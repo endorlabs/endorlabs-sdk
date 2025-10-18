@@ -84,9 +84,9 @@ jobs:
         run: |
           uv run ruff check .
 
-      - name: Run black formatter check
+      - name: Run ruff formatter check
         run: |
-          uv run black --check .
+          uv run ruff format --check .
 
   # Test job - runs in parallel with lint
   test:
@@ -142,7 +142,8 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [resolve-dependencies, lint, test]
+    if: always() && (needs.lint.result == 'success' && needs.test.result == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -152,33 +153,31 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Cache Poetry dependencies
+      - name: Cache UV dependencies
         uses: actions/cache@v4
         with:
-          path: ~/.cache/pypoetry
-          key: ${{ runner.os }}-poetry-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/pyproject.toml') }}
+          path: ~/.cache/uv
+          key: ${{ needs.resolve-dependencies.outputs.cache-key }}
           restore-keys: |
-            ${{ runner.os }}-poetry-${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-poetry-
+            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
+            ${{ runner.os }}-uv-
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install UV
+        uses: astral-sh/setup-uv@v3
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          version: "latest"
 
-      - name: Install dependencies with Poetry
+      - name: Install dependencies
         run: |
-          poetry install --with dev
+          uv sync --dev
 
       - name: Install endorctl
         run: |
-          poetry add endorctl
+          uv add endorctl
 
       - name: Run Endorctl security scan
         run: |
-          poetry run endorctl scan
+          uv run endorctl scan
         env:
           ENDOR_API: ${{ secrets.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}

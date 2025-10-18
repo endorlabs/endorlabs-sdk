@@ -13,9 +13,9 @@ import jsonschema
 import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'src')
-))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import namespaces
@@ -63,7 +63,12 @@ class TestToolDefinitions:
                 for param_name, param_def in properties.items():
                     if "type" in param_def:
                         valid_types = [
-                            "string", "integer", "number", "boolean", "array", "object"
+                            "string",
+                            "integer",
+                            "number",
+                            "boolean",
+                            "array",
+                            "object",
                         ]
                         assert param_def["type"] in valid_types, (
                             f"Invalid type '{param_def['type']}' for parameter "
@@ -102,16 +107,16 @@ class TestToolDefinitions:
                     "properties": {
                         "tenant_namespace": {
                             "type": "string",
-                            "description": "Parent tenant namespace"
+                            "description": "Parent tenant namespace",
                         },
                         "include_children": {
                             "type": "boolean",
                             "description": "Include child namespaces",
-                            "default": True
-                        }
+                            "default": True,
+                        },
                     },
-                    "required": ["tenant_namespace"]
-                }
+                    "required": ["tenant_namespace"],
+                },
             },
             "create_namespace": {
                 "name": "create_namespace",
@@ -121,24 +126,24 @@ class TestToolDefinitions:
                     "properties": {
                         "parent_namespace": {
                             "type": "string",
-                            "description": "Parent namespace name"
+                            "description": "Parent namespace name",
                         },
                         "name": {
                             "type": "string",
-                            "description": "Name for the new namespace"
+                            "description": "Name for the new namespace",
                         },
                         "description": {
                             "type": "string",
-                            "description": "Description for the namespace"
+                            "description": "Description for the namespace",
                         },
                         "labels": {
                             "type": "object",
                             "description": "Optional labels for the namespace",
-                            "additionalProperties": {"type": "string"}
-                        }
+                            "additionalProperties": {"type": "string"},
+                        },
                     },
-                    "required": ["parent_namespace", "name", "description"]
-                }
+                    "required": ["parent_namespace", "name", "description"],
+                },
             },
             "run_security_scan": {
                 "name": "run_security_scan",
@@ -150,25 +155,28 @@ class TestToolDefinitions:
                             "type": "string",
                             "description": (
                                 "Target namespace UUID or resource identifier"
-                            )
+                            ),
                         },
                         "scan_type": {
                             "type": "string",
                             "description": "Type of security scan",
                             "enum": [
-                                "vulnerability", "compliance", "secrets",
-                                "dependencies", "full"
-                            ]
+                                "vulnerability",
+                                "compliance",
+                                "secrets",
+                                "dependencies",
+                                "full",
+                            ],
                         },
                         "include_dependencies": {
                             "type": "boolean",
                             "description": "Include dependency scanning",
-                            "default": True
-                        }
+                            "default": True,
+                        },
                     },
-                    "required": ["target", "scan_type"]
-                }
-            }
+                    "required": ["target", "scan_type"],
+                },
+            },
         }
 
 
@@ -184,20 +192,22 @@ class TestToolImplementation:
     def test_list_namespaces_tool(self, mock_client):
         """Test the list_namespaces tool implementation."""
         # Mock the namespaces.list_namespaces function
-        with patch('endor_cockpit.resources.namespaces.list_namespaces') as mock_list:
+        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
             mock_list.return_value = [
-                Mock(meta=Mock(
-                    name="test-namespace-1",
-                    description="Test namespace 1"
-                )),
-                Mock(meta=Mock(name="test-namespace-2", description="Test namespace 2"))
+                Mock(
+                    meta=Mock(name="test-namespace-1", description="Test namespace 1")
+                ),
+                Mock(
+                    meta=Mock(name="test-namespace-2", description="Test namespace 2")
+                ),
             ]
 
             # Test the tool
-            result = self._call_tool("list_namespaces", {
-                "tenant_namespace": "test-tenant",
-                "include_children": True
-            }, mock_client)
+            result = self._call_tool(
+                "list_namespaces",
+                {"tenant_namespace": "test-tenant", "include_children": True},
+                mock_client,
+            )
 
             assert result is not None
             assert len(result) == 2
@@ -206,7 +216,7 @@ class TestToolImplementation:
     def test_create_namespace_tool(self, mock_client):
         """Test the create_namespace tool implementation."""
         with patch(
-            'endor_cockpit.resources.namespaces.create_namespace'
+            "endor_cockpit.resources.namespaces.create_namespace"
         ) as mock_create:
             mock_namespace = Mock()
             mock_namespace.uuid = "test-uuid-123"
@@ -214,11 +224,15 @@ class TestToolImplementation:
             mock_create.return_value = mock_namespace
 
             # Test the tool
-            result = self._call_tool("create_namespace", {
-                "parent_namespace": "test-tenant",
-                "name": "test-namespace",
-                "description": "Test namespace description"
-            }, mock_client)
+            result = self._call_tool(
+                "create_namespace",
+                {
+                    "parent_namespace": "test-tenant",
+                    "name": "test-namespace",
+                    "description": "Test namespace description",
+                },
+                mock_client,
+            )
 
             assert result is not None
             assert result.uuid == "test-uuid-123"
@@ -226,7 +240,7 @@ class TestToolImplementation:
 
     def test_security_scan_tool(self, mock_client):
         """Test the run_security_scan tool implementation."""
-        with patch('subprocess.run') as mock_subprocess:
+        with patch("subprocess.run") as mock_subprocess:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_result.stdout = "Scan completed successfully"
@@ -234,11 +248,15 @@ class TestToolImplementation:
             mock_subprocess.return_value = mock_result
 
             # Test the tool
-            result = self._call_tool("run_security_scan", {
-                "target": "test-namespace-uuid",
-                "scan_type": "full",
-                "include_dependencies": True
-            }, mock_client)
+            result = self._call_tool(
+                "run_security_scan",
+                {
+                    "target": "test-namespace-uuid",
+                    "scan_type": "full",
+                    "include_dependencies": True,
+                },
+                mock_client,
+            )
 
             assert result is not None
             assert result["success"] is True
@@ -251,36 +269,35 @@ class TestToolImplementation:
             return namespaces.list_namespaces(
                 client,
                 parameters["tenant_namespace"],
-                parameters.get("include_children", True)
+                parameters.get("include_children", True),
             )
         elif tool_name == "create_namespace":
             from endor_cockpit.resources.namespaces import (
                 CreateNamespacePayload,
                 NamespaceMetaCreate,
             )
+
             payload = CreateNamespacePayload(
                 meta=NamespaceMetaCreate(
-                    name=parameters["name"],
-                    description=parameters["description"]
+                    name=parameters["name"], description=parameters["description"]
                 )
             )
             return namespaces.create_namespace(
-                client,
-                parameters["parent_namespace"],
-                payload
+                client, parameters["parent_namespace"], payload
             )
         elif tool_name == "run_security_scan":
             import subprocess
+
             try:
                 result = subprocess.run(
                     ["endorctl", "scan", "--target", parameters["target"]],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
                 return {
                     "success": result.returncode == 0,
                     "stdout": result.stdout,
-                    "stderr": result.stderr
+                    "stderr": result.stderr,
                 }
             except Exception as e:
                 return {"success": False, "error": str(e)}
@@ -297,13 +314,13 @@ class TestToolValidation:
         valid_inputs = {
             "list_namespaces": {
                 "tenant_namespace": "test-tenant",
-                "include_children": True
+                "include_children": True,
             },
             "create_namespace": {
                 "parent_namespace": "test-tenant",
                 "name": "test-namespace",
-                "description": "Test description"
-            }
+                "description": "Test description",
+            },
         }
 
         for tool_name, inputs in valid_inputs.items():
@@ -317,13 +334,13 @@ class TestToolValidation:
         invalid_inputs = {
             "list_namespaces": {
                 "tenant_namespace": "",  # Empty string
-                "include_children": "not-a-boolean"  # Wrong type
+                "include_children": "not-a-boolean",  # Wrong type
             },
             "create_namespace": {
                 "parent_namespace": "test-tenant",
                 # Missing required 'name' parameter
-                "description": "Test description"
-            }
+                "description": "Test description",
+            },
         }
 
         for tool_name, inputs in invalid_inputs.items():
@@ -355,21 +372,25 @@ class TestToolIntegration:
         invalid_client = None
 
         with pytest.raises((AttributeError, TypeError)):
-            self._call_tool("list_namespaces", {
-                "tenant_namespace": "test-tenant"
-            }, invalid_client)
+            self._call_tool(
+                "list_namespaces", {"tenant_namespace": "test-tenant"}, invalid_client
+            )
 
     def test_tool_parameter_types(self):
         """Test tool parameter type handling."""
         # Test with wrong parameter types
-        with patch('endor_cockpit.resources.namespaces.list_namespaces') as mock_list:
+        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
             mock_list.return_value = []
 
             # This should handle type conversion gracefully
-            result = self._call_tool("list_namespaces", {
-                "tenant_namespace": "test-tenant",
-                "include_children": "true"  # String instead of boolean
-            }, Mock())
+            result = self._call_tool(
+                "list_namespaces",
+                {
+                    "tenant_namespace": "test-tenant",
+                    "include_children": "true",  # String instead of boolean
+                },
+                Mock(),
+            )
 
             # The tool should handle this gracefully
             assert result is not None
@@ -384,7 +405,7 @@ class TestToolIntegration:
             return namespaces.list_namespaces(
                 client,
                 parameters["tenant_namespace"],
-                parameters.get("include_children", True)
+                parameters.get("include_children", True),
             )
         return None
 
@@ -415,13 +436,13 @@ class TestToolDocumentation:
         examples = {
             "list_namespaces": {
                 "tenant_namespace": "example-tenant",
-                "include_children": True
+                "include_children": True,
             },
             "create_namespace": {
                 "parent_namespace": "example-tenant",
                 "name": "example-namespace",
-                "description": "Example namespace created by agent"
-            }
+                "description": "Example namespace created by agent",
+            },
         }
 
         for tool_name, example_params in examples.items():
@@ -441,10 +462,10 @@ class TestToolDocumentation:
                     "type": "object",
                     "properties": {
                         "tenant_namespace": {"type": "string"},
-                        "include_children": {"type": "boolean", "default": True}
+                        "include_children": {"type": "boolean", "default": True},
                     },
-                    "required": ["tenant_namespace"]
-                }
+                    "required": ["tenant_namespace"],
+                },
             },
             "create_namespace": {
                 "name": "create_namespace",
@@ -454,11 +475,11 @@ class TestToolDocumentation:
                     "properties": {
                         "parent_namespace": {"type": "string"},
                         "name": {"type": "string"},
-                        "description": {"type": "string"}
+                        "description": {"type": "string"},
                     },
-                    "required": ["parent_namespace", "name", "description"]
-                }
-            }
+                    "required": ["parent_namespace", "name", "description"],
+                },
+            },
         }
 
     def _validate_example(self, tool_name: str, example_params: Dict[str, Any]) -> bool:

@@ -13,9 +13,9 @@ from unittest.mock import Mock, patch
 import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'src')
-))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import namespaces
@@ -34,16 +34,16 @@ class TestToolImplementation:
     def test_list_namespaces_implementation(self, mock_client):
         """Test the list_namespaces tool implementation."""
         # Mock the SDK function
-        with patch('endor_cockpit.resources.namespaces.list_namespaces') as mock_list:
+        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
             mock_namespaces = [
                 Mock(
                     uuid="ns-1",
-                    meta=Mock(name="namespace-1", description="Test namespace 1")
+                    meta=Mock(name="namespace-1", description="Test namespace 1"),
                 ),
                 Mock(
                     uuid="ns-2",
-                    meta=Mock(name="namespace-2", description="Test namespace 2")
-                )
+                    meta=Mock(name="namespace-2", description="Test namespace 2"),
+                ),
             ]
             # Configure the mock to return the expected values
             mock_namespaces[0].meta.name = "namespace-1"
@@ -54,7 +54,7 @@ class TestToolImplementation:
             result = self._implement_list_namespaces_tool(
                 client=mock_client,
                 tenant_namespace="test-tenant",
-                include_children=True
+                include_children=True,
             )
 
             assert result is not None
@@ -65,7 +65,7 @@ class TestToolImplementation:
     def test_create_namespace_implementation(self, mock_client):
         """Test the create_namespace tool implementation."""
         with patch(
-            'endor_cockpit.resources.namespaces.create_namespace'
+            "endor_cockpit.resources.namespaces.create_namespace"
         ) as mock_create:
             mock_namespace = Mock()
             mock_namespace.uuid = "new-ns-uuid"
@@ -77,7 +77,7 @@ class TestToolImplementation:
                 client=mock_client,
                 parent_namespace="test-tenant",
                 name="new-namespace",
-                description="New namespace description"
+                description="New namespace description",
             )
 
             assert result is not None
@@ -87,7 +87,7 @@ class TestToolImplementation:
 
     def test_security_scan_implementation(self, mock_client):
         """Test the run_security_scan tool implementation."""
-        with patch('subprocess.run') as mock_subprocess:
+        with patch("subprocess.run") as mock_subprocess:
             mock_result = Mock()
             mock_result.returncode = 0
             mock_result.stdout = "Security scan completed successfully"
@@ -99,7 +99,7 @@ class TestToolImplementation:
                 client=mock_client,
                 target="test-namespace-uuid",
                 scan_type="full",
-                include_dependencies=True
+                include_dependencies=True,
             )
 
             assert result is not None
@@ -108,14 +108,14 @@ class TestToolImplementation:
 
     def test_tool_error_handling(self, mock_client):
         """Test tool error handling."""
-        with patch('endor_cockpit.resources.namespaces.list_namespaces') as mock_list:
+        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
             mock_list.side_effect = Exception("API Error")
 
             # Test error handling
             result = self._implement_list_namespaces_tool(
                 client=mock_client,
                 tenant_namespace="test-tenant",
-                include_children=True
+                include_children=True,
             )
 
             assert result is None  # Should return None on error
@@ -127,7 +127,7 @@ class TestToolImplementation:
             client=mock_client,
             parent_namespace="",  # Empty string
             name="test-namespace",
-            description="Test description"
+            description="Test description",
         )
         assert result1 is None
 
@@ -135,7 +135,7 @@ class TestToolImplementation:
             client=mock_client,
             parent_namespace="test-tenant",
             name="",  # Empty string
-            description="Test description"
+            description="Test description",
         )
         assert result2 is None
 
@@ -155,8 +155,12 @@ class TestToolImplementation:
             return None
 
     def _implement_create_namespace_tool(
-        self, client: APIClient, parent_namespace: str, name: str,
-        description: str, labels: Dict[str, str] = None
+        self,
+        client: APIClient,
+        parent_namespace: str,
+        name: str,
+        description: str,
+        labels: Dict[str, str] = None,
     ) -> Any:
         """Implement the create_namespace tool."""
         try:
@@ -173,10 +177,7 @@ class TestToolImplementation:
             )
 
             payload = CreateNamespacePayload(
-                meta=NamespaceMetaCreate(
-                    name=name,
-                    description=description
-                )
+                meta=NamespaceMetaCreate(name=name, description=description)
             )
 
             return namespaces.create_namespace(client, parent_namespace, payload)
@@ -185,8 +186,11 @@ class TestToolImplementation:
             return None
 
     def _implement_security_scan_tool(
-        self, client: APIClient, target: str, scan_type: str,
-        include_dependencies: bool = True
+        self,
+        client: APIClient,
+        target: str,
+        scan_type: str,
+        include_dependencies: bool = True,
     ) -> Dict[str, Any]:
         """Implement the run_security_scan tool."""
         try:
@@ -213,13 +217,10 @@ class TestToolImplementation:
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
         except Exception as e:
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
 
 class TestToolSchemaValidation:
@@ -299,16 +300,16 @@ class TestToolSchemaValidation:
                     "properties": {
                         "tenant_namespace": {
                             "type": "string",
-                            "description": "Parent tenant namespace"
+                            "description": "Parent tenant namespace",
                         },
                         "include_children": {
                             "type": "boolean",
                             "description": "Include child namespaces",
-                            "default": True
-                        }
+                            "default": True,
+                        },
                     },
-                    "required": ["tenant_namespace"]
-                }
+                    "required": ["tenant_namespace"],
+                },
             },
             "create_namespace": {
                 "name": "create_namespace",
@@ -318,20 +319,20 @@ class TestToolSchemaValidation:
                     "properties": {
                         "parent_namespace": {
                             "type": "string",
-                            "description": "Parent namespace name"
+                            "description": "Parent namespace name",
                         },
                         "name": {
                             "type": "string",
-                            "description": "Name for the new namespace"
+                            "description": "Name for the new namespace",
                         },
                         "description": {
                             "type": "string",
-                            "description": "Description for the namespace"
-                        }
+                            "description": "Description for the namespace",
+                        },
                     },
-                    "required": ["parent_namespace", "name", "description"]
-                }
-            }
+                    "required": ["parent_namespace", "name", "description"],
+                },
+            },
         }
 
 
@@ -341,27 +342,27 @@ class TestToolIntegration:
     def test_tool_function_mapping(self):
         """Test that tool functions map to SDK functions."""
         # Test that tool implementations use the correct SDK functions
-        with patch('endor_cockpit.resources.namespaces.list_namespaces') as mock_list:
+        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
             mock_list.return_value = []
 
             # Test the mapping
-            self._call_tool("list_namespaces", {
-                "tenant_namespace": "test-tenant",
-                "include_children": True
-            })
+            self._call_tool(
+                "list_namespaces",
+                {"tenant_namespace": "test-tenant", "include_children": True},
+            )
 
             mock_list.assert_called_once()
 
     def test_tool_error_propagation(self):
         """Test that tool errors are properly handled."""
-        with patch('endor_cockpit.resources.namespaces.list_namespaces') as mock_list:
+        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
             mock_list.side_effect = Exception("Test error")
 
             # Test error handling - should catch the exception
             try:
-                result = self._call_tool("list_namespaces", {
-                    "tenant_namespace": "test-tenant"
-                })
+                result = self._call_tool(
+                    "list_namespaces", {"tenant_namespace": "test-tenant"}
+                )
                 assert result is None  # Should return None on error
             except Exception:
                 # If exception is not caught, that's also acceptable
@@ -371,10 +372,11 @@ class TestToolIntegration:
         """Call a tool with given parameters."""
         if tool_name == "list_namespaces":
             from endor_cockpit.resources import namespaces
+
             return namespaces.list_namespaces(
                 Mock(),  # Mock client
                 parameters["tenant_namespace"],
-                parameters.get("include_children", True)
+                parameters.get("include_children", True),
             )
         return None
 
