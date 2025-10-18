@@ -189,14 +189,53 @@ jobs:
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
-      - name: Run Endorctl security scan
+      - name: Run endorctl host-check with diagnostics
         run: |
-          endorctl scan --namespace ${{ vars.ENDOR_NAMESPACE }}
+          echo "Running endorctl host-check with DroidGPT for diagnostics..."
+          endorctl host-check --droid-gpt
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+
+      - name: Run comprehensive Endorctl security scan
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Running PR scan with GitHub integration and PR comments..."
+            endorctl scan \
+              --namespace ${{ vars.ENDOR_NAMESPACE }} \
+              --secrets \
+              --dependencies \
+              --ghactions \
+              --github \
+              --pr \
+              --enable-pr-comments \
+              --scm-pr-id ${{ github.event.number }} \
+              --github-token ${{ secrets.GITHUB_TOKEN }} \
+              --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
+              --output-type summary \
+              --exit-on-policy-warning
+          else
+            echo "Running branch scan with comprehensive security analysis..."
+            endorctl scan \
+              --namespace ${{ vars.ENDOR_NAMESPACE }} \
+              --secrets \
+              --dependencies \
+              --ghactions \
+              --github \
+              --github-token ${{ secrets.GITHUB_TOKEN }} \
+              --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
+              --output-type summary \
+              --exit-on-policy-warning
+          fi
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_API_URL: ${{ github.api_url }}
 
   # Coverage job - runs after tests pass
   coverage:
