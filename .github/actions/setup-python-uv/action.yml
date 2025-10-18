@@ -1,0 +1,42 @@
+name: 'Setup Python with UV'
+description: 'Setup Python and UV with dependency caching for Endor Cockpit'
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+    default: '3.13'
+  cache-key:
+    description: 'Cache key for UV dependencies (optional)'
+    required: false
+    default: ''
+  install-dependencies:
+    description: 'Whether to install dependencies'
+    required: false
+    default: 'true'
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v6.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Cache UV dependencies
+      uses: actions/cache@v4.3.0
+      with:
+        path: ~/.cache/uv
+        key: ${{ inputs.cache-key || format('{0}-uv-{1}-{2}', runner.os, inputs.python-version, hashFiles('**/pyproject.toml')) }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ inputs.python-version }}-
+          ${{ runner.os }}-uv-
+
+    - name: Install UV
+      uses: astral-sh/setup-uv@v3.0.0
+      with:
+        version: "0.9.3"
+
+    - name: Install dependencies
+      if: inputs.install-dependencies == 'true'
+      shell: bash
+      run: |
+        uv sync --dev
