@@ -1,0 +1,7 @@
+# Vector DB Initialization Flag
+# This file indicates that the vector database has been initialized
+# Delete this file to force re-initialization on next run
+
+initialized: true
+created: 2025-10-18T10:30:00Z
+version: 1.0
