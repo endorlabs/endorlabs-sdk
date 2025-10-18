@@ -173,11 +173,14 @@ jobs:
 
       - name: Install endorctl
         run: |
-          uv add endorctl
+          # Install endorctl binary using official Endor Labs download
+          curl -O https://api.endorlabs.com/download/latest/endorctl_linux_amd64
+          chmod +x endorctl_linux_amd64
+          sudo mv endorctl_linux_amd64 /usr/local/bin/endorctl
 
       - name: Run Endorctl security scan
         run: |
-          uv run endorctl scan
+          endorctl scan
         env:
           ENDOR_API: ${{ secrets.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
