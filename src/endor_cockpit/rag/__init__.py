@@ -5,11 +5,11 @@ This module provides semantic search capabilities over the Endor Cockpit documen
 using ChromaDB vector database for AI agent context retrieval.
 """
 
-from .query import query_vector_db, get_vector_db_info
+from .query import get_vector_db_info, query_vector_db
 from .tool_schema import RAG_TOOL_SCHEMA
 
 __all__ = [
     "query_vector_db",
-    "get_vector_db_info", 
+    "get_vector_db_info",
     "RAG_TOOL_SCHEMA"
 ]
