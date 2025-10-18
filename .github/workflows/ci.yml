@@ -6,8 +6,23 @@ on:
   pull_request:
     branches: [ main, dev ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
+  # CI Configuration - easily maintainable environment variables
   PYTHON_VERSION: "3.13"
+  PYTHON_VERSIONS: '["3.12", "3.13", "3.14"]'
+  PYTEST_MAXFAIL: "2"
+  COVERAGE_PACKAGE: "endor_cockpit"
+  UV_VERSION: "0.9.3"
+  
+  # Action versions - pinned for security
+  ACTIONS_CHECKOUT_VERSION: "v5.0.0"
+  ACTIONS_SETUP_PYTHON_VERSION: "v6.0.0"
+  ACTIONS_CACHE_VERSION: "v4.3.0"
+  ASTRAL_SETUP_UV_VERSION: "v3.0.0"
 
 jobs:
   # Dependency resolution job - runs once and caches dependencies
@@ -18,10 +33,10 @@ jobs:
       cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6.0.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -31,7 +46,7 @@ jobs:
           echo "key=${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/pyproject.toml') }}" >> $GITHUB_OUTPUT
 
       - name: Cache UV dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v4.3.0
         with:
           path: ~/.cache/uv
           key: ${{ steps.cache-key.outputs.key }}
@@ -40,9 +55,9 @@ jobs:
             ${{ runner.os }}-uv-
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v3.0.0
         with:
-          version: "latest"
+          version: ${{ env.UV_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -55,30 +70,13 @@ jobs:
     needs: resolve-dependencies
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache UV dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ needs.resolve-dependencies.outputs.cache-key }}
-          restore-keys: |
-            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-uv-
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: |
-          uv sync --dev
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
       - name: Run ruff linter
         run: |
@@ -100,38 +98,20 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache UV dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-${{ matrix.python-version }}-
-            ${{ runner.os }}-uv-
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: |
-          uv sync --dev
-
       - name: Run unit tests
         run: |
-          uv run pytest --maxfail=2 --disable-warnings -m "not integration"
+          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration"
 
       - name: Run integration tests
         run: |
-          uv run pytest --maxfail=2 --disable-warnings -m "integration"
+          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration"
         env:
           ENDOR_API: ${{ secrets.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
@@ -146,30 +126,13 @@ jobs:
     if: always() && (needs.lint.result == 'success' && needs.test.result == 'success')
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache UV dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ needs.resolve-dependencies.outputs.cache-key }}
-          restore-keys: |
-            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-uv-
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: |
-          uv sync --dev
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
       - name: Install endorctl
         run: |
@@ -242,37 +205,20 @@ jobs:
     needs: [resolve-dependencies, test]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5.0.0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Cache UV dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/uv
-          key: ${{ needs.resolve-dependencies.outputs.cache-key }}
-          restore-keys: |
-            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
-            ${{ runner.os }}-uv-
-
-      - name: Install UV
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
-
-      - name: Install dependencies
-        run: |
-          uv sync --dev
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
       - name: Run tests with coverage
         run: |
-          uv run pytest --cov=endor_cockpit --cov-report=xml --cov-report=term-missing --maxfail=2 --disable-warnings -m "not integration"
+          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration"
 
       - name: Display coverage summary
         run: |
           echo "Coverage report generated successfully"
           echo "Coverage data available in coverage.xml"
-          echo "View detailed coverage with: uv run pytest --cov=endor_cockpit --cov-report=html"
+          echo "View detailed coverage with: uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"

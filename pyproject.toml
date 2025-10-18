@@ -66,3 +66,8 @@ dev = [
     "pytest-cov>=6.0.0",
     "ruff>=0.14.1",
 ]
+
+# Logging configuration
+[tool.logging]
+level = "INFO"
+format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
