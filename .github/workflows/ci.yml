@@ -271,10 +271,8 @@ jobs:
         run: |
           uv run pytest --cov=endor_cockpit --cov-report=xml --cov-report=term-missing --maxfail=2 --disable-warnings -m "not integration"
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-endor-cockpit
-          fail_ci_if_error: false
+      - name: Display coverage summary
+        run: |
+          echo "Coverage report generated successfully"
+          echo "Coverage data available in coverage.xml"
+          echo "View detailed coverage with: uv run pytest --cov=endor_cockpit --cov-report=html"
