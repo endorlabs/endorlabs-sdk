@@ -27,6 +27,17 @@ dev = [
 ]
 sec = []
 ops = []
+vector = [
+    "chromadb>=0.4.0",
+    "openai>=1.0.0"
+]
+rag = [
+    "chromadb>=0.4.0",
+    "openai>=1.0.0",
+    "langchain>=0.1.0",
+    "anthropic>=0.8.0"
+]
+
 
 [build-system]
 requires = ["hatchling>=1.0"]
@@ -66,6 +77,38 @@ dev = [
     "pytest-cov>=6.0.0",
     "ruff>=0.14.1",
 ]
+vector = [
+    "chromadb>=0.4.0",
+    "openai>=1.0.0"
+]
+rag = [
+    "chromadb>=0.4.0",
+    "openai>=1.0.0",
+    "langchain>=0.1.0",
+    "anthropic>=0.8.0"
+]
+
+# Vector Database configuration
+[tool.vector_db]
+# ChromaDB configuration
+chroma_path = "workflow/vector_db"
+collection_name = "endor_cockpit_docs"
+embedding_model = "text-embedding-3-small"
+
+# Chunking strategy configuration
+[tool.vector_db.chunking]
+markdown_max_chunk_size = 1000
+markdown_overlap = 200
+code_max_chunk_size = 800
+code_overlap = 100
+api_spec_max_chunk_size = 2000
+api_spec_overlap = 300
+
+# Content type detection patterns
+[tool.vector_db.patterns]
+markdown = ["\\.md$", "\\.rst$"]
+code = ["\\.py$", "\\.js$", "\\.ts$", "\\.go$", "\\.java$"]
+api_spec = ["openapi.*\\.json$", "swagger.*\\.json$", "\\.yaml$", "\\.yml$"]
 
 # Logging configuration
 [tool.logging]

@@ -89,11 +89,8 @@ pytest tests/test_integration.py -v
 ### Code Quality
 
 ```bash
-# Linting
+# Linting & Formatting
 ruff check .
-
-# Formatting
-black .
 
 # Type checking
 mypy src/
