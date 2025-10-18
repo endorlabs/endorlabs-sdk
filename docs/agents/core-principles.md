@@ -88,7 +88,7 @@
 
 ### Code Quality
 - **Linting**: Use ruff for code quality checks
-- **Formatting**: Use black for consistent formatting
+- **Formatting**: Use ruff for consistent formatting
 - **Testing**: Comprehensive test coverage with pytest
 - **Security**: Always run security scans
 
