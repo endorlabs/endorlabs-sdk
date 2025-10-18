@@ -71,27 +71,27 @@ def query_endor_documentation_tool(
 ) -> dict:
     """
     Tool function for querying Endor Cockpit documentation.
-    
+
     This function can be used directly with tool frameworks or wrapped
     for specific LLM integrations.
-    
+
     Args:
         query: Natural language query
         max_results: Maximum number of results to return
         include_metadata: Whether to include source file metadata
-        
+
     Returns:
         Dictionary containing query results
     """
     from .query import query_vector_db
-    
+
     try:
         results = query_vector_db(
             query_text=query,
             n_results=max_results,
             include_metadata=include_metadata
         )
-        
+
         # Format results for tool output
         formatted_results = {
             "success": True,
@@ -99,20 +99,20 @@ def query_endor_documentation_tool(
             "result_count": len(results["results"]),
             "results": []
         }
-        
+
         for result in results["results"]:
             formatted_result = {
                 "content": result["content"],
                 "similarity_score": result["similarity_score"]
             }
-            
+
             if include_metadata and "metadata" in result:
                 formatted_result["source"] = result["metadata"].get("source", "Unknown")
-            
+
             formatted_results["results"].append(formatted_result)
-        
+
         return formatted_results
-        
+
     except Exception as e:
         return {
             "success": False,

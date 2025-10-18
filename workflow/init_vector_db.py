@@ -23,8 +23,7 @@ import os
 import re
 import sys
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 import chromadb
 from chromadb.config import Settings
@@ -84,14 +83,14 @@ EXCLUDE_DIRS = [
 
 class VectorDBManager:
     """Manages ChromaDB vector database initialization and updates."""
-    
+
     def __init__(self, db_path: str = "workflow/vector_db", manifest_path: str = "workflow/vector_db_manifest.json"):
         self.db_path = db_path
         self.manifest_path = manifest_path
         self.client = None
         self.collection = None
         self.manifest = self._load_manifest()
-        
+
     def _load_manifest(self) -> Dict:
         """Load or create manifest file."""
         if os.path.exists(self.manifest_path):
@@ -107,33 +106,33 @@ class VectorDBManager:
                 "total_chunks": 0,
                 "total_documents": 0
             }
-    
+
     def _save_manifest(self):
         """Save manifest file."""
         self.manifest["last_updated"] = datetime.now().isoformat()
         with open(self.manifest_path, 'w') as f:
             json.dump(self.manifest, f, indent=2)
-    
+
     def _get_file_hash(self, file_path: str) -> str:
         """Calculate SHA256 hash of file."""
         with open(file_path, 'rb') as f:
             return hashlib.sha256(f.read()).hexdigest()
-    
+
     def _detect_content_type(self, file_path: str) -> str:
         """Detect content type based on file path and content."""
         for content_type, patterns in CONTENT_TYPE_PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, file_path, re.IGNORECASE):
                     return content_type
-        
+
         # Default to markdown for unknown types
         return "markdown"
-    
+
     def _semantic_chunk(self, content: str, content_type: str) -> List[Dict]:
         """Chunk content using semantic strategies."""
         strategy = CHUNKING_STRATEGY.get(content_type, CHUNKING_STRATEGY["markdown"])
         chunks = []
-        
+
         if content_type == "markdown":
             chunks = self._chunk_markdown(content, strategy)
         elif content_type == "code":
@@ -142,16 +141,16 @@ class VectorDBManager:
             chunks = self._chunk_api_spec(content, strategy)
         else:
             chunks = self._chunk_generic(content, strategy)
-        
+
         return chunks
-    
+
     def _chunk_markdown(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk markdown content by headers and paragraphs."""
         chunks = []
         lines = content.split('\n')
         current_chunk = []
         current_size = 0
-        
+
         for line in lines:
             # Check if this is a header (starts with #)
             if line.strip().startswith('#'):
@@ -166,7 +165,7 @@ class VectorDBManager:
                             "size": len(chunk_text)
                         }
                     })
-                
+
                 # Start new chunk with header
                 current_chunk = [line]
                 current_size = len(line)
@@ -174,7 +173,7 @@ class VectorDBManager:
                 # Add line to current chunk
                 current_chunk.append(line)
                 current_size += len(line) + 1  # +1 for newline
-                
+
                 # Check if chunk is too large
                 if current_size > strategy["max_chunk_size"]:
                     # Save current chunk
@@ -187,11 +186,11 @@ class VectorDBManager:
                             "size": len(chunk_text)
                         }
                     })
-                    
+
                     # Start new chunk
                     current_chunk = []
                     current_size = 0
-        
+
         # Add final chunk
         if current_chunk:
             chunk_text = '\n'.join(current_chunk)
@@ -203,16 +202,16 @@ class VectorDBManager:
                     "size": len(chunk_text)
                 }
             })
-        
+
         return chunks
-    
+
     def _chunk_code(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk code content by functions and classes."""
         chunks = []
         lines = content.split('\n')
         current_chunk = []
         current_size = 0
-        
+
         for line in lines:
             # Check if this is a function or class definition
             if line.strip().startswith(('def ', 'class ')):
@@ -227,7 +226,7 @@ class VectorDBManager:
                             "size": len(chunk_text)
                         }
                     })
-                
+
                 # Start new chunk
                 current_chunk = [line]
                 current_size = len(line)
@@ -235,7 +234,7 @@ class VectorDBManager:
                 # Add line to current chunk
                 current_chunk.append(line)
                 current_size += len(line) + 1
-                
+
                 # Check if chunk is too large
                 if current_size > strategy["max_chunk_size"]:
                     # Save current chunk
@@ -248,11 +247,11 @@ class VectorDBManager:
                             "size": len(chunk_text)
                         }
                     })
-                    
+
                     # Start new chunk
                     current_chunk = []
                     current_size = 0
-        
+
         # Add final chunk
         if current_chunk:
             chunk_text = '\n'.join(current_chunk)
@@ -264,9 +263,9 @@ class VectorDBManager:
                     "size": len(chunk_text)
                 }
             })
-        
+
         return chunks
-    
+
     def _chunk_api_spec(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk API specification content by sections."""
         chunks = []
@@ -275,7 +274,7 @@ class VectorDBManager:
         except json.JSONDecodeError:
             # If not JSON, treat as generic content
             return self._chunk_generic(content, strategy)
-        
+
         # Chunk by major sections
         for section_name, section_content in data.items():
             if isinstance(section_content, dict):
@@ -289,20 +288,20 @@ class VectorDBManager:
                         "size": len(section_text)
                     }
                 })
-        
+
         return chunks
-    
+
     def _chunk_generic(self, content: str, strategy: Dict) -> List[Dict]:
         """Generic chunking for unknown content types."""
         chunks = []
         words = content.split()
         current_chunk = []
         current_size = 0
-        
+
         for word in words:
             current_chunk.append(word)
             current_size += len(word) + 1  # +1 for space
-            
+
             if current_size > strategy["max_chunk_size"]:
                 chunk_text = ' '.join(current_chunk)
                 chunks.append({
@@ -313,10 +312,10 @@ class VectorDBManager:
                         "size": len(chunk_text)
                     }
                 })
-                
+
                 current_chunk = []
                 current_size = 0
-        
+
         # Add final chunk
         if current_chunk:
             chunk_text = ' '.join(current_chunk)
@@ -328,23 +327,23 @@ class VectorDBManager:
                     "size": len(chunk_text)
                 }
             })
-        
+
         return chunks
-    
+
     def _should_rebuild_file(self, file_path: str) -> bool:
         """Check if file needs to be rebuilt based on manifest."""
         if file_path not in self.manifest["documents"]:
             return True
-        
+
         current_hash = self._get_file_hash(file_path)
         stored_hash = self.manifest["documents"][file_path]["file_hash"]
-        
+
         return current_hash != stored_hash
-    
+
     def _get_files_to_process(self) -> List[str]:
         """Get list of files to process for vector DB."""
         files_to_process = []
-        
+
         for include_path in INCLUDE_DIRS:
             if os.path.isfile(include_path):
                 files_to_process.append(include_path)
@@ -352,25 +351,25 @@ class VectorDBManager:
                 for root, dirs, files in os.walk(include_path):
                     # Skip excluded directories
                     dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
-                    
+
                     for file in files:
                         file_path = os.path.join(root, file)
                         if self._should_rebuild_file(file_path):
                             files_to_process.append(file_path)
-        
+
         return files_to_process
-    
+
     def initialize_db(self, rebuild: bool = False):
         """Initialize or rebuild the vector database."""
         # Create database directory
         os.makedirs(self.db_path, exist_ok=True)
-        
+
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
             path=self.db_path,
             settings=Settings(anonymized_telemetry=False)
         )
-        
+
         # Create or get collection
         collection_name = "endor_cockpit_docs"
         if rebuild:
@@ -378,42 +377,42 @@ class VectorDBManager:
                 self.client.delete_collection(collection_name)
             except:
                 pass
-        
+
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             metadata={"description": "Endor Cockpit documentation vector database"}
         )
-        
+
         # Process files
         files_to_process = self._get_files_to_process()
-        
+
         if not files_to_process:
             logger.info("No files need processing")
             return
-        
+
         logger.info(f"Processing {len(files_to_process)} files")
-        
+
         all_chunks = []
         document_metadata = {}
-        
+
         for file_path in files_to_process:
             logger.info(f"Processing: {file_path}")
-            
+
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
-                
+
                 content_type = self._detect_content_type(file_path)
                 chunks = self._semantic_chunk(content, content_type)
-                
+
                 # Add file metadata to chunks
                 for i, chunk in enumerate(chunks):
                     chunk["metadata"]["file_path"] = file_path
                     chunk["metadata"]["file_name"] = os.path.basename(file_path)
                     chunk["metadata"]["chunk_id"] = f"{file_path}:{i}"
-                
+
                 all_chunks.extend(chunks)
-                
+
                 # Update manifest
                 file_hash = self._get_file_hash(file_path)
                 document_metadata[file_path] = {
@@ -422,43 +421,43 @@ class VectorDBManager:
                     "last_modified": datetime.now().isoformat(),
                     "content_type": content_type
                 }
-                
+
             except Exception as e:
                 logger.error(f"Error processing {file_path}: {e}")
                 continue
-        
+
         # Add chunks to collection
         if all_chunks:
             texts = [chunk["text"] for chunk in all_chunks]
             metadatas = [chunk["metadata"] for chunk in all_chunks]
             ids = [chunk["metadata"]["chunk_id"] for chunk in all_chunks]
-            
+
             self.collection.add(
                 documents=texts,
                 metadatas=metadatas,
                 ids=ids
             )
-            
+
             logger.info(f"Added {len(all_chunks)} chunks to vector database")
-        
+
         # Update manifest
         self.manifest["documents"].update(document_metadata)
         self.manifest["total_chunks"] = len(all_chunks)
         self.manifest["total_documents"] = len(document_metadata)
         self._save_manifest()
-        
+
         logger.info("Vector database initialization complete")
-    
+
     def query(self, query_text: str, n_results: int = 5) -> List[Dict]:
         """Query the vector database."""
         if not self.collection:
             self.initialize_db()
-        
+
         results = self.collection.query(
             query_texts=[query_text],
             n_results=n_results
         )
-        
+
         return results
 
 
@@ -467,15 +466,15 @@ def main():
     parser = argparse.ArgumentParser(description="Initialize Endor Cockpit vector database")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild the entire database")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    
+
     args = parser.parse_args()
-    
+
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     # Initialize vector DB manager
     manager = VectorDBManager()
-    
+
     try:
         manager.initialize_db(rebuild=args.rebuild)
         print("[OK] Vector database initialization complete")

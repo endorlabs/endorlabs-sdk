@@ -111,14 +111,14 @@ jobs:
 
       - name: Validate required secrets for integration tests
         run: |
-          if [ -z "${{ secrets.ENDOR_API }}" ]; then
-            echo "❌ ERROR: ENDOR_API secret is not set"
-            echo "Please configure the ENDOR_API secret in repository settings"
+          if [ -z "${{ vars.ENDOR_API }}" ]; then
+            echo "❌ ERROR: ENDOR_API variable is not set"
+            echo "Please configure the ENDOR_API variable in repository settings"
             exit 1
           fi
-          if [ -z "${{ secrets.ENDOR_NAMESPACE }}" ]; then
-            echo "❌ ERROR: ENDOR_NAMESPACE secret is not set"
-            echo "Please configure the ENDOR_NAMESPACE secret in repository settings"
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            echo "Please configure the ENDOR_NAMESPACE variable in repository settings"
             exit 1
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
