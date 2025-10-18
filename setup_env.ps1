@@ -10,7 +10,7 @@ $env:ENDOR_API_CREDENTIALS_SECRET = "your-api-secret-here"
 
 Write-Host "Environment variables set:" -ForegroundColor Yellow
 Write-Host "  ENDOR_API = $env:ENDOR_API"
-Write-Host "  ENDOR_API_CREDENTIALS_KEY = $env:ENDOR_API_CREDENTIALS_SECRET"
+Write-Host "  ENDOR_API_CREDENTIALS_KEY = $env:ENDOR_API_CREDENTIALS_KEY"
 Write-Host "  ENDOR_API_CREDENTIALS_SECRET = [HIDDEN]"
 
 Write-Host "`nTo run integration tests:" -ForegroundColor Cyan
