@@ -177,10 +177,21 @@ jobs:
           curl -O https://api.endorlabs.com/download/latest/endorctl_linux_amd64
           chmod +x endorctl_linux_amd64
           sudo mv endorctl_linux_amd64 /usr/local/bin/endorctl
+        env:
+          ENDOR_API: ${{ secrets.ENDOR_API }}
+
+      - name: Verify endorctl installation
+        run: |
+          endorctl --version
+        env:
+          ENDOR_API: ${{ secrets.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ secrets.ENDOR_NAMESPACE }}
 
       - name: Run Endorctl security scan
         run: |
-          endorctl scan
+          endorctl scan --namespace ${{ secrets.ENDOR_NAMESPACE }}
         env:
           ENDOR_API: ${{ secrets.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
