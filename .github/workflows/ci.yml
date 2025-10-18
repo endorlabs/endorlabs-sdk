@@ -129,8 +129,7 @@ jobs:
         run: |
           uv run pytest --maxfail=2 --disable-warnings -m "not integration"
 
-      - name: Run integration tests (if environment variables are available)
-        if: ${{ secrets.ENDOR_API != '' }}
+      - name: Run integration tests
         run: |
           uv run pytest --maxfail=2 --disable-warnings -m "integration"
         env:
