@@ -13,6 +13,17 @@ from endor_cockpit.resources.namespaces import (
 
 @pytest.mark.integration
 def test_namespaces_main_flow():
+    # Check for required environment variables
+    required_vars = [
+        "ENDOR_API",
+        "ENDOR_API_CREDENTIALS_KEY", 
+        "ENDOR_API_CREDENTIALS_SECRET"
+    ]
+    
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    if missing_vars:
+        pytest.skip(f"Missing required environment variables: {missing_vars}")
+    
     # Setup APIClient
     client = APIClient(max_retries=2, backoff_factor=0.1)
     # Get OpenAPI spec and store in a temp file
