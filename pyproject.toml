@@ -1,5 +1,5 @@
 [build-system]
-requires = [""]
+requires = ["hatchling>=1.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -11,7 +11,7 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -19,18 +19,14 @@ classifiers = [
 ]
 dependencies = [
     "requests>=2.28.0",
-    "pydantic>=2.0",
-    "langchain",
-    "langgraph",
-    "urllib3"
+    "pydantic>=2.0"
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
     "black",
-    "ruff",
-    "uv"
+    "ruff"
 
 ]
 sec = [
