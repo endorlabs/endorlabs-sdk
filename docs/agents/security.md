@@ -19,7 +19,7 @@ endorctl scan
 endorctl scan --dependencies
 
 # For first-party code changes
-endorctl scan --code
+endorctl scan --sast
 ```
 
 ## 2. Data Protection

@@ -121,8 +121,11 @@ For local testing and development, use the `workspace/` folder which is excluded
 - Development scripts and utilities
 - Test-specific documentation
 - User-specific API configurations
+- **Operational context and environment setup guides**
 
 Each user's workspace is isolated and not shared across the team.
+
+For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `workspace/OPERATIONAL_CONTEXT.md`.
 
 ## Contributing
 

@@ -39,6 +39,149 @@ Each resource module should follow this pattern:
 - **Formatting**: `black --check .`
 - **Testing**: `pytest --cov=endor_cockpit`
 
+## 2.1. Linting & CI Error Prevention
+
+### **CRITICAL: Pre-Development Checklist**
+Before writing any code, ensure you understand these requirements:
+
+#### **Line Length Standards**
+- **Maximum line length**: 88 characters (configured in `pyproject.toml`)
+- **Break long lines** using parentheses, backslashes, or string concatenation
+- **Function signatures**: Break parameter lists across multiple lines
+- **Import statements**: Use multi-line imports for long module lists
+
+#### **Import Management**
+```python
+# ✅ CORRECT: Sorted imports with proper grouping
+import os
+import sys
+from typing import Optional, Union
+
+from requests import HTTPError
+from pydantic import BaseModel, Field
+
+from endor_cockpit.api_client import APIClient
+from endor_cockpit.resources.namespaces import CreateNamespacePayload
+
+# ❌ WRONG: Unsorted imports, unused imports
+import json  # F401: unused import
+import urllib3  # F401: unused import
+from typing import Union  # F401: unused import
+```
+
+#### **Whitespace & Formatting**
+- **No trailing whitespace**: Remove spaces at end of lines
+- **No blank lines with whitespace**: Empty lines should be truly empty
+- **Consistent indentation**: Use 4 spaces, never tabs
+- **F-string usage**: Only use f-strings when you have placeholders
+
+```python
+# ✅ CORRECT: Proper f-string usage
+name = "test"
+message = f"Hello {name}"
+
+# ❌ WRONG: F-string without placeholders
+message = f"Hello world"  # Should be: message = "Hello world"
+```
+
+#### **Dependency Management**
+- **Pin exact versions**: Use `==` for core dependencies
+- **Avoid `latest`**: Specify exact versions in `pyproject.toml`
+- **Dev dependencies**: Keep dev tools in `[project.optional-dependencies.dev]`
+- **Version compatibility**: Ensure Python version constraints are correct
+
+#### **Configuration Standards**
+```toml
+# ✅ CORRECT: Proper pyproject.toml structure
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "C", "B"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+```
+
+### **Common Linting Errors & Fixes**
+
+#### **E501: Line too long**
+```python
+# ❌ WRONG: Line too long
+def create_namespace(client: APIClient, parent_namespace: str, payload: CreateNamespacePayload) -> Optional[Namespace]:
+
+# ✅ CORRECT: Break into multiple lines
+def create_namespace(
+    client: APIClient,
+    parent_namespace: str,
+    payload: CreateNamespacePayload
+) -> Optional[Namespace]:
+```
+
+#### **F401: Imported but unused**
+```python
+# ❌ WRONG: Unused imports
+import json
+import urllib3
+from typing import Union
+
+# ✅ CORRECT: Remove unused imports
+# Only import what you use
+```
+
+#### **W291: Trailing whitespace**
+```python
+# ❌ WRONG: Trailing spaces
+def function():    
+    return "value"    
+
+# ✅ CORRECT: No trailing spaces
+def function():
+    return "value"
+```
+
+#### **W293: Blank line contains whitespace**
+```python
+# ❌ WRONG: Blank line with spaces
+def function():
+    
+    return "value"
+
+# ✅ CORRECT: Truly empty blank lines
+def function():
+
+    return "value"
+```
+
+#### **I001: Import block is un-sorted**
+```python
+# ❌ WRONG: Unsorted imports
+from endor_cockpit.api_client import APIClient
+import os
+from typing import Optional
+
+# ✅ CORRECT: Sorted imports
+import os
+from typing import Optional
+
+from endor_cockpit.api_client import APIClient
+```
+
+### **Pre-Commit Workflow**
+1. **Run linting**: `uv run ruff check .`
+2. **Fix auto-fixable issues**: `uv run ruff check . --fix`
+3. **Check formatting**: `uv run black --check .`
+4. **Format code**: `uv run black .`
+5. **Run tests**: `uv run pytest`
+6. **Security scan**: `endorctl scan`
+
+### **CI Error Prevention**
+- **Dependency resolution**: Use `uv sync --dev` for consistent environments
+- **Version pinning**: Never use `latest` in production dependencies
+- **Test coverage**: Maintain comprehensive test coverage
+- **Security scanning**: Always run `endorctl scan` before commits
+- **Multi-version testing**: Ensure compatibility across Python versions
+
 ## 3. API Client Design
 
 ### Authentication

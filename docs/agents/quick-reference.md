@@ -48,6 +48,38 @@ namespaces.update_namespace(client, parent_namespace, namespace_uuid, UpdateName
 - Allow empty descriptions: `Field("")` instead of `Field(..., min_length=1)`
 - Handle optional fields properly
 
+## 🚨 Linting & CI Error Prevention
+
+### **Pre-Development Checklist**
+- **Line length**: Max 88 characters (break long lines)
+- **Imports**: Sort and remove unused imports
+- **Whitespace**: No trailing spaces or blank line whitespace
+- **F-strings**: Only use when you have placeholders
+- **Dependencies**: Pin exact versions, avoid `latest`
+
+### **Quick Linting Commands**
+```bash
+# Check for issues
+uv run ruff check .
+
+# Auto-fix issues
+uv run ruff check . --fix
+
+# Format code
+uv run black .
+
+# Run tests
+uv run pytest
+```
+
+### **Common Linting Errors**
+- **E501**: Line too long → Break into multiple lines
+- **F401**: Unused import → Remove unused imports
+- **W291**: Trailing whitespace → Remove trailing spaces
+- **W293**: Blank line whitespace → Make blank lines truly empty
+- **I001**: Unsorted imports → Sort import blocks
+- **F541**: F-string without placeholders → Remove `f` prefix
+
 ## 📊 Success Indicators
 
 - ✅ All integration tests passing (11/11)
