@@ -11,6 +11,7 @@ from endor_cockpit.resources.namespaces import (
     CreateNamespacePayload, NamespaceMetaCreate, list_namespaces, create_namespace, delete_namespace
 )
 
+@pytest.mark.integration
 def test_namespaces_main_flow():
     # Setup APIClient
     client = APIClient(max_retries=2, backoff_factor=0.1)
