@@ -24,10 +24,11 @@ ENDOR_NAMESPACE = os.getenv("ENDOR_NAMESPACE")
 # TODO: Determine if needed or as an init param or env var
 
 # Logger redaction definitions
-REDACTED_KEYS = ['authorization', 'secret', 'token', 'key']
+REDACTED_KEYS = ["authorization", "secret", "token", "key"]
 redaction_pattern = (
     r"'(" + "|".join(REDACTED_KEYS) + r")':\s*'.*?'"
 )  # Regex pattern to redact keys and their values
+
 
 class RedactingFilter(logging.Filter):
     def __init__(self, patterns):
@@ -47,6 +48,7 @@ class RedactingFilter(logging.Filter):
             message = pattern.sub(r"'\1': '***REDACTED***'", message)
         return message
 
+
 class APIClient:
     """Simple API client with retry, rate limiting handling and redacted logging.
 
@@ -62,12 +64,11 @@ class APIClient:
         max_retries: int = 15,
         backoff_factor: float = 0.5,
         status_forcelist=(429, 500, 502, 503, 504),
-        logging_level: str = "INFO"
+        logging_level: str = "INFO",
     ):
         # Set up logging
         logging.basicConfig(
-            level=logging_level,
-            format='%(asctime)s - %(levelname)s - %(message)s'
+            level=logging_level, format="%(asctime)s - %(levelname)s - %(message)s"
         )
         self.logger = logging.getLogger(__name__)
         self.logger.addFilter(RedactingFilter([redaction_pattern]))
@@ -93,18 +94,18 @@ class APIClient:
             connect=max_retries,
             backoff_factor=backoff_factor,
             status_forcelist=status_forcelist,
-            allowed_methods=None
+            allowed_methods=None,
         )
         adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount('http://', adapter)
-        self.session.mount('https://', adapter)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
         self.rate_limit_delay = 0
         self.last_request_time = 0
         self.logger_len = 25
 
         # Set initial headers
         self.token = self.authenticate()
-        self.default_headers = {'Authorization': f'Bearer {self.token}'}
+        self.default_headers = {"Authorization": f"Bearer {self.token}"}
 
     def _rate_limit(self):
         """Applies a delay if a rate limit was previously encountered."""
@@ -124,11 +125,11 @@ class APIClient:
             return response
         except requests.exceptions.HTTPError as e:
             if response.status_code == 429:
-                retry_info = response.headers.get('Retry-After', 'no retry info')
+                retry_info = response.headers.get("Retry-After", "no retry info")
                 self.logger.warning(
                     f"Rate limit encountered: {response.status_code} - {retry_info}"
                 )
-                retry_after = response.headers.get('Retry-After')
+                retry_after = response.headers.get("Retry-After")
                 if retry_after and retry_after.isdigit():
                     self.rate_limit_delay = int(retry_after) + 1
                 else:
@@ -137,12 +138,10 @@ class APIClient:
                     )
                 raise
             if response.status_code == 401:
-                self.logger.warning(
-                    f"Permissions Error: {response.status_code}"
-                )
-                self.logger.info('Reauthenticating...')
-                self.headers = {'Authorization': f'Bearer {self.authenticate()}'}
-                self.logger.info('Reauthenticated.')
+                self.logger.warning(f"Permissions Error: {response.status_code}")
+                self.logger.info("Reauthenticating...")
+                self.headers = {"Authorization": f"Bearer {self.authenticate()}"}
+                self.logger.info("Reauthenticated.")
 
             else:
                 self.logger.error(f"API error: {response.status_code} - {e}")
@@ -156,15 +155,13 @@ class APIClient:
         self,
         endpoint: str,
         params: Optional[Dict] = None,
-        headers: Optional[Dict] = None
+        headers: Optional[Dict] = None,
     ) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"GET request to: {url} with params: {params}")
         response = self.session.get(url, params=params, headers=headers)
-        self.logger.debug(
-            f"GET response: {response.status_code} - {response.text}..."
-        )
+        self.logger.debug(f"GET response: {response.status_code} - {response.text}...")
         return self._handle_response(response)
 
     def post(self, endpoint, data=None, params=None, headers=None):
@@ -174,13 +171,9 @@ class APIClient:
 
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        self.logger.debug(
-            f"POST request to: {url} with params: {params}, data: {data}"
-        )
+        self.logger.debug(f"POST request to: {url} with params: {params}, data: {data}")
         response = self.session.post(url, params=params, json=data, headers=headers)
-        self.logger.debug(
-            f"POST response: {response.status_code} - {response.text}..."
-        )
+        self.logger.debug(f"POST response: {response.status_code} - {response.text}...")
 
         return self._handle_response(response)
 
@@ -204,9 +197,7 @@ class APIClient:
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"PUT request to: {url} with data: {data}")
         response = self.session.put(url, json=data, params=params, headers=headers)
-        self.logger.debug(
-            f"PUT response: {response.status_code} - {response.text}..."
-        )
+        self.logger.debug(f"PUT response: {response.status_code} - {response.text}...")
         return self._handle_response(response)
 
     def delete(self, endpoint, params=None, headers=None):
@@ -219,14 +210,14 @@ class APIClient:
         )
         return self._handle_response(response)
 
-    def paginate(
+    def paginate(  # noqa: C901
         self,
         endpoint: str,
         params: Optional[Dict] = None,
-        pagination_key: str = 'next',
+        pagination_key: str = "next",
         data_key: Optional[str] = None,
         max_pages: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         Handles pagination for GET requests.
@@ -255,7 +246,8 @@ class APIClient:
             # If next_page_url is a full URL, strip the base_url to pass to self.get
             endpoint_to_call = (
                 next_page_url.replace(f"{self.base_url}/", "")
-                if next_page_url else endpoint
+                if next_page_url
+                else endpoint
             )
             response = self.get(
                 endpoint=endpoint_to_call, params=current_params, **kwargs
@@ -269,10 +261,7 @@ class APIClient:
                 except Exception:
                     resp_json = response if isinstance(response, dict) else {}
 
-                items = (
-                    resp_json.get(data_key)
-                    if isinstance(resp_json, dict) else None
-                )
+                items = resp_json.get(data_key) if isinstance(resp_json, dict) else None
                 if items:
                     yield from items
                 else:
@@ -293,10 +282,11 @@ class APIClient:
 
                 next_link = (
                     resp_json.get(pagination_key)
-                    if isinstance(resp_json, dict) else None
+                    if isinstance(resp_json, dict)
+                    else None
                 )
                 if next_link:
-                    if next_link.startswith('http'):
+                    if next_link.startswith("http"):
                         next_page_url = next_link
                     else:
                         next_page_url = f"{self.base_url}/{next_link.lstrip('/')}"
@@ -305,11 +295,11 @@ class APIClient:
             else:
                 # If no pagination_key, assume pagination is handled by a parameter
                 # You might need to adjust the parameter name based on the API
-                if 'page' in current_params:
-                    current_params['page'] += 1
+                if "page" in current_params:
+                    current_params["page"] += 1
                 else:
                     # Start from page 2 if 'page' not initially present
-                    current_params['page'] = 2
+                    current_params["page"] = 2
 
                 # You'll need a condition to determine when to stop if no 'next' link
                 # This might involve checking if the current page returns an empty
@@ -321,18 +311,15 @@ class APIClient:
 
     def authenticate(self):
         try:
-            payload = {
-                "key": self.key,
-                "secret": self.secret
-            }
+            payload = {"key": self.key, "secret": self.secret}
             response = requests.post(
-                f'{self.base_url}/v1/auth/api-key',
-                headers={'Content-Type': 'application/json'},
-                json=payload
+                f"{self.base_url}/v1/auth/api-key",
+                headers={"Content-Type": "application/json"},
+                json=payload,
             )
             response.raise_for_status()
-            os.environ['ENDOR_TOKEN'] = response.json()['token']
-            return response.json()['token']
+            os.environ["ENDOR_TOKEN"] = response.json()["token"]
+            return response.json()["token"]
         except Exception as e:
             self.logger.error(f"Unable to authenticate: {e}")
 
@@ -353,16 +340,16 @@ class APIClient:
         """
         try:
             if url is None:
-                url = '/download/openapiv2.swagger.json'
+                url = "/download/openapiv2.swagger.json"
 
-            response = self.get(url, headers={'Accept': 'application/json'})
+            response = self.get(url, headers={"Accept": "application/json"})
             response_data = response.json()  # Parse JSON from response
 
             if path is not None:
                 # Create directory if it doesn't exist
                 os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
 
-                with open(path, 'w') as f:
+                with open(path, "w") as f:
                     json.dump(response_data, f, indent=4)
 
             return response_data
@@ -383,14 +370,12 @@ class APIClient:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                encoding='utf-8',
-                errors='replace'
+                encoding="utf-8",
+                errors="replace",
             )
-            return (result.stdout or '').strip()
+            return (result.stdout or "").strip()
         except subprocess.CalledProcessError as e:
             self.logger.error(
                 f"Command '{command}' failed with error: {e.stderr.strip()}"
             )
             raise
-
-

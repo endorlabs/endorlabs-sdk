@@ -53,11 +53,26 @@ def create_resource(
 - [ ] F-strings only with placeholders
 - [ ] Dependencies pinned (no `latest`)
 
+### **Quick Linting Commands**
+```bash
+uv run ruff check .          # Check all issues
+uv run ruff check . --fix    # Auto-fix issues
+uv run ruff format .         # Format code
+uv run pytest               # Test functionality
+```
+
+### **Common Fixes**
+- **E501**: Break long lines with parentheses/backslashes
+- **F401**: Remove unused imports
+- **W291/W293**: Remove trailing/blank line whitespace  
+- **F541**: Remove `f` prefix from strings without placeholders
+- **C901**: Accept for complex but necessary methods
+
 ### **Quick Commands**
 ```bash
 uv run ruff check .          # Check issues
 uv run ruff check . --fix    # Auto-fix
-uv run black .               # Format
+uv run ruff format .         # Format
 uv run pytest               # Test
 endorctl scan               # Security
 ```
@@ -191,7 +206,7 @@ except Exception as e:
 ```bash
 # Development workflow
 uv run ruff check .          # Lint
-uv run black .               # Format  
+uv run ruff format .         # Format  
 uv run pytest               # Test
 endorctl scan               # Security
 

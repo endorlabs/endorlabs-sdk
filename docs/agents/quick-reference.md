@@ -66,7 +66,7 @@ uv run ruff check .
 uv run ruff check . --fix
 
 # Format code
-uv run black .
+uv run ruff format .
 
 # Run tests
 uv run pytest

@@ -22,7 +22,6 @@ dependencies = [
 dev = [
     "pytest==8.4.2",
     "pytest-cov==6.0.0",
-    "black==25.9.0",
     "ruff==0.14.1",
     "jsonschema==4.23.0"
 ]
@@ -33,14 +32,17 @@ ops = []
 requires = ["hatchling>=1.0"]
 build-backend = "hatchling.build"
 
-[tool.black]
-line-length = 88
-
 [tool.ruff]
 line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "C", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -59,7 +61,6 @@ markers = [
 
 [dependency-groups]
 dev = [
-    "black>=25.9.0",
     "jsonschema>=4.23.0",
     "pytest>=8.4.2",
     "pytest-cov>=6.0.0",

@@ -171,7 +171,7 @@ from endor_cockpit.api_client import APIClient
 1. **Run linting**: `uv run ruff check .`
 2. **Fix auto-fixable issues**: `uv run ruff check . --fix`
 3. **Check formatting**: `uv run black --check .`
-4. **Format code**: `uv run black .`
+4. **Format code**: `uv run ruff format .`
 5. **Run tests**: `uv run pytest`
 6. **Security scan**: `endorctl scan`
 

@@ -15,9 +15,9 @@ import jsonschema
 import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'src')
-))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 
 
 class TestToolSchemaValidation:
@@ -87,7 +87,12 @@ class TestToolSchemaValidation:
             for param_name, param_def in properties.items():
                 if "type" in param_def:
                     valid_types = [
-                        "string", "integer", "number", "boolean", "array", "object"
+                        "string",
+                        "integer",
+                        "number",
+                        "boolean",
+                        "array",
+                        "object",
                     ]
                     assert param_def["type"] in valid_types, (
                         f"Invalid type '{param_def['type']}' for parameter "
@@ -110,7 +115,7 @@ class TestToolSchemaValidation:
 
         for tool_name, _schema in tool_schemas.items():
             # Tool names should be snake_case
-            assert re.match(r'^[a-z][a-z0-9_]*$', tool_name), (
+            assert re.match(r"^[a-z][a-z0-9_]*$", tool_name), (
                 f"Tool name '{tool_name}' should be snake_case"
             )
 
@@ -134,20 +139,20 @@ class TestToolSchemaValidation:
     def _extract_tool_schemas_from_docs(self) -> Dict[str, Dict[str, Any]]:
         """Extract tool schemas from the documentation file."""
         docs_path = os.path.join(
-            os.path.dirname(__file__), '..', 'docs', 'agents', 'tool-definitions.md'
+            os.path.dirname(__file__), "..", "docs", "agents", "tool-definitions.md"
         )
 
         if not os.path.exists(docs_path):
             pytest.skip("Tool definitions documentation not found")
 
-        with open(docs_path, 'r', encoding='utf-8') as f:
+        with open(docs_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Extract JSON schemas from the markdown
         schemas = {}
 
         # Find JSON code blocks
-        json_pattern = r'```json\n(.*?)\n```'
+        json_pattern = r"```json\n(.*?)\n```"
         json_blocks = re.findall(json_pattern, content, re.DOTALL)
 
         for json_block in json_blocks:
@@ -172,18 +177,18 @@ class TestToolSchemaExamples:
         examples = {
             "list_namespaces": {
                 "tenant_namespace": "example-tenant",
-                "include_children": True
+                "include_children": True,
             },
             "create_namespace": {
                 "parent_namespace": "example-tenant",
                 "name": "example-namespace",
-                "description": "Example namespace created by agent"
+                "description": "Example namespace created by agent",
             },
             "run_security_scan": {
                 "target": "example-namespace-uuid",
                 "scan_type": "full",
-                "include_dependencies": True
-            }
+                "include_dependencies": True,
+            },
         }
 
         for tool_name, example_params in examples.items():
@@ -253,20 +258,20 @@ class TestToolSchemaExamples:
     def _extract_tool_schemas_from_docs(self) -> Dict[str, Dict[str, Any]]:
         """Extract tool schemas from the documentation file."""
         docs_path = os.path.join(
-            os.path.dirname(__file__), '..', 'docs', 'agents', 'tool-definitions.md'
+            os.path.dirname(__file__), "..", "docs", "agents", "tool-definitions.md"
         )
 
         if not os.path.exists(docs_path):
             pytest.skip("Tool definitions documentation not found")
 
-        with open(docs_path, 'r', encoding='utf-8') as f:
+        with open(docs_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Extract JSON schemas from the markdown
         schemas = {}
 
         # Find JSON code blocks
-        json_pattern = r'```json\n(.*?)\n```'
+        json_pattern = r"```json\n(.*?)\n```"
         json_blocks = re.findall(json_pattern, content, re.DOTALL)
 
         for json_block in json_blocks:
@@ -312,7 +317,7 @@ class TestToolIntegration:
             "create_policy",
             "run_security_scan",
             "get_scan_results",
-            "list_security_findings"
+            "list_security_findings",
         ]
 
         for expected_tool in expected_tools:
@@ -360,20 +365,20 @@ class TestToolIntegration:
     def _extract_tool_schemas_from_docs(self) -> Dict[str, Dict[str, Any]]:
         """Extract tool schemas from the documentation file."""
         docs_path = os.path.join(
-            os.path.dirname(__file__), '..', 'docs', 'agents', 'tool-definitions.md'
+            os.path.dirname(__file__), "..", "docs", "agents", "tool-definitions.md"
         )
 
         if not os.path.exists(docs_path):
             pytest.skip("Tool definitions documentation not found")
 
-        with open(docs_path, 'r', encoding='utf-8') as f:
+        with open(docs_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Extract JSON schemas from the markdown
         schemas = {}
 
         # Find JSON code blocks
-        json_pattern = r'```json\n(.*?)\n```'
+        json_pattern = r"```json\n(.*?)\n```"
         json_blocks = re.findall(json_pattern, content, re.DOTALL)
 
         for json_block in json_blocks:

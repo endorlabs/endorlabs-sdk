@@ -13,9 +13,9 @@ from typing import Optional
 import pytest
 
 # Add src to path for imports
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..', 'src')
-))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+)
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import namespaces
@@ -36,7 +36,7 @@ class TestEndorCockpitIntegration:
         required_vars = [
             "ENDOR_API",
             "ENDOR_API_CREDENTIALS_KEY",
-            "ENDOR_API_CREDENTIALS_SECRET"
+            "ENDOR_API_CREDENTIALS_SECRET",
         ]
 
         missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -60,7 +60,7 @@ class TestEndorCockpitIntegration:
             # Create test namespaces
             test_names = [
                 "integration-test-namespace-1",
-                "integration-test-namespace-2"
+                "integration-test-namespace-2",
             ]
 
             for name in test_names:
@@ -68,7 +68,7 @@ class TestEndorCockpitIntegration:
                     api_client,
                     tenant_namespace,
                     name,
-                    f"Integration test namespace: {name}"
+                    f"Integration test namespace: {name}",
                 )
                 if namespace:
                     created_namespaces.append(namespace)
@@ -109,7 +109,7 @@ class TestEndorCockpitIntegration:
                 api_client,
                 tenant_namespace,
                 test_name,
-                "Integration test for namespace creation"
+                "Integration test for namespace creation",
             )
 
             assert namespace is not None
@@ -121,7 +121,7 @@ class TestEndorCockpitIntegration:
 
         finally:
             # Cleanup
-            if 'namespace' in locals():
+            if "namespace" in locals():
                 self._delete_test_namespace(
                     api_client, tenant_namespace, namespace.uuid
                 )
@@ -171,10 +171,7 @@ class TestEndorCockpitIntegration:
         try:
             # Create namespace
             namespace = self._create_test_namespace(
-                api_client,
-                tenant_namespace,
-                test_name,
-                "Original description"
+                api_client, tenant_namespace, test_name, "Original description"
             )
 
             assert namespace is not None
@@ -186,7 +183,7 @@ class TestEndorCockpitIntegration:
 
         finally:
             # Cleanup
-            if 'namespace' in locals():
+            if "namespace" in locals():
                 self._delete_test_namespace(
                     api_client, tenant_namespace, namespace.uuid
                 )
@@ -197,10 +194,7 @@ class TestEndorCockpitIntegration:
 
         # Create namespace
         namespace = self._create_test_namespace(
-            api_client,
-            tenant_namespace,
-            test_name,
-            "Namespace to be deleted"
+            api_client, tenant_namespace, test_name, "Namespace to be deleted"
         )
 
         assert namespace is not None
@@ -228,7 +222,7 @@ class TestEndorCockpitIntegration:
                 api_client,
                 tenant_namespace,
                 parent_name,
-                "Parent namespace for hierarchy test"
+                "Parent namespace for hierarchy test",
             )
 
             assert parent_namespace is not None
@@ -240,7 +234,7 @@ class TestEndorCockpitIntegration:
                 api_client,
                 canonical_parent,  # Use canonical parent name
                 child_name,
-                "Child namespace for hierarchy test"
+                "Child namespace for hierarchy test",
             )
 
             assert child_namespace is not None
@@ -254,8 +248,7 @@ class TestEndorCockpitIntegration:
 
             # Find our child namespace
             found_child = next(
-                (ns for ns in child_namespaces if ns.uuid == child_namespace.uuid),
-                None
+                (ns for ns in child_namespaces if ns.uuid == child_namespace.uuid), None
             )
             assert found_child is not None
             print(f"✅ Found child namespace in hierarchy: {found_child.meta.name}")
@@ -287,7 +280,7 @@ class TestEndorCockpitIntegration:
                 api_client,
                 tenant_namespace,
                 "",  # Empty name should fail
-                "Invalid namespace"
+                "Invalid namespace",
             )
             # If we get here, the API didn't validate properly
             assert invalid_namespace is None
@@ -308,7 +301,7 @@ class TestEndorCockpitIntegration:
                     api_client,
                     tenant_namespace,
                     name,
-                    f"Rate limiting test namespace {i}"
+                    f"Rate limiting test namespace {i}",
                 )
                 if namespace:
                     created_namespaces.append(namespace)
@@ -332,10 +325,7 @@ class TestEndorCockpitIntegration:
         """Helper method to create a test namespace."""
         try:
             payload = CreateNamespacePayload(
-                meta=NamespaceMetaCreate(
-                    name=name,
-                    description=description
-                )
+                meta=NamespaceMetaCreate(name=name, description=description)
             )
 
             return namespaces.create_namespace(client, parent_namespace, payload)
@@ -364,7 +354,7 @@ class TestEndorCockpitSecurityIntegration:
         required_vars = [
             "ENDOR_API",
             "ENDOR_API_CREDENTIALS_KEY",
-            "ENDOR_API_CREDENTIALS_SECRET"
+            "ENDOR_API_CREDENTIALS_SECRET",
         ]
 
         missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -386,8 +376,9 @@ class TestEndorCockpitSecurityIntegration:
         import tempfile
 
         # Create a temporary test file for scanning
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write("""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
+            f.write(
+                """
 # Test file for security scanning
 import requests
 import os
@@ -397,7 +388,8 @@ def test_function():
     password = "hardcoded-password-123"
     api_key = "sk-1234567890abcdef"  # endorctl:allow
     return password, api_key
-""")
+"""
+            )
             temp_file = f.name
 
         try:
@@ -406,7 +398,7 @@ def test_function():
                 ["endorctl", "scan", temp_file],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             # Check if scan completed (may have findings or not)
@@ -440,7 +432,7 @@ def test_function():
                 ["endorctl", "scan", "--namespace", tenant_namespace],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
 
             # Check if scan completed
