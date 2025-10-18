@@ -23,12 +23,12 @@ class NamespaceMeta(BaseModel):
     
     Attributes:
         name: The name of the namespace (1-255 characters)
-        description: A non-empty description of the namespace's purpose
+        description: A description of the namespace's purpose (can be empty)
         created_at: Timestamp when the namespace was created
         updated_at: Timestamp when the namespace was last updated
     """
     name: str = Field(..., min_length=1, max_length=255, description="The name of the namespace")
-    description: str = Field(..., min_length=1, description="Description of the namespace's purpose")
+    description: str = Field("", description="Description of the namespace's purpose")
     created_at: Optional[datetime] = Field(None, description="Timestamp when the namespace was created")
     updated_at: Optional[datetime] = Field(None, description="Timestamp when the namespace was last updated")
 
@@ -46,6 +46,18 @@ class NamespaceMetaCreate(BaseModel):
     """
     name: str = Field(..., min_length=1, max_length=255, description="The name of the namespace")
     description: str = Field(..., min_length=1, description="Description of the namespace's purpose")
+
+class NamespaceMetaUpdate(BaseModel):
+    """
+    Metadata for updating an Endor Labs namespace.
+    """
+    description: Optional[str] = Field(None, description="Updated description of the namespace's purpose")
+
+class UpdateNamespacePayload(BaseModel):
+    """
+    Payload for updating an Endor Labs namespace.
+    """
+    meta: NamespaceMetaUpdate = Field(..., description="Updated metadata for the namespace")
 
 class Namespace(BaseModel):
     """
@@ -185,7 +197,7 @@ def delete_namespace(client: APIClient, parent_namespace: str, namespace_uuid: s
         logger.error(f"Error deleting namespace {namespace_uuid}: {e}", exc_info=True)
         return False
 
-def update_namespace(client: APIClient, parent_namespace: str, namespace_uuid: str, payload: CreateNamespacePayload) -> Optional[Namespace]:
+def update_namespace(client: APIClient, parent_namespace: str, namespace_uuid: str, payload: UpdateNamespacePayload) -> Optional[Namespace]:
     """
     Update an existing namespace.
 
@@ -193,7 +205,7 @@ def update_namespace(client: APIClient, parent_namespace: str, namespace_uuid: s
         client: The APIClient instance to use for the request
         parent_namespace: The parent namespace containing the target namespace
         namespace_uuid: The UUID of the namespace to update
-        payload: The CreateNamespacePayload containing the updated namespace details
+        payload: The UpdateNamespacePayload containing the updated namespace details
 
     Returns:
         Optional[Namespace]: The updated Namespace object, or None if update fails

@@ -1,17 +1,13 @@
-[build-system]
-requires = ["hatchling>=1.0"]
-build-backend = "hatchling.build"
-
 [project]
-name = "endor_sdk"
+name = "endor-cockpit"
 version = "0.1.0"
-description = "SDK for the Endor Labs API"
+description = "A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs"
 authors = [
     { name = "Your Name", email = "you@example.com" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13,<3.15"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -25,15 +21,17 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest==8.4.2",
+    "pytest-cov==6.0.0",
     "black==25.9.0",
-    "ruff==0.14.1"
+    "ruff==0.14.1",
+    "jsonschema==4.23.0"
 ]
-sec = [
+sec = []
+ops = []
 
-]
-ops = [
-    
-]
+[build-system]
+requires = ["hatchling>=1.0"]
+build-backend = "hatchling.build"
 
 [tool.black]
 line-length = 88
@@ -41,3 +39,27 @@ line-length = 88
 [tool.ruff]
 line-length = 88
 select = ["E", "W", "F", "I", "C", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--disable-warnings"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests"
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "jsonschema>=4.23.0",
+    "pytest>=8.4.2",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.14.1",
+]

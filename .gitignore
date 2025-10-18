@@ -552,3 +552,6 @@ $RECYCLE.BIN/
 # Ephemeral files
 temp/
 tmp/
+
+# Workspace folder for local testing and development
+workspace/
