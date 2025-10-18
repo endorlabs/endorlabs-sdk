@@ -1,8 +1,14 @@
-# AI Agent Integration Guide
+# AI Agent Documentation
 
-This directory contains comprehensive documentation for AI agents working with the Endor Cockpit project.
+## 🚀 **Primary Guide**
 
-## Quick Navigation
+**[AGENT_GUIDE.md](./AGENT_GUIDE.md)** - **Token-efficient, consolidated agent instructions**
+
+> This single document contains all essential guidance for AI agents working with Endor Cockpit, optimized for token efficiency and scalability.
+
+## 📚 **Legacy Documentation (Reference Only)**
+
+*The following files contain detailed information but are now consolidated in [AGENT_GUIDE.md](./AGENT_GUIDE.md) for token efficiency:*
 
 - **[Core Principles](./core-principles.md)** - Fundamental guidelines for agent behavior
 - **[Development Guidelines](./development.md)** - Best practices for developing the SDK
@@ -11,39 +17,29 @@ This directory contains comprehensive documentation for AI agents working with t
 - **[Security Guidelines](./security.md)** - Security-first development practices
 - **[Tool Definitions](./tool-definitions.md)** - LLM tool schemas and examples
 - **[Agent Insights](./insights.md)** - Critical discoveries and patterns
+- **[Quick Reference](./quick-reference.md)** - Essential patterns and fixes
 
-## For Different Agent Types
+## 🎯 **Quick Start for Agents**
 
-### 🤖 Agents Developing the SDK
-Start with [Development Guidelines](./development.md) and [Core Principles](./core-principles.md)
+1. **Read [AGENT_GUIDE.md](./AGENT_GUIDE.md)** - Complete consolidated guidance
+2. **Set up environment** - Configure required environment variables
+3. **Run security scan** - `endorctl scan` before any changes
+4. **Follow linting standards** - Use the pre-development checklist
+5. **Test your changes** - Run `uv run pytest` to verify functionality
 
-### 🔧 Agents Using the SDK
-Start with [Usage Patterns](./usage-patterns.md) and [Tool Definitions](./tool-definitions.md)
+## 📋 **Project Context**
 
-### 🔍 Agents Scanning/Auditing the SDK
-Start with [Security Guidelines](./security.md) and review [catalog-info.yaml](../../catalog-info.yaml)
-
-## Project Context
-
-This is a **foundational workspace** for Endor Labs platform administration and operations. The project:
-
+**Endor Cockpit** is a production-ready foundational service:
 - **Purpose**: Administer, operate and scan with Endor Labs tooling through REST APIs
 - **Data Classification**: Public (no PII handling)
 - **Deployment**: Production-ready foundational service
 - **Security**: SOC2 and ISO27001 compliant
 - **Architecture**: Resource-oriented SDK pattern
 
-## Quick Start for Agents
+## 🔄 **Documentation Evolution**
 
-1. **Read the catalog-info.yaml** for deployment context
-2. **Review core principles** for your agent type
-3. **Follow security guidelines** for all operations
-4. **Use provided tool definitions** for LLM integration
-
-## Contributing to Agent Documentation
-
-When adding new agent guidance:
-- Place in appropriate subdirectory
-- Update this README with navigation
-- Ensure consistency with core principles
-- Include practical examples
+This directory has been restructured for:
+- **Token efficiency**: Consolidated guidance in single document
+- **Scalability**: Reduced duplication and improved navigation
+- **Maintainability**: Single source of truth for agent instructions
+- **Accessibility**: Clear agent type selection and quick start paths
