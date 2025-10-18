@@ -279,5 +279,8 @@ For local testing and development, use the `workspace/` folder which is excluded
 - Development scripts and utilities
 - Test-specific documentation
 - User-specific API configurations
+- **Agent notes and task documentation** (like this file)
 
-The workspace folder allows agents to work with project-specific configurations without cluttering the main repository. Each user's workspace is isolated and not shared across the team.
+The workspace folder allows agents to work with project-specific configurations without cluttering the main repository. Each user's workspace is isolated and not shared across the team. If you would like to collaborate in a shared cockpit, consider working in a branch and removing the .gitignore for that workspace.
+
+**Note for AI Agents**: When creating documentation, notes, or task-specific files, place them in the `workspace/` folder rather than the root directory to keep the repository clean and organized.
