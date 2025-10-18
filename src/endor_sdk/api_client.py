@@ -46,11 +46,20 @@ class RedactingFilter(logging.Filter):
         return message
 
 class APIClient:
+    """Simple API client with retry, rate limiting handling and redacted logging.
+
+    Args:
+        max_retries: Maximum number of retries for requests.
+        backoff_factor: Backoff factor for retries.
+        status_forcelist: HTTP status codes that trigger a retry.
+        logging_level: Logging level for the client's logger.
+    """
+
     def __init__(self,
-                 max_retries=15,
-                 backoff_factor=0.5,
+                 max_retries: int = 15,
+                 backoff_factor: float = 0.5,
                  status_forcelist=(429, 500, 502, 503, 504),
-                 logging_level="INFO"):
+                 logging_level: str = "INFO"):
         # Set up logging
         logging.basicConfig(level=logging_level, format='%(asctime)s - %(levelname)s - %(message)s')
         self.logger = logging.getLogger(__name__)
@@ -190,15 +199,22 @@ class APIClient:
         """
         current_params = params.copy() if params else {}
         page_count = 0
-        next_page_url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        next_page_url = f"{self.base_url}/{endpoint.lstrip('/') }"
 
-        while next_page_url and (max_pages is None or page_count < max_pages):
-            response = self.get(endpoint=next_page_url.replace(f"{self.base_url}/", ""),
-                                params=current_params, **kwargs)
+        while (max_pages is None or page_count < max_pages):
+            # If next_page_url is a full URL, strip the base_url to pass to self.get
+            endpoint_to_call = next_page_url.replace(f"{self.base_url}/", "") if next_page_url else endpoint
+            response = self.get(endpoint=endpoint_to_call, params=current_params, **kwargs)
             page_count += 1
 
             if data_key:
-                items = response.get(data_key)
+                # response may be a requests.Response object; try to access json safely
+                try:
+                    resp_json = response.json()
+                except Exception:
+                    resp_json = response if isinstance(response, dict) else {}
+
+                items = resp_json.get(data_key) if isinstance(resp_json, dict) else None
                 if items:
                     yield from items
                 else:
@@ -208,10 +224,19 @@ class APIClient:
                 yield response
 
             if pagination_key:
-                next_page_url = response.get(pagination_key)
-                if next_page_url and not next_page_url.startswith('http'):
-                    next_page_url = f"{self.base_url}/{next_page_url.lstrip('/')}"
-                elif not next_page_url:
+                # Try parsing next link from JSON body
+                try:
+                    resp_json = response.json()
+                except Exception:
+                    resp_json = response if isinstance(response, dict) else {}
+
+                next_link = resp_json.get(pagination_key) if isinstance(resp_json, dict) else None
+                if next_link:
+                    if next_link.startswith('http'):
+                        next_page_url = next_link
+                    else:
+                        next_page_url = f"{self.base_url}/{next_link.lstrip('/')}"
+                else:
                     break
             else:
                 # If no pagination_key, assume pagination is handled by a parameter
@@ -240,21 +265,36 @@ class APIClient:
         except Exception as e:
             self.logger.error(f"Unable to authenticate: {e}")
     
-    def get_openapi_spec(self, url: Optional[str], path: Optional['str']) -> Dict[str, Any]:
-        # Retrieves and returns the API Spec JSON from the given URL, defaults to https://api.endorlabs.com/download/openapiv2.swagger.json 
+    def get_openapi_spec(self, url: Optional[str], path: Optional[str]) -> Dict[str, Any]:
+        """
+        Retrieves and returns the API Spec JSON from the given URL.
+        
+        Args:
+            url: Optional URL to fetch the OpenAPI spec from. If None, uses default Endor Labs URL
+            path: Optional file path to save the spec to. Will create directories if they don't exist
+            
+        Returns:
+            Dict containing the OpenAPI specification
+        """
         try:   
             if url is None:
                 url = '/download/openapiv2.swagger.json'
+                
             response = self.get(url, headers={'Accept': 'application/json'})
+            response_data = response.json()  # Parse JSON from response
+            
             if path is not None:
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+                
                 with open(path, 'w') as f:
-                    f.write(json.dumps(response.text, indent=4))
+                    json.dump(response_data, f, indent=4)
 
-            return self._handle_response(response)
+            return response_data
             
         except Exception as e:
             self.logger.error(f"Unable to retrieve Swagger JSON from {url}: {e}")
-            return {}
+            raise  # Re-raise to let caller handle the error
             
     def endorctl(self, command: str) -> str:
         """Executes an endorctl command and returns its output."""
