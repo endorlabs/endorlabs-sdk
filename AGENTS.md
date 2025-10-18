@@ -1,10 +1,43 @@
-# Endor Labs SDK: A Guide for AI Agents
+# Endor Cockpit: AI Agent Integration Guide
 
 ## 1. Overview
 
-This document provides AI agents with the necessary information to effectively utilize the Endor Labs Python SDK. The SDK is designed to be a robust, predictable, and agent-friendly interface for interacting with the Endor Labs API.
+This document provides AI agents with comprehensive guidance for working with the Endor Cockpit project. Endor Cockpit is a foundational workspace designed to administer, operate and scan with Endor Labs tooling through REST APIs.
 
-As an agent, your primary goal is to use this SDK to perform tasks on behalf of a user, such as managing resources, retrieving data, and automating security workflows within the Endor Labs platform.
+As an agent, your primary goal is to use this workspace to perform tasks such as:
+- **Administration**: Managing Endor Labs platform resources and configurations
+- **Operations**: Monitoring, maintenance, and operational tasks
+- **Security**: Scanning, compliance, and security workflow automation
+- **Development**: Contributing to and extending the SDK capabilities
+
+## 1.1 Project Context
+
+**Endor Cockpit** is a production-ready foundational service that:
+- **Data Classification**: Public (no PII handling)
+- **Deployment**: Production environment, global region
+- **Security**: SOC2 and ISO27001 compliant
+- **Architecture**: Resource-oriented SDK pattern
+- **Integration**: REST API-based Endor Labs platform interaction
+
+> 📋 **For detailed project context, see [catalog-info.yaml](./catalog-info.yaml)**
+
+## 1.2 Quick Navigation
+
+### 📚 Comprehensive Documentation
+- **[docs/agents/](./docs/agents/)** - Complete agent documentation
+- **[Core Principles](./docs/agents/core-principles.md)** - Fundamental guidelines
+- **[Development Guidelines](./docs/agents/development.md)** - Development best practices
+- **[Usage Patterns](./docs/agents/usage-patterns.md)** - Common patterns and examples
+- **[Resource Guides](./docs/agents/resource-guides.md)** - Resource-specific API documentation
+- **[Security Guidelines](./docs/agents/security.md)** - Security-first practices
+- **[Tool Definitions](./docs/agents/tool-definitions.md)** - LLM tool schemas
+- **[Agent Insights](./docs/agents/insights.md)** - Critical discoveries and patterns
+- **[Quick Reference](./docs/agents/quick-reference.md)** - Essential patterns and fixes
+
+### 🎯 Agent Type Quick Start
+- **🤖 Developing the SDK**: Start with [Development Guidelines](./docs/agents/development.md)
+- **🔧 Using the SDK**: Start with [Usage Patterns](./docs/agents/usage-patterns.md)
+- **🔍 Scanning/Auditing**: Start with [Security Guidelines](./docs/agents/security.md)
 
 ## 2. Core Principles for Agents
 
@@ -21,7 +54,7 @@ Follow the instructions at `https://docs.endorlabs.com/endorctl/commands/scan/` 
 Whenever possible, perform operations that are idempotent. This means that repeated calls with the same parameters will not have unintended side effects. For example, fetching a resource multiple times should always yield the same result without changing the system state.
 
 ### Resource-Oriented Interaction
-The SDK is organized around API resources (e.g., `namespaces`, `policies`). Each resource has a dedicated module within the `endor_sdk.resources` package, containing functions to interact with that resource (e.g., `list_namespaces`, `create_namespace`).
+The SDK is organized around API resources (e.g., `namespaces`, `policies`). Each resource has a dedicated module within the `endor_cockpit.resources` package, containing functions to interact with that resource (e.g., `list_namespaces`, `create_namespace`).
 
 ### Error Handling
 The SDK is designed to be predictable. The `APIClient` will handle standard HTTP errors, retries, and rate limiting. However, you should be prepared to handle potential exceptions, such as:
@@ -35,17 +68,17 @@ The SDK is configured exclusively through environment variables. You must ensure
 - `ENDOR_API_CREDENTIALS_SECRET`: Your Endor Labs API secret.
 
 ### Error Logging
-The SDK's error logging must be secured through the logging filter to ensure no sensitive data or PII are leaked. They should provide sufficient detail to action on fixing the problem (e.g., confirming type variable conforms to the schema then return the relevant section in the API spec). The API specification is retrieved during first creation of the APIClient class.The filters can be through the APIClient class's logger object.
+The SDK's error logging must be secured through the logging filter to ensure no sensitive data or PII are leaked. They should provide sufficient detail to action on fixing the problem (e.g., confirming type variable conforms to the schema then return the relevant section in the API spec). The filters can be through the APIClient class's logger object.
 
 ## 2b. Agents leveraging the SDK in tasks or automation.
 
 ### Task-based Access Controls
-When you are an agent invoking functions in this SDK and are being requested to provide service accounts, create a bespoke API token that matches the intended task. The service account permissions are to be minimally scoped to only provide the necesasary operations for the resource that is being modified. 
+When you are an agent invoking functions in this SDK and are being requested to provide service accounts, create a bespoke API token that matches the intended task. The service account permissions are to be minimally scoped to only provide the necessary operations for the resource that is being modified. 
 
 The expiration date of the provided token is based upon an estimated minimal time for tasks to complete. If the expiration time is less than the minimally allowed time by Endor Labs, then append the suggested expiry date to the service account name.
 
 ### Information Richness
-When you are creating or modifying resources in an Endor namespace, provide descriptions and naming conventions that provide the current goals, tasks or responsibilites of that resource that can be understood for both developer, administration and security/risk management tasks while still conforming to a standardized pattern to be defined by the user and stored in the AGENTS.md file. 
+When you are creating or modifying resources in an Endor namespace, provide descriptions and naming conventions that provide the current goals, tasks or responsibilities of that resource that can be understood for both developer, administration and security/risk management tasks while still conforming to a standardized pattern to be defined by the user and stored in the AGENTS.md file. 
 
 ## 2.c Agents SCANNING the SDK
     Read AGENTS.md for architecture, design decisions, coding style and testing instructions.
@@ -53,18 +86,87 @@ When you are creating or modifying resources in an Endor namespace, provide desc
 
     Combine both to provide a highly contextual fix: "Refactoring this code (using conventions from AGENTS.md) is critical because the function processes PII (as defined in catalog-info.yaml), and the current code's logging filter is not covering this logging filter."
 
+## 3. Critical Platform Insights
 
-## 3. Authentication
+### **Namespace Hierarchy: Canonical Naming Pattern**
+**CRITICAL**: Endor Labs uses **canonical hierarchical naming** for namespace relationships, not UUIDs.
+
+#### **✅ CORRECT Pattern**
+```python
+# Use canonical hierarchical names for parent-child relationships
+canonical_parent = f"{tenant_namespace}.{parent_name}"
+# Example: "endor-solutions-tgowan.cockpit.integration-test-parent-{timestamp}"
+
+# Create child namespace
+child_result = namespaces.create_namespace(client, canonical_parent, child_payload)
+```
+
+#### **❌ INCORRECT Pattern**
+```python
+# DON'T use UUIDs as parents - this will fail with 403 Forbidden
+parent_namespace.uuid  # "68f3b2956795a2693a0f5bec" - FAILS!
+```
+
+### **API Permission Model**
+**DISCOVERY**: The API key permission model is based on **canonical naming**, not UUIDs.
+
+#### **✅ ALLOWED Operations**
+- **Tenant-level operations**: Use tenant name (`endor-solutions-tgowan.cockpit`)
+- **Hierarchy operations**: Use canonical parent names (`tenant.namespace.child`)
+- **All CRUD operations**: Create, read, update, delete within allowed scope
+
+#### **❌ FORBIDDEN Operations**
+- **UUID-based parent relationships**: Cannot use UUIDs as parents
+- **Cross-tenant operations**: Cannot access other tenants
+- **Unauthorized resource access**: Beyond permission scope
+
+### **SDK Implementation Patterns**
+
+#### **Required Classes for Full Functionality**
+```python
+# Namespace creation
+class NamespaceMetaCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(..., min_length=1)
+
+class CreateNamespacePayload(BaseModel):
+    meta: NamespaceMetaCreate
+
+# Namespace updates (CRITICAL: Was missing!)
+class NamespaceMetaUpdate(BaseModel):
+    description: Optional[str] = Field(None)
+
+class UpdateNamespacePayload(BaseModel):
+    meta: NamespaceMetaUpdate
+
+# Namespace metadata (FIXED: Empty descriptions allowed)
+class NamespaceMeta(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: str = Field("")  # Empty descriptions allowed
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+```
+
+#### **Function Signatures**
+```python
+# CRITICAL: get_namespace requires parent_namespace parameter
+def get_namespace(client: APIClient, parent_namespace: str, namespace_uuid: str) -> Optional[Namespace]
+
+# CRITICAL: update_namespace requires UpdateNamespacePayload
+def update_namespace(client: APIClient, parent_namespace: str, namespace_uuid: str, payload: UpdateNamespacePayload) -> Optional[Namespace]
+```
+
+## 4. Authentication
 
 Authentication is handled automatically by the `APIClient`. When instantiated, the client will use the environment variables to obtain an auth token and will manage token refreshes. Your only responsibility is to ensure the environment variables are correctly set.
 
-## 4. SDK Usage Patterns
+## 5. SDK Usage Patterns
 
 ### Initializing the Client
 All interactions begin by creating an instance of the `APIClient`.
 
 ```python
-from endor_sdk.api_client import APIClient
+from endor_cockpit.api_client import APIClient
 
 # The client will automatically authenticate using environment variables
 client = APIClient()
@@ -75,7 +177,7 @@ Here are examples of common CRUD (Create, Read, Update, Delete) operations using
 
 **Listing Namespaces:**
 ```python
-from endor_sdk.resources import namespaces
+from endor_cockpit.resources import namespaces
 
 # The tenant namespace is typically the top-level namespace for your organization - referred to as
 tenant_namespace = "your-tenant-namespace"
@@ -87,14 +189,14 @@ for ns in all_namespaces:
 
 **Creating a Namespace:**
 ```python
-from endor_sdk.resources import namespaces
-from endor_sdk.resources.namespaces import CreateNamespacePayload, NamespaceMeta
+from endor_cockpit.resources import namespaces
+from endor_cockpit.resources.namespaces import CreateNamespacePayload, NamespaceMetaCreate
 
 tenant_namespace = "your-tenant-namespace"
 
 # Use Pydantic models for type-safe payloads
 new_namespace_payload = CreateNamespacePayload(
-    meta=NamespaceMeta(
+    meta=NamespaceMetaCreate(
         name="my-new-agent-namespace",
         description="A namespace created by an AI agent."
     )
@@ -112,7 +214,7 @@ if created_namespace:
 
 **Deleting a Namespace:**
 ```python
-from endor_sdk.resources import namespaces
+from endor_cockpit.resources import namespaces
 
 tenant_namespace = "your-tenant-namespace"
 namespace_uuid_to_delete = "..." # UUID of the namespace to delete
@@ -127,7 +229,7 @@ if success:
     print("Namespace deleted successfully.")
 ```
 
-## 5. Tool Definition & Function Calling
+## 6. Tool Definition & Function Calling
 
 To expose SDK functionality to a Large Language Model (LLM), you should define tools that map directly to the SDK's resource functions.
 
@@ -158,7 +260,7 @@ To expose SDK functionality to a Large Language Model (LLM), you should define t
 }
 ```
 
-## 6. The OpenAPI Specification as a Knowledge Source
+## 7. The OpenAPI Specification as a Knowledge Source
 
 The Endor Labs API is defined by an OpenAPI specification. The SDK's `get_openapi_spec()` method on the `APIClient` can be used to retrieve this specification and place it into the /tmp or a provided path to write the file in. 
 
@@ -168,3 +270,14 @@ This specification is the ultimate source of truth for all available API endpoin
 - "Which endpoints are related to dependency findings?"
 
 By leveraging this vector database, you can dynamically discover and utilize the full range of the Endor Labs API through the SDK.  You are intended to be preserve LLM token bandwidth through narrow queries to capture just the information you need for a specific task.
+
+## 8. Workspace Folder
+
+For local testing and development, use the `workspace/` folder which is excluded from version control. This folder is **unique to each user** and contains:
+- Integration test results and configurations
+- Temporary policy configurations
+- Development scripts and utilities
+- Test-specific documentation
+- User-specific API configurations
+
+The workspace folder allows agents to work with project-specific configurations without cluttering the main repository. Each user's workspace is isolated and not shared across the team.
