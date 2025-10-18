@@ -93,7 +93,7 @@ jobs:
     needs: resolve-dependencies
     strategy:
       matrix:
-        python-version: ${{ fromJSON(env.PYTHON_VERSIONS) }}
+        python-version: ["3.12", "3.13", "3.14"]
       fail-fast: false
 
     steps:
