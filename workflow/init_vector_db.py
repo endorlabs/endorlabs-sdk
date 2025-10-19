@@ -359,6 +359,35 @@ class VectorDBManager:
 
         return current_hash != stored_hash
 
+    def _is_text_file(self, file_path: str) -> bool:
+        """Check if file is a text file that should be processed."""
+        # Skip binary file extensions
+        binary_extensions = {
+            ".pyc",
+            ".pyo",
+            ".pyd",
+            ".so",
+            ".dll",
+            ".exe",
+            ".bin",
+            ".obj",
+            ".o",
+        }
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext in binary_extensions:
+            return False
+
+        # Skip files in __pycache__ directories
+        if "__pycache__" in file_path:
+            return False
+
+        # Skip hidden files
+        if os.path.basename(file_path).startswith("."):
+            return False
+
+        return True
+
     def _get_files_to_process(self) -> List[str]:
         """Get list of files to process for vector DB."""
         files_to_process = []
@@ -373,7 +402,10 @@ class VectorDBManager:
 
                     for file in files:
                         file_path = os.path.join(root, file)
-                        if self._should_rebuild_file(file_path):
+                        # Skip binary files and cache files
+                        if self._is_text_file(file_path) and self._should_rebuild_file(
+                            file_path
+                        ):
                             files_to_process.append(file_path)
 
         return files_to_process
