@@ -19,6 +19,33 @@ logger = logging.getLogger(__name__)
 logger.addFilter(RedactingFilter([redaction_pattern]))
 
 
+class SchemaDriftDetector:
+    """Detects and logs API schema drift for unknown fields."""
+    
+    @staticmethod
+    def log_unknown_fields(model_name: str, unknown_fields: dict, context: str = ""):
+        """Log unknown fields as warnings for schema drift detection."""
+        if unknown_fields:
+            field_list = ", ".join(unknown_fields.keys())
+            logger.warning(
+                f"API Schema Drift Detected in {model_name}: "
+                f"Unknown fields found: {field_list}. "
+                f"Context: {context}. "
+                f"This may indicate API evolution or missing model fields."
+            )
+            # Log detailed field information for debugging
+            for field, value in unknown_fields.items():
+                logger.debug(f"Unknown field '{field}': {type(value).__name__} = {repr(value)[:100]}")
+    
+    @staticmethod
+    def extract_unknown_fields(data: dict, model_fields: set, model_name: str) -> dict:
+        """Extract unknown fields from data and log them."""
+        unknown_fields = {k: v for k, v in data.items() if k not in model_fields}
+        if unknown_fields:
+            SchemaDriftDetector.log_unknown_fields(model_name, unknown_fields)
+        return unknown_fields
+
+
 # Pydantic Models for Project data based on actual API response
 class IndexData(BaseModel):
     """Index data for a project."""
@@ -49,6 +76,8 @@ class ProjectMeta(BaseModel):
     updated_by: str
     version: str
     description: Optional[str] = None
+    upsert_time: Optional[str] = None
+    tags: Optional[List[str]] = None
 
     @field_validator("name")
     @classmethod
@@ -91,6 +120,9 @@ class ProjectMetaUpdate(BaseModel):
     )
     framework: Optional[str] = Field(
         None, description="Updated framework used in the project"
+    )
+    tags: Optional[List[str]] = Field(
+        None, description="Updated tags for the project"
     )
 
 
@@ -145,6 +177,43 @@ class Project(BaseModel):
     spec: ProjectSpec
     tenant_meta: TenantMeta
     uuid: str
+    
+    @field_validator('*', mode='before')
+    @classmethod
+    def detect_schema_drift(cls, v, info):
+        """Detect and log schema drift for unknown fields."""
+        if info.field_name and isinstance(v, dict):
+            # Define expected fields for each model
+            model_fields = {
+                'meta': {
+                    'create_time', 'created_by', 'index_data', 'kind', 'name', 'update_time',
+                    'updated_by', 'version', 'description', 'parent_uuid', 'parent_kind',
+                    'tags', 'annotations', 'references', 'upsert_time'
+                },
+                'processing_status': {
+                    'scan_state', 'scan_time', 'scan_error', 'scan_progress', 'scan_duration',
+                    'last_scan_time', 'next_scan_time', 'scan_frequency', 'scan_enabled',
+                    'analytic_time', 'queue_time', 'disable_automated_scan', 'metadata'
+                },
+                'spec': {
+                    'git_info', 'language', 'framework', 'repository_url', 'branch', 'commit_hash',
+                    'scan_config', 'policy_config', 'notification_config', 'integration_config',
+                    'platform_source', 'internal_reference_key', 'git', 'ingestion_token',
+                    'toolchain_profile_uuid', 'scan_profile_uuid'
+                },
+                'tenant_meta': {
+                    'namespace', 'tenant_id', 'tenant_name'
+                }
+            }
+            
+            if info.field_name in model_fields:
+                SchemaDriftDetector.extract_unknown_fields(
+                    v, 
+                    model_fields[info.field_name], 
+                    f"Project.{info.field_name}"
+                )
+        
+        return v
 
     @field_validator("uuid")
     @classmethod
@@ -303,10 +372,20 @@ def update_project(
         headers.update(
             {"Accept": "application/json", "Content-Type": "application/json"}
         )
+        
+        # The API expects the UUID in the request body, not the URL path
+        request_data = {
+            "object": {
+                "uuid": project_uuid,
+                "tenant_meta": {"namespace": tenant_meta_namespace},
+                **payload.model_dump()
+            }
+        }
+        
         res = client.patch(
-            f"v1/namespaces/{tenant_meta_namespace}/projects/{project_uuid}",
+            f"v1/namespaces/{tenant_meta_namespace}/projects",
             headers=headers,
-            data=payload.model_dump(),
+            data=request_data,
         )
         data = res.json()
         return Project(**data)
