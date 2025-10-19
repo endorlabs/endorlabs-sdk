@@ -209,6 +209,24 @@ def check_permissions(client: APIClient, operation: str, target: str) -> bool:
 
 ## 📊 **Response Format Quirks**
 
+### **API Response Structure Pattern**
+**Problem**: API returns `{"list": {"objects": [...]}}` structure, not direct arrays
+**Root Cause**: Service-based API organization
+**Solution**: Parse response correctly
+```python
+# WRONG: data = res.json().get("projects", [])
+# CORRECT: data = res.json().get("list", {}).get("objects", [])
+```
+
+### **Path Parameter Requirements**
+**Problem**: Must use `tenant_meta.namespace` (canonical) not `namespace_uuid`
+**Root Cause**: API requires canonical namespace format
+**Solution**: Use canonical namespace format
+```python
+# WRONG: f"v1/namespaces/{namespace_uuid}/projects"
+# CORRECT: f"v1/namespaces/{tenant_meta_namespace}/projects"
+```
+
 ### **Namespace List Response**
 
 #### **The Problem**

@@ -65,7 +65,7 @@ Modify the relevant documentation files:
 ### 3. Rebuild the Knowledge Base
 ```bash
 # Rebuild the vector database with updated content
-python workflow/init_vector_db.py --rebuild
+uv run python workflow/init_vector_db.py --rebuild
 ```
 
 ### 4. Verify the Update

@@ -23,11 +23,17 @@ It is recommended to use a virtual environment.
 git clone https://github.com/endor-solutions-architecture/endor-cockpit.git
 cd endor-cockpit
 
-# Install dependencies
-pip install -e .
+# Create virtual environment
+uv venv
+source .venv/bin/activate  # Linux/Mac
+# or
+.venv\Scripts\activate    # Windows
 
-# Or with uv (recommended)
+# Install dependencies
 uv pip install -e .
+
+# Install RAG dependencies for knowledge base
+uv pip install -e ".[rag]"
 ```
 
 ## First Time Setup
@@ -56,7 +62,10 @@ export OPENAI_API_KEY="your-openai-api-key"
 #### 3. Initialize Vector Database
 ```bash
 # Initialize the knowledge base
-python workflow/init_vector_db.py
+uv run python workflow/init_vector_db.py
+
+# Rebuild after documentation updates
+uv run python workflow/init_vector_db.py --rebuild
 ```
 
 #### 4. Query the Knowledge Base

@@ -26,7 +26,10 @@ uv pip install -e ".[rag]"
 ### Vector Database Initialization
 ```bash
 # Initialize the knowledge base (first time only)
-python workflow/init_vector_db.py
+uv run python workflow/init_vector_db.py
+
+# Rebuild after documentation updates
+uv run python workflow/init_vector_db.py --rebuild
 ```
 
 ## Overview
