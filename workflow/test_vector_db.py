@@ -14,6 +14,7 @@ VECTOR_DB_DIR = "workflow/vector_db"
 COLLECTION_NAME = "endor_cockpit_docs"
 EMBEDDING_MODEL = "text-embedding-3-small"
 
+
 def test_vector_db():
     """Test the vector database by performing semantic searches."""
 
@@ -37,7 +38,7 @@ def test_vector_db():
         "How do I set up integrations?",
         "What is the Endor data model?",
         "How do I write tests?",
-        "What are the design principles?"
+        "What are the design principles?",
     ]
 
     print(f"\n[INFO] Testing semantic search with {len(test_queries)} queries...")
@@ -50,20 +51,19 @@ def test_vector_db():
             results = collection.query(
                 query_texts=[query],
                 n_results=3,  # Get top 3 results
-                include=["documents", "metadatas", "distances"]
+                include=["documents", "metadatas", "distances"],
             )
 
-            if results['documents'] and results['documents'][0]:
+            if results["documents"] and results["documents"][0]:
                 print(f"[OK] Found {len(results['documents'][0])} results")
 
                 # Display top result
-                top_doc = results['documents'][0][0]
-                top_metadata = results['metadatas'][0][0]
-                top_distance = results['distances'][0][0]
+                top_doc = results["documents"][0][0]
+                top_metadata = results["metadatas"][0][0]
+                top_distance = results["distances"][0][0]
 
                 print(
-                    f"[INFO] Top result from: "
-                    f"{top_metadata.get('source', 'Unknown')}"
+                    f"[INFO] Top result from: {top_metadata.get('source', 'Unknown')}"
                 )
                 print(f"[INFO] Similarity score: {1 - top_distance:.3f}")
                 print(f"[INFO] Content preview: {top_doc[:200]}...")
@@ -83,6 +83,7 @@ def test_vector_db():
         print(f"[ERROR] Failed to get collection count: {e}")
         return False
 
+
 def test_manifest():
     """Test the manifest file."""
     import json
@@ -94,7 +95,7 @@ def test_manifest():
         return False
 
     try:
-        with open(manifest_path, 'r') as f:
+        with open(manifest_path, "r") as f:
             manifest = json.load(f)
 
         print("[OK] Manifest loaded successfully")
@@ -108,6 +109,7 @@ def test_manifest():
     except Exception as e:
         print(f"[ERROR] Failed to load manifest: {e}")
         return False
+
 
 if __name__ == "__main__":
     print("[INFO] Testing Vector Database System")
