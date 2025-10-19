@@ -96,7 +96,8 @@ class TestEndorCockpitIntegration:
         assert namespaces_list is not None
         assert isinstance(namespaces_list, list)
         print(
-            f"[OK] Connected to Endor Labs API. Found {len(namespaces_list)} namespaces."
+            f"[OK] Connected to Endor Labs API. "
+            f"Found {len(namespaces_list)} namespaces."
         )
 
     def test_create_namespace(self, api_client, tenant_namespace):
@@ -309,7 +310,10 @@ class TestEndorCockpitIntegration:
                 # Small delay between requests
                 time.sleep(0.5)
 
-            print(f"[OK] Created {len(created_namespaces)} namespaces with rate limiting")
+            print(
+                f"[OK] Created {len(created_namespaces)} namespaces "
+                f"with rate limiting"
+            )
 
         finally:
             # Cleanup

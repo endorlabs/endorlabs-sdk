@@ -40,7 +40,7 @@ def test_namespaces_main_flow():
             client.get_openapi_spec(url=None, path=spec_path)
         except Exception as e:
             pytest.skip(f"Could not fetch OpenAPI spec: {e}")
-        tenant_namespace = "endor-solutions-tgowan"
+        tenant_namespace = "endor-solutions-tgowan.cockpit"
         # Create mock namespaces
         mock_namespaces_to_create = [
             CreateNamespacePayload(
