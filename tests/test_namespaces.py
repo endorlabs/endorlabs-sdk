@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import time
 
 import pytest
 
@@ -42,15 +43,17 @@ def test_namespaces_main_flow():
             pytest.skip(f"Could not fetch OpenAPI spec: {e}")
         tenant_namespace = "endor-solutions-tgowan.cockpit"
         # Create mock namespaces
-        mock_namespaces_to_create = [
-            CreateNamespacePayload(
-                meta=NamespaceMetaCreate(
-                    name=f"mock-namespace-{i}",
-                    description=f"Description for mock-namespace-{i}",
+            # Use timestamp to ensure unique names
+            timestamp = int(time.time())
+            mock_namespaces_to_create = [
+                CreateNamespacePayload(
+                    meta=NamespaceMetaCreate(
+                        name=f"mock-namespace-{timestamp}-{i}",
+                        description=f"Description for mock-namespace-{timestamp}-{i}",
+                    )
                 )
-            )
-            for i in range(2)
-        ]
+                for i in range(2)
+            ]
         created_uuids = []
         for payload in mock_namespaces_to_create:
             ns = create_namespace(client, tenant_namespace, payload)

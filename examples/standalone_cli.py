@@ -16,7 +16,7 @@ def query_docs(
     query: str,
     max_results: int = 5,
     include_metadata: bool = True,
-    format_output: str = "text"
+    format_output: str = "text",
 ) -> Dict[str, Any]:
     """
     Query the Endor Cockpit documentation.
@@ -38,16 +38,14 @@ def query_docs(
 
         # Query the documentation
         results = query_vector_db(
-            query_text=query,
-            n_results=max_results,
-            include_metadata=include_metadata
+            query_text=query, n_results=max_results, include_metadata=include_metadata
         )
 
         # Add database info to results
         results["database_info"] = {
             "total_chunks": info["chunk_count"],
             "total_documents": info.get("total_documents", "Unknown"),
-            "last_updated": info.get("last_updated", "Unknown")
+            "last_updated": info.get("last_updated", "Unknown"),
         }
 
         return results
@@ -55,13 +53,10 @@ def query_docs(
     except ImportError as e:
         return {
             "error": f"Import error: {e}",
-            "suggestion": "Make sure endor-cockpit is installed with RAG dependencies"
+            "suggestion": "Make sure endor-cockpit is installed with RAG dependencies",
         }
     except Exception as e:
-        return {
-            "error": f"Query failed: {e}",
-            "query": query
-        }
+        return {"error": f"Query failed: {e}", "query": query}
 
 
 def format_text_output(results: Dict[str, Any]) -> str:
@@ -77,9 +72,9 @@ def format_text_output(results: Dict[str, Any]) -> str:
     )
     output.append(f"Found {len(results['results'])} results:\n")
 
-    for i, result in enumerate(results['results'], 1):
+    for i, result in enumerate(results["results"], 1):
         output.append(f"{i}. Score: {result['similarity_score']:.3f}")
-        if 'metadata' in result and 'source' in result['metadata']:
+        if "metadata" in result and "source" in result["metadata"]:
             output.append(f"   Source: {result['metadata']['source']}")
         output.append(f"   Content: {result['content']}")
         output.append("")
@@ -105,9 +100,9 @@ def format_markdown_output(results: Dict[str, Any]) -> str:
     )
     output.append(f"**Results**: {len(results['results'])} found\n")
 
-    for i, result in enumerate(results['results'], 1):
+    for i, result in enumerate(results["results"], 1):
         output.append(f"## Result {i} (Score: {result['similarity_score']:.3f})")
-        if 'metadata' in result and 'source' in result['metadata']:
+        if "metadata" in result and "source" in result["metadata"]:
             output.append(f"**Source**: {result['metadata']['source']}")
         output.append(f"\n{result['content']}\n")
 
@@ -124,39 +119,34 @@ Examples:
   python standalone_cli.py "How do I create a namespace?"
   python standalone_cli.py "API quirks" --max-results 3 --format json
   python standalone_cli.py "troubleshoot 403" --no-metadata --format markdown
-        """
+        """,
     )
 
     parser.add_argument(
-        "query",
-        help="Natural language query to search the documentation"
+        "query", help="Natural language query to search the documentation"
     )
 
     parser.add_argument(
         "--max-results",
         type=int,
         default=5,
-        help="Maximum number of results to return (default: 5)"
+        help="Maximum number of results to return (default: 5)",
     )
 
     parser.add_argument(
         "--no-metadata",
         action="store_true",
-        help="Exclude source metadata from results"
+        help="Exclude source metadata from results",
     )
 
     parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
         default="text",
-        help="Output format (default: text)"
+        help="Output format (default: text)",
     )
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()
 
@@ -170,7 +160,7 @@ Examples:
         query=args.query,
         max_results=args.max_results,
         include_metadata=not args.no_metadata,
-        format_output=args.format
+        format_output=args.format,
     )
 
     # Format and output results

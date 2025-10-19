@@ -25,7 +25,7 @@ def basic_rag_example():
         print(f"\nQuery: {results['query']}")
         print(f"Found {len(results['results'])} results:\n")
 
-        for i, result in enumerate(results['results'], 1):
+        for i, result in enumerate(results["results"], 1):
             print(f"{i}. Score: {result['similarity_score']:.3f}")
             print(f"   Content: {result['content'][:150]}...")
             print()
@@ -54,7 +54,7 @@ def openai_integration_example():
             tool_call_args = {
                 "query": query,
                 "max_results": 3,
-                "include_metadata": True
+                "include_metadata": True,
             }
 
             # Execute the tool
@@ -92,7 +92,7 @@ def langchain_integration_example():
         rag_tool = Tool(
             name="query_endor_documentation",
             description="Search Endor Cockpit documentation using semantic search",
-            func=query_endor_documentation_tool
+            func=query_endor_documentation_tool,
         )
 
         print("Created LangChain tool:")
@@ -100,17 +100,19 @@ def langchain_integration_example():
         print(f"  Description: {rag_tool.description}")
 
         # Test the tool
-        results = rag_tool.run({
-            "query": "What are the design principles?",
-            "max_results": 2,
-            "include_metadata": True
-        })
+        results = rag_tool.run(
+            {
+                "query": "What are the design principles?",
+                "max_results": 2,
+                "include_metadata": True,
+            }
+        )
 
         print("\nTool execution results:")
         print(f"  Success: {results.get('success', False)}")
-        if results.get('success'):
+        if results.get("success"):
             print(f"  Result count: {results.get('result_count', 0)}")
-            for result in results.get('results', []):
+            for result in results.get("results", []):
                 print(f"    Score: {result['similarity_score']:.3f}")
                 print(f"    Content: {result['content'][:100]}...")
 
@@ -128,6 +130,7 @@ class EndorRAGAgent:
         self.rag_tool = None
         try:
             from endor_cockpit.rag import query_endor_documentation_tool
+
             self.rag_tool = query_endor_documentation_tool
         except ImportError:
             print("RAG tool not available")
@@ -139,9 +142,7 @@ class EndorRAGAgent:
 
         try:
             results = self.rag_tool(
-                query=query,
-                max_results=max_results,
-                include_metadata=True
+                query=query, max_results=max_results, include_metadata=True
             )
 
             if not results.get("success", False):
@@ -186,7 +187,7 @@ def custom_agent_example():
     test_queries = [
         "How do I create a namespace?",
         "What are the API quirks?",
-        "How do I troubleshoot errors?"
+        "How do I troubleshoot errors?",
     ]
 
     for query in test_queries:
@@ -210,7 +211,7 @@ def cli_tool_example():
             print(f"Query: {query}")
             print(f"Found {len(results['results'])} results:\n")
 
-            for i, result in enumerate(results['results'], 1):
+            for i, result in enumerate(results["results"], 1):
                 print(f"{i}. Score: {result['similarity_score']:.3f}")
                 print(f"   Content: {result['content'][:200]}...")
                 print()
@@ -222,7 +223,7 @@ def cli_tool_example():
     test_queries = [
         "How do I create a namespace?",
         "What are the security best practices?",
-        "How do I troubleshoot 403 errors?"
+        "How do I troubleshoot 403 errors?",
     ]
 
     for query in test_queries:
@@ -243,7 +244,7 @@ def batch_processing_example():
             "What are the API quirks for canonical naming?",
             "How do I troubleshoot 403 Forbidden errors?",
             "What are the security best practices?",
-            "How do I write tests?"
+            "How do I write tests?",
         ]
 
         results = {}
@@ -252,17 +253,15 @@ def batch_processing_example():
                 result = query_vector_db(query, n_results=2)
                 results[query] = {
                     "success": True,
-                    "result_count": len(result['results']),
+                    "result_count": len(result["results"]),
                     "top_score": (
-                        max(r['similarity_score'] for r in result['results'])
-                        if result['results'] else 0
-                    )
+                        max(r["similarity_score"] for r in result["results"])
+                        if result["results"]
+                        else 0
+                    ),
                 }
             except Exception as e:
-                results[query] = {
-                    "success": False,
-                    "error": str(e)
-                }
+                results[query] = {"success": False, "error": str(e)}
 
         print("Batch processing results:")
         for query, result in results.items():
@@ -289,7 +288,7 @@ def main():
         langchain_integration_example,
         custom_agent_example,
         cli_tool_example,
-        batch_processing_example
+        batch_processing_example,
     ]
 
     for example in examples:
