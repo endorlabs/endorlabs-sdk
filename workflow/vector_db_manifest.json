@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "last_updated": "2025-10-18T16:58:57.492808",
+  "last_updated": "2025-10-18T20:35:40.752856",
   "embedding_model": "text-embedding-3-small",
   "chunking_strategy": "semantic_headers",
   "documents": {
@@ -257,21 +257,21 @@
       "content_type": "code"
     },
     "tests/README_integration.md": {
-      "file_hash": "4d3bb384563833aa273189a3666bf68208dee4c15a210a5e0b673b5fb51b5f75",
+      "file_hash": "e56354cf791605119c6301abd56eb3c6c1de7a927dc9c8a37c5ae524327f7346",
       "chunks": 35,
-      "last_modified": "2025-10-18T16:58:35.428837",
+      "last_modified": "2025-10-18T20:35:08.668314",
       "content_type": "markdown"
     },
     "tests/test_integration.py": {
-      "file_hash": "0e8dfdbc922f6593084af5ddbab463d4154212ed938cbf280b91b01429de10c3",
+      "file_hash": "24c3eb287bf2c4799d4e2c424b5d82f6893e384d3800548d4e1ee22345699e10",
       "chunks": 31,
-      "last_modified": "2025-10-18T16:58:35.429129",
+      "last_modified": "2025-10-18T20:35:08.668575",
       "content_type": "code"
     },
     "tests/test_namespaces.py": {
-      "file_hash": "a6f47439892a2ab06453c0f429d600bf890feab8b82aefc389b266965e1dab11",
+      "file_hash": "cf0ba3ce4659c1c5710ee4ed16c768dd67cc2fde37419123cbb6f07aff3ec0bb",
       "chunks": 4,
-      "last_modified": "2025-10-18T16:58:35.429429",
+      "last_modified": "2025-10-18T20:35:08.668698",
       "content_type": "code"
     },
     "tests/test_tool_definitions.py": {
@@ -295,10 +295,34 @@
     "tmp/openapiv2.swagger.json": {
       "file_hash": "2b18ae45dc98b1229ff9e779216878c22cba984bcf7bfc321d72b91a806e41e1",
       "chunks": 3,
-      "last_modified": "2025-10-18T16:58:35.459890",
+      "last_modified": "2025-10-18T20:35:38.788626",
       "content_type": "api_spec"
+    },
+    "docs/agents\\rag_usage.md": {
+      "file_hash": "3ae211221cea6516d0a5c3467844743bacaef13ea36ba832a0835b71d35090e0",
+      "chunks": 47,
+      "last_modified": "2025-10-18T20:35:08.665041",
+      "content_type": "markdown"
+    },
+    "src/endor_cockpit\\rag\\query.py": {
+      "file_hash": "1b7cc246291aef0428397a127589311a5ca4c3907d104209af48ac316d0932bc",
+      "chunks": 14,
+      "last_modified": "2025-10-18T20:35:08.665339",
+      "content_type": "code"
+    },
+    "src/endor_cockpit\\rag\\tool_schema.py": {
+      "file_hash": "211726502b49f1baab59888f553cd2dd796650e2d7b3dd55e6341c857d016736",
+      "chunks": 6,
+      "last_modified": "2025-10-18T20:35:08.665556",
+      "content_type": "code"
+    },
+    "src/endor_cockpit\\rag\\__init__.py": {
+      "file_hash": "afe661483c24ba833b5d984d42e15d65b2479dd80ff4b7963effbb1a369e1924",
+      "chunks": 1,
+      "last_modified": "2025-10-18T20:35:08.665795",
+      "content_type": "code"
     }
   },
-  "total_chunks": 1810,
-  "total_documents": 49
+  "total_chunks": 3,
+  "total_documents": 1
 }
