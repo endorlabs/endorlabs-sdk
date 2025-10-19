@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-import chromadb
+import chromadb  # pyright: ignore[reportMissingImports]
 
 
 class RAGQueryError(Exception):
@@ -70,7 +70,7 @@ class VectorDBQuery:
                 include.append("metadatas")
 
             # Perform the query
-            results = self.collection.query(
+            results = self.collection.query(  # pyright: ignore[reportOptionalMemberAccess]
                 query_texts=[query_text], n_results=n_results, include=include
             )
 
@@ -110,6 +110,9 @@ class VectorDBQuery:
             Dictionary containing database statistics and metadata
         """
         try:
+            # Ensure collection is initialized
+            if self.collection is None:
+                raise RAGQueryError("Vector database not initialized")
             # Get collection count
             count = self.collection.count()
 
