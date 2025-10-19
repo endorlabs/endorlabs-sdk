@@ -45,13 +45,16 @@ def test_namespaces_main_flow():
         # Create mock namespaces
         # Use timestamp and random ID to ensure unique names
         import random
+
         timestamp = int(time.time())
         random_id = random.randint(1000, 9999)
         mock_namespaces_to_create = [
             CreateNamespacePayload(
                 meta=NamespaceMetaCreate(
                     name=f"mock-namespace-{timestamp}-{random_id}-{i}",
-                    description=f"Description for mock-namespace-{timestamp}-{random_id}-{i}",
+                    description=(
+                        f"Description for mock-namespace-{timestamp}-{random_id}-{i}"
+                    ),
                 )
             )
             for i in range(2)
@@ -70,7 +73,11 @@ def test_namespaces_main_flow():
         mock_names = {p.meta.name for p in mock_namespaces_to_create}
         found = [ns for ns in all_namespaces if ns.meta.name in mock_names]
         # Assert that at least one namespace was created successfully
-        assert len(found) >= 1, f"Expected at least 1 namespace, found {len(found)}. Created UUIDs: {created_uuids}"
+        expected_msg = (
+            f"Expected at least 1 namespace, found {len(found)}. "
+            f"Created UUIDs: {created_uuids}"
+        )
+        assert len(found) >= 1, expected_msg
         # Delete created
         for ns in found:
             assert delete_namespace(client, tenant_namespace, ns.uuid)
