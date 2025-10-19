@@ -61,7 +61,10 @@ def test_vector_db():
                 top_metadata = results['metadatas'][0][0]
                 top_distance = results['distances'][0][0]
 
-                print(f"[INFO] Top result from: {top_metadata.get('source', 'Unknown')}")
+                print(
+                    f"[INFO] Top result from: "
+                    f"{top_metadata.get('source', 'Unknown')}"
+                )
                 print(f"[INFO] Similarity score: {1 - top_distance:.3f}")
                 print(f"[INFO] Content preview: {top_doc[:200]}...")
 
