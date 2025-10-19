@@ -1,0 +1,112 @@
+# Endor Cockpit: Project Catalog Information
+# This file provides comprehensive project metadata for AI agents and developers
+
+project:
+  name: "endor-cockpit"
+  version: "0.1.0"
+  description: "A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs"
+  type: "Resource-oriented SDK"
+  status: "Production-ready"
+  
+ownership:
+  organization: "Endor Solutions Architecture"
+  repository: "endor-solutions-architecture/endor-cockpit"
+  maintainers: ["tgowan-endor"]
+  
+architecture:
+  pattern: "Resource-oriented SDK"
+  design_principles:
+    - "Security-first development"
+    - "Declarative and idempotent operations"
+    - "Agent-friendly design"
+    - "Information richness"
+    - "Task-based access controls"
+    - "Graceful error handling"
+  
+technology_stack:
+  language: "Python 3.13+"
+  package_manager: "uv"
+  dependencies:
+    core: ["requests==2.32.5", "pydantic==2.12.3"]
+    dev: ["pytest==8.4.2", "pytest-cov==6.0.0", "ruff==0.14.1", "jsonschema==4.23.0"]
+    rag: ["chromadb>=0.4.0", "openai>=1.0.0", "langchain>=0.1.0", "anthropic>=0.8.0"]
+  build_system: "hatchling"
+  linting: "ruff"
+  testing: "pytest"
+  security: "endorctl"
+  
+security:
+  classification: "Public"
+  data_handling: "No PII data"
+  compliance:
+    - "SOC2"
+    - "ISO27001"
+  security_scanning: "endorctl integration"
+  
+deployment:
+  environment: "Production"
+  region: "Global"
+  platform: "Endor Labs API"
+  
+documentation:
+  primary_guide: "AGENTS.md"
+  persona_guides:
+    - "docs/personas/developer/README.md"
+    - "docs/personas/operations/README.md"
+    - "docs/personas/security/README.md"
+  knowledge_base: "docs/knowledge/"
+  api_reference: "docs/SPECIFICATION.md"
+  examples: "docs/examples/"
+  
+features:
+  core:
+    - "Comprehensive API Coverage"
+    - "Security-First Design"
+    - "Modern Python Tooling"
+    - "Type-Safe Operations"
+    - "Resource-Oriented Architecture"
+    - "Agent-Optimized"
+    - "Production-Ready"
+  advanced:
+    - "RAG Vector Database"
+    - "Semantic Search"
+    - "AI Agent Integration"
+    - "Task Tracking"
+    - "Knowledge Base Maintenance"
+  
+workflows:
+  development:
+    - "Pre-development security scan"
+    - "Linting and formatting"
+    - "Testing with coverage"
+    - "Integration testing"
+  knowledge_management:
+    - "Query knowledge base first"
+    - "Verify against documentation"
+    - "Update when contradictions found"
+    - "Maintain knowledge freshness"
+  
+environment_variables:
+  required:
+    - "ENDOR_API"
+    - "ENDOR_API_CREDENTIALS_KEY"
+    - "ENDOR_API_CREDENTIALS_SECRET"
+  optional:
+    - "OPENAI_API_KEY (for RAG functionality)"
+    - "ENDOR_NAMESPACE"
+    - "AGENT_ID"
+  
+quick_start:
+  installation: "uv pip install -e ."
+  rag_setup: "uv pip install -e '.[rag]'"
+  vector_db_init: "python workflow/init_vector_db.py"
+  testing: "uv run pytest"
+  security: "endorctl scan"
+  
+resources:
+  github: "https://github.com/endor-solutions-architecture/endor-cockpit"
+  documentation: "./docs/"
+  examples: "./examples/"
+  workspace: "./workspace/ (user-specific, git-ignored)"
+  
+last_updated: "2025-10-18"
