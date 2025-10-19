@@ -8,6 +8,7 @@ They require valid authentication and will clean up after themselves.
 import os
 import sys
 import time
+import random
 from typing import Optional
 
 import pytest
@@ -102,7 +103,7 @@ class TestEndorCockpitIntegration:
 
     def test_create_namespace(self, api_client, tenant_namespace):
         """Test creating a namespace."""
-        test_name = f"integration-test-create-{int(time.time())}"
+        test_name = f"integration-test-create-{int(time.time())}-{random.randint(1000, 9999)}"
 
         try:
             # Create namespace
@@ -166,7 +167,7 @@ class TestEndorCockpitIntegration:
 
     def test_update_namespace(self, api_client, tenant_namespace):
         """Test updating a namespace."""
-        test_name = f"integration-test-update-{int(time.time())}"
+        test_name = f"integration-test-update-{int(time.time())}-{random.randint(1000, 9999)}"
         updated_description = f"Updated description for {test_name}"
 
         try:
@@ -191,7 +192,7 @@ class TestEndorCockpitIntegration:
 
     def test_delete_namespace(self, api_client, tenant_namespace):
         """Test deleting a namespace."""
-        test_name = f"integration-test-delete-{int(time.time())}"
+        test_name = f"integration-test-delete-{int(time.time())}-{random.randint(1000, 9999)}"
 
         # Create namespace
         namespace = self._create_test_namespace(
@@ -211,8 +212,8 @@ class TestEndorCockpitIntegration:
 
     def test_namespace_hierarchy(self, api_client, tenant_namespace):
         """Test namespace hierarchy operations."""
-        parent_name = f"integration-test-parent-{int(time.time())}"
-        child_name = f"integration-test-child-{int(time.time())}"
+        parent_name = f"integration-test-parent-{int(time.time())}-{random.randint(1000, 9999)}"
+        child_name = f"integration-test-child-{int(time.time())}-{random.randint(1000, 9999)}"
 
         parent_namespace = None
         child_namespace = None
