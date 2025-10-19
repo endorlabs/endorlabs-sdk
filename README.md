@@ -30,6 +30,53 @@ pip install -e .
 uv pip install -e .
 ```
 
+## First Time Setup
+
+### Knowledge Base Initialization
+
+**IMPORTANT**: The vector database knowledge base is the **first step** for any AI agent working with this repository. It contains comprehensive documentation, API patterns, and best practices that should be consulted before making any changes.
+
+#### 1. Install RAG Dependencies
+```bash
+# Install RAG functionality for semantic search
+uv pip install -e ".[rag]"
+```
+
+#### 2. Set Environment Variables
+```bash
+# Required for API access
+export ENDOR_API="https://api.endorlabs.com"
+export ENDOR_API_CREDENTIALS_KEY="your-api-key"
+export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
+
+# Required for RAG functionality
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+#### 3. Initialize Vector Database
+```bash
+# Initialize the knowledge base
+python workflow/init_vector_db.py
+```
+
+#### 4. Query the Knowledge Base
+```python
+from endor_cockpit.rag import query_vector_db
+
+# Always query first before making changes
+results = query_vector_db("How do I create a namespace?")
+print(f"Found {len(results['results'])} relevant documents")
+```
+
+### Knowledge Base Workflow
+
+1. **Query First**: Always check the knowledge base before operations
+2. **Verify**: Cross-reference with existing documentation
+3. **Act**: Make changes based on established patterns
+4. **Update**: Incorporate new learnings when contradictions are found
+
+The knowledge base is a **portable shared learning index** that ensures consistency across all AI agents and maintains the freshness of operational knowledge.
+
 ## Quick Start
 
 ### For Human Developers

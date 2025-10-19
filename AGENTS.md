@@ -4,6 +4,23 @@
 
 ## 🚀 **Quick Start (30 seconds)**
 
+### **Knowledge Base First**
+**CRITICAL**: Always query the vector database before any operations. This portable shared learning index contains:
+- API patterns and best practices
+- Known quirks and workarounds
+- Security guidelines and compliance requirements
+- Operational procedures and troubleshooting
+
+```python
+from endor_cockpit.rag import query_vector_db
+
+# Query before any operation
+results = query_vector_db("How do I create a namespace?")
+# Review results, then proceed with confidence
+```
+
+**Workflow**: Query → Verify → Act → Update if contradictions found
+
 ### **Agent Type Selection**
 - **🤖 SDK Developer**: [Development Guide](./docs/personas/developer/README.md) → [Architecture](./docs/personas/developer/architecture.md)
 - **🔧 SDK User**: [Usage Guide](./docs/personas/developer/README.md) → [API Quirks](./docs/personas/developer/api-quirks.md)
