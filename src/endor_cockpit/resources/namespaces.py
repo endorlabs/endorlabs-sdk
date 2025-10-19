@@ -19,6 +19,33 @@ logger = logging.getLogger(__name__)
 logger.addFilter(RedactingFilter([redaction_pattern]))
 
 
+class SchemaDriftDetector:
+    """Detects and logs API schema drift for unknown fields."""
+    
+    @staticmethod
+    def log_unknown_fields(model_name: str, unknown_fields: dict, context: str = ""):
+        """Log unknown fields as warnings for schema drift detection."""
+        if unknown_fields:
+            field_list = ", ".join(unknown_fields.keys())
+            logger.warning(
+                f"API Schema Drift Detected in {model_name}: "
+                f"Unknown fields found: {field_list}. "
+                f"Context: {context}. "
+                f"This may indicate API evolution or missing model fields."
+            )
+            # Log detailed field information for debugging
+            for field, value in unknown_fields.items():
+                logger.debug(f"Unknown field '{field}': {type(value).__name__} = {repr(value)[:100]}")
+    
+    @staticmethod
+    def extract_unknown_fields(data: dict, model_fields: set, model_name: str) -> dict:
+        """Extract unknown fields from data and log them."""
+        unknown_fields = {k: v for k, v in data.items() if k not in model_fields}
+        if unknown_fields:
+            SchemaDriftDetector.log_unknown_fields(model_name, unknown_fields)
+        return unknown_fields
+
+
 # Pydantic Models for Namespace data with OpenAPI validation
 class NamespaceMeta(BaseModel):
     """
@@ -97,6 +124,29 @@ class Namespace(BaseModel):
     meta: NamespaceMeta = Field(
         ..., description="Metadata associated with the namespace"
     )
+    
+    @field_validator('*', mode='before')
+    @classmethod
+    def detect_schema_drift(cls, v, info):
+        """Detect and log schema drift for unknown fields."""
+        if info.field_name and isinstance(v, dict):
+            # Define expected fields for each model
+            model_fields = {
+                'meta': {
+                    'name', 'description', 'created_at', 'updated_at', 'created_by', 'updated_by',
+                    'parent_uuid', 'parent_kind', 'kind', 'version', 'tags', 'annotations',
+                    'references', 'index_data', 'create_time', 'update_time', 'upsert_time'
+                }
+            }
+            
+            if info.field_name in model_fields:
+                SchemaDriftDetector.extract_unknown_fields(
+                    v, 
+                    model_fields[info.field_name], 
+                    f"Namespace.{info.field_name}"
+                )
+        
+        return v
 
     @field_validator("uuid")
     @classmethod
