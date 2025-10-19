@@ -9,24 +9,39 @@ RAG_TOOL_SCHEMA = {
     "type": "function",
     "function": {
         "name": "query_endor_documentation",
-        "description": "Search the Endor Cockpit documentation using semantic search. Use this to find relevant context about API usage, troubleshooting, design patterns, and best practices.",
+        "description": (
+            "Search the Endor Cockpit documentation using semantic search. "
+            "Use this to find relevant context about API usage, troubleshooting, "
+            "design patterns, and best practices."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
                 "query": {
                     "type": "string",
-                    "description": "Natural language query describing what information you need from the documentation. Examples: 'How do I create a namespace?', 'What are the API quirks for canonical naming?', 'How do I troubleshoot 403 errors?'"
+                    "description": (
+                        "Natural language query describing what information you need "
+                        "from the documentation. Examples: "
+                        "'How do I create a namespace?', "
+                        "'What are the API quirks for canonical naming?', "
+                        "'How do I troubleshoot 403 errors?'"
+                    )
                 },
                 "max_results": {
                     "type": "integer",
-                    "description": "Maximum number of results to return (default: 5, max: 10)",
+                    "description": (
+                        "Maximum number of results to return (default: 5, max: 10)"
+                    ),
                     "minimum": 1,
                     "maximum": 10,
                     "default": 5
                 },
                 "include_metadata": {
                     "type": "boolean",
-                    "description": "Whether to include source file metadata in results (default: true)",
+                    "description": (
+                        "Whether to include source file metadata in results "
+                        "(default: true)"
+                    ),
                     "default": True
                 }
             },
@@ -38,24 +53,36 @@ RAG_TOOL_SCHEMA = {
 # Alternative schema for different frameworks
 LANGCHAIN_TOOL_SCHEMA = {
     "name": "query_endor_documentation",
-    "description": "Search the Endor Cockpit documentation using semantic search. Use this to find relevant context about API usage, troubleshooting, design patterns, and best practices.",
+    "description": (
+        "Search the Endor Cockpit documentation using semantic search. "
+        "Use this to find relevant context about API usage, troubleshooting, "
+        "design patterns, and best practices."
+    ),
     "parameters": {
         "type": "object",
         "properties": {
             "query": {
                 "type": "string",
-                "description": "Natural language query describing what information you need from the documentation."
+                "description": (
+                    "Natural language query describing what information you need "
+                    "from the documentation."
+                )
             },
             "max_results": {
                 "type": "integer",
-                "description": "Maximum number of results to return (default: 5, max: 10)",
+                "description": (
+                    "Maximum number of results to return (default: 5, max: 10)"
+                ),
                 "minimum": 1,
                 "maximum": 10,
                 "default": 5
             },
             "include_metadata": {
                 "type": "boolean",
-                "description": "Whether to include source file metadata in results (default: true)",
+                "description": (
+                    "Whether to include source file metadata in results "
+                    "(default: true)"
+                ),
                 "default": True
             }
         },

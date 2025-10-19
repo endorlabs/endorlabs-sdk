@@ -29,7 +29,10 @@ import chromadb
 from chromadb.config import Settings
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Chunking strategies for different content types
@@ -84,7 +87,11 @@ EXCLUDE_DIRS = [
 class VectorDBManager:
     """Manages ChromaDB vector database initialization and updates."""
 
-    def __init__(self, db_path: str = "workflow/vector_db", manifest_path: str = "workflow/vector_db_manifest.json"):
+    def __init__(
+        self,
+        db_path: str = "workflow/vector_db",
+        manifest_path: str = "workflow/vector_db_manifest.json"
+    ):
         self.db_path = db_path
         self.manifest_path = manifest_path
         self.client = None
@@ -375,7 +382,7 @@ class VectorDBManager:
         if rebuild:
             try:
                 self.client.delete_collection(collection_name)
-            except:
+            except Exception:
                 pass
 
         self.collection = self.client.get_or_create_collection(
@@ -463,8 +470,12 @@ class VectorDBManager:
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description="Initialize Endor Cockpit vector database")
-    parser.add_argument("--rebuild", action="store_true", help="Rebuild the entire database")
+    parser = argparse.ArgumentParser(
+        description="Initialize Endor Cockpit vector database"
+    )
+    parser.add_argument(
+        "--rebuild", action="store_true", help="Rebuild the entire database"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()

@@ -99,7 +99,10 @@ def format_markdown_output(results: Dict[str, Any]) -> str:
 
     output = []
     output.append(f"# Query: {results['query']}")
-    output.append(f"**Database**: {results['database_info']['total_chunks']} chunks, {results['database_info']['total_documents']} documents")
+    output.append(
+        f"**Database**: {results['database_info']['total_chunks']} chunks, "
+        f"{results['database_info']['total_documents']} documents"
+    )
     output.append(f"**Results**: {len(results['results'])} found\n")
 
     for i, result in enumerate(results['results'], 1):
