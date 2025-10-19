@@ -5,6 +5,10 @@ Vector Database Initialization Script
 This script initializes a ChromaDB vector database from documentation files
 using semantic chunking strategies optimized for different content types.
 
+IMPORTANT: This knowledge base is the FIRST step for any AI agent working with
+this repository. Always query the vector database before making changes to
+understand existing patterns, API quirks, and best practices.
+
 Usage:
     python workflow/init_vector_db.py [--rebuild] [--verbose]
 
@@ -13,6 +17,17 @@ Features:
 - Incremental updates based on file hashes
 - Manifest tracking for reproducibility
 - ChromaDB integration with OpenAI embeddings
+
+Prerequisites:
+- OpenAI API key (OPENAI_API_KEY environment variable)
+- RAG dependencies installed: uv pip install -e ".[rag]"
+- Python 3.13+ with uv package manager
+
+First Time Setup:
+1. Set OPENAI_API_KEY environment variable
+2. Install RAG dependencies: uv pip install -e ".[rag]"
+3. Run this script: python workflow/init_vector_db.py
+4. Query the knowledge base before any operations
 """
 
 import argparse
@@ -25,8 +40,21 @@ import sys
 from datetime import datetime
 from typing import Dict, List
 
-import chromadb
-from chromadb.config import Settings
+# Check for required dependencies
+try:
+    import chromadb
+    from chromadb.config import Settings
+except ImportError as e:
+    print("ERROR: Missing required dependencies for vector database.")
+    print("Please install RAG dependencies: uv pip install -e '.[rag]'")
+    print(f"Import error: {e}")
+    sys.exit(1)
+
+# Check for OpenAI API key
+if not os.getenv("OPENAI_API_KEY"):
+    print("WARNING: OPENAI_API_KEY environment variable not set.")
+    print("Vector database will be created but embeddings may fail.")
+    print("Set OPENAI_API_KEY to your OpenAI API key for full functionality.")
 
 # Configure logging
 logging.basicConfig(

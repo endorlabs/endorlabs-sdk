@@ -2,6 +2,33 @@
 
 > **Retrieval Augmented Generation (RAG) integration for Endor Cockpit documentation**
 
+## Prerequisites
+
+Before using the RAG system, ensure you have:
+
+### Required Environment Variables
+```bash
+# OpenAI API key for embeddings
+export OPENAI_API_KEY="your-openai-api-key"
+
+# Endor Labs API credentials (for context)
+export ENDOR_API="https://api.endorlabs.com"
+export ENDOR_API_CREDENTIALS_KEY="your-api-key"
+export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
+```
+
+### Required Dependencies
+```bash
+# Install RAG dependencies
+uv pip install -e ".[rag]"
+```
+
+### Vector Database Initialization
+```bash
+# Initialize the knowledge base (first time only)
+python workflow/init_vector_db.py
+```
+
 ## Overview
 
 The Endor Cockpit RAG system provides semantic search capabilities over the project documentation using ChromaDB vector database. This enables AI agents to retrieve relevant context for API usage, troubleshooting, design patterns, and best practices.
@@ -286,6 +313,69 @@ print(f"  Last updated: {info.get('last_updated', 'Unknown')}")
 ```bash
 # Rebuild the vector database
 python workflow/init_vector_db.py --rebuild
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Missing Dependencies
+```
+ImportError: No module named 'chromadb'
+```
+**Solution**: Install RAG dependencies
+```bash
+uv pip install -e ".[rag]"
+```
+
+#### 2. OpenAI API Key Missing
+```
+WARNING: OPENAI_API_KEY environment variable not set
+```
+**Solution**: Set the environment variable
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+#### 3. Vector Database Not Initialized
+```
+FileNotFoundError: [Errno 2] No such file or directory: 'workflow/vector_db'
+```
+**Solution**: Initialize the vector database
+```bash
+python workflow/init_vector_db.py
+```
+
+#### 4. Empty Query Results
+If queries return no results, check:
+- Vector database is initialized
+- OpenAI API key is valid
+- Documentation files are present
+- Try rebuilding the database: `python workflow/init_vector_db.py --rebuild`
+
+### Knowledge Base Maintenance
+
+#### When to Update
+- Contradictions found between knowledge base and actual behavior
+- New patterns or best practices discovered
+- API changes or new features added
+- Security guidelines updated
+
+#### How to Update
+1. **Identify Contradiction**: Note the discrepancy between knowledge base and reality
+2. **Document Finding**: Create a note about the correct information
+3. **Update Documentation**: Modify the relevant documentation files
+4. **Rebuild Database**: Run `python workflow/init_vector_db.py --rebuild`
+5. **Verify Update**: Query the database to confirm the new information is indexed
+
+#### Testing Knowledge Base Updates
+```python
+# Test that new information is properly indexed
+results = query_vector_db("your specific question")
+assert len(results["results"]) > 0
+assert "expected content" in results["results"][0]["content"]
 ```
 
 ---
