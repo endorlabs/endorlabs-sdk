@@ -135,8 +135,6 @@ uv run pytest
 # Lint code
 uv run ruff check .
 
-# Format code
-uv run black .
 ```
 
 ### Security
