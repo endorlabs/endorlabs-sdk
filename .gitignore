@@ -46,6 +46,9 @@ coverage.xml
 *.cover
 .hypothesis/
 
+# Linting
+.ruff_cache/
+
 # Vector Database
 workflow/vector_db/
 workflow/vector_db_manifest.json
