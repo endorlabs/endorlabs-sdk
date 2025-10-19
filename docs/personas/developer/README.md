@@ -6,10 +6,12 @@
 
 ### **5-Minute Setup**
 1. **Environment**: Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
-2. **Install**: `uv pip install -e .`
-3. **Test**: `uv run pytest tests/test_integration.py -v`
-4. **Security**: `endorctl scan` before any changes
-5. **Lint**: `uv run ruff check . --fix`
+2. **Virtual Environment**: `uv venv` and activate
+3. **Install**: `uv pip install -e .`
+4. **Knowledge Base**: Initialize RAG capabilities with `uv run python workflow/init_vector_db.py`
+5. **Test**: `uv run pytest tests/test_integration.py -v`
+6. **Security**: `endorctl scan` before any changes
+7. **Lint**: `uv run ruff check . --fix`
 
 ### **Development Workflow**
 ```bash
@@ -20,9 +22,16 @@ uv run ruff format .         # Format
 uv run pytest               # Test
 endorctl scan               # Security
 
-# 2. Make changes
-# 3. Repeat checklist
-# 4. Commit with conventional commits
+# 2. Resource implementation workflow
+#    a. Query RAG knowledge base first
+#    b. Analyze OpenAPI spec for {Resource}Service endpoints
+#    c. Implement GET operations first to understand structure
+#    d. Create Pydantic models from live data + API spec
+#    e. Document all quirks and learnings
+
+# 3. Make changes
+# 4. Repeat checklist
+# 5. Commit with conventional commits
 ```
 
 ---
@@ -53,10 +62,58 @@ Each resource module follows this pattern:
 ```python
 def create_resource(
     client: APIClient,
-    parent_namespace: str,
+    tenant_meta_namespace: str,  # Use canonical namespace, not UUID
     payload: CreateResourcePayload
 ) -> Optional[Resource]:
     """Create resource with proper error handling."""
+```
+
+### **Critical API Patterns**
+- **Path parameters**: Use `tenant_meta.namespace` (canonical namespace) not `namespace_uuid`
+- **Response structure**: API returns `{"list": {"objects": [...]}}` not direct arrays
+- **Authentication**: Use resource modules, not direct API calls
+- **OpenAPI analysis**: Look for `{Resource}Service` endpoints in spec
+
+---
+
+## 🧭 **API Navigation & Resource Implementation**
+
+### **OpenAPI Specification Analysis**
+```bash
+# Find service endpoints in OpenAPI spec
+grep -i "{Resource}Service" tmp/openapiv2.swagger.json
+# Examples: ProjectService, FindingService, PolicyService
+
+# Extract endpoint patterns
+grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+```
+
+### **Critical API Patterns**
+- **Endpoint pattern**: `/v1/namespaces/{tenant_meta.namespace}/{resource}`
+- **Path parameter**: Use `tenant_meta.namespace` (canonical namespace) not `namespace_uuid`
+- **Response structure**: `{"list": {"objects": [...]}}` not direct arrays
+- **Authentication**: Use resource modules, not direct API calls
+
+### **Resource Implementation Workflow**
+1. **Query RAG knowledge base** for existing patterns
+2. **Analyze OpenAPI spec** for `{Resource}Service` endpoints
+3. **Implement GET operations first** to understand structure
+4. **Create Pydantic models** from live data + API spec
+5. **Document all quirks** and learnings
+
+### **Common Pitfalls**
+- **❌ Wrong path parameter**: Using `namespace_uuid` instead of `tenant_meta.namespace`
+- **❌ Wrong response parsing**: Expecting direct arrays instead of `list.objects`
+- **❌ Direct API calls**: Bypassing resource modules and authentication
+- **❌ Missing OpenAPI analysis**: Not checking service endpoints first
+
+### **Success Pattern**
+```python
+# CORRECT: Use canonical namespace and resource modules
+projects = list_projects(client, "endor-solutions-tgowan.cockpit")
+
+# WRONG: Direct API calls with wrong parameters
+response = client.get("v1/namespaces/uuid-here/projects")
 ```
 
 ---
@@ -299,6 +356,12 @@ test(integration): add namespace hierarchy tests
 2. Verify API key has required permissions
 3. Confirm parent namespace exists and is accessible
 
+#### **Empty Results (0 resources found)**
+1. **Check path parameter**: Use `tenant_meta.namespace` not `namespace_uuid`
+2. **Check response parsing**: Use `list.objects` not direct array
+3. **Check namespace format**: Use canonical format like `endor-solutions-tgowan.cockpit`
+4. **Use resource modules**: Don't bypass with direct API calls
+
 #### **Import Errors**
 1. Ensure all required classes are imported
 2. Check if SDK classes are missing
@@ -308,6 +371,7 @@ test(integration): add namespace hierarchy tests
 1. Check Pydantic field definitions
 2. Ensure optional fields are properly defined
 3. Handle empty values gracefully
+4. **Model from live data**: Use `endorctl api list -r Resource` for reference
 
 ### **Debugging Tools**
 - **API Client Logging**: Enable debug logging for API calls
@@ -322,6 +386,8 @@ test(integration): add namespace hierarchy tests
 - **[API Quirks](./api-quirks.md)**: Known API discrepancies and workarounds
 - **[Testing Guide](./testing-guide.md)**: Comprehensive testing patterns
 - **[Contributing Guide](./contributing.md)**: How to extend the SDK
+- **[Project Implementation Guide](../../knowledge/endor-data-model/project-implementation-guide.md)**: Complete Project resource implementation
+- **[Resource Implementation Workflow](../../agents/resource-implementation-workflow.md)**: Step-by-step process for any resource
 
 ---
 

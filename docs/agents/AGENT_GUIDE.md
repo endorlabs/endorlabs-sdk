@@ -15,6 +15,11 @@
 - **Dependencies**: Pin exact versions, avoid `latest`
 - **Environment**: Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
 
+### **MANDATORY WORKFLOW: Research → Log → Update Knowledge Base**
+1. **Research**: RAG → API Spec → endorctl → APIClient
+2. **Log**: Document in `workspace/log.md` and `workspace/workspace.py`
+3. **Update Knowledge Base**: Propagate learnings to relevant docs, re-index
+
 ---
 
 ## 🏗️ **Development**
