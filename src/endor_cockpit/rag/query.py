@@ -14,6 +14,7 @@ import chromadb
 
 class RAGQueryError(Exception):
     """Custom exception for RAG query errors."""
+
     pass
 
 
@@ -46,10 +47,7 @@ class VectorDBQuery:
             raise RAGQueryError(f"Failed to initialize vector database: {e}") from e
 
     def query(
-        self,
-        query_text: str,
-        n_results: int = 5,
-        include_metadata: bool = True
+        self, query_text: str, n_results: int = 5, include_metadata: bool = True
     ) -> Dict[str, Any]:
         """
         Query the vector database for relevant context.
@@ -73,30 +71,29 @@ class VectorDBQuery:
 
             # Perform the query
             results = self.collection.query(
-                query_texts=[query_text],
-                n_results=n_results,
-                include=include
+                query_texts=[query_text], n_results=n_results, include=include
             )
 
             # Format results
-            formatted_results = {
-                "query": query_text,
-                "results": []
-            }
+            formatted_results = {"query": query_text, "results": []}
 
-            if results['documents'] and results['documents'][0]:
-                for i, doc in enumerate(results['documents'][0]):
+            if results["documents"] and results["documents"][0]:
+                for i, doc in enumerate(results["documents"][0]):
                     result = {
                         "content": doc,
                         "similarity_score": (
-                            1 - results['distances'][0][i]
-                            if results['distances'] else 0.0
-                        )
+                            1 - results["distances"][0][i]
+                            if results["distances"]
+                            else 0.0
+                        ),
                     }
 
-                    if (include_metadata and results['metadatas'] and
-                            results['metadatas'][0]):
-                        result["metadata"] = results['metadatas'][0][i]
+                    if (
+                        include_metadata
+                        and results["metadatas"]
+                        and results["metadatas"][0]
+                    ):
+                        result["metadata"] = results["metadatas"][0][i]
 
                     formatted_results["results"].append(result)
 
@@ -121,20 +118,20 @@ class VectorDBQuery:
             manifest_info = {}
 
             if manifest_path.exists():
-                with open(manifest_path, 'r') as f:
+                with open(manifest_path, "r") as f:
                     manifest = json.load(f)
                     manifest_info = {
                         "total_documents": manifest.get("total_documents", 0),
                         "total_chunks": manifest.get("total_chunks", 0),
                         "embedding_model": manifest.get("embedding_model", "unknown"),
-                        "last_updated": manifest.get("last_updated", "unknown")
+                        "last_updated": manifest.get("last_updated", "unknown"),
                     }
 
             return {
                 "collection_name": self.collection_name,
                 "chunk_count": count,
                 "vector_db_path": self.vector_db_path,
-                **manifest_info
+                **manifest_info,
             }
 
         except Exception as e:
@@ -154,9 +151,7 @@ def get_query_instance() -> VectorDBQuery:
 
 
 def query_vector_db(
-    query_text: str,
-    n_results: int = 5,
-    include_metadata: bool = True
+    query_text: str, n_results: int = 5, include_metadata: bool = True
 ) -> Dict[str, Any]:
     """
     Query the Endor Cockpit vector database for relevant context.

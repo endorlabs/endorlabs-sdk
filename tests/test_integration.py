@@ -311,8 +311,7 @@ class TestEndorCockpitIntegration:
                 time.sleep(0.5)
 
             print(
-                f"[OK] Created {len(created_namespaces)} namespaces "
-                f"with rate limiting"
+                f"[OK] Created {len(created_namespaces)} namespaces with rate limiting"
             )
 
         finally:

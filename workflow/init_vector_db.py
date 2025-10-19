@@ -30,8 +30,7 @@ from chromadb.config import Settings
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -39,38 +38,33 @@ logger = logging.getLogger(__name__)
 CHUNKING_STRATEGY = {
     "markdown": {
         "max_chunk_size": 1000,  # tokens
-        "overlap": 200,          # tokens
+        "overlap": 200,  # tokens
         "split_on": ["##", "###", "\n\n"],  # Headers and paragraphs
-        "preserve_structure": True
+        "preserve_structure": True,
     },
     "code": {
-        "max_chunk_size": 800,   # tokens
-        "overlap": 100,          # tokens
+        "max_chunk_size": 800,  # tokens
+        "overlap": 100,  # tokens
         "split_on": ["\n\n", "def ", "class "],  # Functions and classes
-        "preserve_structure": True
+        "preserve_structure": True,
     },
     "api_spec": {
         "max_chunk_size": 2000,  # tokens
-        "overlap": 300,          # tokens
-        "split_on": ["\"paths\":", "\"components\":", "\"definitions\":"],
-        "preserve_structure": True
-    }
+        "overlap": 300,  # tokens
+        "split_on": ['"paths":', '"components":', '"definitions":'],
+        "preserve_structure": True,
+    },
 }
 
 # Content type detection patterns
 CONTENT_TYPE_PATTERNS = {
     "markdown": [r"\.md$", r"\.rst$"],
     "code": [r"\.py$", r"\.js$", r"\.ts$", r"\.go$", r"\.java$"],
-    "api_spec": [r"openapi.*\.json$", r"swagger.*\.json$", r"\.yaml$", r"\.yml$"]
+    "api_spec": [r"openapi.*\.json$", r"swagger.*\.json$", r"\.yaml$", r"\.yml$"],
 }
 
 # Directories to include in vector DB
-INCLUDE_DIRS = [
-    "docs/",
-    "src/",
-    "tests/",
-    "tmp/openapiv2.swagger.json"
-]
+INCLUDE_DIRS = ["docs/", "src/", "tests/", "tmp/openapiv2.swagger.json"]
 
 # Directories to exclude
 EXCLUDE_DIRS = [
@@ -80,7 +74,7 @@ EXCLUDE_DIRS = [
     "venv/",
     ".venv/",
     "env/",
-    ".env/"
+    ".env/",
 ]
 
 
@@ -90,7 +84,7 @@ class VectorDBManager:
     def __init__(
         self,
         db_path: str = "workflow/vector_db",
-        manifest_path: str = "workflow/vector_db_manifest.json"
+        manifest_path: str = "workflow/vector_db_manifest.json",
     ):
         self.db_path = db_path
         self.manifest_path = manifest_path
@@ -101,7 +95,7 @@ class VectorDBManager:
     def _load_manifest(self) -> Dict:
         """Load or create manifest file."""
         if os.path.exists(self.manifest_path):
-            with open(self.manifest_path, 'r') as f:
+            with open(self.manifest_path, "r") as f:
                 return json.load(f)
         else:
             return {
@@ -111,18 +105,18 @@ class VectorDBManager:
                 "chunking_strategy": "semantic_headers",
                 "documents": {},
                 "total_chunks": 0,
-                "total_documents": 0
+                "total_documents": 0,
             }
 
     def _save_manifest(self):
         """Save manifest file."""
         self.manifest["last_updated"] = datetime.now().isoformat()
-        with open(self.manifest_path, 'w') as f:
+        with open(self.manifest_path, "w") as f:
             json.dump(self.manifest, f, indent=2)
 
     def _get_file_hash(self, file_path: str) -> str:
         """Calculate SHA256 hash of file."""
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             return hashlib.sha256(f.read()).hexdigest()
 
     def _detect_content_type(self, file_path: str) -> str:
@@ -154,24 +148,26 @@ class VectorDBManager:
     def _chunk_markdown(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk markdown content by headers and paragraphs."""
         chunks = []
-        lines = content.split('\n')
+        lines = content.split("\n")
         current_chunk = []
         current_size = 0
 
         for line in lines:
             # Check if this is a header (starts with #)
-            if line.strip().startswith('#'):
+            if line.strip().startswith("#"):
                 # Save current chunk if it has content
                 if current_chunk:
-                    chunk_text = '\n'.join(current_chunk)
-                    chunks.append({
-                        "text": chunk_text,
-                        "metadata": {
-                            "content_type": "markdown",
-                            "chunk_index": len(chunks),
-                            "size": len(chunk_text)
+                    chunk_text = "\n".join(current_chunk)
+                    chunks.append(
+                        {
+                            "text": chunk_text,
+                            "metadata": {
+                                "content_type": "markdown",
+                                "chunk_index": len(chunks),
+                                "size": len(chunk_text),
+                            },
                         }
-                    })
+                    )
 
                 # Start new chunk with header
                 current_chunk = [line]
@@ -184,15 +180,17 @@ class VectorDBManager:
                 # Check if chunk is too large
                 if current_size > strategy["max_chunk_size"]:
                     # Save current chunk
-                    chunk_text = '\n'.join(current_chunk)
-                    chunks.append({
-                        "text": chunk_text,
-                        "metadata": {
-                            "content_type": "markdown",
-                            "chunk_index": len(chunks),
-                            "size": len(chunk_text)
+                    chunk_text = "\n".join(current_chunk)
+                    chunks.append(
+                        {
+                            "text": chunk_text,
+                            "metadata": {
+                                "content_type": "markdown",
+                                "chunk_index": len(chunks),
+                                "size": len(chunk_text),
+                            },
                         }
-                    })
+                    )
 
                     # Start new chunk
                     current_chunk = []
@@ -200,39 +198,43 @@ class VectorDBManager:
 
         # Add final chunk
         if current_chunk:
-            chunk_text = '\n'.join(current_chunk)
-            chunks.append({
-                "text": chunk_text,
-                "metadata": {
-                    "content_type": "markdown",
-                    "chunk_index": len(chunks),
-                    "size": len(chunk_text)
+            chunk_text = "\n".join(current_chunk)
+            chunks.append(
+                {
+                    "text": chunk_text,
+                    "metadata": {
+                        "content_type": "markdown",
+                        "chunk_index": len(chunks),
+                        "size": len(chunk_text),
+                    },
                 }
-            })
+            )
 
         return chunks
 
     def _chunk_code(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk code content by functions and classes."""
         chunks = []
-        lines = content.split('\n')
+        lines = content.split("\n")
         current_chunk = []
         current_size = 0
 
         for line in lines:
             # Check if this is a function or class definition
-            if line.strip().startswith(('def ', 'class ')):
+            if line.strip().startswith(("def ", "class ")):
                 # Save current chunk if it has content
                 if current_chunk:
-                    chunk_text = '\n'.join(current_chunk)
-                    chunks.append({
-                        "text": chunk_text,
-                        "metadata": {
-                            "content_type": "code",
-                            "chunk_index": len(chunks),
-                            "size": len(chunk_text)
+                    chunk_text = "\n".join(current_chunk)
+                    chunks.append(
+                        {
+                            "text": chunk_text,
+                            "metadata": {
+                                "content_type": "code",
+                                "chunk_index": len(chunks),
+                                "size": len(chunk_text),
+                            },
                         }
-                    })
+                    )
 
                 # Start new chunk
                 current_chunk = [line]
@@ -245,15 +247,17 @@ class VectorDBManager:
                 # Check if chunk is too large
                 if current_size > strategy["max_chunk_size"]:
                     # Save current chunk
-                    chunk_text = '\n'.join(current_chunk)
-                    chunks.append({
-                        "text": chunk_text,
-                        "metadata": {
-                            "content_type": "code",
-                            "chunk_index": len(chunks),
-                            "size": len(chunk_text)
+                    chunk_text = "\n".join(current_chunk)
+                    chunks.append(
+                        {
+                            "text": chunk_text,
+                            "metadata": {
+                                "content_type": "code",
+                                "chunk_index": len(chunks),
+                                "size": len(chunk_text),
+                            },
                         }
-                    })
+                    )
 
                     # Start new chunk
                     current_chunk = []
@@ -261,15 +265,17 @@ class VectorDBManager:
 
         # Add final chunk
         if current_chunk:
-            chunk_text = '\n'.join(current_chunk)
-            chunks.append({
-                "text": chunk_text,
-                "metadata": {
-                    "content_type": "code",
-                    "chunk_index": len(chunks),
-                    "size": len(chunk_text)
+            chunk_text = "\n".join(current_chunk)
+            chunks.append(
+                {
+                    "text": chunk_text,
+                    "metadata": {
+                        "content_type": "code",
+                        "chunk_index": len(chunks),
+                        "size": len(chunk_text),
+                    },
                 }
-            })
+            )
 
         return chunks
 
@@ -286,15 +292,17 @@ class VectorDBManager:
         for section_name, section_content in data.items():
             if isinstance(section_content, dict):
                 section_text = json.dumps({section_name: section_content}, indent=2)
-                chunks.append({
-                    "text": section_text,
-                    "metadata": {
-                        "content_type": "api_spec",
-                        "section": section_name,
-                        "chunk_index": len(chunks),
-                        "size": len(section_text)
+                chunks.append(
+                    {
+                        "text": section_text,
+                        "metadata": {
+                            "content_type": "api_spec",
+                            "section": section_name,
+                            "chunk_index": len(chunks),
+                            "size": len(section_text),
+                        },
                     }
-                })
+                )
 
         return chunks
 
@@ -310,30 +318,34 @@ class VectorDBManager:
             current_size += len(word) + 1  # +1 for space
 
             if current_size > strategy["max_chunk_size"]:
-                chunk_text = ' '.join(current_chunk)
-                chunks.append({
-                    "text": chunk_text,
-                    "metadata": {
-                        "content_type": "generic",
-                        "chunk_index": len(chunks),
-                        "size": len(chunk_text)
+                chunk_text = " ".join(current_chunk)
+                chunks.append(
+                    {
+                        "text": chunk_text,
+                        "metadata": {
+                            "content_type": "generic",
+                            "chunk_index": len(chunks),
+                            "size": len(chunk_text),
+                        },
                     }
-                })
+                )
 
                 current_chunk = []
                 current_size = 0
 
         # Add final chunk
         if current_chunk:
-            chunk_text = ' '.join(current_chunk)
-            chunks.append({
-                "text": chunk_text,
-                "metadata": {
-                    "content_type": "generic",
-                    "chunk_index": len(chunks),
-                    "size": len(chunk_text)
+            chunk_text = " ".join(current_chunk)
+            chunks.append(
+                {
+                    "text": chunk_text,
+                    "metadata": {
+                        "content_type": "generic",
+                        "chunk_index": len(chunks),
+                        "size": len(chunk_text),
+                    },
                 }
-            })
+            )
 
         return chunks
 
@@ -373,8 +385,7 @@ class VectorDBManager:
 
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
-            path=self.db_path,
-            settings=Settings(anonymized_telemetry=False)
+            path=self.db_path, settings=Settings(anonymized_telemetry=False)
         )
 
         # Create or get collection
@@ -387,7 +398,7 @@ class VectorDBManager:
 
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
-            metadata={"description": "Endor Cockpit documentation vector database"}
+            metadata={"description": "Endor Cockpit documentation vector database"},
         )
 
         # Process files
@@ -406,7 +417,7 @@ class VectorDBManager:
             logger.info(f"Processing: {file_path}")
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 content_type = self._detect_content_type(file_path)
@@ -426,7 +437,7 @@ class VectorDBManager:
                     "file_hash": file_hash,
                     "chunks": len(chunks),
                     "last_modified": datetime.now().isoformat(),
-                    "content_type": content_type
+                    "content_type": content_type,
                 }
 
             except Exception as e:
@@ -439,11 +450,7 @@ class VectorDBManager:
             metadatas = [chunk["metadata"] for chunk in all_chunks]
             ids = [chunk["metadata"]["chunk_id"] for chunk in all_chunks]
 
-            self.collection.add(
-                documents=texts,
-                metadatas=metadatas,
-                ids=ids
-            )
+            self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
 
             logger.info(f"Added {len(all_chunks)} chunks to vector database")
 
@@ -460,10 +467,7 @@ class VectorDBManager:
         if not self.collection:
             self.initialize_db()
 
-        results = self.collection.query(
-            query_texts=[query_text],
-            n_results=n_results
-        )
+        results = self.collection.query(query_texts=[query_text], n_results=n_results)
 
         return results
 

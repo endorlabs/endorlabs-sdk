@@ -25,7 +25,7 @@ RAG_TOOL_SCHEMA = {
                         "'How do I create a namespace?', "
                         "'What are the API quirks for canonical naming?', "
                         "'How do I troubleshoot 403 errors?'"
-                    )
+                    ),
                 },
                 "max_results": {
                     "type": "integer",
@@ -34,7 +34,7 @@ RAG_TOOL_SCHEMA = {
                     ),
                     "minimum": 1,
                     "maximum": 10,
-                    "default": 5
+                    "default": 5,
                 },
                 "include_metadata": {
                     "type": "boolean",
@@ -42,12 +42,12 @@ RAG_TOOL_SCHEMA = {
                         "Whether to include source file metadata in results "
                         "(default: true)"
                     ),
-                    "default": True
-                }
+                    "default": True,
+                },
             },
-            "required": ["query"]
-        }
-    }
+            "required": ["query"],
+        },
+    },
 }
 
 # Alternative schema for different frameworks
@@ -66,7 +66,7 @@ LANGCHAIN_TOOL_SCHEMA = {
                 "description": (
                     "Natural language query describing what information you need "
                     "from the documentation."
-                )
+                ),
             },
             "max_results": {
                 "type": "integer",
@@ -75,26 +75,24 @@ LANGCHAIN_TOOL_SCHEMA = {
                 ),
                 "minimum": 1,
                 "maximum": 10,
-                "default": 5
+                "default": 5,
             },
             "include_metadata": {
                 "type": "boolean",
                 "description": (
-                    "Whether to include source file metadata in results "
-                    "(default: true)"
+                    "Whether to include source file metadata in results (default: true)"
                 ),
-                "default": True
-            }
+                "default": True,
+            },
         },
-        "required": ["query"]
-    }
+        "required": ["query"],
+    },
 }
+
 
 # Function implementation for tool frameworks
 def query_endor_documentation_tool(
-    query: str,
-    max_results: int = 5,
-    include_metadata: bool = True
+    query: str, max_results: int = 5, include_metadata: bool = True
 ) -> dict:
     """
     Tool function for querying Endor Cockpit documentation.
@@ -114,9 +112,7 @@ def query_endor_documentation_tool(
 
     try:
         results = query_vector_db(
-            query_text=query,
-            n_results=max_results,
-            include_metadata=include_metadata
+            query_text=query, n_results=max_results, include_metadata=include_metadata
         )
 
         # Format results for tool output
@@ -124,13 +120,13 @@ def query_endor_documentation_tool(
             "success": True,
             "query": query,
             "result_count": len(results["results"]),
-            "results": []
+            "results": [],
         }
 
         for result in results["results"]:
             formatted_result = {
                 "content": result["content"],
-                "similarity_score": result["similarity_score"]
+                "similarity_score": result["similarity_score"],
             }
 
             if include_metadata and "metadata" in result:
@@ -141,8 +137,4 @@ def query_endor_documentation_tool(
         return formatted_results
 
     except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "query": query
-        }
+        return {"success": False, "error": str(e), "query": query}
