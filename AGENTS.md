@@ -330,7 +330,7 @@ endorctl scan --sast
 
 ## 📁 **Workspace Folder**
 
-For local testing and development, use the `workspace/` folder which is excluded from version control:
+For local testing and development, use the `.workspace/` folder which is excluded from version control:
 - Integration test results and configurations
 - Temporary policy configurations
 - Development scripts and utilities
@@ -338,17 +338,17 @@ For local testing and development, use the `workspace/` folder which is excluded
 - User-specific API configurations
 - **Agent notes and task documentation**
 
-**Note for AI Agents**: When creating documentation, notes, or task-specific files, place them in the `workspace/` folder rather than the root directory to keep the repository clean and organized.
+**Note for AI Agents**: When creating documentation, notes, or task-specific files, place them in the `.workspace/` folder rather than the root directory to keep the repository clean and organized.
 
 ### Long-Living Task Tracking for AI Agents
 
 For multi-session tasks or complex workflows that span multiple interactions:
 
-1. Create task tracking files in `workspace/` directory
+1. Create task tracking files in `.workspace/` directory
 2. Use markdown checklist format for easy tracking
-3. File naming: `workspace/tasks-<description>.md` or `workspace/current-tasks.md`
+3. File naming: `.workspace/tasks-<description>.md` or `.workspace/current-tasks.md`
 4. Update checklists as tasks progress
-5. Archive completed task files to `workspace/archive/` when done
+5. Archive completed task files to `.workspace/archive/` when done
 
 **Format:**
 ```markdown
@@ -382,7 +382,7 @@ Last Updated: YYYY-MM-DD
 - Tasks tracked by TODO tool in codebase
 
 ### Operational Context
-For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `workspace/OPERATIONAL_CONTEXT.md`.
+For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `.workspace/OPERATIONAL_CONTEXT.md`.
 
 ---
 

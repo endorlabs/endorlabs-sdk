@@ -281,11 +281,11 @@ def list_{resource}s(client: APIClient, tenant_meta_namespace: str) -> List[{Res
 - [ ] Pydantic models validate correctly
 - [ ] Documentation complete
 - [ ] Knowledge base updated
-- [ ] Workspace cleaned up
+- [ ] .workspace cleaned up
 
 ### **Quality Indicators**
-- [ ] No one-off scripts in workspace
-- [ ] Single workspace.py file for experimentation
+- [ ] No one-off scripts in .workspace
+- [ ] Single .workspace/workspace.py file for experimentation
 - [ ] All learnings documented
 - [ ] Repeatable process established
 - [ ] Ready for next resource implementation

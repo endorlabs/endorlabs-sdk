@@ -11,7 +11,7 @@
 
 **Debugging Steps**:
 1. **Wrong URL Pattern**: Initially used `PATCH /v1/namespaces/{namespace}/projects/{uuid}`
-2. **OpenAPI Spec Check**: Found correct pattern in `tmp/openapiv2.swagger.json`
+2. **OpenAPI Spec Check**: Found correct pattern in `.workspace/downloads/openapi-swagger.json`
 3. **Discovery**: PATCH endpoints expect UUID in request body, not URL path
 4. **Solution**: Changed to `PATCH /v1/namespaces/{namespace}/projects` with UUID in body
 
@@ -143,8 +143,8 @@ results = query_vector_db("What are the common pitfalls for {resource} implement
 ### **OpenAPI Spec Analysis**
 ```bash
 # Search for service endpoints
-grep -i "{Resource}Service" tmp/openapiv2.swagger.json
-grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
 ```
 
 ### **Live Data Analysis**
@@ -157,7 +157,7 @@ endorctl api list -r Policy
 
 ### **Collaborative Workspace**
 ```python
-# Use workspace.py for experimentation
+# Use .workspace/workspace.py for experimentation
 # Document all debugging steps and discoveries
 # Test different approaches systematically
 ```
