@@ -214,6 +214,60 @@ print(f"Total chunks: {info['chunk_count']}")
    - Endpoint documentation
    - Schema definitions
 
+4. **External Documentation** (`.workspace/downloads/`)
+   - OpenAPI specification from Endor API
+   - User documentation from docs.endorlabs.com
+   - Automatically downloaded during init
+
+### **External Documentation Downloads**
+
+During `holocron init`, the following external resources are automatically downloaded:
+
+1. **OpenAPI Specification**
+   - Source: `{ENDOR_API}/download/openapiv2.swagger.json`
+   - Location: `.workspace/downloads/openapi-swagger.json`
+   - Purpose: Complete API specification for endpoint discovery
+   - Timestamp tracked in manifest
+
+2. **Sitemap.xml**
+   - Source: `https://docs.endorlabs.com/sitemap.xml`
+   - Location: `.workspace/downloads/sitemap.xml`
+   - Purpose: Index of all user documentation pages
+
+3. **User Documentation**
+   - Source: All pages from sitemap.xml
+   - Location: `.workspace/downloads/user-docs/*.md`
+   - Purpose: Comprehensive external documentation for context
+   - Converted from HTML to markdown for optimal indexing
+
+### **Refresh Guidance**
+
+External documentation is timestamped in the manifest file:
+
+- **Freshness check**: Automatic warning if downloads >7 days old
+- **Manual refresh**: Run `python -m holocron init --force` to update
+- **Check status**: Review `holocron_data/vector_db_manifest.json`
+- **Manifest location**: `external_docs` section in manifest
+
+Example manifest structure:
+```json
+{
+  "external_docs": {
+    "openapi_spec": {
+      "last_downloaded": "2025-10-20T01:30:00",
+      "file_hash": "abc123...",
+      "size": 524288,
+      "url": "https://api.endorlabs.com/download/openapiv2.swagger.json"
+    },
+    "user_docs": {
+      "last_downloaded": "2025-10-20T01:35:00",
+      "page_count": 125,
+      "sitemap_url": "https://docs.endorlabs.com/sitemap.xml"
+    }
+  }
+}
+```
+
 ### **Metadata Enhancement**
 
 Each chunk includes:

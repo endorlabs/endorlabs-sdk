@@ -48,7 +48,13 @@ CONTENT_TYPE_PATTERNS = {
 }
 
 # Directories to include in vector DB
-INCLUDE_DIRS = ["docs/", "src/", "tests/", ".workspace/downloads/openapi-swagger.json"]
+INCLUDE_DIRS = [
+    "docs/",
+    "src/",
+    "tests/",
+    ".workspace/downloads/openapi-swagger.json",
+    ".workspace/downloads/user-docs/",
+]
 
 # Directories to exclude
 EXCLUDE_DIRS = [
@@ -101,6 +107,38 @@ class VectorDBManager:
         with open(self.manifest_path, "w") as f:
             json.dump(self.manifest, f, indent=2)
 
+    def update_external_docs_metadata(
+        self, openapi_metadata: Dict = None, user_docs_count: int = None
+    ):
+        """
+        Update manifest with external documentation metadata.
+        
+        Args:
+            openapi_metadata: Metadata from OpenAPI spec download
+            user_docs_count: Number of user docs pages downloaded
+        """
+        if "external_docs" not in self.manifest:
+            self.manifest["external_docs"] = {}
+
+        timestamp = datetime.now().isoformat()
+
+        if openapi_metadata:
+            self.manifest["external_docs"]["openapi_spec"] = {
+                "last_downloaded": timestamp,
+                "file_hash": openapi_metadata.get("file_hash"),
+                "size": openapi_metadata.get("size"),
+                "url": openapi_metadata.get("url"),
+            }
+
+        if user_docs_count is not None:
+            self.manifest["external_docs"]["user_docs"] = {
+                "last_downloaded": timestamp,
+                "page_count": user_docs_count,
+                "sitemap_url": "https://docs.endorlabs.com/sitemap.xml",
+            }
+
+        self._save_manifest()
+
     def _get_file_hash(self, file_path: str) -> str:
         """Calculate SHA256 hash of file."""
         with open(file_path, "rb") as f:
@@ -138,7 +176,7 @@ class VectorDBManager:
         lines = content.split("\n")
         current_chunk = []
         current_size = 0
-        
+
         # Track document structure for enhanced metadata
         h1_title = None
         resource_type = None
@@ -171,7 +209,7 @@ class VectorDBManager:
                 # Parse header level and content
                 header_level = self._get_header_level(line)
                 header_text = self._clean_header_text(line)
-                
+
                 # Update tracking variables
                 if header_level == "h1":
                     h1_title = header_text
@@ -183,7 +221,7 @@ class VectorDBManager:
                     current_subsection = None
                 elif header_level == "h3":
                     current_subsection = header_text
-                
+
                 current_header_level = header_level
 
                 # Start new chunk with header
@@ -261,13 +299,13 @@ class VectorDBManager:
         """Clean header text by removing markdown formatting and emojis."""
         # Remove markdown header markers
         text = line.strip().lstrip("#").strip()
-        
+
         # Remove emojis and special characters
         text = re.sub(r'[^\w\s\-\.]', '', text)
-        
+
         # Clean up extra whitespace
         text = re.sub(r'\s+', ' ', text).strip()
-        
+
         return text
 
     def _extract_resource_type(self, h1_title: str) -> str:
@@ -533,7 +571,7 @@ class VectorDBManager:
                     chunk["metadata"]["file_path"] = file_path
                     chunk["metadata"]["file_name"] = os.path.basename(file_path)
                     chunk["metadata"]["chunk_id"] = f"{file_path}:{i}"
-                    
+
                     # Clean metadata to remove None values
                     chunk["metadata"] = {k: v for k, v in chunk["metadata"].items() if v is not None}
 
