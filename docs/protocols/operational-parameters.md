@@ -61,6 +61,26 @@ This protocol defines the operational parameters that should be tracked and moni
 - Update models when drift detected
 - Document breaking changes
 
+### CI/CD State Tracking
+**Location**: `.github/workflows/ci.yml`, GitHub Actions
+**Parameters**:
+- Environment variable configuration (vars vs secrets)
+- Test classification (unit vs integration)
+- Python version compatibility
+- Dependency installation status
+
+**Monitoring**:
+- Verify environment variable references in CI workflows
+- Ensure proper test classification for API-dependent tests
+- Check Python version alignment between local and CI
+- Monitor dependency installation across Python versions
+
+**Common Issues**:
+- **Environment Variables**: Use `${{ vars.VARIABLE }}` for repository variables, `${{ secrets.SECRET }}` for encrypted secrets
+- **Test Classification**: Mark API-dependent tests with `@pytest.mark.integration`
+- **Variable Scope**: Integration tests receive environment variables, unit tests do not
+- **Python Versions**: Ensure `requires-python` in `pyproject.toml` aligns with CI matrix
+
 ## Implementation
 
 ### For Agents
@@ -81,6 +101,7 @@ This protocol defines the operational parameters that should be tracked and moni
 - ✅ Knowledge base is fresh (< 7 days)
 - ✅ Development state is clean (no linting errors)
 - ✅ Schema drift is monitored and addressed
+- ✅ CI/CD configuration is correct (environment variables, test classification)
 
 ## Related Protocols
 
