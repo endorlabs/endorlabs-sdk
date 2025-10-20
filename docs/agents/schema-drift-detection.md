@@ -275,54 +275,64 @@ class Finding(BaseModel, SchemaDriftMixin):
 
 ## 🔧 **SchemaDriftDetector Implementation**
 
+### **Shared Utilities Approach**
+The `SchemaDriftDetector` is now implemented as a shared utility in `src/endor_cockpit/utils/schema_drift.py` to avoid code duplication across resource modules.
+
 ### **Core Detection Logic**
 ```python
+# Import from shared utilities
+from ..utils import SchemaDriftDetector
+
 class SchemaDriftDetector:
-    """Detects and logs schema drift for unknown fields."""
+    """Detects and logs API schema drift for unknown fields."""
     
     @staticmethod
-    def extract_unknown_fields(data: dict, known_fields: set, context: str) -> None:
-        """Extract and log unknown fields from API response."""
-        if not isinstance(data, dict):
-            return
-            
-        unknown_fields = set(data.keys()) - known_fields
-        
+    def extract_unknown_fields(data: dict, model_fields: set, model_name: str) -> dict:
+        """Extract unknown fields from data and log them."""
+        unknown_fields = {k: v for k, v in data.items() if k not in model_fields}
         if unknown_fields:
+            SchemaDriftDetector.log_unknown_fields(model_name, unknown_fields)
+        return unknown_fields
+    
+    @staticmethod
+    def log_unknown_fields(model_name: str, unknown_fields: dict, context: str = ""):
+        """Log unknown fields as warnings for schema drift detection."""
+        if unknown_fields:
+            field_list = ", ".join(unknown_fields.keys())
             logger.warning(
-                f"Schema drift detected in {context}: "
-                f"Unknown fields: {sorted(unknown_fields)}. "
-                f"Consider updating the model to include these fields."
+                f"API Schema Drift Detected in {model_name}: "
+                f"Unknown fields found: {field_list}. "
+                f"Context: {context}. "
+                f"This may indicate API evolution or missing model fields."
             )
-            
-            # Log detailed information for debugging
-            for field in unknown_fields:
-                value = data[field]
-                logger.info(
-                    f"Unknown field '{field}' in {context}: "
-                    f"type={type(value).__name__}, value={repr(value)[:100]}"
-                )
 ```
 
 ### **Integration with Pydantic Models**
 ```python
+from ..utils import SchemaDriftDetector
+
 @field_validator('*', mode='before')
 @classmethod
 def detect_schema_drift(cls, v, info):
     """Detect and log schema drift for unknown fields."""
     if info.field_name and isinstance(v, dict):
         model_fields = {
-            'meta': {'create_time', 'update_time', 'name', 'description', ...},
-            'spec': {'project_uuid', 'level', 'method', 'ecosystem', ...},
-            'context': {'id', 'type', 'scan_uuid', 'tags', ...}
+            'create_time', 'update_time', 'name', 'description', 'created_by', 
+            'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time', 'references'
         }
         
         if info.field_name in model_fields:
             SchemaDriftDetector.extract_unknown_fields(
-                v, model_fields[info.field_name], f"{cls.__name__}.{info.field_name}"
+                v, model_fields, f"{cls.__name__}.{info.field_name}"
             )
     return v
 ```
+
+### **Benefits of Shared Utilities**
+- **Code Deduplication**: Single implementation across all resource modules
+- **Consistency**: All resources use the same schema drift detection logic
+- **Maintainability**: Updates to schema drift detection apply to all resources
+- **Type Safety**: Enhanced type hints and documentation in shared module
 
 ## 📈 **Success Metrics**
 

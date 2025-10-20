@@ -368,6 +368,8 @@ name = "endor-cockpit"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "chromadb" },
+    { name = "openai" },
     { name = "pydantic" },
     { name = "requests" },
 ]
@@ -411,10 +413,12 @@ vector = [
 [package.metadata]
 requires-dist = [
     { name = "anthropic", marker = "extra == 'rag'", specifier = ">=0.8.0" },
+    { name = "chromadb", specifier = ">=1.2.0" },
     { name = "chromadb", marker = "extra == 'rag'", specifier = ">=0.4.0" },
     { name = "chromadb", marker = "extra == 'vector'", specifier = ">=0.4.0" },
     { name = "jsonschema", marker = "extra == 'dev'", specifier = "==4.23.0" },
     { name = "langchain", marker = "extra == 'rag'", specifier = ">=0.1.0" },
+    { name = "openai", specifier = ">=2.5.0" },
     { name = "openai", marker = "extra == 'rag'", specifier = ">=1.0.0" },
     { name = "openai", marker = "extra == 'vector'", specifier = ">=1.0.0" },
     { name = "pydantic", specifier = "==2.12.3" },

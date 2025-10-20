@@ -74,6 +74,62 @@ def create_resource(
 - **Authentication**: Use resource modules, not direct API calls
 - **OpenAPI analysis**: Look for `{Resource}Service` endpoints in spec
 
+### **API Implementation Patterns**
+
+**Endpoint Pattern**:
+```
+GET    /v1/namespaces/{tenant_meta.namespace}/projects
+POST   /v1/namespaces/{tenant_meta.namespace}/projects
+GET    /v1/namespaces/{tenant_meta.namespace}/projects/{uuid}
+DELETE /v1/namespaces/{tenant_meta.namespace}/projects/{uuid}
+```
+
+**Critical Parameters**:
+- **Path parameter**: `tenant_meta.namespace` (canonical namespace name)
+- **NOT**: `namespace_uuid` or `tenant_namespace`
+- **Example**: `endor-solutions-tgowan.cockpit`
+
+**Response Structure**:
+```json
+{
+  "list": {
+    "objects": [
+      {
+        "meta": {
+          "name": "https://github.com/owner/repo.git",
+          "description": null,
+          "create_time": "2025-10-18T15:44:29.121Z",
+          "created_by": "user@endor.ai",
+          "kind": "Project",
+          "version": "v1"
+        },
+        "processing_status": {
+          "disable_automated_scan": true,
+          "scan_state": "SCAN_STATE_IDLE",
+          "scan_time": "2025-10-19T02:54:15.996651723Z"
+        },
+        "spec": {
+          "git": {
+            "full_name": "owner/repo",
+            "git_clone_url": "git@github.com:owner/repo.git",
+            "http_clone_url": "https://github.com/owner/repo.git",
+            "organization": "owner",
+            "path": "repo",
+            "web_url": "https://api.github.com/owner/repo"
+          },
+          "internal_reference_key": "https://github.com/owner/repo.git",
+          "platform_source": "PLATFORM_SOURCE_GITHUB"
+        },
+        "tenant_meta": {
+          "namespace": "endor-solutions-tgowan.cockpit"
+        },
+        "uuid": "68f3b5ddf04afdad6f14be97"
+      }
+    ]
+  }
+}
+```
+
 ---
 
 ## 🧭 **API Navigation & Resource Implementation**
@@ -95,17 +151,154 @@ grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
 - **Authentication**: Use resource modules, not direct API calls
 
 ### **Resource Implementation Workflow**
-1. **Query RAG knowledge base** for existing patterns
-2. **Analyze OpenAPI spec** for `{Resource}Service` endpoints
-3. **Implement GET operations first** to understand structure
-4. **Create Pydantic models** from live data + API spec
-5. **Document all quirks** and learnings
 
-### **Common Pitfalls**
-- **❌ Wrong path parameter**: Using `namespace_uuid` instead of `tenant_meta.namespace`
-- **❌ Wrong response parsing**: Expecting direct arrays instead of `list.objects`
-- **❌ Direct API calls**: Bypassing resource modules and authentication
-- **❌ Missing OpenAPI analysis**: Not checking service endpoints first
+#### **Step 1: Research Phase (10 minutes)**
+
+**1.1 Query Knowledge Base**
+```python
+# Check for existing patterns
+results = query_vector_db("How do I implement {Resource} resources?")
+results = query_vector_db("What are the common pitfalls for {resource} implementation?")
+```
+
+**1.2 Analyze OpenAPI Specification**
+```bash
+# Search for service endpoints
+grep -i "{Resource}Service" tmp/openapiv2.swagger.json
+grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+```
+
+**1.3 Test with endorctl**
+```bash
+# Get live data structure
+endorctl api list -r {Resource}
+# Example: endorctl api list -r Project
+```
+
+#### **Step 2: Live Data Analysis (15 minutes)**
+
+**2.1 Get Live API Data**
+```python
+# workspace/workspace.py
+import sys
+sys.path.insert(0, '..')
+from endor_cockpit.api_client import APIClient
+import os
+
+client = APIClient()
+namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan.cockpit')
+
+# Test the endpoint
+headers = client.default_headers
+res = client.get(f"v1/namespaces/{namespace}/{resource}", headers=headers)
+print(res.json())
+```
+
+**2.2 Create Pydantic Models**
+```python
+# Model from live data + API spec
+class Resource(BaseModel):
+    meta: ResourceMeta
+    spec: ResourceSpec
+    tenant_meta: TenantMeta
+    uuid: str
+```
+
+#### **Step 3: Resource Module Implementation**
+```python
+def list_resources(client: APIClient, tenant_meta_namespace: str) -> List[Resource]:
+    """List all resources in the specified namespace."""
+    res = client.get(f"v1/namespaces/{tenant_meta_namespace}/{resources}")
+    data = res.json()
+    resources_data = data.get("list", {}).get("objects", [])
+    return [Resource(**item) for item in resources_data]
+```
+
+#### **Step 4: Testing Strategy**
+
+**4.1 Collaborative Workspace**
+```python
+# workspace/workspace.py - Single file for experimentation
+import sys
+sys.path.insert(0, '..')
+from endor_cockpit.api_client import APIClient
+from endor_cockpit.resources import resource
+
+client = APIClient()
+namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan.cockpit')
+
+# Test operations
+resources_list = resource.list_resources(client, namespace)
+print(f"Found {len(resources_list)} resources")
+```
+
+**4.2 Validation Steps**
+1. **Check namespace exists**: Verify canonical namespace format
+2. **Test GET operations**: Ensure endpoints return data
+3. **Validate models**: Confirm Pydantic models match API response
+4. **Test CRUD operations**: Verify create, update, delete work
+5. **Document quirks**: Record any API discrepancies
+
+### **Common Pitfalls & Solutions**
+
+**❌ Wrong Path Parameter**
+```python
+# WRONG - This will fail
+client.get(f"v1/namespaces/{namespace_uuid}/projects")
+
+# CORRECT - Use canonical namespace
+client.get(f"v1/namespaces/{tenant_meta_namespace}/projects")
+```
+
+**❌ Wrong Response Parsing**
+```python
+# WRONG - This will fail
+data = res.json().get("projects", [])
+
+# CORRECT - Use list.objects structure
+data = res.json().get("list", {}).get("objects", [])
+```
+
+**❌ Direct API Calls**
+```python
+# WRONG - Direct calls may fail due to auth issues
+response = client.get("v1/namespaces/...")
+
+# CORRECT - Use resource modules
+projects = list_projects(client, namespace)
+```
+
+**❌ Missing Update Mask**
+```python
+# WRONG - Missing update_mask parameter
+payload = UpdateProjectPayload(tags=["new-tag"])
+
+# CORRECT - Include update_mask
+payload = UpdateProjectPayload(
+    tags=["new-tag"],
+    update_mask=["tags"]
+)
+```
+
+**❌ Unicode Encoding Issues (Windows)**
+```python
+# WRONG - Unicode emojis cause encoding errors
+print(f"✅ Success")
+
+# CORRECT - Use ASCII characters
+print(f"[SUCCESS] Success")
+```
+
+**❌ Import Path Issues**
+```python
+# WRONG - Imports before path setup
+from endor_cockpit.api_client import APIClient
+sys.path.insert(0, '..')
+
+# CORRECT - Set up paths before imports
+sys.path.insert(0, '..')
+from endor_cockpit.api_client import APIClient
+```
 
 ### **Success Pattern**
 ```python
@@ -307,7 +500,7 @@ def create_namespace(
 ```python
 # Example: Creating a namespace
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.namespaces import CreateNamespacePayload, NamespaceMeta
+from endor_cockpit.resources.namespace import CreateNamespacePayload, NamespaceMeta
 
 client = APIClient()
 payload = CreateNamespacePayload(

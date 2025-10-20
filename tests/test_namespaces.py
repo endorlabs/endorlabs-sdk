@@ -10,7 +10,7 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
 )
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.namespaces import (
+from endor_cockpit.resources.namespace import (
     CreateNamespacePayload,
     NamespaceMetaCreate,
     create_namespace,
