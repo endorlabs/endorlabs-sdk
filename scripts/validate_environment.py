@@ -9,11 +9,10 @@ Used by holocron init and CI workflows to ensure proper configuration.
 import json
 import os
 import sys
-import requests
-
 from pathlib import Path
 from typing import Dict
 
+import requests
 
 
 class ValidationError(Exception):
