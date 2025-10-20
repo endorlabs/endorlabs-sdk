@@ -390,7 +390,7 @@ For current operational context including environment setup, GitHub CLI configur
 
 ### **Ephemeral Learning Capture**
 
-**CRITICAL**: For every technical issue encountered during SDK development, API debugging, or endorctl usage, document a log entry in `workspace/logbook.md` using the template format.
+**CRITICAL**: For every technical issue encountered during SDK development, API debugging, or endorctl usage, document a log entry in `.workspace/logbook.md` using the template format.
 
 **Required Information**:
 - **Task**: What was being attempted

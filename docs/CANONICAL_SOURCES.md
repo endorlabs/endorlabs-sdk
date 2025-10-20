@@ -91,7 +91,7 @@
 
 ### L1 (Essential - Always Required)
 - Environment validation checklist
-- RAG knowledge base query
+- RAG knowledge base maintenance and query
 - Security scan requirement
 - Error recovery basics
 

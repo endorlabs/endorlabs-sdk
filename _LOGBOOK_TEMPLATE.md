@@ -1,54 +1,88 @@
-# Logbook Template
+# Logbook Entry Template
 
-Use this template for capturing technical learnings during SDK development, API debugging, or endorctl usage.
+> **Ephemeral learning capture for Endor Cockpit development**
+
+## Entry Format
+
+```markdown
+## Entry: [YYYY-MM-DD HH:MM] - [Brief Description]
+
+### Task
+What was being attempted?
+
+### Context
+- Resource types involved
+- Related files
+- RAG query results
+- Terminal output
+- API responses
+
+### Attempted Approach
+- Specific function calls
+- API endpoints used
+- Commands executed
+- Code changes made
+
+### Unexpected Behavior
+- Expected vs actual behavior
+- Error messages
+- Unexpected responses
+- Performance issues
+
+### Resolution
+- Working solution
+- Exact function signatures
+- Correct API usage
+- Final code changes
+
+### Key Learning
+One-sentence summary of the core insight discovered.
+
+### Relevant Documentation
+- SDK references
+- Test files
+- API endpoints
+- Documentation sections
+
+### Miscellaneous Notes
+- Additional context
+- Follow-up items
+- Related discoveries
+- Future considerations
+
+### Tags
+- Resource type (project, finding, policy, namespace)
+- Operation type (create, read, update, delete, query)
+- Context (debugging, implementation, testing, documentation)
+
+### Reviewed for Promotion
+- [ ] Ready for promotion to permanent documentation
+- [ ] Contains valuable universal knowledge
+- [ ] Solution is reusable
+- [ ] Documentation is clear and complete
+```
+
+## Usage Instructions
+
+### For Agents
+1. **Log every significant discovery** during development
+2. **Use structured format** to ensure consistency
+3. **Include all relevant context** for future reference
+4. **Tag appropriately** for easy retrieval
+5. **Mark for promotion** when ready for permanent documentation
+
+### For Developers
+1. **Review logbook entries** before starting similar tasks
+2. **Promote valuable entries** to permanent documentation
+3. **Archive old entries** when no longer relevant
+4. **Use tags** to find related discoveries
+
+### Entry Lifecycle
+1. **Created**: During agent operations
+2. **Reviewed**: Before promotion consideration
+3. **Promoted**: Moved to permanent documentation
+4. **Archived**: When superseded or no longer relevant
 
 ---
 
-## Entry Template
-
-### [YYYY-MM-DD HH:MM] - [Brief Title]
-
-**Task**: [What were you trying to accomplish?]
-
-**Context**: 
-- Resource Type(s): [project, finding, policy, namespace, etc.]
-- Related Files: [List SDK files, test files involved]
-- RAG Query: [If applicable, what did you query?]
-- Terminal Output: [Link to relevant log section or paste key output]
-
-**Attempted Approach**:
-[What did you try? Include specific function calls, API endpoints, commands]
-```python
-# Example code or commands attempted
-```
-
-**Unexpected Behavior**:
-[What happened that was different from expected?]
-- Expected: [What you thought would happen]
-- Actual: [What actually happened]
-- Error Messages: [Exact error messages if applicable]
-
-**Resolution**:
-[How was the issue resolved? Include exact SDK-native function calls]
-```python
-# Working solution with exact function signatures
-from endor_cockpit.resources import resource_name
-result = resource_name.function_name(client, params)
-```
-
-**Key Learning**:
-[One-sentence summary of the core insight]
-
-**Relevant Documentation**:
-- SDK Reference: `src/endor_cockpit/resources/[file].py:[line-range]`
-- Related Tests: `tests/test_[resource].py:[line-range]`
-- API Endpoint: `[METHOD] /v1/endpoint`
-
-**Miscellaneous Notes**:
-[Any additional context, related issues, or follow-up items]
-
-**Tags**: `[debugging, api-quirk, schema-drift, permissions, etc.]`
-
-- [ ] **Reviewed for Promotion** (Check when ready for archive)
-
----
+*This template ensures consistent capture of learning and discoveries during Endor Cockpit development.*

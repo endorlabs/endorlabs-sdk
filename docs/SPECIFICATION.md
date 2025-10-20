@@ -4,7 +4,7 @@
 
 ## 🎯 **Purpose**
 
-This document captures known discrepancies between the OpenAPI specification (`tmp/openapiv2.swagger.json`) and actual Endor Labs API behavior. These corrections ensure agents work with the real API, not the idealized spec.
+This document captures known discrepancies between the OpenAPI specification (`tmp/openapiv2.swagger.json`) and actual Endor Labs API behavior. These corrections ensure agents work with the real API, not the machine-generated spec.
 
 ## 📋 **Critical API Corrections**
 
