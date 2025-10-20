@@ -49,7 +49,7 @@ runs:
       shell: bash
       run: |
         # Only sync if dependencies are not already available
-        if [ ! -d ".venv" ] || [ ! -f ".venv/pyproject.toml" ]; then
+        if [ ! -d ".venv" ]; then
           echo "Installing dependencies..."
           uv sync --dev --group holocron
         else
