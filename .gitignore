@@ -57,6 +57,11 @@ workflow/vector_db_manifest.json
 holocron_data/
 holocron_data/**
 
+# Agent workspace directory (ephemeral)
+.workspace/
+.workspace/**
+!.workspace/README.md
+
 # OS
 .DS_Store
 Thumbs.db
