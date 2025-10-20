@@ -316,7 +316,7 @@ response = client.get("v1/namespaces/uuid-here/projects")
 ### **Python Version Support**
 - **Minimum**: Python 3.11
 - **Maximum**: Python 3.13 (exclusive)
-- **Testing**: Test on 3.11, 3.12, 3.13
+- **Testing**: Test on 3.13
 
 ### **Dependencies**
 - **Core**: `requests==2.32.5`, `pydantic==2.12.3`

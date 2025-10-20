@@ -23,7 +23,7 @@ concurrency:
 env:
   # CI Configuration - easily maintainable environment variables
   PYTHON_VERSION: "3.13"
-  PYTHON_VERSIONS: '["3.12", "3.13"]'
+  PYTHON_VERSIONS: '["3.13"]'
   PYTEST_MAXFAIL: "2"
   COVERAGE_PACKAGE: "endor_cockpit"
   UV_VERSION: "0.9.3"
@@ -112,10 +112,9 @@ jobs:
     needs: resolve-dependencies
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.13"]
       fail-fast: false
-      max-parallel: 2
-    continue-on-error: ${{ matrix.python-version != '3.13' }}
+      max-parallel: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0
