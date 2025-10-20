@@ -44,7 +44,7 @@ Tenant → Namespace → Child Namespace → Resources
 
 ### SDK Implementation
 
-**Location**: `src/endor_cockpit/resources/namespaces.py:117-173`
+**Location**: `src/endor_cockpit/resources/namespace.py:117-173`
 
 ```python
 # Direct reference - see SDK for full definition
@@ -82,15 +82,15 @@ class Namespace(BaseModel):
 
 ### List Namespaces
 
-**Function**: `namespaces.list_namespaces(client, tenant_namespace)`  
-**Location**: `src/endor_cockpit/resources/namespaces.py:197`  
+**Function**: `namespace.list_namespaces(client, tenant_namespace)`  
+**Location**: `src/endor_cockpit/resources/namespace.py:197`  
 **Status**: ✅ IMPLEMENTED
 
 ```python
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 
 # List all namespaces in tenant
-all_namespaces = namespaces.list_namespaces(
+all_namespaces = namespace.list_namespaces(
     client=client,
     tenant_namespace="endor-solutions-tgowan.cockpit"
 )
@@ -100,13 +100,13 @@ all_namespaces = namespaces.list_namespaces(
 
 ### Get Namespace
 
-**Function**: `namespaces.get_namespace(client, parent_namespace, namespace_uuid)`  
-**Location**: `src/endor_cockpit/resources/namespaces.py:257`  
+**Function**: `namespace.get_namespace(client, parent_namespace, namespace_uuid)`  
+**Location**: `src/endor_cockpit/resources/namespace.py:257`  
 **Status**: ✅ IMPLEMENTED
 
 ```python
 # Get specific namespace
-namespace = namespaces.get_namespace(
+namespace = namespace.get_namespace(
     client=client,
     parent_namespace="endor-solutions-tgowan.cockpit",
     namespace_uuid="namespace-uuid-here"
@@ -117,12 +117,12 @@ namespace = namespaces.get_namespace(
 
 ### Create Namespace
 
-**Function**: `namespaces.create_namespace(client, parent_namespace, payload)`  
-**Location**: `src/endor_cockpit/resources/namespaces.py:224`  
+**Function**: `namespace.create_namespace(client, parent_namespace, payload)`  
+**Location**: `src/endor_cockpit/resources/namespace.py:224`  
 **Status**: ✅ IMPLEMENTED
 
 ```python
-from endor_cockpit.resources.namespaces import (
+from endor_cockpit.resources.namespace import (
     CreateNamespacePayload,
     NamespaceMetaCreate
 )
@@ -135,7 +135,7 @@ payload = CreateNamespacePayload(
     )
 )
 
-namespace = namespaces.create_namespace(
+namespace = namespace.create_namespace(
     client=client,
     parent_namespace="endor-solutions-tgowan.cockpit",
     payload=payload
@@ -147,12 +147,12 @@ namespace = namespaces.create_namespace(
 
 ### Update Namespace
 
-**Function**: `namespaces.update_namespace(client, parent_namespace, namespace_uuid, payload)`  
-**Location**: `src/endor_cockpit/resources/namespaces.py:317`  
+**Function**: `namespace.update_namespace(client, parent_namespace, namespace_uuid, payload)`  
+**Location**: `src/endor_cockpit/resources/namespace.py:317`  
 **Status**: ✅ IMPLEMENTED
 
 ```python
-from endor_cockpit.resources.namespaces import (
+from endor_cockpit.resources.namespace import (
     UpdateNamespacePayload,
     NamespaceMetaUpdate
 )
@@ -164,7 +164,7 @@ payload = UpdateNamespacePayload(
     )
 )
 
-namespace = namespaces.update_namespace(
+namespace = namespace.update_namespace(
     client=client,
     parent_namespace="endor-solutions-tgowan.cockpit",
     namespace_uuid="namespace-uuid",
@@ -176,13 +176,13 @@ namespace = namespaces.update_namespace(
 
 ### Delete Namespace
 
-**Function**: `namespaces.delete_namespace(client, parent_namespace, namespace_uuid)`  
-**Location**: `src/endor_cockpit/resources/namespaces.py:288`  
+**Function**: `namespace.delete_namespace(client, parent_namespace, namespace_uuid)`  
+**Location**: `src/endor_cockpit/resources/namespace.py:288`  
 **Status**: ✅ IMPLEMENTED
 
 ```python
 # Delete namespace
-success = namespaces.delete_namespace(
+success = namespace.delete_namespace(
     client=client,
     parent_namespace="endor-solutions-tgowan.cockpit",
     namespace_uuid="namespace-uuid"
@@ -265,7 +265,7 @@ namespace = "your-tenant.namespace"
 
 ---
 
-*Documentation references SDK implementation. See `src/endor_cockpit/resources/namespaces.py` for complete details.*
+*Documentation references SDK implementation. See `src/endor_cockpit/resources/namespace.py` for complete details.*
 """
 
 import logging

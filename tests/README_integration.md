@@ -173,9 +173,9 @@ print('API client created successfully')
 # List namespaces manually
 python -c "
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 client = APIClient()
-ns = namespaces.list_namespaces(client, 'endor-solutions-tgowan.cockpit')
+ns = namespace.list_namespaces(client, 'endor-solutions-tgowan.cockpit')
 print(f'Found {len(ns)} namespaces')
 "
 ```
