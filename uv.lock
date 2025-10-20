@@ -387,6 +387,7 @@ name = "endor-cockpit"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "chromadb" },
     { name = "pydantic" },
     { name = "requests" },
 ]
@@ -407,6 +408,7 @@ holocron = [
 
 [package.metadata]
 requires-dist = [
+    { name = "chromadb", specifier = "==1.2.0" },
     { name = "pydantic", specifier = "==2.12.3" },
     { name = "requests", specifier = "==2.32.5" },
 ]
