@@ -18,7 +18,7 @@ sys.path.insert(
 )
 
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 
 
 class TestToolImplementation:
@@ -34,7 +34,7 @@ class TestToolImplementation:
     def test_list_namespaces_implementation(self, mock_client):
         """Test the list_namespaces tool implementation."""
         # Mock the SDK function
-        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
+        with patch("endor_cockpit.resources.namespace.list_namespaces") as mock_list:
             mock_namespaces = [
                 Mock(
                     uuid="ns-1",
@@ -64,9 +64,7 @@ class TestToolImplementation:
 
     def test_create_namespace_implementation(self, mock_client):
         """Test the create_namespace tool implementation."""
-        with patch(
-            "endor_cockpit.resources.namespaces.create_namespace"
-        ) as mock_create:
+        with patch("endor_cockpit.resources.namespace.create_namespace") as mock_create:
             mock_namespace = Mock()
             mock_namespace.uuid = "new-ns-uuid"
             mock_namespace.meta.name = "new-namespace"
@@ -108,7 +106,7 @@ class TestToolImplementation:
 
     def test_tool_error_handling(self, mock_client):
         """Test tool error handling."""
-        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
+        with patch("endor_cockpit.resources.namespace.list_namespaces") as mock_list:
             mock_list.side_effect = Exception("API Error")
 
             # Test error handling
@@ -147,9 +145,7 @@ class TestToolImplementation:
             if not tenant_namespace:
                 raise ValueError("tenant_namespace is required")
 
-            return namespaces.list_namespaces(
-                client, tenant_namespace, include_children
-            )
+            return namespace.list_namespaces(client, tenant_namespace, include_children)
         except Exception as e:
             print(f"Error in list_namespaces: {e}")
             return None
@@ -171,7 +167,7 @@ class TestToolImplementation:
             if not description:
                 raise ValueError("description is required")
 
-            from endor_cockpit.resources.namespaces import (
+            from endor_cockpit.resources.namespace import (
                 CreateNamespacePayload,
                 NamespaceMetaCreate,
             )
@@ -180,7 +176,7 @@ class TestToolImplementation:
                 meta=NamespaceMetaCreate(name=name, description=description)
             )
 
-            return namespaces.create_namespace(client, parent_namespace, payload)
+            return namespace.create_namespace(client, parent_namespace, payload)
         except Exception as e:
             print(f"Error in create_namespace: {e}")
             return None
@@ -342,7 +338,7 @@ class TestToolIntegration:
     def test_tool_function_mapping(self):
         """Test that tool functions map to SDK functions."""
         # Test that tool implementations use the correct SDK functions
-        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
+        with patch("endor_cockpit.resources.namespace.list_namespaces") as mock_list:
             mock_list.return_value = []
 
             # Test the mapping
@@ -355,7 +351,7 @@ class TestToolIntegration:
 
     def test_tool_error_propagation(self):
         """Test that tool errors are properly handled."""
-        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
+        with patch("endor_cockpit.resources.namespace.list_namespaces") as mock_list:
             mock_list.side_effect = Exception("Test error")
 
             # Test error handling - should catch the exception
@@ -371,9 +367,9 @@ class TestToolIntegration:
     def _call_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Any:
         """Call a tool with given parameters."""
         if tool_name == "list_namespaces":
-            from endor_cockpit.resources import namespaces
+            from endor_cockpit.resources import namespace
 
-            return namespaces.list_namespaces(
+            return namespace.list_namespaces(
                 Mock(),  # Mock client
                 parameters["tenant_namespace"],
                 parameters.get("include_children", True),

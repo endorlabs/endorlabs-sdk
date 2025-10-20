@@ -22,11 +22,36 @@ Each resource module should follow this pattern:
 - **Update operations**: `update_{resource}()`
 - **Delete operations**: `delete_{resource}()`
 
+### Consistent Architecture Patterns
+All resource modules must follow the established patterns from `project.py`:
+
+#### **Documentation Standards**
+- **Mutable/Immutable Fields**: Document which fields can be updated via PATCH operations
+- **Comprehensive Examples**: Include practical usage examples in docstrings
+- **Field Validation**: Document required fields and validation rules
+
+#### **API Payload Structure**
+- **Update Functions**: Include current resource data in API payloads to avoid validation errors
+- **Required Fields**: Always include immutable required fields (e.g., `meta.name`, `tenant_meta`)
+- **Field Merging**: Properly merge update payloads with existing resource data
+
+#### **Logging and Error Handling**
+- **Consistent Logging**: Use `logger.info()` for update operations with resource UUID and update mask
+- **Error Handling**: Consistent error handling with proper logging and exception details
+- **Validation**: Proper field validation and error reporting
+
+#### **Code Structure**
+- **Function Signatures**: Consistent parameter patterns across all resources
+- **Return Types**: All functions return `Optional[Resource]` for consistency
+- **Documentation**: Comprehensive docstrings with examples and field descriptions
+
+**Reference**: See `src/endor_cockpit/resources/project.py` as the canonical implementation pattern.
+
 ## 2. Code Standards
 
 ### Python Version Support
 - **Minimum**: Python 3.11
-- **Maximum**: Python 3.14 (exclusive)
+- **Maximum**: Python 3.13 (exclusive)
 - **Testing**: Test on 3.11, 3.12, 3.13
 
 ### Dependencies
@@ -61,7 +86,7 @@ from requests import HTTPError
 from pydantic import BaseModel, Field
 
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.namespaces import CreateNamespacePayload
+from endor_cockpit.resources.namespace import CreateNamespacePayload
 
 # ❌ WRONG: Unsorted imports, unused imports
 import json  # F401: unused import
@@ -307,7 +332,7 @@ def create_namespace(
 ```python
 # Example: Creating a namespace
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.namespaces import CreateNamespacePayload
+from endor_cockpit.resources.namespace import CreateNamespacePayload
 
 client = APIClient()
 payload = CreateNamespacePayload(
@@ -375,3 +400,37 @@ Create LLM tool schemas for each resource function:
 - **Metrics**: Performance metrics
 - **Logging**: Structured logging
 - **Alerting**: Error rate monitoring
+
+## 11. Cross-Platform Development
+
+### Path Handling Requirements
+**Source**: Logbook entry 2025-01-27
+
+**Problem**: Cross-platform path handling issues cause content type detection failures and query function disconnects.
+
+**Solution**: Implement consistent path normalization across all components:
+
+```python
+import os
+
+# Always normalize paths for cross-platform compatibility
+normalized_path = os.path.normpath(file_path)
+
+# Convert to forward slashes for regex pattern matching
+regex_path = normalized_path.replace(os.path.sep, "/")
+```
+
+**Best Practices**:
+- Use `os.path.normpath()` for all path operations
+- Convert paths to forward slashes before regex matching
+- Ensure database and query function use same path conventions
+- Test path handling on target platforms (Windows, macOS, Linux)
+- Avoid hardcoded path separators
+
+**Platform Considerations**:
+- **Windows**: Uses backslashes (`\`) in file paths
+- **macOS/Linux**: Use forward slashes (`/`) in file paths
+- **Regex patterns**: Always expect forward slashes
+- **Database paths**: Must be synchronized across components
+
+**Related**: [Holocron Setup Guide](../protocols/holocron-setup.md#cross-platform-path-handling)

@@ -35,8 +35,8 @@ runs:
       with:
         version: "0.9.3"
 
-    - name: Install dependencies
+    - name: Install dependencies (dev + holocron)
       if: inputs.install-dependencies == 'true'
       shell: bash
       run: |
-        uv sync --dev
+        uv sync --dev --group holocron

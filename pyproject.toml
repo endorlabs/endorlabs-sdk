@@ -7,7 +7,7 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.13,<3.15"
+requires-python = ">=3.12,<3.16"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -18,22 +18,51 @@ dependencies = [
     "pydantic==2.12.3"
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest==8.4.2",
-    "pytest-cov==6.0.0",
-    "ruff==0.14.1",
-    "jsonschema==4.23.0"
-]
-sec = []
-ops = []
+ [project.optional-dependencies]
+ # (Intentionally minimal; prefer dependency-groups for CI/dev/test installs.)
+
 
 [build-system]
 requires = ["hatchling>=1.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/endor_cockpit", "src/holocron"]
+
 [tool.ruff]
 line-length = 88
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "ENV",
+    "env.bak",
+    "venv.bak",
+    ".vscode",
+    ".idea",
+    ".pytest_cache",
+    ".tox",
+    ".nox",
+    ".ruff_cache",
+    "holocron_data/",
+    "holocron_data/**",
+    "workspace",
+    "workspace/**",
+    "*.log",
+    "__pycache__",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".coverage",
+    "coverage.xml",
+    ".hypothesis",
+    ".DS_Store",
+    "Thumbs.db"
+]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "C", "B"]
@@ -66,6 +95,38 @@ dev = [
     "pytest-cov>=6.0.0",
     "ruff>=0.14.1",
 ]
+cockpit = [
+]
+holocron = [
+    "chromadb==1.2.0",
+    "openai==2.5.0",
+    "langchain==0.1.0",
+    "anthropic==0.8.0",
+    "markdownify==0.11.0",
+    "beautifulsoup4==4.12.0"
+]
+
+# Vector Database configuration
+[tool.vector_db]
+# ChromaDB configuration
+chroma_path = "workflow/vector_db"
+collection_name = "endor_cockpit_docs"
+embedding_model = "text-embedding-3-small"
+
+# Chunking strategy configuration
+[tool.vector_db.chunking]
+markdown_max_chunk_size = 1000
+markdown_overlap = 200
+code_max_chunk_size = 800
+code_overlap = 100
+api_spec_max_chunk_size = 2000
+api_spec_overlap = 300
+
+# Content type detection patterns
+[tool.vector_db.patterns]
+markdown = ["\\.md$", "\\.rst$"]
+code = ["\\.py$", "\\.js$", "\\.ts$", "\\.go$", "\\.java$"]
+api_spec = ["openapi.*\\.json$", "swagger.*\\.json$", "\\.yaml$", "\\.yml$"]
 
 # Logging configuration
 [tool.logging]
