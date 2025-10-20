@@ -8,11 +8,10 @@ Provides commands for workspace initialization, knowledge sync, and querying.
 
 import argparse
 import sys
-from typing import List
 
 from .commands.init import init_command
-from .commands.sync import sync_command
 from .commands.query import query_command
+from .commands.sync import sync_command
 
 
 def main():
@@ -22,13 +21,13 @@ def main():
         description="Holocron Knowledge Base System for Endor Cockpit",
         epilog="For more information, see docs/protocols/holocron-setup.md"
     )
-    
+
     subparsers = parser.add_subparsers(
         dest="command",
         help="Available commands",
         required=True
     )
-    
+
     # Init command
     init_parser = subparsers.add_parser(
         "init",
@@ -44,7 +43,7 @@ def main():
         action="store_true",
         help="Enable verbose output"
     )
-    
+
     # Sync command
     sync_parser = subparsers.add_parser(
         "sync",
@@ -60,7 +59,7 @@ def main():
         action="store_true",
         help="Enable verbose output"
     )
-    
+
     # Query command
     query_parser = subparsers.add_parser(
         "query",
@@ -83,9 +82,9 @@ def main():
         default="text",
         help="Output format (default: text)"
     )
-    
+
     args = parser.parse_args()
-    
+
     try:
         if args.command == "init":
             init_command(args)
@@ -96,7 +95,7 @@ def main():
         else:
             parser.print_help()
             sys.exit(1)
-            
+
     except KeyboardInterrupt:
         print("\nOperation cancelled by user")
         sys.exit(1)

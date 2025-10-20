@@ -492,7 +492,10 @@ def update_project(
                 "tenant_meta": current_project.tenant_meta.model_dump(),
                 "meta": {
                     "name": current_project.meta.name,  # Required field
-                    **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+                    **(
+                        payload.meta.model_dump(exclude_none=True)
+                        if payload.meta else {}
+                    ),
                 },
                 "spec": current_project.spec.model_dump(),  # Required field
             }

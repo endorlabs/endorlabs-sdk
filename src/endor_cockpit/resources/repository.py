@@ -5,7 +5,6 @@ provides type-safe data models.
 """
 
 import logging
-import os
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -33,7 +32,7 @@ class RepositoryMeta(BaseModel):
     update_time: Optional[str] = Field(None, description="Last update timestamp")
     updated_by: Optional[str] = Field(None, description="Last updater identifier")
     tags: Optional[List[str]] = Field(None, description="Repository tags")
-    
+
     # Schema drift fields
     parent_uuid: Optional[str] = Field(None, description="Parent resource UUID")
     parent_kind: Optional[str] = Field(None, description="Parent resource kind")
@@ -46,10 +45,11 @@ class RepositoryMeta(BaseModel):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'create_time', 'update_time', 'name', 'description', 'created_by', 
-                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time', 'references'
+                'create_time', 'update_time', 'name', 'description', 'created_by',
+                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time',
+                'references'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"RepositoryMeta.{info.field_name}"
@@ -60,8 +60,10 @@ class RepositoryMeta(BaseModel):
 class RepositorySpec(BaseModel):
     """Repository specification."""
     project_uuid: str = Field(..., description="Associated project UUID")
-    source_code_info: Optional[dict] = Field(None, description="Source code information")
-    
+    source_code_info: Optional[dict] = Field(
+        None, description="Source code information"
+    )
+
     # Schema drift fields
     notification: Optional[dict] = Field(None, description="Notification configuration")
 
@@ -73,7 +75,7 @@ class RepositorySpec(BaseModel):
             model_fields = {
                 'project_uuid', 'source_code_info', 'notification'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"RepositorySpec.{info.field_name}"
@@ -84,7 +86,7 @@ class RepositorySpec(BaseModel):
 class Repository(BaseModel):
     """Repository resource model."""
     model_config = ConfigDict(extra='ignore')
-    
+
     uuid: str = Field(..., description="Unique identifier for the repository")
     meta: RepositoryMeta = Field(..., description="Repository metadata")
     spec: RepositorySpec = Field(..., description="Repository specification")
@@ -98,7 +100,7 @@ class Repository(BaseModel):
             model_fields = {
                 'uuid', 'meta', 'spec', 'tenant_meta'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"Repository.{info.field_name}"
@@ -126,7 +128,10 @@ def list_repositories(
     """List all repositories in the specified namespace."""
     try:
         headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/repositories", headers=headers)
+        res = client.get(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories",
+            headers=headers,
+        )
         data = res.json()
         repositories_data = data.get("list", {}).get("objects", [])
         return [Repository(**repo) for repo in repositories_data]
@@ -141,7 +146,10 @@ def get_repository(
     """Get a specific repository by UUID."""
     try:
         headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}", headers=headers)
+        res = client.get(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}",
+            headers=headers,
+        )
         data = res.json()
         return Repository(**data)
     except Exception as e:
@@ -155,16 +163,19 @@ def create_repository(
     """Create a new repository."""
     try:
         headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
+        headers.update({
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+
         request_data = {
             "object": {
                 "tenant_meta": {"namespace": tenant_meta_namespace},
                 **payload.model_dump()
             }
         }
-        
-        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/repositories", 
+
+        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/repositories",
                          headers=headers, data=request_data)
         data = res.json()
         return Repository(**data)
@@ -183,14 +194,19 @@ def update_repository(
     """Update an existing repository using partial updates."""
     try:
         headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
+        headers.update({
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+
         # Get the current repository to include required fields
-        current_repository = get_repository(client, tenant_meta_namespace, repository_uuid)
+        current_repository = get_repository(
+            client, tenant_meta_namespace, repository_uuid
+        )
         if not current_repository:
             logger.error(f"Repository {repository_uuid} not found")
             return None
-        
+
         # Build request data with correct structure
         request_data = {
             "object": {
@@ -198,28 +214,38 @@ def update_repository(
                 "tenant_meta": current_repository.tenant_meta.model_dump(),
                 "meta": {
                     "name": current_repository.meta.name,  # Required field
-                    **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+                    **(
+                        payload.meta.model_dump(exclude_none=True)
+                        if payload.meta else {}
+                    ),
                 },
                 "spec": {
-                    **current_repository.spec.model_dump(),  # Include all existing spec fields
-                    **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
+                    **current_repository.spec.model_dump(),  # Include all
+                    # existing spec fields
+                    **(
+                        payload.spec.model_dump(exclude_none=True)
+                        if payload.spec else {}
+                    ),
                 },
             }
         }
-        
+
         if update_mask:
             request_data["request"] = {"update_mask": update_mask}
-        
+
         logger.info(f"Updating repository {repository_uuid} with mask: {update_mask}")
-        
-        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/repositories", 
+
+        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/repositories",
                           headers=headers, data=request_data)
-        
+
         if res.status_code == 200:
             data = res.json()
             return Repository(**data)
         else:
-            logger.error(f"Failed to update repository {repository_uuid}: {res.status_code} - {res.text}")
+            logger.error(
+                f"Failed to update repository {repository_uuid}: "
+                f"{res.status_code} - {res.text}"
+            )
             return None
     except Exception as e:
         logger.error(f"Error updating repository {repository_uuid}: {e}", exc_info=True)
@@ -232,7 +258,10 @@ def delete_repository(
     """Delete a repository."""
     try:
         headers = client.default_headers
-        res = client.delete(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}", headers=headers)
+        res = client.delete(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}",
+            headers=headers,
+        )
         return res.status_code == 200
     except Exception as e:
         logger.error(f"Error deleting repository {repository_uuid}: {e}", exc_info=True)

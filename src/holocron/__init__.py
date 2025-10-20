@@ -17,12 +17,12 @@ Usage:
 """
 
 from .manager import VectorDBManager
-from .query import query_holocron, get_holocron_info, HolocronQuery
+from .query import HolocronQuery, get_holocron_info, query_holocron
 from .workspace import init_workspace
 
 __all__ = [
     "VectorDBManager",
-    "query_holocron", 
+    "query_holocron",
     "get_holocron_info",
     "HolocronQuery",
     "init_workspace",

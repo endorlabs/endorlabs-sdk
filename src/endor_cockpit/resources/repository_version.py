@@ -5,7 +5,6 @@ provides type-safe data models.
 """
 
 import logging
-import os
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -27,13 +26,15 @@ class TenantMeta(BaseModel):
 class RepositoryVersionMeta(BaseModel):
     """Repository version metadata."""
     name: str = Field(..., description="Repository version name (branch/tag)")
-    description: Optional[str] = Field(None, description="Repository version description")
+    description: Optional[str] = Field(
+        None, description="Repository version description"
+    )
     create_time: Optional[str] = Field(None, description="Creation timestamp")
     created_by: Optional[str] = Field(None, description="Creator identifier")
     update_time: Optional[str] = Field(None, description="Last update timestamp")
     updated_by: Optional[str] = Field(None, description="Last updater identifier")
     tags: Optional[List[str]] = Field(None, description="Repository version tags")
-    
+
     # Schema drift fields
     parent_uuid: Optional[str] = Field(None, description="Parent resource UUID")
     parent_kind: Optional[str] = Field(None, description="Parent resource kind")
@@ -46,10 +47,11 @@ class RepositoryVersionMeta(BaseModel):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'create_time', 'update_time', 'name', 'description', 'created_by', 
-                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time', 'references'
+                'create_time', 'update_time', 'name', 'description', 'created_by',
+                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time',
+                'references'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"RepositoryVersionMeta.{info.field_name}"
@@ -63,8 +65,10 @@ class RepositoryVersionSpec(BaseModel):
     commit_sha: Optional[str] = Field(None, description="Git commit SHA")
     branch: Optional[str] = Field(None, description="Git branch name")
     tag: Optional[str] = Field(None, description="Git tag name")
-    source_code_info: Optional[dict] = Field(None, description="Source code information")
-    
+    source_code_info: Optional[dict] = Field(
+        None, description="Source code information"
+    )
+
     # Schema drift fields
     notification: Optional[dict] = Field(None, description="Notification configuration")
 
@@ -74,9 +78,10 @@ class RepositoryVersionSpec(BaseModel):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'repository_uuid', 'commit_sha', 'branch', 'tag', 'source_code_info', 'notification'
+                'repository_uuid', 'commit_sha', 'branch', 'tag', 'source_code_info',
+                'notification'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"RepositoryVersionSpec.{info.field_name}"
@@ -87,10 +92,12 @@ class RepositoryVersionSpec(BaseModel):
 class RepositoryVersion(BaseModel):
     """Repository version resource model."""
     model_config = ConfigDict(extra='ignore')
-    
+
     uuid: str = Field(..., description="Unique identifier for the repository version")
     meta: RepositoryVersionMeta = Field(..., description="Repository version metadata")
-    spec: RepositoryVersionSpec = Field(..., description="Repository version specification")
+    spec: RepositoryVersionSpec = Field(
+        ..., description="Repository version specification"
+    )
     tenant_meta: TenantMeta = Field(..., description="Tenant metadata")
 
     @field_validator('*', mode='before')
@@ -101,7 +108,7 @@ class RepositoryVersion(BaseModel):
             model_fields = {
                 'uuid', 'meta', 'spec', 'tenant_meta'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"RepositoryVersion.{info.field_name}"
@@ -113,13 +120,19 @@ class RepositoryVersion(BaseModel):
 class CreateRepositoryVersionPayload(BaseModel):
     """Payload for creating a repository version."""
     meta: RepositoryVersionMeta = Field(..., description="Repository version metadata")
-    spec: RepositoryVersionSpec = Field(..., description="Repository version specification")
+    spec: RepositoryVersionSpec = Field(
+        ..., description="Repository version specification"
+    )
 
 
 class UpdateRepositoryVersionPayload(BaseModel):
     """Payload for updating a repository version."""
-    meta: Optional[RepositoryVersionMeta] = Field(None, description="Repository version metadata")
-    spec: Optional[RepositoryVersionSpec] = Field(None, description="Repository version specification")
+    meta: Optional[RepositoryVersionMeta] = Field(
+        None, description="Repository version metadata"
+    )
+    spec: Optional[RepositoryVersionSpec] = Field(
+        None, description="Repository version specification"
+    )
 
 
 # CRUD Operations
@@ -129,7 +142,10 @@ def list_repository_versions(
     """List all repository versions for a specific repository."""
     try:
         headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions", headers=headers)
+        res = client.get(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions",
+            headers=headers,
+        )
         data = res.json()
         versions_data = data.get("list", {}).get("objects", [])
         return [RepositoryVersion(**version) for version in versions_data]
@@ -139,36 +155,49 @@ def list_repository_versions(
 
 
 def get_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_uuid: str, version_uuid: str
+    client: APIClient, tenant_meta_namespace: str, repository_uuid: str,
+    version_uuid: str
 ) -> Optional[RepositoryVersion]:
     """Get a specific repository version by UUID."""
     try:
         headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions/{version_uuid}", headers=headers)
+        res = client.get(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions/{version_uuid}",
+            headers=headers,
+        )
         data = res.json()
         return RepositoryVersion(**data)
     except Exception as e:
-        logger.error(f"Error getting repository version {version_uuid}: {e}", exc_info=True)
+        logger.error(
+            f"Error getting repository version {version_uuid}: {e}",
+            exc_info=True,
+        )
         return None
 
 
 def create_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_uuid: str, payload: CreateRepositoryVersionPayload
+    client: APIClient, tenant_meta_namespace: str, repository_uuid: str,
+    payload: CreateRepositoryVersionPayload
 ) -> Optional[RepositoryVersion]:
     """Create a new repository version."""
     try:
         headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
+        headers.update({
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+
         request_data = {
             "object": {
                 "tenant_meta": {"namespace": tenant_meta_namespace},
                 **payload.model_dump()
             }
         }
-        
-        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions", 
-                         headers=headers, data=request_data)
+
+        res = client.post(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions",
+            headers=headers, data=request_data,
+        )
         data = res.json()
         return RepositoryVersion(**data)
     except Exception as e:
@@ -187,14 +216,19 @@ def update_repository_version(
     """Update an existing repository version using partial updates."""
     try:
         headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
+        headers.update({
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+
         # Get the current repository version to include required fields
-        current_version = get_repository_version(client, tenant_meta_namespace, repository_uuid, version_uuid)
+        current_version = get_repository_version(
+            client, tenant_meta_namespace, repository_uuid, version_uuid
+        )
         if not current_version:
             logger.error(f"Repository version {version_uuid} not found")
             return None
-        
+
         # Build request data with correct structure
         request_data = {
             "object": {
@@ -202,42 +236,66 @@ def update_repository_version(
                 "tenant_meta": current_version.tenant_meta.model_dump(),
                 "meta": {
                     "name": current_version.meta.name,  # Required field
-                    **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+                    **(
+                        payload.meta.model_dump(exclude_none=True)
+                        if payload.meta else {}
+                    ),
                 },
                 "spec": {
-                    **current_version.spec.model_dump(),  # Include all existing spec fields
-                    **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
+                    **current_version.spec.model_dump(),  # Include all
+                    # existing spec fields
+                    **(
+                        payload.spec.model_dump(exclude_none=True)
+                        if payload.spec else {}
+                    ),
                 },
             }
         }
-        
+
         if update_mask:
             request_data["request"] = {"update_mask": update_mask}
-        
-        logger.info(f"Updating repository version {version_uuid} with mask: {update_mask}")
-        
-        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions", 
-                          headers=headers, data=request_data)
-        
+
+        logger.info(
+            f"Updating repository version {version_uuid} with mask: {update_mask}"
+        )
+
+        res = client.patch(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions",
+            headers=headers, data=request_data,
+        )
+
         if res.status_code == 200:
             data = res.json()
             return RepositoryVersion(**data)
         else:
-            logger.error(f"Failed to update repository version {version_uuid}: {res.status_code} - {res.text}")
+            logger.error(
+                f"Failed to update repository version {version_uuid}: "
+                f"{res.status_code} - {res.text}"
+            )
             return None
     except Exception as e:
-        logger.error(f"Error updating repository version {version_uuid}: {e}", exc_info=True)
+        logger.error(
+            f"Error updating repository version {version_uuid}: {e}",
+            exc_info=True,
+        )
         return None
 
 
 def delete_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_uuid: str, version_uuid: str
+    client: APIClient, tenant_meta_namespace: str, repository_uuid: str,
+    version_uuid: str
 ) -> bool:
     """Delete a repository version."""
     try:
         headers = client.default_headers
-        res = client.delete(f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions/{version_uuid}", headers=headers)
+        res = client.delete(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions/{version_uuid}",
+            headers=headers,
+        )
         return res.status_code == 200
     except Exception as e:
-        logger.error(f"Error deleting repository version {version_uuid}: {e}", exc_info=True)
+        logger.error(
+            f"Error deleting repository version {version_uuid}: {e}",
+            exc_info=True,
+        )
         return False

@@ -17,17 +17,19 @@ logger = logging.getLogger(__name__)
 class SchemaDriftDetector:
     """
     Detects and logs API schema drift for unknown fields.
-    
+
     This class provides static methods to identify and log unknown fields
     in API responses, helping developers track API evolution and identify
     missing model fields.
     """
 
     @staticmethod
-    def log_unknown_fields(model_name: str, unknown_fields: Dict[str, any], context: str = "") -> None:
+    def log_unknown_fields(
+        model_name: str, unknown_fields: Dict[str, any], context: str = ""
+    ) -> None:
         """
         Log unknown fields as warnings for schema drift detection.
-        
+
         Args:
             model_name: Name of the model where drift was detected
             unknown_fields: Dictionary of unknown field names and values
@@ -49,15 +51,17 @@ class SchemaDriftDetector:
                 )
 
     @staticmethod
-    def extract_unknown_fields(data: Dict[str, any], model_fields: Set[str], model_name: str) -> Dict[str, any]:
+    def extract_unknown_fields(
+        data: Dict[str, any], model_fields: Set[str], model_name: str
+    ) -> Dict[str, any]:
         """
         Extract unknown fields from data and log them.
-        
+
         Args:
             data: Dictionary containing the data to check
             model_fields: Set of known field names for the model
             model_name: Name of the model for logging purposes
-            
+
         Returns:
             Dictionary of unknown fields and their values
         """
@@ -70,15 +74,15 @@ class SchemaDriftDetector:
     def create_field_validator(model_fields: Set[str], model_name: str):
         """
         Create a Pydantic field validator for schema drift detection.
-        
+
         This method returns a validator function that can be used with
         Pydantic's @field_validator decorator to automatically detect
         schema drift in model fields.
-        
+
         Args:
             model_fields: Set of known field names for the model
             model_name: Name of the model for logging purposes
-            
+
         Returns:
             Validator function for use with @field_validator
         """
@@ -89,5 +93,5 @@ class SchemaDriftDetector:
                     v, model_fields, f"{model_name}.{info.field_name}"
                 )
             return v
-        
+
         return validator

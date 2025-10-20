@@ -61,7 +61,9 @@ class TestPolicy:
         print("\n=== TESTING GET POLICY BY UUID ===")
 
         policy_item = self.policies[0]
-        retrieved_policy = policy.get_policy(self.client, self.namespace, policy_item.uuid)
+        retrieved_policy = policy.get_policy(
+            self.client, self.namespace, policy_item.uuid
+        )
 
         # Note: Some policies may not be retrievable by UUID due to API limitations
         if retrieved_policy is not None:
@@ -77,7 +79,8 @@ class TestPolicy:
                 print(f"Policy meta tags: {retrieved_policy.meta.tags}")
         else:
             print(
-                f"[INFO] Policy {policy_item.uuid} not retrievable by UUID (API limitation)"
+                f"[INFO] Policy {policy_item.uuid} not retrievable by UUID "
+                f"(API limitation)"
             )
 
     def test_policy_type_filtering(self):

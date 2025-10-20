@@ -112,7 +112,7 @@ class VectorDBManager:
     ):
         """
         Update manifest with external documentation metadata.
-        
+
         Args:
             openapi_metadata: Metadata from OpenAPI spec download
             user_docs_count: Number of user docs pages downloaded
@@ -310,7 +310,8 @@ class VectorDBManager:
 
     def _extract_resource_type(self, h1_title: str) -> str:
         """Extract resource type from H1 title."""
-        # Look for patterns like "Project Resource Deep-Dive", "Finding Resource Deep-Dive"
+        # Look for patterns like "Project Resource Deep-Dive",
+        # "Finding Resource Deep-Dive"
         if "Project" in h1_title:
             return "project"
         elif "Finding" in h1_title:
@@ -573,7 +574,10 @@ class VectorDBManager:
                     chunk["metadata"]["chunk_id"] = f"{file_path}:{i}"
 
                     # Clean metadata to remove None values
-                    chunk["metadata"] = {k: v for k, v in chunk["metadata"].items() if v is not None}
+                    chunk["metadata"] = {
+                        k: v for k, v in chunk["metadata"].items()
+                        if v is not None
+                    }
 
                 all_chunks.extend(chunks)
 

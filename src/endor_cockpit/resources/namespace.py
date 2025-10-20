@@ -50,7 +50,9 @@ Tenant → Namespace → Child Namespace → Resources
 # Direct reference - see SDK for full definition
 class Namespace(BaseModel):
     uuid: str = Field(..., description="Unique identifier for the namespace")
-    meta: NamespaceMeta = Field(..., description="Metadata associated with the namespace")
+    meta: NamespaceMeta = Field(
+        ..., description="Metadata associated with the namespace"
+    )
 ```
 
 **To explore fields**:
@@ -82,8 +84,8 @@ class Namespace(BaseModel):
 
 ### List Namespaces
 
-**Function**: `namespace.list_namespaces(client, tenant_namespace)`  
-**Location**: `src/endor_cockpit/resources/namespace.py:197`  
+**Function**: `namespace.list_namespaces(client, tenant_namespace)`
+**Location**: `src/endor_cockpit/resources/namespace.py:197`
 **Status**: ✅ IMPLEMENTED
 
 ```python
@@ -100,8 +102,8 @@ all_namespaces = namespace.list_namespaces(
 
 ### Get Namespace
 
-**Function**: `namespace.get_namespace(client, parent_namespace, namespace_uuid)`  
-**Location**: `src/endor_cockpit/resources/namespace.py:257`  
+**Function**: `namespace.get_namespace(client, parent_namespace, namespace_uuid)`
+**Location**: `src/endor_cockpit/resources/namespace.py:257`
 **Status**: ✅ IMPLEMENTED
 
 ```python
@@ -117,8 +119,8 @@ namespace = namespace.get_namespace(
 
 ### Create Namespace
 
-**Function**: `namespace.create_namespace(client, parent_namespace, payload)`  
-**Location**: `src/endor_cockpit/resources/namespace.py:224`  
+**Function**: `namespace.create_namespace(client, parent_namespace, payload)`
+**Location**: `src/endor_cockpit/resources/namespace.py:224`
 **Status**: ✅ IMPLEMENTED
 
 ```python
@@ -142,13 +144,14 @@ namespace = namespace.create_namespace(
 )
 ```
 
-**Required Fields**: `meta.name`, `meta.description`  
+**Required Fields**: `meta.name`, `meta.description`
 **Auto-populated**: `uuid`, `meta.created_at`, `meta.updated_at`
 
 ### Update Namespace
 
-**Function**: `namespace.update_namespace(client, parent_namespace, namespace_uuid, payload)`  
-**Location**: `src/endor_cockpit/resources/namespace.py:317`  
+**Function**: `namespace.update_namespace(client, parent_namespace,\
+ namespace_uuid, payload)`
+**Location**: `src/endor_cockpit/resources/namespace.py:317`
 **Status**: ✅ IMPLEMENTED
 
 ```python
@@ -176,8 +179,8 @@ namespace = namespace.update_namespace(
 
 ### Delete Namespace
 
-**Function**: `namespace.delete_namespace(client, parent_namespace, namespace_uuid)`  
-**Location**: `src/endor_cockpit/resources/namespace.py:288`  
+**Function**: `namespace.delete_namespace(client, parent_namespace, namespace_uuid)`
+**Location**: `src/endor_cockpit/resources/namespace.py:288`
 **Status**: ✅ IMPLEMENTED
 
 ```python
@@ -189,7 +192,7 @@ success = namespace.delete_namespace(
 )
 ```
 
-**Behavior**: Permanently removes namespace and all children  
+**Behavior**: Permanently removes namespace and all children
 **Cascade**: All child namespaces and resources are deleted
 
 ## Relationships
@@ -210,7 +213,7 @@ Policies can be applied at namespace level to affect all contained resources.
 
 ### Issue: Namespace Creation with Invalid Parent
 
-**Cause**: Using UUID instead of canonical name for parent namespace  
+**Cause**: Using UUID instead of canonical name for parent namespace
 **Solution**: Always use canonical hierarchical names
 
 ```python
@@ -223,7 +226,7 @@ parent_namespace = "endor-solutions-tgowan.cockpit.integration-test"
 
 ### Issue: Cross-Tenant Operations
 
-**Cause**: Attempting to access namespaces across tenant boundaries  
+**Cause**: Attempting to access namespaces across tenant boundaries
 **Solution**: Ensure all operations use same tenant namespace
 
 ```python
@@ -265,7 +268,8 @@ namespace = "your-tenant.namespace"
 
 ---
 
-*Documentation references SDK implementation. See `src/endor_cockpit/resources/namespace.py` for complete details.*
+*Documentation references SDK implementation. See
+`src/endor_cockpit/resources/namespace.py` for complete details.*
 """
 
 import logging
@@ -617,9 +621,9 @@ def update_namespace(
         headers.update(
             {"Accept": "application/json", "Content-Type": "application/json"}
         )
-        
+
         logger.info(f"Updating namespace {namespace_uuid}")
-        
+
         res = client.patch(
             f"v1/namespaces/{parent_namespace}/namespaces/{namespace_uuid}",
             headers=headers,

@@ -7,10 +7,8 @@ including OpenAPI spec, sitemap.xml, and user documentation pages.
 
 import json
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
+from unittest.mock import Mock, patch
 
-import pytest
 import requests
 
 from holocron.external_docs import (

@@ -30,8 +30,8 @@ class FlexibleEnum(str, Enum):
         # Create a dynamic enum member for unknown values
         obj = str.__new__(cls, value)
         # Use setattr to avoid type checker issues
-        setattr(obj, '_name_', value)
-        setattr(obj, '_value_', value)
+        obj._name_ = value
+        obj._value_ = value
         return obj
 
 
@@ -555,13 +555,23 @@ def update_finding(
                 "tenant_meta": current_finding.tenant_meta.model_dump(),
                 "meta": {
                     "name": current_finding.meta.name,  # Required field
-                    **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+                    **(
+                        payload.meta.model_dump(exclude_none=True)
+                        if payload.meta else {}
+                    ),
                 },
                 "spec": {
-                    **current_finding.spec.model_dump(),  # Include all existing spec fields
-                    **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
+                    **current_finding.spec.model_dump(),  # Include all
+                    # existing spec fields
+                    **(
+                        payload.spec.model_dump(exclude_none=True)
+                        if payload.spec else {}
+                    ),
                 },
-                "context": current_finding.context.model_dump() if current_finding.context else {},
+                "context": (
+                    current_finding.context.model_dump()
+                    if current_finding.context else {}
+                ),
             }
         }
 
