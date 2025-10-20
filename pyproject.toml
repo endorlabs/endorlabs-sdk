@@ -20,33 +20,8 @@ dependencies = [
     "openai>=2.5.0",
 ]
 
-[project.optional-dependencies]
-dev = [
-    "pytest==8.4.2",
-    "pytest-cov==6.0.0",
-    "ruff==0.14.1",
-    "jsonschema==4.23.0"
-]
-sec = []
-ops = []
-vector = [
-    "chromadb>=0.4.0",
-    "openai>=1.0.0"
-]
-rag = [
-    "chromadb>=0.4.0",
-    "openai>=1.0.0",
-    "langchain>=0.1.0",
-    "anthropic>=0.8.0",
-    "markdownify>=0.11.0",
-    "beautifulsoup4>=4.12.0"
-]
-
-# Holocron runtime deps used by tests (external docs parsing)
-holocron = [
-    "markdownify>=0.11.0",
-    "beautifulsoup4>=4.12.0"
-]
+ [project.optional-dependencies]
+ # (Intentionally minimal; prefer dependency-groups for CI/dev/test installs.)
 
 
 [build-system]
@@ -131,6 +106,10 @@ rag = [
     "openai>=1.0.0",
     "langchain>=0.1.0",
     "anthropic>=0.8.0",
+    "markdownify>=0.11.0",
+    "beautifulsoup4>=4.12.0"
+]
+holocron = [
     "markdownify>=0.11.0",
     "beautifulsoup4>=4.12.0"
 ]
