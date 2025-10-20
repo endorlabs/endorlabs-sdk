@@ -1,1 +1,0 @@
-window.loadPagefind=async function(){try{const t=window.pagefindBasePath||"",n=t.replace(/\/+$/,""),s=`${n}/_pagefind/pagefind.js`,e=await import(s);return window.pagefind={search:e.search,init:e.init,filters:e.filters,preload:e.preload,options:e.options},await window.pagefind.init(),!0}catch(e){return console.warn("Failed to load Pagefind:",e),!1}}
