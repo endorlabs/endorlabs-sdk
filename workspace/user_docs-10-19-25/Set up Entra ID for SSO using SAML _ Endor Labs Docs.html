@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<!-- saved from url=(0134)https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/_print.html -->
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="en" class="no-js"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="Hugo 0.147.6">
+
+    
+    <link rel="canonical" type="text/html" href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/">
+    <meta name="robots" content="noindex, nofollow">
+
+    
+    
+
+<link rel="shortcut icon" href="https://docs.endorlabs.com/favicons/favicon.ico">
+<link rel="apple-touch-icon" href="https://docs.endorlabs.com/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-192x192.png" sizes="192x192">
+
+
+    <title>Set up Entra ID for SSO using SAML | Endor Labs Docs</title>
+    <meta name="description" content="Set up Microsoft Entra ID as a custom identity provider for SSO with Endor Labs.">
+
+    
+    
+    <link href="./Set up Entra ID for SSO using SAML _ Endor Labs Docs_files/main.min.css" rel="stylesheet">
+
+    
+    
+    
+    <!--<base href="/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/">--><base href=".">
+
+    
+
+    <style>
+         
+        @media print {
+             
+            .page-break {
+                page-break-before: always !important;
+            }
+
+             
+            h2 {
+                background: none !important;
+                border: 2pt solid #065A5B !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 0 8pt 0 !important;
+                margin: 40pt 0 20pt 0 !important;
+                text-align: left !important;
+                width: auto !important;
+                font-size: 20pt !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-top: none !important;
+                border-bottom: 2pt solid #065A5B !important;
+            }
+
+             
+            h2::after {
+                content: "" !important;
+                display: none !important;
+            }
+
+             
+            .toc-list {
+                list-style-type: none !important;
+                padding-left: 0 !important;
+                margin: 20pt 0 !important;
+                font-size: 12pt !important;
+                line-height: 1.8 !important;
+            }
+
+            .toc-sublist {
+                list-style-type: none !important;
+                padding-left: 30pt !important;
+                margin: 8pt 0 16pt 0 !important;
+            }
+
+            .toc-list > li {
+                margin: 12pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-sublist > li {
+                margin: 6pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-number {
+                font-weight: 600 !important;
+                color: #065A5B !important;
+                margin-right: 8pt !important;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc !important;
+                text-decoration: none !important;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline !important;
+            }
+        }
+
+         
+        @media screen {
+            .toc-list {
+                list-style-type: none;
+                padding-left: 0;
+                margin: 1rem 0;
+            }
+
+            .toc-sublist {
+                list-style-type: none;
+                padding-left: 2rem;
+                margin: 0.5rem 0 1rem 0;
+            }
+
+            .toc-list > li {
+                margin: 0.75rem 0;
+            }
+
+            .toc-sublist > li {
+                margin: 0.5rem 0;
+            }
+
+            .toc-number {
+                font-weight: 600;
+                color: #065A5B;
+                margin-right: 0.5rem;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc;
+                text-decoration: none;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline;
+            }
+        }
+    </style>
+</head>
+
+<body class="td-section print-layout">
+    <div class="container-fluid td-outer">
+        <div class="td-main">
+            <div class="row flex-xl-nowrap">
+                <main class="col-12" role="main">
+                    <div class="td-content">
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <h1 class="title">Set up Entra ID for SSO using SAML</h1>
+
+                        
+                        
+                        <div class="lead">Set up Microsoft Entra ID as a custom identity provider for SSO with Endor Labs.</div>
+                        
+
+                        
+                        
+
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <div class="content-start page-break" id="page-administration">
+                            
+                            
+                            <div class="section-description">Set up Microsoft Entra ID as a custom identity provider for SSO with Endor Labs.</div>
+                            
+
+                            
+                            <div class="content">
+                                <p>You can integrate Endor Labs with Microsoft Entra ID (formerly Azure Active Directory) to use the Security Assertion Markup Language (SAML) 2.0 protocol for single sign-on (SSO) with Endor Labs.</p>
+<p>With the Endor Labs–Entra ID SAML integration, Endor Labs acts as the Service Provider (SP), and Microsoft Entra ID acts as the Identity Provider (IdP). When users sign in to Endor Labs using SAML, the SAML protocol triggers an authentication request to Entra ID, which returns a SAML assertion to Endor Labs. Users are then authenticated to access the application.</p>
+
+
+<div class="alert alert-primary" role="alert">
+<h4 class="alert-heading">Note</h4>
+
+    The default session duration for SAML authentication is four hours. You can modify the <code>SessionNotOnOrAfter</code> attribute to lower the session duration. See <a href="https://docs.endorlabs.com/authentication-providers/#session-duration" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../authentication-providers/#session-duration">Session duration</a> for more information.
+
+</div>
+
+<p>Complete the following tasks to set up SAML-based single sign-on (SSO) using Entra ID as the identity provider for Endor Labs.</p>
+<h2 id="create-and-configure-saml-application-in-entra-id" class="heading-with-self-link">Create and configure SAML application in Entra ID<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/#create-and-configure-saml-application-in-entra-id" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>To set up SAML, your organization’s Entra ID administrator must create an application for Endor Labs and generate the SSO URL and certificate.</p>
+<p>To configure your Endor Labs application in Entra ID:</p>
+<ol>
+<li>
+<p>Sign in to Entra ID. Select <strong>Enterprise Applications</strong> and click <strong>Create your own application</strong>.</p>
+</li>
+<li>
+<p>Enter <code>Endor Labs</code> as the name of your application and select <strong>Integrate any other application you didn’t find in the gallery (Non-gallery)</strong>.</p>
+</li>
+<li>
+<p>Click <strong>Create</strong> to initiate creating your enterprise application.</p>
+</li>
+<li>
+<p>Under <strong>Overview</strong>, click <strong>Single sign-on</strong> and select <strong>SAML</strong>. This redirects you to the <strong>SAML-based Sign-on</strong> page.</p>
+</li>
+<li>
+<p>Edit the following details in <strong>Basic SAML Configuration</strong> and click <strong>Save</strong>.</p>
+<ul>
+<li>
+<p><strong>Identifier (Entra ID)</strong>: <code>https://api.endorlabs.com/v1/auth/sso</code></p>
+</li>
+<li>
+<p><strong>Reply URL (Assertion Consumer Service URL)</strong>: <code>https://api.endorlabs.com/v1/auth/saml-callback?tenant=yourtenant</code>
+
+
+</p><div class="alert alert-primary" role="alert">
+<h4 class="alert-heading">Note</h4>
+
+    Replace <code>yourtenant</code> with your tenant name.
+
+</div>
+<p></p>
+ <img src="./Set up Entra ID for SSO using SAML _ Endor Labs Docs_files/entraid-saml-setup.png" width="700">
+</li>
+</ul>
+</li>
+<li>
+<p>In <strong>Attributes &amp; Claims</strong>, select <strong>Edit</strong> to add required claims, additional claims and group claims.</p>
+<p>a. Select <strong>Add new claim</strong> and fill the following details:</p>
+<ul>
+<li><strong>Name</strong>: Enter <code>email</code>.</li>
+<li><strong>Source</strong>: Select <strong>Attribute</strong>.</li>
+<li><strong>Source Attribute</strong>: Select <code>user.email</code> from the list.</li>
+</ul>
+<p>b. Select <strong>Add a group claim</strong> and configure the following in the right sidebar.</p>
+<ul>
+<li><strong>Which groups associated with the user should be returned in the claim?</strong>: Select <strong>Security groups</strong>.</li>
+<li><strong>Source attribute</strong>: Select <strong>Group ID</strong> from the list.</li>
+<li><strong>Advance options</strong>: Select <strong>Customize the name of the group claim</strong>, and enter <code>groups</code> in <strong>Name (required)</strong>.</li>
+</ul>
+   <img src="./Set up Entra ID for SSO using SAML _ Endor Labs Docs_files/entraid-attributes-claims.png" width="600">
+<p>c. Click <strong>Save</strong> and return to <strong>SAML-based Sign-on</strong>.</p>
+</li>
+<li>
+<p>Copy the <strong>App Federation Metadata URL</strong> available in <strong>SAML Certificates</strong>.</p>
+   <img src="./Set up Entra ID for SSO using SAML _ Endor Labs Docs_files/entraid-saml-metadataURL.png" width="600">
+</li>
+</ol>
+<h2 id="create-entra-id-sso-in-endor-labs" class="heading-with-self-link">Create Entra ID SSO in Endor Labs<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/#create-entra-id-sso-in-endor-labs" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>After creating the application in Entra ID, configure Endor Labs to use Entra ID as the identity provider (IdP).</p>
+<p>To set up Entra ID as your SAML IdP:</p>
+<ol>
+<li>Sign in to Endor Labs and select <strong>Access Control</strong> from the left sidebar.</li>
+<li>Select <strong>Custom Identity Provider</strong>.</li>
+<li>Provide the following details.
+<ul>
+<li>
+<p><strong>Type of Identity Provider</strong>: SAML.</p>
+</li>
+<li>
+<p><strong>Identity Provider Name</strong>: Entra ID.</p>
+</li>
+<li>
+<p><strong>SAML Identity Provider Metadata URL</strong>: Enter the Metadata URL copied from SAML certificates section in Entra ID.</p>
+</li>
+<li>
+<p><strong>Attributes</strong>: Enter <strong>email</strong>, <strong>groups</strong>. Separate the attributes using the <code>enter</code> or <code>return</code> key.</p>
+ <img src="./Set up Entra ID for SSO using SAML _ Endor Labs Docs_files/entraid-endorlabs-custom-idp-setup.png" width="700">
+</li>
+</ul>
+</li>
+<li>Click <strong>Save Configuration</strong>.</li>
+</ol>
+<h3 id="configure-your-authorization-policy" class="heading-with-self-link">Configure your authorization policy<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/#configure-your-authorization-policy" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>After setting up Entra ID as your SAML IdP, you must configure an authorization policy for your users and groups.</p>
+<p>To configure an authorization policy:</p>
+<ol>
+<li>Sign in to Endor Labs and select <strong>Access Control</strong> from the left sidebar.</li>
+<li>Select <strong>Auth Policy</strong> and click <strong>Add Auth Policy</strong>.</li>
+<li>Select <strong>Entra ID SAML</strong> from the <strong>Identity Provider</strong> list.</li>
+<li>Choose the necessary permissions. See <a href="https://docs.endorlabs.com/authorization-roles/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../authorization-roles/">authorization roles</a> for more information.</li>
+<li>Configure <strong>Claims</strong> as a key-value pair.
+<ul>
+<li>For individual users, provide <code>user</code> as <strong>Key</strong> and the user’s email as <strong>Value</strong>.</li>
+<li>For groups, provide <code>groups</code> as <strong>Key</strong> and the group ID configured in Entra ID as <strong>Value</strong>.</li>
+</ul>
+</li>
+<li>Under <strong>Advanced</strong>, select a set of namespaces for which the authorization policy applies.</li>
+</ol>
+
+                            </div>
+                        </div>
+
+                        
+                        
+                    <div class="alert alert-info d-print-none" style="background: rgb(209, 236, 241); border: 1px solid rgb(190, 229, 235); padding: 10px; margin: 10px 0px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted 0 of 4 internal links to anchors<br>
+                Available pages: administration
+            </div></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🔧 Print template link processing started");
+
+            
+            const availablePages = new Map();
+            const pageElements = document.querySelectorAll('[id^="page-"]');
+
+            pageElements.forEach(page => {
+                const pageId = page.id.replace('page-', '');
+                const pageTitle = page.getAttribute('data-page-title') || '';
+                availablePages.set(pageId, pageTitle);
+                console.log(`📄 Available page: ${pageId} (${pageTitle})`);
+            });
+
+            
+            function extractPageSlug(url) {
+                try {
+                    
+                    if (url.startsWith('http')) {
+                        const urlObj = new URL(url);
+                        const pathParts = urlObj.pathname.split('/').filter(part =>
+                            part && part !== '_print' && part !== 'index.html'
+                        );
+                        return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+                    }
+
+                    
+                    const pathParts = url.split('/').filter(part =>
+                        part && part !== '.' && part !== '..' && part !== '_print' &&
+                        part !== 'monitoring-scans' && part !== 'docs.api.staging.endorlabs.com'
+                    );
+
+                    
+                    const lastPart = pathParts[pathParts.length - 1];
+
+                    
+                    return lastPart || pathParts[pathParts.length - 2];
+                } catch (e) {
+                    console.warn(`Could not parse URL: ${url}`, e);
+                    return null;
+                }
+            }
+
+            
+            function isInternalLink(href) {
+                if (href.startsWith('#')) return false; 
+                if (href.startsWith('http') && !href.includes(window.location.hostname)) return false; 
+                if (href.startsWith('mailto:') || href.startsWith('tel:')) return false; 
+                return true;
+            }
+
+            
+            function fixMalformedURL(href) {
+                
+                const segments = href.split('/').filter(Boolean);
+                const deduped = [];
+                for (let i = 0; i < segments.length; i++) {
+                    if (i === 0 || segments[i] !== segments[i-1]) {
+                        deduped.push(segments[i]);
+                    }
+                }
+                return deduped.join('/');
+            }
+
+            
+            const allLinks = document.querySelectorAll('a[href]');
+            let processedCount = 0;
+            let convertedCount = 0;
+
+            console.log(`🔍 Processing ${allLinks.length} links...`);
+
+            allLinks.forEach((link, index) => {
+                const originalHref = link.getAttribute('href');
+                let href = originalHref;
+
+                
+                if (href.startsWith('#') && href.includes('page-')) {
+                    return;
+                }
+
+                
+                if (href.includes('localhost') || href.includes('//')) {
+                    href = fixMalformedURL(href);
+                }
+
+                
+                if (!isInternalLink(href)) {
+                    console.log(`🌐 External link (keeping): ${originalHref}`);
+                    return;
+                }
+
+                processedCount++;
+
+                
+                const pageSlug = extractPageSlug(href);
+
+                
+                if (pageSlug && availablePages.has(pageSlug)) {
+                    const newHref = `#page-${pageSlug}`;
+                    link.setAttribute('href', newHref);
+
+                    
+                    link.style.borderBottom = '1px dotted #007bff';
+                    link.title = `Internal link to: ${availablePages.get(pageSlug)}`;
+
+                    console.log(`✅ Converted: ${originalHref} → ${newHref}`);
+                    convertedCount++;
+                } else {
+                    
+                    let found = false;
+                    for (const [availableSlug, title] of availablePages) {
+                        if (pageSlug && (
+                            pageSlug.includes(availableSlug) ||
+                            availableSlug.includes(pageSlug) ||
+                            pageSlug.replace(/-/g, '_') === availableSlug ||
+                            pageSlug.replace(/_/g, '-') === availableSlug
+                        )) {
+                            const newHref = `#page-${availableSlug}`;
+                            link.setAttribute('href', newHref);
+                            link.style.borderBottom = '1px dotted #28a745';
+                            link.title = `Fuzzy match to: ${title}`;
+
+                            console.log(`🔀 Fuzzy match: ${originalHref} → ${newHref}`);
+                            convertedCount++;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        
+                        if (isInternalLink(href)) {
+                            
+                            let cleanHref = href.replace(/^\//, '');
+                            
+                            if (href.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(href);
+                                    cleanHref = urlObj.pathname.replace(/^\//, '');
+                                } catch (e) {
+                                    
+                                }
+                            }
+                            const prodUrl = `https://docs.endorlabs.com/${cleanHref}`;
+                            link.setAttribute('href', prodUrl);
+                            link.style.color = '';
+                            link.style.textDecoration = '';
+                            link.title = `Link to docs.endorlabs.com: ${prodUrl}`;
+                            console.log(`🔗 Rewritten unresolved internal link: ${originalHref} → ${prodUrl}`);
+                        } else {
+                            link.style.color = '#dc3545';
+                            link.style.textDecoration = 'line-through';
+                            link.title = `Unresolved internal link: ${originalHref}`;
+                            console.log(`❌ Unresolved: ${originalHref} (extracted: ${pageSlug})`);
+                        }
+                    }
+                }
+            });
+
+            
+            console.log(`📊 Link processing complete:`);
+            console.log(`   Total links: ${allLinks.length}`);
+            console.log(`   Processed internal links: ${processedCount}`);
+            console.log(`   Successfully converted: ${convertedCount}`);
+            console.log(`   Available pages: ${availablePages.size}`);
+
+            
+            const debugSummary = document.createElement('div');
+            debugSummary.className = 'alert alert-info d-print-none';
+            debugSummary.style.cssText = 'background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;';
+            debugSummary.innerHTML = `
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted ${convertedCount} of ${processedCount} internal links to anchors<br>
+                Available pages: ${Array.from(availablePages.keys()).join(', ')}
+            `;
+            document.querySelector('.td-content').appendChild(debugSummary);
+        });
+
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#page-')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
+
+</body></html>

@@ -27,8 +27,8 @@ gh repo view endor-solutions-tgowan/endor-cockpit
 ```powershell
 # Endor Labs API Configuration
 $env:ENDOR_API = "https://api.endorlabs.com"
-$env:ENDOR_API_CREDENTIALS_KEY = "endr+Vc1CM5kLByazbwON"
-$env:ENDOR_API_CREDENTIALS_SECRET = "endr+UdVGRcHWvBg8Y01B"
+$env:ENDOR_API_CREDENTIALS_KEY = "your-api-key-here"
+$env:ENDOR_API_CREDENTIALS_SECRET = "your-api-secret-here"
 $env:ENDOR_NAMESPACE = "endor-solutions-tgowan.cockpit"
 ```
 

@@ -1,0 +1,19 @@
+(function(e){"use strict";const t=window.hugoSearchPath||"./search/";e(document).ready(function(){const n=e(".td-search input"),i=e(".search-dropdown-menu"),o=e(".search-results-container"),s=e(".search-status-text");window.loadPagefind().then(e=>{e?a():console.warn("Pagefind not available - search functionality disabled")});function a(){console.log("Bootstrap search initialized with Pagefind!"),n.on("input",t=>{const i=e(t.target).val().trim();if(i.length<2){s.text("Type at least 2 characters..."),o.empty();return}s.text(`Searching for "${i}"...`),clearTimeout(n.data("searchTimeout"));const a=setTimeout(()=>{r(i)},300);n.data("searchTimeout",a)}),n.on("keydown",e=>{if(e.key==="Enter"){e.preventDefault();const s=n.val().trim();if(s.length>=2){const e=t.endsWith("/")?t:t+"/";window.location.href=`${e}?q=${encodeURIComponent(s)}`}return!1}}),i.on("click",".btn-close",function(){n.val("").trigger("input"),n.dropdown("hide")}),n.closest("form").on("submit",e=>(e.preventDefault(),!1))}async function r(e){if(!e||e.length<2){s.text("Type at least 2 characters..."),o.empty();return}try{const t=await window.pagefind.search(e);c(t,e)}catch(e){console.error("Search error:",e),s.text("Search error occurred"),o.empty()}}function c(e,t){if(!e.results||e.results.length===0){s.text(`No results found for "${t}"`),o.html(`
+                    <li class="dropdown-item text-center py-4">
+                        <i class="fas fa-search text-muted mb-2" style="font-size: 2rem;"></i>
+                        <div class="text-muted">No results found</div>
+                        <small class="text-muted">Try adjusting your search terms</small>
+                    </li>
+                `);return}s.text(`Found ${e.results.length} result${e.results.length!==1?"s":""} for "${t}"`);const n=e.results.slice(0,10).map(e=>e.data());Promise.allSettled(n).then(l)}function l(e){const n=e.filter(e=>e.status==="fulfilled").map(e=>e.value),t=e.filter(e=>e.status==="rejected");t.length>0&&console.warn(`Search: ${t.length} result(s) failed to load:`,t.map(e=>e.reason));const s=n,i=s.map(d).join("");o.html(i)}function d(e){if(!e)return"";const t=e.excerpt?u(e.excerpt):"";return`
+                <li class="dropdown-item search-result-item" style="border-left: 3px solid #005652; margin: 4px 0;">
+                    <div class="d-flex flex-column">
+                        <a href="${e.url}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="search-result-title text-decoration-none fw-semibold text-primary mb-1">
+                            ${e.meta?.title||"Untitled"}
+                        </a>
+                        ${t?`<div class="search-result-excerpt small text-muted">${t}</div>`:""}
+                    </div>
+                </li>
+            `}function u(e){return e?e.length>90?e.substring(0,90)+"...":e:""}})})(jQuery)

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<!-- saved from url=(0064)https://docs.endorlabs.com/administration/namespaces/_print.html -->
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="en" class="no-js"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="Hugo 0.147.6">
+
+    
+    <link rel="canonical" type="text/html" href="https://docs.endorlabs.com/administration/namespaces/">
+    <meta name="robots" content="noindex, nofollow">
+
+    
+    
+
+<link rel="shortcut icon" href="https://docs.endorlabs.com/favicons/favicon.ico">
+<link rel="apple-touch-icon" href="https://docs.endorlabs.com/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-192x192.png" sizes="192x192">
+
+
+    <title>Set up namespaces | Endor Labs Docs</title>
+    <meta name="description" content="Use namespaces to organize your projects logically and define hierarchy.">
+
+    
+    
+    <link href="./Set up namespaces _ Endor Labs Docs_files/main.min.css" rel="stylesheet">
+
+    
+    
+    
+    <!--<base href="/administration/namespaces/">--><base href=".">
+
+    
+
+    <style>
+         
+        @media print {
+             
+            .page-break {
+                page-break-before: always !important;
+            }
+
+             
+            h2 {
+                background: none !important;
+                border: 2pt solid #065A5B !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 0 8pt 0 !important;
+                margin: 40pt 0 20pt 0 !important;
+                text-align: left !important;
+                width: auto !important;
+                font-size: 20pt !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-top: none !important;
+                border-bottom: 2pt solid #065A5B !important;
+            }
+
+             
+            h2::after {
+                content: "" !important;
+                display: none !important;
+            }
+
+             
+            .toc-list {
+                list-style-type: none !important;
+                padding-left: 0 !important;
+                margin: 20pt 0 !important;
+                font-size: 12pt !important;
+                line-height: 1.8 !important;
+            }
+
+            .toc-sublist {
+                list-style-type: none !important;
+                padding-left: 30pt !important;
+                margin: 8pt 0 16pt 0 !important;
+            }
+
+            .toc-list > li {
+                margin: 12pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-sublist > li {
+                margin: 6pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-number {
+                font-weight: 600 !important;
+                color: #065A5B !important;
+                margin-right: 8pt !important;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc !important;
+                text-decoration: none !important;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline !important;
+            }
+        }
+
+         
+        @media screen {
+            .toc-list {
+                list-style-type: none;
+                padding-left: 0;
+                margin: 1rem 0;
+            }
+
+            .toc-sublist {
+                list-style-type: none;
+                padding-left: 2rem;
+                margin: 0.5rem 0 1rem 0;
+            }
+
+            .toc-list > li {
+                margin: 0.75rem 0;
+            }
+
+            .toc-sublist > li {
+                margin: 0.5rem 0;
+            }
+
+            .toc-number {
+                font-weight: 600;
+                color: #065A5B;
+                margin-right: 0.5rem;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc;
+                text-decoration: none;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline;
+            }
+        }
+    </style>
+</head>
+
+<body class="td-section print-layout">
+    <div class="container-fluid td-outer">
+        <div class="td-main">
+            <div class="row flex-xl-nowrap">
+                <main class="col-12" role="main">
+                    <div class="td-content">
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/administration/namespaces/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/administration/namespaces/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/administration/namespaces/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <h1 class="title">Set up namespaces</h1>
+
+                        
+                        
+                        <div class="lead">Use namespaces to organize your projects logically and define hierarchy.</div>
+                        
+
+                        
+                        
+
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/administration/namespaces/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/administration/namespaces/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/administration/namespaces/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <div class="content-start page-break" id="page-administration">
+                            
+                            
+                            <div class="section-description">Use namespaces to organize your projects logically and define hierarchy.</div>
+                            
+
+                            
+                            <div class="content">
+                                <p>Namespaces in Endor Labs define a way to group projects and create logical partitions in an organization based on organizational units, business units, project requirements, or teams.</p>
+<p>Using namespaces, administrators can:</p>
+<ul>
+<li>Define hierarchy and control access to project resources within a namespace.</li>
+<li>Establish policy governance by defining the rules of engagement and setting different or same guardrails across namespaces.</li>
+</ul>
+<h2 id="namespaces-in-an-organization" class="heading-with-self-link">Namespaces in an organization<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#namespaces-in-an-organization" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>In Endor Labs, you can partition each tenant into multiple namespaces and further divide each namespace into sub-namespaces called child namespaces. Each namespace has its own authorization rules and integrations.</p>
+<p>Child namespaces inherit settings, policies, and features from their parent namespace but can also define their own authorization rules, policies, and configurations. This structure helps organizations model hierarchical environments, with each level managing its own access controls and operational settings.</p>
+<p>When you access your tenant, Endor Labs includes data from all child namespaces in the dashboard by default, such as vulnerabilities, dependencies, packages, and more. In <strong>namespace</strong>, toggle the setting to <strong>All child namespaces excluded</strong> to exclude child namespaces and view data and metrics for only the selected namespace.</p>
+<p><img src="./Set up namespaces _ Endor Labs Docs_files/namespaces-toggle.png" alt="namespaces toggle"></p>
+<p>When you sign in to Endor Labs for the first time, create a tenant for your organization, such as <code>abccorp</code>.</p>
+<ul>
+<li>
+<p>Now you can create logical separations in the form of namespaces for different business units in your organization, such as Security Business Unit (<code>security-bu</code>), Datacenter Business Unit (<code>datacenter-bu</code>), and Orchestration Agent Business Unit (<code>orchestration-agent-bu</code>), inside your main tenant <code>abccorp</code>.</p>
+</li>
+<li>
+<p>You can further partition the Security Business Unit into sub-namespaces, such as the Development team (<code>dev-team</code>), Finance Team (<code>finance-team</code>), and Testing Team (<code>testing-team</code>).</p>
+</li>
+</ul>
+<p><img src="./Set up namespaces _ Endor Labs Docs_files/namepsaces.png" alt="Namespaces Example"></p>
+<ul>
+<li>There can be several namespaces within <code>abccorp</code>. For example, the <code>dev-team</code> namespace that hosts projects belonging to the development team of the Security Business Unit and the <code>test-team</code> namespace that hosts projects belonging to the testing team of the Security Business Unit.</li>
+</ul>
+<h3 id="use-namespaces-for-authorization" class="heading-with-self-link">Use namespaces for authorization<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#use-namespaces-for-authorization" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>Large enterprises with multiple business units, teams, or groups can assign different namespaces to different groups and apply authorization policies that restrict access to specific groups. This ensures least privilege access to critical information is available in the organization.</p>
+<p>Organizations can also provision namespaces to provide read access to security teams in specific namespaces while they provide write access to AppSec teams for managing policies.</p>
+<ul>
+<li>
+<p>Create an authorization policy giving users in the development team of the security business unit permissions to scan their projects. Users from group <code>@developers.abccorp.ai</code> can have code scanner permissions for the namespace <code>dev-team</code>.</p>
+</li>
+<li>
+<p>Users from group <code>@applicationsecurity.abccorp.ai</code> can have policy editor permissions for the namespace <code>dev-team</code>. The developers can scan the code, and the application security professionals can define the policies for code compliance.</p>
+</li>
+<li>
+<p>The application security professionals can also choose to define the policies at the tenant level <code>abccorp</code> and choose to apply the same policies to all the child namespaces. This way, they won’t need to create policies individually for every child namespace. The development team inherits the policies from the organization and won’t be able to modify them. They can, however, add additional policies that are specific to engineering to their namespace <code>dev-team</code> and define specific rules and conditions applicable only to them.</p>
+</li>
+</ul>
+<h3 id="use-namespaces-for-policy-governance" class="heading-with-self-link">Use namespaces for policy governance<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#use-namespaces-for-policy-governance" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>Administrators can use namespaces effectively for policy governance and make sure that teams in their organization adhere to industry-wide policy standards enforcing compliance.
+Let us assume that the application security team in <code>ABCcorp</code> wants to define organization-wide rules for code compliance, vulnerability management, and secret detection. They also need Jira tickets filed for all cases.
+The application security engineers can create the following objects at the <code>ABCcorp</code> tenant level and propagate these objects to all the namespaces under <code>abccorp</code> so that it applies to the entire organization.</p>
+<ul>
+<li>Define action policy to break the build when critical vulnerabilities are detected.</li>
+<li>Define action policy to warn the user of detected code compliance misconfigurations.</li>
+<li>Define action policy to break the build when valid secret tokens are detected in their code.</li>
+<li>Create Jira tickets and notify the appropriate team to take remediation measures.</li>
+</ul>
+<h2 id="create-a-namespace" class="heading-with-self-link">Create a namespace<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#create-a-namespace" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>To create a namespace in your tenant:</p>
+<ol>
+<li>
+<p>Sign in to Endor Labs.</p>
+</li>
+<li>
+<p>Select <strong>Manage</strong> &gt; <strong>Namespaces</strong> from the left sidebar.</p>
+</li>
+<li>
+<p>Click <strong>New Namespace</strong>.</p>
+</li>
+<li>
+<p>Enter a title and description for the namespace.</p>
+<p>The title can have a maximum of 32 characters and must contain only lowercase letters (a-z), numbers (0-9), and characters (_-).</p>
+</li>
+<li>
+<p>Enter tags that you want to associate with this namespace.</p>
+<p>Tags can have a maximum of 63 characters and must contain letters (A-Z), numbers (0-9), and characters (=@_.-).</p>
+</li>
+</ol>
+<h2 id="edit-a-namespace" class="heading-with-self-link">Edit a namespace<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#edit-a-namespace" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>You can choose to modify the description of a namespace or include tags for it. You can’t modify its title once a namespace is created. To edit details of a namespace in your tenant:</p>
+<ol>
+<li>Sign in to Endor Labs.</li>
+<li>Select <strong>Manage</strong> &gt; <strong>Namespaces</strong> from the left sidebar.</li>
+<li>Choose the namespace and click <strong>Edit</strong>.</li>
+<li>Edit the description or include tags for the namespace.</li>
+<li>Click <strong>Update Namespace</strong>.</li>
+</ol>
+<h2 id="delete-a-namespace" class="heading-with-self-link">Delete a namespace<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#delete-a-namespace" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>Deleting a namespace permanently deletes all its child namespaces and its projects. To delete a namespace:</p>
+<ol>
+<li>Sign in to Endor Labs.</li>
+<li>Select <strong>Manage</strong> &gt; <strong>Namespaces</strong> from the left sidebar.</li>
+<li>Choose the namespace and click <strong>Delete</strong>.</li>
+<li>Select and confirm the deletion.</li>
+<li>Click <strong>Delete Namespace</strong>.</li>
+</ol>
+<h2 id="data-propagation-from-parent-to-child-namespaces" class="heading-with-self-link">Data propagation from parent to child namespaces<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#data-propagation-from-parent-to-child-namespaces" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>Data propagation defines how the data is inherited by the child namespace from its parent namespace.</p>
+<ul>
+<li>
+<p><strong>Finding Policies</strong> - When a new namespace is created, all the finding policies in the parent are <strong>inherited</strong> by the child namespaces. Any new finding policy you create in the parent, you can choose to apply it to the child namespaces by selecting <strong>Propagate this policy to all child namespaces</strong>.</p>
+</li>
+<li>
+<p><strong>Action Policies</strong> - When a new namespace is created, all the action policies in the parent are <strong>inherited</strong> by the child namespaces. Any new action policy you create in the parent, you can choose to apply it to the child namespaces by selecting <strong>Propagate this policy to all child namespaces</strong>.</p>
+</li>
+<li>
+<p><strong>Remediation Policies</strong> - When a new namespace is created, all the remediation policies in the parent are <strong>inherited</strong> by the child namespaces. Any new remediation policy you create in the parent, you can choose to apply it to the child namespaces by selecting <strong>Propagate this policy to all child namespaces</strong>.</p>
+</li>
+<li>
+<p><strong>Exception Policies</strong> - When a new namespace is created, all the exception policies in the parent are <strong>inherited</strong> by the child namespaces. Any new exception policy you create in the parent, you can choose to apply it to the child namespaces by selecting <strong>Propagate this policy to all child namespaces</strong>.</p>
+</li>
+<li>
+<p><strong>Package Manager Integrations</strong> - Package manager integrations of the parent are <strong>not inherited</strong> by the child namespaces. Any new package manager integration you create in the parent, you can choose to apply them to the child namespaces by selecting <strong>Propagate this package manager to all child namespaces</strong>.</p>
+</li>
+<li>
+<p><strong>Integrations</strong> - Integrations in the parent are <strong>not inherited</strong> by the child namespaces.</p>
+</li>
+<li>
+<p><strong>Authorization Policies</strong> - Authorization policies of the parent are <strong>inherited</strong> by all its child namespaces. You can choose to group the authorization policies of the child namespaces in their parent namespace and manage them easily.</p>
+</li>
+<li>
+<p><strong>Secret Rules</strong> - You can choose to apply custom secret rules created in the parent to its child namespaces by selecting <strong>Propagate this rule to all child namespaces</strong>.</p>
+</li>
+<li>
+<p><strong>API Key</strong> - You can create an API key in a namespace and select <strong>Propagate this rule to all child namespaces</strong> to apply the key to all child namespaces.</p>
+</li>
+</ul>
+<h2 id="tenant-and-namespace-terminologies" class="heading-with-self-link">Tenant and namespace terminologies<a class="td-heading-self-link" href="https://docs.endorlabs.com/administration/namespaces/#tenant-and-namespace-terminologies" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>Tenant is the top-level entity under which you can create namespaces and child namespaces.</p>
+<p>To denote a namespace, always use its fully qualified name. Fully qualified name for a namespace is in the format <code>tenantname.namespacename</code>, and child namespace is in the format <code>tenantname.namespacename.childnamespacename</code>.</p>
+<ul>
+<li>In this example, the tenant is <code>abccorp</code> and its child namespaces are <code>abccorp.security-bu</code>, <code>abccorp.datacenter-bu</code>, and <code>abccorp.agent-bu</code>. The child namespaces of <code>abccorp.security-bu</code> are <code>abccorp.security-bu.dev-team</code>, <code>abccorp.security-bu.testing-team</code>, and <code>abccorp.security-bu.finance-team</code>.</li>
+<li>Consider a tenant named <code>acme</code> with a child namespace <code>dev</code>, which in turn has a child namespace <code>app</code>. The fully qualified namespace for <code>app</code> is <code>acme.dev.app</code>.</li>
+</ul>
+
+                            </div>
+                        </div>
+
+                        
+                        
+                    <div class="alert alert-info d-print-none" style="background: rgb(209, 236, 241); border: 1px solid rgb(190, 229, 235); padding: 10px; margin: 10px 0px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted 0 of 2 internal links to anchors<br>
+                Available pages: administration
+            </div></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🔧 Print template link processing started");
+
+            
+            const availablePages = new Map();
+            const pageElements = document.querySelectorAll('[id^="page-"]');
+
+            pageElements.forEach(page => {
+                const pageId = page.id.replace('page-', '');
+                const pageTitle = page.getAttribute('data-page-title') || '';
+                availablePages.set(pageId, pageTitle);
+                console.log(`📄 Available page: ${pageId} (${pageTitle})`);
+            });
+
+            
+            function extractPageSlug(url) {
+                try {
+                    
+                    if (url.startsWith('http')) {
+                        const urlObj = new URL(url);
+                        const pathParts = urlObj.pathname.split('/').filter(part =>
+                            part && part !== '_print' && part !== 'index.html'
+                        );
+                        return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+                    }
+
+                    
+                    const pathParts = url.split('/').filter(part =>
+                        part && part !== '.' && part !== '..' && part !== '_print' &&
+                        part !== 'monitoring-scans' && part !== 'docs.api.staging.endorlabs.com'
+                    );
+
+                    
+                    const lastPart = pathParts[pathParts.length - 1];
+
+                    
+                    return lastPart || pathParts[pathParts.length - 2];
+                } catch (e) {
+                    console.warn(`Could not parse URL: ${url}`, e);
+                    return null;
+                }
+            }
+
+            
+            function isInternalLink(href) {
+                if (href.startsWith('#')) return false; 
+                if (href.startsWith('http') && !href.includes(window.location.hostname)) return false; 
+                if (href.startsWith('mailto:') || href.startsWith('tel:')) return false; 
+                return true;
+            }
+
+            
+            function fixMalformedURL(href) {
+                
+                const segments = href.split('/').filter(Boolean);
+                const deduped = [];
+                for (let i = 0; i < segments.length; i++) {
+                    if (i === 0 || segments[i] !== segments[i-1]) {
+                        deduped.push(segments[i]);
+                    }
+                }
+                return deduped.join('/');
+            }
+
+            
+            const allLinks = document.querySelectorAll('a[href]');
+            let processedCount = 0;
+            let convertedCount = 0;
+
+            console.log(`🔍 Processing ${allLinks.length} links...`);
+
+            allLinks.forEach((link, index) => {
+                const originalHref = link.getAttribute('href');
+                let href = originalHref;
+
+                
+                if (href.startsWith('#') && href.includes('page-')) {
+                    return;
+                }
+
+                
+                if (href.includes('localhost') || href.includes('//')) {
+                    href = fixMalformedURL(href);
+                }
+
+                
+                if (!isInternalLink(href)) {
+                    console.log(`🌐 External link (keeping): ${originalHref}`);
+                    return;
+                }
+
+                processedCount++;
+
+                
+                const pageSlug = extractPageSlug(href);
+
+                
+                if (pageSlug && availablePages.has(pageSlug)) {
+                    const newHref = `#page-${pageSlug}`;
+                    link.setAttribute('href', newHref);
+
+                    
+                    link.style.borderBottom = '1px dotted #007bff';
+                    link.title = `Internal link to: ${availablePages.get(pageSlug)}`;
+
+                    console.log(`✅ Converted: ${originalHref} → ${newHref}`);
+                    convertedCount++;
+                } else {
+                    
+                    let found = false;
+                    for (const [availableSlug, title] of availablePages) {
+                        if (pageSlug && (
+                            pageSlug.includes(availableSlug) ||
+                            availableSlug.includes(pageSlug) ||
+                            pageSlug.replace(/-/g, '_') === availableSlug ||
+                            pageSlug.replace(/_/g, '-') === availableSlug
+                        )) {
+                            const newHref = `#page-${availableSlug}`;
+                            link.setAttribute('href', newHref);
+                            link.style.borderBottom = '1px dotted #28a745';
+                            link.title = `Fuzzy match to: ${title}`;
+
+                            console.log(`🔀 Fuzzy match: ${originalHref} → ${newHref}`);
+                            convertedCount++;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        
+                        if (isInternalLink(href)) {
+                            
+                            let cleanHref = href.replace(/^\//, '');
+                            
+                            if (href.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(href);
+                                    cleanHref = urlObj.pathname.replace(/^\//, '');
+                                } catch (e) {
+                                    
+                                }
+                            }
+                            const prodUrl = `https://docs.endorlabs.com/${cleanHref}`;
+                            link.setAttribute('href', prodUrl);
+                            link.style.color = '';
+                            link.style.textDecoration = '';
+                            link.title = `Link to docs.endorlabs.com: ${prodUrl}`;
+                            console.log(`🔗 Rewritten unresolved internal link: ${originalHref} → ${prodUrl}`);
+                        } else {
+                            link.style.color = '#dc3545';
+                            link.style.textDecoration = 'line-through';
+                            link.title = `Unresolved internal link: ${originalHref}`;
+                            console.log(`❌ Unresolved: ${originalHref} (extracted: ${pageSlug})`);
+                        }
+                    }
+                }
+            });
+
+            
+            console.log(`📊 Link processing complete:`);
+            console.log(`   Total links: ${allLinks.length}`);
+            console.log(`   Processed internal links: ${processedCount}`);
+            console.log(`   Successfully converted: ${convertedCount}`);
+            console.log(`   Available pages: ${availablePages.size}`);
+
+            
+            const debugSummary = document.createElement('div');
+            debugSummary.className = 'alert alert-info d-print-none';
+            debugSummary.style.cssText = 'background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;';
+            debugSummary.innerHTML = `
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted ${convertedCount} of ${processedCount} internal links to anchors<br>
+                Available pages: ${Array.from(availablePages.keys()).join(', ')}
+            `;
+            document.querySelector('.td-content').appendChild(debugSummary);
+        });
+
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#page-')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
+
+</body></html>

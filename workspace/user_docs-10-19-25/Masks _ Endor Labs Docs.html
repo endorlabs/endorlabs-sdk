@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<!-- saved from url=(0072)https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/_print.html -->
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="en" class="no-js"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="Hugo 0.147.6">
+
+    
+    <link rel="canonical" type="text/html" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/">
+    <meta name="robots" content="noindex, nofollow">
+
+    
+    
+
+<link rel="shortcut icon" href="https://docs.endorlabs.com/favicons/favicon.ico">
+<link rel="apple-touch-icon" href="https://docs.endorlabs.com/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-192x192.png" sizes="192x192">
+
+
+    <title>Masks | Endor Labs Docs</title>
+    <meta name="description" content="Learn how to use field masks with the Endor Labs REST API.">
+
+    
+    
+    <link href="./Masks _ Endor Labs Docs_files/main.min.css" rel="stylesheet">
+
+    
+    
+    
+    <!--<base href="/rest-api/using-the-rest-api/masks/">--><base href=".">
+
+    
+
+    <style>
+         
+        @media print {
+             
+            .page-break {
+                page-break-before: always !important;
+            }
+
+             
+            h2 {
+                background: none !important;
+                border: 2pt solid #065A5B !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 0 8pt 0 !important;
+                margin: 40pt 0 20pt 0 !important;
+                text-align: left !important;
+                width: auto !important;
+                font-size: 20pt !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-top: none !important;
+                border-bottom: 2pt solid #065A5B !important;
+            }
+
+             
+            h2::after {
+                content: "" !important;
+                display: none !important;
+            }
+
+             
+            .toc-list {
+                list-style-type: none !important;
+                padding-left: 0 !important;
+                margin: 20pt 0 !important;
+                font-size: 12pt !important;
+                line-height: 1.8 !important;
+            }
+
+            .toc-sublist {
+                list-style-type: none !important;
+                padding-left: 30pt !important;
+                margin: 8pt 0 16pt 0 !important;
+            }
+
+            .toc-list > li {
+                margin: 12pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-sublist > li {
+                margin: 6pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-number {
+                font-weight: 600 !important;
+                color: #065A5B !important;
+                margin-right: 8pt !important;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc !important;
+                text-decoration: none !important;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline !important;
+            }
+        }
+
+         
+        @media screen {
+            .toc-list {
+                list-style-type: none;
+                padding-left: 0;
+                margin: 1rem 0;
+            }
+
+            .toc-sublist {
+                list-style-type: none;
+                padding-left: 2rem;
+                margin: 0.5rem 0 1rem 0;
+            }
+
+            .toc-list > li {
+                margin: 0.75rem 0;
+            }
+
+            .toc-sublist > li {
+                margin: 0.5rem 0;
+            }
+
+            .toc-number {
+                font-weight: 600;
+                color: #065A5B;
+                margin-right: 0.5rem;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc;
+                text-decoration: none;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline;
+            }
+        }
+    </style>
+</head>
+
+<body class="td-section print-layout">
+    <div class="container-fluid td-outer">
+        <div class="td-main">
+            <div class="row flex-xl-nowrap">
+                <main class="col-12" role="main">
+                    <div class="td-content">
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <h1 class="title">Masks</h1>
+
+                        
+                        
+                        <div class="lead">Learn how to use field masks with the Endor Labs REST API.</div>
+                        
+
+                        
+                        
+
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <div class="content-start page-break" id="page-rest-api">
+                            
+                            
+                            <div class="section-description">Learn how to use field masks with the Endor Labs REST API.</div>
+                            
+
+                            
+                            <div class="content">
+                                <p>Field masks allow you to specify a subset of fields to be returned for each object by a request.
+Similar to <a href="https://docs.endorlabs.com/filters/#keys" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../filters/#keys">filter keys</a>, a field-mask key is used to specify the field to return, using a dot-delimited path.</p>
+<p>The following example shows how to get just the description and severity for all findings:</p>
+
+
+
+
+<ul class="nav nav-tabs" id="tabs-0" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-00-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-00-00" role="tab" data-td-tp-persist="endorctl" aria-controls="tabs-00-00" aria-selected="true">
+        endorctl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-00-01-tab" data-bs-toggle="tab" data-bs-target="#tabs-00-01" role="tab" data-td-tp-persist="curl" aria-controls="tabs-00-01" aria-selected="false">
+        curl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-00-02-tab" data-bs-toggle="tab" data-bs-target="#tabs-00-02" role="tab" data-td-tp-persist="http" aria-controls="tabs-00-02" aria-selected="false">
+        HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-0-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-00-00" role="tabpanel" aria-labelled-by="tabs-00-00-tab" tabindex="0">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">endorctl api list --resource Finding <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --field-mask <span class="s2">"meta.description,spec.level"</span>
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-00-01" role="tabpanel" aria-labelled-by="tabs-00-01-tab" tabindex="0">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl --get <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Authorization: Bearer </span><span class="nv">$ENDOR_TOKEN</span><span class="s2">"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --url <span class="s2">"https://api.endorlabs.com/v1/namespaces/</span><span class="nv">$ENDOR_NAMESPACE</span><span class="s2">/findings?list_parameters.mask=meta.description,spec.level"</span>
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-00-02" role="tabpanel" aria-labelled-by="tabs-00-02-tab" tabindex="0">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">@baseUrl <span class="o">=</span> https://api.endorlabs.com
+</span></span><span class="line"><span class="cl">@token <span class="o">=</span> &lt;insert-access-token&gt;
+</span></span><span class="line"><span class="cl">@namespace <span class="o">=</span> &lt;insert-namespace&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">###</span>
+</span></span><span class="line"><span class="cl">GET <span class="o">{{</span>baseUrl<span class="o">}}</span>/v1/namespaces/<span class="o">{{</span>namespace<span class="o">}}</span>/findings?list_parameters.mask<span class="o">=</span>meta.description,spec.level HTTP/1.1
+</span></span><span class="line"><span class="cl">Authorization: Bearer <span class="o">{{</span>token<span class="o">}}</span>
+</span></span></code></pre></div>
+    </div>
+</div>
+
+<h2 id="jq" class="heading-with-self-link">jq<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/#jq" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>The Endor Labs REST API returns results in json format so it is often convenient to use the <code>jq</code> command-line json processor to parse or format the results.</p>
+<p>The following example shows how to use <code>jq</code> to extract just the description value from the above request:</p>
+
+
+
+<ul class="nav nav-tabs" id="tabs-1" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-01-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-01-00" role="tab" data-td-tp-persist="endorctl" aria-controls="tabs-01-00" aria-selected="true">
+        endorctl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-01-01-tab" data-bs-toggle="tab" data-bs-target="#tabs-01-01" role="tab" data-td-tp-persist="curl" aria-controls="tabs-01-01" aria-selected="false">
+        curl
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-1-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-01-00" role="tabpanel" aria-labelled-by="tabs-01-00-tab" tabindex="1">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">endorctl api list --resource Finding <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --field-mask <span class="s2">"meta.description,spec.level"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  <span class="p">|</span> jq <span class="s1">'.list.objects[].meta.description'</span>
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-01-01" role="tabpanel" aria-labelled-by="tabs-01-01-tab" tabindex="1">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl --get <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Authorization: Bearer </span><span class="nv">$ENDOR_TOKEN</span><span class="s2">"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --url <span class="s2">"https://api.endorlabs.com/v1/namespaces/</span><span class="nv">$ENDOR_NAMESPACE</span><span class="s2">/findings?list_parameters.mask=meta.description,spec.level"</span>
+</span></span><span class="line"><span class="cl">  <span class="p">|</span> jq <span class="s1">'.list.objects[].meta.description'</span>
+</span></span></code></pre></div>
+    </div>
+</div>
+
+
+
+<div class="alert alert-primary" role="alert">
+<h4 class="alert-heading">Note</h4>
+
+    Lists of objects are always nested under <code>.list.objects[]</code>, but for <code>endorctl api get</code> commands a single object is returned directly.
+To extract the object UUID from an object returned by an <code>endorctl api get</code> command, the <code>jq</code> command is <code>jq '.uuid'</code>, as opposed to <code>jq '.list.objects[].uuid'</code>.
+
+</div>
+
+<p>For more information, see the <a href="https://jqlang.github.io/jq/tutorial/">jq documentation</a>.</p>
+
+                            </div>
+                        </div>
+
+                        
+                        
+                    <div class="alert alert-info d-print-none" style="background: rgb(209, 236, 241); border: 1px solid rgb(190, 229, 235); padding: 10px; margin: 10px 0px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted 0 of 3 internal links to anchors<br>
+                Available pages: rest-api
+            </div></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🔧 Print template link processing started");
+
+            
+            const availablePages = new Map();
+            const pageElements = document.querySelectorAll('[id^="page-"]');
+
+            pageElements.forEach(page => {
+                const pageId = page.id.replace('page-', '');
+                const pageTitle = page.getAttribute('data-page-title') || '';
+                availablePages.set(pageId, pageTitle);
+                console.log(`📄 Available page: ${pageId} (${pageTitle})`);
+            });
+
+            
+            function extractPageSlug(url) {
+                try {
+                    
+                    if (url.startsWith('http')) {
+                        const urlObj = new URL(url);
+                        const pathParts = urlObj.pathname.split('/').filter(part =>
+                            part && part !== '_print' && part !== 'index.html'
+                        );
+                        return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+                    }
+
+                    
+                    const pathParts = url.split('/').filter(part =>
+                        part && part !== '.' && part !== '..' && part !== '_print' &&
+                        part !== 'monitoring-scans' && part !== 'docs.api.staging.endorlabs.com'
+                    );
+
+                    
+                    const lastPart = pathParts[pathParts.length - 1];
+
+                    
+                    return lastPart || pathParts[pathParts.length - 2];
+                } catch (e) {
+                    console.warn(`Could not parse URL: ${url}`, e);
+                    return null;
+                }
+            }
+
+            
+            function isInternalLink(href) {
+                if (href.startsWith('#')) return false; 
+                if (href.startsWith('http') && !href.includes(window.location.hostname)) return false; 
+                if (href.startsWith('mailto:') || href.startsWith('tel:')) return false; 
+                return true;
+            }
+
+            
+            function fixMalformedURL(href) {
+                
+                const segments = href.split('/').filter(Boolean);
+                const deduped = [];
+                for (let i = 0; i < segments.length; i++) {
+                    if (i === 0 || segments[i] !== segments[i-1]) {
+                        deduped.push(segments[i]);
+                    }
+                }
+                return deduped.join('/');
+            }
+
+            
+            const allLinks = document.querySelectorAll('a[href]');
+            let processedCount = 0;
+            let convertedCount = 0;
+
+            console.log(`🔍 Processing ${allLinks.length} links...`);
+
+            allLinks.forEach((link, index) => {
+                const originalHref = link.getAttribute('href');
+                let href = originalHref;
+
+                
+                if (href.startsWith('#') && href.includes('page-')) {
+                    return;
+                }
+
+                
+                if (href.includes('localhost') || href.includes('//')) {
+                    href = fixMalformedURL(href);
+                }
+
+                
+                if (!isInternalLink(href)) {
+                    console.log(`🌐 External link (keeping): ${originalHref}`);
+                    return;
+                }
+
+                processedCount++;
+
+                
+                const pageSlug = extractPageSlug(href);
+
+                
+                if (pageSlug && availablePages.has(pageSlug)) {
+                    const newHref = `#page-${pageSlug}`;
+                    link.setAttribute('href', newHref);
+
+                    
+                    link.style.borderBottom = '1px dotted #007bff';
+                    link.title = `Internal link to: ${availablePages.get(pageSlug)}`;
+
+                    console.log(`✅ Converted: ${originalHref} → ${newHref}`);
+                    convertedCount++;
+                } else {
+                    
+                    let found = false;
+                    for (const [availableSlug, title] of availablePages) {
+                        if (pageSlug && (
+                            pageSlug.includes(availableSlug) ||
+                            availableSlug.includes(pageSlug) ||
+                            pageSlug.replace(/-/g, '_') === availableSlug ||
+                            pageSlug.replace(/_/g, '-') === availableSlug
+                        )) {
+                            const newHref = `#page-${availableSlug}`;
+                            link.setAttribute('href', newHref);
+                            link.style.borderBottom = '1px dotted #28a745';
+                            link.title = `Fuzzy match to: ${title}`;
+
+                            console.log(`🔀 Fuzzy match: ${originalHref} → ${newHref}`);
+                            convertedCount++;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        
+                        if (isInternalLink(href)) {
+                            
+                            let cleanHref = href.replace(/^\//, '');
+                            
+                            if (href.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(href);
+                                    cleanHref = urlObj.pathname.replace(/^\//, '');
+                                } catch (e) {
+                                    
+                                }
+                            }
+                            const prodUrl = `https://docs.endorlabs.com/${cleanHref}`;
+                            link.setAttribute('href', prodUrl);
+                            link.style.color = '';
+                            link.style.textDecoration = '';
+                            link.title = `Link to docs.endorlabs.com: ${prodUrl}`;
+                            console.log(`🔗 Rewritten unresolved internal link: ${originalHref} → ${prodUrl}`);
+                        } else {
+                            link.style.color = '#dc3545';
+                            link.style.textDecoration = 'line-through';
+                            link.title = `Unresolved internal link: ${originalHref}`;
+                            console.log(`❌ Unresolved: ${originalHref} (extracted: ${pageSlug})`);
+                        }
+                    }
+                }
+            });
+
+            
+            console.log(`📊 Link processing complete:`);
+            console.log(`   Total links: ${allLinks.length}`);
+            console.log(`   Processed internal links: ${processedCount}`);
+            console.log(`   Successfully converted: ${convertedCount}`);
+            console.log(`   Available pages: ${availablePages.size}`);
+
+            
+            const debugSummary = document.createElement('div');
+            debugSummary.className = 'alert alert-info d-print-none';
+            debugSummary.style.cssText = 'background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;';
+            debugSummary.innerHTML = `
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted ${convertedCount} of ${processedCount} internal links to anchors<br>
+                Available pages: ${Array.from(availablePages.keys()).join(', ')}
+            `;
+            document.querySelector('.td-content').appendChild(debugSummary);
+        });
+
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#page-')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
+
+</body></html>

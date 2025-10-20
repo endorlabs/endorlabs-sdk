@@ -102,16 +102,16 @@ client = APIClient()  # Auto-authenticates via env vars
 
 ### **Namespace Operations**
 ```python
-from endor_cockpit.resources import namespaces
-from endor_cockpit.resources.namespaces import CreateNamespacePayload
+from endor_cockpit.resources import namespace
+from endor_cockpit.resources.namespace import CreateNamespacePayload
 
 # List namespaces
-all_namespaces = namespaces.list_namespaces(client, "tenant-namespace")
+all_namespaces = namespace.list_namespaces(client, "tenant-namespace")
 
 # Create namespace (CRITICAL: Use canonical naming)
 canonical_parent = f"{tenant_namespace}.{parent_name}"
 payload = CreateNamespacePayload(meta=NamespaceMetaCreate(name="test", description="Agent created"))
-created = namespaces.create_namespace(client, canonical_parent, payload)
+created = namespace.create_namespace(client, canonical_parent, payload)
 ```
 
 ### **Critical Patterns**

@@ -11,6 +11,7 @@
 - Security guidelines and compliance requirements
 - Operational procedures and troubleshooting
 
+
 ```python
 from endor_cockpit.rag import query_vector_db
 
@@ -28,9 +29,9 @@ results = query_vector_db("How do I create a namespace?")
 - **⚙️ Operations Admin**: [Operations Guide](./docs/personas/operations/README.md) → [Namespace Admin](./docs/personas/operations/namespace-admin.md)
 
 ### **Critical Requirements**
-- **Security**: Always run `endorctl scan` before code changes
+- **Security**: Always run `endorctl scan` before code changes are committed pushed to the remote repository.
 - **Linting**: Max 88 chars/line, sorted imports, no trailing whitespace
-- **Dependencies**: Pin exact versions, avoid `latest`
+- **Dependencies**: Pin exact versions, avoid `latest` or `>=`
 - **Environment**: Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
 
 ---
@@ -41,87 +42,205 @@ results = query_vector_db("How do I create a namespace?")
 - **Purpose**: Administer, operate and scan with Endor Labs tooling through REST APIs
 - **Data Classification**: Public (no PII handling)
 - **Deployment**: Production environment, global region
-- **Security**: SOC2 and ISO27001 compliant
+- **Security**: Paramount importance
 - **Architecture**: Resource-oriented SDK pattern
-
-> 📋 **For detailed project context, see [catalog-info.yaml](./catalog-info.yaml)**
 
 ---
 
 ## 🎯 **Documentation Style Guide**
 
-### **Semantic Chunking Strategy**
-All documentation follows semantic chunking principles for optimal vector DB retrieval:
+### **Template-Based Documentation**
 
-#### **Header Hierarchy**
-```markdown
-# Main Topic (H1) - Always chunk boundary
-## Section (H2) - Primary chunk boundary  
-### Subsection (H3) - Secondary chunk boundary
-#### Detail (H4) - Rarely used, keep with parent
-```
+All Endor Labs documentation follows standardized templates for consistency and RAG optimization.
 
-#### **Chunking Rules**
-- **Max chunk size**: 1000 tokens
-- **Overlap**: 200 tokens between chunks
-- **Split on**: `##`, `###`, `\n\n` (double newlines)
-- **Preserve structure**: Always maintain header context
+#### **Resource Documentation**
+- **Template**: `docs/endor-data-model/_RESOURCE_TEMPLATE.md`
+- **Structure**: Architecture → Data Model → Operations → Relationships → Common Issues → Testing Patterns → (Optional) Troubleshooting
+- **RAG Metadata**: Required for vector database indexing
+- **Status Markers**: Only ✅ IMPLEMENTED (no conceptual/planned markers)
 
-#### **Content Patterns**
-```markdown
-## Section Title
+#### **Documentation Standards**
+- **Direct SDK References**: Point to actual SDK classes and functions with line numbers
+- **Real Examples**: Use working code examples that reference actual SDK implementations
+- **Validation**: All references must be accurate and current
+- **Cross-References**: Link to related resources and templates
 
-**Purpose**: Brief description of what this section covers
-**Audience**: Which persona(s) this applies to
-**Prerequisites**: What to read first
+#### **Template Usage**
+1. **Copy template** from `_RESOURCE_TEMPLATE.md` or other `*_TEMPLATE.md` files for formatting
+2. **Replace placeholders** with actual resource information
+3. **Fill content** based on actual SDK implementation
+4. **Validate references** to ensure all function/class references exist
+5. **Test RAG queries** to ensure content is discoverable
 
-### Subsection
-
-**Pattern**: Show the correct way first
-**Anti-pattern**: Show common mistakes
-**Example**: Real code examples
-**Reference**: Link to related sections
-```
-
-### **Unicode & Character Encoding Guidelines**
-- **Avoid Unicode Emojis**: Use ASCII characters only in scripts and documentation to prevent encoding issues on Windows.
-- **Windows Compatibility**: Use `#`, `*`, `-`, `+` instead of Unicode symbols (🚀, ✅, ❌, 📊, etc.).
-- **Script Output**: Use plain text status indicators: `[OK]`, `[ERROR]`, `[INFO]`, `[WARNING]`.
-- **File Encoding**: Always use UTF-8 encoding for source files, but avoid Unicode characters in output.
-- **Cross-Platform**: Ensure scripts work on Windows, Linux, and macOS without encoding issues.
+#### **RAG Optimization**
+- **Semantic Chunking**: Structure content for optimal vector database retrieval
+- **Header Hierarchy**: H1/H2/H3 boundaries for chunking
+- **Metadata Extraction**: Enhanced metadata for better search results
+- **Cross-References**: Link between related documentation sections
 
 ---
 
-## 🔑 **Critical API Patterns**
 
-### **Namespace Operations: Canonical Naming**
-**CRITICAL**: Endor Labs API requires canonical naming, not UUIDs.
+## 🔑 **API Patterns & Documentation**
 
-#### **✅ CORRECT Pattern**
+### **Trust but Verify**
+- **Primary Source**: Always check function docstrings and module documentation first
+- **Resource Documentation**: See `src/endor_cockpit/resources/[resource].py` for comprehensive API patterns
+- **Canonical Naming**: Refer to namespace.py documentation for hierarchical naming requirements
+- **Validation**: Verify API patterns against actual SDK implementation before use
+
+---
+
+## 🔍 **Real-World Usage Patterns**
+
+### **Finding Analysis Patterns**
+
+**Pattern**: Retrieve and analyze findings by severity, category, and ecosystem
 ```python
-# Use canonical hierarchical names for parent-child relationships
-canonical_parent = f"{tenant_namespace}.{parent_name}"
-# Example: "endor-solutions-tgowan.cockpit.integration-test-parent"
+# Get all findings in namespace
+findings = finding.list_findings(client, namespace)
 
+# Filter by severity
+critical_findings = [f for f in findings if f.spec.level == FindingLevel.CRITICAL]
+
+# Filter by category
+vulnerability_findings = [f for f in findings 
+                         if 'FINDING_CATEGORY_VULNERABILITY' in (f.spec.finding_categories or [])]
+
+# Filter by project
+project_findings = [f for f in findings if f.spec.project_uuid == project_uuid]
+```
+
+**Pattern**: Analyze finding distribution across multiple dimensions
+```python
+# Analyze finding distribution
+severity_counts = {}
+category_counts = {}
+ecosystem_counts = {}
+
+for finding in findings:
+    # Severity analysis
+    severity = str(finding.spec.level)
+    severity_counts[severity] = severity_counts.get(severity, 0) + 1
+    
+    # Category analysis
+    categories = finding.spec.finding_categories or []
+    for category in categories:
+        category_counts[category] = category_counts.get(category, 0) + 1
+    
+    # Ecosystem analysis
+    ecosystem = str(finding.spec.ecosystem) if finding.spec.ecosystem else 'Unknown'
+    ecosystem_counts[ecosystem] = ecosystem_counts.get(ecosystem, 0) + 1
+```
+
+### **Project Management Patterns**
+
+**Pattern**: List and analyze projects with processing status
+```python
+# Get all projects in namespace
+projects = project.list_projects(client, namespace)
+
+# Filter by scan state
+idle_projects = [p for p in projects if p.processing_status.scan_state == "SCAN_STATE_IDLE"]
+scanning_projects = [p for p in projects if p.processing_status.scan_state == "SCAN_STATE_SCANNING"]
+
+# Analyze project distribution
+platform_counts = {}
+for project in projects:
+    platform = project.spec.platform_source
+    platform_counts[platform] = platform_counts.get(platform, 0) + 1
+```
+
+**Pattern**: Update project tags and metadata
+```python
+# Update project tags
+payload = UpdateProjectPayload(
+    tags=["security-reviewed", "production-ready"],
+    update_mask=["tags"]
+)
+updated_project = project.update_project(client, namespace, project_uuid, payload, "tags")
+```
+
+### **Namespace Hierarchy Patterns**
+
+**Pattern**: Create and manage namespace hierarchies
+```python
 # Create child namespace
-child_result = namespaces.create_namespace(client, canonical_parent, child_payload)
+child_payload = CreateNamespacePayload(
+    meta=NamespaceMeta(
+        name="child-namespace",
+        description="Child namespace for testing"
+    )
+)
+child_result = create_namespace(client, parent_namespace, child_payload)
+
+# List namespaces in hierarchy
+namespaces = list_namespaces(client, parent_namespace)
 ```
 
-#### **❌ INCORRECT Pattern**
+### **Policy Management Patterns**
+
+**Pattern**: Create and manage security policies
 ```python
-# DON'T use UUIDs as parents - this will fail with 403 Forbidden
-parent_namespace.uuid  # "68f3b2956795a2693a0f5bec" - FAILS!
+# Create ML_FINDING policy
+policy_payload = CreatePolicyPayload(
+    meta=PolicyMeta(
+        name="Security Policy",
+        description="Custom security policy"
+    ),
+    spec=PolicySpec(
+        policy_type=PolicyType.ML_FINDING,
+        rule="""package security
+
+configure[result] {
+  result = {
+    "security_method": {
+      "disable": false,
+      "parameters": {
+        "enable_security": {
+          "bool_value": true
+        }
+      }
+    }
+  }
+}""",
+        disable=False
+    )
+)
+new_policy = policy.create_policy(client, namespace, policy_payload)
 ```
 
-#### **API Endpoint Reference**
-- **POST `/namespaces`**: `parent_namespace` parameter requires canonical name format
-- **GET `/namespaces/{uuid}`**: Requires `parent_namespace` parameter (canonical name)
-- **PUT `/namespaces/{uuid}`**: Requires `parent_namespace` parameter (canonical name)
+### **Common Pitfalls & Solutions**
 
-### **Permission Model**
-- **Tenant-level operations**: Use tenant name (`endor-solutions-tgowan.cockpit`)
-- **Hierarchy operations**: Use canonical parent names (`tenant.namespace.child`)
-- **Cross-tenant operations**: Forbidden (403 Forbidden)
+**❌ Wrong Path Parameter**
+```python
+# WRONG - Using UUID instead of canonical namespace
+client.get(f"v1/namespaces/{namespace_uuid}/projects")
+
+# CORRECT - Use canonical namespace
+client.get(f"v1/namespaces/{tenant_meta_namespace}/projects")
+```
+
+**❌ Wrong Response Parsing**
+```python
+# WRONG - Expecting direct arrays
+data = res.json().get("projects", [])
+
+# CORRECT - Use list.objects structure
+data = res.json().get("list", {}).get("objects", [])
+```
+
+**❌ Missing Update Mask**
+```python
+# WRONG - Missing update_mask parameter
+payload = UpdateProjectPayload(tags=["new-tag"])
+
+# CORRECT - Include update_mask
+payload = UpdateProjectPayload(
+    tags=["new-tag"],
+    update_mask=["tags"]
+)
+```
 
 ---
 
@@ -264,6 +383,76 @@ Last Updated: YYYY-MM-DD
 
 ### Operational Context
 For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `workspace/OPERATIONAL_CONTEXT.md`.
+
+---
+
+## 📝 **Knowledge Capture & Promotion Protocol**
+
+### **Ephemeral Learning Capture**
+
+**CRITICAL**: For every technical issue encountered during SDK development, API debugging, or endorctl usage, document a log entry in `workspace/logbook.md` using the template format.
+
+**Required Information**:
+- **Task**: What was being attempted
+- **Context**: Resource types, related files, RAG queries, terminal output
+- **Attempted Approach**: Specific function calls, API endpoints, commands
+- **Unexpected Behavior**: Expected vs actual behavior, error messages
+- **Resolution**: Working solution with exact function signatures
+- **Key Learning**: One-sentence summary of core insight
+- **Relevant Documentation**: SDK references, test files, API endpoints
+- **Miscellaneous Notes**: Additional context and follow-up items
+- **Tags**: Appropriate categorization (resource type, operation type, context)
+- **Reviewed for Promotion**: Checkbox when ready for archive consideration
+
+### **Template Compliance**
+
+Use `_LOGBOOK_TEMPLATE.md` format exactly:
+- Include all required sections
+- Provide specific function calls and error messages
+- Include working code examples in resolution
+- Tag entries with relevant resource types and operation types
+
+### **Promotion Workflow**
+
+**Pre-Commit Process**:
+1. **Check for entries** marked "Reviewed for Promotion"
+2. **Request user approval** for valuable learnings
+3. **If approved**: AI reviews entry and identifies relevant documentation files
+4. **Integration**: AI adds learnings to appropriate documentation with timestamp and logbook reference
+5. **Vector DB**: Rebuild vector database with new content
+6. **Mark promoted**: Update entry status to [PROMOTED - YYYY-MM-DD]
+
+**Target Documentation Files**:
+- **Resource-Specific Issues**: `docs/endor-data-model/[resource].md` (Troubleshooting section)
+- **API Quirks**: `docs/SPECIFICATION.md` (API Corrections section)
+- **Architectural Learnings**: `docs/agents/[relevant-guide].md`
+- **Testing Patterns**: Test file comments or `tests/README.md`
+
+### **Chunking Strategy Updates**
+
+The vector database uses enhanced metadata extraction:
+- **H1 titles** for main topics
+- **Resource types** for resource-specific queries
+- **Section names** for targeted content retrieval
+- **Subsection names** for granular information
+
+**Metadata Fields**:
+- `h1_title`: Main topic title
+- `resource_type`: Resource type (project, finding, policy, namespace)
+- `section_name`: H2 section name
+- `subsection_name`: H3 section name
+- `header_level`: Header level (h1, h2, h3)
+
+### **Protocol Benefits**
+
+1. **Systematic Learning Capture**: No knowledge lost during development
+2. **Quality Control**: User approval gate ensures value
+3. **Traceability**: Link from docs back to original discovery
+4. **Consistency**: Template ensures uniform format
+5. **Scalability**: Protocol guides all future agents
+6. **Efficiency**: Agents can query protocols for maintenance guidance
+7. **Maintainability**: Clear processes for information lifecycle
+8. **RAG Optimization**: Structured content for vector database indexing
 
 ---
 
