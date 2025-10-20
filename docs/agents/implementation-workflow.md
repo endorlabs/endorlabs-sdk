@@ -7,8 +7,8 @@
 ### **Pre-Implementation Checklist**
 - [ ] Virtual environment activated (`uv venv` + `source .venv/bin/activate`)
 - [ ] Environment variables set (`ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`, `ENDOR_NAMESPACE`)
-- [ ] OpenAPI spec downloaded (`tmp/openapiv2.swagger.json`)
-- [ ] Workspace ready (`workspace/workspace.py`)
+- [ ] OpenAPI spec downloaded (`.workspace/downloads/openapi-swagger.json`)
+- [ ] Workspace ready (`.workspace/workspace.py`)
 
 ### **Knowledge Base First**
 ```python
@@ -34,8 +34,8 @@ results = query_vector_db("What are the common pitfalls for {resource} implement
 #### **1.2 Analyze OpenAPI Specification**
 ```bash
 # Search for service endpoints
-grep -i "{Resource}Service" tmp/openapiv2.swagger.json
-grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
 ```
 
 #### **1.3 Test with endorctl**
@@ -49,7 +49,7 @@ endorctl api list -r {Resource}
 
 #### **2.1 Get Live API Data**
 ```python
-# workspace/workspace.py
+# .workspace/workspace.py
 import sys
 sys.path.insert(0, '..')
 from endor_cockpit.api_client import APIClient
@@ -144,7 +144,7 @@ if {resource}s:
 - [ ] Resource module follows established patterns
 - [ ] Documentation updated with learnings
 - [ ] Tests pass for all operations
-- [ ] Workspace.py demonstrates working functionality
+- [ ] .workspace/workspace.py demonstrates working functionality
 
 ### **✅ Knowledge Base Updated When:**
 - [ ] API patterns documented
@@ -209,11 +209,11 @@ response = client.get(endpoint)             # May fail
 - [ ] Pydantic models validate correctly
 - [ ] Documentation complete
 - [ ] Knowledge base updated
-- [ ] Workspace cleaned up
+- [ ] .workspace cleaned up
 
 ### **Quality Indicators**
-- [ ] No one-off scripts in workspace
-- [ ] Single workspace.py file for experimentation
+- [ ] No one-off scripts in .workspace
+- [ ] Single .workspace/workspace.py file for experimentation
 - [ ] All learnings documented
 - [ ] Repeatable process established
 - [ ] Ready for next resource implementation

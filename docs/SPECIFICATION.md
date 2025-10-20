@@ -4,7 +4,7 @@
 
 ## 🎯 **Purpose**
 
-This document captures known discrepancies between the OpenAPI specification (`tmp/openapiv2.swagger.json`) and actual Endor Labs API behavior. These corrections ensure agents work with the real API, not the machine-generated spec.
+This document captures known discrepancies between the OpenAPI specification (`.workspace/downloads/openapi-swagger.json`) and actual Endor Labs API behavior. These corrections ensure agents work with the real API, not the machine-generated spec.
 
 ## 📋 **Critical API Corrections**
 
@@ -309,7 +309,7 @@ regex_path = normalized_path.replace(os.path.sep, "/")
 
 ## 📚 **Reference Links**
 
-- **OpenAPI Spec**: `tmp/openapiv2.swagger.json` (92K lines)
+- **OpenAPI Spec**: `.workspace/downloads/openapi-swagger.json` (92K lines)
 - **SDK Implementation**: `src/endor_cockpit/resources/namespaces.py`
 - **Integration Tests**: `tests/test_integration.py`
 - **Agent Insights**: `docs/agents/insights.md`

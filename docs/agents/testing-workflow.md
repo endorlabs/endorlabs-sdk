@@ -157,11 +157,11 @@ class ProjectMeta(BaseModel):
 - [ ] Resource module follows established patterns
 - [ ] Documentation updated with learnings
 - [ ] Tests pass for all operations
-- [ ] Workspace.py demonstrates working functionality
+- [ ] .workspace/workspace.py demonstrates working functionality
 
 ### **Test Structure Success Metrics**
-- [ ] No one-off scripts in workspace
-- [ ] Single workspace.py file for experimentation
+- [ ] No one-off scripts in .workspace
+- [ ] Single .workspace/workspace.py file for experimentation
 - [ ] All learnings documented
 - [ ] Repeatable process established
 - [ ] Ready for next resource implementation

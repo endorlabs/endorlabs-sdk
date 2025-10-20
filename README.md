@@ -208,7 +208,7 @@ endorctl scan --path . --namespace "your-namespace"
 
 ## Workspace Folder
 
-For local testing and development, use the `workspace/` folder which is excluded from version control. This folder is **unique to each user** and contains:
+For local testing and development, use the `.workspace/` folder which is excluded from version control. This folder is **unique to each user** and contains:
 - Integration test results and configurations
 - Temporary policy configurations
 - Development scripts and utilities
@@ -218,7 +218,7 @@ For local testing and development, use the `workspace/` folder which is excluded
 
 Each user's workspace is isolated and not shared across the team.
 
-For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `workspace/OPERATIONAL_CONTEXT.md`.
+For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `.workspace/OPERATIONAL_CONTEXT.md`.
 
 ## Contributing
 
