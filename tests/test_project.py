@@ -21,6 +21,7 @@ from endor_cockpit.resources.tag_management import (
 )
 
 
+@pytest.mark.integration
 class TestProject:
     """Test cases for Project resource operations."""
 
