@@ -55,7 +55,7 @@ This protocol defines the essential context that must be available to all agents
 
 ## Related Protocols
 
-- [Knowledge Sync Protocol](knowledge-sync.md) - L2/L3
+- [Knowledge Capture Workflow](knowledge-capture-workflow.md) - L1
 - [Holocron Setup Protocol](holocron-setup.md) - L2
 - [Documentation Standards](documentation-standards.md) - L2
 
