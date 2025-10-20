@@ -30,6 +30,15 @@ runs:
           ${{ runner.os }}-uv-${{ inputs.python-version }}-
           ${{ runner.os }}-uv-
 
+    - name: Cache virtual environment
+      uses: actions/cache@v4.3.0
+      with:
+        path: .venv
+        key: ${{ inputs.cache-key || format('{0}-uv-{1}-{2}', runner.os, inputs.python-version, hashFiles('**/pyproject.toml')) }}-venv
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ inputs.python-version }}-venv-
+          ${{ runner.os }}-uv-venv-
+
     - name: Install UV
       uses: astral-sh/setup-uv@v3.0.0
       with:
@@ -39,4 +48,10 @@ runs:
       if: inputs.install-dependencies == 'true'
       shell: bash
       run: |
-        uv sync --dev --group holocron
+        # Only sync if dependencies are not already available
+        if [ ! -d ".venv" ] || [ ! -f ".venv/pyproject.toml" ]; then
+          echo "Installing dependencies..."
+          uv sync --dev --group holocron
+        else
+          echo "Dependencies already available, skipping sync"
+        fi

@@ -64,6 +64,15 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-uv-
 
+      - name: Cache virtual environment
+        uses: actions/cache@v4.3.0
+        with:
+          path: .venv
+          key: ${{ steps.cache-key.outputs.key }}-venv
+          restore-keys: |
+            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-venv-
+            ${{ runner.os }}-uv-venv-
+
       - name: Install UV
         uses: astral-sh/setup-uv@v3.0.0
         with:
