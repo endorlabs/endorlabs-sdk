@@ -48,7 +48,7 @@ CONTENT_TYPE_PATTERNS = {
 }
 
 # Directories to include in vector DB
-INCLUDE_DIRS = ["docs/", "src/", "tests/", "tmp/openapiv2.swagger.json"]
+INCLUDE_DIRS = ["docs/", "src/", "tests/", ".workspace/downloads/openapi-swagger.json"]
 
 # Directories to exclude
 EXCLUDE_DIRS = [
@@ -60,7 +60,8 @@ EXCLUDE_DIRS = [
     "env/",
     ".env/",
     "holocron_data/",  # Exclude our own data directory
-    "workspace/",  # Exclude workspace directory
+    ".workspace/",  # Exclude workspace directory (ephemeral)
+    "tmp/",  # Exclude old tmp directory
 ]
 
 
