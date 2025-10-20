@@ -136,7 +136,9 @@ class VectorDBManager:
             json.dump(self.manifest, f, indent=2)
 
     def update_external_docs_metadata(
-        self, openapi_metadata: Optional[Dict] = None, user_docs_count: Optional[int] = None
+        self,
+        openapi_metadata: Optional[Dict] = None,
+        user_docs_count: Optional[int] = None,
     ):
         """
         Update manifest with external documentation metadata.
