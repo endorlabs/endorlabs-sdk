@@ -137,7 +137,7 @@ def init_workspace(  # noqa: C901
         print("Creating directories...")
 
     create_directories()
-    
+
     # Ensure holocron_data directory exists for manifest
     Path(".workspace/holocron_data").mkdir(parents=True, exist_ok=True)
 

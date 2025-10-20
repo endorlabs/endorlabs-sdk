@@ -29,7 +29,14 @@ CHUNKING_STRATEGY = {
     "external_docs": {
         "max_chunk_size": 1200,  # tokens - slightly larger for external docs
         "overlap": 250,  # tokens
-        "split_on": ["\n\n", "===", "---", "Introduction", "About", "Prerequisites"],  # External doc patterns
+        "split_on": [
+            "\n\n",
+            "===",
+            "---",
+            "Introduction",
+            "About",
+            "Prerequisites",
+        ],  # External doc patterns
         "preserve_structure": True,
     },
     "code": {
@@ -48,7 +55,9 @@ CHUNKING_STRATEGY = {
 
 # Content type detection patterns
 CONTENT_TYPE_PATTERNS = {
-    "external_docs": [r"\.workspace/downloads/user-docs/.*\.md$"],  # External user docs (check first)
+    "external_docs": [
+        r"\.workspace/downloads/user-docs/.*\.md$"
+    ],  # External user docs (check first)
     "markdown": [r"\.md$", r"\.rst$"],
     "code": [r"\.py$", r"\.js$", r"\.ts$", r"\.go$", r"\.java$"],
     "api_spec": [r"openapi.*\.json$", r"swagger.*\.json$", r"\.yaml$", r"\.yml$"],
@@ -67,7 +76,7 @@ INCLUDE_DIRS = [
 EXCLUDE_DIRS = [
     "__pycache__",
     ".git",
-    "node_modules", 
+    "node_modules",
     "venv",
     ".venv",
     "env",
@@ -85,9 +94,10 @@ class VectorDBManager:
     def _normalize_path(file_path: str) -> str:
         """
         Normalize file path for cross-platform compatibility.
-        
-        CRITICAL: This method ensures consistent path handling across Windows, macOS, and Linux.
-        Always use this method before any path operations to prevent cross-platform issues.
+
+        CRITICAL: This method ensures consistent path handling across Windows,
+        macOS, and Linux. Always use this method before any path operations to
+        prevent cross-platform issues.
         Source: Logbook entry 2025-01-27 - Cross-platform path handling learnings.
         """
         return os.path.normpath(file_path)
@@ -166,7 +176,7 @@ class VectorDBManager:
         """Detect content type based on file path and content."""
         # Normalize path for cross-platform compatibility
         normalized_path = self._normalize_path(file_path).replace(os.path.sep, "/")
-        
+
         for content_type, patterns in CONTENT_TYPE_PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, normalized_path, re.IGNORECASE):
@@ -300,6 +310,82 @@ class VectorDBManager:
 
         return chunks
 
+    def _extract_source_url(self, lines: List[str]) -> str:
+        """Extract source URL from HTML comment in first few lines."""
+        for line in lines[:5]:  # Check first few lines for source URL
+            if line.strip().startswith("<!-- Source:"):
+                return line.strip().replace("<!-- Source: ", "").replace(" -->", "")
+        return ""
+
+    def _should_skip_line(self, line: str) -> bool:
+        """Check if line should be skipped (HTML comments, breadcrumbs)."""
+        stripped = line.strip()
+        return (
+            stripped.startswith("<!--")
+            or stripped.startswith("1. [")
+            or stripped.startswith("2. [")
+            or stripped.startswith("3. [")
+        )
+
+    def _create_chunk_metadata(
+        self,
+        chunk_text: str,
+        chunk_index: int,
+        source_url: str,
+        h1_title: str,
+        current_section: str,
+        current_subsection: str,
+    ) -> Dict:
+        """Create metadata dictionary for a chunk."""
+        return {
+            "content_type": "external_docs",
+            "chunk_index": chunk_index,
+            "size": len(chunk_text),
+            "source_url": source_url or "",
+            "h1_title": h1_title or "",
+            "section_name": current_section or "",
+            "subsection_name": current_subsection or "",
+        }
+
+    def _save_current_chunk(
+        self,
+        current_chunk: List[str],
+        chunks: List[Dict],
+        source_url: str,
+        h1_title: str,
+        current_section: str,
+        current_subsection: str,
+    ) -> None:
+        """Save current chunk to chunks list."""
+        if current_chunk:
+            chunk_text = "\n".join(current_chunk)
+            chunks.append(
+                {
+                    "text": chunk_text,
+                    "metadata": self._create_chunk_metadata(
+                        chunk_text,
+                        len(chunks),
+                        source_url,
+                        h1_title,
+                        current_section,
+                        current_subsection,
+                    ),
+                }
+            )
+
+    def _update_header_tracking(
+        self, line: str, h1_title: str, current_section: str, current_subsection: str
+    ) -> tuple:
+        """Update header tracking variables based on line content."""
+        header_text = self._clean_external_header_text(line)
+
+        if line.strip().endswith("="):
+            return header_text, "", ""
+        elif line.strip().endswith("-"):
+            return h1_title or "", header_text, ""
+        else:
+            return h1_title or "", current_section or "", header_text
+
     def _chunk_external_docs(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk external documentation content optimized for downloaded user docs."""
         chunks = []
@@ -311,52 +397,31 @@ class VectorDBManager:
         h1_title = None
         current_section = None
         current_subsection = None
-        source_url = None
-
-        # Extract source URL from HTML comment
-        for line in lines[:5]:  # Check first few lines for source URL
-            if line.strip().startswith("<!-- Source:"):
-                source_url = line.strip().replace("<!-- Source: ", "").replace(" -->", "")
-                break
+        source_url = self._extract_source_url(lines)
 
         for line in lines:
             # Skip HTML comments and breadcrumbs
-            if line.strip().startswith("<!--") or line.strip().startswith("1. [") or line.strip().startswith("2. [") or line.strip().startswith("3. ["):
+            if self._should_skip_line(line):
                 continue
 
             # Check if this is a header (using underline style or title case)
             if self._is_external_doc_header(line):
                 # Save current chunk if it has content
-                if current_chunk:
-                    chunk_text = "\n".join(current_chunk)
-                    chunks.append(
-                        {
-                            "text": chunk_text,
-                            "metadata": {
-                                "content_type": "external_docs",
-                                "chunk_index": len(chunks),
-                                "size": len(chunk_text),
-                                "source_url": source_url,
-                                "h1_title": h1_title,
-                                "section_name": current_section,
-                                "subsection_name": current_subsection,
-                            },
-                        }
-                    )
+                self._save_current_chunk(
+                    current_chunk,
+                    chunks,
+                    source_url,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                )
 
-                # Parse header content
-                header_text = self._clean_external_header_text(line)
-                
                 # Update tracking variables
-                if line.strip().endswith("="):
-                    h1_title = header_text
-                    current_section = None
-                    current_subsection = None
-                elif line.strip().endswith("-"):
-                    current_section = header_text
-                    current_subsection = None
-                else:
-                    current_subsection = header_text
+                h1_title, current_section, current_subsection = (
+                    self._update_header_tracking(
+                        line, h1_title, current_section, current_subsection
+                    )
+                )
 
                 # Start new chunk with header
                 current_chunk = [line]
@@ -369,20 +434,13 @@ class VectorDBManager:
                 # Check if chunk is too large
                 if current_size > strategy["max_chunk_size"]:
                     # Save current chunk
-                    chunk_text = "\n".join(current_chunk)
-                    chunks.append(
-                        {
-                            "text": chunk_text,
-                            "metadata": {
-                                "content_type": "external_docs",
-                                "chunk_index": len(chunks),
-                                "size": len(chunk_text),
-                                "source_url": source_url,
-                                "h1_title": h1_title,
-                                "section_name": current_section,
-                                "subsection_name": current_subsection,
-                            },
-                        }
+                    self._save_current_chunk(
+                        current_chunk,
+                        chunks,
+                        source_url,
+                        h1_title,
+                        current_section,
+                        current_subsection,
                     )
 
                     # Start new chunk
@@ -390,22 +448,14 @@ class VectorDBManager:
                     current_size = 0
 
         # Add final chunk
-        if current_chunk:
-            chunk_text = "\n".join(current_chunk)
-            chunks.append(
-                {
-                    "text": chunk_text,
-                    "metadata": {
-                        "content_type": "external_docs",
-                        "chunk_index": len(chunks),
-                        "size": len(chunk_text),
-                        "source_url": source_url,
-                        "h1_title": h1_title,
-                        "section_name": current_section,
-                        "subsection_name": current_subsection,
-                    },
-                }
-            )
+        self._save_current_chunk(
+            current_chunk,
+            chunks,
+            source_url,
+            h1_title,
+            current_section,
+            current_subsection,
+        )
 
         return chunks
 
@@ -418,7 +468,14 @@ class VectorDBManager:
         if len(stripped) > 0 and stripped.endswith("-") and len(stripped) > 3:
             return True
         # Check for title case headers (no markdown #)
-        if len(stripped) > 0 and not stripped.startswith("#") and not stripped.startswith("*") and not stripped.startswith("-") and stripped.isupper() and len(stripped) > 5:
+        if (
+            len(stripped) > 0
+            and not stripped.startswith("#")
+            and not stripped.startswith("*")
+            and not stripped.startswith("-")
+            and stripped.isupper()
+            and len(stripped) > 5
+        ):
             return True
         return False
 
@@ -426,10 +483,10 @@ class VectorDBManager:
         """Clean external doc header text."""
         # Remove underline characters
         text = line.strip().rstrip("=-")
-        
+
         # Remove extra whitespace
         text = re.sub(r"\s+", " ", text).strip()
-        
+
         return text
 
     def _get_header_level(self, line: str) -> str:
@@ -620,7 +677,7 @@ class VectorDBManager:
         """Check if file needs to be rebuilt based on manifest."""
         # Normalize path for consistent comparison
         normalized_path = self._normalize_path(file_path)
-        
+
         if normalized_path not in self.manifest["documents"]:
             return True
 
@@ -669,9 +726,11 @@ class VectorDBManager:
                 for root, dirs, files in os.walk(include_path):
                     # Skip excluded directories
                     dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
-                    
+
                     # Additional check for nested excluded paths
-                    normalized_root = self._normalize_path(root).replace(os.path.sep, "/")
+                    normalized_root = self._normalize_path(root).replace(
+                        os.path.sep, "/"
+                    )
                     if any(excluded in normalized_root for excluded in EXCLUDE_DIRS):
                         continue
 
@@ -762,17 +821,21 @@ class VectorDBManager:
         if all_chunks:
             batch_size = 1000  # ChromaDB batch size limit
             total_chunks = len(all_chunks)
-            
+
             for i in range(0, total_chunks, batch_size):
-                batch_chunks = all_chunks[i:i + batch_size]
+                batch_chunks = all_chunks[i : i + batch_size]
                 texts = [chunk["text"] for chunk in batch_chunks]
                 metadatas = [chunk["metadata"] for chunk in batch_chunks]
                 ids = [chunk["metadata"]["chunk_id"] for chunk in batch_chunks]
 
                 self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
-                
+
                 if verbose:
-                    logger.info(f"Added batch {i//batch_size + 1}/{(total_chunks + batch_size - 1)//batch_size} ({len(batch_chunks)} chunks)")
+                    logger.info(
+                        f"Added batch {i // batch_size + 1}/"
+                        f"{(total_chunks + batch_size - 1) // batch_size} "
+                        f"({len(batch_chunks)} chunks)"
+                    )
 
             logger.info(f"Added {total_chunks} chunks to vector database")
 
