@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<!-- saved from url=(0092)https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/_print.html -->
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="en" class="no-js"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="Hugo 0.147.6">
+
+    
+    <link rel="canonical" type="text/html" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/">
+    <meta name="robots" content="noindex, nofollow">
+
+    
+    
+
+<link rel="shortcut icon" href="https://docs.endorlabs.com/favicons/favicon.ico">
+<link rel="apple-touch-icon" href="https://docs.endorlabs.com/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-192x192.png" sizes="192x192">
+
+
+    <title>Resource kinds | Endor Labs Docs</title>
+    <meta name="description" content="Learn about the resource kinds in the Endor Labs data model.">
+
+    
+    
+    <link href="./Resource kinds _ Endor Labs Docs_files/main.min.css" rel="stylesheet">
+
+    
+    
+    
+    <!--<base href="/rest-api/using-the-rest-api/data-model/resource-kinds/">--><base href=".">
+
+    
+
+    <style>
+         
+        @media print {
+             
+            .page-break {
+                page-break-before: always !important;
+            }
+
+             
+            h2 {
+                background: none !important;
+                border: 2pt solid #065A5B !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 0 8pt 0 !important;
+                margin: 40pt 0 20pt 0 !important;
+                text-align: left !important;
+                width: auto !important;
+                font-size: 20pt !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-top: none !important;
+                border-bottom: 2pt solid #065A5B !important;
+            }
+
+             
+            h2::after {
+                content: "" !important;
+                display: none !important;
+            }
+
+             
+            .toc-list {
+                list-style-type: none !important;
+                padding-left: 0 !important;
+                margin: 20pt 0 !important;
+                font-size: 12pt !important;
+                line-height: 1.8 !important;
+            }
+
+            .toc-sublist {
+                list-style-type: none !important;
+                padding-left: 30pt !important;
+                margin: 8pt 0 16pt 0 !important;
+            }
+
+            .toc-list > li {
+                margin: 12pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-sublist > li {
+                margin: 6pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-number {
+                font-weight: 600 !important;
+                color: #065A5B !important;
+                margin-right: 8pt !important;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc !important;
+                text-decoration: none !important;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline !important;
+            }
+        }
+
+         
+        @media screen {
+            .toc-list {
+                list-style-type: none;
+                padding-left: 0;
+                margin: 1rem 0;
+            }
+
+            .toc-sublist {
+                list-style-type: none;
+                padding-left: 2rem;
+                margin: 0.5rem 0 1rem 0;
+            }
+
+            .toc-list > li {
+                margin: 0.75rem 0;
+            }
+
+            .toc-sublist > li {
+                margin: 0.5rem 0;
+            }
+
+            .toc-number {
+                font-weight: 600;
+                color: #065A5B;
+                margin-right: 0.5rem;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc;
+                text-decoration: none;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline;
+            }
+        }
+    </style>
+</head>
+
+<body class="td-section print-layout">
+    <div class="container-fluid td-outer">
+        <div class="td-main">
+            <div class="row flex-xl-nowrap">
+                <main class="col-12" role="main">
+                    <div class="td-content">
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <h1 class="title">Resource kinds</h1>
+
+                        
+                        
+                        <div class="lead">Learn about the resource kinds in the Endor Labs data model.</div>
+                        
+
+                        
+                        
+
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <div class="content-start page-break" id="page-rest-api">
+                            
+                            
+                            <div class="section-description">Learn about the resource kinds in the Endor Labs data model.</div>
+                            
+
+                            
+                            <div class="content">
+                                <p>Here is an overview diagram of the Endor Labs data model for the most commonly used resource kinds. Lighter shading identifies the objects that are re-computed on every scan.</p>
+<p><img src="./Resource kinds _ Endor Labs Docs_files/data-model.png" alt="data model"></p>
+<p>This section describes the most commonly used resource kinds. For a complete list of supported resource kinds, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">Endor Labs OpenAPI documentation</a>.</p>
+<p>All objects contain a reference to the project UUID, either as the parent object (<code>meta.parent_uuid</code>) or a specific field in the object-specific data if the project is not the direct parent (<code>spec.project_uuid</code> if not specified otherwise).</p>
+<p>Use the following command to get a list of all objects of a given resource kind in your tenant.</p>
+<p>Here are a few useful options:</p>
+<ul>
+<li><code>--count</code></li>
+<li><code>--page-size=1</code></li>
+<li><code>--list-all</code></li>
+<li><code>--filter="meta.parent_uuid==&lt;uuid&gt;"</code></li>
+<li><code>--filter="spec.project_uuid==&lt;uuid&gt;"</code></li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">endorctl api list -r &lt;resource-kind&gt;
+</span></span></code></pre></div><h2 id="project" class="heading-with-self-link">Project<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#project" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>This is the logical root of all the other information for a given project.</li>
+<li>Contains information about the source code location of a project, such as a Git repository, or a package manager package name.</li>
+<li>Does not have a parent and is not associated with a context.</li>
+<li>The object name is the HTTP clone URL, for example: <code>"https://github.com/definitelytyped/definitelytyped.git"</code>.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">ProjectService REST API documentation</a>.</p>
+<h2 id="repository" class="heading-with-self-link">Repository<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#repository" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains information about the source code for a project.</li>
+<li>Child of a Project and, just like the Project, does not belong to a context.</li>
+<li>There is at most one Repository per Project, but a Project may not have a Repository if there is no source code.</li>
+<li>The object name is the same as the Project.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">RepositoryService REST API documentation</a>.</p>
+<h2 id="repositoryversion" class="heading-with-self-link">RepositoryVersion<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#repositoryversion" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains information about a specific version of a Repository.</li>
+<li>Has the Project as the parent.</li>
+<li>There are often multiple RepositoryVersions per project.</li>
+<li>Each RepositoryVersion is associated with a <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a>.</li>
+<li>The object name is the corresponding branch name, tag, or SHA, for example: <code>"main"</code>.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">RepositoryVersionService REST API documentation</a>.</p>
+<h2 id="packageversion" class="heading-with-self-link">PackageVersion<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#packageversion" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains information about a specific version of a package and its dependencies.</li>
+<li>Does not have a parent (for historical reasons), but is associated with a <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a> and connected to the Project via <code>spec.project_uuid</code>.</li>
+<li>The object name is the corresponding package version name in the format <code>&lt;ecosystem&gt;://&lt;package-name&gt;@&lt;version&gt;</code>, for example: <code>"mvn://org.webjars.npm:types__json-schema@1.2.3"</code>.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">PackageVersionService REST API documentation</a>.</p>
+<h3 id="resolution-errors" class="heading-with-self-link">Resolution errors<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#resolution-errors" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>Details about any dependency resolution or call graph generation errors for a package version are stored in <code>spec.resolution_errors</code>. There are three categories of resolution errors, each with a separate field that can contain up to one resolution error:</p>
+<ol>
+<li><strong>Unresolved</strong> - Details in <code>spec.resolution_errors.unresolved</code> if there was an error computing the unresolved dependencies.</li>
+<li><strong>Resolved</strong> - Details in <code>spec.resolution_errors.resolved</code> if there was an error resolving the dependency versions.</li>
+<li><strong>Call graph</strong> - Details in <code>spec.resolution_errors.call_graph</code> if there was an error generating the call graph.</li>
+</ol>
+<p>Each resolution error has a <code>status_error</code> field and may also contain details about the <code>target</code>, the <code>operation</code> that failed, and a <code>description</code> of the error. The following status errors are supported:</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Status Error</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_BUILD</td>
+          <td style="text-align: left">Indicates that the plugin failed to build the package version. This status error is only used for unresolved dependencies.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_CALL_GRAPH</td>
+          <td style="text-align: left">Indicates that the system failed to create the call graph. This status error is only used for call graph computation.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_DEPENDENCY</td>
+          <td style="text-align: left">Indicates that the system failed to resolve a dependency. Usually happens when a manifest contains bad associations of dependencies and versions. This status error is only used for resolved dependencies.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_INTERNAL</td>
+          <td style="text-align: left">Indicates that there was an internal system failure such as a data stream error.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_MANIFEST_LOAD</td>
+          <td style="text-align: left">Indicates that the system is unable to find the manifest of the language (pom.xml, packages.json, etc). This status error is only used for unresolved dependencies.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_MANIFEST_PARSE</td>
+          <td style="text-align: left">Indicates that the system failed to parse the manifest. This status error is only used for unresolved dependencies.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_MISSING_ARTIFACT</td>
+          <td style="text-align: left">Indicates that the system failed to compute the call graph because the package is not built. This status error is only used for call graph computation.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_NO_CODE_ARTIFACT</td>
+          <td style="text-align: left">Indicates that the package version does not have any source code. This status error is only used for call graphs.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_PACKAGE_VERSION_UNAVAILABLE</td>
+          <td style="text-align: left">Indicates that the package version is not available from the package manager. This status error is only used for unresolved dependencies.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_UNSUPPORTED</td>
+          <td style="text-align: left">Indicates that a package version with an unsupported language was scanned.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left">STATUS_ERROR_VENV</td>
+          <td style="text-align: left">Indicates that the system failed to create the virtual environment required to generate the call graph. This status error is only applicable to Python projects.</td>
+      </tr>
+  </tbody>
+</table>
+<p>Below is an example resolution error in the <strong>Resolved</strong> category:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="nt">"spec"</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nt">"resolution_errors"</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="nt">"resolved"</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">"description"</span><span class="p">:</span> <span class="s2">"failed to discover dependency: unable to resolve dependencies for 'requirements': unable to get direct dependencies: unable to install modules to extract dependencies: unable to resolve package version: ResolveModuleVersion: error in pypi json api for: torch, exact version: 1.9.0+cpu, err: package not found in the repository: unable to resolve dependency version: unable to discover dependencies, unable to discover dependencies"</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">"operation"</span><span class="p">:</span> <span class="s2">"python:resolvedDependencies:discover"</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">"status_error"</span><span class="p">:</span> <span class="s2">"STATUS_ERROR_DEPENDENCY"</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="nt">"target"</span><span class="p">:</span> <span class="s2">"pypi://requirements@main"</span>
+</span></span><span class="line"><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="dependencymetadata" class="heading-with-self-link">DependencyMetadata<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#dependencymetadata" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>
+<p>Different from other common resource kinds as it represents the <em>relationship</em> between two PackageVersions: The <strong>importer</strong> and the <strong>dependency</strong>.</p>
+</li>
+<li>
+<p>There is one DependencyMetadata object for every dependency for every PackageVersion.</p>
+</li>
+<li>
+<p>Has the <strong>importer</strong> PackageVersion as the parent and exists in the same <a href="https://docs.endorlabs.com/common-fields/#tenantmeta" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#tenantmeta">Namespace</a> and <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a> as the parent.</p>
+</li>
+<li>
+<p>The object name is the same as the <strong>dependency</strong> PackageVersion.</p>
+</li>
+<li>
+<p>Combine the object name (<code>meta.name</code>) and the parent UUID (<code>meta.parent_uuid</code>) to get a unique key.</p>
+</li>
+<li>
+<p>Connected to the Project via <code>spec.importer_data.project_uuid</code>.</p>
+</li>
+<li>
+<p>Details about the relationship are stored in <code>spec.dependency_data</code>.
+For example:</p>
+<ul>
+<li><code>spec.dependency_data.direct</code></li>
+<li><code>spec.dependency_data.reachable</code></li>
+<li><code>spec.dependency_data.scope</code></li>
+</ul>
+</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">DependencyMetadataService REST API documentation</a>.</p>
+<h2 id="linterresult" class="heading-with-self-link">LinterResult<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#linterresult" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains the results of scans using third-party programs such as Gitleaks or Semgrep.</li>
+<li>Has a RepositoryVersion or PackageVersion as the parent.</li>
+<li>Belongs to the same <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a> as the parent.</li>
+<li>Connected to the Project through <code>spec.project_uuid</code>.</li>
+<li>The object name is the name of the rule that created the result, for example: <code>"gen-shady-links"</code>.</li>
+<li>The result origin is stored in <code>spec.origin</code>, for example: <code>"LINTER_RESULT_ORIGIN_SECRETS_SCANNER"</code>.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">LinterResultService REST API documentation</a>.</p>
+<h2 id="metric" class="heading-with-self-link">Metric<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#metric" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains the output of the analytics processing.</li>
+<li>Has a PackageVersion, RepositoryVersion, or Repository as the parent.</li>
+<li>Belongs to the same <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a> as the parent.</li>
+<li>Connected to the Project via <code>spec.project_uuid</code>.</li>
+<li>The object name is the name of the analytic that created the metric, for example: <code>"package_version_scorecard"</code>.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">MetricService REST API documentation</a>.</p>
+<h3 id="metric-types" class="heading-with-self-link">Metric types<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#metric-types" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>There are many different types of Metrics. The specifics are stored under <code>spec.metric_values.&lt;key&gt;.&lt;value&gt;</code>, for example: <code>spec.metric_values.scorefactor.score_factor_list</code>. Some Metrics have more than one key-value field under <code>spec.metric_values</code>. The following table lists all supported Metric types along with the corresponding paths to the Metric specific data under <code>spec.metric_values</code>.</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Metric Name</th>
+          <th style="text-align: left">Metric Values Paths</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>github_workflow_posture</code></td>
+          <td style="text-align: left"><code>GHWorkflowPosture.github_workflows</code></td>
+          <td style="text-align: left">Posture management of GitHub Actions workflow yaml files for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>model_scorecard</code></td>
+          <td style="text-align: left"><code>scorecard.score_card</code>, <code>scorefactor.score_factor_list</code></td>
+          <td style="text-align: left">Scorecard for a model repository.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>package_version_scorecard</code></td>
+          <td style="text-align: left"><code>scorecard.score_card</code>, <code>scorefactor.score_factor_list</code></td>
+          <td style="text-align: left">Scorecard for a package version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>pkg_version_info_for_license</code></td>
+          <td style="text-align: left"><code>licenseInfoType.license_info</code></td>
+          <td style="text-align: left">License information for a package version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>pkg_version_stats_for_dependency</code></td>
+          <td style="text-align: left"><code>dependencyStatsType.dependency_stats</code></td>
+          <td style="text-align: left">Dependency related statistics for a package version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>pkg_version_stats_for_linter</code></td>
+          <td style="text-align: left"><code>linterStats.linter_stats</code></td>
+          <td style="text-align: left">Linter related statistics for a package version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>pkg_version_stats_for_secret</code></td>
+          <td style="text-align: left"><code>secretStats.secret_stats</code></td>
+          <td style="text-align: left">Secret related statistics for a package version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>pkg_version_stats_for_vuln</code></td>
+          <td style="text-align: left"><code>vulnerabilityStatsType.vulnerability_stats</code>, <code>publishedVulnerabilitiesStatsType.time_tracker</code></td>
+          <td style="text-align: left">Vulnerability related statistics for a package version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_activity_for_commit</code></td>
+          <td style="text-align: left"><code>locationActivityTrackerType.time_tracker</code>, <code>locationActivityCountType.tag_counts</code></td>
+          <td style="text-align: left">Commit activity for a repository.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_activity_for_issue</code></td>
+          <td style="text-align: left"><code>locationActivityTrackerType.time_tracker</code>, <code>locationActivityCountType.tag_counts</code></td>
+          <td style="text-align: left">Issue activity for a repository.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_activity_for_pr</code></td>
+          <td style="text-align: left"><code>allActivityTrackerType.time_tracker</code>, <code>accountActivityTrackerType.time_tracker</code>, <code>locationActivityTrackerType.time_tracker</code>, <code>locationActivityCountType.tag_counts</code></td>
+          <td style="text-align: left">PR activity for a repository.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_scorecard</code></td>
+          <td style="text-align: left"><code>scorecard.score_card</code>, <code>scorefactor.score_factor_list</code></td>
+          <td style="text-align: left">Scorecard for a repository.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_scpm_data</code></td>
+          <td style="text-align: left"><code>ScpmDataType.scpm_data</code></td>
+          <td style="text-align: left">RSPM data for a repository.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_stats_for_dependency</code></td>
+          <td style="text-align: left"><code>dependencyStatsType.dependency_stats</code></td>
+          <td style="text-align: left">Dependency related statistics for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>repo_stats_for_file</code></td>
+          <td style="text-align: left"><code>fileStats.file_stats</code></td>
+          <td style="text-align: left">File related statistics for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_activity_for_commit</code></td>
+          <td style="text-align: left"><code>locationActivityTrackerType.time_tracker</code>, <code>locationActivityCountType.tag_counts</code></td>
+          <td style="text-align: left">Commit activity of a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_activity_for_issue</code></td>
+          <td style="text-align: left"><code>locationActivityTrackerType.time_tracker</code>, <code>locationActivityCountType.tag_counts</code></td>
+          <td style="text-align: left">Issue activity of a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_activity_for_pr</code></td>
+          <td style="text-align: left"><code>allActivityTrackerType.time_tracker</code>, <code>accountActivityTrackerType.time_tracker</code>, <code>locationActivityTrackerType.time_tracker</code>, <code>locationActivityCountType.tag_counts</code></td>
+          <td style="text-align: left">PR activity of a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_cicd_tools</code></td>
+          <td style="text-align: left"><code>CiCdTools.ci_cd_tools</code></td>
+          <td style="text-align: left">List of CI/CD Tools for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_scorecard</code></td>
+          <td style="text-align: left"><code>scorecard.score_card</code>, <code>scorefactor.score_factor_list</code></td>
+          <td style="text-align: left">Scorecard for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_stats_for_dependency</code></td>
+          <td style="text-align: left"><code>dependencyStatsType.dependency_stats</code></td>
+          <td style="text-align: left">Dependency related statistics for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_stats_for_file</code></td>
+          <td style="text-align: left"><code>fileStats.file_stats</code></td>
+          <td style="text-align: left">File related statistics for a repository version.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>version_stats_for_vuln</code></td>
+          <td style="text-align: left"><code>vulnerabilityStatsType.vulnerability_stats</code>, <code>publishedVulnerabilitiesStatsType.time_tracker</code></td>
+          <td style="text-align: left">Vulnerability related statistics for a package version.</td>
+      </tr>
+  </tbody>
+</table>
+<h2 id="finding" class="heading-with-self-link">Finding<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#finding" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains details of a problem that needs to be fixed.</li>
+<li>Has a PackageVersion, RepositoryVersion, or Repository as the parent.</li>
+<li>Belongs to the same <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a> as the parent.</li>
+<li>Connected to the Project via <code>spec.project_uuid</code>.</li>
+<li>There are many different types of Findings and new types can be created by custom <a href="https://docs.endorlabs.com/managing-policies/finding-policies/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../../managing-policies/finding-policies/">Finding Policies</a>.</li>
+<li>The object name is the Finding type, for example: <code>"outdated_release"</code>. For more information, see <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#finding-names-and-metadata">Finding names and metadata</a> below.</li>
+<li>The object description contains a more specific description of the Finding, for example: <code>"Outdated Dependency @babel/plugin-syntax-async-generators@7.8.4"</code>.</li>
+<li>Additional finding type specific data is stored in <code>spec.finding_metadata</code>, for example: <code>spec.finding_metadata.vulnerability</code>.</li>
+<li>PackageVersion Findings often involve both the root PackageVersion and a dependency PackageVersion. The following details about the dependency PackageVersion are available directly in the Finding object:
+<ul>
+<li><code>spec.target_dependency_name</code>, for example: <code>"@babel/plugin-syntax-async-generators"</code></li>
+<li><code>spec.target_dependency_package_name</code>, for example: <code>"npm://@babel/plugin-syntax-async-generators@7.8.4"</code></li>
+<li><code>spec.target_dependency_version</code>, for example: <code>"7.8.4"</code></li>
+<li><code>spec.finding_metadata.dependency_package_version_metadata</code></li>
+</ul>
+</li>
+<li>The UUID of the DependencyMetadata for the dependency is stored in <code>spec.target_uuid</code>.</li>
+<li>There is one Finding object for every PackageVersion that includes a dependency with a given problem. If 10 PackageVersions include a dependency with a vulnerability then there will be 10 findings for the vulnerability.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">FindingService REST API documentation</a>.</p>
+<h3 id="finding-names-and-metadata" class="heading-with-self-link">Finding names and metadata<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#finding-names-and-metadata" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>The following table lists all supported values for the Finding <code>meta.name</code> field along with an example value for the corresponding <code>meta.description</code> and an explanation.</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Finding Name</th>
+          <th style="text-align: left">Example Description</th>
+          <th style="text-align: left">Explanation</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>archived_source_code_repo</code></td>
+          <td style="text-align: left"><code>Unmaintained Dependency derive-error-chain@0.10.1</code></td>
+          <td style="text-align: left">The source code repository for this package is archived. There is no additional metadata for this finding type.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>bad_license</code></td>
+          <td style="text-align: left"><code>License Risk in Dependency org.codehaus.plexus:plexus-io@2.0.3</code></td>
+          <td style="text-align: left">The repository for this package is either missing a license or the license found is problematic. There is no additional metadata for this finding type.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_critical_vulnerabilities</code></td>
+          <td style="text-align: left"><code>GHSA-65fg-84f6-3jq3: SQL Injection in Log4j 1.2.x</code></td>
+          <td style="text-align: left">A critical severity known vulnerability has been assessed against this version of the software package according to the information in <code>OSV.dev</code>. Additional information about the vulnerability is stored in <code>spec.finding_metadata.vulnerability</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_high_severity_vulnerabilities</code></td>
+          <td style="text-align: left"><code>GHSA-w9p3-5cr8-m3jj: Deserialization of Untrusted Data in Log4j 1.x</code></td>
+          <td style="text-align: left">This package version contains a vulnerability that has been marked as high severity according to the information in <code>OSV.dev</code>. Additional information about the vulnerability is stored in <code>spec.finding_metadata.vulnerability</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_low_activity_score</code></td>
+          <td style="text-align: left"><code>Dependency tempdir@0.3.7 With Low Activity Score</code></td>
+          <td style="text-align: left">This package may be unmaintained, as determined by several factors contributing to a low activity score. Reliance on packages that are no longer maintained can make it costly or unreasonable to fix significant security risks, or quality issues. This may render the package obsolete over time. By relying on an unmaintained software package, organizations may assume the cost of maintenance and have a longer lead time for fixes on any security issues, if they are fixed at all. Additional information about the score is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_low_popularity_score</code></td>
+          <td style="text-align: left"><code>Dependency unicode-canonical-property-names-ecmascript@2.0.0 With Low Popularity Score</code></td>
+          <td style="text-align: left">Popularity is a social proxy for quality. Popular packages are more likely to remain maintained and thoroughly tested. Relying on lesser known packages for critical functions may increase operational risk. Additional information about the score is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_low_quality_score</code></td>
+          <td style="text-align: left"><code>Dependency org.slf4j:slf4j-api@1.7.6 With Low Quality Score</code></td>
+          <td style="text-align: left">This package may have an increased risk of bugs and quality issues as determined by several factors contributing to a low-quality score. A low quality score indicates a project may have an immature software development practice. Relying on packages that do not follow code development best practices can result in an increased risk of security and operational problems. Additional information about the score is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_low_severity_vulnerabilities</code></td>
+          <td style="text-align: left"><code>GHSA-5mg8-w23w-74h3: Information Disclosure in Guava</code></td>
+          <td style="text-align: left">This package version contains a vulnerability that has been marked as low severity according to the information in <code>OSV.dev</code>. Additional information about the vulnerability is stored in <code>spec.finding_metadata.vulnerability</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_malicious_package</code></td>
+          <td style="text-align: left"><code>MAL-2023-462: Malicious code in fsevents (npm)</code></td>
+          <td style="text-align: left">This version of the software package is considered malware according to <code>OSV.dev</code>. Additional information about the malware advisory is stored in <code>spec.finding_metadata.vulnerability</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_medium_severity_vulnerabilities</code></td>
+          <td style="text-align: left"><code>GHSA-269g-pwp5-87pp: TemporaryFolder on unix-like systems does not limit access to created files</code></td>
+          <td style="text-align: left">This package version contains a vulnerability that has been marked as medium severity according to the information in <code>OSV.dev</code>. Additional information about the vulnerability is stored in <code>spec.finding_metadata.vulnerability</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_multiple_low_scores</code></td>
+          <td style="text-align: left"><code>Dependency esformatter-remove-trailing-commas@1.0.1 With Multiple Low Scores</code></td>
+          <td style="text-align: left">This package version has received low scores across more than one categories. This is stronger indication that the package may be problematic and presents an increased risk for security and operational problems. Additional information about the scores is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_very_low_activity_score</code></td>
+          <td style="text-align: left"><code>Dependency is-finite@1.1.0 With Very Low Activity Score</code></td>
+          <td style="text-align: left">This package is very likely to be unmaintained, as determined by several factors contributing to a very low activity score. Reliance on packages that are no longer maintained can make it costly or unreasonable to fix significant security risks, or quality issues. This may render the dependency obsolete over time. By relying on an unmaintained software package, organizations may assume the cost of maintenance and have a longer lead time for fixes on any security issues, if they are fixed at all. Additional information about the score is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_very_low_popularity_score</code></td>
+          <td style="text-align: left"><code>Dependency http-range-header@0.3.0 With Very Low Popularity Score</code></td>
+          <td style="text-align: left">Popularity is a social proxy for quality. Popular packages are more likely to remain maintained and thoroughly tested. Relying on lesser known packages for critical functions may increase operational risk. Additional information about the score is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>dependency_with_very_low_quality_score</code></td>
+          <td style="text-align: left"><code>Dependency org.apache.sis.core:sis-utility@1.1 With Very Low Quality Score</code></td>
+          <td style="text-align: left">This package is likely to have an increased risk of bugs and quality issues as determined by several factors contributing to a very low-quality score. A low quality score indicates a project may have an immature software development practice. Relying on packages that do not follow code development best practices can result in an increased risk of security and operational problems. Additional information about the score is stored in <code>spec.finding_metadata.dependency_score_card</code> and <code>spec.finding_metadata.dependency_score_factor_list</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>missing_source_code</code></td>
+          <td style="text-align: left"><code>Missing Source Code Repository for Dependency commons-dbcp:commons-dbcp@1.4</code></td>
+          <td style="text-align: left">The package versions source code reference is not currently available. As a result, automated analysis of the package’s activity, popularity, code quality and security have not been performed. Manual assessment is required to assess the operational and security risk of this package. There is no additional metadata for this finding type.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>outdated_release</code></td>
+          <td style="text-align: left"><code>Outdated Dependency @babel/plugin-syntax-async-generators@7.8.4</code></td>
+          <td style="text-align: left">This package has had multiple later releases or a significant period of time has passed since the release of the version currently in use. Relying on outdated dependencies can result in missing important bug fixes or security patches and make upgrades more difficult. There is no additional metadata for this finding type.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>policy_finding</code></td>
+          <td style="text-align: left"><code>Code owner approval is not required</code></td>
+          <td style="text-align: left">The finding was created by a <a href="https://docs.endorlabs.com/managing-policies/finding-policies/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../../managing-policies/finding-policies/">Rego policy</a>. The policy UUID is stored in <code>spec.finding_metadata.source_policy_info.uuid</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>recently_released_dependency</code></td>
+          <td style="text-align: left"><code>Recently Released Dependency chalk@5.6.1</code>.</td>
+          <td style="text-align: left">This package version is using a recent release of a dependency. Recently released versions of dependencies are more likely to introduce supply chain risk and breaking changes.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>typosquatted_dependency</code></td>
+          <td style="text-align: left"><code>Dependency serverles@3.27.1 is a Potential Typosquat</code></td>
+          <td style="text-align: left">The name of the dependency is very similar to another package which is more popular and widely used. It is possible that this is a malicious package in the package manager with malware inserted. Additional information about the typosquatted dependency is stored in <code>spec.finding_metadata.typosquatted_dependency_version_metadata</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>unpinned_direct_dependency</code></td>
+          <td style="text-align: left"><code>Unpinned Direct Dependency num-integer@0.1.45</code></td>
+          <td style="text-align: left">This package version has not pinned one of its direct dependencies. Dependencies that are not pinned to a specified version decrease the likelihood of build reproducibility and can be unexpectedly updated, which may introduce operational or security issues into your application. Unpinned dependencies expose organizations to the risk of software supply chain attacks where attackers compromise the upstream software dependency and publish a malicious version of the code. There is no additional metadata for this finding type.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>unreachable_direct_dependency</code></td>
+          <td style="text-align: left"><code>Unused Direct Dependency org.typelevel:macro-compat_2.11@1.1.1</code></td>
+          <td style="text-align: left">Static analysis of this software package indicates that this direct dependency is unused. Unused direct dependencies unnecessarily increase the size of executables, application resource utilization and, increase build time and as a result may decrease developer productivity and application performance. There is no additional metadata for this finding type.</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="finding-categories" class="heading-with-self-link">Finding categories<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#finding-categories" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>The following finding categories are supported as possible values in the <code>spec.finding_categories</code> list. All findings must have at least one category.</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Finding Category</th>
+          <th style="text-align: left">UI Category</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_AI_MODELS</code></td>
+          <td style="text-align: left">AI Models</td>
+          <td style="text-align: left">AI model findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_CICD</code></td>
+          <td style="text-align: left">CI/CD</td>
+          <td style="text-align: left">CI/CD pipeline findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_CONTAINER</code></td>
+          <td style="text-align: left">Container</td>
+          <td style="text-align: left">Container findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_GHACTIONS</code></td>
+          <td style="text-align: left">GitHub Actions</td>
+          <td style="text-align: left">GitHub action findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_LICENSE_RISK</code></td>
+          <td style="text-align: left">License Risk</td>
+          <td style="text-align: left">License issues</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_MALWARE</code></td>
+          <td style="text-align: left">Malware</td>
+          <td style="text-align: left">Malware findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_OPERATIONAL</code></td>
+          <td style="text-align: left">Operational</td>
+          <td style="text-align: left">Operational issues</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_SAST</code></td>
+          <td style="text-align: left">SAST</td>
+          <td style="text-align: left">SAST findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_SCA</code></td>
+          <td style="text-align: left">SCA</td>
+          <td style="text-align: left">Software Composition Analysis issues</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_SCPM</code></td>
+          <td style="text-align: left">RSPM</td>
+          <td style="text-align: left">Repository security posture management issues</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_SECRETS</code></td>
+          <td style="text-align: left">Secrets</td>
+          <td style="text-align: left">Exposed secrets</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_SECURITY</code></td>
+          <td style="text-align: left">Security</td>
+          <td style="text-align: left">Security issues</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_SUPPLY_CHAIN</code></td>
+          <td style="text-align: left">Supply Chain</td>
+          <td style="text-align: left">Supply chain specific problems (malicious packages, typosquats)</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_TOOLS</code></td>
+          <td style="text-align: left">Tools</td>
+          <td style="text-align: left">Tool-related findings</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_CATEGORY_VULNERABILITY</code></td>
+          <td style="text-align: left">Vulnerability</td>
+          <td style="text-align: left">Vulnerability findings</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="finding-tags" class="heading-with-self-link">Finding tags<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#finding-tags" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>The following system defined finding tags are supported as possible values in the <code>spec.finding_tags</code> list and referred to as “attributes” in the UI. Note that these are different from the free-form custom tags that are stored in the <a href="https://docs.endorlabs.com/common-fields/#meta" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#meta">Meta</a> field.</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Finding Tag</th>
+          <th style="text-align: left">UI Attribute</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_CI_BLOCKER</code></td>
+          <td style="text-align: left">Blocker</td>
+          <td style="text-align: left">Finding was marked as blocking by one or more action policies. The policy UUIDs are stored in <code>spec.actions.policy_uuids</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_CI_WARNING</code></td>
+          <td style="text-align: left">Warning</td>
+          <td style="text-align: left">Finding triggered a warning based on one or more action policies. The policy UUIDs are stored in <code>spec.actions.policy_uuids</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_DIRECT</code></td>
+          <td style="text-align: left">Direct</td>
+          <td style="text-align: left">Finding applies to a direct dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_DISPUTED</code></td>
+          <td style="text-align: left">Disputed</td>
+          <td style="text-align: left">The CVE reported in this finding has been marked as ‘disputed’.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_EXCEPTION</code></td>
+          <td style="text-align: left">Exception</td>
+          <td style="text-align: left">Finding was marked as exempt from action policies by one or more exception policies. The policy UUIDs are stored in <code>spec.exceptions.policy_uuids</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_EXPLOITED</code></td>
+          <td style="text-align: left">Exploited</td>
+          <td style="text-align: left">The CVE reported in this finding is actively exploited and is listed in the Known Exploited Vulnerabilities (KEV) database.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_FIX_AVAILABLE</code></td>
+          <td style="text-align: left">Fix Available</td>
+          <td style="text-align: left">There is a fix available for the CVE reported in this finding.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_INVALID_SECRET</code></td>
+          <td style="text-align: left">Invalid Secret</td>
+          <td style="text-align: left">Finding applies to an invalid secret.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_MALWARE</code></td>
+          <td style="text-align: left">Malware</td>
+          <td style="text-align: left">Finding applies to a malicious package.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_NAMESPACE_INTERNAL</code></td>
+          <td style="text-align: left">First Party</td>
+          <td style="text-align: left">Finding applies to a dependency that belongs to the same namespace.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_NORMAL</code></td>
+          <td style="text-align: left">Normal</td>
+          <td style="text-align: left">Finding applies to a normal, non-test, dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_NOTIFICATION</code></td>
+          <td style="text-align: left">Notification</td>
+          <td style="text-align: left">Finding triggered a notification based on one or more action policies. The policy UUIDs are stored in <code>spec.actions.policy_uuids</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_PATH_EXTERNAL</code></td>
+          <td style="text-align: left">External Path Only</td>
+          <td style="text-align: left">Finding applies to a transitive dependency that can only be reached through external, non-OSS, project paths.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_PHANTOM</code></td>
+          <td style="text-align: left">Phantom</td>
+          <td style="text-align: left">Finding applies to a phantom dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_POLICY</code></td>
+          <td style="text-align: left">Policy Based</td>
+          <td style="text-align: left">Finding was generated by a Rego based finding policy. The policy UUID is stored in <code>spec.finding_metadata.source_policy_info.uuid</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_POTENTIALLY_REACHABLE_DEPENDENCY</code></td>
+          <td style="text-align: left">Potentially Reachable Dependency</td>
+          <td style="text-align: left">Finding applies to a potentially reachable dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_POTENTIALLY_REACHABLE_FUNCTION</code></td>
+          <td style="text-align: left">Potentially Reachable Function</td>
+          <td style="text-align: left">Finding applies to a potentially reachable function.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_PROJECT_INTERNAL</code></td>
+          <td style="text-align: left">Same Repository</td>
+          <td style="text-align: left">Finding applies to a dependency that belongs to the same project.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_REACHABLE_DEPENDENCY</code></td>
+          <td style="text-align: left">Reachable Dependency</td>
+          <td style="text-align: left">Finding applies to a reachable dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_REACHABLE_FUNCTION</code></td>
+          <td style="text-align: left">Reachable Function</td>
+          <td style="text-align: left">Finding applies to a reachable function.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_SELF</code></td>
+          <td style="text-align: left">Self</td>
+          <td style="text-align: left">Finding applies only to the analyzed package version, there is no dependency involved.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_TEST</code></td>
+          <td style="text-align: left">Test</td>
+          <td style="text-align: left">Finding applies to a dependency that is not in production code.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_TRANSITIVE</code></td>
+          <td style="text-align: left">Transitive</td>
+          <td style="text-align: left">Finding applies to a transitive (indirect) dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_UNDER_REVIEW</code></td>
+          <td style="text-align: left">Under Review</td>
+          <td style="text-align: left">Finding applies to suspicious package under review.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_UNFIXABLE</code></td>
+          <td style="text-align: left">Unfixable</td>
+          <td style="text-align: left">There is no fix available for the CVE reported in this finding.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_UNREACHABLE_DEPENDENCY</code></td>
+          <td style="text-align: left">Unreachable Dependency</td>
+          <td style="text-align: left">Finding applies to an unreachable dependency.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_UNREACHABLE_FUNCTION</code></td>
+          <td style="text-align: left">Unreachable Function</td>
+          <td style="text-align: left">Finding applies to an unreachable function.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_VALID_SECRET</code></td>
+          <td style="text-align: left">Valid Secret</td>
+          <td style="text-align: left">Finding applies to a valid secret.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>FINDING_TAGS_WITHDRAWN</code></td>
+          <td style="text-align: left">Withdrawn</td>
+          <td style="text-align: left">The CVE reported in this finding has been marked as ‘withdrawn’.</td>
+      </tr>
+  </tbody>
+</table>
+<h3 id="exceptions" class="heading-with-self-link">Exceptions<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#exceptions" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>A finding can be exempt from triggering action policies (such as admission and notification policies)
+if it is matched and marked as dismissed by an exception policy.</p>
+<p><a href="https://docs.endorlabs.com/managing-policies/exception-policies/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../../managing-policies/exception-policies/">Exception policies</a> allow you to set any criteria
+you want to mark findings as dismissed. You can apply an exception policy across all projects, a sub-set of projects,
+or a specific project, within a tenant.
+Based on the criteria you set, the exception can persist across multiple package versions.</p>
+<p>Findings dismissed by one or more exception policies have the <code>spec.dismissed</code> field set to <code>true</code> and
+the corresponding policy object UUIDs are listed under the <code>spec.exceptions.policy_uuids</code> field.
+They also carry the <code>FINDING_TAGS_EXCEPTION</code> tag.</p>
+<h3 id="action-policies" class="heading-with-self-link">Action policies<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#action-policies" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>Findings matched by one or more action policies (a.k.a. admission and notification policies)
+contain the corresponding policy object UUIDs in <code>spec.actions.policy_uuids</code>.
+They also carry a tag corresponding to the specific action, for example, <code>FINDING_TAGS_CI_WARNING</code>,
+<code>FINDING_TAGS_CI_BLOCKER</code>, or <code>FINDING_TAGS_NOTIFICATION</code>.</p>
+<h2 id="scanresult" class="heading-with-self-link">ScanResult<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#scanresult" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><ul>
+<li>Contains details of a scan such as:
+<ul>
+<li>Configuration</li>
+<li>Host environment details</li>
+<li>Runtime statistics</li>
+<li>Findings</li>
+<li>Policies triggered</li>
+<li>Error logs</li>
+<li><a href="https://docs.endorlabs.com/troubleshooting/endorctl-exitcodes/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../../troubleshooting/endorctl-exitcodes/">Exit code</a></li>
+<li><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#scan-status">Scan status</a></li>
+</ul>
+</li>
+<li>Has the Project as the parent.</li>
+<li>Belongs to the same <a href="https://docs.endorlabs.com/common-fields/#context" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../common-fields/#context">Context</a> as the scan.</li>
+</ul>
+<p>For more information, see the <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#page-rest-api" title="Fuzzy match to: " style="border-bottom: 1px dotted rgb(40, 167, 69);">ScanResultService REST API documentation</a>.</p>
+<h3 id="scan-status" class="heading-with-self-link">Scan status<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/#scan-status" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>The following scan statuses are supported:</p>
+<table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Status</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>STATUS_SUCCESS</code></td>
+          <td style="text-align: left">Scan completed successfully.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>STATUS_PARTIAL_SUCCESS</code></td>
+          <td style="text-align: left">Scan completed, but with critical warnings or errors. See <code>spec.logs</code> for more information.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>STATUS_FAILURE</code></td>
+          <td style="text-align: left">Scan failed. See <code>spec.exit_code</code> and the <a href="https://docs.endorlabs.com/troubleshooting/endorctl-exitcodes/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../../troubleshooting/endorctl-exitcodes/">exit code documentation</a> for more information.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>STATUS_RUNNING</code></td>
+          <td style="text-align: left">Scan is running.</td>
+      </tr>
+  </tbody>
+</table>
+
+                            </div>
+                        </div>
+
+                        
+                        
+                    <div class="alert alert-info d-print-none" style="background: rgb(209, 236, 241); border: 1px solid rgb(190, 229, 235); padding: 10px; margin: 10px 0px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted 10 of 26 internal links to anchors<br>
+                Available pages: rest-api
+            </div></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🔧 Print template link processing started");
+
+            
+            const availablePages = new Map();
+            const pageElements = document.querySelectorAll('[id^="page-"]');
+
+            pageElements.forEach(page => {
+                const pageId = page.id.replace('page-', '');
+                const pageTitle = page.getAttribute('data-page-title') || '';
+                availablePages.set(pageId, pageTitle);
+                console.log(`📄 Available page: ${pageId} (${pageTitle})`);
+            });
+
+            
+            function extractPageSlug(url) {
+                try {
+                    
+                    if (url.startsWith('http')) {
+                        const urlObj = new URL(url);
+                        const pathParts = urlObj.pathname.split('/').filter(part =>
+                            part && part !== '_print' && part !== 'index.html'
+                        );
+                        return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+                    }
+
+                    
+                    const pathParts = url.split('/').filter(part =>
+                        part && part !== '.' && part !== '..' && part !== '_print' &&
+                        part !== 'monitoring-scans' && part !== 'docs.api.staging.endorlabs.com'
+                    );
+
+                    
+                    const lastPart = pathParts[pathParts.length - 1];
+
+                    
+                    return lastPart || pathParts[pathParts.length - 2];
+                } catch (e) {
+                    console.warn(`Could not parse URL: ${url}`, e);
+                    return null;
+                }
+            }
+
+            
+            function isInternalLink(href) {
+                if (href.startsWith('#')) return false; 
+                if (href.startsWith('http') && !href.includes(window.location.hostname)) return false; 
+                if (href.startsWith('mailto:') || href.startsWith('tel:')) return false; 
+                return true;
+            }
+
+            
+            function fixMalformedURL(href) {
+                
+                const segments = href.split('/').filter(Boolean);
+                const deduped = [];
+                for (let i = 0; i < segments.length; i++) {
+                    if (i === 0 || segments[i] !== segments[i-1]) {
+                        deduped.push(segments[i]);
+                    }
+                }
+                return deduped.join('/');
+            }
+
+            
+            const allLinks = document.querySelectorAll('a[href]');
+            let processedCount = 0;
+            let convertedCount = 0;
+
+            console.log(`🔍 Processing ${allLinks.length} links...`);
+
+            allLinks.forEach((link, index) => {
+                const originalHref = link.getAttribute('href');
+                let href = originalHref;
+
+                
+                if (href.startsWith('#') && href.includes('page-')) {
+                    return;
+                }
+
+                
+                if (href.includes('localhost') || href.includes('//')) {
+                    href = fixMalformedURL(href);
+                }
+
+                
+                if (!isInternalLink(href)) {
+                    console.log(`🌐 External link (keeping): ${originalHref}`);
+                    return;
+                }
+
+                processedCount++;
+
+                
+                const pageSlug = extractPageSlug(href);
+
+                
+                if (pageSlug && availablePages.has(pageSlug)) {
+                    const newHref = `#page-${pageSlug}`;
+                    link.setAttribute('href', newHref);
+
+                    
+                    link.style.borderBottom = '1px dotted #007bff';
+                    link.title = `Internal link to: ${availablePages.get(pageSlug)}`;
+
+                    console.log(`✅ Converted: ${originalHref} → ${newHref}`);
+                    convertedCount++;
+                } else {
+                    
+                    let found = false;
+                    for (const [availableSlug, title] of availablePages) {
+                        if (pageSlug && (
+                            pageSlug.includes(availableSlug) ||
+                            availableSlug.includes(pageSlug) ||
+                            pageSlug.replace(/-/g, '_') === availableSlug ||
+                            pageSlug.replace(/_/g, '-') === availableSlug
+                        )) {
+                            const newHref = `#page-${availableSlug}`;
+                            link.setAttribute('href', newHref);
+                            link.style.borderBottom = '1px dotted #28a745';
+                            link.title = `Fuzzy match to: ${title}`;
+
+                            console.log(`🔀 Fuzzy match: ${originalHref} → ${newHref}`);
+                            convertedCount++;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        
+                        if (isInternalLink(href)) {
+                            
+                            let cleanHref = href.replace(/^\//, '');
+                            
+                            if (href.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(href);
+                                    cleanHref = urlObj.pathname.replace(/^\//, '');
+                                } catch (e) {
+                                    
+                                }
+                            }
+                            const prodUrl = `https://docs.endorlabs.com/${cleanHref}`;
+                            link.setAttribute('href', prodUrl);
+                            link.style.color = '';
+                            link.style.textDecoration = '';
+                            link.title = `Link to docs.endorlabs.com: ${prodUrl}`;
+                            console.log(`🔗 Rewritten unresolved internal link: ${originalHref} → ${prodUrl}`);
+                        } else {
+                            link.style.color = '#dc3545';
+                            link.style.textDecoration = 'line-through';
+                            link.title = `Unresolved internal link: ${originalHref}`;
+                            console.log(`❌ Unresolved: ${originalHref} (extracted: ${pageSlug})`);
+                        }
+                    }
+                }
+            });
+
+            
+            console.log(`📊 Link processing complete:`);
+            console.log(`   Total links: ${allLinks.length}`);
+            console.log(`   Processed internal links: ${processedCount}`);
+            console.log(`   Successfully converted: ${convertedCount}`);
+            console.log(`   Available pages: ${availablePages.size}`);
+
+            
+            const debugSummary = document.createElement('div');
+            debugSummary.className = 'alert alert-info d-print-none';
+            debugSummary.style.cssText = 'background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;';
+            debugSummary.innerHTML = `
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted ${convertedCount} of ${processedCount} internal links to anchors<br>
+                Available pages: ${Array.from(availablePages.keys()).join(', ')}
+            `;
+            document.querySelector('.td-content').appendChild(debugSummary);
+        });
+
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#page-')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
+
+</body></html>

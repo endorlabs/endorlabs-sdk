@@ -15,7 +15,9 @@ classifiers = [
 ]
 dependencies = [
     "requests==2.32.5",
-    "pydantic==2.12.3"
+    "pydantic==2.12.3",
+    "chromadb>=1.2.0",
+    "openai>=2.5.0",
 ]
 
 [project.optional-dependencies]
@@ -45,6 +47,38 @@ build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 88
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "ENV",
+    "env.bak",
+    "venv.bak",
+    ".vscode",
+    ".idea",
+    ".pytest_cache",
+    ".tox",
+    ".nox",
+    ".ruff_cache",
+    "workflow/vector_db",
+    "workflow/vector_db_manifest.json",
+    "workspace",
+    "workspace/**",
+    "*.log",
+    "__pycache__",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".coverage",
+    "coverage.xml",
+    ".hypothesis",
+    ".DS_Store",
+    "Thumbs.db"
+]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "C", "B"]

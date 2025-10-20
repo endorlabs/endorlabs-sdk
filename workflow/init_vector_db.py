@@ -174,11 +174,18 @@ class VectorDBManager:
         return chunks
 
     def _chunk_markdown(self, content: str, strategy: Dict) -> List[Dict]:
-        """Chunk markdown content by headers and paragraphs."""
+        """Chunk markdown content by headers and paragraphs with enhanced metadata."""
         chunks = []
         lines = content.split("\n")
         current_chunk = []
         current_size = 0
+        
+        # Track document structure for enhanced metadata
+        h1_title = None
+        resource_type = None
+        current_section = None
+        current_subsection = None
+        current_header_level = None
 
         for line in lines:
             # Check if this is a header (starts with #)
@@ -193,9 +200,32 @@ class VectorDBManager:
                                 "content_type": "markdown",
                                 "chunk_index": len(chunks),
                                 "size": len(chunk_text),
+                                "resource_type": resource_type,
+                                "h1_title": h1_title,
+                                "section_name": current_section,
+                                "subsection_name": current_subsection,
+                                "header_level": current_header_level,
                             },
                         }
                     )
+
+                # Parse header level and content
+                header_level = self._get_header_level(line)
+                header_text = self._clean_header_text(line)
+                
+                # Update tracking variables
+                if header_level == "h1":
+                    h1_title = header_text
+                    resource_type = self._extract_resource_type(header_text)
+                    current_section = None
+                    current_subsection = None
+                elif header_level == "h2":
+                    current_section = header_text
+                    current_subsection = None
+                elif header_level == "h3":
+                    current_subsection = header_text
+                
+                current_header_level = header_level
 
                 # Start new chunk with header
                 current_chunk = [line]
@@ -216,6 +246,11 @@ class VectorDBManager:
                                 "content_type": "markdown",
                                 "chunk_index": len(chunks),
                                 "size": len(chunk_text),
+                                "resource_type": resource_type,
+                                "h1_title": h1_title,
+                                "section_name": current_section,
+                                "subsection_name": current_subsection,
+                                "header_level": current_header_level,
                             },
                         }
                     )
@@ -234,11 +269,63 @@ class VectorDBManager:
                         "content_type": "markdown",
                         "chunk_index": len(chunks),
                         "size": len(chunk_text),
+                        "resource_type": resource_type,
+                        "h1_title": h1_title,
+                        "section_name": current_section,
+                        "subsection_name": current_subsection,
+                        "header_level": current_header_level,
                     },
                 }
             )
 
         return chunks
+
+    def _get_header_level(self, line: str) -> str:
+        """Extract header level from markdown line."""
+        stripped = line.strip()
+        if stripped.startswith("# "):
+            return "h1"
+        elif stripped.startswith("## "):
+            return "h2"
+        elif stripped.startswith("### "):
+            return "h3"
+        elif stripped.startswith("#### "):
+            return "h4"
+        elif stripped.startswith("##### "):
+            return "h5"
+        elif stripped.startswith("###### "):
+            return "h6"
+        else:
+            return "unknown"
+
+    def _clean_header_text(self, line: str) -> str:
+        """Clean header text by removing markdown formatting and emojis."""
+        # Remove markdown header markers
+        text = line.strip().lstrip("#").strip()
+        
+        # Remove emojis and special characters
+        text = re.sub(r'[^\w\s\-\.]', '', text)
+        
+        # Clean up extra whitespace
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        return text
+
+    def _extract_resource_type(self, h1_title: str) -> str:
+        """Extract resource type from H1 title."""
+        # Look for patterns like "Project Resource Deep-Dive", "Finding Resource Deep-Dive"
+        if "Project" in h1_title:
+            return "project"
+        elif "Finding" in h1_title:
+            return "finding"
+        elif "Policy" in h1_title:
+            return "policy"
+        elif "Namespace" in h1_title:
+            return "namespace"
+        elif "Scan" in h1_title:
+            return "scan"
+        else:
+            return "unknown"
 
     def _chunk_code(self, content: str, strategy: Dict) -> List[Dict]:
         """Chunk code content by functions and classes."""
@@ -488,6 +575,9 @@ class VectorDBManager:
                     chunk["metadata"]["file_path"] = file_path
                     chunk["metadata"]["file_name"] = os.path.basename(file_path)
                     chunk["metadata"]["chunk_id"] = f"{file_path}:{i}"
+                    
+                    # Clean metadata to remove None values
+                    chunk["metadata"] = {k: v for k, v in chunk["metadata"].items() if v is not None}
 
                 all_chunks.extend(chunks)
 

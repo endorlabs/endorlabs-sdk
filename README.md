@@ -16,7 +16,7 @@ A foundational workspace to administer, operate and scan with Endor Labs tooling
 
 ## Installation
 
-It is recommended to use a virtual environment.
+It is recommended to use a virtual environment - this project is designed with `uv` and `poetry` in mind.
 
 ```bash
 # Clone the repository
@@ -92,7 +92,7 @@ The knowledge base is a **portable shared learning index** that ensures consiste
 
 ```python
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 
 # Initialize the client (uses environment variables for auth)
 client = APIClient()
@@ -158,6 +158,46 @@ mypy src/
 # Run endorctl security scan
 endorctl scan --path . --namespace "your-namespace"
 ```
+
+## Resource Implementation Status
+
+> **Comprehensive tracking of Endor Labs resource types and their implementation status**
+
+### Implementation Checklist
+
+#### ✅ **COMPLETED RESOURCES**
+- **Project** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Finding** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Policy** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Namespace** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+
+#### 🔄 **SCAFFOLDED RESOURCES**
+- **Repository** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+- **RepositoryVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+- **PackageVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+
+#### ❌ **PENDING RESOURCES**
+- **DependencyMetadata** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **LinterResult** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Metric** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Scan** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **User** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Token** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Installation** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+
+### Completion Criteria
+
+**Implementation**: CRUD operations validated, model validated and a handful of attributes modeled correctly
+**Documentation**: Statements verified to match implementation and tests  
+**Tests**: Passes linter, unit tests provided and incorporated into CI
+
+### Status Legend
+- ✅ **COMPLETE**: All criteria met
+- 🚧 **IN PROGRESS**: Implementation started
+- ❌ **NOT STARTED**: No work begun
+- 🚫 **BLOCKED**: Blocked by dependencies
+
+---
 
 ## Documentation
 

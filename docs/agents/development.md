@@ -22,6 +22,31 @@ Each resource module should follow this pattern:
 - **Update operations**: `update_{resource}()`
 - **Delete operations**: `delete_{resource}()`
 
+### Consistent Architecture Patterns
+All resource modules must follow the established patterns from `project.py`:
+
+#### **Documentation Standards**
+- **Mutable/Immutable Fields**: Document which fields can be updated via PATCH operations
+- **Comprehensive Examples**: Include practical usage examples in docstrings
+- **Field Validation**: Document required fields and validation rules
+
+#### **API Payload Structure**
+- **Update Functions**: Include current resource data in API payloads to avoid validation errors
+- **Required Fields**: Always include immutable required fields (e.g., `meta.name`, `tenant_meta`)
+- **Field Merging**: Properly merge update payloads with existing resource data
+
+#### **Logging and Error Handling**
+- **Consistent Logging**: Use `logger.info()` for update operations with resource UUID and update mask
+- **Error Handling**: Consistent error handling with proper logging and exception details
+- **Validation**: Proper field validation and error reporting
+
+#### **Code Structure**
+- **Function Signatures**: Consistent parameter patterns across all resources
+- **Return Types**: All functions return `Optional[Resource]` for consistency
+- **Documentation**: Comprehensive docstrings with examples and field descriptions
+
+**Reference**: See `src/endor_cockpit/resources/project.py` as the canonical implementation pattern.
+
 ## 2. Code Standards
 
 ### Python Version Support

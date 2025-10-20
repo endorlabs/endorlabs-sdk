@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<!-- saved from url=(0075)https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/_print.html -->
+<html itemscope="" itemtype="http://schema.org/WebPage" lang="en" class="no-js"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="generator" content="Hugo 0.147.6">
+
+    
+    <link rel="canonical" type="text/html" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/">
+    <meta name="robots" content="noindex, nofollow">
+
+    
+    
+
+<link rel="shortcut icon" href="https://docs.endorlabs.com/favicons/favicon.ico">
+<link rel="apple-touch-icon" href="https://docs.endorlabs.com/favicons/apple-touch-icon-180x180.png" sizes="180x180">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-36x36.png" sizes="36x36">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-48x48.png" sizes="48x48">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-72x72.png" sizes="72x72">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-96x96.png" sizes="96x96">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-144x144.png" sizes="144x144">
+<link rel="icon" type="image/png" href="https://docs.endorlabs.com/favicons/android-192x192.png" sizes="192x192">
+
+
+    <title>Grouping | Endor Labs Docs</title>
+    <meta name="description" content="Learn how to group results from the Endor Labs REST API.">
+
+    
+    
+    <link href="./Grouping _ Endor Labs Docs_files/main.min.css" rel="stylesheet">
+
+    
+    
+    
+    <!--<base href="/rest-api/using-the-rest-api/grouping/">--><base href=".">
+
+    
+
+    <style>
+         
+        @media print {
+             
+            .page-break {
+                page-break-before: always !important;
+            }
+
+             
+            h2 {
+                background: none !important;
+                border: 2pt solid #065A5B !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                padding: 0 0 8pt 0 !important;
+                margin: 40pt 0 20pt 0 !important;
+                text-align: left !important;
+                width: auto !important;
+                font-size: 20pt !important;
+                border-left: none !important;
+                border-right: none !important;
+                border-top: none !important;
+                border-bottom: 2pt solid #065A5B !important;
+            }
+
+             
+            h2::after {
+                content: "" !important;
+                display: none !important;
+            }
+
+             
+            .toc-list {
+                list-style-type: none !important;
+                padding-left: 0 !important;
+                margin: 20pt 0 !important;
+                font-size: 12pt !important;
+                line-height: 1.8 !important;
+            }
+
+            .toc-sublist {
+                list-style-type: none !important;
+                padding-left: 30pt !important;
+                margin: 8pt 0 16pt 0 !important;
+            }
+
+            .toc-list > li {
+                margin: 12pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-sublist > li {
+                margin: 6pt 0 !important;
+                page-break-inside: avoid !important;
+            }
+
+            .toc-number {
+                font-weight: 600 !important;
+                color: #065A5B !important;
+                margin-right: 8pt !important;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc !important;
+                text-decoration: none !important;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline !important;
+            }
+        }
+
+         
+        @media screen {
+            .toc-list {
+                list-style-type: none;
+                padding-left: 0;
+                margin: 1rem 0;
+            }
+
+            .toc-sublist {
+                list-style-type: none;
+                padding-left: 2rem;
+                margin: 0.5rem 0 1rem 0;
+            }
+
+            .toc-list > li {
+                margin: 0.75rem 0;
+            }
+
+            .toc-sublist > li {
+                margin: 0.5rem 0;
+            }
+
+            .toc-number {
+                font-weight: 600;
+                color: #065A5B;
+                margin-right: 0.5rem;
+            }
+
+            .toc-list a,
+            .toc-sublist a {
+                color: #0066cc;
+                text-decoration: none;
+            }
+
+            .toc-list a:hover,
+            .toc-sublist a:hover {
+                text-decoration: underline;
+            }
+        }
+    </style>
+</head>
+
+<body class="td-section print-layout">
+    <div class="container-fluid td-outer">
+        <div class="td-main">
+            <div class="row flex-xl-nowrap">
+                <main class="col-12" role="main">
+                    <div class="td-content">
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <h1 class="title">Grouping</h1>
+
+                        
+                        
+                        <div class="lead">Learn how to group results from the Endor Labs REST API.</div>
+                        
+
+                        
+                        
+
+                        
+                        <div class="pageinfo pageinfo-primary d-print-none">
+                            <p>This is the multi-page printable view of this section.
+                            <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#" onclick="print();return false;">Click here to print</a>.</p>
+                            <p><a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/">Return to the regular view of this page</a>.</p>
+                        </div>
+
+                        
+                        <div class="content-start page-break" id="page-rest-api">
+                            
+                            
+                            <div class="section-description">Learn how to group results from the Endor Labs REST API.</div>
+                            
+
+                            
+                            <div class="content">
+                                <p>There are many scenarios where it is useful to group the objects returned by the Endor Labs REST API in different ways.
+Like <a href="https://docs.endorlabs.com/filters/#keys" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../filters/#keys">filter keys</a>, a group-aggregation-paths key is used to specify the field, or fields, by which to group the objects, using a dot-delimited path.
+For example, the following request returns the count of findings for each severity level:</p>
+
+
+
+
+<ul class="nav nav-tabs" id="tabs-0" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-00-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-00-00" role="tab" data-td-tp-persist="endorctl" aria-controls="tabs-00-00" aria-selected="true">
+        endorctl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-00-01-tab" data-bs-toggle="tab" data-bs-target="#tabs-00-01" role="tab" data-td-tp-persist="curl" aria-controls="tabs-00-01" aria-selected="false">
+        curl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-00-02-tab" data-bs-toggle="tab" data-bs-target="#tabs-00-02" role="tab" data-td-tp-persist="http" aria-controls="tabs-00-02" aria-selected="false">
+        HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-0-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-00-00" role="tabpanel" aria-labelled-by="tabs-00-00-tab" tabindex="0">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">endorctl api list --resource Finding <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --filter <span class="s2">"spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --group-aggregation-paths <span class="s2">"spec.level"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --timeout 60s
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-00-01" role="tabpanel" aria-labelled-by="tabs-00-01-tab" tabindex="0">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl --get <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Authorization: Bearer </span><span class="nv">$ENDOR_TOKEN</span><span class="s2">"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Request-Timeout: 60"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.filter=spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group.aggregation_paths=spec.level"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  https://api.endorlabs.com/v1/namespaces/<span class="nv">$ENDOR_NAMESPACE</span>/findings <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  <span class="p">|</span> jq <span class="s1">'.'</span>
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-00-02" role="tabpanel" aria-labelled-by="tabs-00-02-tab" tabindex="0">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">@baseUrl <span class="o">=</span> https://api.endorlabs.com
+</span></span><span class="line"><span class="cl">@token <span class="o">=</span> &lt;insert-access-token&gt;
+</span></span><span class="line"><span class="cl">@namespace <span class="o">=</span> &lt;insert-namespace&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">###</span>
+</span></span><span class="line"><span class="cl">GET <span class="o">{{</span>baseUrl<span class="o">}}</span>/v1/namespaces/<span class="o">{{</span>namespace<span class="o">}}</span>/findings?list_parameters.filter<span class="o">=</span>spec.finding_categories contains FINDING_CATEGORY_VULNERABILITY<span class="p">&amp;</span>list_parameters.group.aggregation_paths<span class="o">=</span>spec.level HTTP/1.1
+</span></span><span class="line"><span class="cl">Content-type: application/json
+</span></span><span class="line"><span class="cl">Authorization: Bearer <span class="o">{{</span>token<span class="o">}}</span>
+</span></span><span class="line"><span class="cl">Request-Timeout: <span class="m">60</span>
+</span></span></code></pre></div>
+    </div>
+</div>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">"group_response"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">"groups"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.level\",\"value\":\"FINDING_LEVEL_CRITICAL\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">49</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.level\",\"value\":\"FINDING_LEVEL_HIGH\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">166</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.level\",\"value\":\"FINDING_LEVEL_LOW\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">31</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.level\",\"value\":\"FINDING_LEVEL_MEDIUM\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">202</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><h2 id="group-by-path" class="heading-with-self-link">Group by path<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#group-by-path" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>The following options are available to group objects based on the value of a field in a given path.</p>
+
+
+
+<ul class="nav nav-tabs" id="tabs-1" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-01-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-01-00" role="tab" data-td-tp-persist="endorctl" aria-controls="tabs-01-00" aria-selected="true">
+        endorctl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-01-01-tab" data-bs-toggle="tab" data-bs-target="#tabs-01-01" role="tab" data-td-tp-persist="curl / http" aria-controls="tabs-01-01" aria-selected="false">
+        curl / HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-1-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-01-00" role="tabpanel" aria-labelled-by="tabs-01-00-tab" tabindex="1">
+        <table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Option</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>group-aggregation-paths</code></td>
+          <td style="text-align: left">Specify one or more fields to group objects by.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group-show-aggregation-uuids</code></td>
+          <td style="text-align: left">Get the UUIDs of the objects in each group as specified by <code>--group-aggregation-paths</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group-unique-count-paths</code></td>
+          <td style="text-align: left">Count the number of unique values, for these fields, in the group.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group-unique-value-paths</code></td>
+          <td style="text-align: left">Get the unique values, for these fields, in the group.</td>
+      </tr>
+  </tbody>
+</table>
+<p>For the complete list of all <code>endorctl api list</code> options, see <a href="https://docs.endorlabs.com/endorctl/commands/api/#endorctl-api-list-flags-and-variables" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../../../endorctl/commands/api/#endorctl-api-list-flags-and-variables">flags and variables</a>.</p>
+
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-01-01" role="tabpanel" aria-labelled-by="tabs-01-01-tab" tabindex="1">
+        <table>
+  <thead>
+      <tr>
+          <th style="text-align: left">List Parameter</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>group.aggregation_paths</code></td>
+          <td style="text-align: left">Specify one or more fields to group objects by.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group.show_aggregation_uuids</code></td>
+          <td style="text-align: left">Get the UUIDs of the objects in each group as specified by <code>group.aggregation_paths</code>.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group.unique_count_paths</code></td>
+          <td style="text-align: left">Count the number of unique values, for these fields, in the group.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group.unique_value_paths</code></td>
+          <td style="text-align: left">Get the unique values, for these fields, in the group.</td>
+      </tr>
+  </tbody>
+</table>
+<p>For the complete list of all HTTP list parameters, see <a href="https://docs.endorlabs.com/getting-started/#list-parameters" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../getting-started/#list-parameters">list parameters</a>.</p>
+
+    </div>
+</div>
+
+<h3 id="group-by-path-example" class="heading-with-self-link">Group by path example<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#group-by-path-example" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>Here is an example using all options simultaneously to group package versions by call graph <a href="https://docs.endorlabs.com/data-model/resource-kinds/#resolution-errors" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../data-model/resource-kinds/#resolution-errors">resolution error</a>, list the UUIDs of the package versions in each group, return the number of different ecosystems of the package versions in each group, and list the different ecosystems of the package versions in each group:</p>
+
+
+
+
+<ul class="nav nav-tabs" id="tabs-2" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-02-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-02-00" role="tab" data-td-tp-persist="endorctl" aria-controls="tabs-02-00" aria-selected="true">
+        endorctl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-02-01-tab" data-bs-toggle="tab" data-bs-target="#tabs-02-01" role="tab" data-td-tp-persist="curl" aria-controls="tabs-02-01" aria-selected="false">
+        curl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-02-02-tab" data-bs-toggle="tab" data-bs-target="#tabs-02-02" role="tab" data-td-tp-persist="http" aria-controls="tabs-02-02" aria-selected="false">
+        HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-2-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-02-00" role="tabpanel" aria-labelled-by="tabs-02-00-tab" tabindex="2">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">endorctl api list --resource PackageVersion <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --filter <span class="s2">"spec.resolution_errors.call_graph exists"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --group-aggregation-paths <span class="s2">"spec.resolution_errors.call_graph.status_error"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --group-show-aggregation-uuids <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --group-unique-count-paths <span class="s2">"spec.ecosystem"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --group-unique-value-paths <span class="s2">"spec.ecosystem"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --timeout 60s
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-02-01" role="tabpanel" aria-labelled-by="tabs-02-01-tab" tabindex="2">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl --get <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Authorization: Bearer </span><span class="nv">$ENDOR_TOKEN</span><span class="s2">"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Request-Timeout: 60"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.filter=spec.resolution_errors.call_graph exists"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group.aggregation_paths=spec.resolution_errors.call_graph.status_error"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group.show_aggregation_uuids=true"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group.unique_value_paths=spec.ecosystem"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group.unique_count_paths=spec.ecosystem"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  https://api.endorlabs.com/v1/namespaces/<span class="nv">$ENDOR_NAMESPACE</span>/package-versions <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  <span class="p">|</span> jq <span class="s1">'.'</span>
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-02-02" role="tabpanel" aria-labelled-by="tabs-02-02-tab" tabindex="2">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">@baseUrl <span class="o">=</span> https://api.endorlabs.com
+</span></span><span class="line"><span class="cl">@token <span class="o">=</span> &lt;insert-access-token&gt;
+</span></span><span class="line"><span class="cl">@namespace <span class="o">=</span> &lt;insert-namespace&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">###</span>
+</span></span><span class="line"><span class="cl">GET <span class="o">{{</span>baseUrl<span class="o">}}</span>/v1/namespaces/<span class="o">{{</span>namespace<span class="o">}}</span>/package-versions?list_parameters.filter<span class="o">=</span>spec.resolution_errors.call_graph exists<span class="p">&amp;</span>list_parameters.group.aggregation_paths<span class="o">=</span>spec.resolution_errors.call_graph.status_error<span class="p">&amp;</span>ist_parameters.group.show_aggregation_uuids<span class="o">=</span>true<span class="p">&amp;</span>list_parameters.group.unique_value_paths<span class="o">=</span>spec.ecosystem<span class="p">&amp;</span>list_parameters.group.unique_count_paths<span class="o">=</span>spec.ecosystem HTTP/1.1
+</span></span><span class="line"><span class="cl">Content-type: application/json
+</span></span><span class="line"><span class="cl">Authorization: Bearer <span class="o">{{</span>token<span class="o">}}</span>
+</span></span><span class="line"><span class="cl">Request-Timeout: <span class="m">60</span>
+</span></span></code></pre></div>
+    </div>
+</div>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">"group_response"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">"groups"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.resolution_errors.call_graph.status_error\",\"value\":\"STATUS_ERROR_CALL_GRAPH\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">10</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"6494c13cdcb266d2af02804f"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64ace2dd05228d0041488208"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64ace2dc05228d00414881eb"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64af3a042efc155e48304bf2"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65b86b4a0f460309eac456b5"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64ace2dc832ee78dd03d85b0"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190aa17e6bfc2548f7a48"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64af39d2bebf530905411327"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190a817e6bfc2548f7a19"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64cc2b68727cd13ec36860c8"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"count"</span>: <span class="m">2</span>
+</span></span><span class="line"><span class="cl">          <span class="o">}</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"ECOSYSTEM_MAVEN"</span>,
+</span></span><span class="line"><span class="cl">            <span class="s2">"ECOSYSTEM_PYPI"</span>
+</span></span><span class="line"><span class="cl">          <span class="o">]</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.resolution_errors.call_graph.status_error\",\"value\":\"STATUS_ERROR_INTERNAL\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">2</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"6632e2d6b7765d736fac1865"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664ba7986fafc782b3cda1f6"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"count"</span>: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">          <span class="o">}</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"ECOSYSTEM_NPM"</span>
+</span></span><span class="line"><span class="cl">          <span class="o">]</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.resolution_errors.call_graph.status_error\",\"value\":\"STATUS_ERROR_MISSING_ARTIFACT\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">23</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c3e90ae2dd352a18b6f852"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64b99a3b3d5f8dc732555200"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190a921d68642091aa015"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"650a2457204ab859367160a2"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"650a245780113616f95f770e"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65d6840edb5cf8c9839c3d47"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65e8c21647aae08e2a4e5f5c"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190a921d68642091aa027"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190a958d2eff448df09e1"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"650a2457204ab859367160a6"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190aa58d2eff448df09f0"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64af0879c41c606cbcef6288"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190ab17e6bfc2548f7a4d"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190aa17e6bfc2548f7a41"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190a958d2eff448df09ec"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190ab21d68642091aa033"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190ab58d2eff448df09f3"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64b99a3b6883c0ec1c456c3a"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190aa21d68642091aa02f"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64b99a3ce3b06b2f8a465bdc"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c190a917e6bfc2548f7a35"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64b99a3b6883c0ec1c456c39"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"650a24573e183ec1be29adc6"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"count"</span>: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">          <span class="o">}</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"ECOSYSTEM_MAVEN"</span>
+</span></span><span class="line"><span class="cl">          <span class="o">]</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"[{\"key\":\"spec.resolution_errors.call_graph.status_error\",\"value\":\"STATUS_ERROR_VENV\"}]"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">10</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c41863da2fbc7700d12a0e"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c845aca83e181b82ef9041"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64dd4f61177264d779e203f3"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c418647146e5738bf0af2d"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c845ac41f581de1a6592d1"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64c845ac41f581de1a6592d0"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be4bc6fafc782b363d8e3"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"652e0bcb1d4d2ceedc87a376"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66311e48bf25e232ab24b68c"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"64d6ce776e5804222a2726de"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"count"</span>: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">          <span class="o">}</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"spec.ecosystem"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">            <span class="s2">"ECOSYSTEM_PYPI"</span>
+</span></span><span class="line"><span class="cl">          <span class="o">]</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div><h2 id="group-by-time" class="heading-with-self-link">Group by time<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#group-by-time" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h2><p>The Endor Labs REST API also provides options to group objects by a given time interval. Common time fields include <code>meta.create_time</code> and <code>meta.update_time</code>, but you can sort objects based on any time field.</p>
+<p>For example, to group objects based on create time in 2 week intervals, set the aggregation path to <code>meta.create_time</code>, the time interval to <code>GROUP_BY_TIME_INTERVAL_WEEK</code> and the group size to <code>2</code>.</p>
+<p>The following options are available to group objects based on the value of a time field in a given path.</p>
+
+
+<ul class="nav nav-tabs" id="tabs-3" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-03-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-03-00" role="tab" data-td-tp-persist="curl / http" aria-controls="tabs-03-00" aria-selected="true">
+        curl / HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-3-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-03-00" role="tabpanel" aria-labelled-by="tabs-03-00-tab" tabindex="3">
+        <table>
+  <thead>
+      <tr>
+          <th style="text-align: left">List Parameter</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>group_by_time.aggregation_paths</code></td>
+          <td style="text-align: left">Group the objects based on this time field.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group_by_time.interval</code></td>
+          <td style="text-align: left">The <a href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#time-intervals">time interval</a> to group the objects by.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group_by_time.group_size</code></td>
+          <td style="text-align: left">The time interval size to group the objects by.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group_by_time.start_time</code></td>
+          <td style="text-align: left">Beginning of the time period to group objects.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group_by_time.end_time</code></td>
+          <td style="text-align: left">End of the time period to group objects.</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>group_by_time.show_aggregation_uuids</code></td>
+          <td style="text-align: left">Get the UUIDs of the objects in each group.</td>
+      </tr>
+  </tbody>
+</table>
+<p>For the complete list of all HTTP list parameters, see <a href="https://docs.endorlabs.com/getting-started/#list-parameters" title="Link to docs.endorlabs.com: https://docs.endorlabs.com/../getting-started/#list-parameters">list parameters</a>.</p>
+
+    </div>
+</div>
+
+<h3 id="time-intervals" class="heading-with-self-link">Time intervals<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#time-intervals" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>The following time intervals are supported.</p>
+
+
+<ul class="nav nav-tabs" id="tabs-4" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-04-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-04-00" role="tab" data-td-tp-persist="curl / http" aria-controls="tabs-04-00" aria-selected="true">
+        curl / HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-4-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-04-00" role="tabpanel" aria-labelled-by="tabs-04-00-tab" tabindex="4">
+        <table>
+  <thead>
+      <tr>
+          <th style="text-align: left">Value</th>
+          <th style="text-align: left">Description</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_YEAR</code></td>
+          <td style="text-align: left">Year</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_QUARTER</code></td>
+          <td style="text-align: left">Quarter</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_MONTH</code></td>
+          <td style="text-align: left">Month</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_WEEK</code></td>
+          <td style="text-align: left">Week</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_DAY</code></td>
+          <td style="text-align: left">Day</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_HOUR</code></td>
+          <td style="text-align: left">Hour</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_MINUTE</code></td>
+          <td style="text-align: left">Minute</td>
+      </tr>
+      <tr>
+          <td style="text-align: left"><code>GROUP_BY_TIME_INTERVAL_SECOND</code></td>
+          <td style="text-align: left">Second</td>
+      </tr>
+  </tbody>
+</table>
+
+    </div>
+</div>
+
+<h3 id="group-by-time-example" class="heading-with-self-link">Group by time example<a class="td-heading-self-link" href="https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/#group-by-time-example" aria-label="Heading self link" title="Link to this section">
+    <i class="fas fa-link"></i>
+  </a></h3><p>The following example requests the UUIDs of all critical findings, grouped by create time in two-week intervals:</p>
+
+
+
+<ul class="nav nav-tabs" id="tabs-5" role="tablist">
+  <li class="nav-item">
+      <button class="nav-link active" id="tabs-05-00-tab" data-bs-toggle="tab" data-bs-target="#tabs-05-00" role="tab" data-td-tp-persist="curl" aria-controls="tabs-05-00" aria-selected="true">
+        curl
+      </button>
+    </li><li class="nav-item">
+      <button class="nav-link" id="tabs-05-01-tab" data-bs-toggle="tab" data-bs-target="#tabs-05-01" role="tab" data-td-tp-persist="http" aria-controls="tabs-05-01" aria-selected="false">
+        HTTP
+      </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabs-5-content">
+    <div class="tab-body tab-pane fade show active" id="tabs-05-00" role="tabpanel" aria-labelled-by="tabs-05-00-tab" tabindex="5">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">curl --get <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Authorization: Bearer </span><span class="nv">$ENDOR_TOKEN</span><span class="s2">"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --header <span class="s2">"Request-Timeout: 60"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.filter=spec.level==FINDING_LEVEL_CRITICAL"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group_by_time.aggregation_paths=meta.create_time"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group_by_time.interval=GROUP_BY_TIME_INTERVAL_WEEK"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group_by_time.group_size=2"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  --data-urlencode <span class="s2">"list_parameters.group_by_time.show_aggregation_uuids=true"</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  https://api.endorlabs.com/v1/namespaces/<span class="nv">$ENDOR_NAMESPACE</span>/findings <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>  <span class="p">|</span> jq <span class="s1">'.'</span>
+</span></span></code></pre></div>
+    </div>
+    <div class="tab-body tab-pane fade" id="tabs-05-01" role="tabpanel" aria-labelled-by="tabs-05-01-tab" tabindex="5">
+        <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">@baseUrl <span class="o">=</span> https://api.endorlabs.com
+</span></span><span class="line"><span class="cl">@token <span class="o">=</span> &lt;insert-access-token&gt;
+</span></span><span class="line"><span class="cl">@namespace <span class="o">=</span> &lt;insert-namespace&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">###</span>
+</span></span><span class="line"><span class="cl">GET <span class="o">{{</span>baseUrl<span class="o">}}</span>/v1/namespaces/<span class="o">{{</span>namespace<span class="o">}}</span>/findings?list_parameters.filter<span class="o">=</span>spec.level<span class="o">==</span>FINDING_LEVEL_CRITICAL<span class="p">&amp;</span>list_parameters.group_by_time.aggregation_paths<span class="o">=</span>meta.create_time<span class="p">&amp;</span>list_parameters.group_by_time.interval<span class="o">=</span>GROUP_BY_TIME_INTERVAL_WEEK<span class="p">&amp;</span>list_parameters.group_by_time.group_size<span class="o">=</span>2<span class="p">&amp;</span>list_parameters.group_by_time.show_aggregation_uuids<span class="o">=</span><span class="nb">true</span> HTTP/1.1
+</span></span><span class="line"><span class="cl">Content-type: application/json
+</span></span><span class="line"><span class="cl">Authorization: Bearer <span class="o">{{</span>token<span class="o">}}</span>
+</span></span><span class="line"><span class="cl">Request-Timeout: <span class="m">60</span>
+</span></span></code></pre></div>
+    </div>
+</div>
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">{</span>
+</span></span><span class="line"><span class="cl">  <span class="s2">"group_response"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">"groups"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-01-28T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">7</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02da021a5d767fc147ec0"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02da021a5d767fc147ec3"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02da0aa4b66fa5009eaec"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02da0056f94b6129aa209"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02da021a5d767fc147eca"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02da1aa4b66fa5009eaf9"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65c02daa056f94b6129aa46f"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-03-10T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">2</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"65faf8ec357952c8eda2d36b"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"65fcdcedd40334d9e0065748"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-03-24T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">2</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"660728d190fdb066027d07bb"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"660728d8bddd7358d570ce9c"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-04-07T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">15</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"6615c531bb58b077e43cbb16"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6615c531e2a0c32733a7d50b"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6615c531e2a0c32733a7d514"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bb723ebef7ca3f4571a"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bb7c28c6f37b51cd0e8"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bb723ebef7ca3f4571d"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bc62c21fa9407eda175"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bc6c28c6f37b51cd2d4"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bc62c21fa9407eda17b"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bd72c21fa9407eda210"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bd823ebef7ca3f459a8"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bd823ebef7ca3f459ab"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216bd8c28c6f37b51cd381"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216be623ebef7ca3f45a8a"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"66216be6c28c6f37b51cd465"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-04-21T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">1</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"66341d55f9aa19f4b730a74c"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-05-19T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">19</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2cc6fafc782b35fdc89"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2cc6fafc782b35fdceb"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2d56fafc782b35ff0d8"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2d56fafc782b35ff0e0"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2d5f420988edd47792d"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2dd67636bf844aedcae"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2dd6fafc782b36000a8"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2dd6fafc782b36000aa"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2ddf420988edd4788eb"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2e867636bf844aef4e9"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2e8f420988edd47a140"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"664be2e8f420988edd47a148"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656ababd2d288f1981ea2ba"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656ababce82b72012f10bbc"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656ababce82b72012f10bbd"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656abab252554c986334a6b"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656ababd2d288f1981ea2bd"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656abab252554c986334a6d"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6656abacce82b72012f10bbf"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">      <span class="s2">"\"2024-06-02T00:00:00Z\""</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_count"</span>: <span class="o">{</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"count"</span>: <span class="m">5</span>
+</span></span><span class="line"><span class="cl">        <span class="o">}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"aggregation_uuids"</span>: <span class="o">[</span>
+</span></span><span class="line"><span class="cl">          <span class="s2">"665fa482c980f9f8157e08c3"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6660a9f0e238ad93ad92089e"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6660a9f05728ef99cf0c8535"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6660a9f0b70974e544ccd05a"</span>,
+</span></span><span class="line"><span class="cl">          <span class="s2">"6660a9f05728ef99cf0c853f"</span>
+</span></span><span class="line"><span class="cl">        <span class="o">]</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_counts"</span>: <span class="o">{}</span>,
+</span></span><span class="line"><span class="cl">        <span class="s2">"unique_values"</span>: <span class="o">{}</span>
+</span></span><span class="line"><span class="cl">      <span class="o">}</span>
+</span></span><span class="line"><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="cl">  <span class="o">}</span>
+</span></span><span class="line"><span class="cl"><span class="o">}</span>
+</span></span></code></pre></div>
+                            </div>
+                        </div>
+
+                        
+                        
+                    <div class="alert alert-info d-print-none" style="background: rgb(209, 236, 241); border: 1px solid rgb(190, 229, 235); padding: 10px; margin: 10px 0px; border-radius: 4px; font-family: monospace; font-size: 12px;">
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted 0 of 7 internal links to anchors<br>
+                Available pages: rest-api
+            </div></div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("🔧 Print template link processing started");
+
+            
+            const availablePages = new Map();
+            const pageElements = document.querySelectorAll('[id^="page-"]');
+
+            pageElements.forEach(page => {
+                const pageId = page.id.replace('page-', '');
+                const pageTitle = page.getAttribute('data-page-title') || '';
+                availablePages.set(pageId, pageTitle);
+                console.log(`📄 Available page: ${pageId} (${pageTitle})`);
+            });
+
+            
+            function extractPageSlug(url) {
+                try {
+                    
+                    if (url.startsWith('http')) {
+                        const urlObj = new URL(url);
+                        const pathParts = urlObj.pathname.split('/').filter(part =>
+                            part && part !== '_print' && part !== 'index.html'
+                        );
+                        return pathParts[pathParts.length - 1] || pathParts[pathParts.length - 2];
+                    }
+
+                    
+                    const pathParts = url.split('/').filter(part =>
+                        part && part !== '.' && part !== '..' && part !== '_print' &&
+                        part !== 'monitoring-scans' && part !== 'docs.api.staging.endorlabs.com'
+                    );
+
+                    
+                    const lastPart = pathParts[pathParts.length - 1];
+
+                    
+                    return lastPart || pathParts[pathParts.length - 2];
+                } catch (e) {
+                    console.warn(`Could not parse URL: ${url}`, e);
+                    return null;
+                }
+            }
+
+            
+            function isInternalLink(href) {
+                if (href.startsWith('#')) return false; 
+                if (href.startsWith('http') && !href.includes(window.location.hostname)) return false; 
+                if (href.startsWith('mailto:') || href.startsWith('tel:')) return false; 
+                return true;
+            }
+
+            
+            function fixMalformedURL(href) {
+                
+                const segments = href.split('/').filter(Boolean);
+                const deduped = [];
+                for (let i = 0; i < segments.length; i++) {
+                    if (i === 0 || segments[i] !== segments[i-1]) {
+                        deduped.push(segments[i]);
+                    }
+                }
+                return deduped.join('/');
+            }
+
+            
+            const allLinks = document.querySelectorAll('a[href]');
+            let processedCount = 0;
+            let convertedCount = 0;
+
+            console.log(`🔍 Processing ${allLinks.length} links...`);
+
+            allLinks.forEach((link, index) => {
+                const originalHref = link.getAttribute('href');
+                let href = originalHref;
+
+                
+                if (href.startsWith('#') && href.includes('page-')) {
+                    return;
+                }
+
+                
+                if (href.includes('localhost') || href.includes('//')) {
+                    href = fixMalformedURL(href);
+                }
+
+                
+                if (!isInternalLink(href)) {
+                    console.log(`🌐 External link (keeping): ${originalHref}`);
+                    return;
+                }
+
+                processedCount++;
+
+                
+                const pageSlug = extractPageSlug(href);
+
+                
+                if (pageSlug && availablePages.has(pageSlug)) {
+                    const newHref = `#page-${pageSlug}`;
+                    link.setAttribute('href', newHref);
+
+                    
+                    link.style.borderBottom = '1px dotted #007bff';
+                    link.title = `Internal link to: ${availablePages.get(pageSlug)}`;
+
+                    console.log(`✅ Converted: ${originalHref} → ${newHref}`);
+                    convertedCount++;
+                } else {
+                    
+                    let found = false;
+                    for (const [availableSlug, title] of availablePages) {
+                        if (pageSlug && (
+                            pageSlug.includes(availableSlug) ||
+                            availableSlug.includes(pageSlug) ||
+                            pageSlug.replace(/-/g, '_') === availableSlug ||
+                            pageSlug.replace(/_/g, '-') === availableSlug
+                        )) {
+                            const newHref = `#page-${availableSlug}`;
+                            link.setAttribute('href', newHref);
+                            link.style.borderBottom = '1px dotted #28a745';
+                            link.title = `Fuzzy match to: ${title}`;
+
+                            console.log(`🔀 Fuzzy match: ${originalHref} → ${newHref}`);
+                            convertedCount++;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        
+                        if (isInternalLink(href)) {
+                            
+                            let cleanHref = href.replace(/^\//, '');
+                            
+                            if (href.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(href);
+                                    cleanHref = urlObj.pathname.replace(/^\//, '');
+                                } catch (e) {
+                                    
+                                }
+                            }
+                            const prodUrl = `https://docs.endorlabs.com/${cleanHref}`;
+                            link.setAttribute('href', prodUrl);
+                            link.style.color = '';
+                            link.style.textDecoration = '';
+                            link.title = `Link to docs.endorlabs.com: ${prodUrl}`;
+                            console.log(`🔗 Rewritten unresolved internal link: ${originalHref} → ${prodUrl}`);
+                        } else {
+                            link.style.color = '#dc3545';
+                            link.style.textDecoration = 'line-through';
+                            link.title = `Unresolved internal link: ${originalHref}`;
+                            console.log(`❌ Unresolved: ${originalHref} (extracted: ${pageSlug})`);
+                        }
+                    }
+                }
+            });
+
+            
+            console.log(`📊 Link processing complete:`);
+            console.log(`   Total links: ${allLinks.length}`);
+            console.log(`   Processed internal links: ${processedCount}`);
+            console.log(`   Successfully converted: ${convertedCount}`);
+            console.log(`   Available pages: ${availablePages.size}`);
+
+            
+            const debugSummary = document.createElement('div');
+            debugSummary.className = 'alert alert-info d-print-none';
+            debugSummary.style.cssText = 'background: #d1ecf1; border: 1px solid #bee5eb; padding: 10px; margin: 10px 0; border-radius: 4px; font-family: monospace; font-size: 12px;';
+            debugSummary.innerHTML = `
+                <strong>LINK PROCESSING SUMMARY:</strong><br>
+                Converted ${convertedCount} of ${processedCount} internal links to anchors<br>
+                Available pages: ${Array.from(availablePages.keys()).join(', ')}
+            `;
+            document.querySelector('.td-content').appendChild(debugSummary);
+        });
+
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.getAttribute('href').startsWith('#page-')) {
+                e.preventDefault();
+                const target = document.querySelector(e.target.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
+
+</body></html>
