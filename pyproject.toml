@@ -45,6 +45,9 @@ rag = [
 requires = ["hatchling>=1.0"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/endor_cockpit", "src/holocron"]
+
 [tool.ruff]
 line-length = 88
 exclude = [
@@ -61,8 +64,8 @@ exclude = [
     ".tox",
     ".nox",
     ".ruff_cache",
-    "workflow/vector_db",
-    "workflow/vector_db_manifest.json",
+    "holocron_data/",
+    "holocron_data/**",
     "workspace",
     "workspace/**",
     "*.log",

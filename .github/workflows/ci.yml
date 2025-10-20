@@ -12,8 +12,8 @@ concurrency:
 
 env:
   # CI Configuration - easily maintainable environment variables
-  PYTHON_VERSION: "3.14"
-  PYTHON_VERSIONS: '["3.13", "3.14"]'
+  PYTHON_VERSION: "3.13"
+  PYTHON_VERSIONS: '["3.12", "3.13"]'
   PYTEST_MAXFAIL: "2"
   COVERAGE_PACKAGE: "endor_cockpit"
   UV_VERSION: "0.9.3"
@@ -93,7 +93,7 @@ jobs:
     needs: resolve-dependencies
     strategy:
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13"]
       fail-fast: false
 
     steps:
