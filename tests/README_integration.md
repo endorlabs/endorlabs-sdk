@@ -36,7 +36,7 @@ For security scanning tests:
 endorctl --version
 ```
 
-## 🚀 Running Integration Tests
+## Running Integration Tests
 
 ### Quick Start
 
@@ -173,27 +173,27 @@ print('API client created successfully')
 # List namespaces manually
 python -c "
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 client = APIClient()
-ns = namespaces.list_namespaces(client, 'endor-solutions-tgowan.cockpit')
+ns = namespace.list_namespaces(client, 'endor-solutions-tgowan.cockpit')
 print(f'Found {len(ns)} namespaces')
 "
 ```
 
-## 📊 Test Results
+## Test Results
 
 Successful test run output:
 
 ```
 🧪 Endor Cockpit Integration Test Runner
 ==================================================
-✅ All required environment variables are set
-✅ endorctl is available: v1.0.0
+[OK] All required environment variables are set
+[OK] endorctl is available: v1.0.0
 
-🚀 Running integration tests...
+[INFO] Running integration tests...
 Command: python -m pytest tests/test_integration.py -q -m integration --tb=short --strict-markers --disable-warnings
 
-✅ All integration tests passed!
+[OK] All integration tests passed!
 ```
 
 ## 🔒 Security

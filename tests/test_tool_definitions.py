@@ -18,7 +18,7 @@ sys.path.insert(
 )
 
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 
 
 class TestToolDefinitions:
@@ -192,7 +192,7 @@ class TestToolImplementation:
     def test_list_namespaces_tool(self, mock_client):
         """Test the list_namespaces tool implementation."""
         # Mock the namespaces.list_namespaces function
-        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
+        with patch("endor_cockpit.resources.namespace.list_namespaces") as mock_list:
             mock_list.return_value = [
                 Mock(
                     meta=Mock(name="test-namespace-1", description="Test namespace 1")
@@ -215,9 +215,7 @@ class TestToolImplementation:
 
     def test_create_namespace_tool(self, mock_client):
         """Test the create_namespace tool implementation."""
-        with patch(
-            "endor_cockpit.resources.namespaces.create_namespace"
-        ) as mock_create:
+        with patch("endor_cockpit.resources.namespace.create_namespace") as mock_create:
             mock_namespace = Mock()
             mock_namespace.uuid = "test-uuid-123"
             mock_namespace.meta.name = "test-namespace"
@@ -266,13 +264,13 @@ class TestToolImplementation:
     ) -> Any:
         """Simulate calling a tool with given parameters."""
         if tool_name == "list_namespaces":
-            return namespaces.list_namespaces(
+            return namespace.list_namespaces(
                 client,
                 parameters["tenant_namespace"],
                 parameters.get("include_children", True),
             )
         elif tool_name == "create_namespace":
-            from endor_cockpit.resources.namespaces import (
+            from endor_cockpit.resources.namespace import (
                 CreateNamespacePayload,
                 NamespaceMetaCreate,
             )
@@ -282,7 +280,7 @@ class TestToolImplementation:
                     name=parameters["name"], description=parameters["description"]
                 )
             )
-            return namespaces.create_namespace(
+            return namespace.create_namespace(
                 client, parameters["parent_namespace"], payload
             )
         elif tool_name == "run_security_scan":
@@ -379,7 +377,7 @@ class TestToolIntegration:
     def test_tool_parameter_types(self):
         """Test tool parameter type handling."""
         # Test with wrong parameter types
-        with patch("endor_cockpit.resources.namespaces.list_namespaces") as mock_list:
+        with patch("endor_cockpit.resources.namespace.list_namespaces") as mock_list:
             mock_list.return_value = []
 
             # This should handle type conversion gracefully
@@ -402,7 +400,7 @@ class TestToolIntegration:
         if tool_name == "list_namespaces":
             if client is None:
                 raise AttributeError("Client is None")
-            return namespaces.list_namespaces(
+            return namespace.list_namespaces(
                 client,
                 parameters["tenant_namespace"],
                 parameters.get("include_children", True),
