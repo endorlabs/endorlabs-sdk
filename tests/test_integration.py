@@ -19,8 +19,8 @@ sys.path.insert(
 )
 
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
-from endor_cockpit.resources.namespaces import (
+from endor_cockpit.resources import namespace
+from endor_cockpit.resources.namespace import (
     CreateNamespacePayload,
     NamespaceMetaCreate,
 )
@@ -92,7 +92,7 @@ class TestEndorCockpitIntegration:
     def test_api_connection(self, api_client, tenant_namespace):
         """Test basic API connection and authentication."""
         # Test connection by listing namespaces
-        namespaces_list = namespaces.list_namespaces(api_client, tenant_namespace)
+        namespaces_list = namespace.list_namespaces(api_client, tenant_namespace)
 
         assert namespaces_list is not None
         assert isinstance(namespaces_list, list)
@@ -133,7 +133,7 @@ class TestEndorCockpitIntegration:
     def test_list_namespaces(self, api_client, tenant_namespace, test_namespaces):
         """Test listing namespaces."""
         # List all namespaces
-        all_namespaces = namespaces.list_namespaces(api_client, tenant_namespace)
+        all_namespaces = namespace.list_namespaces(api_client, tenant_namespace)
 
         assert all_namespaces is not None
         assert isinstance(all_namespaces, list)
@@ -158,7 +158,7 @@ class TestEndorCockpitIntegration:
         test_namespace = test_namespaces[0]
 
         # Get the namespace by UUID
-        retrieved_namespace = namespaces.get_namespace(
+        retrieved_namespace = namespace.get_namespace(
             api_client, tenant_namespace, test_namespace.uuid
         )
 
@@ -252,7 +252,7 @@ class TestEndorCockpitIntegration:
             print(f"[OK] Created child namespace: {child_namespace.uuid}")
 
             # List namespaces under parent using canonical naming
-            child_namespaces = namespaces.list_namespaces(api_client, canonical_parent)
+            child_namespaces = namespace.list_namespaces(api_client, canonical_parent)
 
             assert child_namespaces is not None
             assert len(child_namespaces) >= 1
@@ -279,7 +279,7 @@ class TestEndorCockpitIntegration:
         """Test error handling with invalid operations."""
         # Test getting non-existent namespace
         fake_uuid = "00000000-0000-0000-0000-000000000000"
-        result = namespaces.get_namespace(api_client, tenant_namespace, fake_uuid)
+        result = namespace.get_namespace(api_client, tenant_namespace, fake_uuid)
 
         # Should handle gracefully (return None or raise appropriate exception)
         assert result is None or isinstance(result, Exception)
@@ -342,7 +342,7 @@ class TestEndorCockpitIntegration:
                 meta=NamespaceMetaCreate(name=name, description=description)
             )
 
-            return namespaces.create_namespace(client, parent_namespace, payload)
+            return namespace.create_namespace(client, parent_namespace, payload)
         except Exception as e:
             print(f"Error creating namespace {name}: {e}")
             return None
@@ -352,7 +352,7 @@ class TestEndorCockpitIntegration:
     ) -> bool:
         """Helper method to delete a test namespace."""
         try:
-            return namespaces.delete_namespace(client, parent_namespace, namespace_uuid)
+            return namespace.delete_namespace(client, parent_namespace, namespace_uuid)
         except Exception as e:
             print(f"Error deleting namespace {namespace_uuid}: {e}")
             return False

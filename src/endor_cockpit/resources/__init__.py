@@ -2,7 +2,4 @@
 
 from . import finding, namespace, policy, project, repository, repository_version, package_version
 
-# Create alias for backward compatibility
-namespaces = namespace
-
-__all__ = ["namespace", "namespaces", "project", "finding", "policy", "repository", "repository_version", "package_version"]
+__all__ = ["namespace", "project", "finding", "policy", "repository", "repository_version", "package_version"]
