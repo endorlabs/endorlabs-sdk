@@ -283,15 +283,41 @@ def test_permissions(api_client, tenant_namespace):
     assert result is not None  # Should work if permissions allow
 ```
 
+## Path Handling Requirements
+
+### Cross-Platform Path Normalization
+**Source**: Logbook entry 2025-01-27
+
+**Problem**: Holocron vector database components require consistent path handling across Windows, macOS, and Linux platforms.
+
+**Requirements**:
+- All file paths must be normalized using `os.path.normpath()`
+- Regex pattern matching requires forward slash conversion
+- Database and query function paths must be synchronized
+- Content type detection depends on normalized paths
+
+**Implementation**:
+```python
+import os
+
+# Required pattern for all path operations
+normalized_path = os.path.normpath(file_path)
+regex_path = normalized_path.replace(os.path.sep, "/")
+```
+
+**Validation**: Test on Windows (backslashes), macOS/Linux (forward slashes)
+
 ## 📚 **Reference Links**
 
 - **OpenAPI Spec**: `tmp/openapiv2.swagger.json` (92K lines)
 - **SDK Implementation**: `src/endor_cockpit/resources/namespaces.py`
 - **Integration Tests**: `tests/test_integration.py`
 - **Agent Insights**: `docs/agents/insights.md`
+- **Holocron Setup**: `docs/protocols/holocron-setup.md#cross-platform-path-handling`
 
 ## 🎯 **Last Updated**
 
+- **2025-01-27**: Added cross-platform path handling requirements
 - **2025-10-18**: Initial specification corrections documented
 - **Source**: Integration testing and API exploration
 - **Validation**: Confirmed against live Endor Labs API

@@ -26,6 +26,12 @@ CHUNKING_STRATEGY = {
         "split_on": ["##", "###", "\n\n"],  # Headers and paragraphs
         "preserve_structure": True,
     },
+    "external_docs": {
+        "max_chunk_size": 1200,  # tokens - slightly larger for external docs
+        "overlap": 250,  # tokens
+        "split_on": ["\n\n", "===", "---", "Introduction", "About", "Prerequisites"],  # External doc patterns
+        "preserve_structure": True,
+    },
     "code": {
         "max_chunk_size": 800,  # tokens
         "overlap": 100,  # tokens
@@ -42,6 +48,7 @@ CHUNKING_STRATEGY = {
 
 # Content type detection patterns
 CONTENT_TYPE_PATTERNS = {
+    "external_docs": [r"\.workspace/downloads/user-docs/.*\.md$"],  # External user docs (check first)
     "markdown": [r"\.md$", r"\.rst$"],
     "code": [r"\.py$", r"\.js$", r"\.ts$", r"\.go$", r"\.java$"],
     "api_spec": [r"openapi.*\.json$", r"swagger.*\.json$", r"\.yaml$", r"\.yml$"],
@@ -58,26 +65,37 @@ INCLUDE_DIRS = [
 
 # Directories to exclude
 EXCLUDE_DIRS = [
-    "__pycache__/",
-    ".git/",
-    "node_modules/",
-    "venv/",
-    ".venv/",
-    "env/",
-    ".env/",
-    "holocron_data/",  # Exclude our own data directory
-    ".workspace/",  # Exclude workspace directory (ephemeral)
-    "tmp/",  # Exclude old tmp directory
+    "__pycache__",
+    ".git",
+    "node_modules", 
+    "venv",
+    ".venv",
+    "env",
+    ".env",
+    "holocron_data",  # Exclude old data directory
+    ".workspace/holocron_data",  # Exclude only the vector database directory
+    "tmp",  # Exclude old tmp directory
 ]
 
 
 class VectorDBManager:
     """Manages ChromaDB vector database initialization and updates."""
 
+    @staticmethod
+    def _normalize_path(file_path: str) -> str:
+        """
+        Normalize file path for cross-platform compatibility.
+        
+        CRITICAL: This method ensures consistent path handling across Windows, macOS, and Linux.
+        Always use this method before any path operations to prevent cross-platform issues.
+        Source: Logbook entry 2025-01-27 - Cross-platform path handling learnings.
+        """
+        return os.path.normpath(file_path)
+
     def __init__(
         self,
-        db_path: str = "holocron_data/vector_db",
-        manifest_path: str = "holocron_data/vector_db_manifest.json",
+        db_path: str = ".workspace/holocron_data/vector_db",
+        manifest_path: str = ".workspace/holocron_data/vector_db_manifest.json",
     ):
         self.db_path = db_path
         self.manifest_path = manifest_path
@@ -146,9 +164,12 @@ class VectorDBManager:
 
     def _detect_content_type(self, file_path: str) -> str:
         """Detect content type based on file path and content."""
+        # Normalize path for cross-platform compatibility
+        normalized_path = self._normalize_path(file_path).replace(os.path.sep, "/")
+        
         for content_type, patterns in CONTENT_TYPE_PATTERNS.items():
             for pattern in patterns:
-                if re.search(pattern, file_path, re.IGNORECASE):
+                if re.search(pattern, normalized_path, re.IGNORECASE):
                     return content_type
 
         # Default to markdown for unknown types
@@ -161,6 +182,8 @@ class VectorDBManager:
 
         if content_type == "markdown":
             chunks = self._chunk_markdown(content, strategy)
+        elif content_type == "external_docs":
+            chunks = self._chunk_external_docs(content, strategy)
         elif content_type == "code":
             chunks = self._chunk_code(content, strategy)
         elif content_type == "api_spec":
@@ -276,6 +299,138 @@ class VectorDBManager:
             )
 
         return chunks
+
+    def _chunk_external_docs(self, content: str, strategy: Dict) -> List[Dict]:
+        """Chunk external documentation content optimized for downloaded user docs."""
+        chunks = []
+        lines = content.split("\n")
+        current_chunk = []
+        current_size = 0
+
+        # Track document structure for enhanced metadata
+        h1_title = None
+        current_section = None
+        current_subsection = None
+        source_url = None
+
+        # Extract source URL from HTML comment
+        for line in lines[:5]:  # Check first few lines for source URL
+            if line.strip().startswith("<!-- Source:"):
+                source_url = line.strip().replace("<!-- Source: ", "").replace(" -->", "")
+                break
+
+        for line in lines:
+            # Skip HTML comments and breadcrumbs
+            if line.strip().startswith("<!--") or line.strip().startswith("1. [") or line.strip().startswith("2. [") or line.strip().startswith("3. ["):
+                continue
+
+            # Check if this is a header (using underline style or title case)
+            if self._is_external_doc_header(line):
+                # Save current chunk if it has content
+                if current_chunk:
+                    chunk_text = "\n".join(current_chunk)
+                    chunks.append(
+                        {
+                            "text": chunk_text,
+                            "metadata": {
+                                "content_type": "external_docs",
+                                "chunk_index": len(chunks),
+                                "size": len(chunk_text),
+                                "source_url": source_url,
+                                "h1_title": h1_title,
+                                "section_name": current_section,
+                                "subsection_name": current_subsection,
+                            },
+                        }
+                    )
+
+                # Parse header content
+                header_text = self._clean_external_header_text(line)
+                
+                # Update tracking variables
+                if line.strip().endswith("="):
+                    h1_title = header_text
+                    current_section = None
+                    current_subsection = None
+                elif line.strip().endswith("-"):
+                    current_section = header_text
+                    current_subsection = None
+                else:
+                    current_subsection = header_text
+
+                # Start new chunk with header
+                current_chunk = [line]
+                current_size = len(line)
+            else:
+                # Add line to current chunk
+                current_chunk.append(line)
+                current_size += len(line) + 1  # +1 for newline
+
+                # Check if chunk is too large
+                if current_size > strategy["max_chunk_size"]:
+                    # Save current chunk
+                    chunk_text = "\n".join(current_chunk)
+                    chunks.append(
+                        {
+                            "text": chunk_text,
+                            "metadata": {
+                                "content_type": "external_docs",
+                                "chunk_index": len(chunks),
+                                "size": len(chunk_text),
+                                "source_url": source_url,
+                                "h1_title": h1_title,
+                                "section_name": current_section,
+                                "subsection_name": current_subsection,
+                            },
+                        }
+                    )
+
+                    # Start new chunk
+                    current_chunk = []
+                    current_size = 0
+
+        # Add final chunk
+        if current_chunk:
+            chunk_text = "\n".join(current_chunk)
+            chunks.append(
+                {
+                    "text": chunk_text,
+                    "metadata": {
+                        "content_type": "external_docs",
+                        "chunk_index": len(chunks),
+                        "size": len(chunk_text),
+                        "source_url": source_url,
+                        "h1_title": h1_title,
+                        "section_name": current_section,
+                        "subsection_name": current_subsection,
+                    },
+                }
+            )
+
+        return chunks
+
+    def _is_external_doc_header(self, line: str) -> bool:
+        """Check if line is a header in external docs format."""
+        stripped = line.strip()
+        # Check for underline headers (=== or ---)
+        if len(stripped) > 0 and stripped.endswith("=") and len(stripped) > 3:
+            return True
+        if len(stripped) > 0 and stripped.endswith("-") and len(stripped) > 3:
+            return True
+        # Check for title case headers (no markdown #)
+        if len(stripped) > 0 and not stripped.startswith("#") and not stripped.startswith("*") and not stripped.startswith("-") and stripped.isupper() and len(stripped) > 5:
+            return True
+        return False
+
+    def _clean_external_header_text(self, line: str) -> str:
+        """Clean external doc header text."""
+        # Remove underline characters
+        text = line.strip().rstrip("=-")
+        
+        # Remove extra whitespace
+        text = re.sub(r"\s+", " ", text).strip()
+        
+        return text
 
     def _get_header_level(self, line: str) -> str:
         """Extract header level from markdown line."""
@@ -463,11 +618,14 @@ class VectorDBManager:
 
     def _should_rebuild_file(self, file_path: str) -> bool:
         """Check if file needs to be rebuilt based on manifest."""
-        if file_path not in self.manifest["documents"]:
+        # Normalize path for consistent comparison
+        normalized_path = self._normalize_path(file_path)
+        
+        if normalized_path not in self.manifest["documents"]:
             return True
 
         current_hash = self._get_file_hash(file_path)
-        stored_hash = self.manifest["documents"][file_path]["file_hash"]
+        stored_hash = self.manifest["documents"][normalized_path]["file_hash"]
 
         return current_hash != stored_hash
 
@@ -511,6 +669,11 @@ class VectorDBManager:
                 for root, dirs, files in os.walk(include_path):
                     # Skip excluded directories
                     dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+                    
+                    # Additional check for nested excluded paths
+                    normalized_root = self._normalize_path(root).replace(os.path.sep, "/")
+                    if any(excluded in normalized_root for excluded in EXCLUDE_DIRS):
+                        continue
 
                     for file in files:
                         file_path = os.path.join(root, file)
@@ -522,7 +685,7 @@ class VectorDBManager:
 
         return files_to_process
 
-    def initialize_db(self, rebuild: bool = False):
+    def initialize_db(self, rebuild: bool = False, verbose: bool = False):
         """Initialize or rebuild the vector database."""
         # Create database directory
         os.makedirs(self.db_path, exist_ok=True)
@@ -568,10 +731,11 @@ class VectorDBManager:
                 chunks = self._semantic_chunk(content, content_type)
 
                 # Add file metadata to chunks
+                normalized_path = self._normalize_path(file_path)
                 for i, chunk in enumerate(chunks):
-                    chunk["metadata"]["file_path"] = file_path
+                    chunk["metadata"]["file_path"] = normalized_path
                     chunk["metadata"]["file_name"] = os.path.basename(file_path)
-                    chunk["metadata"]["chunk_id"] = f"{file_path}:{i}"
+                    chunk["metadata"]["chunk_id"] = f"{normalized_path}:{i}"
 
                     # Clean metadata to remove None values
                     chunk["metadata"] = {
@@ -582,7 +746,8 @@ class VectorDBManager:
 
                 # Update manifest
                 file_hash = self._get_file_hash(file_path)
-                document_metadata[file_path] = {
+                normalized_path = self._normalize_path(file_path)
+                document_metadata[normalized_path] = {
                     "file_hash": file_hash,
                     "chunks": len(chunks),
                     "last_modified": datetime.now().isoformat(),
@@ -593,15 +758,23 @@ class VectorDBManager:
                 logger.error(f"Error processing {file_path}: {e}")
                 continue
 
-        # Add chunks to collection
+        # Add chunks to collection in batches
         if all_chunks:
-            texts = [chunk["text"] for chunk in all_chunks]
-            metadatas = [chunk["metadata"] for chunk in all_chunks]
-            ids = [chunk["metadata"]["chunk_id"] for chunk in all_chunks]
+            batch_size = 1000  # ChromaDB batch size limit
+            total_chunks = len(all_chunks)
+            
+            for i in range(0, total_chunks, batch_size):
+                batch_chunks = all_chunks[i:i + batch_size]
+                texts = [chunk["text"] for chunk in batch_chunks]
+                metadatas = [chunk["metadata"] for chunk in batch_chunks]
+                ids = [chunk["metadata"]["chunk_id"] for chunk in batch_chunks]
 
-            self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
+                self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
+                
+                if verbose:
+                    logger.info(f"Added batch {i//batch_size + 1}/{(total_chunks + batch_size - 1)//batch_size} ({len(batch_chunks)} chunks)")
 
-            logger.info(f"Added {len(all_chunks)} chunks to vector database")
+            logger.info(f"Added {total_chunks} chunks to vector database")
 
         # Update manifest
         self.manifest["documents"].update(document_metadata)

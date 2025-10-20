@@ -6,6 +6,7 @@ from the vector database using natural language queries.
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -21,7 +22,7 @@ class HolocronQueryError(Exception):
 class HolocronQuery:
     """Main class for querying the Endor Cockpit vector database."""
 
-    def __init__(self, vector_db_path: str = "holocron_data/vector_db"):
+    def __init__(self, vector_db_path: str = ".workspace/holocron_data/vector_db"):
         """
         Initialize the Holocron query interface.
 
@@ -35,10 +36,18 @@ class HolocronQuery:
         self._initialize_client()
 
     def _initialize_client(self):
-        """Initialize ChromaDB client and collection."""
+        """
+        Initialize ChromaDB client and collection.
+        
+        CRITICAL: Path normalization is essential for cross-platform compatibility.
+        Source: Logbook entry 2025-01-27 - Cross-platform path handling learnings.
+        """
         try:
+            # Normalize path for cross-platform compatibility
+            normalized_path = os.path.normpath(self.vector_db_path)
+            
             # Initialize ChromaDB client
-            self.client = chromadb.PersistentClient(path=self.vector_db_path)
+            self.client = chromadb.PersistentClient(path=normalized_path)
 
             # Get the collection
             self.collection = self.client.get_collection(name=self.collection_name)
