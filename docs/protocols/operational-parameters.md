@@ -85,7 +85,7 @@ This protocol defines the operational parameters that should be tracked and moni
 ## Related Protocols
 
 - [Mandatory Context Protocol](mandatory-context.md) - L1
-- [Knowledge Sync Protocol](knowledge-sync.md) - L2/L3
+- [Knowledge Capture Workflow](knowledge-capture-workflow.md) - L1
 - [Documentation Standards](documentation-standards.md) - L2
 
 ---

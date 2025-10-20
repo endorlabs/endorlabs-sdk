@@ -245,7 +245,7 @@ Each chunk includes:
 
 - [Agent Guide](../agents/AGENT_GUIDE.md) - General agent instructions
 - [From Scratch Guide](../agents/FROM_SCRATCH_GUIDE.md) - Complete setup workflow
-- [Knowledge Sync Protocol](knowledge-sync.md) - Documentation maintenance
+- [Knowledge Capture Workflow](knowledge-capture-workflow.md) - Documentation maintenance
 - [API Quirks](../personas/developer/api-quirks.md) - Known API issues
 
 ---

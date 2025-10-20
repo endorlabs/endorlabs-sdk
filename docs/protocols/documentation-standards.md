@@ -102,7 +102,7 @@ This protocol defines the standards for creating, maintaining, and updating docu
 
 - [Mandatory Context Protocol](mandatory-context.md) - L1
 - [Operational Parameters Protocol](operational-parameters.md) - L2
-- [Knowledge Sync Protocol](knowledge-sync.md) - L2/L3
+- [Knowledge Capture Workflow](knowledge-capture-workflow.md) - L1
 
 ---
 

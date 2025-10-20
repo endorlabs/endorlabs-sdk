@@ -60,8 +60,8 @@
 
 ## Workflow Documentation
 
-### Knowledge Sync Protocol
-- **Canonical**: `docs/protocols/knowledge-sync.md`
+### Knowledge Capture Workflow
+- **Canonical**: `docs/protocols/knowledge-capture-workflow.md`
 - **Essential references**: `docs/ESSENTIAL_CONTEXT.md` (1 bullet)
 - **Links only**: `docs/agents/AGENT_GUIDE.md`
 
@@ -94,9 +94,9 @@
 - RAG knowledge base maintenance and query
 - Security scan requirement
 - Error recovery basics
+- Knowledge capture workflow (for maintaining database)
 
 ### L2 (Detailed - Context-Specific)
-- Knowledge sync protocol (for doc maintenance)
 - Resource implementation workflow (for new features)
 - Schema drift detection (for API changes)
 - Tag management patterns (for specific operations)
