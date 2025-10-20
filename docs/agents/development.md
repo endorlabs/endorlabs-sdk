@@ -86,7 +86,7 @@ from requests import HTTPError
 from pydantic import BaseModel, Field
 
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.namespaces import CreateNamespacePayload
+from endor_cockpit.resources.namespace import CreateNamespacePayload
 
 # ❌ WRONG: Unsorted imports, unused imports
 import json  # F401: unused import
@@ -332,7 +332,7 @@ def create_namespace(
 ```python
 # Example: Creating a namespace
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.namespaces import CreateNamespacePayload
+from endor_cockpit.resources.namespace import CreateNamespacePayload
 
 client = APIClient()
 payload = CreateNamespacePayload(
