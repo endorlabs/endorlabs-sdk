@@ -11,7 +11,7 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import chromadb
 from chromadb.config import Settings
@@ -136,7 +136,7 @@ class VectorDBManager:
             json.dump(self.manifest, f, indent=2)
 
     def update_external_docs_metadata(
-        self, openapi_metadata: Dict = None, user_docs_count: int = None
+        self, openapi_metadata: Optional[Dict] = None, user_docs_count: Optional[int] = None
     ):
         """
         Update manifest with external documentation metadata.

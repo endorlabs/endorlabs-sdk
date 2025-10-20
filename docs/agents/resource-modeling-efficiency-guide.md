@@ -96,8 +96,8 @@ class FlexibleEnum(str, Enum):
 
 2. **Analyze OpenAPI Spec**:
    ```bash
-   grep -i "{Resource}Service" tmp/openapiv2.swagger.json
-   grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+   grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
+   grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
    ```
 
 3. **Test with endorctl**:
@@ -108,7 +108,7 @@ class FlexibleEnum(str, Enum):
 ### **Phase 2: Live Data Analysis (10 minutes)**
 1. **Get Live API Data**:
    ```python
-   # workspace/workspace.py
+   # .workspace/workspace.py
    import sys
    sys.path.insert(0, 'src')
    from endor_cockpit.api_client import APIClient
