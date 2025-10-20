@@ -7,7 +7,7 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.13,<3.16"
+requires-python = ">=3.12,<3.16"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -18,7 +18,6 @@ dependencies = [
     "pydantic==2.12.3",
     "chromadb>=1.2.0",
     "openai>=2.5.0",
-    "beautifulsoup4>=4.12.0",
 ]
 
 [project.optional-dependencies]
@@ -39,6 +38,12 @@ rag = [
     "openai>=1.0.0",
     "langchain>=0.1.0",
     "anthropic>=0.8.0",
+    "markdownify>=0.11.0",
+    "beautifulsoup4>=4.12.0"
+]
+
+# Holocron runtime deps used by tests (external docs parsing)
+holocron = [
     "markdownify>=0.11.0",
     "beautifulsoup4>=4.12.0"
 ]
