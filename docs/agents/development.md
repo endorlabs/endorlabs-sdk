@@ -52,7 +52,7 @@ All resource modules must follow the established patterns from `project.py`:
 ### Python Version Support
 - **Minimum**: Python 3.11
 - **Maximum**: Python 3.13 (exclusive)
-- **Testing**: Test on 3.11, 3.12, 3.13
+- **Testing**: Test on 3.13
 
 ### Dependencies
 - **Core**: requests, pydantic
