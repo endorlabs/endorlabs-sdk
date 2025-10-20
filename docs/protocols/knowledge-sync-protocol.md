@@ -95,7 +95,7 @@ Entries are ready for promotion when they contain:
 - [ ] **Complete context** for understanding the solution
 
 ### Review Process
-1. **Weekly review** of new entries
+1. **Recurring review** of new entries after task sets are completed
 2. **Identify promotion candidates** based on criteria
 3. **Mark entries** as "Reviewed for Promotion"
 4. **Document promotion rationale** in entry

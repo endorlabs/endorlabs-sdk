@@ -1,6 +1,6 @@
-# Knowledge Sync
+# Knowledge Capture Workflow
 
-> **Systematic approach to capture, review, and promote technical learnings into permanent documentation**
+> **L1 (Essential - Always Required) - Systematic approach to capture, review, and promote technical learnings into permanent documentation**
 
 ## Overview
 
@@ -10,9 +10,11 @@ This protocol establishes a systematic workflow for capturing technical learning
 
 ## Phase 1: Capture Phase
 
+> **L1 CRITICAL**: This phase is mandatory for all agent operations. Every significant discovery must be captured.
+
 ### When to Create Logbook Entries
 
-Create a new logbook entry for:
+**MANDATORY**: Create a new logbook entry for:
 - **API debugging sessions** where unexpected behavior occurs
 - **SDK development** when encountering errors or quirks
 - **endorctl usage** when commands fail or behave unexpectedly
@@ -22,6 +24,8 @@ Create a new logbook entry for:
 - **Any technical discovery** that could help future agents
 
 ### Required Information for Each Entry
+
+> **L1 ESSENTIAL**: All entries must follow the template format exactly. Incomplete entries cannot be promoted.
 
 **Template Compliance**:
 - Use `_LOGBOOK_TEMPLATE.md` format exactly
@@ -51,9 +55,11 @@ Create a new logbook entry for:
 
 ## Phase 2: Review Phase
 
+> **L1 MANDATORY**: This phase must be completed before any commit. No code changes can be committed without reviewing logbook entries.
+
 ### Pre-Commit Checklist
 
-Before any commit, review logbook entries:
+**REQUIRED**: Before any commit, review logbook entries:
 
 1. **Check for entries** marked "Reviewed for Promotion"
 2. **Validate completeness** of entry information
@@ -101,6 +107,8 @@ An entry is ready for promotion if it:
 ---
 
 ## Phase 3: Promotion Phase
+
+> **L1 CRITICAL**: This phase ensures valuable learnings are preserved in permanent documentation. Without promotion, knowledge is lost.
 
 ### Identifying Target Documentation Files
 
