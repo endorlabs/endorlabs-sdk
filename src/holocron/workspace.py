@@ -15,7 +15,7 @@ from .manager import VectorDBManager
 def validate_environment() -> Tuple[bool, List[str]]:
     """
     Validate that required environment variables are set.
-    
+
     Returns:
         Tuple of (is_valid, missing_variables)
     """
@@ -36,8 +36,14 @@ def validate_environment() -> Tuple[bool, List[str]]:
         return False, missing_required
 
     if missing_optional:
-        print(f"⚠️  Optional environment variables not set: {', '.join(missing_optional)}")
-        print("   These are needed for API operations but not for knowledge base queries.")
+        print(
+            f"⚠️  Optional environment variables not set: "
+            f"{', '.join(missing_optional)}"
+        )
+        print(
+            "   These are needed for API operations but not for knowledge base "
+            "queries."
+        )
 
     return True, []
 
@@ -45,7 +51,7 @@ def validate_environment() -> Tuple[bool, List[str]]:
 def validate_dependencies() -> bool:
     """
     Validate that required dependencies are installed.
-    
+
     Returns:
         True if all dependencies are available, False otherwise
     """
@@ -86,21 +92,21 @@ def create_directories() -> None:
         Path(directory).mkdir(parents=True, exist_ok=True)
 
 
-def init_workspace(
+def init_workspace(  # noqa: C901
     force: bool = False, verbose: bool = False, download_external: bool = True
 ) -> bool:
     """
     Initialize the workspace for AI agents.
-    
+
     Performs comprehensive workspace setup including environment validation,
     dependency checking, directory creation, external documentation downloads,
     and knowledge base initialization.
-    
+
     Args:
         force: Force reinitialization even if workspace exists
         verbose: Enable verbose output
         download_external: Download external documentation (OpenAPI, user docs)
-        
+
     Returns:
         True if initialization successful, False otherwise
     """
@@ -196,7 +202,10 @@ def init_workspace(
 
         if verbose:
             info = manager.manifest
-            print(f"Knowledge base initialized with {info.get('total_chunks', 0)} chunks")
+            print(
+                f"Knowledge base initialized with "
+                f"{info.get('total_chunks', 0)} chunks"
+            )
             print(f"   From {info.get('total_documents', 0)} documents")
     except Exception as e:
         print(f"Failed to initialize knowledge base: {e}")

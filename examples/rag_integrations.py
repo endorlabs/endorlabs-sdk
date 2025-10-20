@@ -58,7 +58,9 @@ def openai_integration_example():
             }
 
             # Execute the tool
-            results = query_holocron(tool_call_args["query"], n_results=tool_call_args["max_results"])
+            results = query_holocron(
+                tool_call_args["query"], n_results=tool_call_args["max_results"]
+            )
             return results
 
         # Test the integration
@@ -86,9 +88,14 @@ def langchain_integration_example():
     try:
         from langchain.tools import Tool
 
-        from holocron import query_holocron
-
         # Create LangChain tool
+        def query_endor_documentation_tool(
+            query: str, max_results: int = 3, include_metadata: bool = True
+        ):
+            """Tool function for querying Endor documentation."""
+            from holocron import query_holocron
+            return query_holocron(query, n_results=max_results)
+
         rag_tool = Tool(
             name="query_endor_documentation",
             description="Search Endor Cockpit documentation using semantic search",
@@ -130,6 +137,12 @@ class EndorRAGAgent:
         self.rag_tool = None
         try:
             from holocron import query_holocron
+
+            def query_endor_documentation_tool(
+                query: str, max_results: int = 3, include_metadata: bool = True
+            ):
+                """Tool function for querying Endor documentation."""
+                return query_holocron(query, n_results=max_results)
 
             self.rag_tool = query_endor_documentation_tool
         except ImportError:

@@ -5,10 +5,11 @@ This module provides common fixtures and configuration for testing
 the Endor Cockpit SDK across all modules.
 """
 
-import pytest
 import logging
-from unittest.mock import Mock, MagicMock
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import Mock
+
+import pytest
 
 from endor_cockpit.api_client import APIClient
 
@@ -96,7 +97,10 @@ def sample_policy_data():
         },
         "spec": {
             "policy_type": "POLICY_TYPE_ML_FINDING",
-            "rule": "package security\n\nconfigure[result] {\n  result = {\n    \"security_method\": {\n      \"disable\": false\n    }\n  }\n}",
+            "rule": (
+                "package security\n\nconfigure[result] {\n  result = {\n    "
+                "\"security_method\": {\n      \"disable\": false\n    }\n  }\n}"
+            ),
             "disable": False
         },
         "tenant_meta": {

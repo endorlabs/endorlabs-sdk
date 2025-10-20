@@ -43,7 +43,9 @@ class HolocronQuery:
             self.collection = self.client.get_collection(name=self.collection_name)
 
         except Exception as e:
-            raise HolocronQueryError(f"Failed to initialize vector database: {e}") from e
+            raise HolocronQueryError(
+                f"Failed to initialize vector database: {e}"
+            ) from e
 
     def query(
         self, query_text: str, n_results: int = 5, include_metadata: bool = True
