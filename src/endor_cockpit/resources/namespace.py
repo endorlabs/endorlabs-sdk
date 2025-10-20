@@ -288,8 +288,6 @@ logger = logging.getLogger(__name__)
 logger.addFilter(RedactingFilter([redaction_pattern]))
 
 
-
-
 # Pydantic Models for Namespace data with OpenAPI validation
 class NamespaceMeta(BaseModel):
     """

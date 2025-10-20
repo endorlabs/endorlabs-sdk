@@ -20,11 +20,13 @@ logger.addFilter(RedactingFilter([redaction_pattern]))
 # Pydantic Models for Repository data based on actual API response
 class TenantMeta(BaseModel):
     """Tenant metadata for repository resources."""
+
     namespace: str = Field(..., description="Canonical namespace name")
 
 
 class RepositoryMeta(BaseModel):
     """Repository metadata."""
+
     name: str = Field(..., description="Repository name (same as Project)")
     description: Optional[str] = Field(None, description="Repository description")
     create_time: Optional[str] = Field(None, description="Creation timestamp")
@@ -39,15 +41,23 @@ class RepositoryMeta(BaseModel):
     upsert_time: Optional[str] = Field(None, description="Upsert timestamp")
     references: Optional[dict] = Field(None, description="Resource references")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'create_time', 'update_time', 'name', 'description', 'created_by',
-                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time',
-                'references'
+                "create_time",
+                "update_time",
+                "name",
+                "description",
+                "created_by",
+                "updated_by",
+                "tags",
+                "parent_uuid",
+                "parent_kind",
+                "upsert_time",
+                "references",
             }
 
             if info.field_name in model_fields:
@@ -59,6 +69,7 @@ class RepositoryMeta(BaseModel):
 
 class RepositorySpec(BaseModel):
     """Repository specification."""
+
     project_uuid: str = Field(..., description="Associated project UUID")
     source_code_info: Optional[dict] = Field(
         None, description="Source code information"
@@ -67,14 +78,12 @@ class RepositorySpec(BaseModel):
     # Schema drift fields
     notification: Optional[dict] = Field(None, description="Notification configuration")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
-            model_fields = {
-                'project_uuid', 'source_code_info', 'notification'
-            }
+            model_fields = {"project_uuid", "source_code_info", "notification"}
 
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
@@ -85,21 +94,20 @@ class RepositorySpec(BaseModel):
 
 class Repository(BaseModel):
     """Repository resource model."""
-    model_config = ConfigDict(extra='ignore')
+
+    model_config = ConfigDict(extra="ignore")
 
     uuid: str = Field(..., description="Unique identifier for the repository")
     meta: RepositoryMeta = Field(..., description="Repository metadata")
     spec: RepositorySpec = Field(..., description="Repository specification")
     tenant_meta: TenantMeta = Field(..., description="Tenant metadata")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
-            model_fields = {
-                'uuid', 'meta', 'spec', 'tenant_meta'
-            }
+            model_fields = {"uuid", "meta", "spec", "tenant_meta"}
 
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
@@ -111,12 +119,14 @@ class Repository(BaseModel):
 # Payload models for CRUD operations
 class CreateRepositoryPayload(BaseModel):
     """Payload for creating a repository."""
+
     meta: RepositoryMeta = Field(..., description="Repository metadata")
     spec: RepositorySpec = Field(..., description="Repository specification")
 
 
 class UpdateRepositoryPayload(BaseModel):
     """Payload for updating a repository."""
+
     meta: Optional[RepositoryMeta] = Field(None, description="Repository metadata")
     spec: Optional[RepositorySpec] = Field(None, description="Repository specification")
 
@@ -163,20 +173,25 @@ def create_repository(
     """Create a new repository."""
     try:
         headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        headers.update(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
 
         request_data = {
             "object": {
                 "tenant_meta": {"namespace": tenant_meta_namespace},
-                **payload.model_dump()
+                **payload.model_dump(),
             }
         }
 
-        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/repositories",
-                         headers=headers, data=request_data)
+        res = client.post(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories",
+            headers=headers,
+            data=request_data,
+        )
         data = res.json()
         return Repository(**data)
     except Exception as e:
@@ -194,10 +209,12 @@ def update_repository(
     """Update an existing repository using partial updates."""
     try:
         headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        headers.update(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
 
         # Get the current repository to include required fields
         current_repository = get_repository(
@@ -216,7 +233,8 @@ def update_repository(
                     "name": current_repository.meta.name,  # Required field
                     **(
                         payload.meta.model_dump(exclude_none=True)
-                        if payload.meta else {}
+                        if payload.meta
+                        else {}
                     ),
                 },
                 "spec": {
@@ -224,7 +242,8 @@ def update_repository(
                     # existing spec fields
                     **(
                         payload.spec.model_dump(exclude_none=True)
-                        if payload.spec else {}
+                        if payload.spec
+                        else {}
                     ),
                 },
             }
@@ -235,8 +254,11 @@ def update_repository(
 
         logger.info(f"Updating repository {repository_uuid} with mask: {update_mask}")
 
-        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/repositories",
-                          headers=headers, data=request_data)
+        res = client.patch(
+            f"v1/namespaces/{tenant_meta_namespace}/repositories",
+            headers=headers,
+            data=request_data,
+        )
 
         if res.status_code == 200:
             data = res.json()

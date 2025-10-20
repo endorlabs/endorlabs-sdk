@@ -86,6 +86,7 @@ class SchemaDriftDetector:
         Returns:
             Validator function for use with @field_validator
         """
+
         def validator(v, info):
             """Detect and log schema drift for unknown fields."""
             if info.field_name and isinstance(v, dict):

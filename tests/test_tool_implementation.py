@@ -64,9 +64,7 @@ class TestToolImplementation:
 
     def test_create_namespace_implementation(self, mock_client):
         """Test the create_namespace tool implementation."""
-        with patch(
-            "endor_cockpit.resources.namespace.create_namespace"
-        ) as mock_create:
+        with patch("endor_cockpit.resources.namespace.create_namespace") as mock_create:
             mock_namespace = Mock()
             mock_namespace.uuid = "new-ns-uuid"
             mock_namespace.meta.name = "new-namespace"
@@ -147,9 +145,7 @@ class TestToolImplementation:
             if not tenant_namespace:
                 raise ValueError("tenant_namespace is required")
 
-            return namespace.list_namespaces(
-                client, tenant_namespace, include_children
-            )
+            return namespace.list_namespaces(client, tenant_namespace, include_children)
         except Exception as e:
             print(f"Error in list_namespaces: {e}")
             return None

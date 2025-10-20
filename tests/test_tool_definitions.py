@@ -215,9 +215,7 @@ class TestToolImplementation:
 
     def test_create_namespace_tool(self, mock_client):
         """Test the create_namespace tool implementation."""
-        with patch(
-            "endor_cockpit.resources.namespace.create_namespace"
-        ) as mock_create:
+        with patch("endor_cockpit.resources.namespace.create_namespace") as mock_create:
             mock_namespace = Mock()
             mock_namespace.uuid = "test-uuid-123"
             mock_namespace.meta.name = "test-namespace"

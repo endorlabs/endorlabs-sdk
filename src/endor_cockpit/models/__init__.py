@@ -41,28 +41,24 @@ __all__ = [
     "BaseMeta",
     "BaseSpec",
     "TenantMeta",
-
     # Project models
     "Project",
     "ProjectMeta",
     "ProjectSpec",
     "CreateProjectPayload",
     "UpdateProjectPayload",
-
     # Finding models
     "Finding",
     "FindingMeta",
     "FindingSpec",
     "CreateFindingPayload",
     "UpdateFindingPayload",
-
     # Policy models
     "Policy",
     "PolicyMeta",
     "PolicySpec",
     "CreatePolicyPayload",
     "UpdatePolicyPayload",
-
     # Namespace models
     "Namespace",
     "NamespaceMeta",

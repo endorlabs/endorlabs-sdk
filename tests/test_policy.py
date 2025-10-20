@@ -269,9 +269,7 @@ class TestPolicy:
 
         print("Policy Types Available:")
         for policy_type in PolicyType:
-            count = len(
-                policy.list_policies(self.client, self.namespace, policy_type)
-            )
+            count = len(policy.list_policies(self.client, self.namespace, policy_type))
             print(f"  - {policy_type.value}: {count} policies")
 
         print("Policy Features:")
@@ -446,9 +444,7 @@ configure[result] {
         print(f"Deleting ML_FINDING policy: {policy_uuid}")
 
         # Delete the policy
-        delete_success = policy.delete_policy(
-            self.client, self.namespace, policy_uuid
-        )
+        delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
 
         assert delete_success, "Policy deletion should succeed"
         print(f"[SUCCESS] Policy deleted: {policy_uuid}")

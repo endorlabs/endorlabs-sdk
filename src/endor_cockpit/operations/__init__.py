@@ -41,21 +41,18 @@ __all__ = [
     "create_project",
     "update_project",
     "delete_project",
-
     # Finding operations
     "list_findings",
     "get_finding",
     "create_finding",
     "update_finding",
     "delete_finding",
-
     # Policy operations
     "list_policies",
     "get_policy",
     "create_policy",
     "update_policy",
     "delete_policy",
-
     # Namespace operations
     "list_namespaces",
     "get_namespace",

@@ -20,11 +20,13 @@ logger.addFilter(RedactingFilter([redaction_pattern]))
 # Pydantic Models for PackageVersion data based on actual API response
 class TenantMeta(BaseModel):
     """Tenant metadata for package version resources."""
+
     namespace: str = Field(..., description="Canonical namespace name")
 
 
 class PackageVersionMeta(BaseModel):
     """Package version metadata."""
+
     name: str = Field(..., description="Package version name")
     description: Optional[str] = Field(None, description="Package version description")
     create_time: Optional[str] = Field(None, description="Creation timestamp")
@@ -39,15 +41,23 @@ class PackageVersionMeta(BaseModel):
     upsert_time: Optional[str] = Field(None, description="Upsert timestamp")
     references: Optional[dict] = Field(None, description="Resource references")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'create_time', 'update_time', 'name', 'description', 'created_by',
-                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time',
-                'references'
+                "create_time",
+                "update_time",
+                "name",
+                "description",
+                "created_by",
+                "updated_by",
+                "tags",
+                "parent_uuid",
+                "parent_kind",
+                "upsert_time",
+                "references",
             }
 
             if info.field_name in model_fields:
@@ -59,6 +69,7 @@ class PackageVersionMeta(BaseModel):
 
 class PackageVersionSpec(BaseModel):
     """Package version specification."""
+
     package_name: str = Field(..., description="Package name")
     version: str = Field(..., description="Package version")
     ecosystem: Optional[str] = Field(
@@ -72,14 +83,18 @@ class PackageVersionSpec(BaseModel):
     # Schema drift fields
     notification: Optional[dict] = Field(None, description="Notification configuration")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'package_name', 'version', 'ecosystem', 'repository_version_uuid',
-                'dependency_info', 'notification'
+                "package_name",
+                "version",
+                "ecosystem",
+                "repository_version_uuid",
+                "dependency_info",
+                "notification",
             }
 
             if info.field_name in model_fields:
@@ -91,21 +106,20 @@ class PackageVersionSpec(BaseModel):
 
 class PackageVersion(BaseModel):
     """Package version resource model."""
-    model_config = ConfigDict(extra='ignore')
+
+    model_config = ConfigDict(extra="ignore")
 
     uuid: str = Field(..., description="Unique identifier for the package version")
     meta: PackageVersionMeta = Field(..., description="Package version metadata")
     spec: PackageVersionSpec = Field(..., description="Package version specification")
     tenant_meta: TenantMeta = Field(..., description="Tenant metadata")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
-            model_fields = {
-                'uuid', 'meta', 'spec', 'tenant_meta'
-            }
+            model_fields = {"uuid", "meta", "spec", "tenant_meta"}
 
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
@@ -117,12 +131,14 @@ class PackageVersion(BaseModel):
 # Payload models for CRUD operations
 class CreatePackageVersionPayload(BaseModel):
     """Payload for creating a package version."""
+
     meta: PackageVersionMeta = Field(..., description="Package version metadata")
     spec: PackageVersionSpec = Field(..., description="Package version specification")
 
 
 class UpdatePackageVersionPayload(BaseModel):
     """Payload for updating a package version."""
+
     meta: Optional[PackageVersionMeta] = Field(
         None, description="Package version metadata"
     )
@@ -158,7 +174,7 @@ def get_package_version(
         headers = client.default_headers
         res = client.get(
             f"v1/namespaces/{tenant_meta_namespace}/package-versions/{package_version_uuid}",
-            headers=headers
+            headers=headers,
         )
         data = res.json()
         return PackageVersion(**data)
@@ -176,20 +192,25 @@ def create_package_version(
     """Create a new package version."""
     try:
         headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        headers.update(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
 
         request_data = {
             "object": {
                 "tenant_meta": {"namespace": tenant_meta_namespace},
-                **payload.model_dump()
+                **payload.model_dump(),
             }
         }
 
-        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/package-versions",
-                         headers=headers, data=request_data)
+        res = client.post(
+            f"v1/namespaces/{tenant_meta_namespace}/package-versions",
+            headers=headers,
+            data=request_data,
+        )
         data = res.json()
         return PackageVersion(**data)
     except Exception as e:
@@ -207,10 +228,12 @@ def update_package_version(
     """Update an existing package version using partial updates."""
     try:
         headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        headers.update(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
 
         # Get the current package version to include required fields
         current_package_version = get_package_version(
@@ -229,7 +252,8 @@ def update_package_version(
                     "name": current_package_version.meta.name,  # Required field
                     **(
                         payload.meta.model_dump(exclude_none=True)
-                        if payload.meta else {}
+                        if payload.meta
+                        else {}
                     ),
                 },
                 "spec": {
@@ -237,7 +261,8 @@ def update_package_version(
                     # existing spec fields
                     **(
                         payload.spec.model_dump(exclude_none=True)
-                        if payload.spec else {}
+                        if payload.spec
+                        else {}
                     ),
                 },
             }
@@ -250,8 +275,11 @@ def update_package_version(
             f"Updating package version {package_version_uuid} with mask: {update_mask}"
         )
 
-        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/package-versions",
-                          headers=headers, data=request_data)
+        res = client.patch(
+            f"v1/namespaces/{tenant_meta_namespace}/package-versions",
+            headers=headers,
+            data=request_data,
+        )
 
         if res.status_code == 200:
             data = res.json()
@@ -278,7 +306,7 @@ def delete_package_version(
         headers = client.default_headers
         res = client.delete(
             f"v1/namespaces/{tenant_meta_namespace}/package-versions/{package_version_uuid}",
-            headers=headers
+            headers=headers,
         )
         return res.status_code == 200
     except Exception as e:

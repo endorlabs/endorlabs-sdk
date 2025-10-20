@@ -20,11 +20,13 @@ logger.addFilter(RedactingFilter([redaction_pattern]))
 # Pydantic Models for RepositoryVersion data based on actual API response
 class TenantMeta(BaseModel):
     """Tenant metadata for repository version resources."""
+
     namespace: str = Field(..., description="Canonical namespace name")
 
 
 class RepositoryVersionMeta(BaseModel):
     """Repository version metadata."""
+
     name: str = Field(..., description="Repository version name (branch/tag)")
     description: Optional[str] = Field(
         None, description="Repository version description"
@@ -41,15 +43,23 @@ class RepositoryVersionMeta(BaseModel):
     upsert_time: Optional[str] = Field(None, description="Upsert timestamp")
     references: Optional[dict] = Field(None, description="Resource references")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'create_time', 'update_time', 'name', 'description', 'created_by',
-                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time',
-                'references'
+                "create_time",
+                "update_time",
+                "name",
+                "description",
+                "created_by",
+                "updated_by",
+                "tags",
+                "parent_uuid",
+                "parent_kind",
+                "upsert_time",
+                "references",
             }
 
             if info.field_name in model_fields:
@@ -61,6 +71,7 @@ class RepositoryVersionMeta(BaseModel):
 
 class RepositoryVersionSpec(BaseModel):
     """Repository version specification."""
+
     repository_uuid: str = Field(..., description="Parent repository UUID")
     commit_sha: Optional[str] = Field(None, description="Git commit SHA")
     branch: Optional[str] = Field(None, description="Git branch name")
@@ -72,14 +83,18 @@ class RepositoryVersionSpec(BaseModel):
     # Schema drift fields
     notification: Optional[dict] = Field(None, description="Notification configuration")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'repository_uuid', 'commit_sha', 'branch', 'tag', 'source_code_info',
-                'notification'
+                "repository_uuid",
+                "commit_sha",
+                "branch",
+                "tag",
+                "source_code_info",
+                "notification",
             }
 
             if info.field_name in model_fields:
@@ -91,7 +106,8 @@ class RepositoryVersionSpec(BaseModel):
 
 class RepositoryVersion(BaseModel):
     """Repository version resource model."""
-    model_config = ConfigDict(extra='ignore')
+
+    model_config = ConfigDict(extra="ignore")
 
     uuid: str = Field(..., description="Unique identifier for the repository version")
     meta: RepositoryVersionMeta = Field(..., description="Repository version metadata")
@@ -100,14 +116,12 @@ class RepositoryVersion(BaseModel):
     )
     tenant_meta: TenantMeta = Field(..., description="Tenant metadata")
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
-            model_fields = {
-                'uuid', 'meta', 'spec', 'tenant_meta'
-            }
+            model_fields = {"uuid", "meta", "spec", "tenant_meta"}
 
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
@@ -119,6 +133,7 @@ class RepositoryVersion(BaseModel):
 # Payload models for CRUD operations
 class CreateRepositoryVersionPayload(BaseModel):
     """Payload for creating a repository version."""
+
     meta: RepositoryVersionMeta = Field(..., description="Repository version metadata")
     spec: RepositoryVersionSpec = Field(
         ..., description="Repository version specification"
@@ -127,6 +142,7 @@ class CreateRepositoryVersionPayload(BaseModel):
 
 class UpdateRepositoryVersionPayload(BaseModel):
     """Payload for updating a repository version."""
+
     meta: Optional[RepositoryVersionMeta] = Field(
         None, description="Repository version metadata"
     )
@@ -155,8 +171,10 @@ def list_repository_versions(
 
 
 def get_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_uuid: str,
-    version_uuid: str
+    client: APIClient,
+    tenant_meta_namespace: str,
+    repository_uuid: str,
+    version_uuid: str,
 ) -> Optional[RepositoryVersion]:
     """Get a specific repository version by UUID."""
     try:
@@ -176,27 +194,32 @@ def get_repository_version(
 
 
 def create_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_uuid: str,
-    payload: CreateRepositoryVersionPayload
+    client: APIClient,
+    tenant_meta_namespace: str,
+    repository_uuid: str,
+    payload: CreateRepositoryVersionPayload,
 ) -> Optional[RepositoryVersion]:
     """Create a new repository version."""
     try:
         headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        headers.update(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
 
         request_data = {
             "object": {
                 "tenant_meta": {"namespace": tenant_meta_namespace},
-                **payload.model_dump()
+                **payload.model_dump(),
             }
         }
 
         res = client.post(
             f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions",
-            headers=headers, data=request_data,
+            headers=headers,
+            data=request_data,
         )
         data = res.json()
         return RepositoryVersion(**data)
@@ -216,10 +239,12 @@ def update_repository_version(
     """Update an existing repository version using partial updates."""
     try:
         headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        headers.update(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
 
         # Get the current repository version to include required fields
         current_version = get_repository_version(
@@ -238,7 +263,8 @@ def update_repository_version(
                     "name": current_version.meta.name,  # Required field
                     **(
                         payload.meta.model_dump(exclude_none=True)
-                        if payload.meta else {}
+                        if payload.meta
+                        else {}
                     ),
                 },
                 "spec": {
@@ -246,7 +272,8 @@ def update_repository_version(
                     # existing spec fields
                     **(
                         payload.spec.model_dump(exclude_none=True)
-                        if payload.spec else {}
+                        if payload.spec
+                        else {}
                     ),
                 },
             }
@@ -261,7 +288,8 @@ def update_repository_version(
 
         res = client.patch(
             f"v1/namespaces/{tenant_meta_namespace}/repositories/{repository_uuid}/versions",
-            headers=headers, data=request_data,
+            headers=headers,
+            data=request_data,
         )
 
         if res.status_code == 200:
@@ -282,8 +310,10 @@ def update_repository_version(
 
 
 def delete_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_uuid: str,
-    version_uuid: str
+    client: APIClient,
+    tenant_meta_namespace: str,
+    repository_uuid: str,
+    version_uuid: str,
 ) -> bool:
     """Delete a repository version."""
     try:

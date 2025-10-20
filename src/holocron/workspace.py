@@ -37,12 +37,10 @@ def validate_environment() -> Tuple[bool, List[str]]:
 
     if missing_optional:
         print(
-            f"⚠️  Optional environment variables not set: "
-            f"{', '.join(missing_optional)}"
+            f"⚠️  Optional environment variables not set: {', '.join(missing_optional)}"
         )
         print(
-            "   These are needed for API operations but not for knowledge base "
-            "queries."
+            "   These are needed for API operations but not for knowledge base queries."
         )
 
     return True, []
@@ -168,19 +166,16 @@ def init_workspace(  # noqa: C901
 
             # Download user docs
             user_docs_dir = Path(".workspace/downloads/user-docs/")
-            print(
-                f"Downloading {len(sitemap_urls)} documentation pages..."
-            )
+            print(f"Downloading {len(sitemap_urls)} documentation pages...")
             pages_count = download_user_docs(sitemap_urls, user_docs_dir)
 
-            print(
-                f"External documentation downloaded: {pages_count} pages"
-            )
+            print(f"External documentation downloaded: {pages_count} pages")
 
         except Exception as e:
             print(f"Warning: Failed to download external documentation: {e}")
             if verbose:
                 import traceback
+
                 traceback.print_exc()
             print("Continuing with initialization...")
 
@@ -192,10 +187,9 @@ def init_workspace(  # noqa: C901
         manager = VectorDBManager()
 
         # Update external docs metadata if we downloaded them
-        if download_external and 'openapi_metadata' in locals():
+        if download_external and "openapi_metadata" in locals():
             manager.update_external_docs_metadata(
-                openapi_metadata=openapi_metadata,
-                user_docs_count=pages_count
+                openapi_metadata=openapi_metadata, user_docs_count=pages_count
             )
 
         manager.initialize_db(rebuild=force)
@@ -203,14 +197,14 @@ def init_workspace(  # noqa: C901
         if verbose:
             info = manager.manifest
             print(
-                f"Knowledge base initialized with "
-                f"{info.get('total_chunks', 0)} chunks"
+                f"Knowledge base initialized with {info.get('total_chunks', 0)} chunks"
             )
             print(f"   From {info.get('total_documents', 0)} documents")
     except Exception as e:
         print(f"Failed to initialize knowledge base: {e}")
         if verbose:
             import traceback
+
             traceback.print_exc()
         return False
 
