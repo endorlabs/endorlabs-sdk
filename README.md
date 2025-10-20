@@ -16,19 +16,75 @@ A foundational workspace to administer, operate and scan with Endor Labs tooling
 
 ## Installation
 
-It is recommended to use a virtual environment.
+It is recommended to use a virtual environment - this project is designed with `uv` and `poetry` in mind.
 
 ```bash
 # Clone the repository
 git clone https://github.com/endor-solutions-architecture/endor-cockpit.git
 cd endor-cockpit
 
-# Install dependencies
-pip install -e .
+# Create virtual environment
+uv venv
+source .venv/bin/activate  # Linux/Mac
+# or
+.venv\Scripts\activate    # Windows
 
-# Or with uv (recommended)
+# Install dependencies
 uv pip install -e .
+
+# Install RAG dependencies for knowledge base
+uv pip install -e ".[rag]"
 ```
+
+## First Time Setup
+
+### Knowledge Base Initialization
+
+**IMPORTANT**: The vector database knowledge base is the **first step** for any AI agent working with this repository. It contains comprehensive documentation, API patterns, and best practices that should be consulted before making any changes.
+
+#### 1. Install RAG Dependencies
+```bash
+# Install RAG functionality for semantic search
+uv pip install -e ".[rag]"
+```
+
+#### 2. Set Environment Variables
+```bash
+# Required for API access
+export ENDOR_API="https://api.endorlabs.com"
+export ENDOR_API_CREDENTIALS_KEY="your-api-key"
+export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
+
+# Required for RAG functionality
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+#### 3. Initialize Vector Database
+```bash
+# Initialize the knowledge base
+uv run python workflow/init_vector_db.py
+
+# Rebuild after documentation updates
+uv run python workflow/init_vector_db.py --rebuild
+```
+
+#### 4. Query the Knowledge Base
+```python
+from endor_cockpit.rag import query_vector_db
+
+# Always query first before making changes
+results = query_vector_db("How do I create a namespace?")
+print(f"Found {len(results['results'])} relevant documents")
+```
+
+### Knowledge Base Workflow
+
+1. **Query First**: Always check the knowledge base before operations
+2. **Verify**: Cross-reference with existing documentation
+3. **Act**: Make changes based on established patterns
+4. **Update**: Incorporate new learnings when contradictions are found
+
+The knowledge base is a **portable shared learning index** that ensures consistency across all AI agents and maintains the freshness of operational knowledge.
 
 ## Quick Start
 
@@ -36,7 +92,7 @@ uv pip install -e .
 
 ```python
 from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespaces
+from endor_cockpit.resources import namespace
 
 # Initialize the client (uses environment variables for auth)
 client = APIClient()
@@ -89,11 +145,8 @@ pytest tests/test_integration.py -v
 ### Code Quality
 
 ```bash
-# Linting
+# Linting & Formatting
 ruff check .
-
-# Formatting
-black .
 
 # Type checking
 mypy src/
@@ -105,6 +158,46 @@ mypy src/
 # Run endorctl security scan
 endorctl scan --path . --namespace "your-namespace"
 ```
+
+## Resource Implementation Status
+
+> **Comprehensive tracking of Endor Labs resource types and their implementation status**
+
+### Implementation Checklist
+
+#### ✅ **COMPLETED RESOURCES**
+- **Project** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Finding** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Policy** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Namespace** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+
+#### 🔄 **SCAFFOLDED RESOURCES**
+- **Repository** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+- **RepositoryVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+- **PackageVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+
+#### ❌ **PENDING RESOURCES**
+- **DependencyMetadata** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **LinterResult** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Metric** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Scan** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **User** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Token** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Installation** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+
+### Completion Criteria
+
+**Implementation**: CRUD operations validated, model validated and a handful of attributes modeled correctly
+**Documentation**: Statements verified to match implementation and tests  
+**Tests**: Passes linter, unit tests provided and incorporated into CI
+
+### Status Legend
+- ✅ **COMPLETE**: All criteria met
+- 🚧 **IN PROGRESS**: Implementation started
+- ❌ **NOT STARTED**: No work begun
+- 🚫 **BLOCKED**: Blocked by dependencies
+
+---
 
 ## Documentation
 

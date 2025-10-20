@@ -15,6 +15,11 @@
 - **Dependencies**: Pin exact versions, avoid `latest`
 - **Environment**: Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
 
+### **MANDATORY WORKFLOW: Research → Log → Update Knowledge Base**
+1. **Research**: RAG → API Spec → endorctl → APIClient
+2. **Log**: Document in `workspace/log.md` and `workspace/workspace.py`
+3. **Update Knowledge Base**: Propagate learnings to relevant docs, re-index
+
 ---
 
 ## 🏗️ **Development**
@@ -28,7 +33,7 @@ endor_cockpit/
 ```
 
 ### **Code Standards**
-- **Python**: 3.11-3.14, test on 3.11/3.12/3.13
+- **Python**: 3.11-3.13, test on 3.11/3.12/3.13
 - **Dependencies**: `requests==2.32.5`, `pydantic==2.12.3`
 - **Tools**: `ruff`, `black`, `pytest`, `endorctl`
 
@@ -97,16 +102,16 @@ client = APIClient()  # Auto-authenticates via env vars
 
 ### **Namespace Operations**
 ```python
-from endor_cockpit.resources import namespaces
-from endor_cockpit.resources.namespaces import CreateNamespacePayload
+from endor_cockpit.resources import namespace
+from endor_cockpit.resources.namespace import CreateNamespacePayload
 
 # List namespaces
-all_namespaces = namespaces.list_namespaces(client, "tenant-namespace")
+all_namespaces = namespace.list_namespaces(client, "tenant-namespace")
 
 # Create namespace (CRITICAL: Use canonical naming)
 canonical_parent = f"{tenant_namespace}.{parent_name}"
 payload = CreateNamespacePayload(meta=NamespaceMetaCreate(name="test", description="Agent created"))
-created = namespaces.create_namespace(client, canonical_parent, payload)
+created = namespace.create_namespace(client, canonical_parent, payload)
 ```
 
 ### **Critical Patterns**

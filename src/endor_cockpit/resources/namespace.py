@@ -1,7 +1,275 @@
 """
+Namespace Resource Deep-Dive
+
+> **Comprehensive guide to namespace resources in Endor Labs platform**
+
 This module provides a resource-oriented interface for managing Endor Labs
 namespaces. It implements CRUD operations following REST principles and
 provides type-safe data models.
+
+## Architecture
+
+### Resource Structure
+
+Namespaces in Endor Labs follow a hierarchical structure with canonical naming:
+
+```
+Tenant (endor-solutions-tgowan.cockpit)
+├── Namespace (tenant.namespace)
+│   ├── Child Namespace (tenant.namespace.child)
+│   │   └── Grandchild (tenant.namespace.child.grandchild)
+│   └── Sibling Namespace (tenant.namespace.sibling)
+└── Other Namespace (tenant.other-namespace)
+```
+
+### Core Concepts
+
+- **Hierarchical Structure**: Namespaces can contain child namespaces
+- **Canonical Naming**: Uses dot-separated hierarchical names, not UUIDs
+- **Tenant Isolation**: Each tenant has isolated namespace hierarchies
+- **Parent-Child Relationships**: Child namespaces inherit from parent context
+
+### Lifecycle
+
+```
+Tenant → Namespace → Child Namespace → Resources
+```
+
+**Lifecycle States**:
+- **Created**: Namespace created in parent context
+- **Active**: Namespace available for resource operations
+- **Deleted**: Namespace and all children removed
+
+## Data Model
+
+### SDK Implementation
+
+**Location**: `src/endor_cockpit/resources/namespace.py:117-173`
+
+```python
+# Direct reference - see SDK for full definition
+class Namespace(BaseModel):
+    uuid: str = Field(..., description="Unique identifier for the namespace")
+    meta: NamespaceMeta = Field(
+        ..., description="Metadata associated with the namespace"
+    )
+```
+
+**To explore fields**:
+- View `NamespaceMeta` in SDK (lines 53-82)
+- View `NamespaceMetaCreate` in SDK (lines 84-95)
+- View `NamespaceMetaUpdate` in SDK (lines 97-105)
+
+### Mutable Fields
+
+**Via PATCH operations**:
+- `meta.description`: str - Namespace description
+- `meta.tags`: List[str] - Namespace tags (if supported)
+
+### Immutable Fields
+
+**Read-only, API-managed**:
+- `uuid`: Unique identifier
+- `meta.name`: Namespace name (set at creation)
+- `meta.created_at`: Creation timestamp
+- `meta.updated_at`: Last update timestamp
+
+### Field Validation
+
+**Validators** (see `NamespaceMeta:75-81`):
+- `name`: Must be 1-255 characters, cannot be empty or whitespace
+- `description`: Optional string for namespace purpose
+
+## Operations
+
+### List Namespaces
+
+**Function**: `namespace.list_namespaces(client, tenant_namespace)`
+**Location**: `src/endor_cockpit/resources/namespace.py:197`
+**Status**: ✅ IMPLEMENTED
+
+```python
+from endor_cockpit.resources import namespace
+
+# List all namespaces in tenant
+all_namespaces = namespace.list_namespaces(
+    client=client,
+    tenant_namespace="endor-solutions-tgowan.cockpit"
+)
+```
+
+**Returns**: `List[Namespace]` - Empty list on error
+
+### Get Namespace
+
+**Function**: `namespace.get_namespace(client, parent_namespace, namespace_uuid)`
+**Location**: `src/endor_cockpit/resources/namespace.py:257`
+**Status**: ✅ IMPLEMENTED
+
+```python
+# Get specific namespace
+namespace = namespace.get_namespace(
+    client=client,
+    parent_namespace="endor-solutions-tgowan.cockpit",
+    namespace_uuid="namespace-uuid-here"
+)
+```
+
+**Returns**: `Optional[Namespace]` - None on error
+
+### Create Namespace
+
+**Function**: `namespace.create_namespace(client, parent_namespace, payload)`
+**Location**: `src/endor_cockpit/resources/namespace.py:224`
+**Status**: ✅ IMPLEMENTED
+
+```python
+from endor_cockpit.resources.namespace import (
+    CreateNamespacePayload,
+    NamespaceMetaCreate
+)
+
+# Create new namespace
+payload = CreateNamespacePayload(
+    meta=NamespaceMetaCreate(
+        name="example-namespace",
+        description="An example namespace"
+    )
+)
+
+namespace = namespace.create_namespace(
+    client=client,
+    parent_namespace="endor-solutions-tgowan.cockpit",
+    payload=payload
+)
+```
+
+**Required Fields**: `meta.name`, `meta.description`
+**Auto-populated**: `uuid`, `meta.created_at`, `meta.updated_at`
+
+### Update Namespace
+
+**Function**: `namespace.update_namespace(client, parent_namespace,\
+ namespace_uuid, payload)`
+**Location**: `src/endor_cockpit/resources/namespace.py:317`
+**Status**: ✅ IMPLEMENTED
+
+```python
+from endor_cockpit.resources.namespace import (
+    UpdateNamespacePayload,
+    NamespaceMetaUpdate
+)
+
+# Update namespace fields
+payload = UpdateNamespacePayload(
+    meta=NamespaceMetaUpdate(
+        description="Updated description"
+    )
+)
+
+namespace = namespace.update_namespace(
+    client=client,
+    parent_namespace="endor-solutions-tgowan.cockpit",
+    namespace_uuid="namespace-uuid",
+    payload=payload
+)
+```
+
+**Mutable Fields**: See Data Model > Mutable Fields
+
+### Delete Namespace
+
+**Function**: `namespace.delete_namespace(client, parent_namespace, namespace_uuid)`
+**Location**: `src/endor_cockpit/resources/namespace.py:288`
+**Status**: ✅ IMPLEMENTED
+
+```python
+# Delete namespace
+success = namespace.delete_namespace(
+    client=client,
+    parent_namespace="endor-solutions-tgowan.cockpit",
+    namespace_uuid="namespace-uuid"
+)
+```
+
+**Behavior**: Permanently removes namespace and all children
+**Cascade**: All child namespaces and resources are deleted
+
+## Relationships
+
+### Namespace-Project
+
+Namespaces contain projects and provide organizational context for security scanning.
+
+### Namespace-Finding
+
+Findings are generated within namespace context and inherit namespace metadata.
+
+### Namespace-Policy
+
+Policies can be applied at namespace level to affect all contained resources.
+
+## Common Issues
+
+### Issue: Namespace Creation with Invalid Parent
+
+**Cause**: Using UUID instead of canonical name for parent namespace
+**Solution**: Always use canonical hierarchical names
+
+```python
+# ❌ WRONG
+parent_namespace = "68f3b2956795a2693a0f5bec"
+
+# ✅ CORRECT
+parent_namespace = "endor-solutions-tgowan.cockpit.integration-test"
+```
+
+### Issue: Cross-Tenant Operations
+
+**Cause**: Attempting to access namespaces across tenant boundaries
+**Solution**: Ensure all operations use same tenant namespace
+
+```python
+# ❌ WRONG
+namespace = "other-tenant.namespace"
+
+# ✅ CORRECT
+namespace = "your-tenant.namespace"
+```
+
+## Testing Patterns
+
+### CRUD Testing
+
+**Test File**: `tests/test_namespace.py`
+
+```python
+# Reference actual test patterns from test_namespace.py
+# See lines X-Y for list/get testing
+# See lines A-B for create/update testing
+# See lines C-D for hierarchy testing
+```
+
+### Integration Testing
+
+**Test File**: `tests/test_namespace.py`
+
+```python
+# Reference integration test patterns
+# See lines X-Y for parent-child relationship testing
+# See lines A-B for error handling testing
+```
+
+## Related Resources
+
+- [Project](./project.md) - Projects contained within namespaces
+- [Finding](./finding.md) - Findings generated in namespace context
+- [Policy](./policy.md) - Policies applied at namespace level
+
+---
+
+*Documentation references SDK implementation. See
+`src/endor_cockpit/resources/namespace.py` for complete details.*
 """
 
 import logging
@@ -13,6 +281,7 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
+from ..utils import SchemaDriftDetector
 
 # Set up logger with redaction filter
 logger = logging.getLogger(__name__)
@@ -77,6 +346,24 @@ class NamespaceMetaUpdate(BaseModel):
 class UpdateNamespacePayload(BaseModel):
     """
     Payload for updating an Endor Labs namespace.
+
+    MUTABLE FIELDS (can be updated via PATCH):
+    - meta.description: Namespace description
+
+    IMMUTABLE FIELDS (read-only, managed by API):
+    - uuid: Unique identifier (set at creation)
+    - meta.name: Namespace name (set at creation)
+    - meta.create_time, meta.created_by: Creation metadata
+    - meta.update_time, meta.updated_by: Auto-managed timestamps
+    - meta.index_data: Index data (managed by API)
+    - meta.kind: Resource kind (managed by API)
+    - meta.version: Version (managed by API)
+
+    Example:
+        >>> payload = UpdateNamespacePayload(
+        ...     meta=NamespaceMetaUpdate(description="Updated namespace description")
+        ... )
+        >>> namespace = update_namespace(client, parent, uuid, payload)
     """
 
     meta: NamespaceMetaUpdate = Field(
@@ -97,6 +384,41 @@ class Namespace(BaseModel):
     meta: NamespaceMeta = Field(
         ..., description="Metadata associated with the namespace"
     )
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def detect_schema_drift(cls, v, info):
+        """Detect and log schema drift for unknown fields."""
+        if info.field_name and isinstance(v, dict):
+            # Define expected fields for each model
+            model_fields = {
+                "meta": {
+                    "name",
+                    "description",
+                    "created_at",
+                    "updated_at",
+                    "created_by",
+                    "updated_by",
+                    "parent_uuid",
+                    "parent_kind",
+                    "kind",
+                    "version",
+                    "tags",
+                    "annotations",
+                    "references",
+                    "index_data",
+                    "create_time",
+                    "update_time",
+                    "upsert_time",
+                }
+            }
+
+            if info.field_name in model_fields:
+                SchemaDriftDetector.extract_unknown_fields(
+                    v, model_fields[info.field_name], f"Namespace.{info.field_name}"
+                )
+
+        return v
 
     @field_validator("uuid")
     @classmethod
@@ -258,6 +580,21 @@ def update_namespace(
     """
     Update an existing namespace.
 
+    This function supports updating namespace metadata fields that are marked as
+    mutable. Only the fields specified in the payload will be updated.
+
+    MUTABLE FIELDS:
+    - meta.description: Namespace description
+
+    IMMUTABLE FIELDS (cannot be updated):
+    - uuid: Unique identifier (set at creation)
+    - meta.name: Namespace name (set at creation)
+    - meta.create_time, meta.created_by: Creation metadata
+    - meta.update_time, meta.updated_by: Auto-managed timestamps
+    - meta.index_data: Index data (managed by API)
+    - meta.kind: Resource kind (managed by API)
+    - meta.version: Version (managed by API)
+
     Args:
         client: The APIClient instance to use for the request
         parent_namespace: The parent namespace containing the target namespace
@@ -270,12 +607,21 @@ def update_namespace(
     Raises:
         requests.exceptions.HTTPError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
+
+    Example:
+        >>> payload = UpdateNamespacePayload(
+        ...     meta=NamespaceMetaUpdate(description="Updated description")
+        ... )
+        >>> updated_namespace = update_namespace(client, parent, uuid, payload)
     """
     try:
         headers = client.default_headers
         headers.update(
             {"Accept": "application/json", "Content-Type": "application/json"}
         )
+
+        logger.info(f"Updating namespace {namespace_uuid}")
+
         res = client.patch(
             f"v1/namespaces/{parent_namespace}/namespaces/{namespace_uuid}",
             headers=headers,

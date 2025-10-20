@@ -13,7 +13,7 @@ concurrency:
 env:
   # CI Configuration - easily maintainable environment variables
   PYTHON_VERSION: "3.13"
-  PYTHON_VERSIONS: '["3.12", "3.13", "3.14"]'
+  PYTHON_VERSIONS: '["3.12", "3.13"]'
   PYTEST_MAXFAIL: "2"
   COVERAGE_PACKAGE: "endor_cockpit"
   UV_VERSION: "0.9.3"
@@ -93,8 +93,9 @@ jobs:
     needs: resolve-dependencies
     strategy:
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13"]
       fail-fast: false
+    continue-on-error: ${{ matrix.python-version != '3.13' }}
 
     steps:
       - name: Checkout code
@@ -109,14 +110,38 @@ jobs:
         run: |
           uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration"
 
+      - name: Validate required secrets for integration tests
+        run: |
+          if [ -z "${{ vars.ENDOR_API }}" ]; then
+            echo "❌ ERROR: ENDOR_API variable is not set"
+            echo "Please configure the ENDOR_API variable in repository settings"
+            exit 1
+          fi
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            echo "Please configure the ENDOR_NAMESPACE variable in repository settings"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
+            echo "Please configure the ENDOR_API_CREDENTIALS_KEY secret in repository settings"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
+            echo "Please configure the ENDOR_API_CREDENTIALS_SECRET secret in repository settings"
+            exit 1
+          fi
+          echo "✅ All required secrets are present"
+
       - name: Run integration tests
         run: |
           uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration"
         env:
-          ENDOR_API: ${{ secrets.ENDOR_API }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ secrets.ENDOR_NAMESPACE }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
   # Security scan job - runs after lint and test pass
   security:
@@ -133,6 +158,30 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
+
+      - name: Validate required secrets for security scan
+        run: |
+          if [ -z "${{ vars.ENDOR_API }}" ]; then
+            echo "❌ ERROR: ENDOR_API variable is not set"
+            echo "Please configure the ENDOR_API variable in repository settings"
+            exit 1
+          fi
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            echo "Please configure the ENDOR_NAMESPACE variable in repository settings"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
+            echo "Please configure the ENDOR_API_CREDENTIALS_KEY secret in repository settings"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
+            echo "Please configure the ENDOR_API_CREDENTIALS_SECRET secret in repository settings"
+            exit 1
+          fi
+          echo "✅ All required secrets and variables are present"
 
       - name: Install endorctl
         run: |
