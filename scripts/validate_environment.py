@@ -9,10 +9,11 @@ Used by holocron init and CI workflows to ensure proper configuration.
 import json
 import os
 import sys
-from pathlib import Path
-from typing import Dict, List, Tuple
-
 import requests
+
+from pathlib import Path
+from typing import Dict
+
 
 
 class ValidationError(Exception):
@@ -37,16 +38,21 @@ class EnvironmentValidator:
     def validate_environment_variables(self) -> None:
         """Validate required environment variables."""
         required_vars = {
-            "OPENAI_API_KEY": "Required for vector embeddings and knowledge base queries",
+            "OPENAI_API_KEY": (
+                "Required for vector embeddings and knowledge base queries"
+            ),
             "ENDOR_API": "Endor Labs API endpoint URL",
             "ENDOR_API_CREDENTIALS_KEY": "API authentication key",
             "ENDOR_API_CREDENTIALS_SECRET": "API authentication secret"
         }
 
-        for var, description in required_vars.items():
+        for var, _description in required_vars.items():
             value = os.getenv(var)
             if not value:
-                error_msg = f"{var} not set\n   Fix: export {var}=\"your-value-here\"\n   Docs: docs/ESSENTIAL_CONTEXT.md#environment-setup"
+                error_msg = (
+                    f"{var} not set\n   Fix: export {var}=\"your-value-here\"\n   "
+                    "Docs: docs/ESSENTIAL_CONTEXT.md#environment-setup"
+                )
                 self.critical_errors.append(error_msg)
                 self.results["errors"].append({
                     "variable": var,
@@ -78,7 +84,11 @@ class EnvironmentValidator:
                     "status_code": response.status_code
                 })
         except requests.exceptions.Timeout:
-            error_msg = "API connection timeout\n   Fix: Check network connectivity and ENDOR_API URL\n   Docs: docs/ESSENTIAL_CONTEXT.md#api-setup"
+            error_msg = (
+                "API connection timeout\n   Fix: Check network connectivity and "
+                "ENDOR_API URL\n   "
+                "Docs: docs/ESSENTIAL_CONTEXT.md#api-setup"
+            )
             self.critical_errors.append(error_msg)
             self.results["errors"].append({
                 "message": "API connection timeout",
@@ -86,7 +96,10 @@ class EnvironmentValidator:
                 "docs": "docs/ESSENTIAL_CONTEXT.md#api-setup"
             })
         except requests.exceptions.ConnectionError:
-            error_msg = "Cannot connect to API\n   Fix: Verify ENDOR_API URL is correct\n   Docs: docs/ESSENTIAL_CONTEXT.md#api-setup"
+            error_msg = (
+                "Cannot connect to API\n   Fix: Verify ENDOR_API URL is correct\n   "
+                "Docs: docs/ESSENTIAL_CONTEXT.md#api-setup"
+            )
             self.critical_errors.append(error_msg)
             self.results["errors"].append({
                 "message": "Cannot connect to API",
@@ -94,7 +107,11 @@ class EnvironmentValidator:
                 "docs": "docs/ESSENTIAL_CONTEXT.md#api-setup"
             })
         except Exception as e:
-            error_msg = f"API connectivity test failed: {e}\n   Fix: Check ENDOR_API URL and network\n   Docs: docs/ESSENTIAL_CONTEXT.md#api-setup"
+            error_msg = (
+                f"API connectivity test failed: {e}\n   Fix: Check ENDOR_API URL and "
+                "network\n   "
+                "Docs: docs/ESSENTIAL_CONTEXT.md#api-setup"
+            )
             self.critical_errors.append(error_msg)
             self.results["errors"].append({
                 "message": f"API connectivity test failed: {e}",
@@ -112,7 +129,7 @@ class EnvironmentValidator:
         }
 
         missing_packages = []
-        for package, description in required_packages.items():
+        for package, _description in required_packages.items():
             try:
                 __import__(package)
                 self.results["environment"][f"{package}_installed"] = True
@@ -121,7 +138,11 @@ class EnvironmentValidator:
 
         if missing_packages:
             packages_str = ", ".join(missing_packages)
-            error_msg = f"Missing required packages: {packages_str}\n   Fix: uv pip install -e '.[rag]'\n   Docs: docs/ESSENTIAL_CONTEXT.md#dependencies"
+            error_msg = (
+                f"Missing required packages: {packages_str}\n   Fix: uv pip install -e "
+                "'.[rag]'\n   "
+                "Docs: docs/ESSENTIAL_CONTEXT.md#dependencies"
+            )
             self.critical_errors.append(error_msg)
             self.results["errors"].append({
                 "message": f"Missing required packages: {packages_str}",
@@ -136,7 +157,11 @@ class EnvironmentValidator:
         manifest_path = holocron_data_path / "vector_db_manifest.json"
 
         if not holocron_data_path.exists():
-            warning = "Holocron data directory not found\n   Fix: Run 'python -m holocron init'\n   Docs: docs/protocols/holocron-setup.md"
+            warning = (
+                "Holocron data directory not found\n   Fix: Run 'python -m holocron "
+                "init'\n   "
+                "Docs: docs/protocols/holocron-setup.md"
+            )
             self.warnings.append(warning)
             self.results["warnings"].append({
                 "message": "Holocron data directory not found",
@@ -146,7 +171,11 @@ class EnvironmentValidator:
             return
 
         if not vector_db_path.exists():
-            warning = "Vector database not initialized\n   Fix: Run 'python -m holocron init'\n   Docs: docs/protocols/holocron-setup.md"
+            warning = (
+                "Vector database not initialized\n   Fix: Run 'python -m holocron "
+                "init'\n   "
+                "Docs: docs/protocols/holocron-setup.md"
+            )
             self.warnings.append(warning)
             self.results["warnings"].append({
                 "message": "Vector database not initialized",
@@ -157,7 +186,11 @@ class EnvironmentValidator:
             self.results["environment"]["vector_db_initialized"] = True
 
         if not manifest_path.exists():
-            warning = "Vector database manifest not found\n   Fix: Run 'python -m holocron sync'\n   Docs: docs/protocols/holocron-setup.md"
+            warning = (
+                "Vector database manifest not found\n   Fix: Run 'python -m holocron "
+                "sync'\n   "
+                "Docs: docs/protocols/holocron-setup.md"
+            )
             self.warnings.append(warning)
             self.results["warnings"].append({
                 "message": "Vector database manifest not found",
@@ -170,9 +203,13 @@ class EnvironmentValidator:
     def validate_workspace_structure(self) -> None:
         """Check if workspace directory structure is properly set up."""
         workspace_path = Path(".workspace")
-        
+
         if not workspace_path.exists():
-            warning = "Workspace directory not found\n   Fix: Will be created automatically\n   Docs: docs/ESSENTIAL_CONTEXT.md#workspace"
+            warning = (
+                "Workspace directory not found\n   Fix: Will be created "
+                "automatically\n   "
+                "Docs: docs/ESSENTIAL_CONTEXT.md#workspace"
+            )
             self.warnings.append(warning)
             self.results["warnings"].append({
                 "message": "Workspace directory not found",
@@ -221,9 +258,11 @@ class EnvironmentValidator:
             print("   All required components are properly configured.")
         elif not self.critical_errors:
             print("\nEnvironment validation passed with warnings.")
-            print("   Core functionality should work, but consider addressing warnings.")
+            print(
+                "   Core functionality should work, but consider addressing warnings."
+            )
 
-        print(f"\nSummary:")
+        print("\nSummary:")
         print(f"   Critical errors: {len(self.critical_errors)}")
         print(f"   Warnings: {len(self.warnings)}")
         print(f"   Overall status: {'Valid' if self.results['valid'] else 'Invalid'}")
@@ -232,10 +271,10 @@ class EnvironmentValidator:
         """Save validation results to file."""
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(output_file, "w") as f:
             json.dump(self.results, f, indent=2)
-        
+
         print(f"\nValidation results saved to: {output_file}")
 
 
@@ -243,13 +282,13 @@ def main():
     """Main entry point for validation script."""
     validator = EnvironmentValidator()
     results = validator.run_validation()
-    
+
     # Print human-readable results
     validator.print_results()
-    
+
     # Save results to file
     validator.save_results()
-    
+
     # Exit with appropriate code
     if not results["valid"]:
         sys.exit(1)

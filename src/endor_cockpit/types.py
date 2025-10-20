@@ -5,13 +5,13 @@ This module provides common type definitions used across the SDK
 for enhanced type safety and LLM understanding.
 """
 
-from typing import List, Optional, Dict, Any, Union, Literal
-from typing_extensions import TypedDict
+from typing import Any, Dict, List, Literal, Optional
 
+from typing_extensions import TypedDict
 
 # Resource Types
 ResourceType = Literal[
-    "Project", "Finding", "Policy", "Namespace", 
+    "Project", "Finding", "Policy", "Namespace",
     "Repository", "RepositoryVersion", "PackageVersion"
 ]
 
@@ -32,7 +32,7 @@ SeverityType = Literal[
 
 # Platform Types
 PlatformType = Literal[
-    "PLATFORM_SOURCE_GITHUB", "PLATFORM_SOURCE_GITLAB", 
+    "PLATFORM_SOURCE_GITHUB", "PLATFORM_SOURCE_GITLAB",
     "PLATFORM_SOURCE_BITBUCKET", "PLATFORM_SOURCE_AZURE_DEVOPS"
 ]
 
@@ -101,10 +101,14 @@ UpdateMask = str
 
 # Function Signatures
 ResourceOperation = Literal[
-    "list_projects", "get_project", "create_project", "update_project", "delete_project",
-    "list_findings", "get_finding", "create_finding", "update_finding", "delete_finding",
-    "list_policies", "get_policy", "create_policy", "update_policy", "delete_policy",
-    "list_namespaces", "get_namespace", "create_namespace", "update_namespace", "delete_namespace"
+    "list_projects", "get_project", "create_project", "update_project",
+    "delete_project",
+    "list_findings", "get_finding", "create_finding", "update_finding",
+    "delete_finding",
+    "list_policies", "get_policy", "create_policy", "update_policy",
+    "delete_policy",
+    "list_namespaces", "get_namespace", "create_namespace", "update_namespace",
+    "delete_namespace"
 ]
 
 # Validation Types

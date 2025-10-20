@@ -483,11 +483,18 @@ def update_policy(
                 "tenant_meta": current_policy.tenant_meta.model_dump(),
                 "meta": {
                     "name": current_policy.meta.name,  # Required field
-                    **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+                    **(
+                        payload.meta.model_dump(exclude_none=True)
+                        if payload.meta else {}
+                    ),
                 },
                 "spec": {
-                    **current_policy.spec.model_dump(),  # Include all existing spec fields
-                    **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
+                    **current_policy.spec.model_dump(),  # Include all
+                    # existing spec fields
+                    **(
+                        payload.spec.model_dump(exclude_none=True)
+                        if payload.spec else {}
+                    ),
                 },
             }
         }

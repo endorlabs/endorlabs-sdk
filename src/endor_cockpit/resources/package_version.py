@@ -5,7 +5,6 @@ provides type-safe data models.
 """
 
 import logging
-import os
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -33,7 +32,7 @@ class PackageVersionMeta(BaseModel):
     update_time: Optional[str] = Field(None, description="Last update timestamp")
     updated_by: Optional[str] = Field(None, description="Last updater identifier")
     tags: Optional[List[str]] = Field(None, description="Package version tags")
-    
+
     # Schema drift fields
     parent_uuid: Optional[str] = Field(None, description="Parent resource UUID")
     parent_kind: Optional[str] = Field(None, description="Parent resource kind")
@@ -46,10 +45,11 @@ class PackageVersionMeta(BaseModel):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'create_time', 'update_time', 'name', 'description', 'created_by', 
-                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time', 'references'
+                'create_time', 'update_time', 'name', 'description', 'created_by',
+                'updated_by', 'tags', 'parent_uuid', 'parent_kind', 'upsert_time',
+                'references'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"PackageVersionMeta.{info.field_name}"
@@ -61,10 +61,14 @@ class PackageVersionSpec(BaseModel):
     """Package version specification."""
     package_name: str = Field(..., description="Package name")
     version: str = Field(..., description="Package version")
-    ecosystem: Optional[str] = Field(None, description="Package ecosystem (NPM, PyPI, etc.)")
-    repository_version_uuid: Optional[str] = Field(None, description="Associated repository version UUID")
+    ecosystem: Optional[str] = Field(
+        None, description="Package ecosystem (NPM, PyPI, etc.)"
+    )
+    repository_version_uuid: Optional[str] = Field(
+        None, description="Associated repository version UUID"
+    )
     dependency_info: Optional[dict] = Field(None, description="Dependency information")
-    
+
     # Schema drift fields
     notification: Optional[dict] = Field(None, description="Notification configuration")
 
@@ -74,9 +78,10 @@ class PackageVersionSpec(BaseModel):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
             model_fields = {
-                'package_name', 'version', 'ecosystem', 'repository_version_uuid', 'dependency_info', 'notification'
+                'package_name', 'version', 'ecosystem', 'repository_version_uuid',
+                'dependency_info', 'notification'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"PackageVersionSpec.{info.field_name}"
@@ -87,7 +92,7 @@ class PackageVersionSpec(BaseModel):
 class PackageVersion(BaseModel):
     """Package version resource model."""
     model_config = ConfigDict(extra='ignore')
-    
+
     uuid: str = Field(..., description="Unique identifier for the package version")
     meta: PackageVersionMeta = Field(..., description="Package version metadata")
     spec: PackageVersionSpec = Field(..., description="Package version specification")
@@ -101,7 +106,7 @@ class PackageVersion(BaseModel):
             model_fields = {
                 'uuid', 'meta', 'spec', 'tenant_meta'
             }
-            
+
             if info.field_name in model_fields:
                 SchemaDriftDetector.extract_unknown_fields(
                     v, model_fields, f"PackageVersion.{info.field_name}"
@@ -118,8 +123,12 @@ class CreatePackageVersionPayload(BaseModel):
 
 class UpdatePackageVersionPayload(BaseModel):
     """Payload for updating a package version."""
-    meta: Optional[PackageVersionMeta] = Field(None, description="Package version metadata")
-    spec: Optional[PackageVersionSpec] = Field(None, description="Package version specification")
+    meta: Optional[PackageVersionMeta] = Field(
+        None, description="Package version metadata"
+    )
+    spec: Optional[PackageVersionSpec] = Field(
+        None, description="Package version specification"
+    )
 
 
 # CRUD Operations
@@ -129,7 +138,10 @@ def list_package_versions(
     """List all package versions in the specified namespace."""
     try:
         headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/package-versions", headers=headers)
+        res = client.get(
+            f"v1/namespaces/{tenant_meta_namespace}/package-versions",
+            headers=headers,
+        )
         data = res.json()
         package_versions_data = data.get("list", {}).get("objects", [])
         return [PackageVersion(**pv) for pv in package_versions_data]
@@ -144,11 +156,17 @@ def get_package_version(
     """Get a specific package version by UUID."""
     try:
         headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/package-versions/{package_version_uuid}", headers=headers)
+        res = client.get(
+            f"v1/namespaces/{tenant_meta_namespace}/package-versions/{package_version_uuid}",
+            headers=headers
+        )
         data = res.json()
         return PackageVersion(**data)
     except Exception as e:
-        logger.error(f"Error getting package version {package_version_uuid}: {e}", exc_info=True)
+        logger.error(
+            f"Error getting package version {package_version_uuid}: {e}",
+            exc_info=True,
+        )
         return None
 
 
@@ -158,16 +176,19 @@ def create_package_version(
     """Create a new package version."""
     try:
         headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
+        headers.update({
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+
         request_data = {
             "object": {
                 "tenant_meta": {"namespace": tenant_meta_namespace},
                 **payload.model_dump()
             }
         }
-        
-        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/package-versions", 
+
+        res = client.post(f"v1/namespaces/{tenant_meta_namespace}/package-versions",
                          headers=headers, data=request_data)
         data = res.json()
         return PackageVersion(**data)
@@ -186,14 +207,19 @@ def update_package_version(
     """Update an existing package version using partial updates."""
     try:
         headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
+        headers.update({
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        })
+
         # Get the current package version to include required fields
-        current_package_version = get_package_version(client, tenant_meta_namespace, package_version_uuid)
+        current_package_version = get_package_version(
+            client, tenant_meta_namespace, package_version_uuid
+        )
         if not current_package_version:
             logger.error(f"Package version {package_version_uuid} not found")
             return None
-        
+
         # Build request data with correct structure
         request_data = {
             "object": {
@@ -201,31 +227,46 @@ def update_package_version(
                 "tenant_meta": current_package_version.tenant_meta.model_dump(),
                 "meta": {
                     "name": current_package_version.meta.name,  # Required field
-                    **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+                    **(
+                        payload.meta.model_dump(exclude_none=True)
+                        if payload.meta else {}
+                    ),
                 },
                 "spec": {
-                    **current_package_version.spec.model_dump(),  # Include all existing spec fields
-                    **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
+                    **current_package_version.spec.model_dump(),  # Include all
+                    # existing spec fields
+                    **(
+                        payload.spec.model_dump(exclude_none=True)
+                        if payload.spec else {}
+                    ),
                 },
             }
         }
-        
+
         if update_mask:
             request_data["request"] = {"update_mask": update_mask}
-        
-        logger.info(f"Updating package version {package_version_uuid} with mask: {update_mask}")
-        
-        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/package-versions", 
+
+        logger.info(
+            f"Updating package version {package_version_uuid} with mask: {update_mask}"
+        )
+
+        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/package-versions",
                           headers=headers, data=request_data)
-        
+
         if res.status_code == 200:
             data = res.json()
             return PackageVersion(**data)
         else:
-            logger.error(f"Failed to update package version {package_version_uuid}: {res.status_code} - {res.text}")
+            logger.error(
+                f"Failed to update package version {package_version_uuid}: "
+                f"{res.status_code} - {res.text}"
+            )
             return None
     except Exception as e:
-        logger.error(f"Error updating package version {package_version_uuid}: {e}", exc_info=True)
+        logger.error(
+            f"Error updating package version {package_version_uuid}: {e}",
+            exc_info=True,
+        )
         return None
 
 
@@ -235,8 +276,14 @@ def delete_package_version(
     """Delete a package version."""
     try:
         headers = client.default_headers
-        res = client.delete(f"v1/namespaces/{tenant_meta_namespace}/package-versions/{package_version_uuid}", headers=headers)
+        res = client.delete(
+            f"v1/namespaces/{tenant_meta_namespace}/package-versions/{package_version_uuid}",
+            headers=headers
+        )
         return res.status_code == 200
     except Exception as e:
-        logger.error(f"Error deleting package version {package_version_uuid}: {e}", exc_info=True)
+        logger.error(
+            f"Error deleting package version {package_version_uuid}: {e}",
+            exc_info=True,
+        )
         return False

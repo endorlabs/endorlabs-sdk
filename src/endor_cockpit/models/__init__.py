@@ -5,43 +5,67 @@ This module provides Pydantic models for all Endor Labs resources,
 following a consistent pattern for type safety and validation.
 """
 
-from .base import BaseResource, BaseMeta, BaseSpec, TenantMeta
-from .project import Project, ProjectMeta, ProjectSpec, CreateProjectPayload, UpdateProjectPayload
-from .finding import Finding, FindingMeta, FindingSpec, CreateFindingPayload, UpdateFindingPayload
-from .policy import Policy, PolicyMeta, PolicySpec, CreatePolicyPayload, UpdatePolicyPayload
-from .namespace import Namespace, NamespaceMeta, NamespaceSpec, CreateNamespacePayload, UpdateNamespacePayload
+from .base import BaseMeta, BaseResource, BaseSpec, TenantMeta
+from .finding import (
+    CreateFindingPayload,
+    Finding,
+    FindingMeta,
+    FindingSpec,
+    UpdateFindingPayload,
+)
+from .namespace import (
+    CreateNamespacePayload,
+    Namespace,
+    NamespaceMeta,
+    NamespaceSpec,
+    UpdateNamespacePayload,
+)
+from .policy import (
+    CreatePolicyPayload,
+    Policy,
+    PolicyMeta,
+    PolicySpec,
+    UpdatePolicyPayload,
+)
+from .project import (
+    CreateProjectPayload,
+    Project,
+    ProjectMeta,
+    ProjectSpec,
+    UpdateProjectPayload,
+)
 
 __all__ = [
     # Base classes
     "BaseResource",
-    "BaseMeta", 
+    "BaseMeta",
     "BaseSpec",
     "TenantMeta",
-    
+
     # Project models
     "Project",
     "ProjectMeta",
-    "ProjectSpec", 
+    "ProjectSpec",
     "CreateProjectPayload",
     "UpdateProjectPayload",
-    
+
     # Finding models
     "Finding",
     "FindingMeta",
     "FindingSpec",
-    "CreateFindingPayload", 
+    "CreateFindingPayload",
     "UpdateFindingPayload",
-    
+
     # Policy models
     "Policy",
     "PolicyMeta",
     "PolicySpec",
     "CreatePolicyPayload",
     "UpdatePolicyPayload",
-    
+
     # Namespace models
     "Namespace",
-    "NamespaceMeta", 
+    "NamespaceMeta",
     "NamespaceSpec",
     "CreateNamespacePayload",
     "UpdateNamespacePayload",
