@@ -53,6 +53,10 @@ coverage.xml
 workflow/vector_db/
 workflow/vector_db_manifest.json
 
+# Holocron data directory
+holocron_data/
+holocron_data/**
+
 # OS
 .DS_Store
 Thumbs.db

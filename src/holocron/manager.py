@@ -1,65 +1,21 @@
-#!/usr/bin/env python3
 """
-Vector Database Initialization Script
+Vector Database Manager for Holocron
 
-This script initializes a ChromaDB vector database from documentation files
-using semantic chunking strategies optimized for different content types.
-
-IMPORTANT: This knowledge base is the FIRST step for any AI agent working with
-this repository. Always query the vector database before making changes to
-understand existing patterns, API quirks, and best practices.
-
-Usage:
-    python workflow/init_vector_db.py [--rebuild] [--verbose]
-
-Features:
-- Semantic chunking by content type (markdown, code, api_spec)
-- Incremental updates based on file hashes
-- Manifest tracking for reproducibility
-- ChromaDB integration with OpenAI embeddings
-
-Prerequisites:
-- OpenAI API key (OPENAI_API_KEY environment variable)
-- RAG dependencies installed: uv pip install -e ".[rag]"
-- Python 3.13+ with uv package manager
-
-First Time Setup:
-1. Set OPENAI_API_KEY environment variable
-2. Install RAG dependencies: uv pip install -e ".[rag]"
-3. Run this script: python workflow/init_vector_db.py
-4. Query the knowledge base before any operations
+Manages ChromaDB vector database initialization and updates using semantic
+chunking strategies optimized for different content types.
 """
 
-import argparse
 import hashlib
 import json
 import logging
 import os
 import re
-import sys
 from datetime import datetime
 from typing import Dict, List
 
-# Check for required dependencies
-try:
-    import chromadb
-    from chromadb.config import Settings
-except ImportError as e:
-    print("ERROR: Missing required dependencies for vector database.")
-    print("Please install RAG dependencies: uv pip install -e '.[rag]'")
-    print(f"Import error: {e}")
-    sys.exit(1)
+import chromadb
+from chromadb.config import Settings
 
-# Check for OpenAI API key
-if not os.getenv("OPENAI_API_KEY"):
-    print("WARNING: OPENAI_API_KEY environment variable not set.")
-    print("Vector database will be created but embeddings may fail.")
-    print("Set OPENAI_API_KEY to your OpenAI API key for full functionality.")
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 logger = logging.getLogger(__name__)
 
 # Chunking strategies for different content types
@@ -103,6 +59,8 @@ EXCLUDE_DIRS = [
     ".venv/",
     "env/",
     ".env/",
+    "holocron_data/",  # Exclude our own data directory
+    "workspace/",  # Exclude workspace directory
 ]
 
 
@@ -111,8 +69,8 @@ class VectorDBManager:
 
     def __init__(
         self,
-        db_path: str = "workflow/vector_db",
-        manifest_path: str = "workflow/vector_db_manifest.json",
+        db_path: str = "holocron_data/vector_db",
+        manifest_path: str = "holocron_data/vector_db_manifest.json",
     ):
         self.db_path = db_path
         self.manifest_path = manifest_path
@@ -456,8 +414,7 @@ class VectorDBManager:
                     "text": chunk_text,
                     "metadata": {
                         "content_type": "generic",
-                        "chunk_index": len(chunks),
-                        "size": len(chunk_text),
+                        "chunk_index": len(chunk_text),
                     },
                 }
             )
@@ -620,33 +577,3 @@ class VectorDBManager:
         results = self.collection.query(query_texts=[query_text], n_results=n_results)
 
         return results
-
-
-def main():
-    """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Initialize Endor Cockpit vector database"
-    )
-    parser.add_argument(
-        "--rebuild", action="store_true", help="Rebuild the entire database"
-    )
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-
-    args = parser.parse_args()
-
-    if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
-
-    # Initialize vector DB manager
-    manager = VectorDBManager()
-
-    try:
-        manager.initialize_db(rebuild=args.rebuild)
-        print("[OK] Vector database initialization complete")
-    except Exception as e:
-        logger.error(f"Error initializing vector database: {e}")
-        sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()

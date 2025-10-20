@@ -315,7 +315,7 @@ response = client.get("v1/namespaces/uuid-here/projects")
 
 ### **Python Version Support**
 - **Minimum**: Python 3.11
-- **Maximum**: Python 3.14 (exclusive)
+- **Maximum**: Python 3.13 (exclusive)
 - **Testing**: Test on 3.11, 3.12, 3.13
 
 ### **Dependencies**

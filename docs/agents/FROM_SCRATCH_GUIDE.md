@@ -7,7 +7,7 @@
 ### **Step 1: Environment Setup**
 ```bash
 # 1. Verify Python environment
-python --version  # Should be 3.11-3.14
+python --version  # Should be 3.11-3.13
 
 # 2. Set up virtual environment
 uv venv
