@@ -13,14 +13,14 @@ def basic_rag_example():
     print("=== Basic RAG Example ===")
 
     try:
-        from endor_cockpit.rag import get_vector_db_info, query_vector_db
+        from holocron import get_holocron_info, query_holocron
 
         # Get database info
-        info = get_vector_db_info()
+        info = get_holocron_info()
         print(f"Database contains {info['chunk_count']} chunks")
 
         # Query the documentation
-        results = query_vector_db("How do I create a namespace?", n_results=3)
+        results = query_holocron("How do I create a namespace?", n_results=3)
 
         print(f"\nQuery: {results['query']}")
         print(f"Found {len(results['results'])} results:\n")
@@ -43,7 +43,7 @@ def openai_integration_example():
     print("=== OpenAI Integration Example ===")
 
     try:
-        from endor_cockpit.rag import query_endor_documentation_tool
+        from holocron import query_holocron
 
         # Simulate OpenAI function call
         def simulate_openai_call(query: str):
@@ -58,7 +58,7 @@ def openai_integration_example():
             }
 
             # Execute the tool
-            results = query_endor_documentation_tool(**tool_call_args)
+            results = query_holocron(tool_call_args["query"], n_results=tool_call_args["max_results"])
             return results
 
         # Test the integration
@@ -86,7 +86,7 @@ def langchain_integration_example():
     try:
         from langchain.tools import Tool
 
-        from endor_cockpit.rag import query_endor_documentation_tool
+        from holocron import query_holocron
 
         # Create LangChain tool
         rag_tool = Tool(
@@ -129,7 +129,7 @@ class EndorRAGAgent:
     def __init__(self):
         self.rag_tool = None
         try:
-            from endor_cockpit.rag import query_endor_documentation_tool
+            from holocron import query_holocron
 
             self.rag_tool = query_endor_documentation_tool
         except ImportError:

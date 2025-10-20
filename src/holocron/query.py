@@ -1,5 +1,5 @@
 """
-Core RAG query functionality for semantic search over Endor Cockpit documentation.
+Core query functionality for semantic search over Endor Cockpit documentation.
 
 This module provides the main query interface for retrieving relevant context
 from the vector database using natural language queries.
@@ -12,18 +12,17 @@ from typing import Any, Dict
 import chromadb  # pyright: ignore[reportMissingImports]
 
 
-class RAGQueryError(Exception):
-    """Custom exception for RAG query errors."""
-
+class HolocronQueryError(Exception):
+    """Custom exception for Holocron query errors."""
     pass
 
 
-class VectorDBQuery:
+class HolocronQuery:
     """Main class for querying the Endor Cockpit vector database."""
 
-    def __init__(self, vector_db_path: str = "workflow/vector_db"):
+    def __init__(self, vector_db_path: str = "holocron_data/vector_db"):
         """
-        Initialize the RAG query interface.
+        Initialize the Holocron query interface.
 
         Args:
             vector_db_path: Path to the ChromaDB database directory
@@ -44,7 +43,7 @@ class VectorDBQuery:
             self.collection = self.client.get_collection(name=self.collection_name)
 
         except Exception as e:
-            raise RAGQueryError(f"Failed to initialize vector database: {e}") from e
+            raise HolocronQueryError(f"Failed to initialize vector database: {e}") from e
 
     def query(
         self, query_text: str, n_results: int = 5, include_metadata: bool = True
@@ -61,7 +60,7 @@ class VectorDBQuery:
             Dictionary containing query results with documents, metadata, and distances
 
         Raises:
-            RAGQueryError: If query fails
+            HolocronQueryError: If query fails
         """
         try:
             # Prepare include parameters
@@ -100,7 +99,7 @@ class VectorDBQuery:
             return formatted_results
 
         except Exception as e:
-            raise RAGQueryError(f"Query failed: {e}") from e
+            raise HolocronQueryError(f"Query failed: {e}") from e
 
     def get_info(self) -> Dict[str, Any]:
         """
@@ -112,7 +111,7 @@ class VectorDBQuery:
         try:
             # Ensure collection is initialized
             if self.collection is None:
-                raise RAGQueryError("Vector database not initialized")
+                raise HolocronQueryError("Vector database not initialized")
             # Get collection count
             count = self.collection.count()
 
@@ -138,22 +137,22 @@ class VectorDBQuery:
             }
 
         except Exception as e:
-            raise RAGQueryError(f"Failed to get database info: {e}") from e
+            raise HolocronQueryError(f"Failed to get database info: {e}") from e
 
 
 # Global query instance
 _query_instance = None
 
 
-def get_query_instance() -> VectorDBQuery:
+def get_query_instance() -> HolocronQuery:
     """Get or create the global query instance."""
     global _query_instance
     if _query_instance is None:
-        _query_instance = VectorDBQuery()
+        _query_instance = HolocronQuery()
     return _query_instance
 
 
-def query_vector_db(
+def query_holocron(
     query_text: str, n_results: int = 5, include_metadata: bool = True
 ) -> Dict[str, Any]:
     """
@@ -173,19 +172,19 @@ def query_vector_db(
         - results: List of relevant context chunks with similarity scores
 
     Example:
-        >>> results = query_vector_db("How do I troubleshoot 403 errors?")
+        >>> results = query_holocron("How do I troubleshoot 403 errors?")
         >>> for result in results["results"]:
         ...     print(f"Score: {result['similarity_score']:.3f}")
         ...     print(f"Content: {result['content'][:100]}...")
 
     Raises:
-        RAGQueryError: If the query fails or vector database is not available
+        HolocronQueryError: If the query fails or vector database is not available
     """
     query_instance = get_query_instance()
     return query_instance.query(query_text, n_results, include_metadata)
 
 
-def get_vector_db_info() -> Dict[str, Any]:
+def get_holocron_info() -> Dict[str, Any]:
     """
     Get information about the vector database.
 
@@ -193,7 +192,7 @@ def get_vector_db_info() -> Dict[str, Any]:
         Dictionary containing database statistics and metadata
 
     Example:
-        >>> info = get_vector_db_info()
+        >>> info = get_holocron_info()
         >>> print(f"Total chunks: {info['chunk_count']}")
         >>> print(f"Last updated: {info['last_updated']}")
     """
