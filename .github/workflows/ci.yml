@@ -138,10 +138,10 @@ jobs:
         run: |
           uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration"
         env:
-          ENDOR_API: ${{ secrets.ENDOR_API }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ secrets.ENDOR_NAMESPACE }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
   # Security scan job - runs after lint and test pass
   security:

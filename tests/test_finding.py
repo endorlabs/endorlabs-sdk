@@ -21,6 +21,7 @@ from endor_cockpit.resources.tag_management import (
 )
 
 
+@pytest.mark.integration
 class TestFinding:
     """Test cases for Finding resource operations."""
 
