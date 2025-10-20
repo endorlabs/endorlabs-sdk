@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def download_openapi_spec(
-    api_url: str, output_path: Path, timeout: int = 30
+    api_url: str, output_path: Path, timeout: int = 30, force: bool = False
 ) -> Dict[str, any]:
     """
     Download OpenAPI specification from Endor API.
@@ -34,11 +34,24 @@ def download_openapi_spec(
         api_url: Base URL of Endor API
         output_path: Path to save the spec file
         timeout: Request timeout in seconds
+        force: Force re-download even if file exists
 
     Returns:
         Dict containing metadata: file_hash, timestamp, size, url
     """
     try:
+        # Check if file exists and skip if not forcing
+        if output_path.exists() and not force:
+            logger.info(f"OpenAPI spec already exists at {output_path}, skipping download")
+            with open(output_path, "rb") as f:
+                file_hash = hashlib.sha256(f.read()).hexdigest()
+            file_size = output_path.stat().st_size
+            return {
+                "file_hash": file_hash,
+                "timestamp": datetime.now().isoformat(),
+                "size": file_size,
+                "url": f"{api_url}/download/openapiv2.swagger.json",
+            }
         # Construct full URL
         spec_url = f"{api_url}/download/openapiv2.swagger.json"
         logger.info(f"Downloading OpenAPI spec from {spec_url}")
@@ -93,7 +106,7 @@ def download_openapi_spec(
         raise
 
 
-def download_sitemap(url: str, output_path: Path, timeout: int = 30) -> List[str]:
+def download_sitemap(url: str, output_path: Path, timeout: int = 30, force: bool = False) -> List[str]:
     """
     Download and parse sitemap.xml to extract documentation URLs.
 
@@ -101,11 +114,32 @@ def download_sitemap(url: str, output_path: Path, timeout: int = 30) -> List[str
         url: URL of sitemap.xml
         output_path: Path to save the sitemap file
         timeout: Request timeout in seconds
+        force: Force re-download even if file exists
 
     Returns:
         List of documentation page URLs
     """
     try:
+        # Check if file exists and skip if not forcing
+        if output_path.exists() and not force:
+            logger.info(f"Sitemap already exists at {output_path}, skipping download")
+            # Parse existing sitemap to extract URLs
+            with open(output_path, "rb") as f:
+                content = f.read()
+            root = ET.fromstring(content)
+            namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+            urls = []
+            for loc in root.findall(".//ns:loc", namespace):
+                if loc.text:
+                    # Convert relative URLs to absolute URLs
+                    if loc.text.startswith('/'):
+                        urls.append(f"https://docs.endorlabs.com{loc.text}")
+                    elif loc.text.startswith('http'):
+                        urls.append(loc.text)
+                    else:
+                        urls.append(f"https://docs.endorlabs.com/{loc.text}")
+            logger.info(f"Found {len(urls)} URLs in existing sitemap")
+            return urls
         logger.info(f"Downloading sitemap from {url}")
 
         # Download sitemap
@@ -126,7 +160,13 @@ def download_sitemap(url: str, output_path: Path, timeout: int = 30) -> List[str
 
         for loc in root.findall(".//ns:loc", namespace):
             if loc.text:
-                urls.append(loc.text)
+                # Convert relative URLs to absolute URLs
+                if loc.text.startswith('/'):
+                    urls.append(f"https://docs.endorlabs.com{loc.text}")
+                elif loc.text.startswith('http'):
+                    urls.append(loc.text)
+                else:
+                    urls.append(f"https://docs.endorlabs.com/{loc.text}")
 
         logger.info(f"Found {len(urls)} URLs in sitemap")
         return urls
@@ -172,6 +212,7 @@ def download_user_docs(
     output_dir: Path,
     max_pages: Optional[int] = None,
     timeout: int = 10,
+    force: bool = False,
 ) -> int:
     """
     Download user documentation pages and convert to markdown.
@@ -181,6 +222,7 @@ def download_user_docs(
         output_dir: Directory to save markdown files
         max_pages: Optional limit on number of pages to download
         timeout: Request timeout in seconds per page
+        force: Force re-download even if files exist
 
     Returns:
         Number of successfully downloaded pages
@@ -189,13 +231,23 @@ def download_user_docs(
         output_dir.mkdir(parents=True, exist_ok=True)
         downloaded_count = 0
         failed_count = 0
+        skipped_count = 0
 
         urls_to_process = sitemap_urls[:max_pages] if max_pages else sitemap_urls
 
-        logger.info(f"Downloading {len(urls_to_process)} documentation pages")
+        logger.info(f"Processing {len(urls_to_process)} documentation pages")
 
         for i, url in enumerate(urls_to_process, 1):
             try:
+                # Check if file already exists
+                filename = sanitize_filename(url)
+                output_path = output_dir / filename
+                
+                if output_path.exists() and not force:
+                    logger.debug(f"File already exists: {filename}, skipping")
+                    skipped_count += 1
+                    continue
+                
                 # Download page
                 response = requests.get(url, timeout=timeout)
                 response.raise_for_status()
@@ -245,7 +297,7 @@ def download_user_docs(
                 continue
 
         logger.info(
-            f"Downloaded {downloaded_count} pages successfully, {failed_count} failed"
+            f"Downloaded {downloaded_count} pages successfully, {skipped_count} skipped, {failed_count} failed"
         )
         return downloaded_count
 

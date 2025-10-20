@@ -70,7 +70,7 @@ def validate_dependencies() -> bool:
 
     if missing_packages:
         print(f"❌ Missing required packages: {', '.join(missing_packages)}")
-        print("   Install with: uv pip install -e '.[rag]'")
+        print("   Install with: uv pip install -e '.[holocron]'")
         return False
 
     return True
@@ -137,6 +137,9 @@ def init_workspace(  # noqa: C901
         print("Creating directories...")
 
     create_directories()
+    
+    # Ensure holocron_data directory exists for manifest
+    Path(".workspace/holocron_data").mkdir(parents=True, exist_ok=True)
 
     # Download external documentation
     if download_external:
@@ -155,19 +158,19 @@ def init_workspace(  # noqa: C901
             spec_path = Path(".workspace/downloads/openapi-swagger.json")
 
             print("Downloading OpenAPI specification...")
-            openapi_metadata = download_openapi_spec(api_url, spec_path)
+            openapi_metadata = download_openapi_spec(api_url, spec_path, force=force)
 
             # Download and parse sitemap
             sitemap_path = Path(".workspace/downloads/sitemap.xml")
             print("Downloading sitemap.xml...")
             sitemap_urls = download_sitemap(
-                "https://docs.endorlabs.com/sitemap.xml", sitemap_path
+                "https://docs.endorlabs.com/sitemap.xml", sitemap_path, force=force
             )
 
             # Download user docs
             user_docs_dir = Path(".workspace/downloads/user-docs/")
             print(f"Downloading {len(sitemap_urls)} documentation pages...")
-            pages_count = download_user_docs(sitemap_urls, user_docs_dir)
+            pages_count = download_user_docs(sitemap_urls, user_docs_dir, force=force)
 
             print(f"External documentation downloaded: {pages_count} pages")
 
@@ -192,7 +195,7 @@ def init_workspace(  # noqa: C901
                 openapi_metadata=openapi_metadata, user_docs_count=pages_count
             )
 
-        manager.initialize_db(rebuild=force)
+        manager.initialize_db(rebuild=force, verbose=verbose)
 
         if verbose:
             info = manager.manifest

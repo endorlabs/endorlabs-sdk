@@ -14,7 +14,7 @@ from ..workspace import init_workspace
 def init_command(args):
     """Execute the init command."""
     # Check for stale external docs before initialization
-    manifest_path = Path("holocron_data/vector_db_manifest.json")
+    manifest_path = Path(".workspace/holocron_data/vector_db_manifest.json")
 
     if manifest_path.exists() and not args.force:
         try:

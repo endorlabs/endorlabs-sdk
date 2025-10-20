@@ -400,3 +400,37 @@ Create LLM tool schemas for each resource function:
 - **Metrics**: Performance metrics
 - **Logging**: Structured logging
 - **Alerting**: Error rate monitoring
+
+## 11. Cross-Platform Development
+
+### Path Handling Requirements
+**Source**: Logbook entry 2025-01-27
+
+**Problem**: Cross-platform path handling issues cause content type detection failures and query function disconnects.
+
+**Solution**: Implement consistent path normalization across all components:
+
+```python
+import os
+
+# Always normalize paths for cross-platform compatibility
+normalized_path = os.path.normpath(file_path)
+
+# Convert to forward slashes for regex pattern matching
+regex_path = normalized_path.replace(os.path.sep, "/")
+```
+
+**Best Practices**:
+- Use `os.path.normpath()` for all path operations
+- Convert paths to forward slashes before regex matching
+- Ensure database and query function use same path conventions
+- Test path handling on target platforms (Windows, macOS, Linux)
+- Avoid hardcoded path separators
+
+**Platform Considerations**:
+- **Windows**: Uses backslashes (`\`) in file paths
+- **macOS/Linux**: Use forward slashes (`/`) in file paths
+- **Regex patterns**: Always expect forward slashes
+- **Database paths**: Must be synchronized across components
+
+**Related**: [Holocron Setup Guide](../protocols/holocron-setup.md#cross-platform-path-handling)

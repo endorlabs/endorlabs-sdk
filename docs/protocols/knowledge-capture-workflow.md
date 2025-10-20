@@ -172,7 +172,6 @@ An entry is ready for promotion if it:
 **Notes**: [Additional context]
 
 ---
-```
 
 ### Timestamp and Attribution
 
