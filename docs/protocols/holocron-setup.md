@@ -51,9 +51,9 @@ The `holocron init` command automatically validates:
 ### **Phase 2: Workspace Initialization**
 
 The system creates necessary directories:
-- `holocron_data/` - Vector database storage
-- `holocron_data/vector_db/` - ChromaDB data
-- `workspace/` - Agent workspace
+- `.workspace/holocron_data/` - Vector database storage
+- `.workspace/holocron_data/vector_db/` - ChromaDB data
+- `.workspace/` - Agent workspace
 
 ### **Phase 3: Knowledge Base Creation**
 
@@ -61,7 +61,7 @@ The system processes documentation from:
 - `docs/` - All documentation files
 - `src/` - Source code with docstrings
 - `tests/` - Test files
-- `tmp/openapiv2.swagger.json` - API specification
+- `.workspace/downloads/openapi-swagger.json` - API specification
 
 ## 🔧 **Command Reference**
 
@@ -134,7 +134,7 @@ export OPENAI_API_KEY="your-openai-api-key"
 ```
 **Solution:** Install RAG dependencies:
 ```bash
-uv pip install -e '.[rag]'
+uv pip install -e '.[holocron]'
 ```
 
 **3. Vector Database Not Found**
@@ -246,7 +246,7 @@ External documentation is timestamped in the manifest file:
 
 - **Freshness check**: Automatic warning if downloads >7 days old
 - **Manual refresh**: Run `python -m holocron init --force` to update
-- **Check status**: Review `holocron_data/vector_db_manifest.json`
+- **Check status**: Review `.workspace/holocron_data/vector_db_manifest.json`
 - **Manifest location**: `external_docs` section in manifest
 
 Example manifest structure:
@@ -301,6 +301,33 @@ Each chunk includes:
 - [From Scratch Guide](../agents/FROM_SCRATCH_GUIDE.md) - Complete setup workflow
 - [Knowledge Capture Workflow](knowledge-capture-workflow.md) - Documentation maintenance
 - [API Quirks](../personas/developer/api-quirks.md) - Known API issues
+
+## Cross-Platform Path Handling
+
+### Path Normalization Requirements
+**Source**: Logbook entry 2025-01-27
+
+**Problem**: Cross-platform path handling issues cause content type detection failures and query function disconnects.
+
+**Solution**: Implement consistent path normalization across all components:
+
+```python
+import os
+
+# Always normalize paths for cross-platform compatibility
+normalized_path = os.path.normpath(file_path)
+
+# Convert to forward slashes for regex pattern matching
+regex_path = normalized_path.replace(os.path.sep, "/")
+```
+
+**Prevention**: 
+- Use `os.path.normpath()` for all path operations
+- Convert paths to forward slashes before regex matching
+- Ensure database and query function use same path conventions
+- Test path handling on target platforms (Windows, macOS, Linux)
+
+**Related**: [Cross-Platform Development Guide](../agents/developer/README.md#cross-platform-development)
 
 ---
 
