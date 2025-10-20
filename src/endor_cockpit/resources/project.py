@@ -494,7 +494,8 @@ def update_project(
                     "name": current_project.meta.name,  # Required field
                     **(
                         payload.meta.model_dump(exclude_none=True)
-                        if payload.meta else {}
+                        if payload.meta
+                        else {}
                     ),
                 },
                 "spec": current_project.spec.model_dump(),  # Required field

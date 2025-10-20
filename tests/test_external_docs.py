@@ -61,9 +61,7 @@ class TestDownloadOpenAPISpec:
 
         # Download to temp path
         output_path = tmp_path / "openapi.json"
-        result = download_openapi_spec(
-            "https://api.endorlabs.com", output_path
-        )
+        result = download_openapi_spec("https://api.endorlabs.com", output_path)
 
         # Verify metadata
         assert "file_hash" in result
@@ -237,4 +235,3 @@ class TestCheckDownloadFreshness:
 
         assert needs_refresh
         assert ages == {}
-

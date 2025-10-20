@@ -35,8 +35,6 @@ class FlexibleEnum(str, Enum):
         return obj
 
 
-
-
 class FindingCategory(FlexibleEnum):
     """Finding category enumeration."""
 
@@ -557,7 +555,8 @@ def update_finding(
                     "name": current_finding.meta.name,  # Required field
                     **(
                         payload.meta.model_dump(exclude_none=True)
-                        if payload.meta else {}
+                        if payload.meta
+                        else {}
                     ),
                 },
                 "spec": {
@@ -565,12 +564,14 @@ def update_finding(
                     # existing spec fields
                     **(
                         payload.spec.model_dump(exclude_none=True)
-                        if payload.spec else {}
+                        if payload.spec
+                        else {}
                     ),
                 },
                 "context": (
                     current_finding.context.model_dump()
-                    if current_finding.context else {}
+                    if current_finding.context
+                    else {}
                 ),
             }
         }

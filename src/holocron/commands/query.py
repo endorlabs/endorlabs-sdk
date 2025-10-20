@@ -49,7 +49,7 @@ def query_command(args):  # noqa: C901
             results = query_holocron(
                 query_text=args.query_text,
                 n_results=args.results,
-                include_metadata=True
+                include_metadata=True,
             )
 
             if args.format == "json":
@@ -73,7 +73,7 @@ def query_command(args):  # noqa: C901
             while True:
                 query_text = input("Query: ").strip()
 
-                if query_text.lower() in ['quit', 'exit', 'q']:
+                if query_text.lower() in ["quit", "exit", "q"]:
                     print("Goodbye!")
                     break
 
@@ -84,7 +84,7 @@ def query_command(args):  # noqa: C901
                     results = query_holocron(
                         query_text=query_text,
                         n_results=args.results,
-                        include_metadata=True
+                        include_metadata=True,
                     )
 
                     print(f"\nFound {len(results['results'])} results:\n")

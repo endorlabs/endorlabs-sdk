@@ -14,6 +14,7 @@ import chromadb  # pyright: ignore[reportMissingImports]
 
 class HolocronQueryError(Exception):
     """Custom exception for Holocron query errors."""
+
     pass
 
 

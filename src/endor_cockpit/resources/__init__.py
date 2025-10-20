@@ -11,6 +11,11 @@ from . import (
 )
 
 __all__ = [
-    "namespace", "project", "finding", "policy", "repository",
-    "repository_version", "package_version"
+    "namespace",
+    "project",
+    "finding",
+    "policy",
+    "repository",
+    "repository_version",
+    "package_version",
 ]

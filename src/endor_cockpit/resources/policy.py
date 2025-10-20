@@ -485,7 +485,8 @@ def update_policy(
                     "name": current_policy.meta.name,  # Required field
                     **(
                         payload.meta.model_dump(exclude_none=True)
-                        if payload.meta else {}
+                        if payload.meta
+                        else {}
                     ),
                 },
                 "spec": {
@@ -493,7 +494,8 @@ def update_policy(
                     # existing spec fields
                     **(
                         payload.spec.model_dump(exclude_none=True)
-                        if payload.spec else {}
+                        if payload.spec
+                        else {}
                     ),
                 },
             }

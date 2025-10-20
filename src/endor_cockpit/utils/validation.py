@@ -31,13 +31,13 @@ class ValidationUtils:
             return False
 
         # Check for canonical format: tenant.namespace.child
-        parts = namespace.split('.')
+        parts = namespace.split(".")
         if len(parts) < 2:
             return False
 
         # Each part should be non-empty and contain only valid characters
         for part in parts:
-            if not part or not part.replace('-', '').replace('_', '').isalnum():
+            if not part or not part.replace("-", "").replace("_", "").isalnum():
                 return False
 
         return True
