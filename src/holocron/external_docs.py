@@ -85,9 +85,7 @@ def download_openapi_spec(
             "url": spec_url,
         }
 
-        logger.info(
-            f"OpenAPI spec downloaded successfully ({file_size} bytes)"
-        )
+        logger.info(f"OpenAPI spec downloaded successfully ({file_size} bytes)")
         return metadata
 
     except Exception as e:
@@ -95,9 +93,7 @@ def download_openapi_spec(
         raise
 
 
-def download_sitemap(
-    url: str, output_path: Path, timeout: int = 30
-) -> List[str]:
+def download_sitemap(url: str, output_path: Path, timeout: int = 30) -> List[str]:
     """
     Download and parse sitemap.xml to extract documentation URLs.
 
@@ -194,9 +190,7 @@ def download_user_docs(
         downloaded_count = 0
         failed_count = 0
 
-        urls_to_process = (
-            sitemap_urls[:max_pages] if max_pages else sitemap_urls
-        )
+        urls_to_process = sitemap_urls[:max_pages] if max_pages else sitemap_urls
 
         logger.info(f"Downloading {len(urls_to_process)} documentation pages")
 
@@ -312,4 +306,3 @@ def check_download_freshness(
     except Exception as e:
         logger.error(f"Failed to check download freshness: {e}")
         return True, {}
-

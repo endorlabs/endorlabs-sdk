@@ -301,10 +301,10 @@ class VectorDBManager:
         text = line.strip().lstrip("#").strip()
 
         # Remove emojis and special characters
-        text = re.sub(r'[^\w\s\-\.]', '', text)
+        text = re.sub(r"[^\w\s\-\.]", "", text)
 
         # Clean up extra whitespace
-        text = re.sub(r'\s+', ' ', text).strip()
+        text = re.sub(r"\s+", " ", text).strip()
 
         return text
 
@@ -575,8 +575,7 @@ class VectorDBManager:
 
                     # Clean metadata to remove None values
                     chunk["metadata"] = {
-                        k: v for k, v in chunk["metadata"].items()
-                        if v is not None
+                        k: v for k, v in chunk["metadata"].items() if v is not None
                     }
 
                 all_chunks.extend(chunks)

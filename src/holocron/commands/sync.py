@@ -30,5 +30,6 @@ def sync_command(args):
         print(f"Failed to sync knowledge base: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         exit(1)

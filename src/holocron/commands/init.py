@@ -29,9 +29,7 @@ def init_command(args):
                 last_dl = datetime.fromisoformat(openapi_last)
                 age_days = (datetime.now() - last_dl).days
                 if age_days > 7:
-                    print(
-                        f"WARNING: OpenAPI spec is {age_days} days old"
-                    )
+                    print(f"WARNING: OpenAPI spec is {age_days} days old")
                     print(
                         "   Consider refreshing with: python -m holocron init --force"
                     )
@@ -42,9 +40,7 @@ def init_command(args):
                 last_dl = datetime.fromisoformat(userdocs_last)
                 age_days = (datetime.now() - last_dl).days
                 if age_days > 7:
-                    print(
-                        f"WARNING: User docs are {age_days} days old"
-                    )
+                    print(f"WARNING: User docs are {age_days} days old")
                     print(
                         "   Consider refreshing with: python -m holocron init --force"
                     )

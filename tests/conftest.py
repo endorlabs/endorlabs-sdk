@@ -21,7 +21,7 @@ def mock_client():
     client.default_headers = {
         "Authorization": "Bearer test-token",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
     return client
 
@@ -42,19 +42,17 @@ def sample_project_data():
             "description": "Test repository",
             "create_time": "2025-10-19T10:00:00Z",
             "created_by": "test@endor.ai",
-            "tags": ["test", "example"]
+            "tags": ["test", "example"],
         },
         "spec": {
             "git": {
                 "full_name": "org/repo",
                 "git_clone_url": "git@github.com:org/repo.git",
-                "http_clone_url": "https://github.com/org/repo.git"
+                "http_clone_url": "https://github.com/org/repo.git",
             },
-            "platform_source": "PLATFORM_SOURCE_GITHUB"
+            "platform_source": "PLATFORM_SOURCE_GITHUB",
         },
-        "tenant_meta": {
-            "namespace": "endor-solutions-tgowan.cockpit"
-        }
+        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit"},
     }
 
 
@@ -68,18 +66,16 @@ def sample_finding_data():
             "description": "Test vulnerability finding",
             "create_time": "2025-10-19T10:00:00Z",
             "created_by": "test@endor.ai",
-            "tags": ["security", "vulnerability"]
+            "tags": ["security", "vulnerability"],
         },
         "spec": {
             "level": "FINDING_LEVEL_HIGH",
             "method": "SYSTEM_EVALUATION_METHOD_SCA",
             "ecosystem": "ECOSYSTEM_NPM",
             "finding_categories": ["FINDING_CATEGORY_VULNERABILITY"],
-            "project_uuid": "project-uuid-123"
+            "project_uuid": "project-uuid-123",
         },
-        "tenant_meta": {
-            "namespace": "endor-solutions-tgowan.cockpit"
-        }
+        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit"},
     }
 
 
@@ -93,19 +89,17 @@ def sample_policy_data():
             "description": "Test security policy",
             "create_time": "2025-10-19T10:00:00Z",
             "created_by": "test@endor.ai",
-            "tags": ["security", "policy"]
+            "tags": ["security", "policy"],
         },
         "spec": {
             "policy_type": "POLICY_TYPE_ML_FINDING",
             "rule": (
                 "package security\n\nconfigure[result] {\n  result = {\n    "
-                "\"security_method\": {\n      \"disable\": false\n    }\n  }\n}"
+                '"security_method": {\n      "disable": false\n    }\n  }\n}'
             ),
-            "disable": False
+            "disable": False,
         },
-        "tenant_meta": {
-            "namespace": "endor-solutions-tgowan.cockpit"
-        }
+        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit"},
     }
 
 
@@ -119,27 +113,27 @@ def sample_namespace_data():
             "description": "Test namespace",
             "create_time": "2025-10-19T10:00:00Z",
             "created_by": "test@endor.ai",
-            "tags": ["test", "namespace"]
+            "tags": ["test", "namespace"],
         },
         "spec": {
             "parent_namespace": "endor-solutions-tgowan.cockpit",
-            "description": "Test namespace for development"
+            "description": "Test namespace for development",
         },
-        "tenant_meta": {
-            "namespace": "endor-solutions-tgowan.cockpit.test-namespace"
-        }
+        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit.test-namespace"},
     }
 
 
 @pytest.fixture
 def mock_api_response():
     """Mock API response for testing."""
+
     def _mock_response(data: Dict[str, Any], status_code: int = 200):
         response = Mock()
         response.status_code = status_code
         response.json.return_value = data
         response.text = str(data)
         return response
+
     return _mock_response
 
 
@@ -160,13 +154,11 @@ def schema_drift_data():
             "name": "test-resource",
             "description": "Test resource",
             "unknown_field": "unknown_value",  # This should trigger schema drift
-            "another_unknown": {"nested": "data"}
+            "another_unknown": {"nested": "data"},
         },
         "spec": {
             "known_field": "known_value",
-            "unknown_spec_field": "unknown_spec_value"
+            "unknown_spec_field": "unknown_spec_value",
         },
-        "tenant_meta": {
-            "namespace": "test.namespace"
-        }
+        "tenant_meta": {"namespace": "test.namespace"},
     }
