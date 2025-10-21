@@ -42,7 +42,9 @@ def download_openapi_spec(
     try:
         # Check if file exists and skip if not forcing
         if output_path.exists() and not force:
-            logger.info(f"OpenAPI spec already exists at {output_path}, skipping download")
+            logger.info(
+                f"OpenAPI spec already exists at {output_path}, skipping download"
+            )
             with open(output_path, "rb") as f:
                 file_hash = hashlib.sha256(f.read()).hexdigest()
             file_size = output_path.stat().st_size
@@ -58,6 +60,7 @@ def download_openapi_spec(
 
         # Make request with retry logic
         max_retries = 3
+        response = None
         for attempt in range(max_retries):
             try:
                 response = requests.get(
@@ -78,6 +81,10 @@ def download_openapi_spec(
                 time.sleep(wait_time)
 
         # Parse and save JSON
+        if response is None:
+            raise requests.exceptions.RequestException(
+                "Failed to get response after retries"
+            )
         spec_data = response.json()
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -106,7 +113,59 @@ def download_openapi_spec(
         raise
 
 
-def download_sitemap(url: str, output_path: Path, timeout: int = 30, force: bool = False) -> List[str]:
+def _normalize_url(url: str) -> str:
+    """Convert relative URLs to absolute URLs."""
+    if url.startswith("/"):
+        return f"https://docs.endorlabs.com{url}"
+    elif url.startswith("http"):
+        return url
+    else:
+        return f"https://docs.endorlabs.com/{url}"
+
+
+def _extract_urls_from_xml(content: bytes) -> List[str]:
+    """Extract URLs from XML sitemap content."""
+    root = ET.fromstring(content)
+    namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+
+    urls = []
+    for loc in root.findall(".//ns:loc", namespace):
+        if loc.text:
+            urls.append(_normalize_url(loc.text))
+
+    return urls
+
+
+def _parse_existing_sitemap(output_path: Path) -> List[str]:
+    """Parse existing sitemap file to extract URLs."""
+    logger.info(f"Sitemap already exists at {output_path}, skipping download")
+
+    with open(output_path, "rb") as f:
+        content = f.read()
+
+    urls = _extract_urls_from_xml(content)
+    logger.info(f"Found {len(urls)} URLs in existing sitemap")
+    return urls
+
+
+def _download_and_save_sitemap(url: str, output_path: Path, timeout: int) -> bytes:
+    """Download sitemap and save to file."""
+    logger.info(f"Downloading sitemap from {url}")
+
+    response = requests.get(url, timeout=timeout)
+    response.raise_for_status()
+
+    # Save sitemap
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "wb") as f:
+        f.write(response.content)
+
+    return response.content
+
+
+def download_sitemap(
+    url: str, output_path: Path, timeout: int = 30, force: bool = False
+) -> List[str]:
     """
     Download and parse sitemap.xml to extract documentation URLs.
 
@@ -122,52 +181,13 @@ def download_sitemap(url: str, output_path: Path, timeout: int = 30, force: bool
     try:
         # Check if file exists and skip if not forcing
         if output_path.exists() and not force:
-            logger.info(f"Sitemap already exists at {output_path}, skipping download")
-            # Parse existing sitemap to extract URLs
-            with open(output_path, "rb") as f:
-                content = f.read()
-            root = ET.fromstring(content)
-            namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-            urls = []
-            for loc in root.findall(".//ns:loc", namespace):
-                if loc.text:
-                    # Convert relative URLs to absolute URLs
-                    if loc.text.startswith('/'):
-                        urls.append(f"https://docs.endorlabs.com{loc.text}")
-                    elif loc.text.startswith('http'):
-                        urls.append(loc.text)
-                    else:
-                        urls.append(f"https://docs.endorlabs.com/{loc.text}")
-            logger.info(f"Found {len(urls)} URLs in existing sitemap")
-            return urls
-        logger.info(f"Downloading sitemap from {url}")
+            return _parse_existing_sitemap(output_path)
 
-        # Download sitemap
-        response = requests.get(url, timeout=timeout)
-        response.raise_for_status()
+        # Download and save sitemap
+        content = _download_and_save_sitemap(url, output_path, timeout)
 
-        # Save sitemap
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "wb") as f:
-            f.write(response.content)
-
-        # Parse XML to extract URLs
-        root = ET.fromstring(response.content)
-
-        # Handle XML namespace
-        namespace = {"ns": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-        urls = []
-
-        for loc in root.findall(".//ns:loc", namespace):
-            if loc.text:
-                # Convert relative URLs to absolute URLs
-                if loc.text.startswith('/'):
-                    urls.append(f"https://docs.endorlabs.com{loc.text}")
-                elif loc.text.startswith('http'):
-                    urls.append(loc.text)
-                else:
-                    urls.append(f"https://docs.endorlabs.com/{loc.text}")
-
+        # Extract URLs from downloaded content
+        urls = _extract_urls_from_xml(content)
         logger.info(f"Found {len(urls)} URLs in sitemap")
         return urls
 
@@ -242,12 +262,12 @@ def download_user_docs(
                 # Check if file already exists
                 filename = sanitize_filename(url)
                 output_path = output_dir / filename
-                
+
                 if output_path.exists() and not force:
                     logger.debug(f"File already exists: {filename}, skipping")
                     skipped_count += 1
                     continue
-                
+
                 # Download page
                 response = requests.get(url, timeout=timeout)
                 response.raise_for_status()
@@ -297,7 +317,8 @@ def download_user_docs(
                 continue
 
         logger.info(
-            f"Downloaded {downloaded_count} pages successfully, {skipped_count} skipped, {failed_count} failed"
+            f"Downloaded {downloaded_count} pages successfully, "
+            f"{skipped_count} skipped, {failed_count} failed"
         )
         return downloaded_count
 

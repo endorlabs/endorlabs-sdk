@@ -24,6 +24,7 @@ from endor_cockpit.resources.policy import (
 )
 
 
+@pytest.mark.integration
 class TestPolicy:
     """Test cases for Policy resource operations."""
 

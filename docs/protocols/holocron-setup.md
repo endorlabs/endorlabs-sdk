@@ -329,6 +329,35 @@ regex_path = normalized_path.replace(os.path.sep, "/")
 
 **Related**: [Cross-Platform Development Guide](../agents/developer/README.md#cross-platform-development)
 
+## Troubleshooting
+
+### **ChromaDB Collection Not Found Error**
+
+**Date Discovered**: 2025-01-27  
+
+**Issue**: Holocron system fails with "Collection [endor_cockpit_docs] does not exist" error after switching virtual environments.
+
+**Symptoms**:
+- `HolocronQueryError: Failed to initialize vector database: Collection [endor_cockpit_docs] does not exist`
+- Database files exist in `.workspace/holocron_data/vector_db/` but collection is missing
+- System worked before but fails after virtual environment changes
+
+**Root Cause**: The ChromaDB collection `endor_cockpit_docs` needs to be created through holocron initialization, not just database file restoration.
+
+**Solution**: Initialize the holocron system to create the collection.
+
+```bash
+# Initialize holocron system
+uv run python -m holocron init --verbose
+
+# Verify collection exists
+uv run python -c "from holocron import query_holocron; print('Holocron working')"
+```
+
+**Prevention**: Always run `holocron init` after virtual environment changes or when setting up the system for the first time.
+
+**Key Learning**: The `endor_cockpit_docs` collection is a ChromaDB entity that contains vector embeddings of processed documentation, not the same as the physical `docs/` folder. When switching virtual environments, the collection needs to be recreated even if database files exist.
+
 ---
 
 *This protocol ensures agents have access to comprehensive, up-to-date knowledge about the Endor Cockpit SDK and can efficiently retrieve relevant context for their operations.*
