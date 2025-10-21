@@ -69,6 +69,12 @@ def main():
         default="text",
         help="Output format (default: text)",
     )
+    query_parser.add_argument(
+        "--max-content",
+        type=int,
+        default=500,
+        help="Maximum content length to display (default: 500)",
+    )
 
     args = parser.parse_args()
 

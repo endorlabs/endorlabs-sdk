@@ -504,6 +504,9 @@ def create_namespace(
             headers=headers,
             data=payload.model_dump(),
         )
+        if res is None:
+            logger.error("Failed to create namespace: No response from API (likely authentication failure)")
+            return None
         data = res.json()
         return Namespace(**data)
     except Exception as e:
