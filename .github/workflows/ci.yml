@@ -3,11 +3,21 @@ name: CI
 on:
   push:
     branches: [ main, dev ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
     branches: [ main, dev ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -54,6 +64,15 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-uv-
 
+      - name: Cache virtual environment
+        uses: actions/cache@v4.3.0
+        with:
+          path: .venv
+          key: ${{ steps.cache-key.outputs.key }}-venv
+          restore-keys: |
+            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-venv-
+            ${{ runner.os }}-uv-venv-
+
       - name: Install UV
         uses: astral-sh/setup-uv@v3.0.0
         with:
@@ -61,7 +80,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --dev --group holocron
 
   # Lint job - runs in parallel with tests
   lint:
@@ -86,17 +105,17 @@ jobs:
         run: |
           uv run ruff format --check .
 
-  # Test job - runs in parallel with lint
-  test:
-    name: Test
+  # Unit tests - fast, no secrets required
+  test-unit:
+    name: Unit Tests
     runs-on: ubuntu-latest
     needs: resolve-dependencies
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
       fail-fast: false
+      max-parallel: 2
     continue-on-error: ${{ matrix.python-version != '3.13' }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0
@@ -105,10 +124,27 @@ jobs:
         uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
       - name: Run unit tests
         run: |
           uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration"
+
+  # Integration tests - slower, requires secrets
+  test-integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [resolve-dependencies, test-unit]
+    if: always() && needs.test-unit.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
       - name: Validate required secrets for integration tests
         run: |
@@ -143,12 +179,12 @@ jobs:
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
-  # Security scan job - runs after lint and test pass
+  # Security scan job - runs after lint and tests pass
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, lint, test]
-    if: always() && (needs.lint.result == 'success' && needs.test.result == 'success')
+    needs: [resolve-dependencies, lint, test-unit, test-integration]
+    if: always() && (needs.lint.result == 'success' && needs.test-unit.result == 'success' && needs.test-integration.result == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0
@@ -247,11 +283,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.ENDOR_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_API_URL: ${{ github.api_url }}
 
-  # Coverage job - runs after tests pass
+  # Coverage job - runs after unit tests pass
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, test]
+    needs: [resolve-dependencies, test-unit]
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0

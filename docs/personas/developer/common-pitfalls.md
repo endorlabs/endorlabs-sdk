@@ -30,8 +30,8 @@ from endor_cockpit.api_client import APIClient
 **Root Cause**: No virtual environment activated
 **Solution**: Use `uv run python` instead of direct `python`
 ```bash
-# WRONG: python workspace/workspace.py
-# CORRECT: uv run python workspace/workspace.py
+# WRONG: python .workspace/workspace.py
+# CORRECT: uv run python .workspace/workspace.py
 ```
 **Prevention**: Always use `uv run` for Python execution
 
@@ -122,7 +122,7 @@ from endor_cockpit.api_client import APIClient
 5. **Document API discrepancies** when endorctl and SDK differ
 
 ### **Workspace Management**
-- **Single file**: Use `workspace/workspace.py` for all experimentation
+- **Single file**: Use `.workspace/workspace.py` for all experimentation
 - **Function-based**: Define test functions instead of one-off scripts
 - **Version control**: Commit working versions with descriptive messages
 - **Clean up**: Remove one-off scripts, keep only workspace.py
@@ -134,7 +134,7 @@ from endor_cockpit.api_client import APIClient
 2. **Analyze OpenAPI spec** for `{Resource}Service` endpoints
 3. **Use endorctl** for live data structure reference
 4. **Test with APIClient** for actual implementation
-5. **Document learnings** in workspace/log.md
+5. **Document learnings** in .workspace/log.md
 
 ### **Update Knowledge Base**
 1. **Propagate learnings** to relevant documentation
@@ -171,7 +171,7 @@ response = client.get("v1/namespaces/uuid/projects")
 print("✅ Success")
 
 # WRONG: Direct python execution
-python workspace/workspace.py
+python .workspace/workspace.py
 ```
 
 ## 🔍 **Troubleshooting Checklist**
