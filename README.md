@@ -4,6 +4,18 @@
 
 A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs. Designed for both human developers and AI agents working with Endor Labs security platform.
 
+## META: Documentation Guidelines
+
+**Before adding files, check for presence of related files for suitability first.**
+
+- **Related files**: Search for existing files with similar content using `glob_file_search` or `grep`
+- **Suitability check**: Verify if existing files are more appropriate for the content
+- **Consolidation**: Prefer updating existing files over creating new ones
+- **Examples**: 
+  - Chunking strategy → `docs/agents/rag_usage.md` (RAG-specific)
+  - API patterns → `docs/agents/api-patterns.md` (agent-focused)
+  - Development setup → `docs/agents/development.md` (development-focused)
+
 ## Features
 
 - **Comprehensive API Coverage**: Full REST API client for Endor Labs platform administration and operations

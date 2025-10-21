@@ -49,6 +49,8 @@ Content is chunked using semantic strategies:
 - **API Specs**: By major sections
 - **Examples**: By workflow steps
 
+**Detailed Strategy**: See [RAG Usage Guide](agents/rag_usage.md#chunking-strategy) for comprehensive chunking rules and empirical analysis.
+
 ---
 
 ## 📊 **Content Statistics**
