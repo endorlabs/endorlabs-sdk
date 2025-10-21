@@ -137,11 +137,11 @@ DELETE /v1/namespaces/{tenant_meta.namespace}/projects/{uuid}
 ### **OpenAPI Specification Analysis**
 ```bash
 # Find service endpoints in OpenAPI spec
-grep -i "{Resource}Service" tmp/openapiv2.swagger.json
+grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
 # Examples: ProjectService, FindingService, PolicyService
 
 # Extract endpoint patterns
-grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
 ```
 
 ### **Critical API Patterns**
@@ -164,8 +164,8 @@ results = query_vector_db("What are the common pitfalls for {resource} implement
 **1.2 Analyze OpenAPI Specification**
 ```bash
 # Search for service endpoints
-grep -i "{Resource}Service" tmp/openapiv2.swagger.json
-grep -A 20 -B 5 "{Resource}Service" tmp/openapiv2.swagger.json
+grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
 ```
 
 **1.3 Test with endorctl**
@@ -179,7 +179,7 @@ endorctl api list -r {Resource}
 
 **2.1 Get Live API Data**
 ```python
-# workspace/workspace.py
+# .workspace/workspace.py
 import sys
 sys.path.insert(0, '..')
 from endor_cockpit.api_client import APIClient
@@ -218,7 +218,7 @@ def list_resources(client: APIClient, tenant_meta_namespace: str) -> List[Resour
 
 **4.1 Collaborative Workspace**
 ```python
-# workspace/workspace.py - Single file for experimentation
+# .workspace/workspace.py - Single file for experimentation
 import sys
 sys.path.insert(0, '..')
 from endor_cockpit.api_client import APIClient

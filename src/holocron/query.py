@@ -38,14 +38,14 @@ class HolocronQuery:
     def _initialize_client(self):
         """
         Initialize ChromaDB client and collection.
-        
+
         CRITICAL: Path normalization is essential for cross-platform compatibility.
         Source: Logbook entry 2025-01-27 - Cross-platform path handling learnings.
         """
         try:
             # Normalize path for cross-platform compatibility
             normalized_path = os.path.normpath(self.vector_db_path)
-            
+
             # Initialize ChromaDB client
             self.client = chromadb.PersistentClient(path=normalized_path)
 
