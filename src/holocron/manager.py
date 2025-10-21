@@ -19,37 +19,42 @@ from chromadb.config import Settings
 logger = logging.getLogger(__name__)
 
 # Chunking strategies for different content types
+# Updated based on empirical analysis with 1000 token buffer
 CHUNKING_STRATEGY = {
     "markdown": {
-        "max_chunk_size": 1000,  # tokens
-        "overlap": 200,  # tokens
-        "split_on": ["##", "###", "\n\n"],  # Headers and paragraphs
+        "max_chunk_size": 1607,  # tokens - P95 (607) + 1000 buffer
+        "overlap": 400,  # tokens - increased for better context
+        "split_on": ["##"],  # Only H2 headers - preserve H3 subsections
         "preserve_structure": True,
+        "preserve_complete_sections": True,  # Never split H2 sections
     },
     "external_docs": {
-        "max_chunk_size": 1200,  # tokens - slightly larger for external docs
-        "overlap": 250,  # tokens
+        "max_chunk_size": 2165,  # tokens - P95 (1165) + 1000 buffer
+        "overlap": 500,  # tokens - increased for better context
         "split_on": [
-            "\n\n",
             "===",
             "---",
+            "\n\n",
             "Introduction",
-            "About",
+            "About", 
             "Prerequisites",
-        ],  # External doc patterns
+        ],  # External doc patterns - prioritize major sections
         "preserve_structure": True,
+        "preserve_complete_sections": True,  # Preserve complete procedures
     },
     "code": {
-        "max_chunk_size": 800,  # tokens
-        "overlap": 100,  # tokens
-        "split_on": ["\n\n", "def ", "class "],  # Functions and classes
+        "max_chunk_size": 6851,  # tokens - P95 (5851) + 1000 buffer
+        "overlap": 500,  # tokens - increased for better context
+        "split_on": ["def ", "class "],  # Functions and classes only
         "preserve_structure": True,
+        "preserve_complete_sections": True,  # Keep complete functions/classes
     },
     "api_spec": {
-        "max_chunk_size": 2000,  # tokens
+        "max_chunk_size": 5000,  # tokens - split by individual endpoints
         "overlap": 300,  # tokens
         "split_on": ['"paths":', '"components":', '"definitions":'],
         "preserve_structure": True,
+        "split_by_endpoints": True,  # Split large service groups by individual endpoints
     },
 }
 
@@ -220,8 +225,8 @@ class VectorDBManager:
         current_header_level = None
 
         for line in lines:
-            # Check if this is a header (starts with #)
-            if line.strip().startswith("#"):
+            # Check if this is an H2 header (starts with ## but not ###)
+            if line.strip().startswith("## ") and not line.strip().startswith("### "):
                 # Save current chunk if it has content
                 if current_chunk:
                     chunk_text = "\n".join(current_chunk)
@@ -267,8 +272,9 @@ class VectorDBManager:
                 current_chunk.append(line)
                 current_size += len(line) + 1  # +1 for newline
 
-                # Check if chunk is too large
-                if current_size > strategy["max_chunk_size"]:
+                # Check if chunk is too large (only split if not preserving complete sections)
+                if (current_size > strategy["max_chunk_size"] and 
+                    not strategy.get("preserve_complete_sections", False)):
                     # Save current chunk
                     chunk_text = "\n".join(current_chunk)
                     chunks.append(
@@ -354,9 +360,9 @@ class VectorDBManager:
         current_chunk: List[str],
         chunks: List[Dict],
         source_url: str,
-        h1_title: str,
-        current_section: str,
-        current_subsection: str,
+        h1_title: Optional[str],
+        current_section: Optional[str],
+        current_subsection: Optional[str],
     ) -> None:
         """Save current chunk to chunks list."""
         if current_chunk:
@@ -376,7 +382,7 @@ class VectorDBManager:
             )
 
     def _update_header_tracking(
-        self, line: str, h1_title: str, current_section: str, current_subsection: str
+        self, line: str, h1_title: Optional[str], current_section: Optional[str], current_subsection: Optional[str]
     ) -> tuple:
         """Update header tracking variables based on line content."""
         header_text = self._clean_external_header_text(line)
@@ -720,30 +726,49 @@ class VectorDBManager:
     def _get_files_to_process(self) -> List[str]:
         """Get list of files to process for vector DB."""
         files_to_process = []
+        
+        logger.info("=== FILE DISCOVERY DEBUG ===")
+        logger.info(f"INCLUDE_DIRS: {INCLUDE_DIRS}")
+        logger.info(f"EXCLUDE_DIRS: {EXCLUDE_DIRS}")
 
         for include_path in INCLUDE_DIRS:
+            logger.info(f"Processing include path: {include_path}")
+            
             if os.path.isfile(include_path):
-                files_to_process.append(include_path)
+                logger.info(f"  -> File: {include_path}")
+                if self._is_text_file(include_path) and self._should_rebuild_file(include_path):
+                    files_to_process.append(include_path)
+                    logger.info(f"    -> INCLUDED")
+                else:
+                    logger.info(f"    -> EXCLUDED (not text or should not rebuild)")
             elif os.path.isdir(include_path):
+                logger.info(f"  -> Directory: {include_path}")
                 for root, dirs, files in os.walk(include_path):
                     # Skip excluded directories
                     dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
 
-                    # Additional check for nested excluded paths
-                    normalized_root = self._normalize_path(root).replace(
-                        os.path.sep, "/"
-                    )
+                    # OS-agnostic path normalization
+                    normalized_root = os.path.normpath(root).replace(os.path.sep, "/")
+                    logger.info(f"    -> Walking: {normalized_root}")
+                    
+                    # Check for excluded paths using normalized paths
                     if any(excluded in normalized_root for excluded in EXCLUDE_DIRS):
+                        logger.info(f"    -> SKIPPED (excluded path): {normalized_root}")
                         continue
 
                     for file in files:
-                        file_path = os.path.join(root, file)
-                        # Skip binary files and cache files
-                        if self._is_text_file(file_path) and self._should_rebuild_file(
-                            file_path
-                        ):
+                        file_path = os.path.normpath(os.path.join(root, file))
+                        normalized_file_path = file_path.replace(os.path.sep, "/")
+                        
+                        if self._is_text_file(file_path) and self._should_rebuild_file(file_path):
                             files_to_process.append(file_path)
+                            logger.info(f"      -> INCLUDED: {file}")
+                        else:
+                            logger.info(f"      -> EXCLUDED: {file}")
+            else:
+                logger.info(f"  -> NOT FOUND: {include_path}")
 
+        logger.info(f"Total files to process: {len(files_to_process)}")
         return files_to_process
 
     def initialize_db(self, rebuild: bool = False, verbose: bool = False):
@@ -763,6 +788,16 @@ class VectorDBManager:
                 self.client.delete_collection(collection_name)
             except Exception:
                 pass
+            # Clear manifest on rebuild
+            self.manifest = {
+                "version": "1.0",
+                "last_updated": datetime.now().isoformat(),
+                "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+                "documents": {},
+                "total_chunks": 0,
+                "total_documents": 0,
+            }
+            logger.info("Manifest cleared for rebuild")
 
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
