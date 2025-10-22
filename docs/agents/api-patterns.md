@@ -2,6 +2,26 @@
 
 > **Critical API patterns and implementation strategies for Endor Labs resources**
 
+## ⚠️ **API Operations Support Matrix**
+
+> **CRITICAL**: Not all resources support all HTTP methods. Always check the Resource Guide before implementing operations.
+
+| Resource | GET | POST | PATCH | DELETE | Notes |
+|----------|-----|------|-------|--------|-------|
+| **Project** | ✅ | ✅ | ✅ | ✅ | Full CRUD support |
+| **Policy** | ✅ | ✅ | ✅ | ❌ | No DELETE support |
+| **Namespace** | ✅ | ✅ | ✅ | ❌ | No DELETE support |
+| **Finding** | ✅ | ❌ | ✅ | ❌ | Read-only creation, supports updates |
+| **PackageVersion** | ✅ | ❌ | ❌ | ❌ | Read-only resource |
+| **Repository** | ✅ | ❌ | ❌ | ❌ | Read-only resource |
+| **RepositoryVersion** | ✅ | ❌ | ❌ | ❌ | Read-only resource |
+
+### **Implementation Guidelines**
+- **Always check Resource Guide** before implementing operations
+- **Skip unsupported operations** in tests (use `pytest.skip()`)
+- **Validate API capabilities** before writing tests
+- **Use Resource Guide as authoritative source** for operation support
+
 ## 🎯 **Universal API Response Pattern**
 
 ### **Standard Response Structure**

@@ -16,6 +16,12 @@ This protocol defines testing requirements and patterns for the Endor Cockpit SD
 - [ ] Tag management tests
 - [ ] Schema drift detection tests
 
+### Test Validation Requirements
+- [ ] **Resource Guide Alignment**: All tests must align with Resource Guide API capabilities
+- [ ] **Operation Support Validation**: Only test operations that are actually supported by the API
+- [ ] **Test Suite Consistency**: Ensure test suite demonstrates good engineering practices
+- [ ] **API Compatibility**: Use Resource Guide as authoritative source for determining test validity
+
 ### Test Structure Requirements
 - [ ] Use pytest fixtures for setup
 - [ ] Mark integration tests with `@pytest.mark.integration`
