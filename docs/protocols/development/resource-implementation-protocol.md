@@ -1,46 +1,133 @@
 # Resource Implementation Protocol
 
-> **L2 (Task-Specific) - Comprehensive resource implementation workflow**
+> **L2 (Task-Specific) - Comprehensive resource implementation workflow using Resource Guide**
 
 ## Overview
 
-This protocol provides detailed steps for implementing new Endor Labs resources in the SDK, following established patterns from project.py.
+This protocol provides detailed steps for implementing new Endor Labs resources in the SDK, using the Resource Guide as the canonical source for API patterns, examples, and specifications. This ensures consistency with documented patterns and real-world usage.
 
-## Implementation Phases
+## Updated Implementation Phases (Using Resource Guide)
 
-### Phase 0: API Validation Phase (MANDATORY)
+### Phase 0: Resource Guide Analysis (MANDATORY)
 
-**CRITICAL**: This phase must be completed before any implementation begins. Skipping this validation will result in schema mismatches and non-functional implementations.
+**CRITICAL**: This phase must be completed before any implementation begins. The Resource Guide contains validated examples, API patterns, and specifications that ensure consistency with real-world usage.
 
-#### 0.1 Follow API Validation Protocol
-- [ ] **Complete**: [API Validation Protocol](api-validation-protocol.md)
-- [ ] **OpenAPI Analysis**: Extract complete schema from OpenAPI spec
-- [ ] **Live Data Testing**: Test with real API endpoints
-- [ ] **Schema Validation**: Compare spec with live data
-- [ ] **Operations Validation**: Test all available CRUD operations
-- [ ] **Error Case Testing**: Test error scenarios
+#### 0.1 Analyze Resource Guide Entry
+- [ ] **Review Resource Guide**: Check `Resource-Guide.md` for the resource
+- [ ] **Example Output**: Use the JSON example as the canonical data structure
+- [ ] **Description**: Understand the resource's purpose and characteristics
+- [ ] **Service Name**: Note the related service name (e.g., `FindingService`)
+- [ ] **URL Endpoints**: Review all available endpoints and HTTP methods
+- [ ] **API Patterns**: Note any resource-specific patterns or requirements
 
-#### 0.2 Check Operation Availability (MANDATORY)
-```bash
-# Check OpenAPI specification for available operations
-grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
+#### 0.2 Validate Against Base Class Architecture
+- [ ] **Universal Attributes**: Ensure all universal fields are present in example
+- [ ] **Conditional Attributes**: Identify which conditional attributes are used
+- [ ] **Base Class Compatibility**: Verify the resource can inherit from BaseResource
+- [ ] **API Pattern Support**: Confirm advanced patterns (filtering, masking, pagination) are supported
 
-# Test endpoints directly to verify operation availability
-# Check both patterns:
-# - /v1/namespaces/{tenant_meta.namespace}/{resource} (POST/GET/DELETE)
-# - /v1/namespaces/{object.tenant_meta.namespace}/{resource} (PATCH)
+#### 0.3 Create Implementation Matrix
+Document the complete mapping between Resource Guide and base class architecture:
+- [ ] **Universal fields**: All universal attributes present and correct
+- [ ] **Conditional fields**: Which conditional attributes are used
+- [ ] **Resource-specific fields**: Fields unique to this resource type
+- [ ] **API operations**: Which CRUD operations are supported
+- [ ] **Advanced patterns**: Which advanced API patterns are supported
+
+## Updated Implementation Approach (Using Base Classes)
+
+### Phase 1: Base Class Implementation
+**Use the Resource Guide example as the canonical structure and inherit from base classes for consistency.**
+
+#### 1.1 Create Resource-Specific Models
+```python
+# Use Resource Guide example as canonical structure
+# Inherit from base classes for consistency
+
+class ResourceMeta(BaseMeta):
+    """Resource metadata extending BaseMeta."""
+    # Only add resource-specific fields here
+    # Universal fields inherited from BaseMeta
+
+class ResourceSpec(BaseSpec):
+    """Resource specification extending BaseSpec."""
+    # Add resource-specific spec fields based on Resource Guide example
+    # Use Optional for API variations
+    # Use Union types for flexible fields
+
+class Resource(BaseResource):
+    """Resource entity extending BaseResource."""
+    # Resource-specific fields only
+    spec: ResourceSpec = Field(..., description="Resource specification")  # type: ignore
+    
+    # Add conditional attributes if present in Resource Guide example
+    # context: Optional[Context] = Field(None, description="Contextual information")
+    # processing_status: Optional[ProcessingStatus] = Field(None, description="Processing state")
+    # ingested_object: Optional[IngestedObject] = Field(None, description="Ingestion metadata")
+    
+    def __init__(self, **data):
+        # Convert spec to ResourceSpec if it's a dict
+        if 'spec' in data and isinstance(data['spec'], dict):
+            data['spec'] = ResourceSpec(**data['spec'])
+        super().__init__(**data)
 ```
 
-#### 0.3 Create Validation Matrix
-Document the complete mapping between OpenAPI spec and live data:
-- [ ] **Field mapping**: All fields mapped between spec and live data
-- [ ] **Type validation**: All field types match between spec and live data
-- [ ] **Required fields**: All required fields identified and validated
-- [ ] **Optional fields**: All optional fields identified and validated
-- [ ] **Read-only fields**: All read-only fields identified
-- [ ] **Nested objects**: All complex nested structures mapped
+#### 1.2 Use BaseResourceOperations for CRUD
+```python
+def _get_resource_ops(client: APIClient) -> BaseResourceOperations:
+    """Get BaseResourceOperations instance for this resource."""
+    return BaseResourceOperations(client, "ResourceName", Resource)
 
-### Phase 1: API Research Phase
+def list_resources(
+    client: APIClient, 
+    tenant_meta_namespace: str,
+    list_params: Optional[ListParameters] = None,
+    **kwargs
+) -> List[Resource]:
+    """List resources with advanced filtering and pagination."""
+    ops = _get_resource_ops(client)
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+
+def get_resource(
+    client: APIClient, 
+    tenant_meta_namespace: str, 
+    resource_uuid: str
+) -> Optional[Resource]:
+    """Get specific resource by UUID."""
+    ops = _get_resource_ops(client)
+    return ops.get(tenant_meta_namespace, resource_uuid)  # type: ignore
+
+def create_resource(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    payload: CreateResourcePayload
+) -> Optional[Resource]:
+    """Create new resource."""
+    ops = _get_resource_ops(client)
+    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+
+def update_resource(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    resource_uuid: str,
+    payload: UpdateResourcePayload,
+    update_mask: List[str]
+) -> Optional[Resource]:
+    """Update resource with field masking."""
+    ops = _get_resource_ops(client)
+    return ops.update(tenant_meta_namespace, resource_uuid, payload, update_mask)  # type: ignore
+
+def delete_resource(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    resource_uuid: str
+) -> bool:
+    """Delete resource."""
+    ops = _get_resource_ops(client)
+    return ops.delete(tenant_meta_namespace, resource_uuid)
+```
+
+### Phase 2: Legacy Implementation Phase
 
 #### 1.1 Analyze OpenAPI Specification
 ```bash
@@ -102,46 +189,54 @@ Document the complete mapping between OpenAPI spec and live data:
 | spec | object | object | Yes | No | Specification object |
 | ... | ... | ... | ... | ... | ... |
 
-### Phase 2: Data Modeling Phase
+### Phase 2: Base Class Implementation Phase
 
-#### 2.1 Create Pydantic Models
+#### 2.1 Create Resource-Specific Models
 ```python
-# Model from live data + API spec
-class ResourceMeta(BaseModel):
-    name: str
-    description: Optional[str] = None
-    create_time: Optional[str] = None
-    created_by: Optional[str] = None
-    update_time: Optional[str] = None
-    updated_by: Optional[str] = None
-    tags: Optional[List[str]] = None
-    # Schema drift fields
-    parent_uuid: Optional[str] = None
-    parent_kind: Optional[str] = None
-    upsert_time: Optional[str] = None
-    references: Optional[dict] = None
+# Use Resource Guide example as canonical structure
+# Inherit from base classes for consistency
 
-class ResourceSpec(BaseModel):
-    # Add fields based on live data analysis
+class ResourceMeta(BaseMeta):
+    """Resource metadata extending BaseMeta."""
+    # Only add resource-specific fields here
+    # Universal fields inherited from BaseMeta
+
+class ResourceSpec(BaseSpec):
+    """Resource specification extending BaseSpec."""
+    # Add resource-specific spec fields based on Resource Guide example
     # Use Optional for API variations
     # Use Union types for flexible fields
 
-class Resource(BaseModel):
-    """Resource entity based on actual API response."""
-    uuid: str
-    meta: ResourceMeta
-    spec: ResourceSpec
-    tenant_meta: TenantMeta
+class Resource(BaseResource):
+    """Resource entity extending BaseResource."""
+    # Resource-specific fields only
+    spec: ResourceSpec = Field(..., description="Resource specification")  # type: ignore
     
-    @field_validator('*', mode='before')
+    # Add conditional attributes if present in Resource Guide example
+    # context: Optional[Context] = Field(None, description="Contextual information")
+    # processing_status: Optional[ProcessingStatus] = Field(None, description="Processing state")
+    # ingested_object: Optional[IngestedObject] = Field(None, description="Ingestion metadata")
+    
+    def __init__(self, **data):
+        # Convert spec to ResourceSpec if it's a dict
+        if 'spec' in data and isinstance(data['spec'], dict):
+            data['spec'] = ResourceSpec(**data['spec'])
+        super().__init__(**data)
+    
+    @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            model_fields = {"uuid", "meta", "spec", "tenant_meta"}
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields, f"Resource.{info.field_name}"
+        if info.field_name == "spec" and isinstance(v, dict):
+            # Log unknown fields for schema drift detection in spec
+            known_fields = {
+                # Add resource-specific spec fields here
+            }
+            unknown_fields = set(v.keys()) - known_fields
+            if unknown_fields:
+                logger.warning(
+                    f"Schema drift detected in {info.field_name}: "
+                    f"unknown fields {unknown_fields}"
                 )
         return v
 ```

@@ -15,9 +15,8 @@
 from endor_cockpit.rag import query_vector_db
 
 # Always start with knowledge base
-results = query_vector_db("How do I implement {Resource} resources?")
-results = query_vector_db("What are the API endpoints for {resource}?")
-results = query_vector_db("What are the common pitfalls for {resource} implementation?")
+results = query_vector_db("What does the resource guide tell me about {Resource} ?")
+
 ```
 
 ## 📋 **Step-by-Step Implementation Process**
@@ -27,8 +26,7 @@ results = query_vector_db("What are the common pitfalls for {resource} implement
 #### **1.1 Query Knowledge Base**
 ```python
 # Check for existing patterns
-results = query_vector_db("How do I implement {Resource} resources?")
-results = query_vector_db("What are the common pitfalls for {resource} implementation?")
+results = query_vector_db("What does the resource guide tell me about {Resource} ?")
 ```
 
 #### **1.2 Analyze OpenAPI Specification**

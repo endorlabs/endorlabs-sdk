@@ -5,12 +5,55 @@
 <!-- RAG METADATA
 resource_type: package_version
 sdk_module: src/endor_cockpit/resources/package_version.py
-last_reviewed: 2025-10-19
+last_reviewed: 2025-01-19
+implementation_status: fully_implemented_base_class
+base_class_inheritance: true
 -->
 
 ## Architecture
 
 <!-- ~500 tokens | Query: "What is package version architecture?" -->
+
+### Base Class Implementation
+
+PackageVersion now inherits from the enhanced base class architecture:
+
+```python
+class PackageVersionMeta(BaseMeta):
+    """PackageVersion metadata extending BaseMeta."""
+    # PackageVersion-specific fields only (universal fields inherited from BaseMeta)
+    pass
+
+class PackageVersionSpec(BaseSpec):
+    """PackageVersion specification extending BaseSpec."""
+    # PackageVersion-specific spec fields based on Resource Guide example
+    call_graph_available: bool = Field(..., description="Whether call graph analysis is available")
+    ecosystem: str = Field(..., description="Package ecosystem (NPM, PyPI, Maven, etc.)")
+    language: str = Field(..., description="Programming language")
+    package_name: str = Field(..., description="Package name")
+    project_uuid: str = Field(..., description="UUID of the project this package belongs to")
+    relative_path: str = Field(..., description="Relative path to the package")
+    release_timestamp: str = Field(..., description="Package release timestamp")
+    resolution_errors: List[str] = Field(default_factory=list, description="Resolution errors")
+    resolved_dependencies: List[dict] = Field(default_factory=list, description="Resolved dependencies")
+    source_code_reference: Optional[dict] = Field(None, description="Source code reference")
+    unresolved_dependencies: List[str] = Field(default_factory=list, description="Unresolved dependencies")
+
+class PackageVersion(BaseResource):
+    """PackageVersion resource model extending BaseResource."""
+    # PackageVersion-specific fields (universal fields inherited from BaseResource)
+    spec: PackageVersionSpec = Field(..., description="PackageVersion specification")  # type: ignore
+    # Conditional attributes from Resource Guide example
+    context: Optional[dict] = Field(None, description="Contextual information", alias="context")
+    processing_status: Optional[dict] = Field(None, description="Processing status information", alias="processing_status")
+```
+
+**Key Benefits:**
+- **Universal Attributes**: Inherits all universal fields from BaseMeta and BaseResource
+- **Conditional Attributes**: Supports context and processing_status when present
+- **BaseResourceOperations**: Uses consistent CRUD operations with advanced filtering
+- **Schema Drift Detection**: Automatically detects unknown fields in spec
+- **Type Safety**: Full type safety with Pydantic validation
 
 ### Resource Structure
 
@@ -109,14 +152,28 @@ class PackageVersion(BaseModel):
 
 ### CRUD Operations
 
-**Location**: `src/endor_cockpit/resources/package_version.py:200-400`
+**Location**: `src/endor_cockpit/resources/package_version.py:70-90`
 
 #### List Package Versions
 ```python
 from endor_cockpit.resources import package_version
+from endor_cockpit.types import ListParameters
 
 # List all package versions in namespace
 package_versions = package_version.list_package_versions(client, namespace)
+
+# Advanced filtering with BaseResourceOperations
+filtered_packages = package_version.list_package_versions(
+    client,
+    namespace,
+    list_params=ListParameters(
+        filter="spec.ecosystem==ECOSYSTEM_NPM",
+        mask="meta.name,spec.package_name,spec.ecosystem",
+        page_size=50,
+        sort_field="meta.create_time",
+        sort_order="desc"
+    )
+)
 ```
 
 #### Get Package Version
@@ -124,6 +181,17 @@ package_versions = package_version.list_package_versions(client, namespace)
 # Get specific package version
 package_version_obj = package_version.get_package_version(client, namespace, package_version_uuid)
 ```
+
+#### BaseResourceOperations Benefits
+
+The PackageVersion resource now uses BaseResourceOperations for consistent CRUD operations:
+
+- **Advanced Filtering**: Support for complex filter expressions
+- **Field Masking**: Return only specific fields to reduce payload size
+- **Pagination**: Built-in pagination support with page_size and page_token
+- **Sorting**: Sort results by any field in ascending or descending order
+- **Counting**: Get count of resources matching filter criteria
+- **Error Handling**: Consistent error handling across all operations
 
 #### Create Package Version
 ```python

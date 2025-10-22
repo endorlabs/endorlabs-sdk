@@ -254,6 +254,7 @@ jobs:
               --namespace ${{ vars.ENDOR_NAMESPACE }} \
               --secrets \
               --dependencies \
+              --sast \
               --ghactions \
               --github \
               --pr \
@@ -268,6 +269,7 @@ jobs:
               --namespace ${{ vars.ENDOR_NAMESPACE }} \
               --secrets \
               --dependencies \
+              --sast \
               --ghactions \
               --github \
               --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \

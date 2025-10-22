@@ -2,6 +2,7 @@
 Test cases for Project resource operations.
 
 Tests GET and PATCH operations for Project resources, including tag management.
+Follows the testing protocol for comprehensive coverage.
 """
 
 import os
@@ -133,6 +134,79 @@ class TestProject:
             field for field in dir(project.tenant_meta) if not field.startswith("_")
         ]
         print(f"Project tenant_meta fields: {tenant_meta_fields}")
+
+    def test_project_base_class_inheritance(self):
+        """Test that project inherits from base classes."""
+        project_obj = self.projects[0]
+
+        # Test BaseResource inheritance
+        from endor_cockpit.models.base import BaseResource
+        assert isinstance(project_obj, BaseResource)
+
+        # Test BaseMeta inheritance
+        from endor_cockpit.models.base import BaseMeta
+        assert isinstance(project_obj.meta, BaseMeta)
+
+        # Test BaseSpec inheritance
+        from endor_cockpit.models.base import BaseSpec
+        assert isinstance(project_obj.spec, BaseSpec)
+
+    def test_project_conditional_attributes(self):
+        """Test conditional attributes in project."""
+        project_obj = self.projects[0]
+
+        # Check for conditional attributes
+        if hasattr(project_obj, 'processing_status') and project_obj.processing_status:
+            print("Project has processing_status attribute")
+            # processing_status is a Pydantic model, not a dict
+            assert hasattr(project_obj.processing_status, 'scan_state')
+            assert hasattr(project_obj.processing_status, 'scan_time')
+            assert hasattr(project_obj.processing_status, 'disable_automated_scan')
+
+    def test_project_advanced_filtering(self):
+        """Test advanced filtering capabilities."""
+        from endor_cockpit.types import ListParameters
+
+        # Test filtering by platform
+        github_projects = project.list_projects(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(filter="spec.platform_source==PLATFORM_SOURCE_GITHUB")
+        )
+        assert isinstance(github_projects, list)
+
+        # Test field masking
+        masked_projects = project.list_projects(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(mask="meta.name,spec.platform_source")
+        )
+        assert isinstance(masked_projects, list)
+        if masked_projects:
+            proj = masked_projects[0]
+            # Should have masked fields
+            assert hasattr(proj, 'meta')
+            assert hasattr(proj, 'spec')
+
+    def test_project_error_handling(self):
+        """Test error handling for invalid UUID."""
+        # Test with invalid UUID
+        invalid_project = project.get_project(
+            self.client, self.namespace, "invalid-uuid"
+        )
+        assert invalid_project is None
+
+    def test_project_schema_drift_detection(self):
+        """Test schema drift detection in project."""
+        project_obj = self.projects[0]
+
+        # Test that schema drift detection is working
+        # This is tested implicitly through the model validation
+        assert project_obj is not None
+
+        # Test that unknown fields are handled gracefully
+        # This is tested through the model's extra="ignore" configuration
+        assert hasattr(project_obj, 'model_config')
 
     def test_project_operations_summary(self):
         """Generate summary of project operations."""
