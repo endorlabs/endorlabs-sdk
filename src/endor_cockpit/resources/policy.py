@@ -7,13 +7,26 @@ listing, examining, creating, updating, and deleting policies.
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 from ..api_client import APIClient
+from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
+
+# Global resource instance
+_policy_ops = None
+
+
+def _get_policy_ops(client: APIClient) -> BaseResourceOperations:
+    """Get or create policy operations instance."""
+    global _policy_ops
+    if _policy_ops is None:
+        _policy_ops = BaseResourceOperations(client, "policies", Policy)
+    return _policy_ops
 
 
 class PolicyType(str, Enum):
@@ -36,8 +49,8 @@ class PolicyRule(BaseModel):
     description: str = Field(..., description="Rule description")
 
 
-class PolicySpec(BaseModel):
-    """Policy specification."""
+class PolicySpec(BaseSpec):
+    """Policy specification extending BaseSpec."""
 
     policy_type: PolicyType = Field(..., description="Policy type")
     rule: Optional[str] = Field(None, description="Policy rule in text format")
@@ -95,28 +108,11 @@ class PolicySpec(BaseModel):
         return v
 
 
-class PolicyMeta(BaseModel):
-    """Policy metadata."""
+class PolicyMeta(BaseMeta):
+    """Policy metadata extending BaseMeta."""
 
-    name: str = Field(..., description="Policy name")
-    description: str = Field(..., description="Policy description")
-    kind: str = Field(default="Policy", description="Resource kind")
-    tags: Optional[List[str]] = Field(default=None, description="Policy tags")
-    create_time: Optional[str] = Field(default=None, description="Creation timestamp")
-    update_time: Optional[str] = Field(default=None, description="Update timestamp")
-    created_by: Optional[str] = Field(default=None, description="Created by")
-    updated_by: Optional[str] = Field(default=None, description="Updated by")
-    version: Optional[str] = Field(default="v1", description="Policy version")
-    index_data: Optional[Dict[str, Any]] = Field(default=None, description="Index data")
-    annotations: Optional[Dict[str, str]] = Field(
-        default=None, description="Annotations"
-    )
-    parent_uuid: Optional[str] = Field(default=None, description="Parent UUID")
-    parent_kind: Optional[str] = Field(default=None, description="Parent kind")
-    upsert_time: Optional[str] = Field(default=None, description="Upsert timestamp")
-    references: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = Field(
-        default=None, description="References"
-    )
+    # Policy-specific fields only (universal fields inherited from BaseMeta)
+    pass
 
     @field_validator("tags")
     @classmethod
@@ -143,72 +139,45 @@ class PolicyMeta(BaseModel):
         return v.strip()
 
 
-class TenantMeta(BaseModel):
-    """Tenant metadata."""
+class Policy(BaseResource):
+    """Policy resource model extending BaseResource."""
 
-    namespace: str = Field(..., description="Tenant namespace")
+    # Policy-specific fields (universal fields inherited from BaseResource)
+    spec: PolicySpec = Field(..., description="Policy specification")  # type: ignore
 
-
-class Policy(BaseModel):
-    """Policy resource model."""
-
-    uuid: str = Field(..., description="Policy UUID")
-    tenant_meta: TenantMeta = Field(..., description="Tenant metadata")
-    meta: PolicyMeta = Field(..., description="Policy metadata")
-    spec: PolicySpec = Field(..., description="Policy specification")
-    propagate: Optional[bool] = Field(True, description="Propagate to child namespaces")
+    model_config = {"extra": "ignore"}
 
     @field_validator("*", mode="before")
+    @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift in policy responses."""
-        if info.field_name in ["meta", "spec", "tenant_meta"] and isinstance(v, dict):
-            # Log unknown fields for schema drift detection
+        if info.field_name == "spec" and isinstance(v, dict):
+            # Log unknown fields for schema drift detection in spec
             known_fields = {
-                "meta": {
-                    "name",
-                    "description",
-                    "kind",
-                    "tags",
-                    "create_time",
-                    "update_time",
-                    "created_by",
-                    "updated_by",
-                    "version",
-                    "index_data",
-                    "annotations",
-                    "parent_uuid",
-                    "parent_kind",
-                    "upsert_time",
-                    "references",
-                },
-                "spec": {
-                    "policy_type",
-                    "rule",
-                    "project_selector",
-                    "project_exceptions",
-                    "resource_kinds",
-                    "disable",
-                    "finding",
-                    "finding_level",
-                    "query_statements",
-                    "template_uuid",
-                    "template_version",
-                    "template_parameters",
-                    "template_values",
-                    "admission",
-                    "group_by_fields",
-                    "notification",
-                },
-                "tenant_meta": {"namespace"},
+                "policy_type",
+                "rule",
+                "project_selector",
+                "project_exceptions",
+                "resource_kinds",
+                "disable",
+                "finding",
+                "finding_level",
+                "query_statements",
+                "template_uuid",
+                "template_version",
+                "template_parameters",
+                "template_values",
+                "admission",
+                "group_by_fields",
+                "notification",
             }
 
-            if info.field_name in known_fields:
-                unknown_fields = set(v.keys()) - known_fields[info.field_name]
-                if unknown_fields:
-                    logger.warning(
-                        f"Schema drift detected in {info.field_name}: "
-                        f"unknown fields {unknown_fields}"
-                    )
+            unknown_fields = set(v.keys()) - known_fields
+            if unknown_fields:
+                logger.warning(
+                    f"Schema drift detected in {info.field_name}: "
+                    f"unknown fields {unknown_fields}"
+                )
 
         return v
 
@@ -272,51 +241,54 @@ def list_policies(
     client: APIClient,
     tenant_meta_namespace: str,
     policy_type: Optional[PolicyType] = None,
+    list_params: Optional[ListParameters] = None,
+    **kwargs,
 ) -> List[Policy]:
     """
-    List all policies in a namespace.
+    List all policies in a namespace with filtering support.
 
     Args:
         client: APIClient instance
         tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_type: Optional policy type filter
+        policy_type: Optional policy type filter (legacy parameter)
+        list_params: Optional list parameters for filtering, masking, pagination
+        **kwargs: Additional query parameters
 
     Returns:
         List of Policy objects
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/policies", headers=headers
+    ops = _get_policy_ops(client)
+
+    # Handle legacy policy_type parameter
+    if policy_type and list_params is None:
+        list_params = ListParameters(
+            filter=f"spec.policy_type=={policy_type.value}",
+            mask=None,
+            page_size=None,
+            page_token=None,
+            sort_field=None,
+            sort_order=None,
+            count=None,
+            include_child_namespaces=None,
+            from_date=None,
+            to_date=None,
         )
-        data = res.json()
+    elif policy_type and list_params:
+        type_filter = f"spec.policy_type=={policy_type.value}"
+        list_params.filter = (
+            f"({list_params.filter}) and ({type_filter})"
+            if list_params.filter
+            else type_filter
+        )
 
-        # Parse response structure: {"list": {"objects": [...]}}
-        objects = data.get("list", {}).get("objects", [])
-
-        policies = []
-        for obj in objects:
-            try:
-                policy = Policy(**obj)
-                # Apply policy type filter if specified
-                if policy_type is None or policy.spec.policy_type == policy_type:
-                    policies.append(policy)
-            except Exception as e:
-                logger.warning(f"Failed to parse policy object: {e}")
-                continue
-
-        return policies
-
-    except Exception as e:
-        logger.error(f"Error listing policies: {e}", exc_info=True)
-        return []
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
 
 
 def get_policy(
     client: APIClient, tenant_meta_namespace: str, policy_uuid: str
 ) -> Optional[Policy]:
     """
-    Get a specific policy by UUID.
+    Get a specific policy by UUID with robust retrieval.
 
     Args:
         client: APIClient instance
@@ -326,18 +298,8 @@ def get_policy(
     Returns:
         Policy object or None if not found
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/policies/{policy_uuid}",
-            headers=headers,
-        )
-        data = res.json()
-        return Policy(**data)
-
-    except Exception as e:
-        logger.error(f"Error getting policy {policy_uuid}: {e}", exc_info=True)
-        return None
+    ops = _get_policy_ops(client)
+    return ops.get(tenant_meta_namespace, policy_uuid)  # type: ignore
 
 
 def create_policy(
@@ -544,3 +506,105 @@ def delete_policy(
     except Exception as e:
         logger.error(f"Error deleting policy {policy_uuid}: {e}", exc_info=True)
         return False
+
+
+# Convenience functions for common filtering patterns
+def list_policies_by_type(
+    client: APIClient, tenant_meta_namespace: str, policy_type: PolicyType
+) -> List[Policy]:
+    """List policies filtered by type."""
+    list_params = ListParameters(
+        filter=f"spec.policy_type=={policy_type.value}",
+        mask=None,
+        page_size=None,
+        page_token=None,
+        sort_field=None,
+        sort_order=None,
+        count=None,
+        include_child_namespaces=None,
+        from_date=None,
+        to_date=None,
+    )
+    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+
+
+def list_policies_by_namespace(
+    client: APIClient, tenant_meta_namespace: str, target_namespace: str
+) -> List[Policy]:
+    """List policies filtered by namespace."""
+    list_params = ListParameters(
+        filter=f"tenant_meta.namespace=={target_namespace}",
+        mask=None,
+        page_size=None,
+        page_token=None,
+        sort_field=None,
+        sort_order=None,
+        count=None,
+        include_child_namespaces=None,
+        from_date=None,
+        to_date=None,
+    )
+    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+
+
+def list_policies_with_mask(
+    client: APIClient, tenant_meta_namespace: str, fields: List[str]
+) -> List[Policy]:
+    """List policies with field masking."""
+    list_params = ListParameters(
+        filter=None,
+        mask=",".join(fields),
+        page_size=None,
+        page_token=None,
+        sort_field=None,
+        sort_order=None,
+        count=None,
+        include_child_namespaces=None,
+        from_date=None,
+        to_date=None,
+    )
+    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+
+
+def list_policies_paginated(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    page_size: int = 10,
+    page_token: Optional[str] = None,
+) -> List[Policy]:
+    """List policies with pagination."""
+    list_params = ListParameters(
+        filter=None,
+        mask=None,
+        page_size=page_size,
+        page_token=page_token,
+        sort_field=None,
+        sort_order=None,
+        count=None,
+        include_child_namespaces=None,
+        from_date=None,
+        to_date=None,
+    )
+    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+
+
+def list_policies_sorted(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    sort_field: str = "meta.create_time",
+    desc: bool = True,
+) -> List[Policy]:
+    """List policies with sorting."""
+    list_params = ListParameters(
+        filter=None,
+        mask=None,
+        page_size=None,
+        page_token=None,
+        sort_field=sort_field,
+        sort_order="desc" if desc else "asc",
+        count=None,
+        include_child_namespaces=None,
+        from_date=None,
+        to_date=None,
+    )
+    return list_policies(client, tenant_meta_namespace, list_params=list_params)

@@ -52,7 +52,7 @@ All resource modules must follow the established patterns from `project.py`:
 ### Python Version Support
 - **Minimum**: Python 3.11
 - **Maximum**: Python 3.13 (exclusive)
-- **Testing**: Test on 3.11, 3.12, 3.13
+- **Testing**: Test on 3.13
 
 ### Dependencies
 - **Core**: requests, pydantic
@@ -206,6 +206,49 @@ from endor_cockpit.api_client import APIClient
 - **Test coverage**: Maintain comprehensive test coverage
 - **Security scanning**: Always run `endorctl scan` before commits
 - **Multi-version testing**: Ensure compatibility across Python versions
+
+### **CI Workflow Optimization**
+
+**Date Discovered**: 2025-01-27  
+**Logbook Reference**: `.workspace/logbook.md#2025-01-27-complete-dependency-resolution`
+
+**Issue**: CI jobs were unnecessarily redownloading dependencies after resolve-dependencies job, causing slower execution and redundant downloads.
+
+**Root Cause**: The resolve-dependencies job was only installing `--dev` dependencies, missing the `holocron` group. This meant chromadb and other holocron dependencies weren't cached in the .venv.
+
+**Solution**: 
+```yaml
+# .github/workflows/ci.yml - resolve-dependencies job
+- name: Resolve dependencies
+  run: uv sync --dev --group holocron  # Install ALL dependencies including holocron group
+```
+
+**Key Learning**: For a self-repairing SDK, all dependencies should be resolved and cached in the first job regardless of dev/non-dev distinction. This ensures subsequent jobs can truly skip dependency installation and use the complete cached environment.
+
+**Prevention**: Always install complete dependency set in resolve-dependencies job to maximize CI efficiency.
+
+### **Dependency Management Strategy**
+
+**Date Discovered**: 2025-01-27  
+**Logbook Reference**: `.workspace/logbook.md#2025-01-27-add-chromadb-direct-dependency`
+
+**Issue**: ChromaDB was only available as an optional dependency in the holocron group, requiring users to specify the group for basic functionality.
+
+**Root Cause**: ChromaDB was categorized as an optional dependency when it's actually essential for the SDK's vector database capabilities.
+
+**Solution**: 
+```toml
+# pyproject.toml - Move chromadb to main dependencies
+[project]
+dependencies = [
+    "chromadb==1.2.0",  # Core functionality dependency
+    # ... other dependencies
+]
+```
+
+**Key Learning**: Core functionality dependencies should be direct dependencies, not optional groups. ChromaDB is essential for the holocron vector database functionality and should be available by default.
+
+**Prevention**: Categorize dependencies based on functionality requirements - core features should be direct dependencies, optional features can be in groups.
 
 ## 3. API Client Design
 

@@ -23,7 +23,7 @@ concurrency:
 env:
   # CI Configuration - easily maintainable environment variables
   PYTHON_VERSION: "3.13"
-  PYTHON_VERSIONS: '["3.12", "3.13"]'
+  PYTHON_VERSIONS: '["3.13"]'
   PYTEST_MAXFAIL: "2"
   COVERAGE_PACKAGE: "endor_cockpit"
   UV_VERSION: "0.9.3"
@@ -64,14 +64,6 @@ jobs:
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
             ${{ runner.os }}-uv-
 
-      - name: Cache virtual environment
-        uses: actions/cache@v4.3.0
-        with:
-          path: .venv
-          key: ${{ steps.cache-key.outputs.key }}-venv
-          restore-keys: |
-            ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-venv-
-            ${{ runner.os }}-uv-venv-
 
       - name: Install UV
         uses: astral-sh/setup-uv@v3.0.0
@@ -112,10 +104,9 @@ jobs:
     needs: resolve-dependencies
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.13"]
       fail-fast: false
-      max-parallel: 2
-    continue-on-error: ${{ matrix.python-version != '3.13' }}
+      max-parallel: 1
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0
@@ -255,6 +246,7 @@ jobs:
               --namespace ${{ vars.ENDOR_NAMESPACE }} \
               --secrets \
               --dependencies \
+              --sast \
               --ghactions \
               --github \
               --pr \
@@ -269,6 +261,7 @@ jobs:
               --namespace ${{ vars.ENDOR_NAMESPACE }} \
               --secrets \
               --dependencies \
+              --sast \
               --ghactions \
               --github \
               --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \

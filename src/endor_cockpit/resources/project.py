@@ -11,7 +11,8 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
-from ..utils import SchemaDriftDetector
+from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..types import ListParameters
 
 # Set up logger with redaction filter
 logger = logging.getLogger(__name__)
@@ -26,33 +27,17 @@ class IndexData(BaseModel):
     tenant: str
 
 
-class ProjectMeta(BaseModel):
+class ProjectMeta(BaseMeta):
     """
-    Metadata for an Endor Labs project based on actual API response.
+    Metadata for an Endor Labs project extending BaseMeta.
 
-    Attributes:
-        create_time: When the project was created
-        created_by: Who created the project
-        index_data: Index data for the project
-        kind: The kind of resource (Project)
-        name: The name of the project
-        update_time: When the project was last updated
-        updated_by: Who last updated the project
-        version: The version of the project
-        description: Optional description (can be None)
+    Project-specific fields only (universal fields inherited from BaseMeta).
     """
 
-    create_time: str
-    created_by: str
-    index_data: IndexData
-    kind: str
-    name: str
-    update_time: str
-    updated_by: str
-    version: str
-    description: Optional[str] = None
-    upsert_time: Optional[str] = None
-    tags: Optional[List[str]] = None
+    # Project-specific fields (universal fields inherited from BaseMeta)
+    project_index_data: IndexData = Field(
+        ..., description="Index data for the project", alias="index_data"
+    )
 
     @field_validator("name")
     @classmethod
@@ -161,12 +146,12 @@ class GitInfo(BaseModel):
     web_url: str
 
 
-class ProjectSpec(BaseModel):
-    """Project specification."""
+class ProjectSpec(BaseSpec):
+    """Project specification extending BaseSpec."""
 
-    git: GitInfo
-    internal_reference_key: str
-    platform_source: str
+    git: GitInfo = Field(..., description="Git information for the project")
+    internal_reference_key: str = Field(..., description="Internal reference key")
+    platform_source: str = Field(..., description="Platform source identifier")
 
 
 class ProcessingStatus(BaseModel):
@@ -183,89 +168,56 @@ class TenantMeta(BaseModel):
     namespace: str
 
 
-class Project(BaseModel):
+class Project(BaseResource):
     """
-    An Endor Labs project entity based on actual API response.
+    An Endor Labs project entity extending BaseResource.
 
-    Attributes:
-        meta: Project metadata
-        processing_status: Processing status information
-        spec: Project specification including git info
-        tenant_meta: Tenant metadata including namespace
-        uuid: Unique identifier for the project
+    Project-specific fields (universal fields inherited from BaseResource).
     """
 
-    meta: ProjectMeta
-    processing_status: ProcessingStatus
-    spec: ProjectSpec
-    tenant_meta: TenantMeta
-    uuid: str
+    # Project-specific fields (universal fields inherited from BaseResource)
+    spec: ProjectSpec = Field(..., description="Project specification")  # type: ignore
+    project_processing_status: ProcessingStatus = Field(
+        ..., description="Processing status information", alias="processing_status"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+    def __init__(self, **data):
+        # Convert spec to ProjectSpec if it's a dict
+        if "spec" in data and isinstance(data["spec"], dict):
+            data["spec"] = ProjectSpec(**data["spec"])
+        super().__init__(**data)
 
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            # Define expected fields for each model
-            model_fields = {
-                "meta": {
-                    "create_time",
-                    "created_by",
-                    "index_data",
-                    "kind",
-                    "name",
-                    "update_time",
-                    "updated_by",
-                    "version",
-                    "description",
-                    "parent_uuid",
-                    "parent_kind",
-                    "tags",
-                    "annotations",
-                    "references",
-                    "upsert_time",
-                },
-                "processing_status": {
-                    "scan_state",
-                    "scan_time",
-                    "scan_error",
-                    "scan_progress",
-                    "scan_duration",
-                    "last_scan_time",
-                    "next_scan_time",
-                    "scan_frequency",
-                    "scan_enabled",
-                    "analytic_time",
-                    "queue_time",
-                    "disable_automated_scan",
-                    "metadata",
-                },
-                "spec": {
-                    "git_info",
-                    "language",
-                    "framework",
-                    "repository_url",
-                    "branch",
-                    "commit_hash",
-                    "scan_config",
-                    "policy_config",
-                    "notification_config",
-                    "integration_config",
-                    "platform_source",
-                    "internal_reference_key",
-                    "git",
-                    "ingestion_token",
-                    "toolchain_profile_uuid",
-                    "scan_profile_uuid",
-                },
-                "tenant_meta": {"namespace", "tenant_id", "tenant_name"},
+        if info.field_name == "spec" and isinstance(v, dict):
+            # Log unknown fields for schema drift detection in spec
+            known_fields = {
+                "git",
+                "language",
+                "framework",
+                "repository_url",
+                "branch",
+                "commit_hash",
+                "scan_config",
+                "policy_config",
+                "notification_config",
+                "integration_config",
+                "platform_source",
+                "internal_reference_key",
+                "ingestion_token",
+                "toolchain_profile_uuid",
+                "scan_profile_uuid",
             }
-
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields[info.field_name], f"Project.{info.field_name}"
+            unknown_fields = set(v.keys()) - known_fields
+            if unknown_fields:
+                logger.warning(
+                    f"Schema drift detected in {info.field_name}: "
+                    f"unknown fields {unknown_fields}"
                 )
-
         return v
 
     @field_validator("uuid")
@@ -305,7 +257,16 @@ class CreateProjectPayload(BaseModel):
     )
 
 
-def list_projects(client: APIClient, tenant_meta_namespace: str) -> List[Project]:
+def _get_project_ops(client: APIClient) -> BaseResourceOperations:
+    """Get BaseResourceOperations instance for projects."""
+    return BaseResourceOperations(client, "projects", Project)
+
+
+def list_projects(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: Optional[ListParameters] = None,
+) -> List[Project]:
     """
     List all projects in the specified namespace.
 
@@ -313,6 +274,7 @@ def list_projects(client: APIClient, tenant_meta_namespace: str) -> List[Project
         client: The APIClient instance to use for the request
         tenant_meta_namespace: The canonical namespace name
             (e.g., 'endor-solutions-tgowan.cockpit')
+        list_params: Optional list parameters for filtering, pagination, etc.
 
     Returns:
         List[Project]: A list of Project objects. Empty list if error occurs.
@@ -321,18 +283,9 @@ def list_projects(client: APIClient, tenant_meta_namespace: str) -> List[Project
         requests.exceptions.HTTPError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/projects", headers=headers
-        )
-        data = res.json()
-        # Handle the actual API response structure: list.objects
-        projects_data = data.get("list", {}).get("objects", [])
-        return [Project(**item) for item in projects_data]
-    except Exception as e:
-        logger.error(f"Error listing projects: {e}", exc_info=True)
-        return []
+    ops = _get_project_ops(client)
+    results = ops.list(tenant_meta_namespace, list_params)
+    return [Project(**item.model_dump()) for item in results]  # type: ignore
 
 
 def get_project(
@@ -354,17 +307,11 @@ def get_project(
         requests.exceptions.HTTPError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/projects/{project_uuid}",
-            headers=headers,
-        )
-        data = res.json()
-        return Project(**data)
-    except Exception as e:
-        logger.error(f"Error retrieving project {project_uuid}: {e}", exc_info=True)
-        return None
+    ops = _get_project_ops(client)
+    result = ops.get(tenant_meta_namespace, project_uuid)
+    if result:
+        return Project(**result.model_dump())  # type: ignore
+    return None
 
 
 def create_project(
