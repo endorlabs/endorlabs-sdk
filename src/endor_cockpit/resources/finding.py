@@ -8,12 +8,13 @@ patterns from the Project resource implementation.
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import List, Optional, Union
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient
-from ..utils import SchemaDriftDetector
+from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
 
@@ -30,8 +31,8 @@ class FlexibleEnum(str, Enum):
         # Create a dynamic enum member for unknown values
         obj = str.__new__(cls, value)
         # Use setattr to avoid type checker issues
-        obj._name_ = value
-        obj._value_ = value
+        obj._name_ = value  # type: ignore
+        obj._value_ = value  # type: ignore
         return obj
 
 
@@ -107,24 +108,11 @@ class Ecosystem(FlexibleEnum):
     REDHAT = "ECOSYSTEM_REDHAT"
 
 
-class FindingMeta(BaseModel):
-    """Finding metadata."""
+class FindingMeta(BaseMeta):
+    """Finding metadata extending BaseMeta."""
 
-    create_time: Optional[str] = None
-    update_time: Optional[str] = None
-    upsert_time: Optional[str] = None
-    name: str
-    kind: Optional[str] = None
-    version: Optional[str] = None
-    description: Optional[str] = None
-    parent_uuid: Optional[str] = None
-    parent_kind: Optional[str] = None
-    tags: Optional[List[str]] = None
-    annotations: Optional[Dict[str, str]] = None
-    created_by: Optional[str] = None
-    updated_by: Optional[str] = None
-    references: Optional[Union[List[dict], dict]] = None
-    index_data: Optional[dict] = None
+    # Finding-specific fields (universal fields inherited from BaseMeta)
+    pass  # No additional fields needed, all were universal
 
 
 class FindingMetadata(BaseModel):
@@ -138,20 +126,30 @@ class FindingMetadata(BaseModel):
     category: Optional[FindingCategory] = None
 
 
-class FindingSpec(BaseModel):
-    """Finding specification."""
+class FindingSpec(BaseSpec):
+    """Finding specification extending BaseSpec."""
 
-    project_uuid: str
-    last_processed: Optional[datetime] = None
-    level: FindingLevel
-    dismiss: Optional[bool] = None  # Can be None in API response
-    remediation: Optional[str] = None
-    finding_metadata: Optional[dict] = None  # Complex nested structure
-    summary: Optional[str] = None
-    finding_tags: Optional[List[str]] = None
-    target_uuid: Optional[str] = None
-    extra_key: Optional[str] = None
-    method: Optional[AnalysisMethod] = None
+    project_uuid: str = Field(
+        ..., description="UUID of the project this finding belongs to"
+    )
+    last_processed: Optional[datetime] = Field(
+        None, description="Last processed timestamp"
+    )
+    level: FindingLevel = Field(..., description="Severity level of the finding")
+    dismiss: Optional[bool] = Field(
+        None, description="Whether the finding is dismissed"
+    )
+    remediation: Optional[str] = Field(None, description="Remediation guidance")
+    finding_metadata: Optional[dict] = Field(
+        None, description="Complex nested structure"
+    )
+    summary: Optional[str] = Field(None, description="Finding summary")
+    finding_tags: Optional[List[str]] = Field(
+        None, description="Tags associated with the finding"
+    )
+    target_uuid: Optional[str] = Field(None, description="Target resource UUID")
+    extra_key: Optional[str] = Field(None, description="Extra key information")
+    method: Optional[AnalysisMethod] = Field(None, description="Analysis method used")
 
     @field_validator("level", mode="before")
     @classmethod
@@ -246,99 +244,73 @@ class TenantMeta(BaseModel):
     namespace: str
 
 
-class Finding(BaseModel):
+class Finding(BaseResource):
     """
-    An Endor Labs finding entity based on API specification.
+    An Endor Labs finding entity extending BaseResource.
 
-    Attributes:
-        uuid: Unique identifier for the finding
-        tenant_meta: Tenant metadata including namespace
-        meta: Finding metadata
-        spec: Finding specification including severity and details
-        context: Context information for the finding
+    Finding-specific fields (universal fields inherited from BaseResource).
     """
 
-    uuid: str
-    tenant_meta: TenantMeta
-    meta: FindingMeta
-    spec: FindingSpec
-    context: Context
+    # Finding-specific fields (universal fields inherited from BaseResource)
+    spec: FindingSpec = Field(..., description="Finding specification")  # type: ignore
+    finding_context: Context = Field(
+        ..., description="Context information for the finding", alias="context"
+    )
+
+    model_config = ConfigDict(extra="ignore")
+
+    def __init__(self, **data):
+        # Convert spec to FindingSpec if it's a dict
+        if "spec" in data and isinstance(data["spec"], dict):
+            data["spec"] = FindingSpec(**data["spec"])
+        super().__init__(**data)
 
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            # Define expected fields for each model
-            model_fields = {
-                "meta": {
-                    "create_time",
-                    "update_time",
-                    "upsert_time",
-                    "name",
-                    "kind",
-                    "version",
-                    "description",
-                    "parent_uuid",
-                    "parent_kind",
-                    "tags",
-                    "annotations",
-                    "created_by",
-                    "updated_by",
-                    "references",
-                    "index_data",
-                },
-                "spec": {
-                    "project_uuid",
-                    "last_processed",
-                    "level",
-                    "dismiss",
-                    "remediation",
-                    "finding_metadata",
-                    "summary",
-                    "finding_tags",
-                    "target_uuid",
-                    "extra_key",
-                    "method",
-                    "target_dependency_package_name",
-                    "target_dependency_name",
-                    "target_dependency_version",
-                    "explanation",
-                    "remediation_action",
-                    "source_code_version",
-                    "reachable_paths",
-                    "ecosystem",
-                    "finding_categories",
-                    "relationship",
-                    "latest_version",
-                    "dependency_file_paths",
-                    "approximation",
-                    "proposed_version",
-                    "exceptions",
-                    "actions",
-                    "fixing_upgrades",
-                    "fixing_patch",
-                    "code_owners",
-                    "location_urls",
-                    "call_graph_analysis_type",
-                },
-                "context": {
-                    "id",
-                    "type",
-                    "scan_uuid",
-                    "scan_type",
-                    "scan_time",
-                    "will_be_deleted_at",
-                    "tags",
-                },
-                "tenant_meta": {"namespace"},
+        if info.field_name == "spec" and isinstance(v, dict):
+            # Log unknown fields for schema drift detection in spec
+            known_fields = {
+                "project_uuid",
+                "last_processed",
+                "level",
+                "dismiss",
+                "remediation",
+                "finding_metadata",
+                "summary",
+                "finding_tags",
+                "target_uuid",
+                "extra_key",
+                "method",
+                "target_dependency_package_name",
+                "target_dependency_name",
+                "target_dependency_version",
+                "explanation",
+                "remediation_action",
+                "source_code_version",
+                "reachable_paths",
+                "ecosystem",
+                "finding_categories",
+                "relationship",
+                "latest_version",
+                "dependency_file_paths",
+                "approximation",
+                "proposed_version",
+                "exceptions",
+                "actions",
+                "fixing_upgrades",
+                "fixing_patch",
+                "code_owners",
+                "location_urls",
+                "call_graph_analysis_type",
             }
-
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields[info.field_name], f"Finding.{info.field_name}"
+            unknown_fields = set(v.keys()) - known_fields
+            if unknown_fields:
+                logger.warning(
+                    f"Schema drift detected in {info.field_name}: "
+                    f"unknown fields {unknown_fields}"
                 )
-
         return v
 
 
@@ -387,8 +359,15 @@ class UpdateFindingPayload(BaseModel):
     context: Context
 
 
+def _get_finding_ops(client: APIClient) -> BaseResourceOperations:
+    """Get BaseResourceOperations instance for findings."""
+    return BaseResourceOperations(client, "findings", Finding)
+
+
 def list_findings(
-    client: APIClient, tenant_meta_namespace: str, **kwargs
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: Optional[ListParameters] = None,
 ) -> List[Finding]:
     """
     List findings in a namespace.
@@ -396,25 +375,14 @@ def list_findings(
     Args:
         client: APIClient instance
         tenant_meta_namespace: Canonical namespace name (e.g., 'tenant.namespace')
-        **kwargs: Additional query parameters
+        list_params: Optional list parameters for filtering, pagination, etc.
 
     Returns:
         List of Finding objects
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/findings",
-            headers=headers,
-            params=kwargs,
-        )
-        data = res.json()
-        # Handle the actual API response structure: list.objects
-        findings_data = data.get("list", {}).get("objects", [])
-        return [Finding(**finding) for finding in findings_data]
-    except Exception as e:
-        print(f"Error listing findings: {e}")
-        return []
+    ops = _get_finding_ops(client)
+    results = ops.list(tenant_meta_namespace, list_params)
+    return [Finding(**item.model_dump()) for item in results]  # type: ignore
 
 
 def get_finding(
@@ -431,17 +399,11 @@ def get_finding(
     Returns:
         Finding object if found, None otherwise
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/findings/{finding_uuid}",
-            headers=headers,
-        )
-        data = res.json()
-        return Finding(**data)
-    except Exception as e:
-        logger.error(f"Error getting finding {finding_uuid}: {e}", exc_info=True)
-        return None
+    ops = _get_finding_ops(client)
+    result = ops.get(tenant_meta_namespace, finding_uuid)
+    if result:
+        return Finding(**result.model_dump())  # type: ignore
+    return None
 
 
 def create_finding(

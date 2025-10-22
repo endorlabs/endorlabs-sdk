@@ -10,7 +10,9 @@ from typing import Any, Dict
 from ..query import query_holocron
 
 
-def format_result(result: Dict[str, Any], format_type: str = "text") -> str:
+def format_result(
+    result: Dict[str, Any], format_type: str = "text", max_content: int = 500
+) -> str:
     """Format a single query result for display."""
     if format_type == "json":
         return json.dumps(result, indent=2)
@@ -21,8 +23,8 @@ def format_result(result: Dict[str, Any], format_type: str = "text") -> str:
     metadata = result.get("metadata", {})
 
     # Truncate content for display
-    if len(content) > 200:
-        content = content[:200] + "..."
+    if len(content) > max_content:
+        content = content[:max_content] + "..."
 
     output = f"Score: {score:.3f}\n"
     output += f"Content: {content}\n"
@@ -59,7 +61,11 @@ def query_command(args):  # noqa: C901
                 print(f"Found {len(results['results'])} results:\n")
 
                 for result in results["results"]:
-                    print(format_result(result, args.format))
+                    print(
+                        format_result(
+                            result, args.format, getattr(args, "max_content", 500)
+                        )
+                    )
 
         except Exception as e:
             print(f"Query failed: {e}")
@@ -90,7 +96,11 @@ def query_command(args):  # noqa: C901
                     print(f"\nFound {len(results['results'])} results:\n")
 
                     for result in results["results"]:
-                        print(format_result(result, args.format))
+                        print(
+                            format_result(
+                                result, args.format, getattr(args, "max_content", 500)
+                            )
+                        )
 
                     print()  # Add spacing between queries
 

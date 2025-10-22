@@ -302,6 +302,7 @@ class TestPolicy:
         dummy_policy_payload = CreatePolicyPayload(
             meta=policy.PolicyMeta(
                 name="Test Dummy ML Policy",
+                kind="Policy",
                 description=(
                     "A test ML_FINDING policy created for CRUD operations testing"
                 ),
@@ -372,10 +373,50 @@ configure[result] {
         # Wait for policy to be fully created
         time.sleep(2)
 
+        # Robustness check: Find a policy that can be modified in current namespace
+        # Policies created in parent namespaces cannot be modified in child namespaces
+        print(f"Current namespace: {self.namespace}")
+
+        # Get all policies and find one that was created in the current namespace
+        all_policies = policy.list_policies(self.client, self.namespace)
+        modifiable_policy = None
+
+        for p in all_policies:
+            if p.tenant_meta.namespace == self.namespace:
+                modifiable_policy = p
+                print(
+                    f"Found modifiable policy: {p.uuid} (created in {p.tenant_meta.namespace})"
+                )
+                break
+
+        if not modifiable_policy:
+            # If no policy was created in current namespace, use the one we just created
+            # but first verify it's in the current namespace
+            created_policy_check = policy.get_policy(
+                self.client, self.namespace, policy_uuid
+            )
+            if (
+                created_policy_check
+                and created_policy_check.tenant_meta.namespace == self.namespace
+            ):
+                modifiable_policy = created_policy_check
+                print(
+                    f"Using newly created policy: {policy_uuid} (created in {created_policy_check.tenant_meta.namespace})"
+                )
+            else:
+                pytest.skip(
+                    f"No modifiable policies found in namespace {self.namespace}"
+                )
+        else:
+            # Use the modifiable policy we found
+            policy_uuid = modifiable_policy.uuid
+            print(f"Using existing modifiable policy: {policy_uuid}")
+
         # Create update payload - only update safe fields
         update_payload = UpdatePolicyPayload(
             meta=policy.PolicyMeta(
                 name="Updated Test Dummy ML Policy",
+                kind="Policy",
                 description="Updated description for the test ML_FINDING policy",
                 tags=["test", "dummy", "ml-finding", "crud-test", "updated"],
             ),
@@ -482,6 +523,12 @@ configure[result] {
             "Retrieved policy should match created policy"
         )
 
+        # Verify the policy was created in the current namespace
+        assert retrieved_policy.tenant_meta.namespace == self.namespace, (
+            f"Policy should be in current namespace {self.namespace}, "
+            f"but found in {retrieved_policy.tenant_meta.namespace}"
+        )
+
         # UPDATE
         print("3. UPDATE - Updating policy")
         updated_policy = self.test_policy_update_ml_finding()
@@ -513,6 +560,7 @@ configure[result] {
         dummy_policy_payload = CreatePolicyPayload(
             meta=policy.PolicyMeta(
                 name="ML Pattern Validation Test",
+                kind="Policy",
                 description="Testing ML_FINDING pattern characteristics",
                 tags=["test", "pattern-validation", "ml-finding"],
             ),

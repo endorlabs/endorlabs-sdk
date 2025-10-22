@@ -12,7 +12,8 @@ from ..manager import VectorDBManager
 def sync_command(args):
     """Execute the sync command."""
     if args.verbose:
-        logging.basicConfig(level=logging.INFO)
+        from endor_cockpit.utils.logging_config import setup_logging
+        logger = setup_logging("holocron")
 
     print("Syncing knowledge base...")
 

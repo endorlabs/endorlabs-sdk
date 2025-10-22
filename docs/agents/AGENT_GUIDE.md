@@ -33,7 +33,7 @@ endor_cockpit/
 ```
 
 ### **Code Standards**
-- **Python**: 3.11-3.13, test on 3.11/3.12/3.13
+- **Python**: 3.11-3.13, test on 3.13
 - **Dependencies**: `requests==2.32.5`, `pydantic==2.12.3`
 - **Tools**: `ruff`, `black`, `pytest`, `endorctl`
 

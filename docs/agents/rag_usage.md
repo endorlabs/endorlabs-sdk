@@ -36,6 +36,46 @@ uv run python workflow/init_vector_db.py --rebuild
 
 The Endor Cockpit RAG system provides semantic search capabilities over the project documentation using ChromaDB vector database. This enables AI agents to retrieve relevant context for API usage, troubleshooting, design patterns, and best practices.
 
+## Chunking Strategy
+
+**Date Updated**: 2025-10-21  
+**Logbook Reference**: `.workspace/logbook.md#2025-10-21-holocron-chunking-strategy-optimization`
+
+The RAG system uses data-driven chunking strategies based on empirical analysis of 1,910 sections across all content types. Optimal chunk sizes are determined using P95 (95th percentile) + 1000 token buffer.
+
+### Content Type Chunking Rules
+
+**Internal Documentation** (`docs/`):
+- **Chunk Size**: 1,607 tokens (P95: 607 + 1000 buffer)
+- **Split Points**: H2 headers only (`## `)
+- **Preservation**: Complete H2 sections with all H3 subsections
+- **Overlap**: 400 tokens for context continuity
+
+**External Documentation** (`.workspace/downloads/user-docs/`):
+- **Chunk Size**: 2,165 tokens (P95: 1165 + 1000 buffer)
+- **Split Points**: Major section delimiters (`===`, `---`, `\n\n`)
+- **Preservation**: Complete procedures and workflows
+- **Overlap**: 500 tokens for context continuity
+
+**Code Files** (`src/`, `tests/`):
+- **Chunk Size**: 6,851 tokens (P95: 5851 + 1000 buffer)
+- **Split Points**: Function and class boundaries (`def `, `class `)
+- **Preservation**: Complete functions and classes
+- **Overlap**: 500 tokens for context continuity
+
+**API Specifications** (`.workspace/downloads/openapi-swagger.json`):
+- **Chunk Size**: 5,000 tokens (split by individual endpoints)
+- **Split Points**: Service endpoint boundaries
+- **Preservation**: Complete endpoint definitions
+- **Overlap**: 300 tokens for context continuity
+
+### Semantic Coherence Principles
+
+- **H2-only splitting**: Preserves complete sections with all subsections
+- **Complete section preservation**: Never split H2 sections regardless of size
+- **Context continuity**: Sufficient overlap for semantic coherence
+- **Cross-platform compatibility**: OS-agnostic path handling with debug logging
+
 ## Quick Start
 
 ### Basic Usage

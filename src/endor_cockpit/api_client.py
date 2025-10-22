@@ -67,10 +67,8 @@ class APIClient:
         logging_level: str = "INFO",
     ):
         # Set up logging
-        logging.basicConfig(
-            level=logging_level, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-        self.logger = logging.getLogger(__name__)
+        from endor_cockpit.utils.logging_config import setup_logging
+        self.logger = setup_logging("endor_cockpit")
         self.logger.addFilter(RedactingFilter([redaction_pattern]))
 
         # Initialize API client parameters
@@ -318,10 +316,12 @@ class APIClient:
                 json=payload,
             )
             response.raise_for_status()
-            os.environ["ENDOR_TOKEN"] = response.json()["token"]
-            return response.json()["token"]
+            token = response.json()["token"]
+            os.environ["ENDOR_TOKEN"] = token
+            return token
         except Exception as e:
             self.logger.error(f"Unable to authenticate: {e}")
+            return None
 
     def get_openapi_spec(
         self, url: Optional[str], path: Optional[str]
@@ -357,6 +357,8 @@ class APIClient:
         except Exception as e:
             self.logger.error(f"Unable to retrieve Swagger JSON from {url}: {e}")
             raise  # Re-raise to let caller handle the error
+
+    # TODO: def get_sitemap_xml() # https://docs.endorlabs.com/sitemap.xml
 
     def endorctl(self, command: str) -> str:
         """Executes an endorctl command and returns its output."""
