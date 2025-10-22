@@ -67,10 +67,8 @@ class APIClient:
         logging_level: str = "INFO",
     ):
         # Set up logging
-        logging.basicConfig(
-            level=logging_level, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-        self.logger = logging.getLogger(__name__)
+        from endor_cockpit.utils.logging_config import setup_logging
+        self.logger = setup_logging("endor_cockpit")
         self.logger.addFilter(RedactingFilter([redaction_pattern]))
 
         # Initialize API client parameters

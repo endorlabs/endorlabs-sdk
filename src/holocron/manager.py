@@ -16,11 +16,15 @@ from typing import Dict, List, Optional
 import chromadb
 from chromadb.config import Settings
 
+try:
+    import tomllib  # Python 3.11+
+except ImportError:
+    import tomli as tomllib  # Python < 3.11
+
 logger = logging.getLogger(__name__)
 
-# Chunking strategies for different content types
-# Updated based on empirical analysis with 1000 token buffer
-CHUNKING_STRATEGY = {
+# Default chunking strategy fallback
+DEFAULT_CHUNKING_STRATEGY = {
     "markdown": {
         "max_chunk_size": 1607,  # tokens - P95 (607) + 1000 buffer
         "overlap": 400,  # tokens - increased for better context
@@ -57,6 +61,59 @@ CHUNKING_STRATEGY = {
         "split_by_endpoints": True,  # Split large service groups by individual endpoints
     },
 }
+
+
+def _load_chunking_strategy():
+    """Load chunking strategy from pyproject.toml configuration."""
+    try:
+        with open("pyproject.toml", "rb") as f:
+            config = tomllib.load(f)
+            chunk_config = config.get("tool", {}).get("vector_db", {}).get("chunking", {})
+        
+        return {
+            "markdown": {
+                "max_chunk_size": chunk_config.get("markdown_max_chunk_size", 1607),
+                "overlap": chunk_config.get("markdown_overlap", 400),
+                "split_on": ["##"],  # Only H2 headers - preserve H3 subsections
+                "preserve_structure": True,
+                "preserve_complete_sections": True,  # Never split H2 sections
+            },
+            "external_docs": {
+                "max_chunk_size": chunk_config.get("external_docs_max_chunk_size", 2165),
+                "overlap": chunk_config.get("external_docs_overlap", 500),
+                "split_on": [
+                    "===",
+                    "---",
+                    "\n\n",
+                    "Introduction",
+                    "About",
+                    "Prerequisites",
+                ],  # External doc patterns - prioritize major sections
+                "preserve_structure": True,
+                "preserve_complete_sections": True,  # Preserve complete procedures
+            },
+            "code": {
+                "max_chunk_size": chunk_config.get("code_max_chunk_size", 6851),
+                "overlap": chunk_config.get("code_overlap", 500),
+                "split_on": ["def ", "class "],  # Functions and classes only
+                "preserve_structure": True,
+                "preserve_complete_sections": True,  # Keep complete functions/classes
+            },
+            "api_spec": {
+                "max_chunk_size": chunk_config.get("api_spec_max_chunk_size", 5000),
+                "overlap": chunk_config.get("api_spec_overlap", 300),
+                "split_on": ['"paths":', '"components":', '"definitions":'],
+                "preserve_structure": True,
+                "split_by_endpoints": True,  # Split large service groups by individual endpoints
+            },
+        }
+    except Exception as e:
+        logger.warning(f"Could not load chunking config from pyproject.toml: {e}")
+        return DEFAULT_CHUNKING_STRATEGY
+
+
+# Load chunking strategy from configuration
+CHUNKING_STRATEGY = _load_chunking_strategy()
 
 # Content type detection patterns
 CONTENT_TYPE_PATTERNS = {
