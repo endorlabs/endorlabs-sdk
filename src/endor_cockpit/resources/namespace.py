@@ -275,13 +275,13 @@ namespace = "your-tenant.namespace"
 import logging
 import os
 import sys
-from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
-from ..utils import SchemaDriftDetector
+from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..types import ListParameters
 
 # Set up logger with redaction filter
 logger = logging.getLogger(__name__)
@@ -289,27 +289,15 @@ logger.addFilter(RedactingFilter([redaction_pattern]))
 
 
 # Pydantic Models for Namespace data with OpenAPI validation
-class NamespaceMeta(BaseModel):
+class NamespaceMeta(BaseMeta):
     """
-    Metadata for an Endor Labs namespace.
+    Metadata for an Endor Labs namespace extending BaseMeta.
 
-    Attributes:
-        name: The name of the namespace (1-255 characters)
-        description: A description of the namespace's purpose (can be empty)
-        created_at: Timestamp when the namespace was created
-        updated_at: Timestamp when the namespace was last updated
+    Namespace-specific fields only (universal fields inherited from BaseMeta).
     """
 
-    name: str = Field(
-        ..., min_length=1, max_length=255, description="The name of the namespace"
-    )
-    description: str = Field("", description="Description of the namespace's purpose")
-    created_at: Optional[datetime] = Field(
-        None, description="Timestamp when the namespace was created"
-    )
-    updated_at: Optional[datetime] = Field(
-        None, description="Timestamp when the namespace was last updated"
-    )
+    # Namespace-specific fields (universal fields inherited from BaseMeta)
+    pass  # No additional fields needed, all were universal
 
     @field_validator("name")
     @classmethod
@@ -318,6 +306,13 @@ class NamespaceMeta(BaseModel):
         if not v.strip():
             raise ValueError("name cannot be empty")
         return v
+
+
+class NamespaceSpec(BaseSpec):
+    """Namespace specification extending BaseSpec."""
+
+    # Namespace-specific fields (universal fields inherited from BaseSpec)
+    pass  # No additional fields needed for namespace spec
 
 
 class NamespaceMetaCreate(BaseModel):
@@ -371,53 +366,37 @@ class UpdateNamespacePayload(BaseModel):
     )
 
 
-class Namespace(BaseModel):
+class Namespace(BaseResource):
     """
-    An Endor Labs namespace entity.
+    An Endor Labs namespace entity extending BaseResource.
 
-    Attributes:
-        uuid: Unique identifier for the namespace
-        meta: Metadata associated with the namespace
+    Namespace-specific fields (universal fields inherited from BaseResource).
     """
 
-    uuid: str = Field(..., description="Unique identifier for the namespace")
-    meta: NamespaceMeta = Field(
-        ..., description="Metadata associated with the namespace"
-    )
+    # Namespace-specific fields (universal fields inherited from BaseResource)
+    spec: NamespaceSpec = Field(..., description="Namespace specification")  # type: ignore
+
+    model_config = ConfigDict(extra="ignore")
+
+    def __init__(self, **data):
+        # Convert spec to NamespaceSpec if it's a dict
+        if "spec" in data and isinstance(data["spec"], dict):
+            data["spec"] = NamespaceSpec(**data["spec"])
+        super().__init__(**data)
 
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            # Define expected fields for each model
-            model_fields = {
-                "meta": {
-                    "name",
-                    "description",
-                    "created_at",
-                    "updated_at",
-                    "created_by",
-                    "updated_by",
-                    "parent_uuid",
-                    "parent_kind",
-                    "kind",
-                    "version",
-                    "tags",
-                    "annotations",
-                    "references",
-                    "index_data",
-                    "create_time",
-                    "update_time",
-                    "upsert_time",
-                }
-            }
-
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields[info.field_name], f"Namespace.{info.field_name}"
+        if info.field_name == "spec" and isinstance(v, dict):
+            # Log unknown fields for schema drift detection in spec
+            known_fields = set()  # No specific fields for namespace spec
+            unknown_fields = set(v.keys()) - known_fields
+            if unknown_fields:
+                logger.warning(
+                    f"Schema drift detected in {info.field_name}: "
+                    f"unknown fields {unknown_fields}"
                 )
-
         return v
 
     @field_validator("uuid")
@@ -451,13 +430,23 @@ class CreateNamespacePayload(BaseModel):
     )
 
 
-def list_namespaces(client: APIClient, tenant_namespace: str) -> List[Namespace]:
+def _get_namespace_ops(client: APIClient) -> BaseResourceOperations:
+    """Get BaseResourceOperations instance for namespaces."""
+    return BaseResourceOperations(client, "namespaces", Namespace)
+
+
+def list_namespaces(
+    client: APIClient,
+    tenant_namespace: str,
+    list_params: Optional[ListParameters] = None,
+) -> List[Namespace]:
     """
     List all namespaces under the specified tenant namespace.
 
     Args:
         client: The APIClient instance to use for the request
         tenant_namespace: The parent namespace to list namespaces from
+        list_params: Optional list parameters for filtering, pagination, etc.
 
     Returns:
         List[Namespace]: A list of Namespace objects. Empty list if error occurs.
@@ -466,16 +455,9 @@ def list_namespaces(client: APIClient, tenant_namespace: str) -> List[Namespace]
         requests.exceptions.HTTPError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
     """
-    try:
-        headers = client.default_headers
-        res = client.get(
-            f"v1/namespaces/{tenant_namespace}/namespaces", headers=headers
-        )
-        data = res.json().get("list", {}).get("objects", [])
-        return [Namespace(**item) for item in data]
-    except Exception as e:
-        logger.error(f"Error listing namespaces: {e}", exc_info=True)
-        return []
+    ops = _get_namespace_ops(client)
+    results = ops.list(tenant_namespace, list_params)
+    return [Namespace(**item.model_dump()) for item in results]  # type: ignore
 
 
 def create_namespace(
@@ -505,7 +487,9 @@ def create_namespace(
             data=payload.model_dump(),
         )
         if res is None:
-            logger.error("Failed to create namespace: No response from API (likely authentication failure)")
+            logger.error(
+                "Failed to create namespace: No response from API (likely authentication failure)"
+            )
             return None
         data = res.json()
         return Namespace(**data)

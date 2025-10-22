@@ -36,7 +36,7 @@ CHUNKING_STRATEGY = {
             "---",
             "\n\n",
             "Introduction",
-            "About", 
+            "About",
             "Prerequisites",
         ],  # External doc patterns - prioritize major sections
         "preserve_structure": True,
@@ -273,8 +273,9 @@ class VectorDBManager:
                 current_size += len(line) + 1  # +1 for newline
 
                 # Check if chunk is too large (only split if not preserving complete sections)
-                if (current_size > strategy["max_chunk_size"] and 
-                    not strategy.get("preserve_complete_sections", False)):
+                if current_size > strategy["max_chunk_size"] and not strategy.get(
+                    "preserve_complete_sections", False
+                ):
                     # Save current chunk
                     chunk_text = "\n".join(current_chunk)
                     chunks.append(
@@ -382,7 +383,11 @@ class VectorDBManager:
             )
 
     def _update_header_tracking(
-        self, line: str, h1_title: Optional[str], current_section: Optional[str], current_subsection: Optional[str]
+        self,
+        line: str,
+        h1_title: Optional[str],
+        current_section: Optional[str],
+        current_subsection: Optional[str],
     ) -> tuple:
         """Update header tracking variables based on line content."""
         header_text = self._clean_external_header_text(line)
@@ -726,21 +731,23 @@ class VectorDBManager:
     def _get_files_to_process(self) -> List[str]:
         """Get list of files to process for vector DB."""
         files_to_process = []
-        
+
         logger.info("=== FILE DISCOVERY DEBUG ===")
         logger.info(f"INCLUDE_DIRS: {INCLUDE_DIRS}")
         logger.info(f"EXCLUDE_DIRS: {EXCLUDE_DIRS}")
 
         for include_path in INCLUDE_DIRS:
             logger.info(f"Processing include path: {include_path}")
-            
+
             if os.path.isfile(include_path):
                 logger.info(f"  -> File: {include_path}")
-                if self._is_text_file(include_path) and self._should_rebuild_file(include_path):
+                if self._is_text_file(include_path) and self._should_rebuild_file(
+                    include_path
+                ):
                     files_to_process.append(include_path)
-                    logger.info(f"    -> INCLUDED")
+                    logger.info("    -> INCLUDED")
                 else:
-                    logger.info(f"    -> EXCLUDED (not text or should not rebuild)")
+                    logger.info("    -> EXCLUDED (not text or should not rebuild)")
             elif os.path.isdir(include_path):
                 logger.info(f"  -> Directory: {include_path}")
                 for root, dirs, files in os.walk(include_path):
@@ -750,17 +757,21 @@ class VectorDBManager:
                     # OS-agnostic path normalization
                     normalized_root = os.path.normpath(root).replace(os.path.sep, "/")
                     logger.info(f"    -> Walking: {normalized_root}")
-                    
+
                     # Check for excluded paths using normalized paths
                     if any(excluded in normalized_root for excluded in EXCLUDE_DIRS):
-                        logger.info(f"    -> SKIPPED (excluded path): {normalized_root}")
+                        logger.info(
+                            f"    -> SKIPPED (excluded path): {normalized_root}"
+                        )
                         continue
 
                     for file in files:
                         file_path = os.path.normpath(os.path.join(root, file))
                         normalized_file_path = file_path.replace(os.path.sep, "/")
-                        
-                        if self._is_text_file(file_path) and self._should_rebuild_file(file_path):
+
+                        if self._is_text_file(file_path) and self._should_rebuild_file(
+                            file_path
+                        ):
                             files_to_process.append(file_path)
                             logger.info(f"      -> INCLUDED: {file}")
                         else:

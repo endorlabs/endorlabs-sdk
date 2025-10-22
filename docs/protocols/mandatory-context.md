@@ -27,7 +27,7 @@ This protocol defines the essential context that must be available to all agents
 **Failure**: Block commit if security issues found
 
 ### 4. Error Recovery Basics
-**Source**: `.workspace/validation.log`
+**Source**: `.workspace/logbook.log`
 **Purpose**: Understand and resolve common issues
 **Pattern**: Check logs → Apply fixes → Retry operation
 **When**: When operations fail
