@@ -7,6 +7,7 @@ for enhanced type safety and LLM understanding.
 
 from typing import Any, Dict, List, Literal, Optional
 
+from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 # Resource Types
@@ -148,3 +149,32 @@ SchemaDriftInfo = TypedDict(
     "SchemaDriftInfo",
     {"model_name": str, "unknown_fields": List[str], "context": str, "timestamp": str},
 )
+
+
+# Universal List Parameters
+class ListParameters(BaseModel):
+    """Universal list parameters for all Endor Labs resources."""
+
+    filter: Optional[str] = Field(
+        None,
+        description="Filter expression (e.g., 'spec.level==FINDING_LEVEL_CRITICAL')",
+    )
+    mask: Optional[str] = Field(
+        None, description="Field mask (e.g., 'meta.name,spec.level')"
+    )
+    page_size: Optional[int] = Field(None, description="Results per page")
+    page_token: Optional[str] = Field(None, description="Page token for pagination")
+    sort_field: Optional[str] = Field(
+        None, description="Sort field (e.g., 'meta.create_time')"
+    )
+    sort_order: Optional[str] = Field("asc", description="Sort order (asc/desc)")
+    count: Optional[bool] = Field(
+        None, description="Count only (return count instead of objects)"
+    )
+    include_child_namespaces: Optional[bool] = Field(
+        None, description="Include child namespaces"
+    )
+    from_date: Optional[str] = Field(
+        None, description="Created after date (ISO format)"
+    )
+    to_date: Optional[str] = Field(None, description="Created before date (ISO format)")

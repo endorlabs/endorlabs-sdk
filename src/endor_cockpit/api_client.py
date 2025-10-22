@@ -359,8 +359,8 @@ class APIClient:
         except Exception as e:
             self.logger.error(f"Unable to retrieve Swagger JSON from {url}: {e}")
             raise  # Re-raise to let caller handle the error
-        
-    # TODO: def get_sitemap_xml() # https://docs.endorlabs.com/sitemap.xml 
+
+    # TODO: def get_sitemap_xml() # https://docs.endorlabs.com/sitemap.xml
 
     def endorctl(self, command: str) -> str:
         """Executes an endorctl command and returns its output."""
