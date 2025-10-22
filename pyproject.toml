@@ -18,6 +18,7 @@ dependencies = [
     "pydantic==2.12.3",
     "chromadb==1.2.0",
     "markdownify==1.2.0",
+    "tomli==2.2.1; python_version < '3.11'",
 ]
 
  [project.optional-dependencies]
@@ -106,6 +107,10 @@ holocron = [
     "markdownify==1.2.0"
 ]
 
+# Endor Cockpit configuration
+[tool.endor_cockpit]
+default_namespace = "endor-solutions-tgowan.cockpit"
+
 # Vector Database configuration
 [tool.vector_db]
 # ChromaDB configuration
@@ -113,13 +118,19 @@ chroma_path = "workflow/vector_db"
 collection_name = "endor_cockpit_docs"
 embedding_model = "text-embedding-3-small"
 
-# Chunking strategy configuration
+# Chunking strategy configuration - empirical values from analysis
 [tool.vector_db.chunking]
-markdown_max_chunk_size = 1000
-markdown_overlap = 200
-code_max_chunk_size = 800
-code_overlap = 100
-api_spec_max_chunk_size = 2000
+# Markdown (internal docs) - empirical P95 + 1000 buffer
+markdown_max_chunk_size = 1607
+markdown_overlap = 400
+# External docs - empirical P95 + 1000 buffer
+external_docs_max_chunk_size = 2165
+external_docs_overlap = 500
+# Code files - empirical P95 + 1000 buffer
+code_max_chunk_size = 6851
+code_overlap = 500
+# OpenAPI specs
+api_spec_max_chunk_size = 5000
 api_spec_overlap = 300
 
 # Content type detection patterns
@@ -130,5 +141,13 @@ api_spec = ["openapi.*\\.json$", "swagger.*\\.json$", "\\.yaml$", "\\.yml$"]
 
 # Logging configuration
 [tool.logging]
+level = "INFO"
+format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+[tool.logging.endor_cockpit]
+level = "INFO"
+format = "%(asctime)s - %(levelname)s - %(message)s"
+
+[tool.logging.holocron]
 level = "INFO"
 format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
