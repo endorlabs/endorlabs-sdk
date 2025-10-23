@@ -68,6 +68,7 @@ class APIClient:
     ):
         # Set up logging
         from endor_cockpit.utils.logging_config import setup_logging
+
         self.logger = setup_logging("endor_cockpit")
         self.logger.addFilter(RedactingFilter([redaction_pattern]))
 

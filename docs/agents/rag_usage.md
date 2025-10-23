@@ -26,11 +26,16 @@ uv pip install -e ".[rag]"
 ### Vector Database Initialization
 ```bash
 # Initialize the knowledge base (first time only)
-uv run python workflow/init_vector_db.py
+uv run python -m holocron init
 
-# Rebuild after documentation updates
-uv run python workflow/init_vector_db.py --rebuild
+# Sync after documentation updates
+uv run python -m holocron sync
+
+# Validate system health
+python scripts/validate_holocron.py
 ```
+
+**Reference**: See [docs/holocron/README.md](../holocron/README.md) for comprehensive Holocron documentation and [docs/holocron/TROUBLESHOOTING.md](../holocron/TROUBLESHOOTING.md) for issue resolution.
 
 ## Overview
 
@@ -473,20 +478,32 @@ class EndorAgent:
 
 ### Common Issues
 
-1. **Database not found**: Ensure `workflow/vector_db/` exists and is initialized
-2. **Empty results**: Check if vector database is populated with `get_vector_db_info()`
-3. **Low similarity scores**: Try rephrasing queries or check database quality
-4. **Import errors**: Ensure `endor-cockpit` package is installed with RAG dependencies
+1. **ChromaDB Collection Not Found**: Run `uv run python -m holocron init` to recreate collection
+2. **External Docs Tiny Chunks**: Check chunk size configuration (should be 6000 for external_docs)
+3. **Cross-Platform Path Issues**: Ensure `os.path.normpath()` is used for all path operations
+4. **Empty results**: Check if vector database is populated with `uv run python -m holocron query "test"`
+
+### System Validation
+
+```bash
+# Run comprehensive health check
+python scripts/validate_holocron.py
+
+# Check specific components
+python scripts/validate_holocron.py --check-database
+python scripts/validate_holocron.py --check-chunking
+```
 
 ### Debug Mode
 
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Enable debug logging for RAG queries
-results = query_vector_db("test query", n_results=1)
+```bash
+# Enable verbose output
+uv run python -m holocron init --verbose
+uv run python -m holocron sync --verbose
+uv run python -m holocron query "test query" --verbose
 ```
+
+**Reference**: See [docs/holocron/TROUBLESHOOTING.md](../holocron/TROUBLESHOOTING.md) for comprehensive issue resolution and [docs/holocron/README.md](../holocron/README.md) for system overview.
 
 ---
 

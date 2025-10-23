@@ -488,7 +488,8 @@ def create_namespace(
         )
         if res is None:
             logger.error(
-                "Failed to create namespace: No response from API (likely authentication failure)"
+                "Failed to create namespace: No response from API "
+                "(likely authentication failure)"
             )
             return None
         data = res.json()

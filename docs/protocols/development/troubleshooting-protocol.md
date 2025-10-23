@@ -15,7 +15,7 @@ This protocol provides a systematic approach to resolving development issues whi
 - [ ] Note attempted approach with specific function calls
 
 ### 2. Research Phase
-- [ ] Query holocron for related issues: `python -m holocron query "issue description"`
+- [ ] Query holocron for related issues: `uv run python -m holocron query "issue description"`
 - [ ] Search existing documentation for similar problems
 - [ ] Check `.workspace/logbook.md` for previous solutions
 - [ ] Review API specification for expected behavior
@@ -42,7 +42,7 @@ This protocol provides a systematic approach to resolving development issues whi
 - [ ] Mark logbook entry "Reviewed for Promotion"
 - [ ] Follow [Knowledge Capture Workflow](../knowledge-capture-workflow.md)
 - [ ] Update relevant documentation
-- [ ] Sync knowledge base with `python -m holocron sync`
+- [ ] Sync knowledge base with `uv run python -m holocron sync`
 
 ## Common Issue Patterns
 

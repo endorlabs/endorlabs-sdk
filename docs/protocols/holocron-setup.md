@@ -12,20 +12,20 @@ This protocol provides step-by-step guidance for AI agents to initialize and man
 
 ```bash
 # Initialize workspace and knowledge base
-python -m holocron init
+uv run python -m holocron init
 
 # Verify setup
-python -m holocron query "How do I create a namespace?"
+uv run python -m holocron query "How do I create a namespace?"
 ```
 
 ### **Regular Operations**
 
 ```bash
 # Sync knowledge base after documentation updates
-python -m holocron sync
+uv run python -m holocron sync
 
 # Query for specific information
-python -m holocron query "How do I troubleshoot 403 errors?"
+uv run python -m holocron query "How do I troubleshoot 403 errors?"
 ```
 
 ## 📋 **Detailed Workflow**
@@ -67,7 +67,7 @@ The system processes documentation from:
 
 ### **Initialize Workspace**
 ```bash
-python -m holocron init [--force] [--verbose]
+uv run python -m holocron init [--force] [--verbose]
 ```
 
 **Options:**
@@ -81,7 +81,7 @@ python -m holocron init [--force] [--verbose]
 
 ### **Sync Knowledge Base**
 ```bash
-python -m holocron sync [--rebuild] [--verbose]
+uv run python -m holocron sync [--rebuild] [--verbose]
 ```
 
 **Options:**
@@ -95,7 +95,7 @@ python -m holocron sync [--rebuild] [--verbose]
 
 ### **Query Knowledge Base**
 ```bash
-python -m holocron query [query_text] [--results N] [--format text|json]
+uv run python -m holocron query [query_text] [--results N] [--format text|json]
 ```
 
 **Options:**
@@ -106,20 +106,56 @@ python -m holocron query [query_text] [--results N] [--format text|json]
 **Examples:**
 ```bash
 # Specific query
-python -m holocron query "How do I create a namespace?"
+uv run python -m holocron query "How do I create a namespace?"
 
 # Interactive mode
-python -m holocron query
+uv run python -m holocron query
 
 # JSON output for programmatic use
-python -m holocron query "troubleshoot 403" --format json
+uv run python -m holocron query "troubleshoot 403" --format json
 ```
 
 ## 🐛 **Troubleshooting**
 
+### **Quick Health Check**
+
+**System Validation**:
+```bash
+# Run comprehensive health check
+python scripts/validate_holocron.py
+
+# Check specific components
+python scripts/validate_holocron.py --check-config
+python scripts/validate_holocron.py --check-database
+```
+
 ### **Common Issues**
 
-**1. Missing Environment Variables**
+**1. ChromaDB Collection Not Found**
+```
+❌ Collection [endor_cockpit_docs] does not exist
+```
+**Solution:** Initialize the holocron system:
+```bash
+uv run python -m holocron init --verbose
+```
+
+**2. External Docs Tiny Chunks**
+```
+Found chunks with only headers (19-40 characters)
+```
+**Solution:** Check chunk size configuration (should be 6000 for external_docs):
+```bash
+uv run python -m holocron config show
+```
+
+**3. Cross-Platform Path Issues**
+```
+Content type detection fails on different operating systems
+```
+**Solution:** Ensure `os.path.normpath()` is used for all path operations
+
+**4. Missing Environment Variables**
 ```
 ❌ Missing required environment variables: OPENAI_API_KEY
 ```
@@ -128,40 +164,16 @@ python -m holocron query "troubleshoot 403" --format json
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
-**2. Missing Dependencies**
-```
-❌ Missing required packages: chromadb, openai
-```
-**Solution:** Install RAG dependencies:
-```bash
-uv pip install -e '.[holocron]'
-```
-
-**3. Vector Database Not Found**
-```
-❌ Failed to initialize vector database: Collection not found
-```
-**Solution:** Rebuild the knowledge base:
-```bash
-python -m holocron sync --rebuild
-```
-
-**4. No Results from Query**
-```
-Found 0 results
-```
-**Solution:** 
-- Check if knowledge base is initialized: `python -m holocron sync`
-- Try broader search terms
-- Verify documentation files exist in `docs/`
-
 ### **Debug Mode**
 
 Use `--verbose` flag for detailed output:
 ```bash
-python -m holocron init --verbose
-python -m holocron sync --verbose
+uv run python -m holocron init --verbose
+uv run python -m holocron sync --verbose
+uv run python -m holocron query "test query" --verbose
 ```
+
+**Reference**: See [docs/holocron/TROUBLESHOOTING.md](../holocron/TROUBLESHOOTING.md) for comprehensive issue resolution and [docs/holocron/README.md](../holocron/README.md) for system overview.
 
 ## 🔄 **Integration with Agent Workflow**
 
@@ -245,7 +257,7 @@ During `holocron init`, the following external resources are automatically downl
 External documentation is timestamped in the manifest file:
 
 - **Freshness check**: Automatic warning if downloads >7 days old
-- **Manual refresh**: Run `python -m holocron init --force` to update
+- **Manual refresh**: Run `uv run python -m holocron init --force` to update
 - **Check status**: Review `.workspace/holocron_data/vector_db_manifest.json`
 - **Manifest location**: `external_docs` section in manifest
 
@@ -284,8 +296,8 @@ Each chunk includes:
 
 ### **For AI Agents**
 
-1. **Always query first**: Use `python -m holocron query` before starting any task
-2. **Keep knowledge base updated**: Run `python -m holocron sync` after documentation changes
+1. **Always query first**: Use `uv run python -m holocron query` before starting any task
+2. **Keep knowledge base updated**: Run `uv run python -m holocron sync` after documentation changes
 3. **Use specific queries**: More specific queries yield better results
 4. **Check similarity scores**: Higher scores indicate more relevant content
 

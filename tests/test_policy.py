@@ -385,7 +385,8 @@ configure[result] {
             if p.tenant_meta.namespace == self.namespace:
                 modifiable_policy = p
                 print(
-                    f"Found modifiable policy: {p.uuid} (created in {p.tenant_meta.namespace})"
+                    f"Found modifiable policy: {p.uuid} (created in "
+                    f"{p.tenant_meta.namespace})"
                 )
                 break
 
@@ -401,7 +402,8 @@ configure[result] {
             ):
                 modifiable_policy = created_policy_check
                 print(
-                    f"Using newly created policy: {policy_uuid} (created in {created_policy_check.tenant_meta.namespace})"
+                    f"Using newly created policy: {policy_uuid} (created in "
+                    f"{created_policy_check.tenant_meta.namespace})"
                 )
             else:
                 pytest.skip(

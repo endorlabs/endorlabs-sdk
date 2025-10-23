@@ -7,9 +7,9 @@ retrieve relevant context from the knowledge base.
 
 Usage:
     # CLI interface
-    python -m holocron init     # Initialize workspace
-    python -m holocron sync     # Sync knowledge base
-    python -m holocron query    # Query knowledge base
+    uv run python -m holocron init     # Initialize workspace
+    uv run python -m holocron sync     # Sync knowledge base
+    uv run python -m holocron query    # Query knowledge base
 
     # Programmatic interface
     from holocron import query_holocron, init_workspace

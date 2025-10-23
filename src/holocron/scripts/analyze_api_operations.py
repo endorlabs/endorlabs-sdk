@@ -47,8 +47,8 @@ def analyze_openapi_spec(spec_file):
                 # Analyze operations
                 for method in ["get", "post", "patch", "delete", "put"]:
                     if method in path_item:
-                        operation = path_item[method]
-                        summary = operation.get("summary", "")
+                        # operation = path_item[method]  # Not used
+                        # summary = operation.get("summary", "")  # Not used
 
                         # Categorize operations
                         if is_uuid_endpoint:
@@ -78,7 +78,10 @@ def generate_operation_analysis():
 
     spec_file = Path(".workspace/downloads/openapi-swagger.json")
     if not spec_file.exists():
-        print("❌ OpenAPI spec file not found. Run 'python -m holocron sync' first.")
+        print(
+            "❌ OpenAPI spec file not found. Run 'uv run python -m holocron sync' "
+            "first."
+        )
         return
 
     print("🔍 Analyzing OpenAPI specification for operation patterns...")
@@ -99,7 +102,7 @@ def generate_operation_analysis():
 
     # Count resources with each operation type
     operation_counts = defaultdict(int)
-    for resource, operations in resource_operations.items():
+    for _resource, operations in resource_operations.items():
         for op in operations:
             operation_counts[op] += 1
 
@@ -134,7 +137,8 @@ def generate_operation_analysis():
             print(f"  ✅ {resource}")
 
     print(
-        f"\n📊 Summary: {len(crud_resources)}/{total_resources} resources have complete CRUD"
+        f"\n📊 Summary: {len(crud_resources)}/{total_resources} resources have "
+        "complete CRUD"
     )
 
     # Find resources missing operations

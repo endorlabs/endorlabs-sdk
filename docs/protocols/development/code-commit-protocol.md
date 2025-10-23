@@ -32,7 +32,7 @@ This protocol ensures all code changes meet quality, security, and documentation
 - [ ] Function docstrings with Args/Returns/Raises
 - [ ] Resource documentation updated (if applicable)
 - [ ] API quirks documented in logbook
-- [ ] Knowledge base synced with `python -m holocron sync`
+- [ ] Knowledge base synced with `uv run python -m holocron sync`
 
 ### Knowledge Capture
 - [ ] Logbook entries created for troubleshooting sessions
@@ -49,7 +49,7 @@ uv run ruff check . --fix
 uv run ruff format .
 uv run pytest
 endorctl scan
-python -m holocron sync
+uv run python -m holocron sync
 ```
 
 ### 2. Commit Message Format

@@ -15,7 +15,7 @@ This protocol defines the essential context that must be available to all agents
 **When**: Before starting any operation
 
 ### 2. RAG Knowledge Base Query
-**Command**: `python -m holocron query "your question"`
+**Command**: `uv run python -m holocron query "your question"`
 **Purpose**: Retrieve relevant context before coding
 **Pattern**: Query first, then implement
 **When**: Before implementing any feature

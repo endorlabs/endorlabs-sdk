@@ -8,7 +8,7 @@
 - [ ] Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
 - [ ] Python >=3.12, <3.16
 - [ ] Run `python scripts/validate_environment.py` before operations
-- [ ] Initialize RAG with `python -m holocron sync`
+- [ ] Initialize RAG with `uv run python -m holocron sync`
 
 ### Code Standards
 - [ ] Line length ≤88 characters
@@ -67,8 +67,8 @@ endorctl scan --sast            # SAST scan
 
 # Development
 python scripts/validate_environment.py  # Validate environment
-python -m holocron query "..."    # RAG query
-python -m holocron sync          # Rebuild vector DB
+uv run python -m holocron query "..."    # RAG query
+uv run python -m holocron sync          # Rebuild vector DB
 
 # Environment Setup
 export ENDOR_API="https://api.endorlabs.com"

@@ -24,7 +24,7 @@ This protocol guides the implementation of new features, ensuring consistency wi
 - [ ] User validation checkpoint
 
 ### 3. Documentation Context Phase
-- [ ] Query holocron for semantic patterns: `python -m holocron query "your question"`
+- [ ] Query holocron for semantic patterns: `uv run python -m holocron query "your question"`
 - [ ] Extract documentation context and examples
 - [ ] Identify best practices and common patterns
 - [ ] Gather real-world usage examples
