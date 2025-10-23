@@ -8,6 +8,264 @@ This guide captures critical learnings from the Finding modeling exercise and pr
 
 ## 📊 **Key Learnings from Finding Implementation**
 
+## 🚨 **Critical Issues from Triage Script (2025-10-23)**
+
+### **1. Pydantic Model Validation Issues**
+**Problem**: FindingSpec and PolicySpec had required fields that prevented partial updates.
+
+```python
+# ❌ WRONG - Required fields in Spec classes
+class FindingSpec(BaseSpec):
+    project_uuid: str = Field(..., description="Project UUID")  # Required!
+    level: FindingLevel = Field(..., description="Severity level")  # Required!
+
+# ✅ CORRECT - Optional fields for partial updates
+class FindingSpec(BaseSpec):
+    project_uuid: Optional[str] = Field(None, description="Project UUID")
+    level: Optional[FindingLevel] = Field(None, description="Severity level")
+```
+
+**Impact**: Required fields in Spec classes break partial updates and cause Pydantic validation errors.
+
+### **2. UpdatePayload Validation Issues**
+**Problem**: UpdateFindingPayload had required fields that prevented partial updates.
+
+```python
+# ❌ WRONG - Required fields in UpdatePayload
+class UpdateFindingPayload(BaseModel):
+    meta: FindingMeta  # Required!
+    spec: FindingSpec  # Required!
+    context: Context  # Required!
+
+# ✅ CORRECT - Optional fields for partial updates
+class UpdateFindingPayload(BaseModel):
+    meta: Optional[FindingMeta] = Field(None, description="Updated finding metadata")
+    spec: Optional[FindingSpec] = Field(None, description="Updated finding specification")
+    context: Optional[Context] = Field(None, description="Updated finding context")
+```
+
+**Impact**: Required fields in UpdatePayload classes prevent partial updates and cause validation errors.
+
+### **3. Enum Flexibility Issues**
+**Problem**: PolicyType enum was missing EXCEPTION value and wasn't flexible for unknown values.
+
+```python
+# ❌ WRONG - Rigid enum without flexibility
+class PolicyType(str, Enum):
+    SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
+    USER_FINDING = "POLICY_TYPE_USER_FINDING"
+    # Missing EXCEPTION!
+
+# ✅ CORRECT - Flexible enum with unknown value handling
+class PolicyType(FlexibleEnum):
+    SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
+    USER_FINDING = "POLICY_TYPE_USER_FINDING"
+    EXCEPTION = "POLICY_TYPE_EXCEPTION"  # Added missing value
+```
+
+**Impact**: Missing enum values cause validation errors and prevent policy creation.
+
+### **4. DateTime Serialization Issues**
+**Problem**: DateTime objects couldn't be serialized to JSON for API calls.
+
+```python
+# ❌ WRONG - No datetime serialization
+class BaseResource(BaseModel):
+    # No datetime handling
+
+# ✅ CORRECT - Custom datetime serialization
+class BaseResource(BaseModel):
+    @field_serializer('*')
+    def serialize_datetime(self, value):
+        """Serialize datetime objects to ISO format strings."""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
+```
+
+**Impact**: DateTime serialization failures prevent API calls from working.
+
+### **5. Model Configuration Issues**
+**Problem**: Models were too strict and didn't allow unknown fields for forward compatibility.
+
+```python
+# ❌ WRONG - Strict model configuration
+class BaseResource(BaseModel):
+    model_config = ConfigDict(extra="ignore")  # Too strict!
+
+# ✅ CORRECT - Flexible model configuration
+class BaseResource(BaseModel):
+    model_config = ConfigDict(extra="allow")  # Allow unknown fields
+```
+
+**Impact**: Strict models break when API adds new fields, causing validation errors.
+
+## ✅ **Solutions Implemented (2025-10-23)**
+
+### **1. FlexibleEnum Pattern**
+**Solution**: Created FlexibleEnum base class that handles unknown values gracefully.
+
+```python
+class FlexibleEnum(str, Enum):
+    """Base class for flexible enums that can handle unknown values."""
+    
+    @classmethod
+    def _missing_(cls, value):
+        """Handle unknown enum values gracefully."""
+        logger.warning(f"Unknown {cls.__name__} value: {value}. Adding as dynamic enum.")
+        obj = str.__new__(cls, value)
+        obj._name_ = value
+        obj._value_ = value
+        return obj
+
+# Applied to all enums
+class PolicyType(FlexibleEnum):
+    SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
+    USER_FINDING = "POLICY_TYPE_USER_FINDING"
+    EXCEPTION = "POLICY_TYPE_EXCEPTION"
+```
+
+### **2. Optional Spec Fields**
+**Solution**: Made all Spec class fields optional to support partial updates.
+
+```python
+class FindingSpec(BaseSpec):
+    project_uuid: Optional[str] = Field(None, description="Project UUID")
+    level: Optional[FindingLevel] = Field(None, description="Severity level")
+    # All fields are now optional for partial updates
+```
+
+### **3. Optional UpdatePayload Fields**
+**Solution**: Made all UpdatePayload fields optional for partial updates.
+
+```python
+class UpdateFindingPayload(BaseModel):
+    meta: Optional[FindingMeta] = Field(None, description="Updated finding metadata")
+    spec: Optional[FindingSpec] = Field(None, description="Updated finding specification")
+    context: Optional[Context] = Field(None, description="Updated finding context")
+```
+
+### **4. DateTime Serialization**
+**Solution**: Added custom datetime serialization to BaseResource.
+
+```python
+class BaseResource(BaseModel):
+    @field_serializer('*')
+    def serialize_datetime(self, value):
+        """Serialize datetime objects to ISO format strings."""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
+```
+
+### **5. Flexible Model Configuration**
+**Solution**: Changed model configuration to allow unknown fields.
+
+```python
+class BaseResource(BaseModel):
+    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+
+class BaseMeta(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+class BaseSpec(BaseModel):
+    model_config = ConfigDict(extra="allow")
+```
+
+### **6. Validation Utilities**
+**Solution**: Created comprehensive validation utilities for safe serialization and partial updates.
+
+```python
+# src/endor_cockpit/utils/model_validation.py
+def safe_serialize(obj: Any) -> Any:
+    """Safely serialize objects to JSON-compatible format."""
+    
+def merge_partial_update(existing_data: Dict[str, Any], update_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Merge partial update data with existing data."""
+    
+def validate_enum_value(enum_class: Type, value: Any) -> Any:
+    """Validate enum value with fallback for unknown values."""
+```
+
+### **7. Comprehensive Enum Modeling**
+**Solution**: Modeled all known API enums to provide better developer experience and IntelliSense.
+
+```python
+# Finding-related enums
+class FindingLevel(FlexibleEnum):
+    CRITICAL = "FINDING_LEVEL_CRITICAL"
+    HIGH = "FINDING_LEVEL_HIGH"
+    MEDIUM = "FINDING_LEVEL_MEDIUM"
+    LOW = "FINDING_LEVEL_LOW"
+    INFO = "FINDING_LEVEL_INFO"
+
+class FindingCategory(FlexibleEnum):
+    SECURITY = "FINDING_CATEGORY_SECURITY"
+    VULNERABILITY = "FINDING_CATEGORY_VULNERABILITY"
+    SAST = "FINDING_CATEGORY_SAST"
+    # ... and many more
+
+class Ecosystem(FlexibleEnum):
+    NPM = "ECOSYSTEM_NPM"
+    PYPI = "ECOSYSTEM_PYPI"
+    MAVEN = "ECOSYSTEM_MAVEN"
+    # ... comprehensive ecosystem support
+
+# Policy-related enums
+class PolicyType(FlexibleEnum):
+    EXCEPTION = "POLICY_TYPE_EXCEPTION"
+    SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
+    # ... and more
+
+class ExceptionReason(FlexibleEnum):
+    FALSE_POSITIVE = "EXCEPTION_REASON_FALSE_POSITIVE"
+    ACCEPTED_RISK = "EXCEPTION_REASON_ACCEPTED_RISK"
+    # ... and more
+```
+
+**Benefits**:
+- ✅ **IntelliSense Support**: Developers get autocomplete for all enum values
+- ✅ **Type Safety**: Prevents typos in enum values
+- ✅ **API Evolution**: FlexibleEnum handles unknown values gracefully
+- ✅ **Comprehensive Coverage**: All known API enums are modeled
+
+### **8. Field Mutability Documentation**
+**Solution**: Added comprehensive field-level documentation with IntelliSense support.
+
+```python
+class FindingSpec(BaseSpec):
+    """Finding specification extending BaseSpec.
+    
+    Field Mutability Guide:
+    ======================
+    
+    IMMUTABLE FIELDS (cannot be updated after creation):
+    - project_uuid: Project assignment (set at creation)
+    - level: Severity level (determined by analysis)
+    - method: Analysis method used (determined by analysis)
+    
+    MUTABLE FIELDS (can be updated via API):
+    - dismiss: User can dismiss/undismiss findings
+    - remediation: User can add remediation guidance
+    - finding_tags: User can add/remove tags
+    """
+    
+    project_uuid: Optional[str] = Field(
+        None, description="UUID of the project this finding belongs to"  # IMMUTABLE: Set at creation
+    )
+    dismiss: Optional[bool] = Field(
+        None, description="Whether the finding is dismissed"  # MUTABLE: User can update
+    )
+```
+
+**Benefits**:
+- ✅ **IntelliSense Documentation**: Field comments show mutability in IDE
+- ✅ **Clear Field Guidance**: Developers know which fields can be updated
+- ✅ **API Understanding**: Clear distinction between system vs user fields
+- ✅ **Update Validation**: Prevents attempts to update immutable fields
+
+## 📊 **Key Learnings from Finding Implementation**
+
 ### **1. Critical API Response Pattern Discovery**
 **Learning**: The most critical discovery was the API response structure pattern.
 

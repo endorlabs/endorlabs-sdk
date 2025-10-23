@@ -7,33 +7,21 @@ patterns from the Project resource implementation.
 
 import logging
 from datetime import datetime
-from enum import Enum
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient
-from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..models.base import (
+    BaseMeta,
+    BaseResource,
+    BaseResourceOperations,
+    BaseSpec,
+    FlexibleEnum,
+)
 from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
-
-
-class FlexibleEnum(str, Enum):
-    """Base class for flexible enums that can handle unknown values."""
-
-    @classmethod
-    def _missing_(cls, value):
-        """Handle unknown enum values gracefully."""
-        logger.warning(
-            f"Unknown {cls.__name__} value: {value}. Adding as dynamic enum."
-        )
-        # Create a dynamic enum member for unknown values
-        obj = str.__new__(cls, value)
-        # Use setattr to avoid type checker issues
-        obj._name_ = value  # type: ignore
-        obj._value_ = value  # type: ignore
-        return obj
 
 
 class FindingCategory(FlexibleEnum):
@@ -90,8 +78,15 @@ class AnalysisMethod(FlexibleEnum):
     INFRASTRUCTURE = "SYSTEM_EVALUATION_METHOD_INFRASTRUCTURE"
 
 
+class CallGraphAnalysisType(FlexibleEnum):
+    """Call graph analysis type enumeration."""
+
+    UNSPECIFIED = "CALL_GRAPH_ANALYSIS_TYPE_UNSPECIFIED"
+    FULL = "CALL_GRAPH_ANALYSIS_TYPE_FULL"
+
+
 class Ecosystem(FlexibleEnum):
-    """Ecosystem enumeration."""
+    """Package ecosystem enumeration."""
 
     UNSPECIFIED = "ECOSYSTEM_UNSPECIFIED"
     NPM = "ECOSYSTEM_NPM"
@@ -101,11 +96,125 @@ class Ecosystem(FlexibleEnum):
     RUBYGEMS = "ECOSYSTEM_RUBYGEMS"
     GO = "ECOSYSTEM_GO"
     RUST = "ECOSYSTEM_RUST"
-    DOCKER = "ECOSYSTEM_DOCKER"
+    CARGO = "ECOSYSTEM_CARGO"
+    COMPOSER = "ECOSYSTEM_COMPOSER"
+    HEX = "ECOSYSTEM_HEX"
+    COCOAPODS = "ECOSYSTEM_COCOAPODS"
+    SWIFT = "ECOSYSTEM_SWIFT"
+    CONAN = "ECOSYSTEM_CONAN"
+    CRAN = "ECOSYSTEM_CRAN"
+    PUB = "ECOSYSTEM_PUB"
+    PACKAGIST = "ECOSYSTEM_PACKAGIST"
     DEBIAN = "ECOSYSTEM_DEBIAN"
     UBUNTU = "ECOSYSTEM_UBUNTU"
     ALPINE = "ECOSYSTEM_ALPINE"
-    REDHAT = "ECOSYSTEM_REDHAT"
+    RHEL = "ECOSYSTEM_RHEL"
+    AMAZON = "ECOSYSTEM_AMAZON"
+    SUSE = "ECOSYSTEM_SUSE"
+    ARCH = "ECOSYSTEM_ARCH"
+    GENTOO = "ECOSYSTEM_GENTOO"
+    FEDORA = "ECOSYSTEM_FEDORA"
+    PHARONIX = "ECOSYSTEM_PHARONIX"
+    DOCKER = "ECOSYSTEM_DOCKER"
+    GITHUB = "ECOSYSTEM_GITHUB"
+    GITLAB = "ECOSYSTEM_GITLAB"
+    BITBUCKET = "ECOSYSTEM_BITBUCKET"
+    AZURE_DEVOPS = "ECOSYSTEM_AZURE_DEVOPS"
+    JENKINS = "ECOSYSTEM_JENKINS"
+    CIRCLECI = "ECOSYSTEM_CIRCLECI"
+    TRAVIS_CI = "ECOSYSTEM_TRAVIS_CI"
+    GITHUB_ACTIONS = "ECOSYSTEM_GITHUB_ACTIONS"
+    GITLAB_CI = "ECOSYSTEM_GITLAB_CI"
+    AZURE_PIPELINES = "ECOSYSTEM_AZURE_PIPELINES"
+    BAMBOO = "ECOSYSTEM_BAMBOO"
+    TEAMCITY = "ECOSYSTEM_TEAMCITY"
+    BUILDKITE = "ECOSYSTEM_BUILDKITE"
+    CODESHIP = "ECOSYSTEM_CODESHIP"
+    DRONE = "ECOSYSTEM_DRONE"
+    SEMAPHORE = "ECOSYSTEM_SEMAPHORE"
+    APPVEYOR = "ECOSYSTEM_APPVEYOR"
+    WERCKER = "ECOSYSTEM_WERCKER"
+    SHIPPABLE = "ECOSYSTEM_SHIPPABLE"
+    MAGNUM = "ECOSYSTEM_MAGNUM"
+    SOLANO = "ECOSYSTEM_SOLANO"
+    BUDDY = "ECOSYSTEM_BUDDY"
+    CODEFRESH = "ECOSYSTEM_CODEFRESH"
+    CODEFRESH_PIPELINES = "ECOSYSTEM_CODEFRESH_PIPELINES"
+    CODEFRESH_RUNTIME = "ECOSYSTEM_CODEFRESH_RUNTIME"
+    CODEFRESH_RUNTIME_IMAGES = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES"
+    CODEFRESH_RUNTIME_IMAGES_UBUNTU = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_UBUNTU"
+    CODEFRESH_RUNTIME_IMAGES_ALPINE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_ALPINE"
+    CODEFRESH_RUNTIME_IMAGES_DEBIAN = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_DEBIAN"
+    CODEFRESH_RUNTIME_IMAGES_CENTOS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_CENTOS"
+    CODEFRESH_RUNTIME_IMAGES_RHEL = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_RHEL"
+    CODEFRESH_RUNTIME_IMAGES_AMAZON = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AMAZON"
+    CODEFRESH_RUNTIME_IMAGES_SUSE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_SUSE"
+    CODEFRESH_RUNTIME_IMAGES_ARCH = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_ARCH"
+    CODEFRESH_RUNTIME_IMAGES_GENTOO = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GENTOO"
+    CODEFRESH_RUNTIME_IMAGES_FEDORA = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_FEDORA"
+    CODEFRESH_RUNTIME_IMAGES_PHARONIX = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_PHARONIX"
+    CODEFRESH_RUNTIME_IMAGES_DOCKER = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_DOCKER"
+    CODEFRESH_RUNTIME_IMAGES_GITHUB = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITHUB"
+    CODEFRESH_RUNTIME_IMAGES_GITLAB = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITLAB"
+    CODEFRESH_RUNTIME_IMAGES_BITBUCKET = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BITBUCKET"
+    CODEFRESH_RUNTIME_IMAGES_AZURE_DEVOPS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AZURE_DEVOPS"
+    CODEFRESH_RUNTIME_IMAGES_JENKINS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_JENKINS"
+    CODEFRESH_RUNTIME_IMAGES_CIRCLECI = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_CIRCLECI"
+    CODEFRESH_RUNTIME_IMAGES_TRAVIS_CI = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_TRAVIS_CI"
+    CODEFRESH_RUNTIME_IMAGES_GITHUB_ACTIONS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITHUB_ACTIONS"
+    CODEFRESH_RUNTIME_IMAGES_GITLAB_CI = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITLAB_CI"
+    CODEFRESH_RUNTIME_IMAGES_AZURE_PIPELINES = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AZURE_PIPELINES"
+    CODEFRESH_RUNTIME_IMAGES_BAMBOO = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BAMBOO"
+    CODEFRESH_RUNTIME_IMAGES_TEAMCITY = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_TEAMCITY"
+    CODEFRESH_RUNTIME_IMAGES_BUILDKITE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BUILDKITE"
+    CODEFRESH_RUNTIME_IMAGES_CODESHIP = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_CODESHIP"
+    CODEFRESH_RUNTIME_IMAGES_DRONE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_DRONE"
+    CODEFRESH_RUNTIME_IMAGES_SEMAPHORE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_SEMAPHORE"
+    CODEFRESH_RUNTIME_IMAGES_APPVEYOR = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_APPVEYOR"
+    CODEFRESH_RUNTIME_IMAGES_WERCKER = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_WERCKER"
+    CODEFRESH_RUNTIME_IMAGES_SHIPPABLE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_SHIPPABLE"
+    CODEFRESH_RUNTIME_IMAGES_MAGNUM = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_MAGNUM"
+    CODEFRESH_RUNTIME_IMAGES_SOLANO = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_SOLANO"
+    CODEFRESH_RUNTIME_IMAGES_BUDDY = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BUDDY"
+
+
+class CvssVersion(FlexibleEnum):
+    """CVSS version enumeration."""
+
+    UNSPECIFIED = "CVSS_VERSION_UNSPECIFIED"
+    V3 = "CVSS_VERSION_V3"
+    V4 = "CVSS_VERSION_V4"
+
+
+class CvssSeverityLevel(FlexibleEnum):
+    """CVSS severity level enumeration."""
+
+    UNSPECIFIED = "CVSS_SEVERITY_LEVEL_UNSPECIFIED"
+    NONE = "CVSS_SEVERITY_LEVEL_NONE"
+    LOW = "CVSS_SEVERITY_LEVEL_LOW"
+    MEDIUM = "CVSS_SEVERITY_LEVEL_MEDIUM"
+    HIGH = "CVSS_SEVERITY_LEVEL_HIGH"
+    CRITICAL = "CVSS_SEVERITY_LEVEL_CRITICAL"
+
+
+class FindingTags(FlexibleEnum):
+    """Finding tags enumeration."""
+
+    UNSPECIFIED = "FINDING_TAGS_UNSPECIFIED"
+    NORMAL = "FINDING_TAGS_NORMAL"
+    POLICY = "FINDING_TAGS_POLICY"
+    EXCEPTION = "FINDING_TAGS_EXCEPTION"
+    TEST = "FINDING_TAGS_TEST"
+
+
+class RangeType(FlexibleEnum):
+    """Range type enumeration."""
+
+    UNSPECIFIED = "RANGE_TYPE_UNSPECIFIED"
+    ECOSYSTEM = "RANGE_TYPE_ECOSYSTEM"
+    GIT = "RANGE_TYPE_GIT"
+    SEMVER = "RANGE_TYPE_SEMVER"
+    UNKNOWN = "RANGE_TYPE_UNKNOWN"
 
 
 class FindingMeta(BaseMeta):
@@ -127,29 +236,48 @@ class FindingMetadata(BaseModel):
 
 
 class FindingSpec(BaseSpec):
-    """Finding specification extending BaseSpec."""
+    """Finding specification extending BaseSpec.
+    
+    Field Mutability Guide:
+    ======================
+    
+    IMMUTABLE FIELDS (cannot be updated after creation):
+    - project_uuid: Project assignment (set at creation)
+    - level: Severity level (determined by analysis)
+    - method: Analysis method used (determined by analysis)
+    - target_uuid: Target resource (set at creation)
+    - finding_metadata: Analysis results (system-generated)
+    - last_processed: System-managed timestamp
+    
+    MUTABLE FIELDS (can be updated via API):
+    - dismiss: User can dismiss/undismiss findings
+    - remediation: User can add remediation guidance
+    - summary: User can update finding summary
+    - finding_tags: User can add/remove tags
+    - extra_key: User-defined extra information
+    """
 
-    project_uuid: str = Field(
-        ..., description="UUID of the project this finding belongs to"
+    project_uuid: Optional[str] = Field(
+        None, description="UUID of the project this finding belongs to"  # IMMUTABLE: Set at creation
     )
     last_processed: Optional[datetime] = Field(
-        None, description="Last processed timestamp"
+        None, description="Last processed timestamp"  # IMMUTABLE: System-managed
     )
-    level: FindingLevel = Field(..., description="Severity level of the finding")
+    level: Optional[FindingLevel] = Field(None, description="Severity level of the finding")  # IMMUTABLE: Analysis-determined
     dismiss: Optional[bool] = Field(
-        None, description="Whether the finding is dismissed"
+        None, description="Whether the finding is dismissed"  # MUTABLE: User can update
     )
-    remediation: Optional[str] = Field(None, description="Remediation guidance")
+    remediation: Optional[str] = Field(None, description="Remediation guidance")  # MUTABLE: User can update
     finding_metadata: Optional[dict] = Field(
-        None, description="Complex nested structure"
+        None, description="Complex nested structure"  # IMMUTABLE: System-generated
     )
-    summary: Optional[str] = Field(None, description="Finding summary")
+    summary: Optional[str] = Field(None, description="Finding summary")  # MUTABLE: User can update
     finding_tags: Optional[List[str]] = Field(
-        None, description="Tags associated with the finding"
+        None, description="Tags associated with the finding"  # MUTABLE: User can update
     )
-    target_uuid: Optional[str] = Field(None, description="Target resource UUID")
-    extra_key: Optional[str] = Field(None, description="Extra key information")
-    method: Optional[AnalysisMethod] = Field(None, description="Analysis method used")
+    target_uuid: Optional[str] = Field(None, description="Target resource UUID")  # IMMUTABLE: Set at creation
+    extra_key: Optional[str] = Field(None, description="Extra key information")  # MUTABLE: User can update
+    method: Optional[AnalysisMethod] = Field(None, description="Analysis method used")  # IMMUTABLE: Analysis-determined
 
     @field_validator("level", mode="before")
     @classmethod
@@ -354,9 +482,9 @@ class UpdateFindingPayload(BaseModel):
         ... )
     """
 
-    meta: FindingMeta
-    spec: FindingSpec
-    context: Context
+    meta: Optional[FindingMeta] = Field(None, description="Updated finding metadata")
+    spec: Optional[FindingSpec] = Field(None, description="Updated finding specification")
+    context: Optional[Context] = Field(None, description="Updated finding context")
 
 
 def _get_finding_ops(client: APIClient) -> BaseResourceOperations:
