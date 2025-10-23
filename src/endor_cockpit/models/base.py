@@ -251,7 +251,11 @@ class BaseResourceOperations:
             return [self.model_class(**item) for item in items]
 
         except Exception as e:
-            self.logger.error(f"Failed to list {self.resource_name}: {e}")
+            self.logger.error(
+                f"Failed to list {self.resource_name} in namespace "
+                f"'{tenant_meta_namespace}': {e}. "
+                f"Check namespace permissions and API connectivity."
+            )
             return []
 
     def get(
@@ -269,7 +273,9 @@ class BaseResourceOperations:
             return self.model_class(**data)
         except Exception as e:
             self.logger.debug(
-                f"Direct {self.resource_name} access failed for {resource_uuid}: {e}"
+                f"Direct {self.resource_name} access failed for UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Falling back to list+filter approach."
             )
 
         # Method 2: Use list and filter approach (workaround)
@@ -290,7 +296,9 @@ class BaseResourceOperations:
             return resources[0] if resources else None
         except Exception as e:
             self.logger.error(
-                f"List and filter approach failed for {resource_uuid}: {e}"
+                f"List and filter approach failed for {self.resource_name} UUID "
+                f"'{resource_uuid}' in namespace '{tenant_meta_namespace}': {e}. "
+                f"Resource may not exist or namespace may be inaccessible."
             )
             return None
 
@@ -311,7 +319,11 @@ class BaseResourceOperations:
             return self.model_class(**data)
 
         except Exception as e:
-            self.logger.error(f"Failed to create {self.resource_name}: {e}")
+            self.logger.error(
+                f"Failed to create {self.resource_name} in namespace "
+                f"'{tenant_meta_namespace}': {e}. "
+                f"Check payload validity and namespace permissions."
+            )
             return None
 
     def update(
@@ -324,7 +336,10 @@ class BaseResourceOperations:
         """Universal update operation with field masking."""
         try:
             headers = self.client.default_headers
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/{resource_uuid}"
+            url = (
+                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
+                f"{resource_uuid}"
+            )
 
             # Convert payload to dict and validate
             payload_dict = payload.model_dump(exclude_none=True)
@@ -341,7 +356,9 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to update {self.resource_name} {resource_uuid}: {e}"
+                f"Failed to update {self.resource_name} UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check resource exists and update_mask is valid."
             )
             return None
 
@@ -349,7 +366,10 @@ class BaseResourceOperations:
         """Universal delete operation."""
         try:
             headers = self.client.default_headers
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/{resource_uuid}"
+            url = (
+                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
+                f"{resource_uuid}"
+            )
 
             res = self.client.delete(url, headers=headers)
 
@@ -358,7 +378,9 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to delete {self.resource_name} {resource_uuid}: {e}"
+                f"Failed to delete {self.resource_name} UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check resource exists and deletion permissions."
             )
             return False
 
@@ -403,7 +425,11 @@ class BaseResourceOperations:
                 return 0
 
         except Exception as e:
-            self.logger.error(f"Failed to count {self.resource_name}: {e}")
+            self.logger.error(
+                f"Failed to count {self.resource_name} in namespace "
+                f"'{tenant_meta_namespace}': {e}. "
+                f"Check namespace permissions and filter syntax."
+            )
             return 0
 
     def _build_params(
@@ -413,30 +439,60 @@ class BaseResourceOperations:
         params = {}
 
         if list_params:
-            if list_params.filter:
-                params["list_parameters.filter"] = list_params.filter
-            if list_params.mask:
-                params["list_parameters.mask"] = list_params.mask
-            if list_params.page_size:
-                params["list_parameters.page_size"] = str(list_params.page_size)
-            if list_params.page_token:
-                params["list_parameters.page_token"] = list_params.page_token
-            if list_params.sort_field:
-                params["list_parameters.sort_field"] = list_params.sort_field
-            if list_params.sort_order:
-                params["list_parameters.sort_order"] = list_params.sort_order
-            if list_params.count is not None:
-                params["list_parameters.count"] = str(list_params.count).lower()
-            if list_params.include_child_namespaces is not None:
-                params["list_parameters.include_child_namespaces"] = str(
-                    list_params.include_child_namespaces
-                ).lower()
-            if list_params.from_date:
-                params["list_parameters.from_date"] = list_params.from_date
-            if list_params.to_date:
-                params["list_parameters.to_date"] = list_params.to_date
+            self._add_basic_params(params, list_params)
+            self._add_pagination_params(params, list_params)
+            self._add_sorting_params(params, list_params)
+            self._add_boolean_params(params, list_params)
+            self._add_date_params(params, list_params)
 
         # Add any additional kwargs
         params.update(kwargs)
 
         return params
+
+    def _add_basic_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add basic filter and mask parameters."""
+        if list_params.filter:
+            params["list_parameters.filter"] = list_params.filter
+        if list_params.mask:
+            params["list_parameters.mask"] = list_params.mask
+
+    def _add_pagination_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add pagination-related parameters."""
+        if list_params.page_size:
+            params["list_parameters.page_size"] = str(list_params.page_size)
+        if list_params.page_token:
+            params["list_parameters.page_token"] = list_params.page_token
+
+    def _add_sorting_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add sorting-related parameters."""
+        if list_params.sort_field:
+            params["list_parameters.sort_field"] = list_params.sort_field
+        if list_params.sort_order:
+            params["list_parameters.sort_order"] = list_params.sort_order
+
+    def _add_boolean_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add boolean parameters."""
+        if list_params.count is not None:
+            params["list_parameters.count"] = str(list_params.count).lower()
+        if list_params.include_child_namespaces is not None:
+            params["list_parameters.include_child_namespaces"] = str(
+                list_params.include_child_namespaces
+            ).lower()
+
+    def _add_date_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add date-related parameters."""
+        if list_params.from_date:
+            params["list_parameters.from_date"] = list_params.from_date
+        if list_params.to_date:
+            params["list_parameters.to_date"] = list_params.to_date

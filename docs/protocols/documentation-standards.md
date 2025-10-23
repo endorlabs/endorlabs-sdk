@@ -59,7 +59,7 @@ This protocol defines the standards for creating, maintaining, and updating docu
 2. **Query knowledge base** for existing content
 3. **Update canonical source** with new information
 4. **Update cross-references** if needed
-5. **Sync knowledge base** with `python -m holocron sync`
+5. **Sync knowledge base** with `uv run python -m holocron sync`
 6. **Validate changes** with agent workflow test
 
 ### Quality Assurance

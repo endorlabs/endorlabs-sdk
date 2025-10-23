@@ -9,6 +9,8 @@ Provides commands for workspace initialization, knowledge sync, and querying.
 import argparse
 import sys
 
+from .commands.analyze import add_analyze_parser, analyze_command
+from .commands.config import config_command
 from .commands.init import init_command
 from .commands.query import query_command
 from .commands.sync import sync_command
@@ -49,6 +51,22 @@ def main():
     sync_parser.add_argument(
         "--verbose", action="store_true", help="Enable verbose output"
     )
+    sync_parser.add_argument(
+        "--include",
+        nargs="*",
+        help="Include specific content types (e.g., markdown, external_docs, code, "
+        "api_spec). Default: all available",
+    )
+    sync_parser.add_argument(
+        "--exclude",
+        nargs="*",
+        help="Exclude specific content types (e.g., external_docs for minimal mode)",
+    )
+    sync_parser.add_argument(
+        "--list-collections",
+        action="store_true",
+        help="List available content collections and exit",
+    )
 
     # Query command
     query_parser = subparsers.add_parser("query", help="Query the knowledge base")
@@ -72,9 +90,52 @@ def main():
     query_parser.add_argument(
         "--max-content",
         type=int,
-        default=500,
-        help="Maximum content length to display (default: 500)",
+        default=5000,
+        help="Maximum content length to display (default: 5000)",
     )
+    query_parser.add_argument(
+        "--include",
+        nargs="*",
+        help="Include specific content types in search (e.g., markdown, external_docs, "
+        "code, api_spec). Default: all available",
+    )
+    query_parser.add_argument(
+        "--exclude",
+        nargs="*",
+        help="Exclude specific content types from search (e.g., external_docs for "
+        "focused results)",
+    )
+
+    # Config command
+    config_parser = subparsers.add_parser("config", help="Configuration management")
+    config_subparsers = config_parser.add_subparsers(
+        dest="subcommand", help="Config subcommands", required=True
+    )
+
+    # Config show
+    config_show_parser = config_subparsers.add_parser(
+        "show", help="Show current configuration"
+    )
+    config_show_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    config_show_parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose output"
+    )
+
+    # Config validate
+    config_validate_parser = config_subparsers.add_parser(
+        "validate", help="Validate configuration"
+    )
+    config_validate_parser.add_argument(
+        "--verbose", action="store_true", help="Enable verbose output"
+    )
+
+    # Analyze command
+    add_analyze_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -85,6 +146,10 @@ def main():
             sync_command(args)
         elif args.command == "query":
             query_command(args)
+        elif args.command == "config":
+            config_command(args)
+        elif args.command == "analyze":
+            analyze_command(args)
         else:
             parser.print_help()
             sys.exit(1)

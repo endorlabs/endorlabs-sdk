@@ -72,13 +72,16 @@ class TestPackageVersion:
             == test_package_version.spec.package_name
         )
         assert (
-            retrieved_package_version.spec.ecosystem == test_package_version.spec.ecosystem
+            retrieved_package_version.spec.ecosystem
+            == test_package_version.spec.ecosystem
         )
 
     def test_package_version_patch_tags(self):
         """Test PATCH operations using tag management."""
-        # Skip this test - PackageVersion PATCH operations are not supported by the API
-        # The API returns 501 "Method Not Allowed" for PATCH requests to package-versions
+        # Skip this test - PackageVersion PATCH operations are not supported by \
+        # the API
+        # The API returns 501 "Method Not Allowed" for PATCH requests to \
+        # package-versions
         pytest.skip("PackageVersion PATCH operations not supported by API")
 
     def test_package_version_structure_analysis(self):

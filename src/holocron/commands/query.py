@@ -45,6 +45,22 @@ def format_result(
 
 def query_command(args):  # noqa: C901
     """Execute the query command."""
+    # Build collection filter for query
+    collection_filter = None
+    if args.include or args.exclude:
+        from ..manager import VectorDBManager
+
+        manager = VectorDBManager()
+        try:
+            collection_filter = manager.get_collection_filter(
+                include=args.include, exclude=args.exclude
+            )
+            if collection_filter:
+                print(f"Searching in collections: {collection_filter}")
+        except ValueError as e:
+            print(f"Error: {e}")
+            return
+
     if args.query_text:
         # Argument-based query
         try:
@@ -52,6 +68,7 @@ def query_command(args):  # noqa: C901
                 query_text=args.query_text,
                 n_results=args.results,
                 include_metadata=True,
+                collection_filter=collection_filter,
             )
 
             if args.format == "json":
@@ -91,6 +108,7 @@ def query_command(args):  # noqa: C901
                         query_text=query_text,
                         n_results=args.results,
                         include_metadata=True,
+                        collection_filter=collection_filter,
                     )
 
                     print(f"\nFound {len(results['results'])} results:\n")

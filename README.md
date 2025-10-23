@@ -45,56 +45,40 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e .
 
 # Install RAG dependencies for knowledge base
-uv pip install -e ".[rag]"
+uv pip install -e ".[holocron]"
 ```
 
 ## First Time Setup
 
 ### Knowledge Base Initialization
 
-**IMPORTANT**: The vector database knowledge base is the **first step** for any AI agent working with this repository. It contains comprehensive documentation, API patterns, and best practices that should be consulted before making any changes.
+**IMPORTANT**: The Holocron knowledge base is the **first step** for any AI agent working with this repository. It contains comprehensive documentation, API patterns, and best practices that should be consulted before making any changes.
 
-#### 1. Install RAG Dependencies
+#### Quick Start
 ```bash
 # Install RAG functionality for semantic search
-uv pip install -e ".[rag]"
-```
+uv pip install -e ".[holocron]"
 
-#### 2. Set Environment Variables
-```bash
-# Required for API access
-export ENDOR_API="https://api.endorlabs.com"
-export ENDOR_API_CREDENTIALS_KEY="your-api-key"
-export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
-
-# Required for RAG functionality
+# Set required environment variables
 export OPENAI_API_KEY="your-openai-api-key"
-```
 
-#### 3. Initialize Vector Database
-```bash
 # Initialize the knowledge base
-uv run python workflow/init_vector_db.py
+uv run python -m holocron init
 
-# Rebuild after documentation updates
-uv run python workflow/init_vector_db.py --rebuild
+# Query the knowledge base
+uv run python -m holocron query "How do I create a namespace?"
 ```
 
-#### 4. Query the Knowledge Base
-```python
-from endor_cockpit.rag import query_vector_db
-
-# Always query first before making changes
-results = query_vector_db("How do I create a namespace?")
-print(f"Found {len(results['results'])} relevant documents")
-```
-
-### Knowledge Base Workflow
+#### Knowledge Base Workflow
 
 1. **Query First**: Always check the knowledge base before operations
 2. **Verify**: Cross-reference with existing documentation
 3. **Act**: Make changes based on established patterns
 4. **Update**: Incorporate new learnings when contradictions are found
+
+**Complete Guide**: See [docs/holocron/README.md](docs/holocron/README.md) for comprehensive Holocron documentation, including configuration, architecture, and troubleshooting.
+
+**Setup Workflows**: See [docs/protocols/holocron-setup.md](docs/protocols/holocron-setup.md) for detailed initialization procedures.
 
 The knowledge base is a **portable shared learning index** that ensures consistency across all AI agents and maintains the freshness of operational knowledge.
 
