@@ -45,7 +45,7 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e .
 
 # Install RAG dependencies for knowledge base
-uv pip install -e ".[rag]"
+uv pip install -e ".[holocron]"
 ```
 
 ## First Time Setup
