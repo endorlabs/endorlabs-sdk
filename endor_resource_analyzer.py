@@ -554,8 +554,22 @@ class EndorResourceAnalyzer:
         required_attributes = set()
         nullable_attributes = set()
 
-        # Skip Pydantic internal methods and attributes
-        skip_attributes = {
+        skip_attributes = self._get_skip_attributes()
+
+        for entity in entities:
+            self._analyze_entity_attributes(
+                entity, skip_attributes, attribute_values,
+                attribute_types, required_attributes, nullable_attributes, model
+            )
+
+        self._create_attribute_info_objects(
+            attribute_values, attribute_types, required_attributes,
+            nullable_attributes, model
+        )
+
+    def _get_skip_attributes(self) -> set:
+        """Get set of Pydantic internal methods and attributes to skip."""
+        return {
             "model_computed_fields",
             "model_config",
             "model_construct",
@@ -589,78 +603,91 @@ class EndorResourceAnalyzer:
             "validate_uuid",
         }
 
-        for entity in entities:
-            # Analyze meta attributes
-            if hasattr(entity, "meta") and entity.meta:
-                for attr_name in dir(entity.meta):
-                    if (
-                        not attr_name.startswith("_")
-                        and attr_name not in skip_attributes
-                    ):
-                        try:
-                            value = getattr(entity.meta, attr_name)
-                            if not callable(value):  # Skip methods
-                                attribute_values[f"meta.{attr_name}"].append(value)
-                                attribute_types[f"meta.{attr_name}"] = type(
-                                    value
-                                ).__name__
+    def _analyze_entity_attributes(
+        self, entity: Any, skip_attributes: set, attribute_values: dict,
+        attribute_types: dict, required_attributes: set,
+        nullable_attributes: set, model: ResourceModel
+    ):
+        """Analyze attributes for a single entity."""
+        # Analyze meta attributes
+        if hasattr(entity, "meta") and entity.meta:
+            self._analyze_section_attributes(
+                entity.meta, "meta", skip_attributes, attribute_values,
+                attribute_types, required_attributes, nullable_attributes, model
+            )
 
-                                if value is None:
-                                    nullable_attributes.add(f"meta.{attr_name}")
-                                else:
-                                    required_attributes.add(f"meta.{attr_name}")
-                        except Exception as e:
-                            model.validation_errors.append(
-                                f"Error accessing meta.{attr_name}: {e}"
-                            )
+        # Analyze spec attributes
+        if hasattr(entity, "spec") and entity.spec:
+            self._analyze_section_attributes(
+                entity.spec, "spec", skip_attributes, attribute_values,
+                attribute_types, required_attributes, nullable_attributes, model
+            )
 
-            # Analyze spec attributes
-            if hasattr(entity, "spec") and entity.spec:
-                for attr_name in dir(entity.spec):
-                    if (
-                        not attr_name.startswith("_")
-                        and attr_name not in skip_attributes
-                    ):
-                        try:
-                            value = getattr(entity.spec, attr_name)
-                            if not callable(value):  # Skip methods
-                                attribute_values[f"spec.{attr_name}"].append(value)
-                                attribute_types[f"spec.{attr_name}"] = type(
-                                    value
-                                ).__name__
+        # Analyze top-level attributes
+        self._analyze_top_level_attributes(
+            entity, skip_attributes, attribute_values, attribute_types,
+            required_attributes, nullable_attributes, model
+        )
 
-                                if value is None:
-                                    nullable_attributes.add(f"spec.{attr_name}")
-                                else:
-                                    required_attributes.add(f"spec.{attr_name}")
-                        except Exception as e:
-                            model.validation_errors.append(
-                                f"Error accessing spec.{attr_name}: {e}"
-                            )
+    def _analyze_section_attributes(
+        self, section_obj: Any, section_name: str, skip_attributes: set,
+        attribute_values: dict, attribute_types: dict, required_attributes: set,
+        nullable_attributes: set, model: ResourceModel
+    ):
+        """Analyze attributes in a specific section (meta/spec)."""
+        for attr_name in dir(section_obj):
+            if (
+                not attr_name.startswith("_")
+                and attr_name not in skip_attributes
+            ):
+                try:
+                    value = getattr(section_obj, attr_name)
+                    if not callable(value):  # Skip methods
+                        full_attr_name = f"{section_name}.{attr_name}"
+                        attribute_values[full_attr_name].append(value)
+                        attribute_types[full_attr_name] = type(value).__name__
 
-            # Analyze top-level attributes
-            for attr_name in dir(entity):
-                if (
-                    not attr_name.startswith("_")
-                    and attr_name not in ["meta", "spec"]
-                    and attr_name not in skip_attributes
-                ):
-                    try:
-                        value = getattr(entity, attr_name)
-                        if not callable(value):  # Skip methods
-                            attribute_values[attr_name].append(value)
-                            attribute_types[attr_name] = type(value).__name__
+                        if value is None:
+                            nullable_attributes.add(full_attr_name)
+                        else:
+                            required_attributes.add(full_attr_name)
+                except Exception as e:
+                    model.validation_errors.append(
+                        f"Error accessing {section_name}.{attr_name}: {e}"
+                    )
 
-                            if value is None:
-                                nullable_attributes.add(attr_name)
-                            else:
-                                required_attributes.add(attr_name)
-                    except Exception as e:
-                        model.validation_errors.append(
-                            f"Error accessing {attr_name}: {e}"
-                        )
+    def _analyze_top_level_attributes(
+        self, entity: Any, skip_attributes: set, attribute_values: dict,
+        attribute_types: dict, required_attributes: set,
+        nullable_attributes: set, model: ResourceModel
+    ):
+        """Analyze top-level attributes of an entity."""
+        for attr_name in dir(entity):
+            if (
+                not attr_name.startswith("_")
+                and attr_name not in ["meta", "spec"]
+                and attr_name not in skip_attributes
+            ):
+                try:
+                    value = getattr(entity, attr_name)
+                    if not callable(value):  # Skip methods
+                        attribute_values[attr_name].append(value)
+                        attribute_types[attr_name] = type(value).__name__
 
-        # Create AttributeInfo objects
+                        if value is None:
+                            nullable_attributes.add(attr_name)
+                        else:
+                            required_attributes.add(attr_name)
+                except Exception as e:
+                    model.validation_errors.append(
+                        f"Error accessing {attr_name}: {e}"
+                    )
+
+    def _create_attribute_info_objects(
+        self, attribute_values: dict, attribute_types: dict,
+        required_attributes: set, nullable_attributes: set, model: ResourceModel
+    ):
+        """Create AttributeInfo objects from analyzed attributes."""
         for attr_name, values in attribute_values.items():
             # Filter out None values for type analysis
             non_null_values = [v for v in values if v is not None]
@@ -733,28 +760,10 @@ class EndorResourceAnalyzer:
             return
 
         for field_name, field_type in pydantic_class.__annotations__.items():
-            attr_name = (
-                f"{class_type.lower()}.{field_name}"
-                if class_type != "Resource"
-                else field_name
+            attr_name = self._get_attribute_name(field_name, class_type)
+            required, nullable = self._determine_field_properties(
+                field_type, pydantic_class, field_name
             )
-
-            # Determine if field is required
-            required = True
-            nullable = False
-
-            # Check for Optional types
-            if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
-                nullable = True
-                if type(None) in field_type.__args__:
-                    required = False
-
-            # Check for default values
-            if hasattr(pydantic_class, "__dataclass_fields__"):
-                field_info = pydantic_class.__dataclass_fields__.get(field_name)
-                if field_info and hasattr(field_info, "default"):
-                    if field_info.default is not None:
-                        required = False
 
             attr_info = AttributeInfo(
                 name=attr_name,
@@ -764,17 +773,52 @@ class EndorResourceAnalyzer:
                 api_source="pydantic",
             )
 
-            # Update existing attribute or create new one
-            if attr_name in model.attributes:
-                # Merge information
-                existing = model.attributes[attr_name]
-                existing.api_source = f"{existing.api_source},pydantic"
-                if not existing.required and required:
-                    existing.required = required
-                if not existing.nullable and nullable:
-                    existing.nullable = nullable
-            else:
-                model.attributes[attr_name] = attr_info
+            self._update_or_create_attribute(attr_name, attr_info, model)
+
+    def _get_attribute_name(self, field_name: str, class_type: str) -> str:
+        """Get the attribute name based on field name and class type."""
+        return (
+            f"{class_type.lower()}.{field_name}"
+            if class_type != "Resource"
+            else field_name
+        )
+
+    def _determine_field_properties(
+        self, field_type: Any, pydantic_class: Any, field_name: str
+    ) -> tuple[bool, bool]:
+        """Determine if a field is required and nullable."""
+        required = True
+        nullable = False
+
+        # Check for Optional types
+        if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
+            nullable = True
+            if type(None) in field_type.__args__:
+                required = False
+
+        # Check for default values
+        if hasattr(pydantic_class, "__dataclass_fields__"):
+            field_info = pydantic_class.__dataclass_fields__.get(field_name)
+            if field_info and hasattr(field_info, "default"):
+                if field_info.default is not None:
+                    required = False
+
+        return required, nullable
+
+    def _update_or_create_attribute(
+        self, attr_name: str, attr_info: AttributeInfo, model: ResourceModel
+    ):
+        """Update existing attribute or create new one."""
+        if attr_name in model.attributes:
+            # Merge information
+            existing = model.attributes[attr_name]
+            existing.api_source = f"{existing.api_source},pydantic"
+            if not existing.required and attr_info.required:
+                existing.required = attr_info.required
+            if not existing.nullable and attr_info.nullable:
+                existing.nullable = attr_info.nullable
+        else:
+            model.attributes[attr_name] = attr_info
 
     def _check_schema_drift(self, entities: List[Any], model: ResourceModel):
         """Check for schema drift between API and Pydantic models."""
@@ -807,26 +851,44 @@ class EndorResourceAnalyzer:
 
     def _print_data_model(self, model: ResourceModel):
         """Print the complete data model in absolute truth terms."""
+        self._print_model_header(model)
+        self._print_model_summary(model)
+        self._print_validation_errors(model)
+        self._print_schema_drift(model)
+        self._print_attributes_section(model)
+        self._print_relationships(model)
+        self._print_model_footer(model)
+
+    def _print_model_header(self, model: ResourceModel):
+        """Print the model header."""
         print(f"\n{'=' * 80}")
         print(f"📋 COMPLETE DATA MODEL: {model.resource_name}")
         print(f"{'=' * 80}")
 
+    def _print_model_summary(self, model: ResourceModel):
+        """Print the model summary."""
         print("\n📊 SUMMARY:")
         print(f"   Total Entities Analyzed: {model.total_entities}")
         print(f"   Total Attributes Found: {len(model.attributes)}")
         print(f"   Validation Errors: {len(model.validation_errors)}")
         print(f"   Schema Drift Issues: {len(model.schema_drift)}")
 
+    def _print_validation_errors(self, model: ResourceModel):
+        """Print validation errors if any."""
         if model.validation_errors:
             print("\n❌ VALIDATION ERRORS:")
             for error in model.validation_errors:
                 print(f"   - {error}")
 
+    def _print_schema_drift(self, model: ResourceModel):
+        """Print schema drift issues if any."""
         if model.schema_drift:
             print("\n⚠️  SCHEMA DRIFT:")
             for drift in model.schema_drift:
                 print(f"   - {drift}")
 
+    def _print_attributes_section(self, model: ResourceModel):
+        """Print the attributes section."""
         print("\n📋 ATTRIBUTES (Absolute Truth):")
         print(f"{'=' * 80}")
 
@@ -843,30 +905,26 @@ class EndorResourceAnalyzer:
             if not k.startswith(("meta.", "spec."))
         }
 
-        # Print Meta attributes
-        if meta_attrs:
-            print("\n🔹 META ATTRIBUTES:")
-            for _attr_name, attr_info in sorted(meta_attrs.items()):
+        self._print_attribute_group("META ATTRIBUTES", meta_attrs)
+        self._print_attribute_group("SPEC ATTRIBUTES", spec_attrs)
+        self._print_attribute_group("OTHER ATTRIBUTES", other_attrs)
+
+    def _print_attribute_group(self, group_name: str, attributes: dict):
+        """Print a group of attributes."""
+        if attributes:
+            print(f"\n🔹 {group_name}:")
+            for _attr_name, attr_info in sorted(attributes.items()):
                 self._print_attribute_info(attr_info)
 
-        # Print Spec attributes
-        if spec_attrs:
-            print("\n🔹 SPEC ATTRIBUTES:")
-            for _attr_name, attr_info in sorted(spec_attrs.items()):
-                self._print_attribute_info(attr_info)
-
-        # Print other attributes
-        if other_attrs:
-            print("\n🔹 OTHER ATTRIBUTES:")
-            for _attr_name, attr_info in sorted(other_attrs.items()):
-                self._print_attribute_info(attr_info)
-
-        # Print relationships
+    def _print_relationships(self, model: ResourceModel):
+        """Print relationships if any."""
         if model.relationships:
             print("\n🔗 RELATIONSHIPS:")
             for rel_name, rel_type in model.relationships.items():
                 print(f"   {rel_name}: {rel_type}")
 
+    def _print_model_footer(self, model: ResourceModel):
+        """Print the model footer."""
         print(f"\n{'=' * 80}")
         print(f"✅ Data model analysis complete for {model.resource_name}")
         print(f"{'=' * 80}")
