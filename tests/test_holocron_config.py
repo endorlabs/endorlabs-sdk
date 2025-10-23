@@ -191,10 +191,10 @@ class TestExternalDocsConfig:
         """Test valid external docs configuration."""
         config = ExternalDocsConfig(
             openapi_url_template="{ENDOR_API}/download/openapiv2.swagger.json",
-            openapi_output=".workspace/downloads/openapi-swagger.json",
+            openapi_output="external_docs/openapi-swagger.json",
             sitemap_url="https://docs.endorlabs.com/sitemap.xml",
-            sitemap_output=".workspace/downloads/sitemap.xml",
-            user_docs_output=".workspace/downloads/user-docs/",
+            sitemap_output="external_docs/sitemap.xml",
+            user_docs_output="external_docs/user-docs/",
             max_age_days=7,
         )
 
@@ -380,10 +380,10 @@ exclude_dirs = ["__pycache__", ".git"]
 
 [tool.holocron.external_docs]
 openapi_url_template = "{ENDOR_API}/download/openapiv2.swagger.json"
-openapi_output = ".workspace/downloads/openapi-swagger.json"
+openapi_output = "external_docs/openapi-swagger.json"
 sitemap_url = "https://docs.endorlabs.com/sitemap.xml"
-sitemap_output = ".workspace/downloads/sitemap.xml"
-user_docs_output = ".workspace/downloads/user-docs/"
+sitemap_output = "external_docs/sitemap.xml"
+user_docs_output = "external_docs/user-docs/"
 max_age_days = 7
 
 [tool.holocron.content_types.markdown]
@@ -432,7 +432,7 @@ chunk_size = 1607
 overlap = 400
 delimiters = ["##"]
 file_extensions = [".md", ".rst"]
-not_path_patterns = [".workspace/downloads/user-docs/.*"]
+not_path_patterns = ["external_docs/user-docs/.*"]
 
 [tool.holocron.collection.code]
 name = "Source Code Files"
@@ -458,9 +458,7 @@ file_extensions = [".py", ".js", ".ts"]
             markdown_config = config.collections["markdown"]
             assert markdown_config.name == "Markdown Documentation"
             assert markdown_config.file_extensions == [".md", ".rst"]
-            assert markdown_config.not_path_patterns == [
-                ".workspace/downloads/user-docs/.*"
-            ]
+            assert markdown_config.not_path_patterns == ["external_docs/user-docs/.*"]
 
             code_config = config.collections["code"]
             assert code_config.name == "Source Code Files"

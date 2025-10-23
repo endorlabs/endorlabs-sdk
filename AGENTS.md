@@ -164,45 +164,9 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **Secure logging**: No sensitive data in logs
 - **Input validation**: Validate all inputs
 
----
+### **Git Citizenship**
+- **.workspace**: Provide ephemeral scripts in the .workspace folder
 
-## 📊 **Examples**
-
-### **Complete Workflow**
-```python
-# 1. Initialize client
-from endor_cockpit.api_client import APIClient
-client = APIClient()
-
-# 2. List existing namespaces
-namespaces_list = namespaces.list_namespaces(client, "endor-solutions-tgowan.cockpit")
-
-# 3. Create new namespace
-canonical_parent = "endor-solutions-tgowan.cockpit"
-payload = CreateNamespacePayload(
-    meta=NamespaceMetaCreate(
-        name="agent-created-namespace",
-        description="Created by AI agent"
-    )
-)
-new_namespace = namespaces.create_namespace(client, canonical_parent, payload)
-
-# 4. Verify creation
-if new_namespace:
-    print(f"Created: {new_namespace.uuid}")
-```
-
-### **Error Handling Pattern**
-```python
-try:
-    result = namespaces.create_namespace(client, parent, payload)
-    if result:
-        return f"Success: {result.uuid}"
-    else:
-        return "Failed: No result returned"
-except Exception as e:
-    return f"Error: {str(e)}"
-```
 
 ---
 

@@ -56,7 +56,7 @@ The RAG system uses data-driven chunking strategies based on empirical analysis 
 - **Preservation**: Complete H2 sections with all H3 subsections
 - **Overlap**: 400 tokens for context continuity
 
-**External Documentation** (`.workspace/downloads/user-docs/`):
+**External Documentation** (`external_docs/user-docs/`):
 - **Chunk Size**: 2,165 tokens (P95: 1165 + 1000 buffer)
 - **Split Points**: Major section delimiters (`===`, `---`, `\n\n`)
 - **Preservation**: Complete procedures and workflows
@@ -68,7 +68,7 @@ The RAG system uses data-driven chunking strategies based on empirical analysis 
 - **Preservation**: Complete functions and classes
 - **Overlap**: 500 tokens for context continuity
 
-**API Specifications** (`.workspace/downloads/openapi-swagger.json`):
+**API Specifications** (`external_docs/openapi-swagger.json`):
 - **Chunk Size**: 5,000 tokens (split by individual endpoints)
 - **Split Points**: Service endpoint boundaries
 - **Preservation**: Complete endpoint definitions

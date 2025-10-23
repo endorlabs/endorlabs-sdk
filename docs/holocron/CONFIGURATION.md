@@ -18,16 +18,16 @@ embedding_model = "text-embedding-3-small"
 
 [tool.holocron.paths]
 # Path management
-include_dirs = ["docs/", "src/", "tests/", ".workspace/downloads/"]
+include_dirs = ["docs/", "src/", "tests/", "external_docs/"]
 exclude_dirs = ["__pycache__", ".git", "node_modules", "venv", ".venv"]
 
 [tool.holocron.external_docs]
 # External documentation settings
 openapi_url_template = "{ENDOR_API}/download/openapiv2.swagger.json"
-openapi_output = ".workspace/downloads/openapi-swagger.json"
+openapi_output = "external_docs/openapi-swagger.json"
 sitemap_url = "https://docs.endorlabs.com/sitemap.xml"
-sitemap_output = ".workspace/downloads/sitemap.xml"
-user_docs_output = ".workspace/downloads/user-docs/"
+sitemap_output = "external_docs/sitemap.xml"
+user_docs_output = "external_docs/user-docs/"
 max_age_days = 7
 
 [tool.holocron.content_types.markdown]
@@ -64,10 +64,10 @@ preserve_complete_sections = true
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `openapi_url_template` | string | `"{ENDOR_API}/download/openapiv2.swagger.json"` | OpenAPI spec download URL template |
-| `openapi_output` | string | `".workspace/downloads/openapi-swagger.json"` | Local path for OpenAPI spec |
+| `openapi_output` | string | `"external_docs/openapi-swagger.json"` | Local path for OpenAPI spec |
 | `sitemap_url` | string | `"https://docs.endorlabs.com/sitemap.xml"` | Sitemap URL for external docs |
-| `sitemap_output` | string | `".workspace/downloads/sitemap.xml"` | Local path for sitemap |
-| `user_docs_output` | string | `".workspace/downloads/user-docs/"` | Directory for user documentation |
+| `sitemap_output` | string | `"external_docs/sitemap.xml"` | Local path for sitemap |
+| `user_docs_output` | string | `"external_docs/user-docs/"` | Directory for user documentation |
 | `max_age_days` | integer | `7` | Maximum age in days before refresh needed |
 
 ## 🎯 Content Type Configuration
@@ -125,7 +125,7 @@ preserve_complete_sections = true
 ```toml
 [tool.holocron.content_types.external_docs]
 name = "External User Documentation"
-patterns = ["\\.workspace/downloads/user-docs/.*\\.md$"]
+patterns = ["external_docs/user-docs/.*\\.md$"]
 chunk_size = 6000
 overlap = 500
 delimiters = ["===", "---", "\\n\\n", "Introduction", "About"]
@@ -480,7 +480,7 @@ include_dirs = [
     "src/",
     "tests/",
     "examples/",
-    ".workspace/downloads/"
+    "external_docs/"
 ]
 exclude_dirs = [
     "__pycache__",
@@ -494,10 +494,10 @@ exclude_dirs = [
 
 [tool.holocron.external_docs]
 openapi_url_template = "{ENDOR_API}/download/openapiv2.swagger.json"
-openapi_output = ".workspace/downloads/openapi-swagger.json"
+openapi_output = "external_docs/openapi-swagger.json"
 sitemap_url = "https://docs.example.com/sitemap.xml"
-sitemap_output = ".workspace/downloads/sitemap.xml"
-user_docs_output = ".workspace/downloads/user-docs/"
+sitemap_output = "external_docs/sitemap.xml"
+user_docs_output = "external_docs/user-docs/"
 max_age_days = 3
 
 # Custom content types
