@@ -246,11 +246,11 @@ class Resource(BaseResource):
 #### 3.1 Query Knowledge Base for Context
 ```bash
 # Query for documentation context and examples
-python -m holocron query "How do I implement {Resource} resources?"
-python -m holocron query "What are common pitfalls for {resource} implementation?"
-python -m holocron query "What are the API patterns for {Resource}Service?"
-python -m holocron query "What are the best practices for {resource} operations?"
-python -m holocron query "What are the common use cases for {resource} resources?"
+uv run python -m holocron query "How do I implement {Resource} resources?"
+uv run python -m holocron query "What are common pitfalls for {resource} implementation?"
+uv run python -m holocron query "What are the API patterns for {Resource}Service?"
+uv run python -m holocron query "What are the best practices for {resource} operations?"
+uv run python -m holocron query "What are the common use cases for {resource} resources?"
 ```
 
 #### 3.2 Extract Documentation Context

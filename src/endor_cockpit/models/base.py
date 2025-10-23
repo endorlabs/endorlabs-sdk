@@ -324,7 +324,10 @@ class BaseResourceOperations:
         """Universal update operation with field masking."""
         try:
             headers = self.client.default_headers
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/{resource_uuid}"
+            url = (
+                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
+                f"{resource_uuid}"
+            )
 
             # Convert payload to dict and validate
             payload_dict = payload.model_dump(exclude_none=True)
@@ -349,7 +352,10 @@ class BaseResourceOperations:
         """Universal delete operation."""
         try:
             headers = self.client.default_headers
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/{resource_uuid}"
+            url = (
+                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
+                f"{resource_uuid}"
+            )
 
             res = self.client.delete(url, headers=headers)
 
@@ -413,30 +419,60 @@ class BaseResourceOperations:
         params = {}
 
         if list_params:
-            if list_params.filter:
-                params["list_parameters.filter"] = list_params.filter
-            if list_params.mask:
-                params["list_parameters.mask"] = list_params.mask
-            if list_params.page_size:
-                params["list_parameters.page_size"] = str(list_params.page_size)
-            if list_params.page_token:
-                params["list_parameters.page_token"] = list_params.page_token
-            if list_params.sort_field:
-                params["list_parameters.sort_field"] = list_params.sort_field
-            if list_params.sort_order:
-                params["list_parameters.sort_order"] = list_params.sort_order
-            if list_params.count is not None:
-                params["list_parameters.count"] = str(list_params.count).lower()
-            if list_params.include_child_namespaces is not None:
-                params["list_parameters.include_child_namespaces"] = str(
-                    list_params.include_child_namespaces
-                ).lower()
-            if list_params.from_date:
-                params["list_parameters.from_date"] = list_params.from_date
-            if list_params.to_date:
-                params["list_parameters.to_date"] = list_params.to_date
+            self._add_basic_params(params, list_params)
+            self._add_pagination_params(params, list_params)
+            self._add_sorting_params(params, list_params)
+            self._add_boolean_params(params, list_params)
+            self._add_date_params(params, list_params)
 
         # Add any additional kwargs
         params.update(kwargs)
 
         return params
+
+    def _add_basic_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add basic filter and mask parameters."""
+        if list_params.filter:
+            params["list_parameters.filter"] = list_params.filter
+        if list_params.mask:
+            params["list_parameters.mask"] = list_params.mask
+
+    def _add_pagination_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add pagination-related parameters."""
+        if list_params.page_size:
+            params["list_parameters.page_size"] = str(list_params.page_size)
+        if list_params.page_token:
+            params["list_parameters.page_token"] = list_params.page_token
+
+    def _add_sorting_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add sorting-related parameters."""
+        if list_params.sort_field:
+            params["list_parameters.sort_field"] = list_params.sort_field
+        if list_params.sort_order:
+            params["list_parameters.sort_order"] = list_params.sort_order
+
+    def _add_boolean_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add boolean parameters."""
+        if list_params.count is not None:
+            params["list_parameters.count"] = str(list_params.count).lower()
+        if list_params.include_child_namespaces is not None:
+            params["list_parameters.include_child_namespaces"] = str(
+                list_params.include_child_namespaces
+            ).lower()
+
+    def _add_date_params(
+        self, params: Dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add date-related parameters."""
+        if list_params.from_date:
+            params["list_parameters.from_date"] = list_params.from_date
+        if list_params.to_date:
+            params["list_parameters.to_date"] = list_params.to_date

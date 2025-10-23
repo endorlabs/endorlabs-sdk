@@ -5,22 +5,21 @@
 ## 🚀 **Quick Start (30 seconds)**
 
 ### **Knowledge Base First**
-**CRITICAL**: Always query the vector database before any operations. This portable shared learning index contains:
+**CRITICAL**: Always query the Holocron knowledge base before any operations. This portable shared learning index contains:
 - API patterns and best practices
 - Known quirks and workarounds
 - Security guidelines and compliance requirements
 - Operational procedures and troubleshooting
 
-
-```python
-from endor_cockpit.rag import query_vector_db
-
+```bash
 # Query before any operation
-results = query_vector_db("How do I create a namespace?")
+uv run python -m holocron query "How do I create a namespace?"
 # Review results, then proceed with confidence
 ```
 
 **Workflow**: Query → Verify → Act → Update if contradictions found
+
+**Reference**: See [docs/holocron/README.md](docs/holocron/README.md) for comprehensive Holocron documentation and [docs/protocols/holocron-setup.md](docs/protocols/holocron-setup.md) for initialization workflows.
 
 ### **Agent Type Selection**
 - **🤖 SDK Developer**: [Development Guide](./docs/personas/developer/README.md) → [Architecture](./docs/personas/developer/architecture.md)
@@ -301,6 +300,7 @@ endorctl scan --sast
 - **[Security](./docs/personas/security/README.md)**: Policy authoring, findings, compliance
 
 ### **Knowledge Base**
+- **[Holocron System](./docs/holocron/README.md)**: AI-powered documentation search and retrieval
 - **[API Corrections](./docs/SPECIFICATION.md)**: Known discrepancies between OpenAPI spec and actual API
 - **[Endor Data Model](./docs/knowledge/endor-data-model/)**: Resource schemas and relationships
 - **[Examples](./docs/knowledge/examples/)**: Common workflows and patterns

@@ -4,21 +4,52 @@ Sync command implementation for Holocron.
 Handles knowledge base synchronization from documentation.
 """
 
-import logging
-
 from ..manager import VectorDBManager
 
 
 def sync_command(args):
     """Execute the sync command."""
     if args.verbose:
-        from endor_cockpit.utils.logging_config import setup_logging
-        logger = setup_logging("holocron")
+        pass
 
-    print("Syncing knowledge base...")
+        # logger = setup_logging("holocron")  # Not used
 
     try:
         manager = VectorDBManager()
+
+        # Handle list collections request
+        if args.list_collections:
+            collections = manager.get_available_collections()
+            if not collections:
+                print(
+                    "No collections found. Run 'holocron sync' first to populate the "
+                    "knowledge base."
+                )
+                return
+
+            print("Available content collections:")
+            print("=" * 50)
+            for content_type, info in collections.items():
+                print(
+                    f"{content_type:15} | {info['count']:4d} chunks | "
+                    f"{info['description']}"
+                )
+            return
+
+        # Build collection filter
+        collection_filter = None
+        if args.include or args.exclude:
+            try:
+                collection_filter = manager.get_collection_filter(
+                    include=args.include, exclude=args.exclude
+                )
+                if collection_filter:
+                    print(f"Filtering collections: {collection_filter}")
+            except ValueError as e:
+                print(f"Error: {e}")
+                return
+
+        print("Syncing knowledge base...")
         manager.initialize_db(rebuild=args.rebuild)
 
         info = manager.manifest
@@ -26,6 +57,16 @@ def sync_command(args):
         print(f"   Total chunks: {info.get('total_chunks', 0)}")
         print(f"   Total documents: {info.get('total_documents', 0)}")
         print(f"   Last updated: {info.get('last_updated', 'unknown')}")
+
+        # Show available collections after sync
+        collections = manager.get_available_collections()
+        if collections:
+            print("\nAvailable content collections:")
+            for content_type, info in collections.items():
+                print(
+                    f"   {content_type:15} | {info['count']:4d} chunks | "
+                    f"{info['description']}"
+                )
 
     except Exception as e:
         print(f"Failed to sync knowledge base: {e}")

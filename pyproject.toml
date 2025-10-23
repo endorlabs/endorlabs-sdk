@@ -111,33 +111,65 @@ holocron = [
 [tool.endor_cockpit]
 default_namespace = "endor-solutions-tgowan.cockpit"
 
-# Vector Database configuration
-[tool.vector_db]
-# ChromaDB configuration
-chroma_path = "workflow/vector_db"
-collection_name = "endor_cockpit_docs"
+# Holocron Knowledge Base Configuration
+[tool.holocron]
+db_path = ".workspace/holocron_data/vector_db"
+manifest_path = ".workspace/holocron_data/vector_db_manifest.json"
+default_collection = "endor_cockpit_docs"
 embedding_model = "text-embedding-3-small"
 
-# Chunking strategy configuration - empirical values from analysis
-[tool.vector_db.chunking]
-# Markdown (internal docs) - empirical P95 + 1000 buffer
-markdown_max_chunk_size = 1607
-markdown_overlap = 400
-# External docs - empirical P95 + 1000 buffer
-external_docs_max_chunk_size = 2165
-external_docs_overlap = 500
-# Code files - empirical P95 + 1000 buffer
-code_max_chunk_size = 6851
-code_overlap = 500
-# OpenAPI specs
-api_spec_max_chunk_size = 5000
-api_spec_overlap = 300
+    [tool.holocron.paths]
+    include_dirs = ["docs/", "src/", "tests/", ".workspace/downloads/"]
+    exclude_dirs = ["__pycache__", ".git", "node_modules", "venv", ".venv", "env", ".env", "holocron_data", ".workspace/holocron_data", "tmp"]
 
-# Content type detection patterns
-[tool.vector_db.patterns]
-markdown = ["\\.md$", "\\.rst$"]
-code = ["\\.py$", "\\.js$", "\\.ts$", "\\.go$", "\\.java$"]
-api_spec = ["openapi.*\\.json$", "swagger.*\\.json$", "\\.yaml$", "\\.yml$"]
+    # Collection definitions - each collection is self-contained
+        [tool.holocron.collection.endor_user_docs]
+        name = "External User Documentation"
+        chunk_size = 6000
+        overlap = 500
+        delimiters = ["===", "---", "\\n\\n"]
+        preserve_structure = true
+        preserve_complete_sections = true
+
+        # Simple array-based criteria
+        path_patterns = [".workspace/downloads/user-docs/.*"]
+        file_extensions = [".md"]
+        not_path_patterns = [".workspace/downloads/user-docs/.*\\.rst$"]
+        
+        # Collection-specific external docs config
+        openapi_url_template = "{ENDOR_API}/download/openapiv2.swagger.json"
+        openapi_output = ".workspace/downloads/openapi-swagger.json"
+        sitemap_url = "https://docs.endorlabs.com/sitemap.xml"
+        sitemap_output = ".workspace/downloads/sitemap.xml"
+        user_docs_output = ".workspace/downloads/user-docs/"
+        max_age_days = 7
+
+        [tool.holocron.collection.markdown]
+        name = "Internal Markdown Documentation"
+        chunk_size = 1607
+        overlap = 400
+        delimiters = ["##"]
+        preserve_structure = true
+        file_extensions = [".md"]
+        not_path_patterns = [".workspace/downloads/user-docs/.*"]
+
+        [tool.holocron.collection.code]
+        name = "Source Code Files"
+        chunk_size = 6851
+        overlap = 500
+        delimiters = ["def ", "class "]
+        file_extensions = [".py", ".js", ".ts", ".go", ".java"]
+        path_patterns = ["\\.py$", "\\.js$", "\\.ts$", "\\.go$", "\\.java$"]
+
+        [tool.holocron.collection.api_spec]
+        name = "API Specifications"
+        chunk_size = 5000
+        overlap = 300
+        delimiters = ['"paths":', '"components":', '"definitions":']
+        preserve_structure = true
+        split_by_endpoints = true
+        file_extensions = [".json", ".yaml", ".yml"]
+        path_patterns = ["openapi.*\\.json$", "swagger.*\\.json$"]
 
 # Logging configuration
 [tool.logging]

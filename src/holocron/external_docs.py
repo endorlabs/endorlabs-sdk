@@ -10,23 +10,92 @@ Provides functions to download and process external documentation sources:
 import hashlib
 import json
 import logging
+import os
 import time
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
+from .config import ExternalDocsConfig
+
 logger = logging.getLogger(__name__)
+
+
+def download_openapi_spec_with_config(
+    config: ExternalDocsConfig, timeout: int = 30, force: bool = False
+) -> Dict[str, Any]:
+    """
+    Download OpenAPI specification using configuration.
+
+    Args:
+        config: ExternalDocsConfig instance
+        timeout: Request timeout in seconds
+        force: Force re-download even if file exists
+
+    Returns:
+        Dict containing metadata: file_hash, timestamp, size, url
+    """
+    # Interpolate environment variables in URL template
+    api_url = config.openapi_url_template
+    if "{ENDOR_API}" in api_url:
+        endor_api = os.getenv("ENDOR_API", "https://api.endorlabs.com")
+        api_url = api_url.replace("{ENDOR_API}", endor_api)
+
+    output_path = Path(config.openapi_output)
+    return download_openapi_spec(api_url, output_path, timeout, force)
+
+
+def download_sitemap_with_config(
+    config: ExternalDocsConfig, timeout: int = 30, force: bool = False
+) -> List[str]:
+    """
+    Download and parse sitemap.xml using configuration.
+
+    Args:
+        config: ExternalDocsConfig instance
+        timeout: Request timeout in seconds
+        force: Force re-download even if file exists
+
+    Returns:
+        List of documentation page URLs
+    """
+    output_path = Path(config.sitemap_output)
+    return download_sitemap(config.sitemap_url, output_path, timeout, force)
+
+
+def download_user_docs_with_config(
+    config: ExternalDocsConfig,
+    sitemap_urls: List[str],
+    max_pages: Optional[int] = None,
+    timeout: int = 10,
+    force: bool = False,
+) -> int:
+    """
+    Download user documentation pages using configuration.
+
+    Args:
+        config: ExternalDocsConfig instance
+        sitemap_urls: List of URLs to download
+        max_pages: Optional limit on number of pages to download
+        timeout: Request timeout in seconds per page
+        force: Force re-download even if files exist
+
+    Returns:
+        Number of successfully downloaded pages
+    """
+    output_dir = Path(config.user_docs_output)
+    return download_user_docs(sitemap_urls, output_dir, max_pages, timeout, force)
 
 
 def download_openapi_spec(
     api_url: str, output_path: Path, timeout: int = 30, force: bool = False
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Download OpenAPI specification from Endor API.
 

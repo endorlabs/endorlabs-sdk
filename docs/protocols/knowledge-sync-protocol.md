@@ -117,6 +117,7 @@ Identify the appropriate documentation location:
 - **API quirks** → `docs/SPECIFICATION.md#api-corrections`
 - **Workflow patterns** → `docs/protocols/[relevant-protocol].md`
 - **Architectural insights** → `docs/agents/[relevant-guide].md`
+- **Task-specific insights** → `docs/persona/[relevant-persona]/[relevant-guide].md`
 - **Testing patterns** → `tests/README.md` or test file comments
 
 ### Promotion Process
@@ -171,15 +172,40 @@ cp _LOGBOOK_TEMPLATE.md .workspace/logbook.md
 After promoting entries to documentation:
 
 1. **Update documentation** with new learnings
-2. **Run knowledge sync**: `python -m holocron sync`
-3. **Verify retrieval**: `python -m holocron query "new learning"`
-4. **Test agent workflow** with updated knowledge
+2. **Validate system health**: `python scripts/validate_holocron.py`
+3. **Run knowledge sync**: `uv run python -m holocron sync`
+4. **Verify retrieval**: `uv run python -m holocron query "new learning"`
+5. **Test agent workflow** with updated knowledge
+
+### Validation Steps
+**Pre-Sync Validation**:
+```bash
+# Check system health before sync
+python scripts/validate_holocron.py
+
+# Verify configuration is valid
+uv run python -m holocron config validate
+```
+
+**Post-Sync Validation**:
+```bash
+# Verify sync completed successfully
+uv run python -m holocron sync --verbose
+
+# Test query functionality
+uv run python -m holocron query "test query"
+
+# Check database state
+python scripts/validate_holocron.py --check-database
+```
 
 ### Vector Database Updates
 - **New content** is automatically indexed
 - **Updated content** replaces old versions
 - **Cross-references** are maintained
 - **Search results** include new learnings
+
+**Reference**: See [docs/holocron/TROUBLESHOOTING.md](../holocron/TROUBLESHOOTING.md) for sync issues and [docs/holocron/README.md](../holocron/README.md) for system overview.
 
 ## Success Criteria
 

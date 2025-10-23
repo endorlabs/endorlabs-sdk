@@ -7,33 +7,91 @@ for AI agents working with the Endor Cockpit SDK.
 
 import os
 from pathlib import Path
-from typing import List, Tuple
+from typing import Optional
 
+from .config import HolocronConfig, load_config
 from .manager import VectorDBManager
 
 
-def validate_environment() -> Tuple[bool, List[str]]:
-    """
-    Validate that required environment variables are set.
-
-    Returns:
-        Tuple of (is_valid, missing_variables)
-    """
-    required_vars = [
-        "OPENAI_API_KEY",  # Required for vector embeddings
+def create_directories(config: HolocronConfig) -> None:
+    """Create necessary directories for holocron."""
+    directories = [
+        "holocron_data",
+        "holocron_data/vector_db",
+        ".workspace",
+        ".workspace/downloads",
+        ".workspace/downloads/user-docs",
+        # Add directories from config
+        os.path.dirname(config.db_path),
+        os.path.dirname(config.manifest_path),
+        config.external_docs.openapi_output,
+        config.external_docs.sitemap_output,
+        config.external_docs.user_docs_output,
     ]
 
+    for directory in directories:
+        Path(directory).mkdir(parents=True, exist_ok=True)
+
+
+def init_workspace(  # noqa: C901
+    force: bool = False,
+    verbose: bool = False,
+    download_external: bool = True,
+    config: Optional[HolocronConfig] = None,
+) -> bool:
+    """
+    Initialize the workspace for AI agents.
+
+    Performs comprehensive workspace setup including environment validation,
+    dependency checking, directory creation, external documentation downloads,
+    and knowledge base initialization.
+
+    Args:
+        force: Force reinitialization even if workspace exists
+        verbose: Enable verbose output
+        download_external: Download external documentation (OpenAPI, user docs)
+        config: HolocronConfig instance (loads from pyproject.toml if None)
+
+    Returns:
+        True if initialization successful, False otherwise
+    """
+    print("Initializing Holocron workspace...")
+
+    # Load configuration
+    if config is None:
+        try:
+            config = load_config()
+        except Exception as e:
+            print(f"Warning: Could not load configuration: {e}. Using defaults.")
+            from .config import get_default_config
+
+            config = get_default_config()
+
+    # Check if workspace already exists
+    if not force and Path(config.db_path).exists():
+        print("Workspace already exists. Use --force to reinitialize.")
+        return True
+
+    # Validate environment
+    if verbose:
+        print("Validating environment...")
+
+    # Check required environment variables
+    required_vars = ["OPENAI_API_KEY"]
+    missing_required = [var for var in required_vars if not os.getenv(var)]
+
+    if missing_required:
+        print(f"Missing required environment variables: {', '.join(missing_required)}")
+        print("   Set them before running: uv run python -m holocron init")
+        return False
+
+    # Check optional environment variables
     optional_vars = [
         "ENDOR_API",
         "ENDOR_API_CREDENTIALS_KEY",
         "ENDOR_API_CREDENTIALS_SECRET",
     ]
-
-    missing_required = [var for var in required_vars if not os.getenv(var)]
     missing_optional = [var for var in optional_vars if not os.getenv(var)]
-
-    if missing_required:
-        return False, missing_required
 
     if missing_optional:
         print(
@@ -43,23 +101,11 @@ def validate_environment() -> Tuple[bool, List[str]]:
             "   These are needed for API operations but not for knowledge base queries."
         )
 
-    return True, []
+    # Validate dependencies
+    if verbose:
+        print("Validating dependencies...")
 
-
-def validate_dependencies() -> bool:
-    """
-    Validate that required dependencies are installed.
-
-    Returns:
-        True if all dependencies are available, False otherwise
-    """
-    required_packages = [
-        "chromadb",
-        "openai",
-        "requests",
-        "pydantic",
-    ]
-
+    required_packages = ["chromadb", "openai", "requests", "pydantic"]
     missing_packages = []
 
     for package in required_packages:
@@ -73,104 +119,47 @@ def validate_dependencies() -> bool:
         print("   Install with: uv pip install -e '.[holocron]'")
         return False
 
-    return True
-
-
-def create_directories() -> None:
-    """Create necessary directories for holocron."""
-    directories = [
-        "holocron_data",
-        "holocron_data/vector_db",
-        ".workspace",
-        ".workspace/downloads",
-        ".workspace/downloads/user-docs",
-    ]
-
-    for directory in directories:
-        Path(directory).mkdir(parents=True, exist_ok=True)
-
-
-def init_workspace(  # noqa: C901
-    force: bool = False, verbose: bool = False, download_external: bool = True
-) -> bool:
-    """
-    Initialize the workspace for AI agents.
-
-    Performs comprehensive workspace setup including environment validation,
-    dependency checking, directory creation, external documentation downloads,
-    and knowledge base initialization.
-
-    Args:
-        force: Force reinitialization even if workspace exists
-        verbose: Enable verbose output
-        download_external: Download external documentation (OpenAPI, user docs)
-
-    Returns:
-        True if initialization successful, False otherwise
-    """
-    print("Initializing Holocron workspace...")
-
-    # Check if workspace already exists
-    if not force and Path("holocron_data").exists():
-        print("Workspace already exists. Use --force to reinitialize.")
-        return True
-
-    # Validate environment
-    if verbose:
-        print("Validating environment...")
-
-    env_valid, missing_vars = validate_environment()
-    if not env_valid:
-        print(f"Missing required environment variables: {', '.join(missing_vars)}")
-        print("   Set them before running: python -m holocron init")
-        return False
-
-    # Validate dependencies
-    if verbose:
-        print("Validating dependencies...")
-
-    if not validate_dependencies():
-        return False
-
     # Create directories
     if verbose:
         print("Creating directories...")
 
-    create_directories()
+    create_directories(config)
 
     # Ensure holocron_data directory exists for manifest
-    Path(".workspace/holocron_data").mkdir(parents=True, exist_ok=True)
+    Path(os.path.dirname(config.manifest_path)).mkdir(parents=True, exist_ok=True)
 
     # Download external documentation
+    openapi_metadata = None
+    pages_count = 0
+
     if download_external:
         if verbose:
             print("Downloading external documentation...")
 
         try:
             from .external_docs import (
-                download_openapi_spec,
-                download_sitemap,
-                download_user_docs,
+                download_openapi_spec_with_config,
+                download_sitemap_with_config,
+                download_user_docs_with_config,
             )
 
             # Download OpenAPI spec
-            api_url = os.getenv("ENDOR_API", "https://api.endorlabs.com")
-            spec_path = Path(".workspace/downloads/openapi-swagger.json")
-
             print("Downloading OpenAPI specification...")
-            openapi_metadata = download_openapi_spec(api_url, spec_path, force=force)
+            openapi_metadata = download_openapi_spec_with_config(
+                config.external_docs, force=force
+            )
 
             # Download and parse sitemap
-            sitemap_path = Path(".workspace/downloads/sitemap.xml")
             print("Downloading sitemap.xml...")
-            sitemap_urls = download_sitemap(
-                "https://docs.endorlabs.com/sitemap.xml", sitemap_path, force=force
+            sitemap_urls = download_sitemap_with_config(
+                config.external_docs, force=force
             )
 
             # Download user docs
-            user_docs_dir = Path(".workspace/downloads/user-docs/")
             print(f"Downloading {len(sitemap_urls)} documentation pages...")
-            pages_count = download_user_docs(sitemap_urls, user_docs_dir, force=force)
+            pages_count = download_user_docs_with_config(
+                config.external_docs, sitemap_urls, force=force
+            )
 
             print(f"External documentation downloaded: {pages_count} pages")
 
@@ -187,10 +176,10 @@ def init_workspace(  # noqa: C901
         print("Initializing knowledge base...")
 
     try:
-        manager = VectorDBManager()
+        manager = VectorDBManager(config=config)
 
         # Update external docs metadata if we downloaded them
-        if download_external and "openapi_metadata" in locals():
+        if download_external and openapi_metadata is not None:
             manager.update_external_docs_metadata(
                 openapi_metadata=openapi_metadata, user_docs_count=pages_count
             )
@@ -212,6 +201,8 @@ def init_workspace(  # noqa: C901
         return False
 
     print("Holocron workspace initialization complete!")
-    print("   You can now query the knowledge base with: python -m holocron query")
+    print(
+        "   You can now query the knowledge base with: uv run python -m holocron query"
+    )
 
     return True
