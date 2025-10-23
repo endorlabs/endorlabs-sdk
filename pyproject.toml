@@ -16,13 +16,15 @@ classifiers = [
 dependencies = [
     "requests==2.32.5",
     "pydantic==2.12.3",
-    "chromadb==1.2.0",
-    "markdownify==1.2.0",
-    "tomli==2.2.1; python_version < '3.11'",
 ]
 
- [project.optional-dependencies]
- # (Intentionally minimal; prefer dependency-groups for CI/dev/test installs.)
+[project.optional-dependencies]
+holocron = [
+    "chromadb==1.2.0",
+    "openai==2.5.0",
+    "beautifulsoup4==4.14.2",
+    "markdownify==1.2.0",
+]
 
 
 [build-system]
@@ -90,7 +92,8 @@ addopts = [
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests"
+    "integration: marks tests as integration tests",
+    "local: marks tests as local-only (excluded from CI)"
 ]
 
 [dependency-groups]
@@ -99,14 +102,6 @@ dev = [
     "pytest==8.4.2",
     "pytest-cov==7.0.0",
     "ruff==0.14.1",
-]
-cockpit = [
-]
-holocron = [
-    "chromadb==1.2.0",
-    "openai==2.5.0",
-    "beautifulsoup4==4.14.2",
-    "markdownify==1.2.0"
 ]
 
 # Endor Cockpit configuration

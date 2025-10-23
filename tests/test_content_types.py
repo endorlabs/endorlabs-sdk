@@ -2,6 +2,8 @@
 Tests for Holocron content type system.
 
 Tests content type detection, chunking strategies, and content source implementations.
+These tests are marked as local-only since they test functionality
+that is already validated by scripts/validate_holocron.py in CI.
 """
 
 import pytest
@@ -18,6 +20,7 @@ from holocron.content_types import (
 )
 
 
+@pytest.mark.local
 class TestChunk:
     """Test Chunk data structure."""
 
@@ -42,6 +45,7 @@ class TestChunk:
             Chunk(text="test", metadata="invalid")
 
 
+@pytest.mark.local
 class TestContentSource:
     """Test ContentSource abstract base class."""
 
@@ -104,6 +108,7 @@ class TestContentSource:
         assert source.detect("test.txt") is False
 
 
+@pytest.mark.local
 class TestMarkdownSource:
     """Test MarkdownSource implementation."""
 
@@ -216,6 +221,7 @@ Usage examples go here.
         assert source.detect("docs/README.txt") is False
 
 
+@pytest.mark.local
 class TestExternalDocsSource:
     """Test ExternalDocsSource implementation."""
 
@@ -326,6 +332,7 @@ The API provides several endpoints for different operations.
         assert source._should_skip_line("## Header") is False
 
 
+@pytest.mark.local
 class TestCodeSource:
     """Test CodeSource implementation."""
 
@@ -347,6 +354,7 @@ class TestCodeSource:
 import os
 import sys
 
+@pytest.mark.local
 class TestClass:
     \"\"\"Test class for demonstration.\"\"\"
 
@@ -395,6 +403,7 @@ if __name__ == "__main__":
         assert source.detect("src/main.go") is False
 
 
+@pytest.mark.local
 class TestApiSpecSource:
     """Test ApiSpecSource implementation."""
 
@@ -501,6 +510,7 @@ paths:
         assert all(isinstance(chunk, Chunk) for chunk in chunks)
 
 
+@pytest.mark.local
 class TestContentTypeRegistry:
     """Test ContentTypeRegistry implementation."""
 

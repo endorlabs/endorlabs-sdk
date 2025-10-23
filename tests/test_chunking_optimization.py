@@ -3,7 +3,11 @@
 Simplified tests for core chunking functionality.
 
 Tests essential chunking strategies without over-engineering.
+These tests are marked as local-only since they test functionality
+that is already validated by scripts/analyze_documentation_chunks.py in CI.
 """
+
+import pytest
 
 from holocron.scripts.generic_chunking_framework import (
     ChunkingMetrics,
@@ -13,6 +17,7 @@ from holocron.scripts.generic_chunking_framework import (
 )
 
 
+@pytest.mark.local
 class TestChunkingStrategy:
     """Test base chunking strategy functionality."""
 
@@ -42,6 +47,7 @@ More content."""
         assert metrics.avg_size > 0
 
 
+@pytest.mark.local
 class TestMarkdownChunkingStrategy:
     """Test markdown chunking strategies."""
 

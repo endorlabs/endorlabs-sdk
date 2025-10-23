@@ -20,7 +20,7 @@ export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
 ### Required Dependencies
 ```bash
 # Install RAG dependencies
-uv pip install -e ".[rag]"
+uv pip install -e ".[holocron]"
 ```
 
 ### Vector Database Initialization
@@ -375,7 +375,7 @@ ImportError: No module named 'chromadb'
 ```
 **Solution**: Install RAG dependencies
 ```bash
-uv pip install -e ".[rag]"
+uv pip install -e ".[holocron]"
 ```
 
 #### 2. OpenAI API Key Missing

@@ -1,4 +1,8 @@
-"""Tests for Holocron configuration system."""
+"""Tests for Holocron configuration system.
+
+These tests are marked as local-only since they test functionality
+that is already validated by scripts/validate_holocron.py in CI.
+"""
 
 import os
 import tempfile
@@ -19,6 +23,7 @@ from holocron.config import (
 )
 
 
+@pytest.mark.local
 class TestCollectionConfig:
     """Test CollectionConfig class."""
 
@@ -100,6 +105,7 @@ class TestCollectionConfig:
         assert "not_path_pattern" in criteria_types
 
 
+@pytest.mark.local
 class TestContentTypeConfig:
     """Test ContentTypeConfig class."""
 
@@ -158,6 +164,7 @@ class TestContentTypeConfig:
             )
 
 
+@pytest.mark.local
 class TestPathConfig:
     """Test PathConfig class."""
 
@@ -176,6 +183,7 @@ class TestPathConfig:
             PathConfig(include_dirs=[], exclude_dirs=["__pycache__"])
 
 
+@pytest.mark.local
 class TestExternalDocsConfig:
     """Test ExternalDocsConfig class."""
 
@@ -209,6 +217,7 @@ class TestExternalDocsConfig:
             )
 
 
+@pytest.mark.local
 class TestHolocronConfig:
     """Test HolocronConfig class."""
 
@@ -261,6 +270,7 @@ class TestHolocronConfig:
         assert config.content_types == content_types
 
 
+@pytest.mark.local
 class TestLoadConfig:
     """Test configuration loading."""
 
@@ -342,6 +352,7 @@ user_docs_output = "test"
             os.unlink(temp_path)
 
 
+@pytest.mark.local
 class TestEnvironmentVariableInterpolation:
     """Test environment variable interpolation."""
 
@@ -460,6 +471,7 @@ file_extensions = [".py", ".js", ".ts"]
             os.unlink(temp_path)
 
 
+@pytest.mark.local
 class TestValidateConfig:
     """Test configuration validation."""
 
@@ -551,6 +563,7 @@ class TestValidateConfig:
         assert isinstance(warnings, list)
 
 
+@pytest.mark.local
 class TestGetDefaultConfig:
     """Test getting default configuration."""
 
@@ -571,6 +584,7 @@ class TestGetDefaultConfig:
         assert len(config.content_types) > 0
 
 
+@pytest.mark.local
 class TestValidationScriptIntegration:
     """Test integration with validation script."""
 
