@@ -170,7 +170,13 @@ class APIClient:
         self.logger.debug(f"GET response: {response.status_code} - {response.text}...")
         return self._handle_response(response)
 
-    def post(self, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
+    def post(
+        self,
+        endpoint: str,
+        data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+    ) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"POST request to: {url} with params: {params}, data: {data}")
@@ -179,7 +185,13 @@ class APIClient:
 
         return self._handle_response(response)
 
-    def patch(self, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
+    def patch(
+        self,
+        endpoint: str,
+        data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+    ) -> Any:
         self.logger.debug(
             f"PATCH request to: {endpoint} with params: {params}, data: {data}"
         )
@@ -194,7 +206,13 @@ class APIClient:
         )
         return self._handle_response(response)
 
-    def put(self, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
+    def put(
+        self,
+        endpoint: str,
+        data: Optional[Dict] = None,
+        params: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+    ) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"PUT request to: {url} with data: {data}")
@@ -202,7 +220,12 @@ class APIClient:
         self.logger.debug(f"PUT response: {response.status_code} - {response.text}...")
         return self._handle_response(response)
 
-    def delete(self, endpoint: str, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
+    def delete(
+        self,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        headers: Optional[Dict] = None,
+    ) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"DELETE request to: {url}")

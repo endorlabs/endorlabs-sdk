@@ -10,8 +10,8 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 import chromadb
-from chromadb.config import Settings
 from chromadb.api import ClientAPI
+from chromadb.config import Settings
 
 from ..config import HolocronConfig
 
@@ -59,7 +59,8 @@ class DatabaseService:
             name=collection_name,
             metadata={"description": "Endor Cockpit documentation vector database"},
         )
-        logger.info(f"Collection created/retrieved: {self.collection.name if self.collection else 'None'}")
+        collection_name = self.collection.name if self.collection else "None"
+        logger.info(f"Collection created/retrieved: {collection_name}")
 
     def store_chunks_batch(self, chunks: List[Dict], batch_size: int = 1000) -> None:
         """Store chunks in batches with proper error handling."""

@@ -319,6 +319,81 @@ def _load_collections(holocron_section: Dict[str, Any]) -> Dict[str, CollectionC
     return collections
 
 
+def _parse_config_file(config_path: str) -> dict:
+    """Parse configuration file and return raw data."""
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+
+    try:
+        with open(config_path, "rb") as f:
+            return tomllib.load(f)
+    except Exception as e:
+        raise HolocronConfigError(f"Failed to parse configuration file: {e}") from e
+
+
+def _extract_holocron_section(config_data: dict) -> dict:
+    """Extract and validate holocron section from config data."""
+    holocron_section = config_data.get("tool", {}).get("holocron", {})
+    if not holocron_section:
+        raise HolocronConfigError("No [tool.holocron] section found in configuration")
+    return holocron_section
+
+
+def _load_main_config(holocron_section: dict) -> dict:
+    """Load main configuration with environment variable interpolation."""
+    main_config = {}
+    excluded_keys = [
+        "paths",
+        "external_docs",
+        "content_types",
+        "collection",
+        "collection.endor_user_docs",
+        "collection.markdown",
+        "collection.code",
+        "collection.api_spec",
+    ]
+
+    for key, value in holocron_section.items():
+        if key not in excluded_keys:
+            if isinstance(value, str):
+                main_config[key] = _interpolate_env_vars(value)
+            else:
+                main_config[key] = value
+    return main_config
+
+
+def _load_paths_config(holocron_section: dict) -> PathConfig:
+    """Load and validate paths configuration."""
+    paths_section = holocron_section.get("paths", {})
+    if not paths_section:
+        raise HolocronConfigError("No [tool.holocron.paths] section found")
+
+    try:
+        return PathConfig(**paths_section)
+    except TypeError as e:
+        raise HolocronConfigError(f"Invalid paths configuration: {e}") from e
+
+
+def _load_external_docs_config(holocron_section: dict) -> Optional[ExternalDocsConfig]:
+    """Load legacy external docs configuration."""
+    external_docs_section = holocron_section.get("external_docs", {})
+    if not external_docs_section:
+        return None
+
+    # Interpolate environment variables
+    processed_external_docs = {}
+    for key, value in external_docs_section.items():
+        if isinstance(value, str):
+            processed_external_docs[key] = _interpolate_env_vars(value)
+        else:
+            processed_external_docs[key] = value
+
+    try:
+        return ExternalDocsConfig(**processed_external_docs)
+    except TypeError as e:
+        raise HolocronConfigError(f"Invalid external_docs configuration: {e}") from e
+
+
 def load_config(config_path: str = "pyproject.toml") -> HolocronConfig:
     """
     Load Holocron configuration from pyproject.toml.
@@ -333,70 +408,15 @@ def load_config(config_path: str = "pyproject.toml") -> HolocronConfig:
         HolocronConfigError: If configuration is invalid
         FileNotFoundError: If configuration file doesn't exist
     """
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
+    # Parse configuration file
+    config_data = _parse_config_file(config_path)
+    holocron_section = _extract_holocron_section(config_data)
 
-    try:
-        with open(config_path, "rb") as f:
-            config_data = tomllib.load(f)
-    except Exception as e:
-        raise HolocronConfigError(f"Failed to parse configuration file: {e}") from e
-
-    holocron_section = config_data.get("tool", {}).get("holocron", {})
-    if not holocron_section:
-        raise HolocronConfigError("No [tool.holocron] section found in configuration")
-
-    # Load main configuration with environment variable interpolation
-    main_config = {}
-    for key, value in holocron_section.items():
-        if key not in [
-            "paths",
-            "external_docs",
-            "content_types",
-            "collection",
-            "collection.endor_user_docs",
-            "collection.markdown",
-            "collection.code",
-            "collection.api_spec",
-        ]:
-            if isinstance(value, str):
-                main_config[key] = _interpolate_env_vars(value)
-            else:
-                main_config[key] = value
-
-    # Load paths configuration
-    paths_section = holocron_section.get("paths", {})
-    if not paths_section:
-        raise HolocronConfigError("No [tool.holocron.paths] section found")
-
-    try:
-        paths_config = PathConfig(**paths_section)
-    except TypeError as e:
-        raise HolocronConfigError(f"Invalid paths configuration: {e}") from e
-
-    # Load collections (new format)
+    # Load configuration sections
+    main_config = _load_main_config(holocron_section)
+    paths_config = _load_paths_config(holocron_section)
     collections = _load_collections(holocron_section)
-
-    # Load legacy external docs configuration (for backward compatibility)
-    external_docs_section = holocron_section.get("external_docs", {})
-    external_docs_config = None
-    if external_docs_section:
-        # Interpolate environment variables in external docs config
-        processed_external_docs = {}
-        for key, value in external_docs_section.items():
-            if isinstance(value, str):
-                processed_external_docs[key] = _interpolate_env_vars(value)
-            else:
-                processed_external_docs[key] = value
-
-        try:
-            external_docs_config = ExternalDocsConfig(**processed_external_docs)
-        except TypeError as e:
-            raise HolocronConfigError(
-                f"Invalid external_docs configuration: {e}"
-            ) from e
-
-    # Load legacy content types (for backward compatibility)
+    external_docs_config = _load_external_docs_config(holocron_section)
     content_types = _load_content_types(holocron_section)
 
     # Validate that either collections or content types are defined
@@ -405,7 +425,7 @@ def load_config(config_path: str = "pyproject.toml") -> HolocronConfig:
             "No collections or content types defined in configuration"
         )
 
-    # Load legacy collection mapping (for backward compatibility)
+    # Load legacy collection mapping
     collection_mapping = holocron_section.get("collection", {})
 
     # Create main config
@@ -422,16 +442,8 @@ def load_config(config_path: str = "pyproject.toml") -> HolocronConfig:
         raise HolocronConfigError(f"Invalid main configuration: {e}") from e
 
 
-def validate_config(config: HolocronConfig) -> List[str]:
-    """
-    Validate configuration and return list of warnings/errors.
-
-    Args:
-        config: HolocronConfig instance to validate
-
-    Returns:
-        List of validation messages (empty if valid)
-    """
+def _validate_directories(config: HolocronConfig) -> List[str]:
+    """Validate directory existence and permissions."""
     warnings = []
 
     # Check if required directories exist
@@ -449,43 +461,66 @@ def validate_config(config: HolocronConfig) -> List[str]:
     elif not os.access(db_dir, os.W_OK):
         warnings.append(f"Database directory is not writable: {db_dir}")
 
-    # Check collection configurations
+    return warnings
+
+
+def _validate_collection_configs(config: HolocronConfig) -> List[str]:
+    """Validate collection configurations."""
+    warnings = []
+
     for collection_name, collection_config in config.collections.items():
         if collection_config.chunk_size < 100:
             warnings.append(
-                (
-                    f"Collection '{collection_name}' has very small chunk_size "
-                    f"({collection_config.chunk_size})"
-                )
+                f"Collection '{collection_name}' has very small chunk_size "
+                f"({collection_config.chunk_size})"
             )
 
         if collection_config.overlap > collection_config.chunk_size // 2:
             warnings.append(
-                (
-                    f"Collection '{collection_name}' has high overlap ratio "
-                    f"({collection_config.overlap}/{collection_config.chunk_size})"
-                )
+                f"Collection '{collection_name}' has high overlap ratio "
+                f"({collection_config.overlap}/{collection_config.chunk_size})"
             )
 
-    # Check legacy content type configurations (if present)
-    if config.content_types:
-        for content_type_name, content_type_config in config.content_types.items():
-            if content_type_config.chunk_size < 100:
-                warnings.append(
-                    (
-                        f"Content type '{content_type_name}' has very small chunk_size "
-                        f"({content_type_config.chunk_size})"
-                    )
-                )
+    return warnings
 
-            if content_type_config.overlap > content_type_config.chunk_size // 2:
-                warnings.append(
-                    (
-                        f"Content type '{content_type_name}' has high overlap ratio "
-                        f"({content_type_config.overlap}/{content_type_config.chunk_size})"
-                    )
-                )
 
+def _validate_content_type_configs(config: HolocronConfig) -> List[str]:
+    """Validate legacy content type configurations."""
+    warnings = []
+
+    if not config.content_types:
+        return warnings
+
+    for content_type_name, content_type_config in config.content_types.items():
+        if content_type_config.chunk_size < 100:
+            warnings.append(
+                f"Content type '{content_type_name}' has very small chunk_size "
+                f"({content_type_config.chunk_size})"
+            )
+
+        if content_type_config.overlap > content_type_config.chunk_size // 2:
+            warnings.append(
+                f"Content type '{content_type_name}' has high overlap ratio "
+                f"({content_type_config.overlap}/{content_type_config.chunk_size})"
+            )
+
+    return warnings
+
+
+def validate_config(config: HolocronConfig) -> List[str]:
+    """
+    Validate configuration and return list of warnings/errors.
+
+    Args:
+        config: HolocronConfig instance to validate
+
+    Returns:
+        List of validation messages (empty if valid)
+    """
+    warnings = []
+    warnings.extend(_validate_directories(config))
+    warnings.extend(_validate_collection_configs(config))
+    warnings.extend(_validate_content_type_configs(config))
     return warnings
 
 
