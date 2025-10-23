@@ -461,14 +461,14 @@ def list_namespaces(
 
 
 def create_namespace(
-    client: APIClient, parent_namespace: str, payload: CreateNamespacePayload
+    client: APIClient, tenant_meta_namespace: str, payload: CreateNamespacePayload
 ) -> Optional[Namespace]:
     """
     Create a new namespace under the specified parent namespace.
 
     Args:
         client: The APIClient instance to use for the request
-        parent_namespace: The namespace under which to create the new namespace
+        tenant_meta_namespace: The namespace under which to create the new namespace
         payload: The CreateNamespacePayload containing the new namespace details
 
     Returns:
@@ -482,7 +482,7 @@ def create_namespace(
         headers = client.default_headers
         headers.update({"Accept": "application/json"})
         res = client.post(
-            f"v1/namespaces/{parent_namespace}/namespaces",
+            f"v1/namespaces/{tenant_meta_namespace}/namespaces",
             headers=headers,
             data=payload.model_dump(),
         )
@@ -500,14 +500,14 @@ def create_namespace(
 
 
 def get_namespace(
-    client: APIClient, parent_namespace: str, namespace_uuid: str
+    client: APIClient, tenant_meta_namespace: str, namespace_uuid: str
 ) -> Optional[Namespace]:
     """
     Retrieve a specific namespace by UUID.
 
     Args:
         client: The APIClient instance to use for the request
-        parent_namespace: The parent namespace containing the target namespace
+        tenant_meta_namespace: The parent namespace containing the target namespace
         namespace_uuid: The UUID of the namespace to retrieve
 
     Returns:
@@ -520,7 +520,7 @@ def get_namespace(
     try:
         headers = client.default_headers
         res = client.get(
-            f"v1/namespaces/{parent_namespace}/namespaces/{namespace_uuid}",
+            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}",
             headers=headers,
         )
         data = res.json()
@@ -531,14 +531,14 @@ def get_namespace(
 
 
 def delete_namespace(
-    client: APIClient, parent_namespace: str, namespace_uuid: str
+    client: APIClient, tenant_meta_namespace: str, namespace_uuid: str
 ) -> bool:
     """
     Delete a namespace by UUID.
 
     Args:
         client: The APIClient instance to use for the request
-        parent_namespace: The parent namespace containing the target namespace
+        tenant_meta_namespace: The parent namespace containing the target namespace
         namespace_uuid: The UUID of the namespace to delete
 
     Returns:
@@ -550,7 +550,7 @@ def delete_namespace(
     try:
         headers = client.default_headers
         res = client.delete(
-            f"v1/namespaces/{parent_namespace}/namespaces/{namespace_uuid}",
+            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}",
             headers=headers,
         )
         return res.status_code == 200  # Endor's API returns 200 on successful deletion
@@ -561,7 +561,7 @@ def delete_namespace(
 
 def update_namespace(
     client: APIClient,
-    parent_namespace: str,
+    tenant_meta_namespace: str,
     namespace_uuid: str,
     payload: UpdateNamespacePayload,
 ) -> Optional[Namespace]:
@@ -585,7 +585,7 @@ def update_namespace(
 
     Args:
         client: The APIClient instance to use for the request
-        parent_namespace: The parent namespace containing the target namespace
+        tenant_meta_namespace: The parent namespace containing the target namespace
         namespace_uuid: The UUID of the namespace to update
         payload: The UpdateNamespacePayload containing the updated namespace details
 
@@ -611,7 +611,7 @@ def update_namespace(
         logger.info(f"Updating namespace {namespace_uuid}")
 
         res = client.patch(
-            f"v1/namespaces/{parent_namespace}/namespaces/{namespace_uuid}",
+            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}",
             headers=headers,
             data=payload.model_dump(),
         )

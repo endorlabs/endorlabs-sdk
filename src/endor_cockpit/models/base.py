@@ -251,7 +251,10 @@ class BaseResourceOperations:
             return [self.model_class(**item) for item in items]
 
         except Exception as e:
-            self.logger.error(f"Failed to list {self.resource_name}: {e}")
+            self.logger.error(
+                f"Failed to list {self.resource_name} in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check namespace permissions and API connectivity."
+            )
             return []
 
     def get(
@@ -269,7 +272,9 @@ class BaseResourceOperations:
             return self.model_class(**data)
         except Exception as e:
             self.logger.debug(
-                f"Direct {self.resource_name} access failed for {resource_uuid}: {e}"
+                f"Direct {self.resource_name} access failed for UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Falling back to list+filter approach."
             )
 
         # Method 2: Use list and filter approach (workaround)
@@ -290,7 +295,9 @@ class BaseResourceOperations:
             return resources[0] if resources else None
         except Exception as e:
             self.logger.error(
-                f"List and filter approach failed for {resource_uuid}: {e}"
+                f"List and filter approach failed for {self.resource_name} UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Resource may not exist or namespace may be inaccessible."
             )
             return None
 
@@ -311,7 +318,10 @@ class BaseResourceOperations:
             return self.model_class(**data)
 
         except Exception as e:
-            self.logger.error(f"Failed to create {self.resource_name}: {e}")
+            self.logger.error(
+                f"Failed to create {self.resource_name} in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check payload validity and namespace permissions."
+            )
             return None
 
     def update(
@@ -344,7 +354,9 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to update {self.resource_name} {resource_uuid}: {e}"
+                f"Failed to update {self.resource_name} UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check resource exists and update_mask is valid."
             )
             return None
 
@@ -364,7 +376,9 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to delete {self.resource_name} {resource_uuid}: {e}"
+                f"Failed to delete {self.resource_name} UUID '{resource_uuid}' "
+                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check resource exists and deletion permissions."
             )
             return False
 
@@ -409,7 +423,10 @@ class BaseResourceOperations:
                 return 0
 
         except Exception as e:
-            self.logger.error(f"Failed to count {self.resource_name}: {e}")
+            self.logger.error(
+                f"Failed to count {self.resource_name} in namespace '{tenant_meta_namespace}': {e}. "
+                f"Check namespace permissions and filter syntax."
+            )
             return 0
 
     def _build_params(
