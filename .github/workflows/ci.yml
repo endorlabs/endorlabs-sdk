@@ -72,7 +72,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev --group holocron
+          uv sync --dev
 
   # Lint job - runs in parallel with tests
   lint:
@@ -119,7 +119,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration"
+          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration and not local"
 
   # Integration tests - slower, requires secrets
   test-integration:
@@ -163,7 +163,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration"
+          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration and not local"
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
@@ -293,7 +293,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration"
+          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not integration and not local"
 
       - name: Display coverage summary
         run: |
