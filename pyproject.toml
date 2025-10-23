@@ -52,6 +52,8 @@ exclude = [
     "holocron_data/**",
     "workspace",
     "workspace/**",
+    "scripts/",  # Root-level utility scripts
+    "scripts/**",  # Allow complexity in utility scripts
     "*.log",
     "__pycache__",
     "*.pyc",

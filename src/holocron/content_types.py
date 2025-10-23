@@ -369,6 +369,137 @@ class MarkdownSource(ContentSource):
 class ExternalDocsSource(ContentSource):
     """Content source for external documentation."""
 
+    def _process_underline_header(
+        self,
+        lines: List[str],
+        i: int,
+        current_chunk: List[str],
+        chunks: List[Chunk],
+        source_url: str,
+        h1_title: str,
+        current_section: str,
+        current_subsection: str,
+        file_path: str,
+    ) -> tuple:
+        """Process underline header pattern."""
+        header_text = lines[i - 1].strip()
+        if header_text and not self._should_skip_line(lines[i - 1]):
+            # Save current chunk if exists
+            if current_chunk:
+                self._save_current_chunk(
+                    current_chunk,
+                    chunks,
+                    source_url,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                    file_path,
+                )
+                current_chunk = []
+
+            # Update tracking for the header
+            h1_title, current_section, current_subsection = (
+                self._update_header_tracking(
+                    lines[i - 1], h1_title, current_section, current_subsection
+                )
+            )
+
+            # Start new chunk WITH header + underline
+            current_chunk = [lines[i - 1], lines[i]]
+            current_size = len(lines[i - 1]) + len(lines[i]) + 1
+            return (
+                current_chunk,
+                current_size,
+                h1_title,
+                current_section,
+                current_subsection,
+            )
+
+        return current_chunk, 0, h1_title, current_section, current_subsection
+
+    def _process_regular_header(
+        self,
+        line: str,
+        current_chunk: List[str],
+        chunks: List[Chunk],
+        source_url: str,
+        h1_title: str,
+        current_section: str,
+        current_subsection: str,
+        file_path: str,
+    ) -> tuple:
+        """Process regular header."""
+        # Save accumulated content
+        if current_chunk:
+            self._save_current_chunk(
+                current_chunk,
+                chunks,
+                source_url,
+                h1_title,
+                current_section,
+                current_subsection,
+                file_path,
+            )
+            current_chunk = []
+
+        # Update tracking
+        h1_title, current_section, current_subsection = self._update_header_tracking(
+            line, h1_title, current_section, current_subsection
+        )
+
+        # Start new chunk WITH this header
+        current_chunk = [line]
+        current_size = len(line)
+        return (
+            current_chunk,
+            current_size,
+            h1_title,
+            current_section,
+            current_subsection,
+        )
+
+    def _process_content_line(
+        self,
+        line: str,
+        current_chunk: List[str],
+        current_size: int,
+        lines: List[str],
+        i: int,
+        chunks: List[Chunk],
+        source_url: str,
+        h1_title: str,
+        current_section: str,
+        current_subsection: str,
+        file_path: str,
+    ) -> tuple:
+        """Process regular content line."""
+        # Accumulate content
+        current_chunk.append(line)
+        current_size += len(line) + 1
+
+        # Check if chunk is too large
+        if current_size > self.config.chunk_size:
+            is_next_header = i + 1 < len(lines) and (
+                self._is_external_doc_header(lines[i + 1])
+                or (i + 2 < len(lines) and self._is_underline(lines[i + 1]))
+            )
+
+            if is_next_header or current_size > self.config.chunk_size * 1.5:
+                # Save and start new chunk
+                self._save_current_chunk(
+                    current_chunk,
+                    chunks,
+                    source_url,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                    file_path,
+                )
+                current_chunk = []
+                current_size = 0
+
+        return current_chunk, current_size
+
     def chunk_content(self, content: str, file_path: str = "") -> List[Chunk]:
         """Chunk external documentation content - preserve complete sections."""
         chunks = []
@@ -389,91 +520,61 @@ class ExternalDocsSource(ContentSource):
                 continue
 
             # Check for underline header pattern (look-behind)
-            # is_underline_header = False  # Not used
             if i > 0 and self._is_underline(line):
-                # Previous line is the actual header text
-                header_text = lines[i - 1].strip()
-                if header_text and not self._should_skip_line(lines[i - 1]):
-                    # is_underline_header = True  # Not used
-                    # Process i-1 and i together as header
-                    if current_chunk:
-                        self._save_current_chunk(
-                            current_chunk,
-                            chunks,
-                            source_url,
-                            h1_title,
-                            current_section,
-                            current_subsection,
-                            file_path,
-                        )
-                        current_chunk = []
-                        current_size = 0
-
-                    # Update tracking for the header
-                    h1_title, current_section, current_subsection = (
-                        self._update_header_tracking(
-                            lines[i - 1], h1_title, current_section, current_subsection
-                        )
-                    )
-
-                    # Start new chunk WITH header + underline
-                    current_chunk = [lines[i - 1], line]
-                    current_size = len(lines[i - 1]) + len(line) + 1
-                    # Skip processing this underline line since we've already added it
-                    continue
+                result = self._process_underline_header(
+                    lines,
+                    i,
+                    current_chunk,
+                    chunks,
+                    source_url,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                    file_path,
+                )
+                (
+                    current_chunk,
+                    current_size,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                ) = result
+                continue
 
             # Check if this is a regular header
             if self._is_external_doc_header(line):
-                # If we have accumulated content, save it now with its header
-                if current_chunk:
-                    self._save_current_chunk(
-                        current_chunk,
-                        chunks,
-                        source_url,
-                        h1_title,
-                        current_section,
-                        current_subsection,
-                        file_path,
-                    )
-                    current_chunk = []
-                    current_size = 0
-
-                # Update tracking - DON'T save yet
-                h1_title, current_section, current_subsection = (
-                    self._update_header_tracking(
-                        line, h1_title, current_section, current_subsection
-                    )
+                result = self._process_regular_header(
+                    line,
+                    current_chunk,
+                    chunks,
+                    source_url,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                    file_path,
                 )
-
-                # Start new chunk WITH this header
-                current_chunk = [line]
-                current_size = len(line)
+                (
+                    current_chunk,
+                    current_size,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                ) = result
             else:
-                # Accumulate content
-                current_chunk.append(line)
-                current_size += len(line) + 1
-
-                # Only split if chunk is too large AND we're not in middle of a section
-                # Look ahead to see if next line is a header
-                if current_size > self.config.chunk_size:
-                    is_next_header = i + 1 < len(lines) and (
-                        self._is_external_doc_header(lines[i + 1])
-                        or (i + 2 < len(lines) and self._is_underline(lines[i + 1]))
-                    )
-
-                    if is_next_header or current_size > self.config.chunk_size * 1.5:
-                        # Save and start new chunk
-                        self._save_current_chunk(
-                            current_chunk,
-                            chunks,
-                            source_url,
-                            h1_title,
-                            current_section,
-                            current_subsection,
-                            file_path,
-                        )
-                        current_chunk = []
-                        current_size = 0
+                # Process regular content line
+                current_chunk, current_size = self._process_content_line(
+                    line,
+                    current_chunk,
+                    current_size,
+                    lines,
+                    i,
+                    chunks,
+                    source_url,
+                    h1_title,
+                    current_section,
+                    current_subsection,
+                    file_path,
+                )
 
         # Save final chunk
         if current_chunk:

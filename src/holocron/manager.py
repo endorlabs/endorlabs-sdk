@@ -400,6 +400,54 @@ class VectorDBManager:
 
         return True
 
+    def _process_single_file(self, file_path: str) -> bool:
+        """Process a single file and return True if it should be included."""
+        logger.info(f"  -> File: {file_path}")
+        if self._is_text_file(file_path):
+            if self._should_rebuild_file(file_path):
+                logger.info("    -> INCLUDED")
+                return True
+            else:
+                logger.info("    -> SKIPPED (already processed)")
+        else:
+            logger.info("    -> EXCLUDED (not text file)")
+        return False
+
+    def _process_directory(self, dir_path: str) -> List[str]:
+        """Process a directory and return list of files to include."""
+        files_to_process = []
+        logger.info(f"  -> Directory: {dir_path}")
+
+        for root, dirs, files in os.walk(dir_path):
+            # Skip excluded directories
+            dirs[:] = [d for d in dirs if d not in self.config.paths.exclude_dirs]
+
+            # OS-agnostic path normalization
+            normalized_root = os.path.normpath(root).replace(os.path.sep, "/")
+            logger.info(f"    -> Walking: {normalized_root}")
+
+            # Check for excluded paths using normalized paths
+            if any(
+                excluded in normalized_root
+                for excluded in self.config.paths.exclude_dirs
+            ):
+                logger.info(f"    -> SKIPPED (excluded path): {normalized_root}")
+                continue
+
+            for file in files:
+                file_path = os.path.normpath(os.path.join(root, file))
+
+                if self._is_text_file(file_path):
+                    if self._should_rebuild_file(file_path):
+                        files_to_process.append(file_path)
+                        logger.info(f"      -> INCLUDED: {file}")
+                    else:
+                        logger.info(f"      -> SKIPPED (already processed): {file}")
+                else:
+                    logger.info(f"      -> EXCLUDED (not text file): {file}")
+
+        return files_to_process
+
     def _get_files_to_process(self) -> List[str]:
         """Get list of files to process for vector DB."""
         files_to_process = []
@@ -412,53 +460,10 @@ class VectorDBManager:
             logger.info(f"Processing include path: {include_path}")
 
             if os.path.isfile(include_path):
-                logger.info(f"  -> File: {include_path}")
-                if self._is_text_file(include_path):
-                    if self._should_rebuild_file(include_path):
-                        files_to_process.append(include_path)
-                        logger.info("    -> INCLUDED")
-                    else:
-                        logger.info("    -> SKIPPED (already processed)")
-                else:
-                    logger.info("    -> EXCLUDED (not text file)")
+                if self._process_single_file(include_path):
+                    files_to_process.append(include_path)
             elif os.path.isdir(include_path):
-                logger.info(f"  -> Directory: {include_path}")
-                for root, dirs, files in os.walk(include_path):
-                    # Skip excluded directories
-                    dirs[:] = [
-                        d for d in dirs if d not in self.config.paths.exclude_dirs
-                    ]
-
-                    # OS-agnostic path normalization
-                    normalized_root = os.path.normpath(root).replace(os.path.sep, "/")
-                    logger.info(f"    -> Walking: {normalized_root}")
-
-                    # Check for excluded paths using normalized paths
-                    if any(
-                        excluded in normalized_root
-                        for excluded in self.config.paths.exclude_dirs
-                    ):
-                        logger.info(
-                            f"    -> SKIPPED (excluded path): {normalized_root}"
-                        )
-                        continue
-
-                    for file in files:
-                        file_path = os.path.normpath(os.path.join(root, file))
-                        # normalized_file_path = file_path.replace(
-                        #     os.path.sep, "/"
-                        # )  # Not used
-
-                        if self._is_text_file(file_path):
-                            if self._should_rebuild_file(file_path):
-                                files_to_process.append(file_path)
-                                logger.info(f"      -> INCLUDED: {file}")
-                            else:
-                                logger.info(
-                                    f"      -> SKIPPED (already processed): {file}"
-                                )
-                        else:
-                            logger.info(f"      -> EXCLUDED (not text file): {file}")
+                files_to_process.extend(self._process_directory(include_path))
             else:
                 logger.info(f"  -> NOT FOUND: {include_path}")
 
