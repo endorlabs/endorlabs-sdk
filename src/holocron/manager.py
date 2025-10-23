@@ -9,144 +9,14 @@ import hashlib
 import json
 import logging
 import os
-import re
 from datetime import datetime
 from typing import Dict, List, Optional
 
-import chromadb
-from chromadb.config import Settings
-
-try:
-    import tomllib  # Python 3.11+
-except ImportError:
-    import tomli as tomllib  # Python < 3.11
+from .config import HolocronConfig, load_config
+from .content_types import ContentTypeRegistry
+from .services import DatabaseService, FileProcessor
 
 logger = logging.getLogger(__name__)
-
-# Default chunking strategy fallback
-DEFAULT_CHUNKING_STRATEGY = {
-    "markdown": {
-        "max_chunk_size": 1607,  # tokens - P95 (607) + 1000 buffer
-        "overlap": 400,  # tokens - increased for better context
-        "split_on": ["##"],  # Only H2 headers - preserve H3 subsections
-        "preserve_structure": True,
-        "preserve_complete_sections": True,  # Never split H2 sections
-    },
-    "external_docs": {
-        "max_chunk_size": 2165,  # tokens - P95 (1165) + 1000 buffer
-        "overlap": 500,  # tokens - increased for better context
-        "split_on": [
-            "===",
-            "---",
-            "\n\n",
-            "Introduction",
-            "About",
-            "Prerequisites",
-        ],  # External doc patterns - prioritize major sections
-        "preserve_structure": True,
-        "preserve_complete_sections": True,  # Preserve complete procedures
-    },
-    "code": {
-        "max_chunk_size": 6851,  # tokens - P95 (5851) + 1000 buffer
-        "overlap": 500,  # tokens - increased for better context
-        "split_on": ["def ", "class "],  # Functions and classes only
-        "preserve_structure": True,
-        "preserve_complete_sections": True,  # Keep complete functions/classes
-    },
-    "api_spec": {
-        "max_chunk_size": 5000,  # tokens - split by individual endpoints
-        "overlap": 300,  # tokens
-        "split_on": ['"paths":', '"components":', '"definitions":'],
-        "preserve_structure": True,
-        "split_by_endpoints": True,  # Split large service groups by individual endpoints
-    },
-}
-
-
-def _load_chunking_strategy():
-    """Load chunking strategy from pyproject.toml configuration."""
-    try:
-        with open("pyproject.toml", "rb") as f:
-            config = tomllib.load(f)
-            chunk_config = config.get("tool", {}).get("vector_db", {}).get("chunking", {})
-        
-        return {
-            "markdown": {
-                "max_chunk_size": chunk_config.get("markdown_max_chunk_size", 1607),
-                "overlap": chunk_config.get("markdown_overlap", 400),
-                "split_on": ["##"],  # Only H2 headers - preserve H3 subsections
-                "preserve_structure": True,
-                "preserve_complete_sections": True,  # Never split H2 sections
-            },
-            "external_docs": {
-                "max_chunk_size": chunk_config.get("external_docs_max_chunk_size", 2165),
-                "overlap": chunk_config.get("external_docs_overlap", 500),
-                "split_on": [
-                    "===",
-                    "---",
-                    "\n\n",
-                    "Introduction",
-                    "About",
-                    "Prerequisites",
-                ],  # External doc patterns - prioritize major sections
-                "preserve_structure": True,
-                "preserve_complete_sections": True,  # Preserve complete procedures
-            },
-            "code": {
-                "max_chunk_size": chunk_config.get("code_max_chunk_size", 6851),
-                "overlap": chunk_config.get("code_overlap", 500),
-                "split_on": ["def ", "class "],  # Functions and classes only
-                "preserve_structure": True,
-                "preserve_complete_sections": True,  # Keep complete functions/classes
-            },
-            "api_spec": {
-                "max_chunk_size": chunk_config.get("api_spec_max_chunk_size", 5000),
-                "overlap": chunk_config.get("api_spec_overlap", 300),
-                "split_on": ['"paths":', '"components":', '"definitions":'],
-                "preserve_structure": True,
-                "split_by_endpoints": True,  # Split large service groups by individual endpoints
-            },
-        }
-    except Exception as e:
-        logger.warning(f"Could not load chunking config from pyproject.toml: {e}")
-        return DEFAULT_CHUNKING_STRATEGY
-
-
-# Load chunking strategy from configuration
-CHUNKING_STRATEGY = _load_chunking_strategy()
-
-# Content type detection patterns
-CONTENT_TYPE_PATTERNS = {
-    "external_docs": [
-        r"\.workspace/downloads/user-docs/.*\.md$"
-    ],  # External user docs (check first)
-    "markdown": [r"\.md$", r"\.rst$"],
-    "code": [r"\.py$", r"\.js$", r"\.ts$", r"\.go$", r"\.java$"],
-    "api_spec": [r"openapi.*\.json$", r"swagger.*\.json$", r"\.yaml$", r"\.yml$"],
-}
-
-# Directories to include in vector DB
-INCLUDE_DIRS = [
-    "docs/",
-    "src/",
-    "tests/",
-    ".workspace/downloads/openapi-swagger.json",
-    ".workspace/downloads/user-docs/",
-]
-
-# Directories to exclude
-EXCLUDE_DIRS = [
-    "__pycache__",
-    ".git",
-    "node_modules",
-    "venv",
-    ".venv",
-    "env",
-    ".env",
-    "holocron_data",  # Exclude old data directory
-    ".workspace/holocron_data",  # Exclude only the vector database directory
-    "tmp",  # Exclude old tmp directory
-]
 
 
 class VectorDBManager:
@@ -166,11 +36,45 @@ class VectorDBManager:
 
     def __init__(
         self,
-        db_path: str = ".workspace/holocron_data/vector_db",
-        manifest_path: str = ".workspace/holocron_data/vector_db_manifest.json",
+        config: Optional[HolocronConfig] = None,
+        db_path: Optional[str] = None,
+        manifest_path: Optional[str] = None,
     ):
-        self.db_path = db_path
-        self.manifest_path = manifest_path
+        """
+        Initialize VectorDBManager with configuration.
+
+        Args:
+            config: HolocronConfig instance (loads from pyproject.toml if None)
+            db_path: Override database path (deprecated, use config)
+            manifest_path: Override manifest path (deprecated, use config)
+        """
+        # Load configuration
+        if config is None:
+            try:
+                self.config = load_config()
+            except Exception as e:
+                logger.warning(f"Could not load configuration: {e}. Using defaults.")
+                from .config import get_default_config
+
+                self.config = get_default_config()
+        else:
+            self.config = config
+
+        # Support legacy parameters for backward compatibility
+        self.db_path = db_path or self.config.db_path
+        self.manifest_path = manifest_path or self.config.manifest_path
+
+        # Initialize content type registry
+        self.content_registry = ContentTypeRegistry(
+            content_types=self.config.content_types,
+            collection_mapping=self.config.collection_mapping,
+            collections=self.config.collections,
+        )
+
+        # Initialize services
+        self.database_service = DatabaseService(self.config)
+        self.file_processor = FileProcessor(self.config, self.content_registry)
+
         self.client = None
         self.collection = None
         self.manifest = self._load_manifest()
@@ -184,7 +88,7 @@ class VectorDBManager:
             return {
                 "version": "1.0",
                 "last_updated": datetime.now().isoformat(),
-                "embedding_model": "text-embedding-3-small",
+                "embedding_model": self.config.embedding_model,
                 "chunking_strategy": "semantic_headers",
                 "documents": {},
                 "total_chunks": 0,
@@ -196,6 +100,151 @@ class VectorDBManager:
         self.manifest["last_updated"] = datetime.now().isoformat()
         with open(self.manifest_path, "w") as f:
             json.dump(self.manifest, f, indent=2)
+
+    def get_available_collections(self) -> Dict[str, Dict]:
+        """
+        Get available content collections with metadata.
+
+        Returns:
+            Dict mapping content_type to collection info (count, description, etc.)
+        """
+        if not self.client:
+            self.initialize_db()
+
+        if not self.collection and self.client:
+            # Collection is initialized in initialize_db, but we need to get it
+            collection_name = self.config.default_collection
+            self.collection = self.client.get_collection(name=collection_name)
+
+        # Get all unique content types from the database
+        try:
+            # Get all documents to determine available content types
+            if self.collection:
+                all_results = self.collection.get()
+                content_types = set()
+
+                metadatas = all_results.get("metadatas", [])
+                if metadatas:
+                    for metadata in metadatas:
+                        if "content_type" in metadata:
+                            content_types.add(metadata["content_type"])
+            else:
+                content_types = set()
+
+            collections = {}
+            if self.collection:
+                for content_type in content_types:
+                    # Count documents of this type by filtering
+                    count_results = self.collection.get(
+                        where={"content_type": content_type}
+                    )
+                    count = len(count_results.get("ids", []))
+
+                    # Get description
+                    description = self._get_content_type_description(content_type)
+
+                    collections[content_type] = {
+                        "count": count,
+                        "description": description,
+                        "enabled": True,
+                    }
+
+            return collections
+
+        except Exception as e:
+            logger.warning(f"Could not determine available collections: {e}")
+            return {}
+
+    def _get_content_type_description(self, content_type: str) -> str:
+        """Get human-readable description for content type."""
+        # Check if it's a collection first
+        if content_type in self.config.collections:
+            return self.config.collections[content_type].name
+
+        # Legacy descriptions
+        descriptions = {
+            "markdown": "Internal documentation (docs/)",
+            "external_docs": "External user documentation (docs.endorlabs.com)",
+            "code": "Source code files (src/, tests/)",
+            "api_spec": "OpenAPI specifications",
+        }
+        return descriptions.get(content_type, f"Unknown content type: {content_type}")
+
+    def validate_chunking_config(self) -> Dict[str, str]:
+        """Validate chunking configuration against actual content."""
+        warnings = {}
+
+        # Check collections (new format)
+        for collection_name, config in self.config.collections.items():
+            max_size = config.chunk_size
+            if collection_name == "endor_user_docs" and max_size < 4000:
+                warnings[collection_name] = (
+                    f"max_chunk_size {max_size} may fragment sections "
+                    "(recommended: 6000+)"
+                )
+
+        # Check legacy content types
+        if self.config.content_types:
+            for content_type_name, config in self.config.content_types.items():
+                max_size = config.chunk_size
+                if content_type_name == "external_docs" and max_size < 4000:
+                    warnings[content_type_name] = (
+                        f"max_chunk_size {max_size} may fragment sections "
+                        "(recommended: 6000+)"
+                    )
+
+        return warnings
+
+    def get_collection_filter(
+        self, include: Optional[List[str]] = None, exclude: Optional[List[str]] = None
+    ) -> Dict:
+        """
+        Build collection filter for database queries.
+
+        Args:
+            include: List of content types to include (None = all)
+            exclude: List of content types to exclude
+
+        Returns:
+            Dict with 'where' clause for ChromaDB query
+        """
+        available = self.get_available_collections()
+
+        if not include and not exclude:
+            # No filtering - return all
+            return {}
+
+        # Start with all available types
+        allowed_types = set(available.keys())
+
+        # Apply include filter
+        if include:
+            include_set = set(include)
+            # Validate include types
+            invalid_types = include_set - allowed_types
+            if invalid_types:
+                raise ValueError(
+                    f"Invalid content types: {invalid_types}. "
+                    f"Available: {list(allowed_types)}"
+                )
+            allowed_types = include_set
+
+        # Apply exclude filter
+        if exclude:
+            exclude_set = set(exclude)
+            # Validate exclude types
+            invalid_types = exclude_set - allowed_types
+            if invalid_types:
+                raise ValueError(
+                    f"Invalid content types to exclude: {invalid_types}. "
+                    f"Available: {list(allowed_types)}"
+                )
+            allowed_types = allowed_types - exclude_set
+
+        if not allowed_types:
+            raise ValueError("No content types remaining after filtering")
+
+        return {"content_type": {"$in": list(allowed_types)}}
 
     def update_external_docs_metadata(
         self,
@@ -238,487 +287,52 @@ class VectorDBManager:
 
     def _detect_content_type(self, file_path: str) -> str:
         """Detect content type based on file path and content."""
-        # Normalize path for cross-platform compatibility
-        normalized_path = self._normalize_path(file_path).replace(os.path.sep, "/")
+        # Use content type registry for detection
+        detected_type = self.content_registry.detect_content_type(file_path)
+        return detected_type or "markdown"  # Default to markdown for unknown types
 
-        for content_type, patterns in CONTENT_TYPE_PATTERNS.items():
-            for pattern in patterns:
-                if re.search(pattern, normalized_path, re.IGNORECASE):
-                    return content_type
-
-        # Default to markdown for unknown types
-        return "markdown"
-
-    def _semantic_chunk(self, content: str, content_type: str) -> List[Dict]:
+    def _semantic_chunk(
+        self, content: str, content_type: str, file_path: str = ""
+    ) -> List[Dict]:
         """Chunk content using semantic strategies."""
-        strategy = CHUNKING_STRATEGY.get(content_type, CHUNKING_STRATEGY["markdown"])
-        chunks = []
-
-        if content_type == "markdown":
-            chunks = self._chunk_markdown(content, strategy)
-        elif content_type == "external_docs":
-            chunks = self._chunk_external_docs(content, strategy)
-        elif content_type == "code":
-            chunks = self._chunk_code(content, strategy)
-        elif content_type == "api_spec":
-            chunks = self._chunk_api_spec(content, strategy)
-        else:
-            chunks = self._chunk_generic(content, strategy)
-
-        return chunks
-
-    def _chunk_markdown(self, content: str, strategy: Dict) -> List[Dict]:
-        """Chunk markdown content by headers and paragraphs with enhanced metadata."""
-        chunks = []
-        lines = content.split("\n")
-        current_chunk = []
-        current_size = 0
-
-        # Track document structure for enhanced metadata
-        h1_title = None
-        resource_type = None
-        current_section = None
-        current_subsection = None
-        current_header_level = None
-
-        for line in lines:
-            # Check if this is an H2 header (starts with ## but not ###)
-            if line.strip().startswith("## ") and not line.strip().startswith("### "):
-                # Save current chunk if it has content
-                if current_chunk:
-                    chunk_text = "\n".join(current_chunk)
-                    chunks.append(
-                        {
-                            "text": chunk_text,
-                            "metadata": {
-                                "content_type": "markdown",
-                                "chunk_index": len(chunks),
-                                "size": len(chunk_text),
-                                "resource_type": resource_type,
-                                "h1_title": h1_title,
-                                "section_name": current_section,
-                                "subsection_name": current_subsection,
-                                "header_level": current_header_level,
-                            },
-                        }
-                    )
-
-                # Parse header level and content
-                header_level = self._get_header_level(line)
-                header_text = self._clean_header_text(line)
-
-                # Update tracking variables
-                if header_level == "h1":
-                    h1_title = header_text
-                    resource_type = self._extract_resource_type(header_text)
-                    current_section = None
-                    current_subsection = None
-                elif header_level == "h2":
-                    current_section = header_text
-                    current_subsection = None
-                elif header_level == "h3":
-                    current_subsection = header_text
-
-                current_header_level = header_level
-
-                # Start new chunk with header
-                current_chunk = [line]
-                current_size = len(line)
-            else:
-                # Add line to current chunk
-                current_chunk.append(line)
-                current_size += len(line) + 1  # +1 for newline
-
-                # Check if chunk is too large (only split if not preserving complete sections)
-                if current_size > strategy["max_chunk_size"] and not strategy.get(
-                    "preserve_complete_sections", False
-                ):
-                    # Save current chunk
-                    chunk_text = "\n".join(current_chunk)
-                    chunks.append(
-                        {
-                            "text": chunk_text,
-                            "metadata": {
-                                "content_type": "markdown",
-                                "chunk_index": len(chunks),
-                                "size": len(chunk_text),
-                                "resource_type": resource_type,
-                                "h1_title": h1_title,
-                                "section_name": current_section,
-                                "subsection_name": current_subsection,
-                                "header_level": current_header_level,
-                            },
-                        }
-                    )
-
-                    # Start new chunk
-                    current_chunk = []
-                    current_size = 0
-
-        # Add final chunk
-        if current_chunk:
-            chunk_text = "\n".join(current_chunk)
-            chunks.append(
-                {
-                    "text": chunk_text,
-                    "metadata": {
-                        "content_type": "markdown",
-                        "chunk_index": len(chunks),
-                        "size": len(chunk_text),
-                        "resource_type": resource_type,
-                        "h1_title": h1_title,
-                        "section_name": current_section,
-                        "subsection_name": current_subsection,
-                        "header_level": current_header_level,
-                    },
-                }
-            )
-
-        return chunks
-
-    def _extract_source_url(self, lines: List[str]) -> str:
-        """Extract source URL from HTML comment in first few lines."""
-        for line in lines[:5]:  # Check first few lines for source URL
-            if line.strip().startswith("<!-- Source:"):
-                return line.strip().replace("<!-- Source: ", "").replace(" -->", "")
-        return ""
-
-    def _should_skip_line(self, line: str) -> bool:
-        """Check if line should be skipped (HTML comments, breadcrumbs)."""
-        stripped = line.strip()
-        return (
-            stripped.startswith("<!--")
-            or stripped.startswith("1. [")
-            or stripped.startswith("2. [")
-            or stripped.startswith("3. [")
-        )
-
-    def _create_chunk_metadata(
-        self,
-        chunk_text: str,
-        chunk_index: int,
-        source_url: str,
-        h1_title: str,
-        current_section: str,
-        current_subsection: str,
-    ) -> Dict:
-        """Create metadata dictionary for a chunk."""
-        return {
-            "content_type": "external_docs",
-            "chunk_index": chunk_index,
-            "size": len(chunk_text),
-            "source_url": source_url or "",
-            "h1_title": h1_title or "",
-            "section_name": current_section or "",
-            "subsection_name": current_subsection or "",
-        }
-
-    def _save_current_chunk(
-        self,
-        current_chunk: List[str],
-        chunks: List[Dict],
-        source_url: str,
-        h1_title: Optional[str],
-        current_section: Optional[str],
-        current_subsection: Optional[str],
-    ) -> None:
-        """Save current chunk to chunks list."""
-        if current_chunk:
-            chunk_text = "\n".join(current_chunk)
-            chunks.append(
-                {
-                    "text": chunk_text,
-                    "metadata": self._create_chunk_metadata(
-                        chunk_text,
-                        len(chunks),
-                        source_url,
-                        h1_title,
-                        current_section,
-                        current_subsection,
-                    ),
-                }
-            )
-
-    def _update_header_tracking(
-        self,
-        line: str,
-        h1_title: Optional[str],
-        current_section: Optional[str],
-        current_subsection: Optional[str],
-    ) -> tuple:
-        """Update header tracking variables based on line content."""
-        header_text = self._clean_external_header_text(line)
-
-        if line.strip().endswith("="):
-            return header_text, "", ""
-        elif line.strip().endswith("-"):
-            return h1_title or "", header_text, ""
-        else:
-            return h1_title or "", current_section or "", header_text
-
-    def _chunk_external_docs(self, content: str, strategy: Dict) -> List[Dict]:
-        """Chunk external documentation content optimized for downloaded user docs."""
-        chunks = []
-        lines = content.split("\n")
-        current_chunk = []
-        current_size = 0
-
-        # Track document structure for enhanced metadata
-        h1_title = None
-        current_section = None
-        current_subsection = None
-        source_url = self._extract_source_url(lines)
-
-        for line in lines:
-            # Skip HTML comments and breadcrumbs
-            if self._should_skip_line(line):
-                continue
-
-            # Check if this is a header (using underline style or title case)
-            if self._is_external_doc_header(line):
-                # Save current chunk if it has content
-                self._save_current_chunk(
-                    current_chunk,
-                    chunks,
-                    source_url,
-                    h1_title,
-                    current_section,
-                    current_subsection,
-                )
-
-                # Update tracking variables
-                h1_title, current_section, current_subsection = (
-                    self._update_header_tracking(
-                        line, h1_title, current_section, current_subsection
-                    )
-                )
-
-                # Start new chunk with header
-                current_chunk = [line]
-                current_size = len(line)
-            else:
-                # Add line to current chunk
-                current_chunk.append(line)
-                current_size += len(line) + 1  # +1 for newline
-
-                # Check if chunk is too large
-                if current_size > strategy["max_chunk_size"]:
-                    # Save current chunk
-                    self._save_current_chunk(
-                        current_chunk,
-                        chunks,
-                        source_url,
-                        h1_title,
-                        current_section,
-                        current_subsection,
-                    )
-
-                    # Start new chunk
-                    current_chunk = []
-                    current_size = 0
-
-        # Add final chunk
-        self._save_current_chunk(
-            current_chunk,
-            chunks,
-            source_url,
-            h1_title,
-            current_section,
-            current_subsection,
-        )
-
-        return chunks
-
-    def _is_external_doc_header(self, line: str) -> bool:
-        """Check if line is a header in external docs format."""
-        stripped = line.strip()
-        # Check for underline headers (=== or ---)
-        if len(stripped) > 0 and stripped.endswith("=") and len(stripped) > 3:
-            return True
-        if len(stripped) > 0 and stripped.endswith("-") and len(stripped) > 3:
-            return True
-        # Check for title case headers (no markdown #)
-        if (
-            len(stripped) > 0
-            and not stripped.startswith("#")
-            and not stripped.startswith("*")
-            and not stripped.startswith("-")
-            and stripped.isupper()
-            and len(stripped) > 5
-        ):
-            return True
-        return False
-
-    def _clean_external_header_text(self, line: str) -> str:
-        """Clean external doc header text."""
-        # Remove underline characters
-        text = line.strip().rstrip("=-")
-
-        # Remove extra whitespace
-        text = re.sub(r"\s+", " ", text).strip()
-
-        return text
-
-    def _get_header_level(self, line: str) -> str:
-        """Extract header level from markdown line."""
-        stripped = line.strip()
-        if stripped.startswith("# "):
-            return "h1"
-        elif stripped.startswith("## "):
-            return "h2"
-        elif stripped.startswith("### "):
-            return "h3"
-        elif stripped.startswith("#### "):
-            return "h4"
-        elif stripped.startswith("##### "):
-            return "h5"
-        elif stripped.startswith("###### "):
-            return "h6"
-        else:
-            return "unknown"
-
-    def _clean_header_text(self, line: str) -> str:
-        """Clean header text by removing markdown formatting and emojis."""
-        # Remove markdown header markers
-        text = line.strip().lstrip("#").strip()
-
-        # Remove emojis and special characters
-        text = re.sub(r"[^\w\s\-\.]", "", text)
-
-        # Clean up extra whitespace
-        text = re.sub(r"\s+", " ", text).strip()
-
-        return text
-
-    def _extract_resource_type(self, h1_title: str) -> str:
-        """Extract resource type from H1 title."""
-        # Look for patterns like "Project Resource Deep-Dive",
-        # "Finding Resource Deep-Dive"
-        if "Project" in h1_title:
-            return "project"
-        elif "Finding" in h1_title:
-            return "finding"
-        elif "Policy" in h1_title:
-            return "policy"
-        elif "Namespace" in h1_title:
-            return "namespace"
-        elif "Scan" in h1_title:
-            return "scan"
-        else:
-            return "unknown"
-
-    def _chunk_code(self, content: str, strategy: Dict) -> List[Dict]:
-        """Chunk code content by functions and classes."""
-        chunks = []
-        lines = content.split("\n")
-        current_chunk = []
-        current_size = 0
-
-        for line in lines:
-            # Check if this is a function or class definition
-            if line.strip().startswith(("def ", "class ")):
-                # Save current chunk if it has content
-                if current_chunk:
-                    chunk_text = "\n".join(current_chunk)
-                    chunks.append(
-                        {
-                            "text": chunk_text,
-                            "metadata": {
-                                "content_type": "code",
-                                "chunk_index": len(chunks),
-                                "size": len(chunk_text),
-                            },
-                        }
-                    )
-
-                # Start new chunk
-                current_chunk = [line]
-                current_size = len(line)
-            else:
-                # Add line to current chunk
-                current_chunk.append(line)
-                current_size += len(line) + 1
-
-                # Check if chunk is too large
-                if current_size > strategy["max_chunk_size"]:
-                    # Save current chunk
-                    chunk_text = "\n".join(current_chunk)
-                    chunks.append(
-                        {
-                            "text": chunk_text,
-                            "metadata": {
-                                "content_type": "code",
-                                "chunk_index": len(chunks),
-                                "size": len(chunk_text),
-                            },
-                        }
-                    )
-
-                    # Start new chunk
-                    current_chunk = []
-                    current_size = 0
-
-        # Add final chunk
-        if current_chunk:
-            chunk_text = "\n".join(current_chunk)
-            chunks.append(
-                {
-                    "text": chunk_text,
-                    "metadata": {
-                        "content_type": "code",
-                        "chunk_index": len(chunks),
-                        "size": len(chunk_text),
-                    },
-                }
-            )
-
-        return chunks
-
-    def _chunk_api_spec(self, content: str, strategy: Dict) -> List[Dict]:
-        """Chunk API specification content by sections."""
-        chunks = []
         try:
-            data = json.loads(content)
-        except json.JSONDecodeError:
-            # If not JSON, treat as generic content
-            return self._chunk_generic(content, strategy)
+            # Use content type registry for chunking
+            chunks = self.content_registry.chunk_content(
+                content, file_path, content_type
+            )
 
-        # Chunk by major sections
-        for section_name, section_content in data.items():
-            if isinstance(section_content, dict):
-                section_text = json.dumps({section_name: section_content}, indent=2)
-                chunks.append(
-                    {
-                        "text": section_text,
-                        "metadata": {
-                            "content_type": "api_spec",
-                            "section": section_name,
-                            "chunk_index": len(chunks),
-                            "size": len(section_text),
-                        },
-                    }
-                )
+            # Convert Chunk objects to dictionaries for compatibility
+            return [
+                {"text": chunk.text, "metadata": chunk.metadata} for chunk in chunks
+            ]
+        except Exception as e:
+            logger.warning(f"Failed to chunk {content_type} content: {e}")
+            # Fallback to generic chunking
+            return self._chunk_generic(content, content_type)
 
-        return chunks
-
-    def _chunk_generic(self, content: str, strategy: Dict) -> List[Dict]:
-        """Generic chunking for unknown content types."""
+    def _chunk_generic(
+        self, content: str, content_type: str = "markdown"
+    ) -> List[Dict]:
+        """Generic chunking fallback for unknown content types."""
         chunks = []
         words = content.split()
         current_chunk = []
         current_size = 0
 
+        # Use default chunk size from config
+        max_chunk_size = 1000  # Default fallback
+
         for word in words:
             current_chunk.append(word)
             current_size += len(word) + 1  # +1 for space
 
-            if current_size > strategy["max_chunk_size"]:
+            if current_size > max_chunk_size:
                 chunk_text = " ".join(current_chunk)
                 chunks.append(
                     {
                         "text": chunk_text,
                         "metadata": {
-                            "content_type": "generic",
+                            "content_type": content_type,
                             "chunk_index": len(chunks),
                             "size": len(chunk_text),
                         },
@@ -735,8 +349,9 @@ class VectorDBManager:
                 {
                     "text": chunk_text,
                     "metadata": {
-                        "content_type": "generic",
-                        "chunk_index": len(chunk_text),
+                        "content_type": content_type,
+                        "chunk_index": len(chunks),
+                        "size": len(chunk_text),
                     },
                 }
             )
@@ -790,33 +405,39 @@ class VectorDBManager:
         files_to_process = []
 
         logger.info("=== FILE DISCOVERY DEBUG ===")
-        logger.info(f"INCLUDE_DIRS: {INCLUDE_DIRS}")
-        logger.info(f"EXCLUDE_DIRS: {EXCLUDE_DIRS}")
+        logger.info(f"INCLUDE_DIRS: {self.config.paths.include_dirs}")
+        logger.info(f"EXCLUDE_DIRS: {self.config.paths.exclude_dirs}")
 
-        for include_path in INCLUDE_DIRS:
+        for include_path in self.config.paths.include_dirs:
             logger.info(f"Processing include path: {include_path}")
 
             if os.path.isfile(include_path):
                 logger.info(f"  -> File: {include_path}")
-                if self._is_text_file(include_path) and self._should_rebuild_file(
-                    include_path
-                ):
-                    files_to_process.append(include_path)
-                    logger.info("    -> INCLUDED")
+                if self._is_text_file(include_path):
+                    if self._should_rebuild_file(include_path):
+                        files_to_process.append(include_path)
+                        logger.info("    -> INCLUDED")
+                    else:
+                        logger.info("    -> SKIPPED (already processed)")
                 else:
-                    logger.info("    -> EXCLUDED (not text or should not rebuild)")
+                    logger.info("    -> EXCLUDED (not text file)")
             elif os.path.isdir(include_path):
                 logger.info(f"  -> Directory: {include_path}")
                 for root, dirs, files in os.walk(include_path):
                     # Skip excluded directories
-                    dirs[:] = [d for d in dirs if d not in EXCLUDE_DIRS]
+                    dirs[:] = [
+                        d for d in dirs if d not in self.config.paths.exclude_dirs
+                    ]
 
                     # OS-agnostic path normalization
                     normalized_root = os.path.normpath(root).replace(os.path.sep, "/")
                     logger.info(f"    -> Walking: {normalized_root}")
 
                     # Check for excluded paths using normalized paths
-                    if any(excluded in normalized_root for excluded in EXCLUDE_DIRS):
+                    if any(
+                        excluded in normalized_root
+                        for excluded in self.config.paths.exclude_dirs
+                    ):
                         logger.info(
                             f"    -> SKIPPED (excluded path): {normalized_root}"
                         )
@@ -824,15 +445,20 @@ class VectorDBManager:
 
                     for file in files:
                         file_path = os.path.normpath(os.path.join(root, file))
-                        normalized_file_path = file_path.replace(os.path.sep, "/")
+                        # normalized_file_path = file_path.replace(
+                        #     os.path.sep, "/"
+                        # )  # Not used
 
-                        if self._is_text_file(file_path) and self._should_rebuild_file(
-                            file_path
-                        ):
-                            files_to_process.append(file_path)
-                            logger.info(f"      -> INCLUDED: {file}")
+                        if self._is_text_file(file_path):
+                            if self._should_rebuild_file(file_path):
+                                files_to_process.append(file_path)
+                                logger.info(f"      -> INCLUDED: {file}")
+                            else:
+                                logger.info(
+                                    f"      -> SKIPPED (already processed): {file}"
+                                )
                         else:
-                            logger.info(f"      -> EXCLUDED: {file}")
+                            logger.info(f"      -> EXCLUDED (not text file): {file}")
             else:
                 logger.info(f"  -> NOT FOUND: {include_path}")
 
@@ -841,36 +467,23 @@ class VectorDBManager:
 
     def initialize_db(self, rebuild: bool = False, verbose: bool = False):
         """Initialize or rebuild the vector database."""
-        # Create database directory
-        os.makedirs(self.db_path, exist_ok=True)
+        # Initialize database service
+        self.database_service.initialize_client(self.db_path)
 
-        # Initialize ChromaDB client
-        self.client = chromadb.PersistentClient(
-            path=self.db_path, settings=Settings(anonymized_telemetry=False)
-        )
-
-        # Create or get collection
-        collection_name = "endor_cockpit_docs"
+        # Setup collection
+        collection_name = self.config.default_collection
         if rebuild:
-            try:
-                self.client.delete_collection(collection_name)
-            except Exception:
-                pass
             # Clear manifest on rebuild
-            self.manifest = {
-                "version": "1.0",
-                "last_updated": datetime.now().isoformat(),
-                "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-                "documents": {},
-                "total_chunks": 0,
-                "total_documents": 0,
-            }
+            self.manifest = self.database_service.create_manifest(
+                self.config.embedding_model
+            )
             logger.info("Manifest cleared for rebuild")
 
-        self.collection = self.client.get_or_create_collection(
-            name=collection_name,
-            metadata={"description": "Endor Cockpit documentation vector database"},
-        )
+        self.database_service.setup_collection(collection_name, rebuild)
+
+        # Update references for backward compatibility
+        self.client = self.database_service.client
+        self.collection = self.database_service.collection
 
         # Process files
         files_to_process = self._get_files_to_process()
@@ -881,82 +494,45 @@ class VectorDBManager:
 
         logger.info(f"Processing {len(files_to_process)} files")
 
-        all_chunks = []
-        document_metadata = {}
+        # Process files using FileProcessor service
+        result = self.file_processor.process_files_batch(files_to_process)
 
-        for file_path in files_to_process:
-            logger.info(f"Processing: {file_path}")
+        all_chunks = result["chunks"]
+        document_metadata = result["document_metadata"]
 
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-
-                content_type = self._detect_content_type(file_path)
-                chunks = self._semantic_chunk(content, content_type)
-
-                # Add file metadata to chunks
-                normalized_path = self._normalize_path(file_path)
-                for i, chunk in enumerate(chunks):
-                    chunk["metadata"]["file_path"] = normalized_path
-                    chunk["metadata"]["file_name"] = os.path.basename(file_path)
-                    chunk["metadata"]["chunk_id"] = f"{normalized_path}:{i}"
-
-                    # Clean metadata to remove None values
-                    chunk["metadata"] = {
-                        k: v for k, v in chunk["metadata"].items() if v is not None
-                    }
-
-                all_chunks.extend(chunks)
-
-                # Update manifest
-                file_hash = self._get_file_hash(file_path)
-                normalized_path = self._normalize_path(file_path)
-                document_metadata[normalized_path] = {
-                    "file_hash": file_hash,
-                    "chunks": len(chunks),
-                    "last_modified": datetime.now().isoformat(),
-                    "content_type": content_type,
-                }
-
-            except Exception as e:
-                logger.error(f"Error processing {file_path}: {e}")
-                continue
-
-        # Add chunks to collection in batches
+        # Store chunks using DatabaseService
         if all_chunks:
-            batch_size = 1000  # ChromaDB batch size limit
-            total_chunks = len(all_chunks)
-
-            for i in range(0, total_chunks, batch_size):
-                batch_chunks = all_chunks[i : i + batch_size]
-                texts = [chunk["text"] for chunk in batch_chunks]
-                metadatas = [chunk["metadata"] for chunk in batch_chunks]
-                ids = [chunk["metadata"]["chunk_id"] for chunk in batch_chunks]
-
-                self.collection.add(documents=texts, metadatas=metadatas, ids=ids)
-
-                if verbose:
-                    logger.info(
-                        f"Added batch {i // batch_size + 1}/"
-                        f"{(total_chunks + batch_size - 1) // batch_size} "
-                        f"({len(batch_chunks)} chunks)"
-                    )
-
-            logger.info(f"Added {total_chunks} chunks to vector database")
+            self.database_service.store_chunks_batch(all_chunks)
 
         # Update manifest
-        self.manifest["documents"].update(document_metadata)
+        self.manifest["documents"] = document_metadata
         self.manifest["total_chunks"] = len(all_chunks)
         self.manifest["total_documents"] = len(document_metadata)
+        self.manifest["last_updated"] = datetime.now().isoformat()
+
+        # Save manifest
         self._save_manifest()
 
-        logger.info("Vector database initialization complete")
+        logger.info("Vector database initialization complete!")
+        logger.info(f"   Total chunks: {len(all_chunks)}")
+        logger.info(f"   Total documents: {len(document_metadata)}")
+        logger.info(f"   Last updated: {self.manifest['last_updated']}")
 
-    def query(self, query_text: str, n_results: int = 5) -> List[Dict]:
+    def query(self, query_text: str, n_results: int = 5) -> Dict:
         """Query the vector database."""
         if not self.collection:
             self.initialize_db()
 
-        results = self.collection.query(query_texts=[query_text], n_results=n_results)
-
-        return results
+        if self.collection:
+            results = self.collection.query(
+                query_texts=[query_text], n_results=n_results
+            )
+            # Convert QueryResult to Dict for compatibility
+            return {
+                "documents": results.get("documents", []),
+                "metadatas": results.get("metadatas", []),
+                "distances": results.get("distances", []),
+                "ids": results.get("ids", []),
+            }
+        else:
+            return {"documents": [], "metadatas": [], "distances": [], "ids": []}
