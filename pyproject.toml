@@ -97,8 +97,6 @@ markers = [
     "integration: marks tests as integration tests",
     "local: marks tests as local-only (excluded from CI)"
 ]
-# Skip holocron-dependent tests that require optional dependencies
-norecursedirs = ["test_chunking_optimization.py", "test_content_types.py", "test_holocron_config.py"]
 
 [dependency-groups]
 dev = [
