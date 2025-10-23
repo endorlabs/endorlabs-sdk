@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 
 import chromadb
 from chromadb.config import Settings
+from chromadb.api import ClientAPI
 
 from ..config import HolocronConfig
 
@@ -23,7 +24,7 @@ class DatabaseService:
     def __init__(self, config: HolocronConfig):
         """Initialize database service with configuration."""
         self.config = config
-        self.client: Optional[chromadb.PersistentClient] = None
+        self.client: Optional[ClientAPI] = None
         self.collection: Optional[chromadb.Collection] = None
 
     def initialize_client(self, db_path: str) -> None:
@@ -58,7 +59,7 @@ class DatabaseService:
             name=collection_name,
             metadata={"description": "Endor Cockpit documentation vector database"},
         )
-        logger.info(f"Collection created/retrieved: {self.collection.name}")
+        logger.info(f"Collection created/retrieved: {self.collection.name if self.collection else 'None'}")
 
     def store_chunks_batch(self, chunks: List[Dict], batch_size: int = 1000) -> None:
         """Store chunks in batches with proper error handling."""

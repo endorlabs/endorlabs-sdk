@@ -126,7 +126,8 @@ class APIClient:
             if response.status_code == 429:
                 retry_info = response.headers.get("Retry-After", "no retry info")
                 self.logger.warning(
-                    f"Rate limit encountered: {response.status_code} - {retry_info}"
+                    f"Rate limit encountered (429): {retry_info}. "
+                    f"Request to {response.url} was throttled."
                 )
                 retry_after = response.headers.get("Retry-After")
                 if retry_after and retry_after.isdigit():
@@ -137,14 +138,20 @@ class APIClient:
                     )
                 raise
             if response.status_code == 401:
-                self.logger.warning(f"Permissions Error: {response.status_code}")
-                self.logger.info("Reauthenticating...")
+                self.logger.warning(
+                    f"Authentication failed (401): Invalid or expired credentials. "
+                    f"Request to {response.url} was unauthorized."
+                )
+                self.logger.info("Attempting to reauthenticate...")
                 self.headers = {"Authorization": f"Bearer {self.authenticate()}"}
-                self.logger.info("Reauthenticated.")
+                self.logger.info("Reauthentication completed.")
 
             else:
-                self.logger.error(f"API error: {response.status_code} - {e}")
-                self.logger.error(f"Response content: {response.text}")
+                self.logger.error(
+                    f"API error {response.status_code}: {e}. "
+                    f"Request to {response.url} failed. "
+                    f"Response: {response.text[:200]}..."
+                )
                 raise
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Request exception: {e}")
@@ -163,11 +170,7 @@ class APIClient:
         self.logger.debug(f"GET response: {response.status_code} - {response.text}...")
         return self._handle_response(response)
 
-    def post(self, endpoint, data=None, params=None, headers=None):
-        self.logger.debug(
-            f"POST request to: {endpoint} with params: {params}, data: {data}"
-        )
-
+    def post(self, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"POST request to: {url} with params: {params}, data: {data}")
@@ -176,7 +179,7 @@ class APIClient:
 
         return self._handle_response(response)
 
-    def patch(self, endpoint, data=None, params=None, headers=None):
+    def patch(self, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
         self.logger.debug(
             f"PATCH request to: {endpoint} with params: {params}, data: {data}"
         )
@@ -191,7 +194,7 @@ class APIClient:
         )
         return self._handle_response(response)
 
-    def put(self, endpoint, data=None, params=None, headers=None):
+    def put(self, endpoint: str, data: Optional[Dict] = None, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"PUT request to: {url} with data: {data}")
@@ -199,7 +202,7 @@ class APIClient:
         self.logger.debug(f"PUT response: {response.status_code} - {response.text}...")
         return self._handle_response(response)
 
-    def delete(self, endpoint, params=None, headers=None):
+    def delete(self, endpoint: str, params: Optional[Dict] = None, headers: Optional[Dict] = None) -> Any:
         self._rate_limit()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         self.logger.debug(f"DELETE request to: {url}")
@@ -254,11 +257,11 @@ class APIClient:
             page_count += 1
 
             if data_key:
-                # response may be a requests.Response object; try to access json safely
+                # response is a requests.Response object; try to access json safely
                 try:
                     resp_json = response.json()
                 except Exception:
-                    resp_json = response if isinstance(response, dict) else {}
+                    resp_json = {}
 
                 items = resp_json.get(data_key) if isinstance(resp_json, dict) else None
                 if items:
@@ -277,7 +280,7 @@ class APIClient:
                 try:
                     resp_json = response.json()
                 except Exception:
-                    resp_json = response if isinstance(response, dict) else {}
+                    resp_json = {}
 
                 next_link = (
                     resp_json.get(pagination_key)
@@ -303,12 +306,17 @@ class APIClient:
                 # You'll need a condition to determine when to stop if no 'next' link
                 # This might involve checking if the current page returns an empty
                 # dataset
-                if not response.get(data_key):  # Example stop condition
+                try:
+                    resp_json = response.json()
+                    if data_key and not resp_json.get(data_key):
+                        break
+                except Exception:
+                    # If we can't parse JSON, assume we should stop
                     break
                 # Keep the base URL
                 next_page_url = f"{self.base_url}/{endpoint.lstrip('/')}"
 
-    def authenticate(self):
+    def authenticate(self) -> Optional[str]:
         try:
             payload = {"key": self.key, "secret": self.secret}
             response = requests.post(
