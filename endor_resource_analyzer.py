@@ -29,7 +29,6 @@ from endor_cockpit.resources import (
     project,
     repository,
     repository_version,
-    tag_management,
 )
 from endor_cockpit.types import ListParameters
 
@@ -37,6 +36,7 @@ from endor_cockpit.types import ListParameters
 @dataclass
 class AttributeInfo:
     """Information about a resource attribute."""
+
     name: str
     type: str
     required: bool = False
@@ -44,7 +44,7 @@ class AttributeInfo:
     description: str = ""
     default_value: Any = None
     enum_values: List[str] = field(default_factory=list)
-    nested_attributes: Dict[str, 'AttributeInfo'] = field(default_factory=dict)
+    nested_attributes: Dict[str, "AttributeInfo"] = field(default_factory=dict)
     api_source: str = ""  # "pydantic", "api_response", "openapi"
     examples: List[Any] = field(default_factory=list)
 
@@ -52,6 +52,7 @@ class AttributeInfo:
 @dataclass
 class ResourceModel:
     """Complete data model for a resource type."""
+
     resource_name: str
     total_entities: int
     attributes: Dict[str, AttributeInfo] = field(default_factory=dict)
@@ -75,33 +76,32 @@ class EndorResourceAnalyzer:
 
         # SDK resource mappings (for known resources)
         self.resource_modules = {
-            'Project': project,
-            'Finding': finding,
-            'Repository': repository,
-            'RepositoryVersion': repository_version,
-            'PackageVersion': package_version,
-            'Policy': policy,
-            'TagManagement': tag_management,
+            "Project": project,
+            "Finding": finding,
+            "Repository": repository,
+            "RepositoryVersion": repository_version,
+            "PackageVersion": package_version,
+            "Policy": policy,
         }
 
         # Resource class mappings
         self.resource_classes = {
-            'Project': project.Project,
-            'Finding': finding.Finding,
-            'Repository': repository.Repository,
-            'RepositoryVersion': repository_version.RepositoryVersion,
-            'PackageVersion': package_version.PackageVersion,
-            'Policy': policy.Policy,
+            "Project": project.Project,
+            "Finding": finding.Finding,
+            "Repository": repository.Repository,
+            "RepositoryVersion": repository_version.RepositoryVersion,
+            "PackageVersion": package_version.PackageVersion,
+            "Policy": policy.Policy,
         }
 
         # List function mappings
         self.list_functions = {
-            'Project': project.list_projects,
-            'Finding': finding.list_findings,
-            'Repository': repository.list_repositories,
-            'RepositoryVersion': repository_version.list_repository_versions,
-            'PackageVersion': package_version.list_package_versions,
-            'Policy': policy.list_policies,
+            "Project": project.list_projects,
+            "Finding": finding.list_findings,
+            "Repository": repository.list_repositories,
+            "RepositoryVersion": repository_version.list_repository_versions,
+            "PackageVersion": package_version.list_package_versions,
+            "Policy": policy.list_policies,
         }
 
         # Raw API resource discovery
@@ -118,25 +118,54 @@ class EndorResourceAnalyzer:
 
         # Common resource types to try
         common_resources = [
-            'Project', 'Finding', 'Repository', 'RepositoryVersion', 'PackageVersion',
-            'Policy', 'TagManagement', 'Metric', 'Namespace', 'User', 'Organization',
-            'Scan', 'Report', 'Template', 'Workflow', 'Action', 'Event', 'Log',
-            'Configuration', 'Setting', 'Permission', 'Role', 'Team', 'Invitation'
+            "Project",
+            "Finding",
+            "Repository",
+            "RepositoryVersion",
+            "PackageVersion",
+            "Policy",
+            "Metric",
+            "Namespace",
+            "User",
+            "Organization",
+            "Scan",
+            "Report",
+            "Template",
+            "Workflow",
+            "Action",
+            "Event",
+            "Log",
+            "Configuration",
+            "Setting",
+            "Permission",
+            "Role",
+            "Team",
+            "Invitation",
         ]
 
         for resource_type in common_resources:
             try:
                 # Try to list resources using raw API
-                response = self.client.get(f"v1/namespaces/{self.namespace}/{resource_type.lower()}s")
+                response = self.client.get(
+                    f"v1/namespaces/{self.namespace}/{resource_type.lower()}"
+                )
                 if response.status_code == 200:
                     data = response.json()
-                    if 'resources' in data and len(data['resources']) > 0:
+                    if "resources" in data and len(data["resources"]) > 0:
                         discovered.add(resource_type)
                         self.raw_api_resources[resource_type] = {
-                            'endpoint': f"v1/namespaces/{self.namespace}/{resource_type.lower()}s",
-                            'sample_data': data['resources'][0] if data['resources'] else None
+                            "endpoint": (
+                                f"v1/namespaces/{self.namespace}/"
+                                f"{resource_type.lower()}"
+                            ),
+                            "sample_data": data["resources"][0]
+                            if data["resources"]
+                            else None,
                         }
-                        print(f"   ✅ {resource_type}: {len(data['resources'])} entities found")
+                        print(
+                            f"   ✅ {resource_type}: "
+                            f"{len(data['resources'])} entities found"
+                        )
                     else:
                         print(f"   ⚪ {resource_type}: No entities found")
                 else:
@@ -155,7 +184,9 @@ class EndorResourceAnalyzer:
 
         return sorted(discovered)
 
-    def analyze_unmapped_resource(self, resource_type: str, max_entities: int = 50) -> ResourceModel:
+    def analyze_unmapped_resource(
+        self, resource_type: str, max_entities: int = 50
+    ) -> ResourceModel:
         """Analyze a resource type that's not in the SDK using raw API calls."""
         print(f"🔍 Analyzing unmapped resource: {resource_type}")
         print("=" * 60)
@@ -190,7 +221,9 @@ class EndorResourceAnalyzer:
             model.validation_errors.append(str(e))
             return model
 
-    def _get_raw_api_entities(self, resource_type: str, max_entities: int) -> List[Dict]:
+    def _get_raw_api_entities(
+        self, resource_type: str, max_entities: int
+    ) -> List[Dict]:
         """Get entities using raw API calls following SDK pattern."""
         entities = []
 
@@ -210,9 +243,18 @@ class EndorResourceAnalyzer:
 
                 # Debug: Print response structure for troubleshooting
                 print("   🔍 Response structure:")
-                print(f"      Keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+                keys_info = (
+                    list(data.keys()) if isinstance(data, dict)
+                    else 'Not a dict'
+                )
+                print(f"      Keys: {keys_info}")
                 if isinstance(data, dict) and "list" in data:
-                    print(f"      List keys: {list(data['list'].keys()) if isinstance(data['list'], dict) else 'Not a dict'}")
+                    list_keys_info = (
+                        list(data['list'].keys())
+                        if isinstance(data['list'], dict)
+                        else 'Not a dict'
+                    )
+                    print(f"      List keys: {list_keys_info}")
 
                 # Handle response format (following SDK pattern)
                 if "list" in data and "objects" in data["list"]:
@@ -221,11 +263,11 @@ class EndorResourceAnalyzer:
                 elif isinstance(data, list):
                     entities = data
                     print(f"   ✅ Found {len(entities)} entities in direct list")
-                elif 'resources' in data:
-                    entities = data['resources']
+                elif "resources" in data:
+                    entities = data["resources"]
                     print(f"   ✅ Found {len(entities)} entities in resources")
-                elif 'data' in data:
-                    entities = data['data']
+                elif "data" in data:
+                    entities = data["data"]
                     print(f"   ✅ Found {len(entities)} entities in data")
                 else:
                     entities = [data]
@@ -234,7 +276,7 @@ class EndorResourceAnalyzer:
                 print(f"   📡 Using endpoint: {url}")
             else:
                 print(f"   ❌ Request failed with status {response.status_code}")
-                if hasattr(response, 'text'):
+                if hasattr(response, "text"):
                     print(f"   📄 Response text: {response.text[:200]}...")
 
             if not entities:
@@ -259,8 +301,14 @@ class EndorResourceAnalyzer:
 
         for entity in entities:
             # Recursively analyze JSON structure
-            self._analyze_json_object(entity, "", attribute_values, attribute_types,
-                                    required_attributes, nullable_attributes)
+            self._analyze_json_object(
+                entity,
+                "",
+                attribute_values,
+                attribute_types,
+                required_attributes,
+                nullable_attributes,
+            )
 
         # Create AttributeInfo objects
         for attr_name, values in attribute_values.items():
@@ -269,11 +317,11 @@ class EndorResourceAnalyzer:
 
             attr_info = AttributeInfo(
                 name=attr_name,
-                type=attribute_types.get(attr_name, 'unknown'),
+                type=attribute_types.get(attr_name, "unknown"),
                 required=attr_name in required_attributes,
                 nullable=attr_name in nullable_attributes,
                 api_source="raw_api",
-                examples=non_null_values[:3]  # First 3 non-null examples
+                examples=non_null_values[:3],  # First 3 non-null examples
             )
 
             # Analyze nested attributes for complex objects
@@ -282,9 +330,15 @@ class EndorResourceAnalyzer:
 
             model.attributes[attr_name] = attr_info
 
-    def _analyze_json_object(self, obj: Any, prefix: str, attribute_values: Dict,
-                           attribute_types: Dict, required_attributes: Set,
-                           nullable_attributes: Set):
+    def _analyze_json_object(
+        self,
+        obj: Any,
+        prefix: str,
+        attribute_values: Dict,
+        attribute_types: Dict,
+        required_attributes: Set,
+        nullable_attributes: Set,
+    ):
         """Recursively analyze JSON object structure."""
         if isinstance(obj, dict):
             for key, value in obj.items():
@@ -300,63 +354,95 @@ class EndorResourceAnalyzer:
 
                 # Recursively analyze nested objects
                 if isinstance(value, (dict, list)):
-                    self._analyze_json_object(value, full_key, attribute_values,
-                                            attribute_types, required_attributes,
-                                            nullable_attributes)
+                    self._analyze_json_object(
+                        value,
+                        full_key,
+                        attribute_values,
+                        attribute_types,
+                        required_attributes,
+                        nullable_attributes,
+                    )
 
         elif isinstance(obj, list) and obj:
             # Analyze first item in list to understand structure
-            self._analyze_json_object(obj[0], f"{prefix}[0]", attribute_values,
-                                    attribute_types, required_attributes,
-                                    nullable_attributes)
+            self._analyze_json_object(
+                obj[0],
+                f"{prefix}[0]",
+                attribute_values,
+                attribute_types,
+                required_attributes,
+                nullable_attributes,
+            )
 
     def _analyze_raw_relationships(self, entities: List[Dict], model: ResourceModel):
         """Analyze relationships in raw JSON data."""
         print("\n🔍 Analyzing relationships in raw data...")
 
         # Look for UUID patterns and common relationship fields
-        uuid_pattern = r'^[0-9a-f]{24}$'  # MongoDB ObjectId pattern
+        uuid_pattern = r"^[0-9a-f]{24}$"  # MongoDB ObjectId pattern
         relationship_fields = [
-            'uuid', 'id', 'parent_uuid', 'project_uuid', 'repository_uuid',
-            'target_uuid', 'source_uuid', 'related_uuid', 'owner_uuid',
-            'created_by', 'updated_by', 'assigned_to', 'user_uuid'
+            "uuid",
+            "id",
+            "parent_uuid",
+            "project_uuid",
+            "repository_uuid",
+            "target_uuid",
+            "source_uuid",
+            "related_uuid",
+            "owner_uuid",
+            "created_by",
+            "updated_by",
+            "assigned_to",
+            "user_uuid",
         ]
 
         for entity in entities:
-            self._find_relationships_in_object(entity, "", model, uuid_pattern, relationship_fields)
+            self._find_relationships_in_object(
+                entity, "", model, uuid_pattern, relationship_fields
+            )
 
-    def _find_relationships_in_object(self, obj: Any, prefix: str, model: ResourceModel,
-                                     uuid_pattern: str, relationship_fields: List[str]):
+    def _find_relationships_in_object(
+        self,
+        obj: Any,
+        prefix: str,
+        model: ResourceModel,
+        uuid_pattern: str,
+        relationship_fields: List[str],
+    ):
         """Find relationship patterns in JSON object."""
         if isinstance(obj, dict):
             for key, value in obj.items():
                 full_key = f"{prefix}.{key}" if prefix else key
 
                 # Check if this looks like a relationship field
-                if (key.lower() in relationship_fields or
-                    (isinstance(value, str) and re.match(uuid_pattern, value))):
+                if key.lower() in relationship_fields or (
+                    isinstance(value, str) and re.match(uuid_pattern, value)
+                ):
                     model.relationships[full_key] = "UUID Reference"
 
                 # Recursively check nested objects
                 if isinstance(value, (dict, list)):
-                    self._find_relationships_in_object(value, full_key, model,
-                                                     uuid_pattern, relationship_fields)
+                    self._find_relationships_in_object(
+                        value, full_key, model, uuid_pattern, relationship_fields
+                    )
 
         elif isinstance(obj, list):
             for i, item in enumerate(obj):
-                self._find_relationships_in_object(item, f"{prefix}[{i}]", model,
-                                                 uuid_pattern, relationship_fields)
+                self._find_relationships_in_object(
+                    item, f"{prefix}[{i}]", model, uuid_pattern, relationship_fields
+                )
 
-    def analyze_resource(self, resource_type: str, max_entities: int = 50,
-                         use_raw_api: bool = False) -> ResourceModel:
+    def analyze_resource(
+        self, resource_type: str, max_entities: int = 50, use_raw_api: bool = False
+    ) -> ResourceModel:
         """
         Analyze a specific resource type and return its complete data model.
-        
+
         Args:
             resource_type: The resource type to analyze (e.g., 'Project', 'Finding')
             max_entities: Maximum number of entities to analyze
             use_raw_api: Force use of raw API instead of SDK
-            
+
         Returns:
             ResourceModel with complete attribute information
         """
@@ -426,7 +512,7 @@ class EndorResourceAnalyzer:
                     count=None,
                     include_child_namespaces=None,
                     from_date=None,
-                    to_date=None
+                    to_date=None,
                 )
 
                 page_entities = list_func(self.client, self.namespace, list_params)
@@ -437,7 +523,7 @@ class EndorResourceAnalyzer:
                 entities.extend(page_entities)
 
                 # Check if we have a page token for next page
-                if hasattr(page_entities, '__len__') and len(page_entities) < page_size:
+                if hasattr(page_entities, "__len__") and len(page_entities) < page_size:
                     break
 
                 # For simplicity, we'll stop after first page for now
@@ -448,14 +534,18 @@ class EndorResourceAnalyzer:
             print(f"⚠️  Error getting entities: {e}")
             # Try with minimal parameters
             try:
-                entities = self.list_functions[resource_type](self.client, self.namespace)
+                entities = self.list_functions[resource_type](
+                    self.client, self.namespace
+                )
             except Exception as e2:
                 print(f"❌ Failed to get entities: {e2}")
                 return []
 
         return entities[:max_entities]
 
-    def _analyze_attributes_from_entities(self, entities: List[Any], model: ResourceModel):
+    def _analyze_attributes_from_entities(
+        self, entities: List[Any], model: ResourceModel
+    ):
         """Analyze attributes from real API response entities."""
         print(f"\n📊 Analyzing attributes from {len(entities)} entities...")
 
@@ -466,56 +556,95 @@ class EndorResourceAnalyzer:
 
         # Skip Pydantic internal methods and attributes
         skip_attributes = {
-            'model_computed_fields', 'model_config', 'model_construct', 'model_copy',
-            'model_dump', 'model_dump_json', 'model_extra', 'model_fields',
-            'model_fields_set', 'model_json_schema', 'model_parametrized_name',
-            'model_post_init', 'model_rebuild', 'model_validate', 'model_validate_json',
-            'model_validate_strings', 'parse_file', 'parse_obj', 'parse_raw',
-            'schema', 'schema_json', 'update_forward_refs', 'validate',
-            'construct', 'copy', 'dict', 'from_orm', 'json', 'detect_schema_drift',
-            'validate_update_mask', 'validate_uuid'
+            "model_computed_fields",
+            "model_config",
+            "model_construct",
+            "model_copy",
+            "model_dump",
+            "model_dump_json",
+            "model_extra",
+            "model_fields",
+            "model_fields_set",
+            "model_json_schema",
+            "model_parametrized_name",
+            "model_post_init",
+            "model_rebuild",
+            "model_validate",
+            "model_validate_json",
+            "model_validate_strings",
+            "parse_file",
+            "parse_obj",
+            "parse_raw",
+            "schema",
+            "schema_json",
+            "update_forward_refs",
+            "validate",
+            "construct",
+            "copy",
+            "dict",
+            "from_orm",
+            "json",
+            "detect_schema_drift",
+            "validate_update_mask",
+            "validate_uuid",
         }
 
         for entity in entities:
             # Analyze meta attributes
-            if hasattr(entity, 'meta') and entity.meta:
+            if hasattr(entity, "meta") and entity.meta:
                 for attr_name in dir(entity.meta):
-                    if not attr_name.startswith('_') and attr_name not in skip_attributes:
+                    if (
+                        not attr_name.startswith("_")
+                        and attr_name not in skip_attributes
+                    ):
                         try:
                             value = getattr(entity.meta, attr_name)
                             if not callable(value):  # Skip methods
                                 attribute_values[f"meta.{attr_name}"].append(value)
-                                attribute_types[f"meta.{attr_name}"] = type(value).__name__
+                                attribute_types[f"meta.{attr_name}"] = type(
+                                    value
+                                ).__name__
 
                                 if value is None:
                                     nullable_attributes.add(f"meta.{attr_name}")
                                 else:
                                     required_attributes.add(f"meta.{attr_name}")
                         except Exception as e:
-                            model.validation_errors.append(f"Error accessing meta.{attr_name}: {e}")
+                            model.validation_errors.append(
+                                f"Error accessing meta.{attr_name}: {e}"
+                            )
 
             # Analyze spec attributes
-            if hasattr(entity, 'spec') and entity.spec:
+            if hasattr(entity, "spec") and entity.spec:
                 for attr_name in dir(entity.spec):
-                    if not attr_name.startswith('_') and attr_name not in skip_attributes:
+                    if (
+                        not attr_name.startswith("_")
+                        and attr_name not in skip_attributes
+                    ):
                         try:
                             value = getattr(entity.spec, attr_name)
                             if not callable(value):  # Skip methods
                                 attribute_values[f"spec.{attr_name}"].append(value)
-                                attribute_types[f"spec.{attr_name}"] = type(value).__name__
+                                attribute_types[f"spec.{attr_name}"] = type(
+                                    value
+                                ).__name__
 
                                 if value is None:
                                     nullable_attributes.add(f"spec.{attr_name}")
                                 else:
                                     required_attributes.add(f"spec.{attr_name}")
                         except Exception as e:
-                            model.validation_errors.append(f"Error accessing spec.{attr_name}: {e}")
+                            model.validation_errors.append(
+                                f"Error accessing spec.{attr_name}: {e}"
+                            )
 
             # Analyze top-level attributes
             for attr_name in dir(entity):
-                if (not attr_name.startswith('_') and
-                    attr_name not in ['meta', 'spec'] and
-                    attr_name not in skip_attributes):
+                if (
+                    not attr_name.startswith("_")
+                    and attr_name not in ["meta", "spec"]
+                    and attr_name not in skip_attributes
+                ):
                     try:
                         value = getattr(entity, attr_name)
                         if not callable(value):  # Skip methods
@@ -527,7 +656,9 @@ class EndorResourceAnalyzer:
                             else:
                                 required_attributes.add(attr_name)
                     except Exception as e:
-                        model.validation_errors.append(f"Error accessing {attr_name}: {e}")
+                        model.validation_errors.append(
+                            f"Error accessing {attr_name}: {e}"
+                        )
 
         # Create AttributeInfo objects
         for attr_name, values in attribute_values.items():
@@ -536,11 +667,11 @@ class EndorResourceAnalyzer:
 
             attr_info = AttributeInfo(
                 name=attr_name,
-                type=attribute_types.get(attr_name, 'unknown'),
+                type=attribute_types.get(attr_name, "unknown"),
                 required=attr_name in required_attributes,
                 nullable=attr_name in nullable_attributes,
                 api_source="api_response",
-                examples=non_null_values[:3]  # First 3 non-null examples
+                examples=non_null_values[:3],  # First 3 non-null examples
             )
 
             # Analyze nested attributes for complex objects
@@ -554,20 +685,18 @@ class EndorResourceAnalyzer:
         if isinstance(obj, dict):
             for key, value in obj.items():
                 nested_attr = AttributeInfo(
-                    name=key,
-                    type=type(value).__name__,
-                    api_source="api_response"
+                    name=key, type=type(value).__name__, api_source="api_response"
                 )
                 parent_attr.nested_attributes[key] = nested_attr
-        elif hasattr(obj, '__dict__'):
+        elif hasattr(obj, "__dict__"):
             for attr_name in dir(obj):
-                if not attr_name.startswith('_'):
+                if not attr_name.startswith("_"):
                     try:
                         value = getattr(obj, attr_name)
                         nested_attr = AttributeInfo(
                             name=attr_name,
                             type=type(value).__name__,
-                            api_source="api_response"
+                            api_source="api_response",
                         )
                         parent_attr.nested_attributes[attr_name] = nested_attr
                     except Exception:
@@ -584,40 +713,46 @@ class EndorResourceAnalyzer:
             self._analyze_pydantic_class(resource_class, model, "Resource")
 
             # Analyze Meta class if it exists
-            if hasattr(resource_class, 'Meta'):
+            if hasattr(resource_class, "Meta"):
                 meta_class = resource_class.Meta
                 self._analyze_pydantic_class(meta_class, model, "Meta")
 
             # Analyze Spec class if it exists
-            if hasattr(resource_class, 'Spec'):
+            if hasattr(resource_class, "Spec"):
                 spec_class = resource_class.Spec
                 self._analyze_pydantic_class(spec_class, model, "Spec")
 
         except Exception as e:
             model.validation_errors.append(f"Error analyzing Pydantic models: {e}")
 
-    def _analyze_pydantic_class(self, pydantic_class: Any, model: ResourceModel, class_type: str):
+    def _analyze_pydantic_class(
+        self, pydantic_class: Any, model: ResourceModel, class_type: str
+    ):
         """Analyze a specific Pydantic class."""
-        if not hasattr(pydantic_class, '__annotations__'):
+        if not hasattr(pydantic_class, "__annotations__"):
             return
 
         for field_name, field_type in pydantic_class.__annotations__.items():
-            attr_name = f"{class_type.lower()}.{field_name}" if class_type != "Resource" else field_name
+            attr_name = (
+                f"{class_type.lower()}.{field_name}"
+                if class_type != "Resource"
+                else field_name
+            )
 
             # Determine if field is required
             required = True
             nullable = False
 
             # Check for Optional types
-            if hasattr(field_type, '__origin__') and field_type.__origin__ is Union:
+            if hasattr(field_type, "__origin__") and field_type.__origin__ is Union:
                 nullable = True
                 if type(None) in field_type.__args__:
                     required = False
 
             # Check for default values
-            if hasattr(pydantic_class, '__dataclass_fields__'):
+            if hasattr(pydantic_class, "__dataclass_fields__"):
                 field_info = pydantic_class.__dataclass_fields__.get(field_name)
-                if field_info and hasattr(field_info, 'default'):
+                if field_info and hasattr(field_info, "default"):
                     if field_info.default is not None:
                         required = False
 
@@ -626,7 +761,7 @@ class EndorResourceAnalyzer:
                 type=str(field_type),
                 required=required,
                 nullable=nullable,
-                api_source="pydantic"
+                api_source="pydantic",
             )
 
             # Update existing attribute or create new one
@@ -645,7 +780,8 @@ class EndorResourceAnalyzer:
         """Check for schema drift between API and Pydantic models."""
         print("\n🔍 Checking schema drift...")
 
-        # This would typically involve comparing API responses with Pydantic model expectations
+        # This would typically involve comparing API responses with
+        # Pydantic model expectations
         # For now, we'll note any validation errors that occurred during analysis
         if model.validation_errors:
             model.schema_drift.extend(model.validation_errors)
@@ -656,12 +792,14 @@ class EndorResourceAnalyzer:
 
         # Look for UUID references to other resources
         for entity in entities:
-            if hasattr(entity, 'spec'):
+            if hasattr(entity, "spec"):
                 for attr_name in dir(entity.spec):
-                    if not attr_name.startswith('_'):
+                    if not attr_name.startswith("_"):
                         try:
                             value = getattr(entity.spec, attr_name)
-                            if isinstance(value, str) and len(value) == 24:  # MongoDB ObjectId length
+                            if (
+                                isinstance(value, str) and len(value) == 24
+                            ):  # MongoDB ObjectId length
                                 # This might be a UUID reference
                                 model.relationships[attr_name] = "UUID Reference"
                         except Exception:
@@ -669,9 +807,9 @@ class EndorResourceAnalyzer:
 
     def _print_data_model(self, model: ResourceModel):
         """Print the complete data model in absolute truth terms."""
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"📋 COMPLETE DATA MODEL: {model.resource_name}")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         print("\n📊 SUMMARY:")
         print(f"   Total Entities Analyzed: {model.total_entities}")
@@ -690,29 +828,37 @@ class EndorResourceAnalyzer:
                 print(f"   - {drift}")
 
         print("\n📋 ATTRIBUTES (Absolute Truth):")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Group attributes by section
-        meta_attrs = {k: v for k, v in model.attributes.items() if k.startswith('meta.')}
-        spec_attrs = {k: v for k, v in model.attributes.items() if k.startswith('spec.')}
-        other_attrs = {k: v for k, v in model.attributes.items() if not k.startswith(('meta.', 'spec.'))}
+        meta_attrs = {
+            k: v for k, v in model.attributes.items() if k.startswith("meta.")
+        }
+        spec_attrs = {
+            k: v for k, v in model.attributes.items() if k.startswith("spec.")
+        }
+        other_attrs = {
+            k: v
+            for k, v in model.attributes.items()
+            if not k.startswith(("meta.", "spec."))
+        }
 
         # Print Meta attributes
         if meta_attrs:
             print("\n🔹 META ATTRIBUTES:")
-            for attr_name, attr_info in sorted(meta_attrs.items()):
+            for _attr_name, attr_info in sorted(meta_attrs.items()):
                 self._print_attribute_info(attr_info)
 
         # Print Spec attributes
         if spec_attrs:
             print("\n🔹 SPEC ATTRIBUTES:")
-            for attr_name, attr_info in sorted(spec_attrs.items()):
+            for _attr_name, attr_info in sorted(spec_attrs.items()):
                 self._print_attribute_info(attr_info)
 
         # Print other attributes
         if other_attrs:
             print("\n🔹 OTHER ATTRIBUTES:")
-            for attr_name, attr_info in sorted(other_attrs.items()):
+            for _attr_name, attr_info in sorted(other_attrs.items()):
                 self._print_attribute_info(attr_info)
 
         # Print relationships
@@ -721,9 +867,9 @@ class EndorResourceAnalyzer:
             for rel_name, rel_type in model.relationships.items():
                 print(f"   {rel_name}: {rel_type}")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✅ Data model analysis complete for {model.resource_name}")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
     def _print_attribute_info(self, attr_info: AttributeInfo):
         """Print detailed information about an attribute."""
@@ -750,13 +896,16 @@ class EndorResourceAnalyzer:
 
         if attr_info.nested_attributes:
             print(f"      Nested Attributes: {len(attr_info.nested_attributes)}")
-            for nested_name, nested_attr in list(attr_info.nested_attributes.items())[:3]:
+            for nested_name, nested_attr in list(attr_info.nested_attributes.items())[
+                :3
+            ]:
                 print(f"        - {nested_name}: {nested_attr.type}")
 
         print()
 
-    def analyze_all_resources(self, max_entities_per_resource: int = 20,
-                             include_unmapped: bool = False):
+    def analyze_all_resources(
+        self, max_entities_per_resource: int = 20, include_unmapped: bool = False
+    ):
         """Analyze all available resource types."""
         print("🚀 COMPREHENSIVE ENDOR LABS RESOURCE ANALYSIS")
         print("=" * 80)
@@ -772,28 +921,38 @@ class EndorResourceAnalyzer:
 
         for resource_type in available_resources:
             try:
-                print(f"\n{'='*20} {resource_type} {'='*20}")
+                print(f"\n{'=' * 20} {resource_type} {'=' * 20}")
 
                 # Determine if we should use raw API
-                use_raw_api = (include_unmapped and
-                              resource_type not in self.resource_classes and
-                              self.enable_raw_api)
+                use_raw_api = (
+                    include_unmapped
+                    and resource_type not in self.resource_classes
+                    and self.enable_raw_api
+                )
 
-                model = self.analyze_resource(resource_type, max_entities_per_resource, use_raw_api)
+                model = self.analyze_resource(
+                    resource_type, max_entities_per_resource, use_raw_api
+                )
                 results[resource_type] = model
             except Exception as e:
                 print(f"❌ Failed to analyze {resource_type}: {e}")
                 results[resource_type] = None
 
         # Print summary
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("📊 ANALYSIS SUMMARY")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         for resource_type, model in results.items():
             if model:
-                source = "Raw API" if resource_type not in self.resource_classes else "SDK"
-                print(f"✅ {resource_type} ({source}): {model.total_entities} entities, {len(model.attributes)} attributes")
+                source = (
+                    "Raw API" if resource_type not in self.resource_classes else "SDK"
+                )
+                print(
+                    f"✅ {resource_type} ({source}): "
+                    f"{model.total_entities} entities, "
+                    f"{len(model.attributes)} attributes"
+                )
             else:
                 print(f"❌ {resource_type}: Analysis failed")
 
@@ -804,14 +963,38 @@ def main():
     """Main function to run the resource analyzer."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Endor Labs Resource Data Model Analyzer")
+    parser = argparse.ArgumentParser(
+        description="Endor Labs Resource Data Model Analyzer"
+    )
     parser.add_argument("--resource", "-r", help="Specific resource type to analyze")
-    parser.add_argument("--all", "-a", action="store_true", help="Analyze all resource types")
-    parser.add_argument("--discover", "-d", action="store_true", help="Discover all available resource types")
-    parser.add_argument("--max-entities", "-m", type=int, default=20, help="Maximum entities to analyze per resource")
-    parser.add_argument("--raw-api", action="store_true", help="Force use of raw API instead of SDK")
-    parser.add_argument("--include-unmapped", "-u", action="store_true", help="Include unmapped resources (requires --all)")
-    parser.add_argument("--disable-raw-api", action="store_true", help="Disable raw API discovery")
+    parser.add_argument(
+        "--all", "-a", action="store_true", help="Analyze all resource types"
+    )
+    parser.add_argument(
+        "--discover",
+        "-d",
+        action="store_true",
+        help="Discover all available resource types",
+    )
+    parser.add_argument(
+        "--max-entities",
+        "-m",
+        type=int,
+        default=20,
+        help="Maximum entities to analyze per resource",
+    )
+    parser.add_argument(
+        "--raw-api", action="store_true", help="Force use of raw API instead of SDK"
+    )
+    parser.add_argument(
+        "--include-unmapped",
+        "-u",
+        action="store_true",
+        help="Include unmapped resources (requires --all)",
+    )
+    parser.add_argument(
+        "--disable-raw-api", action="store_true", help="Disable raw API discovery"
+    )
 
     args = parser.parse_args()
 
@@ -830,12 +1013,17 @@ def main():
         elif args.all:
             analyzer.analyze_all_resources(args.max_entities, args.include_unmapped)
         elif args.resource:
-            analyzer.analyze_resource(args.resource, args.max_entities, args.raw_api)
+            analyzer.analyze_resource(
+                args.resource, args.max_entities, args.raw_api
+            )
         else:
             print("Please specify one of:")
             print("  --resource <type>     : Analyze specific resource")
             print("  --all                 : Analyze all SDK resources")
-            print("  --all --include-unmapped : Analyze all resources (including unmapped)")
+            print(
+                "  --all --include-unmapped : Analyze all resources "
+                "(including unmapped)"
+            )
             print("  --discover            : Discover available resources")
             print("\nAvailable SDK resources:", list(analyzer.resource_classes.keys()))
 

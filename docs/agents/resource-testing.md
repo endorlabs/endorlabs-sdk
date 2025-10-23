@@ -197,7 +197,6 @@ test_instance = TestResourceOperations()  # Works!
 tests/
 ├── test_resource_get_operations.py
 ├── test_resource_operations.py
-├── test_tag_management.py
 ├── test_patch_with_update_mask.py
 └── test_comprehensive_tag_fix.py
 
