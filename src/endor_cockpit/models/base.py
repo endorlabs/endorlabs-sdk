@@ -252,7 +252,8 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to list {self.resource_name} in namespace '{tenant_meta_namespace}': {e}. "
+                f"Failed to list {self.resource_name} in namespace "
+                f"'{tenant_meta_namespace}': {e}. "
                 f"Check namespace permissions and API connectivity."
             )
             return []
@@ -295,8 +296,8 @@ class BaseResourceOperations:
             return resources[0] if resources else None
         except Exception as e:
             self.logger.error(
-                f"List and filter approach failed for {self.resource_name} UUID '{resource_uuid}' "
-                f"in namespace '{tenant_meta_namespace}': {e}. "
+                f"List and filter approach failed for {self.resource_name} UUID "
+                f"'{resource_uuid}' in namespace '{tenant_meta_namespace}': {e}. "
                 f"Resource may not exist or namespace may be inaccessible."
             )
             return None
@@ -319,7 +320,8 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to create {self.resource_name} in namespace '{tenant_meta_namespace}': {e}. "
+                f"Failed to create {self.resource_name} in namespace "
+                f"'{tenant_meta_namespace}': {e}. "
                 f"Check payload validity and namespace permissions."
             )
             return None
@@ -424,7 +426,8 @@ class BaseResourceOperations:
 
         except Exception as e:
             self.logger.error(
-                f"Failed to count {self.resource_name} in namespace '{tenant_meta_namespace}': {e}. "
+                f"Failed to count {self.resource_name} in namespace "
+                f"'{tenant_meta_namespace}': {e}. "
                 f"Check namespace permissions and filter syntax."
             )
             return 0

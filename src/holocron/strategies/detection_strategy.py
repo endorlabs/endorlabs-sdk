@@ -66,39 +66,53 @@ class CriteriaDetectionStrategy(DetectionStrategy):
                 return True
         return False
 
+    def _check_file_extensions(self, criteria_set: dict, file_name: str) -> bool:
+        """Check file extensions with OR logic."""
+        if "file_extensions" not in criteria_set:
+            return True
+
+        extensions = criteria_set["file_extensions"]
+        file_ext = os.path.splitext(file_name)[1].lower()
+        return any(ext.lower() == file_ext for ext in extensions)
+
+    def _check_not_patterns(self, criteria_set: dict, normalized_path: str) -> bool:
+        """Check not patterns with AND logic - none should match."""
+        if "not_patterns" not in criteria_set:
+            return True
+
+        not_patterns = criteria_set["not_patterns"]
+        return not any(
+            re.compile(pattern).search(normalized_path) for pattern in not_patterns
+        )
+
+    def _check_not_file_patterns(self, criteria_set: dict, file_name: str) -> bool:
+        """Check not file patterns with AND logic - none should match."""
+        if "not_file_patterns" not in criteria_set:
+            return True
+
+        not_file_patterns = criteria_set["not_file_patterns"]
+        return not any(
+            re.compile(pattern).search(file_name) for pattern in not_file_patterns
+        )
+
+    def _check_patterns(self, criteria_set: dict, normalized_path: str) -> bool:
+        """Check patterns with AND logic - all must match."""
+        if "patterns" not in criteria_set:
+            return True
+
+        patterns = criteria_set["patterns"]
+        return all(re.compile(pattern).search(normalized_path) for pattern in patterns)
+
     def _check_criteria_set(
         self, criteria_set: dict, normalized_path: str, file_name: str
     ) -> bool:
         """Check criteria with AND logic, except file_extensions use OR logic."""
-        # Check file extensions (OR logic)
-        if "file_extensions" in criteria_set:
-            extensions = criteria_set["file_extensions"]
-            file_ext = os.path.splitext(file_name)[1].lower()
-            if not any(ext.lower() == file_ext for ext in extensions):
-                return False
-
-        # Check not patterns (AND logic - none should match)
-        if "not_patterns" in criteria_set:
-            not_patterns = criteria_set["not_patterns"]
-            for pattern in not_patterns:
-                if re.compile(pattern).search(normalized_path):
-                    return False
-
-        # Check not file patterns (AND logic - none should match)
-        if "not_file_patterns" in criteria_set:
-            not_file_patterns = criteria_set["not_file_patterns"]
-            for pattern in not_file_patterns:
-                if re.compile(pattern).search(file_name):
-                    return False
-
-        # Check patterns (AND logic - all must match)
-        if "patterns" in criteria_set:
-            patterns = criteria_set["patterns"]
-            for pattern in patterns:
-                if not re.compile(pattern).search(normalized_path):
-                    return False
-
-        return True
+        return (
+            self._check_file_extensions(criteria_set, file_name)
+            and self._check_not_patterns(criteria_set, normalized_path)
+            and self._check_not_file_patterns(criteria_set, file_name)
+            and self._check_patterns(criteria_set, normalized_path)
+        )
 
 
 class DetectionStrategyFactory:
