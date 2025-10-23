@@ -38,7 +38,7 @@ class SchemaDriftDetector:
         # Suppress known ignored fields that are expected in API responses
         known_ignored_fields = {'tenant', 'data', 'will_be_deleted_at', 'search_score', 'scan_time'}
         filtered_unknown_fields = {k: v for k, v in unknown_fields.items() if k not in known_ignored_fields}
-        
+
         if filtered_unknown_fields:
             field_list = ", ".join(filtered_unknown_fields.keys())
             logger.warning(
