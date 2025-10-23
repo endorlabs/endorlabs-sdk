@@ -366,8 +366,8 @@ def test_content_types(config):
     test_files = [
         "docs/README.md",
         "src/holocron/manager.py",
-        ".workspace/downloads/openapi-swagger.json",
-        ".workspace/downloads/user-docs/getting-started.md"
+        "external_docs/openapi-swagger.json",
+        "external_docs/user-docs/getting-started.md"
     ]
     
     print("Content Type Detection Test:")

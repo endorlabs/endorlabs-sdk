@@ -354,8 +354,8 @@ class FlexibleEnum(str, Enum):
 
 2. **Analyze OpenAPI Spec**:
    ```bash
-   grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
-   grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
+   grep -i "{Resource}Service" external_docs/openapi-swagger.json
+   grep -A 20 -B 5 "{Resource}Service" external_docs/openapi-swagger.json
    ```
 
 3. **Test with endorctl**:

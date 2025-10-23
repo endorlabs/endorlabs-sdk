@@ -267,8 +267,8 @@ results = query_vector_db("How do I debug PATCH endpoint issues?")
 ### **OpenAPI Spec Analysis**
 ```bash
 # Search for service endpoints
-grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
-grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -i "{Resource}Service" external_docs/openapi-swagger.json
+grep -A 20 -B 5 "{Resource}Service" external_docs/openapi-swagger.json
 ```
 
 ### **Live Data Analysis**

@@ -13,15 +13,15 @@ This protocol ensures that all resource implementations are validated against th
 #### 1.1 Find Service Endpoints
 ```bash
 # Search for the specific service in OpenAPI spec
-grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
-grep -A 30 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -i "{Resource}Service" external_docs/openapi-swagger.json
+grep -A 30 -B 5 "{Resource}Service" external_docs/openapi-swagger.json
 ```
 
 #### 1.2 Extract Complete Schema Definition
 ```bash
 # Find the main resource schema
-grep -A 50 '"v1{Resource}":' .workspace/downloads/openapi-swagger.json
-grep -A 100 '"v1{Resource}Spec":' .workspace/downloads/openapi-swagger.json
+grep -A 50 '"v1{Resource}":' external_docs/openapi-swagger.json
+grep -A 100 '"v1{Resource}Spec":' external_docs/openapi-swagger.json
 ```
 
 #### 1.3 Document Required vs Optional Fields
@@ -195,14 +195,14 @@ print(f"Invalid UUID: {res.status_code}")
 ### OpenAPI Analysis Tools
 ```bash
 # Extract service endpoints
-grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -i "{Resource}Service" external_docs/openapi-swagger.json
 
 # Extract schema definitions
-grep -A 100 '"v1{Resource}":' .workspace/downloads/openapi-swagger.json
-grep -A 100 '"v1{Resource}Spec":' .workspace/downloads/openapi-swagger.json
+grep -A 100 '"v1{Resource}":' external_docs/openapi-swagger.json
+grep -A 100 '"v1{Resource}Spec":' external_docs/openapi-swagger.json
 
 # Extract operation definitions
-grep -A 20 "/v1/namespaces/{tenant_meta.namespace}/{resource}" .workspace/downloads/openapi-swagger.json
+grep -A 20 "/v1/namespaces/{tenant_meta.namespace}/{resource}" external_docs/openapi-swagger.json
 ```
 
 ### Live Data Analysis Tools

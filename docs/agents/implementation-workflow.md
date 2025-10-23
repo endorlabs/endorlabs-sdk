@@ -7,7 +7,7 @@
 ### **Pre-Implementation Checklist**
 - [ ] Virtual environment activated (`uv venv` + `source .venv/bin/activate`)
 - [ ] Environment variables set (`ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`, `ENDOR_NAMESPACE`)
-- [ ] OpenAPI spec downloaded (`.workspace/downloads/openapi-swagger.json`)
+- [ ] OpenAPI spec downloaded (`external_docs/openapi-swagger.json`)
 - [ ] Workspace ready (`.workspace/workspace.py`)
 
 ### **Knowledge Base First**
@@ -32,8 +32,8 @@ results = query_vector_db("What does the resource guide tell me about {Resource}
 #### **1.2 Analyze OpenAPI Specification**
 ```bash
 # Search for service endpoints
-grep -i "{Resource}Service" .workspace/downloads/openapi-swagger.json
-grep -A 20 -B 5 "{Resource}Service" .workspace/downloads/openapi-swagger.json
+grep -i "{Resource}Service" external_docs/openapi-swagger.json
+grep -A 20 -B 5 "{Resource}Service" external_docs/openapi-swagger.json
 ```
 
 #### **1.3 Test with endorctl**

@@ -4,25 +4,12 @@
 
 ## 🚨 Operational Protocols
 
-**These 8 protocols are mandatory for all agent operations:**
-
-1. **Query First**: `uv run python -m holocron query "your question"` before coding
-2. **Validate Environment**: `python scripts/validate_environment.py` before starting
-3. **Security Scan**: `endorctl scan` required before commits
-4. **Knowledge Capture**: Log discoveries in `.workspace/logbook.md`, follow promotion protocol
-5. **Documentation Sync**: `uv run python -m holocron sync` after doc updates
-6. **Check Docstrings**: Read function/class docstrings for API details
-7. **Test Pattern**: Follow `test_<resource>.py` convention
-8. **Error Recovery**: Check `.workspace/validation.log` for actionable errors
+**These are mandatory for all agent operations:**
 
 ## 🔍 When You Don't Know Something
-
 **Route to the right information source:**
-
-- **Terminology/concepts?** → Query holocron first
-- **Process/workflow?** → Check `docs/protocols/`
-- **API details?** → Read docstrings, check `.workspace/downloads/openapi-swagger.json`
-- **Resource structure?** → Query holocron for resource-specific docs
+- **API details?** →  check `external_docs/openapi-swagger.json`, Read docstrings
+- **API example output?** Read user docs, try with `endorctl api get`
 
 ## 🎯 Rationale
 
