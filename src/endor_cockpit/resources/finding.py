@@ -157,13 +157,19 @@ class Ecosystem(FlexibleEnum):
     CODEFRESH_RUNTIME_IMAGES_GITHUB = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITHUB"
     CODEFRESH_RUNTIME_IMAGES_GITLAB = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITLAB"
     CODEFRESH_RUNTIME_IMAGES_BITBUCKET = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BITBUCKET"
-    CODEFRESH_RUNTIME_IMAGES_AZURE_DEVOPS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AZURE_DEVOPS"
+    CODEFRESH_RUNTIME_IMAGES_AZURE_DEVOPS = (
+        "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AZURE_DEVOPS"
+    )
     CODEFRESH_RUNTIME_IMAGES_JENKINS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_JENKINS"
     CODEFRESH_RUNTIME_IMAGES_CIRCLECI = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_CIRCLECI"
     CODEFRESH_RUNTIME_IMAGES_TRAVIS_CI = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_TRAVIS_CI"
-    CODEFRESH_RUNTIME_IMAGES_GITHUB_ACTIONS = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITHUB_ACTIONS"
+    CODEFRESH_RUNTIME_IMAGES_GITHUB_ACTIONS = (
+        "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITHUB_ACTIONS"
+    )
     CODEFRESH_RUNTIME_IMAGES_GITLAB_CI = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_GITLAB_CI"
-    CODEFRESH_RUNTIME_IMAGES_AZURE_PIPELINES = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AZURE_PIPELINES"
+    CODEFRESH_RUNTIME_IMAGES_AZURE_PIPELINES = (
+        "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_AZURE_PIPELINES"
+    )
     CODEFRESH_RUNTIME_IMAGES_BAMBOO = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BAMBOO"
     CODEFRESH_RUNTIME_IMAGES_TEAMCITY = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_TEAMCITY"
     CODEFRESH_RUNTIME_IMAGES_BUILDKITE = "ECOSYSTEM_CODEFRESH_RUNTIME_IMAGES_BUILDKITE"
@@ -237,10 +243,10 @@ class FindingMetadata(BaseModel):
 
 class FindingSpec(BaseSpec):
     """Finding specification extending BaseSpec.
-    
+
     Field Mutability Guide:
     ======================
-    
+
     IMMUTABLE FIELDS (cannot be updated after creation):
     - project_uuid: Project assignment (set at creation)
     - level: Severity level (determined by analysis)
@@ -248,7 +254,7 @@ class FindingSpec(BaseSpec):
     - target_uuid: Target resource (set at creation)
     - finding_metadata: Analysis results (system-generated)
     - last_processed: System-managed timestamp
-    
+
     MUTABLE FIELDS (can be updated via API):
     - dismiss: User can dismiss/undismiss findings
     - remediation: User can add remediation guidance
@@ -258,26 +264,43 @@ class FindingSpec(BaseSpec):
     """
 
     project_uuid: Optional[str] = Field(
-        None, description="UUID of the project this finding belongs to"  # IMMUTABLE: Set at creation
+        None,
+        description="UUID of the project this finding belongs to",  # IMMUTABLE
     )
     last_processed: Optional[datetime] = Field(
-        None, description="Last processed timestamp"  # IMMUTABLE: System-managed
+        None,
+        description="Last processed timestamp",  # IMMUTABLE: System-managed
     )
-    level: Optional[FindingLevel] = Field(None, description="Severity level of the finding")  # IMMUTABLE: Analysis-determined
+    level: Optional[FindingLevel] = Field(
+        None, description="Severity level of the finding"
+    )  # IMMUTABLE: Analysis-determined
     dismiss: Optional[bool] = Field(
-        None, description="Whether the finding is dismissed"  # MUTABLE: User can update
+        None,
+        description="Whether the finding is dismissed",  # MUTABLE: User can update
     )
-    remediation: Optional[str] = Field(None, description="Remediation guidance")  # MUTABLE: User can update
+    remediation: Optional[str] = Field(
+        None, description="Remediation guidance"
+    )  # MUTABLE: User can update
     finding_metadata: Optional[dict] = Field(
-        None, description="Complex nested structure"  # IMMUTABLE: System-generated
+        None,
+        description="Complex nested structure",  # IMMUTABLE: System-generated
     )
-    summary: Optional[str] = Field(None, description="Finding summary")  # MUTABLE: User can update
+    summary: Optional[str] = Field(
+        None, description="Finding summary"
+    )  # MUTABLE: User can update
     finding_tags: Optional[List[str]] = Field(
-        None, description="Tags associated with the finding"  # MUTABLE: User can update
+        None,
+        description="Tags associated with the finding",  # MUTABLE: User can update
     )
-    target_uuid: Optional[str] = Field(None, description="Target resource UUID")  # IMMUTABLE: Set at creation
-    extra_key: Optional[str] = Field(None, description="Extra key information")  # MUTABLE: User can update
-    method: Optional[AnalysisMethod] = Field(None, description="Analysis method used")  # IMMUTABLE: Analysis-determined
+    target_uuid: Optional[str] = Field(
+        None, description="Target resource UUID"
+    )  # IMMUTABLE: Set at creation
+    extra_key: Optional[str] = Field(
+        None, description="Extra key information"
+    )  # MUTABLE: User can update
+    method: Optional[AnalysisMethod] = Field(
+        None, description="Analysis method used"
+    )  # IMMUTABLE: Analysis-determined
 
     @field_validator("level", mode="before")
     @classmethod
@@ -483,7 +506,9 @@ class UpdateFindingPayload(BaseModel):
     """
 
     meta: Optional[FindingMeta] = Field(None, description="Updated finding metadata")
-    spec: Optional[FindingSpec] = Field(None, description="Updated finding specification")
+    spec: Optional[FindingSpec] = Field(
+        None, description="Updated finding specification"
+    )
     context: Optional[Context] = Field(None, description="Updated finding context")
 
 

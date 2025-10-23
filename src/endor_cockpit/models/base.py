@@ -71,37 +71,64 @@ class IngestedObject(BaseModel):
 class BaseMeta(BaseModel):
     """Base metadata for all resources with universal attributes."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     # Required universal fields
     name: str = Field(..., description="Resource name")  # IMMUTABLE: Set at creation
-    kind: str = Field(..., description="Resource type identifier")  # IMMUTABLE: Set at creation
-    version: str = Field(default="v1", description="Version identifier")  # IMMUTABLE: System-managed
+    kind: str = Field(
+        ..., description="Resource type identifier"
+    )  # IMMUTABLE: Set at creation
+    version: str = Field(
+        default="v1", description="Version identifier"
+    )  # IMMUTABLE: System-managed
 
     # Lifecycle fields (auto-managed by API)
-    create_time: Optional[str] = Field(None, description="Creation timestamp")  # IMMUTABLE: System-managed
-    created_by: Optional[str] = Field(None, description="Creator identifier")  # IMMUTABLE: System-managed
-    update_time: Optional[str] = Field(None, description="Last update timestamp")  # IMMUTABLE: System-managed
-    updated_by: Optional[str] = Field(None, description="Last updater identifier")  # IMMUTABLE: System-managed
-    upsert_time: Optional[str] = Field(None, description="Upsert timestamp")  # IMMUTABLE: System-managed
+    create_time: Optional[str] = Field(
+        None, description="Creation timestamp"
+    )  # IMMUTABLE: System-managed
+    created_by: Optional[str] = Field(
+        None, description="Creator identifier"
+    )  # IMMUTABLE: System-managed
+    update_time: Optional[str] = Field(
+        None, description="Last update timestamp"
+    )  # IMMUTABLE: System-managed
+    updated_by: Optional[str] = Field(
+        None, description="Last updater identifier"
+    )  # IMMUTABLE: System-managed
+    upsert_time: Optional[str] = Field(
+        None, description="Upsert timestamp"
+    )  # IMMUTABLE: System-managed
 
     # User-defined fields
-    description: Optional[str] = Field(None, description="Resource description")  # MUTABLE: User can update
-    tags: Optional[List[str]] = Field(None, description="Resource tags")  # MUTABLE: User can update
+    description: Optional[str] = Field(
+        None, description="Resource description"
+    )  # MUTABLE: User can update
+    tags: Optional[List[str]] = Field(
+        None, description="Resource tags"
+    )  # MUTABLE: User can update
     annotations: Optional[Dict[str, Any]] = Field(
-        None, description="Key-value metadata pairs"  # MUTABLE: User can update
+        None,
+        description="Key-value metadata pairs",  # MUTABLE: User can update
     )
 
     # Hierarchical fields
-    parent_uuid: Optional[str] = Field(None, description="Parent resource UUID")  # IMMUTABLE: Set at creation
-    parent_kind: Optional[str] = Field(None, description="Parent resource kind")  # IMMUTABLE: Set at creation
+    parent_uuid: Optional[str] = Field(
+        None, description="Parent resource UUID"
+    )  # IMMUTABLE: Set at creation
+    parent_kind: Optional[str] = Field(
+        None, description="Parent resource kind"
+    )  # IMMUTABLE: Set at creation
 
     # System fields
     references: Optional[Dict[str, Any]] = Field(
-        None, description="External references and links"  # IMMUTABLE: System-managed
+        None,
+        description="External references and links",  # IMMUTABLE: System-managed
     )
     index_data: Optional[Dict[str, Any]] = Field(
-        None, description="Search and indexing metadata"  # IMMUTABLE: System-managed
+        None,
+        description="Search and indexing metadata",  # IMMUTABLE: System-managed
     )
 
     @field_validator("*", mode="before")
@@ -137,7 +164,9 @@ class BaseMeta(BaseModel):
 class BaseSpec(BaseModel):
     """Base specification for all resources."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     # Schema drift fields
     notification: Optional[Dict[str, Any]] = Field(
@@ -160,14 +189,14 @@ class BaseSpec(BaseModel):
 
 class BaseResource(BaseModel):
     """Base resource model for all Endor Labs resources.
-    
+
     Field Mutability Guide:
     ======================
-    
+
     IMMUTABLE FIELDS (cannot be updated after creation):
     - uuid: System-generated unique identifier
     - meta.name: Resource name set at creation
-    - meta.kind: Resource type set at creation  
+    - meta.kind: Resource type set at creation
     - meta.create_time: System-managed creation timestamp
     - meta.created_by: System-managed creator identifier
     - meta.update_time: System-managed update timestamp
@@ -178,7 +207,7 @@ class BaseResource(BaseModel):
     - meta.references: System-managed external references
     - meta.index_data: System-managed search metadata
     - tenant_meta.namespace: Tenant assignment (immutable)
-    
+
     MUTABLE FIELDS (can be updated via API):
     - meta.description: User-defined description
     - meta.tags: User-defined tags list
@@ -186,32 +215,49 @@ class BaseResource(BaseModel):
     - spec.*: Most spec fields are mutable (resource-specific)
     """
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     # Universal fields (nearly universal)
-    uuid: str = Field(..., description="Unique identifier for the resource")  # IMMUTABLE: System-generated
-    meta: BaseMeta = Field(..., description="Resource metadata")  # Mixed: See BaseMeta field comments
-    tenant_meta: TenantMeta = Field(..., description="Tenant metadata")  # IMMUTABLE: Set at creation
+    uuid: str = Field(
+        ..., description="Unique identifier for the resource"
+    )  # IMMUTABLE: System-generated
+    meta: BaseMeta = Field(
+        ..., description="Resource metadata"
+    )  # Mixed: See BaseMeta field comments
+    tenant_meta: TenantMeta = Field(
+        ..., description="Tenant metadata"
+    )  # IMMUTABLE: Set at creation
 
     # Common fields (88% present)
-    spec: BaseSpec = Field(..., description="Resource specification")  # MUTABLE: Most spec fields can be updated
+    spec: BaseSpec = Field(
+        ..., description="Resource specification"
+    )  # MUTABLE: Most spec fields can be updated
 
     # Conditional fields (present when applicable)
-    context: Optional[Context] = Field(None, description="Contextual information")  # MUTABLE: User can update
+    context: Optional[Context] = Field(
+        None, description="Contextual information"
+    )  # MUTABLE: User can update
     processing_status: Optional[ProcessingStatus] = Field(
-        None, description="Processing state"  # IMMUTABLE: System-managed
+        None,
+        description="Processing state",  # IMMUTABLE: System-managed
     )
     ingested_object: Optional[IngestedObject] = Field(
-        None, description="Ingestion metadata"  # IMMUTABLE: System-managed
+        None,
+        description="Ingestion metadata",  # IMMUTABLE: System-managed
     )
     related_object: Optional[Dict[str, Any]] = Field(
-        None, description="Related object information"  # IMMUTABLE: System-managed
+        None,
+        description="Related object information",  # IMMUTABLE: System-managed
     )
     scan_object: Optional[Dict[str, Any]] = Field(
-        None, description="Scan object information"  # IMMUTABLE: System-managed
+        None,
+        description="Scan object information",  # IMMUTABLE: System-managed
     )
     propagate: Optional[bool] = Field(
-        None, description="Inheritance flag for hierarchical resources"  # MUTABLE: User can update
+        None,
+        description="Inheritance flag for hierarchical resources",  # MUTABLE
     )
 
     @field_validator("*", mode="before")
@@ -259,7 +305,7 @@ class BaseResource(BaseModel):
         mutable_fields = self.get_mutable_fields()
         return update_mask in mutable_fields
 
-    @field_serializer('*')
+    @field_serializer("*")
     def serialize_datetime(self, value):
         """Serialize datetime objects to ISO format strings."""
         if isinstance(value, datetime):

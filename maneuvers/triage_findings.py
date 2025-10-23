@@ -32,8 +32,11 @@ from endor_cockpit.resources.policy import (
 from endor_cockpit.types import ListParameters
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class FindingTriageManeuver:
     """Main class for the finding triage maneuver."""
@@ -46,9 +49,15 @@ class FindingTriageManeuver:
         self.logbook_path = Path(".workspace/logbook.md")
         self.assessment_path = Path(".workspace/findings_assessment.md")
 
-    def log_step(self, step_name: str, task: str, problem: str = None,
-                 troubleshooting: List[str] = None, solution: str = None,
-                 verification: str = None):
+    def log_step(
+        self,
+        step_name: str,
+        task: str,
+        problem: str = None,
+        troubleshooting: List[str] = None,
+        solution: str = None,
+        verification: str = None,
+    ):
         """Log a step to the logbook."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -85,15 +94,19 @@ class FindingTriageManeuver:
         required_vars = [
             "ENDOR_NAMESPACE",
             "ENDOR_API_CREDENTIALS_KEY",
-            "ENDOR_API_CREDENTIALS_SECRET"
+            "ENDOR_API_CREDENTIALS_SECRET",
         ]
 
         missing_vars = [var for var in required_vars if not os.getenv(var)]
         if missing_vars:
             error_msg = f"Missing required environment variables: {missing_vars}"
             logger.error(error_msg)
-            self.log_step("Environment Validation", "Check environment variables",
-                         problem=error_msg, solution="Set missing environment variables")
+            self.log_step(
+                "Environment Validation",
+                "Check environment variables",
+                problem=error_msg,
+                solution="Set missing environment variables",
+            )
             return False
 
         try:
@@ -101,18 +114,24 @@ class FindingTriageManeuver:
             self.client = APIClient()
             self.namespace = os.getenv("ENDOR_NAMESPACE")
 
-            self.log_step("Environment Validation",
-                         "Check environment variables and initialize API client",
-                         solution="Environment variables set, API client initialized",
-                         verification="Client initialized successfully")
+            self.log_step(
+                "Environment Validation",
+                "Check environment variables and initialize API client",
+                solution="Environment variables set, API client initialized",
+                verification="Client initialized successfully",
+            )
 
             return True
 
         except Exception as e:
             error_msg = f"Failed to initialize API client: {str(e)}"
             logger.error(error_msg)
-            self.log_step("Environment Validation", "Initialize API client",
-                         problem=error_msg, solution="Check API credentials and network connectivity")
+            self.log_step(
+                "Environment Validation",
+                "Initialize API client",
+                problem=error_msg,
+                solution="Check API credentials and network connectivity",
+            )
             return False
 
     def find_target_project(self) -> bool:
@@ -126,19 +145,19 @@ class FindingTriageManeuver:
                 'spec.git.web_url=="https://github.com/Endor-Solutions-Architecture/endor-cockpit.git"',
                 'meta.name=="https://github.com/Endor-Solutions-Architecture/endor-cockpit.git"',
                 'meta.name=="https://github.com/Endor-Solutions-Architecture/endor-cockpit"',
-                'spec.git.full_name=="Endor-Solutions-Architecture/endor-cockpit"'
+                'spec.git.full_name=="Endor-Solutions-Architecture/endor-cockpit"',
             ]
 
             projects = []
-            successful_filter = None
 
             for filter_expr in filter_attempts:
                 logger.info(f"Trying filter: {filter_expr}")
                 list_params = ListParameters(filter=filter_expr)
-                projects = project.list_projects(self.client, self.namespace, list_params)
+                projects = project.list_projects(
+                    self.client, self.namespace, list_params
+                )
 
                 if projects:
-                    successful_filter = filter_expr
                     break
 
             if not projects:
@@ -151,16 +170,26 @@ class FindingTriageManeuver:
                 for proj in all_projects:
                     if "endor-cockpit" in str(proj.model_dump()).lower():
                         projects = [proj]
-                        successful_filter = "manual search"
                         break
 
                 if not projects:
-                    error_msg = "No projects found matching endor-cockpit repository URL"
+                    error_msg = (
+                        "No projects found matching endor-cockpit repository URL"
+                    )
                     logger.error(error_msg)
-                    self.log_step("Find Target Project", "Filter projects by repository URL",
-                                 problem=error_msg,
-                                 troubleshooting=[f"Tried filters: {filter_attempts}", "Listed all projects"],
-                                 solution="Verify repository URL in project spec or check project names")
+                    self.log_step(
+                        "Find Target Project",
+                        "Filter projects by repository URL",
+                        problem=error_msg,
+                        troubleshooting=[
+                            f"Tried filters: {filter_attempts}",
+                            "Listed all projects",
+                        ],
+                        solution=(
+                            "Verify repository URL in project spec or "
+                            "check project names"
+                        ),
+                    )
                     return False
 
             if len(projects) > 1:
@@ -172,24 +201,35 @@ class FindingTriageManeuver:
                 project_obj = projects[0]
 
             self.project_uuid = project_obj.uuid
-            logger.info(f"Found project: {project_obj.meta.name} (UUID: {self.project_uuid})")
+            logger.info(
+                f"Found project: {project_obj.meta.name} (UUID: {self.project_uuid})"
+            )
 
-            self.log_step("Find Target Project", "Filter projects by repository URL",
-                         solution=f"Found project: {project_obj.meta.name}",
-                         verification=f"Project UUID: {self.project_uuid}")
+            self.log_step(
+                "Find Target Project",
+                "Filter projects by repository URL",
+                solution=f"Found project: {project_obj.meta.name}",
+                verification=f"Project UUID: {self.project_uuid}",
+            )
 
             return True
 
         except Exception as e:
             error_msg = f"Failed to find project: {str(e)}"
             logger.error(error_msg)
-            self.log_step("Find Target Project", "Filter projects by repository URL",
-                         problem=error_msg, solution="Check project filtering syntax")
+            self.log_step(
+                "Find Target Project",
+                "Filter projects by repository URL",
+                problem=error_msg,
+                solution="Check project filtering syntax",
+            )
             return False
 
     def retrieve_findings(self) -> bool:
         """Retrieve SAST findings for the project from both main and dev branches."""
-        logger.info("Step 3: Retrieving SAST findings from both main and dev branches...")
+        logger.info(
+            "Step 3: Retrieving SAST findings from both main and dev branches..."
+        )
 
         try:
             # Retrieve SAST findings with pagination from all branches
@@ -198,16 +238,21 @@ class FindingTriageManeuver:
 
             page_token = None
             while True:
-                # Get SAST findings for this project - filter for SAST findings specifically
+                # Get SAST findings for this project - filter for SAST findings
                 list_params = ListParameters(
-                    filter=f'spec.project_uuid=="{self.project_uuid}" AND spec.finding_categories=="FINDING_CATEGORY_SAST"',
+                    filter=(
+                        f'spec.project_uuid=="{self.project_uuid}" AND '
+                        f'spec.finding_categories=="FINDING_CATEGORY_SAST"'
+                    ),
                     sort_field="spec.level",
                     sort_order="desc",
                     page_token=page_token,
-                    page_size=page_size
+                    page_size=page_size,
                 )
 
-                page_findings = finding.list_findings(self.client, self.namespace, list_params)
+                page_findings = finding.list_findings(
+                    self.client, self.namespace, list_params
+                )
 
                 if not page_findings:
                     break
@@ -219,7 +264,7 @@ class FindingTriageManeuver:
                 if len(all_findings) == len(page_findings):  # First page
                     methods = set()
                     for finding_obj in page_findings:
-                        if hasattr(finding_obj.spec, 'method'):
+                        if hasattr(finding_obj.spec, "method"):
                             methods.add(finding_obj.spec.method)
                     logger.info(f"Available finding methods: {list(methods)}")
 
@@ -227,8 +272,11 @@ class FindingTriageManeuver:
                 for finding_obj in page_findings:
                     # Determine branch from source_code_version.ref
                     branch = "unknown"
-                    if hasattr(finding_obj.spec, 'source_code_version') and finding_obj.spec.source_code_version:
-                        if hasattr(finding_obj.spec.source_code_version, 'ref'):
+                    if (
+                        hasattr(finding_obj.spec, "source_code_version")
+                        and finding_obj.spec.source_code_version
+                    ):
+                        if hasattr(finding_obj.spec.source_code_version, "ref"):
                             branch = finding_obj.spec.source_code_version.ref
 
                     logger.info(f"SAST Finding: {finding_obj.meta.name}")
@@ -236,18 +284,36 @@ class FindingTriageManeuver:
                     logger.info(f"  Level: {finding_obj.spec.level}")
                     logger.info(f"  Method: {finding_obj.spec.method}")
                     logger.info(f"  Branch: {branch}")
-                    if hasattr(finding_obj.spec, 'finding_categories') and finding_obj.spec.finding_categories:
-                        logger.info(f"  Categories: {finding_obj.spec.finding_categories}")
-                    if hasattr(finding_obj.spec, 'summary') and finding_obj.spec.summary:
+                    if (
+                        hasattr(finding_obj.spec, "finding_categories")
+                        and finding_obj.spec.finding_categories
+                    ):
+                        logger.info(
+                            f"  Categories: {finding_obj.spec.finding_categories}"
+                        )
+                    if (
+                        hasattr(finding_obj.spec, "summary")
+                        and finding_obj.spec.summary
+                    ):
                         logger.info(f"  Summary: {finding_obj.spec.summary[:100]}...")
-                    if hasattr(finding_obj.spec, 'finding_tags') and finding_obj.spec.finding_tags:
+                    if (
+                        hasattr(finding_obj.spec, "finding_tags")
+                        and finding_obj.spec.finding_tags
+                    ):
                         logger.info(f"  Tags: {finding_obj.spec.finding_tags}")
                     # Log SAST-specific fields
-                    for attr in ['file_path', 'line_number', 'target_uuid', 'parent_uuid']:
+                    for attr in [
+                        "file_path",
+                        "line_number",
+                        "target_uuid",
+                        "parent_uuid",
+                    ]:
                         if hasattr(finding_obj.spec, attr):
                             value = getattr(finding_obj.spec, attr)
                             if value is not None:
-                                logger.info(f"  {attr.replace('_', ' ').title()}: {value}")
+                                logger.info(
+                                    f"  {attr.replace('_', ' ').title()}: {value}"
+                                )
                     logger.info("  ---")
 
                 # If we got fewer findings than page_size, we've reached the end
@@ -255,7 +321,7 @@ class FindingTriageManeuver:
                     break
 
                 # Get next page token from the response (if available)
-                # Note: The actual implementation would need to extract page_token from response
+                # Note: Extract page_token from response in actual implementation
                 # For now, we'll break after first page to avoid infinite loop
                 break
 
@@ -265,8 +331,11 @@ class FindingTriageManeuver:
             branch_analysis = {}
             for finding_obj in self.findings:
                 branch = "unknown"
-                if hasattr(finding_obj.spec, 'source_code_version') and finding_obj.spec.source_code_version:
-                    if hasattr(finding_obj.spec.source_code_version, 'ref'):
+                if (
+                    hasattr(finding_obj.spec, "source_code_version")
+                    and finding_obj.spec.source_code_version
+                ):
+                    if hasattr(finding_obj.spec.source_code_version, "ref"):
                         branch = finding_obj.spec.source_code_version.ref
 
                 if branch not in branch_analysis:
@@ -277,17 +346,30 @@ class FindingTriageManeuver:
             for branch, findings in branch_analysis.items():
                 logger.info(f"  {branch} branch: {len(findings)} findings")
 
-            self.log_step("Retrieve SAST Findings", "Get SAST findings for project from all branches",
-                         solution=f"Retrieved {len(self.findings)} SAST findings from {len(branch_analysis)} branches",
-                         verification=f"SAST findings sorted by severity level, branch analysis: {dict(branch_analysis)}")
+            self.log_step(
+                "Retrieve SAST Findings",
+                "Get SAST findings for project from all branches",
+                solution=(
+                    f"Retrieved {len(self.findings)} SAST findings from "
+                    f"{len(branch_analysis)} branches"
+                ),
+                verification=(
+                    f"SAST findings sorted by severity level, "
+                    f"branch analysis: {dict(branch_analysis)}"
+                ),
+            )
 
             return True
 
         except Exception as e:
             error_msg = f"Failed to retrieve SAST findings: {str(e)}"
             logger.error(error_msg)
-            self.log_step("Retrieve SAST Findings", "Get SAST findings for project from all branches",
-                         problem=error_msg, solution="Check SAST finding filtering syntax")
+            self.log_step(
+                "Retrieve SAST Findings",
+                "Get SAST findings for project from all branches",
+                problem=error_msg,
+                solution="Check SAST finding filtering syntax",
+            )
             return False
 
     def generate_assessment(self) -> bool:
@@ -344,17 +426,24 @@ Project UUID: {self.project_uuid}
 
             logger.info(f"Assessment document written to {self.assessment_path}")
 
-            self.log_step("Generate Assessment", "Create findings assessment document",
-                         solution=f"Generated assessment with {total_findings} findings",
-                         verification=f"Document saved to {self.assessment_path}")
+            self.log_step(
+                "Generate Assessment",
+                "Create findings assessment document",
+                solution=f"Generated assessment with {total_findings} findings",
+                verification=f"Document saved to {self.assessment_path}",
+            )
 
             return True
 
         except Exception as e:
             error_msg = f"Failed to generate assessment: {str(e)}"
             logger.error(error_msg)
-            self.log_step("Generate Assessment", "Create findings assessment document",
-                         problem=error_msg, solution="Check file permissions and path")
+            self.log_step(
+                "Generate Assessment",
+                "Create findings assessment document",
+                problem=error_msg,
+                solution="Check file permissions and path",
+            )
             return False
 
     def _generate_finding_assessment(self, finding_obj, index: int) -> str:
@@ -385,8 +474,10 @@ Project UUID: {self.project_uuid}
 
         elif package_name and ecosystem:
             # Check if it's a dev dependency (heuristic)
-            if any(dev_indicator in package_name.lower() for dev_indicator in
-                   ["test", "dev", "mock", "spec", "example"]):
+            if any(
+                dev_indicator in package_name.lower()
+                for dev_indicator in ["test", "dev", "mock", "spec", "example"]
+            ):
                 recommendation = "SUPPRESS"
                 rationale = "Appears to be development/testing dependency"
             else:
@@ -397,11 +488,11 @@ Project UUID: {self.project_uuid}
 
 - **UUID**: {finding_obj.uuid}
 - **Severity**: {finding_obj.spec.level}
-- **Categories**: {', '.join(categories) if categories else 'None'}
-- **Summary**: {finding_obj.spec.summary or 'No summary available'}
-- **Affected Component**: {finding_obj.spec.target_dependency_package_name or 'N/A'} ({finding_obj.spec.ecosystem or 'N/A'})
-- **Remediation**: {finding_obj.spec.remediation or 'No remediation guidance'}
-- **Current Tags**: {', '.join(finding_obj.spec.finding_tags) if finding_obj.spec.finding_tags else 'None'}
+- **Categories**: {", ".join(categories) if categories else "None"}
+- **Summary**: {finding_obj.spec.summary or "No summary available"}
+- **Affected Component**: {finding_obj.spec.target_dependency_package_name or "N/A"} ({finding_obj.spec.ecosystem or "N/A"})
+- **Remediation**: {finding_obj.spec.remediation or "No remediation guidance"}
+- **Current Tags**: {", ".join(finding_obj.spec.finding_tags) if finding_obj.spec.finding_tags else "None"}
 
 **Risk Assessment** (AI-generated recommendations):
 - **Likelihood**: {likelihood}
@@ -431,8 +522,11 @@ Project UUID: {self.project_uuid}
             for finding_obj in self.findings:
                 # Determine branch for statistics
                 branch = "unknown"
-                if hasattr(finding_obj.spec, 'source_code_version') and finding_obj.spec.source_code_version:
-                    if hasattr(finding_obj.spec.source_code_version, 'ref'):
+                if (
+                    hasattr(finding_obj.spec, "source_code_version")
+                    and finding_obj.spec.source_code_version
+                ):
+                    if hasattr(finding_obj.spec.source_code_version, "ref"):
                         branch = finding_obj.spec.source_code_version.ref
 
                 if branch not in branch_stats:
@@ -442,21 +536,36 @@ Project UUID: {self.project_uuid}
                     tagged_count += 1
                     branch_stats[branch] += 1
 
-            logger.info(f"Tagged {tagged_count} SAST findings as false-positive")
+            logger.info(
+                f"Tagged {tagged_count} SAST findings as false-positive"
+            )
             for branch, count in branch_stats.items():
                 logger.info(f"  {branch} branch: {count} findings tagged")
 
-            self.log_step("Tag All SAST Findings", "Tag all SAST findings as false-positive from all branches",
-                         solution=f"Tagged {tagged_count} SAST findings as false-positive across {len(branch_stats)} branches",
-                         verification=f"All SAST findings tagged with false-positive tag, branch breakdown: {branch_stats}")
+            self.log_step(
+                "Tag All SAST Findings",
+                "Tag all SAST findings as false-positive from all branches",
+                solution=(
+                    f"Tagged {tagged_count} SAST findings as false-positive "
+                    f"across {len(branch_stats)} branches"
+                ),
+                verification=(
+                    f"All SAST findings tagged with false-positive tag, "
+                    f"branch breakdown: {branch_stats}"
+                ),
+            )
 
             return True
 
         except Exception as e:
             error_msg = f"Failed to tag SAST findings: {str(e)}"
             logger.error(error_msg)
-            self.log_step("Tag All SAST Findings", "Tag all SAST findings as false-positive from all branches",
-                         problem=error_msg, solution="Check finding tagging logic")
+            self.log_step(
+                "Tag All SAST Findings",
+                "Tag all SAST findings as false-positive from all branches",
+                problem=error_msg,
+                solution="Check finding tagging logic",
+            )
             return False
 
     def _is_ai_recommended_suppress(self, finding_obj) -> bool:
@@ -466,12 +575,14 @@ Project UUID: {self.project_uuid}
         level = finding_obj.spec.level
 
         # Check severity level (convert enum to string for comparison)
-        level_str = str(level) if hasattr(level, 'value') else str(level)
+        level_str = str(level) if hasattr(level, "value") else str(level)
         if "LOW" in level_str or "INFO" in level_str:
             return True
 
-        if package_name and any(dev_indicator in package_name.lower() for dev_indicator in
-                               ["test", "dev", "mock", "spec", "example"]):
+        if package_name and any(
+            dev_indicator in package_name.lower()
+            for dev_indicator in ["test", "dev", "mock", "spec", "example"]
+        ):
             return True
 
         return False
@@ -480,43 +591,49 @@ Project UUID: {self.project_uuid}
         """Tag a finding as false-positive."""
         try:
             # Get current finding
-            current_finding = finding.get_finding(self.client, self.namespace, finding_uuid)
+            current_finding = finding.get_finding(
+                self.client, self.namespace, finding_uuid
+            )
             if not current_finding:
                 logger.warning(f"Finding {finding_uuid} not found")
                 return False
 
             # Update with false-positive tag in meta.tags (most reliable location)
             existing_tags = current_finding.meta.tags or []
-            new_tags = ["false-positive"] + [tag for tag in existing_tags if tag != "false-positive"]
+            new_tags = ["false-positive"] + [
+                tag for tag in existing_tags if tag != "false-positive"
+            ]
 
             # Use raw API client to bypass Pydantic serialization issues
             headers = self.client.default_headers
-            headers.update({"Accept": "application/json", "Content-Type": "application/json"})
+            headers.update(
+                {"Accept": "application/json", "Content-Type": "application/json"}
+            )
 
             request_data = {
                 "object": {
                     "uuid": finding_uuid,
                     "tenant_meta": {"namespace": self.namespace},
-                    "meta": {
-                        "tags": new_tags
-                    }
+                    "meta": {"tags": new_tags},
                 },
-                "request": {
-                    "update_mask": "meta.tags"
-                }
+                "request": {"update_mask": "meta.tags"},
             }
 
             try:
                 res = self.client.patch(
                     f"v1/namespaces/{self.namespace}/findings",
                     headers=headers,
-                    data=request_data
+                    data=request_data,
                 )
                 if res.status_code == 200:
-                    logger.info(f"Successfully tagged finding {finding_uuid} as false-positive")
+                    logger.info(
+                        f"Successfully tagged finding {finding_uuid} as false-positive"
+                    )
                     return True
                 else:
-                    logger.error(f"Failed to tag finding {finding_uuid}: {res.status_code}")
+                    logger.error(
+                        f"Failed to tag finding {finding_uuid}: {res.status_code}"
+                    )
                     return False
             except Exception as e:
                 logger.error(f"Error tagging finding {finding_uuid}: {str(e)}")
@@ -533,22 +650,35 @@ Project UUID: {self.project_uuid}
             from endor_cockpit.resources import repository
 
             # List repositories in the namespace
-            repositories = repository.list_repositories(self.client, self.namespace)
-            logger.info(f"Found {len(repositories)} repositories in namespace")
+            repositories = repository.list_repositories(
+                self.client, self.namespace
+            )
+            logger.info(
+                f"Found {len(repositories)} repositories in namespace"
+            )
 
             # Find repository by name matching our project
             # Since repositories don't have project_uuid, match by name
             # Use the project name from the project we found earlier
-            project_name = "https://github.com/Endor-Solutions-Architecture/endor-cockpit.git"
+            project_name = (
+                "https://github.com/Endor-Solutions-Architecture/"
+                "endor-cockpit.git"
+            )
             for repo in repositories:
                 if repo.meta.name == project_name:
-                    logger.info(f"Found matching repository: {repo.meta.name} (UUID: {repo.uuid})")
+                    logger.info(
+                        f"Found matching repository: {repo.meta.name} "
+                        f"(UUID: {repo.uuid})"
+                    )
                     return repo.uuid
 
             # Fallback: look for endor-cockpit specifically
             for repo in repositories:
                 if "endor-cockpit" in repo.meta.name.lower():
-                    logger.info(f"Found endor-cockpit repository: {repo.meta.name} (UUID: {repo.uuid})")
+                    logger.info(
+                        f"Found endor-cockpit repository: {repo.meta.name} "
+                        f"(UUID: {repo.uuid})"
+                    )
                     return repo.uuid
 
             logger.warning(f"No repository found for project {self.project_uuid}")
@@ -566,13 +696,11 @@ Project UUID: {self.project_uuid}
         logger.info("Step 6: Creating exception policy...")
 
         try:
-            # For dependency vulnerability findings, we can use Project UUID directly
+            # For dependency vulnerability findings, use Project UUID directly
             # These findings don't have Repository/RepositoryVersion/PackageVersion UUIDs
 
             # Build Rego rule to suppress findings with false-positive tag
             # Handle both dev and main branch RepositoryVersions
-            dev_repository_version_uuid = "68f3b5dde67c6b402406da33"  # Dev branch RepositoryVersion UUID
-            main_repository_version_uuid = "68f3e40ce563d66b71e6d4c2"  # Main branch RepositoryVersion UUID
 
             rego_rule = f"""package endor.cockpit.exceptions
 
@@ -587,8 +715,11 @@ match_finding[result] {{
                 meta=PolicyMeta(
                     name="Endor Cockpit - False Positive Exceptions (Dev & Main)",
                     kind="Policy",
-                    description="Suppresses findings tagged as false-positive during manual triage for both dev and main branches",
-                    tags=["exception", "false-positive", "endor-cockpit"]
+                    description=(
+                        "Suppresses findings tagged as false-positive during "
+                        "manual triage for both dev and main branches"
+                    ),
+                    tags=["exception", "false-positive", "endor-cockpit"],
                 ),
                 spec=PolicySpec(
                     policy_type=PolicyType.EXCEPTION,
@@ -596,24 +727,33 @@ match_finding[result] {{
                     project_selector=[f"$uuid={self.project_uuid}"],
                     resource_kinds=["Finding"],
                     disable=False,
-                    exception={"reason": ExceptionReason.FALSE_POSITIVE}
+                    exception={"reason": ExceptionReason.FALSE_POSITIVE},
                 ),
-                propagate=False
+                propagate=False,
             )
 
-            exception_policy = policy.create_policy(self.client, self.namespace, payload)
+            exception_policy = policy.create_policy(
+                self.client, self.namespace, payload
+            )
 
             if exception_policy:
                 logger.info(f"Created exception policy: {exception_policy.uuid}")
-                self.log_step("Create Exception Policy", "Create policy to suppress tagged findings",
-                             solution=f"Created policy: {exception_policy.uuid}",
-                             verification=f"Policy name: {exception_policy.meta.name}")
+                self.log_step(
+                    "Create Exception Policy",
+                    "Create policy to suppress tagged findings",
+                    solution=f"Created policy: {exception_policy.uuid}",
+                    verification=f"Policy name: {exception_policy.meta.name}",
+                )
                 return True
             else:
                 error_msg = "Failed to create exception policy"
                 logger.error(error_msg)
-                self.log_step("Create Exception Policy", "Create policy to suppress tagged findings",
-                             problem=error_msg, solution="Check policy creation permissions")
+                self.log_step(
+                    "Create Exception Policy",
+                    "Create policy to suppress tagged findings",
+                    problem=error_msg,
+                    solution="Check policy creation permissions",
+                )
                 return False
 
         except Exception as e:
@@ -621,17 +761,34 @@ match_finding[result] {{
             logger.error(error_msg)
 
             # Log detailed error information
-            if hasattr(e, 'response'):
+            if hasattr(e, "response"):
                 try:
-                    error_details = e.response.json() if hasattr(e.response, 'json') else str(e.response.text)
+                    error_details = (
+                        e.response.json()
+                        if hasattr(e.response, "json")
+                        else str(e.response.text)
+                    )
                     logger.error(f"API Error Details: {error_details}")
-                except:
-                    logger.error(f"API Error Response: {e.response.text if hasattr(e.response, 'text') else 'No response text'}")
+                except Exception:
+                    logger.error(
+                        f"API Error Response: {e.response.text if hasattr(e.response, 'text') else 'No response text'}"
+                    )
 
-            self.log_step("Create Exception Policy", "Create policy to suppress tagged findings",
-                         problem=f"{error_msg} - Check Rego rule syntax and policy parameters",
-                         solution="Verify OPA/Rego rule syntax and ensure proper input structure",
-                         troubleshooting=["Check Rego rule syntax", "Verify input.resource structure", "Test policy rule manually"])
+            self.log_step(
+                "Create Exception Policy",
+                "Create policy to suppress tagged findings",
+                problem=(
+                    f"{error_msg} - Check Rego rule syntax and policy parameters"
+                ),
+                solution=(
+                    "Verify OPA/Rego rule syntax and ensure proper input structure"
+                ),
+                troubleshooting=[
+                    "Check Rego rule syntax",
+                    "Verify input.resource structure",
+                    "Test policy rule manually",
+                ],
+            )
             return False
 
     def run(self) -> bool:
@@ -656,6 +813,7 @@ match_finding[result] {{
         logger.info("Finding Triage Maneuver completed successfully!")
         return True
 
+
 def main():
     """Main entry point."""
     maneuver = FindingTriageManeuver()
@@ -668,6 +826,7 @@ def main():
     else:
         print("\n❌ Finding Triage Maneuver failed!")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
