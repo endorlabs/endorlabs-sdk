@@ -51,13 +51,18 @@ class TestEndorCockpitIntegration:
     def tenant_namespace(self):
         """The tenant namespace for testing."""
         import tomllib
+
         # Read from env var first, fallback to pyproject.toml
         namespace = os.getenv("ENDOR_NAMESPACE")
         if not namespace:
             try:
                 with open("pyproject.toml", "rb") as f:
                     config = tomllib.load(f)
-                    namespace = config.get("tool", {}).get("endor_cockpit", {}).get("default_namespace")
+                    namespace = (
+                        config.get("tool", {})
+                        .get("endor_cockpit", {})
+                        .get("default_namespace")
+                    )
             except Exception:
                 pass
         return namespace or "endor-solutions-tgowan.cockpit"
@@ -375,9 +380,6 @@ class TestEndorCockpitIntegration:
         except Exception as e:
             print(f"Error deleting namespace {namespace_uuid}: {e}")
             return False
-
-
-
 
 
 if __name__ == "__main__":

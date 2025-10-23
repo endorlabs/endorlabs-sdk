@@ -387,10 +387,16 @@ name = "endor-cockpit"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "chromadb" },
-    { name = "markdownify" },
     { name = "pydantic" },
     { name = "requests" },
+]
+
+[package.optional-dependencies]
+holocron = [
+    { name = "beautifulsoup4" },
+    { name = "chromadb" },
+    { name = "markdownify" },
+    { name = "openai" },
 ]
 
 [package.dev-dependencies]
@@ -400,35 +406,24 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
-holocron = [
-    { name = "beautifulsoup4" },
-    { name = "chromadb" },
-    { name = "markdownify" },
-    { name = "openai" },
-]
 
 [package.metadata]
 requires-dist = [
-    { name = "chromadb", specifier = "==1.2.0" },
-    { name = "markdownify", specifier = "==1.2.0" },
+    { name = "beautifulsoup4", marker = "extra == 'holocron'", specifier = "==4.14.2" },
+    { name = "chromadb", marker = "extra == 'holocron'", specifier = "==1.2.0" },
+    { name = "markdownify", marker = "extra == 'holocron'", specifier = "==1.2.0" },
+    { name = "openai", marker = "extra == 'holocron'", specifier = "==2.5.0" },
     { name = "pydantic", specifier = "==2.12.3" },
     { name = "requests", specifier = "==2.32.5" },
-    { name = "tomli", marker = "python_full_version < '3.11'", specifier = "==2.2.1" },
 ]
+provides-extras = ["holocron"]
 
 [package.metadata.requires-dev]
-cockpit = []
 dev = [
     { name = "jsonschema", specifier = "==4.25.1" },
     { name = "pytest", specifier = "==8.4.2" },
     { name = "pytest-cov", specifier = "==7.0.0" },
     { name = "ruff", specifier = "==0.14.1" },
-]
-holocron = [
-    { name = "beautifulsoup4", specifier = "==4.14.2" },
-    { name = "chromadb", specifier = "==1.2.0" },
-    { name = "markdownify", specifier = "==1.2.0" },
-    { name = "openai", specifier = "==2.5.0" },
 ]
 
 [[package]]

@@ -109,7 +109,8 @@ def print_setup_instructions():
 
     print("\n4. 🧪 Test the setup:")
     print(
-        "   - Run: uv run python -c 'from endor_cockpit.api_client import EndorClient; print(\"SDK import successful\")'"
+        "   - Run: uv run python -c 'from endor_cockpit.api_client import "
+        'EndorClient; print("SDK import successful")\''
     )
 
 
@@ -149,7 +150,8 @@ def main():
 
         if not required_ok:
             print(
-                "\n❌ Required environment variables are missing or using placeholder values"
+                "\n❌ Required environment variables are missing or using "
+                "placeholder values"
             )
         if not uv_ok:
             print("\n⚠️  UV environment configuration needs attention")
