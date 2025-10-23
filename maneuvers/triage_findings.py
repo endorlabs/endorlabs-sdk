@@ -232,145 +232,163 @@ class FindingTriageManeuver:
         )
 
         try:
-            # Retrieve SAST findings with pagination from all branches
-            all_findings = []
-            page_size = 50  # Reasonable page size
-
-            page_token = None
-            while True:
-                # Get SAST findings for this project - filter for SAST findings
-                list_params = ListParameters(
-                    filter=(
-                        f'spec.project_uuid=="{self.project_uuid}" AND '
-                        f'spec.finding_categories=="FINDING_CATEGORY_SAST"'
-                    ),
-                    sort_field="spec.level",
-                    sort_order="desc",
-                    page_token=page_token,
-                    page_size=page_size,
-                )
-
-                page_findings = finding.list_findings(
-                    self.client, self.namespace, list_params
-                )
-
-                if not page_findings:
-                    break
-
-                all_findings.extend(page_findings)
-                logger.info(f"Retrieved page: {len(page_findings)} findings")
-
-                # Log available methods on first page
-                if len(all_findings) == len(page_findings):  # First page
-                    methods = set()
-                    for finding_obj in page_findings:
-                        if hasattr(finding_obj.spec, "method"):
-                            methods.add(finding_obj.spec.method)
-                    logger.info(f"Available finding methods: {list(methods)}")
-
-                # Log detailed SAST finding information with branch info
-                for finding_obj in page_findings:
-                    # Determine branch from source_code_version.ref
-                    branch = "unknown"
-                    if (
-                        hasattr(finding_obj.spec, "source_code_version")
-                        and finding_obj.spec.source_code_version
-                    ):
-                        if hasattr(finding_obj.spec.source_code_version, "ref"):
-                            branch = finding_obj.spec.source_code_version.ref
-
-                    logger.info(f"SAST Finding: {finding_obj.meta.name}")
-                    logger.info(f"  UUID: {finding_obj.uuid}")
-                    logger.info(f"  Level: {finding_obj.spec.level}")
-                    logger.info(f"  Method: {finding_obj.spec.method}")
-                    logger.info(f"  Branch: {branch}")
-                    if (
-                        hasattr(finding_obj.spec, "finding_categories")
-                        and finding_obj.spec.finding_categories
-                    ):
-                        logger.info(
-                            f"  Categories: {finding_obj.spec.finding_categories}"
-                        )
-                    if (
-                        hasattr(finding_obj.spec, "summary")
-                        and finding_obj.spec.summary
-                    ):
-                        logger.info(f"  Summary: {finding_obj.spec.summary[:100]}...")
-                    if (
-                        hasattr(finding_obj.spec, "finding_tags")
-                        and finding_obj.spec.finding_tags
-                    ):
-                        logger.info(f"  Tags: {finding_obj.spec.finding_tags}")
-                    # Log SAST-specific fields
-                    for attr in [
-                        "file_path",
-                        "line_number",
-                        "target_uuid",
-                        "parent_uuid",
-                    ]:
-                        if hasattr(finding_obj.spec, attr):
-                            value = getattr(finding_obj.spec, attr)
-                            if value is not None:
-                                logger.info(
-                                    f"  {attr.replace('_', ' ').title()}: {value}"
-                                )
-                    logger.info("  ---")
-
-                # If we got fewer findings than page_size, we've reached the end
-                if len(page_findings) < page_size:
-                    break
-
-                # Get next page token from the response (if available)
-                # Note: Extract page_token from response in actual implementation
-                # For now, we'll break after first page to avoid infinite loop
-                break
-
+            all_findings = self._fetch_all_findings()
             self.findings = all_findings
-
-            # Analyze findings by branch
-            branch_analysis = {}
-            for finding_obj in self.findings:
-                branch = "unknown"
-                if (
-                    hasattr(finding_obj.spec, "source_code_version")
-                    and finding_obj.spec.source_code_version
-                ):
-                    if hasattr(finding_obj.spec.source_code_version, "ref"):
-                        branch = finding_obj.spec.source_code_version.ref
-
-                if branch not in branch_analysis:
-                    branch_analysis[branch] = []
-                branch_analysis[branch].append(finding_obj)
-
-            logger.info(f"Retrieved {len(self.findings)} SAST findings total")
-            for branch, findings in branch_analysis.items():
-                logger.info(f"  {branch} branch: {len(findings)} findings")
-
-            self.log_step(
-                "Retrieve SAST Findings",
-                "Get SAST findings for project from all branches",
-                solution=(
-                    f"Retrieved {len(self.findings)} SAST findings from "
-                    f"{len(branch_analysis)} branches"
-                ),
-                verification=(
-                    f"SAST findings sorted by severity level, "
-                    f"branch analysis: {dict(branch_analysis)}"
-                ),
-            )
-
+            branch_analysis = self._analyze_findings_by_branch()
+            self._log_retrieval_results(branch_analysis)
             return True
 
         except Exception as e:
-            error_msg = f"Failed to retrieve SAST findings: {str(e)}"
-            logger.error(error_msg)
-            self.log_step(
-                "Retrieve SAST Findings",
-                "Get SAST findings for project from all branches",
-                problem=error_msg,
-                solution="Check SAST finding filtering syntax",
-            )
+            self._handle_retrieval_error(e)
             return False
+
+    def _fetch_all_findings(self) -> list:
+        """Fetch all SAST findings with pagination."""
+        all_findings = []
+        page_size = 50  # Reasonable page size
+        page_token = None
+
+        while True:
+            page_findings = self._fetch_page_findings(page_token, page_size)
+            if not page_findings:
+                break
+
+            all_findings.extend(page_findings)
+            logger.info(f"Retrieved page: {len(page_findings)} findings")
+
+            self._log_page_details(page_findings, all_findings)
+            self._log_finding_details(page_findings)
+
+            # If we got fewer findings than page_size, we've reached the end
+            if len(page_findings) < page_size:
+                break
+
+            # Get next page token from the response (if available)
+            # Note: Extract page_token from response in actual implementation
+            # For now, we'll break after first page to avoid infinite loop
+            break
+
+        return all_findings
+
+    def _fetch_page_findings(self, page_token: str, page_size: int) -> list:
+        """Fetch a single page of findings."""
+        list_params = ListParameters(
+            filter=(
+                f'spec.project_uuid=="{self.project_uuid}" AND '
+                f'spec.finding_categories=="FINDING_CATEGORY_SAST"'
+            ),
+            sort_field="spec.level",
+            sort_order="desc",
+            page_token=page_token,
+            page_size=page_size,
+        )
+
+        return finding.list_findings(self.client, self.namespace, list_params)
+
+    def _log_page_details(self, page_findings: list, all_findings: list):
+        """Log details about the current page."""
+        # Log available methods on first page
+        if len(all_findings) == len(page_findings):  # First page
+            methods = set()
+            for finding_obj in page_findings:
+                if hasattr(finding_obj.spec, "method"):
+                    methods.add(finding_obj.spec.method)
+            logger.info(f"Available finding methods: {list(methods)}")
+
+    def _log_finding_details(self, page_findings: list):
+        """Log detailed information about findings."""
+        for finding_obj in page_findings:
+            branch = self._get_finding_branch(finding_obj)
+            self._log_single_finding(finding_obj, branch)
+
+    def _get_finding_branch(self, finding_obj) -> str:
+        """Get the branch for a finding."""
+        branch = "unknown"
+        if (
+            hasattr(finding_obj.spec, "source_code_version")
+            and finding_obj.spec.source_code_version
+        ):
+            if hasattr(finding_obj.spec.source_code_version, "ref"):
+                branch = finding_obj.spec.source_code_version.ref
+        return branch
+
+    def _log_single_finding(self, finding_obj, branch: str):
+        """Log details for a single finding."""
+        logger.info(f"SAST Finding: {finding_obj.meta.name}")
+        logger.info(f"  UUID: {finding_obj.uuid}")
+        logger.info(f"  Level: {finding_obj.spec.level}")
+        logger.info(f"  Method: {finding_obj.spec.method}")
+        logger.info(f"  Branch: {branch}")
+
+        self._log_finding_optional_fields(finding_obj)
+        self._log_sast_specific_fields(finding_obj)
+        logger.info("  ---")
+
+    def _log_finding_optional_fields(self, finding_obj):
+        """Log optional fields of a finding."""
+        if (
+            hasattr(finding_obj.spec, "finding_categories")
+            and finding_obj.spec.finding_categories
+        ):
+            logger.info(f"  Categories: {finding_obj.spec.finding_categories}")
+        if (
+            hasattr(finding_obj.spec, "summary")
+            and finding_obj.spec.summary
+        ):
+            logger.info(f"  Summary: {finding_obj.spec.summary[:100]}...")
+        if (
+            hasattr(finding_obj.spec, "finding_tags")
+            and finding_obj.spec.finding_tags
+        ):
+            logger.info(f"  Tags: {finding_obj.spec.finding_tags}")
+
+    def _log_sast_specific_fields(self, finding_obj):
+        """Log SAST-specific fields."""
+        for attr in ["file_path", "line_number", "target_uuid", "parent_uuid"]:
+            if hasattr(finding_obj.spec, attr):
+                value = getattr(finding_obj.spec, attr)
+                if value is not None:
+                    logger.info(f"  {attr.replace('_', ' ').title()}: {value}")
+
+    def _analyze_findings_by_branch(self) -> dict:
+        """Analyze findings by branch."""
+        branch_analysis = {}
+        for finding_obj in self.findings:
+            branch = self._get_finding_branch(finding_obj)
+            if branch not in branch_analysis:
+                branch_analysis[branch] = []
+            branch_analysis[branch].append(finding_obj)
+        return branch_analysis
+
+    def _log_retrieval_results(self, branch_analysis: dict):
+        """Log the results of findings retrieval."""
+        logger.info(f"Retrieved {len(self.findings)} SAST findings total")
+        for branch, findings in branch_analysis.items():
+            logger.info(f"  {branch} branch: {len(findings)} findings")
+
+        self.log_step(
+            "Retrieve SAST Findings",
+            "Get SAST findings for project from all branches",
+            solution=(
+                f"Retrieved {len(self.findings)} SAST findings from "
+                f"{len(branch_analysis)} branches"
+            ),
+            verification=(
+                f"SAST findings sorted by severity level, "
+                f"branch analysis: {dict(branch_analysis)}"
+            ),
+        )
+
+    def _handle_retrieval_error(self, e: Exception):
+        """Handle errors during findings retrieval."""
+        error_msg = f"Failed to retrieve SAST findings: {str(e)}"
+        logger.error(error_msg)
+        self.log_step(
+            "Retrieve SAST Findings",
+            "Get SAST findings for project from all branches",
+            problem=error_msg,
+            solution="Check SAST finding filtering syntax",
+        )
 
     def generate_assessment(self) -> bool:
         """Generate findings assessment document with AI recommendations."""
@@ -490,9 +508,11 @@ Project UUID: {self.project_uuid}
 - **Severity**: {finding_obj.spec.level}
 - **Categories**: {", ".join(categories) if categories else "None"}
 - **Summary**: {finding_obj.spec.summary or "No summary available"}
-- **Affected Component**: {finding_obj.spec.target_dependency_package_name or "N/A"} ({finding_obj.spec.ecosystem or "N/A"})
+- **Affected Component**: {finding_obj.spec.target_dependency_package_name or "N/A"} (
+    {finding_obj.spec.ecosystem or "N/A"})
 - **Remediation**: {finding_obj.spec.remediation or "No remediation guidance"}
-- **Current Tags**: {", ".join(finding_obj.spec.finding_tags) if finding_obj.spec.finding_tags else "None"}
+- **Current Tags**: {", ".join(finding_obj.spec.finding_tags)
+    if finding_obj.spec.finding_tags else "None"}
 
 **Risk Assessment** (AI-generated recommendations):
 - **Likelihood**: {likelihood}
@@ -697,7 +717,8 @@ Project UUID: {self.project_uuid}
 
         try:
             # For dependency vulnerability findings, use Project UUID directly
-            # These findings don't have Repository/RepositoryVersion/PackageVersion UUIDs
+            # These findings don't have Repository/RepositoryVersion/
+            # PackageVersion UUIDs
 
             # Build Rego rule to suppress findings with false-positive tag
             # Handle both dev and main branch RepositoryVersions
@@ -771,7 +792,8 @@ match_finding[result] {{
                     logger.error(f"API Error Details: {error_details}")
                 except Exception:
                     logger.error(
-                        f"API Error Response: {e.response.text if hasattr(e.response, 'text') else 'No response text'}"
+                        f"API Error Response: {e.response.text
+                        if hasattr(e.response, 'text') else 'No response text'}"
                     )
 
             self.log_step(
