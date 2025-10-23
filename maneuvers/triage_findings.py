@@ -331,15 +331,9 @@ class FindingTriageManeuver:
             and finding_obj.spec.finding_categories
         ):
             logger.info(f"  Categories: {finding_obj.spec.finding_categories}")
-        if (
-            hasattr(finding_obj.spec, "summary")
-            and finding_obj.spec.summary
-        ):
+        if hasattr(finding_obj.spec, "summary") and finding_obj.spec.summary:
             logger.info(f"  Summary: {finding_obj.spec.summary[:100]}...")
-        if (
-            hasattr(finding_obj.spec, "finding_tags")
-            and finding_obj.spec.finding_tags
-        ):
+        if hasattr(finding_obj.spec, "finding_tags") and finding_obj.spec.finding_tags:
             logger.info(f"  Tags: {finding_obj.spec.finding_tags}")
 
     def _log_sast_specific_fields(self, finding_obj):
@@ -511,8 +505,11 @@ Project UUID: {self.project_uuid}
 - **Affected Component**: {finding_obj.spec.target_dependency_package_name or "N/A"} (
     {finding_obj.spec.ecosystem or "N/A"})
 - **Remediation**: {finding_obj.spec.remediation or "No remediation guidance"}
-- **Current Tags**: {", ".join(finding_obj.spec.finding_tags)
-    if finding_obj.spec.finding_tags else "None"}
+- **Current Tags**: {
+            ", ".join(finding_obj.spec.finding_tags)
+            if finding_obj.spec.finding_tags
+            else "None"
+        }
 
 **Risk Assessment** (AI-generated recommendations):
 - **Likelihood**: {likelihood}
@@ -556,9 +553,7 @@ Project UUID: {self.project_uuid}
                     tagged_count += 1
                     branch_stats[branch] += 1
 
-            logger.info(
-                f"Tagged {tagged_count} SAST findings as false-positive"
-            )
+            logger.info(f"Tagged {tagged_count} SAST findings as false-positive")
             for branch, count in branch_stats.items():
                 logger.info(f"  {branch} branch: {count} findings tagged")
 
@@ -670,19 +665,14 @@ Project UUID: {self.project_uuid}
             from endor_cockpit.resources import repository
 
             # List repositories in the namespace
-            repositories = repository.list_repositories(
-                self.client, self.namespace
-            )
-            logger.info(
-                f"Found {len(repositories)} repositories in namespace"
-            )
+            repositories = repository.list_repositories(self.client, self.namespace)
+            logger.info(f"Found {len(repositories)} repositories in namespace")
 
             # Find repository by name matching our project
             # Since repositories don't have project_uuid, match by name
             # Use the project name from the project we found earlier
             project_name = (
-                "https://github.com/Endor-Solutions-Architecture/"
-                "endor-cockpit.git"
+                "https://github.com/Endor-Solutions-Architecture/endor-cockpit.git"
             )
             for repo in repositories:
                 if repo.meta.name == project_name:
@@ -792,16 +782,17 @@ match_finding[result] {{
                     logger.error(f"API Error Details: {error_details}")
                 except Exception:
                     logger.error(
-                        f"API Error Response: {e.response.text
-                        if hasattr(e.response, 'text') else 'No response text'}"
+                        f"API Error Response: {
+                            e.response.text
+                            if hasattr(e.response, 'text')
+                            else 'No response text'
+                        }"
                     )
 
             self.log_step(
                 "Create Exception Policy",
                 "Create policy to suppress tagged findings",
-                problem=(
-                    f"{error_msg} - Check Rego rule syntax and policy parameters"
-                ),
+                problem=(f"{error_msg} - Check Rego rule syntax and policy parameters"),
                 solution=(
                     "Verify OPA/Rego rule syntax and ensure proper input structure"
                 ),

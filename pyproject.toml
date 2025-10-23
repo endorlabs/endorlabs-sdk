@@ -118,7 +118,7 @@ default_collection = "endor_cockpit_docs"
 embedding_model = "text-embedding-3-small"
 
     [tool.holocron.paths]
-    include_dirs = ["docs/", "src/", "tests/", ".workspace/downloads/"]
+    include_dirs = ["docs/", "src/", "tests/", "external_docs/"]
     exclude_dirs = ["__pycache__", ".git", "node_modules", "venv", ".venv", "env", ".env", "holocron_data", ".workspace/holocron_data", "tmp"]
 
     # Collection definitions - each collection is self-contained
@@ -131,16 +131,16 @@ embedding_model = "text-embedding-3-small"
         preserve_complete_sections = true
 
         # Simple array-based criteria
-        path_patterns = [".workspace/downloads/user-docs/.*"]
+        path_patterns = ["external_docs/user-docs/.*"]
         file_extensions = [".md"]
-        not_path_patterns = [".workspace/downloads/user-docs/.*\\.rst$"]
+        not_path_patterns = ["external_docs/user-docs/.*\\.rst$"]
         
         # Collection-specific external docs config
         openapi_url_template = "{ENDOR_API}/download/openapiv2.swagger.json"
-        openapi_output = ".workspace/downloads/openapi-swagger.json"
+        openapi_output = "external_docs/openapi-swagger.json"
         sitemap_url = "https://docs.endorlabs.com/sitemap.xml"
-        sitemap_output = ".workspace/downloads/sitemap.xml"
-        user_docs_output = ".workspace/downloads/user-docs/"
+        sitemap_output = "external_docs/sitemap.xml"
+        user_docs_output = "external_docs/user-docs/"
         max_age_days = 7
 
         [tool.holocron.collection.markdown]
@@ -150,7 +150,7 @@ embedding_model = "text-embedding-3-small"
         delimiters = ["##"]
         preserve_structure = true
         file_extensions = [".md"]
-        not_path_patterns = [".workspace/downloads/user-docs/.*"]
+        not_path_patterns = ["external_docs/user-docs/.*"]
 
         [tool.holocron.collection.code]
         name = "Source Code Files"

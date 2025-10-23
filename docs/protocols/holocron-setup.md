@@ -61,7 +61,7 @@ The system processes documentation from:
 - `docs/` - All documentation files
 - `src/` - Source code with docstrings
 - `tests/` - Test files
-- `.workspace/downloads/openapi-swagger.json` - API specification
+- `external_docs/openapi-swagger.json` - API specification
 
 ## 🔧 **Command Reference**
 
@@ -226,7 +226,7 @@ print(f"Total chunks: {info['chunk_count']}")
    - Endpoint documentation
    - Schema definitions
 
-4. **External Documentation** (`.workspace/downloads/`)
+4. **External Documentation** (`external_docs/`)
    - OpenAPI specification from Endor API
    - User documentation from docs.endorlabs.com
    - Automatically downloaded during init
@@ -237,18 +237,18 @@ During `holocron init`, the following external resources are automatically downl
 
 1. **OpenAPI Specification**
    - Source: `{ENDOR_API}/download/openapiv2.swagger.json`
-   - Location: `.workspace/downloads/openapi-swagger.json`
+   - Location: `external_docs/openapi-swagger.json`
    - Purpose: Complete API specification for endpoint discovery
    - Timestamp tracked in manifest
 
 2. **Sitemap.xml**
    - Source: `https://docs.endorlabs.com/sitemap.xml`
-   - Location: `.workspace/downloads/sitemap.xml`
+   - Location: `external_docs/sitemap.xml`
    - Purpose: Index of all user documentation pages
 
 3. **User Documentation**
    - Source: All pages from sitemap.xml
-   - Location: `.workspace/downloads/user-docs/*.md`
+   - Location: `external_docs/user-docs/*.md`
    - Purpose: Comprehensive external documentation for context
    - Converted from HTML to markdown for optimal indexing
 

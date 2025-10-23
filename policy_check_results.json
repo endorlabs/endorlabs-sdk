@@ -1,0 +1,1013 @@
+{
+  "policies": [
+    {
+      "uuid": "68dae96a2027d5f3151efb4e",
+      "name": "Linear commit history should be required",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Requiring linear commit history ensures a clear record of activity for code changes making your code easier to troubleshoot and audit. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a2027d5f3151efb4f",
+      "name": "Restrict runner groups to specific repositories",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "It is recommended to limit the runner groups to specific repositories. Malicious users within an organization can create repositories with workflows designed to exploit vulnerabilities. If such repositories are allowed access to the organization's hosted runners, they could trigger automated tasks and disrupt your network."
+    },
+    {
+      "uuid": "68dae96a2027d5f3151efb52",
+      "name": "Non OIDC cloud authentication detected in GitHub workflow file",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise a finding if the GitHub Action workflow authenticates to the cloud provider without using OIDC."
+    },
+    {
+      "uuid": "68dae96a2027d5f3151efb55",
+      "name": "Organizations should have fewer than three owners",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Administrators in an organization have the highest level of permissions and privileges to perform vital functions. To reduce the attack surface, minimize insider threats, and establish accountability, it is recommended to limit the number of administrators in an organization to three. Raise findings for organization that have more than three administrators configured."
+    },
+    {
+      "uuid": "68dae96a2027d5f3151efb6e",
+      "name": "End of Life Container Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Dependencies marked end of life are no longer maintained or supported. They do not receive security patches, bug fixes, or updates, increasing vulnerability to security threats. Resolution of issues in end of life dependencies must be handled by your organization and increases the cost of software reuse. Raise findings for end of life container dependencies."
+    },
+    {
+      "uuid": "68dae96a229111bf380af214",
+      "name": "Low Endor Activity Scores",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Package with low Endor activity scores are less likely to be actively maintained, which increases their response time to software bugs and security risks. Raise findings for packages with low Endor activity scores."
+    },
+    {
+      "uuid": "68dae96a229111bf380af215",
+      "name": "Repository webhooks should use HTTPS",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for active repository webhooks that do not use HTTPS."
+    },
+    {
+      "uuid": "68dae96a229111bf380af218",
+      "name": "Two informed reviews should be required for code changes",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Requiring multiple approvals to code changes increases reduces the risk of introducing software bugs or security risks and promotes better decision-making and accountability. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a229111bf380af219",
+      "name": "Organization webhooks should use SSL verification",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for active organization webhooks that do not have SSL verification enabled."
+    },
+    {
+      "uuid": "68dae96a4832142ec75a72ea",
+      "name": "Script injection detected in github workflow file",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise a finding if the workflow file contains a bash injection script with an expression that could include user input."
+    },
+    {
+      "uuid": "68dae96a4832142ec75a72eb",
+      "name": "Contributors should not approve their own changes",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Ensure contributors cannot approve their own code changes. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a4832142ec75a72ec",
+      "name": "Comments should be resolved before merging",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Merging pull requests with unresolved comments can compromise the quality and effectiveness of the code review process. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a4832142ec75a72f0",
+      "name": "Unmaintained Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Unmaintained packages will not address vulnerabilities or bugs. Resolution of issues in unmaintained dependencies must be handled by your organization and increases the cost of software reuse. Raise findings for unmaintained packages."
+    },
+    {
+      "uuid": "68dae96a4832142ec75a7314",
+      "name": "Multi-Factor Authentication (MFA) should be required for external contributors",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Require collaborators from outside the organization to use Multi-Factor Authentication (MFA) in addition to a standard user name and password when authenticating to the source code management platform. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a69133ab8df4f77b2",
+      "name": "Recently Released Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Recent releases of dependencies are more likely to introduce supply chain risk and breaking changes. Raise findings for dependencies with releases that are newer than the given threshold, or \"cooldown\" period (default: 48 hours)."
+    },
+    {
+      "uuid": "68dae96a69133ab8df4f77b3",
+      "name": "Branches should be up-to-date before merging",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updating branches before merging code to protected branches prevents conflicts and errors that compromise software stability and security. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a69133ab8df4f77b5",
+      "name": "Require a SECURITY.md file",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A SECURITY.md file explains how to report security vulnerabilities for a project, making it more likely that people will do so in a responsible manner. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a69133ab8df4f77b7",
+      "name": "License Risks",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Software with missing, unknown, or problematic licenses should be assessed by legal experts to evaluate the legal implications of using it. Raise findings for packages with missing, unknown, or problematic licenses."
+    },
+    {
+      "uuid": "68dae96a69133ab8df4f77b8",
+      "name": "Authorization to push or merge to protected branches should be limited",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Only trusted users should be allowed to push or merge new code to protected branches. This ensures thorough review and approval. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96a69133ab8df4f77b9",
+      "name": "Repository webhooks should use SSL verification",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for active repository webhooks that do not have SSL verification enabled."
+    },
+    {
+      "uuid": "68dae96a8a8332e369641b85",
+      "name": "Unused Direct Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Unreachable dependencies are most likely not used. Removing these dependencies reduces security costs, improves build times, decreases package size, and improves application performance. Raise findings for unused direct dependencies."
+    },
+    {
+      "uuid": "68dae96a8a8332e369641b87",
+      "name": "Untrusted code checkout detected in workflow file",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "The GitHub workflow seems to be checking out untrusted code from a fork and using a command that is known to permit code execution."
+    },
+    {
+      "uuid": "68dae96a8a8332e369641b88",
+      "name": "Malware",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Malicious software in dependencies pose significant security risks to your applications and infrastructure. Raise findings for packages containing known malware or suspicious code patterns that may indicate malicious intent."
+    },
+    {
+      "uuid": "68dae96a8a8332e369641b8a",
+      "name": "Low Endor Quality Scores",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Quality scores measure code quality and adherence to best practices. Low quality packages are more susceptible to security and operational issues. Raise findings for packages with low Endor quality scores."
+    },
+    {
+      "uuid": "68dae96a8a8332e369641b99",
+      "name": "Restrict the use of runner groups for public repositories",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "It is recommended to allow only workflows from private or internal repositories to run on GitHub hosted runners. This prevents security risks posed by malicious actors who could exploit workflows from public repositories to gain unauthorized access to your private network."
+    },
+    {
+      "uuid": "68dae96a8c540daa79b6ebaf",
+      "name": "Restrict the creation of repositories to trusted members",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Limiting repository creation to trusted users and teams is advisable for maintaining organizational structure, reducing tracking workload, preventing impersonation, and avoiding overloading the version-control system.\nRaise findings where creation of repositories is not limited to trusted members."
+    },
+    {
+      "uuid": "68dae96a8c540daa79b6ebb0",
+      "name": "Missing Source Code",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "When you cannot audit the source code associated with a software component, there is limited visibility into the operational and security risk of that software. Raise findings for packages with missing source code."
+    },
+    {
+      "uuid": "68dae96a8c540daa79b6ebb2",
+      "name": "Repository webhooks must be configured with a secret",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for active repository webhooks that do not have secret configured."
+    },
+    {
+      "uuid": "68dae96a8c540daa79b6ebb3",
+      "name": "Archive inactive repositories",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Repositories that are not actively maintained are vulnerable to security breaches. Archiving such repositories helps maintain a cleaner and more organized GitHub environment. Archiving ensures repositories become read-only, thus preventing unauthorized modifications. Raise findings for repositories that have been inactive beyond the duration specified by the user, defaulting to 6 months if not specified."
+    },
+    {
+      "uuid": "68dae96a8c540daa79b6ebc7",
+      "name": "Protected branch deletion should be blocked",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Avoid the loss of valuable code and source code history within the software development process by ensuring protected branches cannot be deleted by developers. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96aba6beae35576c8c8",
+      "name": "Organizations should be verified",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Ensure an organization's identity is confirmed with a 'Verified' badge in Github. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96aba6beae35576c8c9",
+      "name": "Valid secrets",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Detect valid secrets leaked into source code."
+    },
+    {
+      "uuid": "68dae96aba6beae35576c8cb",
+      "name": "Restrict GitHub Actions to selected repositories",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Selectively enabling GitHub Actions ensures better resource management, and mitigates security risks. Raise findings for organizations where GitHub Actions are enabled for all repositories."
+    },
+    {
+      "uuid": "68dae96aba6beae35576c8cd",
+      "name": "Status checks should pass before merging new code",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Merging untested code changes can compromise software security and undermine quality control measures. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96aba6beae35576c8ce",
+      "name": "Stale approvals should be dismissed",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Ensure that when a proposed code change is updated, previous approvals are declined and new approvals are required. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96ac0f65038c5bdf251",
+      "name": "Vulnerabilities",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Vulnerabilities are issues in software components that may introduce flaws that threaten the confidentiality, integrity, or availability of your software. Raise findings for packages containing known vulnerabilities."
+    },
+    {
+      "uuid": "68dae96ac0f65038c5bdf252",
+      "name": "Secrets object detected in GitHub workflow file",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise a finding if all the secrets of a repository and organization are exposed in a job."
+    },
+    {
+      "uuid": "68dae96ac0f65038c5bdf253",
+      "name": "Code owner review is required when a change affects owned code",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Code owners are responsible for reviewing and approving changes to sensitive parts of a codebase that they own. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96ac0f65038c5bdf256",
+      "name": "Potential Typosquats",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Typosquatting is when a package masquerades as a popular package by choosing an intentionally similar name. They are often malicious and create security and operational issues. Raise findings for packages that contain potential typosquats."
+    },
+    {
+      "uuid": "68dae96ac0f65038c5bdf257",
+      "name": "Organization webhooks must be configured with a secret",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for active organization webhooks that are not configured with a secret."
+    },
+    {
+      "uuid": "68dae96ac0f65038c5bdf258",
+      "name": "Ensure branch protection is enforced for the default branch",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Enforcing branch protection on the default branch of your repository is a good practice to maintain code quality and prevent accidental or unauthorized changes."
+    },
+    {
+      "uuid": "68dae96ad3bbe7bb22983d98",
+      "name": "Outdated Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Dependencies far behind the current release version are often missing important bug fixes and security patches. By keeping software components reasonably up to date you reduce the risk of introducing application breaking changes when making version updates to address known bugs or security risks. Raise findings for packages that are out of date."
+    },
+    {
+      "uuid": "68dae96ad3bbe7bb22983d99",
+      "name": "Flag Phantom Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for phantom dependencies found in a project."
+    },
+    {
+      "uuid": "68dae96ad3bbe7bb22983d9b",
+      "name": "Default workflow token permission should be read only",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Set the default GitHub Action workflow token permission to read-only. It is highly recommended to adhere to the principle of least privilege for generating workflow tokens and enforce the workflow authors to explicitly specify the permissions they require."
+    },
+    {
+      "uuid": "68dae96ad3bbe7bb22983d9d",
+      "name": "Restrict general action permissions to organization members",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Setting general action permissions for the organization to \"all\" can pose security risks by allowing unrestricted access to repositories to use GitHub actions.This ensures that actions within the organization are confined to local resources, mitigating the risk of unauthorized access or unintended actions on external resources."
+    },
+    {
+      "uuid": "68dae96ad3bbe7bb22983d9e",
+      "name": "Organization webhooks should use HTTPS",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for active organization webhooks that do not use HTTPS."
+    },
+    {
+      "uuid": "68dae96aef42e04d3170b746",
+      "name": "Default member permissions should be restricted",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "By default, members have write permissions giving them permissive access to newly created repositories. Adhering to the concept of least privilege, limit the base permissions to avoid unintentional updates or deletions. Raise findings for an organization where the base permissions for members is set to write or admin."
+    },
+    {
+      "uuid": "68dae96aef42e04d3170b747",
+      "name": "Commits should be signed for new changes",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Ensure every commit in a pull request is signed and verified before merging. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96aef42e04d3170b748",
+      "name": "Secrets without validation rules",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Report secrets leaked in source code without support for secret validation."
+    },
+    {
+      "uuid": "68dae96aef42e04d3170b749",
+      "name": "Multi-Factor Authentication (MFA) should be required for organization members",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Require members of the organization to use Multi-Factor Authentication (MFA) in addition to a standard user name and password when authenticating to the source code management platform. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96aef42e04d3170b74c",
+      "name": "Low Endor Popularity Scores",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Popularity is a social proxy for quality. Popular packages are more likely to remain maintained and thoroughly tested. Raise findings for packages with low Endor popularity scores."
+    },
+    {
+      "uuid": "68dae96aef42e04d3170b74d",
+      "name": "Code owner should be configured for sensitive code",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Code owners are responsible for reviewing and approving changes to sensitive parts of a codebase that they own. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96af05404157355e871",
+      "name": "At least two administrators should be configured for a repository",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Having more than one administrator per repository reduces the risk of being unable to make important changes when the sole administrator is unavailable. Raise findings for repositories that have fewer than two administrators configured."
+    },
+    {
+      "uuid": "68dae96af05404157355e872",
+      "name": "Security Review",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for significant changes to the project security posture. Only applicable to Pull Request (PR) scans."
+    },
+    {
+      "uuid": "68dae96af05404157355e87a",
+      "name": "Branch protection rules should be enforced on administrators",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Administrators should be subject to branch protection rules to prevent unauthorized changes and ensure consistent review and approval. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96af05404157355e890",
+      "name": "Unpinned Direct Dependencies",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Dependencies with variable version specifications are more likely to introduce supply chain risk and breaking changes. Raise findings for unpinned direct dependencies."
+    },
+    {
+      "uuid": "68dae96af07ce67ccea338e7",
+      "name": "Force pushing code to protected branches should be restricted",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Force pushing compromises the integrity of the code base by allowing users to circumvent the review process, and should be disabled. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68dae96af07ce67ccea338e8",
+      "name": "Workflows should not be allowed to create and approve pull requests",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Do not configure the GitHub Action workflows to create and approve pull requests. Code review is a crucial part of the software development process and must be performed by human reviewers."
+    },
+    {
+      "uuid": "68dae96af07ce67ccea338ea",
+      "name": "Private repositories should not permit forking",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Restricting forks allows organizations to keep control over their codebase, preventing unauthorized use and distribution. Raise findings for private repositories where forking is enabled."
+    },
+    {
+      "uuid": "68dae96af07ce67ccea338eb",
+      "name": "Invalid secrets",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Detect invalid secrets."
+    },
+    {
+      "uuid": "68dae96af07ce67ccea338ef",
+      "name": "Report SAST results matching given criteria",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Raise findings for SAST results based on a given set of criteria, such as the severity, confidence level, and/or tags. The severity of the finding is set based on the severity of the rule that created the result. If the SAST rule does not have a severity then the policy finding severity is used."
+    },
+    {
+      "uuid": "68dae96bba6beae35576c8fd",
+      "name": "Dismissing code change reviews should be restricted",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Trusted users help ensure consistent review and evaluation of code changes, preventing mistakes and security issues. Raise findings for repositories that do not enforce this."
+    },
+    {
+      "uuid": "68e5766b1940ed2dfb7ca8e2",
+      "name": "Malware Notification - Personal Email and Jira",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Match malware by status, relationship to root package, or ecosystem."
+    },
+    {
+      "uuid": "68f0fcb1b9e7809560d96878",
+      "name": "Vulnerabilities",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Match vulnerabilities by severity, reachability, and whether a fix is available or not."
+    },
+    {
+      "uuid": "68f0fd2dcb02b34b1c53a290",
+      "name": "SAST",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Match SAST findings."
+    },
+    {
+      "uuid": "68f0fd465baed90e4be0c6f3",
+      "name": "Containers",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Match container vulnerabilities by severity, relationship, and whether a fix is available or not."
+    },
+    {
+      "uuid": "68f10bc0567621011a88fc84",
+      "name": "Secrets",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Match findings for secrets."
+    },
+    {
+      "uuid": "68f48ef798dd12971ae9a26c",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f48ef846a336aef4826ef4",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f51a63c2d62843021b0c2a",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f51a64f0365deaa62d76c1",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f53136c2d62843021cc1a6",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f5313746a336aef490ba9f",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f59b1a0d6c66f017ff2f4f",
+      "name": "Test Dummy ML Policy - Mutability Test",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for mutability testing"
+    },
+    {
+      "uuid": "68f5b0ee6a8eda4948e7b432",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f5b0eef0365deaa6418459",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f5b22fefb1729896d1a283",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f5b230ca56e367d4cb4a1e",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f5b5f4f0365deaa641da20",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f5b5f5c2d62843022f6e4f",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f5da4fca56e367d4ce649f",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f5da5098dd12971a0d70b4",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f5dbe96aa2bb5d4cbce009",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f5dbeaefb1729896d4c890",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f637b4bf0e6b98bed56d10",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f637b5ca56e367d4d28c03",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f6398d98dd12971a11adbe",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f6398dca56e367d4d2a265",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f63dbf46a336aef4aaa2ca",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f63dc0016cc4d2b3e72e3b",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f63ed7bf0e6b98bed5b8d9",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f63ed86a8eda4948ef54af",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f65b9b6aa2bb5d4cc47c19",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f65b9c46a336aef4ade4bd",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f65c9f6a8eda4948f2a874",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f65ca0f0365deaa64c78a5",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f6748defb1729896defbfe",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f6748e98dd12971a17aeb9",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    },
+    {
+      "uuid": "68f6825a6aa2bb5d4cc89a49",
+      "name": "Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "A test ML_FINDING policy created for CRUD operations testing"
+    },
+    {
+      "uuid": "68f6825b5c881b624d0c2735",
+      "name": "Updated Test Dummy ML Policy",
+      "type": "Unknown",
+      "enforcement_mode": "Unknown",
+      "is_blocking": false,
+      "is_warning": false,
+      "is_admission": false,
+      "description": "Updated description for the test ML_FINDING policy"
+    }
+  ],
+  "summary": {
+    "total": 100,
+    "blocking": 0,
+    "warning": 0,
+    "non_blocking": 100,
+    "admission_total": 4,
+    "admission_blocking": 0,
+    "admission_warning": 0
+  }
+}
