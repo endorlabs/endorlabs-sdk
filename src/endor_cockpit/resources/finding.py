@@ -217,8 +217,8 @@ class FindingSpec(BaseSpec):
     dependency_file_paths: Optional[List[str]] = None
     approximation: Optional[bool] = None
     proposed_version: Optional[str] = None
-    exceptions: Optional[List[str]] = None
-    actions: Optional[List[str]] = None
+    exceptions: Optional[Union[List[str], dict]] = None
+    actions: Optional[Union[List[str], dict]] = None
     fixing_upgrades: Optional[List[str]] = None
     fixing_patch: Optional[List[str]] = None
     code_owners: Optional[List[str]] = None

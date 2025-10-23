@@ -159,7 +159,7 @@ class ProcessingStatus(BaseModel):
 
     disable_automated_scan: bool
     scan_state: str
-    scan_time: str
+    scan_time: Optional[str] = None
 
 
 class TenantMeta(BaseModel):
