@@ -170,12 +170,12 @@ jobs:
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
-  # Security scan job - runs after lint and tests pass
+  # Security scan job - runs after lint and unit tests pass
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, lint, test-unit, test-integration]
-    if: always() && (needs.lint.result == 'success' && needs.test-unit.result == 'success' && needs.test-integration.result == 'success')
+    needs: [resolve-dependencies, lint, test-unit]
+    if: always() && (needs.lint.result == 'success' && needs.test-unit.result == 'success')
     steps:
       - name: Checkout code
         uses: actions/checkout@v5.0.0

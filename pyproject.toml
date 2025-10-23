@@ -18,14 +18,7 @@ dependencies = [
     "pydantic==2.12.3",
 ]
 
-[project.optional-dependencies]
-holocron = [
-    "chromadb==1.2.0",
-    "openai==2.5.0",
-    "beautifulsoup4==4.14.2",
-    "markdownify==1.2.0",
-]
-
+# Removed [project.optional-dependencies] as it's now in dependency-groups
 
 [build-system]
 requires = ["hatchling>=1.0"]
@@ -102,6 +95,13 @@ dev = [
     "pytest==8.4.2",
     "pytest-cov==7.0.0",
     "ruff==0.14.1",
+]
+# Moved holocron dependencies here from [project.optional-dependencies]
+holocron = [
+    "chromadb==1.2.0",
+    "openai==2.5.0",
+    "beautifulsoup4==4.14.2",
+    "markdownify==1.2.0",
 ]
 
 # Endor Cockpit configuration
