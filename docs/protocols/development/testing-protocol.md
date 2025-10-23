@@ -6,6 +6,24 @@
 
 This protocol defines testing requirements and patterns for the Endor Cockpit SDK, ensuring comprehensive coverage and quality assurance.
 
+## 🎯 **Test Structure Standardization**
+
+### **Improved Approach (Recommended)**
+```
+tests/
+├── test_namespace.py    # All namespace operations
+├── test_project.py      # All project operations  
+├── test_finding.py      # All finding operations
+└── test_tool_*.py       # Tool-specific tests
+```
+
+### **Key Benefits**
+- **Intuitive Organization**: Follows `endorctl` naming pattern
+- **Consolidated Operations**: All resource operations in single files
+- **Reduced Redundancy**: Eliminates duplicate test files
+- **Maintainable Structure**: Easy to find and update tests
+- **Consistent Naming**: `test_<resource>.py` with singular resource names
+
 ## Testing Requirements
 
 ### Mandatory Test Coverage
@@ -228,6 +246,45 @@ def test_validation_errors(self):
     # Test invalid UUID format
     with pytest.raises(ValidationError):
         resource.get_resource(self.client, self.namespace, "invalid-uuid")
+```
+
+## 🚨 **PATCH Endpoint Testing Patterns**
+
+### **Common PATCH Debugging Issues**
+
+#### **1. 501 Method Not Allowed Error**
+```bash
+# WRONG: UUID in URL path
+PATCH /v1/namespaces/{namespace}/projects/{uuid}
+
+# CORRECT: UUID in request body
+PATCH /v1/namespaces/{namespace}/projects
+# Request body: {"object": {"uuid": "...", ...}}
+```
+
+#### **2. 400 Bad Request - Missing Required Fields**
+```bash
+# Problem: API requires full object structure
+# Solution: Use update_mask for partial updates
+{
+  "object": {"uuid": "...", "meta": {"tags": ["new-tag"]}},
+  "request": {"update_mask": "meta.tags"}
+}
+```
+
+#### **3. Tags Not Persisting Despite 200 OK**
+```python
+# Problem: Pydantic model missing tags field
+class ProjectMeta(BaseModel):
+    name: str
+    description: str
+    # Missing: tags field!
+
+# Solution: Add missing field
+class ProjectMeta(BaseModel):
+    name: str
+    description: str
+    tags: Optional[List[str]] = None  # Added this!
 ```
 
 ## Test Fixtures and Setup

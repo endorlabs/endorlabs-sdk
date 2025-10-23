@@ -8,9 +8,11 @@ from the vector database using natural language queries.
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import chromadb  # pyright: ignore[reportMissingImports]
+
+from .config import HolocronConfig, load_config
 
 
 class HolocronQueryError(Exception):
@@ -22,15 +24,32 @@ class HolocronQueryError(Exception):
 class HolocronQuery:
     """Main class for querying the Endor Cockpit vector database."""
 
-    def __init__(self, vector_db_path: str = ".workspace/holocron_data/vector_db"):
+    def __init__(
+        self,
+        config: Optional[HolocronConfig] = None,
+        vector_db_path: Optional[str] = None,
+    ):
         """
         Initialize the Holocron query interface.
 
         Args:
-            vector_db_path: Path to the ChromaDB database directory
+            config: HolocronConfig instance (loads from pyproject.toml if None)
+            vector_db_path: Override database path (deprecated, use config)
         """
-        self.vector_db_path = vector_db_path
-        self.collection_name = "endor_cockpit_docs"
+        # Load configuration
+        if config is None:
+            try:
+                self.config = load_config()
+            except Exception:
+                from .config import get_default_config
+
+                self.config = get_default_config()
+        else:
+            self.config = config
+
+        # Support legacy parameter for backward compatibility
+        self.vector_db_path = vector_db_path or self.config.db_path
+        self.collection_name = self.config.default_collection
         self.client = None
         self.collection = None
         self._initialize_client()
@@ -58,7 +77,11 @@ class HolocronQuery:
             ) from e
 
     def query(
-        self, query_text: str, n_results: int = 5, include_metadata: bool = True
+        self,
+        query_text: str,
+        n_results: int = 10,
+        include_metadata: bool = True,
+        collection_filter: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """
         Query the vector database for relevant context.
@@ -80,10 +103,19 @@ class HolocronQuery:
             if include_metadata:
                 include.append("metadatas")
 
+            # Prepare query parameters
+            query_params = {
+                "query_texts": [query_text],
+                "n_results": n_results,
+                "include": include,
+            }
+
+            # Add collection filter if provided
+            if collection_filter:
+                query_params["where"] = collection_filter
+
             # Perform the query
-            results = self.collection.query(  # pyright: ignore[reportOptionalMemberAccess]
-                query_texts=[query_text], n_results=n_results, include=include
-            )
+            results = self.collection.query(**query_params)  # pyright: ignore[reportOptionalMemberAccess]
 
             # Format results
             formatted_results = {"query": query_text, "results": []}
@@ -165,7 +197,10 @@ def get_query_instance() -> HolocronQuery:
 
 
 def query_holocron(
-    query_text: str, n_results: int = 5, include_metadata: bool = True
+    query_text: str,
+    n_results: int = 10,
+    include_metadata: bool = True,
+    collection_filter: Optional[Dict] = None,
 ) -> Dict[str, Any]:
     """
     Query the Endor Cockpit vector database for relevant context.
@@ -193,7 +228,9 @@ def query_holocron(
         HolocronQueryError: If the query fails or vector database is not available
     """
     query_instance = get_query_instance()
-    return query_instance.query(query_text, n_results, include_metadata)
+    return query_instance.query(
+        query_text, n_results, include_metadata, collection_filter
+    )
 
 
 def get_holocron_info() -> Dict[str, Any]:

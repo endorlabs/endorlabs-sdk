@@ -170,15 +170,15 @@ class EnvironmentValidator:
 
         if not holocron_data_path.exists():
             warning = (
-                "Holocron data directory not found\n   Fix: Run 'python -m holocron "
-                "init'\n   "
+                "Holocron data directory not found\n   Fix: Run 'uv run python -m "
+                "holocron init'\n   "
                 "Docs: docs/protocols/holocron-setup.md"
             )
             self.warnings.append(warning)
             self.results["warnings"].append(
                 {
                     "message": "Holocron data directory not found",
-                    "fix": "Run 'python -m holocron init'",
+                    "fix": "Run 'uv run python -m holocron init'",
                     "docs": "docs/protocols/holocron-setup.md",
                 }
             )
@@ -186,15 +186,15 @@ class EnvironmentValidator:
 
         if not vector_db_path.exists():
             warning = (
-                "Vector database not initialized\n   Fix: Run 'python -m holocron "
-                "init'\n   "
+                "Vector database not initialized\n   Fix: Run 'uv run python -m "
+                "holocron init'\n   "
                 "Docs: docs/protocols/holocron-setup.md"
             )
             self.warnings.append(warning)
             self.results["warnings"].append(
                 {
                     "message": "Vector database not initialized",
-                    "fix": "Run 'python -m holocron init'",
+                    "fix": "Run 'uv run python -m holocron init'",
                     "docs": "docs/protocols/holocron-setup.md",
                 }
             )
@@ -203,15 +203,15 @@ class EnvironmentValidator:
 
         if not manifest_path.exists():
             warning = (
-                "Vector database manifest not found\n   Fix: Run 'python -m holocron "
-                "sync'\n   "
+                "Vector database manifest not found\n   Fix: Run 'uv run python -m "
+                "holocron sync'\n   "
                 "Docs: docs/protocols/holocron-setup.md"
             )
             self.warnings.append(warning)
             self.results["warnings"].append(
                 {
                     "message": "Vector database manifest not found",
-                    "fix": "Run 'python -m holocron sync'",
+                    "fix": "Run 'uv run python -m holocron sync'",
                     "docs": "docs/protocols/holocron-setup.md",
                 }
             )

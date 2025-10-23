@@ -31,7 +31,8 @@ def init_command(args):
                 if age_days > 7:
                     print(f"WARNING: OpenAPI spec is {age_days} days old")
                     print(
-                        "   Consider refreshing with: python -m holocron init --force"
+                        "   Consider refreshing with: uv run python -m holocron "
+                        "init --force"
                     )
 
             # Check user docs freshness
@@ -42,7 +43,8 @@ def init_command(args):
                 if age_days > 7:
                     print(f"WARNING: User docs are {age_days} days old")
                     print(
-                        "   Consider refreshing with: python -m holocron init --force"
+                        "   Consider refreshing with: uv run python -m holocron "
+                        "init --force"
                     )
 
         except Exception:

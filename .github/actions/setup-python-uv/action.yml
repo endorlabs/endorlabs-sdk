@@ -44,14 +44,10 @@ runs:
       with:
         version: "0.9.3"
 
-    - name: Install dependencies (dev + holocron)
+    - name: Install dependencies (dev only)
       if: inputs.install-dependencies == 'true'
       shell: bash
       run: |
-        # Only sync if dependencies are not already available
-        if [ ! -d ".venv" ]; then
-          echo "Installing dependencies..."
-          uv sync --dev --group holocron
-        else
-          echo "Dependencies already available, skipping sync"
-        fi
+        # Always sync to ensure dependencies are up to date
+        echo "Installing dependencies..."
+        uv sync --dev
