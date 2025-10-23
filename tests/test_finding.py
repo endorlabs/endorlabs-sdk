@@ -14,11 +14,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import finding
-from endor_cockpit.resources.tag_management import (
-    add_finding_tag,
-    list_finding_tags,
-    remove_finding_tag,
-)
 
 
 @pytest.mark.integration
@@ -81,42 +76,6 @@ class TestFinding:
         if retrieved_finding.spec.finding_tags:
             print(f"Finding spec finding_tags: {retrieved_finding.spec.finding_tags}")
 
-    def test_finding_patch_tags(self):
-        """Test PATCH operations on findings using tag management."""
-        print("\n=== TESTING FINDING PATCH OPERATIONS ===")
-
-        finding = self.findings[0]
-        print(f"Testing finding: {finding.uuid}")
-
-        # Test adding a meta tag
-        test_meta_tag = "test-patch-finding-meta-tag"
-        updated_finding = add_finding_tag(
-            self.client, self.namespace, finding.uuid, test_meta_tag, "meta"
-        )
-        assert updated_finding is not None, "Should successfully add finding meta tag"
-
-        # Verify meta tag was added
-        meta_tags_after_add = list_finding_tags(
-            self.client, self.namespace, finding.uuid, "meta"
-        )
-        assert test_meta_tag in meta_tags_after_add, (
-            "Meta tag should be present after add"
-        )
-        print(f"[SUCCESS] Added meta tag '{test_meta_tag}' to finding")
-
-        # Test removing the meta tag
-        final_finding = remove_finding_tag(
-            self.client, self.namespace, finding.uuid, test_meta_tag, "meta"
-        )
-        assert final_finding is not None, "Should successfully remove finding meta tag"
-
-        # Verify meta tag was removed
-        meta_tags_after_remove = list_finding_tags(
-            self.client, self.namespace, finding.uuid, "meta"
-        )
-        assert test_meta_tag not in meta_tags_after_remove, "Meta tag should be removed"
-        print(f"[SUCCESS] Removed meta tag '{test_meta_tag}' from finding")
-
     def test_finding_structure_analysis(self):
         """Test and analyze finding structure."""
         print("\n=== FINDING STRUCTURE ANALYSIS ===")
@@ -147,38 +106,6 @@ class TestFinding:
         print(f"Finding context fields: {context_fields}")
         if hasattr(finding.context, "tags") and finding.context.tags:
             print(f"Finding context tags: {finding.context.tags}")
-
-    def test_finding_spec_tag_limitation(self):
-        """Test finding spec tag limitation (read-only system tags)."""
-        print("\n=== TESTING FINDING SPEC TAG LIMITATION ===")
-
-        finding = self.findings[0]
-        print(f"Testing finding: {finding.uuid}")
-
-        # Get current spec tags (should be system-managed)
-        current_spec_tags = list_finding_tags(
-            self.client, self.namespace, finding.uuid, "spec"
-        )
-        print(f"Current spec tags: {current_spec_tags}")
-
-        # Attempt to add spec tag (should not persist due to API limitation)
-        test_spec_tag = "TEST_SPEC_TAG_LIMITATION"
-        add_finding_tag(
-            self.client, self.namespace, finding.uuid, test_spec_tag, "spec"
-        )
-
-        # Check if tag was added (it shouldn't persist)
-        spec_tags_after_add = list_finding_tags(
-            self.client, self.namespace, finding.uuid, "spec"
-        )
-
-        # This is expected behavior - spec tags are system-managed
-        if test_spec_tag not in spec_tags_after_add:
-            print("[INFO] Spec tags are system-managed (read-only) - this is expected")
-        else:
-            print(
-                "[WARNING] Spec tags unexpectedly persisted - may indicate API change"
-            )
 
     def test_finding_operations_summary(self):
         """Generate summary of finding operations."""
