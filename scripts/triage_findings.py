@@ -713,7 +713,7 @@ Project UUID: {self.project_uuid}
             # Build Rego rule to suppress findings with false-positive tag
             # Handle both dev and main branch RepositoryVersions
 
-            rego_rule = f"""package endor.cockpit.exceptions
+            rego_rule = f"""package exceptions
 
 match_finding[result] {{
   finding := input.resource
