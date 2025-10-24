@@ -77,12 +77,12 @@ class BaseMeta(BaseModel):
 
     # Required universal fields
     name: str = Field(..., description="Resource name")  # IMMUTABLE: Set at creation
-    kind: str = Field(
-        ..., description="Resource type identifier"
-    )  # IMMUTABLE: Set at creation
-    version: str = Field(
-        default="v1", description="Version identifier"
-    )  # IMMUTABLE: System-managed
+    kind: Optional[str] = Field(
+        None, description="Resource type identifier"
+    )  # IMMUTABLE: Set at creation, but may be None when masked
+    version: Optional[str] = Field(
+        None, description="Version identifier"
+    )  # IMMUTABLE: System-managed, but may be None when masked
 
     # Lifecycle fields (auto-managed by API)
     create_time: Optional[str] = Field(
@@ -231,9 +231,9 @@ class BaseResource(BaseModel):
     )  # IMMUTABLE: Set at creation
 
     # Common fields (88% present)
-    spec: BaseSpec = Field(
-        ..., description="Resource specification"
-    )  # MUTABLE: Most spec fields can be updated
+    spec: Optional[BaseSpec] = Field(
+        None, description="Resource specification"
+    )  # MUTABLE: Most spec fields can be updated, but may be None when masked
 
     # Conditional fields (present when applicable)
     context: Optional[Context] = Field(
