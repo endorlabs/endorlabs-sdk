@@ -53,7 +53,7 @@ This protocol provides a systematic approach to resolving development issues whi
 
 **Debugging Steps**:
 1. **Wrong URL Pattern**: Initially used `PATCH /v1/namespaces/{namespace}/projects/{uuid}`
-2. **OpenAPI Spec Check**: Found correct pattern in `.workspace/downloads/openapi-swagger.json`
+2. **OpenAPI Spec Check**: Found correct pattern in `external_docs/openapi-swagger.json`
 3. **Discovery**: PATCH endpoints expect UUID in request body, not URL path
 4. **Solution**: Changed to `PATCH /v1/namespaces/{namespace}/projects` with UUID in body
 

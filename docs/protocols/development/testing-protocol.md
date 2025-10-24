@@ -190,12 +190,6 @@ def test_crud_operations(self):
     assert success is True
 ```
 
-#### Tag Management Tests
-```python
-def test_tag_management(self):
-    """Test tag management operations."""
-    resource_obj = self.resources[0]
-    test_tag = "test-tag"
     
     # Add tag
     updated_resource = add_resource_tag(
@@ -390,9 +384,6 @@ def test_security_scan():
 def test_crud_operations():
     """Test CRUD operations."""
 
-@pytest.mark.tag_management
-def test_tag_operations():
-    """Test tag management operations."""
 ```
 
 ## Success Criteria

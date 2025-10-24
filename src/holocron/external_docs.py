@@ -97,7 +97,7 @@ def download_openapi_spec(
     api_url: str, output_path: Path, timeout: int = 30, force: bool = False
 ) -> Dict[str, Any]:
     """
-    Download OpenAPI specification from Endor API.
+    Download OpenAPI specification from Endor API with intelligent caching.
 
     Args:
         api_url: Base URL of Endor API
@@ -109,20 +109,28 @@ def download_openapi_spec(
         Dict containing metadata: file_hash, timestamp, size, url
     """
     try:
-        # Check if file exists and skip if not forcing
+        # Check if file exists and is recent
         if output_path.exists() and not force:
-            logger.info(
-                f"OpenAPI spec already exists at {output_path}, skipping download"
-            )
-            with open(output_path, "rb") as f:
-                file_hash = hashlib.sha256(f.read()).hexdigest()
-            file_size = output_path.stat().st_size
-            return {
-                "file_hash": file_hash,
-                "timestamp": datetime.now().isoformat(),
-                "size": file_size,
-                "url": f"{api_url}/download/openapiv2.swagger.json",
-            }
+            file_age_days = (
+                datetime.now() - datetime.fromtimestamp(output_path.stat().st_mtime)
+            ).days
+
+            if file_age_days < 7:  # Within staleness threshold
+                logger.info(f"Using cached OpenAPI spec (age: {file_age_days} days)")
+                with open(output_path, "rb") as f:
+                    file_hash = hashlib.sha256(f.read()).hexdigest()
+                file_size = output_path.stat().st_size
+                return {
+                    "file_hash": file_hash,
+                    "timestamp": datetime.now().isoformat(),
+                    "size": file_size,
+                    "url": f"{api_url}/download/openapiv2.swagger.json",
+                }
+            else:
+                logger.warning(
+                    f"OpenAPI spec is {file_age_days} days old, checking for updates..."
+                )
+                # Continue to download and compare hash
         # Construct full URL
         spec_url = f"{api_url}/download/openapiv2.swagger.json"
         logger.info(f"Downloading OpenAPI spec from {spec_url}")
@@ -157,18 +165,33 @@ def download_openapi_spec(
         spec_data = response.json()
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(spec_data, f, indent=2)
+        # Calculate hash of new content before saving
+        new_content = json.dumps(spec_data, indent=2, sort_keys=True)
+        new_hash = hashlib.sha256(new_content.encode("utf-8")).hexdigest()
 
-        # Calculate file hash
-        with open(output_path, "rb") as f:
-            file_hash = hashlib.sha256(f.read()).hexdigest()
+        # Check if content has changed
+        if output_path.exists():
+            with open(output_path, "rb") as f:
+                old_hash = hashlib.sha256(f.read()).hexdigest()
+            if new_hash == old_hash:
+                logger.info("OpenAPI spec unchanged, no update needed")
+                file_size = output_path.stat().st_size
+                return {
+                    "file_hash": old_hash,
+                    "timestamp": datetime.now().isoformat(),
+                    "size": file_size,
+                    "url": spec_url,
+                }
+
+        # Save new content
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(new_content)
 
         # Get file size
         file_size = output_path.stat().st_size
 
         metadata = {
-            "file_hash": file_hash,
+            "file_hash": new_hash,
             "timestamp": datetime.now().isoformat(),
             "size": file_size,
             "url": spec_url,
@@ -236,7 +259,8 @@ def download_sitemap(
     url: str, output_path: Path, timeout: int = 30, force: bool = False
 ) -> List[str]:
     """
-    Download and parse sitemap.xml to extract documentation URLs.
+    Download and parse sitemap.xml to extract documentation URLs with intelligent
+    caching.
 
     Args:
         url: URL of sitemap.xml
@@ -248,12 +272,32 @@ def download_sitemap(
         List of documentation page URLs
     """
     try:
-        # Check if file exists and skip if not forcing
+        # Check if file exists and is recent
         if output_path.exists() and not force:
-            return _parse_existing_sitemap(output_path)
+            file_age_days = (
+                datetime.now() - datetime.fromtimestamp(output_path.stat().st_mtime)
+            ).days
+
+            if file_age_days < 7:  # Within staleness threshold
+                logger.info(f"Using cached sitemap (age: {file_age_days} days)")
+                return _parse_existing_sitemap(output_path)
+            else:
+                logger.warning(
+                    f"Sitemap is {file_age_days} days old, checking for updates..."
+                )
+                # Continue to download and compare hash
 
         # Download and save sitemap
         content = _download_and_save_sitemap(url, output_path, timeout)
+
+        # Check if content has changed
+        new_hash = hashlib.sha256(content).hexdigest()
+        if output_path.exists():
+            with open(output_path, "rb") as f:
+                old_hash = hashlib.sha256(f.read()).hexdigest()
+            if new_hash == old_hash:
+                logger.info("Sitemap unchanged, no update needed")
+                return _parse_existing_sitemap(output_path)
 
         # Extract URLs from downloaded content
         urls = _extract_urls_from_xml(content)

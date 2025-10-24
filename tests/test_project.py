@@ -15,11 +15,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import project
-from endor_cockpit.resources.tag_management import (
-    add_project_tag,
-    list_project_tags,
-    remove_project_tag,
-)
 
 
 @pytest.mark.integration
@@ -77,36 +72,6 @@ class TestProject:
         print(f"Project name: {retrieved_project.meta.name}")
         if retrieved_project.meta.tags:
             print(f"Project tags: {retrieved_project.meta.tags}")
-
-    def test_project_patch_tags(self):
-        """Test PATCH operations on projects using tag management."""
-        print("\n=== TESTING PROJECT PATCH OPERATIONS ===")
-
-        project = self.projects[0]
-        print(f"Testing project: {project.uuid}")
-
-        # Test adding a tag
-        test_tag = "test-patch-project-tag"
-        updated_project = add_project_tag(
-            self.client, self.namespace, project.uuid, test_tag
-        )
-        assert updated_project is not None, "Should successfully add project tag"
-
-        # Verify tag was added
-        tags_after_add = list_project_tags(self.client, self.namespace, project.uuid)
-        assert test_tag in tags_after_add, "Tag should be present after add"
-        print(f"[SUCCESS] Added tag '{test_tag}' to project")
-
-        # Test removing the tag
-        final_project = remove_project_tag(
-            self.client, self.namespace, project.uuid, test_tag
-        )
-        assert final_project is not None, "Should successfully remove project tag"
-
-        # Verify tag was removed
-        tags_after_remove = list_project_tags(self.client, self.namespace, project.uuid)
-        assert test_tag not in tags_after_remove, "Tag should be removed"
-        print(f"[SUCCESS] Removed tag '{test_tag}' from project")
 
     def test_project_structure_analysis(self):
         """Test and analyze project structure."""

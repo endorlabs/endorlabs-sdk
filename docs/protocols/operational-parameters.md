@@ -21,19 +21,6 @@ This protocol defines the operational parameters that should be tracked and moni
 - Re-validate if timestamp > 24 hours
 - Alert on credential expiration
 
-### Knowledge Base State
-**Location**: `holocron_data/vector_db_manifest.json`
-**Parameters**:
-- Last sync timestamp
-- Chunk count and coverage
-- Query performance metrics
-- Schema drift detection
-
-**Monitoring**:
-- Check manifest for freshness
-- Re-sync if timestamp > 7 days
-- Monitor query performance
-
 ### Development State
 **Location**: Various sources
 **Parameters**:
@@ -106,8 +93,6 @@ This protocol defines the operational parameters that should be tracked and moni
 ## Related Protocols
 
 - [Mandatory Context Protocol](mandatory-context.md) - L1
-- [Knowledge Capture Workflow](knowledge-capture-workflow.md) - L1
-- [Documentation Standards](documentation-standards.md) - L2
 
 ---
 
