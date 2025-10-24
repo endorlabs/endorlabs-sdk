@@ -214,6 +214,13 @@ class DriftAnalyzer:
             # Extract fields from schema
             fields = self._extract_schema_fields(schema, "", spec)
             
+            # Also extract fields from the actual resource definition (e.g., v1Project, v1Finding)
+            resource_def_name = f"v1{resource_type}"
+            if resource_def_name in spec.get("definitions", {}):
+                resource_schema = spec["definitions"][resource_def_name]
+                resource_fields = self._extract_schema_fields(resource_schema, "", spec)
+                fields.update(resource_fields)
+            
             print(f"✅ Found {len(fields)} API spec fields")
             return {"fields": fields, "example": f"GET {list_endpoint}"}
             
