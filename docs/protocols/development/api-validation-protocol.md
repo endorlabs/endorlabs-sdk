@@ -11,14 +11,14 @@ This protocol ensures that all resource implementations are validated against th
 ### Phase 1: OpenAPI Specification Analysis (MANDATORY)
 
 #### 1.1 Find Service Endpoints
-```bash
+```bash (or powershell equivalent)
 # Search for the specific service in OpenAPI spec
 grep -i "{Resource}Service" external_docs/openapi-swagger.json
 grep -A 30 -B 5 "{Resource}Service" external_docs/openapi-swagger.json
 ```
 
 #### 1.2 Extract Complete Schema Definition
-```bash
+```bash (or powershell equivalent)
 # Find the main resource schema
 grep -A 50 '"v1{Resource}":' external_docs/openapi-swagger.json
 grep -A 100 '"v1{Resource}Spec":' external_docs/openapi-swagger.json
@@ -193,7 +193,7 @@ print(f"Invalid UUID: {res.status_code}")
 ## Validation Tools
 
 ### OpenAPI Analysis Tools
-```bash
+```bash (or powershell equivalent)
 # Extract service endpoints
 grep -i "{Resource}Service" external_docs/openapi-swagger.json
 
