@@ -100,7 +100,7 @@ uv run python maneuvers/create_exception_policy.py \
 The created exception policy uses this Rego rule:
 
 ```rego
-package endor.cockpit.exceptions
+package exceptions
 
 match_finding[result] {
   finding := input.resource
