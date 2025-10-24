@@ -16,7 +16,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -93,9 +93,27 @@ class DriftAnalyzer:
                 "default": getattr(field_info, 'default', None)
             }
             
-            # Recursively check nested classes
+            # Recursively check nested classes - handle various annotation types
             field_type = field_info.annotation
-            if hasattr(field_type, 'model_fields'):
+            
+            # Handle Union types (like Optional[str])
+            if hasattr(field_type, '__origin__') and field_type.__origin__ is Union:
+                # Get the non-None type from Union
+                non_none_types = [t for t in field_type.__args__ if t is not type(None)]
+                if non_none_types:
+                    field_type = non_none_types[0]
+            
+            # Handle generic types (like List[SomeModel])
+            if hasattr(field_type, '__origin__') and hasattr(field_type, '__args__'):
+                # Get the inner type from generic types
+                inner_types = field_type.__args__
+                for inner_type in inner_types:
+                    if hasattr(inner_type, 'model_fields'):
+                        nested_fields = self._extract_pydantic_fields(inner_type, field_path)
+                        fields.update(nested_fields)
+            
+            # Handle direct model classes
+            elif hasattr(field_type, 'model_fields'):
                 nested_fields = self._extract_pydantic_fields(field_type, field_path)
                 fields.update(nested_fields)
         
@@ -225,15 +243,10 @@ class DriftAnalyzer:
                     # Resolve the reference
                     ref_schema = self._resolve_schema_reference(spec, prop_schema["$ref"])
                     if ref_schema:
-                        # Extract fields from the referenced schema
+                        # Recursively extract fields from the referenced schema
                         nested_fields = self._extract_schema_fields(ref_schema, field_path, spec)
                         fields.update(nested_fields)
-                        # Also add the field itself
-                        fields[field_path] = {
-                            "type": "object",
-                            "required": prop_name in schema.get("required", []),
-                            "description": prop_schema.get("description", "")
-                        }
+                        # Don't add the field itself as a generic object - let the recursion handle it
                 else:
                     # Regular field
                     fields[field_path] = {
