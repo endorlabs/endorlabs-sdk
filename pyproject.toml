@@ -56,7 +56,7 @@ exclude = [
     "scripts/",  # Root-level utility scripts
     "scripts/**",  # Allow complexity in utility scripts
     "maneuvers/",  # Maneuver scripts - utility automation scripts
-    "maneuvers/**",  # Allow complexity in maneuver scripts
+    "maneuvers/**",  
     "*.log",
     "__pycache__",
     "*.pyc",
