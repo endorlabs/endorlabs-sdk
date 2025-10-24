@@ -26,9 +26,6 @@
 - [ ] Test with live API data using endorctl and direct API calls
 - [ ] Create validation matrix mapping OpenAPI spec to live data
 - [ ] Validate all field types, required fields, and nested objects
-- [ ] Test all available CRUD operations before implementation
-- [ ] Document any API discrepancies or quirks found
-- [ ] Verify operation availability by checking OpenAPI spec and testing endpoints
 
 ### Security Requirements
 - [ ] Run `endorctl scan` before any commits
@@ -37,13 +34,13 @@
 - [ ] Input validation on all user inputs
 
 ### Testing Requirements
-- [ ] Write CRUD tests for all resource operations
+- [ ] Write CRUD tests for all resource operations where exposed by the API Spec
 - [ ] Integration tests required for API interactions
 - [ ] Use pytest markers (slow/integration)
 - [ ] Test coverage for new functionality
 
 ### Knowledge Capture Requirements
-- [ ] Create logbook entries during troubleshooting (link to knowledge-capture-workflow.md)
+- [ ] Create logbook entries during troubleshooting 
 - [ ] Query holocron first before implementing features
 - [ ] Document all API quirks and learnings
 - [ ] Follow conventional commit format (feat/fix/docs/test)
@@ -83,9 +80,6 @@ export ENDOR_API_CREDENTIALS_SECRET="your-secret"
 - [Development Protocol](development/development-protocol.md) - Feature implementation workflow
 - [Troubleshooting Protocol](development/troubleshooting-protocol.md) - Issue resolution workflow
 
-### Nested Protocols (L2)
-- [Resource Implementation Protocol](development/resource-implementation-protocol.md) - When implementing new resources
-- [Testing Protocol](development/testing-protocol.md) - When writing tests
 
 ## Repository Structure
 ```
@@ -96,25 +90,19 @@ endor-cockpit/
 │   │   ├── resources/         # Resource modules (CRUD)
 │   │   ├── models/            # Pydantic models
 │   │   └── utils/             # Utilities
-│   └── holocron/              # RAG knowledge base
+│   └── wayfinder/             # Graphical visualizer
 ├── docs/
-│   ├── protocols/             # L1 mandatory protocols
-│   ├── personas/              # Persona-specific guides  
-│   ├── endor-data-model/      # Resource documentation
-│   └── agents/                # Agent guides
 ├── tests/                     # Test suite
 ├── .workspace/                # Local workspace (gitignored)
-└── holocron_data/             # Vector database (gitignored)
 ```
 
 ## Success Criteria
 - ✅ All tests passing
-- ✅ No linting errors
+- ✅ No linting errors at all within included repos
 - ✅ Security scan clean
 - ✅ Resource operations working
 - ✅ Error handling graceful
-- ✅ Documentation updated
-- ✅ Knowledge base synced
+- ✅ Docstrings and inline docs updated
 
 ---
 

@@ -1,25 +1,27 @@
 # Endor Cockpit: AI Agent Integration Guide
 
-> **Universal Anchor for All AI Agents**
+> **Universal Anchor for All AI Agents in IDEs**
 
 ## 🚀 **Quick Start (30 seconds)**
 
-### **Knowledge Base First**
-**CRITICAL**: Always query the Holocron knowledge base before any operations. This portable shared learning index contains:
-- API patterns and best practices
-- Known quirks and workarounds
-- Security guidelines and compliance requirements
-- Operational procedures and troubleshooting
+### **IDE Integration Ready**
+**CRITICAL**: This toolkit is designed for seamless integration with AI-powered development environments. The SDK provides:
+- Type-safe API operations with comprehensive error handling
+- Built-in security scanning capabilities
+- Resource-oriented patterns for consistent operations
+- Production-ready authentication and rate limiting
 
-```bash
-# Query before any operation
-uv run python -m holocron query "How do I create a namespace?"
-# Review results, then proceed with confidence
+```python
+# Initialize client (auto-authenticates via environment variables)
+from endor_cockpit.api_client import APIClient
+client = APIClient()
+
+# List namespaces
+from endor_cockpit.resources import namespace
+namespaces = namespace.list_namespaces(client, "tenant.namespace")
 ```
 
-**Workflow**: Query → Verify → Act → Update if contradictions found
-
-**Reference**: See [docs/holocron/README.md](docs/holocron/README.md) for comprehensive Holocron documentation and [docs/protocols/holocron-setup.md](docs/protocols/holocron-setup.md) for initialization workflows.
+**Workflow**: Initialize → Authenticate → Operate → Handle Errors
 
 ### **Critical Requirements**
 - **Security**: Always run `endorctl scan` before code changes
@@ -31,12 +33,29 @@ uv run python -m holocron query "How do I create a namespace?"
 
 ## 📋 **Project Context**
 
-**Endor Cockpit** is a production-ready foundational service:
-- **Purpose**: Administer, operate and scan with Endor Labs tooling through REST APIs
+**Endor Cockpit** is a production-ready Python SDK for AI-powered IDEs:
+- **Purpose**: Integrate Endor Labs security platform with AI development tools
 - **Data Classification**: Public (no PII handling)
 - **Deployment**: Production environment, global region
 - **Security**: Paramount importance
 - **Architecture**: Resource-oriented SDK pattern
+
+## 🤖 **Agent Roles & IDE Integration**
+
+### **Developer Agent**
+- **Primary Function**: Code analysis, dependency management, vulnerability assessment
+- **Key Operations**: Project scanning, finding management, policy evaluation
+- **IDE Integration**: Seamless integration with development workflows
+
+### **Security Agent**
+- **Primary Function**: Security policy enforcement, compliance monitoring, risk assessment
+- **Key Operations**: Policy management, security scanning, finding triage
+- **IDE Integration**: Real-time security feedback and policy enforcement
+
+### **Operations Agent**
+- **Primary Function**: Infrastructure management, namespace administration, system monitoring
+- **Key Operations**: Namespace management, repository administration, system health monitoring
+- **IDE Integration**: DevOps workflow integration and infrastructure automation
 
 ---
 
@@ -123,24 +142,41 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 
 ---
 
-## 🛠️ **Tools**
+## 🛠️ **LLM Tool Integration**
 
-### **LLM Tool Schema**
+### **Tool Schema Pattern**
 ```json
 {
   "name": "create_namespace",
-  "description": "Create a new namespace",
+  "description": "Create a new namespace in the Endor Labs platform",
   "parameters": {
     "type": "object",
     "properties": {
-      "parent_namespace": {"type": "string"},
-      "name": {"type": "string"},
-      "description": {"type": "string"}
+      "parent_namespace": {
+        "type": "string",
+        "description": "Canonical parent namespace (e.g., 'tenant.namespace')"
+      },
+      "name": {
+        "type": "string",
+        "description": "Name of the new namespace"
+      },
+      "description": {
+        "type": "string",
+        "description": "Description of the namespace purpose"
+      }
     },
     "required": ["parent_namespace", "name", "description"]
   }
 }
 ```
+
+### **Available Resource Operations**
+- **Namespace**: `list_namespaces`, `create_namespace`, `get_namespace`, `update_namespace`, `delete_namespace`
+- **Project**: `list_projects`, `create_project`, `get_project`, `update_project`, `delete_project`
+- **Finding**: `list_findings`, `get_finding`, `update_finding`, `delete_finding`
+- **Policy**: `list_policies`, `create_policy`, `get_policy`, `update_policy`, `delete_policy`
+- **Repository**: `list_repositories`, `create_repository`, `get_repository`, `update_repository`
+- **PackageVersion**: `list_package_versions`, `get_package_version`, `update_package_version`
 
 ### **Error Handling**
 - **HTTP errors**: Handle 4xx/5xx status codes

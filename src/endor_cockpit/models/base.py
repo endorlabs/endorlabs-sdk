@@ -328,26 +328,56 @@ class BaseResourceOperations:
         list_params: Optional[ListParameters] = None,
         **kwargs,
     ) -> List[BaseModel]:
-        """Universal list operation with filtering, masking, and pagination."""
+        """Universal list operation with automatic pagination."""
         try:
             headers = self.client.default_headers
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
-            # Build query parameters
-            params = self._build_params(list_params, **kwargs)
+            all_items = []
+            page_token = None
+            page_count = 0
 
-            res = self.client.get(url, headers=headers, params=params)
-            data = res.json()
+            while True:
+                # Build query parameters for this page
+                params = self._build_params(list_params, **kwargs)
 
-            # Handle both list.objects and direct array responses
-            if "list" in data and "objects" in data["list"]:
-                items = data["list"]["objects"]
-            elif isinstance(data, list):
-                items = data
-            else:
-                items = []
+                # Add page_token to params if present
+                if page_token is not None:
+                    params["list_parameters.page_token"] = str(page_token)
 
-            return [self.model_class(**item) for item in items]
+                res = self.client.get(url, headers=headers, params=params)
+                data = res.json()
+
+                # Extract objects from this page
+                if "list" in data and "objects" in data["list"]:
+                    items = data["list"]["objects"]
+                elif isinstance(data, list):
+                    items = data
+                else:
+                    items = []
+
+                all_items.extend(items)
+                page_count += 1
+
+                # Check for next page token
+                page_token = None
+                if isinstance(data, dict) and "list" in data:
+                    list_data = data["list"]
+                    if isinstance(list_data, dict) and "response" in list_data:
+                        response_data = list_data["response"]
+                        if isinstance(response_data, dict):
+                            page_token = response_data.get("next_page_token")
+
+                # Break if no more pages
+                if not page_token:
+                    break
+
+            self.logger.debug(
+                f"Fetched {len(all_items)} {self.resource_name} items "
+                f"across {page_count} pages from namespace '{tenant_meta_namespace}'"
+            )
+
+            return [self.model_class(**item) for item in all_items]
 
         except Exception as e:
             self.logger.error(
