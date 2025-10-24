@@ -143,15 +143,17 @@ jobs:
 
       - name: Run comprehensive Endorctl security scan
         run: |
+          # Note: GitHub token needs organization admin permissions for full GitHub integration
+          # For now, we skip GitHub-specific checks to avoid 403 permission errors
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Running PR scan with comprehensive security analysis and PR comments..."
             endorctl scan \
               --namespace ${{ vars.ENDOR_NAMESPACE }} \
+              --languages=python \
               --secrets \
               --dependencies \
               --sast \
               --ghactions \
-              --github \
               --pr \
               --enable-pr-comments \
               --scm-pr-id ${{ github.event.number }} \
@@ -162,11 +164,11 @@ jobs:
             echo "Running branch scan with comprehensive security analysis..."
             endorctl scan \
               --namespace ${{ vars.ENDOR_NAMESPACE }} \
+              --languages=python \
               --secrets \
               --dependencies \
               --sast \
               --ghactions \
-              --github \
               --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
               --output-type summary \
               --exit-on-policy-warning

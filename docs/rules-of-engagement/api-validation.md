@@ -1,10 +1,10 @@
-# API Validation Protocol
+# API Validation Rules of Engagement
 
-> **L2 (Task-Specific) - Mandatory API validation before implementation**
+> **Tactical Operations**: These rules guide pre-implementation validation to ensure schema compatibility and prevent implementation failures.
 
 ## Overview
 
-This protocol ensures that all resource implementations are validated against the actual API specification and live data before any code is written. This prevents schema mismatches and ensures implementations work with the real API.
+These rules ensure that all resource implementations are validated against the actual API specification and live data before any code is written. This prevents schema mismatches and ensures implementations work with the real API.
 
 ## Mandatory Validation Steps
 
@@ -41,7 +41,7 @@ endorctl api list -r {Resource}
 # Example: endorctl api list -r Project
 ```
 
-#### 2.2 Create Validation Script
+#### 2.2 Create Validation Script in this repo as an ephemeral script (`.workspace`)
 ```python
 # .workspace/validate_{resource}.py
 import sys
@@ -49,7 +49,7 @@ sys.path.insert(0, '..')
 from endor_cockpit.api_client import APIClient
 import os
 import json
-
+# Import implemented class objects for type safety.
 client = APIClient()
 namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan.cockpit')
 
@@ -242,23 +242,6 @@ def analyze_api_response(resource_name):
 - [ ] **Wrong endpoints**: Using incorrect API endpoints
 - [ ] **Data flow issues**: Request/response handling problems
 
-## Integration with Other Protocols
-
-### Resource Implementation Protocol
-- **Before Phase 1**: Run API Validation Protocol
-- **During Phase 2**: Use validation results for data modeling
-- **After Phase 3**: Re-validate against live data
-
-### Development Protocol
-- **Step 1**: Include API validation in research phase
-- **Step 2**: Use validation results in planning phase
-- **Step 3**: Validate implementation against spec
-
-### Testing Protocol
-- **Pre-testing**: Validate test data against live API
-- **During testing**: Use real API endpoints for validation
-- **Post-testing**: Verify tests work with live data
-
 ---
 
-**CRITICAL**: This protocol must be completed before any resource implementation begins. Skipping this validation will result in schema mismatches and non-functional implementations.
+**CRITICAL**: These rules must be completed before any resource implementation begins. Skipping this validation will result in schema mismatches and non-functional implementations.

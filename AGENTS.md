@@ -1,6 +1,6 @@
 # Endor Cockpit: AI Agent Integration Guide
 
-> **Universal Anchor for All AI Agents in IDEs**
+> **Endor Cockpit**: Navigate the Endor Labs platform with tactical precision. This guide provides Rules of Engagement for AI agents piloting the SDK.
 
 ## 🚀 **Quick Start (30 seconds)**
 
@@ -29,6 +29,9 @@ namespaces = namespace.list_namespaces(client, "tenant.namespace")
 - **Linting**: Max 88 chars/line, sorted imports, no trailing whitespace
 - **Dependencies**: Pin exact versions, avoid `latest`
 - **Environment**: Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
+- **Python**: 3.11-3.13, test on 3.13
+- **Return Types**: All functions return `Optional[Resource]` for consistency
+- **Canonical Naming**: Use `tenant.namespace.child` format, never UUIDs in paths
 
 ---
 
@@ -158,6 +161,43 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 
 ---
 
+## 📊 **Resource Implementation Status**
+
+### **Implementation Checklist**
+
+#### ✅ **COMPLETED RESOURCES**
+- **Project** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Finding** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Policy** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Namespace** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+
+#### 🔄 **SCAFFOLDED RESOURCES**
+- **Repository** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+- **RepositoryVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+- **PackageVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
+
+#### ❌ **PENDING RESOURCES**
+- **DependencyMetadata** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **LinterResult** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Metric** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Scan** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **User** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Token** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+- **Installation** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+
+### **Completion Criteria**
+- **Implementation**: CRUD operations validated, model validated and a handful of attributes modeled correctly
+- **Documentation**: Statements verified to match implementation and tests  
+- **Tests**: Passes linter, unit tests provided and incorporated into CI
+
+### **Status Legend**
+- ✅ **COMPLETE**: All criteria met
+- 🚧 **IN PROGRESS**: Implementation started
+- ❌ **NOT STARTED**: No work begun
+- 🚫 **BLOCKED**: Blocked by dependencies
+
+---
+
 ## 🛠️ **LLM Tool Integration**
 
 ### **Available Resource Operations**
@@ -167,6 +207,19 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **Policy**: `list_policies`, `create_policy`, `get_policy`, `update_policy`, `delete_policy`
 - **Repository**: `list_repositories`, `create_repository`, `get_repository`, `update_repository`
 - **PackageVersion**: `list_package_versions`, `get_package_version`, `update_package_version`
+
+---
+
+## 📚 **Reference Guides & Rules of Engagement**
+
+### **Specialized Guides**
+- **Rego Policy Development**: [docs/rego_guide.md](docs/rego_guide.md) - Complete Rego reference
+- **API Validation**: [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md) - Pre-implementation validation
+- **Troubleshooting**: [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md) - Issue resolution patterns
+- **Resource Implementation**: [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md) - Implementation patterns
+
+### **Operational Maneuvers**
+Example scripts in `maneuvers/` directory demonstrate practical SDK usage patterns.
 
 ---
 
@@ -185,7 +238,7 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **Backward Compatibility**: Changes must not break existing functionality
 
 ### **Environment Security**
-- **Credentials**: Use environment variables only
+- **Credentials**: Use environment variables ONLY
 - **No hardcoded secrets**: All secrets via env vars
 - **Secure logging**: No sensitive data in logs
 - **Input validation**: Validate all inputs
@@ -195,7 +248,7 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 ## 🎯 **Quick Reference**
 
 ### **Essential Commands**
-```bash
+```bash (or powershell equivalent)
 # Development workflow
 uv run ruff check .          # Lint
 uv run ruff format .         # Format  
