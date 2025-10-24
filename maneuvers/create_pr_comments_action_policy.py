@@ -767,7 +767,7 @@ Examples:
         sast_config = build_sast_finding_config(args)
 
         # Build finding configuration
-        build_finding_config(sast_config, args)
+        finding_config = build_finding_config(sast_config, args)
 
         # Build template values if template is specified
         template_values = {}
@@ -866,6 +866,7 @@ Examples:
                 branch_type=args.branch_type,
                 action=args.action,
                 sast_config=sast_config,
+                finding=finding_config if finding_config else None,
                 query_statements=["data.sast_notification.match_sast_findings"],
                 notification={
                     "notification_target_uuids": [target_uuid],
