@@ -2,28 +2,33 @@
 
 [![Python CI](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml)
 
-A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs. Designed for both human developers and AI agents working with Endor Labs security platform.
+A production-ready Python SDK for integrating Endor Labs security platform with AI-powered IDEs and development tools. Provides comprehensive REST API client capabilities for administering, operating, and scanning with Endor Labs tooling.
 
-## META: Documentation Guidelines
+## 🚀 Agentic Usage (Quick Start)
 
-**Before adding files, check for presence of related files for suitability first.**
+**For AI Agents in IDEs**: This toolkit is designed to be seamlessly integrated into AI-powered development environments. See [AGENTS.md](./AGENTS.md) for comprehensive integration guidance.
 
-- **Related files**: Search for existing files with similar content using `glob_file_search` or `grep`
-- **Suitability check**: Verify if existing files are more appropriate for the content
-- **Consolidation**: Prefer updating existing files over creating new ones
-- **Examples**: 
-  - Chunking strategy → `docs/agents/rag_usage.md` (RAG-specific)
-  - API patterns → `docs/agents/api-patterns.md` (agent-focused)
-  - Development setup → `docs/agents/development.md` (development-focused)
+```python
+from endor_cockpit.api_client import APIClient
+from endor_cockpit.resources import namespace
+
+# Initialize client (auto-authenticates via environment variables)
+client = APIClient()
+
+# List namespaces
+namespaces = namespace.list_namespaces(client, "tenant.namespace")
+for ns in namespaces:
+    print(f"Namespace: {ns.meta.name}")
+```
 
 ## Features
 
+- **IDE Integration Ready**: Designed for seamless integration with AI-powered development environments
 - **Comprehensive API Coverage**: Full REST API client for Endor Labs platform administration and operations
 - **Security-First Design**: Built-in security scanning capabilities with `endorctl` integration
 - **Modern Python Tooling**: Uses `uv` for dependency management, `ruff` for linting, and `pytest` for testing
 - **Type-Safe Operations**: Leverages Pydantic for clear, validated API data structures and operations
 - **Resource-Oriented Architecture**: Intuitive structure with modules dedicated to specific API resources
-- **Agent-Optimized**: Comprehensive documentation and patterns specifically designed for AI agent integration
 - **Production-Ready**: Robust error handling, authentication, rate limiting, and retry mechanisms
 
 ## Installation
@@ -43,44 +48,17 @@ source .venv/bin/activate  # Linux/Mac
 
 # Install dependencies
 uv pip install -e .
-
-# Install RAG dependencies for knowledge base
-uv pip install -e ".[holocron]"
 ```
 
-## First Time Setup
+## Environment Setup
 
-### Knowledge Base Initialization
+Set the following environment variables:
 
-**IMPORTANT**: The Holocron knowledge base is the **first step** for any AI agent working with this repository. It contains comprehensive documentation, API patterns, and best practices that should be consulted before making any changes.
-
-#### Quick Start
 ```bash
-# Install RAG functionality for semantic search
-uv pip install -e ".[holocron]"
-
-# Set required environment variables
-export OPENAI_API_KEY="your-openai-api-key"
-
-# Initialize the knowledge base
-uv run python -m holocron init
-
-# Query the knowledge base
-uv run python -m holocron query "How do I create a namespace?"
+export ENDOR_API="https://api.endorlabs.com"
+export ENDOR_API_CREDENTIALS_KEY="your-api-key"
+export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
 ```
-
-#### Knowledge Base Workflow
-
-1. **Query First**: Always check the knowledge base before operations
-2. **Verify**: Cross-reference with existing documentation
-3. **Act**: Make changes based on established patterns
-4. **Update**: Incorporate new learnings when contradictions are found
-
-**Complete Guide**: See [docs/holocron/README.md](docs/holocron/README.md) for comprehensive Holocron documentation, including configuration, architecture, and troubleshooting.
-
-**Setup Workflows**: See [docs/protocols/holocron-setup.md](docs/protocols/holocron-setup.md) for detailed initialization procedures.
-
-The knowledge base is a **portable shared learning index** that ensures consistency across all AI agents and maintains the freshness of operational knowledge.
 
 ## Quick Start
 
@@ -95,33 +73,20 @@ client = APIClient()
 
 # List namespaces
 tenant_namespace = "your-tenant-namespace"
-all_namespaces = namespaces.list_namespaces(client, tenant_namespace)
+all_namespaces = namespace.list_namespaces(client, tenant_namespace)
 
 for ns in all_namespaces:
     print(f"Namespace: {ns.meta.name}, UUID: {ns.uuid}")
 ```
 
-### For AI Agents
+### For AI Agents in IDEs
 
-See the comprehensive [AI Agent Integration Guide](./AGENTS.md) for detailed guidance on:
-- Core principles and best practices
-- Platform-specific insights and patterns
-- Tool definitions for LLM integration
-- Security and compliance guidelines
+This toolkit is specifically designed for integration with AI-powered development environments. See [AGENTS.md](./AGENTS.md) for comprehensive guidance on:
 
-## Environment Setup
-
-Set the following environment variables:
-
-```bash
-export ENDOR_API="https://api.endorlabs.com"
-export ENDOR_API_CREDENTIALS_KEY="your-api-key"
-export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
-```
-
-Or use the provided setup scripts:
-- **Windows**: `setup_env.ps1` or `setup_env.bat`
-- **Linux/macOS**: `setup_env.sh`
+- **Agent Roles**: Developer, Security, and Operations agent definitions
+- **Tool Integration**: LLM tool schemas and function definitions
+- **Security Protocols**: Built-in security scanning and compliance
+- **Best Practices**: Patterns for reliable agent operations
 
 ## Development
 
@@ -197,10 +162,10 @@ endorctl scan --path . --namespace "your-namespace"
 
 ## Documentation
 
-- **[AI Agent Integration Guide](./AGENTS.md)** - Comprehensive guide for AI agents
-- **[Agent Documentation](./docs/agents/)** - Detailed agent-specific documentation
+- **[AI Agent Integration Guide](./AGENTS.md)** - Comprehensive guide for AI agent integration
+- **[Development Protocols](./docs/protocols/)** - Operational protocols and best practices
 - **[API Reference](./docs/)** - Complete API documentation
-- **[Examples](./docs/examples/)** - Usage examples and patterns
+- **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
 
 ## Workspace Folder
 
