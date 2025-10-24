@@ -146,7 +146,7 @@ class DriftAnalyzer:
             return False
     
     def _get_api_spec_fields(self, resource_type: str) -> Dict[str, Any]:
-        """Get fields from API spec (OpenAPI)."""
+        """Get fields from API spec (OpenAPI/Swagger)."""
         print(f"📋 Checking API spec fields...")
         
         try:
@@ -174,16 +174,27 @@ class DriftAnalyzer:
             if not list_endpoint:
                 return {"error": f"No list endpoint found for {resource_type}"}
             
-            # Get response schema
+            # Get response schema - handle both Swagger 2.0 and OpenAPI 3.0
             get_method = paths[list_endpoint]["get"]
             responses = get_method.get("responses", {})
             success_response = responses.get("200", {})
-            content = success_response.get("content", {})
-            json_content = content.get("application/json", {})
-            schema = json_content.get("schema", {})
+            
+            # Handle Swagger 2.0 format
+            if "schema" in success_response:
+                schema = success_response["schema"]
+                # If it's a reference, resolve it
+                if "$ref" in schema:
+                    schema = self._resolve_schema_reference(spec, schema["$ref"])
+            # Handle OpenAPI 3.0 format
+            elif "content" in success_response:
+                content = success_response.get("content", {})
+                json_content = content.get("application/json", {})
+                schema = json_content.get("schema", {})
+            else:
+                return {"error": "No schema found in response"}
             
             # Extract fields from schema
-            fields = self._extract_schema_fields(schema, "")
+            fields = self._extract_schema_fields(schema, "", spec)
             
             print(f"✅ Found {len(fields)} API spec fields")
             return {"fields": fields, "example": f"GET {list_endpoint}"}
@@ -192,24 +203,49 @@ class DriftAnalyzer:
             print(f"❌ API spec analysis failed: {e}")
             return {"error": str(e)}
     
-    def _extract_schema_fields(self, schema: Dict[str, Any], prefix: str) -> Dict[str, Any]:
-        """Recursively extract fields from OpenAPI schema."""
+    def _resolve_schema_reference(self, spec: Dict[str, Any], ref_path: str) -> Dict[str, Any]:
+        """Resolve a schema reference in Swagger 2.0 format."""
+        if not ref_path.startswith("#/definitions/"):
+            return {}
+        
+        definition_name = ref_path.split("/")[-1]
+        definitions = spec.get("definitions", {})
+        return definitions.get(definition_name, {})
+    
+    def _extract_schema_fields(self, schema: Dict[str, Any], prefix: str, spec: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Recursively extract fields from OpenAPI/Swagger schema."""
         fields = {}
         
         if "properties" in schema:
             for prop_name, prop_schema in schema["properties"].items():
                 field_path = f"{prefix}.{prop_name}" if prefix else prop_name
                 
-                fields[field_path] = {
-                    "type": prop_schema.get("type", "unknown"),
-                    "required": prop_name in schema.get("required", []),
-                    "description": prop_schema.get("description", "")
-                }
-                
-                # Recursively check nested objects
-                if prop_schema.get("type") == "object" and "properties" in prop_schema:
-                    nested_fields = self._extract_schema_fields(prop_schema, field_path)
-                    fields.update(nested_fields)
+                # Handle Swagger 2.0 $ref references
+                if "$ref" in prop_schema:
+                    # Resolve the reference
+                    ref_schema = self._resolve_schema_reference(spec, prop_schema["$ref"])
+                    if ref_schema:
+                        # Extract fields from the referenced schema
+                        nested_fields = self._extract_schema_fields(ref_schema, field_path, spec)
+                        fields.update(nested_fields)
+                        # Also add the field itself
+                        fields[field_path] = {
+                            "type": "object",
+                            "required": prop_name in schema.get("required", []),
+                            "description": prop_schema.get("description", "")
+                        }
+                else:
+                    # Regular field
+                    fields[field_path] = {
+                        "type": prop_schema.get("type", "unknown"),
+                        "required": prop_name in schema.get("required", []),
+                        "description": prop_schema.get("description", "")
+                    }
+                    
+                    # Recursively check nested objects
+                    if prop_schema.get("type") == "object" and "properties" in prop_schema:
+                        nested_fields = self._extract_schema_fields(prop_schema, field_path, spec)
+                        fields.update(nested_fields)
         
         return fields
     
