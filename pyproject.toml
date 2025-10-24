@@ -110,7 +110,7 @@ dev = [
 
 # Endor Cockpit configuration
 [tool.endor_cockpit]
-default_namespace = "endor-solutions-tgowan.cockpit"
+default_namespace = "endor-solutions-tgowan.cockpit.kessel"
 
 # Holocron Knowledge Base Configuration
 [tool.holocron]

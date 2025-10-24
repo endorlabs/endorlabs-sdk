@@ -2,25 +2,67 @@
 """
 PR Comments Action Policy Maneuver
 
-A repeatable script for creating notification policies that enable PR comments for SAST findings
-using the Endor Labs API client. This script provides parameterized inputs for creating
-comprehensive notification policies with proper SAST targeting and GitHub PR comment configuration.
+A repeatable script for creating notification policies that enable PR comments for various
+finding categories using the Endor Labs API client. This script provides parameterized inputs 
+for creating comprehensive notification policies with proper targeting and GitHub PR comment 
+configuration.
 
-Based on the OpenAPI schema and notification policy structure for SAST findings.
+Supported Finding Categories:
+- SAST: Static Application Security Testing findings
+- SECRETS: Exposed secrets (passwords, tokens, keys)
+- SCA: Software Composition Analysis findings
+- VULNERABILITY: Vulnerability findings
+- MALWARE: Malware findings
+- LICENSE_RISK: License risk findings
+- SUPPLY_CHAIN: Supply chain issues
+- OPERATIONAL: Operational issues
+- SECURITY: General security issues
+- CICD: CI/CD pipeline issues
+- GHACTIONS: GitHub Actions findings
+- CONTAINER: Container findings
+- AI_MODELS: AI model findings
+- TOOLS: Tool-related findings
+- SCPM: Repository security posture management
+
+Based on the OpenAPI schema and notification policy structure.
 
 Example:
 
+# SAST findings
 uv run python maneuvers/create_pr_comments_action_policy.py \
   --tenant-namespace "endor-solutions-tgowan.cockpit" \
   --name "SAST PR Comments Policy" \
   --description "Notification policy for SAST findings to generate PR comments" \
+  --finding-categories "SAST" \
   --severity "MEDIUM" \
   --tags "sast,pr-comments" \
   --project-tags "sast-enabled" \
   --dry-run
 
-## Note: Notification policies are required for PR comments to appear. This policy specifically
-## targets SAST findings and configures them to generate PR comments on pull requests.
+# SECRETS findings
+uv run python maneuvers/create_pr_comments_action_policy.py \
+  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --name "SECRETS PR Comments Policy" \
+  --description "Notification policy for SECRETS findings to generate PR comments" \
+  --finding-categories "SECRETS" \
+  --severity "HIGH" \
+  --tags "secrets,pr-comments" \
+  --project-tags "secrets-enabled" \
+  --dry-run
+
+# Multiple finding categories
+uv run python maneuvers/create_pr_comments_action_policy.py \
+  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --name "Security PR Comments Policy" \
+  --description "Notification policy for security findings to generate PR comments" \
+  --finding-categories "SAST,SECRETS,VULNERABILITY" \
+  --severity "MEDIUM" \
+  --tags "security,pr-comments" \
+  --project-tags "security-enabled" \
+  --dry-run
+
+## Note: Notification policies are required for PR comments to appear. This policy can target
+## multiple finding categories and configures them to generate PR comments on pull requests.
 ## The policy creates both a notification target (GitHub PR) and a notification policy.
 """
 
@@ -514,6 +556,46 @@ def parse_tags(tags_str: str) -> List[str]:
     return [tag.strip() for tag in tags_str.split(',') if tag.strip()]
 
 
+def parse_finding_categories(categories_str: str) -> List[str]:
+    """Parse comma-separated finding categories string into list."""
+    if not categories_str:
+        return []
+    
+    # Map user-friendly names to API constants
+    category_mapping = {
+        'SAST': 'FINDING_CATEGORY_SAST',
+        'SECRETS': 'FINDING_CATEGORY_SECRETS',
+        'SCA': 'FINDING_CATEGORY_SCA',
+        'VULNERABILITY': 'FINDING_CATEGORY_VULNERABILITY',
+        'MALWARE': 'FINDING_CATEGORY_MALWARE',
+        'LICENSE_RISK': 'FINDING_CATEGORY_LICENSE_RISK',
+        'SUPPLY_CHAIN': 'FINDING_CATEGORY_SUPPLY_CHAIN',
+        'OPERATIONAL': 'FINDING_CATEGORY_OPERATIONAL',
+        'SECURITY': 'FINDING_CATEGORY_SECURITY',
+        'CICD': 'FINDING_CATEGORY_CICD',
+        'GHACTIONS': 'FINDING_CATEGORY_GHACTIONS',
+        'CONTAINER': 'FINDING_CATEGORY_CONTAINER',
+        'AI_MODELS': 'FINDING_CATEGORY_AI_MODELS',
+        'TOOLS': 'FINDING_CATEGORY_TOOLS',
+        'SCPM': 'FINDING_CATEGORY_SCPM'
+    }
+    
+    categories = []
+    for category in categories_str.split(','):
+        category = category.strip().upper()
+        if category in category_mapping:
+            categories.append(category_mapping[category])
+        else:
+            # If it's already in API format, use as-is
+            if category.startswith('FINDING_CATEGORY_'):
+                categories.append(category)
+            else:
+                raise ValueError(f"Unknown finding category: {category}. "
+                               f"Available categories: {', '.join(category_mapping.keys())}")
+    
+    return categories
+
+
 def parse_project_tags(tags_str: str) -> List[str]:
     """Parse comma-separated project tags string into list."""
     return [tag.strip() for tag in tags_str.split(',') if tag.strip()]
@@ -555,10 +637,63 @@ def build_finding_config(sast_config: Optional[SASTFindingConfig], args) -> Dict
     return finding_config
 
 
+def generate_rego_rule(finding_categories: List[str]) -> str:
+    """Generate Rego rule for the specified finding categories."""
+    if not finding_categories:
+        raise ValueError("At least one finding category must be specified")
+    
+    # Create the package name based on the first category
+    first_category = finding_categories[0].replace('FINDING_CATEGORY_', '').lower()
+    package_name = f"{first_category}_notification"
+    
+    # Generate the match conditions for each category
+    category_conditions = []
+    for category in finding_categories:
+        category_conditions.append(f'    data.resources.Finding[i].spec.finding_categories[_] == "{category}"')
+    
+    # Join conditions with OR logic
+    category_match = " or\n".join(category_conditions)
+    
+    # Generate the complete rule
+    rule = f"""package {package_name}
+
+match_baseline(finding) {{
+    some i
+    data.baseline.Finding[i].spec.extra_key == finding.spec.extra_key
+    count(data.baseline.Finding[i].spec.finding_metadata.source_policy_info.results) == count(finding.spec.finding_metadata.source_policy_info.results)
+}}
+
+match_findings[result] {{
+    some i
+    ({category_match})
+    not match_baseline(data.resources.Finding[i])
+    
+    result = {{
+        "Endor": {{
+            "Finding": data.resources.Finding[i].uuid
+        }}
+    }}
+}}"""
+    
+    return rule
+
+
+def generate_query_statement(finding_categories: List[str]) -> str:
+    """Generate query statement for the specified finding categories."""
+    if not finding_categories:
+        raise ValueError("At least one finding category must be specified")
+    
+    # Create the package name based on the first category
+    first_category = finding_categories[0].replace('FINDING_CATEGORY_', '').lower()
+    package_name = f"{first_category}_notification"
+    
+    return f"data.{package_name}.match_findings"
+
+
 def main():
-    """Main function to create notification target and policy for SAST PR comments."""
+    """Main function to create notification target and policy for PR comments."""
     parser = argparse.ArgumentParser(
-        description="Create notification target and policy for SAST PR comments using Endor Labs API",
+        description="Create notification target and policy for PR comments using Endor Labs API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -624,50 +759,60 @@ Examples:
         help="Policy description - explains the purpose and scope of the action policy"
     )
 
-    # SAST Configuration
-    sast_group = parser.add_argument_group(
-        "SAST Configuration",
-        "Configure SAST-specific finding criteria"
+    # Finding Categories Configuration
+    parser.add_argument(
+        "--finding-categories",
+        required=True,
+        help="Finding categories - comma-separated list of finding categories to target. "
+             "Available categories: SAST, SECRETS, SCA, VULNERABILITY, MALWARE, LICENSE_RISK, "
+             "SUPPLY_CHAIN, OPERATIONAL, SECURITY, CICD, GHACTIONS, CONTAINER, AI_MODELS, TOOLS, SCPM. "
+             "Examples: 'SAST', 'SECRETS', 'SAST,SECRETS,VULNERABILITY'"
     )
-    sast_group.add_argument(
+
+    # Finding-Specific Configuration
+    finding_group = parser.add_argument_group(
+        "Finding-Specific Configuration",
+        "Configure finding-specific criteria (SAST, SECRETS, etc.)"
+    )
+    finding_group.add_argument(
         "--severity",
         choices=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
         help="Severity level - only match findings with this severity level"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--confidence",
         help="Confidence level - only match findings for SAST rules with this confidence level"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--language",
         help="Language - only match findings for this SAST result language (e.g., python, javascript, java)"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--sast-tag",
         help="SAST tag - only match findings that have this SAST tag (e.g., A01:2021, Cryptographic-Failures)"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--custom-tag",
         help="Custom tag - only match findings that have this custom tag"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--cwe",
         help="CWE - only match findings with this CWE (e.g., CWE-123, CWE-456)"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--file-scope",
         choices=["Normal", "Test"],
         help="File scope - only match findings with this file scope"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--include-path",
         help="Include path - only match findings for files that match this glob pattern (e.g., src/golang/**)"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--exclude-path",
         help="Exclude path - do not match findings for files that match this glob pattern"
     )
-    sast_group.add_argument(
+    finding_group.add_argument(
         "--code-owner",
         help="Code owner - only match findings with this code owner (e.g., @octocat, @team)"
     )
@@ -756,6 +901,7 @@ Examples:
 
         # Parse arguments
         tags = parse_tags(args.tags) if args.tags else None
+        finding_categories = parse_finding_categories(args.finding_categories)
         project_selector = (
             parse_project_tags(args.project_tags) if args.project_tags else None
         )
@@ -854,7 +1000,7 @@ Examples:
             ),
             spec=NotificationPolicySpec(
                 policy_type="POLICY_TYPE_NOTIFICATION",
-                rule="package sast_notification\n\nmatch_baseline(finding) {\n    some i\n    data.baseline.Finding[i].spec.extra_key == finding.spec.extra_key\n    count(data.baseline.Finding[i].spec.finding_metadata.source_policy_info.results) == count(finding.spec.finding_metadata.source_policy_info.results)\n}\n\nmatch_sast_findings[result] {\n    some i\n    data.resources.Finding[i].spec.finding_categories[_] == \"FINDING_CATEGORY_SAST\"\n    not match_baseline(data.resources.Finding[i])\n    \n    result = {\n        \"Endor\": {\n            \"Finding\": data.resources.Finding[i].uuid\n        }\n    }\n}",
+                rule=generate_rego_rule(finding_categories),
                 template_uuid=args.template_uuid,
                 template_version=args.template_version,
                 template_values=template_values if template_values else None,
@@ -867,7 +1013,7 @@ Examples:
                 action=args.action,
                 sast_config=sast_config,
                 finding=finding_config if finding_config else None,
-                query_statements=["data.sast_notification.match_sast_findings"],
+                query_statements=[generate_query_statement(finding_categories)],
                 notification={
                     "notification_target_uuids": [target_uuid],
                     "aggregation_type": "AGGREGATION_TYPE_PROJECT",
