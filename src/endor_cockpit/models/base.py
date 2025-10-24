@@ -6,9 +6,11 @@ used across all Endor Labs resource models.
 """
 
 import logging
+from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from ..types import ListParameters
 from ..utils import SchemaDriftDetector
@@ -16,6 +18,23 @@ from ..utils import SchemaDriftDetector
 T = TypeVar("T", bound=BaseModel)
 
 logger = logging.getLogger(__name__)
+
+
+class FlexibleEnum(str, Enum):
+    """Base class for flexible enums that can handle unknown values."""
+
+    @classmethod
+    def _missing_(cls, value):
+        """Handle unknown enum values gracefully."""
+        logger.warning(
+            f"Unknown {cls.__name__} value: {value}. Adding as dynamic enum."
+        )
+        # Create a dynamic enum member for unknown values
+        obj = str.__new__(cls, value)
+        # Use setattr to avoid type checker issues
+        obj._name_ = value  # type: ignore
+        obj._value_ = value  # type: ignore
+        return obj
 
 
 class TenantMeta(BaseModel):
@@ -52,35 +71,64 @@ class IngestedObject(BaseModel):
 class BaseMeta(BaseModel):
     """Base metadata for all resources with universal attributes."""
 
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
+
     # Required universal fields
-    name: str = Field(..., description="Resource name")
-    kind: str = Field(..., description="Resource type identifier")
-    version: str = Field(default="v1", description="Version identifier")
+    name: str = Field(..., description="Resource name")  # IMMUTABLE: Set at creation
+    kind: str = Field(
+        ..., description="Resource type identifier"
+    )  # IMMUTABLE: Set at creation
+    version: str = Field(
+        default="v1", description="Version identifier"
+    )  # IMMUTABLE: System-managed
 
     # Lifecycle fields (auto-managed by API)
-    create_time: Optional[str] = Field(None, description="Creation timestamp")
-    created_by: Optional[str] = Field(None, description="Creator identifier")
-    update_time: Optional[str] = Field(None, description="Last update timestamp")
-    updated_by: Optional[str] = Field(None, description="Last updater identifier")
-    upsert_time: Optional[str] = Field(None, description="Upsert timestamp")
+    create_time: Optional[str] = Field(
+        None, description="Creation timestamp"
+    )  # IMMUTABLE: System-managed
+    created_by: Optional[str] = Field(
+        None, description="Creator identifier"
+    )  # IMMUTABLE: System-managed
+    update_time: Optional[str] = Field(
+        None, description="Last update timestamp"
+    )  # IMMUTABLE: System-managed
+    updated_by: Optional[str] = Field(
+        None, description="Last updater identifier"
+    )  # IMMUTABLE: System-managed
+    upsert_time: Optional[str] = Field(
+        None, description="Upsert timestamp"
+    )  # IMMUTABLE: System-managed
 
     # User-defined fields
-    description: Optional[str] = Field(None, description="Resource description")
-    tags: Optional[List[str]] = Field(None, description="Resource tags")
+    description: Optional[str] = Field(
+        None, description="Resource description"
+    )  # MUTABLE: User can update
+    tags: Optional[List[str]] = Field(
+        None, description="Resource tags"
+    )  # MUTABLE: User can update
     annotations: Optional[Dict[str, Any]] = Field(
-        None, description="Key-value metadata pairs"
+        None,
+        description="Key-value metadata pairs",  # MUTABLE: User can update
     )
 
     # Hierarchical fields
-    parent_uuid: Optional[str] = Field(None, description="Parent resource UUID")
-    parent_kind: Optional[str] = Field(None, description="Parent resource kind")
+    parent_uuid: Optional[str] = Field(
+        None, description="Parent resource UUID"
+    )  # IMMUTABLE: Set at creation
+    parent_kind: Optional[str] = Field(
+        None, description="Parent resource kind"
+    )  # IMMUTABLE: Set at creation
 
     # System fields
     references: Optional[Dict[str, Any]] = Field(
-        None, description="External references and links"
+        None,
+        description="External references and links",  # IMMUTABLE: System-managed
     )
     index_data: Optional[Dict[str, Any]] = Field(
-        None, description="Search and indexing metadata"
+        None,
+        description="Search and indexing metadata",  # IMMUTABLE: System-managed
     )
 
     @field_validator("*", mode="before")
@@ -116,7 +164,9 @@ class BaseMeta(BaseModel):
 class BaseSpec(BaseModel):
     """Base specification for all resources."""
 
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     # Schema drift fields
     notification: Optional[Dict[str, Any]] = Field(
@@ -138,34 +188,76 @@ class BaseSpec(BaseModel):
 
 
 class BaseResource(BaseModel):
-    """Base resource model for all Endor Labs resources."""
+    """Base resource model for all Endor Labs resources.
 
-    model_config = ConfigDict(extra="ignore")
+    Field Mutability Guide:
+    ======================
+
+    IMMUTABLE FIELDS (cannot be updated after creation):
+    - uuid: System-generated unique identifier
+    - meta.name: Resource name set at creation
+    - meta.kind: Resource type set at creation
+    - meta.create_time: System-managed creation timestamp
+    - meta.created_by: System-managed creator identifier
+    - meta.update_time: System-managed update timestamp
+    - meta.updated_by: System-managed updater identifier
+    - meta.upsert_time: System-managed upsert timestamp
+    - meta.parent_uuid: Parent relationship set at creation
+    - meta.parent_kind: Parent type set at creation
+    - meta.references: System-managed external references
+    - meta.index_data: System-managed search metadata
+    - tenant_meta.namespace: Tenant assignment (immutable)
+
+    MUTABLE FIELDS (can be updated via API):
+    - meta.description: User-defined description
+    - meta.tags: User-defined tags list
+    - meta.annotations: User-defined key-value metadata
+    - spec.*: Most spec fields are mutable (resource-specific)
+    """
+
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     # Universal fields (nearly universal)
-    uuid: str = Field(..., description="Unique identifier for the resource")
-    meta: BaseMeta = Field(..., description="Resource metadata")
-    tenant_meta: TenantMeta = Field(..., description="Tenant metadata")
+    uuid: str = Field(
+        ..., description="Unique identifier for the resource"
+    )  # IMMUTABLE: System-generated
+    meta: BaseMeta = Field(
+        ..., description="Resource metadata"
+    )  # Mixed: See BaseMeta field comments
+    tenant_meta: TenantMeta = Field(
+        ..., description="Tenant metadata"
+    )  # IMMUTABLE: Set at creation
 
     # Common fields (88% present)
-    spec: BaseSpec = Field(..., description="Resource specification")
+    spec: BaseSpec = Field(
+        ..., description="Resource specification"
+    )  # MUTABLE: Most spec fields can be updated
 
     # Conditional fields (present when applicable)
-    context: Optional[Context] = Field(None, description="Contextual information")
+    context: Optional[Context] = Field(
+        None, description="Contextual information"
+    )  # MUTABLE: User can update
     processing_status: Optional[ProcessingStatus] = Field(
-        None, description="Processing state"
+        None,
+        description="Processing state",  # IMMUTABLE: System-managed
     )
     ingested_object: Optional[IngestedObject] = Field(
-        None, description="Ingestion metadata"
+        None,
+        description="Ingestion metadata",  # IMMUTABLE: System-managed
     )
     related_object: Optional[Dict[str, Any]] = Field(
-        None, description="Related object information"
+        None,
+        description="Related object information",  # IMMUTABLE: System-managed
     )
     scan_object: Optional[Dict[str, Any]] = Field(
-        None, description="Scan object information"
+        None,
+        description="Scan object information",  # IMMUTABLE: System-managed
     )
     propagate: Optional[bool] = Field(
-        None, description="Inheritance flag for hierarchical resources"
+        None,
+        description="Inheritance flag for hierarchical resources",  # MUTABLE
     )
 
     @field_validator("*", mode="before")
@@ -213,6 +305,13 @@ class BaseResource(BaseModel):
         mutable_fields = self.get_mutable_fields()
         return update_mask in mutable_fields
 
+    @field_serializer("*")
+    def serialize_datetime(self, value):
+        """Serialize datetime objects to ISO format strings."""
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
+
 
 class BaseResourceOperations:
     """Base class providing CRUD operations for all resources."""
@@ -229,26 +328,56 @@ class BaseResourceOperations:
         list_params: Optional[ListParameters] = None,
         **kwargs,
     ) -> List[BaseModel]:
-        """Universal list operation with filtering, masking, and pagination."""
+        """Universal list operation with automatic pagination."""
         try:
             headers = self.client.default_headers
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
-            # Build query parameters
-            params = self._build_params(list_params, **kwargs)
+            all_items = []
+            page_token = None
+            page_count = 0
 
-            res = self.client.get(url, headers=headers, params=params)
-            data = res.json()
+            while True:
+                # Build query parameters for this page
+                params = self._build_params(list_params, **kwargs)
 
-            # Handle both list.objects and direct array responses
-            if "list" in data and "objects" in data["list"]:
-                items = data["list"]["objects"]
-            elif isinstance(data, list):
-                items = data
-            else:
-                items = []
+                # Add page_token to params if present
+                if page_token is not None:
+                    params["list_parameters.page_token"] = str(page_token)
 
-            return [self.model_class(**item) for item in items]
+                res = self.client.get(url, headers=headers, params=params)
+                data = res.json()
+
+                # Extract objects from this page
+                if "list" in data and "objects" in data["list"]:
+                    items = data["list"]["objects"]
+                elif isinstance(data, list):
+                    items = data
+                else:
+                    items = []
+
+                all_items.extend(items)
+                page_count += 1
+
+                # Check for next page token
+                page_token = None
+                if isinstance(data, dict) and "list" in data:
+                    list_data = data["list"]
+                    if isinstance(list_data, dict) and "response" in list_data:
+                        response_data = list_data["response"]
+                        if isinstance(response_data, dict):
+                            page_token = response_data.get("next_page_token")
+
+                # Break if no more pages
+                if not page_token:
+                    break
+
+            self.logger.debug(
+                f"Fetched {len(all_items)} {self.resource_name} items "
+                f"across {page_count} pages from namespace '{tenant_meta_namespace}'"
+            )
+
+            return [self.model_class(**item) for item in all_items]
 
         except Exception as e:
             self.logger.error(

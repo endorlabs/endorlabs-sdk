@@ -62,6 +62,9 @@ holocron_data/**
 .workspace/**
 !.workspace/README.md
 
+# External documentation (committed)
+# external_docs/ - intentionally NOT ignored
+
 # OS
 .DS_Store
 Thumbs.db

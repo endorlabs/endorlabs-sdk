@@ -6,13 +6,18 @@ listing, examining, creating, updating, and deleting policies.
 """
 
 import logging
-from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 from ..api_client import APIClient
-from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..models.base import (
+    BaseMeta,
+    BaseResource,
+    BaseResourceOperations,
+    BaseSpec,
+    FlexibleEnum,
+)
 from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
@@ -29,7 +34,7 @@ def _get_policy_ops(client: APIClient) -> BaseResourceOperations:
     return _policy_ops
 
 
-class PolicyType(str, Enum):
+class PolicyType(FlexibleEnum):
     """Policy type enumeration."""
 
     SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
@@ -37,6 +42,18 @@ class PolicyType(str, Enum):
     ADMISSION = "POLICY_TYPE_ADMISSION"
     ML_FINDING = "POLICY_TYPE_ML_FINDING"
     NOTIFICATION = "POLICY_TYPE_NOTIFICATION"
+    EXCEPTION = "POLICY_TYPE_EXCEPTION"
+
+
+class ExceptionReason(FlexibleEnum):
+    """Exception reason enumeration."""
+
+    UNSPECIFIED = "EXCEPTION_REASON_UNSPECIFIED"
+    FALSE_POSITIVE = "EXCEPTION_REASON_FALSE_POSITIVE"
+    ACCEPTED_RISK = "EXCEPTION_REASON_ACCEPTED_RISK"
+    MITIGATION = "EXCEPTION_REASON_MITIGATION"
+    COMPLIANCE = "EXCEPTION_REASON_COMPLIANCE"
+    BUSINESS_JUSTIFICATION = "EXCEPTION_REASON_BUSINESS_JUSTIFICATION"
 
 
 class PolicyRule(BaseModel):
@@ -52,7 +69,7 @@ class PolicyRule(BaseModel):
 class PolicySpec(BaseSpec):
     """Policy specification extending BaseSpec."""
 
-    policy_type: PolicyType = Field(..., description="Policy type")
+    policy_type: Optional[PolicyType] = Field(None, description="Policy type")
     rule: Optional[str] = Field(None, description="Policy rule in text format")
     project_selector: Optional[List[str]] = Field(
         None, description="Project selector tags"
@@ -79,6 +96,9 @@ class PolicySpec(BaseSpec):
     group_by_fields: Optional[List[str]] = Field(None, description="Group by fields")
     notification: Optional[Dict[str, Any]] = Field(
         None, description="Notification configuration"
+    )
+    exception: Optional[Dict[str, Any]] = Field(
+        None, description="Exception configuration"
     )
 
     @field_validator("rule")

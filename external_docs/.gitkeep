@@ -1,0 +1,8 @@
+# External Documentation Directory
+# This directory contains committed external documentation:
+# - openapi-swagger.json: OpenAPI specification from Endor API
+# - sitemap.xml: Documentation sitemap from docs.endorlabs.com  
+# - user-docs/: User documentation pages converted to markdown
+#
+# These files are committed to git to ensure AI agents always have
+# access to external documentation without requiring downloads.
