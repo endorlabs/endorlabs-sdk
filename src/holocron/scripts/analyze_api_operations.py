@@ -205,7 +205,7 @@ def _save_analysis_results(
 
 def generate_operation_analysis():
     """Generate comprehensive operation analysis."""
-    spec_file = Path(".workspace/downloads/openapi-swagger.json")
+    spec_file = Path("external_docs/openapi-swagger.json")
     if not spec_file.exists():
         print(
             "❌ OpenAPI spec file not found. Run 'uv run python -m holocron sync' "

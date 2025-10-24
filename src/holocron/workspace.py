@@ -18,14 +18,14 @@ def create_directories(config: HolocronConfig) -> None:
     directories = [
         "holocron_data",
         "holocron_data/vector_db",
-        ".workspace",
-        ".workspace/downloads",
-        ".workspace/downloads/user-docs",
+        ".workspace",  # Keep for other ephemeral data
+        "external_docs",  # New committed location
+        "external_docs/user-docs",
         # Add directories from config
         os.path.dirname(config.db_path),
         os.path.dirname(config.manifest_path),
-        config.external_docs.openapi_output,
-        config.external_docs.sitemap_output,
+        os.path.dirname(config.external_docs.openapi_output),
+        os.path.dirname(config.external_docs.sitemap_output),
         config.external_docs.user_docs_output,
     ]
 

@@ -229,7 +229,7 @@ class TestExternalDocsSource:
         """Test external documentation chunking."""
         config = ContentTypeConfig(
             name="External Docs",
-            patterns=[r"\.workspace/downloads/user-docs/.*\.md$"],
+            patterns=[r"external_docs/user-docs/.*\.md$"],
             chunk_size=2000,
             overlap=300,
             delimiters=["===", "---", "\n\n"],
@@ -254,7 +254,7 @@ The API provides several endpoints for different operations.
 """
 
         chunks = source.chunk_content(
-            content, ".workspace/downloads/user-docs/getting-started.md"
+            content, "external_docs/user-docs/getting-started.md"
         )
 
         assert len(chunks) > 0
@@ -270,7 +270,7 @@ The API provides several endpoints for different operations.
         """Test external docs file detection."""
         config = ContentTypeConfig(
             name="External Docs",
-            patterns=[r"\.workspace/downloads/user-docs/.*\.md$"],
+            patterns=[r"external_docs/user-docs/.*\.md$"],
             chunk_size=2000,
             overlap=300,
             delimiters=["===", "---"],
@@ -278,17 +278,15 @@ The API provides several endpoints for different operations.
 
         source = ExternalDocsSource(config)
 
-        assert (
-            source.detect(".workspace/downloads/user-docs/getting-started.md") is True
-        )
+        assert source.detect("external_docs/user-docs/getting-started.md") is True
         assert source.detect("docs/README.md") is False
-        assert source.detect(".workspace/downloads/user-docs/api-reference.md") is True
+        assert source.detect("external_docs/user-docs/api-reference.md") is True
 
     def test_underline_header_detection(self):
         """Test underline header detection."""
         config = ContentTypeConfig(
             name="External Docs",
-            patterns=[r"\.workspace/downloads/user-docs/.*\.md$"],
+            patterns=[r"external_docs/user-docs/.*\.md$"],
             chunk_size=2000,
             overlap=300,
             delimiters=["===", "---"],
@@ -310,7 +308,7 @@ The API provides several endpoints for different operations.
         """Test line skipping for HTML comments and breadcrumbs."""
         config = ContentTypeConfig(
             name="External Docs",
-            patterns=[r"\.workspace/downloads/user-docs/.*\.md$"],
+            patterns=[r"external_docs/user-docs/.*\.md$"],
             chunk_size=2000,
             overlap=300,
             delimiters=["===", "---"],

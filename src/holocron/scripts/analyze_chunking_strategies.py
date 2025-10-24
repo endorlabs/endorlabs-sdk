@@ -626,7 +626,7 @@ def analyze_chunking_strategies(content: str, content_type: str):
 
 if __name__ == "__main__":
     # For testing - load OpenAPI spec if available
-    spec_file = Path(".workspace/downloads/openapi-swagger.json")
+    spec_file = Path("external_docs/openapi-swagger.json")
     if spec_file.exists():
         with open(spec_file, "r", encoding="utf-8") as f:
             spec_data = json.load(f)

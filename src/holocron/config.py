@@ -532,7 +532,7 @@ def get_default_config() -> HolocronConfig:
         default_collection="endor_cockpit_docs",
         embedding_model="text-embedding-3-small",
         paths=PathConfig(
-            include_dirs=["docs/", "src/", "tests/"],
+            include_dirs=["docs/", "src/", "tests/", "external_docs/"],
             exclude_dirs=["__pycache__", ".git", "node_modules", "venv", ".venv"],
         ),
         collections={
@@ -546,10 +546,10 @@ def get_default_config() -> HolocronConfig:
         },
         external_docs=ExternalDocsConfig(
             openapi_url_template="{ENDOR_API}/download/openapiv2.swagger.json",
-            openapi_output=".workspace/downloads/openapi-swagger.json",
+            openapi_output="external_docs/openapi-swagger.json",
             sitemap_url="https://docs.endorlabs.com/sitemap.xml",
-            sitemap_output=".workspace/downloads/sitemap.xml",
-            user_docs_output=".workspace/downloads/user-docs/",
+            sitemap_output="external_docs/sitemap.xml",
+            user_docs_output="external_docs/user-docs/",
             max_age_days=7,
         ),
         content_types={
