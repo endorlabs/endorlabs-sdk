@@ -1,42 +1,42 @@
-# Resource Implementation Protocol
+# Resource Implementation Rules of Engagement
 
-> **L2 (Task-Specific) - Comprehensive resource implementation workflow using Resource Guide**
+> **Tactical Operations**: These rules guide comprehensive resource implementation for the Endor Cockpit SDK.
 
 ## Overview
 
-This protocol provides detailed steps for implementing new Endor Labs resources in the SDK, using the Resource Guide as the canonical source for API patterns, examples, and specifications. This ensures consistency with documented patterns and real-world usage.
+These rules provide detailed steps for implementing new Endor Labs resources in the SDK, ensuring consistency with documented patterns and real-world usage.
 
-## Updated Implementation Phases (Using Resource Guide)
+## Implementation Phases
 
-### Phase 0: Resource Guide Analysis (MANDATORY)
+### Phase 0: API Analysis (MANDATORY)
 
-**CRITICAL**: This phase must be completed before any implementation begins. The Resource Guide contains validated examples, API patterns, and specifications that ensure consistency with real-world usage.
+**CRITICAL**: This phase must be completed before any implementation begins. Use the OpenAPI specification and live API data as canonical sources.
 
-#### 0.1 Analyze Resource Guide Entry
-- [ ] **Review Resource Guide**: Check `Resource-Guide.md` for the resource
-- [ ] **Example Output**: Use the JSON example as the canonical data structure
+#### 0.1 Analyze OpenAPI Specification
+- [ ] **Review OpenAPI Spec**: Check `external_docs/openapi-swagger.json` for the resource
+- [ ] **Example Output**: Use live API responses as the canonical data structure
 - [ ] **Description**: Understand the resource's purpose and characteristics
 - [ ] **Service Name**: Note the related service name (e.g., `FindingService`)
 - [ ] **URL Endpoints**: Review all available endpoints and HTTP methods
 - [ ] **API Patterns**: Note any resource-specific patterns or requirements
 
 #### 0.2 Validate Against Base Class Architecture
-- [ ] **Universal Attributes**: Ensure all universal fields are present in example
+- [ ] **Universal Attributes**: Ensure all universal fields are present in live data
 - [ ] **Conditional Attributes**: Identify which conditional attributes are used
 - [ ] **Base Class Compatibility**: Verify the resource can inherit from BaseResource
 - [ ] **API Pattern Support**: Confirm advanced patterns (filtering, masking, pagination) are supported
 
 #### 0.3 Create Implementation Matrix
-Document the complete mapping between Resource Guide and base class architecture:
+Document the complete mapping between OpenAPI spec and live data:
 - [ ] **Universal fields**: All universal attributes present and correct
 - [ ] **Conditional fields**: Which conditional attributes are used
 - [ ] **Resource-specific fields**: Fields unique to this resource type
 - [ ] **API operations**: Which CRUD operations are supported
 - [ ] **Advanced patterns**: Which advanced API patterns are supported
 
-## 🔧 **Implementation Patterns**
+## Implementation Patterns
 
-### **1. Basic Resource Structure**
+### 1. Basic Resource Structure
 
 #### **Pydantic Models**
 ```python
@@ -96,7 +96,7 @@ def get_{resource}(client: APIClient, tenant_meta_namespace: str, {resource}_uui
         return None
 ```
 
-### **2. Advanced Resource Patterns**
+### 2. Advanced Resource Patterns
 
 #### **Schema Drift Detection**
 ```python
@@ -152,7 +152,7 @@ class FindingSpec(BaseModel):
     references: Optional[Union[List[dict], dict]] = None    # Can be list or empty object
 ```
 
-### **3. PATCH Operations with Update Mask**
+### 3. PATCH Operations with Update Mask
 
 #### **Update Operations**
 ```python
@@ -195,12 +195,6 @@ def update_{resource}(client: APIClient, tenant_meta_namespace: str, {resource}_
 - ✅ **Error handling graceful**
 - ✅ **Follows project.py patterns**
 
-## Related Protocols
-
-- [Testing Protocol](testing-protocol.md) - For testing requirements
-- [Development Protocol](development-protocol.md) - For overall workflow
-- [Code Commit Protocol](code-commit-protocol.md) - For pre-commit requirements
-
 ---
 
-*This protocol ensures consistent, high-quality resource implementation across the SDK.*
+*These rules ensure consistent, high-quality resource implementation across the Endor Cockpit SDK.*
