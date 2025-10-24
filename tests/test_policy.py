@@ -363,56 +363,31 @@ configure[result] {
         """Test UPDATE policy operation using ML_FINDING pattern."""
         print("\n=== TESTING POLICY UPDATE (ML_FINDING) ===")
 
-        # Ensure we have a created policy to update
-        if not hasattr(self, "created_policy_uuid"):
-            created_policy = self.test_policy_create_ml_finding()
-            policy_uuid = created_policy.uuid
-        else:
-            policy_uuid = self.created_policy_uuid
+        # Create a fresh policy for this test
+        print("Creating fresh policy for update test...")
+        created_policy = self.test_policy_create_ml_finding()
+        policy_uuid = created_policy.uuid
+        print(f"Created policy UUID: {policy_uuid}")
 
         # Wait for policy to be fully created
         time.sleep(2)
 
-        # Robustness check: Find a policy that can be modified in current namespace
-        # Policies created in parent namespaces cannot be modified in child namespaces
+        # Verify the policy exists and is in the current namespace
         print(f"Current namespace: {self.namespace}")
+        created_policy_check = policy.get_policy(
+            self.client, self.namespace, policy_uuid
+        )
+        if not created_policy_check:
+            pytest.skip(f"Could not retrieve created policy {policy_uuid}")
 
-        # Get all policies and find one that was created in the current namespace
-        all_policies = policy.list_policies(self.client, self.namespace)
-        modifiable_policy = None
-
-        for p in all_policies:
-            if p.tenant_meta.namespace == self.namespace:
-                modifiable_policy = p
-                print(
-                    f"Found modifiable policy: {p.uuid} (created in "
-                    f"{p.tenant_meta.namespace})"
-                )
-                break
-
-        if not modifiable_policy:
-            # If no policy was created in current namespace, use the one we just created
-            # but first verify it's in the current namespace
-            created_policy_check = policy.get_policy(
-                self.client, self.namespace, policy_uuid
+        if created_policy_check.tenant_meta.namespace != self.namespace:
+            pytest.skip(
+                f"Policy {policy_uuid} is in namespace "
+                f"{created_policy_check.tenant_meta.namespace}, "
+                f"not in current namespace {self.namespace}"
             )
-            if (
-                created_policy_check
-                and created_policy_check.tenant_meta.namespace == self.namespace
-            ):
-                modifiable_policy = created_policy_check
-                print(
-                    f"Using newly created policy: {policy_uuid} (created in "
-                    f"{created_policy_check.tenant_meta.namespace})"
-                )
-            else:
-                pytest.skip(
-                    f"No modifiable policies found in namespace {self.namespace}"
-                )
-        else:
-            # Use the modifiable policy we found
-            policy_uuid = modifiable_policy.uuid
-            print(f"Using existing modifiable policy: {policy_uuid}")
+
+        print(f"Using created policy: {policy_uuid} (created in {self.namespace})")
 
         # Create update payload - only update safe fields
         update_payload = UpdatePolicyPayload(
@@ -472,18 +447,35 @@ configure[result] {
         print(f"Updated tags: {updated_policy.meta.tags}")
         print(f"Updated project selector: {updated_policy.spec.project_selector}")
 
+        # Clean up - delete the policy we created for this test
+        print(f"Cleaning up test policy: {policy_uuid}")
+        delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
+        if delete_success:
+            print(f"[SUCCESS] Test policy cleaned up: {policy_uuid}")
+        else:
+            print(f"[WARNING] Failed to clean up test policy: {policy_uuid}")
+
         return updated_policy
 
     def test_policy_delete_ml_finding(self):
         """Test DELETE policy operation using ML_FINDING pattern."""
         print("\n=== TESTING POLICY DELETE (ML_FINDING) ===")
 
-        # Ensure we have a created policy to delete
-        if not hasattr(self, "created_policy_uuid"):
-            created_policy = self.test_policy_create_ml_finding()
-            policy_uuid = created_policy.uuid
-        else:
-            policy_uuid = self.created_policy_uuid
+        # Create a fresh policy for this test
+        print("Creating fresh policy for delete test...")
+        created_policy = self.test_policy_create_ml_finding()
+        policy_uuid = created_policy.uuid
+        print(f"Created policy UUID: {policy_uuid}")
+
+        # Wait for policy to be fully created
+        time.sleep(2)
+
+        # Verify the policy exists
+        created_policy_check = policy.get_policy(
+            self.client, self.namespace, policy_uuid
+        )
+        if not created_policy_check:
+            pytest.skip(f"Could not retrieve created policy {policy_uuid}")
 
         print(f"Deleting ML_FINDING policy: {policy_uuid}")
 
@@ -500,10 +492,6 @@ configure[result] {
         assert deleted_policy is None, "Policy should no longer exist after deletion"
         print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
 
-        # Clean up
-        if hasattr(self, "created_policy_uuid"):
-            delattr(self, "created_policy_uuid")
-
         return True
 
     def test_policy_full_crud_cycle(self):
@@ -514,14 +502,14 @@ configure[result] {
         print("1. CREATE - Creating ML_FINDING policy")
         created_policy = self.test_policy_create_ml_finding()
         assert created_policy is not None, "Policy creation should succeed"
+        policy_uuid = created_policy.uuid
+        print(f"Created policy UUID: {policy_uuid}")
 
         # READ
         print("2. READ - Retrieving created policy")
-        retrieved_policy = policy.get_policy(
-            self.client, self.namespace, created_policy.uuid
-        )
+        retrieved_policy = policy.get_policy(self.client, self.namespace, policy_uuid)
         assert retrieved_policy is not None, "Policy retrieval should succeed"
-        assert retrieved_policy.uuid == created_policy.uuid, (
+        assert retrieved_policy.uuid == policy_uuid, (
             "Retrieved policy should match created policy"
         )
 
@@ -533,16 +521,80 @@ configure[result] {
 
         # UPDATE
         print("3. UPDATE - Updating policy")
-        updated_policy = self.test_policy_update_ml_finding()
+        # Wait for policy to be fully created
+        time.sleep(2)
+
+        # Create update payload - only update safe fields
+        update_payload = UpdatePolicyPayload(
+            meta=policy.PolicyMeta(
+                name="Updated Test Dummy ML Policy",
+                kind="Policy",
+                description="Updated description for the test ML_FINDING policy",
+                tags=["test", "dummy", "ml-finding", "crud-test", "updated"],
+            ),
+            spec=policy.PolicySpec(
+                policy_type=PolicyType.ML_FINDING,
+                rule="""package testpolicy
+
+configure[result] {
+  result = {
+    "updated_test_method": {
+      "disable": false,
+      "parameters": {
+        "enable_updated_test": {
+          "bool_value": true
+        }
+      }
+    }
+  }
+}""",
+                disable=False,
+                resource_kinds=[],
+                project_selector=["test-projects", "updated-projects"],
+                project_exceptions=["excluded-projects", "old-projects"],
+            ),
+            propagate=True,
+        )
+
+        print(f"Updating ML_FINDING policy: {policy_uuid}")
+        print(f"New name: {update_payload.meta.name}")
+        print(f"New tags: {update_payload.meta.tags}")
+
+        # Update the policy
+        updated_policy = policy.update_policy(
+            self.client,
+            self.namespace,
+            policy_uuid,
+            update_payload,
+            "meta.name,meta.description,meta.tags,spec.rule,spec.project_selector,spec.project_exceptions",
+        )
+
         assert updated_policy is not None, "Policy update should succeed"
-        assert updated_policy.meta.name != created_policy.meta.name, (
+        assert updated_policy.meta.name == "Updated Test Dummy ML Policy", (
             "Policy name should be updated"
         )
+        assert "updated" in updated_policy.meta.tags, "Updated tag should be present"
+        assert "updated-projects" in updated_policy.spec.project_selector, (
+            "Project selector should be updated"
+        )
+
+        print(f"[SUCCESS] Policy updated: {updated_policy.meta.name}")
 
         # DELETE
         print("4. DELETE - Deleting policy")
-        delete_success = self.test_policy_delete_ml_finding()
+        print(f"Deleting ML_FINDING policy: {policy_uuid}")
+
+        # Delete the policy
+        delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
+
         assert delete_success, "Policy deletion should succeed"
+        print(f"[SUCCESS] Policy deleted: {policy_uuid}")
+
+        # Verify deletion by trying to retrieve it
+        time.sleep(2)  # Wait for deletion to propagate
+        deleted_policy = policy.get_policy(self.client, self.namespace, policy_uuid)
+        assert deleted_policy is None, "Policy should no longer exist after deletion"
+        print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
 
         print("\n[SUCCESS] Full CRUD cycle completed successfully!")
         print("  - CREATE: ML_FINDING policy creation successful")

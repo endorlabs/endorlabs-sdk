@@ -25,6 +25,7 @@ namespaces = namespace.list_namespaces(client, "tenant.namespace")
 
 ### **Critical Requirements**
 - **Security**: Always run `endorctl scan` before code changes
+- **API Understanding**: Check OpenAPI spec → Review docs → Validate implementation
 - **Linting**: Max 88 chars/line, sorted imports, no trailing whitespace
 - **Dependencies**: Pin exact versions, avoid `latest`
 - **Environment**: Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
@@ -40,22 +41,38 @@ namespaces = namespace.list_namespaces(client, "tenant.namespace")
 - **Security**: Paramount importance
 - **Architecture**: Resource-oriented SDK pattern
 
-## 🤖 **Agent Roles & IDE Integration**
+---
 
-### **Developer Agent**
-- **Primary Function**: Code analysis, dependency management, vulnerability assessment
-- **Key Operations**: Project scanning, finding management, policy evaluation
-- **IDE Integration**: Seamless integration with development workflows
+## 🔍 **API Understanding Workflow**
+**CRITICAL**: Before making any model changes or API modifications, follow this workflow:
 
-### **Security Agent**
-- **Primary Function**: Security policy enforcement, compliance monitoring, risk assessment
-- **Key Operations**: Policy management, security scanning, finding triage
-- **IDE Integration**: Real-time security feedback and policy enforcement
+1. **Check Canonical OpenAPI Spec** (`external_docs/openapi-swagger.json`)
+   - Verify field requirements and types
+   - Understand which fields are required vs optional
+   - Check for read-only fields and their behavior
+   - Validate field masking implications
 
-### **Operations Agent**
-- **Primary Function**: Infrastructure management, namespace administration, system monitoring
-- **Key Operations**: Namespace management, repository administration, system health monitoring
-- **IDE Integration**: DevOps workflow integration and infrastructure automation
+2. **Review External Documentation** (`external_docs/user-docs/`)
+   - Understand business context and use cases
+   - Learn about field masking and API behavior
+   - Check for edge cases and special handling
+
+3. **Validate Against Current Implementation**
+   - Compare Pydantic models with OpenAPI spec
+   - Test with both masked and unmasked API responses
+   - Ensure backward compatibility
+
+**Example Workflow**:
+```bash
+# 1. Check OpenAPI spec for field requirements
+grep -A 20 "v1Meta" external_docs/openapi-swagger.json
+
+# 2. Review user documentation for context
+ls external_docs/user-docs/ | grep -i policy
+
+# 3. Test current implementation
+uv run python maneuvers/cleanup_test_policies.py --dry-run
+```
 
 ---
 
@@ -72,7 +89,7 @@ endor_cockpit/
 ### **Code Standards**
 - **Python**: 3.11-3.13, test on 3.13
 - **Dependencies**: `requests==2.32.5`, `pydantic==2.12.3`
-- **Tools**: `ruff`, `black`, `pytest`, `endorctl`
+- **Tools**: `ruff`, `pytest`, `endorctl`
 
 ### **Function Pattern**
 ```python
@@ -106,9 +123,7 @@ uv run pytest               # Test functionality
 ### **Common Fixes**
 - **E501**: Break long lines with parentheses/backslashes
 - **F401**: Remove unused imports
-- **W291/W293**: Remove trailing/blank line whitespace  
-- **F541**: Remove `f` prefix from strings without placeholders
-- **C901**: Accept for complex but necessary methods
+- **W291/W293**: Remove trailing/blank line whitespace
 
 ---
 
@@ -139,36 +154,11 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **❌ WRONG**: Don't use UUIDs as parents (403 Forbidden)
 - **Required**: `parent_namespace` parameter for all operations
 - **Payloads**: Use Pydantic models for type safety
+- **API Understanding**: Check OpenAPI spec → Review docs → Validate implementation
 
 ---
 
 ## 🛠️ **LLM Tool Integration**
-
-### **Tool Schema Pattern**
-```json
-{
-  "name": "create_namespace",
-  "description": "Create a new namespace in the Endor Labs platform",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "parent_namespace": {
-        "type": "string",
-        "description": "Canonical parent namespace (e.g., 'tenant.namespace')"
-      },
-      "name": {
-        "type": "string",
-        "description": "Name of the new namespace"
-      },
-      "description": {
-        "type": "string",
-        "description": "Description of the namespace purpose"
-      }
-    },
-    "required": ["parent_namespace", "name", "description"]
-  }
-}
-```
 
 ### **Available Resource Operations**
 - **Namespace**: `list_namespaces`, `create_namespace`, `get_namespace`, `update_namespace`, `delete_namespace`
@@ -177,12 +167,6 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **Policy**: `list_policies`, `create_policy`, `get_policy`, `update_policy`, `delete_policy`
 - **Repository**: `list_repositories`, `create_repository`, `get_repository`, `update_repository`
 - **PackageVersion**: `list_package_versions`, `get_package_version`, `update_package_version`
-
-### **Error Handling**
-- **HTTP errors**: Handle 4xx/5xx status codes
-- **Validation errors**: Handle Pydantic validation failures
-- **Network issues**: Retry logic for transient failures
-- **Rate limiting**: Respect API limits
 
 ---
 
@@ -194,15 +178,17 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **No PII**: This project handles no PII data
 - **Secure logging**: Filter sensitive data from logs
 
+### **API Security & Validation**
+- **Canonical Spec First**: Always check `external_docs/openapi-swagger.json` before model changes
+- **Field Masking Security**: Understand how field masking affects data validation
+- **Input Validation**: Ensure Pydantic models match API specifications exactly
+- **Backward Compatibility**: Changes must not break existing functionality
+
 ### **Environment Security**
 - **Credentials**: Use environment variables only
 - **No hardcoded secrets**: All secrets via env vars
 - **Secure logging**: No sensitive data in logs
 - **Input validation**: Validate all inputs
-
-### **Git Citizenship**
-- **.workspace**: Provide ephemeral scripts in the .workspace folder
-
 
 ---
 
@@ -222,7 +208,7 @@ export ENDOR_API_CREDENTIALS_KEY="your-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-secret"
 ```
 
-### **Critical Patterns**
+### **Essential Patterns**
 - **Canonical naming**: `tenant.namespace.child` (not UUIDs)
 - **Line length**: 88 characters max
 - **Imports**: Sorted, no unused

@@ -163,7 +163,7 @@ class Policy(BaseResource):
     """Policy resource model extending BaseResource."""
 
     # Policy-specific fields (universal fields inherited from BaseResource)
-    spec: PolicySpec = Field(..., description="Policy specification")  # type: ignore
+    spec: Optional[PolicySpec] = Field(None, description="Policy specification")  # type: ignore
 
     model_config = {"extra": "ignore"}
 
