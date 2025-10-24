@@ -1,24 +1,24 @@
-# Troubleshooting Protocol
+# Troubleshooting Rules of Engagement
 
-> **L1 (Essential - Always Required) - Issue resolution workflow**
+> **Tactical Operations**: These rules guide systematic issue resolution and debugging patterns for the Endor Cockpit.
 
 ## Overview
 
-This protocol provides a systematic approach to resolving development issues while capturing learnings for future reference.
+These rules provide a systematic approach to resolving development issues while capturing learnings for future reference.
 
 ## Troubleshooting Workflow
 
-### 1. Start Logbook Entry
-- [ ] Create entry in `.workspace/logbook.md` using `_LOGBOOK_TEMPLATE.md`
+### 1. Document the Issue
 - [ ] Document task being attempted
 - [ ] Record context (resource types, files, terminal output)
 - [ ] Note attempted approach with specific function calls
+- [ ] Capture error messages and stack traces
 
 ### 2. Research Phase
-- [ ] Query holocron for related issues: `uv run python -m holocron query "issue description"`
+- [ ] Search codebase using IDE semantic search for similar issues
 - [ ] Search existing documentation for similar problems
-- [ ] Check `.workspace/logbook.md` for previous solutions
 - [ ] Review API specification for expected behavior
+- [ ] Check external_docs/ for relevant patterns
 
 ### 3. Investigation Phase
 - [ ] Read SDK code and API spec
@@ -36,17 +36,11 @@ This protocol provides a systematic approach to resolving development issues whi
 - [ ] Implement working solution
 - [ ] Document exact function signatures that work
 - [ ] Test solution thoroughly
-- [ ] Update logbook entry with resolution
+- [ ] Document learnings in code comments for future reference
 
-### 6. Knowledge Promotion
-- [ ] Mark logbook entry "Reviewed for Promotion"
-- [ ] Follow [Knowledge Capture Workflow](../knowledge-capture-workflow.md)
-- [ ] Update relevant documentation
-- [ ] Sync knowledge base with `uv run python -m holocron sync`
+## Critical Debugging Patterns
 
-## 🚨 **Critical Debugging Patterns**
-
-### **1. PATCH Endpoint Debugging Journey**
+### 1. PATCH Endpoint Debugging Journey
 
 #### **Problem**: PATCH operations failing with 501 "Method Not Allowed"
 **Initial Error**: `requests.exceptions.HTTPError: 501 Server Error: Not Implemented`
@@ -82,7 +76,7 @@ This protocol provides a systematic approach to resolving development issues whi
 
 **Key Learning**: API responses can be correct but Pydantic models must include all fields for proper parsing.
 
-### **2. Test Structure Restructuring Debugging**
+### 2. Test Structure Restructuring Debugging
 
 #### **Problem**: Multiple redundant test files with overlapping functionality
 **Symptoms**: 5+ test files with similar test cases, hard to maintain
@@ -105,20 +99,31 @@ This protocol provides a systematic approach to resolving development issues whi
 
 **Key Learning**: Maintain consistency between class names and references throughout test files.
 
+## Common Issue Patterns
+
+### API Endpoint Issues
+- **Wrong URL patterns**: Check OpenAPI spec for actual endpoint structure
+- **Missing required fields**: Validate against OpenAPI specification
+- **Authentication failures**: Verify environment variables and credentials
+
+### Pydantic Model Issues
+- **Missing fields**: Ensure all API response fields are modeled
+- **Type mismatches**: Validate field types against OpenAPI spec
+- **Validation errors**: Check required vs optional field definitions
+
+### Test Structure Issues
+- **Redundant test files**: Consolidate by resource type
+- **Class naming**: Maintain consistency between class names and references
+- **Test organization**: Follow established patterns from existing tests
+
 ## Success Criteria
 
 - ✅ Issue resolved with working solution
-- ✅ Logbook entry created with complete information
+- ✅ Solution documented in code comments
 - ✅ Knowledge captured for future reference
 - ✅ Documentation updated if applicable
-- ✅ Knowledge base synced
-
-## Related Protocols
-
-- [Knowledge Capture Workflow](../knowledge-capture-workflow.md) - For promoting learnings
-- [Development Protocol](development-protocol.md) - For implementing fixes
-- [Code Commit Protocol](code-commit-protocol.md) - For committing solutions
+- ✅ Patterns documented for team knowledge
 
 ---
 
-*This protocol ensures systematic issue resolution while building institutional knowledge.*
+*These rules ensure systematic issue resolution while building institutional knowledge for the Endor Cockpit.*

@@ -162,10 +162,12 @@ endorctl scan --path . --namespace "your-namespace"
 
 ## Documentation
 
-- **[AI Agent Integration Guide](./AGENTS.md)** - Comprehensive guide for AI agent integration
-- **[Development Protocols](./docs/protocols/)** - Operational protocols and best practices
-- **[API Reference](./docs/)** - Complete API documentation
+- **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
+- **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
+- **[Rego Policy Guide](./docs/rego_guide.md)** - Complete Rego policy development reference
 - **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
+- **[External Documentation](./external_docs/)** - Endor Labs API and user documentation
+- **[Holocron (Deprecated)](./src/holocron/README.md)** - Historical semantic search system
 
 ## Workspace Folder
 
