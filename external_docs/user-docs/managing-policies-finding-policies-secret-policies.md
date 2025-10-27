@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/secret-policies/
 title: Secret policies | Endor Labs Docs
-downloaded: 2025-10-23 23:26:35
+downloaded: 2025-10-27 12:58:52
 ---
 
 Secret policies | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-local-system/
 title: Quick start with endorctl | Endor Labs Docs
-downloaded: 2025-10-23 23:26:30
+downloaded: 2025-10-27 12:58:46
 ---
 
 Quick start with endorctl | Endor Labs Docs
@@ -376,7 +376,7 @@ If your project contains multiple programming languages, you can specify them as
 endorctl scan --languages=<languages-list>
 ```
 
-Where `<languages-list>` should be provided as a comma-separated list from the supported languages: `c/c++,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`.
+Where `<languages-list>` should be provided as a comma-separated list from the supported languages: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`.
 
 #### Scanning an example repository
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/maven-private-package-manager/
 title: Private package manager integration for Maven | Endor Labs Docs
-downloaded: 2025-10-23 23:27:01
+downloaded: 2025-10-27 12:59:16
 ---
 
 Private package manager integration for Maven | Endor Labs Docs

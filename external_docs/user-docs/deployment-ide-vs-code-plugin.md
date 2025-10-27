@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ide/vs-code-plugin/
 title: Endor Labs Visual Studio Code extension | Endor Labs Docs
-downloaded: 2025-10-23 23:24:51
+downloaded: 2025-10-27 12:57:10
 ---
 
 Endor Labs Visual Studio Code extension | Endor Labs Docs

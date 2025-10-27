@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authorization-roles/
 title: Authorization roles | Endor Labs Docs
-downloaded: 2025-10-23 23:25:31
+downloaded: 2025-10-27 12:57:49
 ---
 
 Authorization roles | Endor Labs Docs

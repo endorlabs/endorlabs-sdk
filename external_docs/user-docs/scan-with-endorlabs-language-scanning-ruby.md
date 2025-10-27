@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/ruby/
 title: Ruby | Endor Labs Docs
-downloaded: 2025-10-23 23:27:41
+downloaded: 2025-10-27 12:59:55
 ---
 
 Ruby | Endor Labs Docs

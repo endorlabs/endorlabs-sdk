@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/pr-comments/
 title: Pull Request comments | Endor Labs Docs
-downloaded: 2025-10-23 23:25:49
+downloaded: 2025-10-27 12:58:07
 ---
 
 Pull Request comments | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/operational-best-practices/
 title: Best Practices: Branches and workflows | Endor Labs Docs
-downloaded: 2025-10-23 23:24:41
+downloaded: 2025-10-27 12:57:00
 ---
 
 Best Practices: Branches and workflows | Endor Labs Docs
@@ -16,6 +16,8 @@ Best Practices: Branches and workflows | Endor Labs Docs
 
 
 # Best Practices: Branches and workflows
+
+Learn how to scan different branches, set up baseline branches, and integrate PR scans into your development workflow.
 
 Explore how to effectively use Endor Labs to scan different branches within your organization’s software development workflows. Properly managing branches and integrating robust scanning processes is crucial for maintaining code quality, security, and consistency across your development pipeline.
 

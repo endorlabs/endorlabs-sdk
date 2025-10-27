@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/github-security-campaign/
 title: Best Practices: GitHub Security Campaign | Endor Labs Docs
-downloaded: 2025-10-23 23:27:14
+downloaded: 2025-10-27 12:59:29
 ---
 
 Best Practices: GitHub Security Campaign | Endor Labs Docs
@@ -31,7 +31,7 @@ The security campaign allows organizations to:
 * Enforce consistent remediation timelines and accountability across teams.
 * Monitor reduction in overall security debt using both GitHub’s campaign dashboard and Endor Labs analytics.
 
-Ensure you have deployed [Endor Labs](../../deployment/_index.en.md) and enabled [GitHub Advanced Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) before creating a security campaign.
+Ensure you have deployed [Endor Labs](../../deployment) and enabled [GitHub Advanced Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) before creating a security campaign.
 
 ## Create and manage a security campaign
 

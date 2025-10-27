@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-review-endorctl/
 title: Set up AI security code review with endorctl | Endor Labs Docs
-downloaded: 2025-10-23 23:26:36
+downloaded: 2025-10-27 12:58:52
 ---
 
 Set up AI security code review with endorctl | Endor Labs Docs
@@ -23,13 +23,13 @@ You can use AI security code review with endorctl and GitHub environment variabl
 
 Complete the following tasks to set up AI security code review with endorctl:
 
-* [Complete the prerequisites to use AI security code review with endorctl.](#prerequisites-to-use-ai-security-review-with-endorctl)
+* [Complete the prerequisites to use AI security code review with endorctl.](#prerequisites-to-use-ai-security-code-review-with-endorctl)
 * [Set up the environment variables required to run endorctl for AI security code review.](#set-up-environment-variables)
 * [Install and authenticate endorctl, build your project, and run a scan.](../../../getting-started/quickstart/quickstart-local-system) Scanning the repository creates the project in Endor Labs that you can use to configure the scan profile.
 * Configure a [scan profile](../ai-security-review-settings/#configure-scan-profile-for-ai-security-review) for AI security code review.
 * Enable the [security review finding policy](../ai-security-review-settings#enable-finding-policy-for-ai-security-review).
 * Configure an [action policy](../ai-security-review-settings#configure-action-policy-for-pull-request-comments) if you want to get comments on your GitHub pull request with the details of the AI security code review.
-* [Run scans for AI security code review.](#pull-request-scan-with-ai-security-review)
+* [Run scans for AI security code review.](#pull-request-scan-with-ai-security-code-review)
 * [View results of the AI security code review.](../ai-security-review-results/)
 
 ## Prerequisites to use AI security code review with endorctl
@@ -75,7 +75,21 @@ export ENDOR_NAMESPACE=<your-namespace>
 
 ## Pull request scan with AI security code review
 
-For pull request scans with AI security code review, you need to specify the required flags.
+To scan a pull request with AI security code review, fetch the pull request branch locally and checkout the branch.
+
+```
+git fetch origin pull/<PR_NUMBER>/head:pr-<PR_NUMBER>
+git checkout pr-<PR_NUMBER>
+```
+
+For example, to scan pull request 12, you need to run the following commands.
+
+```
+git fetch origin pull/12/head:pr-12
+git checkout pr-12
+```
+
+After you have fetched and checked out the pull request branch, you can run the following command to scan the pull request with AI security code review.
 
 ```
 endorctl scan \

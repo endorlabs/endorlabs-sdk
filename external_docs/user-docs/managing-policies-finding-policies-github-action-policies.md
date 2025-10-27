@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/github-action-policies/
 title: GitHub Action policies | Endor Labs Docs
-downloaded: 2025-10-23 23:27:18
+downloaded: 2025-10-27 12:59:33
 ---
 
 GitHub Action policies | Endor Labs Docs

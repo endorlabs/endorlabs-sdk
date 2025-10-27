@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/sync-org/
 title: sync-org | Endor Labs Docs
-downloaded: 2025-10-23 23:25:17
+downloaded: 2025-10-27 12:57:35
 ---
 
 sync-org | Endor Labs Docs
