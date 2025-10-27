@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-gitlab/
 title: Scanning in GitLab Pipelines | Endor Labs Docs
-downloaded: 2025-10-23 23:27:02
+downloaded: 2025-10-27 12:59:18
 ---
 
 Scanning in GitLab Pipelines | Endor Labs Docs

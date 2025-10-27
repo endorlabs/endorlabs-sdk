@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/
 title: Monitoring or supervisory scans | Endor Labs Docs
-downloaded: 2025-10-23 23:24:27
+downloaded: 2025-10-27 12:56:46
 ---
 
 Monitoring or supervisory scans | Endor Labs Docs
@@ -23,18 +23,26 @@ Perform monitoring scans to gain fast and broad visibility over open source risk
 
 ```
 graph TD
-    A(["Endor Labs App"]) -->|<span style='font-size: 12px'>Continuous monitoring</span>| B["Customer Repositories"]
-    A -->|<span style='font-size: 12px'>Initiate scans every 24h or on-demand</span>| C["Endor Labs Cloud
-    <span style='font-size: 12px'>Customer data destroyed after scans</span>"]
-    B -->|<span style='font-size: 12px'>Clones and scans repositories</span>| C
-    C -->|<span style='font-size: 12px'>Pass scan data</span>| D(["Endor Labs Platform
-    <span style='font-size: 12px'>Generate findings from scan results</span>"])
-    subgraph "<span style='font-size: 18px'>Supervisory scan workflow<span>"
+    A["Endor Labs App"]
+    B["Customer Repositories"]
+    C["Endor Labs Cloud<br/><small>Customer data destroyed after scans</small>"]
+    D["Endor Labs Platform<br/><small>Generate findings from scan results</small>"]
+
+    A -->|<small>Continuous monitoring</small>| B
+    A -->|<small>Initiate scan every 24h or on-demand</small>| C
+    C <-->|<small>Clone and scan repositories</small>| B
+    C -->|<small>Pass scan data</small>| D
+
+    subgraph "Supervisory scan workflow"
     A
     B
     C
     D
     end
+
+    class B customer
+    class A,C,D endor
+    classDef customer fill:#3FE1F3
 ```
 
 * **GitHub App monitoring scan**: You can use the Endor Labs GitHub App to scan your GitHub organizations. It provides broad visibility over your GitHub organizations. Once installed, the GitHub App will automatically clone and scan all the repositories every 24 hours, providing continuous monitoring for open source vulnerabilities. It performs RSPM scans for posture management of your repository weekly on Sundays. These repositories are temporarily cloned and retained only during the scan. See [Scan using the GitHub App](../monitoring-scans/github-app/) for more information.

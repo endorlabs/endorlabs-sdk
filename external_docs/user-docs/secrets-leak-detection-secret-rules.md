@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/secrets-leak-detection/secret-rules/
 title: Manage secret rules | Endor Labs Docs
-downloaded: 2025-10-23 23:22:13
+downloaded: 2025-10-27 12:56:43
 ---
 
 Manage secret rules | Endor Labs Docs

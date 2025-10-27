@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/scoping-scans/
 title: Best Practices: Scoping scans | Endor Labs Docs
-downloaded: 2025-10-23 23:26:14
+downloaded: 2025-10-27 12:58:31
 ---
 
 Best Practices: Scoping scans | Endor Labs Docs

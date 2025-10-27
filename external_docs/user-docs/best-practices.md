@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/
 title: Best practices | Endor Labs Docs
-downloaded: 2025-10-23 23:28:19
+downloaded: 2025-10-27 13:00:32
 ---
 
 Best practices | Endor Labs Docs
@@ -21,7 +21,11 @@ The resources described here are designed to help you maximize the effectiveness
 
 ##### [Best Practices: Branches and workflows](/best-practices/operational-best-practices/)
 
+Learn how to scan different branches, set up baseline branches, and integrate PR scans into your development workflow.
+
 ##### [Best Practices: API key management](/best-practices/manage-api-keys/)
+
+Learn how to manage API keys, check for expiring keys, and automate key rotation.
 
 ##### [Best Practices: Scoping scans](/best-practices/scoping-scans/)
 

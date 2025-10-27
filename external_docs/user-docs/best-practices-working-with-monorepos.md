@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/working-with-monorepos/
 title: Best Practices: Working with monorepos | Endor Labs Docs
-downloaded: 2025-10-23 23:26:49
+downloaded: 2025-10-27 12:59:05
 ---
 
 Best Practices: Working with monorepos | Endor Labs Docs
@@ -113,7 +113,7 @@ Run the following command to scan a project for only packages used for packages 
 endorctl scan --languages=java
 ```
 
-Define supported languages as a comma-separated list of the following languages: `c/c++,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`
+Define supported languages as a comma-separated list of the following languages: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`
 
 ## Feedback
 

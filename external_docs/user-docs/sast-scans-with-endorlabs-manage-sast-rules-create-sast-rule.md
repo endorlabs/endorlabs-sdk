@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/manage-sast-rules/create-sast-rule/
 title: Create a SAST rule | Endor Labs Docs
-downloaded: 2025-10-23 23:24:48
+downloaded: 2025-10-27 12:57:07
 ---
 
 Create a SAST rule | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/jira-with-endor-labs/
 title: Best Practices: Jira integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-23 23:26:48
+downloaded: 2025-10-27 12:59:04
 ---
 
 Best Practices: Jira integration with Endor Labs | Endor Labs Docs

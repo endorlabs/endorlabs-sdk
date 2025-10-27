@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/build-tools/
 title: Configure build tools | Endor Labs Docs
-downloaded: 2025-10-23 23:24:47
+downloaded: 2025-10-27 12:57:05
 ---
 
 Configure build tools | Endor Labs Docs

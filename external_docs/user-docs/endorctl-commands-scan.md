@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/scan/
 title: scan | Endor Labs Docs
-downloaded: 2025-10-23 23:25:14
+downloaded: 2025-10-27 12:57:32
 ---
 
 scan | Endor Labs Docs
@@ -35,7 +35,7 @@ If your project contains multiple programming languages, you can specify them as
 endorctl scan --languages=<languages-list>
 ```
 
-Where `<languages-list>` should be provided as a comma-separated list from the supported languages: `c/c++,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`.
+Where `<languages-list>` should be provided as a comma-separated list from the supported languages: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`.
 
 To scan leaked secrets and monitor all results in the checked out version of your repository.
 
@@ -201,7 +201,7 @@ The command `endorctl scan` uses the following flags and environment variables:
 | `finding-tags` | `ENDOR_SCAN_FINDING_TAGS` | string | Specify a list of user-defined tags to add to findings generated for objects in this scan scope. Use in combination with options such as `--include-path` or `--exclude-path`. Finding tags can be used to search and filter findings later. |
 | `ghactions` | `ENDOR_SCAN_GHACTIONS` | boolean (default:false) | Scan and discover GitHub action workflows in your CI/CD pipeline. |
 | `include-path` | `ENDOR_SCAN_INCLUDE_PATH` | string | Limit the scan to the specified file paths or directories using Glob style expressions. For example, `--include-path="src/java/**"` will scan all the files under `src/java`, including any sub-directories, while `--include-path="src/java/*"` will only include the files directly under `src/java`. Paths must be relative to the root of the repository. Use quotes to ensure that your shell does not expand wild cards. |
-| `l`, `languages` | `ENDOR_SCAN_LANGUAGES` | string | Set programming languages to scan. Used to limit scanning to specific languages. If your project contains multiple programming languages, you can specify them as a comma-separated list as: `c/c++,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`. |
+| `l`, `languages` | `ENDOR_SCAN_LANGUAGES` | string | Set programming languages to scan. Used to limit scanning to specific languages. If your project contains multiple programming languages, you can specify them as a comma-separated list as: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`. |
 | `o`, `output-type` | `ENDOR_SCAN_SUMMARY_OUTPUT_TYPE` | string | Set output format to json, yaml, table, or summary. Summary only displays policy violations (default: `table`). |
 | `package` | `ENDOR_SCAN_PACKAGE` | boolean (default:false) | Scan binaries and artifacts. You must provide the path of your file using `--path` and specify a name for your project using `--project-name` parameters. |
 | `p`, `path` | `ENDOR_SCAN_PATH` | string | Set path to local repository to scan. For example: `--path=/Users/endorlabs/github/myrepo`. |

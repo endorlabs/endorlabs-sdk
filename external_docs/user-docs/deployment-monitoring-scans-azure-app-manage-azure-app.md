@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/azure-app/manage-azure-app/
 title: Manage Azure DevOps App on Endor Labs | Endor Labs Docs
-downloaded: 2025-10-23 23:25:44
+downloaded: 2025-10-27 12:58:02
 ---
 
 Manage Azure DevOps App on Endor Labs | Endor Labs Docs

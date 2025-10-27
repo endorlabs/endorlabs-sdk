@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/scores/repository-scores/security-score-factors/
 title: Security score factors | Endor Labs Docs
-downloaded: 2025-10-23 23:26:09
+downloaded: 2025-10-27 12:58:26
 ---
 
 Security score factors | Endor Labs Docs
