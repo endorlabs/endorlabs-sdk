@@ -3,9 +3,21 @@ RepositoryVersion resource module for Endor Labs API.
 
 This module provides CRUD operations for RepositoryVersion resources following the
 established patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List repository versions, Get repository version by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported (repository versions managed by platform integrations)
+- UPDATE: Not supported by API (repository versions are read-only)
+- DELETE: Not supported (repository versions managed by platform integrations)
+
+Note: Repository versions are automatically discovered and managed through platform
+integrations and cannot be manually created, updated, or deleted through the API.
 """
 
 import logging
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -27,23 +39,65 @@ class RepositoryVersionMeta(BaseMeta):
 
 
 class VersionInfo(BaseModel):
-    """Version information for RepositoryVersion."""
+    """Version information for RepositoryVersion matching v1Version spec."""
 
-    ref: str = Field(..., description="Version reference (branch, tag, or commit)")
-    sha: str = Field(..., description="Commit SHA hash")
+    sha: Optional[str] = Field(
+        None,
+        description="SHA of source control version. Optional if SHA cannot resolve.",
+    )
+    ref: Optional[str] = Field(
+        None,
+        description="Resolved ref of source control version: tag, branch, or SHA",
+    )
+    metadata: Optional[dict] = Field(None, description="Version metadata.")
 
 
 class RepositoryVersionSpec(BaseSpec):
-    """RepositoryVersion specification extending BaseSpec."""
+    """RepositoryVersion specification extending BaseSpec.
 
-    # RepositoryVersion-specific spec fields based on actual API structure
-    version: VersionInfo = Field(
-        ..., description="Version information with ref and sha"
-    )
+    Field Mutability Guide:
+    ======================
+
+    IMMUTABLE FIELDS (cannot be updated after creation):
+    - version: Version information (set at creation)
+    - last_commit_date: Last commit date (system-managed)
+
+    MUTABLE FIELDS (can be updated via API):
+    - None (RepositoryVersion is typically immutable after creation)
+    """
+
+    version: Optional[VersionInfo] = Field(
+        None, description="Version information with ref, sha, and metadata"
+    )  # IMMUTABLE: Set at creation
+    last_commit_date: Optional[datetime] = Field(
+        None, description="The last known time when the repository version was updated"
+    )  # IMMUTABLE: System-managed
 
 
 class RepositoryVersion(BaseResource):
-    """RepositoryVersion resource model extending BaseResource."""
+    """
+    RepositoryVersion resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List repository versions, Get by UUID
+    ❌ CREATE: Not supported (managed by platform integrations)
+    ❌ UPDATE: Not supported (repository versions are read-only)
+    ❌ DELETE: Not supported (managed by platform integrations)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Repository version name (set by platform)
+    - spec.version: Version information (set by platform)
+    - spec.last_commit_date: Last commit date (set by platform)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Platform-managed metadata
+
+    Note: Repository versions are automatically synchronized from platform integrations
+    and cannot be manually created, updated, or deleted through the API.
+    """
 
     # RepositoryVersion-specific fields (universal fields inherited from BaseResource)
     spec: RepositoryVersionSpec = Field(
@@ -71,7 +125,7 @@ class RepositoryVersion(BaseResource):
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
-            known_fields = {"version"}
+            known_fields = {"version", "last_commit_date"}
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
@@ -103,3 +157,75 @@ def get_repository_version(
     """Get specific repository version by UUID."""
     ops = _get_repository_version_ops(client)
     return ops.get(tenant_meta_namespace, repository_version_uuid)  # type: ignore
+
+
+def create_repository_version(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    payload: "CreateRepositoryVersionPayload",
+) -> Optional[RepositoryVersion]:
+    """Create a new repository version."""
+    ops = _get_repository_version_ops(client)
+    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+
+
+def update_repository_version(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    repository_version_uuid: str,
+    payload: "UpdateRepositoryVersionPayload",
+    update_mask: Optional[List[str]] = None,
+) -> Optional[RepositoryVersion]:
+    """Update an existing repository version with partial updates."""
+    ops = _get_repository_version_ops(client)
+    return ops.update(
+        tenant_meta_namespace, repository_version_uuid, payload, update_mask
+    )  # type: ignore
+
+
+def delete_repository_version(
+    client: APIClient, tenant_meta_namespace: str, repository_version_uuid: str
+) -> bool:
+    """Delete a repository version by UUID."""
+    ops = _get_repository_version_ops(client)
+    return ops.delete(tenant_meta_namespace, repository_version_uuid)  # type: ignore
+
+
+# Payload models for create and update operations
+class CreateRepositoryVersionPayload(BaseModel):
+    """Payload for creating a repository version."""
+
+    meta: "RepositoryVersionMetaCreate" = Field(
+        ..., description="RepositoryVersion metadata for creation"
+    )
+    spec: RepositoryVersionSpec = Field(
+        ..., description="RepositoryVersion specification"
+    )
+
+
+class UpdateRepositoryVersionPayload(BaseModel):
+    """Payload for updating a repository version."""
+
+    meta: Optional["RepositoryVersionMetaUpdate"] = Field(
+        None, description="RepositoryVersion metadata for update"
+    )
+    spec: Optional[RepositoryVersionSpec] = Field(
+        None, description="RepositoryVersion specification for update"
+    )
+
+
+class RepositoryVersionMetaCreate(BaseModel):
+    """RepositoryVersion metadata for creation."""
+
+    name: str = Field(..., description="RepositoryVersion name")
+    description: Optional[str] = Field(
+        None, description="RepositoryVersion description"
+    )
+
+
+class RepositoryVersionMetaUpdate(BaseModel):
+    """RepositoryVersion metadata for update."""
+
+    description: Optional[str] = Field(
+        None, description="RepositoryVersion description"
+    )

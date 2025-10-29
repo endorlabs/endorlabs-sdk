@@ -3,20 +3,134 @@ PackageVersion resource module for Endor Labs API.
 
 This module provides CRUD operations for PackageVersion resources following the
 established patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List package versions, Get package version by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported by API (package versions are discovered by scans)
+- UPDATE: Not supported by API (returns 501 Method Not Allowed)
+- DELETE: Not supported by API (package versions are immutable)
+
+Note: Package versions are automatically discovered during security scans and cannot
+be manually created, updated, or deleted. The API returns 501 Not Allowed for
+PATCH operations on package versions.
 """
 
 import logging
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
-from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..models.base import (
+    BaseMeta,
+    BaseResource,
+    BaseResourceOperations,
+    BaseSpec,
+    FlexibleEnum,
+)
 from ..types import ListParameters
 
 # Set up logger with redaction filter
 logger = logging.getLogger(__name__)
 logger.addFilter(RedactingFilter([redaction_pattern]))
+
+
+class Ecosystem(FlexibleEnum):
+    """Ecosystem enumeration."""
+
+    UNSPECIFIED = "ECOSYSTEM_UNSPECIFIED"
+    GO = "ECOSYSTEM_GO"
+    MAVEN = "ECOSYSTEM_MAVEN"
+    PYPI = "ECOSYSTEM_PYPI"
+    CARGO = "ECOSYSTEM_CARGO"
+    NPM = "ECOSYSTEM_NPM"
+    GEM = "ECOSYSTEM_GEM"
+    NUGET = "ECOSYSTEM_NUGET"
+    PACKAGIST = "ECOSYSTEM_PACKAGIST"
+    SBOM = "ECOSYSTEM_SBOM"
+    RPM = "ECOSYSTEM_RPM"
+    DEBIAN = "ECOSYSTEM_DEBIAN"
+    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+
+
+class Language(FlexibleEnum):
+    """Language enumeration."""
+
+    UNSPECIFIED = "LANGUAGE_UNSPECIFIED"
+    GO = "LANGUAGE_GO"
+    JAVA = "LANGUAGE_JAVA"
+    SCALA = "LANGUAGE_SCALA"
+    PYTHON = "LANGUAGE_PYTHON"
+    RUST = "LANGUAGE_RUST"
+    JS = "LANGUAGE_JS"
+    RUBY = "LANGUAGE_RUBY"
+    CSHARP = "LANGUAGE_CSHARP"
+    PHP = "LANGUAGE_PHP"
+    TYPESCRIPT = "LANGUAGE_TYPESCRIPT"
+    KOTLIN = "LANGUAGE_KOTLIN"
+    SWIFT = "LANGUAGE_SWIFT"
+
+
+class PackageVersionSourceCodeReference(BaseModel):
+    """Source code reference for package version."""
+
+    ref: str = Field(..., description="Reference (branch, tag, or commit)")
+    sha: Optional[str] = Field(None, description="Commit SHA")
+    repository_uuid: Optional[str] = Field(None, description="Repository UUID")
+
+
+class PackageVersionDependency(BaseModel):
+    """Package version dependency."""
+
+    name: str = Field(..., description="Dependency name")
+    version: str = Field(..., description="Dependency version")
+    ecosystem: Optional[Ecosystem] = Field(None, description="Dependency ecosystem")
+
+
+class Bom(BaseModel):
+    """Bill of Materials for resolved dependencies."""
+
+    dependencies: List[PackageVersionDependency] = Field(
+        ..., description="Resolved dependencies"
+    )
+
+
+class PackageVersionResolutionErrors(BaseModel):
+    """Resolution errors for package version."""
+
+    errors: List[str] = Field(..., description="List of resolution errors")
+
+
+class ContainerMetadata(BaseModel):
+    """Container metadata."""
+
+    image_name: str = Field(..., description="Container image name")
+    tag: Optional[str] = Field(None, description="Container tag")
+    digest: Optional[str] = Field(None, description="Container digest")
+
+
+class BazelMetadata(BaseModel):
+    """Bazel metadata."""
+
+    target: str = Field(..., description="Bazel target")
+    package: Optional[str] = Field(None, description="Bazel package")
+
+
+class CodeOwnerData(BaseModel):
+    """Code owner data."""
+
+    owners: List[str] = Field(..., description="List of code owners")
+    paths: List[str] = Field(..., description="List of owned paths")
+
+
+class PrecomputedState(BaseModel):
+    """Precomputed state for call graph."""
+
+    state: str = Field(..., description="Precomputed state")
+    timestamp: Optional[datetime] = Field(None, description="State timestamp")
 
 
 class PackageVersionMeta(BaseMeta):
@@ -27,36 +141,139 @@ class PackageVersionMeta(BaseMeta):
 
 
 class PackageVersionSpec(BaseSpec):
-    """PackageVersion specification extending BaseSpec."""
+    """PackageVersion specification extending BaseSpec.
 
-    # PackageVersion-specific spec fields based on Resource Guide example
-    call_graph_available: bool = Field(
-        ..., description="Whether call graph analysis is available"
-    )
-    ecosystem: str = Field(
-        ..., description="Package ecosystem (NPM, PyPI, Maven, etc.)"
-    )
-    language: str = Field(..., description="Programming language")
-    package_name: str = Field(..., description="Package name")
+    Field Mutability Guide:
+    ======================
+
+    IMMUTABLE FIELDS (cannot be updated after creation):
+    - project_uuid: Project assignment (set at creation)
+    - source_code_reference: Source code reference (set at creation)
+    - release_timestamp: Release timestamp (set at creation)
+    - ecosystem: Package ecosystem (analysis-determined)
+    - package_name: Package name (analysis-determined)
+    - language: Programming language (analysis-determined)
+    - relative_path: Relative path (set at creation)
+    - container_metadata: Container metadata (analysis-determined)
+    - bazel_metadata: Bazel metadata (analysis-determined)
+    - code_owners: Code owner data (analysis-determined)
+    - internal_reference_key: Internal reference key (system-generated)
+    - precomputed_call_graph_state: Precomputed state (system-managed)
+
+    MUTABLE FIELDS (can be updated via API):
+    - unresolved_dependencies: Dependency declarations (can be updated)
+    - resolved_dependencies: Resolved dependency graph (can be updated)
+    - resolution_errors: Resolution errors (can be updated)
+    - call_graph_available: Call graph availability (can be updated)
+    """
+
     project_uuid: str = Field(
-        ..., description="UUID of the project this package belongs to"
-    )
-    relative_path: str = Field(..., description="Relative path to the package")
-    release_timestamp: str = Field(..., description="Package release timestamp")
-    resolution_errors: Optional[dict] = Field(None, description="Resolution errors")
-    resolved_dependencies: Optional[dict] = Field(
-        None, description="Resolved dependencies"
-    )
-    source_code_reference: Optional[dict] = Field(
-        None, description="Source code reference"
-    )
-    unresolved_dependencies: Optional[List[dict]] = Field(
-        None, description="Unresolved dependencies"
-    )
+        ..., description="The UUID of the project to which this package version belongs"
+    )  # IMMUTABLE: Set at creation
+    source_code_reference: Optional[PackageVersionSourceCodeReference] = Field(
+        None,
+        description="Ref info of source code repository from which package was created",
+    )  # IMMUTABLE: Set at creation
+    release_timestamp: Optional[datetime] = Field(
+        None,
+        description="Release timestamp when this package version was released",
+    )  # IMMUTABLE: Set at creation
+    unresolved_dependencies: Optional[List[PackageVersionDependency]] = Field(
+        None,
+        description="Exact dependency declarations in package manager descriptor file",
+    )  # MUTABLE: Can be updated
+    resolved_dependencies: Optional[Bom] = Field(
+        None, description="A graph of resolved dependencies"
+    )  # MUTABLE: Can be updated
+    resolution_errors: Optional[PackageVersionResolutionErrors] = Field(
+        None, description="Captures any errors during dependency resolution"
+    )  # MUTABLE: Can be updated
+    ecosystem: Optional[Ecosystem] = Field(
+        None, description="Dependency ecosystem"
+    )  # IMMUTABLE: Analysis-determined
+    package_name: Optional[str] = Field(
+        None, description="The name of the package of this package version"
+    )  # IMMUTABLE: Analysis-determined
+    language: Optional[Language] = Field(
+        None, description="Language of the package_version"
+    )  # IMMUTABLE: Analysis-determined
+    relative_path: Optional[str] = Field(
+        None,
+        description="Relative path of package from discovery point to workspace root",
+    )  # IMMUTABLE: Set at creation
+    container_metadata: Optional[ContainerMetadata] = Field(
+        None, description="The metadata of the container image"
+    )  # IMMUTABLE: Analysis-determined
+    bazel_metadata: Optional[BazelMetadata] = Field(
+        None, description="The metadata of the bazel target"
+    )  # IMMUTABLE: Analysis-determined
+    code_owners: Optional[CodeOwnerData] = Field(
+        None, description="Code owner data for the package"
+    )  # IMMUTABLE: Analysis-determined
+    call_graph_available: Optional[bool] = Field(
+        None,
+        description="True if call graph was successfully created by latest scan",
+    )  # MUTABLE: Can be updated
+    internal_reference_key: Optional[str] = Field(
+        None,
+        description="Unique key for package generated by Endor Labs for lookups",
+    )  # IMMUTABLE: System-generated
+    precomputed_call_graph_state: Optional[PrecomputedState] = Field(
+        None, description="The state of the precomputed callgraph"
+    )  # IMMUTABLE: System-managed
+
+    @field_validator("ecosystem", mode="before")
+    @classmethod
+    def validate_ecosystem(cls, v):
+        """Handle unknown ecosystem values gracefully."""
+        if isinstance(v, str):
+            try:
+                return Ecosystem(v)
+            except ValueError:
+                logger.warning(f"Unknown Ecosystem value: {v}. Using as-is.")
+                return v
+        return v
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def validate_language(cls, v):
+        """Handle unknown language values gracefully."""
+        if isinstance(v, str):
+            try:
+                return Language(v)
+            except ValueError:
+                logger.warning(f"Unknown Language value: {v}. Using as-is.")
+                return v
+        return v
 
 
 class PackageVersion(BaseResource):
-    """PackageVersion resource model extending BaseResource."""
+    """
+    PackageVersion resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List package versions, Get by UUID
+    ❌ CREATE: Not supported (discovered by scans)
+    ❌ UPDATE: Not supported (returns 501 Method Not Allowed)
+    ❌ DELETE: Not supported (package versions are immutable)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Package name (set by scan)
+    - spec.project_uuid: Project assignment (set at creation)
+    - spec.ecosystem: Package ecosystem (analysis-determined)
+    - spec.package_name: Package name (analysis-determined)
+    - spec.language: Programming language (analysis-determined)
+    - spec.release_timestamp: Release timestamp (set at creation)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Scan-discovered metadata
+
+    Note: Package versions are automatically discovered during security scans and
+    cannot be manually created, updated, or deleted. PATCH operations return 501.
+    """
 
     # PackageVersion-specific fields (universal fields inherited from BaseResource)
     spec: PackageVersionSpec = Field(..., description="PackageVersion specification")  # type: ignore
@@ -83,17 +300,22 @@ class PackageVersion(BaseResource):
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
             known_fields = {
-                "call_graph_available",
-                "ecosystem",
-                "language",
-                "package_name",
                 "project_uuid",
-                "relative_path",
-                "release_timestamp",
-                "resolution_errors",
-                "resolved_dependencies",
                 "source_code_reference",
+                "release_timestamp",
                 "unresolved_dependencies",
+                "resolved_dependencies",
+                "resolution_errors",
+                "ecosystem",
+                "package_name",
+                "language",
+                "relative_path",
+                "container_metadata",
+                "bazel_metadata",
+                "code_owners",
+                "call_graph_available",
+                "internal_reference_key",
+                "precomputed_call_graph_state",
             }
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
@@ -136,13 +358,54 @@ def get_package_version(
     return ops.get(tenant_meta_namespace, package_version_uuid)  # type: ignore
 
 
+def create_package_version(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    payload: "CreatePackageVersionPayload",
+) -> Optional[PackageVersion]:
+    """Create a new package version."""
+    ops = _get_package_version_ops(client)
+    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+
+
 def update_package_version(
     client: APIClient,
     tenant_meta_namespace: str,
     package_version_uuid: str,
     payload: UpdatePackageVersionPayload,
-    update_mask: List[str],
+    update_mask: Optional[List[str]] = None,
 ) -> Optional[PackageVersion]:
     """Update package version using base class operations."""
     ops = _get_package_version_ops(client)
     return ops.update(tenant_meta_namespace, package_version_uuid, payload, update_mask)  # type: ignore
+
+
+def delete_package_version(
+    client: APIClient, tenant_meta_namespace: str, package_version_uuid: str
+) -> bool:
+    """Delete a package version by UUID."""
+    ops = _get_package_version_ops(client)
+    return ops.delete(tenant_meta_namespace, package_version_uuid)  # type: ignore
+
+
+# Payload models for create and update operations
+class CreatePackageVersionPayload(BaseModel):
+    """Payload for creating a package version."""
+
+    meta: "PackageVersionMetaCreate" = Field(
+        ..., description="PackageVersion metadata for creation"
+    )
+    spec: PackageVersionSpec = Field(..., description="PackageVersion specification")
+
+
+class PackageVersionMetaCreate(BaseModel):
+    """PackageVersion metadata for creation."""
+
+    name: str = Field(..., description="PackageVersion name")
+    description: Optional[str] = Field(None, description="PackageVersion description")
+
+
+class PackageVersionMetaUpdate(BaseModel):
+    """PackageVersion metadata for update."""
+
+    description: Optional[str] = Field(None, description="PackageVersion description")

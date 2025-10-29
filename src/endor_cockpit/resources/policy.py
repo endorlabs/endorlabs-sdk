@@ -3,6 +3,20 @@ Policy resource module for Endor Labs API.
 
 This module provides comprehensive policy management capabilities including
 listing, examining, creating, updating, and deleting policies.
+
+API OPERATIONS SUPPORTED:
+- GET: List policies, Get policy by UUID
+- POST: Create new policies
+- PATCH: Update existing policies
+- DELETE: Delete policies
+
+API FEATURES:
+- Full CRUD operations supported
+- Policy type filtering (SYSTEM_FINDING, USER_FINDING, ADMISSION, ML_FINDING, etc.)
+- OPA/Rego rule support
+- Template system integration
+- Project selector and exception support
+- Namespace propagation control
 """
 
 import logging
@@ -160,7 +174,45 @@ class PolicyMeta(BaseMeta):
 
 
 class Policy(BaseResource):
-    """Policy resource model extending BaseResource."""
+    """
+    Policy resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List policies, Get by UUID
+    ✅ POST: Create new policies
+    ✅ PATCH: Update existing policies
+    ✅ DELETE: Delete policies
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.create_time, meta.created_by: Creation metadata
+    - meta.update_time, meta.updated_by: Auto-managed timestamps
+    - spec.policy_type: Policy type (set at creation)
+    - spec.template_uuid: Template reference (set at creation)
+    - tenant_meta.namespace: Namespace assignment
+
+    MUTABLE FIELDS (can be updated via PATCH):
+    - meta.name: Policy name
+    - meta.description: Policy description
+    - meta.tags: Policy tags
+    - spec.rule: OPA/Rego rule definition
+    - spec.disable: Enable/disable flag
+    - spec.project_selector: Projects to apply policy to
+    - spec.project_exceptions: Projects to exclude from policy
+    - spec.template_values: Template configuration values
+    - propagate: Whether to propagate to child namespaces
+
+    FEATURES:
+    =========
+    - OPA/Rego rule support for custom policy logic
+    - Template system for reusable policy patterns
+    - Project selector and exception support
+    - Multiple policy types (SYSTEM_FINDING, USER_FINDING, ADMISSION, ML_FINDING, etc.)
+    - Namespace propagation control
+    """
 
     # Policy-specific fields (universal fields inherited from BaseResource)
     spec: Optional[PolicySpec] = Field(None, description="Policy specification")  # type: ignore
