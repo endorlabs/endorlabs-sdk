@@ -3,6 +3,18 @@ Installation resource module for Endor Labs API.
 
 This module provides CRUD operations for Installation resources following the
 established patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List installations, Get installation by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported by API (installations managed by platform integrations)
+- UPDATE: Not supported by API (installation configuration is read-only)
+- DELETE: Not supported by API (installations managed by platform integrations)
+
+Note: Installations are auto-discovered and managed through platform
+integrations (GitHub, GitLab, Azure, Bitbucket) and cannot be manually
+created, updated, or deleted.
 """
 
 import logging
@@ -234,7 +246,31 @@ class InstallationSpec(BaseSpec):
 
 
 class Installation(BaseResource):
-    """Installation resource model extending BaseResource."""
+    """
+    Installation resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List installations, Get by UUID
+    ❌ CREATE: Not supported (managed by platform integrations)
+    ❌ UPDATE: Not supported (installation configuration is read-only)
+    ❌ DELETE: Not supported (managed by platform integrations)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Installation name (set by platform)
+    - spec.external_id: External ID (set at creation)
+    - spec.platform_type: Platform type (set at creation)
+    - spec.platform_source: Platform source (set at discovery)
+    - spec.ingestion_token: Ingestion token (system-managed)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Platform-managed configuration
+
+    Note: Installations are automatically synchronized from platform integrations
+    and cannot be manually created, updated, or deleted through the API.
+    """
 
     # Installation-specific fields (universal fields inherited from BaseResource)
     spec: InstallationSpec = Field(..., description="Installation specification")  # type: ignore

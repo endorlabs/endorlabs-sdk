@@ -3,6 +3,17 @@ Repository resource module for Endor Labs API.
 
 This module provides CRUD operations for Repository resources following the established
 patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List repositories, Get repository by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported by API (repositories are managed by platform integrations)
+- UPDATE: Not supported by API (repository metadata is read-only)
+- DELETE: Not supported by API (repositories are managed by platform integrations)
+
+Note: Repositories are auto-discovered and managed through platform integrations
+(GitHub, GitLab, etc.) and cannot be manually created, updated, or deleted via API.
 """
 
 import logging
@@ -194,7 +205,30 @@ class RepositorySpec(BaseSpec):
 
 
 class Repository(BaseResource):
-    """Repository resource model extending BaseResource."""
+    """
+    Repository resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List repositories, Get by UUID
+    ❌ CREATE: Not supported (managed by platform integrations)
+    ❌ UPDATE: Not supported (repository metadata is read-only)
+    ❌ DELETE: Not supported (managed by platform integrations)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Repository name (set by platform)
+    - spec.platform_source: Platform source (set at discovery)
+    - spec.http_clone_url: Clone URL (set by platform)
+    - spec.external_id: External platform ID (set by platform)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Platform-managed metadata
+
+    Note: Repository metadata is automatically synchronized from platform integrations
+    and cannot be manually modified through the API.
+    """
 
     # Repository-specific fields (universal fields inherited from BaseResource)
     spec: RepositorySpec = Field(..., description="Repository specification")  # type: ignore
