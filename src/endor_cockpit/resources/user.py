@@ -3,6 +3,17 @@ User resource module for Endor Labs API.
 
 This module provides CRUD operations for User resources following the
 established patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List users, Get user by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported by API (users managed by identity provider)
+- UPDATE: Not supported by API (user data is read-only)
+- DELETE: Not supported by API (users managed by identity provider)
+
+Note: Users are automatically synchronized from identity providers and cannot
+be manually created, updated, or deleted through the API.
 """
 
 import logging
@@ -100,7 +111,31 @@ class UserSpec(BaseSpec):
 
 
 class User(BaseResource):
-    """User resource model extending BaseResource."""
+    """
+    User resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List users, Get by UUID
+    ❌ CREATE: Not supported (managed by identity provider)
+    ❌ UPDATE: Not supported (user data is read-only)
+    ❌ DELETE: Not supported (managed by identity provider)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: User name (derived from token)
+    - spec.user_name: Username (derived from token)
+    - spec.last_login_time: Last login time (system-managed)
+    - spec.token_hash: Token hash (system-managed)
+    - spec.groups: User groups (from identity provider)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Identity provider-managed data
+
+    Note: Users are automatically synchronized from identity providers and cannot
+    be manually created, updated, or deleted through the API.
+    """
 
     # User-specific fields (universal fields inherited from BaseResource)
     spec: UserSpec = Field(..., description="User specification")  # type: ignore

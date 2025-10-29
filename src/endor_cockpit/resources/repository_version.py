@@ -3,6 +3,17 @@ RepositoryVersion resource module for Endor Labs API.
 
 This module provides CRUD operations for RepositoryVersion resources following the
 established patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List repository versions, Get repository version by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported (repository versions managed by platform integrations)
+- UPDATE: Not supported by API (repository versions are read-only)
+- DELETE: Not supported (repository versions managed by platform integrations)
+
+Note: Repository versions are automatically discovered and managed through platform
+integrations and cannot be manually created, updated, or deleted through the API.
 """
 
 import logging
@@ -64,7 +75,29 @@ class RepositoryVersionSpec(BaseSpec):
 
 
 class RepositoryVersion(BaseResource):
-    """RepositoryVersion resource model extending BaseResource."""
+    """
+    RepositoryVersion resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List repository versions, Get by UUID
+    ❌ CREATE: Not supported (managed by platform integrations)
+    ❌ UPDATE: Not supported (repository versions are read-only)
+    ❌ DELETE: Not supported (managed by platform integrations)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Repository version name (set by platform)
+    - spec.version: Version information (set by platform)
+    - spec.last_commit_date: Last commit date (set by platform)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Platform-managed metadata
+
+    Note: Repository versions are automatically synchronized from platform integrations
+    and cannot be manually created, updated, or deleted through the API.
+    """
 
     # RepositoryVersion-specific fields (universal fields inherited from BaseResource)
     spec: RepositoryVersionSpec = Field(

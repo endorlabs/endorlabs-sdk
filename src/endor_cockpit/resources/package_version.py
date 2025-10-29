@@ -3,6 +3,18 @@ PackageVersion resource module for Endor Labs API.
 
 This module provides CRUD operations for PackageVersion resources following the
 established patterns from the base class implementation.
+
+API OPERATIONS SUPPORTED:
+- GET: List package versions, Get package version by UUID
+
+API LIMITATIONS:
+- CREATE: Not supported by API (package versions are discovered by scans)
+- UPDATE: Not supported by API (returns 501 Method Not Allowed)
+- DELETE: Not supported by API (package versions are immutable)
+
+Note: Package versions are automatically discovered during security scans and cannot
+be manually created, updated, or deleted. The API returns 501 Not Allowed for
+PATCH operations on package versions.
 """
 
 import logging
@@ -236,7 +248,32 @@ class PackageVersionSpec(BaseSpec):
 
 
 class PackageVersion(BaseResource):
-    """PackageVersion resource model extending BaseResource."""
+    """
+    PackageVersion resource model extending BaseResource.
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List package versions, Get by UUID
+    ❌ CREATE: Not supported (discovered by scans)
+    ❌ UPDATE: Not supported (returns 501 Method Not Allowed)
+    ❌ DELETE: Not supported (package versions are immutable)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Package name (set by scan)
+    - spec.project_uuid: Project assignment (set at creation)
+    - spec.ecosystem: Package ecosystem (analysis-determined)
+    - spec.package_name: Package name (analysis-determined)
+    - spec.language: Programming language (analysis-determined)
+    - spec.release_timestamp: Release timestamp (set at creation)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Scan-discovered metadata
+
+    Note: Package versions are automatically discovered during security scans and
+    cannot be manually created, updated, or deleted. PATCH operations return 501.
+    """
 
     # PackageVersion-specific fields (universal fields inherited from BaseResource)
     spec: PackageVersionSpec = Field(..., description="PackageVersion specification")  # type: ignore
