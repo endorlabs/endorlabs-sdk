@@ -162,7 +162,7 @@ class LinterResultSpec(BaseSpec):
     )  # IMMUTABLE: Set at creation
     extra_key: str = Field(
         ...,
-        description="Additional information that may result in creating a unique linter result",
+        description="Additional info that may create a unique linter result",
     )  # IMMUTABLE: Set at creation
     version: Optional[str] = Field(
         None, description="Version information"

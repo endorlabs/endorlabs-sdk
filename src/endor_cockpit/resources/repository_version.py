@@ -32,11 +32,11 @@ class VersionInfo(BaseModel):
 
     sha: Optional[str] = Field(
         None,
-        description="SHA of the source control version. Because the SHA might not be possible to resolved this field is optional.",
+        description="SHA of source control version. Optional if SHA cannot resolve.",
     )
     ref: Optional[str] = Field(
         None,
-        description="Resolved ref of the source control version. Can be a tag, a branch or a SHA.",
+        description="Resolved ref of source control version: tag, branch, or SHA",
     )
     metadata: Optional[dict] = Field(None, description="Version metadata.")
 

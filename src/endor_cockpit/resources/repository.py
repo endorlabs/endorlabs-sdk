@@ -132,7 +132,7 @@ class RepositorySpec(BaseSpec):
     )  # IMMUTABLE: Set at creation
     external_id: Optional[str] = Field(
         None,
-        description="The unique identifier of the repository in the source platform before ingestion",
+        description="Unique identifier of repo in source platform before ingestion",
     )  # IMMUTABLE: Set at creation
     http_clone_url: str = Field(
         ...,
@@ -149,11 +149,11 @@ class RepositorySpec(BaseSpec):
     )  # IMMUTABLE: System-managed
     contributors: Optional[List[str]] = Field(
         None,
-        description="Contributors represents all account external_ids that have been seen throughout the ingestion",
+        description="Account external_ids seen throughout the ingestion process",
     )  # IMMUTABLE: System-managed
     commit_hashes: Optional[List[str]] = Field(
         None,
-        description="Commit hashes contains a list of all of the commit presents in the repository",
+        description="List of all commit hashes present in the repository",
     )  # IMMUTABLE: System-managed
     languages: Optional[Languages] = Field(
         None, description="The languages of the repository"
@@ -163,18 +163,18 @@ class RepositorySpec(BaseSpec):
     )  # IMMUTABLE: System-managed
     branch_protections: Optional[dict] = Field(
         None,
-        description="Branch protections is a map of branch name to its github branch protection rules",
+        description="Map of branch name to GitHub branch protection rules",
     )  # IMMUTABLE: System-managed
     vulnerability_alerts_enabled: Optional[bool] = Field(
         None,
-        description="Denotes whether vulnerability alerts have been enabled on the source control repository",
+        description="Whether vulnerability alerts are enabled on source control repo",
     )  # IMMUTABLE: System-managed
     default_branch: str = Field(
         ..., description="The default branch of the source control repository"
     )  # IMMUTABLE: Set at creation
     org: Optional[Organization] = Field(
         None,
-        description="Org contains the github organization information available for this repository",
+        description="GitHub organization information available for this repository",
     )  # IMMUTABLE: Set at creation
     repository_license: Optional[RepositoryLicense] = Field(
         None, description="The license of the repository"

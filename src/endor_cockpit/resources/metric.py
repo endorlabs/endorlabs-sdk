@@ -75,11 +75,11 @@ class MetricSpec(BaseSpec):
     )  # IMMUTABLE: Set at creation
     metric_values: Dict[str, MetricValue] = Field(
         ...,
-        description="A map of metric values. These values include scores and score factors",
+        description="Map of metric values including scores and score factors",
     )  # IMMUTABLE: Set at creation
     raw: Optional[dict] = Field(
         None,
-        description="This is a superset of the information included in the specification",
+        description="Superset of information included in the specification",
     )  # IMMUTABLE: Set at creation
 
     @field_validator("metric_values", mode="before")

@@ -461,7 +461,7 @@ class FindingSpec(BaseSpec):
     )  # IMMUTABLE: Analysis-determined
     reachable_paths: Optional[List[dict]] = Field(
         None,
-        description="Function paths to the vulnerable method. Only applies to vulnerability findings.",
+        description="Function paths to vulnerable method. Only for vulnerabilities.",
     )  # IMMUTABLE: Analysis-determined
     ecosystem: Optional[Ecosystem] = Field(
         None, description="Ecosystem where the finding was detected"
