@@ -149,11 +149,11 @@ class InstallationSpec(BaseSpec):
     )  # IMMUTABLE: Read-only
     invalid: Optional[bool] = Field(
         None,
-        description="Identifies the installations that are in the system, but potentially their corresponding configuration has been removed",
+        description="Identifies installations with potentially removed config",
     )  # MUTABLE: Can be updated
     ingestion_token: Optional[str] = Field(
         None,
-        description="The API token that the scanner can use for scanning installation related information",
+        description="API token for scanner to use for scanning installation info",
     )  # IMMUTABLE: Read-only
     enabled_features: Optional[List[EnabledFeatureType]] = Field(
         None, description="Enabled features. The valid values are 'git, github'"
@@ -163,7 +163,7 @@ class InstallationSpec(BaseSpec):
     )  # IMMUTABLE: Read-only
     platform_type: Optional[PlatformSourceType] = Field(
         None,
-        description="The platform type for the installation, which can be GitHub, GitLab, Azure, or Bitbucket",
+        description="Platform type: GitHub, GitLab, Azure, or Bitbucket",
     )  # IMMUTABLE: Set at creation
     github_config: Optional[GitHubConfig] = Field(
         None, description="GitHub configuration"
@@ -182,7 +182,7 @@ class InstallationSpec(BaseSpec):
     )  # IMMUTABLE: Read-only
     include_archived_repos: Optional[bool] = Field(
         None,
-        description="include_archived_repos is a boolean value that indicates if the archived repos should be included",
+        description="Boolean indicating if archived repos should be included",
     )  # MUTABLE: Can be updated
     installation_error_message: Optional[str] = Field(
         None, description="Message explaining why the installation is invalid"

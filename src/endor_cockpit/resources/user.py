@@ -58,7 +58,7 @@ class UserSpec(BaseSpec):
 
     user_name: Optional[str] = Field(
         None,
-        description="Username of a user. Usernames are automatically derived from the token",
+        description="Username automatically derived from the token",
     )  # IMMUTABLE: Read-only
     first_name: Optional[str] = Field(
         None, description="First name of the user as identified. It can be changed"
@@ -71,7 +71,7 @@ class UserSpec(BaseSpec):
     )  # MUTABLE: User can change
     last_login_time: Optional[datetime] = Field(
         None,
-        description="Last login time keeps a record of the last time that the user logged in",
+        description="Record of the last time the user logged in",
     )  # IMMUTABLE: Read-only
     event_tracking: Optional[Dict[str, Events]] = Field(
         None, description="Lists of user events indexed by event type"
@@ -81,7 +81,7 @@ class UserSpec(BaseSpec):
     )  # IMMUTABLE: System-managed
     groups: Optional[List[str]] = Field(
         None,
-        description="Groups that the user is a member of, as identified by the claims returned by the identity provider",
+        description="Groups user is member of, from identity provider claims",
     )  # MUTABLE: System-managed
 
     @field_validator("event_tracking", mode="before")
