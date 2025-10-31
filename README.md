@@ -1,8 +1,14 @@
-# Endor Cockpit
+# 🚀 Endor Cockpit
 
 [![Python CI](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml)
 
+> **Starfighter Ready**: Navigate the Endor Labs security platform with tactical precision. This cockpit is designed for AI agents, human pilots, and autonomous security operations.
+
 A production-ready Python SDK for integrating Endor Labs security platform with AI-powered IDEs and development tools. Provides comprehensive REST API client capabilities for administering, operating, and scanning with Endor Labs tooling.
+
+## 🤖 **AI Agents Welcome**
+
+This cockpit is specifically engineered for AI-powered development environments. Whether you're an autonomous security agent, a development assistant, or a human pilot, the Endor Cockpit provides the tools you need to navigate the security landscape with confidence.
 
 ## 🚀 Agentic Usage (Quick Start)
 
@@ -21,19 +27,22 @@ for ns in namespaces:
     print(f"Namespace: {ns.meta.name}")
 ```
 
-## Features
+## ⚡ **Tactical Features**
 
-- **IDE Integration Ready**: Designed for seamless integration with AI-powered development environments
-- **Comprehensive API Coverage**: Full REST API client for Endor Labs platform administration and operations
-- **Security-First Design**: Built-in security scanning capabilities with `endorctl` integration
-- **Modern Python Tooling**: Uses `uv` for dependency management, `ruff` for linting, and `pytest` for testing
-- **Type-Safe Operations**: Leverages Pydantic for clear, validated API data structures and operations
-- **Resource-Oriented Architecture**: Intuitive structure with modules dedicated to specific API resources
-- **Production-Ready**: Robust error handling, authentication, rate limiting, and retry mechanisms
+- **🎯 AI Agent Integration**: Seamlessly integrated with AI-powered development environments
+- **🛡️ Security-First Design**: Built-in security scanning with `endorctl` integration
+- **🔧 Comprehensive API Coverage**: Full REST API client for Endor Labs platform operations
+- **⚙️ Modern Python Arsenal**: `uv` dependency management, `ruff` linting, `pytest` testing
+- **🎪 Type-Safe Operations**: Pydantic-powered data structures with field mutability tracking
+- **🏗️ Resource-Oriented Architecture**: Intuitive modules for specific API resources
+- **🚀 Production-Ready**: Robust error handling, authentication, rate limiting, and retry mechanisms
+- **📚 External Documentation Sync**: Automated helpers to pull API specs and user docs
+- **🎭 Maneuvers & Protocols**: Pre-built tactical scripts for common security operations
+- **🔍 Schema Drift Detection**: Advanced monitoring for API specification changes
 
-## Installation
+## 🛠️ **Installation & Setup**
 
-It is recommended to use a virtual environment - this project is designed with `uv` and `poetry` in mind.
+### Quick Setup (Recommended)
 
 ```bash
 # Clone the repository
@@ -53,7 +62,21 @@ uv pip install -e .
 uv pip install -e ".[docs]"
 ```
 
-## Environment Setup
+### External Documentation Sync
+
+Pull the latest API specifications and user documentation:
+
+```bash
+# Download user documentation from Endor Labs
+uv run python scripts/download_user_docs.py \
+  --sitemap-url "https://docs.endorlabs.com/sitemap.xml" \
+  --output-dir "external_docs/user-docs" \
+  --max-pages 100
+
+# The OpenAPI specification is already included in external_docs/openapi-swagger.json
+```
+
+## 🔐 **Environment Configuration**
 
 ### Required Environment Variables
 
@@ -95,7 +118,7 @@ The SDK reads configuration from environment variables only - no hardcoded value
 
 ## Quick Start
 
-### For Human Developers
+### For Human Pilots
 
 ```python
 from endor_cockpit.api_client import APIClient
@@ -112,18 +135,20 @@ for ns in all_namespaces:
     print(f"Namespace: {ns.meta.name}, UUID: {ns.uuid}")
 ```
 
-### For AI Agents in IDEs
+### For AI Agents & Autonomous Systems
 
-This toolkit is specifically designed for integration with AI-powered development environments. See [AGENTS.md](./AGENTS.md) for comprehensive guidance on:
+This cockpit is specifically engineered for AI-powered development environments. See [AGENTS.md](./AGENTS.md) for comprehensive guidance on:
 
-- **Agent Roles**: Developer, Security, and Operations agent definitions
-- **Tool Integration**: LLM tool schemas and function definitions
-- **Security Protocols**: Built-in security scanning and compliance
-- **Best Practices**: Patterns for reliable agent operations
+- **🤖 Agent Roles**: Developer, Security, and Operations agent definitions
+- **🔧 Tool Integration**: LLM tool schemas and function definitions
+- **🛡️ Security Protocols**: Built-in security scanning and compliance
+- **📋 Best Practices**: Patterns for reliable agent operations
+- **🎭 Maneuvers**: Pre-built tactical scripts for common operations
+- **📚 External Docs**: Automated sync with API specifications and user documentation
 
-## Development
+## 🛠️ **Development & Operations**
 
-### Running Tests
+### Testing Arsenal
 
 ```bash
 # Run all tests
@@ -136,7 +161,7 @@ pytest --cov=endor_cockpit --cov-report=html
 pytest tests/test_integration.py -v
 ```
 
-### Code Quality
+### Code Quality & Linting
 
 ```bash
 # Linting & Formatting
@@ -153,9 +178,27 @@ mypy src/
 endorctl scan --path . --namespace "your-namespace"
 ```
 
-## Resource Implementation Status
+### Maneuvers & Tactical Scripts
 
-> **Comprehensive tracking of Endor Labs resource types and their implementation status**
+Execute pre-built tactical operations:
+
+```bash
+# Create notification policies
+uv run python maneuvers/create_notification_policy.py --help
+
+# Tag findings for triage
+uv run python maneuvers/tag_findings.py --help
+
+# Create exception policies
+uv run python maneuvers/create_exception_policy.py --help
+
+# See all available maneuvers
+ls maneuvers/
+```
+
+## 📊 **Resource Implementation Status**
+
+> **Mission Control**: Comprehensive tracking of Endor Labs resource types and their implementation status
 
 ### Implementation Checklist
 
@@ -193,7 +236,7 @@ endorctl scan --path . --namespace "your-namespace"
 
 ---
 
-## Documentation
+## 📚 **Documentation & Intelligence**
 
 - **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
@@ -201,9 +244,9 @@ endorctl scan --path . --namespace "your-namespace"
 - **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
 - **[External Documentation](./external_docs/)** - Endor Labs API and user documentation
 
-## Workspace Folder
+## 🗂️ **Workspace & Mission Files**
 
-For local testing and development, use the `.workspace/` folder which is excluded from version control. This folder is **unique to each user** and contains:
+For local testing and development, use the `.workspace/` folder which is excluded from version control. This folder is **unique to each pilot** and contains:
 - Integration test results and configurations
 - Temporary policy configurations
 - Development scripts and utilities
@@ -211,11 +254,11 @@ For local testing and development, use the `.workspace/` folder which is exclude
 - User-specific API configurations
 - **Operational context and environment setup guides**
 
-Each user's workspace is isolated and not shared across the team.
+Each pilot's workspace is isolated and not shared across the squadron.
 
 For current operational context including environment setup, GitHub CLI configuration, and development workflow, see `.workspace/OPERATIONAL_CONTEXT.md`.
 
-## Contributing
+## 🤝 **Contributing to the Squadron**
 
 1. Fork the repository
 2. Create a feature branch
@@ -223,13 +266,19 @@ For current operational context including environment setup, GitHub CLI configur
 4. Run tests and linting
 5. Submit a pull request
 
-## License
+## 📄 **License**
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 🆘 **Support & Mission Control**
 
 For questions and support:
-- **Documentation**: See the [AI Agent Integration Guide](./AGENTS.md)
-- **Issues**: Create an issue in the repository
-- **Security**: Follow the security guidelines in the documentation
+- **📚 Documentation**: See the [AI Agent Integration Guide](./AGENTS.md)
+- **🐛 Issues**: Create an issue in the repository
+- **🛡️ Security**: Follow the security guidelines in the documentation
+- **🎭 Maneuvers**: Check the `maneuvers/` directory for tactical scripts
+- **📋 Protocols**: Review `protocols/` for operational procedures
+
+---
+
+> **May the Force be with you, pilot. The Endor Cockpit is ready for your mission.** 🚀
