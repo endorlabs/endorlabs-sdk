@@ -42,7 +42,7 @@ class TestPolicy:
 
     def teardown_method(self):
         """Clean up any policies created during tests."""
-        if hasattr(self, 'created_policy_uuids'):
+        if hasattr(self, "created_policy_uuids"):
             for policy_uuid in self.created_policy_uuids:
                 try:
                     policy.delete_policy(self.client, self.namespace, policy_uuid)
