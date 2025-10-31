@@ -195,7 +195,6 @@ class TestEndorCockpitIntegration:
         timestamp = int(time.time())
         random_id = random.randint(1000, 9999)
         test_name = f"integration-test-update-{timestamp}-{random_id}"
-        updated_description = f"Updated description for {test_name}"
 
         namespace = None
         try:
