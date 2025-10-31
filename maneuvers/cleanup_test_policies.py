@@ -20,7 +20,8 @@ uv run python maneuvers/cleanup_test_policies.py \
 
 ## Note: This script will delete ALL policies with test-related tags.
 ## Use --dry-run first to see what would be deleted.
-## Namespaces are NOT cleaned up by this script - tests should clean up their own namespaces.
+## Namespaces are NOT cleaned up by this script -
+## tests should clean up their own namespaces.
 """
 
 import argparse
@@ -38,7 +39,6 @@ from endor_cockpit.resources.policy import (
     delete_policy,
     list_policies,
 )
-# Namespace cleanup removed - tests should clean up their own namespaces
 from endor_cockpit.types import ListParameters
 
 # Set up logging
@@ -67,7 +67,10 @@ def find_test_policies(
 
         # Create filter for policies with test-related tags
         # Using OR logic to find policies that have any test-related tags
-        filter_expression = "meta.tags in ['test', 'dummy', 'crud-test', 'integration-test', 'ml-finding']"
+        filter_expression = (
+            "meta.tags in ['test', 'dummy', 'crud-test', "
+            "'integration-test', 'ml-finding']"
+        )
 
         list_params = ListParameters(
             filter=filter_expression,
@@ -89,7 +92,8 @@ def find_test_policies(
         for policy in policies:
             tags = policy.meta.tags or []
             # Check for any test-related tags
-            if any(tag in tags for tag in ['test', 'dummy', 'crud-test', 'integration-test', 'ml-finding']):
+            test_tags = ['test', 'dummy', 'crud-test', 'integration-test', 'ml-finding']
+            if any(tag in tags for tag in test_tags):
                 test_policies.append(policy)
 
         logger.info(f"Found {len(test_policies)} policies with test-related tags")
@@ -184,7 +188,11 @@ def delete_policies_batch(
             logger.info(f"Deleting policy {i}/{len(policies)}: {policy.meta.name}")
 
             # Determine the correct namespace for deletion
-            policy_namespace = policy.tenant_meta.namespace if policy.tenant_meta else tenant_namespace
+            policy_namespace = (
+                policy.tenant_meta.namespace
+                if policy.tenant_meta
+                else tenant_namespace
+            )
 
             success = delete_policy(client, policy_namespace, policy.uuid)
 
@@ -193,7 +201,10 @@ def delete_policies_batch(
                 logger.info(f"Successfully deleted policy: {policy.meta.name}")
             else:
                 results["failed"] += 1
-                error_msg = f"Failed to delete policy: {policy.meta.name} (UUID: {policy.uuid})"
+                error_msg = (
+                    f"Failed to delete policy: {policy.meta.name} "
+                    f"(UUID: {policy.uuid})"
+                )
                 results["errors"].append(error_msg)
                 logger.error(error_msg)
 
@@ -347,9 +358,15 @@ uv run python maneuvers/cleanup_test_policies.py \\
 
         # Confirmation
         if not args.confirm_delete:
-            print(f"\n⚠️  WARNING: You are about to delete {len(test_policies)} policies!")
+            print(
+                f"\n⚠️  WARNING: You are about to delete "
+                f"{len(test_policies)} policies!"
+            )
             print("This action cannot be undone.")
-            response = input("Are you sure you want to proceed? Type 'DELETE' to confirm: ")
+            response = input(
+                "Are you sure you want to proceed? "
+                "Type 'DELETE' to confirm: "
+            )
             if response.strip() != "DELETE":
                 print("Operation cancelled by user.")
                 return
@@ -367,7 +384,10 @@ uv run python maneuvers/cleanup_test_policies.py \\
         display_deletion_results(results)
 
         if results["failed"] > 0:
-            print(f"\n⚠️  {results['failed']} policies failed to delete. Check the errors above.")
+            print(
+                f"\n⚠️  {results['failed']} policies failed to delete. "
+                "Check the errors above."
+            )
             sys.exit(1)
         else:
             print(f"\n✅ Successfully deleted {results['successful']} test policies.")
