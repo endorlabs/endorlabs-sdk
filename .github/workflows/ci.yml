@@ -158,7 +158,6 @@ jobs:
               --enable-pr-comments \
               --scm-pr-id ${{ github.event.number }} \
               --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
-              --sarif-file endor-scan-results.sarif \
               --output-type summary \
               --exit-on-policy-warning || echo "PR comments failed - scan completed successfully"
           else
@@ -171,7 +170,6 @@ jobs:
               --sast \
               --ghactions \
               --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
-              --sarif-file endor-scan-results.sarif \
               --output-type summary \
               --exit-on-policy-warning
           fi
@@ -184,12 +182,6 @@ jobs:
           GITHUB_API_URL: ${{ github.api_url }}
           ENDOR_LOG_LEVEL: "debug"
           ENDOR_LOG_VERBOSE: "true"
-
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: endor-scan-results.sarif
 
   # Lint job - runs after security passes
   lint:
