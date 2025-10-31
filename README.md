@@ -48,17 +48,50 @@ source .venv/bin/activate  # Linux/Mac
 
 # Install dependencies
 uv pip install -e .
+
+# Optional: Install dependencies for documentation sync scripts
+uv pip install -e ".[docs]"
 ```
 
 ## Environment Setup
 
-Set the following environment variables:
+### Required Environment Variables
+
+The SDK requires the following environment variables to be set:
 
 ```bash
 export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-api-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
+export ENDOR_NAMESPACE="your-tenant-namespace"  # Required for operations
 ```
+
+### Local Development Setup
+
+For local development, you can use the admin setup script:
+
+```bash
+# Initialize environment (creates .env file from template)
+uv run python scripts/admin_setup.py init
+
+# Validate environment configuration
+uv run python scripts/admin_setup.py validate
+
+# Quick health check
+uv run python scripts/admin_setup.py check
+```
+
+### Configuration Management
+
+**Local Development**: Use `.env` file or environment variables directly.
+
+**CI/CD**: Environment variables are configured in GitHub repository settings:
+- `ENDOR_API` - Repository variable
+- `ENDOR_NAMESPACE` - Repository variable  
+- `ENDOR_API_CREDENTIALS_KEY` - Repository secret
+- `ENDOR_API_CREDENTIALS_SECRET` - Repository secret
+
+The SDK reads configuration from environment variables only - no hardcoded values or configuration files. This follows 12-factor app principles and ensures security and flexibility across different environments.
 
 ## Quick Start
 
@@ -167,7 +200,6 @@ endorctl scan --path . --namespace "your-namespace"
 - **[Rego Policy Guide](./docs/rego_guide.md)** - Complete Rego policy development reference
 - **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
 - **[External Documentation](./external_docs/)** - Endor Labs API and user documentation
-- **[Holocron (Deprecated)](./src/holocron/README.md)** - Historical semantic search system
 
 ## Workspace Folder
 

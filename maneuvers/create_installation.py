@@ -11,7 +11,7 @@ Based on the OpenAPI schema and installation resource structure.
 Example:
 
 uv run python maneuvers/create_installation.py \
-  --tenant-namespace "endor-solutions-tgowan.cockpit.kessel" \
+  --tenant-namespace "${ENDOR_NAMESPACE}" \
   --name "GitHub Endor Pro App - kessel" \
   --external-id "91278704" \
   --github-app-id "977385" \
@@ -337,8 +337,8 @@ def main():
 Examples:
   # Basic GitHub installation
   python create_installation.py \\
-    --tenant-namespace "endor-solutions-tgowan.cockpit.kessel" \\
-    --name "GitHub Endor Pro App - kessel" \\
+    --tenant-namespace "${ENDOR_NAMESPACE}" \\
+    --name "GitHub Endor Pro App" \\
     --external-id "91278704" \\
     --github-app-id "977385" \\
     --github-user "tgowan-endor" \\
