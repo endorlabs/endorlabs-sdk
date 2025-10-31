@@ -40,7 +40,7 @@ runs:
           ${{ runner.os }}-uv-venv-
 
     - name: Install UV
-      uses: astral-sh/setup-uv@v3.0.0
+      uses: astral-sh/setup-uv@v7.1.2
       with:
         version: "0.9.3"
 
