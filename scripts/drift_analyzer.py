@@ -29,7 +29,7 @@ class DriftAnalyzer:
     """Robust drift analyzer for spec vs class vs API with graceful degradation."""
     
     def __init__(self, namespace: Optional[str] = None):
-        self.namespace = namespace or os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = namespace or os.getenv("ENDOR_NAMESPACE", "")
         self.client = APIClient()
         self.resource_modules = {
             "Project": project,

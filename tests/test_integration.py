@@ -30,6 +30,10 @@ from endor_cockpit.resources.namespace import (
 class TestEndorCockpitIntegration:
     """Integration tests using real Endor Labs API."""
 
+    def __init__(self):
+        """Initialize test class."""
+        pass
+
     @pytest.fixture(scope="class")
     def api_client(self):
         """Create authenticated API client."""
@@ -65,7 +69,10 @@ class TestEndorCockpitIntegration:
                     )
             except Exception:
                 pass
-        return namespace or "endor-solutions-tgowan.cockpit"
+        namespace = namespace or os.getenv("ENDOR_NAMESPACE")
+        if not namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+        return namespace
 
     @pytest.fixture(scope="class")
     def test_namespaces(self, api_client, tenant_namespace):
@@ -122,6 +129,7 @@ class TestEndorCockpitIntegration:
         random_id = random.randint(1000, 9999)
         test_name = f"integration-test-create-{timestamp}-{random_id}"
 
+        namespace = None
         try:
             # Create namespace
             namespace = self._create_test_namespace(
@@ -143,7 +151,7 @@ class TestEndorCockpitIntegration:
 
         finally:
             # Cleanup
-            if "namespace" in locals() and namespace is not None:
+            if namespace is not None:
                 self._delete_test_namespace(
                     api_client, tenant_namespace, namespace.uuid
                 )
@@ -190,8 +198,8 @@ class TestEndorCockpitIntegration:
         timestamp = int(time.time())
         random_id = random.randint(1000, 9999)
         test_name = f"integration-test-update-{timestamp}-{random_id}"
-        updated_description = f"Updated description for {test_name}"
 
+        namespace = None
         try:
             # Create namespace
             namespace = self._create_test_namespace(
@@ -210,7 +218,7 @@ class TestEndorCockpitIntegration:
 
         finally:
             # Cleanup
-            if "namespace" in locals() and namespace is not None:
+            if namespace is not None:
                 self._delete_test_namespace(
                     api_client, tenant_namespace, namespace.uuid
                 )
@@ -291,6 +299,7 @@ class TestEndorCockpitIntegration:
         finally:
             # Cleanup: Delete child first, then parent
             if child_namespace:
+                canonical_parent = f"{tenant_namespace}.{parent_name}"
                 self._delete_test_namespace(
                     api_client, canonical_parent, child_namespace.uuid
                 )
