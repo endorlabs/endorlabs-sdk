@@ -1,0 +1,16 @@
+# The CODEOWNERS file is a list of patterns and owners, where the last matching
+# pattern is used.
+
+# --- Global Defaults ---
+
+# Set a default owner for everything in the repository. This owner will be
+# requested for review for any changes not matched by a more specific pattern.
+* @tgowan-endor
+
+
+# Solutions Team are responsible for relaying inaccuracies in external docs to 
+# the appropriate internal Endor tech docs team
+/docs/external_docs @solutions
+
+# Security Champions Team are responsible for appropriate implementation of security controls in CI
+.github/workflows @security-champions

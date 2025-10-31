@@ -3,7 +3,7 @@
 Test Policy Cleanup Maneuver
 
 A repeatable script for cleaning up test policies in the Endor Labs platform.
-This script identifies and deletes all policies that contain "test" and "dummy" tags
+This script identifies and deletes all policies that contain test-related tags
 in the specified namespace, with comprehensive safety features and confirmation.
 
 Based on the policy resource structure and API patterns.
@@ -18,8 +18,10 @@ uv run python maneuvers/cleanup_test_policies.py \
   --tenant-namespace "endor-solutions-tgowan.cockpit" \
   --confirm-delete
 
-## Note: This script will delete ALL policies with "test" and "dummy" tags.
+## Note: This script will delete ALL policies with test-related tags.
 ## Use --dry-run first to see what would be deleted.
+## Namespaces are NOT cleaned up by this script -
+## tests should clean up their own namespaces.
 """
 
 import argparse
@@ -50,7 +52,7 @@ def find_test_policies(
     include_child_namespaces: bool = True
 ) -> List[Policy]:
     """
-    Find all policies with "test" and "dummy" tags in the specified namespace.
+    Find all policies with test-related tags in the specified namespace.
 
     Args:
         client: Authenticated APIClient instance
@@ -63,9 +65,12 @@ def find_test_policies(
     try:
         logger.info(f"Searching for test policies in namespace: {tenant_namespace}")
 
-        # Create filter for policies with test and dummy tags
-        # Using OR logic to find policies that have either "test" OR "dummy" tags
-        filter_expression = "meta.tags in ['test', 'dummy']"
+        # Create filter for policies with test-related tags
+        # Using OR logic to find policies that have any test-related tags
+        filter_expression = (
+            "meta.tags in ['test', 'dummy', 'crud-test', "
+            "'integration-test', 'ml-finding']"
+        )
 
         list_params = ListParameters(
             filter=filter_expression,
@@ -82,14 +87,16 @@ def find_test_policies(
 
         policies = list_policies(client, tenant_namespace, list_params=list_params)
 
-        # Additional filtering to ensure we only get policies with BOTH test AND dummy tags
+        # Additional filtering to ensure we only get policies with test-related tags
         test_policies = []
         for policy in policies:
             tags = policy.meta.tags or []
-            if "test" in tags and "dummy" in tags:
+            # Check for any test-related tags
+            test_tags = ['test', 'dummy', 'crud-test', 'integration-test', 'ml-finding']
+            if any(tag in tags for tag in test_tags):
                 test_policies.append(policy)
 
-        logger.info(f"Found {len(test_policies)} policies with both 'test' and 'dummy' tags")
+        logger.info(f"Found {len(test_policies)} policies with test-related tags")
         return test_policies
 
     except Exception as e:
@@ -181,7 +188,11 @@ def delete_policies_batch(
             logger.info(f"Deleting policy {i}/{len(policies)}: {policy.meta.name}")
 
             # Determine the correct namespace for deletion
-            policy_namespace = policy.tenant_meta.namespace if policy.tenant_meta else tenant_namespace
+            policy_namespace = (
+                policy.tenant_meta.namespace
+                if policy.tenant_meta
+                else tenant_namespace
+            )
 
             success = delete_policy(client, policy_namespace, policy.uuid)
 
@@ -190,7 +201,10 @@ def delete_policies_batch(
                 logger.info(f"Successfully deleted policy: {policy.meta.name}")
             else:
                 results["failed"] += 1
-                error_msg = f"Failed to delete policy: {policy.meta.name} (UUID: {policy.uuid})"
+                error_msg = (
+                    f"Failed to delete policy: {policy.meta.name} "
+                    f"(UUID: {policy.uuid})"
+                )
                 results["errors"].append(error_msg)
                 logger.error(error_msg)
 
@@ -256,7 +270,7 @@ def confirm_deletion(policies: List[Policy]) -> bool:
 def main():
     """Main function to handle command line arguments and execute cleanup."""
     parser = argparse.ArgumentParser(
-        description="Clean up test policies with 'test' and 'dummy' tags",
+        description="Clean up test policies with test-related tags",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -332,7 +346,7 @@ uv run python maneuvers/cleanup_test_policies.py \\
         )
 
         if not test_policies:
-            print("No test policies found with both 'test' and 'dummy' tags.")
+            print("No test policies found.")
             return
 
         # Display summary
@@ -344,12 +358,21 @@ uv run python maneuvers/cleanup_test_policies.py \\
 
         # Confirmation
         if not args.confirm_delete:
-            if not confirm_deletion(test_policies):
+            print(
+                f"\n⚠️  WARNING: You are about to delete "
+                f"{len(test_policies)} policies!"
+            )
+            print("This action cannot be undone.")
+            response = input(
+                "Are you sure you want to proceed? "
+                "Type 'DELETE' to confirm: "
+            )
+            if response.strip() != "DELETE":
                 print("Operation cancelled by user.")
                 return
 
         # Delete policies
-        logger.info("Proceeding with deletion...")
+        logger.info("Proceeding with policy deletion...")
         results = delete_policies_batch(
             client,
             args.tenant_namespace,
@@ -361,7 +384,10 @@ uv run python maneuvers/cleanup_test_policies.py \\
         display_deletion_results(results)
 
         if results["failed"] > 0:
-            print(f"\n⚠️  {results['failed']} policies failed to delete. Check the errors above.")
+            print(
+                f"\n⚠️  {results['failed']} policies failed to delete. "
+                "Check the errors above."
+            )
             sys.exit(1)
         else:
             print(f"\n✅ Successfully deleted {results['successful']} test policies.")

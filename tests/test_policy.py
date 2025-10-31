@@ -33,11 +33,23 @@ class TestPolicy:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.created_policy_uuids = []  # Track created policies for cleanup
 
         # Get test data
         self.policies = policy.list_policies(self.client, self.namespace)
         if not self.policies:
             pytest.skip("No policies available for testing")
+
+    def teardown_method(self):
+        """Clean up any policies created during tests."""
+        if hasattr(self, "created_policy_uuids"):
+            for policy_uuid in self.created_policy_uuids:
+                try:
+                    policy.delete_policy(self.client, self.namespace, policy_uuid)
+                    print(f"[CLEANUP] Deleted test policy: {policy_uuid}")
+                except Exception as e:
+                    print(f"[WARNING] Failed to delete test policy {policy_uuid}: {e}")
+            self.created_policy_uuids.clear()
 
     def test_policy_get_list(self):
         """Test GET policies operation."""
@@ -356,7 +368,7 @@ configure[result] {
         print(f"[SUCCESS] Policy created with UUID: {created_policy.uuid}")
 
         # Store for cleanup
-        self.created_policy_uuid = created_policy.uuid
+        self.created_policy_uuids.append(created_policy.uuid)
         return created_policy
 
     def test_policy_update_ml_finding(self):
@@ -447,13 +459,8 @@ configure[result] {
         print(f"Updated tags: {updated_policy.meta.tags}")
         print(f"Updated project selector: {updated_policy.spec.project_selector}")
 
-        # Clean up - delete the policy we created for this test
-        print(f"Cleaning up test policy: {policy_uuid}")
-        delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
-        if delete_success:
-            print(f"[SUCCESS] Test policy cleaned up: {policy_uuid}")
-        else:
-            print(f"[WARNING] Failed to clean up test policy: {policy_uuid}")
+        # Note: Policy will be cleaned up by teardown_method
+        print(f"[INFO] Policy {policy_uuid} will be cleaned up by teardown")
 
         return updated_policy
 
@@ -484,6 +491,10 @@ configure[result] {
 
         assert delete_success, "Policy deletion should succeed"
         print(f"[SUCCESS] Policy deleted: {policy_uuid}")
+
+        # Remove from cleanup list since we deleted it manually
+        if policy_uuid in self.created_policy_uuids:
+            self.created_policy_uuids.remove(policy_uuid)
 
         # Verify deletion by trying to retrieve it
         time.sleep(2)  # Wait for deletion to propagate
@@ -590,6 +601,10 @@ configure[result] {
         assert delete_success, "Policy deletion should succeed"
         print(f"[SUCCESS] Policy deleted: {policy_uuid}")
 
+        # Remove from cleanup list since we deleted it manually
+        if policy_uuid in self.created_policy_uuids:
+            self.created_policy_uuids.remove(policy_uuid)
+
         # Verify deletion by trying to retrieve it
         time.sleep(2)  # Wait for deletion to propagate
         deleted_policy = policy.get_policy(self.client, self.namespace, policy_uuid)
@@ -668,9 +683,8 @@ configure[result] {
         print("  - Rule Pattern: configure[result] with JSON configuration")
         print(f"  - Rule Length: {len(created_policy.spec.rule)} characters")
 
-        # Clean up
-        policy.delete_policy(self.client, self.namespace, created_policy.uuid)
-        print("[SUCCESS] Test policy cleaned up")
+        # Note: Policy will be cleaned up by teardown_method
+        print("[INFO] Test policy will be cleaned up by teardown")
 
         return True
 

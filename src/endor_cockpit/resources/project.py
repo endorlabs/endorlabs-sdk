@@ -2,6 +2,18 @@
 This module provides a resource-oriented interface for managing Endor Labs
 projects. It implements CRUD operations following REST principles and
 provides type-safe data models.
+
+API OPERATIONS SUPPORTED:
+- GET: List projects, Get project by UUID
+- PATCH: Update project metadata and tags
+
+API LIMITATIONS:
+- CREATE: Not supported by API (projects are managed by platform integrations)
+- DELETE: Not supported by API (projects are managed by platform integrations)
+
+Note: Projects are automatically discovered and managed through platform integrations
+and cannot be manually created or deleted. Only metadata updates (tags, descriptions)
+are allowed via PATCH operations.
 """
 
 import logging
@@ -173,6 +185,31 @@ class Project(BaseResource):
     An Endor Labs project entity extending BaseResource.
 
     Project-specific fields (universal fields inherited from BaseResource).
+
+    OPERATION SUPPORT:
+    ==================
+    ✅ GET: List projects, Get by UUID
+    ✅ PATCH: Update project metadata and tags
+    ❌ CREATE: Not supported (managed by platform integrations)
+    ❌ DELETE: Not supported (managed by platform integrations)
+
+    FIELD MUTABILITY:
+    =================
+    IMMUTABLE FIELDS (read-only, system-managed):
+    - uuid: Unique identifier
+    - meta.name: Project name (set by platform)
+    - spec.platform_source: Platform source (set at discovery)
+    - spec.internal_reference_key: Internal reference key (system-generated)
+    - spec.ingestion_token: Ingestion token (system-managed)
+    - tenant_meta.namespace: Namespace assignment
+    - All spec fields: Platform-managed metadata
+
+    MUTABLE FIELDS (can be updated via PATCH):
+    - meta.description: Project description
+    - meta.tags: Project tags for categorization
+
+    Note: Projects are automatically discovered through platform integrations
+    and cannot be manually created or deleted. Only metadata updates are allowed.
     """
 
     # Project-specific fields (universal fields inherited from BaseResource)
