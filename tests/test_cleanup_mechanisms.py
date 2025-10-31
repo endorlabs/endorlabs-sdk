@@ -7,8 +7,6 @@ properly clean up resources created during tests.
 
 import os
 import sys
-import time
-from typing import List
 
 import pytest
 
@@ -19,8 +17,6 @@ from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import policy
 from endor_cockpit.resources.policy import (
     CreatePolicyPayload,
-    PolicyMeta,
-    PolicySpec,
     PolicyType,
 )
 
