@@ -110,21 +110,21 @@ configure[result] {
         for i in range(2):
             policy_payload = CreatePolicyPayload(
                 meta=policy.PolicyMeta(
-                    name=f"Integration Cleanup Test Policy {i+1}",
+                    name=f"Integration Cleanup Test Policy {i + 1}",
                     kind="Policy",
-                    description=f"Test policy {i+1} for integration cleanup testing",
+                    description=f"Test policy {i + 1} for integration cleanup testing",
                     tags=["test", "integration-cleanup", "crud-test"],
                 ),
                 spec=policy.PolicySpec(
                     policy_type=PolicyType.ML_FINDING,
-                    rule=f"""package testpolicy{i+1}
+                    rule=f"""package testpolicy{i + 1}
 
 configure[result] {{
   result = {{
-    "test_method_{i+1}": {{
+    "test_method_{i + 1}": {{
       "disable": false,
       "parameters": {{
-        "enable_test_{i+1}": {{
+        "enable_test_{i + 1}": {{
           "bool_value": true
         }}
       }}
@@ -133,8 +133,8 @@ configure[result] {{
 }}""",
                     disable=False,
                     resource_kinds=[],
-                    project_selector=[f"test-projects-{i+1}"],
-                    project_exceptions=[f"excluded-projects-{i+1}"],
+                    project_selector=[f"test-projects-{i + 1}"],
+                    project_exceptions=[f"excluded-projects-{i + 1}"],
                 ),
                 propagate=True,
             )
