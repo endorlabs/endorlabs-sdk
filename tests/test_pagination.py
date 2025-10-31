@@ -27,7 +27,7 @@ class TestPagination:
     def setup(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
 
     def test_pagination_with_mock_data(self):
         """Test pagination with mock API responses."""
@@ -241,7 +241,10 @@ if __name__ == "__main__":
     import os
 
     # Set up environment
-    os.environ.setdefault("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+    # Require ENDOR_NAMESPACE to be set
+    if not os.getenv("ENDOR_NAMESPACE"):
+        print("ERROR: ENDOR_NAMESPACE environment variable must be set")
+        sys.exit(1)
 
     # Create test instance and manually set up
     test_instance = TestPagination()
@@ -249,7 +252,7 @@ if __name__ == "__main__":
     # Manual setup without using pytest fixture
     test_instance.client = APIClient()
     test_instance.namespace = os.getenv(
-        "ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit"
+        "ENDOR_NAMESPACE", ""
     )
 
     try:
