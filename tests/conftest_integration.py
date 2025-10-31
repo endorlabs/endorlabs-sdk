@@ -44,8 +44,11 @@ def _has_credentials() -> bool:
 @pytest.fixture(scope="session")
 def integration_config():
     """Integration test configuration."""
+    namespace = os.getenv("ENDOR_NAMESPACE", "")
+    if not namespace:
+        pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     return {
-        "tenant_namespace": "endor-solutions-tgowan.cockpit",
+        "tenant_namespace": namespace,
         "test_prefix": "integration-test",
         "cleanup_delay": 1,  # seconds between operations
         "timeout": 60,  # seconds for operations
