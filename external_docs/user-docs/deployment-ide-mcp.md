@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ide/mcp/
 title: Endor Labs MCP server | Endor Labs Docs
-downloaded: 2025-10-23 23:25:37
+downloaded: 2025-10-27 12:57:55
 ---
 
 Endor Labs MCP server | Endor Labs Docs

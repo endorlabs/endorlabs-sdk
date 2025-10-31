@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/exception-policies/templates/
 title: Exception policy templates | Endor Labs Docs
-downloaded: 2025-10-23 23:24:54
+downloaded: 2025-10-27 12:57:13
 ---
 
 Exception policy templates | Endor Labs Docs

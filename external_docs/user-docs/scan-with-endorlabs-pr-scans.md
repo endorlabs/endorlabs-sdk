@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/
 title: Pull Request scans | Endor Labs Docs
-downloaded: 2025-10-23 23:26:29
+downloaded: 2025-10-27 12:58:45
 ---
 
 Pull Request scans | Endor Labs Docs

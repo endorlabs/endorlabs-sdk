@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-app-pro/
 title: Deploy Endor Labs GitHub App (Pro) | Endor Labs Docs
-downloaded: 2025-10-23 23:26:55
+downloaded: 2025-10-27 12:59:11
 ---
 
 Deploy Endor Labs GitHub App (Pro) | Endor Labs Docs

@@ -102,6 +102,9 @@
       "name": "BatchDependencyMetadataService"
     },
     {
+      "name": "DepsDevPackageService"
+    },
+    {
       "name": "EndorLicenseService"
     },
     {
@@ -701,7 +704,7 @@
         "parameters": [
           {
             "name": "filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -8731,7 +8734,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -9134,7 +9137,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -9532,7 +9535,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -9962,7 +9965,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -10364,7 +10367,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -10713,7 +10716,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -11114,7 +11117,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -11512,7 +11515,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -11981,7 +11984,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -12325,7 +12328,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -12731,7 +12734,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -13027,7 +13030,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -13362,7 +13365,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -13760,7 +13763,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -14286,7 +14289,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -14768,7 +14771,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -15236,7 +15239,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -15635,7 +15638,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -16037,7 +16040,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -16434,7 +16437,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -16808,6 +16811,405 @@
         ]
       }
     },
+    "/v1/namespaces/{tenant_meta.namespace}/depsdev-packages": {
+      "get": {
+        "summary": "ListDepsDevPackage",
+        "description": "List DepsDevPackage objects based on the specified list parameters.",
+        "operationId": "DepsDevPackageService_ListDepsDevPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListDepsDevPackageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenant_meta.namespace",
+            "description": "Namespaces are a way to organize organizational units into virtual\ngroupings of resources. Namespaces must be a fully qualified name,\nfor example, the child namespace of namespace \"endor.prod\" called \"app\"\nis called \"endor.prod.app\".",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-endor-name": "Namespace"
+          },
+          {
+            "name": "list_parameters.filter",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.page_token",
+            "description": "Set the page token to start from.\nUse page tokens to page through list results or list specific pages.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "list_parameters.page_size",
+            "description": "Set the page size to limit the number of results returned.\nDefault: 100. Max: 500.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "list_parameters.action",
+            "description": "Action to be executed with a request. Not supported for all endpoints.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.mask",
+            "description": "List of fields to return (all fields are returned by default).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.traverse",
+            "description": "Get data from any child namespaces as well.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "list_parameters.sort.path",
+            "description": "Field to sort objects by, for example, meta.name.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.sort.order",
+            "description": "Sort order. Default: ASC.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "SORT_ENTRY_ORDER_UNSPECIFIED",
+              "SORT_ENTRY_ORDER_ASC",
+              "SORT_ENTRY_ORDER_DESC"
+            ],
+            "default": "SORT_ENTRY_ORDER_UNSPECIFIED"
+          },
+          {
+            "name": "list_parameters.count",
+            "description": "Return the number of objects matching the given list parameters.\nIf count is set to true, the response is a CountResponse.\nCan be used together with filter and traverse.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "list_parameters.group.aggregation_paths",
+            "description": "Group the objects based on this field.\nIf there are multiple fields then the objects are grouped\nbased on the uniqueness of all fields.\nSupports composite paths.\nSupports arrays and maps.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.group.show_aggregation_uuids",
+            "description": "Return the UUID of each object in each group as specified by\naggregation_paths.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "list_parameters.group.unique_count_paths",
+            "description": "List of fields for which we want the unique count.\nSupports arrays and maps.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.group.unique_value_paths",
+            "description": "List of fields for which we want the unique values.\nSupports arrays and maps.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.ci_run_uuid",
+            "description": "Only return objects from PR scans that match this context id.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.page_id",
+            "description": "Page ID to retrieve.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.group_by_time.aggregation_paths",
+            "description": "Group the objects based on this time field,\nfor example, meta.create_time.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.group_by_time.show_aggregation_uuids",
+            "description": "Return the UUIDs of the objects in each group.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "list_parameters.group_by_time.interval",
+            "description": "Interval unit by which the objects should be grouped.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "GROUP_BY_TIME_INTERVAL_UNSPECIFIED",
+              "GROUP_BY_TIME_INTERVAL_YEAR",
+              "GROUP_BY_TIME_INTERVAL_QUARTER",
+              "GROUP_BY_TIME_INTERVAL_MONTH",
+              "GROUP_BY_TIME_INTERVAL_WEEK",
+              "GROUP_BY_TIME_INTERVAL_DAY",
+              "GROUP_BY_TIME_INTERVAL_HOUR",
+              "GROUP_BY_TIME_INTERVAL_MINUTE",
+              "GROUP_BY_TIME_INTERVAL_SECOND"
+            ],
+            "default": "GROUP_BY_TIME_INTERVAL_UNSPECIFIED"
+          },
+          {
+            "name": "list_parameters.group_by_time.group_size",
+            "description": "Size of the time interval to group the objects by,\nfor example, to group objects by 2-week intervals, set interval\nto GROUP_BY_TIME_INTERVAL_WEEK and group_size to 2.",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "list_parameters.group_by_time.start_time",
+            "description": "Beginning of the time period to group objects.\nDefaults to the beginning of time.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "list_parameters.group_by_time.end_time",
+            "description": "End of the time period to group objects.\nDefaults to the current time.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "list_parameters.group_by_time.mode",
+            "description": "The mode determines how the matching objects are counted\nin the produced time-series. Values allowed are:\ncount (default) : is the number of items matching in every interval.\nsum: is the total number of items matching since the beginning of the\naggregation time.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.group_by_time.aggregation_value_field",
+            "description": "The aggregation_field is a field on the matched objects that we want to\nperform some operation in each interval (example : min, max, avg)",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.group_by_time.aggregation_operator",
+            "description": "The aggreation_operator is the operator that we should use for the\naggregation. Allowed values are: min, max, sum, avg",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "list_parameters.disable_pagination",
+            "description": "If true, the results will not be paginated and\nonly the first page will be returned. The order\nof the results is not guaranteed.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "DepsDevPackageService"
+        ]
+      },
+      "post": {
+        "summary": "CreateDepsDevPackage",
+        "description": "Creates a DepsDevPackage object.",
+        "operationId": "DepsDevPackageService_CreateDepsDevPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DepsDevPackage"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenant_meta.namespace",
+            "description": "Namespaces are a way to organize organizational units into virtual\ngroupings of resources. Namespaces must be a fully qualified name,\nfor example, the child namespace of namespace \"endor.prod\" called \"app\"\nis called \"endor.prod.app\".",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-endor-name": "Namespace"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "uuid": {
+                  "type": "string",
+                  "description": "The UUID of the resource.",
+                  "readOnly": true
+                },
+                "tenant_meta": {
+                  "type": "object",
+                  "description": "The tenant metadata restricts access to a specific tenant.",
+                  "title": "The tenant metadata restricts access to a specific tenant."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata identifies the object."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1DepsDevPackageSpec",
+                  "description": "Resource kind specific data."
+                }
+              },
+              "description": "DepsDevPackage stores package metadata from deps.dev snapshots.\nThis data includes package popularity (dependents count) and age information\nused for typosquatting detection and package analysis.\n\nMongoDB Atlas Search Index Configuration:\nTo enable fuzzy typosquatting detection, create an Atlas Search index on this collection with:\n  - Field: meta.name\n    Type: string\n    Analyzer: lucene.keyword (treats full package identifier as single token)\n  - Field: spec.ecosystem\n    Type: token\n    Normalizer: lowercase\n  - Field: tenant_meta.namespace\n    Type: token\n    Normalizer: lowercase",
+              "required": [
+                "meta",
+                "spec"
+              ]
+            }
+          }
+        ],
+        "tags": [
+          "DepsDevPackageService"
+        ]
+      }
+    },
+    "/v1/namespaces/{tenant_meta.namespace}/depsdev-packages/{uuid}": {
+      "get": {
+        "summary": "GetDepsDevPackage",
+        "description": "Returns a specified DepsDevPackage object.",
+        "operationId": "DepsDevPackageService_GetDepsDevPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DepsDevPackage"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenant_meta.namespace",
+            "description": "Namespaces are a way to organize organizational units into virtual\ngroupings of resources. Namespaces must be a fully qualified name,\nfor example, the child namespace of namespace \"endor.prod\" called \"app\"\nis called \"endor.prod.app\".",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-endor-name": "Namespace"
+          },
+          {
+            "name": "uuid",
+            "description": "The UUID of the requested resource.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "get_parameters.mask",
+            "description": "List of fields to return (all fields are returned by default).",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DepsDevPackageService"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteDepsDevPackage",
+        "description": "Delete a specified DepsDevPackage object.",
+        "operationId": "DepsDevPackageService_DeleteDepsDevPackage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "tenant_meta.namespace",
+            "description": "Namespaces are a way to organize organizational units into virtual\ngroupings of resources. Namespaces must be a fully qualified name,\nfor example, the child namespace of namespace \"endor.prod\" called \"app\"\nis called \"endor.prod.app\".",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "x-endor-name": "Namespace"
+          },
+          {
+            "name": "uuid",
+            "description": "The UUID of the resource to be deleted.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "delete_parameters.action",
+            "description": "Action to be executed with delete request.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "delete_parameters.force",
+            "description": "Force will force the deletion of the resource if any\nchecks fail.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "DepsDevPackageService"
+        ]
+      }
+    },
     "/v1/namespaces/{tenant_meta.namespace}/endor-licenses": {
       "get": {
         "summary": "ListEndorLicenses",
@@ -16838,7 +17240,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -17242,7 +17644,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -17649,7 +18051,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -18051,7 +18453,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -18453,7 +18855,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -18856,7 +19258,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -19255,7 +19657,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -19663,7 +20065,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -20134,7 +20536,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -20538,7 +20940,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -20943,7 +21345,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -21430,7 +21832,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -21829,7 +22231,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -22231,7 +22633,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -22635,7 +23037,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -23033,7 +23435,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -23436,7 +23838,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -23839,7 +24241,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -24237,7 +24639,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -24639,7 +25041,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -25043,7 +25445,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -25384,7 +25786,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -25661,7 +26063,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -25942,7 +26344,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -26345,7 +26747,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -26748,7 +27150,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -27215,7 +27617,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -27618,7 +28020,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -28019,7 +28421,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -28481,7 +28883,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -28884,7 +29286,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -29287,7 +29689,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -29690,7 +30092,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -30093,7 +30495,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -30496,7 +30898,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -30899,7 +31301,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -31302,7 +31704,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -31705,7 +32107,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -32108,7 +32510,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -32511,7 +32913,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -32914,7 +33316,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -33317,7 +33719,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -33787,7 +34189,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -34190,7 +34592,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -34588,7 +34990,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -34892,7 +35294,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -35392,7 +35794,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -35790,7 +36192,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -36193,7 +36595,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -36595,7 +36997,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -36997,7 +37399,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -37465,7 +37867,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -37862,7 +38264,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -38269,7 +38671,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -38671,7 +39073,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -39672,7 +40074,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -40076,7 +40478,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -40479,7 +40881,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -40882,7 +41284,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -41285,7 +41687,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -41687,7 +42089,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -42090,7 +42492,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -42493,7 +42895,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -42896,7 +43298,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -43299,7 +43701,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -43702,7 +44104,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -44105,7 +44507,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -44503,7 +44905,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -44906,7 +45308,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -45309,7 +45711,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -45715,7 +46117,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -46114,7 +46516,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -46511,7 +46913,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -47025,7 +47427,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -47429,7 +47831,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -47890,7 +48292,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -48289,7 +48691,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -48688,7 +49090,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -49091,7 +49493,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -49496,7 +49898,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -49896,7 +50298,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -50298,7 +50700,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -50696,7 +51098,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -51098,7 +51500,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -51716,7 +52118,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -52121,7 +52523,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -52656,7 +53058,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -52933,7 +53335,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -53336,7 +53738,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -53738,7 +54140,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -54207,7 +54609,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -54676,7 +55078,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -55138,7 +55540,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -55545,7 +55947,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -55943,7 +56345,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -56405,7 +56807,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -56807,7 +57209,7 @@
           },
           {
             "name": "list_parameters.filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -57066,7 +57468,7 @@
         "parameters": [
           {
             "name": "filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -57423,7 +57825,7 @@
         "parameters": [
           {
             "name": "filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -57778,7 +58180,7 @@
         "parameters": [
           {
             "name": "filter",
-            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
+            "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\".",
             "in": "query",
             "required": false,
             "type": "string"
@@ -60676,7 +61078,7 @@
         },
         "version_constraints": {
           "type": "string",
-          "title": "The Cocoapod version that is defined in the\nPodfile. Example: (~> 1.2)",
+          "title": "The Cocoapod version that is defined in the\nPodfile. Example: (~\u003e 1.2)",
           "x-endor-name": "cocoapod Package version constraint"
         },
         "scope": {
@@ -60708,7 +61110,7 @@
         },
         "version_constraints": {
           "type": "string",
-          "title": "Package version number rules.\nExample-1: ~= 1.2\nExample-2: >= 4.0.0, < 6.0.0\nExample-3: == 5.4.7",
+          "title": "Package version number rules.\nExample-1: ~= 1.2\nExample-2: \u003e= 4.0.0, \u003c 6.0.0\nExample-3: == 5.4.7",
           "x-endor-name": "Rubygem required version constraints"
         },
         "scope_type": {
@@ -60933,7 +61335,7 @@
         },
         "version_constraint": {
           "type": "string",
-          "title": "versionConstraints are module version number rules if no concrete version\nis found. Example-1: ~= 3.2 Example-2: >= 2.0.0, < 3.0.0 Example-3:\n== 4.7.0",
+          "title": "versionConstraints are module version number rules if no concrete version\nis found. Example-1: ~= 3.2 Example-2: \u003e= 2.0.0, \u003c 3.0.0 Example-3:\n== 4.7.0",
           "x-endor-name": "npm Package version constraint"
         },
         "scope": {
@@ -61051,7 +61453,7 @@
         },
         "version_constraints": {
           "type": "string",
-          "title": "Package version number rules.\nExample-1: ~= 3.2\nExample-2: >= 2.0.0, < 3.0.0\nExample-3: == 4.7.0",
+          "title": "Package version number rules.\nExample-1: ~= 3.2\nExample-2: \u003e= 2.0.0, \u003c 3.0.0\nExample-3: == 4.7.0",
           "x-endor-name": "Python required version constraints"
         },
         "scope_type": {
@@ -61085,10 +61487,11 @@
         "PACKAGE_MANAGER_TYPE_PIP",
         "PACKAGE_MANAGER_TYPE_PIPENV",
         "PACKAGE_MANAGER_TYPE_POETRY",
-        "PACKAGE_MANAGER_TYPE_PDM"
+        "PACKAGE_MANAGER_TYPE_PDM",
+        "PACKAGE_MANAGER_TYPE_UV"
       ],
       "default": "PACKAGE_MANAGER_TYPE_UNSPECIFIED",
-      "description": "Python package manager.\n\n - PACKAGE_MANAGER_TYPE_PIP: PIP package manager\n - PACKAGE_MANAGER_TYPE_PIPENV: PIPENV package manager\n - PACKAGE_MANAGER_TYPE_POETRY: POETRY package manager\n - PACKAGE_MANAGER_TYPE_PDM: PDM package manager"
+      "description": "Python package manager.\n\n - PACKAGE_MANAGER_TYPE_PIP: PIP package manager\n - PACKAGE_MANAGER_TYPE_PIPENV: PIPENV package manager\n - PACKAGE_MANAGER_TYPE_POETRY: POETRY package manager\n - PACKAGE_MANAGER_TYPE_PDM: PDM package manager\n - PACKAGE_MANAGER_TYPE_UV: UV package manager"
     },
     "PackageVersionDependencyPypiDependencySpecScope": {
       "type": "string",
@@ -61181,7 +61584,7 @@
         },
         "version_constraints": {
           "type": "string",
-          "description": "Version constraints, for example, ~> 1.2.",
+          "description": "Version constraints, for example, ~\u003e 1.2.",
           "x-endor-name": "Package version constraint"
         },
         "scope": {
@@ -64073,10 +64476,11 @@
       "type": "string",
       "enum": [
         "JOB_TYPE_UNSPECIFIED",
-        "JOB_TYPE_SAMPLE"
+        "JOB_TYPE_SAMPLE",
+        "JOB_TYPE_ANALYTICS_REPORT"
       ],
       "default": "JOB_TYPE_UNSPECIFIED",
-      "description": "JobType is used to match the job to its handler.\nA new job type should be added when a new handler is added.\n\n - JOB_TYPE_SAMPLE: Sample job type."
+      "description": "JobType is used to match the job to its handler.\nA new job type should be added when a new handler is added.\n\n - JOB_TYPE_SAMPLE: Sample job type.\n - JOB_TYPE_ANALYTICS_REPORT: Analytics report job type."
     },
     "SpecKEVRecord": {
       "type": "object",
@@ -66023,7 +66427,7 @@
         "cumulative_count_float": {
           "type": "number",
           "format": "double",
-          "description": "Overrides cumulative_count if > 0."
+          "description": "Overrides cumulative_count if \u003e 0."
         },
         "upper_bound": {
           "type": "number",
@@ -66108,7 +66512,7 @@
         "sample_count_float": {
           "type": "number",
           "format": "double",
-          "description": "Overrides sample_count if > 0."
+          "description": "Overrides sample_count if \u003e 0."
         },
         "sample_sum": {
           "type": "number",
@@ -66129,7 +66533,7 @@
         "schema": {
           "type": "integer",
           "format": "int32",
-          "description": "schema defines the bucket schema. Currently, valid numbers are -4 <= n <= 8.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times 2^(2^-n).\nIn the future, more bucket schemas may be added using numbers < -4 or > 8."
+          "description": "schema defines the bucket schema. Currently, valid numbers are -4 \u003c= n \u003c= 8.\nThey are all for base-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.\nOr in other words, each bucket boundary is the previous boundary times 2^(2^-n).\nIn the future, more bucket schemas may be added using numbers \u003c -4 or \u003e 8."
         },
         "zero_threshold": {
           "type": "number",
@@ -66144,7 +66548,7 @@
         "zero_count_float": {
           "type": "number",
           "format": "double",
-          "description": "Overrides sb_zero_count if > 0."
+          "description": "Overrides sb_zero_count if \u003e 0."
         },
         "negative_span": {
           "type": "array",
@@ -66655,7 +67059,7 @@
         }
       },
       "additionalProperties": {},
-      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
     },
     "googlerpcStatus": {
       "type": "object",
@@ -66756,7 +67160,7 @@
         },
         "ecosystem": {
           "type": "string",
-          "description": "Required. The ecosystem for this package. \nFor the complete list of valid ecosystem names, see\n<https://ossf.github.io/osv-schema/#affectedpackage-field>."
+          "description": "Required. The ecosystem for this package. \nFor the complete list of valid ecosystem names, see\n\u003chttps://ossf.github.io/osv-schema/#affectedpackage-field\u003e."
         },
         "purl": {
           "type": "string",
@@ -66856,7 +67260,7 @@
         },
         "id": {
           "type": "string",
-          "description": "The `id` field is a unique identifier for the vulnerability entry. It is a\nstring of the format `<DB>-<ENTRYID>`, where `DB` names the database and\n`ENTRYID` is in the format used by the database. For example:\n\u201cOSV-2020-111\u201d, \u201cCVE-2021-3114\u201d, or \u201cGHSA-vp9c-fpxx-744v\u201d."
+          "description": "The `id` field is a unique identifier for the vulnerability entry. It is a\nstring of the format `\u003cDB\u003e-\u003cENTRYID\u003e`, where `DB` names the database and\n`ENTRYID` is in the format used by the database. For example:\n“OSV-2020-111”, “CVE-2021-3114”, or “GHSA-vp9c-fpxx-744v”."
         },
         "published": {
           "type": "string",
@@ -69644,6 +70048,10 @@
           "type": "string",
           "format": "date-time",
           "description": "Most recent time this image was seen used as a base image."
+        },
+        "update_options": {
+          "$ref": "#/definitions/v1ContainerImageUpdateOptions",
+          "description": "Update options capturing possible base image update candidates.\nThe update_time on ContainerImageUpdateOptions applies to the entire set of options."
         }
       },
       "description": "ContainerAsBase captures usage of this container image as a base image elsewhere."
@@ -69698,6 +70106,47 @@
           "description": "Layers of the container image where a dependency is found.\nThis is an optional field.\nIt is only set when target dependency is found via container image scan."
         }
       }
+    },
+    "v1ContainerImageUpdateOption": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full image reference including registry, repository, and tag\n(e.g., \"docker.io/library/ubuntu:22.04\")."
+        },
+        "digest": {
+          "type": "string",
+          "description": "The SHA256 digest of the candidate image (e.g., \"sha256:...\")."
+        },
+        "chain_id": {
+          "type": "string",
+          "description": "Chain ID for the candidate image's layers."
+        }
+      },
+      "description": "ContainerImageUpdateOption describes a single base image update candidate."
+    },
+    "v1ContainerImageUpdateOptions": {
+      "type": "object",
+      "properties": {
+        "refreshed": {
+          "$ref": "#/definitions/v1ContainerImageUpdateOption",
+          "description": "Same image reference; potentially newer digest."
+        },
+        "next_version": {
+          "$ref": "#/definitions/v1ContainerImageUpdateOption",
+          "description": "Immediately newer tag (based on semver or timestamp ordering)."
+        },
+        "latest_version": {
+          "$ref": "#/definitions/v1ContainerImageUpdateOption",
+          "description": "Newest available tag (based on semver or timestamp ordering)."
+        },
+        "update_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when these update options were determined."
+        }
+      },
+      "description": "ContainerImageUpdateOptions groups possible base image update candidates."
     },
     "v1ContainerLayer": {
       "type": "object",
@@ -69756,7 +70205,7 @@
             "type": "object",
             "$ref": "#/definitions/v1ContainerLayer"
           },
-          "description": "The list of layers of the container in the order they are applied to\nassemble the container image. The layers are the SHA256 digest of the\ncontainer image layers. The list is equivalent to the output of `docker\ninspect --format='{{.RootFS.Layers}}' <image>`."
+          "description": "The list of layers of the container in the order they are applied to\nassemble the container image. The layers are the SHA256 digest of the\ncontainer image layers. The list is equivalent to the output of `docker\ninspect --format='{{.RootFS.Layers}}' \u003cimage\u003e`."
         },
         "base_image": {
           "$ref": "#/definitions/v1ContainerBaseImage",
@@ -70689,6 +71138,61 @@
         }
       },
       "description": "Includes all dependency related data."
+    },
+    "v1DepsDevPackage": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "description": "The UUID of the resource.",
+          "readOnly": true
+        },
+        "tenant_meta": {
+          "$ref": "#/definitions/v1TenantMeta",
+          "description": "The tenant metadata restricts access to a specific tenant."
+        },
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata identifies the object."
+        },
+        "spec": {
+          "$ref": "#/definitions/v1DepsDevPackageSpec",
+          "description": "Resource kind specific data."
+        }
+      },
+      "description": "DepsDevPackage stores package metadata from deps.dev snapshots.\nThis data includes package popularity (dependents count) and age information\nused for typosquatting detection and package analysis.\n\nMongoDB Atlas Search Index Configuration:\nTo enable fuzzy typosquatting detection, create an Atlas Search index on this collection with:\n  - Field: meta.name\n    Type: string\n    Analyzer: lucene.keyword (treats full package identifier as single token)\n  - Field: spec.ecosystem\n    Type: token\n    Normalizer: lowercase\n  - Field: tenant_meta.namespace\n    Type: token\n    Normalizer: lowercase",
+      "required": [
+        "tenant_meta",
+        "meta",
+        "spec"
+      ]
+    },
+    "v1DepsDevPackageSpec": {
+      "type": "object",
+      "properties": {
+        "ecosystem": {
+          "$ref": "#/definitions/v1Ecosystem",
+          "description": "The ecosystem of the package."
+        },
+        "dependents_count": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Number of packages that depend on this package.\nUsed to determine package popularity for typosquatting detection."
+        },
+        "age_weeks": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Age of the package in weeks since its first release.\nUsed to filter out old packages in typosquatting detection."
+        },
+        "snapshot_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp of the deps.dev snapshot this data was extracted from."
+        }
+      },
+      "required": [
+        "ecosystem"
+      ]
     },
     "v1Discussion": {
       "type": "object",
@@ -72099,6 +72603,11 @@
             "type": "string"
           },
           "description": "Policy meta tags."
+        },
+        "total_num_results": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The total number of results matched by the policy. This number may be greater\nthan the list of policy matches in the results field, which is truncated if\nthere are more than 5 results."
         }
       },
       "description": "Details about the policy that created the finding."
@@ -72771,6 +73280,10 @@
         "enable_mr_comments": {
           "type": "boolean",
           "description": "enable_mr_comments is a boolean value that indicates if the automated MR\ncomments should be enabled."
+        },
+        "enable_full_scan": {
+          "type": "boolean",
+          "description": "enable_full_scan is a boolean value that indicates if the full scan should\nbe enabled."
         }
       },
       "required": [
@@ -75159,6 +75672,36 @@
         }
       }
     },
+    "v1ListDepsDevPackageResponse": {
+      "type": "object",
+      "properties": {
+        "list": {
+          "$ref": "#/definitions/v1ListDepsDevPackageResponseList"
+        },
+        "count_response": {
+          "$ref": "#/definitions/v1CountResponse"
+        },
+        "group_response": {
+          "$ref": "#/definitions/v1GroupResponse"
+        }
+      },
+      "description": "Response returned for requests to list DepsDevPackage objects."
+    },
+    "v1ListDepsDevPackageResponseList": {
+      "type": "object",
+      "properties": {
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DepsDevPackage"
+          }
+        },
+        "response": {
+          "$ref": "#/definitions/v1ListResponse"
+        }
+      }
+    },
     "v1ListEndorLicensesResponse": {
       "type": "object",
       "properties": {
@@ -76608,7 +77151,7 @@
       "properties": {
         "filter": {
           "type": "string",
-          "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\"."
+          "description": "String of conditions to filter resources by.\nFilters may include any attribute along with the following operators:\n\"==\", \"!=\", \"\u003e\", \"\u003e=\", \"\u003c\", \"\u003c=\", \"Contains\", \"In\", \"Matches\", and\n\"Exists\". The logical operators \"And\" and \"Or\" are also supported.\nExpressions may be combined and grouped with parentheses.\n\nExamples:\n\"spec.value == 5\",\n\"spec.value in [\"a\", \"b\", \"c\"]\",\n\"(meta.name == \"xyz\" and \"spec.value in [\"a\",\"b\"]) or (spec.value ==\n\"c\")\"."
         },
         "page_token": {
           "type": "integer",

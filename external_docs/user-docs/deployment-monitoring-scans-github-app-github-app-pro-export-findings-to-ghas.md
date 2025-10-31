@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/
 title: Export findings to GitHub Advanced Security | Endor Labs Docs
-downloaded: 2025-10-23 23:24:56
+downloaded: 2025-10-27 12:57:14
 ---
 
 Export findings to GitHub Advanced Security | Endor Labs Docs
@@ -136,7 +136,11 @@ To filter findings using action policies:
 
 1. Create an [action policy](../../../../../managing-policies/action-policies/) that defines the criteria for findings you want to export, or use an existing action policy.
 2. Assign specific projects to the scope of the action policy you want to use.
-3. Run the following command to create a GHAS SARIF exporter that exports only findings from projects assigned in the scope:
+3. Run the following command to create a GHAS SARIF exporter that exports only findings from projects in the scope of your action policies.
+
+   #### Note
+
+   Use `MESSAGE_TYPE_ADMISSION_POLICY_FINDING` as the `message_type` to filter findings based on your action policies.
 
    ```
    endorctl api create -n <namespace> -r Exporter -d '{

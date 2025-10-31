@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-sboms/
 title: Manage SBOMs | Endor Labs Docs
-downloaded: 2025-10-23 23:28:04
+downloaded: 2025-10-27 13:00:18
 ---
 
 Manage SBOMs | Endor Labs Docs

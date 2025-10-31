@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/december-2024/
 title: December 2024 | Endor Labs Docs
-downloaded: 2025-10-23 23:28:24
+downloaded: 2025-10-27 13:00:37
 ---
 
 December 2024 | Endor Labs Docs

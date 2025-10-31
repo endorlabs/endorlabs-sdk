@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-sboms/importing-sboms/
 title: Import SBOMs | Endor Labs Docs
-downloaded: 2025-10-23 23:27:20
+downloaded: 2025-10-27 12:59:35
 ---
 
 Import SBOMs | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/environment-variables/
 title: Global flags and environment variables | Endor Labs Docs
-downloaded: 2025-10-23 23:27:19
+downloaded: 2025-10-27 12:59:34
 ---
 
 Global flags and environment variables | Endor Labs Docs

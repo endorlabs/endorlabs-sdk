@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/reachability-analysis/pre-computed-reachability/
 title: Pre-computed Reachability analysis | Endor Labs Docs
-downloaded: 2025-10-23 23:25:09
+downloaded: 2025-10-27 12:57:27
 ---
 
 Pre-computed Reachability analysis | Endor Labs Docs
@@ -49,7 +49,7 @@ The following table summarizes how pre-computed reachability is used across diff
 | Full scan | Full dependency-level and function-level | Direct and transitive dependencies | ✓ |
 | Full scan with pre-computed flag | Dependency-level and function-level. If the code build fails, it falls back to pre-computed reachability | Direct and transitive dependencies | ✗ |
 
-### Pre-computer reachability analysis process
+### Pre-computed reachability analysis process
 
 Pre-computed reachability analysis evaluates transitive dependencies using available metadata and entry points. This analysis provides an approximate assessment of vulnerability exposure in dependencies.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/
 title: Scan for open source risks | Endor Labs Docs
-downloaded: 2025-10-23 23:22:14
+downloaded: 2025-10-27 12:56:44
 ---
 
 Scan for open source risks | Endor Labs Docs
@@ -94,7 +94,7 @@ The following comprehensive matrix lists the supported languages, build tools, m
 |  | SwiftPM | `Package.swift` | `.swift`, `.h`, `.m` | SwiftPM 5.0.0 and higher versions |
 | [PHP](../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | `.php` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions |
 
-Define supported languages when running endorctl `scan` command as a comma-separated list: `c/c++,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`
+Define supported languages when running endorctl `scan` command as a comma-separated list: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`
 
 ## Feedback
 

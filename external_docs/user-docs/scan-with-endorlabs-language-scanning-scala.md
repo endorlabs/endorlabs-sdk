@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/scala/
 title: Scala | Endor Labs Docs
-downloaded: 2025-10-23 23:27:58
+downloaded: 2025-10-27 13:00:12
 ---
 
 Scala | Endor Labs Docs

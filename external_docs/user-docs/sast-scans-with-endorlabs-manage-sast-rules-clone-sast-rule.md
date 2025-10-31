@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/manage-sast-rules/clone-sast-rule/
 title: Clone a SAST rule | Endor Labs Docs
-downloaded: 2025-10-23 23:24:44
+downloaded: 2025-10-27 12:57:03
 ---
 
 Clone a SAST rule | Endor Labs Docs
