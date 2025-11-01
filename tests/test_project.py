@@ -216,9 +216,7 @@ if __name__ == "__main__":
 
     # Manual setup
     test_instance.client = APIClient()
-    test_instance.namespace = os.getenv(
-        "ENDOR_NAMESPACE", ""
-    )
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
     test_instance.projects = project.list_projects(
         test_instance.client, test_instance.namespace
     )

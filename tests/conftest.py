@@ -30,6 +30,7 @@ def mock_client():
 def sample_namespace():
     """Sample namespace for testing."""
     import os
+
     namespace = os.getenv("ENDOR_NAMESPACE", "test.tenant.namespace")
     return namespace
 

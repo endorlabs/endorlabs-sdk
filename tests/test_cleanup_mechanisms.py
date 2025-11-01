@@ -237,9 +237,7 @@ if __name__ == "__main__":
 
     # Manual setup
     test_instance.client = APIClient()
-    test_instance.namespace = os.getenv(
-        "ENDOR_NAMESPACE", ""
-    )
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
     test_instance.created_policy_uuids = []
 
     try:
