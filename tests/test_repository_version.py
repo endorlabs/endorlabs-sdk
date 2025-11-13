@@ -24,7 +24,7 @@ class TestRepositoryVersion:
     def setup(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
 
         # Get test data
         self.repository_versions = repository_version.list_repository_versions(

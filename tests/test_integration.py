@@ -69,7 +69,10 @@ class TestEndorCockpitIntegration:
                     )
             except Exception:
                 pass
-        return namespace or "endor-solutions-tgowan.cockpit"
+        namespace = namespace or os.getenv("ENDOR_NAMESPACE")
+        if not namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+        return namespace
 
     @pytest.fixture(scope="class")
     def test_namespaces(self, api_client, tenant_namespace):

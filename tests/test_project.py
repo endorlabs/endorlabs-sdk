@@ -25,7 +25,7 @@ class TestProject:
     def setup(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
 
         # Get test data
         self.projects = project.list_projects(self.client, self.namespace)
@@ -206,16 +206,17 @@ if __name__ == "__main__":
     import sys
 
     # Set up environment
-    os.environ.setdefault("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+    # Require ENDOR_NAMESPACE to be set
+    if not os.getenv("ENDOR_NAMESPACE"):
+        print("ERROR: ENDOR_NAMESPACE environment variable must be set")
+        sys.exit(1)
 
     # Create test instance and manually set up
     test_instance = TestProject()
 
     # Manual setup
     test_instance.client = APIClient()
-    test_instance.namespace = os.getenv(
-        "ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit"
-    )
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
     test_instance.projects = project.list_projects(
         test_instance.client, test_instance.namespace
     )
