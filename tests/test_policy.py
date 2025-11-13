@@ -32,7 +32,7 @@ class TestPolicy:
     def setup(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
         self.created_policy_uuids = []  # Track created policies for cleanup
 
         # Get test data
@@ -694,17 +694,17 @@ if __name__ == "__main__":
     import os
     import sys
 
-    # Set up environment
-    os.environ.setdefault("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+    # Set up environment - require ENDOR_NAMESPACE to be set
+    if not os.getenv("ENDOR_NAMESPACE"):
+        print("ERROR: ENDOR_NAMESPACE environment variable must be set")
+        sys.exit(1)
 
     # Create test instance and manually set up
     test_instance = TestPolicy()
 
     # Manual setup
     test_instance.client = APIClient()
-    test_instance.namespace = os.getenv(
-        "ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit"
-    )
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
     test_instance.policies = policy.list_policies(
         test_instance.client, test_instance.namespace
     )

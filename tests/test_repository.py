@@ -24,7 +24,7 @@ class TestRepository:
     def setup(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
 
         # Get test data
         self.repositories = repository.list_repositories(self.client, self.namespace)

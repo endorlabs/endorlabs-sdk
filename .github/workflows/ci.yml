@@ -180,6 +180,8 @@ jobs:
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
           GITHUB_TOKEN: ${{ secrets.ENDOR_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
           GITHUB_API_URL: ${{ github.api_url }}
+          ENDOR_LOG_LEVEL: "debug"
+          ENDOR_LOG_VERBOSE: "true"
 
   # Lint job - runs after security passes
   lint:

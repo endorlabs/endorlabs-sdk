@@ -29,7 +29,10 @@ def mock_client():
 @pytest.fixture
 def sample_namespace():
     """Sample namespace for testing."""
-    return "endor-solutions-tgowan.cockpit"
+    import os
+
+    namespace = os.getenv("ENDOR_NAMESPACE", "test.tenant.namespace")
+    return namespace
 
 
 @pytest.fixture
@@ -52,7 +55,7 @@ def sample_project_data():
             },
             "platform_source": "PLATFORM_SOURCE_GITHUB",
         },
-        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit"},
+        "tenant_meta": {"namespace": "test.tenant.namespace"},
     }
 
 
@@ -75,7 +78,7 @@ def sample_finding_data():
             "finding_categories": ["FINDING_CATEGORY_VULNERABILITY"],
             "project_uuid": "project-uuid-123",
         },
-        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit"},
+        "tenant_meta": {"namespace": "test.tenant.namespace"},
     }
 
 
@@ -99,7 +102,7 @@ def sample_policy_data():
             ),
             "disable": False,
         },
-        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit"},
+        "tenant_meta": {"namespace": "test.tenant.namespace"},
     }
 
 
@@ -116,10 +119,10 @@ def sample_namespace_data():
             "tags": ["test", "namespace"],
         },
         "spec": {
-            "parent_namespace": "endor-solutions-tgowan.cockpit",
+            "parent_namespace": "test.tenant.namespace",
             "description": "Test namespace for development",
         },
-        "tenant_meta": {"namespace": "endor-solutions-tgowan.cockpit.test-namespace"},
+        "tenant_meta": {"namespace": "test.tenant.namespace.test-namespace"},
     }
 
 

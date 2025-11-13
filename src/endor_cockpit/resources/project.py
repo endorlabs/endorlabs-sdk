@@ -310,7 +310,7 @@ def list_projects(
     Args:
         client: The APIClient instance to use for the request
         tenant_meta_namespace: The canonical namespace name
-            (e.g., 'endor-solutions-tgowan.cockpit')
+            (e.g., 'tenant.namespace')
         list_params: Optional list parameters for filtering, pagination, etc.
 
     Returns:
@@ -334,7 +334,7 @@ def get_project(
     Args:
         client: The APIClient instance to use for the request
         tenant_meta_namespace: The canonical namespace name
-            (e.g., 'endor-solutions-tgowan.cockpit')
+            (e.g., 'tenant.namespace')
         project_uuid: The UUID of the project to retrieve
 
     Returns:
@@ -360,7 +360,7 @@ def create_project(
     Args:
         client: The APIClient instance to use for the request
         tenant_meta_namespace: The canonical namespace name
-            (e.g., 'endor-solutions-tgowan.cockpit')
+            (e.g., 'tenant.namespace')
         payload: The CreateProjectPayload containing the new project details
 
     Returns:
@@ -416,7 +416,7 @@ def update_project(
     Args:
         client: The APIClient instance to use for the request
         tenant_meta_namespace: The fully qualified namespace name
-            (e.g., 'endor-solutions-tgowan.cockpit')
+            (e.g., 'tenant.namespace')
         project_uuid: The UUID of the project to update
         payload: The UpdateProjectPayload containing the updated project details
         update_mask: Optional comma-separated list of fields to update
@@ -521,7 +521,7 @@ def delete_project(
     Args:
         client: The APIClient instance to use for the request
         tenant_meta_namespace: The canonical namespace name
-            (e.g., 'endor-solutions-tgowan.cockpit')
+            (e.g., 'tenant.namespace')
         project_uuid: The UUID of the project to delete
 
     Returns:
@@ -545,9 +545,7 @@ def delete_project(
 if __name__ == "__main__":
     # Example usage
     client = APIClient()
-    tenant_meta_namespace = os.getenv(
-        "ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit"
-    )
+    tenant_meta_namespace = os.getenv("ENDOR_NAMESPACE", "")
 
     # List projects
     print("Listing projects...")

@@ -58,11 +58,8 @@ source .venv/bin/activate  # Linux/Mac
 # Install dependencies
 uv pip install -e .
 
-# Setup environment (creates .env file and validates configuration)
-uv run python scripts/setup_environment.py
-
-# Validate your setup
-uv run python scripts/validate_environment.py
+# Optional: Install dependencies for documentation sync scripts
+uv pip install -e ".[docs]"
 ```
 
 ### External Documentation Sync
@@ -81,21 +78,45 @@ uv run python scripts/download_user_docs.py \
 
 ## 🔐 **Environment Configuration**
 
-Set the following environment variables:
+### Required Environment Variables
+
+The SDK requires the following environment variables to be set:
 
 ```bash
 export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-api-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
+export ENDOR_NAMESPACE="your-tenant-namespace"  # Required for operations
 ```
 
-**Pro Tip**: Use the setup script to automatically create your `.env` file:
+### Local Development Setup
+
+For local development, you can use the admin setup script:
 
 ```bash
-uv run python scripts/setup_environment.py
+# Initialize environment (creates .env file from template)
+uv run python scripts/admin_setup.py init
+
+# Validate environment configuration
+uv run python scripts/admin_setup.py validate
+
+# Quick health check
+uv run python scripts/admin_setup.py check
 ```
 
-## 🚀 **Quick Start**
+### Configuration Management
+
+**Local Development**: Use `.env` file or environment variables directly.
+
+**CI/CD**: Environment variables are configured in GitHub repository settings:
+- `ENDOR_API` - Repository variable
+- `ENDOR_NAMESPACE` - Repository variable  
+- `ENDOR_API_CREDENTIALS_KEY` - Repository secret
+- `ENDOR_API_CREDENTIALS_SECRET` - Repository secret
+
+The SDK reads configuration from environment variables only - no hardcoded values or configuration files. This follows 12-factor app principles and ensures security and flexibility across different environments.
+
+## Quick Start
 
 ### For Human Pilots
 
@@ -217,14 +238,11 @@ ls maneuvers/
 
 ## 📚 **Documentation & Intelligence**
 
-- **[🤖 AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
-- **[⚔️ Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
-- **[📋 Rego Policy Guide](./docs/rego_guide.md)** - Complete Rego policy development reference
-- **[🔧 SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
-- **[📖 External Documentation](./external_docs/)** - Endor Labs API and user documentation
-- **[🎭 Maneuvers](./maneuvers/)** - Pre-built tactical scripts for common operations
-- **[📋 Protocols](./protocols/)** - Operational procedures and workflows
-- **[🔍 Holocron (Deprecated)](./src/holocron/README.md)** - Historical semantic search system (superseded by modern IDE capabilities)
+- **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
+- **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
+- **[Rego Policy Guide](./docs/rego_guide.md)** - Complete Rego policy development reference
+- **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
+- **[External Documentation](./external_docs/)** - Endor Labs API and user documentation
 
 ## 🗂️ **Workspace & Mission Files**
 

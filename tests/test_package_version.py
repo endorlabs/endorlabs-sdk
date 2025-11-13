@@ -21,7 +21,7 @@ class TestPackageVersion:
     def setup(self):
         """Set up test environment."""
         self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.cockpit")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
         self.package_versions = package_version.list_package_versions(
             self.client, self.namespace
         )

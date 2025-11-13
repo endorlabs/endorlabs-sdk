@@ -41,7 +41,9 @@ def test_namespaces_main_flow():
             client.get_openapi_spec(url=None, path=spec_path)
         except Exception as e:
             pytest.skip(f"Could not fetch OpenAPI spec: {e}")
-        tenant_namespace = "endor-solutions-tgowan.cockpit"
+        tenant_namespace = os.getenv("ENDOR_NAMESPACE", "")
+        if not tenant_namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
         # Create mock namespaces
         # Use timestamp and random ID to ensure unique names
         import random
