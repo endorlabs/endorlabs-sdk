@@ -36,9 +36,6 @@ from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
 
-# Global resource instance
-_scan_result_ops = None
-
 
 def _get_scan_result_ops(client: APIClient) -> BaseResourceOperations:
     """Get BaseResourceOperations instance for scan results."""
