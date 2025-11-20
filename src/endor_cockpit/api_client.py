@@ -105,9 +105,7 @@ class APIClient:
         # Set initial headers
         self.token = self.authenticate()
         if self.token:
-            self.session.headers.update(
-                {"Authorization": f"Bearer {self.token}"}
-            )
+            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
         self.default_headers = self.session.headers.copy()
 
     def _rate_limit(self):
