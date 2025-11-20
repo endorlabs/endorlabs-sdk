@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/
 title: Data model | Endor Labs Docs
-downloaded: 2025-10-27 12:57:52
+downloaded: 2025-11-20 11:49:08
 ---
 
 Data model | Endor Labs Docs

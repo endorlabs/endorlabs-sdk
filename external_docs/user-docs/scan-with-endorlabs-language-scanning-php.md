@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/php/
 title: PHP | Endor Labs Docs
-downloaded: 2025-10-27 13:00:14
+downloaded: 2025-11-20 11:51:33
 ---
 
 PHP | Endor Labs Docs

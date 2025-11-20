@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/sbom/export/
 title: export | Endor Labs Docs
-downloaded: 2025-10-27 12:57:13
+downloaded: 2025-11-20 11:48:29
 ---
 
 export | Endor Labs Docs

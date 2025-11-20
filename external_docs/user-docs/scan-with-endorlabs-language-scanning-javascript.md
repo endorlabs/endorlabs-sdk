@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/javascript/
 title: JavaScript/TypeScript | Endor Labs Docs
-downloaded: 2025-10-27 12:59:12
+downloaded: 2025-11-20 11:50:29
 ---
 
 JavaScript/TypeScript | Endor Labs Docs
@@ -128,6 +128,22 @@ Set the following environment variable before you run the scan.
 ```
 export ENDOR_JS_USE_ROOT_DIR_LOCK_FILE=true
 ```
+
+### Configure call graph generation timeout
+
+When generating call graphs for JavaScript/TypeScript projects, endorctl uses `tsserver` to analyze the code. By default, `tsserver` waits 15 seconds for a response before timing out. For large or complex projects, you may need to increase this timeout.
+
+Set the `ENDOR_JS_TSSERVER_TIMEOUT` environment variable to specify the timeout in seconds.
+
+```
+export ENDOR_JS_TSSERVER_TIMEOUT=30
+```
+
+Increasing the timeout might be beneficial in the following scenarios:
+
+* Large monorepos with many TypeScript files
+* Projects with complex type hierarchies
+* Projects with extensive type checking requirements
 
 ### Override JavaScript package manager detection
 

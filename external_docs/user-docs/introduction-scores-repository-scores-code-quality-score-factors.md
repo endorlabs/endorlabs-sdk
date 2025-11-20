@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/scores/repository-scores/code-quality-score-factors/
 title: Code quality score factors | Endor Labs Docs
-downloaded: 2025-10-27 12:59:01
+downloaded: 2025-11-20 11:50:17
 ---
 
 Code quality score factors | Endor Labs Docs

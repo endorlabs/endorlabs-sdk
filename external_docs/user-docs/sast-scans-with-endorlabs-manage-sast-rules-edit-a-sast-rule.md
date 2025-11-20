@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/manage-sast-rules/edit-a-sast-rule/
 title: Edit a SAST rule | Endor Labs Docs
-downloaded: 2025-10-27 12:57:08
+downloaded: 2025-11-20 11:48:23
 ---
 
 Edit a SAST rule | Endor Labs Docs

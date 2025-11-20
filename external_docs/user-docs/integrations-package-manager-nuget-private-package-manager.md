@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/nuget-private-package-manager/
 title: Private package manager integration for NuGet | Endor Labs Docs
-downloaded: 2025-10-27 13:00:11
+downloaded: 2025-11-20 11:51:29
 ---
 
 Private package manager integration for NuGet | Endor Labs Docs

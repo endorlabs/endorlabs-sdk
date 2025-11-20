@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/recommend/
 title: recommend | Endor Labs Docs
-downloaded: 2025-10-27 13:00:23
+downloaded: 2025-11-20 11:51:42
 ---
 
 recommend | Endor Labs Docs

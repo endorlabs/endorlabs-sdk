@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/dotnet/
 title: .NET | Endor Labs Docs
-downloaded: 2025-10-27 13:00:02
+downloaded: 2025-11-20 11:51:21
 ---
 
 .NET | Endor Labs Docs
@@ -42,7 +42,7 @@ Before you proceed to run a deep scan, ensure that your system meets the followi
 The following prerequisites must be fulfilled:
 
 * Make sure your repository includes one or more files with `.cs` extension.
-* Dependency resolution and reachability analysis is support only for SDK-style .NET projects.
+* Dependency resolution and reachability analysis is supported only for SDK-style .NET projects.
 * One or more `*.csproj` files must be present in your repository.
 * The .NET command or NuGet command must be installed and available on the host system.
 * At least one .NET SDK installed on the system must be compatible with the project’s `global.json` file settings.
@@ -50,11 +50,6 @@ The following prerequisites must be fulfilled:
 #### Note
 
 To check your available SDK versions you can run the command `dotnet --info` or `dotnet --list-sdks`.
-
-### Call graph requirements
-
-* You must install .NET 7.0.1 (SDK 7.0.101) or later on the host system.
-* Endor Labs’ call graph support for .NET is based on [Microsoft’s Common Intermediate Language](https://learn.microsoft.com/en-us/dynamicsax-2012/appuser-itpro/compile-into-net-framework-cil) (CIL). Artifacts such as `.exe` or `.dll` files must be available in the project’s standard workspace through a build and restore or a restored cache.
 
 ## Run a scan
 
@@ -228,11 +223,16 @@ Endor Labs performs static analysis on the C# code based on the following factor
 
 ### Known Limitations
 
-* The following .NET programming languages are not currently supported for dependency resolution or call graph generation.
-  + Projects written in F#
-  + Projects written in Visual Basic
 * When using the GitHub app, either resolve all the private and internal dependencies, or [Configure NuGet private repositories](#configure-nuget-private-repositories) before running a scan.
 * When working with old-style MSBuild projects, we recommend scanning them through [Continuous Integration (CI)](../../../deployment/ci-scans/) after building the project to ensure that the .NET build system generates the required `obj/project.assets.json` file. For [monitoring scans](../../../deployment/monitoring-scans/), support for restoring dependencies in Windows projects is limited. This may lead to **restore or build errors**, potentially causing unexpected scan results.
+
+### Call graph limitations
+
+* You must install .NET 7.0.1 (SDK 7.0.101) or later on the host system.
+* The following .NET programming languages are not supported for dependency resolution or call graph generation:
+  + Projects written in F#
+  + Projects written in Visual Basic
+* Endor Labs’ call graph support for .NET is based on [Microsoft’s Common Intermediate Language](https://learn.microsoft.com/en-us/dynamicsax-2012/appuser-itpro/compile-into-net-framework-cil) (CIL). Artifacts such as `.exe` or `.dll` files must be available in the project’s standard workspace through a build and restore or a restored cache.
 
 ## Troubleshoot errors
 

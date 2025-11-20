@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-local-system/
 title: Quick start with endorctl | Endor Labs Docs
-downloaded: 2025-10-27 12:58:46
+downloaded: 2025-11-20 11:50:02
 ---
 
 Quick start with endorctl | Endor Labs Docs
@@ -268,8 +268,9 @@ For more information on supported languages, package managers and build systems 
 |  | PDM | `pyproject.toml`, `pdm.lock` |  |
 |  | PyPI | `setup.py`, `setup.cfg`, `pyproject.toml` |  |
 |  | Bazel | `workspace`, `MODULE.bazel` | Bazel versions `5.x.x`, `6.x.x`, and `7.x.x` |
-| [.NET (C#)](../../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | .NET 1.0 and higher versions; Call graphs are supported for .NET 7.0.1 and higher versions |
+| [.NET (C#)](../../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | .NET 5.0 and higher versions; .NET Core 1.0 and higher versions; .NET Framework 4.5 and higher versions. Call graphs are supported for .NET 7.0.1 and higher versions. |
 | [Scala](../../../scan-with-endorlabs/language-scanning/scala/) | sbt | `build.sbt` | sbt 1.3 and higher versions |
+|  | Gradle | `build.gradle`, `build.gradle.kts` | JDK version 11-25; Gradle 6.0.0 and higher versions |
 | [Ruby](../../../scan-with-endorlabs/language-scanning/ruby/) | Bundler | `Gemfile`, `*.gemspec`, `gemfile.lock` | Ruby 2.6 and higher versions |
 | [Swift/Objective-C](../../../scan-with-endorlabs/language-scanning/swift-objective-c/) | CocoaPods | `Podfile`, `Podfile.lock` | CocoaPods 0.9.0 and higher versions |
 |  | SwiftPM | `Package.swift` | SwiftPM 5.0.0 and higher versions |
@@ -294,6 +295,7 @@ To run a complete and accurate scan with Endor Labs, ensure that the software ca
 * Ruby (bundler)
 * Swift/Objective-C
 * Scala (sbt)
+* Scala (Gradle)
 * Rust (Cargo)
 
 ```
@@ -302,10 +304,9 @@ mvn clean install
 ```
 
 ```
-gradle dependencies --configuration compileClasspath
+gradle dependencies --configuration runtimeClasspath
 ./gradlew assemble
-# Use `gradle assemble` if you do not have a gradle wrapper
-# in your repository
+# Use `gradle assemble` if you do not have a gradle wrapper in your repository
 ```
 
 ```
@@ -356,6 +357,12 @@ pod install
 sbt projects
 sbt compile
 sbt dependencyTree
+```
+
+```
+gradle dependencies --configuration runtimeClasspath
+./gradlew assemble
+# Use `gradle assemble` if you do not have a gradle wrapper in your repository
 ```
 
 ```

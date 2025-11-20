@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/action-policies/
 title: Action policies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:29
+downloaded: 2025-11-20 11:49:45
 ---
 
 Action policies | Endor Labs Docs

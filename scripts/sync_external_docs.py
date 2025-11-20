@@ -323,9 +323,9 @@ Examples:
 
     # Determine what to download
     download_openapi = args.download_openapi or args.all
-    download_user_docs = args.download_user_docs or args.all
+    should_download_user_docs = args.download_user_docs or args.all
 
-    if not download_openapi and not download_user_docs:
+    if not download_openapi and not should_download_user_docs:
         parser.error("Must specify --download-openapi, --download-user-docs, or --all")
 
     success = True
@@ -339,7 +339,7 @@ Examples:
             success = False
 
     # Download user docs
-    if download_user_docs:
+    if should_download_user_docs:
         if not HAS_DOCS_DEPS:
             logger.error(
                 "Missing required dependencies for user docs download.\n"

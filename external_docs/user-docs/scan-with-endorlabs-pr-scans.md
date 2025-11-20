@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/
 title: Pull Request scans | Endor Labs Docs
-downloaded: 2025-10-27 12:58:45
+downloaded: 2025-11-20 11:50:02
 ---
 
 Pull Request scans | Endor Labs Docs
@@ -42,7 +42,7 @@ endorctl scan --pr
 
 After you raise a pull request, the `--pr` flag enables scanning of the latest version of the pull request and stores the results separately from the main branches. The PR scan and its findings do not affect the main branch’s reporting.
 
-Endor Labs stores the PR scan findings in **PR Runs** for 30 days, after which they are erased to accommodate new PR scans.
+Endor Labs stores the PR scan findings in **PR Runs** for three weeks, after which they are erased to accommodate new PR scans.
 
 ### Set a baseline branch for PR scans
 

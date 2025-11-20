@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/sbom/import/
 title: import | Endor Labs Docs
-downloaded: 2025-10-27 12:57:21
+downloaded: 2025-11-20 11:48:36
 ---
 
 import | Endor Labs Docs

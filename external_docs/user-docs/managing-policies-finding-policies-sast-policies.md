@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/sast-policies/
 title: SAST policies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:49
+downloaded: 2025-11-20 11:50:05
 ---
 
 SAST policies | Endor Labs Docs

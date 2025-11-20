@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/secrets-leak-detection/scan-secrets/
 title: Scan for secrets | Endor Labs Docs
-downloaded: 2025-10-27 12:57:45
+downloaded: 2025-11-20 11:49:01
 ---
 
 Scan for secrets | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/scoping-scans/
 title: Best Practices: Scoping scans | Endor Labs Docs
-downloaded: 2025-10-27 12:58:31
+downloaded: 2025-11-20 11:49:47
 ---
 
 Best Practices: Scoping scans | Endor Labs Docs
@@ -115,10 +115,10 @@ Here are a few best practices of using scoping scans:
   + `inst/doc/`
   + `samples/`
 * The specified paths must be relative to the root of the directory.
-* If you are using **JavaScript** workspaces, take special consideration when including and excluding the root package:
-  + When using include or exclude patterns, it’s crucial to make sure you never exclude and always include the parent workspace package. Otherwise, all child packages won’t build properly.
-  + You can always exclude child packages in the workspace if the root is included.
-  + There is only one lock file for the workspace that exists in the workspace root directory. Make sure to include the lock file to perform a successful scan.
+* If you are using **JavaScript** workspaces, Endor Labs automatically detects workspace roots and their lock files:
+  + You can scan individual workspace packages without explicitly including the root package. The scanner automatically detects the workspace root and locates the lock file.
+  + For example, to scan only a specific workspace package: `endorctl scan --include-path="packages/utils/**"` - the scanner automatically finds and uses the lock file at the workspace root.
+  + You can still exclude specific child packages from your scan while the workspace root is automatically detected.
 
 ## Feedback
 

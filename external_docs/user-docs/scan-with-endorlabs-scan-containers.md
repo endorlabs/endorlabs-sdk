@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scan-containers/
 title: Scan containers | Endor Labs Docs
-downloaded: 2025-10-27 13:00:27
+downloaded: 2025-11-20 11:51:45
 ---
 
 Scan containers | Endor Labs Docs
@@ -76,7 +76,7 @@ You must configure the containerd config file to authenticate with the container
 
 [Learn more](https://github.com/containerd/containerd/blob/main/docs/cri/registry.md)
 
-## Perform the endorctl scan
+## Run the endorctl scan
 
 Endor Labs supports the following methods of scanning container images:
 
@@ -136,30 +136,28 @@ You can save a container image as a tarball and scan it with endorctl to generat
 
 1. Ensure that you have the container image available locally.
 
-```
-  docker pull alpine:latest
-```
-
+   ```
+   docker pull alpine:latest
+   ```
 2. Export the image to a tarball file.
 
-```
-  docker save alpine:latest -o alpine-latest.tar
-```
-
+   ```
+   docker save alpine:latest -o alpine-latest.tar
+   ```
 3. Perform the endorctl scan.
 
-```
-  endorctl container scan --image=alpine:latest
-  --project-name=<endor_project_name>
-  --image-tar=/absolute/path/to/alpine-latest.tar
-```
+   ```
+   endorctl container scan --image=alpine:latest
+   --project-name=<endor_project_name>
+   --image-tar=/absolute/path/to/alpine-latest.tar
+   ```
 
-#### Note
+   #### Note
 
-* `--image-tar` must point to the absolute path of the tarball file.
-* `--image=<name:tag>` is optional but recommended. It explicitly identifies the container image inside the tarball.
+   * `--image-tar` must point to the absolute path of the tarball file.
+   * `--image=<name:tag>` is optional but recommended. It explicitly identifies the container image inside the tarball.
 
-## Perform container scan in CI pipelines
+## Run container scan in CI pipelines
 
 You can integrate container scanning into CI pipelines to automatically detect vulnerabilities and ensure the security of container images during the build and deployment process.
 
@@ -201,7 +199,7 @@ See also [Create a finding policy from template](../../managing-policies/finding
 
 The dependencies associated with the following list of components are identified in the endorctl scan.
 
-| OS/Language | Package Manager / Packaging | Version Support |
+| OS / Language | Package Manager Packaging | Version Support |
 | --- | --- | --- |
 | Alpine | apk | 3.20, 3.19, 3.18, 3.17, 3.16, 3.15, 3.14, 3.12, 3.11, 3.10 |
 | Debian | dpkg | 8, 9, 10, 11, 12 |

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/
 title: Previous releases | Endor Labs Docs
-downloaded: 2025-10-27 13:00:52
+downloaded: 2025-11-20 11:52:11
 ---
 
 Previous releases | Endor Labs Docs
@@ -20,6 +20,8 @@ Previous releases | Endor Labs Docs
 Endor Labs releases that are older than six months.
 
 ---
+
+##### [May 2025](/releasenotes/previous-releases/may-2025/)
 
 ##### [April 2025](/releasenotes/previous-releases/april-2025/)
 

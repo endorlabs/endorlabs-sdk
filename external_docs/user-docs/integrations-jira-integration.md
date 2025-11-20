@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/jira-integration/
 title: Set up Jira integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:59:20
+downloaded: 2025-11-20 11:50:37
 ---
 
 Set up Jira integration with Endor Labs | Endor Labs Docs
@@ -120,7 +120,11 @@ While creating an action policy, configure the following settings:
 
 * Select **Choose an Action** as **Send Notification**.
 * From **SELECT NOTIFICATION TARGETS**, choose the Jira integration notification that you created.
-* Choose an **Aggregation type** for Jira notifications. Choose **Project** to trigger a single notification for all findings, choose **Dependency** to trigger multiple notifications for every dependency, or choose **Dependency per package version** to trigger multiple notifications for unique combinations of dependency and package. See [Aggregation types](../../managing-policies/action-policies/#aggregation-types-for-notifications) for more details.
+* Choose an **Aggregation type** for Jira notifications.
+  + Choose **Project** to trigger a single notification for all findings.
+  + Choose **Dependency** to trigger a notification for every dependency.
+  + Choose **Dependency per package version** to trigger notifications for every unique combinations of dependency and package version.
+    See [Aggregation types](../../managing-policies/action-policies/#aggregation-types-for-notifications) for more details.
 
 ### View ticket details in Jira
 

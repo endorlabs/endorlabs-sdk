@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/endor-labs-ui/
 title: Endor Labs user interface | Endor Labs Docs
-downloaded: 2025-10-27 12:58:36
+downloaded: 2025-11-20 11:49:52
 ---
 
 Endor Labs user interface | Endor Labs Docs

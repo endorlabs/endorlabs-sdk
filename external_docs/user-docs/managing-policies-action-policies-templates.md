@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/action-policies/templates/
 title: Action policy templates | Endor Labs Docs
-downloaded: 2025-10-27 12:56:56
+downloaded: 2025-11-20 11:48:11
 ---
 
 Action policy templates | Endor Labs Docs

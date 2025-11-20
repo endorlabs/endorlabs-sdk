@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/pypi-private-package-manager/
 title: Private package manager integration for PyPI | Endor Labs Docs
-downloaded: 2025-10-27 12:59:53
+downloaded: 2025-11-20 11:51:11
 ---
 
 Private package manager integration for PyPI | Endor Labs Docs

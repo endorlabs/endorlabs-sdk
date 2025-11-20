@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/configure-jfrog-artifactory/
 title: Configure JFrog Artifactory to use Endor patches | Endor Labs Docs
-downloaded: 2025-10-27 12:59:06
+downloaded: 2025-11-20 11:50:23
 ---
 
 Configure JFrog Artifactory to use Endor patches | Endor Labs Docs

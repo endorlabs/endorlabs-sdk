@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/
 title: Scan for open source risks | Endor Labs Docs
-downloaded: 2025-10-27 12:56:44
+downloaded: 2025-11-20 11:47:59
 ---
 
 Scan for open source risks | Endor Labs Docs
@@ -86,8 +86,9 @@ The following comprehensive matrix lists the supported languages, build tools, m
 |  | Poetry | `pyproject.toml`, `poetry.lock` | `.py` |  |
 |  | PyPI | `setup.py`, `setup.cfg`, `pyproject.toml` | `.py` |  |
 |  | Bazel | `workspace`, `MODULE.bazel` | `.py` | Bazel versions `5.x.x`, `6.x.x`, and `7.x.x` |
-| [.NET (C#)](../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | `.cs` | .NET 1.0 and higher versions; Call graphs are supported for .NET 7.0.1 and higher versions |
+| [.NET (C#)](../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | `.cs` | .NET 5.0 and higher versions; .NET Core 1.0 and higher versions; .NET Framework 4.5 and higher versions. |
 | [Scala](../../scan-with-endorlabs/language-scanning/scala/) | sbt | `build.sbt` | `.sc` or `.scala` | sbt 1.3 and higher versions |
+|  | Gradle | `build.gradle`, `build.gradle.kts` | `.sc` or `.scala` | JDK version 11-25; Gradle 6.0.0 and higher versions |
 |  | Bazel | `workspace`, `MODULE.bazel` | `.sc` or `.scala` | Bazel versions `5.x.x`, `6.x.x`, and `7.x.x` |
 | [Ruby](../../scan-with-endorlabs/language-scanning/ruby/) | Bundler | `Gemfile`, `*.gemspec`, `gemfile.lock` | `.rb` | Ruby 2.6 and higher versions |
 | [Swift/Objective-C](../../scan-with-endorlabs/language-scanning/swift-objective-c/) | CocoaPods | `Podfile`, `Podfile.lock` | `.swift`, `.h`, `.m` | CocoaPods 0.9.0 and higher versions |

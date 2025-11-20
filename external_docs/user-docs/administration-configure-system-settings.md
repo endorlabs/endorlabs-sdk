@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/configure-system-settings/
 title: Configure system settings | Endor Labs Docs
-downloaded: 2025-10-27 12:58:33
+downloaded: 2025-11-20 11:49:49
 ---
 
 Configure system settings | Endor Labs Docs
@@ -24,6 +24,7 @@ Administrators can configure the following settings to customize certain interac
 * [Configure data privacy settings](#configure-data-privacy-settings)
 * [Configure Endor patches settings](#configure-endor-patches-settings)
 * [Configure policy settings](#configure-policy-settings)
+* [Configure urgent notification settings](#configure-urgent-notification-settings)
 * [Configure SBOM settings](#configure-sbom-settings)
 * [Configure CVSS score version](#configure-cvss-score-version)
 
@@ -33,14 +34,14 @@ Use data privacy settings to manage how your scan logs are handled to improve mo
 
 To configure data privacy settings:
 
-1. Navigate to **Manage** > **Settings** from the left sidebar.
+1. Select **Manage** > **Settings** from the left sidebar.
 2. Select **SYSTEM SETTINGS** > **Data Privacy**.
 3. Select **Remote Logging** to send scan logs to a centralized logging system for improved monitoring and debugging.
 4. Select **Code Snippet Storage** to store and display code snippets that triggered SAST findings.
 5. Select **Code Segment Embeddings and LLM Processing** to use embeddings and LLM processing to improve C/C++ and AI model detection accuracy.
 6. Click **Save Data Privacy Settings** to save your changes.\*\*\*\*
 
-![Data Privacy](../../images/enable_embeddings.png)
+![Data Privacy](../../images/enable-embeddings.png)
 
 ## Configure Endor patches settings
 
@@ -66,7 +67,7 @@ Endor Labs regularly updates its existing policies and also includes several new
 
 To configure policy settings:
 
-1. Navigate to **Manage** > **Settings** from the left sidebar.
+1. Select **Manage** > **Settings** from the left sidebar.
 2. Select **SYSTEM SETTINGS** > **Policies & Rules**.
 3. Select **Enable Policies for New Features** to ensure that new policies released by Endor Labs are automatically enabled for your projects.
 
@@ -76,13 +77,30 @@ To configure policy settings:
 
 ![policy settings](../../images/policy-update-settings.png)
 
+## Configure urgent notification settings
+
+Urgent notifications provide alerts about newly discovered malware that could impact your projects. This enables your security teams to take immediate action as soon as the malware is detected by Endor Labs, without waiting for the next scan cycle.
+
+To configure urgent notification settings:
+
+1. Select **Manage** > **Settings** from the left sidebar.
+2. Select **SYSTEM SETTINGS** > **Urgent Notifications**.
+3. Select **Enable urgent notification** to turn on alerts for malicious packages.
+4. Select the **Notification Threshold** to define which affected package versions trigger notifications.
+   * **Definitely Affected**: Receive notifications when a malicious package version exactly matches a dependency version used in your projects.
+   * **Potentially Affected**: Receive notifications when a malicious package is detected among your dependencies, even if the versions differ.
+5. Provide a Slack webhook URL to receive urgent notifications directly in Slack.
+6. Click **Save Urgent Notifications Settings**.
+
+![Urgent notifications](../../images/urgent-notifications.png)
+
 ## Configure SBOM settings
 
 You can configure organizational settings that will be included in every one of your organization’s SBOMs. These settings allow you to meet NTIA requirements for minimum SBOM data fields which require supplier contact information for your organization.
 
 To define your organization’s SBOM settings:
 
-1. Navigate to **Manage** > **Settings** from the left sidebar.
+1. Select **Manage** > **Settings** from the left sidebar.
 2. Select **SYSTEM SETTINGS** > **SBOM**.
 3. Enter the following organizational SBOM settings as appropriate for your organization under **SBOM Settings**.
    * **Organizational Name** - The organization that supplied the library or application that the SBOM describes.
@@ -107,7 +125,7 @@ Endor Labs uses CVSS 3.x to report vulnerabilities by default.
 
 To enable CVSS 4.x scoring:
 
-1. Navigate to **Manage** > **Settings** from the left sidebar.
+1. Select **Manage** > **Settings** from the left sidebar.
 2. Select **SYSTEM SETTINGS** > **CVSS Version**.
 3. Choose **CVSS 4.x**.
 4. Click **Save CVSS Version Settings**.

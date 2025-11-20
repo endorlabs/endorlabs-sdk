@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scanning-strategies/
 title: Scanning strategies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:13
+downloaded: 2025-11-20 11:49:29
 ---
 
 Scanning strategies | Endor Labs Docs

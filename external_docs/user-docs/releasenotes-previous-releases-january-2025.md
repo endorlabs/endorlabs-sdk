@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/january-2025/
 title: January 2025 | Endor Labs Docs
-downloaded: 2025-10-27 13:00:36
+downloaded: 2025-11-20 11:51:54
 ---
 
 January 2025 | Endor Labs Docs

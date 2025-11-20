@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/c/
 title: C/C++ | Endor Labs Docs
-downloaded: 2025-10-27 12:57:01
+downloaded: 2025-11-20 11:48:15
 ---
 
 C/C++ | Endor Labs Docs
@@ -71,7 +71,7 @@ Embeddings are disabled by default and require the Endor Labs AI license.
 
 To enable embeddings go to **Settings** near the bottom of the left sidebar, navigate to **Data Privacy** under **System Settings**, check the box for **Code Segment Embeddings and LLM Processing** and click **Save Data Privacy Settings**.
 
-![Enable embeddings](../../../images/enable_embeddings.png)
+![Enable embeddings](../../../images/enable-embeddings.png)
 
 ### Limitations
 

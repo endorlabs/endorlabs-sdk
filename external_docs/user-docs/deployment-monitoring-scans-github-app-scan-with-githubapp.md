@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/scan-with-githubapp/
 title: Scan capabilities of the Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-10-27 12:56:54
+downloaded: 2025-11-20 11:48:09
 ---
 
 Scan capabilities of the Endor Labs GitHub App | Endor Labs Docs
@@ -238,7 +238,7 @@ See the following sections to understand the Finding and PackageVersion definiti
 See the following specification to understand the additional functions that are also available. You can access these functions by using their corresponding keys.
 
 ```
-// FuncMap contains the additional functions that are available to GithubCommentTemplate.
+// FuncMap contains the additional functions that are available to CommentTemplate.
 var FuncMap = template.FuncMap{
 	"now": toTime, // 'now' gives the current time
 

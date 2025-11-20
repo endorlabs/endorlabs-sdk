@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-bitbucket/
 title: Scanning in Bitbucket Pipelines | Endor Labs Docs
-downloaded: 2025-10-27 12:59:57
+downloaded: 2025-11-20 11:51:15
 ---
 
 Scanning in Bitbucket Pipelines | Endor Labs Docs

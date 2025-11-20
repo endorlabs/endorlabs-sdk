@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/gitlab-app/manage-gitlab-app/
 title: Manage GitLab App on Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:58:06
+downloaded: 2025-11-20 11:49:22
 ---
 
 Manage GitLab App on Endor Labs | Endor Labs Docs

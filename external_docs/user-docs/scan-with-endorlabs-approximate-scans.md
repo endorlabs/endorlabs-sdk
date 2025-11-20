@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/approximate-scans/
 title: Approximate scans | Endor Labs Docs
-downloaded: 2025-10-27 13:00:49
+downloaded: 2025-11-20 11:52:07
 ---
 
 Approximate scans | Endor Labs Docs

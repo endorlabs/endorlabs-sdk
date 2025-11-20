@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/microsoft-defender-for-cloud/
 title: Set up Microsoft Defender for Cloud integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:58:54
+downloaded: 2025-11-20 11:50:11
 ---
 
 Set up Microsoft Defender for Cloud integration with Endor Labs | Endor Labs Docs

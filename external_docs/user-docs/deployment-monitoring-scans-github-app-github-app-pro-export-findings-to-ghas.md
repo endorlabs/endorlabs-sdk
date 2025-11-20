@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/
 title: Export findings to GitHub Advanced Security | Endor Labs Docs
-downloaded: 2025-10-27 12:57:14
+downloaded: 2025-11-20 11:48:30
 ---
 
 Export findings to GitHub Advanced Security | Endor Labs Docs

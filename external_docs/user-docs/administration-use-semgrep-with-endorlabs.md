@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/use-semgrep-with-endorlabs/
 title: Use Semgrep with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:59:21
+downloaded: 2025-11-20 11:50:38
 ---
 
 Use Semgrep with Endor Labs | Endor Labs Docs

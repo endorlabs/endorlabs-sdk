@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/sign-artifacts/
 title: artifact sign | Endor Labs Docs
-downloaded: 2025-10-27 12:56:59
+downloaded: 2025-11-20 11:48:13
 ---
 
 artifact sign | Endor Labs Docs

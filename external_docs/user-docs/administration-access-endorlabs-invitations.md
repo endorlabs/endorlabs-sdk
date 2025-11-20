@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/invitations/
 title: Manage user invitations | Endor Labs Docs
-downloaded: 2025-10-27 12:59:14
+downloaded: 2025-11-20 11:50:31
 ---
 
 Manage user invitations | Endor Labs Docs

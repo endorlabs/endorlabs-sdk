@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-review-pr-comments/
 title: PR Comments for AI security code review | Endor Labs Docs
-downloaded: 2025-10-27 12:59:38
+downloaded: 2025-11-20 11:50:56
 ---
 
 PR Comments for AI security code review | Endor Labs Docs
@@ -45,7 +45,9 @@ After the analysis is complete, Endor Labs posts a comment directly on your pull
 * **Summary**: A summary of the code changes in the pull request along with the file name and location of the code changes.
 * **Security Changes**: A list of security changes in the pull request along with the file names and location of the security changes.
 
-You can view [this example PR](https://github.com/endorlabs-demos/open-weather-app/pull/8) with AI security code review PR comment to understand how the comment looks like.
+The following example shows how an AI security code review PR comment appears in a GitHub pull request.
+
+![Example of AI security review](../../../images/ai-security-review-example.png)
 
 ### Summary of code changes
 

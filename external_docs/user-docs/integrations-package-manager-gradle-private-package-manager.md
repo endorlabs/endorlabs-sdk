@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/gradle-private-package-manager/
 title: Private package manager integration for Gradle | Endor Labs Docs
-downloaded: 2025-10-27 12:59:39
+downloaded: 2025-11-20 11:50:57
 ---
 
 Private package manager integration for Gradle | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/
 title: Deploy Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-10-27 12:56:53
+downloaded: 2025-11-20 11:48:08
 ---
 
 Deploy Endor Labs GitHub App | Endor Labs Docs
@@ -29,7 +29,38 @@ If you want to use PR remediations as part of your monitoring scan or need to ex
 
 You cannot have both GitHub App and GitHub App (Pro) simultaneously in your environment. If you are currently using the standard GitHub App, you can migrate to GitHub App (Pro). When migrating from one app to the other, ensure you select the same set of repositories as before to preserve your currently scanned projects and findings after the migration.
 
-### Prerequisites for GitHub App
+## Default branch detection
+
+When Endor Labs scans a repository for the first time, it detects the default branch of the repository. The findings that are created in the scan are associated with the default branch.
+
+### Changing the default branch
+
+When you change the default branch in your source control system (for example, from `main` to `dev`):
+
+* Endor Labs automatically detects the new default branch and sets that as the default reference
+* The previous default branch becomes a reference branch
+* Scans continue on the new default branch and the reference branch
+
+The findings associated with the previous default branch are no longer associated with the default context reference. You can view them in the reference context.
+
+### Renaming the default branch
+
+When you rename the default branch in your source control system:
+
+* Endor Labs automatically switches to the renamed branch
+* Scans continue without disruption
+
+### Adding repository versions
+
+When you add a new repository version (for example, a `dev` branch), both the default branch and the new version are scanned by the Endor Labs App.
+
+### Control default branch detection
+
+You can control the default branch detection by setting the `ENDOR_SCAN_TRACK_DEFAULT_BRANCH` environment variable in a scan profile. You need to configure the project to use the scan profile. See [Configure scan profiles](/scan-with-endorlabs/manage-scan-profiles/) for more information.
+
+By default, the environment variable is set to `true`. When set to `true`, the default branch detection is enabled, and the first branch you scan is automatically considered as the default branch.
+
+## Prerequisites for GitHub App
 
 Before installing and scanning projects with Endor Labs GitHub App, make sure you have:
 

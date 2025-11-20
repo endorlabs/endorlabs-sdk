@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/outpost/outpost-configuration/
 title: Outpost configuration | Endor Labs Docs
-downloaded: 2025-10-27 12:58:20
+downloaded: 2025-11-20 11:49:36
 ---
 
 Outpost configuration | Endor Labs Docs

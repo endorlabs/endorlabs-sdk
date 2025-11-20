@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/toolchains/
 title: toolchains | Endor Labs Docs
-downloaded: 2025-10-27 12:57:36
+downloaded: 2025-11-20 11:48:52
 ---
 
 toolchains | Endor Labs Docs
@@ -20,6 +20,10 @@ toolchains | Endor Labs Docs
 Use the toolchains command to detect the tools in your repository and create a scan profile.
 
 Use the `endorctl toolchains` command to detect the current tools used in your repository. You can also create a scan profile.
+
+#### Note
+
+Toolchain commands are not supported on Windows.
 
 ## Usage
 

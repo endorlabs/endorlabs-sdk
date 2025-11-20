@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/webhooks/
 title: Set up integrations using webhooks | Endor Labs Docs
-downloaded: 2025-10-27 12:58:16
+downloaded: 2025-11-20 11:49:32
 ---
 
 Set up integrations using webhooks | Endor Labs Docs
@@ -38,6 +38,23 @@ Set up a custom integration with Endor Labs webhooks.
 7. Enter the details for the authentication method such as **USERNAME**, **PASSWORD**, or **API KEY**. Make sure the API Key has required permissions to post messages using webhook.
 8. To ensure integrity, de-select **Disable HMAC Integration Check** and enter the **HMAC Shared Key**. The Hash-Based Message Authentication Code (HMAC) ensures the authenticity of a message using a cryptographic hash function and a secret key. The HMAC signature is passed as a header in the HTTP request.
 9. Click **Add Notification Integration**.
+
+### Associate an action policy with the webhook
+
+You can create action policies to trigger webhook notifications when policy conditions are met. For example, send a webhook notification when there is a critical or high vulnerability.
+
+While creating an action policy, configure the following settings:
+
+* Select **Choose an Action** as **Send Notification**.
+* From **SELECT NOTIFICATION TARGETS**, choose the email integration notification that you created.
+* Choose an **Aggregation type** for notifications.
+
+  + Choose **Project** to trigger a single notification for all findings.
+  + Choose **Dependency** to trigger a notification for every dependency.
+  + Choose **Dependency per package version** to trigger notifications for every unique combination of dependency and package version.
+* From **Assign Scope**, include the project tags in **INCLUSIONS** to apply this policy to a project.
+
+See [Create an action policy](../../managing-policies/action-policies/) for more details.
 
 ## Endor Labs webhook payload
 
@@ -209,7 +226,8 @@ message NotificationData {
   map<string, internal.endor.ai.endor.v1.PackageVersion> package_version_map = 7;
 
   // The map of finding UUIDs to corresponding parent project objects.
-  map<string, internal.endor.ai.endor.v1.Project> project_map = 8;
+  // Deprecated: Findings cannot have Project as a parent. This field is kept for backward compatibility but will always be empty.
+  map<string, internal.endor.ai.endor.v1.Project> project_map = 8 [deprecated = true];
 
   enum NotificationType {
     NOTIFICATION_TYPE_UNSPECIFIED = 0;

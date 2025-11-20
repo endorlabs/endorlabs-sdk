@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authorization-policies/
 title: Authorization policies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:30
+downloaded: 2025-11-20 11:49:46
 ---
 
 Authorization policies | Endor Labs Docs

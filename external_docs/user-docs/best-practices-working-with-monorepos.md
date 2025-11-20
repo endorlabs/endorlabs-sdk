@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/working-with-monorepos/
 title: Best Practices: Working with monorepos | Endor Labs Docs
-downloaded: 2025-10-27 12:59:05
+downloaded: 2025-11-20 11:50:22
 ---
 
 Best Practices: Working with monorepos | Endor Labs Docs

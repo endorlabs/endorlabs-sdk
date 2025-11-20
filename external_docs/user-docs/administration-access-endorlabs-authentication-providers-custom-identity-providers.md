@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/
 title: Set up SSO with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:56:49
+downloaded: 2025-11-20 11:48:03
 ---
 
 Set up SSO with Endor Labs | Endor Labs Docs

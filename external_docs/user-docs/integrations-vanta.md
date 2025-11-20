@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/vanta/
 title: Set up Vanta integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:59:42
+downloaded: 2025-11-20 11:50:59
 ---
 
 Set up Vanta integration with Endor Labs | Endor Labs Docs
@@ -100,7 +100,7 @@ While creating an action policy, configure the following settings:
 
 * Select **Choose an Action** as **Send Notification**.
 * From **SELECT NOTIFICATION TARGETS**, choose the Vanta integration notification that you created.
-* Choose an **Aggregation type** for notifications. For integrating with Vanta, we recommend you choose **Project**.
+* Choose an [**Aggregation type**](../../managing-policies/action-policies/#aggregation-types-for-notifications) for notifications. For integrating with Vanta, we recommend you choose **Project**.
 * From **Assign Scope**, include the project tags in **INCLUSIONS** to apply this policy to a project.
 
 See [Create an action policy](../../managing-policies/action-policies/) for more details.

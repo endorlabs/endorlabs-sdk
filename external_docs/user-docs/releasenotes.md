@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/
 title: Release notes | Endor Labs Docs
-downloaded: 2025-10-27 13:00:52
+downloaded: 2025-11-20 11:52:10
 ---
 
 Release notes | Endor Labs Docs
@@ -14,6 +14,28 @@ Release notes | Endor Labs Docs
 # Release notes
 
 Endor Labs helps you select, secure, and maintain dependencies, so development moves fast and supply chain risk remains low. The following release notes highlight the most recent major capabilities and any major bug fixes published by Endor Labs.
+
+[November 2025](/releasenotes/november-2025/)
+
+We are excited to introduce the latest features and enhancements in Endor Labs.
+
+### Urgent notifications for newly detected malware New
+
+You can now enable urgent notifications in Endor Labs to receive real-time alerts for newly discovered malware, allowing you to take immediate action.
+
+For more information, see [Urgent Notifications](../../administration/configure-system-settings/#configure-urgent-notification-settings).
+
+### Default branch detection Enhancement
+
+Endor Labs now sets the default branch detection flag for all projects to `true` by default. Endor Labs automatically detects the new default branch and sets that as the default reference for all the projects configured with the Endor Labs SCM Apps.
+
+For more information, see [Default branch detection](../../deployment/monitoring-scans/#default-branch-detection).
+
+### Malware findings now enabled by default Enhancement
+
+Endor Labs now enables the malware finding policy by default for all tenants. You automatically receive findings for suspicious and malicious code across all projects, helping you detect and remediate security issues faster.
+
+For more information, see [OSS finding policy](../../managing-policies/finding-policies/oss-policies/).
 
 [October 2025](/releasenotes/october-2025/)
 
@@ -44,6 +66,12 @@ For more information, see [Search authorization policies](../../administration/a
 You can now filter notifications by project name to focus on notifications from specific projects and reduce noise from others.
 
 For more information, see [Notifications](../../getting-started/endor-labs-ui/#notifications).
+
+### Gradle support for Scala projects Enhancement
+
+Endor Labs now supports scanning Scala projects built with Gradle by resolving dependencies from `build.gradle` or `build.gradle.kts` files.
+
+For more information, see [Scan Scala projects](../../scan-with-endorlabs/language-scanning/scala/).
 
 [September 2025](/releasenotes/september-2025/)
 
@@ -308,47 +336,6 @@ For more information, see [Integrate Jira with Endor Labs](../../integrations/ji
 By default, the Endor Labs dashboard includes data from all child namespaces. Use the **All child namespaces excluded** toggle to exclude child namespaces and view data and metrics for only the selected namespace.
 
 For more information, see [Namespaces in Endor Labs](../../administration/namespaces/#namespaces-in-an-organization).
-
-[May 2025](/releasenotes/may-2025/)
-
-We are excited to introduce the latest features and enhancements in Endor Labs.
-
-### Outpost: On-premise scheduler for monitoring scans Beta New
-
-Outpost is a new on-premise scheduler for monitoring scans that you can run in your own Kubernetes cluster. When you install and configure Outpost, monitoring scans on your source code repositories are scheduled and run on your own Kubernetes cluster inside your firewall. For more information, see [Outpost](../../deployment/monitoring-scans/outpost/).
-
-### Authenticate Jira Data Center with Endor Labs Enhancement
-
-You can now use **Personal Access Token (PAT)** to authenticate your Jira Data Center to Endor Labs.
-
-For more information, see [Configure Jira integration.](../../integrations/jira-integration/#configure-jira-integration-on-endor-labs)
-
-### Pipenv support for Python projects Enhancement
-
-Endor Labs now offers support for scanning Python projects that use Pipenv as their package manager by resolving dependencies from `Pipfile` and `Pipfile.lock`. For more information, see [Scan Python projects](../../scan-with-endorlabs/language-scanning/python/).
-
-### View AI usage in the application Enhancement
-
-You can now view which features in the Endor Labs application use AI services. To modify AI access settings, go to **Settings** > **AI Access** and contact support to customize access based on your organization’s needs. For more information, see [AI access](../../ai/ai-access/).
-
-### Projects page user interface improvements Enhancement
-
-The **Projects** page now includes enhancements that make it easier to explore, sort, and filter package data.
-
-* The following new columns help you assess the overall health of your project.
-  + **Dependency Resolution Status** - Shows the percentage of packages for which dependency resolution was successful.
-  + **Reachability Analysis Status** - Shows the percentage of packages for which reachability analysis was successful.
-* Click any column header to sort projects in ascending or descending order. For more information, see [Manage projects](../../managing-projects/).
-* From **Inventory** > **Packages**, you can now filter packages by Dependency Resolution or Reachability Analysis statuses to focus on relevant results.
-* Sort packages by **Package** name, **Created** date, and **Last Scanned** date to quickly locate changes or specific dependencies. For more information, see [Packages](../../managing-projects/packages/#filter-package-dependencies).
-
-### Discontinue reachability analysis for Rust Breaking change
-
-Reachability analysis is no longer supported for Rust projects. However, you can continue to scan Rust projects for software composition analysis and vulnerability detection.
-
-### View findings location in Jira tickets Enhancement
-
-You can now view the location of the findings identified by Endor Labs in your Jira tickets. For more information, see [Findings in Jira.](../../best-practices/jira-with-endor-labs/#track-findings-in-jira)
 
 ## Feedback
 

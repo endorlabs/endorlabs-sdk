@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/sbom/
 title: sbom | Endor Labs Docs
-downloaded: 2025-10-27 12:57:31
+downloaded: 2025-11-20 11:48:47
 ---
 
 sbom | Endor Labs Docs

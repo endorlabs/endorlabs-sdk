@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/java/
 title: Java | Endor Labs Docs
-downloaded: 2025-10-27 12:56:50
+downloaded: 2025-11-20 11:48:04
 ---
 
 Java | Endor Labs Docs

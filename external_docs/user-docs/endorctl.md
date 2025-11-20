@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/
 title: Endor Labs CLI | Endor Labs Docs
-downloaded: 2025-10-27 13:00:21
+downloaded: 2025-11-20 11:51:39
 ---
 
 Endor Labs CLI | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/secrets-leak-detection/
 title: Detect secret leaks | Endor Labs Docs
-downloaded: 2025-10-27 13:00:13
+downloaded: 2025-11-20 11:51:32
 ---
 
 Detect secret leaks | Endor Labs Docs

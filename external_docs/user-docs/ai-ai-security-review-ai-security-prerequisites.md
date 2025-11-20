@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-prerequisites/
 title: Prerequisites for AI security code review | Endor Labs Docs
-downloaded: 2025-10-27 12:57:28
+downloaded: 2025-11-20 11:48:44
 ---
 
 Prerequisites for AI security code review | Endor Labs Docs

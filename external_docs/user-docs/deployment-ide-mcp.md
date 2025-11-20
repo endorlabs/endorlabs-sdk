@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ide/mcp/
 title: Endor Labs MCP server | Endor Labs Docs
-downloaded: 2025-10-27 12:57:55
+downloaded: 2025-11-20 11:49:11
 ---
 
 Endor Labs MCP server | Endor Labs Docs
@@ -155,7 +155,7 @@ To enhance the MCP server integration you can add custom rules for your project.
 
 1. Navigate to the root of your repository.
 2. In the `.cursor/rules` directory, create an `.mdc` file to add specific instructions.
-3. Add appropriate rules for your project in the `.cursor/endorlabs.mdc` file. For example, you can add a rule to check if the code is free from vulnerabilities.
+3. Add appropriate rules for your project in the `.cursor/rules/endorlabs.mdc` file. For example, you can add a rule to check if the code is free from vulnerabilities.
 
 #### Example Cursor rules
 

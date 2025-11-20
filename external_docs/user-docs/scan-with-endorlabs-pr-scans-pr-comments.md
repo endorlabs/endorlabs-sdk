@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/pr-comments/
 title: Pull Request comments | Endor Labs Docs
-downloaded: 2025-10-27 12:58:07
+downloaded: 2025-11-20 11:49:23
 ---
 
 Pull Request comments | Endor Labs Docs
@@ -132,7 +132,9 @@ Ensure that you set the following parameters:
 * Use `--scm-pr-id` to specify the pull request to comment on.
 * Set the `pull-requests` permission to `write` for the `--github-token`.
 
-Note: You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future.
+#### Note
+
+You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future.
 
 ## Configure Action policy for PR comments
 
@@ -316,7 +318,7 @@ See the following sections to understand the Finding and PackageVersion definiti
 See the following specification to understand the additional functions that are also available. You can access these functions by using their corresponding keys.
 
 ```
-// FuncMap contains the additional functions that are available to GithubCommentTemplate.
+// FuncMap contains the additional functions that are available to CommentTemplate.
 var FuncMap = template.FuncMap{
 	"now": toTime, // 'now' gives the current time
 

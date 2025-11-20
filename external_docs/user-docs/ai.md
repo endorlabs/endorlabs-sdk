@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/
 title: AI inventory and governance | Endor Labs Docs
-downloaded: 2025-10-27 12:59:00
+downloaded: 2025-11-20 11:50:17
 ---
 
 AI inventory and governance | Endor Labs Docs

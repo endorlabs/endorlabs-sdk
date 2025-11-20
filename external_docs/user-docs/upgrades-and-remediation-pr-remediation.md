@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/pr-remediation/
 title: Remediation Pull Requests in GitHub App | Endor Labs Docs
-downloaded: 2025-10-27 12:58:47
+downloaded: 2025-11-20 11:50:04
 ---
 
 Remediation Pull Requests in GitHub App | Endor Labs Docs

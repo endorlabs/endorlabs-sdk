@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/upgrade-impact-analysis/
 title: Upgrade impact analysis | Endor Labs Docs
-downloaded: 2025-10-27 12:57:37
+downloaded: 2025-11-20 11:48:53
 ---
 
 Upgrade impact analysis | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-jenkins/
 title: Scanning with Jenkins | Endor Labs Docs
-downloaded: 2025-10-27 12:58:50
+downloaded: 2025-11-20 11:50:06
 ---
 
 Scanning with Jenkins | Endor Labs Docs

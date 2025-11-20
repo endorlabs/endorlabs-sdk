@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/manage-github-app/
 title: Manage GitHub App on Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:58:05
+downloaded: 2025-11-20 11:49:21
 ---
 
 Manage GitHub App on Endor Labs | Endor Labs Docs
@@ -78,10 +78,6 @@ To migrate from standard GitHub App to GitHub App (Pro):
 4. Select a user to authorize the app.
 5. Select **Configure** in the organization in which you want to migrate the app.
 6. Select whether to install and authorize Endor Labs on all your repositories or select the specific repositories that you wish to scan.
-
-   #### Warning
-
-   When you migrate from one app to the other, select the same set of repositories as before to preserve the currently scanned projects and findings after the migration.
 7. Choose the namespace and click **Next**.
 
    #### Warning
@@ -94,6 +90,10 @@ To migrate from standard GitHub App to GitHub App (Pro):
 #### Old installation cleanup
 
 After migration is successful, delete the old installation from your GitHub organization.
+
+#### Branch protection rules
+
+When you migrate from one app to another, you must manually update your branch protection rules in GitHub. Branch protection rules that reference the old GitHub App ID will become inactive and will not function until reconfigured with the new app. Refer to [Branch protection rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule#creating-a-branch-protection-rule) to learn more.
 
 ### Manually rescan GitHub repositories
 

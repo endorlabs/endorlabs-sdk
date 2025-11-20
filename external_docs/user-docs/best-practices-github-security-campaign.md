@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/github-security-campaign/
 title: Best Practices: GitHub Security Campaign | Endor Labs Docs
-downloaded: 2025-10-27 12:59:29
+downloaded: 2025-11-20 11:50:46
 ---
 
 Best Practices: GitHub Security Campaign | Endor Labs Docs

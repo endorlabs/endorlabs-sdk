@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/
 title: Commands | Endor Labs Docs
-downloaded: 2025-10-27 12:57:52
+downloaded: 2025-11-20 11:49:07
 ---
 
 Commands | Endor Labs Docs
@@ -24,6 +24,10 @@ Use the `artifact sign` command to sign container images and build artifacts in 
 ##### [completion](/endorctl/commands/completion/)
 
 Use the completion command to get a command completion script for a specified command shell
+
+##### [container](/endorctl/commands/container/)
+
+Use the container command to scan container images.
 
 ##### [endorctl api](/endorctl/commands/api/)
 
