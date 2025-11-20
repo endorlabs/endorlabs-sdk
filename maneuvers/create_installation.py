@@ -105,16 +105,10 @@ def delete_installation(
         True if deletion successful, False otherwise
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-
         logger.info(f"Deleting installation: {installation_uuid}")
 
         res = client.delete(
-            f"v1/namespaces/{tenant_namespace}/installations/{installation_uuid}",
-            headers=headers
+            f"v1/namespaces/{tenant_namespace}/installations/{installation_uuid}"
         )
 
         if res.status_code == 200:
@@ -146,12 +140,6 @@ def create_installation(
         Created installation data or None if creation failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        })
-
         logger.info(f"Creating installation in namespace: {tenant_namespace}")
 
         # Create sanitized payload for debug logging (remove sensitive data)
@@ -160,8 +148,11 @@ def create_installation(
 
         res = client.post(
             f"v1/namespaces/{tenant_namespace}/installations",
-            headers=headers,
-            data=payload.model_dump()
+            json=payload.model_dump(),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
 
         if res.status_code == 200:
@@ -194,16 +185,10 @@ def get_installation(
         Installation data or None if retrieval failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-
         logger.info(f"Retrieving installation: {installation_uuid}")
 
         res = client.get(
-            f"v1/namespaces/{tenant_namespace}/installations/{installation_uuid}",
-            headers=headers
+            f"v1/namespaces/{tenant_namespace}/installations/{installation_uuid}"
         )
 
         if res.status_code == 200:
@@ -593,9 +578,7 @@ Examples:
         if args.force:
             logger.info(f"Force flag enabled - checking for existing installation with external_id: {args.external_id}")
             try:
-                headers = client.default_headers
-                headers.update({"Accept": "application/json"})
-                res = client.get(f"v1/namespaces/{args.tenant_namespace}/installations", headers=headers)
+                res = client.get(f"v1/namespaces/{args.tenant_namespace}/installations")
                 if res.status_code == 200:
                     data = res.json()
                     installations = data.get('list', {}).get('objects', [])

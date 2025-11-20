@@ -16,6 +16,7 @@ from . import (
     project,
     repository,
     repository_version,
+    scan_result,
     user,
 )
 
@@ -31,5 +32,6 @@ __all__ = [
     "project",
     "repository",
     "repository_version",
+    "scan_result",
     "user",
 ]
