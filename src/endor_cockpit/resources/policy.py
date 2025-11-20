@@ -389,11 +389,6 @@ def create_policy(
         Created Policy object or None if creation failed
     """
     try:
-        headers = client.default_headers
-        headers.update(
-            {"Accept": "application/json", "Content-Type": "application/json"}
-        )
-
         request_data = {
             "meta": payload.meta.model_dump(),
             "spec": payload.spec.model_dump(),
@@ -402,8 +397,7 @@ def create_policy(
 
         res = client.post(
             f"v1/namespaces/{tenant_meta_namespace}/policies",
-            headers=headers,
-            data=request_data,
+            json=request_data,
         )
         data = res.json()
         return Policy(**data)
@@ -442,14 +436,25 @@ def update_policy(
     - spec.template_values: Template configuration values
     - propagate: Whether to propagate to child namespaces
 
-    IMMUTABLE FIELDS (cannot be updated):
-    - uuid: Unique identifier
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - spec.policy_type: Policy type (set at creation)
-    - spec.template_uuid: Template reference (set at creation)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdatePolicy request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
     - tenant_meta.namespace: Namespace assignment
-    - Inherited policies from parent namespaces
+
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name, meta.description, meta.tags: Metadata
+    - spec.*: All PolicySpec fields (no readOnly fields in v1PolicySpec,
+      including policy_type and template_uuid)
+    - propagate: Whether to propagate to child namespaces
+
+    Note: Inherited policies from parent namespaces cannot be updated
+    (business logic constraint).
 
     Args:
         client: APIClient instance
@@ -497,11 +502,6 @@ def update_policy(
         you want to update.
     """
     try:
-        headers = client.default_headers
-        headers.update(
-            {"Accept": "application/json", "Content-Type": "application/json"}
-        )
-
         # Get the current policy to include required fields
         # Note: Using list_policies as workaround for get_policy 404 issues
         policies = list_policies(client, tenant_meta_namespace)
@@ -542,8 +542,11 @@ def update_policy(
 
         res = client.patch(
             f"v1/namespaces/{tenant_meta_namespace}/policies",
-            headers=headers,
-            data=request_data,
+            json=request_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
         data = res.json()
         return Policy(**data)
@@ -568,10 +571,8 @@ def delete_policy(
         True if deletion successful, False otherwise
     """
     try:
-        headers = client.default_headers
         res = client.delete(
-            f"v1/namespaces/{tenant_meta_namespace}/policies/{policy_uuid}",
-            headers=headers,
+            f"v1/namespaces/{tenant_meta_namespace}/policies/{policy_uuid}"
         )
         return res.status_code == 200
 

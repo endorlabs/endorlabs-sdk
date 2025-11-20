@@ -274,40 +274,17 @@ class FindingSpec(BaseSpec):
     Field Mutability Guide:
     ======================
 
-    IMMUTABLE FIELDS (cannot be updated after creation):
-    - project_uuid: Project assignment (set at creation)
-    - level: Severity level (determined by analysis)
-    - method: Analysis method used (determined by analysis)
-    - target_uuid: Target resource (set at creation)
-    - finding_metadata: Analysis results (system-generated)
-    - last_processed: System-managed timestamp
-    - target_dependency_package_name: Dependency package name (analysis-determined)
-    - target_dependency_name: Dependency name (analysis-determined)
-    - target_dependency_version: Dependency version (analysis-determined)
-    - explanation: Analysis explanation (analysis-determined)
-    - remediation_action: Recommended action (analysis-determined)
-    - source_code_version: Source code version (analysis-determined)
-    - reachable_paths: Function paths (analysis-determined)
-    - ecosystem: Ecosystem where found (analysis-determined)
-    - finding_categories: Finding categories (analysis-determined)
-    - relationship: Relationship information (analysis-determined)
-    - latest_version: Latest version (analysis-determined)
-    - dependency_file_paths: Dependency file paths (analysis-determined)
-    - approximation: Approximation flag (analysis-determined)
-    - proposed_version: Proposed version (analysis-determined)
-    - exceptions: Exception information (analysis-determined)
-    - actions: Action information (analysis-determined)
-    - fixing_upgrades: Fixing upgrade info (analysis-determined)
-    - fixing_patch: Fixing patch info (analysis-determined)
-    - code_owners: Code owners (analysis-determined)
-    - location_urls: Location URLs (analysis-determined)
-    - call_graph_analysis_type: Call graph analysis type (analysis-determined)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    Note: v1FindingSpec has NO fields marked as readOnly: true in the API spec.
+    This means all FindingSpec fields are technically mutable via the Update endpoint.
 
-    MUTABLE FIELDS (can be updated via API):
-    - dismiss: User can dismiss/undismiss findings
-    - remediation: User can add remediation guidance
-    - summary: User can update finding summary
-    - finding_tags: User can add/remove tags
+    However, many fields are analysis-determined and updated by the scan service.
+    Common fields updated by users:
+    - dismiss: Dismissal status
+    - remediation: Remediation guidance
+    - summary: Finding summary
+    - finding_tags: Finding-specific tags
     - extra_key: User-defined extra information
     """
 
@@ -740,12 +717,13 @@ def create_finding(
     Returns:
         Created Finding object if successful, None otherwise
     """
-    endpoint = f"/v1/namespaces/{tenant_meta_namespace}/findings"
+    url = f"v1/namespaces/{tenant_meta_namespace}/findings"
 
     try:
-        response = client.post(endpoint, data=payload.model_dump())
+        response = client.post(url, json=payload.model_dump())
         if response:
-            return Finding(**response)
+            data = response.json()
+            return Finding(**data)
         return None
     except Exception as e:
         print(f"Error creating finding: {e}")
@@ -773,12 +751,21 @@ def update_finding(
     - spec.remediation: Remediation guidance
     - context.tags: Contextual tags
 
-    IMMUTABLE FIELDS (cannot be updated):
-    - uuid, meta.name: Set at creation
-    - spec.level, spec.category: Set by scan
-    - spec.project_uuid: Associated project (set at creation)
-    - spec.finding_metadata: Scan-discovered metadata
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdateFinding request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
     - tenant_meta.namespace: Namespace assignment
+
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name, meta.description, meta.tags: Metadata
+    - spec.*: All FindingSpec fields (no readOnly fields in v1FindingSpec)
+    - context.tags: Contextual tags
 
     Args:
         client: APIClient instance
@@ -817,11 +804,6 @@ def update_finding(
         the API may not persist tag changes reliably.
     """
     try:
-        headers = client.default_headers
-        headers.update(
-            {"Accept": "application/json", "Content-Type": "application/json"}
-        )
-
         # Get the current finding to include required fields
         current_finding = get_finding(client, tenant_meta_namespace, finding_uuid)
         if not current_finding:
@@ -866,8 +848,11 @@ def update_finding(
 
         res = client.patch(
             f"v1/namespaces/{tenant_meta_namespace}/findings",
-            headers=headers,
-            data=request_data,
+            json=request_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
 
         if res.status_code == 200:
@@ -898,10 +883,10 @@ def delete_finding(
     Returns:
         True if successful, False otherwise
     """
-    endpoint = f"/v1/namespaces/{tenant_meta_namespace}/findings/{finding_uuid}"
+    url = f"v1/namespaces/{tenant_meta_namespace}/findings/{finding_uuid}"
 
     try:
-        response = client.delete(endpoint)
+        response = client.delete(url)
         return response is not None
     except Exception as e:
         print(f"Error deleting finding {finding_uuid}: {e}")
