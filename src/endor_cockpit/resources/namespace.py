@@ -522,12 +522,10 @@ def create_namespace(
         pydantic.ValidationError: If response data doesn't match expected schema
     """
     try:
-        headers = client.default_headers
-        headers.update({"Accept": "application/json"})
         res = client.post(
             f"v1/namespaces/{tenant_meta_namespace}/namespaces",
-            headers=headers,
-            data=payload.model_dump(),
+            json=payload.model_dump(),
+            headers={"Accept": "application/json"},
         )
         if res is None:
             logger.error(
@@ -561,10 +559,8 @@ def get_namespace(
         pydantic.ValidationError: If response data doesn't match expected schema
     """
     try:
-        headers = client.default_headers
         res = client.get(
-            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}",
-            headers=headers,
+            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}"
         )
         data = res.json()
         return Namespace(**data)
@@ -591,10 +587,8 @@ def delete_namespace(
         requests.exceptions.HTTPError: For API-level errors
     """
     try:
-        headers = client.default_headers
         res = client.delete(
-            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}",
-            headers=headers,
+            f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}"
         )
         return res.status_code == 200  # Endor's API returns 200 on successful deletion
     except Exception as e:
@@ -617,14 +611,22 @@ def update_namespace(
     MUTABLE FIELDS:
     - meta.description: Namespace description
 
-    IMMUTABLE FIELDS (cannot be updated):
-    - uuid: Unique identifier (set at creation)
-    - meta.name: Namespace name (set at creation)
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - meta.index_data: Index data (managed by API)
-    - meta.kind: Resource kind (managed by API)
-    - meta.version: Version (managed by API)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdateNamespace request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
+    - spec.full_name: Fully qualified namespace name (readOnly: true in v1NamespaceSpec)
+
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name: Namespace name
+    - meta.description: Namespace description
+    - meta.tags: Namespace tags
+    - spec.managed: Managed flag
 
     Args:
         client: The APIClient instance to use for the request
@@ -646,17 +648,15 @@ def update_namespace(
         >>> updated_namespace = update_namespace(client, parent, uuid, payload)
     """
     try:
-        headers = client.default_headers
-        headers.update(
-            {"Accept": "application/json", "Content-Type": "application/json"}
-        )
-
         logger.info(f"Updating namespace {namespace_uuid}")
 
         res = client.patch(
             f"v1/namespaces/{tenant_meta_namespace}/namespaces/{namespace_uuid}",
-            headers=headers,
-            data=payload.model_dump(),
+            json=payload.model_dump(),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
         data = res.json()
         return Namespace(**data)

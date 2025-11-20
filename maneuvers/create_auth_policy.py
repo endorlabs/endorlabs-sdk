@@ -105,12 +105,6 @@ def create_authorization_policy(
         Created policy data or None if creation failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        })
-
         # Convert payload to dict
         request_data = {
             "meta": payload.meta.model_dump(),
@@ -123,8 +117,11 @@ def create_authorization_policy(
 
         res = client.post(
             f"v1/namespaces/{tenant_namespace}/authorization-policies",
-            headers=headers,
-            data=request_data
+            json=request_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
 
         if res.status_code == 200:
@@ -157,16 +154,10 @@ def get_authorization_policy(
         Policy data or None if retrieval failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-
         logger.info(f"Retrieving authorization policy: {policy_uuid}")
 
         res = client.get(
-            f"v1/namespaces/{tenant_namespace}/authorization-policies/{policy_uuid}",
-            headers=headers
+            f"v1/namespaces/{tenant_namespace}/authorization-policies/{policy_uuid}"
         )
 
         if res.status_code == 200:

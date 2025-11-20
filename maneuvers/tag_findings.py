@@ -179,12 +179,6 @@ def tag_finding(
         new_tags = [tag] + [t for t in existing_tags if t != tag]
 
         # Use raw API client to update tags
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        })
-
         request_data = {
             "object": {
                 "uuid": finding_uuid,
@@ -196,8 +190,11 @@ def tag_finding(
 
         res = client.patch(
             f"v1/namespaces/{namespace}/findings",
-            headers=headers,
-            data=request_data,
+            json=request_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
         
         if res.status_code == 200:

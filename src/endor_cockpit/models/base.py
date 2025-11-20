@@ -241,7 +241,8 @@ class BaseResource(BaseModel):
     )  # MUTABLE: User can update
     processing_status: Optional[ProcessingStatus] = Field(
         None,
-        description="Processing state",  # IMMUTABLE: System-managed
+        # PARTIALLY MUTABLE: scan_state and disable_automated_scan are updatable
+        description="Processing state",
     )
     ingested_object: Optional[IngestedObject] = Field(
         None,
@@ -330,7 +331,6 @@ class BaseResourceOperations:
     ) -> List[BaseModel]:
         """Universal list operation with automatic pagination."""
         try:
-            headers = self.client.default_headers
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
             all_items = []
@@ -345,7 +345,7 @@ class BaseResourceOperations:
                 if page_token is not None:
                     params["list_parameters.page_token"] = str(page_token)
 
-                res = self.client.get(url, headers=headers, params=params)
+                res = self.client.get(url, params=params)
                 data = res.json()
 
                 # Extract objects from this page
@@ -380,9 +380,20 @@ class BaseResourceOperations:
             return [self.model_class(**item) for item in all_items]
 
         except Exception as e:
+            error_msg = str(e)
+            if hasattr(e, "errors"):
+                # Pydantic ValidationError - include detailed error info
+                from pydantic import ValidationError
+
+                if isinstance(e, ValidationError):
+                    error_details = "\n".join(
+                        f"  {err['loc']}: {err['msg']} (type: {err['type']})"
+                        for err in e.errors()
+                    )
+                    error_msg = f"{error_msg}\nValidation details:\n{error_details}"
             self.logger.error(
                 f"Failed to list {self.resource_name} in namespace "
-                f"'{tenant_meta_namespace}': {e}. "
+                f"'{tenant_meta_namespace}': {error_msg}. "
                 f"Check namespace permissions and API connectivity."
             )
             return []
@@ -393,10 +404,8 @@ class BaseResourceOperations:
         """Universal get operation with fallback to list+filter."""
         try:
             # Method 1: Try direct UUID access first (fastest if it works)
-            headers = self.client.default_headers
             res = self.client.get(
-                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/{resource_uuid}",
-                headers=headers,
+                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/{resource_uuid}"
             )
             data = res.json()
             return self.model_class(**data)
@@ -436,13 +445,12 @@ class BaseResourceOperations:
     ) -> Optional[BaseModel]:
         """Universal create operation."""
         try:
-            headers = self.client.default_headers
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
             # Convert payload to dict and validate
             payload_dict = payload.model_dump(exclude_none=True)
 
-            res = self.client.post(url, headers=headers, json=payload_dict)
+            res = self.client.post(url, json=payload_dict)
             data = res.json()
 
             return self.model_class(**data)
@@ -464,7 +472,6 @@ class BaseResourceOperations:
     ) -> Optional[BaseModel]:
         """Universal update operation with field masking."""
         try:
-            headers = self.client.default_headers
             url = (
                 f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
                 f"{resource_uuid}"
@@ -476,9 +483,7 @@ class BaseResourceOperations:
             # Add update_mask as query parameter
             params = {"update_mask": ",".join(update_mask)}
 
-            res = self.client.patch(
-                url, headers=headers, data=payload_dict, params=params
-            )
+            res = self.client.patch(url, json=payload_dict, params=params)
             data = res.json()
 
             return self.model_class(**data)
@@ -494,13 +499,12 @@ class BaseResourceOperations:
     def delete(self, tenant_meta_namespace: str, resource_uuid: str) -> bool:
         """Universal delete operation."""
         try:
-            headers = self.client.default_headers
             url = (
                 f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
                 f"{resource_uuid}"
             )
 
-            res = self.client.delete(url, headers=headers)
+            res = self.client.delete(url)
 
             # Check if deletion was successful (204 No Content or 200 OK)
             return res.status_code in [200, 204]
@@ -536,13 +540,12 @@ class BaseResourceOperations:
                     to_date=None,
                 )
 
-            headers = self.client.default_headers
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
             # Build query parameters
             params = self._build_params(count_params)
 
-            res = self.client.get(url, headers=headers, params=params)
+            res = self.client.get(url, params=params)
             data = res.json()
 
             # Handle count response

@@ -147,16 +147,13 @@ def create_notification_policy(
         logger.debug(f"Payload: {json.dumps(payload, indent=2)}")
         
         # Make the API call
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        })
-        
         res = client.post(
             f"v1/namespaces/{namespace}/policies",
-            headers=headers,
-            data=payload
+            json=payload,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
         
         if res.status_code == 200:
@@ -254,16 +251,10 @@ def get_notification_policy(
         Policy data or None if retrieval failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-        
         logger.info(f"Retrieving notification policy: {policy_uuid}")
         
         res = client.get(
-            f"v1/namespaces/{namespace}/policies/{policy_uuid}",
-            headers=headers
+            f"v1/namespaces/{namespace}/policies/{policy_uuid}"
         )
         
         if res.status_code == 200:

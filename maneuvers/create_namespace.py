@@ -76,12 +76,6 @@ def create_namespace(
         Created namespace data or None if creation failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        })
-
         logger.info(f"Creating namespace in parent: {parent_namespace}")
 
         # Create sanitized payload for debug logging
@@ -90,8 +84,11 @@ def create_namespace(
 
         res = client.post(
             f"v1/namespaces/{parent_namespace}/namespaces",
-            headers=headers,
-            data=payload.model_dump()
+            json=payload.model_dump(),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
 
         if res.status_code == 200:
@@ -124,16 +121,10 @@ def get_namespace(
         Namespace data or None if retrieval failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-
         logger.info(f"Retrieving namespace: {namespace_uuid}")
 
         res = client.get(
-            f"v1/namespaces/{tenant_namespace}/namespaces/{namespace_uuid}",
-            headers=headers
+            f"v1/namespaces/{tenant_namespace}/namespaces/{namespace_uuid}"
         )
 
         if res.status_code == 200:
