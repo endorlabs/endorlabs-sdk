@@ -323,6 +323,24 @@ class BaseResourceOperations:
         self.model_class = model_class
         self.logger = logging.getLogger(f"{__name__}.{resource_name}")
 
+    def _extract_items_from_page(self, data: Any) -> List[Any]:
+        """Extract items from a paginated response page."""
+        if "list" in data and "objects" in data["list"]:
+            return data["list"]["objects"]
+        elif isinstance(data, list):
+            return data
+        return []
+
+    def _extract_page_token(self, data: Any) -> Optional[str]:
+        """Extract next page token from paginated response."""
+        if isinstance(data, dict) and "list" in data:
+            list_data = data["list"]
+            if isinstance(list_data, dict) and "response" in list_data:
+                response_data = list_data["response"]
+                if isinstance(response_data, dict):
+                    return response_data.get("next_page_token")
+        return None
+
     def list(
         self,
         tenant_meta_namespace: str,
@@ -349,24 +367,12 @@ class BaseResourceOperations:
                 data = res.json()
 
                 # Extract objects from this page
-                if "list" in data and "objects" in data["list"]:
-                    items = data["list"]["objects"]
-                elif isinstance(data, list):
-                    items = data
-                else:
-                    items = []
-
+                items = self._extract_items_from_page(data)
                 all_items.extend(items)
                 page_count += 1
 
                 # Check for next page token
-                page_token = None
-                if isinstance(data, dict) and "list" in data:
-                    list_data = data["list"]
-                    if isinstance(list_data, dict) and "response" in list_data:
-                        response_data = list_data["response"]
-                        if isinstance(response_data, dict):
-                            page_token = response_data.get("next_page_token")
+                page_token = self._extract_page_token(data)
 
                 # Break if no more pages
                 if not page_token:

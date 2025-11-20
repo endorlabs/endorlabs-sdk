@@ -14,7 +14,7 @@ import os
 import re
 import subprocess
 import time
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -240,7 +240,13 @@ class APIClient:
             f"GET response: {response.status_code} - {response.text[:200]}..."
         )
         return self._handle_response(
-            response, method="GET", url=normalized_url, params=params, data=data, json=json, **request_kwargs
+            response,
+            method="GET",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
         )
 
     def post(
@@ -283,7 +289,13 @@ class APIClient:
             f"POST response: {response.status_code} - {response.text[:200]}..."
         )
         return self._handle_response(
-            response, method="POST", url=normalized_url, params=params, data=data, json=json, **request_kwargs
+            response,
+            method="POST",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
         )
 
     def patch(
@@ -326,7 +338,13 @@ class APIClient:
             f"PATCH response: {response.status_code} - {response.text[:200]}..."
         )
         return self._handle_response(
-            response, method="PATCH", url=normalized_url, params=params, data=data, json=json, **request_kwargs
+            response,
+            method="PATCH",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
         )
 
     def put(
@@ -369,7 +387,13 @@ class APIClient:
             f"PUT response: {response.status_code} - {response.text[:200]}..."
         )
         return self._handle_response(
-            response, method="PUT", url=normalized_url, params=params, data=data, json=json, **request_kwargs
+            response,
+            method="PUT",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
         )
 
     def delete(
@@ -412,8 +436,34 @@ class APIClient:
             f"DELETE response: {response.status_code} - {response.text[:200]}..."
         )
         return self._handle_response(
-            response, method="DELETE", url=normalized_url, params=params, data=data, json=json, **request_kwargs
+            response,
+            method="DELETE",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
         )
+
+    def _extract_items_from_response(self, response_data: Any) -> List[Any]:
+        """Extract items from paginated response."""
+        if isinstance(response_data, dict) and "list" in response_data:
+            list_data = response_data["list"]
+            if isinstance(list_data, dict) and "objects" in list_data:
+                return list_data["objects"]
+        elif isinstance(response_data, list):
+            return response_data
+        return []
+
+    def _extract_next_page_token(self, response_data: Any) -> Optional[str]:
+        """Extract next page token from paginated response."""
+        if isinstance(response_data, dict) and "list" in response_data:
+            list_data = response_data["list"]
+            if isinstance(list_data, dict) and "response" in list_data:
+                response_meta = list_data["response"]
+                if isinstance(response_meta, dict):
+                    return response_meta.get("next_page_token")
+        return None
 
     def get_all(
         self,
@@ -457,33 +507,23 @@ class APIClient:
 
             # Make request
             response = self.get(
-                normalized_url, params=request_params, data=data, json=json, **kwargs
+                normalized_url,
+                params=request_params,
+                data=data,
+                json=json,
+                **kwargs,
             )
             response_data = response.json()
 
-            # Extract items from this page
-            items = []
-            if isinstance(response_data, dict) and "list" in response_data:
-                list_data = response_data["list"]
-                if isinstance(list_data, dict) and "objects" in list_data:
-                    items = list_data["objects"]
-            elif isinstance(response_data, list):
-                items = response_data
-
-            # Yield items
+            # Extract and yield items from this page
+            items = self._extract_items_from_response(response_data)
             for item in items:
                 yield item
 
             page_count += 1
 
             # Check for next page token
-            page_token = None
-            if isinstance(response_data, dict) and "list" in response_data:
-                list_data = response_data["list"]
-                if isinstance(list_data, dict) and "response" in list_data:
-                    response_meta = list_data["response"]
-                    if isinstance(response_meta, dict):
-                        page_token = response_meta.get("next_page_token")
+            page_token = self._extract_next_page_token(response_data)
 
             # Break if no more pages
             if not page_token:
