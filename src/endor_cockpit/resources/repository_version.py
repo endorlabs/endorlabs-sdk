@@ -58,12 +58,14 @@ class RepositoryVersionSpec(BaseSpec):
     Field Mutability Guide:
     ======================
 
-    IMMUTABLE FIELDS (cannot be updated after creation):
-    - version: Version information (set at creation)
-    - last_commit_date: Last commit date (system-managed)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    Note: v1RepositoryVersionSpec has NO fields marked as readOnly: true
+    in the API spec. This means all RepositoryVersionSpec fields are
+    technically mutable via the Update endpoint.
 
-    MUTABLE FIELDS (can be updated via API):
-    - None (RepositoryVersion is typically immutable after creation)
+    However, UpdateRepositoryVersion requires meta and context, and most fields are
+    typically managed by platform integrations.
     """
 
     version: Optional[VersionInfo] = Field(
@@ -85,18 +87,26 @@ class RepositoryVersion(BaseResource):
     ❌ UPDATE: Not supported (repository versions are read-only)
     ❌ DELETE: Not supported (managed by platform integrations)
 
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.name: Repository version name (set by platform)
-    - spec.version: Version information (set by platform)
-    - spec.last_commit_date: Last commit date (set by platform)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdateRepositoryVersion request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
     - tenant_meta.namespace: Namespace assignment
-    - All spec fields: Platform-managed metadata
+
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name, meta.description, meta.tags: Metadata
+    - spec.version: Version information (NOT readOnly in v1RepositoryVersionSpec)
+    - spec.last_commit_date: Last commit date (NOT readOnly in v1RepositoryVersionSpec)
+    - scan_object.*: Scan object fields
+    - context.*: Context fields
 
     Note: Repository versions are automatically synchronized from platform integrations
-    and cannot be manually created, updated, or deleted through the API.
+    and typically should not be manually updated through the API.
     """
 
     # RepositoryVersion-specific fields (universal fields inherited from BaseResource)

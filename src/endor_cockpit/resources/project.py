@@ -117,20 +117,45 @@ class UpdateProjectPayload(BaseModel):
     Payload for updating an Endor Labs project.
 
     MUTABLE FIELDS (can be updated via PATCH):
-    - meta.description: Project description
-    - meta.tags: List of tags for categorization
+    - meta.name: Project name (NOT readOnly in API spec)
+    - meta.description: Project description (NOT readOnly in API spec)
+    - meta.tags: List of tags for categorization (NOT readOnly in API spec)
+    - meta.parent_uuid, meta.parent_kind: Parent object references
+      (NOT readOnly in API spec)
+    - meta.annotations: Resource annotations (NOT readOnly in API spec)
+    - spec.platform_source: Platform source (NOT readOnly in API spec)
+    - spec.git.http_clone_url: HTTP clone URL (NOT readOnly in API spec)
+    - spec.git.external_installation_id: External installation ID
+      (NOT readOnly in API spec)
+    - spec.git.invalid_installation: Invalid installation flag
+      (NOT readOnly in API spec)
+    - spec.toolchain_profile_uuid: Toolchain profile UUID (NOT readOnly in API spec)
+    - spec.scan_profile_uuid: Scan profile UUID (NOT readOnly in API spec)
+    - processing_status.scan_state: Scan state
+      (e.g., SCAN_STATE_IDLE, SCAN_STATE_INGESTING) (NOT readOnly in API spec)
+    - processing_status.disable_automated_scan: Disable automated scanning flag
+      (NOT readOnly in API spec)
+    - processing_status.scan_time: Last scan time
+      (NOT readOnly in API spec, but typically system-managed)
+    - processing_status.analytic_time: Last analytics time
+      (NOT readOnly in API spec, but typically system-managed)
+    - processing_status.queue_time: Last queue time
+      (NOT readOnly in API spec, but typically system-managed)
 
     IMMUTABLE FIELDS (read-only, managed by API):
-    - uuid: Unique identifier (set at creation)
-    - meta.name: Project name (set at creation)
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.update_time, meta.updated_by: Auto-managed timestamps
-    - meta.repository_url: Repository URL (not API-mutable)
-    - meta.language: Primary programming language (not API-mutable)
-    - meta.framework: Framework used (not API-mutable)
-    - spec.git.*: Git information (synced from repository)
+    - uuid: Unique identifier (readOnly: true in API spec)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in API spec)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in API spec)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in API spec)
+    - meta.references, meta.index_data: System-managed fields
+      (readOnly: true in API spec)
+    - spec.internal_reference_key: Internal reference key (readOnly: true in API spec)
+    - spec.ingestion_token: Ingestion token (readOnly: true in API spec)
+    - spec.git.git_clone_url, spec.git.organization, spec.git.path,
+      spec.git.full_name, spec.git.web_url: Git metadata
+      (readOnly: true in API spec)
     - tenant_meta.namespace: Namespace assignment
-    - processing_status.*: Scan state (managed by scan service)
 
     Example:
         >>> payload = UpdateProjectPayload(
@@ -193,20 +218,34 @@ class Project(BaseResource):
     ❌ CREATE: Not supported (managed by platform integrations)
     ❌ DELETE: Not supported (managed by platform integrations)
 
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
     - uuid: Unique identifier
-    - meta.name: Project name (set by platform)
-    - spec.platform_source: Platform source (set at discovery)
-    - spec.internal_reference_key: Internal reference key (system-generated)
-    - spec.ingestion_token: Ingestion token (system-managed)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+    - meta.kind, meta.version: Resource metadata
+    - meta.created_by, meta.updated_by: Audit fields
+    - meta.references, meta.index_data: System-managed fields
+    - spec.internal_reference_key: Internal reference key
+    - spec.ingestion_token: Ingestion token
+    - spec.git.git_clone_url, spec.git.organization, spec.git.path,
+      spec.git.full_name, spec.git.web_url: Git metadata
     - tenant_meta.namespace: Namespace assignment
-    - All spec fields: Platform-managed metadata
 
-    MUTABLE FIELDS (can be updated via PATCH):
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name: Project name
     - meta.description: Project description
-    - meta.tags: Project tags for categorization
+    - meta.tags: Project tags
+    - meta.parent_uuid, meta.parent_kind: Parent object references
+    - meta.annotations: Resource annotations
+    - spec.platform_source: Platform source
+    - spec.git.http_clone_url: HTTP clone URL
+    - spec.git.external_installation_id: External installation ID
+    - spec.git.invalid_installation: Invalid installation flag
+    - spec.toolchain_profile_uuid: Toolchain profile UUID
+    - spec.scan_profile_uuid: Scan profile UUID
+    - processing_status.*: All processing status fields
+      (scan_state, disable_automated_scan, scan_time, analytic_time, queue_time)
 
     Note: Projects are automatically discovered through platform integrations
     and cannot be manually created or deleted. Only metadata updates are allowed.
@@ -371,12 +410,10 @@ def create_project(
         pydantic.ValidationError: If response data doesn't match expected schema
     """
     try:
-        headers = client.default_headers
-        headers.update({"Accept": "application/json"})
         res = client.post(
             f"v1/namespaces/{tenant_meta_namespace}/projects",
-            headers=headers,
-            data=payload.model_dump(),
+            json=payload.model_dump(),
+            headers={"Accept": "application/json"},
         )
         data = res.json()
         return Project(**data)
@@ -399,19 +436,27 @@ def update_project(
     parameter, which enables efficient partial updates without overwriting
     unchanged fields.
 
-    MUTABLE FIELDS:
-    - meta.description: Project description
-    - meta.tags: List of tags for categorization
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+    - meta.kind, meta.version: Resource metadata
+    - meta.created_by, meta.updated_by: Audit fields
+    - meta.references, meta.index_data: System-managed fields
+    - spec.internal_reference_key: Internal reference key
+    - spec.ingestion_token: Ingestion token
+    - spec.git.git_clone_url, spec.git.organization, spec.git.path,
+      spec.git.full_name, spec.git.web_url: Git metadata
 
-    IMMUTABLE FIELDS (cannot be updated):
-    - uuid, meta.name: Set at creation
-    - meta.create_time, meta.created_by: Creation metadata
-    - meta.repository_url: Repository URL (not API-mutable)
-    - meta.language: Primary programming language (not API-mutable)
-    - meta.framework: Framework used (not API-mutable)
-    - spec.*: Git information (synced from repository)
-    - tenant_meta.namespace: Namespace assignment
-    - processing_status.*: Managed by scan service
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name, meta.description, meta.tags: Metadata
+    - meta.parent_uuid, meta.parent_kind, meta.annotations: Additional metadata
+    - spec.platform_source: Platform source
+    - spec.git.http_clone_url, spec.git.external_installation_id,
+      spec.git.invalid_installation: Git configuration
+    - spec.toolchain_profile_uuid, spec.scan_profile_uuid: Profile references
+    - processing_status.*: All processing status fields
 
     Args:
         client: The APIClient instance to use for the request
@@ -458,11 +503,6 @@ def update_project(
         the API may not persist tag changes reliably.
     """
     try:
-        headers = client.default_headers
-        headers.update(
-            {"Accept": "application/json", "Content-Type": "application/json"}
-        )
-
         # Get the current project to include required fields
         current_project = get_project(client, tenant_meta_namespace, project_uuid)
         if not current_project:
@@ -494,8 +534,11 @@ def update_project(
 
         res = client.patch(
             f"v1/namespaces/{tenant_meta_namespace}/projects",
-            headers=headers,
-            data=request_data,
+            json=request_data,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
 
         if res.status_code == 200:
@@ -531,10 +574,8 @@ def delete_project(
         requests.exceptions.HTTPError: For API-level errors
     """
     try:
-        headers = client.default_headers
         res = client.delete(
-            f"v1/namespaces/{tenant_meta_namespace}/projects/{project_uuid}",
-            headers=headers,
+            f"v1/namespaces/{tenant_meta_namespace}/projects/{project_uuid}"
         )
         return res.status_code == 200  # Endor's API returns 200 on successful deletion
     except Exception as e:

@@ -258,18 +258,41 @@ class PackageVersion(BaseResource):
     ❌ UPDATE: Not supported (returns 501 Method Not Allowed)
     ❌ DELETE: Not supported (package versions are immutable)
 
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.name: Package name (set by scan)
-    - spec.project_uuid: Project assignment (set at creation)
-    - spec.ecosystem: Package ecosystem (analysis-determined)
-    - spec.package_name: Package name (analysis-determined)
-    - spec.language: Programming language (analysis-determined)
-    - spec.release_timestamp: Release timestamp (set at creation)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    Note: UpdatePackageVersion endpoint exists in API spec but returns
+    501 Method Not Allowed.
+
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdatePackageVersion request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
+    - spec.ecosystem: Package ecosystem (readOnly: true in v1PackageVersionSpec)
+    - spec.package_name: Package name (readOnly: true in v1PackageVersionSpec)
+    - spec.internal_reference_key: Internal reference key
+      (readOnly: true in v1PackageVersionSpec)
     - tenant_meta.namespace: Namespace assignment
-    - All spec fields: Scan-discovered metadata
+
+    MUTABLE FIELDS (NOT readOnly in API spec, but Update returns 501):
+    - meta.name, meta.description, meta.tags: Metadata
+    - spec.project_uuid: Project assignment
+    - spec.source_code_reference: Source code reference
+    - spec.release_timestamp: Release timestamp
+    - spec.unresolved_dependencies: Dependency declarations
+    - spec.resolved_dependencies: Resolved dependency graph
+    - spec.resolution_errors: Resolution errors
+    - spec.language: Programming language
+    - spec.relative_path: Relative path
+    - spec.container_metadata: Container metadata
+    - spec.bazel_metadata: Bazel metadata
+    - spec.code_owners: Code owner data
+    - spec.call_graph_available: Call graph availability
+    - spec.precomputed_call_graph_state: Precomputed call graph state
+    - processing_status.*: All processing status fields
+    - context.*: Context fields
 
     Note: Package versions are automatically discovered during security scans and
     cannot be manually created, updated, or deleted. PATCH operations return 501.

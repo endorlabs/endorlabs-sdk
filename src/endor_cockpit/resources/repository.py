@@ -116,25 +116,14 @@ class RepositorySpec(BaseSpec):
     Field Mutability Guide:
     ======================
 
-    IMMUTABLE FIELDS (cannot be updated after creation):
-    - platform_source: Platform source (set at creation)
-    - external_id: External platform ID (set at creation)
-    - http_clone_url: Clone URL (set at creation)
-    - owner: Repository owner (set at creation)
-    - create_time: Creation timestamp (system-managed)
-    - update_time: Update timestamp (system-managed)
-    - contributors: Contributors list (system-managed)
-    - commit_hashes: Commit hashes (system-managed)
-    - languages: Programming languages (analysis-determined)
-    - tags: Repository tags (system-managed)
-    - branch_protections: Branch protection rules (system-managed)
-    - vulnerability_alerts_enabled: Vulnerability alerts status (system-managed)
-    - default_branch: Default branch (set at creation)
-    - org: Organization information (set at creation)
-    - repository_license: Repository license (analysis-determined)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    Note: v1RepositorySpec has NO fields marked as readOnly: true in the
+    API spec. This means all RepositorySpec fields are technically mutable
+    via the Update endpoint.
 
-    MUTABLE FIELDS (can be updated via API):
-    - None (Repository is typically immutable after creation)
+    However, UpdateRepository requires meta and ingested_object, and most fields are
+    typically managed by platform integrations and updated through ingestion.
     """
 
     platform_source: PlatformSource = Field(

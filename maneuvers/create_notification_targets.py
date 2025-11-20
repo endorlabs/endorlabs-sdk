@@ -163,16 +163,10 @@ def delete_notification_target(
         True if deletion successful, False otherwise
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-
         logger.info(f"Deleting notification target: {notification_target_uuid}")
 
         res = client.delete(
-            f"v1/namespaces/{tenant_namespace}/notification-targets/{notification_target_uuid}",
-            headers=headers
+            f"v1/namespaces/{tenant_namespace}/notification-targets/{notification_target_uuid}"
         )
 
         if res.status_code == 200:
@@ -204,12 +198,6 @@ def create_notification_target(
         Created notification target data or None if creation failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        })
-
         logger.info(f"Creating notification target in namespace: {tenant_namespace}")
 
         # Create sanitized payload for debug logging (remove sensitive data)
@@ -227,8 +215,11 @@ def create_notification_target(
 
         res = client.post(
             f"v1/namespaces/{tenant_namespace}/notification-targets",
-            headers=headers,
-            data=payload.model_dump()
+            json=payload.model_dump(),
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
         )
 
         if res.status_code == 200:
@@ -261,16 +252,10 @@ def get_notification_target(
         Notification target data or None if retrieval failed
     """
     try:
-        headers = client.default_headers
-        headers.update({
-            "Accept": "application/json"
-        })
-
         logger.info(f"Retrieving notification target: {notification_target_uuid}")
 
         res = client.get(
-            f"v1/namespaces/{tenant_namespace}/notification-targets/{notification_target_uuid}",
-            headers=headers
+            f"v1/namespaces/{tenant_namespace}/notification-targets/{notification_target_uuid}"
         )
 
         if res.status_code == 200:
@@ -692,9 +677,7 @@ Examples:
             logger.info(f"Force flag enabled - checking for existing notification target with name: {args.name}")
             # List notification targets to find existing one with same name
             try:
-                headers = client.default_headers
-                headers.update({"Accept": "application/json"})
-                res = client.get(f"v1/namespaces/{args.tenant_namespace}/notification-targets", headers=headers)
+                res = client.get(f"v1/namespaces/{args.tenant_namespace}/notification-targets")
                 if res.status_code == 200:
                     data = res.json()
                     notification_targets = data.get('list', {}).get('objects', [])

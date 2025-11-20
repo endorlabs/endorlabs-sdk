@@ -14,7 +14,7 @@ import os
 import re
 import subprocess
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -104,7 +104,9 @@ class APIClient:
 
         # Set initial headers
         self.token = self.authenticate()
-        self.default_headers = {"Authorization": f"Bearer {self.token}"}
+        if self.token:
+            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+        self.default_headers = self.session.headers.copy()
 
     def _rate_limit(self):
         """Applies a delay if a rate limit was previously encountered."""
@@ -117,7 +119,32 @@ class APIClient:
                 time.sleep(wait_time)
             self.rate_limit_delay = 0
 
-    def _handle_response(self, response: requests.Response) -> Any:
+    def _normalize_url(self, url: str) -> str:
+        """Normalize URL: use as-is if absolute, prepend base_url if relative."""
+        if url.startswith(("http://", "https://")):
+            return url
+        # Relative URL: prepend base_url with proper slash handling
+        base = self.base_url.rstrip("/")
+        url = url.lstrip("/")
+        return f"{base}/{url}"
+
+    def _redact_log_data(self, data: Any) -> str:
+        """Redact sensitive data from logging."""
+        if data is None:
+            return "None"
+        data_str = str(data)
+        # Use the same redaction pattern as the filter
+        pattern = re.compile(redaction_pattern, re.IGNORECASE)
+        data_str = pattern.sub(r"'\1': '***REDACTED***'", data_str)
+        return data_str
+
+    def _handle_response(
+        self,
+        response: requests.Response,
+        method: str = None,
+        url: str = None,
+        **kwargs,
+    ) -> Any:
         self.last_request_time = time.time()
         try:
             response.raise_for_status()
@@ -143,9 +170,23 @@ class APIClient:
                     f"Request to {response.url} was unauthorized."
                 )
                 self.logger.info("Attempting to reauthenticate...")
-                self.headers = {"Authorization": f"Bearer {self.authenticate()}"}
-                self.logger.info("Reauthentication completed.")
-
+                new_token = self.authenticate()
+                if new_token:
+                    self.session.headers.update(
+                        {"Authorization": f"Bearer {new_token}"}
+                    )
+                    self.default_headers = self.session.headers.copy()
+                    self.logger.info("Reauthentication completed.")
+                    # Retry the original request
+                    if method and url:
+                        self.logger.info(f"Retrying {method} request to {url}")
+                        retry_response = self.session.request(
+                            method=method, url=url, **kwargs
+                        )
+                        return self._handle_response(
+                            retry_response, method=method, url=url, **kwargs
+                        )
+                raise
             else:
                 self.logger.error(
                     f"API error {response.status_code}: {e}. "
@@ -159,83 +200,339 @@ class APIClient:
 
     def get(
         self,
-        endpoint: str,
+        url: str,
         params: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-    ) -> Any:
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """GET request compatible with requests library signature."""
         self._rate_limit()
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        self.logger.debug(f"GET request to: {url} with params: {params}")
-        response = self.session.get(url, params=params, headers=headers)
-        self.logger.debug(f"GET response: {response.status_code} - {response.text}...")
-        return self._handle_response(response)
+        normalized_url = self._normalize_url(url)
+        # Merge headers if provided
+        request_kwargs = kwargs.copy()
+        if "headers" in request_kwargs:
+            # Merge with session headers
+            merged_headers = self.session.headers.copy()
+            merged_headers.update(request_kwargs["headers"])
+            request_kwargs["headers"] = merged_headers
+        else:
+            request_kwargs["headers"] = self.session.headers.copy()
+
+        # Log with redaction
+        log_data = self._redact_log_data(data) if data else None
+        log_json = self._redact_log_data(json) if json else None
+        self.logger.debug(
+            f"GET request to: {normalized_url} with params: {params}, "
+            f"data: {log_data}, json: {log_json}"
+        )
+        response = self.session.request(
+            method="GET",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
+        self.logger.debug(
+            f"GET response: {response.status_code} - {response.text[:200]}..."
+        )
+        return self._handle_response(
+            response,
+            method="GET",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
 
     def post(
         self,
-        endpoint: str,
-        data: Optional[Dict] = None,
+        url: str,
         params: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-    ) -> Any:
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """POST request compatible with requests library signature."""
         self._rate_limit()
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        self.logger.debug(f"POST request to: {url} with params: {params}, data: {data}")
-        response = self.session.post(url, params=params, json=data, headers=headers)
-        self.logger.debug(f"POST response: {response.status_code} - {response.text}...")
+        normalized_url = self._normalize_url(url)
+        # Merge headers if provided
+        request_kwargs = kwargs.copy()
+        if "headers" in request_kwargs:
+            # Merge with session headers
+            merged_headers = self.session.headers.copy()
+            merged_headers.update(request_kwargs["headers"])
+            request_kwargs["headers"] = merged_headers
+        else:
+            request_kwargs["headers"] = self.session.headers.copy()
 
-        return self._handle_response(response)
+        # Log with redaction
+        log_data = self._redact_log_data(data) if data else None
+        log_json = self._redact_log_data(json) if json else None
+        self.logger.debug(
+            f"POST request to: {normalized_url} with params: {params}, "
+            f"data: {log_data}, json: {log_json}"
+        )
+        response = self.session.request(
+            method="POST",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
+        self.logger.debug(
+            f"POST response: {response.status_code} - {response.text[:200]}..."
+        )
+        return self._handle_response(
+            response,
+            method="POST",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
 
     def patch(
         self,
-        endpoint: str,
-        data: Optional[Dict] = None,
+        url: str,
         params: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-    ) -> Any:
-        self.logger.debug(
-            f"PATCH request to: {endpoint} with params: {params}, data: {data}"
-        )
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """PATCH request compatible with requests library signature."""
         self._rate_limit()
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        normalized_url = self._normalize_url(url)
+        # Merge headers if provided
+        request_kwargs = kwargs.copy()
+        if "headers" in request_kwargs:
+            # Merge with session headers
+            merged_headers = self.session.headers.copy()
+            merged_headers.update(request_kwargs["headers"])
+            request_kwargs["headers"] = merged_headers
+        else:
+            request_kwargs["headers"] = self.session.headers.copy()
+
+        # Log with redaction
+        log_data = self._redact_log_data(data) if data else None
+        log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
-            f"PATCH request to: {url} with params: {params}, data: {data}"
+            f"PATCH request to: {normalized_url} with params: {params}, "
+            f"data: {log_data}, json: {log_json}"
         )
-        response = self.session.patch(url, params=params, json=data, headers=headers)
+        response = self.session.request(
+            method="PATCH",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
         self.logger.debug(
-            f"PATCH response: {response.status_code} - {response.text}..."
+            f"PATCH response: {response.status_code} - {response.text[:200]}..."
         )
-        return self._handle_response(response)
+        return self._handle_response(
+            response,
+            method="PATCH",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
 
     def put(
         self,
-        endpoint: str,
-        data: Optional[Dict] = None,
+        url: str,
         params: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-    ) -> Any:
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """PUT request compatible with requests library signature."""
         self._rate_limit()
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        self.logger.debug(f"PUT request to: {url} with data: {data}")
-        response = self.session.put(url, json=data, params=params, headers=headers)
-        self.logger.debug(f"PUT response: {response.status_code} - {response.text}...")
-        return self._handle_response(response)
+        normalized_url = self._normalize_url(url)
+        # Merge headers if provided
+        request_kwargs = kwargs.copy()
+        if "headers" in request_kwargs:
+            # Merge with session headers
+            merged_headers = self.session.headers.copy()
+            merged_headers.update(request_kwargs["headers"])
+            request_kwargs["headers"] = merged_headers
+        else:
+            request_kwargs["headers"] = self.session.headers.copy()
+
+        # Log with redaction
+        log_data = self._redact_log_data(data) if data else None
+        log_json = self._redact_log_data(json) if json else None
+        self.logger.debug(
+            f"PUT request to: {normalized_url} with params: {params}, "
+            f"data: {log_data}, json: {log_json}"
+        )
+        response = self.session.request(
+            method="PUT",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
+        self.logger.debug(
+            f"PUT response: {response.status_code} - {response.text[:200]}..."
+        )
+        return self._handle_response(
+            response,
+            method="PUT",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
 
     def delete(
         self,
-        endpoint: str,
+        url: str,
         params: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-    ) -> Any:
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """DELETE request compatible with requests library signature."""
         self._rate_limit()
-        url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        self.logger.debug(f"DELETE request to: {url}")
-        response = self.session.delete(url, params=params, headers=headers)
+        normalized_url = self._normalize_url(url)
+        # Merge headers if provided
+        request_kwargs = kwargs.copy()
+        if "headers" in request_kwargs:
+            # Merge with session headers
+            merged_headers = self.session.headers.copy()
+            merged_headers.update(request_kwargs["headers"])
+            request_kwargs["headers"] = merged_headers
+        else:
+            request_kwargs["headers"] = self.session.headers.copy()
+
+        # Log with redaction
+        log_data = self._redact_log_data(data) if data else None
+        log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
-            f"DELETE response: {response.status_code} - {response.text}..."
+            f"DELETE request to: {normalized_url} with params: {params}, "
+            f"data: {log_data}, json: {log_json}"
         )
-        return self._handle_response(response)
+        response = self.session.request(
+            method="DELETE",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
+        self.logger.debug(
+            f"DELETE response: {response.status_code} - {response.text[:200]}..."
+        )
+        return self._handle_response(
+            response,
+            method="DELETE",
+            url=normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
+
+    def _extract_items_from_response(self, response_data: Any) -> List[Any]:
+        """Extract items from paginated response."""
+        if isinstance(response_data, dict) and "list" in response_data:
+            list_data = response_data["list"]
+            if isinstance(list_data, dict) and "objects" in list_data:
+                return list_data["objects"]
+        elif isinstance(response_data, list):
+            return response_data
+        return []
+
+    def _extract_next_page_token(self, response_data: Any) -> Optional[str]:
+        """Extract next page token from paginated response."""
+        if isinstance(response_data, dict) and "list" in response_data:
+            list_data = response_data["list"]
+            if isinstance(list_data, dict) and "response" in list_data:
+                response_meta = list_data["response"]
+                if isinstance(response_meta, dict):
+                    return response_meta.get("next_page_token")
+        return None
+
+    def get_all(
+        self,
+        url: str,
+        params: Optional[Dict] = None,
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        **kwargs,
+    ) -> Iterator[Dict[str, Any]]:
+        """
+        Get all items from a paginated endpoint, automatically handling
+        page_token pagination.
+
+        Yields individual items from paginated responses. Handles Endor Labs
+        pagination format with list.objects and next_page_token.
+
+        Args:
+            url: Endpoint URL (relative or absolute)
+            params: Query parameters (will be updated with page_token)
+            data: Request body data
+            json: Request body JSON
+            **kwargs: Additional arguments passed to request
+
+        Yields:
+            Individual items from paginated responses
+        """
+        normalized_url = self._normalize_url(url)
+        page_token = None
+        page_count = 0
+
+        # Start with provided params or empty dict
+        request_params = dict(params) if params else {}
+
+        while True:
+            # Update params with page_token if present
+            if page_token is not None:
+                request_params["list_parameters.page_token"] = str(page_token)
+            elif "list_parameters.page_token" in request_params:
+                # Remove page_token if we're starting fresh
+                del request_params["list_parameters.page_token"]
+
+            # Make request
+            response = self.get(
+                normalized_url,
+                params=request_params,
+                data=data,
+                json=json,
+                **kwargs,
+            )
+            response_data = response.json()
+
+            # Extract and yield items from this page
+            items = self._extract_items_from_response(response_data)
+            for item in items:
+                yield item
+
+            page_count += 1
+
+            # Check for next page token
+            page_token = self._extract_next_page_token(response_data)
+
+            # Break if no more pages
+            if not page_token:
+                break
+
+        self.logger.debug(
+            f"Fetched all items from {normalized_url} across {page_count} pages"
+        )
 
     def authenticate(self) -> Optional[str]:
+        """Authenticate and update session headers with bearer token."""
         try:
             payload = {"key": self.key, "secret": self.secret}
             response = requests.post(
@@ -246,6 +543,9 @@ class APIClient:
             response.raise_for_status()
             token = response.json()["token"]
             os.environ["ENDOR_TOKEN"] = token
+            # Update session headers
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
+            self.default_headers = self.session.headers.copy()
             return token
         except Exception as e:
             self.logger.error(f"Unable to authenticate: {e}")

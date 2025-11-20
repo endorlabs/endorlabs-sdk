@@ -620,11 +620,6 @@ Project UUID: {self.project_uuid}
             ]
 
             # Use raw API client to bypass Pydantic serialization issues
-            headers = self.client.default_headers
-            headers.update(
-                {"Accept": "application/json", "Content-Type": "application/json"}
-            )
-
             request_data = {
                 "object": {
                     "uuid": finding_uuid,
@@ -637,8 +632,11 @@ Project UUID: {self.project_uuid}
             try:
                 res = self.client.patch(
                     f"v1/namespaces/{self.namespace}/findings",
-                    headers=headers,
-                    data=request_data,
+                    json=request_data,
+                    headers={
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
                 )
                 if res.status_code == 200:
                     logger.info(

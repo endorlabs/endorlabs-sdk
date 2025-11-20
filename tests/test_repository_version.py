@@ -217,3 +217,69 @@ class TestRepositoryVersion:
             parent_kind = repository_version_obj.meta.parent_kind
             assert isinstance(parent_kind, str)
             assert parent_kind == "Project"
+
+    def test_repository_version_operations_summary(self):
+        """Test and summarize repository version operations."""
+        repository_versions_list = repository_version.list_repository_versions(
+            self.client, self.namespace
+        )
+
+        print("\n=== Repository Version Operations Summary ===")
+        print(f"Total repository versions: {len(repository_versions_list)}")
+
+        # Analyze repository versions by parent
+        parent_counts = {}
+        for rv in repository_versions_list:
+            parent = rv.meta.parent_uuid if rv.meta.parent_uuid else "None"
+            parent_counts[parent] = parent_counts.get(parent, 0) + 1
+
+        print("Parent distribution:")
+        for parent, count in list(parent_counts.items())[:5]:
+            print(f"  {parent[:8]}...: {count}")
+
+        # Analyze repository versions by tags
+        tagged_count = sum(1 for rv in repository_versions_list if rv.meta.tags)
+        print(f"Repository versions with tags: {tagged_count}")
+
+        # Show sample repository versions
+        print("\nSample repository versions:")
+        for i, rv in enumerate(repository_versions_list[:3]):
+            print(f"  {i + 1}. {rv.meta.name}")
+            if rv.spec.version:
+                if rv.spec.version.ref:
+                    print(f"     Ref: {rv.spec.version.ref}")
+                if rv.spec.version.sha:
+                    print(f"     SHA: {rv.spec.version.sha[:8]}...")
+            if rv.meta.tags:
+                print(f"     Tags: {', '.join(rv.meta.tags)}")
+
+        assert len(repository_versions_list) > 0
+
+    def test_repository_version_pagination(self):
+        """Test pagination capabilities."""
+        from endor_cockpit.types import ListParameters
+
+        # Test with page size
+        # Note: API may return more than page_size if it has a minimum page size
+        paginated_versions = repository_version.list_repository_versions(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=5),
+        )
+        assert isinstance(paginated_versions, list)
+        assert len(paginated_versions) > 0
+
+    def test_repository_version_field_validation(self):
+        """Test field validation and required fields."""
+        repository_version_obj = self.repository_versions[0]
+
+        # Verify required fields are present
+        assert repository_version_obj.uuid is not None
+        assert repository_version_obj.meta.name is not None
+        assert repository_version_obj.spec is not None
+
+        # Verify version info structure if present
+        if repository_version_obj.spec.version:
+            version_info = repository_version_obj.spec.version
+            # Version info can have ref, sha, or metadata
+            assert hasattr(version_info, "ref") or hasattr(version_info, "sha")

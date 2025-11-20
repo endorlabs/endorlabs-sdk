@@ -252,24 +252,48 @@ class Installation(BaseResource):
     OPERATION SUPPORT:
     ==================
     ✅ GET: List installations, Get by UUID
+    ✅ UPDATE: Update installation configuration (limited fields)
     ❌ CREATE: Not supported (managed by platform integrations)
-    ❌ UPDATE: Not supported (installation configuration is read-only)
     ❌ DELETE: Not supported (managed by platform integrations)
 
-    FIELD MUTABILITY:
-    =================
-    IMMUTABLE FIELDS (read-only, system-managed):
-    - uuid: Unique identifier
-    - meta.name: Installation name (set by platform)
-    - spec.external_id: External ID (set at creation)
-    - spec.platform_type: Platform type (set at creation)
-    - spec.platform_source: Platform source (set at discovery)
-    - spec.ingestion_token: Ingestion token (system-managed)
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdateInstallation request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
+    - spec.external_name: External name (readOnly: true in v1InstallationSpec)
+    - spec.user: User name (readOnly: true in v1InstallationSpec)
+    - spec.ingestion_time: Ingestion time (readOnly: true in v1InstallationSpec)
+    - spec.target_type: Target type (readOnly: true in v1InstallationSpec)
+    - spec.login: Login (readOnly: true in v1InstallationSpec)
+    - spec.ingestion_token: Ingestion token (readOnly: true in v1InstallationSpec)
+    - spec.marked_for_deletion: Marked for deletion
+      (readOnly: true in v1InstallationSpec)
     - tenant_meta.namespace: Namespace assignment
-    - All spec fields: Platform-managed configuration
+
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name, meta.description, meta.tags: Metadata
+    - spec.public: Public flag
+    - spec.external_id: External ID
+    - spec.suspended: Suspended flag
+    - spec.project_uuids: Project UUIDs list
+    - spec.invalid: Invalid flag
+    - spec.enabled_features: Enabled features list
+    - spec.platform_source: Platform source (deprecated but mutable)
+    - spec.platform_type: Platform type
+    - spec.github_config, spec.azure_config, spec.gitlab_config,
+      spec.bitbucket_config: Platform configs
+    - spec.include_archived_repos: Include archived repos flag
+    - spec.installation_error_message: Error message
+    - processing_status.*: All processing status fields
+    - propagate: Whether to propagate to child namespaces
 
     Note: Installations are automatically synchronized from platform integrations
-    and cannot be manually created, updated, or deleted through the API.
+    but certain configuration fields can be updated through the API.
     """
 
     # Installation-specific fields (universal fields inherited from BaseResource)
@@ -362,7 +386,72 @@ def update_installation(
     payload: "UpdateInstallationPayload",
     update_mask: Optional[List[str]] = None,
 ) -> Optional[Installation]:
-    """Update an existing installation with partial updates."""
+    """
+    Update an existing installation with partial updates.
+
+    This function supports updating only specific fields using the update_mask
+    parameter, which enables efficient partial updates without overwriting
+    unchanged fields.
+
+    MUTABLE FIELDS:
+    - meta.description: Installation description
+    - spec.public: Public flag
+    - spec.suspended: Suspended flag
+    - spec.project_uuids: Project UUIDs list
+    - spec.invalid: Invalid flag
+    - spec.enabled_features: Enabled features list
+    - spec.include_archived_repos: Include archived repos flag
+    - spec.installation_error_message: Error message
+    - processing_status.scan_state: Scan state
+      (e.g., SCAN_STATE_IDLE, SCAN_STATE_INGESTING)
+    - processing_status.disable_automated_scan: Disable automated scanning flag
+
+    FIELD MUTABILITY (per OpenAPI spec):
+    =====================================
+    IMMUTABLE FIELDS (readOnly: true in API spec):
+    - uuid: Unique identifier (readOnly: true in UpdateInstallation request body)
+    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
+      (readOnly: true in v1Meta)
+    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
+    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
+    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
+    - spec.external_name: External name (readOnly: true in v1InstallationSpec)
+    - spec.user: User name (readOnly: true in v1InstallationSpec)
+    - spec.ingestion_time: Ingestion time (readOnly: true in v1InstallationSpec)
+    - spec.target_type: Target type (readOnly: true in v1InstallationSpec)
+    - spec.login: Login (readOnly: true in v1InstallationSpec)
+    - spec.ingestion_token: Ingestion token (readOnly: true in v1InstallationSpec)
+    - spec.marked_for_deletion: Marked for deletion
+      (readOnly: true in v1InstallationSpec)
+    - tenant_meta.namespace: Namespace assignment
+
+    MUTABLE FIELDS (NOT readOnly in API spec):
+    - meta.name, meta.description, meta.tags: Metadata
+    - spec.public: Public flag
+    - spec.external_id: External ID
+    - spec.suspended: Suspended flag
+    - spec.project_uuids: Project UUIDs list
+    - spec.invalid: Invalid flag
+    - spec.enabled_features: Enabled features list
+    - spec.platform_source: Platform source (deprecated but mutable)
+    - spec.platform_type: Platform type
+    - spec.github_config, spec.azure_config, spec.gitlab_config,
+      spec.bitbucket_config: Platform configs
+    - spec.include_archived_repos: Include archived repos flag
+    - spec.installation_error_message: Error message
+    - processing_status.*: All processing status fields
+    - propagate: Whether to propagate to child namespaces
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        installation_uuid: UUID of the installation to update
+        payload: Installation update payload
+        update_mask: Optional list of fields to update
+
+    Returns:
+        Updated Installation object if successful, None otherwise
+    """
     ops = _get_installation_ops(client)
     return ops.update(tenant_meta_namespace, installation_uuid, payload, update_mask)  # type: ignore
 
@@ -386,7 +475,39 @@ class CreateInstallationPayload(BaseModel):
 
 
 class UpdateInstallationPayload(BaseModel):
-    """Payload for updating an installation."""
+    """
+    Payload for updating an installation.
+
+    MUTABLE FIELDS (can be updated via PATCH):
+    - meta.description: Installation description
+    - spec.public: Public flag
+    - spec.suspended: Suspended flag
+    - spec.project_uuids: Project UUIDs list
+    - spec.invalid: Invalid flag
+    - spec.enabled_features: Enabled features list
+    - spec.include_archived_repos: Include archived repos flag
+    - spec.installation_error_message: Error message
+    - processing_status.scan_state: Scan state
+      (e.g., SCAN_STATE_IDLE, SCAN_STATE_INGESTING)
+    - processing_status.disable_automated_scan: Disable automated scanning flag
+
+    IMMUTABLE FIELDS (read-only, managed by API):
+    - uuid: Unique identifier (set at creation)
+    - meta.name: Installation name (set by platform)
+    - spec.external_id: External ID (set at creation)
+    - spec.external_name: External name (read-only)
+    - spec.user: User name (read-only)
+    - spec.ingestion_time: Ingestion time (read-only)
+    - spec.target_type: Target type (read-only)
+    - spec.login: Login (read-only)
+    - spec.ingestion_token: Ingestion token (read-only)
+    - spec.platform_source: Platform source (deprecated, read-only)
+    - spec.platform_type: Platform type (set at creation)
+    - spec.marked_for_deletion: Marked for deletion (read-only)
+    - tenant_meta.namespace: Namespace assignment
+    - processing_status.scan_time: Last scan time (system-managed)
+    - processing_status.analytic_time: Last analytics time (system-managed)
+    """
 
     meta: Optional["InstallationMetaUpdate"] = Field(
         None, description="Installation metadata for update"
