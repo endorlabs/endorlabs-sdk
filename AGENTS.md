@@ -170,20 +170,17 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 - **Finding** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
 - **Policy** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
 - **Namespace** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Repository** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **RepositoryVersion** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **PackageVersion** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **ScanResult** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
 
-#### 🔄 **SCAFFOLDED RESOURCES**
-- **Repository** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
-- **RepositoryVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
-- **PackageVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
-
-#### ❌ **PENDING RESOURCES**
-- **DependencyMetadata** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **LinterResult** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Metric** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Scan** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **User** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Token** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Installation** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+#### 🚧 **IMPLEMENTED (Tests Pending)**
+- **DependencyMetadata** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
+- **LinterResult** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
+- **Metric** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
+- **User** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
+- **Installation** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 
 ### **Completion Criteria**
 - **Implementation**: CRUD operations validated, model validated and a handful of attributes modeled correctly
@@ -201,12 +198,23 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 ## 🛠️ **LLM Tool Integration**
 
 ### **Available Resource Operations**
+
+#### **Fully Supported (CRUD)**
 - **Namespace**: `list_namespaces`, `create_namespace`, `get_namespace`, `update_namespace`, `delete_namespace`
 - **Project**: `list_projects`, `create_project`, `get_project`, `update_project`, `delete_project`
-- **Finding**: `list_findings`, `get_finding`, `update_finding`, `delete_finding`
+- **Finding**: `list_findings`, `get_finding`, `create_finding`, `update_finding`, `delete_finding`
 - **Policy**: `list_policies`, `create_policy`, `get_policy`, `update_policy`, `delete_policy`
-- **Repository**: `list_repositories`, `create_repository`, `get_repository`, `update_repository`
-- **PackageVersion**: `list_package_versions`, `get_package_version`, `update_package_version`
+- **Repository**: `list_repositories`, `get_repository` (CREATE/UPDATE/DELETE: API-limited, read-only)
+- **RepositoryVersion**: `list_repository_versions`, `get_repository_version` (CREATE/UPDATE/DELETE: API-limited)
+- **PackageVersion**: `list_package_versions`, `get_package_version`, `create_package_version`, `update_package_version`, `delete_package_version`
+- **ScanResult**: `list_scan_results`, `get_scan_result`, `create_scan_result`, `update_scan_result`, `delete_scan_result`
+- **DependencyMetadata**: `list_dependency_metadata`, `get_dependency_metadata`, `create_dependency_metadata`, `update_dependency_metadata`, `delete_dependency_metadata`
+- **LinterResult**: `list_linter_results`, `get_linter_result`, `create_linter_result`, `update_linter_result`, `delete_linter_result`
+- **Metric**: `list_metrics`, `get_metric`, `create_metric`, `update_metric`, `delete_metric`
+
+#### **Read-Only (GET Only)**
+- **User**: `list_users`, `get_user` (CREATE/UPDATE/DELETE: Managed by identity provider)
+- **Installation**: `list_installations`, `get_installation` (CREATE/UPDATE/DELETE: Managed by platform integrations)
 
 ---
 

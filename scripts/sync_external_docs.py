@@ -21,6 +21,7 @@ Example:
 """
 
 import argparse
+import json
 import logging
 import os
 import re
@@ -225,7 +226,15 @@ def download_openapi_spec(
         client = APIClient()
 
         logger.info("Downloading OpenAPI specification from Endor Labs API...")
-        client.get_openapi_spec(url=None, path=str(output_file))
+        url = "/download/openapiv2.swagger.json"
+        response = client.get(url, headers={"Accept": "application/json"})
+        response_data = response.json()
+
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(os.path.abspath(str(output_file))), exist_ok=True)
+
+        with open(output_file, "w") as f:
+            json.dump(response_data, f, indent=4)
 
         logger.info(f"OpenAPI spec saved to: {output_path}")
         return True
@@ -323,9 +332,9 @@ Examples:
 
     # Determine what to download
     download_openapi = args.download_openapi or args.all
-    download_user_docs = args.download_user_docs or args.all
+    should_download_user_docs = args.download_user_docs or args.all
 
-    if not download_openapi and not download_user_docs:
+    if not download_openapi and not should_download_user_docs:
         parser.error("Must specify --download-openapi, --download-user-docs, or --all")
 
     success = True
@@ -339,7 +348,7 @@ Examples:
             success = False
 
     # Download user docs
-    if download_user_docs:
+    if should_download_user_docs:
         if not HAS_DOCS_DEPS:
             logger.error(
                 "Missing required dependencies for user docs download.\n"
