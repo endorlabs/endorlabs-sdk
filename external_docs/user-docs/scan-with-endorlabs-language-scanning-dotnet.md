@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/dotnet/
 title: .NET | Endor Labs Docs
-downloaded: 2025-11-20 11:51:21
+downloaded: 2025-12-11 11:34:59
 ---
 
 .NET | Endor Labs Docs
@@ -47,7 +47,7 @@ The following prerequisites must be fulfilled:
 * The .NET command or NuGet command must be installed and available on the host system.
 * At least one .NET SDK installed on the system must be compatible with the project’s `global.json` file settings.
 
-#### Note
+**Note**
 
 To check your available SDK versions you can run the command `dotnet --info` or `dotnet --list-sdks`.
 
@@ -146,7 +146,7 @@ A `*.csproj` file is an XML-based C# project file that contains information abou
 * Package references in any `*.props` file and the prop file is imported in the `.csproj` file.
 * Package references in `*.Targets` file.
 
-#### Note
+**Note**
 
 You may not be able to view the **Requested version** of the packages on the Endor Labs user interface
 
@@ -166,7 +166,7 @@ The `project.assets.json` file is used in .NET projects to store metadata and in
 
 Endor Labs fetches resolved package versions, paths to the dependencies’ assets, such as assemblies and resources, and other related information from this file. If a project does not include a `project.assets.json` file, it is generated through the `dotnet restore` or the `nuget restore` command. This command uses all the configured sources to restore dependencies as well as project-specific tools that are specified in the project file.
 
-#### Note
+**Note**
 
 If the host machine has .NET Core or .NET 5+ installed, the dotnet restore command is used to generate the `project.assets.json` file. The `nuget restore` command is used to generate the `project.asssets.json` file for earlier versions of the .NET frameworks.
 

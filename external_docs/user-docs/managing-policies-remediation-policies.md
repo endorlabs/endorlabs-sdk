@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/remediation-policies/
 title: Remediation policies | Endor Labs Docs
-downloaded: 2025-11-20 11:50:34
+downloaded: 2025-12-11 11:33:57
 ---
 
 Remediation policies | Endor Labs Docs
@@ -89,7 +89,7 @@ You can create a remediation policy in Endor Labs to address a finding when spec
 
     The policy is enabled by default.
 
-#### Note
+**Note**
 
 Rescan the project to apply the newly created remediation policy and update the findings.
 

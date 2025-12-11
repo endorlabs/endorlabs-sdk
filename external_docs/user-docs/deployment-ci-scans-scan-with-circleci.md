@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-circleci/
 title: Scanning with CircleCI | Endor Labs Docs
-downloaded: 2025-11-20 11:51:25
+downloaded: 2025-12-11 11:35:04
 ---
 
 Scanning with CircleCI | Endor Labs Docs
@@ -45,6 +45,10 @@ If you choose not to use keyless authentication you can configure an API key and
 7. Repeat the previous 3 steps to add your **API key secret** as the environment variable **ENDOR\_API\_CREDENTIALS\_SECRET**. Have the name of the context handy to reference in the workflows later.
 
 ## Configure your CircleCI pipeline
+
+**Important**
+
+CircleCI may check out commits in a detached HEAD state, which can lead to fragmented branch tracking in Endor Labs. See [Set up branch tracking in CircleCI](#set-up-branch-tracking-in-circleci) to configure proper branch context.
 
 To create a CircleCI pipeline reference the following steps:
 
@@ -259,6 +263,43 @@ workflows:
 ```
 
 Once you’ve set up Endor Labs you can test your CI implementation is successful and begin scanning.
+
+## Set up branch tracking in CircleCI
+
+In Git, a detached HEAD state occurs when the repository checks out a specific commit instead of a branch reference. In this state, Git points the HEAD directly to a commit hash, without associating it with a named branch. As a result, actions performed, such as creating new commits or running automated scans, do not carry branch identity unless explicitly specified.
+
+Proper branch context enables Endor Labs to:
+
+* Associate scans with the correct branch
+* Identify scans on the monitored default branch
+* Track findings and display metrics accurately across branches
+
+Without proper branch configuration, Endor Labs may create multiple branch entries for the same logical branch, leading to fragmented reporting and inaccurate metrics.
+
+![Project with multiple branch entries](../../../images/branch-fragmentation.png)
+
+CircleCI often checks out commits by their SHA instead of the branch name, which creates a detached HEAD state.
+
+Use `--detached-ref-name` only to specify the branch name for a commit in detached HEAD state. This associates the commit with the correct branch without setting it as the default branch.
+
+```
+- run:
+    name: "Endor Labs Scan"
+    command: |
+      ./endorctl scan --dependencies --secrets \
+      --detached-ref-name="<< pipeline.git.branch >>"
+```
+
+Use both `--detached-ref-name` and `--as-default-branch` together when you want to associate the commit with a branch and set it as the default branch scan.
+
+```
+- run:
+    name: "Endor Labs Scan"
+    command: |
+      ./endorctl scan --dependencies --secrets \
+      --as-default-branch \
+      --detached-ref-name="<< pipeline.git.branch >>"
+```
 
 ## Feedback
 

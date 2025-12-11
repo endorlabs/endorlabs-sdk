@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-cloud/
 title: Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
-downloaded: 2025-11-20 11:50:42
+downloaded: 2025-12-11 11:34:06
 ---
 
 Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
@@ -23,7 +23,7 @@ Endor Labs provides a Bitbucket App that continuously monitors users’ projects
 
 When you use the Endor Labs Bitbucket App, it creates namespaces based on your workspace and projects in Bitbucket Cloud. The namespaces created by the Endor Labs Bitbucket App are not like regular namespaces and are called managed namespaces. You can either configure the URL to Bitbucket Cloud to import all the projects or configure the project key to import a specific project in Endor Labs.
 
-#### Note
+**Note**
 
 The following characters are allowed in Endor Labs namespaces: lowercase letters (a–z), digits (0–9), hyphens (-), and underscores (\_). Additionally, the namespace is limited to a maximum of 64 characters in length. If the Bitbucket host or your projects have a different naming convention, the corresponding namespaces will be converted to comply with the naming convention of Endor Labs namespaces.
 
@@ -69,7 +69,7 @@ graph TD
 
       class EN,EN2 endor
       class O1,P1,P2,P3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ### Namespace structure when you add a Bitbucket Cloud project
@@ -99,7 +99,7 @@ graph TD
 
       class EN,EN2 endor
       class A1,A2,A3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ## Default branch detection
@@ -140,7 +140,7 @@ Ensure the following prerequisites are in place before you install the Endor Lab
 * Bitbucket Cloud instance with workspace and projects
 * A Bitbucket access token either at the [workspace level](https://support.atlassian.com/bitbucket-cloud/docs/create-a-workspace-access-token/) to import a workspace, or the [project level](https://support.atlassian.com/bitbucket-cloud/docs/create-a-project-access-token/) to import a project. The token must have at least `Project read` permission.
 
-#### Note
+**Note**
 
 Endor Labs Bitbucket App for Bitbucket Cloud requires a Bitbucket Cloud premium plan since Bitbucket Cloud standard plan does not support project-level access tokens.
 
@@ -171,7 +171,7 @@ Endor Labs Bitbucket App for Bitbucket Cloud requires a Bitbucket Cloud premium 
 
 Endor Labs Bitbucket App scans your Bitbucket projects every 24 hours and reports any new findings or changes to release versions of your code.
 
-#### Note
+**Note**
 
 Only users with admin authorization role can create and manage installations.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/java/
 title: Java | Endor Labs Docs
-downloaded: 2025-11-20 11:48:04
+downloaded: 2025-12-11 11:30:53
 ---
 
 Java | Endor Labs Docs
@@ -136,13 +136,16 @@ To build your project with Maven, use the following procedure:
    ```
 2. Run `mvn install` and make sure the build is successful.
 
-   #### info
+**info**
 
-   If you want to skip the execution of tests during the build, you can use `-DskipTests` to quickly build and install your projects.
+If you want to skip the execution of tests during the build, you can use `-DskipTests` to quickly build and install your projects.
 
-   ```
-   mvn install -DskipTests
-   ```
+```
+```bash
+mvn install -DskipTests
+```
+```
+
 3. If you have multiple Java modules not referenced in the root pom.xml file, make sure to run `mvn install` separately in all the directories.
 
 #### Configure private Maven package repositories
@@ -199,7 +202,7 @@ You can sign in to the [Endor Labs user interface](https://app.endorlabs.com), c
 
 Endor Labs supports projects that do not use Maven or Gradle, and have no `pom.xml` in the following cases.
 
-#### Note
+**Note**
 
 Run the scans with the `--quick-scan` parameter if you prefer to scan the project without reachability.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/november-2025/
 title: November 2025 | Endor Labs Docs
-downloaded: 2025-11-20 11:47:56
+downloaded: 2025-12-11 11:31:52
 ---
 
 November 2025 | Endor Labs Docs
@@ -19,7 +19,13 @@ November 2025 | Endor Labs Docs
 
 We are excited to introduce the latest features and enhancements in Endor Labs.
 
-### Urgent notifications for newly detected malware New
+### GitLab App MR scans Beta New
+
+You can now scan merge requests using the Endor Labs GitLab App. You can also configure MR comments to receive comments on your merge requests.
+
+For more information, see [GitLab App MR scans](/deployment/monitoring-scans/gitlab-app/gitlab-mr-scan/).
+
+### Urgent notifications for newly detected malware Beta New
 
 You can now enable urgent notifications in Endor Labs to receive real-time alerts for newly discovered malware, allowing you to take immediate action.
 

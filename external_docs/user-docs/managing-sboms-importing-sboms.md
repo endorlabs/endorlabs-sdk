@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-sboms/importing-sboms/
 title: Import SBOMs | Endor Labs Docs
-downloaded: 2025-11-20 11:50:52
+downloaded: 2025-12-11 11:34:26
 ---
 
 Import SBOMs | Endor Labs Docs
@@ -48,7 +48,7 @@ Import your project’s SBOM into the Endor Labs application to discover vulnera
 
 Once you have imported your SBOM to Endor Labs, Endor Labs will schedule a scan in the background for the SBOM within the next few hours. To instantly scan the SBOM see [Importing SBOMs through the Endor Labs CLI](#import-sboms-through-the-endor-labs-cli)
 
-#### Tip
+**Tip**
 
 Endor Labs supports CycloneDX or SPDX format SBOMs in XML or json format.
 

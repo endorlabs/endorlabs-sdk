@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/scan/
 title: scan | Endor Labs Docs
-downloaded: 2025-11-20 11:48:48
+downloaded: 2025-12-11 11:31:44
 ---
 
 scan | Endor Labs Docs
@@ -98,6 +98,14 @@ To scan and discover AI/LLM models in your repository, run the following command
 endorctl scan --ai-models --dependencies
 ```
 
+To run a scan in dry run mode with local scanning and read-only access, run the following command. Dry run mode does not store scan results for monitoring and is best when used by developers running local scans.
+
+```
+endorctl scan --dependencies --dry-run
+```
+
+You can also use `--dry-run` with `--secrets` or `--sast` flags. The `--dry-run` flag cannot be used with container scanning.
+
 ## Options
 
 The command `endorctl scan` uses the following flags and environment variables:
@@ -120,11 +128,12 @@ The command `endorctl scan` uses the following flags and environment variables:
 
 | Flag | Environment Variable | Type | Description |
 | --- | --- | --- | --- |
-| `enable-pr-comments` | `ENDOR_SCAN_ENABLE_PR_COMMENTS` | boolean (default:false) | Publish new findings as review comments. Must be set together with `--scm-pr-id`, `--pr`, and `--github-token`. Cannot be used with `--pr-baseline` since the baseline is determined from the merge target of the PR. Note: You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future. |
-| `scm-pr-id` | `ENDOR_SCAN_SCM_PR_ID` | string | Set the GitHub PR ID corresponding to the scan. Must be set together with `--enable-pr-comments`, `--pr`, and `--github-token`. |
+| `enable-pr-comments` | `ENDOR_SCAN_ENABLE_PR_COMMENTS` | boolean (default:false) | Publish new findings as review comments. Must be set together with `--scm-pr-id`, `--pr`, and either `--github-token` (for GitHub) or `--scm-token` (for GitLab). Cannot be used with `--pr-baseline` since the baseline is determined from the merge target of the PR. Note: You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future. |
+| `scm-pr-id` | `ENDOR_SCAN_SCM_PR_ID` | string | Set the PR or MR ID corresponding to the scan. Must be set together with `--enable-pr-comments`, `--pr`, and either `--github-token` (for GitHub) or `--scm-token` (for GitLab). |
 | `pr` | `ENDOR_SCAN_PR` | boolean (default:false) | Set if this is a PR scan. PR scans are not used for reporting or monitoring and should be treated as point-in-time policy and finding tests. |
 | `pr-baseline` | `ENDOR_SCAN_PR_BASELINE` | string | Set to the Git reference that you are merging to, such as your default branch. Action policies will only flag issues that do not exist in the baseline so that developers are only alerted to issues on the current changes. For example, `--pr-baseline=main`. |
 | `pr-incremental` | `ENDOR_SCAN_PR_INCREMENTAL` | boolean (default:false) | Only scan packages with dependencies that have changed compared to the baseline scan. Must be set together with `--pr-baseline` or `--enable-pr-comments`. |
+| `scm-token` | `ENDOR_SCAN_SCM_TOKEN` | string | Set the GitLab token used to authenticate with GitLab for MR comments. Must be set together with `--enable-pr-comments`, `--scm-pr-id`, and `--pr`. The token takes priority over installation PATs. |
 
 ### GitHub configuration flags
 
@@ -189,6 +198,7 @@ The command `endorctl scan` uses the following flags and environment variables:
 | `container` | `ENDOR_SCAN_CONTAINER` | string | Set this to the container image:tag to perform a scan on containers. |
 | `container-as-ref` | `ENDOR_SCAN_CONTAINER_AS_REF` | boolean (default:false) | Scan container in a persistent context and keep the version. Use the `--project-name` argument to specify the name of the project and `--path` argument to specify its path. |
 | `dependencies` | `ENDOR_SCAN_DEPENDENCIES` | boolean (default:false) | Scan Git commits and generate findings for all dependencies. |
+| `dry-run` | `ENDOR_SCAN_DRY_RUN` | boolean (default:false) | Run the scan in dry run mode. When enabled, scan results are not stored and only read only access is required. This flag can only be used with SCA (dependencies), SAST, or secrets scanning. It cannot be used with container scanning. |
 | `detached-ref-name` | `ENDOR_SCAN_DETACHED_REF_NAME` | string | Set the name of the Git reference to a user-provided name. For example, `--detached-ref-name="$CI_DEFAULT_BRANCH"`. Use with CI environments that checkout commits, such as GitLab. |
 | `droid-gpt` | `ENDOR_SCAN_DROID_GPT` | boolean (default:false) | Use DroidGPT to interpret build errors and generate remediation advice. |
 | `exclude-path` | `ENDOR_SCAN_EXCLUDE_PATH` | string | Specify one or more file paths or directories to exclude from the scan using Glob style expressions. For example, `--exclude-path="src/java/**"` will exclude all files under `src/java`, including any subdirectories, while `--exclude-path="src/java/*"` will only exclude the files directly under `src/java`. Paths must be relative to the root of the repository. Use quotes to ensure that your shell does not expand wild cards. |

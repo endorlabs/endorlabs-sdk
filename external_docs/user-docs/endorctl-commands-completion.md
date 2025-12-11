@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/completion/
 title: completion | Endor Labs Docs
-downloaded: 2025-11-20 11:48:19
+downloaded: 2025-12-11 11:31:07
 ---
 
 completion | Endor Labs Docs

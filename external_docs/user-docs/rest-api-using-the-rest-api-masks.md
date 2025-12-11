@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/
 title: Masks | Endor Labs Docs
-downloaded: 2025-11-20 11:50:32
+downloaded: 2025-12-11 11:33:55
 ---
 
 Masks | Endor Labs Docs
@@ -71,7 +71,7 @@ curl --get \
   | jq '.list.objects[].meta.description'
 ```
 
-#### Note
+**Note**
 
 Lists of objects are always nested under `.list.objects[]`, but for `endorctl api get` commands a single object is returned directly.
 To extract the object UUID from an object returned by an `endorctl api get` command, the `jq` command is `jq '.uuid'`, as opposed to `jq '.list.objects[].uuid'`.

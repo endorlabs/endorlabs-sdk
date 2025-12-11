@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/postman/
 title: Postman | Endor Labs Docs
-downloaded: 2025-11-20 11:51:40
+downloaded: 2025-12-11 11:35:18
 ---
 
 Postman | Endor Labs Docs
@@ -39,7 +39,7 @@ Endor REST API collection is added to your workspace. It may take a couple of mi
 
 To use the Endor Labs APIs effectively with Postman you need to set the appropriate variables and configure authentication.
 
-Before you proceed further, get your API Key and API Secret from the Endor Labs UI or endorctl. See [REST API authentication](../../authentication/#api-key-and-secret) for more information.
+Before you proceed further, get your API Key and API Secret from the Endor Labs user interface or endorctl. See [REST API authentication](../../authentication/#api-key-and-secret) for more information.
 
 Endor Labs APIs require a bearer token, which is obtained from the `CreateAPIReq` endpoint. You need to add a pre-request script to obtain this token in the collection. The pre-request script runs when you initiate an API request and fetches the bearer token to be used in your API request.
 

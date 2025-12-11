@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/scala/
 title: Scala | Endor Labs Docs
-downloaded: 2025-11-20 11:51:30
+downloaded: 2025-12-11 11:35:08
 ---
 
 Scala | Endor Labs Docs
@@ -174,7 +174,7 @@ endorctl scan -o json | tee /path/to/results.json
 
 Sign in to the [Endor Labs user interface](https://app.endorlabs.com), click **Projects** on the left sidebar, and find your project to review its results.
 
-#### Note
+**Note**
 
 If your project includes both sbt and Gradle build systems, Endor Labs scans your project using only one build system to avoid scanning the same packages multiple times. When both are present, Gradle has higher priority for dependency resolution.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/okta-saml/
 title: Set up Okta for SSO using SAML | Endor Labs Docs
-downloaded: 2025-11-20 11:48:50
+downloaded: 2025-12-11 11:31:46
 ---
 
 Set up Okta for SSO using SAML | Endor Labs Docs
@@ -24,7 +24,7 @@ Endor Labs integrates with Okta to use SSO through either Security Assertion Mar
 With the Endor Labs-Okta SAML integration, Endor Labs acts as the Service Provider (SP), and Okta acts as the Identity Provider (IdP).
 When users sign in to Endor Labs using the SAML authentication method, the IdP (Okta) sends a SAML assertion to the browser that is passed to the SP (Endor Labs). This enables Okta to establish a secure connection with the browser and then authenticate the users to sign in to Endor Labs.
 
-#### Tip
+**Tip**
 
 Endor Labs honors the session duration set in SAML, after which the user needs to reauthenticate. You can set the session duration in the `SessionNotOnOrAfter` attribute for SAML. If you do not set the attribute, the default session duration is four hours. Session duration cannot be more than four hours. If you set the `SessionNotOnOrAfter` attribute for more than four hours, the session duration defaults to four hours.
 
@@ -34,7 +34,7 @@ The following high level steps allow you to successfully configure Okta for SSO 
 
 In Okta, configure the Endor Labs application as a SAML 2.0 application and generate a single sign-on URL and certificate.
 
-#### Tip
+**Tip**
 
 You must be an Okta administrator to configure the application end-to-end in Okta.
 
@@ -100,7 +100,7 @@ Once you’ve created your Okta app and assigned groups, then collect the identi
 
 Provide the Identity Provider SSO details to configure Okta SSO in Endor Labs and allow users to seamlessly and securely sign in to Endor Labs.
 
-#### Tip
+**Tip**
 
 You must be an Endor Labs administrator to configure custom identity providers and authorization policies.
 

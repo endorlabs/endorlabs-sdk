@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/advanced-use-cases/audit-log/
 title: Using Audit Log API | Endor Labs Docs
-downloaded: 2025-11-20 11:50:13
+downloaded: 2025-12-11 11:33:36
 ---
 
 Using Audit Log API | Endor Labs Docs
@@ -44,11 +44,38 @@ Run the following command to fetch the entire audit log.
 endorctl api list -r AuditLog -n <namespace name>
 ```
 
+### Audit log retention and archival
+
+Audit logs remain in the active database for 30 days before being automatically moved to archive storage, where they’re retained for 3 years. Both active and archived logs support the same filters, pagination, and field masks.
+
+You can access archived logs older than 30 days using either of the following methods:
+
+1. Using the `endorctl` command with the `--archive` flag:
+
+   ```
+   endorctl api list -r AuditLog -n <namespace name> --archive
+   ```
+2. Using a direct API request:
+
+   ```
+   curl -X GET "https://api.endorlabs.com/v1/namespaces/<namespace>/audit-logs/archived" \
+     -H "Authorization: Bearer ${ENDOR_API_KEY}" \
+     -H "Content-Type: application/json"
+   ```
+
+**Note**
+
+Audit logs from the last 30 days and archived logs must be queried separately.
+
 ## Operations with the audit log API
 
 You can pass the [`meta`](#meta-fields) and [`spec`](#spec-fields) fields with the `endorctl list AuditLog` command to refine the output based on your requirements. You can combine multiple filters in the same command and use various operators. See [Filters](../../filters/) for more information on using filters and operators.
 
 The `meta` and `spec` options listed are not exhaustive. You can build your command based on the `meta` and `spec` fields in the [API specification](https://docs.endorlabs.com/api/#tag/AuditLogService/operation/AuditLogService_ListAuditLogs).
+
+**Note**
+
+When retrieving archived audit logs, filter by `spec.message_kind` first, followed by `meta.create_time` for optimal query performance. The `meta.create_time` filter must be used in conjunction with `spec.message_kind`.
 
 ## Operators
 

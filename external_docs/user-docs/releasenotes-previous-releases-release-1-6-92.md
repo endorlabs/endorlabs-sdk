@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/release-1-6-92/
 title: December 2023 | Endor Labs Docs
-downloaded: 2025-11-20 11:52:05
+downloaded: 2025-12-11 11:35:44
 ---
 
 December 2023 | Endor Labs Docs
@@ -32,7 +32,7 @@ Endor Labs expertly resolves JavaScript dependencies to identify:
 
 The dependencies used in the source code but not declared in the package’s manifest files are tagged as **Phantom**.
 
-#### Note
+**Note**
 
 Dependency reachability is in the **Beta** phase and is turned off by default. To detect phantom dependencies, run the endorctl scan with the flag `--disable-phantom=false`.
 
@@ -40,7 +40,7 @@ Dependency reachability is in the **Beta** phase and is turned off by default. T
 
 Users can now scan the JavaScript projects that have pnpm as their package manager. pnpm 3.0.0 and higher versions are supported.
 
-#### Note
+**Note**
 
 To scan JavaScript projects using pnpm, set the environment variable `ENDOR_PNPM_ENABLED` to `true` and then run the endorctl scan.
 

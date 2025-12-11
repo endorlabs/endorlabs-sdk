@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/microsoft-defender-for-cloud/
 title: Set up Microsoft Defender for Cloud integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-11-20 11:50:11
+downloaded: 2025-12-11 11:33:34
 ---
 
 Set up Microsoft Defender for Cloud integration with Endor Labs | Endor Labs Docs
@@ -91,7 +91,7 @@ From the Defender for Cloud console, you can use Endor Labs’ function-reachabi
 
    ![Defender for Cloud Result Details](../../images/mdcresultdetails.png)
 
-   You can review the findings and also navigate to Endor Labs UI to view more information on the findings.
+   You can review the findings and also navigate to Endor Labs user interface to view more information on the findings.
 
 ## Detect vulnerable code running in the cloud
 

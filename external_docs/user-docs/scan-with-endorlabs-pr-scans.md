@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/
 title: Pull Request scans | Endor Labs Docs
-downloaded: 2025-11-20 11:50:02
+downloaded: 2025-12-11 11:33:25
 ---
 
 Pull Request scans | Endor Labs Docs
@@ -23,30 +23,33 @@ Scan pull requests as soon as they are raised in your repository. PR scans detec
 
 You can perform the following types of PR scans.
 
-* [PR scan](#scan-prs-using-the-cli)
-* [Incremental PR scan](#perform-incremental-pr-scan).
+* [PR scan](#scan-prs-using-endorctl)
+* [Incremental PR scan](#perform-incremental-pr-scan)
 
 You can perform PR scans during the following deployments:
 
-* [Using the CLI](#scan-prs-using-the-cli)
+* [Using endorctl](#scan-prs-using-endorctl)
 * [During CI workflows](#scan-prs-during-ci-workflows)
-* [Using the Endor Labs GitHub app](#scan-prs-using-the-endor-labs-github-app)
+* [PR scans using the Endor Labs GitHub app](../../deployment/monitoring-scans/github-app/github-app-pr-scans/)
+* [MR scans using the Endor Labs GitLab App](../../deployment/monitoring-scans/gitlab-app/gitlab-mr-scan/)
 
-## Scan PRs using the CLI
+## Scan PRs using endorctl
 
-Run the following command to scan PRs after you commit to a pull request.
+You can scan pull requests or merge requests using endorctl for both GitHub and GitLab repositories.
+
+Run the following command to scan PRs or merge requests after you commit to a pull request or merge request.
 
 ```
 endorctl scan --pr
 ```
 
-After you raise a pull request, the `--pr` flag enables scanning of the latest version of the pull request and stores the results separately from the main branches. The PR scan and its findings do not affect the main branch’s reporting.
+After you raise a pull request or merge request, the `--pr` flag enables scanning of the latest version of the pull request or merge request and stores the results separately from the main branches. The PR scan and its findings do not affect the main branch’s reporting.
 
-Endor Labs stores the PR scan findings in **PR Runs** for three weeks, after which they are erased to accommodate new PR scans.
+Endor Labs stores the PR and MR scan findings in **PR Runs** for three weeks, after which they are erased to accommodate new PR scans.
 
 ### Set a baseline branch for PR scans
 
-Setting up a baseline branch is recommended to establish a Git reference against which you can compare the changes introduced in pull requests. You must regularly scan the baseline branch for vulnerabilities by either scheduling it (using the GitHub app) or triggering it using the `--pr-baseline` flag.
+Setting up a baseline branch is recommended to establish a Git reference against which you can compare the changes introduced in pull requests or merge requests. You must regularly scan the baseline branch for vulnerabilities by either scheduling it (using the GitHub App or GitLab App) or triggering it using the `--pr-baseline` flag.
 
 Usually, the first scanned branch becomes the baseline and is continuously monitored. A successful complete scan will resolve dependencies, run analytics, and generate call graphs for supported languages. See [set a default branch](../scanning-strategies/#set-a-default-branch).
 
@@ -64,9 +67,9 @@ In the above example, the `main` branch is the baseline, and all PR scans will o
 
 The `--pr-incremental` flag scans only the parts of the codebase and dependencies that have changed since the last complete baseline scan, rather than scanning the entire codebase every time. It focuses on new or modified code that may introduce vulnerabilities or issues. The scan reports only findings that don’t exist in the baseline and are associated with changed dependencies in the pull request.
 
-The baseline is detected automatically for GitHub App scans or when PR comments are enabled. Otherwise, you must provide it using the `--pr-baseline` option. You can only perform an incremental scan after scanning a baseline or the default branch.
+The baseline is detected automatically for GitHub App or GitLab App scans, or when PR comments are enabled. Otherwise, you must provide it using the `--pr-baseline` option. You can only perform an incremental scan after scanning a baseline or the default branch.
 
-If a finding has been fixed in the baseline by upgrading or downgrading a dependency, and a PR modifies the same package, the finding will be flagged as new since there is no matching finding in the baseline and the dependency versions don’t match. To mitigate this, you need to rebase the PR with the latest baseline content and re-run the PR check.
+If a finding has been fixed in the baseline by upgrading or downgrading a dependency, and a PR modifies the same package, the finding will be flagged as new. This happens because there is no matching finding in the baseline and the dependency versions don’t match. To mitigate this, rebase the PR with the latest baseline content and re-run the PR check.
 
 To initiate an incremental PR scan:
 
@@ -152,29 +155,7 @@ stage('endorctl Scan') {
 
 ### GitLab pipelines
 
-The following example snippet shows how you can enable PR scanning using endorctl in [GitLab pipelines](../../deployment/ci-scans/scan-with-gitlab/).
-
-```
-script:
-    - curl https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl;
-    - echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_linux_amd64)  endorctl" | sha256sum -c;
-      if [ $? -ne 0 ]; then
-       echo "Integrity check failed";
-       exit 1;
-      fi
-    - chmod +x ./endorctl
-    - if [ "$DEBUG" == "true" ]; then
-        export ENDOR_LOG_VERBOSE=true;
-        export ENDOR_LOG_LEVEL=debug;
-      fi
-    - if [ "$CI_COMMIT_REF_NAME" == "$CI_DEFAULT_BRANCH" ]; then
-        export ENDOR_SCAN_AS_DEFAULT_BRANCH=true;
-        export ENDOR_SCAN_DETACHED_REF_NAME="$CI_COMMIT_REF_NAME";
-      else
-        export ENDOR_SCAN_PR=true;
-      fi
-    - ./endorctl scan ${ENDOR_ARGS}
-```
+Enable MR scans in GitLab CI pipelines by adding the `--pr` flag. Configure your pipeline to run only on merge requests using `rules: - if: $CI_MERGE_REQUEST_IID`. See [Run MR scans](../../deployment/ci-scans/scan-with-gitlab/#run-mr-scans) and [Enable MR comments](../../deployment/ci-scans/scan-with-gitlab/#enable-mr-comments) for complete configuration examples.
 
 ### Bitbucket pipelines
 
@@ -235,16 +216,7 @@ To view the scan report:
 
 ## View PR scan findings
 
-To view the PR scan findings:
-
-1. Sign in to Endor Labs.
-2. Click **Projects** from the left sidebar.
-3. Search for and select the project.
-4. Select **PR runs** to view the PR scan findings.
-
-**PR Runs** captures the commit ID, **Commit SHA**, the referenced branch, its findings, and the tags added to the scan as configured in the policies. Select the specific PR scan to view its findings in detail.
-
-![PR scan results in PR Runs](../../images/pr-scan-findings.png)
+View detailed results of your pull request scans in PR Runs. See [PR Runs](../../managing-projects/pr-runs/) to learn more.
 
 ---
 

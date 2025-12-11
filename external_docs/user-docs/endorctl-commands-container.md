@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/container/
 title: container | Endor Labs Docs
-downloaded: 2025-11-20 11:48:22
+downloaded: 2025-12-11 11:31:10
 ---
 
 container | Endor Labs Docs
@@ -21,7 +21,7 @@ Use the container command to scan container images.
 
 The `endorctl container scan` command scans container images for vulnerabilities and security risks. It detects and reports known vulnerabilities in operating system packages, programming language packages, and libraries within your container images.
 
-#### Note
+**Note**
 
 Use the `endorctl container scan` command instead of the deprecated `endorctl scan --container` command. See [Container scan commands migration guide](../../../scan-with-endorlabs/scan-containers/container-migration/) for more information.
 
@@ -75,7 +75,7 @@ You can tag findings with the corresponding container image name and tag. This l
 endorctl container scan --project-name=<endor_project_name> --container=<image_name:tag>  -as-ref --finding-tags=<image_name:tag>
 ```
 
-#### Important
+**Important**
 
 To associate a container scan with an existing SCA scan for a project, you must use the `--path` argument specifying the same project path used for the SCA scan. You cannot associate a container scan with an SCA scan for a project using the `--project-name` parameter.
 
@@ -101,10 +101,10 @@ You can save a container image as a tarball and scan it with endorctl to generat
    --image-tar=/absolute/path/to/alpine-latest.tar
    ```
 
-   #### Note
+**Note**
 
-   * `--image-tar` must point to the absolute path of the tarball file.
-   * `--image=<name:tag>` is optional but recommended. It explicitly identifies the container image inside the tarball.
+* `--image-tar` must point to the absolute path of the tarball file.
+* `--image=<name:tag>` is optional but recommended. It explicitly identifies the container image inside the tarball.
 
 ## Options
 

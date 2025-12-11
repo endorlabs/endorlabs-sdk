@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-app-pro/manage-github-app-pro/
 title: Manage GitHub App (Pro) on Endor Labs | Endor Labs Docs
-downloaded: 2025-11-20 11:49:20
+downloaded: 2025-12-11 11:32:16
 ---
 
 Manage GitHub App (Pro) on Endor Labs | Endor Labs Docs
@@ -64,7 +64,7 @@ The sync logs display details of synchronization attempts, including timestamps,
 
 ### Migrate to Standard GitHub App
 
-#### Warning
+**Warning**
 
 You cannot have both GitHub App and GitHub App (Pro) simultaneously in your environment. When you migrate from one app to the other, select the same set of repositories as before to preserve the currently scanned projects and findings after the migration.
 
@@ -80,18 +80,19 @@ To migrate from GitHub App (Pro) to standard GitHub App:
 6. Select whether to install and authorize Endor Labs on all your repositories or select the specific repositories that you wish to scan.
 7. Choose the namespace and click **Next**.
 
-   #### Warning
+**Warning**
 
-   You must choose the same namespace as your existing GitHub App installation.
+You must choose the same namespace as your existing GitHub App installation.
+
 8. Select and enable the scanners you require.
 9. Select the preferences for scanning pull requests, if required.
 10. Click **Continue**.
 
-#### Old installation cleanup
+**Old installation cleanup**
 
 After migration is successful, delete the old installation from your GitHub organization.
 
-#### Branch protection rules
+**Branch protection rules**
 
 When you migrate from one app to another, you must manually update your branch protection rules in GitHub. Branch protection rules that reference the old GitHub App (Pro) ID will become inactive and will not function until reconfigured with the new app. Refer to [Branch protection rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule#creating-a-branch-protection-rule) to learn more.
 

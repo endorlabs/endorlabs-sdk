@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/invitations/
 title: Manage user invitations | Endor Labs Docs
-downloaded: 2025-11-20 11:50:31
+downloaded: 2025-12-11 11:33:54
 ---
 
 Manage user invitations | Endor Labs Docs
@@ -37,6 +37,8 @@ To invite a new user to Endor Labs:
 5. Click **Invite Users**.
 
 An email will be sent to the email address inviting the user to your tenant namespace. The email will provide a link for them to access your tenant namespace, and they can start collaborating on your projects.
+
+**Note**
 
 If the users you invite are using GitHub or GitLab as their external identity provider, the email address of the user you would like to invite must be the primary email address of the account.
 

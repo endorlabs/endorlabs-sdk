@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scan-containers/
 title: Scan containers | Endor Labs Docs
-downloaded: 2025-11-20 11:51:45
+downloaded: 2025-12-11 11:35:24
 ---
 
 Scan containers | Endor Labs Docs
@@ -19,7 +19,7 @@ Scan containers | Endor Labs Docs
 
 Learn how to scan your containers with Endor Labs.
 
-#### Important
+**Important**
 
 Container scanning now has its own dedicated command: `endorctl container scan`.
 
@@ -126,7 +126,7 @@ You can tag findings with the corresponding container image name and tag. This l
 endorctl container scan --project-name=<endor_project_name> --container=<image_name:tag>  -as-ref --finding-tags=<image_name:tag>
 ```
 
-#### Important
+**Important**
 
 To associate a container scan with an existing SCA scan for a project, you must use the `--path` argument specifying the same project path used for the SCA scan. You cannot associate a container scan with an SCA scan for a project using the `--project-name` parameter.
 
@@ -152,10 +152,10 @@ You can save a container image as a tarball and scan it with endorctl to generat
    --image-tar=/absolute/path/to/alpine-latest.tar
    ```
 
-   #### Note
+**Note**
 
-   * `--image-tar` must point to the absolute path of the tarball file.
-   * `--image=<name:tag>` is optional but recommended. It explicitly identifies the container image inside the tarball.
+* `--image-tar` must point to the absolute path of the tarball file.
+* `--image=<name:tag>` is optional but recommended. It explicitly identifies the container image inside the tarball.
 
 ## Run container scan in CI pipelines
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/okta-oidc/
 title: Set up Okta for SSO using OIDC | Endor Labs Docs
-downloaded: 2025-11-20 11:49:33
+downloaded: 2025-12-11 11:32:31
 ---
 
 Set up Okta for SSO using OIDC | Endor Labs Docs
@@ -21,7 +21,7 @@ Learn how to setup Okta as a custom external identity provider for SSO with Endo
 
 Endor Labs integrates with Okta to use SSO through OpenID Connect (OIDC) protocol.
 
-#### Tip
+**Tip**
 
 Endor Labs honors the session duration set in OIDC, after which the user needs to reauthenticate. The token expiration claims (`exp`) control the session duration in OIDC. If you do not have token expiration claims, the default session duration is four hours. Session duration cannot be more than four hours. If you set a session duration for more than four hours in the token expiration claim, the session duration defaults to four hours.
 
@@ -31,7 +31,7 @@ Complete the following tasks to configure Okta for SSO through OIDC.
 
 In Okta, configure the Endor Labs application as an OIDC application and generate a single sign-on URL and certificate.
 
-#### Tip
+**Tip**
 
 You must be an Okta administrator to configure the application end-to-end in Okta.
 
@@ -76,7 +76,7 @@ the Okta identity provider SSO details to configure Okta in Endor Labs.
 
 Provide the Identity Provider SSO details to configure Okta SSO in Endor Labs and allow users to seamlessly and securely sign in to Endor Labs.
 
-#### Tip
+**Tip**
 
 You must be an Endor Labs administrator to configure custom identity providers and authorization policies.
 
@@ -91,7 +91,7 @@ You must be an Endor Labs administrator to configure custom identity providers a
 9. If you are configuring group-based authentication ensure to add **groups** in the **Claim Names** section.
 10. Click **Save Configuration**.
 
-#### Note
+**Note**
 
 Based on your Okta configuration you may need additional claim names or scopes. Consult your Okta administrator for additional guidance.
 

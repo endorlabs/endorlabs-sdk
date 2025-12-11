@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/
 title: CI Scans | Endor Labs Docs
-downloaded: 2025-11-20 11:48:59
+downloaded: 2025-12-11 11:31:55
 ---
 
 CI Scans | Endor Labs Docs

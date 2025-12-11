@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/
 title: AI security code review | Endor Labs Docs
-downloaded: 2025-11-20 11:51:06
+downloaded: 2025-12-11 11:34:42
 ---
 
 AI security code review | Endor Labs Docs
@@ -19,7 +19,7 @@ Beta
 
 AI security code review provides automated code review capabilities using artificial intelligence to identify potential security issues in your codebase.
 
-#### Availability
+**Availability**
 
 AI security code review is available only for GitHub. You can set up AI security code review through the [Endor Labs GitHub App](ai-security-review-settings/) or using [endorctl](ai-security-review-endorctl/).
 

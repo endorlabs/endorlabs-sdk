@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/email/
 title: Set up email integration | Endor Labs Docs
-downloaded: 2025-11-20 11:51:16
+downloaded: 2025-12-11 11:34:54
 ---
 
 Set up email integration | Endor Labs Docs

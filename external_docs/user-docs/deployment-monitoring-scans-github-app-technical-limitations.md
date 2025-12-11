@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/technical-limitations/
 title: Technical limitations of the Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-11-20 11:49:44
+downloaded: 2025-12-11 11:32:42
 ---
 
 Technical limitations of the Endor Labs GitHub App | Endor Labs Docs

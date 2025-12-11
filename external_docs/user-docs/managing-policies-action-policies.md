@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/action-policies/
 title: Action policies | Endor Labs Docs
-downloaded: 2025-11-20 11:49:45
+downloaded: 2025-12-11 11:32:43
 ---
 
 Action policies | Endor Labs Docs
@@ -33,12 +33,21 @@ You can view, enable, clone, disable, edit, or delete your Endor Labs action pol
 
 1. Sign in to Endor Labs and select **Policies & Rules** from the left sidebar.
 2. Select **Action Policies**.
-3. Use the search bar to search for a policy.
-4. Enable or disable a policy using the toggle.
-5. Select **Hide Disabled** to hide policies that are not enabled.
-6. Select **Hide Warnings** to hide policies that are not blocking or notifications.
-7. To delete a policy, click the vertical three dots and select **Delete Policy**.
-8. To edit a policy, click on the vertical three dots and select **Edit Policy**.
+3. The preset filters help you in locating the finding policies that matter most to you:
+   * Choose from a list of options under **Code Dependencies** to view a list of **SCA**, **Vulnerability**, **Operational**, **License Risk**, **Malware**, or **AI model** action policies.
+   * Choose from a list of options under **First Party Code** to view a list of action policies related to **SAST** and **Secrets**.
+   * Choose from a list of options under **CI/CD** to view action policies related to **GitHub Actions**.
+   * Choose **RSPM** to view action policies related to repository’s security posture.
+   * Choose **Container** to view container action policies.
+   * Choose **Other** to view custom action policies.
+4. Use the search bar to search for a policy.
+5. Enable or disable a policy using the toggle.
+6. Select **Hide Disabled** to hide policies that are not enabled.
+7. Select **Hide Warnings** to hide policies that are not blocking or notifications.
+8. To delete a policy, click on the vertical three dots and select **Delete Policy**.
+9. To edit a policy, click on the vertical three dots and select **Edit Policy**.
+
+![Action policies](../../images/action-policies-ui.png)
 
 ## View policy details
 
@@ -58,10 +67,9 @@ You can create an action policy in Endor Labs to perform a given action when a g
 2. Select **Action Policies**.
 3. Click **Create Action Policy** to create a new action policy.
 4. First, you must **Define a Policy**.
-
-   Choose a policy template and define the criteria for the action. See [Action policy templates](./templates) for more information.
-5. Next, **Choose an Action** to take when the policy criteria are met.
-
+5. Choose a **Template Category** from the list.
+6. Choose a **Policy Template** from the list and define the criteria for the action. See [Action policy templates](./templates) for more information.
+7. Next, **Choose an Action** to take when the policy criteria are met.
    * Choose **Enforce Policy** to define the behavior of endorctl scans.
      + A **Warn** enforcement action will warn the user when the policy criteria are met by letting them know which findings violate the policy. **Warn** enforcement actions will only notify users of policy violations and will still return a 0 exit code in CI/CD environments, which won’t fail a job. However, it is possible to configure the scan to return a non-zero (129) exit code for policy warnings by setting the `--exit-on-policy-warning` flag.
      + A **Break the Build** enforcement action will return a non-zero (128) exit code, which will fail the job. This action will inform the user which findings violate the policy as part of the scan.
@@ -69,23 +77,22 @@ You can create an action policy in Endor Labs to perform a given action when a g
      + A **Notification Target** must be set to send a notification. A notification target may be defined as a notification integration. For more information, see [Endor Labs integrations](../../integrations/).
      + Choose an **Aggregation Type** for notifications. Choose **Project** to trigger a single notification for all findings, choose **Dependency** to trigger multiple notifications for every dependency, or choose **Dependency per package version** to trigger multiple notifications for unique combinations of dependency and package. For more information, see [Aggregation types for notifications](#aggregation-types-for-notifications).
 
-       #### Note
+**Note**
 
-       Notifications are only processed for monitored branches, not for pull requests.
-6. You can **Assign Scope** to the action policy by specifying what projects the policy has to scan.
+Notifications are only processed for monitored branches, not for pull requests.
 
+8. You can **Assign Scope** to the action policy by specifying what projects the policy has to scan.
    * In **Inclusions**, enter the projects and the tags of the projects that you want to scan.
    * In **Exclusions**, enter the projects and the tags of the projects that you do not want to scan. Exclusions take precedence over the inclusions, in case of a conflict.
    * Click the link to view the projects included in the action policy scan.
    * Click **Add project tag to these projects** and enter a tag for the selected projects. Click **Save Tags** to apply it or **Reset Tags** to discard changes.
    * You can set custom tags for your projects from **Projects** > **Settings** > **Custom Tags**. See [Tagging projects](../tagging-projects/) for more information about creating project tags.
-7. **Name Your Action Policy**.
-
+9. **Name Your Action Policy**.
    * Enter a human readable **Name** for your action policy.
    * Enter a **Description** for your action policy that describes what it does.
    * Enter any **Policy Tags** that you want to associate with your policy. Tags can have a maximum of 63 characters and can contain letters, numbers, and characters `=`, `@`, `_`, and `-`.
-8. **Advanced**: When you define a policy you do so for the current namespace and all child namespaces. If you do not want the policy to be applied to any child namespaces, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
-9. Click **Create Action Policy**. The policy will be enabled by default.
+10. **Advanced**: When you define a policy you do so for the current namespace and all child namespaces. If you do not want the policy to be applied to any child namespaces, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
+11. Click **Create Action Policy**. The policy will be enabled by default.
 
 ## Create an action policy from scratch
 
@@ -125,9 +132,9 @@ Write an action policy from scratch using the [OPA Rego policy language](https:/
 7. Select the **Resource Kinds** required to evaluate the policy.
 
    For the example above the required resource kind is `Finding`. The requested resource kind records for the current scan are made available to the Rego code under `data.resources.<ResourceKind>`. The corresponding baseline records are available under `data.baseline.<ResourceKind>`. Note: Action policies should only operate on Findings
-8. Continue with steps 5-9 above under [Create an action policy from template](#create-an-action-policy-from-template)
+8. Continue with steps 7-11 above under [Create an action policy from template](#create-an-action-policy-from-template)
 
-#### Note
+**Note**
 
 Rescan the project to apply the newly created action policy and update the findings.
 
@@ -157,7 +164,7 @@ See the [endorctl validate policy](../../endorctl/commands/validate) command for
 
 For action policies that are used to comment on, or block, PR scans you often only want to trigger the policy for findings that are not present in the baseline. The baseline data for the requested resource kinds is available under `data.baseline.<ResourceKind>`. Here are some examples of how to implement a function called `match_baseline` that returns true if a given finding also exists in the baseline. As in the [example above](#create-an-action-policy-from-scratch), you can then call `not match_baseline(data.resources.Finding[i])` to filter out findings that are not unique to the PR scan. Any additional resource kinds, for example `DependencyMetadata`, must be added to the list of requested [**Resource Kinds**](#create-an-action-policy-from-scratch).
 
-#### Note
+**Note**
 
 Baseline data is only loaded for action policies with one of the **Enforce Policy** actions (**Warn** or **Break the Build**). It is not loaded for any other policy types.
 

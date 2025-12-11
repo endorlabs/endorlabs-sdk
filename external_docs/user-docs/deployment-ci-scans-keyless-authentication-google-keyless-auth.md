@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/google-keyless-auth/
 title: Keyless authentication in Google Cloud | Endor Labs Docs
-downloaded: 2025-11-20 11:50:30
+downloaded: 2025-12-11 11:33:53
 ---
 
 Keyless authentication in Google Cloud | Endor Labs Docs
@@ -67,7 +67,7 @@ Once we’ve created the necessary account permissions we will create an authori
 
 Use the following command to create an authorization policy in Endor Labs.
 
-#### Note
+**Note**
 
 Make sure to replace `<your-tenant>` with your Endor Labs tenant name and `<insert-your-project>` with your GCP project name in the following command.
 
@@ -157,7 +157,7 @@ kubectl create serviceaccount endorlabs-compute-service -n endorlabs
 
 **Step 5:** To bind your Kubernetes service account to your GCP compute service account run the following command:
 
-#### Note
+**Note**
 
 Make sure to replace `<insert-your-project>` in the following command with your GCP project name.
 
@@ -167,7 +167,7 @@ gcloud iam service-accounts add-iam-policy-binding endorlabs-compute-service@$PR
 
 **Step 6:** To annotate your Kubernetes service account with your GCP service account to complete your binding run the following command:
 
-#### Note
+**Note**
 
 If you have created a different service account name replace *endorlabs-compute-service* with the appropriate service account name.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/swift-private-package-manager/
 title: Private package manager integration for Swift | Endor Labs Docs
-downloaded: 2025-11-20 11:51:33
+downloaded: 2025-12-11 11:35:12
 ---
 
 Private package manager integration for Swift | Endor Labs Docs
@@ -48,9 +48,10 @@ To set up a package manager integration:
    See [AWS authentication](../aws-codeartifact/) for more information.
 7. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
 
-   #### Maven
+**Maven**
 
-   Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
+Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
+
 8. Select **Add Package Manager**.
 
 If you want to delete a package manager integration, click the trash can icon at the far right of the integration.
@@ -67,7 +68,7 @@ To connect to private repositories of Swift Package Manager enter the package ma
 2. Click **Manage** in the package manager configuration you want to customize.
 3. Click the vertical three dots of the package manager configured and select **Test Connection**.
 
-#### Note
+**Note**
 
 The integration does not perform authentication or authorization checks on the package manager repository.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/auto-detect-toolchains/
 title: Enable auto detection | Endor Labs Docs
-downloaded: 2025-11-20 11:49:10
+downloaded: 2025-12-11 11:32:06
 ---
 
 Enable auto detection | Endor Labs Docs
@@ -318,7 +318,7 @@ module github.com/example/project
 go 1.21
 ```
 
-#### Note
+**Note**
 
 Auto detection is best-effort and works only if your project’s config files are correctly configured.
 
@@ -330,7 +330,7 @@ To enable auto detection for endorctl scans, run:
 endorctl scan --install-build-tools --enable-build-tools-version-detection
 ```
 
-#### Warning
+**Warning**
 
 Enabling these options downloads the necessary build toolchains during each scan. This works well for one-time scans but may cause scan failures in CI environments due to intermittent network issues.
 

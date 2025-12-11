@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-local-system/
 title: Quick start with endorctl | Endor Labs Docs
-downloaded: 2025-11-20 11:50:02
+downloaded: 2025-12-11 11:33:26
 ---
 
 Quick start with endorctl | Endor Labs Docs
@@ -224,7 +224,7 @@ Endor Labs supports three distinct scan types. See each section for instructions
 * [Scan for leaked secrets](#scanning-for-leaked-secrets)
 * [Scan for GitHub misconfigurations](#scan-for-github-misconfigurations)
 
-#### Note
+**Note**
 
 When performing a scan, you can specify a [namespace](../../../endorctl/environment-variables/#global-flags-and-variables). If left unspecified, projects are created in the root namespace of the tenant. This is important if the user or token has restricted access to specific namespaces. See [Namespaces in Endor Labs](../../../administration/namespaces/) to learn more about namespaces.
 
@@ -237,7 +237,7 @@ Follow these steps to scan with Endor Labs for open source risk:
 3. [Build your software](#build-your-software)
 4. [Scan with Endor Labs for OSS risk](#scan-your-project-for-oss-risk)
 
-#### Tip
+**Tip**
 
 See the walkthrough on [scanning an example repository](#scanning-an-example-repository) using `endorctl` to learn how to perform a scan.
 
@@ -274,7 +274,7 @@ For more information on supported languages, package managers and build systems 
 | [Ruby](../../../scan-with-endorlabs/language-scanning/ruby/) | Bundler | `Gemfile`, `*.gemspec`, `gemfile.lock` | Ruby 2.6 and higher versions |
 | [Swift/Objective-C](../../../scan-with-endorlabs/language-scanning/swift-objective-c/) | CocoaPods | `Podfile`, `Podfile.lock` | CocoaPods 0.9.0 and higher versions |
 |  | SwiftPM | `Package.swift` | SwiftPM 5.0.0 and higher versions |
-| [PHP](../../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions |
+| [PHP](../../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions except 2.9.1. |
 
 For more information, see [endorctl commands](../../../endorctl/commands/) and [working with the API](../../../endorctl/commands/api/).
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/pr-remediation/
 title: Remediation Pull Requests in GitHub App | Endor Labs Docs
-downloaded: 2025-11-20 11:50:04
+downloaded: 2025-12-11 11:33:27
 ---
 
 Remediation Pull Requests in GitHub App | Endor Labs Docs
@@ -23,7 +23,7 @@ Beta
 
 You can set up Remediation PRs in your GitHub environment if you use the [Endor Labs GitHub App (Pro)](../../deployment/monitoring-scans/github-app/github-app-pro/). When Remediation PRs are set up, Endor Labs creates a PR to update the manifest files with dependency version upgrades, based on a remediation policy, to address vulnerability findings.
 
-#### Warning
+**Warning**
 
 You cannot have both the GitHub App and the GitHub App (Pro) simultaneously in your environment. When you migrate from one app to the other, select the same set of repositories as before to preserve the currently scanned projects and vulnerability findings after the migration.
 

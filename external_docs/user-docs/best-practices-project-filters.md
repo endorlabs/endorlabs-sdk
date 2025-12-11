@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/project-filters/
 title: Best practices: Working with project filters | Endor Labs Docs
-downloaded: 2025-11-20 11:51:08
+downloaded: 2025-12-11 11:34:44
 ---
 
 Best practices: Working with project filters | Endor Labs Docs
@@ -100,7 +100,7 @@ Use dependency resolution status to identify projects with resolution issues tha
 
 For example, to find projects with poor dependency resolution that need investigation, use the `Dependency Resolution Status equals 0.5` filter.
 
-#### Note
+**Note**
 
 Only float values are supported for dependency resolution status filters such as 0.5 for 50%, 0.75 for 75%, or 1.0 for 100%.
 
@@ -128,7 +128,7 @@ Use reachability analysis status to identify projects based on the success rate 
 
 For example, to find projects with successful reachability analysis, use the `Reachability Analysis Status greater than or equal to 0.7` filter.
 
-#### Note
+**Note**
 
 Only float values are supported for reachability analysis status filters such as 0.5 for 50%, 0.75 for 75%, or 1.0 for 100%.
 

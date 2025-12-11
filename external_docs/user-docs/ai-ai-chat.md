@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-chat/
 title: Endor AI Chat | Endor Labs Docs
-downloaded: 2025-11-20 11:48:24
+downloaded: 2025-12-11 11:31:13
 ---
 
 Endor AI Chat | Endor Labs Docs
@@ -27,8 +27,7 @@ To start using Endor Ask AI chat, you must enable **Code Segment Embeddings and 
 
 1. Select **Manage** > **Settings** from the left sidebar.
 2. Select **SYSTEM SETTINGS** > **Data Privacy**.
-
-   ![Enable Code Segment Embeddings and LLM Processing](/images/enable_embeddings.png)
+   ![Enable Code Segment Embeddings and LLM Processing](../../images/enable-embeddings.png)
 3. Select **Code Segment Embeddings and LLM Processing**.
 4. Click **Save Data Privacy Settings**.
 

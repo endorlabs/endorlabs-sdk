@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/exception-policies/
 title: Exception policies | Endor Labs Docs
-downloaded: 2025-11-20 11:49:14
+downloaded: 2025-12-11 11:32:10
 ---
 
 Exception policies | Endor Labs Docs
@@ -33,10 +33,23 @@ You can view, enable, clone, disable, edit, or delete your Endor Labs exception 
 
 1. Sign in to Endor Labs, and select **Policies & Rules** from the left sidebar.
 2. Select **Exception Policies**.
-3. Use the search bar to search for a policy or click **Create Exception Policy**.
-4. Enable or disable a policy using the toggle.
-5. To delete a policy, click the vertical three dots and select **Delete Policy**.
-6. To edit a policy, click on the vertical three dots and select **Edit Policy**.
+3. The preset filters help you in locating the finding policies that matter most to you:
+   * Choose from a list of options under **Code Dependencies** to view a list of **SCA**, **Vulnerability**, **Operational**, **License Risk**, **Malware**, or **AI model** exception policies.
+   * Choose from a list of options under **First Party Code** to view a list of exception policies related to **SAST** and **Secrets**.
+   * Choose from a list of options under **CI/CD** to view exception policies related to **GitHub Actions**.
+   * Choose **RSPM** to view exception policies related to repository’s security posture.
+   * Choose **Container** to view container exception policies.
+   * Choose **Other** to view custom exception policies.
+4. Use the search bar to search for a policy or click **Create Exception Policy**.
+5. Enable or disable a policy using the toggle.
+6. To delete a policy, click the vertical three dots and select **Delete Policy**.
+7. To edit a policy, click on the vertical three dots and select **Edit Policy**.
+
+![Exception policies](../../images/exception-policies-ui.png)
+
+**Note**
+
+You can edit the exception policy name from the findings detail drawer if you have admin permissions. This change updates the exception policy name for all findings that reference it.
 
 ## View policy details
 
@@ -55,10 +68,12 @@ You can create an exception policy in Endor Labs to apply an exception to a find
 1. Sign in to Endor Labs, and select **Policies & Rules** from the left sidebar.
 2. Select **Exception Policies**.
 3. Click **Create Exception Policy**.
-4. In **Define Exception Criteria**, choose a policy template and define the criteria for the exception.
+4. In **Define Exception Criteria**, choose a **Template Category** from the list.
+5. Choose a **Policy Template** from the list and define the criteria for the exception.
 
    See [exception policy templates](./templates) to choose a template and define the criteria for the exception.
-5. Next, you must **Choose a Reason** for your exception and set an expiration time for the exception.
+6. You can also enter exception tags to findings that match the exception policy.
+7. Next, you must **Choose a Reason** for your exception and set an expiration time for the exception.
 
    * Select from the following reasons why you are applying this exception:
      + **In Triage**: The finding is still being triaged for more information.
@@ -67,22 +82,22 @@ You can create an exception policy in Endor Labs to apply an exception to a find
      + **Resolved**: The issue has been resolved.
      + **Other**: Another reason applies for this exception.
    * Select when the exception should expire. Options include `30`, `60`, `90` days, or `Never`.
-6. You can **Assign Scope** to the exception policy by specifying what projects the policy has to scan.
+8. You can **Assign Scope** to the exception policy by specifying what projects the policy has to scan.
 
    * In **Inclusions**, enter the projects and the tags of the projects that you want to scan.
    * In **Exclusions**, enter the projects and the tags of the projects that you do not want to scan. Exclusions take precedence over the inclusions, in case of a conflict.
    * Click the link to view the projects included in the exception policy scan.
    * Click **Add project tag to these projects** and enter a tag for the selected projects. Click **Save Tags** to apply it or **Reset Tags** to discard changes.
    * You can set custom tags for your projects from **Projects** > **Settings** > **Custom Tags**. See [Tagging projects](../tagging-projects/) for more information about creating project tags.
-7. Finally, you must **Name Your Exception Policy**.
+9. Finally, you must **Name Your Exception Policy**.
 
    * Enter a human-readable **Name** for your exception policy.
    * Enter a **Description** for your exception policy that explains its function.
    * Enter any **Policy Tags** that you want to associate with your policy. Tags can have a maximum of 63 characters and can contain letters, numbers, and characters = @ \_ -.
-8. **Advanced**: When you define a policy, it applies to the current namespace and all its child namespaces. To prevent the policy from being applied to any child namespace, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
-9. Click **Create Exception Policy**. The policy is enabled by default.
+10. **Advanced**: When you define a policy, it applies to the current namespace and all its child namespaces. To prevent the policy from being applied to any child namespace, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
+11. Click **Create Exception Policy**. The policy is enabled by default.
 
-#### Tip
+**Tip**
 
 When creating exceptions for a specific package, make sure to not include the version of the package in the package name template parameter. Adding the version to the name can result in the exception not applying to a newly released version of the package.
 
@@ -96,16 +111,7 @@ You can create an exception policy in Endor Labs to apply an exception to a find
 2. Click on the **Exception Policies** tab.
 3. Click **Create Exception Policy** to create a new exception policy
 4. First, choose **From Scratch** to author an exception policy under **Define Exception Criteria**.
-5. Next, you must **Choose a Reason** for your exception and set an expiration time for the exception.
-
-   * Select from the following reasons why you are applying this exception:
-     + **In Triage**: The finding is still being triaged for more information.
-     + **False Positive**: The finding is a false positive.
-     + **Risk Accepted**: The risk associated with the finding is accepted.
-     + **Resolved**: The issue has been resolved.
-     + **Other**: Another reason applies for this exception.
-   * Select when the exception should expire. Options include 30, 60, 90 days, or Never.
-6. Enter the Rego rule for the policy in **Rego Definition**. For example, the following Rego rule recognizes a set of 3 vulnerabilities acknowledged by an organization, with an organization-wide exception. For more information about findings, see the [Finding resource kind documentation](../../rest-api/using-the-rest-api/data-model/resource-kinds/#finding).
+5. Enter the Rego rule for the policy in **Rego Definition**. For example, the following Rego rule recognizes a set of 3 vulnerabilities acknowledged by an organization, with an organization-wide exception. For more information about findings, see the [Finding resource kind documentation](../../rest-api/using-the-rest-api/data-model/resource-kinds/#finding).
 
    ```
    package exceptions
@@ -129,23 +135,35 @@ You can create an exception policy in Endor Labs to apply an exception to a find
      }
    }
    ```
-7. Enter the OPA **Query Statement** for the rule in the following format: `data.<package-name>.<function-name>`. For the example above the query statement is `data.exceptions.match_finding`.
-8. Select the **Resource Kinds** required to evaluate the policy. For the example above, the required resource kind is `Finding`. The requested resource kind records for the current scan are made available to the Rego code under `data.resources.<ResourceKind>`.
-9. **Assign Scope** for which this exception policy should apply. Scopes are defined by the tags assigned to a project.
+6. Enter the OPA **Query Statement** for the rule in the following format: `data.<package-name>.<function-name>`. For the example above the query statement is `data.exceptions.match_finding`.
+7. Select the **Resource Kinds** required to evaluate the policy. For the example above, the required resource kind is `Finding`. The requested resource kind records for the current scan are made available to the Rego code under `data.resources.<ResourceKind>`.
+8. You can also enter exception tags to findings that match the exception policy.
+9. Next, you must **Choose a Reason** for your exception and set an expiration time for the exception.
 
-   * In **Inclusions**, enter the tags of the projects that you want to apply an exception to.
-   * In **Exclusions**, enter the tags of the projects that you do not want to apply an exception to. Exclusions take precedence over the inclusions, in case of a conflict.
-   * Click the link to view the projects included in the exception policy.
-   * See [Tagging projects](../tagging-projects/) for more information about creating project tags.
-10. Finally, you must **Name Your Exception Policy**.
+   * Select from the following reasons why you are applying this exception:
+     + **In Triage**: The finding is still being triaged for more information.
+     + **False Positive**: The finding is a false positive.
+     + **Risk Accepted**: The risk associated with the finding is accepted.
+     + **Resolved**: The issue has been resolved.
+     + **Other**: Another reason applies for this exception.
+   * Select when the exception should expire. Options include 30, 60, 90 days, or Never.
+10. **Assign Scope** for which this exception policy should apply. Scopes are defined by the tags assigned to a project.
+
+    * In **Inclusions**, enter the tags of the projects that you want to apply an exception to.
+    * In **Exclusions**, enter the tags of the projects that you do not want to apply an exception to. Exclusions take precedence over the inclusions, in case of a conflict.
+    * Click the link to view the projects included in the exception policy.
+    * See [Tagging projects](../tagging-projects/) for more information about creating project tags.
+11. Finally, you must **Name Your Exception Policy**.
 
     * Enter a human-readable **Name** for your exception policy.
     * Enter a **Description** for your exception policy that explains its function.
     * Enter any **Policy Tags** that you want to associate with your policy. Tags can have a maximum of 63 characters and can contain letters, numbers, and characters = @ \_ -.
-11. **Advanced**: When you define a policy, it applies to the current namespace and all its child namespaces. To prevent the policy from being applied to any child namespace, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
-12. Click **Create Exception Policy**. The policy is enabled by default.
+12. **Advanced**: When you define a policy, it applies to the current namespace and all its child namespaces. To prevent the policy from being applied to any child namespace, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
+13. Click **Create Exception Policy**.
 
-#### Note
+The policy is enabled by default.
+
+**Note**
 
 Rescan the project to apply the newly created exception policy and update the findings.
 

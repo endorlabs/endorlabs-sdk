@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-sboms/exporting-sboms/
 title: Export SBOMs and VEX | Endor Labs Docs
-downloaded: 2025-11-20 11:50:49
+downloaded: 2025-12-11 11:34:14
 ---
 
 Export SBOMs and VEX | Endor Labs Docs
@@ -259,7 +259,7 @@ To export the SPDX SBOM using the tag-value format instead of json, use `--outpu
 endorctl sbom export --format spdx --output-format=tag-value --package-version-name=$PACKAGE_VERSION_NAME >> sbom-spdx.spdx
 ```
 
-#### Note
+**Note**
 
 endorctl generates SBOMs in the CycloneDX format by default.
 

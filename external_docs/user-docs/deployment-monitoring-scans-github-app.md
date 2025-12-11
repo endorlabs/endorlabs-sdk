@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/
 title: Deploy Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-11-20 11:48:08
+downloaded: 2025-12-11 11:30:56
 ---
 
 Deploy Endor Labs GitHub App | Endor Labs Docs
@@ -25,7 +25,9 @@ The Endor Labs GitHub App scans your repositories every 24 hours and reports new
 
 If you want to use PR remediations as part of your monitoring scan or need to export your findings to GitHub Advanced Security, you need to use [GitHub App (Pro)](../github-app/github-app-pro/).
 
-#### Warning
+If you are using GitHub Enterprise Server, you can use the [GitHub Enterprise App](../github-app/github-enterprise-app/) to continuously monitor your environment.
+
+**Warning**
 
 You cannot have both GitHub App and GitHub App (Pro) simultaneously in your environment. If you are currently using the standard GitHub App, you can migrate to GitHub App (Pro). When migrating from one app to the other, ensure you select the same set of repositories as before to preserve your currently scanned projects and findings after the migration.
 
@@ -91,7 +93,10 @@ To automatically scan repositories using the GitHub App:
    ![Choose Repositories](../../../images/authorize-githubapp.png)
 9. Review the permissions required for Endor Labs and click **Install and Authorize**.
 
-   If the button to install says **Install and Request** instead of **Install and Authorize**, you don’t have permission to install the GitHub App. Use the [endorctl command line interface](../../../getting-started/quickstart/quickstart-local-system/) or select **Install and Request** to notify your organizational administrator of your request to install. If you select **Install and Request** your installation will not be active unless your organizational administrator approves the request to install GitHub App.
+**Note**
+
+If the button to install says **Install and Request** instead of **Install and Authorize**, you don’t have permission to install the GitHub App. Use the [endorctl command line interface](../../../getting-started/quickstart/quickstart-local-system/) or select **Install and Request** to notify your organizational administrator of your request to install. If you select **Install and Request** your installation will not be active unless your organizational administrator approves the request to install GitHub App.
+
 10. Choose a namespace and click **Next**.
 
     ![Choose namespace](../../../images/GitHubApp_namespace.png)
@@ -106,7 +111,6 @@ To automatically scan repositories using the GitHub App:
 13. Select **PULL REQUEST SCANS** to set preferences for scanning pull requests submitted by users.
 
     ![Choose PR options](../../../images/github-app-pr.png)
-
     * Select **Pull Request Comments** to enable GitHub Actions to comment on PRs for policy violations.
     * In **Define Scanning Preferences**, select either:
 
@@ -124,7 +128,7 @@ You can improve your experience with the GitHub App by setting up package reposi
 
 ---
 
-##### [Scan capabilities of the Endor Labs GitHub App](/deployment/monitoring-scans/github-app/scan-with-githubapp/)
+##### [Scan capabilities of the Endor Labs GitHub Apps](/deployment/monitoring-scans/github-app/scan-with-githubapp/)
 
 Learn how to scan projects using the Endor Labs GitHub App.
 
@@ -143,6 +147,14 @@ Understand the technical limitations associated with the GitHub App.
 ##### [Deploy Endor Labs GitHub App (Pro)](/deployment/monitoring-scans/github-app/github-app-pro/)
 
 Learn how to continuously monitor your environment with the Endor Labs GitHub App.
+
+##### [Deploy Endor Labs GitHub Enterprise App](/deployment/monitoring-scans/github-app/github-enterprise-app/)
+
+Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise App.
+
+##### [Scan PRs using the Endor Labs GitHub app](/deployment/monitoring-scans/github-app/github-app-pr-scans/)
+
+Learn how to scan PRs using the Endor Labs GitHub app.
 
 ## Feedback
 

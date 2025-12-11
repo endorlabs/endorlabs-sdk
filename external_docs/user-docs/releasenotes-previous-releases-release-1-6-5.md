@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/release-1-6-5/
 title: October 2023 | Endor Labs Docs
-downloaded: 2025-11-20 11:52:09
+downloaded: 2025-12-11 11:35:47
 ---
 
 October 2023 | Endor Labs Docs
@@ -52,7 +52,7 @@ Endor Labs integrates with third-party Artificial Intelligence (AI) tools to hel
 
 In the event of an error, DroidGPT generates explanations and actionable advice for how to resolve the error on the given host system. These suggestions are displayed as part of the error log messages on the command line and can help you understand why build errors occurred during the scan process and how to resolve them.
 
-#### Important
+**Important**
 
 Recommendations generated are meant solely for informational purposes. Before implementing these suggestions, it is strongly advised to thoroughly verify and assess them to ensure their accuracy and suitability for your specific circumstances and work environments.
 

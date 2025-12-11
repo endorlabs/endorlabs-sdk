@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/sast-policies/
 title: SAST policies | Endor Labs Docs
-downloaded: 2025-11-20 11:50:05
+downloaded: 2025-12-11 11:33:29
 ---
 
 SAST policies | Endor Labs Docs
@@ -27,6 +27,7 @@ See [SAST severity matrix](../../../sast-scans-with-endorlabs/#sast-severity-mat
 | --- | --- | --- |
 | Report SAST results matching given rule names | Raise findings for SAST results for a given set of SAST rules. The severity of the finding is set based on the severity of the rule that created the result. If the SAST rule does not have a severity then the policy finding severity is used. | Critical |
 | Report SAST results matching given criteria | Raise findings for SAST results based on a given set of criteria, such as the severity, confidence level, and/or tags. The severity of the finding is set based on the severity of the rule that created the result. If the SAST rule does not have a severity then the policy finding severity is used. | Critical |
+| Report SAST results by rules and location | Raise findings for SAST results matching the given criteria and group them by rule and location. If the SAST rule does not have a severity then the policy finding severity is used. | Critical |
 
 ## Feedback
 

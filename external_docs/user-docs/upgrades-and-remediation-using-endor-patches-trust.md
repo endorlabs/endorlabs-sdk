@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/trust/
 title: Patch transparency | Endor Labs Docs
-downloaded: 2025-11-20 11:50:01
+downloaded: 2025-12-11 11:33:24
 ---
 
 Patch transparency | Endor Labs Docs
@@ -89,7 +89,7 @@ endorctl api get -r AssuredPackageVersion -n oss --name="mvn://com.fasterxml.jac
 
 Use the URL to download the source code to reproduce the build. You can find instructions on building the artifact in the README of the downloaded tar.
 
-#### Note
+**Note**
 
 You will need Bazel and Docker installed on your host.
 

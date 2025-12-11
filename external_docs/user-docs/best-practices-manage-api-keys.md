@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/manage-api-keys/
 title: Best Practices: API key management | Endor Labs Docs
-downloaded: 2025-11-20 11:49:06
+downloaded: 2025-12-11 11:32:03
 ---
 
 Best Practices: API key management | Endor Labs Docs
@@ -23,7 +23,7 @@ You can use API keys to engage with Endor Labs services programmatically to enab
 
 Ensure that you rotate API keys regularly to limit the window of opportunity for an API key to be compromised.
 
-#### Tip
+**Tip**
 
 Instead of using API keys, you can use keyless authentication to authenticate with Endor Labs services. See [Keyless authentication](../../deployment/ci-scans/keyless-authentication/) for more information. Using keyless authentication eliminates the need to manage API keys and reduces the risk of API key compromise.
 

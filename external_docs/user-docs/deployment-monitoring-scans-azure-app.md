@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/azure-app/
 title: Deploy Endor Labs Azure DevOps App | Endor Labs Docs
-downloaded: 2025-11-20 11:49:09
+downloaded: 2025-12-11 11:32:05
 ---
 
 Deploy Endor Labs Azure DevOps App | Endor Labs Docs
@@ -65,7 +65,7 @@ graph TD
 
       class EN,EN2 endor
       class O1,P1,P2,P3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ### Namespace structure when you add an Azure DevOps project
@@ -95,7 +95,7 @@ graph TD
 
       class EN,EN2 endor
       class A1,A2,A3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ## Default branch detection
@@ -164,7 +164,7 @@ To automatically scan repositories using the Azure DevOps App:
 
 Endor Labs Azure DevOps App scans your Azure repos every 24 hours and reports any new findings or changes to release versions of your code.
 
-#### Note
+**Note**
 
 Only users with admin authorization role can create and manage installations.
 

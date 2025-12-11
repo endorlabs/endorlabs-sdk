@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/
 title: AI inventory and governance | Endor Labs Docs
-downloaded: 2025-11-20 11:50:17
+downloaded: 2025-12-11 11:33:40
 ---
 
 AI inventory and governance | Endor Labs Docs
@@ -54,7 +54,7 @@ Discover open-source software components and troubleshoot errors with intelligen
 Identify potential security issues in your pull requests and get recommendations to fix them.](/ai/ai-security-review/)
 [### Endor Labs MCP Server
 
-Use Endor Labs MCP Server to integrate AI models into your development workflow.](../../deployment/ide/mcp/)
+Use Endor Labs MCP Server to integrate AI models into your development workflow.](/deployment/mcp/)
 
 ## Feedback
 

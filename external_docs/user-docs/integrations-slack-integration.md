@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/slack-integration/
 title: Set up Slack integration | Endor Labs Docs
-downloaded: 2025-11-20 11:51:17
+downloaded: 2025-12-11 11:34:55
 ---
 
 Set up Slack integration | Endor Labs Docs
@@ -34,7 +34,7 @@ Integrate Endor Labs with Slack and automatically receive policy violations as n
 
 Create an incoming webhook to your Slack channel to enable Endor Labs to post notifications in the channel. The **Incoming Webhook** provides a unique URL to integrate your Slack channel in Endor Labs.
 
-#### Note
+**Note**
 
 We recommend you designate a channel in your Slack workspace for receiving Endor Labs notifications and create an incoming webhook for that channel.
 

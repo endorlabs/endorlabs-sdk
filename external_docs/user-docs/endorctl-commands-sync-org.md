@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/sync-org/
 title: sync-org | Endor Labs Docs
-downloaded: 2025-11-20 11:48:51
+downloaded: 2025-12-11 11:31:47
 ---
 
 sync-org | Endor Labs Docs
@@ -36,7 +36,7 @@ To sync your GitHub organization to Endor Labs:
   endorctl sync-org --name=endorlabs
   ```
 
-#### Note
+**Note**
 
 The `sync-org` command deletes projects in Endor Labs when their linked repositories are archived on GitHub. Use the `--archived` flag to include archived repositories and prevent them from being deleted in Endor Labs.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/scores/repository-scores/popularity-score-factors/
 title: Popularity score factors | Endor Labs Docs
-downloaded: 2025-11-20 11:49:41
+downloaded: 2025-12-11 11:32:40
 ---
 
 Popularity score factors | Endor Labs Docs
@@ -22,14 +22,14 @@ Popularity scores indicate how popular is the repository. Popularity information
 The following factors have a positive contribution to the popularity score:
 
 * Many reputable contributors affiliated with the project indicates that the project is reliable. An account is considered reputable if it participates in multiple open-source projects and has a high rating on GitHub.
-* The project includes many stars indicating an interest in the project.
+* The project includes many stars, indicating an interest in the project.
 * Having subscribers indicates interest in the project.
-* Includes many subscribers
-* Includes a high number of dependent projects.
-* Includes many forks.
-* Some released artifacts of the repository are downloaded many times indicating the project is popular.
+* The project includes a high number of subscribers.
+* The repository includes a high number of dependent projects.
+* The repository includes many forks.
+* Some released artifacts of the repository are downloaded many times, indicating the project is popular.
 
-The following factors have a negative contribution to the activity score:
+The following factors have a negative contribution to the popularity score:
 
 * Low fork count may indicate a lack of interest in the project.
 * Few subscribers may mean a lack of interest in the project.

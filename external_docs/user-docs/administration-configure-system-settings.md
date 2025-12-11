@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/configure-system-settings/
 title: Configure system settings | Endor Labs Docs
-downloaded: 2025-11-20 11:49:49
+downloaded: 2025-12-11 11:33:11
 ---
 
 Configure system settings | Endor Labs Docs
@@ -39,7 +39,7 @@ To configure data privacy settings:
 3. Select **Remote Logging** to send scan logs to a centralized logging system for improved monitoring and debugging.
 4. Select **Code Snippet Storage** to store and display code snippets that triggered SAST findings.
 5. Select **Code Segment Embeddings and LLM Processing** to use embeddings and LLM processing to improve C/C++ and AI model detection accuracy.
-6. Click **Save Data Privacy Settings** to save your changes.\*\*\*\*
+6. Click **Save Data Privacy Settings** to save your changes.
 
 ![Data Privacy](../../images/enable-embeddings.png)
 
@@ -54,7 +54,7 @@ To configure Endor patches settings:
 3. Select **Auto Patch Vulnerable Dependencies** to apply vulnerability fixes to your applications without changing your code
 4. Click **Save Patch Settings**.
 
-#### Note
+**Note**
 
 Changes to auto patching settings may take up to ten minutes to take effect.
 
@@ -79,18 +79,21 @@ To configure policy settings:
 
 ## Configure urgent notification settings
 
-Urgent notifications provide alerts about newly discovered malware that could impact your projects. This enables your security teams to take immediate action as soon as the malware is detected by Endor Labs, without waiting for the next scan cycle.
+Beta
+
+Urgent notifications deliver real-time alerts about newly discovered malware that could impact your projects. These alerts are sent independently of your notification policy settings, enabling your security teams to take immediate action without waiting for the next scan cycle.
 
 To configure urgent notification settings:
 
 1. Select **Manage** > **Settings** from the left sidebar.
 2. Select **SYSTEM SETTINGS** > **Urgent Notifications**.
 3. Select **Enable urgent notification** to turn on alerts for malicious packages.
-4. Select the **Notification Threshold** to define which affected package versions trigger notifications.
-   * **Definitely Affected**: Receive notifications when a malicious package version exactly matches a dependency version used in your projects.
-   * **Potentially Affected**: Receive notifications when a malicious package is detected among your dependencies, even if the versions differ.
-5. Provide a Slack webhook URL to receive urgent notifications directly in Slack.
-6. Click **Save Urgent Notifications Settings**.
+4. Select the **Setup Threshold** to define which affected package versions trigger notifications.
+   * **Notify when definitely affected**: Receive notifications when a malicious package version exactly matches a dependency version used in your projects.
+   * **Notify when potentially affected**: Receive notifications when a malicious package is detected among your dependencies, even if the versions differ.
+5. Enter email addresses to receive these notifications in your inbox.
+6. Optionally, enter a Slack webhook URL to receive them in Slack.
+7. Click **Save Urgent Notifications Settings**.
 
 ![Urgent notifications](../../images/urgent-notifications.png)
 
@@ -117,7 +120,7 @@ Endor Labs supports choosing between CVSS v4 and v3 scoring from vulnerability p
 
 When CVSS v4 is enabled, vulnerability severities are determined using CVSS v4.x scores.
 
-#### Warning
+**Warning**
 
 Integrations with Vanta only support CVSS v3. If you are exporting vulnerability details to Vanta, only CVSS v3 data is included.
 

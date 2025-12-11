@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/pr-comments/
 title: Pull Request comments | Endor Labs Docs
-downloaded: 2025-11-20 11:49:23
+downloaded: 2025-12-11 11:32:21
 ---
 
 Pull Request comments | Endor Labs Docs
@@ -31,19 +31,17 @@ Endor Labs generates the following types of PR comments based on the nature of t
 
 ## Enable PR comments
 
-You can enable PR comments through one of the following methods.
+After enabling PR comments, you must [Configure an action policy](#configure-action-policy-for-pr-comments) to allow comments to be posted on pull requests or merge requests.
 
-* [Using Endor Labs GitHub App](#github-app)
-* [Using GitHub Actions](#github-actions)
-* [Using the CLI](#endor-labs-cli)
+### GitHub PR comments
 
-After enabling PR comments, you must [Configure an action policy](#configure-action-policy-for-pr-comments) to allow comments to be posted on pull requests.
+You can enable PR comments for GitHub through one of the following methods.
 
-### GitHub App
+#### GitHub App
 
 You can enable PR comments during the initial setup of the [GitHub App](../../../deployment/monitoring-scans/github-app/) or [GitHub App (Pro)](../../../deployment/monitoring-scans/github-app/github-app-pro/), or by editing an existing integration. Once enabled, Endor Labs automatically adds comments to pull requests when policy violations are detected.
 
-### GitHub Actions
+#### GitHub Actions
 
 You can configure GitHub Actions to comment on PRs if there are any policy violations. Make sure that your GitHub Actions workflow includes the following configuration.
 
@@ -66,7 +64,7 @@ The following example configuration comments on PRs if a policy violation is det
           github_token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-#### PR comments example
+##### PR comments example
 
 The [main.yaml](https://github.com/endorlabs/hearts-github/blob/main/.github/workflows/main.yml) file in this [sample repository](https://github.com/endorlabs/hearts-github) contains the following configuration to enable PR comments.
 
@@ -113,7 +111,7 @@ You can expand the comment to view the following details:
 
 ![PR Comment Details](../../../images/pr-comment-details.png)
 
-### Endor Labs CLI
+#### GitHub PR comments with Endor Labs CLI
 
 You can generate PR comments using the CLI by including the following flags in the `endorctl scan` command.
 
@@ -128,20 +126,55 @@ endorctl scan \
 
 Ensure that you set the following parameters:
 
-* Set `--enable-pr-comments` to `true` to activate PR comment generation.
+* Set `--enable-pr-comments` to activate PR comment generation.
 * Use `--scm-pr-id` to specify the pull request to comment on.
-* Set the `pull-requests` permission to `write` for the `--github-token`.
+* Use `--github-token` and set the `pull-requests` permission to `write` for the token.
 
-#### Note
+**Note**
 
 You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future.
+
+### GitLab MR comments
+
+You can enable MR comments for GitLab through one of the following methods.
+
+#### GitLab App
+
+You can enable MR comments during the initial setup of the [GitLab App](../../../deployment/monitoring-scans/gitlab-app/) or by editing an existing integration. Once enabled, Endor Labs automatically adds comments to merge requests when policy violations are detected. See [GitLab MR comments](../../../deployment/monitoring-scans/gitlab-app/gitlab-mr-scan/#gitlab-mr-comments) for more information.
+
+#### GitLab CI pipelines
+
+You can configure GitLab CI pipelines to comment on merge requests when policy violations are detected. Add `--enable-pr-comments`, `--scm-pr-id=$CI_MERGE_REQUEST_IID`, and `--scm-token=$ENDOR_SCAN_SCM_TOKEN` to your scan command. Configure a GitLab CI/CD variable `ENDOR_SCAN_SCM_TOKEN` with your GitLab personal access token with the `api` scope. See [Enable MR comments](../../../deployment/ci-scans/scan-with-gitlab/#enable-mr-comments) for complete configuration examples.
+
+#### GitLab MR comments with endorctl
+
+You can generate MR comments with endorctl by including the following flags in the `endorctl scan` command.
+
+```
+endorctl scan \
+  --pr \
+  --enable-pr-comments \
+  --scm-token <your-token> \
+  --scm-pr-id <merge-request-id> \
+  --namespace <your-namespace>
+```
+
+Ensure that you set the following parameters:
+
+* Set `--enable-pr-comments` to activate MR comment generation.
+* Use `--scm-pr-id` to specify the merge request to comment on.
+* Use `--scm-token`. The token takes priority over installation PATs.
+
+**Note**
+
+Security review comments for GitLab merge requests are not yet supported.
 
 ## Configure Action policy for PR comments
 
 You must create an Action policy to receive comments on your pull request after enabling PR comments.
 
 1. Create an [Action policy](../../../managing-policies/action-policies/).
-2. Set the **Branch Type** to `PR` so the policy applies specifically to pull request scans.
+2. Set the **Branch Type** to `Pull Request` so the policy applies specifically to pull request scans.
 3. Under **Action**, select **Enforce Policy**, then choose:
    * **Warn** to post a comment without breaking the build.
    * **Break the Build** to fail the build and block the pull request.
@@ -405,6 +438,10 @@ var FuncMap = template.FuncMap{
 
 	// 'getFirstPartyReachableFunctions' extracts first-party functions from reachable paths
 	"getFirstPartyReachableFunctions": getFirstPartyReachableFunctions,
+
+	// 'groupFindingsByRemediation' groups findings by their remediation value
+	// Returns a slice of GroupedRemediation where findings with the same remediation are grouped together
+	"groupFindingsByRemediation": groupFindingsByRemediation,
 }
 ```
 

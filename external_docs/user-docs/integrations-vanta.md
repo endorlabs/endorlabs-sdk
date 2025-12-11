@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/vanta/
 title: Set up Vanta integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-11-20 11:50:59
+downloaded: 2025-12-11 11:34:35
 ---
 
 Set up Vanta integration with Endor Labs | Endor Labs Docs
@@ -87,9 +87,10 @@ Make sure you have the client ID, client secret, and the resource IDs from Vanta
 5. Enter the **CLIENT ID** and **CLIENT SECRET** that you generated on Vanta.
 6. Under **Vanta Resources**, enter the Resource IDs for VULNERABILITY COMPONENT, PACKAGE VULNERABILITY, and STATIC CODE ANALYSIS VULNERABILITY from Vanta.
 
-   #### Note
+**Note**
 
-   **Vulnerable Component** is mandatory. You must enter either one of the **Package Vulnerability** or **Static Code Analysis Vulnerability** resource types.
+**Vulnerable Component** is mandatory. You must enter either one of the **Package Vulnerability** or **Static Code Analysis Vulnerability** resource types.
+
 7. Click **Add Notification Integration**.
 
 ### Associate an action policy with a Vanta notification

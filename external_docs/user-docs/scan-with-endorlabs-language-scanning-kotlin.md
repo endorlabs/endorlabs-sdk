@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/kotlin/
 title: Kotlin | Endor Labs Docs
-downloaded: 2025-11-20 11:48:58
+downloaded: 2025-12-11 11:31:54
 ---
 
 Kotlin | Endor Labs Docs
@@ -175,9 +175,9 @@ mvn dependency:tree
 
 2. Run `mvn install` and ensure the build is successful.
 
-   #### info
+**info**
 
-   If you want to skip the execution of tests during the build, you can use `-DskipTests` to quickly build and install your projects.
+If you want to skip the execution of tests during the build, you can use `-DskipTests` to quickly build and install your projects.
 
 ```
 mvn install -DskipTests

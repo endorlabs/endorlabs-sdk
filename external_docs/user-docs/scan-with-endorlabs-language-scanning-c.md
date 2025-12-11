@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/c/
 title: C/C++ | Endor Labs Docs
-downloaded: 2025-11-20 11:48:15
+downloaded: 2025-12-11 11:31:04
 ---
 
 C/C++ | Endor Labs Docs
@@ -37,7 +37,7 @@ To scan your C and C++ repositories, run the following command.
 endorctl scan --languages=c
 ```
 
-#### Important
+**Important**
 
 * Ensure that the entire source code and all its dependencies are present in the scanned folder.
 * Using the `--languages=c` flag will scan only C and C++ projects. For a multi-language repository, ensure that you include all other languages with the flag.

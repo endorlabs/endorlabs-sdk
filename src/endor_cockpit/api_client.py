@@ -1,18 +1,15 @@
 """
 Description:
     API Client to provide REST calls with retry, rate limiting, pagination,
-    and logging with redaction. Also retrieves Swagger JSON from a stable
-    endpoint and can execute endorctl commands.
+    and logging with redaction.
 
 Author:
     tgowan@endor.ai
 """
 
-import json
 import logging
 import os
 import re
-import subprocess
 import time
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -550,62 +547,3 @@ class APIClient:
         except Exception as e:
             self.logger.error(f"Unable to authenticate: {e}")
             return None
-
-    def get_openapi_spec(
-        self, url: Optional[str], path: Optional[str]
-    ) -> Dict[str, Any]:
-        """
-        Retrieves and returns the API Spec JSON from the given URL.
-
-        Args:
-            url: Optional URL to fetch the OpenAPI spec from. If None, uses
-                 default Endor Labs URL
-            path: Optional file path to save the spec to. Will create
-                  directories if they don't exist
-
-        Returns:
-            Dict containing the OpenAPI specification
-        """
-        try:
-            if url is None:
-                url = "/download/openapiv2.swagger.json"
-
-            response = self.get(url, headers={"Accept": "application/json"})
-            response_data = response.json()  # Parse JSON from response
-
-            if path is not None:
-                # Create directory if it doesn't exist
-                os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-
-                with open(path, "w") as f:
-                    json.dump(response_data, f, indent=4)
-
-            return response_data
-
-        except Exception as e:
-            self.logger.error(f"Unable to retrieve Swagger JSON from {url}: {e}")
-            raise  # Re-raise to let caller handle the error
-
-    # TODO: def get_sitemap_xml() # https://docs.endorlabs.com/sitemap.xml
-
-    def endorctl(self, command: str) -> str:
-        """Executes an endorctl command and returns its output."""
-        try:
-            # Force utf-8 decoding and replace errors to avoid crashes
-            # from unexpected bytes
-            result = subprocess.run(
-                command,
-                shell=True,
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-            return (result.stdout or "").strip()
-        except subprocess.CalledProcessError as e:
-            self.logger.error(
-                f"Command '{command}' failed with error: {e.stderr.strip()}"
-            )
-            raise

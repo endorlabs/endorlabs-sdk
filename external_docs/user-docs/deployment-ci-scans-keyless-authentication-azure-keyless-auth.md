@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/azure-keyless-auth/
 title: Keyless authentication for Azure | Endor Labs Docs
-downloaded: 2025-11-20 11:49:16
+downloaded: 2025-12-11 11:32:12
 ---
 
 Keyless authentication for Azure | Endor Labs Docs

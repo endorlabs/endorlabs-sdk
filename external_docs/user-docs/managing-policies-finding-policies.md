@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/
 title: Finding policies | Endor Labs Docs
-downloaded: 2025-11-20 11:48:31
+downloaded: 2025-12-11 11:31:21
 ---
 
 Finding policies | Endor Labs Docs
@@ -31,24 +31,37 @@ You can view, enable, disable, edit, upgrade, or delete your Endor Labs finding 
 
 1. Sign in to Endor Labs and select **Policies & Rules** from the left sidebar.
 2. Select **Finding Policies** to view the list of finding policies.
-3. You can use the search bar to search for a policy.
-4. Use the toggle next to a finding policy to enable or disable the finding policy.
-5. Select **Hide Disabled** to hide policies that are not enabled.
-6. Use **Finding Level** to filter policies by **Critical**, **High**, **Medium**, or **Low**.
-7. To edit a policy, click the vertical three dots and select **Edit**.
-8. To delete a policy, click the vertical three dots and select **Delete**. The findings associated with the policy are not deleted.
+3. The preset filters help you in locating the finding policies that matter most to you:
+   * Choose from a list of options under **Code Dependencies** to view a list of **SCA**, **Vulnerability**, **Operational**, **License Risk**, **Malware**, or **AI model** finding policies.
+   * Choose from a list of options under **First Party Code** to view a list of finding policies related to **SAST** and **Secrets**.
+   * Choose from a list of options under **CI/CD** to view finding policies related to **GitHub Actions**.
+   * Choose **RSPM** to view finding policies related to repository’s security posture.
+   * Choose **Container** to view container finding policies.
+   * Choose **Other** to view custom finding policies.
+4. You can use the search bar to search for a policy.
+5. Use the toggle next to a finding policy to enable or disable the finding policy.
+6. Select **Hide Disabled** to hide policies that are not enabled.
+7. Use **Finding Level** to filter policies by **Critical**, **High**, **Medium**, or **Low**.
+8. To edit a policy, click on the vertical three dots and select **Edit**.
+9. To delete a policy, click on the vertical three dots and select **Delete**. The findings associated with the policy are not deleted.
 
-![finding policy](../../images/finding-policy-ui.png)
+![finding policy](../../images/finding-policies-ui.png)
 
 ### Upgrade a finding policy
 
 Upgrades are available when there are changes to a policy, such as new fields, parameters, tags, or updates to the Rego code.
 After upgrading a policy, you can’t revert it to its previous version.
 
-1. To upgrade a policy based on the latest template version, click the vertical three dots and select **Upgrade**.
-2. In **Upgrade Available for Policy**, review the release notes and select **Upgrade Policy**.
+You can upgrade a policy to the latest template version in any of the following two ways:
+
+* Click on the vertical three dots and select **Upgrade** and click **Upgrade Policy**.
+* Click on **Upgrade Available**, review the release notes and click **Upgrade Policy**.
 
 You can enable automatic policy upgrades from the **Policies & Rules** system settings. See [configure policy settings](../../administration/configure-system-settings/#configure-policy-settings) for more information.
+
+**Note**
+
+You can upgrade finding policies if you have admin permissions.
 
 ## View policy details
 
@@ -76,23 +89,24 @@ Create a finding policy from a pre-defined Endor Labs template.
 1. Sign in to Endor Labs, and select **Policies & Rules** from the left sidebar.
 2. Click **Create Finding Policy**.
 3. Choose **From Template** to create a finding policy from template.
-4. Choose a **Policy Template** from the list. The template details are pre-filled with recommended values on the form.
-5. **Severity**, **Summary**, **Explanation**, **Remediation**, **Finding Name**, and **Finding Categories** are pre-populated with Endor Labs’ recommended values. You can modify them to suit your requirements.
-6. In **Finding Custom Tags**, enter custom tags that you want to associate with the findings of this policy. Custom tags can have a maximum of 63 characters and can contain letters, numbers, and characters = @ \_ -. Note that these are different and separate from the system defined finding tags.
-7. You can **Assign Scope** to the finding policy by specifying what projects the policy has to scan.
+4. Choose a **Template Category** from the list.
+5. Choose a **Policy Template** from the list. The template details are pre-filled with recommended values on the form.
+6. Endor Labs pre-populates **Severity**, **Summary**, **Explanation**, **Remediation**, **Finding Name**, and **Finding Categories** with recommended values. You can modify these fields except **Finding Categories**.
+7. In **Finding Custom Tags**, enter custom tags that you want to associate with the findings of this policy. Custom tags can have a maximum of 63 characters and can contain letters, numbers, and characters = @ \_ -. Note that these are different and separate from the system defined finding tags.
+8. You can **Assign Scope** to the finding policy by specifying what projects the policy has to scan.
    * In **Inclusions**, enter the projects and the tags of the projects that you want to scan.
    * In **Exclusions**, enter the projects and the tags of the projects that you do not want to scan. Exclusions take precedence over the inclusions, in case of a conflict.
    * Click the link to view the projects included in the finding policy scan.
    * Click **Add project tag to these projects** and enter a tag for the selected projects. Click **Save Tags** to apply it or **Reset Tags** to discard changes.
    * You can set custom tags for your projects from **Projects** > **Settings** > **Custom Tags**. See [Tagging projects](../tagging-projects/) for more information about creating project tags.
-8. **Name Your Finding Policy**.
+9. **Name Your Finding Policy**.
    * Enter a human readable **Name** for your finding policy.
    * Enter a **Description** for your finding policy that describes what it does.
    * Enter any **Policy Tags** that you want to associate with your policy. Tags can have a maximum of 63 characters and can contain letters, numbers, and characters = @ \_ -.
-9. **Advanced**: When you define a policy you do so for the current namespace and all child namespaces. If you do not want the policy to be applied to any child namespaces, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
-10. Click **Create Finding Policy**. The policy will be enabled by default.
+10. **Advanced**: When you define a policy you do so for the current namespace and all child namespaces. If you do not want the policy to be applied to any child namespaces, click **Advanced** and deselect **Propagate this policy to all child namespaces**.
+11. Click **Create Finding Policy**. The policy will be enabled by default.
 
-#### Note
+**Note**
 
 Rescan the project to apply the newly created finding policy and update the findings.
 
@@ -136,7 +150,7 @@ Write a finding policy from scratch using the [OPA Rego policy language](https:/
 13. Select one or more categories for the finding in **Finding Categories**.
 14. See steps 6-10 above under [Create a finding policy from template](#create-a-finding-policy-from-template)
 
-#### Note
+**Note**
 
 The application verifies the Rego syntax and query statement before creating the policy. However, please note that the logic cannot be fully validated without input data. See also [validate policy](#validate-policy).
 
@@ -164,7 +178,7 @@ Findings targets have one of three resource kinds:
 Individual finding target records are identified by their universally unique identifier (UUID).
 The finding target record is the parent of the finding record.
 
-#### Note
+**Note**
 
 The finding target resource kind is **PackageVersion** for findings in the root package as well as for findings in its dependencies. A dependency **PackageVersion** record may or not be in the same namespace as the root package. The relationships between the root package and its dependencies is captured by the corresponding **DependencyMetadata** records. All **DependencyMetadata** records are children of the root **PackageVersion** record in the same namespace as the root **PackageVersion**.
 

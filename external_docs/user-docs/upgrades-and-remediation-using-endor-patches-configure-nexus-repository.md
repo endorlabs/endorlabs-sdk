@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/configure-nexus-repository/
 title: Configure Sonatype Nexus Repository to use Endor patches | Endor Labs Docs
-downloaded: 2025-11-20 11:50:48
+downloaded: 2025-12-11 11:34:12
 ---
 
 Configure Sonatype Nexus Repository to use Endor patches | Endor Labs Docs

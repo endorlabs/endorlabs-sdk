@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/outpost/outpost-configuration/
 title: Outpost configuration | Endor Labs Docs
-downloaded: 2025-11-20 11:49:36
+downloaded: 2025-12-11 11:32:34
 ---
 
 Outpost configuration | Endor Labs Docs
@@ -57,50 +57,51 @@ Perform the following steps to configure Outpost:
 
    The command installs the Outpost scheduler on your Kubernetes cluster.
 
-   #### Important
+**Important**
 
-   If you use GCP service account authentication, you need to configure annotations for the service account in Helm values.
+If you use GCP service account authentication, you need to configure annotations for the service account in Helm values.
 
-   Add the following annotations to the Helm chart values before you run the Helm install command.
+Add the following annotations to the Helm chart values before you run the Helm install command.
 
-   ```
-   scheduler:
-    .
-    .
-     serviceAccount:
-       create: true
-       annotations:
-         iam.gke.io/gcp-service-account: "endor-scanner-sa@project-name-123456.iam.gserviceaccount.com"
-   endorctl:
-    .
-    .
-     serviceAccount:
-       create: true
-       annotations:
-         iam.gke.io/gcp-service-account: "endor-scanner-sa@project-name-123456.iam.gserviceaccount.com"
-   ```
+```
+scheduler:
+ .
+ .
+  serviceAccount:
+    create: true
+    annotations:
+      iam.gke.io/gcp-service-account: "endor-scanner-sa@project-name-123456.iam.gserviceaccount.com"
+endorctl:
+ .
+ .
+  serviceAccount:
+    create: true
+    annotations:
+      iam.gke.io/gcp-service-account: "endor-scanner-sa@project-name-123456.iam.gserviceaccount.com"
+```
 
-   If you run the Helm command directly, update the generated Helm command to set the annotations with the following options:
+If you run the Helm command directly, update the generated Helm command to set the annotations with the following options:
 
-   ```
-   --set scheduler.serviceAccount.annotations.iam.gke.io/gcp-service-account="<GCP_SERVICE_ACCOUNT_NAME>@<GCP_PROJECT_NAME>.iam.gserviceaccount.com"
-   --set endorctl.serviceAccount.annotations.iam.gke.io/gcp-service-account="<GCP_SERVICE_ACCOUNT_NAME>@<GCP_PROJECT_NAME>.iam.gserviceaccount.com"
-   ```
+```
+--set scheduler.serviceAccount.annotations.iam.gke.io/gcp-service-account="<GCP_SERVICE_ACCOUNT_NAME>@<GCP_PROJECT_NAME>.iam.gserviceaccount.com"
+--set endorctl.serviceAccount.annotations.iam.gke.io/gcp-service-account="<GCP_SERVICE_ACCOUNT_NAME>@<GCP_PROJECT_NAME>.iam.gserviceaccount.com"
+```
 
-   For example:
+For example:
 
-   ```
-   helm install endorlabsscheduler oci://endorcipublic.azurecr.io/charts/onprem-scheduler \
-       -n <k8s-ns> \
-       --set endorAPI=https://api.staging.endorlabs.com \
-       --set endorNamespace=nryn \
-       --set auth.gcpServiceAccountName=endor-scanner-sa@project-name-123456.iam.gserviceaccount.com \
-       --set scheduler.serviceAccount.annotations.iam.gke.io/gcp-service-account="endor-scanner-sa@project-name-123456.iam.gserviceaccount.com" \
-       --set endorctl.serviceAccount.annotations.iam.gke.io/gcp-service-account="endor-scanner-sa@project-name-123456.iam.gserviceaccount.com" \
-       --set bazelremote.install=false
-   ```
+```
+helm install endorlabsscheduler oci://endorcipublic.azurecr.io/charts/onprem-scheduler \
+    -n <k8s-ns> \
+    --set endorAPI=https://api.staging.endorlabs.com \
+    --set endorNamespace=nryn \
+    --set auth.gcpServiceAccountName=endor-scanner-sa@project-name-123456.iam.gserviceaccount.com \
+    --set scheduler.serviceAccount.annotations.iam.gke.io/gcp-service-account="endor-scanner-sa@project-name-123456.iam.gserviceaccount.com" \
+    --set endorctl.serviceAccount.annotations.iam.gke.io/gcp-service-account="endor-scanner-sa@project-name-123456.iam.gserviceaccount.com" \
+    --set bazelremote.install=false
+```
 
-   The annotations are automatically added to the Helm chart values if you choose Azure managed identity authentication.
+The annotations are automatically added to the Helm chart values if you choose Azure managed identity authentication.
+
 8. If you do not want to customize the values, the Helm command with your configured values appears in the user interface. You can copy the command and run it on your Kubernetes cluster.
 
    For example, the following command appears on the user interface when you configure the integration on the `endor` Kubernetes namespace with the Azure managed identity authentication and build tool caching enabled. The root Endor Labs namespace is `endor`.
@@ -416,6 +417,7 @@ After deploying Outpost to your Kubernetes cluster, you need to set up the appro
 You can install Endor Labs apps for the following source code managers:
 
 * [GitHub Cloud](../../github-app/)
+* [GitHub Enterprise](../../github-app/github-enterprise-app/)
 * [GitLab Cloud and self-hosted](../../gitlab-app/)
 * [Bitbucket Data Center](../../bitbucket-datacenter-app/)
 * [Bitbucket Cloud](../../bitbucket-cloud/)
@@ -425,7 +427,7 @@ You can install Endor Labs apps for the following source code managers:
 
 When you configure Outpost on GitLab self-hosted with self-signed certificates, you need to add the self-signed certificate to the Outpost Helm chart values.
 
-#### Note
+**Note**
 
 Proper certificate validation is crucial for secure communication between Outpost and your GitLab self-hosted instance. Ensure that the self-signed certificate is valid and properly configured to prevent any security issues.
 
@@ -487,6 +489,95 @@ Perform the following steps to add the self-signed certificate to the Outpost He
    -f endor-outpost-values.yaml
    ```
 6. [Install the GitLab App.](../../gitlab-app/)
+
+## Configure Outpost on GitHub Enterprise Server with self-signed certificates
+
+When you configure Outpost on GitHub Enterprise Server with self-signed certificates, you need to add the self-signed certificate to the Outpost Helm chart values.
+
+**Note**
+
+Proper certificate validation is crucial for secure communication between Outpost and your GitHub Enterprise Server instance. Ensure that the self-signed certificate is valid and properly configured to prevent any security issues.
+
+Perform the following steps to add the self-signed certificate to the Outpost Helm chart values and deploy Outpost with GitHub Enterprise Server.
+
+1. Download the self-signed certificate from the GitHub Enterprise Server instance.
+2. Check if a `ConfigMap` for the GitHub certificate already exists.
+
+   ```
+   kubectl -n <namespace> get configmap github-cert -o yaml
+   ```
+3. If a previous certificate exists, delete it before creating a new one.
+
+   ```
+   kubectl -n <namespace> delete configmap github-cert
+   ```
+4. Create a new `ConfigMap` with the certificate in the Outpost cluster.
+
+   ```
+   kubectl create configmap github-cert --from-file=github-CA.pem=<path-of-the-certificate> -n <namespace>
+   ```
+
+   For example:
+
+   ```
+   kubectl create configmap github-cert --from-file=github-CA.pem=/Users/doe/Downloads/github-CA.pem -n onprem-scheduler
+   ```
+5. Verify that the `ConfigMap` has been created:
+
+   ```
+   kubectl -n <namespace> get configmap github-cert -o yaml
+   ```
+6. Modify the values yaml file to volume mount the certificate in the scheduler and endorctl image. Mount your cert file under `/etc/ssl/certs` directory.
+
+   ```
+   endorAPI: "https://api.endorlabs.com"
+   endorNamespace: "<Endor Labs namespace>"
+   auth:
+     apiKey: "<apiKey>"
+     apiSecret: "<apiSecret>"
+   scheduler:
+     image:
+       repository: "endorcipublic.azurecr.io/scheduler"
+       tag: "latest"
+       pullPolicy: "Always"
+     volumes:
+       - name: github-cert
+         configMap:
+           name: github-cert
+     volumeMounts:
+       - name: github-cert
+         mountPath: /etc/ssl/certs/github-CA.pem
+         subPath: github-CA.pem
+   endorctl:
+     image:
+       repository: "endorcipublic.azurecr.io/endorctl_bare"
+       tag: "latest"
+       pullPolicy: "Always"
+     volumes:
+       - name: github-cert
+         configMap:
+           name: github-cert
+     volumeMounts:
+       - name: github-cert
+         mountPath: /etc/ssl/certs/github-CA.pem
+         subPath: github-CA.pem
+    additionalEnvs:
+      - name: "GITHUB_USE_APP_TRANSPORT"
+        value: "true"
+   ```
+7. Install Helm for outpost configuration.
+
+   ```
+   helm install endorlabsscheduler oci://endorcipublic.azurecr.io/charts/onprem-scheduler \
+   -n <namespace> \
+   -f endor-outpost-values.yaml
+   ```
+8. Verify certificate in Pod and Confirm that the certificate is correctly mounted in the pods:
+
+   ```
+   kubectl -n onpremschedulertest describe pod $POD | grep -A3 github-cert
+   ```
+9. [Install the GitHub Enterprise App.](../../github-app/github-enterprise-app/)
 
 ## Feedback
 

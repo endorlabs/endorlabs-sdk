@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/july-2025/
 title: July 2025 | Endor Labs Docs
-downloaded: 2025-11-20 11:50:41
+downloaded: 2025-12-11 11:34:38
 ---
 
 July 2025 | Endor Labs Docs

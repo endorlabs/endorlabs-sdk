@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/approximate-scans/
 title: Approximate scans | Endor Labs Docs
-downloaded: 2025-11-20 11:52:07
+downloaded: 2025-12-11 11:35:46
 ---
 
 Approximate scans | Endor Labs Docs
@@ -31,7 +31,7 @@ For example, if the version is pinned then the approximate scan uses that versio
 
 False positives can occur if the actual resolved version is different from the approximated version, or if the same dependency is included in multiple places.
 
-#### Warning
+**Warning**
 
 Endor Labs automatically performs an approximate scan if full dependency resolution fails. You cannot disable approximate scans, and you cannot initiate an approximate scan manually.
 

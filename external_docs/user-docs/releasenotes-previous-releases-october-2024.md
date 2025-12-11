@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/october-2024/
 title: October 2024 | Endor Labs Docs
-downloaded: 2025-11-20 11:51:57
+downloaded: 2025-12-11 11:35:36
 ---
 
 October 2024 | Endor Labs Docs
@@ -65,7 +65,7 @@ When integrating Jira with Endor Labs, you can:
 * Specify an issue type from the custom Jira project such as Bug, Task, Epic, Story, or any other value when raising a Jira ticket. This enables efficient categorization and tracking of issues within the project.
 * Configure the integration to define custom fields with appropriate values, that align with your organization’s workflows. For instance, you can create key-value pairs like `Source = Endor Labs` to associate specific information with each Jira ticket raised from Endor Labs.
 
-#### Note
+**Note**
 
 Make sure the endorctl version is v1.6.547 to use **ISSUE TYPE** and v1.6.567 or higher to use **Custom Fields**.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/
 title: Upgrades and remediation | Endor Labs Docs
-downloaded: 2025-11-20 11:51:27
+downloaded: 2025-12-11 11:35:05
 ---
 
 Upgrades and remediation | Endor Labs Docs
@@ -29,7 +29,7 @@ Endor Labs provides automated upgrade analysis and remediation capabilities that
 
 [**Remediation PRs in GitHub App**](./pr-remediation/) automatically generate pull requests with dependency upgrades and security fixes directly in GitHub development workflows. This capability integrates remediation recommendations into existing CI/CD processes, enabling teams to review and merge security fixes through standard code review workflows.
 
-#### Maximum number of remediation PRs
+**Maximum number of remediation PRs**
 
 Endor Labs creates a maximum of 20 remediation PRs per project through the GitHub App integration.
 

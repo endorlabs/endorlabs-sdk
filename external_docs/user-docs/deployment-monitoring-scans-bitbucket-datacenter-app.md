@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-datacenter-app/
 title: Deploy Endor Labs Bitbucket App in Bitbucket Data Center | Endor Labs Docs
-downloaded: 2025-11-20 11:50:14
+downloaded: 2025-12-11 11:33:38
 ---
 
 Deploy Endor Labs Bitbucket App in Bitbucket Data Center | Endor Labs Docs
@@ -23,7 +23,7 @@ Endor Labs provides a Bitbucket App that continuously monitors users’ projects
 
 When you use the Endor Labs Bitbucket App, it creates namespaces based on your projects in Bitbucket Data Center. The namespaces created by the Endor Labs Bitbucket App are not like regular namespaces and are called managed namespaces. You can either configure the URL to Bitbucket Data Center to import all the projects or configure the project key to import a specific project in Endor Labs.
 
-#### Note
+**Note**
 
 The following characters are allowed in Endor Labs namespaces: lowercase letters (a–z), digits (0–9), hyphens (-), and underscores (\_). Additionally, the namespace is limited to a maximum of 64 characters in length. If the Bitbucket host or your projects have a different naming convention, the corresponding namespaces will be converted to comply with the naming convention of Endor Labs namespaces.
 
@@ -69,14 +69,14 @@ graph TD
 
       class EN,EN2 endor
       class O1,P1,P2,P3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ### Namespace structure when you add a Bitbucket Data Center project
 
 When you add a Bitbucket Data Center project to an Endor Labs namespace, Endor Labs creates a child namespace for the Bitbucket Data Center project and maps all repositories in that project to this namespace. The child namespace that maps to the Bitbucket Data Center project is a managed namespace. The managed namespace has the name, `<host name>_<project name>`. For example, if your Bitbucket hostname is `bitbucket.deerinc.com` and project name is `doe`, the managed namespace will have the name, `bitbucket-deerinc-com_doe`.
 
-You can add multiple projects to the same Endor Labs namespace. Each project will have its own managed namespace. For example, your hostname is `bitbucket.deerinc.com`, which has three projects, `buck`,`doe`, and`fawn`. You add each project to the Endor Labs namespace, `endor-azure`.
+You can add multiple projects to the same Endor Labs namespace. Each project will have its own managed namespace. For example, your hostname is `bitbucket.deerinc.com`, which has three projects, `buck`,`doe`, and`fawn`. You add each project to the Endor Labs namespace, `endor-bitbucket`.
 
 The following image shows the namespace structure in Endor Labs.
 
@@ -99,7 +99,7 @@ graph TD
 
       class EN,EN2 endor
       class A1,A2,A3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ## Default branch detection
@@ -140,6 +140,8 @@ Ensure the following prerequisites are in place before you install the Endor Lab
 * A publicly accessible Bitbucket Data Center host set up with HTTPS.
 * A [Bitbucket HTTP access token](https://confluence.atlassian.com/bitbucketserver/http-access-tokens-939515499.html) with at least `Project read` permission at the project level.
 
+If your Bitbucket Data Center instance is self-hosted behind a firewall with ingress restrictions, you must configure your firewall to allow inbound connections from Endor Labs. See [Firewall & Proxy Rules](../../../troubleshooting/firewall-rules/#ingress-rules-for-restricted-environments) for detailed guidance on configuring firewall access.
+
 ## Install the Bitbucket App
 
 1. Sign in to Endor Labs.
@@ -170,7 +172,7 @@ Ensure the following prerequisites are in place before you install the Endor Lab
 
 Endor Labs Bitbucket App scans your Bitbucket projects every 24 hours and reports any new findings or changes to release versions of your code.
 
-#### Note
+**Note**
 
 Only users with admin authorization role can create and manage installations.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/outpost/outpost-requirements/
 title: Outpost requirements | Endor Labs Docs
-downloaded: 2025-11-20 11:47:58
+downloaded: 2025-12-11 11:30:46
 ---
 
 Outpost requirements | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/python/
 title: Python | Endor Labs Docs
-downloaded: 2025-11-20 11:49:24
+downloaded: 2025-12-11 11:32:22
 ---
 
 Python | Endor Labs Docs
@@ -101,7 +101,7 @@ export ENDOR_SCAN_PYTHON_VIRTUAL_ENV=/usr/tmp/venv
 export ENDOR_SCAN_PYTHON_GLOBAL_SITE_PACKAGES=true
 ```
 
-#### Note
+**Note**
 
 Setting both `ENDOR_SCAN_PYTHON_VIRTUAL_ENV` and `ENDOR_SCAN_PYTHON_GLOBAL_SITE_PACKAGES` environment variables at the same time is currently not supported, and the scan may not be successful.
 
@@ -258,7 +258,7 @@ To resolve dependencies from multiple requirement files, export them as a comma-
 export ENDOR_SCAN_PYTHON_REQUIREMENTS=default.txt,requirements.txt
 ```
 
-#### Note
+**Note**
 
 When the `ENDOR_SCAN_PYTHON_REQUIREMENTS` environment variable is used, only the file names specified in the variable are considered for dependency analysis. For example, if you export `default.txt` and also have `requirements.txt` in your repository, `requirements.txt` will not be considered.
 
@@ -275,7 +275,7 @@ To solve this problem, Endor Labs has developed a unique method for dependency r
 
 Through this approach, Endor Labs conducts comprehensive dependency management, assesses reachability, and generates integrated call graphs.
 
-#### Note
+**Note**
 
 Dependency resolution using static analysis is performed on deep scans only.
 

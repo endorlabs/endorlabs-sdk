@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scanning-strategies/
 title: Scanning strategies | Endor Labs Docs
-downloaded: 2025-11-20 11:49:29
+downloaded: 2025-12-11 11:32:27
 ---
 
 Scanning strategies | Endor Labs Docs
@@ -25,7 +25,7 @@ As you deploy Endor Labs in your environment, it’s important for your team to 
 
 The findings, metrics, and data shown on the dashboard and the project listing page are based on scanning the default branch, which is also known as the main context.
 
-#### Important recommendation
+**Important recommendation**
 
 If you are scanning multiple branches, it is essential to select and set one as the default branch. When performing the endorctl scan, use the flag `--as-default-branch` to designate a project branch as the default branch and view its findings.
 

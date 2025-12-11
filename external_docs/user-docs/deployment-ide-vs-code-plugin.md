@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ide/vs-code-plugin/
 title: Endor Labs Visual Studio Code extension | Endor Labs Docs
-downloaded: 2025-11-20 11:48:25
+downloaded: 2025-12-11 11:31:16
 ---
 
 Endor Labs Visual Studio Code extension | Endor Labs Docs
@@ -59,7 +59,7 @@ The Endor Labs Visual Studio extension reads all the manifest files in your proj
   + No Underline - Has no critical findings and is on the latest version
 * Use **Update to latest version** to update the package to its latest version.
 
-#### Note
+**Note**
 
 The manifest file is updated with the latest version; however, the package is not automatically upgraded.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/gitlab-app/manage-gitlab-app/
 title: Manage GitLab App on Endor Labs | Endor Labs Docs
-downloaded: 2025-11-20 11:49:22
+downloaded: 2025-12-11 11:32:19
 ---
 
 Manage GitLab App on Endor Labs | Endor Labs Docs
@@ -39,8 +39,16 @@ To edit the GitLab App integration:
 
 1. Click the three vertical dots next to the integration, and select **Edit Integration**.
 2. You can update your personal access token and choose the scanners.
-   ![Edit GitLab App](../../../../images/GitLabAppManageEdit.png)
-3. Click **Save**.
+   ![Edit GitLab App](../../../../images/GitLabAppManageEdit.png)\
+3. Select **Merge Request Settings** to edit the MR scans configuration.
+
+   See [GitLab App MR scans](../gitlab-mr-scan/) for more information.
+
+**Scope of the Personal Access Token**
+
+Replace the personal access token with the personal access token of a project developer (minimum) role with the `api` scope for MR scans.
+
+4. Click **Save**.
 
    The changes are applicable from the next scanning cycle.
 

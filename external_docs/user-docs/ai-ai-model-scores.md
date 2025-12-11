@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-model-scores/
 title: AI model scores | Endor Labs Docs
-downloaded: 2025-11-20 11:50:43
+downloaded: 2025-12-11 11:34:07
 ---
 
 AI model scores | Endor Labs Docs

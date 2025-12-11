@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/
 title: Set up Entra ID for SSO using SAML | Endor Labs Docs
-downloaded: 2025-11-20 11:50:10
+downloaded: 2025-12-11 11:33:33
 ---
 
 Set up Entra ID for SSO using SAML | Endor Labs Docs
@@ -23,7 +23,7 @@ You can integrate Endor Labs with Microsoft Entra ID (formerly Azure Active Dire
 
 With the Endor Labs–Entra ID SAML integration, Endor Labs acts as the Service Provider (SP), and Microsoft Entra ID acts as the Identity Provider (IdP). When users sign in to Endor Labs using SAML, the SAML protocol triggers an authentication request to Entra ID, which returns a SAML assertion to Endor Labs. Users are then authenticated to access the application.
 
-#### Note
+**Note**
 
 The default session duration for SAML authentication is four hours. You can modify the `SessionNotOnOrAfter` attribute to lower the session duration. See [Session duration](../../../authentication-providers/#session-duration) for more information.
 
@@ -40,15 +40,17 @@ To configure your Endor Labs application in Entra ID:
 3. Click **Create** to initiate creating your enterprise application.
 4. Under **Overview**, click **Single sign-on** and select **SAML**. This redirects you to the **SAML-based Sign-on** page.
 5. Edit the following details in **Basic SAML Configuration** and click **Save**.
-
    * **Identifier (Entra ID)**: `https://api.endorlabs.com/v1/auth/sso`
    * **Reply URL (Assertion Consumer Service URL)**: `https://api.endorlabs.com/v1/auth/saml-callback?tenant=yourtenant`
 
-     #### Note
+**Note**
 
-     Replace `yourtenant` with your tenant name.
+Replace `yourtenant` with your tenant name.
 
-     ![](../../../../../images/entraid-saml-setup.png)
+```
+  <img src="../../../../../images/entraid-saml-setup.png" width="700" />
+```
+
 6. In **Attributes & Claims**, select **Edit** to add required claims, additional claims and group claims.
 
    a. Select **Add new claim** and fill the following details:
