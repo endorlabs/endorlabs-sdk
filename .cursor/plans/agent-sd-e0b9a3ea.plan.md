@@ -1,4 +1,12 @@
-<!-- e0b9a3ea-0e65-4183-9a3f-2bf1191a3d9a 4e8c435f-d220-4ef9-ad5d-0b117185d08c -->
+---
+name: "Wayfinder: Graph-Based Data Model Navigator"
+overview: ""
+todos:
+  - id: 87bc5ae1-6e29-499e-b1e9-5bbd3b768ef5
+    content: Create Wayfinder documentation for agents and visualization
+    status: pending
+---
+
 # Wayfinder: Graph-Based Data Model Navigator
 
 ## Overview
@@ -949,11 +957,3 @@ path = graph.find_path("Finding", "RepositoryVersion")
 from endor_cockpit.resources import finding, policy
 # ... implementation using learned structure
 ```
-
-### To-dos
-
-- [ ] Move agent plan to .workspace and create OpenAPI definitions index script
-- [ ] Delete old Holocron RAG implementation and all references
-- [ ] Implement Wayfinder core with NetworkX (graph.py, builder.py, models.py)
-- [ ] Implement exporters and CLI interface for Wayfinder
-- [ ] Create Wayfinder documentation for agents and visualization

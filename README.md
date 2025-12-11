@@ -207,20 +207,17 @@ ls maneuvers/
 - **Finding** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
 - **Policy** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
 - **Namespace** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **Repository** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **RepositoryVersion** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **PackageVersion** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
+- **ScanResult** - Implementation: ✅ | Documentation: ✅ | Tests: ✅
 
-#### 🔄 **SCAFFOLDED RESOURCES**
-- **Repository** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
-- **RepositoryVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
-- **PackageVersion** - Implementation: 🔄 | Documentation: 🔄 | Tests: ❌
-
-#### ❌ **PENDING RESOURCES**
-- **DependencyMetadata** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **LinterResult** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Metric** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Scan** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **User** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Token** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
-- **Installation** - Implementation: ❌ | Documentation: ❌ | Tests: ❌
+#### 🚧 **IMPLEMENTED (Tests Pending)**
+- **DependencyMetadata** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
+- **LinterResult** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
+- **Metric** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
+- **User** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
+- **Installation** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 
 ### Completion Criteria
 
