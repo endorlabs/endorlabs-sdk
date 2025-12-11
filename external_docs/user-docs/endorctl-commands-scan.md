@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/scan/
 title: scan | Endor Labs Docs
-downloaded: 2025-10-27 12:57:32
+downloaded: 2025-12-11 11:31:44
 ---
 
 scan | Endor Labs Docs
@@ -57,19 +57,13 @@ endorctl scan --secrets --git-logs
 
 The above command performs a scan of the repository’s Git logs using the following logic:
 
-* if it is the first time the repository’s Git log history is scanned, it performs a full scan
-* a full rescan is also performed if a change has been detected to any of the rules in the namespace
-* in all other cases, the scan is incremental based on the last time a scan was performed.
+* If it is the first time the repository’s Git log history is scanned, it performs a full scan
+* A full rescan is also performed if a change has been detected to any of the rules in the namespace
+* In all other cases, the scan is incremental based on the last time a scan was performed.
 
-In cases where any of the detected secrets has been invalidated and you would like the system to run
-the validators again so that the state of the secret is properly reflected in the findings page,
-you could force a full rescan by using the following command.
+If the system invalidates any detected secrets, and you want to run the validators again so that the findings page properly reflects the secret state, you can force a full rescan by using the following command.
 
-```
-endorctl scan --secrets --force-rescan
-```
-
-To scan for misconfigurations in a GitHub repository (i.e <https://github.com/endorlabs/app-java-demo>).
+To scan for misconfigurations in a GitHub repository like <https://github.com/endorlabs/app-java-demo>.
 
 ```
 export GITHUB_TOKEN=<insert-your-github-token>
@@ -104,6 +98,14 @@ To scan and discover AI/LLM models in your repository, run the following command
 endorctl scan --ai-models --dependencies
 ```
 
+To run a scan in dry run mode with local scanning and read-only access, run the following command. Dry run mode does not store scan results for monitoring and is best when used by developers running local scans.
+
+```
+endorctl scan --dependencies --dry-run
+```
+
+You can also use `--dry-run` with `--secrets` or `--sast` flags. The `--dry-run` flag cannot be used with container scanning.
+
 ## Options
 
 The command `endorctl scan` uses the following flags and environment variables:
@@ -113,24 +115,25 @@ The command `endorctl scan` uses the following flags and environment variables:
 | Flag | Environment Variable | Type | Description |
 | --- | --- | --- | --- |
 | `bazel-exclude-targets` | `ENDOR_SCAN_BAZEL_EXCLUDE_TARGETS` | comma-separated string | Set this variable to exclude a list of Bazel targets included in a provided Bazel query. |
-| `bazel-include-targets` | `ENDOR_SCAN_AS_INCLUDE_TARGETS` | comma-separated string | Set this variable to scan a list of targets using Bazel. Only the specified list of targets are scanned. If you do not specify `bazel-include-targets`, you must identify targets using `bazel-targets-query`. If you specify targets, then the results from `bazel-targets-query` are ignored. |
+| `bazel-include-targets` | `ENDOR_SCAN_BAZEL_INCLUDE_TARGETS` | comma-separated string | Set this variable to scan a list of targets using Bazel. Only the specified list of targets are scanned. If you do not specify `bazel-include-targets`, you must identify targets using `bazel-targets-query`. If you specify targets, then the results from `bazel-targets-query` are ignored. |
 | `bazel-show-internal-targets` | `ENDOR_SCAN_BAZEL_SHOW_INTERNAL_TARGETS` | boolean (default:false) | Show internal targets as py\_library, java\_library and go\_library as dependencies. Must be used together with `--use-bazel`. |
-| `bazel-targets-query` | `ENDOR_SCAN_BAZEL_TARGETS` | string | Set this variable to query for a list of Bazel targets to include in a scan. |
+| `bazel-targets-query` | `ENDOR_SCAN_BAZEL_TARGETS_QUERY` | string | Set this variable to query for a list of Bazel targets to include in a scan. |
 | `bazel-vendor-manifest-path` | `ENDOR_SCAN_BAZEL_VENDOR_MANIFEST_PATH` | string | Set this variable to specify the path of the `go.mod` file if you use Bazel with Gazelle in vendored mode for Go projects. |
 | `bazel-workspace-path` | `ENDOR_SCAN_BAZEL_WORKSPACE_PATH` | string | Set this variable to specify the path of the Bazel workspace. |
 | `use-bazel` | `ENDOR_SCAN_USE_BAZEL` | boolean (default:false) | Use Bazel to perform the endorctl scan. |
-| `bazel-rc-path` | `ENDOR_SCAN_BAZEL_RC_PATH` | string | Specify custom paths for Bazel configuration files. Specify comma-separated paths relative to the repository root. If multiple .bazelrc files are provided and contain conflicting configuration options, the configuration in the last file listed takes precedence. See [Bazel documentation](https://bazel.build/run/bazelrc#bazelrc-file-locations) for details about `.bazel.rc` file locations. |
+| `bazel-rc-path` | `ENDOR_SCAN_BAZEL_RC_PATH` | string | Specify custom paths for Bazel configuration files. Specify comma-separated paths relative to the repository root. If multiple `.bazelrc` files are provided and contain conflicting configuration options, the configuration in the last file listed takes precedence. See [Bazel documentation](https://bazel.build/run/bazelrc#bazelrc-file-locations) for details about `.bazel.rc` file locations. |
 | `bazel-flags` | `ENDOR_SCAN_BAZEL_FLAGS` | string | Specify additional command-line flags that should be passed to Bazel when running a scan. Specify Comma-separated key-value pairs in the format `key=value`. These flags are applied to `bazel build`. |
 
 ### Pull request (CI) flags
 
 | Flag | Environment Variable | Type | Description |
 | --- | --- | --- | --- |
-| `enable-pr-comments` | `ENDOR_SCAN_ENABLE_PR_COMMENTS` | boolean (default:false) | Publish new findings as review comments. Must be set together with `--scm-pr-id`, `--pr`, and `--github-token`. Cannot be used with `--pr-baseline` since the baseline is determined from the merge target of the PR. Note: You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future. |
-| `scm-pr-id` | `ENDOR_SCAN_GITHUB_PR_ID` | string | Set the GitHub PR ID corresponding to the scan. Must be set together with `--enable-pr-comments`, `--pr`, and `--github-token`. |
+| `enable-pr-comments` | `ENDOR_SCAN_ENABLE_PR_COMMENTS` | boolean (default:false) | Publish new findings as review comments. Must be set together with `--scm-pr-id`, `--pr`, and either `--github-token` (for GitHub) or `--scm-token` (for GitLab). Cannot be used with `--pr-baseline` since the baseline is determined from the merge target of the PR. Note: You can continue to use `--github-pr-id` flag, but it will be deprecated and removed in the future. |
+| `scm-pr-id` | `ENDOR_SCAN_SCM_PR_ID` | string | Set the PR or MR ID corresponding to the scan. Must be set together with `--enable-pr-comments`, `--pr`, and either `--github-token` (for GitHub) or `--scm-token` (for GitLab). |
 | `pr` | `ENDOR_SCAN_PR` | boolean (default:false) | Set if this is a PR scan. PR scans are not used for reporting or monitoring and should be treated as point-in-time policy and finding tests. |
 | `pr-baseline` | `ENDOR_SCAN_PR_BASELINE` | string | Set to the Git reference that you are merging to, such as your default branch. Action policies will only flag issues that do not exist in the baseline so that developers are only alerted to issues on the current changes. For example, `--pr-baseline=main`. |
 | `pr-incremental` | `ENDOR_SCAN_PR_INCREMENTAL` | boolean (default:false) | Only scan packages with dependencies that have changed compared to the baseline scan. Must be set together with `--pr-baseline` or `--enable-pr-comments`. |
+| `scm-token` | `ENDOR_SCAN_SCM_TOKEN` | string | Set the GitLab token used to authenticate with GitLab for MR comments. Must be set together with `--enable-pr-comments`, `--scm-pr-id`, and `--pr`. The token takes priority over installation PATs. |
 
 ### GitHub configuration flags
 
@@ -195,12 +198,13 @@ The command `endorctl scan` uses the following flags and environment variables:
 | `container` | `ENDOR_SCAN_CONTAINER` | string | Set this to the container image:tag to perform a scan on containers. |
 | `container-as-ref` | `ENDOR_SCAN_CONTAINER_AS_REF` | boolean (default:false) | Scan container in a persistent context and keep the version. Use the `--project-name` argument to specify the name of the project and `--path` argument to specify its path. |
 | `dependencies` | `ENDOR_SCAN_DEPENDENCIES` | boolean (default:false) | Scan Git commits and generate findings for all dependencies. |
+| `dry-run` | `ENDOR_SCAN_DRY_RUN` | boolean (default:false) | Run the scan in dry run mode. When enabled, scan results are not stored and only read only access is required. This flag can only be used with SCA (dependencies), SAST, or secrets scanning. It cannot be used with container scanning. |
 | `detached-ref-name` | `ENDOR_SCAN_DETACHED_REF_NAME` | string | Set the name of the Git reference to a user-provided name. For example, `--detached-ref-name="$CI_DEFAULT_BRANCH"`. Use with CI environments that checkout commits, such as GitLab. |
 | `droid-gpt` | `ENDOR_SCAN_DROID_GPT` | boolean (default:false) | Use DroidGPT to interpret build errors and generate remediation advice. |
-| `exclude-path` | `ENDOR_SCAN_EXCLUDE_PATH` | string | Specify one or more file paths or directories to exclude from the scan using Glob style expressions. For example, `--exclude-path="src/java/**"` will exclude all files under `src/java`, including any sub-directories, while `--exclude-path="src/java/*"` will only exclude the files directly under `src/java`. Paths must be relative to the root of the repository. Use quotes to ensure that your shell does not expand wild cards. |
+| `exclude-path` | `ENDOR_SCAN_EXCLUDE_PATH` | string | Specify one or more file paths or directories to exclude from the scan using Glob style expressions. For example, `--exclude-path="src/java/**"` will exclude all files under `src/java`, including any subdirectories, while `--exclude-path="src/java/*"` will only exclude the files directly under `src/java`. Paths must be relative to the root of the repository. Use quotes to ensure that your shell does not expand wild cards. |
 | `finding-tags` | `ENDOR_SCAN_FINDING_TAGS` | string | Specify a list of user-defined tags to add to findings generated for objects in this scan scope. Use in combination with options such as `--include-path` or `--exclude-path`. Finding tags can be used to search and filter findings later. |
 | `ghactions` | `ENDOR_SCAN_GHACTIONS` | boolean (default:false) | Scan and discover GitHub action workflows in your CI/CD pipeline. |
-| `include-path` | `ENDOR_SCAN_INCLUDE_PATH` | string | Limit the scan to the specified file paths or directories using Glob style expressions. For example, `--include-path="src/java/**"` will scan all the files under `src/java`, including any sub-directories, while `--include-path="src/java/*"` will only include the files directly under `src/java`. Paths must be relative to the root of the repository. Use quotes to ensure that your shell does not expand wild cards. |
+| `include-path` | `ENDOR_SCAN_INCLUDE_PATH` | string | Limit the scan to the specified file paths or directories using Glob style expressions. For example, `--include-path="src/java/**"` will scan all the files under `src/java`, including any subdirectories, while `--include-path="src/java/*"` will only include the files directly under `src/java`. Paths must be relative to the root of the repository. Use quotes to ensure that your shell does not expand wild cards. |
 | `l`, `languages` | `ENDOR_SCAN_LANGUAGES` | string | Set programming languages to scan. Used to limit scanning to specific languages. If your project contains multiple programming languages, you can specify them as a comma-separated list as: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`. |
 | `o`, `output-type` | `ENDOR_SCAN_SUMMARY_OUTPUT_TYPE` | string | Set output format to json, yaml, table, or summary. Summary only displays policy violations (default: `table`). |
 | `package` | `ENDOR_SCAN_PACKAGE` | boolean (default:false) | Scan binaries and artifacts. You must provide the path of your file using `--path` and specify a name for your project using `--project-name` parameters. |

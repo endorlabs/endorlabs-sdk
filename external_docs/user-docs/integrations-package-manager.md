@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/
 title: Set up custom package repositories | Endor Labs Docs
-downloaded: 2025-10-27 12:56:55
+downloaded: 2025-12-11 11:30:58
 ---
 
 Set up custom package repositories | Endor Labs Docs
@@ -47,7 +47,7 @@ The following support matrix details support for package manager integrations:
 | [Ruby](./rubygems-private-package-manager/) | Gem (`gem://`) | ✓ | ✗ |
 | [PHP](./packagist-private-package-manager/) | Composer (`composer://`) | ✓ | ✗ |
 
-#### Note
+**Note**
 
 Private package manager integrations for Golang and Rust are not supported.
 

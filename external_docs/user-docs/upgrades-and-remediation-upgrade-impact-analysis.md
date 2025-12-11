@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/upgrade-impact-analysis/
 title: Upgrade impact analysis | Endor Labs Docs
-downloaded: 2025-10-27 12:57:37
+downloaded: 2025-12-11 11:31:49
 ---
 
 Upgrade impact analysis | Endor Labs Docs
@@ -37,7 +37,7 @@ The following upgrade options are available after assessment:
 * The most impactful update with moderate evidence of breaking changes
 * The most impactful update with low evidence of breaking changes
 
-#### License
+**License**
 
 Upgrade impact analysis is available with the Endor Pro license.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/api/
 title: endorctl api | Endor Labs Docs
-downloaded: 2025-10-27 12:57:11
+downloaded: 2025-12-11 11:31:17
 ---
 
 endorctl api | Endor Labs Docs
@@ -56,6 +56,8 @@ The following flags are supported for all `endorctl api` subcommands, unless spe
 ### Commonly used resource types
 
 The following table lists resource types that are commonly used in the API. See [resource kind](../../../rest-api/using-the-rest-api/data-model/resource-kinds) for more information.
+
+**Note**
 
 Resource kinds are case sensitive.
 

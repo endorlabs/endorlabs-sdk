@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/sign-in-to-endorlabs/
 title: Log in to Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:56:45
+downloaded: 2025-12-11 11:30:48
 ---
 
 Log in to Endor Labs | Endor Labs Docs
@@ -15,7 +15,7 @@ Log in to Endor Labs | Endor Labs Docs
 
 Sign in to the application and start using its features
 
-#### Tip
+**Tip**
 
 You need an Endor Labs account and a tenant to use Endor Labs.
 

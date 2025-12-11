@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/aws-keyless-auth/
 title: Keyless authentication in AWS | Endor Labs Docs
-downloaded: 2025-10-27 12:57:24
+downloaded: 2025-12-11 11:31:31
 ---
 
 Keyless authentication in AWS | Endor Labs Docs
@@ -33,7 +33,11 @@ Perform the following steps to configure keyless authentication in AWS.
 5. [Create an authorization policy in Endor Labs.](#create-an-authorization-policy-in-endor-labs)
 6. [Test keyless authentication.](#test-keyless-authentication-with-aws)
 
+**Note**
+
 To configure keyless authentication with EKS, you will need an existing IAM ODIC provider for your cluster and to configure a Kubernetes service account annotated with your instance access role. You won’t need to create or assign roles to instance profiles or create any instance profiles. See the [AWS Documentation](https://docs.aws.amazon.com/eks/latest/userguide/associate-service-account-role.html) for additional information.
+
+**Note**
 
 You will need to have the [AWS CLI installed](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) to follow the following procedure.
 
@@ -85,6 +89,8 @@ aws iam create-role --role-name endorlabs-instance-access-role --assume-role-pol
 ### Assign instance access role to the instance profile
 
 Next, ensure that the instance access role is assigned to the instance profile using the following command:
+
+**Note**
 
 Your instance profile name and role name will need to be updated based on the names of these resources in your environment.
 

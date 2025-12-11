@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/packages/
 title: Packages | Endor Labs Docs
-downloaded: 2025-10-27 12:58:43
+downloaded: 2025-12-11 11:32:20
 ---
 
 Packages | Endor Labs Docs
@@ -71,7 +71,7 @@ A dependent of a given package version has the following metadata associated wit
 
 To view the dependencies of your package:
 
-1. Sign in to Endor Labs and select **Projects** from the left sidebar.
+1. Select **Projects** from the left sidebar.
 2. Search for and select a project to review.
 3. Go to **Packages** under **Inventory** to view the list of all packages maintained as part of your project and any findings associated with them.
 
@@ -87,28 +87,29 @@ To view the dependencies of your package:
    * **Created** - The date and time when the package was created.
    * **Last Scanned** - The date and time when the package was last scanned.
 
-   #### Important
+**Important**
 
-   The following table describes the status icons for dependency resolution.
+The following table describes the status icons for dependency resolution.
 
-   | Status | Description |
-   | --- | --- |
-   | ▲ | Error occurred during manifest scan |
-   | ◐ | Error occurred during dependency resolution |
-   | ● | Dependency resolution was successful |
+| Status | Description |
+| --- | --- |
+| ▲ | Error occurred during manifest scan |
+| ◐ | Error occurred during dependency resolution |
+| ● | Dependency resolution was successful |
 
-   The following table describes the status icons for reachability analysis.
+The following table describes the status icons for reachability analysis.
 
-   | Status | Description |
-   | --- | --- |
-   | ▲ | Error occurred during call graph generation |
-   | ● | Call graph generation was successful |
-   | ■ | Call graph generation is not supported or not enabled |
+| Status | Description |
+| --- | --- |
+| ▲ | Error occurred during call graph generation |
+| ● | Call graph generation was successful |
+| ■ | Call graph generation is not supported or not enabled |
+
 4. Click the package to view all dependencies and the scorecards of those dependencies.
 
 To view the dependencies of your package:
 
-1. Sign in to Endor Labs and select **Projects** from the left sidebar.
+1. Select **Projects** from the left sidebar.
 2. Search for and select a project to review.
 3. Go to **Packages** under **Inventory** to view the list of all packages maintained as part of your project and any findings associated with them.
 4. Select the package whose dependents you’d like to review.
@@ -120,7 +121,7 @@ Dependents can be used to communicate with downstream users of your package vers
 
 Use filters to focus on the packages that are relevant to your tech stack and quickly identify resolution or reachability issues.
 
-1. Sign in to Endor Labs and select **Projects** from the left sidebar.
+1. Select **Projects** from the left sidebar.
 2. Search for and select a project to review.
 3. Go to **Packages** under **Inventory** to view the list of all packages maintained as part of your project and any findings associated with them.
 4. Use the **Ecosystem**, **Dependency Resolution**, and **Reachability Analysis** statuses filters to narrow down the results.
@@ -129,11 +130,23 @@ You can sort the search results by the **Package** name, **Created* data,* and *
 
 ![Filter packages](../../images/filter-package.png)
 
+### Delete package dependencies
+
+You can delete packages that are no longer needed from your project inventory. Deleting a package also deletes all associated findings.
+
+1. Select **Projects** from the left sidebar.
+2. Search for and select a project to review.
+3. Go to **Packages** under **Inventory** to view the list of all packages maintained as part of your project and any findings associated with them.
+4. Click the vertical three dots in the package row, select **Delete**.
+5. Click **Delete** to confirm the action.
+
+![Delete package](../../images/delete-package.png)
+
 ## View scorecards
 
 Scorecards are data sheets of facts that are used to derive Endor Labs scores. Scorecards are based on analysis that Endor Labs performs on open-source dependencies used in your packages.
 
-1. Sign in to Endor Labs and select **Projects** from the left sidebar.
+1. Select **Projects** from the left sidebar.
 2. Search for and select a project to review.
 3. Go to **Packages** under **Inventory** to view the list of all packages maintained as part of your project and any findings associated with them.
 4. Select the package whose dependencies you’d like to review.

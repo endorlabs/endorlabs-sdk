@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/kotlin/
 title: Kotlin | Endor Labs Docs
-downloaded: 2025-10-27 12:57:42
+downloaded: 2025-12-11 11:31:54
 ---
 
 Kotlin | Endor Labs Docs
@@ -37,17 +37,17 @@ Before you proceed to run a deep scan, ensure that your system meets the followi
 | Mid-size projects | 8-core processor | 32 GB |
 | Large projects | 16-core processor | 64 GB |
 
-## Software prerequisites
+## Software Prerequisites
 
-To ensure a successful scan using Endor Labs, it is essential to have the following prerequisite software installed:
-
-* **Maven Package Manager:** Version 3.6.1 and higher
-* **Gradle Build System:** Version 6.0.0 and higher
-* **Java Runtime Environment:** JDK versions between 11 and 23
-* **Kotlin:** version 1.4 through 2.1
-
-  For users on JDK 8, specific instructions can be found in the section [Scan the Projects on JDK Version 8](#scan-the-projects-on-jdk-version-8).
+* Install JDK versions between 11 and 25.
+  + For JDK 8, see [Scan projects on JDK version 8](#scan-the-projects-on-jdk-version-8).
 * Make sure your repository includes one or more files with `.kt` extension.
+* Install Maven version 3.6.1 and higher if your project uses Maven.
+* Install Gradle build system version 6.0.0 and higher, if your project uses Gradle.
+  + To support lower versions of Gradle, see [Scan projects on older Gradle versions](#scan-projects-on-gradle-versions-between-47-and-600).
+* Your repository must include the appropriate build manifest file:
+  + `pom.xml` for Maven projects.
+  + `build.gradle` or `build.gradle.kts` for Gradle projects.
 
 ## Build Kotlin projects
 
@@ -175,9 +175,9 @@ mvn dependency:tree
 
 2. Run `mvn install` and ensure the build is successful.
 
-   #### info
+**info**
 
-   If you want to skip the execution of tests during the build, you can use `-DskipTests` to quickly build and install your projects.
+If you want to skip the execution of tests during the build, you can use `-DskipTests` to quickly build and install your projects.
 
 ```
 mvn install -DskipTests

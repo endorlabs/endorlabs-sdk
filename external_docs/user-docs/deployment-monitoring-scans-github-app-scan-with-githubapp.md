@@ -1,10 +1,10 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/scan-with-githubapp/
-title: Scan capabilities of the Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-10-27 12:56:54
+title: Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
+downloaded: 2025-12-11 11:30:57
 ---
 
-Scan capabilities of the Endor Labs GitHub App | Endor Labs Docs
+Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
 
 
 
@@ -15,15 +15,19 @@ Scan capabilities of the Endor Labs GitHub App | Endor Labs Docs
 
 
 
-# Scan capabilities of the Endor Labs GitHub App
+# Scan capabilities of the Endor Labs GitHub Apps
 
 Learn how to scan projects using the Endor Labs GitHub App.
 
-With the Endor Labs GitHub App, you can enhance the security of your repository through the following types of scans.
+With the Endor Labs GitHub App or the Endor Labs GitHub Enterprise App you can enhance the security of your repository through the following types of scans.
+
+**Note**
+
+GitHub App refers to both the Endor Labs GitHub App and the Endor Labs GitHub Enterprise App unless otherwise specified.
 
 ## Scan complete repository
 
-The Endor Labs GitHub App automatically scans your repositories every 24 hours for potential security issues and operational risks, providing up-to-date information about your projects’ security posture.
+The Endor Labs App automatically scans your repositories every 24 hours for potential security issues and operational risks, providing up-to-date information about your projects’ security posture.
 
 * You can use the GitHub App to selectively scan your repositories for Software Composition Analysis (SCA), secrets, Repository Security Posture Management (RSPM), or CI/CD tools.
 * While the automated scan happens every 24 hours, you can manually trigger a rescan outside this schedule from the Endor Labs user interface. See [Rescan projects](../re-scan-projects/).
@@ -33,7 +37,7 @@ The Endor Labs GitHub App automatically scans your repositories every 24 hours f
 
 After scanning the complete repository, it’s important to address the pull requests submitted by users. Administrators can enable a fully automated scanning process for all pull requests and merges initiated into the main branch.
 
-To automatically scan the PRs, set the pull request preferences during the [GitHub App installation](../../github-app/#install-the-github-app) or edit the [integration preferences](../../github-app/#manage-github-apps-on-endor-labs) afterward.
+To automatically scan the PRs, set the pull request preferences during the [GitHub App installation](../../github-app/#install-the-github-app) or edit the [integration preferences](../../github-app/#manage-github-apps-on-endor-labs) afterward. For GitHub Enterprise App, set the preferences during [installation](../github-enterprise-app/#install-the-app-in-your-organization) or edit the [integration preferences](../github-enterprise-app/manage-githubapp-enterprise/) afterward.
 
 Whenever a PR is created against a repository, the Endor Labs GitHub App performs an incremental scan to detect any changes in resolved dependencies that may introduce new vulnerabilities. These incremental scans are CI runs and are not monitored. You can see the results of the scan on GitHub.
 
@@ -61,7 +65,7 @@ Endor Labs generates the following types of PR comments based on the nature of t
 You must create an Action policy to receive comments on your pull request after enabling PR comments.
 
 1. Create an [Action policy](../../../managing-policies/action-policies/).
-2. Set the **Branch Type** to `PR` so the policy applies specifically to pull request scans.
+2. Set the **Branch Type** to `Pull Request` so the policy applies specifically to pull request scans.
 3. Under **Action**, select **Enforce Policy**, then choose:
    * **Warn** to post a comment without breaking the build.
    * **Break the Build** to fail the build and block the pull request.
@@ -238,7 +242,7 @@ See the following sections to understand the Finding and PackageVersion definiti
 See the following specification to understand the additional functions that are also available. You can access these functions by using their corresponding keys.
 
 ```
-// FuncMap contains the additional functions that are available to GithubCommentTemplate.
+// FuncMap contains the additional functions that are available to CommentTemplate.
 var FuncMap = template.FuncMap{
 	"now": toTime, // 'now' gives the current time
 
@@ -325,6 +329,10 @@ var FuncMap = template.FuncMap{
 
 	// 'getFirstPartyReachableFunctions' extracts first-party functions from reachable paths
 	"getFirstPartyReachableFunctions": getFirstPartyReachableFunctions,
+
+	// 'groupFindingsByRemediation' groups findings by their remediation value
+	// Returns a slice of GroupedRemediation where findings with the same remediation are grouped together
+	"groupFindingsByRemediation": groupFindingsByRemediation,
 }
 ```
 

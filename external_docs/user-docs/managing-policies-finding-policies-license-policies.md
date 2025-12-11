@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/license-policies/
 title: License policies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:41
+downloaded: 2025-12-11 11:33:21
 ---
 
 License policies | Endor Labs Docs
@@ -28,7 +28,7 @@ See [Finding Policies](..) for details on how to create policies from policy tem
 | --- | --- | --- |
 | Permit only specified software licenses | Use this template to define an allowed list of software licenses permitted within your organization or a subset of projects. Endor Labs will raise findings when dependencies in packages or projects have licenses that are not on the allowed list. | Medium |
 | Restricted software licenses | Use this template to define a blocked list of software licenses that should be restricted from use or only used within specific contexts within your organization. Endor Labs will raise findings when dependencies in packages or projects have licenses that are on the blocked list. | Medium |
-| Restricted software license types | Use this template to create an organizational policy to restrict certain license types or limit a license type to specific contexts within an organization. This is useful to identify license risks and violations in 3rd party open source packages. The license type classification in this policy follows the industry best practice rules defined by [Google license types](https://opensource.google/documentation/reference/thirdparty/licenses#types). If no license types are specified using the input parameter, only “restricted” and “FORBIDDEN” license types are flagged. | Medium |
+| Restricted software license types | Use this template to create an organizational policy to restrict certain license types or limit a license type to specific contexts within an organization. This is useful to identify license risks and violations in third party open source packages. The license type classification in this policy follows the industry best practice rules defined by [Google license types](https://opensource.google/documentation/reference/thirdparty/licenses#types). If no license types are specified using the input parameter, only `restricted` and `FORBIDDEN` license types are flagged. | Medium |
 
 ## Feedback
 

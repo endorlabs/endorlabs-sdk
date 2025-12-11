@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/azure-app/
 title: Deploy Endor Labs Azure DevOps App | Endor Labs Docs
-downloaded: 2025-10-27 12:57:53
+downloaded: 2025-12-11 11:32:05
 ---
 
 Deploy Endor Labs Azure DevOps App | Endor Labs Docs
@@ -65,7 +65,7 @@ graph TD
 
       class EN,EN2 endor
       class O1,P1,P2,P3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ### Namespace structure when you add an Azure DevOps project
@@ -95,17 +95,48 @@ graph TD
 
       class EN,EN2 endor
       class A1,A2,A3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
-### Prerequisites for Azure DevOps App
+## Default branch detection
+
+When Endor Labs scans a repository for the first time, it detects the default branch of the repository. The findings that are created in the scan are associated with the default branch.
+
+### Changing the default branch
+
+When you change the default branch in your source control system (for example, from `main` to `dev`):
+
+* Endor Labs automatically detects the new default branch and sets that as the default reference
+* The previous default branch becomes a reference branch
+* Scans continue on the new default branch and the reference branch
+
+The findings associated with the previous default branch are no longer associated with the default context reference. You can view them in the reference context.
+
+### Renaming the default branch
+
+When you rename the default branch in your source control system:
+
+* Endor Labs automatically switches to the renamed branch
+* Scans continue without disruption
+
+### Adding repository versions
+
+When you add a new repository version (for example, a `dev` branch), both the default branch and the new version are scanned by the Endor Labs App.
+
+### Control default branch detection
+
+You can control the default branch detection by setting the `ENDOR_SCAN_TRACK_DEFAULT_BRANCH` environment variable in a scan profile. You need to configure the project to use the scan profile. See [Configure scan profiles](/scan-with-endorlabs/manage-scan-profiles/) for more information.
+
+By default, the environment variable is set to `true`. When set to `true`, the default branch detection is enabled, and the first branch you scan is automatically considered as the default branch.
+
+## Prerequisites for Azure DevOps App
 
 Ensure the following prerequisites are in place before you install the Endor Labs Azure DevOps App.
 
 * An Azure DevOps cloud account and organization. If you don’t have one, create one at [Azure DevOps](https://dev.azure.com).
 * Endor Labs Azure DevOps App requires read permissions to in your projects. You can grant these permissions by providing read access to the **Code** category when you create an Azure DevOps personal access token for Endor Labs.
 
-### Install the Azure DevOps App
+## Install the Azure DevOps App
 
 To automatically scan repositories using the Azure DevOps App:
 
@@ -133,7 +164,7 @@ To automatically scan repositories using the Azure DevOps App:
 
 Endor Labs Azure DevOps App scans your Azure repos every 24 hours and reports any new findings or changes to release versions of your code.
 
-#### Note
+**Note**
 
 Only users with admin authorization role can create and manage installations.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/api-keys/
 title: Manage API keys | Endor Labs Docs
-downloaded: 2025-10-27 12:58:01
+downloaded: 2025-12-11 11:32:13
 ---
 
 Manage API keys | Endor Labs Docs
@@ -21,7 +21,7 @@ Manage your Endor Labs API keys for automation.
 
 Use API keys to engage with Endor Labs services programmatically and enable any automation or integration with other systems in your environment. You can manage API keys with endorctl or from the Endor Labs user interface.
 
-#### Tip
+**Tip**
 
 Instead of using API keys, you can use keyless authentication to authenticate with Endor Labs services. See [Keyless authentication](../../deployment/ci-scans/keyless-authentication/) for more information. Using keyless authentication eliminates the need to manage API keys and reduces the risk of API key compromise.
 

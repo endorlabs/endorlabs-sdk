@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-cloud/
 title: Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
-downloaded: 2025-10-27 12:59:25
+downloaded: 2025-12-11 11:34:06
 ---
 
 Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
@@ -19,13 +19,11 @@ Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
 
 Learn how to continuously monitor your environment with the Endor Labs Bitbucket App.
 
-Beta
-
 Endor Labs provides a Bitbucket App that continuously monitors users’ projects for security and operational risks in Bitbucket Cloud. You can use the Bitbucket App to selectively scan your repositories for SCA, secrets, SAST, and CI/CD tools.
 
 When you use the Endor Labs Bitbucket App, it creates namespaces based on your workspace and projects in Bitbucket Cloud. The namespaces created by the Endor Labs Bitbucket App are not like regular namespaces and are called managed namespaces. You can either configure the URL to Bitbucket Cloud to import all the projects or configure the project key to import a specific project in Endor Labs.
 
-#### Note
+**Note**
 
 The following characters are allowed in Endor Labs namespaces: lowercase letters (a–z), digits (0–9), hyphens (-), and underscores (\_). Additionally, the namespace is limited to a maximum of 64 characters in length. If the Bitbucket host or your projects have a different naming convention, the corresponding namespaces will be converted to comply with the naming convention of Endor Labs namespaces.
 
@@ -71,7 +69,7 @@ graph TD
 
       class EN,EN2 endor
       class O1,P1,P2,P3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ### Namespace structure when you add a Bitbucket Cloud project
@@ -101,8 +99,39 @@ graph TD
 
       class EN,EN2 endor
       class A1,A2,A3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
+
+## Default branch detection
+
+When Endor Labs scans a repository for the first time, it detects the default branch of the repository. The findings that are created in the scan are associated with the default branch.
+
+### Changing the default branch
+
+When you change the default branch in your source control system (for example, from `main` to `dev`):
+
+* Endor Labs automatically detects the new default branch and sets that as the default reference
+* The previous default branch becomes a reference branch
+* Scans continue on the new default branch and the reference branch
+
+The findings associated with the previous default branch are no longer associated with the default context reference. You can view them in the reference context.
+
+### Renaming the default branch
+
+When you rename the default branch in your source control system:
+
+* Endor Labs automatically switches to the renamed branch
+* Scans continue without disruption
+
+### Adding repository versions
+
+When you add a new repository version (for example, a `dev` branch), both the default branch and the new version are scanned by the Endor Labs App.
+
+### Control default branch detection
+
+You can control the default branch detection by setting the `ENDOR_SCAN_TRACK_DEFAULT_BRANCH` environment variable in a scan profile. You need to configure the project to use the scan profile. See [Configure scan profiles](/scan-with-endorlabs/manage-scan-profiles/) for more information.
+
+By default, the environment variable is set to `true`. When set to `true`, the default branch detection is enabled, and the first branch you scan is automatically considered as the default branch.
 
 ## Prerequisites for Bitbucket App for Bitbucket Cloud
 
@@ -111,7 +140,7 @@ Ensure the following prerequisites are in place before you install the Endor Lab
 * Bitbucket Cloud instance with workspace and projects
 * A Bitbucket access token either at the [workspace level](https://support.atlassian.com/bitbucket-cloud/docs/create-a-workspace-access-token/) to import a workspace, or the [project level](https://support.atlassian.com/bitbucket-cloud/docs/create-a-project-access-token/) to import a project. The token must have at least `Project read` permission.
 
-#### Note
+**Note**
 
 Endor Labs Bitbucket App for Bitbucket Cloud requires a Bitbucket Cloud premium plan since Bitbucket Cloud standard plan does not support project-level access tokens.
 
@@ -142,7 +171,7 @@ Endor Labs Bitbucket App for Bitbucket Cloud requires a Bitbucket Cloud premium 
 
 Endor Labs Bitbucket App scans your Bitbucket projects every 24 hours and reports any new findings or changes to release versions of your code.
 
-#### Note
+**Note**
 
 Only users with admin authorization role can create and manage installations.
 

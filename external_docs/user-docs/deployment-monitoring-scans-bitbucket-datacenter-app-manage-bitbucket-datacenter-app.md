@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-datacenter-app/manage-bitbucket-datacenter-app/
 title: Manage Bitbucket Data Center App on Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:58:03
+downloaded: 2025-12-11 11:32:15
 ---
 
 Manage Bitbucket Data Center App on Endor Labs | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/github-keyless-auth/
 title: Keyless authentication in GitHub | Endor Labs Docs
-downloaded: 2025-10-27 12:58:40
+downloaded: 2025-12-11 11:33:21
 ---
 
 Keyless authentication in GitHub | Endor Labs Docs

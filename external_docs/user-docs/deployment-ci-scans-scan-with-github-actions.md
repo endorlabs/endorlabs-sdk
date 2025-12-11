@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-github-actions/
 title: Scanning with GitHub Actions | Endor Labs Docs
-downloaded: 2025-10-27 12:58:14
+downloaded: 2025-12-11 11:32:28
 ---
 
 Scanning with GitHub Actions | Endor Labs Docs
@@ -123,6 +123,32 @@ jobs:
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'findings.sarif'
+```
+
+## Set up branch tracking in GitHub Actions
+
+In Git, a detached HEAD state occurs when the repository checks out a specific commit instead of a branch reference. In this state, Git points the HEAD directly to a commit hash, without associating it with a named branch. As a result, actions performed, such as creating new commits or running automated scans, do not carry branch identity unless explicitly specified.
+
+Proper branch context enables Endor Labs to:
+
+* Associate scans with the correct branch
+* Identify scans on the monitored default branch
+* Track findings and display metrics accurately across branches
+
+Without proper branch configuration, Endor Labs may create multiple branch entries for the same logical branch, leading to fragmented reporting and inaccurate metrics.
+
+![Project with multiple branch entries](../../../images/branch-fragmentation.png)
+
+GitHub Actions typically maintains proper branch context automatically. However, to ensure scans are properly tracked, when using the Endor Labs GitHub Action, set `pr: false` to create monitored versions that appear on dashboards. Use `if: github.event_name == 'push'` to trigger only on pushes to the default branch:
+
+```
+- name: Endor Labs Scan Push to main
+  if: github.event_name == 'push'
+  uses: endorlabs/github-action@v1
+  with:
+    namespace: 'example'
+    scan_dependencies: true
+    pr: false
 ```
 
 ## Secure GitHub Actions with immutable commit SHA

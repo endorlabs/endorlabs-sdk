@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/dependencies/
 title: Dependencies | Endor Labs Docs
-downloaded: 2025-10-27 12:59:10
+downloaded: 2025-12-11 11:33:14
 ---
 
 Dependencies | Endor Labs Docs
@@ -95,9 +95,16 @@ Select **Dependencies** to view the dependencies of the selected dependency vers
 
 ### View dependency graph
 
-Select **Dependency Graph** to view the dependency graph of the selected dependency version.
+Select **Dependency Graph** to view the dependency graph of the selected dependency version. Use the search bar to locate specific dependencies within the graph.
 
 ![Dependency graph](../../images/dependency-graph.png)
+
+Use the following options to filter the dependency graph view:
+
+* **Severity filter**: Filters dependencies by the severity level of their findings such as Critical, High, Medium, or Low.
+* **Ecosystem**: Filters dependencies by their package ecosystem such as Maven, npm, PyPI, Go, or NuGet.
+* **Hide Unreachable**: Hides dependencies that are not reachable in your code to help you focus on dependencies that are actively used.
+* **Hide Without Findings**: Hides dependencies that don’t have any security findings, so you can focus on dependencies that require attention.
 
 ## Export dependencies
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-review-results/
 title: View AI security code review results | Endor Labs Docs
-downloaded: 2025-10-27 12:59:22
+downloaded: 2025-12-11 11:34:03
 ---
 
 View AI security code review results | Endor Labs Docs
@@ -54,8 +54,6 @@ You can view the AI security code review results in the Endor Labs UI. You can a
 ## Security review GitHub pull request comment
 
 If you configure the action policy to get comments on your GitHub pull requests, Endor Labs comments on the pull request with the security analysis.
-
-You can view an example pull request with AI security code review comment [here](https://github.com/endorlabs-demos/open-weather-app/pull/8).
 
 ![Security Review GitHub pull request comment](../../../images/ai-security-review-github-pr-comment.png)
 

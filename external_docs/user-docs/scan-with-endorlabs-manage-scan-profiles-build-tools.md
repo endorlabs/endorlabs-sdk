@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/build-tools/
 title: Configure build tools | Endor Labs Docs
-downloaded: 2025-10-27 12:57:05
+downloaded: 2025-12-11 11:31:08
 ---
 
 Configure build tools | Endor Labs Docs
@@ -84,11 +84,11 @@ The following table outlines the toolchain profile support details across differ
 | **PHP** | Supported | Supported |  | 8.2 | Linux |
 | **Ruby** | Supported | Supported | Ruby 3.2.9, 3.3.9, 3.4.5 | Ruby 3.2.9 | Linux |
 
-#### Note
+**Note**
 
 .NET 5 and earlier versions are not supported for auto detection or manual configuration.
 
-#### Note
+**Note**
 
 If a project uses Java 8, Endor Labs installs both Java 8 and Java 17.0.11. It builds the project with Java 8 and scans it with Java 17.
 
@@ -102,7 +102,7 @@ You can define the following parameters in your scan profile:
 * **excluded\_paths**: Enable to specify a list of path to exclude from the scan.
 * **languages**: Enable to specify a list of languages to scan. If empty, default values are used.
 * **call\_graph\_languages**: Enable to specify a list of language to use for generating call graphs. If empty, default values are used.
-* **additional\_environment\_variables**: Enable to specify additional environment variables to set during the scan. Only the environment variables starting with `ENDOR_` are passed to the scan, all others are ignored.
+* **additional\_environment\_variables**: Enable to specify additional environment variables to set during the scan. Only the environment variables starting with `ENDOR_` are passed to the scan, all others are ignored. See [Global flags and environment variables](../../../endorctl/environment-variables/) for a complete list of available environment variables.
 * **enable\_automated\_pr\_scans**: Enables automatic scanning of pull request changes.
 * **enable\_pr\_comments**: Enables adding scan results as comments in pull requests.
 * **enable\_sast\_scan**: Enables SAST during the scanning process.

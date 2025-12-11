@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/june-2025/
 title: June 2025 | Endor Labs Docs
-downloaded: 2025-10-27 12:59:24
+downloaded: 2025-12-02 16:01:12
 ---
 
 June 2025 | Endor Labs Docs
@@ -23,7 +23,7 @@ We are excited to introduce the latest features and enhancements in Endor Labs.
 
 Endor Labs MCP server is now available in alpha for Cursor and Visual Studio Code.
 
-The Endor Labs MCP server integrates directly into your IDE to scan code in real-time, and catch security issues before they reach production. This workflow secures both human and AI-generated code from the moment it’s written. For more information, see [Endor Labs MCP Server](../../deployment/ide/mcp/).
+The Endor Labs MCP server integrates directly into your IDE to scan code in real-time, and catch security issues before they reach production. This workflow secures both human and AI-generated code from the moment it’s written. For more information, see [Endor Labs MCP Server](../../deployment/mcp/).
 
 ### Grant support access to your tenant New
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/configure-scanprofile-api/
 title: Configure scan profile through Endor Labs API | Endor Labs Docs
-downloaded: 2025-10-27 12:58:32
+downloaded: 2025-12-11 11:33:10
 ---
 
 Configure scan profile through Endor Labs API | Endor Labs Docs

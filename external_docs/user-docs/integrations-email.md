@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/email/
 title: Set up email integration | Endor Labs Docs
-downloaded: 2025-10-27 12:59:58
+downloaded: 2025-12-11 11:34:54
 ---
 
 Set up email integration | Endor Labs Docs
@@ -31,7 +31,7 @@ Integrate your email address with Endor Labs and automatically receive policy vi
 
 To configure an email integration, follow these steps:
 
-1. Sign in to Endor Labs and click **Integrations** from the left sidebar.
+1. Sign in to Endor Labs and select **Integrations** from the left sidebar.
 2. Navigate to **Email** under **Notifications** and click **Add**.
 3. Click **Add Notification Integration**.
 4. Specify a name and description for this integration.
@@ -47,8 +47,10 @@ While creating an action policy, configure the following settings:
 * Select **Choose an Action** as **Send Notification**.
 * From **SELECT NOTIFICATION TARGETS**, choose the email integration notification that you created.
 * Choose an **Aggregation type** for notifications.
-  + Choose **Project** to group and send the findings related to a project in one email.
-  + Choose **Dependency** to send individual email messages for every dependency.
+
+  + Choose **Project** to group and send all the findings related to a project in one email.
+  + Choose **Dependency** to send individual emails for every dependency.
+  + Choose **Dependency per package version** to send emails for every unique combination of dependency and package version.
 * From **Assign Scope**, include the project tags in **INCLUSIONS** to apply this policy to a project.
 
 See [Create an action policy](../../managing-policies/action-policies/) for more details.
@@ -162,7 +164,8 @@ message NotificationData {
   map<string, internal.endor.ai.endor.v1.PackageVersion> package_version_map = 7;
 
   // The map of finding UUIDs to corresponding parent project objects.
-  map<string, internal.endor.ai.endor.v1.Project> project_map = 8;
+  // Deprecated: Findings cannot have Project as a parent. This field is kept for backward compatibility but will always be empty.
+  map<string, internal.endor.ai.endor.v1.Project> project_map = 8 [deprecated = true];
 
   enum NotificationType {
     NOTIFICATION_TYPE_UNSPECIFIED = 0;
@@ -260,12 +263,7 @@ var EmailTemplateFuncs = template.FuncMap{
 	},
 
 	"isPatchAvailable": func(f *endorpb.Finding) bool {
-		for _, tag := range f.GetSpec().GetFindingTags() {
-			if tag == endorpb.FindingTags_FINDING_TAGS_FIX_AVAILABLE {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(f.GetSpec().GetFindingTags(), endorpb.FindingTags_FINDING_TAGS_FIX_AVAILABLE)
 	},
 
 	"getPackageEcosystem": func(p *endorpb.PackageVersion) string {

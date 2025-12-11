@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/jira-integration/
 title: Set up Jira integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:59:20
+downloaded: 2025-12-11 11:34:02
 ---
 
 Set up Jira integration with Endor Labs | Endor Labs Docs
@@ -34,7 +34,7 @@ To integrate Endor Labs with Jira:
 
 Generate Jira API credentials that you want to use to sign in to Endor Labs.
 
-#### Note
+**Note**
 
 It is recommended that the Jira account used for this integration includes only the following set of minimum required permissions.
 
@@ -50,7 +50,7 @@ It is recommended that the Jira account used for this integration includes only 
 4. Enter a concise label to distinguish your token and click **Create**.
 5. Click **Copy to clipboard**, and have the token handy to enter in the Endor Labs application.
 
-#### Note
+**Note**
 
 The token cannot be viewed after closing the form. Copy it to a secure location and have it handy. Do not share the token.
 
@@ -79,16 +79,18 @@ Set up Jira integration on the Endor Labs application.
 
     The issue type is case-sensitive. Make sure to match with an exact issue type on your Jira board.
 
-    #### Note
+**Note**
 
-    Make sure the endorctl version is 1.6.547 or higher to use **ISSUE TYPE**.
+Make sure the endorctl version is 1.6.547 or higher to use **ISSUE TYPE**.
+
 12. In **RESOLVED STATUS**, specify the resolved status used in your Jira projects.
 
     For example, if you enter the value as `Completed`, after the findings are resolved, the Jira ticket will be updated to this status. If you don’t specify a status, Endor Labs will attempt to determine your project’s resolution status and default to one of the following statuses in the order of priority: `Done`, `Resolved`, `Closed`, or `Fixed`.
 
-    #### Warning
+**Warning**
 
-    If you do not provide a resolved status and your project’s resolved status does not match `Done`, `Resolved`, `Closed`, or `Fixed`, you will be unable to configure the integration.
+If you do not provide a resolved status and your project’s resolved status does not match `Done`, `Resolved`, `Closed`, or `Fixed`, you will be unable to configure the integration.
+
 13. In **LABELS**, enter a label to associate it with your Jira notifications.
 14. For [company-managed Jira project](https://support.atlassian.com/jira-software-cloud/docs/what-are-team-managed-and-company-managed-projects/#Company-managed-projects), enter one or more component values in **COMPONENTS**. These values are automatically populated in the **Components** field of the created Jira ticket.
 15. Click **Add Custom Field** to add custom `KEY-VALUE` pairs in the created Jira ticket. Use this to create a **Components** field in your team managed Jira project.
@@ -97,9 +99,10 @@ Set up Jira integration on the Endor Labs application.
 
     For [team-managed Jira project](https://support.atlassian.com/jira-software-cloud/docs/what-are-team-managed-and-company-managed-projects/#Team-managed-projects), use **Add Custom Field** to create a **Components** field in your Jira ticket. In **KEY** enter `Components` and enter the component value in **VALUE**.
 
-    #### Note
+**Note**
 
-    Ensure that the endorctl version is 1.6.567 or higher to use **Custom Fields**. Check that the **KEY** you enter matches an existing custom field in your Jira project; otherwise, the notification cannot be saved and the **KEY-VALUE** pair will not be reflected in your Jira ticket.
+Ensure that the endorctl version is 1.6.567 or higher to use **Custom Fields**. Check that the **KEY** you enter matches an existing custom field in your Jira project; otherwise, the notification cannot be saved and the **KEY-VALUE** pair will not be reflected in your Jira ticket.
+
 16. Click **Propagate this notification target to all child namespaces** to apply this Jira notification target to all child namespaces within the hierarchy.
 17. Click **Add Notification Integration**.
 
@@ -120,7 +123,11 @@ While creating an action policy, configure the following settings:
 
 * Select **Choose an Action** as **Send Notification**.
 * From **SELECT NOTIFICATION TARGETS**, choose the Jira integration notification that you created.
-* Choose an **Aggregation type** for Jira notifications. Choose **Project** to trigger a single notification for all findings, choose **Dependency** to trigger multiple notifications for every dependency, or choose **Dependency per package version** to trigger multiple notifications for unique combinations of dependency and package. See [Aggregation types](../../managing-policies/action-policies/#aggregation-types-for-notifications) for more details.
+* Choose an **Aggregation type** for Jira notifications.
+  + Choose **Project** to trigger a single notification for all findings.
+  + Choose **Dependency** to trigger a notification for every dependency.
+  + Choose **Dependency per package version** to trigger notifications for every unique combinations of dependency and package version.
+    See [Aggregation types](../../managing-policies/action-policies/#aggregation-types-for-notifications) for more details.
 
 ### View ticket details in Jira
 
@@ -135,11 +142,11 @@ A parent ticket is created with the selected issue type, either a Task or a Bug,
 The following labels are associated with a Jira ticket created by Endor Labs:
 
 * `endorlabs-scan`: Indicates that the ticket was created by Endor Labs scan.
-* `endor-severity`: The `endor-severity` label has an associated value, `critical`, `high`, `medium`, or `low`, which reflects the severity of the associated finding in Endor Labs.
+* `endor-severity`: The `endor-severity` label has an associated value, `critical`, `high`, `medium`, or `low`, that reflects the severity of the associated Endor Labs finding. If a ticket includes multiple findings with different severities, the label represents the highest severity among them.
 
-#### Note
+**Note**
 
-For dependency and dependency per package version aggregation types, the `endor-severity` label is included in the sub-task.
+For Dependency and Dependency per package version aggregation types, the `endor-severity` label is included in the sub-task.
 
 ![Jira Parent Ticket](../../images/jiraticketwithlabel.png)
 

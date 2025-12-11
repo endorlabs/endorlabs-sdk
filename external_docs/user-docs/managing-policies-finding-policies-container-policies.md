@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/container-policies/
 title: Container policies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:33
+downloaded: 2025-12-11 11:33:12
 ---
 
 Container policies | Endor Labs Docs
@@ -29,7 +29,7 @@ This policy scans container images to detect operating system dependencies or co
 
 If a dependency reaches EOL after the initial scan, containers do not need to be re-scanned. The analytics scan automatically detects the change and raises a finding without requiring a rescan.
 
-#### Note
+**Note**
 
 This policy detects end of life status only for OS-level packages and components.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/
 title: Upgrades and remediation | Endor Labs Docs
-downloaded: 2025-10-27 13:00:09
+downloaded: 2025-12-11 11:35:05
 ---
 
 Upgrades and remediation | Endor Labs Docs
@@ -28,6 +28,10 @@ Endor Labs provides automated upgrade analysis and remediation capabilities that
 [**Endor Patches**](./using-endor-patches/) provide backported security fixes to your packages, allowing you to minimize the impact of software updates. You can update the libraries with a minimally viable security patch that reduces the risks of breaking changes, bugs, or performance issues associated with an upgrade.
 
 [**Remediation PRs in GitHub App**](./pr-remediation/) automatically generate pull requests with dependency upgrades and security fixes directly in GitHub development workflows. This capability integrates remediation recommendations into existing CI/CD processes, enabling teams to review and merge security fixes through standard code review workflows.
+
+**Maximum number of remediation PRs**
+
+Endor Labs creates a maximum of 20 remediation PRs per project through the GitHub App integration.
 
 The following diagram demonstrates an example of a vulnerability prioritization process performed by security teams:
 

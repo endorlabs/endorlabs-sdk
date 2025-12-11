@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/php/
 title: PHP | Endor Labs Docs
-downloaded: 2025-10-27 13:00:14
+downloaded: 2025-12-11 11:35:11
 ---
 
 PHP | Endor Labs Docs
@@ -36,6 +36,10 @@ Using Endor Labs, application security engineers and developers can:
 * The following versions are supported for PHP and Composer:
   + PHP 5.3.2 and higher versions
   + Composer 2.2.0 and higher versions
+
+**Note**
+
+Endor Labs does not support Composer 2.9.1.
 
 ## Build PHP projects
 

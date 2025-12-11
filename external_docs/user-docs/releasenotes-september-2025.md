@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/september-2025/
 title: September 2025 | Endor Labs Docs
-downloaded: 2025-10-27 12:57:40
+downloaded: 2025-12-11 11:33:37
 ---
 
 September 2025 | Endor Labs Docs
@@ -27,7 +27,7 @@ CI/CD tool scanning functionality is being deprecated and will be discontinued b
 
 You can now use the dedicated command `endorctl container scan` for container scanning. This replaces the older `endorctl scan --container` command. Migrate to `endorctl container scan` to ensure continued compatibility. For more information, see [Use new container scan commands](../../scan-with-endorlabs/scan-containers/container-migration/).
 
-#### Deprecation notice
+**Deprecation notice**
 
 The old `endorctl scan --container` commands and their corresponding flags (`--container`, `--container-tar`, and `--container-as-ref`) will be removed after a three-month deprecation period.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/filters/
 title: Filters | Endor Labs Docs
-downloaded: 2025-10-27 12:58:38
+downloaded: 2025-12-11 11:33:19
 ---
 
 Filters | Endor Labs Docs
@@ -144,7 +144,7 @@ Use double quotes to escape string or regex values in a filter, for example:
 * `uuid in ["64a3b8326dda5fb62bfcceea", "658323c91aa208f231cc7eff", "658323c963ca516ef02d1b02"]`
 * `meta.name matches "validation bypass"`
 
-#### Note
+**Note**
 
 Filters are case-sensitive by default.
 

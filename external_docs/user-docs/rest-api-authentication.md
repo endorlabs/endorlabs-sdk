@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/authentication/
 title: Authentication | Endor Labs Docs
-downloaded: 2025-10-27 12:59:03
+downloaded: 2025-12-11 11:33:43
 ---
 
 Authentication | Endor Labs Docs
@@ -35,7 +35,7 @@ curl --get \
   --url "https://api.endorlabs.com/v1/namespaces/$ENDOR_NAMESPACE/projects" \
 ```
 
-#### Note
+**Note**
 
 Basic authentication with curl -u is not supported.
 
@@ -110,7 +110,7 @@ To generate an API key and secret via the UI, follow these steps:
 
 Under the **Advanced** section, you have the option to propagate the API key to all child namespaces.
 
-After generating your API key and secret, click **Copy API Key & Secret**. Make sure to securely store your API secret in a safe location, as it will not be accessible through the Endor Labs UI later.
+After generating your API key and secret, click **Copy API Key & Secret**. Make sure to securely store your API secret in a safe location, as it will not be accessible through the Endor Labs user interface later.
 
 The copied key and secret will look like this:
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/build-tools-use-case/
 title: Best Practices: Build tools use cases | Endor Labs Docs
-downloaded: 2025-10-27 12:59:48
+downloaded: 2025-12-11 11:34:43
 ---
 
 Best Practices: Build tools use cases | Endor Labs Docs
@@ -32,7 +32,7 @@ You can configure toolchains and build tools in scan profiles in multiple ways:
 
 Auto detection takes place when no scan profile or build tool is configured for a project. The process identifies the toolchain versions required by the project and compares them with the versions that Endor Labs supports. See the [toolchain support matrix](../../scan-with-endorlabs/manage-scan-profiles/build-tools/#toolchain-support-matrix) to learn more about supported versions and [auto detection](../../scan-with-endorlabs/manage-scan-profiles/auto-detect-toolchains/) to learn about the complete process.
 
-#### Note
+**Note**
 
 Use the `--install-build-tools` flag to enable auto detection in endorctl scans.
 
@@ -89,7 +89,7 @@ You can configure these build tools and name them `3.13.0` and `1.24.6` in your 
 
 This approach reduces duplication, saves time, and ensures consistent toolchain use across projects. Note that these reusable build tool configurations are namespace specific, so only projects within your namespace can access them.
 
-#### Note
+**Note**
 
 Use clear, unique, and consistent naming for build tool and scan profiles to improve visibility and promote reuse. For example `frontend-node16`, `backend-java17`, `shared-go120`.
 

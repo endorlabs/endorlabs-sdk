@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/
 title: Set up SSO with Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:56:49
+downloaded: 2025-12-11 11:30:52
 ---
 
 Set up SSO with Endor Labs | Endor Labs Docs
@@ -98,7 +98,7 @@ Provide the following Identity Provider SSO details to configure OIDC SSO in End
 8. If you are configuring group-based authentication ensure to add **groups** in the **Claim Names** section.
 9. Click **Save Configuration**.
 
-#### Note
+**Note**
 
 Based on your IdP configuration you may need additional claim names or scopes. Consult your IdP administrator for additional guidance.
 

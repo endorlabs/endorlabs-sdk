@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/common-fields/
 title: Common fields | Endor Labs Docs
-downloaded: 2025-10-27 12:57:03
+downloaded: 2025-12-11 11:31:07
 ---
 
 Common fields | Endor Labs Docs
@@ -44,7 +44,7 @@ Meta is a mandatory object that contains the common fields for each object, incl
 | `upsert_time` | The time the object was last updated or created (HTTP POST). |
 | `created_by` | The name and authentication source of the user who created the object. Example: `ewok@endor.ai@google@api-key` |
 | `updated_by` | The name and authentication source of the last user who updated the object. Example: `vulnerabilityingestor@endor.ai@x509` |
-| `tags` | A list of custom tags attached to the object. Tags can be used to organize objects and find collections of objects that satisfy certain conditions. A tag must be 63 characters or less and may contain alphanumeric characters, `@`, `_`, `.`, and `-`. An optional prefix must be separated with `=` (for example, `my_tag=my_value`). |
+| `tags` | A list of custom tags attached to the object. Tags can be used to organize objects and find collections of objects that satisfy certain conditions. A tag must be 63 characters or fewer. Tags may contain alphanumeric characters, `@`, `_`, `.`, and `-`. An optional prefix must be separated with `=` (for example, `my_tag=my_value`). |
 | `annotations` | Map of additional metadata for the object. Annotation keys may contain alphanumeric characters, `_`, `.`, and `-`. Annotation values can be structured or unstructured and may include characters not permitted by tags. Values must be 16384 bytes or smaller. |
 
 ## TenantMeta
@@ -86,7 +86,7 @@ Each context has a type and an id. For example, objects created during a scan of
 | --- | --- |
 | `CONTEXT_TYPE_MAIN` | Objects from a scan of the default branch. All objects in the OSS namespace are in the main context. The context ID is always `default`. |
 | `CONTEXT_TYPE_REF` | Objects from a scan of a specific branch. The context ID is the branch reference name. |
-| `CONTEXT_TYPE_CI_RUN` | Objects from a PR scan. The context ID is the PR UUID. Objects in this context are deleted after 30 days. |
+| `CONTEXT_TYPE_CI_RUN` | Objects from a PR scan. The context ID is the PR UUID. Objects in this context are deleted after three weeks. |
 | `CONTEXT_TYPE_SBOM` | Objects from an SBOM scan. The context ID is the SBOM serial number or some other unique identifier. |
 | `CONTEXT_TYPE_EXTERNAL` | Indicates that this object is a copy/temporary value of an object in another project. Used for same-tenant dependencies. In source code reference this is equivalent to “vendor” folders. Package versions in the external context are only scanned for call graphs. No other operations are performed on them. |
 

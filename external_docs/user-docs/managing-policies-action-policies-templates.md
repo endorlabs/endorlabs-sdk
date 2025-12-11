@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/action-policies/templates/
 title: Action policy templates | Endor Labs Docs
-downloaded: 2025-10-27 12:56:56
+downloaded: 2025-12-11 11:30:59
 ---
 
 Action policy templates | Endor Labs Docs
@@ -22,13 +22,29 @@ Learn about the predefined action policy templates and how to customize them.
 Endor Labs provides the following action policy templates that you can use to quickly create action policies.
 Each policy template provides parameters to help you customize the conditions under which a policy action takes place.
 
-#### Note
+**Note**
 
 All action policy templates automatically only match new findings for PR scans, assuming that there is a baseline that the scan results can be compared to. If the finding already exists in the baseline, then it is not considered to be a match. See [PR baseline](../../../endorctl/commands/scan/#pull-request-ci-flags) and [PR comments](../../../scan-with-endorlabs/pr-scans/pr-comments/#enable-pr-comments) to learn more.
 
-## Containers
+The following template categories are available:
 
-Matches container findings for vulnerabilities that meet specific parameters. The following parameters are supported:
+* [Container](#container)
+* [Malware](#malware)
+* [SAST](#sast)
+* [SCA](#sca)
+* [Secrets](#secrets)
+* [Security Review](#security-review)
+* [Vulnerabilities](#vulnerabilities)
+
+## Container
+
+Use these templates to define actions for findings related to container images, including vulnerabilities in base images, installed packages, and container configurations.
+
+### Containers
+
+Matches container findings for vulnerabilities that meet specific parameters.
+
+The following table describes the parameters.
 
 | Parameter | Description |
 | --- | --- |
@@ -45,15 +61,17 @@ Matches container findings for vulnerabilities that meet specific parameters. Th
 | Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
 | Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
 
-## Custom (advanced)
+### Custom (Advanced)
 
-Allows you to define a custom action policy based on the attributes of the finding. The following parameters are supported:
+Allows you to define a custom action policy based on the attributes of the finding.
+
+The following table describes the parameters.
 
 | Parameter | Description |
 | --- | --- |
 | Finding Name | Match full or partial finding name. |
-| Category | Match [finding category](#finding-categories). |
-| Type | Match [finding type](#finding-types). |
+| Category | Match finding category. |
+| Type | Match finding type. |
 | Severity | Match finding severity. |
 | Fix Availability | Select **Fix Available** to only match findings if a patch is available to fix the issue in the dependency. |
 | Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
@@ -72,7 +90,7 @@ Allows you to define a custom action policy based on the attributes of the findi
 | Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
 | Code Owner | Only match findings with this code owner. For example, `@octocat` or `@octocat-team`. Case-insensitive exact matches only, no partial or approximate (fuzzy) matches. If a finding does not have a code owner, it is not matched by the policy. Code owners are automatically assigned to findings based on the `CodeOwners` object for the project, which is generated from the CODEOWNERS file in the default branch of the repository. For projects without a CODEOWNERS file, the `CodeOwners` object can be managed through the API. |
 
-### Finding categories
+#### Finding categories
 
 Findings are classified into one or more of the following categories:
 
@@ -93,7 +111,7 @@ Findings are classified into one or more of the following categories:
 | Supply Chain | Umbrella category for supply chain issues including malware, typosquatting, license risk, and AI model findings. |
 | Vulnerability | Vulnerability findings. |
 
-### Finding types
+#### Finding types
 
 Findings are classified into the following types when the packages scanned include:
 
@@ -122,6 +140,10 @@ Findings are classified into the following types when the packages scanned inclu
 
 Allows you to define the action policy to apply when a malware finding is detected, depending on its status, relationship to root packages, and ecosystem.
 
+Allows you to define the action policy to apply when a malware finding is detected, depending on its status, relationship to root packages, and ecosystem.
+
+The following table describes the parameters.
+
 | Parameter | Description |
 | --- | --- |
 | Status | Select the status of malware finding such as **Malware** for confirmed malware, **Telemetry** if the package is not always malicious but may expose environment details, or **Unhealthy** if the package appears broken or non-functional. |
@@ -129,33 +151,6 @@ Allows you to define the action policy to apply when a malware finding is detect
 | Ecosystem | Match finding ecosystem. |
 | Exclude Test | Select **Yes** to exclude test dependencies from this policy. |
 | Exclude Approximate | Select **Yes** to exclude approximate dependencies from this policy. |
-
-## Outdated releases
-
-Matches findings based on older versions of software or dependencies and are not actively updated. The following parameters are supported:
-
-| Parameter | Description |
-| --- | --- |
-| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
-| Dependency Reachability | Select **Reachable Dependency** and **Potentially Reachable Dependency** to only match findings where the vulnerable dependency is reachable. |
-| Exclude Test | Exclude test dependencies from this policy. |
-| Ecosystem | Match finding ecosystem. |
-| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
-| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
-| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
-
-## Recently released dependencies (cooldown)
-
-Matches findings for recently released dependencies. Supported configuration parameters for this action policy template are:
-
-| Parameter | Description |
-| --- | --- |
-| Ecosystem | Match finding ecosystem. |
-| Exclude Test | Exclude test dependencies from this policy. |
-| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
-| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
-| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
-| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
 
 ## SAST
 
@@ -175,19 +170,102 @@ Allows you to define the action taken when a SAST finding is raised.
 | Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
 | Code Owner | Only match findings with this code owner. For example, `@octocat` or `@octocat-team`. Case-insensitive exact matches only, no partial or approximate (fuzzy) matches. If a finding does not have a code owner, it is not matched by the policy. Code owners are automatically assigned to findings based on the `CodeOwners` object for the project, which is generated from the CODEOWNERS file in the default branch of the repository. For projects without a CODEOWNERS file, the `CodeOwners` object can be managed through the API. |
 
-## Secrets
+## SCA
 
-Allows you to define the action taken when a leaked secret is detected based on the validation status of the secret.
+Use these templates to define actions for Software Composition Analysis (SCA) findings, including vulnerabilities, outdated dependencies, unmaintained packages, license risks, and other issues in your open-source dependencies.
+
+### Containers
+
+Matches container findings for vulnerabilities that meet specific parameters.
+
+The following table describes the parameters.
 
 | Parameter | Description |
 | --- | --- |
-| Validation Status | Select secret validation status: **Valid**, **Invalid**, or **Unable to Validate**. |
+| Vulnerability ID | Full vulnerability identifier. For example, CVE-2024-3727 or GHSA-qh2h-chj9-jffq (case insensitive). |
+| Severity | Only match findings with this severity. |
+| Fix Availability | Select **Fix Available** to only match findings if a patch is available to fix the issue in the dependency. |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| EPSS Percentile Threshold | Only match findings with an EPSS percentile threshold equal to or higher than this threshold (0.00-100.00). The EPSS percentile threshold represents the percentile ranking among all vulnerabilities that a vulnerability will be exploited. |
+| EPSS Probability Threshold | Only match findings with an EPSS probability score equal to or higher than this threshold (0.00-1.00). The EPSS probability score represents the probability [0-1] of exploitation in the wild in the next 30 days following score publication. |
+| Exploited | Only match findings for CVEs that are listed in the Known Exploited Vulnerabilities (KEV) database. |
+| Ecosystem | Match finding ecosystem. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
+
+### Custom (Advanced)
+
+Allows you to define a custom action policy based on the attributes of the finding.
+
+The following table describes the parameters.
+
+| Parameter | Description |
+| --- | --- |
+| Finding Name | Match full or partial finding name. |
+| Category | Match finding category. |
+| Type | Match finding type. |
+| Severity | Match finding severity. |
+| Fix Availability | Select **Fix Available** to only match findings if a patch is available to fix the issue in the dependency. |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| Dependency Reachability | Select **Reachable Dependency** and **Potentially Reachable Dependency** to only match findings where the vulnerable dependency is reachable. |
+| Function Reachability | Select **Reachable Function** and **Potentially Reachable Function** to only match findings where the vulnerable function is reachable. |
+| Exclude Test | Select **Yes** to exclude test dependencies. |
+| Ecosystem | Match finding ecosystem. |
 | Custom Tag | Only match findings that have this custom tag (set by the policy that created the finding or using the `--finding-tags` CLI option). Note that these are different and separate from the system-defined finding tags. |
-| Include Path | Only match findings for files that match this glob style file pattern. For example, `src/golang/**`. |
-| Exclude Path | Do not match findings for files that match this glob style file pattern. For example, `src/golang/**`. |
+| Include Path | Only match findings for dependencies or files that match this glob style file pattern. For example, `src/golang/**`. |
+| Exclude Path | Do not match findings for dependencies or files that match this glob style file pattern. For example, `src/golang/**`. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+| Include GitHub Action findings | Select **Yes** to include findings for GitHub action dependencies. |
+| Include Container findings | Select **Yes** to include findings for container dependencies. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
 | Code Owner | Only match findings with this code owner. For example, `@octocat` or `@octocat-team`. Case-insensitive exact matches only, no partial or approximate (fuzzy) matches. If a finding does not have a code owner, it is not matched by the policy. Code owners are automatically assigned to findings based on the `CodeOwners` object for the project, which is generated from the CODEOWNERS file in the default branch of the repository. For projects without a CODEOWNERS file, the `CodeOwners` object can be managed through the API. |
 
-## Unmaintained dependencies
+### Malware
+
+Allows you to define the action policy to apply when a malware finding is detected, depending on its status, relationship to root packages, and ecosystem.
+
+The following table describes the parameters.
+
+| Parameter | Description |
+| --- | --- |
+| Status | Select the status of malware finding such as **Malware** for confirmed malware, **Telemetry** if the package is not always malicious but may expose environment details, or **Unhealthy** if the package appears broken or non-functional. |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| Ecosystem | Match finding ecosystem. |
+| Exclude Test | Select **Yes** to exclude test dependencies from this policy. |
+| Exclude Approximate | Select **Yes** to exclude approximate dependencies from this policy. |
+
+### Outdated Releases
+
+Matches findings based on older versions of software or dependencies and are not actively updated. The following parameters are supported:
+
+| Parameter | Description |
+| --- | --- |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| Dependency Reachability | Select **Reachable Dependency** and **Potentially Reachable Dependency** to only match findings where the vulnerable dependency is reachable. |
+| Exclude Test | Exclude test dependencies from this policy. |
+| Ecosystem | Match finding ecosystem. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+
+### Recently Released Dependencies (cooldown)
+
+Matches findings for recently released dependencies. Supported configuration parameters for this action policy template are:
+
+| Parameter | Description |
+| --- | --- |
+| Ecosystem | Match finding ecosystem. |
+| Exclude Test | Exclude test dependencies from this policy. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
+
+### Unmaintained Dependencies
 
 Matches findings based on dependencies that are no longer maintained or may have reached end-of-life. The following parameters are supported:
 
@@ -201,7 +279,7 @@ Matches findings based on dependencies that are no longer maintained or may have
 | Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
 | Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
 
-## Unpinned direct dependencies
+### Unpinned Direct Dependencies
 
 Matches findings based on direct dependencies that do not have a version or a range of versions specified. Supported configuration parameters for this action policy template are:
 
@@ -213,7 +291,7 @@ Matches findings based on direct dependencies that do not have a version or a ra
 | Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
 | Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
 
-## Unreachable direct dependencies
+### Unreachable Direct Dependencies
 
 Matches findings based on dependencies that are not directly used or called within a project. Supported configuration parameters for this action policy template are:
 
@@ -225,9 +303,115 @@ Matches findings based on dependencies that are not directly used or called with
 | Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
 | Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
 
+### Vulnerabilities
+
+Matches findings that are vulnerabilities that meet specific parameters.
+
+The following table describes the parameters.
+
+| Parameter | Description |
+| --- | --- |
+| Vulnerability ID | Full vulnerability identifier. For example, `CVE-2024-3727` or `GHSA-qh2h-chj9-jffq` (case insensitive). |
+| Severity | Only match findings with this severity. |
+| Fix Availability | Select **Fix Available** to only match findings if a patch is available to fix the issue in the dependency. |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| Dependency Reachability | Select **Reachable Dependency** and **Potentially Reachable Dependency** to only match findings where the vulnerable dependency is reachable. |
+| Function Reachability | Select **Reachable Function** and **Potentially Reachable Function** to only match findings where the vulnerable function is reachable. |
+| Exclude Test | Select **Yes** to exclude test dependencies from this policy. |
+| EPSS Percentile Threshold | Only match findings with an EPSS percentile threshold equal to or higher than this threshold (0.00–100.00). The EPSS percentile threshold represents the percentile ranking among all vulnerabilities that a vulnerability will be exploited. |
+| EPSS Probability Threshold | Only match findings with an EPSS probability score equal to or higher than this threshold (0.00–1.00). The EPSS probability score represents the probability [0–1] of exploitation in the wild in the next 30 days following score publication. |
+| Exploited | Only match findings for CVEs that are listed in the Known Exploited Vulnerabilities (KEV) database. |
+| Ecosystem | Match finding ecosystem. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+| Include GitHub Action findings | Select **Yes** to include findings for GitHub action dependencies. |
+| Include Container findings | Select **Yes** to include findings for container dependencies. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
+| Code Owner | Only match findings with this code owner. For example, `@octocat` or `@octocat-team`. Case-insensitive exact matches only, no partial or approximate (fuzzy) matches. If a finding does not have a code owner, it is not matched by the policy. Code owners are automatically assigned to findings based on the `CodeOwners` object for the project, which is generated from the CODEOWNERS file in the default branch of the repository. For projects without a CODEOWNERS file, the `CodeOwners` object can be managed through the API. |
+
+## Secrets
+
+Allows you to define the action taken when a leaked secret is detected based on the validation status of the secret.
+
+| Parameter | Description |
+| --- | --- |
+| Validation Status | Select secret validation status: **Valid**, **Invalid**, or **Unable to Validate**. |
+| Custom Tag | Only match findings that have this custom tag (set by the policy that created the finding or using the `--finding-tags` CLI option). Note that these are different and separate from the system-defined finding tags. |
+| Include Path | Only match findings for files that match this glob style file pattern. For example, `src/golang/**`. |
+| Exclude Path | Do not match findings for files that match this glob style file pattern. For example, `src/golang/**`. |
+| Code Owner | Only match findings with this code owner. For example, `@octocat` or `@octocat-team`. Case-insensitive exact matches only, no partial or approximate (fuzzy) matches. If a finding does not have a code owner, it is not matched by the policy. Code owners are automatically assigned to findings based on the `CodeOwners` object for the project, which is generated from the CODEOWNERS file in the default branch of the repository. For projects without a CODEOWNERS file, the `CodeOwners` object can be managed through the API. |
+
+## Security Review
+
+Use these templates to define actions for security review findings that require manual assessment or additional analysis before taking action.
+
+Match security review findings. The following parameters are supported:
+
+| Parameter | Description |
+| --- | --- |
+| Severity | Only match findings with this severity. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
+
 ## Vulnerabilities
 
-Matches findings that are vulnerabilities that meet specific parameters. The following parameters are supported:
+Use these templates to define actions for vulnerability findings, including CVEs, security advisories, and known exploits in your dependencies based on severity, exploitability, and fix availability.
+
+### Containers
+
+Matches container findings for vulnerabilities that meet specific parameters.
+
+The following table describes the parameters.
+
+| Parameter | Description |
+| --- | --- |
+| Vulnerability ID | Full vulnerability identifier. For example, CVE-2024-3727 or GHSA-qh2h-chj9-jffq (case insensitive). |
+| Severity | Only match findings with this severity. |
+| Fix Availability | Select **Fix Available** to only match findings if a patch is available to fix the issue in the dependency. |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| EPSS Percentile Threshold | Only match findings with an EPSS percentile threshold equal to or higher than this threshold (0.00-100.00). The EPSS percentile threshold represents the percentile ranking among all vulnerabilities that a vulnerability will be exploited. |
+| EPSS Probability Threshold | Only match findings with an EPSS probability score equal to or higher than this threshold (0.00-1.00). The EPSS probability score represents the probability [0-1] of exploitation in the wild in the next 30 days following score publication. |
+| Exploited | Only match findings for CVEs that are listed in the Known Exploited Vulnerabilities (KEV) database. |
+| Ecosystem | Match finding ecosystem. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
+
+### Custom (Advanced)
+
+Allows you to define a custom action policy based on the attributes of the finding.
+
+The following table describes the parameters.
+
+| Parameter | Description |
+| --- | --- |
+| Finding Name | Match full or partial finding name. |
+| Category | Match finding category. |
+| Type | Match finding type. |
+| Severity | Match finding severity. |
+| Fix Availability | Select **Fix Available** to only match findings if a patch is available to fix the issue in the dependency. |
+| Relationship | Select **Direct Dependency** to only match findings for direct dependencies, or **Transitive Dependency** to only match findings for transitive dependencies. |
+| Dependency Reachability | Select **Reachable Dependency** and **Potentially Reachable Dependency** to only match findings where the vulnerable dependency is reachable. |
+| Function Reachability | Select **Reachable Function** and **Potentially Reachable Function** to only match findings where the vulnerable function is reachable. |
+| Exclude Test | Select **Yes** to exclude test dependencies. |
+| Ecosystem | Match finding ecosystem. |
+| Custom Tag | Only match findings that have this custom tag (set by the policy that created the finding or using the `--finding-tags` CLI option). Note that these are different and separate from the system-defined finding tags. |
+| Include Path | Only match findings for dependencies or files that match this glob style file pattern. For example, `src/golang/**`. |
+| Exclude Path | Do not match findings for dependencies or files that match this glob style file pattern. For example, `src/golang/**`. |
+| Exclude if Dependency Name Contains | Allows you to define full or partial dependency names for which an action policy should exclude. For example, you want to exclude a specific dependency from this policy. |
+| Exclude if Package Name Contains | Allows you to define full or partial package names for which an action policy should exclude. This is the resource that the finding is raised against. For example, the package indirectly or directly includes an unmaintained dependency. |
+| Exclude findings for transitive dependencies via other projects | Exclude findings for transitive dependencies that can only be reached through other projects. This helps your team to not act when they do not have control of findings introduced by libraries your team developed. |
+| Include GitHub Action findings | Select **Yes** to include findings for GitHub action dependencies. |
+| Include Container findings | Select **Yes** to include findings for container dependencies. |
+| Branch Type | Only match findings for this branch type. Set to **Default** to match findings for the default branch. Set to **Ref** to match findings for reference (non-default) branches. Set to **Pull Request** to match findings for pull requests. Note that the **Send Notification** action does not apply to pull requests, as notifications are only processed for monitored branches. |
+| Code Owner | Only match findings with this code owner. For example, `@octocat` or `@octocat-team`. Case-insensitive exact matches only, no partial or approximate (fuzzy) matches. If a finding does not have a code owner, it is not matched by the policy. Code owners are automatically assigned to findings based on the `CodeOwners` object for the project, which is generated from the CODEOWNERS file in the default branch of the repository. For projects without a CODEOWNERS file, the `CodeOwners` object can be managed through the API. |
+
+### Vulnerabilities
+
+Matches findings that are vulnerabilities that meet specific parameters.
+
+The following table describes the parameters.
 
 | Parameter | Description |
 | --- | --- |

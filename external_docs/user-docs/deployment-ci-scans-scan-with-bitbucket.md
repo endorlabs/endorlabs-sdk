@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-bitbucket/
 title: Scanning in Bitbucket Pipelines | Endor Labs Docs
-downloaded: 2025-10-27 12:59:57
+downloaded: 2025-12-11 11:34:53
 ---
 
 Scanning in Bitbucket Pipelines | Endor Labs Docs
@@ -33,6 +33,10 @@ To integrate Endor Labs into a Bitbucket pipeline:
 Configure an API key and secret in the `bitbucket-pipelines.yml` file for authentication. See [managing API keys](../../../administration/api-keys/) for more information on generating an API key for Endor Labs.
 
 ## Configure your Bitbucket pipeline
+
+**Important**
+
+Bitbucket Pipelines may check out commits in a detached HEAD state, which can lead to fragmented branch tracking in Endor Labs. See [Set up branch tracking in Bitbucket Pipelines](#set-up-branch-tracking-in-bitbucket-pipelines) to configure proper branch context.
 
 To create a Bitbucket pipeline reference the following steps:
 
@@ -227,6 +231,43 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+## Set up branch tracking in Bitbucket Pipelines
+
+In Git, a detached HEAD state occurs when the repository checks out a specific commit instead of a branch reference. In this state, Git points the HEAD directly to a commit hash, without associating it with a named branch. As a result, actions performed, such as creating new commits or running automated scans, do not carry branch identity unless explicitly specified.
+
+Proper branch context enables Endor Labs to:
+
+* Associate scans with the correct branch
+* Identify scans on the monitored default branch
+* Track findings and display metrics accurately across branches
+
+Without proper branch configuration, Endor Labs may create multiple branch entries for the same logical branch, leading to fragmented reporting and inaccurate metrics.
+
+![Project with multiple branch entries](../../../images/branch-fragmentation.png)
+
+Bitbucket Pipelines often check out commits by their SHA instead of the branch name, which creates a detached HEAD state.
+
+Use `--detached-ref-name` only to specify the branch name for a commit in detached HEAD state. This associates the commit with the correct branch without setting it as the default branch.
+
+```
+script:
+  - ./endorctl scan -n $ENDOR_NAMESPACE \
+    --detached-ref-name="$BITBUCKET_BRANCH" \
+    --api-key $ENDOR_API_CREDENTIALS_KEY \
+    --api-secret $ENDOR_API_CREDENTIALS_SECRET
+```
+
+Use both `--detached-ref-name` and `--as-default-branch` together when you want to associate the commit with a branch and set it as the default branch scan.
+
+```
+script:
+  - ./endorctl scan -n $ENDOR_NAMESPACE \
+    --as-default-branch \
+    --detached-ref-name="$BITBUCKET_BRANCH" \
+    --api-key $ENDOR_API_CREDENTIALS_KEY \
+    --api-secret $ENDOR_API_CREDENTIALS_SECRET
 ```
 
 ## Feedback

@@ -670,19 +670,6 @@ if __name__ == "__main__":
     # and run as a module: python -m src.endor_sdk.resources.namespaces
     client = APIClient(max_retries=15, backoff_factor=1)
 
-    # Get OpenAPI spec and store it in the tmp directory
-    spec_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        "tmp",
-        "openapiv2.swagger.json",
-    )
-    try:
-        client.get_openapi_spec(url=None, path=spec_path)
-        logger.info(f"Successfully retrieved and stored OpenAPI spec at {spec_path}")
-    except Exception as e:
-        logger.error(f"Failed to retrieve OpenAPI spec: {e}")
-        sys.exit(1)
-
     tenant_namespace = "endor-solutions-tgowan"
 
     # Create mock namespaces using Pydantic models

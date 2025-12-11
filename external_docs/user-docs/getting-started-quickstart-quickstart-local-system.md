@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-local-system/
 title: Quick start with endorctl | Endor Labs Docs
-downloaded: 2025-10-27 12:58:46
+downloaded: 2025-12-11 11:33:26
 ---
 
 Quick start with endorctl | Endor Labs Docs
@@ -224,7 +224,7 @@ Endor Labs supports three distinct scan types. See each section for instructions
 * [Scan for leaked secrets](#scanning-for-leaked-secrets)
 * [Scan for GitHub misconfigurations](#scan-for-github-misconfigurations)
 
-#### Note
+**Note**
 
 When performing a scan, you can specify a [namespace](../../../endorctl/environment-variables/#global-flags-and-variables). If left unspecified, projects are created in the root namespace of the tenant. This is important if the user or token has restricted access to specific namespaces. See [Namespaces in Endor Labs](../../../administration/namespaces/) to learn more about namespaces.
 
@@ -237,7 +237,7 @@ Follow these steps to scan with Endor Labs for open source risk:
 3. [Build your software](#build-your-software)
 4. [Scan with Endor Labs for OSS risk](#scan-your-project-for-oss-risk)
 
-#### Tip
+**Tip**
 
 See the walkthrough on [scanning an example repository](#scanning-an-example-repository) using `endorctl` to learn how to perform a scan.
 
@@ -268,12 +268,13 @@ For more information on supported languages, package managers and build systems 
 |  | PDM | `pyproject.toml`, `pdm.lock` |  |
 |  | PyPI | `setup.py`, `setup.cfg`, `pyproject.toml` |  |
 |  | Bazel | `workspace`, `MODULE.bazel` | Bazel versions `5.x.x`, `6.x.x`, and `7.x.x` |
-| [.NET (C#)](../../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | .NET 1.0 and higher versions; Call graphs are supported for .NET 7.0.1 and higher versions |
+| [.NET (C#)](../../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | .NET 5.0 and higher versions; .NET Core 1.0 and higher versions; .NET Framework 4.5 and higher versions. Call graphs are supported for .NET 7.0.1 and higher versions. |
 | [Scala](../../../scan-with-endorlabs/language-scanning/scala/) | sbt | `build.sbt` | sbt 1.3 and higher versions |
+|  | Gradle | `build.gradle`, `build.gradle.kts` | JDK version 11-25; Gradle 6.0.0 and higher versions |
 | [Ruby](../../../scan-with-endorlabs/language-scanning/ruby/) | Bundler | `Gemfile`, `*.gemspec`, `gemfile.lock` | Ruby 2.6 and higher versions |
 | [Swift/Objective-C](../../../scan-with-endorlabs/language-scanning/swift-objective-c/) | CocoaPods | `Podfile`, `Podfile.lock` | CocoaPods 0.9.0 and higher versions |
 |  | SwiftPM | `Package.swift` | SwiftPM 5.0.0 and higher versions |
-| [PHP](../../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions |
+| [PHP](../../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions except 2.9.1. |
 
 For more information, see [endorctl commands](../../../endorctl/commands/) and [working with the API](../../../endorctl/commands/api/).
 
@@ -294,6 +295,7 @@ To run a complete and accurate scan with Endor Labs, ensure that the software ca
 * Ruby (bundler)
 * Swift/Objective-C
 * Scala (sbt)
+* Scala (Gradle)
 * Rust (Cargo)
 
 ```
@@ -302,10 +304,9 @@ mvn clean install
 ```
 
 ```
-gradle dependencies --configuration compileClasspath
+gradle dependencies --configuration runtimeClasspath
 ./gradlew assemble
-# Use `gradle assemble` if you do not have a gradle wrapper
-# in your repository
+# Use `gradle assemble` if you do not have a gradle wrapper in your repository
 ```
 
 ```
@@ -356,6 +357,12 @@ pod install
 sbt projects
 sbt compile
 sbt dependencyTree
+```
+
+```
+gradle dependencies --configuration runtimeClasspath
+./gradlew assemble
+# Use `gradle assemble` if you do not have a gradle wrapper in your repository
 ```
 
 ```

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/github-security-campaign/
 title: Best Practices: GitHub Security Campaign | Endor Labs Docs
-downloaded: 2025-10-27 12:59:29
+downloaded: 2025-12-11 11:34:10
 ---
 
 Best Practices: GitHub Security Campaign | Endor Labs Docs
@@ -39,9 +39,10 @@ Use GitHub Security Campaigns to coordinate and manage large-scale vulnerability
 
 1. Run a scan with Endor Labs to generate vulnerability findings in SARIF format and upload them to GitHub Advanced Security. See [SARIF output format](../../scan-with-endorlabs/scanning-strategies/#understand-sarif-files) for detailed information on generating, customizing, and uploading SARIF files.
 
-   #### Automatic SARIF upload
+**Automatic SARIF upload**
 
-   Configure Endor Labs GitHub App (Pro) with a GHAS SARIF exporter to automatically upload findings to GitHub after each scan. See [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/) for setup instructions.
+Configure Endor Labs GitHub App (Pro) with a GHAS SARIF exporter to automatically upload findings to GitHub after each scan. See [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/) for setup instructions.
+
 2. In GitHub, navigate to **Security > Campaigns > New Campaign** to define your campaign parameters. Refer to [security campaign guide](https://docs.github.com/en/enterprise-cloud@latest/code-security/securing-your-organization/fixing-security-alerts-at-scale/creating-managing-security-campaigns) for more information on GitHub’s campaign features and configuration options.
 3. Define the scope of your campaign.
 
@@ -66,7 +67,7 @@ Use Endor Labs’ reachability analysis and severity scoring to identify high-im
 * Filter by **exploitability score**, **CVE severity**, or **policy violation type**.
 * Use **Endor Labs Dependency Graph** to visualize transitive relationships and focus on the most impactful fixes.
 
-#### Tip
+**Tip**
 
 You can tag repositories with metadata such as `critical`, `frontend`, or `backend` in Endor Labs and scope your campaign accordingly. Exclude inactive or archived repositories to focus efforts where they matter most.
 
@@ -99,7 +100,7 @@ Set timelines according to issue complexity and remediation scope. Simple depend
 
 Continuously monitor campaign performance using GitHub dashboards for remediation percentage, active versus resolved alerts, repository-level progress, and time-to-fix metrics, and use GitHub Issues for task tracking and communication within developer workflows.
 
-#### Tip
+**Tip**
 
 Use GitHub labels such as `security-campaign-q4` or `log4j-remediation` on issues and pull requests to enable easy filtering and audit tracking across repositories.
 

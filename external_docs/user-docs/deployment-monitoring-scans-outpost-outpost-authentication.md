@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/outpost/outpost-authentication/
 title: Outpost authentication | Endor Labs Docs
-downloaded: 2025-10-27 12:57:41
+downloaded: 2025-12-11 11:31:53
 ---
 
 Outpost authentication | Endor Labs Docs
@@ -77,15 +77,15 @@ Perform the following steps to configure Outpost to use an Azure managed identit
     --subject system:serviceaccount:onprem-cluster:onprem-scheduler-endorctl-account
    ```
 
-   #### Warning
+**Warning**
 
-   The `onprem-cluster` specified in the commands is the name of the Kubernetes namespace where Outpost is to be deployed. Replace it with the actual namespace name where you want to deploy Outpost. Ensure that you create the namespace before running the commands.
+The `onprem-cluster` specified in the commands is the name of the Kubernetes namespace where Outpost is to be deployed. Replace it with the actual namespace name where you want to deploy Outpost. Ensure that you create the namespace before running the commands.
 
-   The commands link the managed identity to Kubernetes service accounts and enable secure access without static credentials.
+The commands link the managed identity to Kubernetes service accounts and enable secure access without static credentials.
 6. Configure an [authorization policy](../../../../administration/access-endorlabs/authorization-policies/) in Endor Labs with configuration from Azure.
 7. Configure the Outpost integration with **Managed Identity Client ID**.
 
-   See [Outpost configuration](../outpost-configuration/) for more information on how to configure the Outpost integration.
+See [Outpost configuration](../outpost-configuration/) for more information on how to configure the Outpost integration.
 
 ## GCP Service Account authentication for Outpost
 
@@ -132,9 +132,9 @@ Perform the following steps to configure Outpost to use a GCP service account fo
 
    See [Outpost configuration](../outpost-configuration/) for more information on how to configure the Outpost integration.
 
-   #### Warning
+**Warning**
 
-   Replace `endor-experiments` with the actual project name where you want to deploy Outpost. Replace `endor-federation` and `endor-compute` with the actual service account names.
+Replace `endor-experiments` with the actual project name where you want to deploy Outpost. Replace `endor-federation` and `endor-compute` with the actual service account names.
 
 ## Feedback
 

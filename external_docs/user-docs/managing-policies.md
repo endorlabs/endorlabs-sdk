@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/
 title: Policies | Endor Labs Docs
-downloaded: 2025-10-27 12:59:38
+downloaded: 2025-12-11 11:34:29
 ---
 
 Policies | Endor Labs Docs

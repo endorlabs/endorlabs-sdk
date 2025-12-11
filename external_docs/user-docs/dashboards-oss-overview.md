@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/dashboards/oss-overview/
 title: OSS overview | Endor Labs Docs
-downloaded: 2025-10-27 12:57:26
+downloaded: 2025-12-11 11:31:35
 ---
 
 OSS overview | Endor Labs Docs
@@ -48,7 +48,7 @@ Use the search bar to filter projects by name and view their OSS overview. The s
 
 ![Vulnerability funnel](../../images/vulnerability-funnel.png)
 
-#### Note
+**Note**
 
 You require an Endor Labs OSS Pro license to access the **Low Risk Upgrade** feature.
 

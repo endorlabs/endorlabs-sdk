@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/october-2025/
 title: October 2025 | Endor Labs Docs
-downloaded: 2025-10-27 12:56:42
+downloaded: 2025-12-11 11:32:33
 ---
 
 October 2025 | Endor Labs Docs
@@ -44,6 +44,12 @@ For more information, see [Search authorization policies](../../administration/a
 You can now filter notifications by project name to focus on notifications from specific projects and reduce noise from others.
 
 For more information, see [Notifications](../../getting-started/endor-labs-ui/#notifications).
+
+### Gradle support for Scala projects Enhancement
+
+Endor Labs now supports scanning Scala projects built with Gradle by resolving dependencies from `build.gradle` or `build.gradle.kts` files.
+
+For more information, see [Scan Scala projects](../../scan-with-endorlabs/language-scanning/scala/).
 
 ## Feedback
 

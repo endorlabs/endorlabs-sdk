@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/january-2025/
 title: January 2025 | Endor Labs Docs
-downloaded: 2025-10-27 13:00:36
+downloaded: 2025-12-11 11:35:33
 ---
 
 January 2025 | Endor Labs Docs
@@ -17,7 +17,7 @@ January 2025 | Endor Labs Docs
 
 # January 2025
 
-#### Version upgrade notice
+**Version upgrade notice**
 
 Effective 21st January 2025, Endor Labs and endorctl are upgraded to version 1.7 from the previous 1.6.x series. This version upgrade reflects continuous improvements to our GitHub App and introduces a new suite of capabilities to help teams accelerate their security maturity.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/golang/
 title: Go | Endor Labs Docs
-downloaded: 2025-10-27 12:57:59
+downloaded: 2025-12-11 11:32:11
 ---
 
 Go | Endor Labs Docs

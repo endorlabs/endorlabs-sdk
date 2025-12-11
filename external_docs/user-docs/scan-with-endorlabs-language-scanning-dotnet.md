@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/dotnet/
 title: .NET | Endor Labs Docs
-downloaded: 2025-10-27 13:00:02
+downloaded: 2025-12-11 11:34:59
 ---
 
 .NET | Endor Labs Docs
@@ -42,19 +42,14 @@ Before you proceed to run a deep scan, ensure that your system meets the followi
 The following prerequisites must be fulfilled:
 
 * Make sure your repository includes one or more files with `.cs` extension.
-* Dependency resolution and reachability analysis is support only for SDK-style .NET projects.
+* Dependency resolution and reachability analysis is supported only for SDK-style .NET projects.
 * One or more `*.csproj` files must be present in your repository.
 * The .NET command or NuGet command must be installed and available on the host system.
 * At least one .NET SDK installed on the system must be compatible with the project’s `global.json` file settings.
 
-#### Note
+**Note**
 
 To check your available SDK versions you can run the command `dotnet --info` or `dotnet --list-sdks`.
-
-### Call graph requirements
-
-* You must install .NET 7.0.1 (SDK 7.0.101) or later on the host system.
-* Endor Labs’ call graph support for .NET is based on [Microsoft’s Common Intermediate Language](https://learn.microsoft.com/en-us/dynamicsax-2012/appuser-itpro/compile-into-net-framework-cil) (CIL). Artifacts such as `.exe` or `.dll` files must be available in the project’s standard workspace through a build and restore or a restored cache.
 
 ## Run a scan
 
@@ -151,7 +146,7 @@ A `*.csproj` file is an XML-based C# project file that contains information abou
 * Package references in any `*.props` file and the prop file is imported in the `.csproj` file.
 * Package references in `*.Targets` file.
 
-#### Note
+**Note**
 
 You may not be able to view the **Requested version** of the packages on the Endor Labs user interface
 
@@ -171,7 +166,7 @@ The `project.assets.json` file is used in .NET projects to store metadata and in
 
 Endor Labs fetches resolved package versions, paths to the dependencies’ assets, such as assemblies and resources, and other related information from this file. If a project does not include a `project.assets.json` file, it is generated through the `dotnet restore` or the `nuget restore` command. This command uses all the configured sources to restore dependencies as well as project-specific tools that are specified in the project file.
 
-#### Note
+**Note**
 
 If the host machine has .NET Core or .NET 5+ installed, the dotnet restore command is used to generate the `project.assets.json` file. The `nuget restore` command is used to generate the `project.asssets.json` file for earlier versions of the .NET frameworks.
 
@@ -228,11 +223,16 @@ Endor Labs performs static analysis on the C# code based on the following factor
 
 ### Known Limitations
 
-* The following .NET programming languages are not currently supported for dependency resolution or call graph generation.
-  + Projects written in F#
-  + Projects written in Visual Basic
 * When using the GitHub app, either resolve all the private and internal dependencies, or [Configure NuGet private repositories](#configure-nuget-private-repositories) before running a scan.
 * When working with old-style MSBuild projects, we recommend scanning them through [Continuous Integration (CI)](../../../deployment/ci-scans/) after building the project to ensure that the .NET build system generates the required `obj/project.assets.json` file. For [monitoring scans](../../../deployment/monitoring-scans/), support for restoring dependencies in Windows projects is limited. This may lead to **restore or build errors**, potentially causing unexpected scan results.
+
+### Call graph limitations
+
+* You must install .NET 7.0.1 (SDK 7.0.101) or later on the host system.
+* The following .NET programming languages are not supported for dependency resolution or call graph generation:
+  + Projects written in F#
+  + Projects written in Visual Basic
+* Endor Labs’ call graph support for .NET is based on [Microsoft’s Common Intermediate Language](https://learn.microsoft.com/en-us/dynamicsax-2012/appuser-itpro/compile-into-net-framework-cil) (CIL). Artifacts such as `.exe` or `.dll` files must be available in the project’s standard workspace through a build and restore or a restored cache.
 
 ## Troubleshoot errors
 

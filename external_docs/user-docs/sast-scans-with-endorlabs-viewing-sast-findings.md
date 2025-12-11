@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/viewing-sast-findings/
 title: View SAST Findings | Endor Labs Docs
-downloaded: 2025-10-27 12:59:23
+downloaded: 2025-12-11 11:34:04
 ---
 
 View SAST Findings | Endor Labs Docs
@@ -30,7 +30,7 @@ You can view SAST findings in the Findings page.
 5. Select **Rule** to view the rule that triggered the finding.
 
    ![View SAST finding rules](../../images/SAST_findingrule.png)
-6. You can select **Actions** > **Export all** or select the required findings and select **Actions** > **Export** to export findings as a CSV file.
+6. To export findings as a CSV file, select the findings, click the vertical three dots, and select **Export Selected** or **Export All**. See [export findings](../../managing-projects/view-findings/#export-findings) to learn more.
 
    ![SAST finding export](../../images/SAST_findingexport.png)
 

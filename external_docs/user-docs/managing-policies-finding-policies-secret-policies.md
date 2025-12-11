@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/secret-policies/
 title: Secret policies | Endor Labs Docs
-downloaded: 2025-10-27 12:58:52
+downloaded: 2025-12-11 11:33:32
 ---
 
 Secret policies | Endor Labs Docs
@@ -24,13 +24,13 @@ Learn about the out-of-the-box finding policies and templates for secret detecti
 Endor Labs comes with the following out-of-the-box finding policies to detect leaked secrets.
 See [Finding Policies](..) for details on how to **enable**, **disable**, or **edit** out-of-the-box policies.
 
-#### Note
+**Note**
 
 Note: The out-of-the-box secret policies can be deleted and re-created from the corresponding policy templates. See [Policy templates for secret detection](#policy-templates-for-secret-detection) below.
 
 | Policy | Description | Severity |
 | --- | --- | --- |
-| Valid Secrets | Scan the code for active secrets. When a secret is valid, it means that the secret meets the necessary criteria or requirements to be considered acceptable or legitimate within a given context. For example, GitHub personal access tokens of an employee that are not yet expired and can be used to access an organization’s codebase. | Critical |
+| Valid Secrets | Use this template to scan the code for active secrets. When a secret is valid, it means that the secret meets the necessary criteria or requirements to be considered acceptable or legitimate within a given context. For example, GitHub personal access tokens of an employee that are not yet expired and can be used to access an organization’s codebase. | Critical |
 | Invalid Secrets | Scan the code for any secrets that are no longer valid. | Low |
 | Secrets without validation rules | Detect secrets that cannot be validated either because there is no validator or the validation failed for any reason. | Medium |
 

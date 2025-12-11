@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-oidc-azure/
 title: Set up Entra ID for SSO using OIDC | Endor Labs Docs
-downloaded: 2025-10-27 12:59:20
+downloaded: 2025-12-11 11:34:01
 ---
 
 Set up Entra ID for SSO using OIDC | Endor Labs Docs
@@ -21,7 +21,7 @@ Learn how to setup Microsoft Entra ID as a custom external identity provider for
 
 Integrate Endor Labs with Microsoft Entra ID (formerly Azure Active Directory) to use SSO through OpenID Connect (OIDC) protocol.
 
-#### Note
+**Note**
 
 Endor Labs honors the session duration set in OIDC, after which the user needs to reauthenticate. The token expiration claims (`exp`) control the session duration in OIDC. If your token does not include an expiration claim, the session duration defaults to four hours. The session duration cannot exceed four hours. If you set a session duration for more than four hours in the token expiration claim, the session duration defaults to four hours.
 
@@ -30,7 +30,7 @@ Complete the following tasks to configure Microsoft Entra ID for SSO through OID
 1. [Create and configure an OIDC application in Azure](#create-and-configure-an-oidc-application-in-azure)
 2. [Create Entra ID SSO in Endor Labs](#create-entra-id-sso-in-endor-labs)
 
-#### Note
+**Note**
 
 You must have administrator access to configure the application end-to-end in Azure.
 
@@ -86,7 +86,7 @@ To configure the custom identity provider in Endor Labs, you must retrieve the *
 
 Provide the Identity Provider details to configure Microsoft Entra ID in Endor Labs and allow users to seamlessly and securely sign in to Endor Labs.
 
-#### Note
+**Note**
 
 You must be an Endor Labs administrator to configure custom identity providers and authorization policies.
 
@@ -103,7 +103,7 @@ You must be an Endor Labs administrator to configure custom identity providers a
 9. If you are configuring group-based authentication ensure to add **groups** in **claim names**.
 10. Click **Save Configuration**.
 
-#### Note
+**Note**
 
 Based on your Microsoft Entra ID configuration, you may need additional Azure claim names as scopes in Endor Labs. Consult your Microsoft administrator for additional guidance.
 

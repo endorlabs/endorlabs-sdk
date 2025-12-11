@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-datacenter-app/
 title: Deploy Endor Labs Bitbucket App in Bitbucket Data Center | Endor Labs Docs
-downloaded: 2025-10-27 12:58:58
+downloaded: 2025-12-11 11:33:38
 ---
 
 Deploy Endor Labs Bitbucket App in Bitbucket Data Center | Endor Labs Docs
@@ -19,13 +19,11 @@ Deploy Endor Labs Bitbucket App in Bitbucket Data Center | Endor Labs Docs
 
 Learn how to continuously monitor your environment with the Endor Labs Bitbucket App.
 
-Beta
-
 Endor Labs provides a Bitbucket App that continuously monitors users’ projects for security and operational risks in Bitbucket Data Center. You can use the Bitbucket App to selectively scan your repositories for SCA, secrets, SAST, and CI/CD tools.
 
 When you use the Endor Labs Bitbucket App, it creates namespaces based on your projects in Bitbucket Data Center. The namespaces created by the Endor Labs Bitbucket App are not like regular namespaces and are called managed namespaces. You can either configure the URL to Bitbucket Data Center to import all the projects or configure the project key to import a specific project in Endor Labs.
 
-#### Note
+**Note**
 
 The following characters are allowed in Endor Labs namespaces: lowercase letters (a–z), digits (0–9), hyphens (-), and underscores (\_). Additionally, the namespace is limited to a maximum of 64 characters in length. If the Bitbucket host or your projects have a different naming convention, the corresponding namespaces will be converted to comply with the naming convention of Endor Labs namespaces.
 
@@ -71,14 +69,14 @@ graph TD
 
       class EN,EN2 endor
       class O1,P1,P2,P3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
 
 ### Namespace structure when you add a Bitbucket Data Center project
 
 When you add a Bitbucket Data Center project to an Endor Labs namespace, Endor Labs creates a child namespace for the Bitbucket Data Center project and maps all repositories in that project to this namespace. The child namespace that maps to the Bitbucket Data Center project is a managed namespace. The managed namespace has the name, `<host name>_<project name>`. For example, if your Bitbucket hostname is `bitbucket.deerinc.com` and project name is `doe`, the managed namespace will have the name, `bitbucket-deerinc-com_doe`.
 
-You can add multiple projects to the same Endor Labs namespace. Each project will have its own managed namespace. For example, your hostname is `bitbucket.deerinc.com`, which has three projects, `buck`,`doe`, and`fawn`. You add each project to the Endor Labs namespace, `endor-azure`.
+You can add multiple projects to the same Endor Labs namespace. Each project will have its own managed namespace. For example, your hostname is `bitbucket.deerinc.com`, which has three projects, `buck`,`doe`, and`fawn`. You add each project to the Endor Labs namespace, `endor-bitbucket`.
 
 The following image shows the namespace structure in Endor Labs.
 
@@ -101,8 +99,39 @@ graph TD
 
       class EN,EN2 endor
       class A1,A2,A3 managed
-      classDef managed fill:#3FE1F3
+      classDef managed fill:#5EEAD4
 ```
+
+## Default branch detection
+
+When Endor Labs scans a repository for the first time, it detects the default branch of the repository. The findings that are created in the scan are associated with the default branch.
+
+### Changing the default branch
+
+When you change the default branch in your source control system (for example, from `main` to `dev`):
+
+* Endor Labs automatically detects the new default branch and sets that as the default reference
+* The previous default branch becomes a reference branch
+* Scans continue on the new default branch and the reference branch
+
+The findings associated with the previous default branch are no longer associated with the default context reference. You can view them in the reference context.
+
+### Renaming the default branch
+
+When you rename the default branch in your source control system:
+
+* Endor Labs automatically switches to the renamed branch
+* Scans continue without disruption
+
+### Adding repository versions
+
+When you add a new repository version (for example, a `dev` branch), both the default branch and the new version are scanned by the Endor Labs App.
+
+### Control default branch detection
+
+You can control the default branch detection by setting the `ENDOR_SCAN_TRACK_DEFAULT_BRANCH` environment variable in a scan profile. You need to configure the project to use the scan profile. See [Configure scan profiles](/scan-with-endorlabs/manage-scan-profiles/) for more information.
+
+By default, the environment variable is set to `true`. When set to `true`, the default branch detection is enabled, and the first branch you scan is automatically considered as the default branch.
 
 ## Prerequisites for Bitbucket App for Bitbucket Data Center
 
@@ -110,6 +139,8 @@ Ensure the following prerequisites are in place before you install the Endor Lab
 
 * A publicly accessible Bitbucket Data Center host set up with HTTPS.
 * A [Bitbucket HTTP access token](https://confluence.atlassian.com/bitbucketserver/http-access-tokens-939515499.html) with at least `Project read` permission at the project level.
+
+If your Bitbucket Data Center instance is self-hosted behind a firewall with ingress restrictions, you must configure your firewall to allow inbound connections from Endor Labs. See [Firewall & Proxy Rules](../../../troubleshooting/firewall-rules/#ingress-rules-for-restricted-environments) for detailed guidance on configuring firewall access.
 
 ## Install the Bitbucket App
 
@@ -141,7 +172,7 @@ Ensure the following prerequisites are in place before you install the Endor Lab
 
 Endor Labs Bitbucket App scans your Bitbucket projects every 24 hours and reports any new findings or changes to release versions of your code.
 
-#### Note
+**Note**
 
 Only users with admin authorization role can create and manage installations.
 

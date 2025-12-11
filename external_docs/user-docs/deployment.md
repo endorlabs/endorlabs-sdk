@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/
 title: Deploy Endor Labs | Endor Labs Docs
-downloaded: 2025-10-27 12:58:22
+downloaded: 2025-12-11 11:32:36
 ---
 
 Deploy Endor Labs | Endor Labs Docs
@@ -27,7 +27,7 @@ Learn how to scan your code in your local development environment.](../scan-with
 Set up continuous monitoring for your repositories.](../deployment/monitoring-scans/)
 [### Scan with Outpost
 
-Set up monitoring scans for your repositories within your Kubernetes cluster.](../deployment/outpost/)
+Set up monitoring scans for your repositories within your Kubernetes cluster.](../deployment/monitoring-scans/outpost/)
 [### Scan in CI/CD environments
 
 Integrate Endor Labs scanning into your CI/CD pipelines.](../deployment/ci-scans/)

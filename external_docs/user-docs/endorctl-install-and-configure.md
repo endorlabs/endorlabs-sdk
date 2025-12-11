@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/install-and-configure/
 title: Install and configure endorctl | Endor Labs Docs
-downloaded: 2025-10-27 12:57:23
+downloaded: 2025-12-11 11:31:31
 ---
 
 Install and configure endorctl | Endor Labs Docs
@@ -213,6 +213,8 @@ Once you’ve exported your environment variables you can test successful authen
 ```
 endorctl api list -r Project --page-size=1
 ```
+
+**Note**
 
 If you do not have any projects in your namespace you will get an empty json output, which means you are successfully authenticated.
 

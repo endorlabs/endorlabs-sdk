@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/use-cases/
 title: Use cases | Endor Labs Docs
-downloaded: 2025-10-27 13:00:16
+downloaded: 2025-12-11 11:35:13
 ---
 
 Use cases | Endor Labs Docs
@@ -789,7 +789,7 @@ Authorization: Bearer {{token}}
 
 The following example uses the [Update Policy](https://docs.endorlabs.com/api/#tag/PolicyService/operation/PolicyService_UpdatePolicy) endpoint to apply a policy to a given project by updating the `spec.project_selector` tag list.
 
-#### Warning
+**Warning**
 
 This overrides the existing `project_selector` list, so you must pass in all the project inclusion tags that you want to keep for this policy along with the new tag.
 
@@ -853,7 +853,7 @@ Authorization: Bearer {{token}}
 
 The following example uses the [Update Policy](https://docs.endorlabs.com/api/#tag/PolicyService/operation/PolicyService_UpdatePolicy) endpoint to exclude a given project from a policy by updating the `spec.project_exceptions` tag list.
 
-#### Warning
+**Warning**
 
 This overrides the existing `project_exceptions` list, so you must pass in all project exception tags that you want to keep for this policy along with the new tag.
 
@@ -917,7 +917,7 @@ Authorization: Bearer {{token}}
 
 The following example uses the [Update Policy](https://docs.endorlabs.com/api/#tag/PolicyService/operation/PolicyService_UpdatePolicy) endpoint to specify a list of custom tags to apply to findings matching a given exception policy.
 
-#### Warning
+**Warning**
 
 This overrides the existing `spec.exception.tags` list, so you must pass in all tags that you want to keep for this policy along with the new tag.
 
@@ -1072,7 +1072,7 @@ Authorization: Bearer {{token}}
 
 The following example uses the [Update Finding](https://docs.endorlabs.com/api/#tag/FindingService/operation/FindingService_UpdateFinding) endpoint to add custom tags to a finding by updating the `meta.tags` field.
 
-#### Warning
+**Warning**
 
 This overrides the existing `meta.tags` list, so you must pass in all tags that you want to keep for this object along with the new tag.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/
 title: SAST scan | Endor Labs Docs
-downloaded: 2025-10-27 12:59:56
+downloaded: 2025-12-11 11:34:52
 ---
 
 SAST scan | Endor Labs Docs
@@ -32,19 +32,19 @@ Opengrep is an open-source, static analysis tool that finds bugs and vulnerabili
 
 When you run a SAST scan, Endor Labs downloads Opengrep and works seamlessly. If you wish, you can use Semgrep instead of Opengrep with Endor Labs. See [Use Semgrep with Endor Labs](../administration/use-semgrep-with-endorlabs/) for more information.
 
-#### Warning
+**Warning**
 
 If you use Semgrep with Endor Labs, SAST scan is supported on macOS and Linux, and not supported on Windows.
 
 Endor Labs includes a set of [curated rules](../sast-scans-with-endorlabs/manage-sast-rules/). You can [create your own rules](../sast-scans-with-endorlabs/manage-sast-rules/create-sast-rule/) or [import rules](../sast-scans-with-endorlabs/manage-sast-rules/import-sast-rule/) with the rule designer.
 
-#### Note
+**Note**
 
 Ensure that the default finding policy `Report SAST results matching given criteria` is enabled so that SAST scans generate findings.
 
 When you [scan with the SAST option enabled](../sast-scans-with-endorlabs/run-a-sast-scan/), Endor Labs uses Opengrep to scan for weaknesses in your source code based on the enabled rules and generates results based on the configured finding policies.
 
-#### Tip
+**Tip**
 
 Endor Labs does not scan the files included in the `.gitignore` files during SAST scan. You can also use the `nosemgrep` annotation in the code to skip SAST scan. Refer to the [Semgrep Documentation](https://semgrep.dev/docs/ignoring-files-folders-code#ignore-code-through-nosemgrep) for more information.
 

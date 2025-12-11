@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/environment-variables/
 title: Global flags and environment variables | Endor Labs Docs
-downloaded: 2025-10-27 12:59:34
+downloaded: 2025-12-11 11:34:25
 ---
 
 Global flags and environment variables | Endor Labs Docs
@@ -46,9 +46,13 @@ The following Global flags are supported and configurable for any `endorctl` com
 | `verbose` | `ENDOR_LOG_VERBOSE` | boolean (default:false) | Enable verbose logging. |
 | `version` | Not applicable |  | Display the `endorctl` client version. |
 | Not applicable | `ENDOR_JS_ENABLE_TSSERVER` | boolean (default:false) | Set this environment variable to true to view call graphs for JavaScript/TypeScript projects. |
+| Not applicable | `ENDOR_JS_TSSERVER_TIMEOUT` | integer (default:15) | Set the timeout in seconds for `tsserver` responses when generating JavaScript/TypeScript call graphs. The default timeout is 15 seconds. Increase this value if call graph generation times out for large or complex projects. |
 | Not applicable | `ENDOR_JS_PACKAGE_MANAGER` | string | Set this environment variable to `npm`, `yarn`, `pnpm`, or `lerna` to override auto detection and force `endorctl` to use a specific JavaScript package manager. |
 | Not applicable | `ENDOR_SCAN_SEMGREP_PROGRAM` | string | Set the scan engine to use for SAST scans. Supported values are `semgrep` and `opengrep`. The default value is `opengrep`. You can set this value to `semgrep` to use Semgrep with Endor Labs. See [Use Semgrep with Endor Labs](../../administration/use-semgrep-with-endorlabs/) for more information. |
 | Not applicable | `ENDOR_SCAN_ENABLE_PRECOMPUTED_CALLGRAPHS` | boolean (default:false) | Enable pre-computed reachability analysis to analyze your application based on analysis of how your direct dependencies interact with the software they rely on. This provides faster analysis and serves as a fallback when traditional reachability analysis fails. Supported all languages that support reachability except for Golang. |
+| Not applicable | `ENDOR_MAVEN_ADDITIONAL_PARAMETERS` | Comma-separated string | Set additional JVM options for Maven dependency resolution in monitoring scans. Parameters are appended to `MAVEN_OPTS`. For example `ENDOR_MAVEN_ADDITIONAL_PARAMETERS=-Xmx4096m,-DskipTests=true`. |
+| Not applicable | `ENDOR_GRADLE_ADDITIONAL_PARAMETERS` | Comma-separated string with key-value pairs | Set additional Gradle properties for dependency resolution in monitoring scans. Parameters are added to `gradle.properties`. For example `ENDOR_GRADLE_ADDITIONAL_PARAMETERS=org.gradle.jvmargs=-Xmx4096m,org.gradle.caching=true`. |
+| Not applicable | `ENDOR_SCAN_MAVEN_PREPOP_CACHE` | boolean (default:false) | Enable pre-population of Maven local cache for large monorepos to speed up dependency resolution by running `mvn dependency:collect` in parallel before scanning modules. Recommended for projects with more than 100 `pom.xml` files. |
 
 ## Set `endorctl` environment variables
 

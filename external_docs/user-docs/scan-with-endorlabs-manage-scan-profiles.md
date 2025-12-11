@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/
 title: Scan profiles | Endor Labs Docs
-downloaded: 2025-10-27 13:00:19
+downloaded: 2025-12-11 11:35:16
 ---
 
 Scan profiles | Endor Labs Docs

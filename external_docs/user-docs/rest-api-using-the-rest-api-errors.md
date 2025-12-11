@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/errors/
 title: Errors | Endor Labs Docs
-downloaded: 2025-10-27 13:00:25
+downloaded: 2025-12-11 11:35:22
 ---
 
 Errors | Endor Labs Docs
@@ -21,7 +21,7 @@ Learn about the Endor Labs REST API error codes and how to handle them
 
 Endor Labs uses conventional gRPC and HTTP response codes to indicate the success or failure of an API request.
 
-#### Note
+**Note**
 
 When making API requests, always implement proper error handling to gracefully manage these response codes.
 
@@ -63,7 +63,7 @@ Refer to the [gRPC status code documentation](https://grpc.io/docs/guides/status
 | 429 | Too Many Requests | Too many API requests were sent to Endor Labs in a short time. We recommend using an exponential backoff strategy for your requests. |
 | “500, 502, 503, 504” | Server Errors | Something went wrong on the Endor Labs side (these are rare). |
 
-#### Note
+**Note**
 
 When receiving a 429 status code, implement an exponential backoff strategy to avoid overwhelming the API.
 

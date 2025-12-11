@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/secrets-leak-detection/scan-secrets/
 title: Scan for secrets | Endor Labs Docs
-downloaded: 2025-10-27 12:57:45
+downloaded: 2025-12-11 11:31:57
 ---
 
 Scan for secrets | Endor Labs Docs
@@ -125,12 +125,13 @@ You must [install and initialize endorctl](../../endorctl/install-and-configure/
    chmod +x .git/hooks/pre-commit
    ```
 
-   #### Note
+**Note**
 
-   ```
-   You can't push the `.git/hooks/` folder to the Git repository because it's only recognized locally on your system.
-   To include the pre-commit code in the Git repository, save it in a different location, like a `hooks/` directory, and then copy it into `.git/hooks/`. This way, you can easily push the hook code to your Git repository.
-   ```
+```
+You can't push the `.git/hooks/` folder to the Git repository because it's only recognized locally on your system.
+To include the pre-commit code in the Git repository, save it in a different location, like a `hooks/` directory, and then copy it into `.git/hooks/`. This way, you can easily push the hook code to your Git repository.
+```
+
 4. You can set up this hook on other systems in your organization by creating a script and running it on each system.
 
    ```
@@ -141,7 +142,7 @@ You must [install and initialize endorctl](../../endorctl/install-and-configure/
    chmod +x .git/hooks/*
    ```
 
-#### Note
+**Note**
 
 Endor Labs secret rules come packaged with the `endorctl` binary, so a local secrets scan using the `--pre-commit` flag does not need to connect to Endor Labs services over the internet, making the scan extremely fast. However, this also means the pre-commit scan does not include any custom secret rules added to your namespace.
 

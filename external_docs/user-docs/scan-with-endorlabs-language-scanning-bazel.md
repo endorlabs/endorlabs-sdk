@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/bazel/
 title: Bazel | Endor Labs Docs
-downloaded: 2025-10-27 13:00:03
+downloaded: 2025-12-11 11:35:00
 ---
 
 Bazel | Endor Labs Docs
@@ -58,6 +58,7 @@ The following table lists the supported Bazel rules and Endor Labs features for 
 | [Python](https://github.com/bazelbuild/rules_python) | [py\_binary](https://bazel.build/reference/be/python#py_binary), [py\_library](https://bazel.build/reference/be/python#py_library), [py\_image](https://github.com/bazelbuild/rules_docker/blob/master/README.md#py3_image)  🛑 `py_image` only supports PY3 toolchain (`py3_image`) | 0.9.0+ |
 | [Go](https://github.com/bazelbuild/rules_go) | [go\_binary](https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/rules.md#go_binary), [go\_library](https://github.com/bazelbuild/rules_go/blob/master/docs/go/core/rules.md#go_library), [go\_image](https://github.com/bazelbuild/rules_docker/blob/master/README.md#go_image) | 0.40.1+ (Bazel 5.x-6.x), 0.42.0+ (Bazel 7.x)  📝 For [Bazel with Gazelle in vendored mode](https://github.com/bazelbuild/bazel-gazelle?tab=readme-ov-file#bazel-rule), see [Go with Gazelle](#scan-bazel-projects-with-go-with-gazelle-vendored-mode). |
 | [Scala](https://github.com/bazelbuild/rules_scala) | [scala\_binary](https://github.com/bazelbuild/rules_scala/blob/master/docs/scala_binary.md), [scala\_library](https://github.com/bazelbuild/rules_scala/blob/master/docs/scala_library.md) | 5.0.0 - 6.6.0 |
+| [Rust](https://github.com/bazelbuild/rules_rust) (Beta) | [rust\_binary](https://bazelbuild.github.io/rules_rust/rust.html#rust_binary), [rust\_library](https://bazelbuild.github.io/rules_rust/rust.html#rust_library) | 0.40.0+ |
 
 ## Quick target discovery for Bazel projects
 
@@ -67,6 +68,7 @@ Use the following commands to find scannable targets in your repository.
 * Python
 * Go
 * Scala
+* Rust
 * All binary targets
 
 ```
@@ -83,6 +85,10 @@ bazel query 'kind(go_binary, //...)'
 
 ```
 bazel query 'kind(scala_binary, //...)'
+```
+
+```
+bazel query 'kind(rust_binary, //...)'
 ```
 
 ```
@@ -163,7 +169,7 @@ Perform a full analysis with dependency resolution, reachability analysis, and c
 endorctl scan --use-bazel --bazel-include-targets=//your-target-name
 ```
 
-#### Private Package Analysis
+**Private Package Analysis**
 
 When a deep scan is performed, all private software dependencies are completely analyzed by default if they have not been previously scanned. This is a one-time operation and will slow down initial scans, but won’t impact subsequent scans.
 
@@ -191,6 +197,7 @@ Use these commands to scan targets based on queries.
 * Python
 * Go
 * Scala
+* Rust
 * All binary targets
 
 ```
@@ -207,6 +214,10 @@ endorctl scan --use-bazel --bazel-targets-query='kind(go_binary, //...)'
 
 ```
 endorctl scan --use-bazel --bazel-targets-query='kind(scala_binary, //...)'
+```
+
+```
+endorctl scan --use-bazel --bazel-targets-query='kind(rust_binary, //...)'
 ```
 
 ```
@@ -251,6 +262,7 @@ For detailed information about scanning specific languages:
 * [Python](../python/)
 * [Go](../golang/)
 * [Scala](../scala/)
+* [Rust](../rust/)
 
 ## Results of Bazel projects scans
 

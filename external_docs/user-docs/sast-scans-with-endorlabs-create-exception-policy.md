@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/create-exception-policy/
 title: Create Exception Policy for SAST Findings | Endor Labs Docs
-downloaded: 2025-10-27 12:58:34
+downloaded: 2025-12-11 11:33:13
 ---
 
 Create Exception Policy for SAST Findings | Endor Labs Docs
@@ -60,9 +60,13 @@ For example, you want to mark findings with the description, `Detected Potential
 
 You can also create exceptions from the Findings page.
 
-Select the Finding for which you want to create an exception and select **Actions** > **Add Exception Policy**.
+1. Select **Projects** from the left sidebar.
+2. Search for and select a project, and select **Findings**.
+3. Search for findings using advanced or basic filters.
+4. Select findings and click the vertical three dots.
+5. Select **Add Exception**.
 
-The **Create Exception Policy** page appears where you can add a new exception policy. The template parameters are automatically updated based on the vulnerability.
+The **Create Exception Policy** page appears where you can add a new exception policy. The template parameters are automatically updated based on the vulnerability. See [Create exception policy](../../managing-policies/exception-policies/) for details on how to create and apply exceptions.
 
 You can use this feature to specifically apply exception to findings with a specific hash value. For example, `Detected Potential time of check time of use vulnerability (open/fopen): ID #e81f27`. This exception policy after creation only applies to the SAST findings with this hash ID and not any others.
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scm-configuration-management/
 title: Repository security posture management | Endor Labs Docs
-downloaded: 2025-10-27 12:59:54
+downloaded: 2025-12-11 11:34:51
 ---
 
 Repository security posture management | Endor Labs Docs

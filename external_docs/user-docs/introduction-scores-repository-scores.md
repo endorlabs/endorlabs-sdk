@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/scores/repository-scores/
 title: Package scores | Endor Labs Docs
-downloaded: 2025-10-27 12:56:53
+downloaded: 2025-12-11 11:30:56
 ---
 
 Package scores | Endor Labs Docs
@@ -25,7 +25,7 @@ Endor Labs scores are categorized into:
 
 * **Security**: Indicates the number of security-related issues a package may have such as known vulnerabilities, following security best practices when developing code, and the results of static code analysis. Packages with lower security scores can be expected to have many security-related issues when compared with packages with higher scores. See the [factors affecting the security score](../repository-scores/security-score-factors/) for more details.
 * **Activity**: Indicates the level of development activity for a package as observed through the source code management system. Packages with higher activity scores will be more active and presumably better maintained when compared to packages with a lower activity score. See the [factors affecting the activity score](../repository-scores/activity-score-factors/) for more details.
-* **Popularity**: Indicates how widely a package is used in its ecosystem by tracking both source code management system metrics (for example, the number of stars in GitHub) as well as counting how many other packages import it. A package with a high popularity score indicates that it is used widely. See the [factors affecting the popularity score](../repository-scores/popularity-score-factors/) for more details.
+* **Popularity**: Indicates how widely a package is used in its ecosystem by tracking both source code management system metrics (for example, the number of stars in GitHub), as well as counting how many other packages import it. A package with a high popularity score indicates that it is used widely. See the [factors affecting the popularity score](../repository-scores/popularity-score-factors/) for more details.
 * **Code Quality**: Indicates how well the package complies with best practices for code development and includes the results of static code analysis of that package’s source code. A package with a higher quality score has fewer code issues. See the [factors affecting the code quality score](../repository-scores/code-quality-score-factors/) for more details.
 
 ## Input data for score calculation

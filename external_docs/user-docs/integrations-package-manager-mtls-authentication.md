@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/mtls-authentication/
 title: Authenticate to private packages using mTLS | Endor Labs Docs
-downloaded: 2025-10-27 12:57:48
+downloaded: 2025-12-11 11:32:00
 ---
 
 Authenticate to private packages using mTLS | Endor Labs Docs
@@ -27,7 +27,7 @@ Use mutual TLS to securely authenticate to artifact repositories.
 
 Perform the following steps to set up a secure mTLS connection:
 
-#### Note
+**Note**
 
 If your certificate is in PKCS12 format, you can start with step 1. If you already have a PEM certificate, you can skip to step 2.
 
@@ -84,7 +84,7 @@ endorctl api create -n <namespace> -r packageManager -d '{
 }'
 ```
 
-#### Note
+**Note**
 
 The `property_key_name` must be set exactly as **ENDOR\_MTLS\_CONFIGURATION**.
 
