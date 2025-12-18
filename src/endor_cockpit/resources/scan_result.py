@@ -152,6 +152,17 @@ class SpecFindingData(BaseModel):
     create_time: Optional[str] = Field(None, description="Finding creation time")
 
 
+class ToolChainsSource(FlexibleEnum):
+    """Toolchain source enumeration."""
+
+    UNSPECIFIED = "TOOL_CHAINS_SOURCE_UNSPECIFIED"
+    API = "TOOL_CHAINS_SOURCE_API"
+    FILE = "TOOL_CHAINS_SOURCE_FILE"
+    AUTO_DETECTION = "TOOL_CHAINS_SOURCE_AUTO_DETECTION"
+    DEFAULTS = "TOOL_CHAINS_SOURCE_DEFAULTS"
+    NAMESPACE_DEFAULT = "TOOL_CHAINS_SOURCE_NAMESPACE_DEFAULT"
+
+
 class SpecProvisioningResultData(BaseModel):
     """Provisioning result data."""
 
@@ -166,8 +177,8 @@ class SpecProvisioningResultData(BaseModel):
     auto_detect_result: Optional[Dict[str, Any]] = Field(
         None, description="Auto detect results"
     )
-    tool_chains_source: Optional[Dict[str, Any]] = Field(
-        None, description="Toolchain source"
+    tool_chains_source: Optional[str] = Field(
+        None, description="Toolchain source (enum: TOOL_CHAINS_SOURCE_*)"
     )
     tool_chains: Optional[Dict[str, Any]] = Field(
         None, description="Toolchains installed"

@@ -5,6 +5,9 @@ This module provides CRUD operations for all Endor Labs API resources.
 """
 
 from . import (
+    api_key,
+    audit_log,
+    authorization_policy,
     dependency_metadata,
     finding,
     installation,
@@ -21,6 +24,9 @@ from . import (
 )
 
 __all__ = [
+    "api_key",
+    "audit_log",
+    "authorization_policy",
     "dependency_metadata",
     "finding",
     "installation",

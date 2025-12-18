@@ -69,8 +69,7 @@ CLAUSE FORMATS:
 • User Email: 'user@endor.ai', 'tgowan@endor.ai'
 • Domain Wildcard: '*@endor.ai' (all users from domain)
 • Identity Provider UUID: '68fae83022a47bdae812bb42' (all users from this IDP)
-• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key'
-• Group Claims: 'group=developers', 'group=admins'
+• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key' # endorctl:allow
 • Mixed: 'tgowan@endor.ai,68fae83022a47bdae812bb42' (user + IDP)
 
 SECURITY: All clauses must match (AND logic) for policy to apply.""")
@@ -354,7 +353,7 @@ Examples:
     --tenant-namespace "tenant.namespace" \\
     --name "API Key Access Policy" \\
     --description "Access for API key authentication" \\
-    --clause "endr+abCdefGhIJKL0PQrs,api-key" \\
+    --clause "endr+abCdefGhIJKL0PQrs,api-key" \\ # endorctl:allow
     --target-namespaces "tenant.namespace" \\
     --roles "SYSTEM_ROLE_CODE_SCANNER"
 
@@ -395,14 +394,14 @@ CLAUSE TYPES:
 • User Email: 'user@endor.ai' or 'tgowan@endor.ai'
 • Domain Wildcard: '*@endor.ai' (matches all users from domain)
 • Identity Provider UUID: '68fae83022a47bdae812bb42' (matches all users from this IDP)
-• API Key: 'endr+abCdefGhIJKL0PQrs,api-key'
+• API Key: 'endr+abCdefGhIJKL0PQrs,api-key' # endorctl:allow
 • Group Claims: 'group=developers' or 'group=admins'
 • Mixed Format: 'tgowan@endor.ai,68fae83022a47bdae812bb42' (user + IDP)
 
 EXAMPLES:
 • Single user: 'tgowan@endor.ai'
 • Domain + IDP: '*@endor.ai,68fae83022a47bdae812bb42'
-• API key: 'endr+abCdefGhIJKL0PQrs,api-key'
+• API key: 'endr+abCdefGhIJKL0PQrs,api-key' # endorctl:allow
 • Group + IDP: 'group=developers,68fae83022a47bdae812bb42'
 
 SECURITY NOTE: Clauses work as AND operator - ALL must match for policy to apply."""
