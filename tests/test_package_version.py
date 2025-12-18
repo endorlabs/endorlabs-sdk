@@ -76,14 +76,6 @@ class TestPackageVersion:
             == test_package_version.spec.ecosystem
         )
 
-    def test_package_version_patch_tags(self):
-        """Test PATCH operations using tag management."""
-        # Skip this test - PackageVersion PATCH operations are not supported by \
-        # the API
-        # The API returns 501 "Method Not Allowed" for PATCH requests to \
-        # package-versions
-        pytest.skip("PackageVersion PATCH operations not supported by API")
-
     def test_package_version_structure_analysis(self):
         """Test and analyze package version structure."""
         package_version_obj = self.package_versions[0]

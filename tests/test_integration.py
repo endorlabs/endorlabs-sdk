@@ -248,66 +248,6 @@ class TestEndorCockpitIntegration:
         assert success is True
         print(f"[OK] Successfully deleted namespace: {namespace_uuid}")
 
-    @pytest.mark.skip(reason="Hierarchy test disabled - data model persistence trusted")
-    def test_namespace_hierarchy(self, api_client, tenant_namespace):
-        """Test namespace hierarchy operations."""
-        timestamp = int(time.time())
-        random_id = random.randint(1000, 9999)
-        parent_name = f"integration-test-parent-{timestamp}-{random_id}"
-        child_name = f"integration-test-child-{timestamp}-{random_id}"
-
-        parent_namespace = None
-        child_namespace = None
-
-        try:
-            # Create parent namespace
-            parent_namespace = self._create_test_namespace(
-                api_client,
-                tenant_namespace,
-                parent_name,
-                "Parent namespace for hierarchy test",
-            )
-
-            assert parent_namespace is not None
-            print(f"[OK] Created parent namespace: {parent_namespace.uuid}")
-
-            # Create child namespace under parent using canonical naming
-            canonical_parent = f"{tenant_namespace}.{parent_name}"
-            child_namespace = self._create_test_namespace(
-                api_client,
-                canonical_parent,  # Use canonical parent name
-                child_name,
-                "Child namespace for hierarchy test",
-            )
-
-            assert child_namespace is not None
-            print(f"[OK] Created child namespace: {child_namespace.uuid}")
-
-            # List namespaces under parent using canonical naming
-            child_namespaces = namespace.list_namespaces(api_client, canonical_parent)
-
-            assert child_namespaces is not None
-            assert len(child_namespaces) >= 1
-
-            # Find our child namespace
-            found_child = next(
-                (ns for ns in child_namespaces if ns.uuid == child_namespace.uuid), None
-            )
-            assert found_child is not None
-            print(f"[OK] Found child namespace in hierarchy: {found_child.meta.name}")
-
-        finally:
-            # Cleanup: Delete child first, then parent
-            if child_namespace:
-                canonical_parent = f"{tenant_namespace}.{parent_name}"
-                self._delete_test_namespace(
-                    api_client, canonical_parent, child_namespace.uuid
-                )
-            if parent_namespace:
-                self._delete_test_namespace(
-                    api_client, tenant_namespace, parent_namespace.uuid
-                )
-
     def test_error_handling(self, api_client, tenant_namespace):
         """Test error handling with invalid operations."""
         # Test getting non-existent namespace
@@ -332,39 +272,6 @@ class TestEndorCockpitIntegration:
             # Expected behavior - should raise an exception
             pass
         print("[OK] Handled invalid namespace creation gracefully")
-
-    @pytest.mark.skip(reason="Rate limiting test disabled to reduce namespace load")
-    def test_rate_limiting(self, api_client, tenant_namespace):
-        """Test rate limiting behavior."""
-        # Create multiple namespaces quickly to test rate limiting
-        test_names = [f"rate-limit-test-{i}-{int(time.time())}" for i in range(3)]
-        created_namespaces = []
-
-        try:
-            for i, name in enumerate(test_names):
-                namespace = self._create_test_namespace(
-                    api_client,
-                    tenant_namespace,
-                    name,
-                    f"Rate limiting test namespace {i}",
-                )
-                if namespace:
-                    created_namespaces.append(namespace)
-
-                # Small delay between requests
-                time.sleep(0.5)
-
-            print(
-                f"[OK] Created {len(created_namespaces)} namespaces with rate limiting"
-            )
-
-        finally:
-            # Cleanup
-            for namespace in created_namespaces:
-                self._delete_test_namespace(
-                    api_client, tenant_namespace, namespace.uuid
-                )
-                time.sleep(0.5)
 
     def _create_test_namespace(
         self, client: APIClient, parent_namespace: str, name: str, description: str
