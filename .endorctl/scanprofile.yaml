@@ -1,0 +1,143 @@
+meta:
+  name:
+    value: Testing
+propagate:
+  value: true
+spec:
+  toolchain_profile:
+    os:
+      darwin:
+        arch:
+          amd64:
+            python_tool_chain:
+              version:
+                name:
+                  value: 3.12.4
+                relative_tool_chain_path:
+                  value: python
+                sha256_sum:
+                  value: 60cfc2465326cb44303e3a8904d4e606ec54aaa41be378532e219f05f06ef37d
+                urls:
+                - https://github.com/astral-sh/python-build-standalone/releases/download/20240726/cpython-3.12.4+20240726-x86_64-apple-darwin-pgo+lto-full.tar.zst
+          arm64:
+            javascript_tool_chain:
+              nodejs_version:
+                name:
+                  value: 20.10.0
+                relative_tool_chain_path:
+                  value: node-v20.10.0-darwin-arm64
+                sha256_sum:
+                  value: 68b93099451d77aac116cf8fce179cabcf53fec079508dc6b39d3a086fb461a8
+                urls:
+                - https://nodejs.org/dist/v20.10.0/node-v20.10.0-darwin-arm64.tar.gz
+              npm_packages:
+                jsconfig.json: {}
+                minimist: {}
+                typescript: {}
+                typescript-language-server: {}
+              pnpm_version:
+                name:
+                  value: 8.10.2
+                sha256_sum:
+                  value: 9a1cf8b616a82dd731e45ecacc2f31c11c59c9ff0fd40faa857050260a38403f
+                urls:
+                - https://github.com/pnpm/pnpm/releases/download/v8.10.2/pnpm-macos-arm64
+              yarn_version:
+                name:
+                  value: 1.22.19
+                relative_tool_chain_path:
+                  value: yarn-v1.22.19
+                sha256_sum:
+                  value: 732620bac8b1690d507274f025f3c6cfdc3627a84d9642e38a07452cc00e0f2e
+                urls:
+                - https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-v1.22.19.tar.gz
+            python_tool_chain:
+              pip_packages:
+                click:
+                  name:
+                    value: 8.1.8
+                pdm:
+                  name:
+                    value: 2.16.0
+                pipenv:
+                  name:
+                    value: 2024.0.0
+                poetry:
+                  name:
+                    value: 1.7.0
+                semgrep:
+                  name:
+                    value: 1.99.0
+                setuptools: {}
+                wheel: {}
+              version:
+                name:
+                  value: 3.12.4
+                relative_tool_chain_path:
+                  value: python
+                sha256_sum:
+                  value: 3b017ab70e2f11b95d909317fc4e76c000ece588461058a642bf74db77cec267
+                urls:
+                - https://github.com/astral-sh/python-build-standalone/releases/download/20240726/cpython-3.12.4+20240726-aarch64-apple-darwin-pgo+lto-full.tar.zst
+      linux:
+        arch:
+          amd64:
+            javascript_tool_chain:
+              nodejs_version:
+                name:
+                  value: 20.10.0
+                relative_tool_chain_path:
+                  value: node-v20.10.0-linux-x64
+                sha256_sum:
+                  value: d3f0908a9d9190a8525c5b9a716ed91bb57e908555841b0c47f75b2a001ff91b
+                urls:
+                - https://nodejs.org/dist/v20.10.0/node-v20.10.0-linux-x64.tar.gz
+              npm_packages:
+                jsconfig.json: {}
+                minimist: {}
+                typescript: {}
+                typescript-language-server: {}
+              pnpm_version:
+                name:
+                  value: 8.10.2
+                sha256_sum:
+                  value: 0ab0306430599bd5486af416addaeb8d9876ec304a2f9e4ac5fbe8e7ca71c740
+                urls:
+                - https://github.com/pnpm/pnpm/releases/download/v8.10.2/pnpm-linux-x64
+              yarn_version:
+                name:
+                  value: 1.22.19
+                relative_tool_chain_path:
+                  value: yarn-v1.22.19
+                sha256_sum:
+                  value: 732620bac8b1690d507274f025f3c6cfdc3627a84d9642e38a07452cc00e0f2e
+                urls:
+                - https://github.com/yarnpkg/yarn/releases/download/v1.22.19/yarn-v1.22.19.tar.gz
+            python_tool_chain:
+              pip_packages:
+                click:
+                  name:
+                    value: 8.1.8
+                pdm:
+                  name:
+                    value: 2.16.0
+                pipenv:
+                  name:
+                    value: 2024.0.0
+                poetry:
+                  name:
+                    value: 1.7.0
+                semgrep:
+                  name:
+                    value: 1.99.0
+                setuptools: {}
+                wheel: {}
+              version:
+                name:
+                  value: 3.12.4
+                relative_tool_chain_path:
+                  value: python
+                sha256_sum:
+                  value: 164f9ca029de9220d6f473e835b06c14684905912aee73312c560238fc2051d6
+                urls:
+                - https://github.com/astral-sh/python-build-standalone/releases/download/20240726/cpython-3.12.4+20240726-x86_64-unknown-linux-gnu-pgo+lto-full.tar.zst
