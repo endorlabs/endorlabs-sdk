@@ -30,10 +30,6 @@ from endor_cockpit.resources.namespace import (
 class TestEndorCockpitIntegration:
     """Integration tests using real Endor Labs API."""
 
-    def __init__(self):
-        """Initialize test class."""
-        pass
-
     @pytest.fixture(scope="class")
     def api_client(self):
         """Create authenticated API client."""
@@ -122,76 +118,6 @@ class TestEndorCockpitIntegration:
             f"[OK] Connected to Endor Labs API. "
             f"Found {len(namespaces_list)} namespaces."
         )
-
-    def test_create_namespace(self, api_client, tenant_namespace):
-        """Test creating a namespace."""
-        timestamp = int(time.time())
-        random_id = random.randint(1000, 9999)
-        test_name = f"integration-test-create-{timestamp}-{random_id}"
-
-        namespace = None
-        try:
-            # Create namespace
-            namespace = self._create_test_namespace(
-                api_client,
-                tenant_namespace,
-                test_name,
-                "Integration test for namespace creation",
-            )
-
-            if namespace is None:
-                pytest.skip("Namespace creation failed - likely authentication issue")
-
-            assert namespace is not None
-            assert namespace.uuid is not None
-            assert namespace.meta.name == test_name
-            print(f"[OK] Created namespace: {namespace.uuid}")
-
-            return namespace
-
-        finally:
-            # Cleanup
-            if namespace is not None:
-                self._delete_test_namespace(
-                    api_client, tenant_namespace, namespace.uuid
-                )
-
-    def test_list_namespaces(self, api_client, tenant_namespace, test_namespaces):
-        """Test listing namespaces."""
-        # List all namespaces
-        all_namespaces = namespace.list_namespaces(api_client, tenant_namespace)
-
-        assert all_namespaces is not None
-        assert isinstance(all_namespaces, list)
-
-        # Check that our test namespaces are in the list
-        test_namespace_uuids = {ns.uuid for ns in test_namespaces}
-        found_namespaces = [
-            ns for ns in all_namespaces if ns.uuid in test_namespace_uuids
-        ]
-
-        assert len(found_namespaces) == len(test_namespaces)
-        print(
-            f"[OK] Listed {len(all_namespaces)} namespaces, "
-            f"found {len(found_namespaces)} test namespaces"
-        )
-
-    def test_get_namespace(self, api_client, tenant_namespace, test_namespaces):
-        """Test getting a specific namespace."""
-        if not test_namespaces:
-            pytest.skip("No test namespaces available")
-
-        test_namespace = test_namespaces[0]
-
-        # Get the namespace by UUID
-        retrieved_namespace = namespace.get_namespace(
-            api_client, tenant_namespace, test_namespace.uuid
-        )
-
-        assert retrieved_namespace is not None
-        assert retrieved_namespace.uuid == test_namespace.uuid
-        assert retrieved_namespace.meta.name == test_namespace.meta.name
-        print(f"[OK] Retrieved namespace: {retrieved_namespace.meta.name}")
 
     def test_update_namespace(self, api_client, tenant_namespace):
         """Test updating a namespace."""

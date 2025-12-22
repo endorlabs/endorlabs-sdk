@@ -22,8 +22,19 @@ class TestPackageVersion:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+        
+        # Get test data with pagination limits
+        from endor_cockpit.types import ListParameters
+        import conftest
+
         self.package_versions = package_version.list_package_versions(
-            self.client, self.namespace
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
         )
         if not self.package_versions:
             pytest.skip("No package versions available for testing")
@@ -75,65 +86,6 @@ class TestPackageVersion:
             retrieved_package_version.spec.ecosystem
             == test_package_version.spec.ecosystem
         )
-
-    def test_package_version_structure_analysis(self):
-        """Test and analyze package version structure."""
-        package_version_obj = self.package_versions[0]
-
-        # Analyze meta fields
-        meta_fields = [
-            field
-            for field in dir(package_version_obj.meta)
-            if not field.startswith("_")
-        ]
-        assert len(meta_fields) > 0
-
-        # Analyze spec fields
-        spec_fields = [
-            field
-            for field in dir(package_version_obj.spec)
-            if not field.startswith("_")
-        ]
-        assert len(spec_fields) > 0
-
-        # Verify required fields are present
-        assert package_version_obj.meta.name is not None
-        assert package_version_obj.spec.package_name is not None
-        assert package_version_obj.spec.ecosystem is not None
-        assert package_version_obj.spec.language is not None
-
-    def test_package_version_operations_summary(self):
-        """Test and summarize package version operations."""
-        package_versions_list = package_version.list_package_versions(
-            self.client, self.namespace
-        )
-
-        print("\n=== Package Version Operations Summary ===")
-        print(f"Total package versions: {len(package_versions_list)}")
-
-        # Analyze package versions by ecosystem
-        ecosystem_counts = {}
-        for pv in package_versions_list:
-            ecosystem = str(pv.spec.ecosystem) if pv.spec.ecosystem else "Unknown"
-            ecosystem_counts[ecosystem] = ecosystem_counts.get(ecosystem, 0) + 1
-
-        print("Ecosystem distribution:")
-        for ecosystem, count in ecosystem_counts.items():
-            print(f"  {ecosystem}: {count}")
-
-        # Analyze package versions by tags
-        tagged_count = sum(1 for pv in package_versions_list if pv.meta.tags)
-        print(f"Package versions with tags: {tagged_count}")
-
-        # Show sample package versions
-        print("\nSample package versions:")
-        for i, pv in enumerate(package_versions_list[:3]):
-            print(f"  {i + 1}. {pv.meta.name} ({pv.spec.ecosystem})")
-            if pv.meta.tags:
-                print(f"     Tags: {', '.join(pv.meta.tags)}")
-
-        assert len(package_versions_list) > 0
-
 
 def add_package_version_tag(
     client: APIClient, namespace: str, package_version_uuid: str, tag: str

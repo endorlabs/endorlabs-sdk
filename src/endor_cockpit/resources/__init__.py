@@ -20,6 +20,7 @@ from . import (
     repository,
     repository_version,
     scan_result,
+    semgrep_rule,
     user,
 )
 
@@ -39,5 +40,6 @@ __all__ = [
     "repository",
     "repository_version",
     "scan_result",
+    "semgrep_rule",
     "user",
 ]

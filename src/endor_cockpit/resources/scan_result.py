@@ -256,10 +256,14 @@ class ScanResultSpec(BaseSpec):
 
     # Optional fields
     start_time: Optional[str] = Field(
-        None, description="Time the scan started", format="date-time"
+        None,
+        description="Time the scan started",
+        json_schema_extra={"format": "date-time"},
     )
     end_time: Optional[str] = Field(
-        None, description="Time the scan ended", format="date-time"
+        None,
+        description="Time the scan ended",
+        json_schema_extra={"format": "date-time"},
     )
     stats: Optional[Dict[str, int]] = Field(
         None,

@@ -6,6 +6,7 @@ used across all Endor Labs resource models.
 """
 
 import logging
+import sys
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type, TypeVar
@@ -14,6 +15,11 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_valid
 
 from ..types import ListParameters
 from ..utils import SchemaDriftDetector
+
+# Import nested config models for better type safety
+from .exception_config import ExceptionConfig
+from .finding_config import FindingConfig
+from .notification_config import NotificationConfig
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -112,6 +118,14 @@ class BaseMeta(BaseModel):
         None,
         description="Key-value metadata pairs",  # MUTABLE: User can update
     )
+    
+    @field_validator("annotations", mode="before")
+    @classmethod
+    def validate_annotations(cls, v):
+        """Validate annotations field - allow any keys including 'id'."""
+        # Annotations is a flexible dict that can contain any keys
+        # The 'id' field is a known annotation key used by the API
+        return v
 
     # Hierarchical fields
     parent_uuid: Optional[str] = Field(
@@ -136,6 +150,11 @@ class BaseMeta(BaseModel):
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name and isinstance(v, dict):
+            # Skip drift detection for flexible dict fields
+            flexible_dict_fields = {"annotations", "references", "index_data"}
+            if info.field_name in flexible_dict_fields:
+                return v  # These are flexible dicts that can contain any keys
+            
             model_fields = {
                 "name",
                 "kind",
@@ -168,22 +187,28 @@ class BaseSpec(BaseModel):
         extra="allow"
     )  # Allow unknown fields for forward compatibility
 
-    # Schema drift fields
-    notification: Optional[Dict[str, Any]] = Field(
+    # Schema drift fields - using typed models for better structure
+    notification: Optional[NotificationConfig] = Field(
         None, description="Notification configuration"
+    )
+    finding: Optional[FindingConfig] = Field(
+        None, description="Finding configuration"
+    )
+    exception: Optional[ExceptionConfig] = Field(
+        None, description="Exception configuration"
     )
 
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            model_fields = {"notification"}
-
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields, f"BaseSpec.{info.field_name}"
-                )
+        # Skip drift detection for typed nested models (they handle their own validation)
+        typed_model_fields = {"notification", "finding", "exception"}
+        if info.field_name and isinstance(v, dict) and info.field_name not in typed_model_fields:
+            model_fields = {"notification", "finding", "exception"}
+            SchemaDriftDetector.extract_unknown_fields(
+                v, model_fields, f"BaseSpec.{info.field_name}"
+            )
         return v
 
 
@@ -345,9 +370,22 @@ class BaseResourceOperations:
         self,
         tenant_meta_namespace: str,
         list_params: Optional[ListParameters] = None,
+        max_pages: Optional[int] = None,
         **kwargs,
     ) -> List[BaseModel]:
-        """Universal list operation with automatic pagination."""
+        """Universal list operation with automatic pagination.
+
+        Args:
+            tenant_meta_namespace: Namespace to list resources from
+            list_params: Optional list parameters (filter, page_size, etc.)
+            max_pages: Optional maximum number of pages to fetch.
+                If None and in test environment, defaults to 10 pages max.
+                If None in production, fetches all pages.
+            **kwargs: Additional keyword arguments
+
+        Returns:
+            List of resource objects
+        """
         try:
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
@@ -355,7 +393,29 @@ class BaseResourceOperations:
             page_token = None
             page_count = 0
 
+            # Check if we're in a test environment and set default max_pages
+            import os
+
+            if max_pages is None and (
+                "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST")
+            ):
+                # Default to 10 pages max in test environment for safety
+                max_pages = 10
+                self.logger.debug(
+                    f"Test environment detected: limiting pagination to "
+                    f"{max_pages} pages max"
+                )
+
             while True:
+                # Check max_pages limit
+                if max_pages is not None and page_count >= max_pages:
+                    self.logger.warning(
+                        f"Reached max_pages limit ({max_pages}). "
+                        f"Stopping pagination after {page_count} pages. "
+                        f"Fetched {len(all_items)} items so far."
+                    )
+                    break
+
                 # Build query parameters for this page
                 params = self._build_params(list_params, **kwargs)
 

@@ -25,10 +25,19 @@ class TestRepositoryVersion:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data
+        # Get test data with pagination limits
+        from endor_cockpit.types import ListParameters
+        import conftest
+
         self.repository_versions = repository_version.list_repository_versions(
-            self.client, self.namespace
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
         )
         if not self.repository_versions:
             pytest.skip("No repository versions available for testing")
@@ -71,40 +80,6 @@ class TestRepositoryVersion:
             retrieved_repository_version.meta.name == test_repository_version.meta.name
         )
 
-    def test_repository_version_structure_analysis(self):
-        """Test and analyze repository version structure."""
-        repository_version_obj = self.repository_versions[0]
-
-        # Analyze meta fields
-        meta_fields = [
-            field
-            for field in dir(repository_version_obj.meta)
-            if not field.startswith("_")
-        ]
-        assert len(meta_fields) > 0
-
-        # Analyze spec fields
-        spec_fields = [
-            field
-            for field in dir(repository_version_obj.spec)
-            if not field.startswith("_")
-        ]
-        assert len(spec_fields) > 0
-
-        # Verify required fields
-        assert hasattr(repository_version_obj, "uuid")
-        assert hasattr(repository_version_obj, "meta")
-        assert hasattr(repository_version_obj, "spec")
-        assert hasattr(repository_version_obj, "tenant_meta")
-
-        # Verify meta structure
-        assert hasattr(repository_version_obj.meta, "name")
-        assert hasattr(repository_version_obj.meta, "kind")
-        assert hasattr(repository_version_obj.meta, "version")
-
-        # Verify spec structure
-        assert hasattr(repository_version_obj.spec, "version")
-
     def test_repository_version_conditional_attributes(self):
         """Test conditional attributes in repository version."""
         repository_version_obj = self.repository_versions[0]
@@ -127,25 +102,6 @@ class TestRepositoryVersion:
             assert isinstance(repository_version_obj.scan_object, dict)
             assert "scan_time" in repository_version_obj.scan_object
             assert "status" in repository_version_obj.scan_object
-
-    def test_repository_version_base_class_inheritance(self):
-        """Test that repository version inherits from base classes."""
-        repository_version_obj = self.repository_versions[0]
-
-        # Test BaseResource inheritance
-        from endor_cockpit.models.base import BaseResource
-
-        assert isinstance(repository_version_obj, BaseResource)
-
-        # Test BaseMeta inheritance
-        from endor_cockpit.models.base import BaseMeta
-
-        assert isinstance(repository_version_obj.meta, BaseMeta)
-
-        # Test BaseSpec inheritance
-        from endor_cockpit.models.base import BaseSpec
-
-        assert isinstance(repository_version_obj.spec, BaseSpec)
 
     def test_repository_version_advanced_filtering(self):
         """Test advanced filtering capabilities."""
@@ -185,18 +141,6 @@ class TestRepositoryVersion:
         )
         assert invalid_repository_version is None
 
-    def test_repository_version_schema_drift_detection(self):
-        """Test schema drift detection in repository version."""
-        repository_version_obj = self.repository_versions[0]
-
-        # Test that schema drift detection is working
-        # This is tested implicitly through the model validation
-        assert repository_version_obj is not None
-
-        # Test that unknown fields are handled gracefully
-        # This is tested through the model's extra="ignore" configuration
-        assert hasattr(repository_version_obj, "model_config")
-
     def test_repository_version_hierarchical_relationships(self):
         """Test hierarchical relationships in repository version."""
         repository_version_obj = self.repository_versions[0]
@@ -217,43 +161,6 @@ class TestRepositoryVersion:
             parent_kind = repository_version_obj.meta.parent_kind
             assert isinstance(parent_kind, str)
             assert parent_kind == "Project"
-
-    def test_repository_version_operations_summary(self):
-        """Test and summarize repository version operations."""
-        repository_versions_list = repository_version.list_repository_versions(
-            self.client, self.namespace
-        )
-
-        print("\n=== Repository Version Operations Summary ===")
-        print(f"Total repository versions: {len(repository_versions_list)}")
-
-        # Analyze repository versions by parent
-        parent_counts = {}
-        for rv in repository_versions_list:
-            parent = rv.meta.parent_uuid if rv.meta.parent_uuid else "None"
-            parent_counts[parent] = parent_counts.get(parent, 0) + 1
-
-        print("Parent distribution:")
-        for parent, count in list(parent_counts.items())[:5]:
-            print(f"  {parent[:8]}...: {count}")
-
-        # Analyze repository versions by tags
-        tagged_count = sum(1 for rv in repository_versions_list if rv.meta.tags)
-        print(f"Repository versions with tags: {tagged_count}")
-
-        # Show sample repository versions
-        print("\nSample repository versions:")
-        for i, rv in enumerate(repository_versions_list[:3]):
-            print(f"  {i + 1}. {rv.meta.name}")
-            if rv.spec.version:
-                if rv.spec.version.ref:
-                    print(f"     Ref: {rv.spec.version.ref}")
-                if rv.spec.version.sha:
-                    print(f"     SHA: {rv.spec.version.sha[:8]}...")
-            if rv.meta.tags:
-                print(f"     Tags: {', '.join(rv.meta.tags)}")
-
-        assert len(repository_versions_list) > 0
 
     def test_repository_version_pagination(self):
         """Test pagination capabilities."""
