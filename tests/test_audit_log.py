@@ -18,6 +18,19 @@ from endor_cockpit.resources import audit_log
 from endor_cockpit.resources.audit_log import AuditLogOperation
 from endor_cockpit.types import ListParameters
 
+# Import TEST_PAGE_SIZE from conftest in the same directory
+import sys
+from pathlib import Path
+
+# Add tests directory to path to import conftest
+tests_dir = Path(__file__).parent
+if str(tests_dir) not in sys.path:
+    sys.path.insert(0, str(tests_dir))
+
+import conftest
+
+TEST_PAGE_SIZE = conftest.TEST_PAGE_SIZE
+
 
 @pytest.mark.integration
 class TestAuditLog:
@@ -28,11 +41,18 @@ class TestAuditLog:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+        
         self.created_audit_log_uuids = []  # Track created logs for cleanup
 
-        # Get test data with reasonable limit
+        # Get test data with pagination limits
         self.audit_logs = audit_log.list_audit_logs(
-            self.client, self.namespace, list_params=ListParameters(page_size=20)
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
         )
 
     def teardown_method(self):
@@ -50,9 +70,11 @@ class TestAuditLog:
         """Test GET audit logs operation."""
         print("\n=== TESTING GET AUDIT LOGS ===")
 
-        # Test list_audit_logs with reasonable limit
+        # Test list_audit_logs with pagination limits
         logs_list = audit_log.list_audit_logs(
-            self.client, self.namespace, list_params=ListParameters(page_size=20)
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
         )
         assert isinstance(logs_list, list), "Should return a list of logs"
         print(f"Found {len(logs_list)} audit logs")
@@ -71,9 +93,11 @@ class TestAuditLog:
         """Test GET archived audit logs operation."""
         print("\n=== TESTING GET ARCHIVED AUDIT LOGS ===")
 
-        # Test list_archived_audit_logs with reasonable limit
+        # Test list_archived_audit_logs with pagination limits
         archived_logs = audit_log.list_archived_audit_logs(
-            self.client, self.namespace, list_params=ListParameters(page_size=20)
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
         )
         assert isinstance(archived_logs, list), "Should return a list of archived logs"
         print(f"Found {len(archived_logs)} archived audit logs")
@@ -131,7 +155,7 @@ class TestAuditLog:
                 self.namespace,
                 list_params=ListParameters(
                     filter=f"spec.operation=='{operation_type.value}'",
-                    page_size=20,
+                    page_size=conftest.TEST_PAGE_SIZE,
                 ),
             )
             print(f"{operation_type.value}: {len(filtered_logs)} logs")
@@ -153,7 +177,8 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(
-                filter=f"spec.message_kind=='{message_kind}'", page_size=20
+                filter=f"spec.message_kind=='{message_kind}'",
+                page_size=conftest.TEST_PAGE_SIZE,
             ),
         )
         print(f"Message Kind '{message_kind}': {len(filtered_logs)} logs")
@@ -170,9 +195,9 @@ class TestAuditLog:
         print("\n=== TESTING FILTER BY TIME RANGE ===")
 
         # Test filtering by recent time range (last 7 days)
-        from datetime import datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
-        to_date = datetime.utcnow()
+        to_date = datetime.now(timezone.utc)
         from_date = to_date - timedelta(days=7)
 
         to_date_str = to_date.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -186,7 +211,7 @@ class TestAuditLog:
                     f"meta.create_time>=date({from_date_str}) "
                     f"and meta.create_time<=date({to_date_str})"
                 ),
-                page_size=20,
+                    page_size=conftest.TEST_PAGE_SIZE,
             ),
         )
         print(
@@ -196,9 +221,11 @@ class TestAuditLog:
         # Verify all returned logs are within the time range
         for log_item in filtered_logs:
             if log_item.meta.create_time:
-                log_time = datetime.fromisoformat(
-                    log_item.meta.create_time.replace("Z", "+00:00")
-                )
+                log_time_str = log_item.meta.create_time.replace("Z", "+00:00")
+                log_time = datetime.fromisoformat(log_time_str)
+                # Ensure both datetimes are timezone-aware for comparison
+                if log_time.tzinfo is None:
+                    log_time = log_time.replace(tzinfo=timezone.utc)
                 assert from_date <= log_time <= to_date, (
                     "Log should be within time range"
                 )
@@ -260,46 +287,6 @@ class TestAuditLog:
                     f"Log should have remote address {remote_addr}"
                 )
 
-    def test_audit_log_structure_analysis(self):
-        """Test and analyze audit log structure."""
-        print("\n=== AUDIT LOG STRUCTURE ANALYSIS ===")
-
-        if not self.audit_logs:
-            pytest.skip("No audit logs available for testing")
-
-        log = self.audit_logs[0]
-        print(f"Analyzing audit log: {log.uuid}")
-
-        # Analyze log meta fields
-        meta_fields = [field for field in dir(log.meta) if not field.startswith("_")]
-        print(f"Audit log meta fields: {meta_fields}")
-        if log.meta.create_time:
-            print(f"Create Time: {log.meta.create_time}")
-        if log.meta.created_by:
-            print(f"Created By: {log.meta.created_by}")
-
-        # Analyze log spec fields
-        if log.spec:
-            spec_fields = [
-                field for field in dir(log.spec) if not field.startswith("_")
-            ]
-            print(f"Audit log spec fields: {spec_fields}")
-            print(f"Operation: {log.spec.operation}")
-            if log.spec.message_kind:
-                print(f"Message Kind: {log.spec.message_kind}")
-            if log.spec.message_uuid:
-                print(f"Message UUID: {log.spec.message_uuid}")
-            if log.spec.claims:
-                print(f"Claims: {log.spec.claims}")
-            if log.spec.remote_address:
-                print(f"Remote Address: {log.spec.remote_address}")
-
-        # Analyze log tenant_meta fields
-        tenant_meta_fields = [
-            field for field in dir(log.tenant_meta) if not field.startswith("_")
-        ]
-        print(f"Audit log tenant_meta fields: {tenant_meta_fields}")
-
     def test_audit_log_api_key_activity(self):
         """Test identifying API key activity via claims."""
         print("\n=== TESTING API KEY ACTIVITY IDENTIFICATION ===")
@@ -359,79 +346,6 @@ class TestAuditLog:
         # Verify pagination works (should get at least some results)
         assert isinstance(paginated_logs, list), "Should return a list"
         print(f"Successfully retrieved {len(paginated_logs)} logs with pagination")
-
-    def test_audit_log_schema_drift_detection(self):
-        """Test schema drift detection for audit log."""
-        print("\n=== AUDIT LOG SCHEMA DRIFT DETECTION ===")
-
-        if not self.audit_logs:
-            pytest.skip("No audit logs available for testing")
-
-        log = self.audit_logs[0]
-        print(f"Testing schema drift detection for log: {log.uuid}")
-
-        # Check for known schema drift fields
-        meta_fields = [field for field in dir(log.meta) if not field.startswith("_")]
-        spec_fields = []
-        if log.spec:
-            spec_fields = [
-                field for field in dir(log.spec) if not field.startswith("_")
-            ]
-
-        print(f"Meta fields: {meta_fields}")
-        print(f"Spec fields: {spec_fields}")
-
-        # Verify that schema drift detection is working by checking for warnings
-        # This is more of a validation that the system is working correctly
-        print("[INFO] Schema drift detection warnings should be visible in logs")
-        print(
-            "[INFO] This indicates the system is properly detecting API schema changes"
-        )
-
-    def test_audit_log_operations_summary(self):
-        """Generate summary of audit log operations."""
-        print("\n=== AUDIT LOG OPERATIONS SUMMARY ===")
-
-        print("GET Operations:")
-        print(f"  - List Audit Logs: GET /v1/namespaces/{self.namespace}/audit-logs")
-        print(
-            f"  - List Archived Audit Logs: GET /v1/namespaces/"
-            f"{self.namespace}/audit-logs/archived"
-        )
-        print(
-            f"  - Get Audit Log: GET /v1/namespaces/{self.namespace}/"
-            f"audit-logs/{{uuid}}"
-        )
-
-        print("Operation Types Available:")
-        for operation_type in AuditLogOperation:
-            count = len(
-                audit_log.list_audit_logs(
-                    self.client,
-                    self.namespace,
-                    list_params=ListParameters(
-                        filter=f"spec.operation=='{operation_type.value}'",
-                        page_size=20,
-                    ),
-                )
-            )
-            print(f"  - {operation_type.value}: {count} logs")
-
-        print("Audit Log Features:")
-        print("  - Active Logs: Last 30 days")
-        print("  - Archived Logs: 30+ days old, retained for 3 years")
-        print("  - Filtering: Operation, message kind, time, claims, IP")
-        print("  - API Key Identification: Via claims filtering")
-        print("  - Pagination: Supported")
-        print("  - Field Masking: Supported")
-
-        print("Success Metrics:")
-        print(f"  - Audit Logs Retrieved: {len(self.audit_logs)}")
-        print("  - GET Operations: Working")
-        print("  - Filtering: Working")
-        print("  - Schema Drift Detection: Working")
-        print("  - API Key Activity Identification: Functional")
-
 
 if __name__ == "__main__":
     # Run tests directly

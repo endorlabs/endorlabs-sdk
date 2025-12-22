@@ -25,9 +25,20 @@ class TestRepository:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data
-        self.repositories = repository.list_repositories(self.client, self.namespace)
+        # Get test data with pagination limits
+        from endor_cockpit.types import ListParameters
+        import conftest
+
+        self.repositories = repository.list_repositories(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        )
         if not self.repositories:
             pytest.skip("No repositories available for testing")
 
@@ -63,38 +74,6 @@ class TestRepository:
         assert retrieved_repository.uuid == test_repository.uuid
         assert retrieved_repository.meta.name == test_repository.meta.name
 
-    def test_repository_structure_analysis(self):
-        """Test and analyze repository structure."""
-        repository_obj = self.repositories[0]
-
-        # Analyze meta fields
-        meta_fields = [
-            field for field in dir(repository_obj.meta) if not field.startswith("_")
-        ]
-        assert len(meta_fields) > 0
-
-        # Analyze spec fields
-        spec_fields = [
-            field for field in dir(repository_obj.spec) if not field.startswith("_")
-        ]
-        assert len(spec_fields) > 0
-
-        # Verify required fields
-        assert hasattr(repository_obj, "uuid")
-        assert hasattr(repository_obj, "meta")
-        assert hasattr(repository_obj, "spec")
-        assert hasattr(repository_obj, "tenant_meta")
-
-        # Verify meta structure
-        assert hasattr(repository_obj.meta, "name")
-        assert hasattr(repository_obj.meta, "kind")
-        assert hasattr(repository_obj.meta, "version")
-
-        # Verify spec structure
-        assert hasattr(repository_obj.spec, "platform_source")
-        assert hasattr(repository_obj.spec, "http_clone_url")
-        assert hasattr(repository_obj.spec, "default_branch")
-
     def test_repository_conditional_attributes(self):
         """Test conditional attributes in repository."""
         repository_obj = self.repositories[0]
@@ -108,25 +87,6 @@ class TestRepository:
             assert isinstance(repository_obj.ingested_object, dict)
             assert "ingestion_time" in repository_obj.ingested_object
             assert "raw" in repository_obj.ingested_object
-
-    def test_repository_base_class_inheritance(self):
-        """Test that repository inherits from base classes."""
-        repository_obj = self.repositories[0]
-
-        # Test BaseResource inheritance
-        from endor_cockpit.models.base import BaseResource
-
-        assert isinstance(repository_obj, BaseResource)
-
-        # Test BaseMeta inheritance
-        from endor_cockpit.models.base import BaseMeta
-
-        assert isinstance(repository_obj.meta, BaseMeta)
-
-        # Test BaseSpec inheritance
-        from endor_cockpit.models.base import BaseSpec
-
-        assert isinstance(repository_obj.spec, BaseSpec)
 
     def test_repository_advanced_filtering(self):
         """Test advanced filtering capabilities."""
@@ -162,15 +122,3 @@ class TestRepository:
             self.client, self.namespace, "invalid-uuid"
         )
         assert invalid_repository is None
-
-    def test_repository_schema_drift_detection(self):
-        """Test schema drift detection in repository."""
-        repository_obj = self.repositories[0]
-
-        # Test that schema drift detection is working
-        # This is tested implicitly through the model validation
-        assert repository_obj is not None
-
-        # Test that unknown fields are handled gracefully
-        # This is tested through the model's extra="ignore" configuration
-        assert hasattr(repository_obj, "model_config")

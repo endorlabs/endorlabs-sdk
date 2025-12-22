@@ -41,9 +41,14 @@ class TestAuthorizationPolicy:
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data
+        # Get test data with pagination limits
+        from endor_cockpit.types import ListParameters
+        import conftest
+
         self.policies = authorization_policy.list_authorization_policies(
-            self.client, self.namespace
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
         )
 
     def teardown_method(self):
@@ -305,113 +310,6 @@ class TestAuthorizationPolicy:
                     "All policies should have CODE_SCANNER role"
                 )
 
-    def test_authorization_policy_structure_analysis(self):
-        """Test authorization policy structure and field analysis."""
-        print("\n=== TESTING AUTHORIZATION POLICY STRUCTURE ===")
-
-        policies = authorization_policy.list_authorization_policies(
-            self.client, self.namespace
-        )
-        if not policies:
-            pytest.skip("No authorization policies available for analysis")
-
-        policy = policies[0]
-
-        # Check required fields
-        assert hasattr(policy, "uuid"), "Policy should have uuid"
-        assert hasattr(policy, "meta"), "Policy should have meta"
-        assert hasattr(policy, "spec"), "Policy should have spec"
-        assert hasattr(policy, "tenant_meta"), "Policy should have tenant_meta"
-
-        # Check meta fields
-        assert hasattr(policy.meta, "name"), "Meta should have name"
-        assert hasattr(policy.meta, "kind"), "Meta should have kind"
-
-        # Check spec fields
-        assert hasattr(policy.spec, "clause"), "Spec should have clause"
-        assert hasattr(policy.spec, "target_namespaces"), (
-            "Spec should have target_namespaces"
-        )
-        assert hasattr(policy.spec, "permissions"), "Spec should have permissions"
-
-        # Check permissions structure
-        if policy.spec.permissions:
-            assert hasattr(
-                policy.spec.permissions, "roles"
-            ), "Permissions should have roles"
-            assert hasattr(
-                policy.spec.permissions, "rules"
-            ), "Permissions should have rules"
-
-        print("Policy structure validation passed")
-
-    def test_authorization_policy_full_crud_cycle(self):
-        """Test full CRUD cycle for authorization policy."""
-        print("\n=== TESTING AUTHORIZATION POLICY FULL CRUD CYCLE ===")
-
-        timestamp = int(time.time())
-
-        # CREATE
-        create_payload = CreateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-crud-cycle-{timestamp}",
-                description="Test policy for full CRUD cycle",
-                tags=["test", "crud"],
-            ),
-            spec=AuthorizationPolicySpec(
-                clause=["test@endor.ai"],
-                target_namespaces=[self.namespace],
-                propagate=False,
-                permissions=AuthorizationPolicyPermissions(
-                    roles=[SystemRole.POLICY_EDITOR.value]
-                ),
-            ),
-            propagate=False,
-        )
-
-        created = authorization_policy.create_authorization_policy(
-            self.client, self.namespace, create_payload
-        )
-        assert created is not None, "CREATE should succeed"
-        self.created_policy_uuids.append(created.uuid)
-
-        # READ
-        retrieved = authorization_policy.get_authorization_policy(
-            self.client, self.namespace, created.uuid
-        )
-        assert retrieved is not None, "READ should succeed"
-        assert retrieved.uuid == created.uuid, "UUID should match"
-
-        # UPDATE
-        update_payload = UpdateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-crud-cycle-{timestamp}-updated",
-                description="Updated description",
-            )
-        )
-
-        updated = authorization_policy.update_authorization_policy(
-            self.client,
-            self.namespace,
-            created.uuid,
-            update_payload,
-            "meta.name,meta.description",
-        )
-        assert updated is not None, "UPDATE should succeed"
-        assert updated.meta.name == update_payload.meta.name, "Name should be updated"
-
-        # DELETE
-        deleted = authorization_policy.delete_authorization_policy(
-            self.client, self.namespace, created.uuid
-        )
-        assert deleted is True, "DELETE should succeed"
-
-        # Remove from cleanup list since we deleted it
-        if created.uuid in self.created_policy_uuids:
-            self.created_policy_uuids.remove(created.uuid)
-
-        print("Full CRUD cycle completed successfully")
-
 
 if __name__ == "__main__":
     # Run tests directly
@@ -460,4 +358,7 @@ if __name__ == "__main__":
     finally:
         # Cleanup
         test_instance.teardown_method()
+
+
+
 

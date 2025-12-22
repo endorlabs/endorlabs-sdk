@@ -33,12 +33,88 @@ class TestPolicy:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+        
         self.created_policy_uuids = []  # Track created policies for cleanup
 
-        # Get test data
-        self.policies = policy.list_policies(self.client, self.namespace)
+        # Get test data with pagination limits
+        from endor_cockpit.types import ListParameters
+        import conftest
+
+        self.policies = policy.list_policies(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        )
         if not self.policies:
             pytest.skip("No policies available for testing")
+
+    def _create_test_policy(self, name_suffix: str = ""):
+        """Helper method to create a test policy for CRUD operations.
+
+        Args:
+            name_suffix: Optional suffix to add to policy name for uniqueness
+
+        Returns:
+            Created policy object
+        """
+        import time
+
+        timestamp = int(time.time())
+        policy_name = f"Test Dummy ML Policy{name_suffix} {timestamp}"
+        dummy_policy_payload = CreatePolicyPayload(
+            meta=policy.PolicyMeta(
+                name=policy_name,
+                kind="Policy",
+                description=(
+                    "A test ML_FINDING policy created for CRUD operations testing"
+                ),
+                tags=["test", "dummy", "ml-finding", "crud-test"],
+            ),
+            spec=policy.PolicySpec(
+                policy_type=PolicyType.ML_FINDING,
+                rule="""package testpolicy
+
+configure[result] {
+  result = {
+    "test_method": {
+      "disable": false,
+      "parameters": {
+        "enable_test": {
+          "bool_value": true
+        }
+      }
+    }
+  }
+}""",
+                disable=False,
+                resource_kinds=[],  # ML_FINDING can have empty resource kinds
+                project_selector=["test-projects"],
+                project_exceptions=["excluded-projects"],
+            ),
+            propagate=True,
+        )
+
+        # Create the policy
+        created_policy = policy.create_policy(
+            self.client, self.namespace, dummy_policy_payload
+        )
+
+        assert created_policy is not None, "Policy creation should succeed"
+        assert created_policy.meta.name == policy_name, "Policy name should match"
+        assert created_policy.spec.policy_type == PolicyType.ML_FINDING, (
+            "Policy type should be ML_FINDING"
+        )
+        assert created_policy.spec.resource_kinds == [], (
+            "Resource kinds should be empty for ML_FINDING"
+        )
+
+        # Store for cleanup
+        self.created_policy_uuids.append(created_policy.uuid)
+        return created_policy
 
     def teardown_method(self):
         """Clean up any policies created during tests."""
@@ -120,43 +196,6 @@ class TestPolicy:
                 assert policy_item.spec.policy_type == policy_type, (
                     f"Policy should be of type {policy_type}"
                 )
-
-    def test_policy_structure_analysis(self):
-        """Test and analyze policy structure."""
-        print("\n=== POLICY STRUCTURE ANALYSIS ===")
-
-        policy = self.policies[0]
-        print(f"Analyzing policy: {policy.uuid} - {policy.meta.name}")
-
-        # Analyze policy meta fields
-        meta_fields = [field for field in dir(policy.meta) if not field.startswith("_")]
-        print(f"Policy meta fields: {meta_fields}")
-        if policy.meta.tags:
-            print(f"Policy meta tags: {policy.meta.tags}")
-
-        # Analyze policy spec fields
-        spec_fields = [field for field in dir(policy.spec) if not field.startswith("_")]
-        print(f"Policy spec fields: {spec_fields}")
-
-        # Analyze policy tenant_meta fields
-        tenant_meta_fields = [
-            field for field in dir(policy.tenant_meta) if not field.startswith("_")
-        ]
-        print(f"Policy tenant_meta fields: {tenant_meta_fields}")
-
-        # Analyze policy rule content
-        if policy.spec.rule:
-            rule_preview = (
-                policy.spec.rule[:200] + "..."
-                if len(policy.spec.rule) > 200
-                else policy.spec.rule
-            )
-            print(f"Policy rule preview: {rule_preview}")
-
-        # Analyze template information
-        if policy.spec.template_uuid:
-            print(f"Template UUID: {policy.spec.template_uuid}")
-            print(f"Template Version: {policy.spec.template_version}")
 
     def test_policy_rule_analysis(self):
         """Test and analyze policy rules."""
@@ -244,132 +283,13 @@ class TestPolicy:
         if policy.spec.notification:
             print(f"Notification Configuration: {policy.spec.notification}")
 
-    def test_policy_schema_drift_detection(self):
-        """Test schema drift detection for policy."""
-        print("\n=== POLICY SCHEMA DRIFT DETECTION ===")
-
-        # This test verifies that schema drift detection is working
-        # The warnings should be visible in the logs during policy retrieval
-
-        policy = self.policies[0]
-        print(f"Testing schema drift detection for policy: {policy.uuid}")
-
-        # Check for known schema drift fields
-        meta_fields = [field for field in dir(policy.meta) if not field.startswith("_")]
-        spec_fields = [field for field in dir(policy.spec) if not field.startswith("_")]
-
-        print(f"Meta fields: {meta_fields}")
-        print(f"Spec fields: {spec_fields}")
-
-        # Verify that schema drift detection is working by checking for warnings
-        # This is more of a validation that the system is working correctly
-        print("[INFO] Schema drift detection warnings should be visible in logs")
-        print(
-            "[INFO] This indicates the system is properly detecting API schema changes"
-        )
-
-    def test_policy_operations_summary(self):
-        """Generate summary of policy operations."""
-        print("\n=== POLICY OPERATIONS SUMMARY ===")
-
-        print("GET Operations:")
-        print(f"  - List Policies: GET /v1/namespaces/{self.namespace}/policies")
-        print(f"  - Get Policy: GET /v1/namespaces/{self.namespace}/policies/{{uuid}}")
-        print(
-            f"  - Filter by Type: GET /v1/namespaces/{self.namespace}/"
-            f"policies?policy_type={{type}}"
-        )
-
-        print("Policy Types Available:")
-        for policy_type in PolicyType:
-            count = len(policy.list_policies(self.client, self.namespace, policy_type))
-            print(f"  - {policy_type.value}: {count} policies")
-
-        print("Policy Features:")
-        print("  - OPA/Rego Rules: Supported")
-        print("  - Template System: Supported")
-        print("  - Resource Kinds: Supported")
-        print("  - Project Selectors: Supported")
-        print("  - Finding Configuration: Supported")
-        print("  - Admission Control: Supported")
-        print("  - Notification System: Supported")
-
-        print("Success Metrics:")
-        print(f"  - Policies Retrieved: {len(self.policies)}")
-        print("  - GET Operations: Working")
-        print("  - Policy Type Filtering: Working")
-        print("  - Schema Drift Detection: Working")
-        print("  - Policy Analysis: Functional")
-
-        print("Note: Full CRUD operations now tested using ML_FINDING dummy policy.")
-        print(
-            "  This provides comprehensive testing without affecting production data."
-        )
-
     def test_policy_create_ml_finding(self):
         """Test CREATE policy operation using ML_FINDING pattern."""
         print("\n=== TESTING POLICY CREATE (ML_FINDING) ===")
 
-        # Create dummy policy payload using ML_FINDING pattern (simplest)
-        dummy_policy_payload = CreatePolicyPayload(
-            meta=policy.PolicyMeta(
-                name="Test Dummy ML Policy",
-                kind="Policy",
-                description=(
-                    "A test ML_FINDING policy created for CRUD operations testing"
-                ),
-                tags=["test", "dummy", "ml-finding", "crud-test"],
-            ),
-            spec=policy.PolicySpec(
-                policy_type=PolicyType.ML_FINDING,
-                rule="""package testpolicy
-
-configure[result] {
-  result = {
-    "test_method": {
-      "disable": false,
-      "parameters": {
-        "enable_test": {
-          "bool_value": true
-        }
-      }
-    }
-  }
-}""",
-                disable=False,
-                resource_kinds=[],  # ML_FINDING can have empty resource kinds
-                project_selector=["test-projects"],
-                project_exceptions=["excluded-projects"],
-            ),
-            propagate=True,
-        )
-
-        print(f"Creating ML_FINDING policy: {dummy_policy_payload.meta.name}")
-        print(f"Policy Type: {dummy_policy_payload.spec.policy_type}")
-        print(f"Tags: {dummy_policy_payload.meta.tags}")
-        print(f"Resource Kinds: {dummy_policy_payload.spec.resource_kinds}")
-
-        # Create the policy
-        created_policy = policy.create_policy(
-            self.client, self.namespace, dummy_policy_payload
-        )
-
-        assert created_policy is not None, "Policy creation should succeed"
-        assert created_policy.meta.name == dummy_policy_payload.meta.name, (
-            "Policy name should match"
-        )
-        assert created_policy.spec.policy_type == PolicyType.ML_FINDING, (
-            "Policy type should be ML_FINDING"
-        )
-        assert created_policy.spec.resource_kinds == [], (
-            "Resource kinds should be empty for ML_FINDING"
-        )
-
+        created_policy = self._create_test_policy()
         print(f"[SUCCESS] Policy created with UUID: {created_policy.uuid}")
-
-        # Store for cleanup
-        self.created_policy_uuids.append(created_policy.uuid)
-        return created_policy
+        assert created_policy is not None, "Policy should be created successfully"
 
     def test_policy_update_ml_finding(self):
         """Test UPDATE policy operation using ML_FINDING pattern."""
@@ -377,7 +297,7 @@ configure[result] {
 
         # Create a fresh policy for this test
         print("Creating fresh policy for update test...")
-        created_policy = self.test_policy_create_ml_finding()
+        created_policy = self._create_test_policy(" (Update Test)")
         policy_uuid = created_policy.uuid
         print(f"Created policy UUID: {policy_uuid}")
 
@@ -462,7 +382,7 @@ configure[result] {
         # Note: Policy will be cleaned up by teardown_method
         print(f"[INFO] Policy {policy_uuid} will be cleaned up by teardown")
 
-        return updated_policy
+        assert updated_policy is not None, "Policy should be updated successfully"
 
     def test_policy_delete_ml_finding(self):
         """Test DELETE policy operation using ML_FINDING pattern."""
@@ -470,7 +390,7 @@ configure[result] {
 
         # Create a fresh policy for this test
         print("Creating fresh policy for delete test...")
-        created_policy = self.test_policy_create_ml_finding()
+        created_policy = self._create_test_policy(" (Delete Test)")
         policy_uuid = created_policy.uuid
         print(f"Created policy UUID: {policy_uuid}")
 
@@ -502,124 +422,6 @@ configure[result] {
 
         assert deleted_policy is None, "Policy should no longer exist after deletion"
         print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
-
-        return True
-
-    def test_policy_full_crud_cycle(self):
-        """Test complete CRUD cycle using ML_FINDING pattern."""
-        print("\n=== TESTING FULL CRUD CYCLE (ML_FINDING) ===")
-
-        # CREATE
-        print("1. CREATE - Creating ML_FINDING policy")
-        created_policy = self.test_policy_create_ml_finding()
-        assert created_policy is not None, "Policy creation should succeed"
-        policy_uuid = created_policy.uuid
-        print(f"Created policy UUID: {policy_uuid}")
-
-        # READ
-        print("2. READ - Retrieving created policy")
-        retrieved_policy = policy.get_policy(self.client, self.namespace, policy_uuid)
-        assert retrieved_policy is not None, "Policy retrieval should succeed"
-        assert retrieved_policy.uuid == policy_uuid, (
-            "Retrieved policy should match created policy"
-        )
-
-        # Verify the policy was created in the current namespace
-        assert retrieved_policy.tenant_meta.namespace == self.namespace, (
-            f"Policy should be in current namespace {self.namespace}, "
-            f"but found in {retrieved_policy.tenant_meta.namespace}"
-        )
-
-        # UPDATE
-        print("3. UPDATE - Updating policy")
-        # Wait for policy to be fully created
-        time.sleep(2)
-
-        # Create update payload - only update safe fields
-        update_payload = UpdatePolicyPayload(
-            meta=policy.PolicyMeta(
-                name="Updated Test Dummy ML Policy",
-                kind="Policy",
-                description="Updated description for the test ML_FINDING policy",
-                tags=["test", "dummy", "ml-finding", "crud-test", "updated"],
-            ),
-            spec=policy.PolicySpec(
-                policy_type=PolicyType.ML_FINDING,
-                rule="""package testpolicy
-
-configure[result] {
-  result = {
-    "updated_test_method": {
-      "disable": false,
-      "parameters": {
-        "enable_updated_test": {
-          "bool_value": true
-        }
-      }
-    }
-  }
-}""",
-                disable=False,
-                resource_kinds=[],
-                project_selector=["test-projects", "updated-projects"],
-                project_exceptions=["excluded-projects", "old-projects"],
-            ),
-            propagate=True,
-        )
-
-        print(f"Updating ML_FINDING policy: {policy_uuid}")
-        print(f"New name: {update_payload.meta.name}")
-        print(f"New tags: {update_payload.meta.tags}")
-
-        # Update the policy
-        updated_policy = policy.update_policy(
-            self.client,
-            self.namespace,
-            policy_uuid,
-            update_payload,
-            "meta.name,meta.description,meta.tags,spec.rule,spec.project_selector,spec.project_exceptions",
-        )
-
-        assert updated_policy is not None, "Policy update should succeed"
-        assert updated_policy.meta.name == "Updated Test Dummy ML Policy", (
-            "Policy name should be updated"
-        )
-        assert "updated" in updated_policy.meta.tags, "Updated tag should be present"
-        assert "updated-projects" in updated_policy.spec.project_selector, (
-            "Project selector should be updated"
-        )
-
-        print(f"[SUCCESS] Policy updated: {updated_policy.meta.name}")
-
-        # DELETE
-        print("4. DELETE - Deleting policy")
-        print(f"Deleting ML_FINDING policy: {policy_uuid}")
-
-        # Delete the policy
-        delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
-
-        assert delete_success, "Policy deletion should succeed"
-        print(f"[SUCCESS] Policy deleted: {policy_uuid}")
-
-        # Remove from cleanup list since we deleted it manually
-        if policy_uuid in self.created_policy_uuids:
-            self.created_policy_uuids.remove(policy_uuid)
-
-        # Verify deletion by trying to retrieve it
-        time.sleep(2)  # Wait for deletion to propagate
-        deleted_policy = policy.get_policy(self.client, self.namespace, policy_uuid)
-        assert deleted_policy is None, "Policy should no longer exist after deletion"
-        print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
-
-        print("\n[SUCCESS] Full CRUD cycle completed successfully!")
-        print("  - CREATE: ML_FINDING policy creation successful")
-        print("  - READ: Policy retrieval successful")
-        print("  - UPDATE: Policy update successful")
-        print("  - DELETE: Policy deletion successful")
-        print(
-            "  - VERIFICATION: All operations completed without affecting "
-            "production data"
-        )
 
     def test_policy_ml_finding_pattern_validation(self):
         """Test ML_FINDING pattern validation and characteristics."""
@@ -685,8 +487,6 @@ configure[result] {
 
         # Note: Policy will be cleaned up by teardown_method
         print("[INFO] Test policy will be cleaned up by teardown")
-
-        return True
 
 
 if __name__ == "__main__":

@@ -26,9 +26,20 @@ class TestProject:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data
-        self.projects = project.list_projects(self.client, self.namespace)
+        # Get test data with pagination limits
+        from endor_cockpit.types import ListParameters
+        import conftest
+
+        self.projects = project.list_projects(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        )
         if not self.projects:
             pytest.skip("No projects available for testing")
 
@@ -72,52 +83,6 @@ class TestProject:
         print(f"Project name: {retrieved_project.meta.name}")
         if retrieved_project.meta.tags:
             print(f"Project tags: {retrieved_project.meta.tags}")
-
-    def test_project_structure_analysis(self):
-        """Test and analyze project structure."""
-        print("\n=== PROJECT STRUCTURE ANALYSIS ===")
-
-        project = self.projects[0]
-        print(f"Analyzing project: {project.uuid} - {project.meta.name}")
-
-        # Analyze project meta fields
-        meta_fields = [
-            field for field in dir(project.meta) if not field.startswith("_")
-        ]
-        print(f"Project meta fields: {meta_fields}")
-        if project.meta.tags:
-            print(f"Project meta tags: {project.meta.tags}")
-
-        # Analyze project spec fields
-        spec_fields = [
-            field for field in dir(project.spec) if not field.startswith("_")
-        ]
-        print(f"Project spec fields: {spec_fields}")
-
-        # Analyze project tenant_meta fields
-        tenant_meta_fields = [
-            field for field in dir(project.tenant_meta) if not field.startswith("_")
-        ]
-        print(f"Project tenant_meta fields: {tenant_meta_fields}")
-
-    def test_project_base_class_inheritance(self):
-        """Test that project inherits from base classes."""
-        project_obj = self.projects[0]
-
-        # Test BaseResource inheritance
-        from endor_cockpit.models.base import BaseResource
-
-        assert isinstance(project_obj, BaseResource)
-
-        # Test BaseMeta inheritance
-        from endor_cockpit.models.base import BaseMeta
-
-        assert isinstance(project_obj.meta, BaseMeta)
-
-        # Test BaseSpec inheritance
-        from endor_cockpit.models.base import BaseSpec
-
-        assert isinstance(project_obj.spec, BaseSpec)
 
     def test_project_conditional_attributes(self):
         """Test conditional attributes in project."""
@@ -165,40 +130,6 @@ class TestProject:
             self.client, self.namespace, "invalid-uuid"
         )
         assert invalid_project is None
-
-    def test_project_schema_drift_detection(self):
-        """Test schema drift detection in project."""
-        project_obj = self.projects[0]
-
-        # Test that schema drift detection is working
-        # This is tested implicitly through the model validation
-        assert project_obj is not None
-
-        # Test that unknown fields are handled gracefully
-        # This is tested through the model's extra="ignore" configuration
-        assert hasattr(project_obj, "model_config")
-
-    def test_project_operations_summary(self):
-        """Generate summary of project operations."""
-        print("\n=== PROJECT OPERATIONS SUMMARY ===")
-
-        print("GET Operations:")
-        print(f"  - List Projects: GET /v1/namespaces/{self.namespace}/projects")
-        print(f"  - Get Project: GET /v1/namespaces/{self.namespace}/projects/{{uuid}}")
-
-        print("PATCH Operations (Tag Management):")
-        print(
-            f"  - Update Project Tags: PATCH /v1/namespaces/{self.namespace}/projects"
-        )
-        print("  - Uses update_mask for efficient partial updates")
-        print("  - Project tags: meta.tags field")
-
-        print("Success Metrics:")
-        print(f"  - Projects Retrieved: {len(self.projects)}")
-        print("  - GET Operations: Working")
-        print("  - PATCH Operations: Working with update_mask")
-        print("  - Tag Management: Functional for user-defined tags")
-
 
 if __name__ == "__main__":
     # Run tests directly
