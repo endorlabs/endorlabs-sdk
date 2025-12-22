@@ -6,12 +6,20 @@ the Endor Cockpit SDK across all modules.
 """
 
 import logging
-from typing import Any, Dict
+import os
+from typing import Any, Callable, Dict, Optional
 from unittest.mock import Mock
 
 import pytest
 
 from endor_cockpit.api_client import APIClient
+from endor_cockpit.types import ListParameters
+
+# Test pagination limits
+# Tests fetch limited resources for setup (page_size=10, max 5 pages = 50 items max)
+# Tests that need more should explicitly request it
+TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
+TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
 
 
 @pytest.fixture
@@ -29,10 +37,29 @@ def mock_client():
 @pytest.fixture
 def sample_namespace():
     """Sample namespace for testing."""
-    import os
-
     namespace = os.getenv("ENDOR_NAMESPACE", "test.tenant.namespace")
     return namespace
+
+
+@pytest.fixture
+def api_client():
+    """Create a real APIClient instance for integration tests."""
+    return APIClient()
+
+
+@pytest.fixture
+def namespace():
+    """Get namespace from environment for testing."""
+    namespace = os.getenv("ENDOR_NAMESPACE", "")
+    if not namespace:
+        pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+    return namespace
+
+
+@pytest.fixture
+def test_list_params():
+    """Create ListParameters with test pagination limits."""
+    return ListParameters(page_size=TEST_PAGE_SIZE)
 
 
 @pytest.fixture
@@ -165,3 +192,27 @@ def schema_drift_data():
         },
         "tenant_meta": {"namespace": "test.namespace"},
     }
+
+
+def resource_list_fixture_factory(
+    list_func: Callable, resource_name: str
+) -> Callable:
+    """Factory to create resource list fixtures with pagination limits.
+
+    Args:
+        list_func: The list function to call (e.g., project.list_projects)
+        resource_name: Name of the resource for error messages
+
+    Returns:
+        A pytest fixture function
+    """
+
+    @pytest.fixture
+    def _resource_list(api_client, namespace, test_list_params):
+        """Get limited list of resources for testing."""
+        resources = list_func(api_client, namespace, list_params=test_list_params)
+        if not resources:
+            pytest.skip(f"No {resource_name} available for testing")
+        return resources
+
+    return _resource_list

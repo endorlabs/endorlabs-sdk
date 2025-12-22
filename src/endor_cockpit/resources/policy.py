@@ -111,8 +111,10 @@ class PolicySpec(BaseSpec):
     notification: Optional[Dict[str, Any]] = Field(
         None, description="Notification configuration"
     )
-    exception: Optional[Dict[str, Any]] = Field(
-        None, description="Exception configuration"
+    # exception is now defined in BaseSpec as ExceptionConfig
+    # Keeping this for backward compatibility but it will use BaseSpec.exception
+    finding_categories: Optional[List[str]] = Field(
+        None, description="Finding categories for policy filtering"
     )
 
     @field_validator("rule")
@@ -242,6 +244,8 @@ class Policy(BaseResource):
                 "admission",
                 "group_by_fields",
                 "notification",
+                "exception",
+                "finding_categories",
             }
 
             unknown_fields = set(v.keys()) - known_fields
