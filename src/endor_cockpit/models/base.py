@@ -290,24 +290,34 @@ class BaseResource(BaseModel):
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
+        # Skip drift detection for typed nested models (they handle their own validation)
+        typed_model_fields = {
+            "meta",  # BaseMeta
+            "tenant_meta",  # TenantMeta
+            "context",  # Context
+            "processing_status",  # ProcessingStatus
+            "ingested_object",  # IngestedObject
+        }
         if info.field_name and isinstance(v, dict):
-            model_fields = {
-                "uuid",
-                "meta",
-                "spec",
-                "tenant_meta",
-                "context",
-                "processing_status",
-                "ingested_object",
-                "related_object",
-                "scan_object",
-                "propagate",
-            }
+            # Only check drift for non-typed-model fields
+            if info.field_name not in typed_model_fields:
+                model_fields = {
+                    "uuid",
+                    "meta",
+                    "spec",
+                    "tenant_meta",
+                    "context",
+                    "processing_status",
+                    "ingested_object",
+                    "related_object",
+                    "scan_object",
+                    "propagate",
+                }
 
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields, f"BaseResource.{info.field_name}"
-                )
+                if info.field_name in model_fields:
+                    SchemaDriftDetector.extract_unknown_fields(
+                        v, model_fields, f"BaseResource.{info.field_name}"
+                    )
         return v
 
     def get_mutable_fields(self) -> List[str]:
