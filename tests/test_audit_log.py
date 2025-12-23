@@ -100,6 +100,7 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+            max_pages=2,
         )
         assert isinstance(archived_logs, list), "Should return a list of archived logs"
         print(f"Found {len(archived_logs)} archived audit logs")

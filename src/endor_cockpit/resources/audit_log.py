@@ -351,8 +351,18 @@ def list_archived_audit_logs(
         all_items = []
         page_token = None
         page_count = 0
+        max_pages = kwargs.pop("max_pages", None)
 
         while True:
+            # Check max_pages limit
+            if max_pages is not None and page_count >= max_pages:
+                logger.warning(
+                    f"Reached max_pages limit ({max_pages}). "
+                    f"Stopping pagination after {page_count} pages. "
+                    f"Fetched {len(all_items)} items so far."
+                )
+                break
+
             # Build query parameters using BaseResourceOperations helper
             params = ops._build_params(list_params, **kwargs)
 
