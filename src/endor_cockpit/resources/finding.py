@@ -479,14 +479,27 @@ class FindingSpec(BaseSpec):
     actions: Optional[Union[List[str], dict]] = Field(
         None, description="Action information"
     )  # IMMUTABLE: Analysis-determined
-    fixing_upgrades: Optional[List[str]] = Field(
-        None, description="Fixing upgrade information"
+    fixing_upgrades: Optional[Union[List[Union[str, dict]], dict]] = Field(
+        None,
+        description=(
+            "Fixing upgrade information. Can be: "
+            "list of strings, list of dicts, or dict with upgrade_list key"
+        ),
     )  # IMMUTABLE: Analysis-determined
-    fixing_patch: Optional[List[str]] = Field(
-        None, description="Fixing patch information"
+    fixing_patch: Optional[Union[List[str], dict]] = Field(
+        None, description="Fixing patch information (list or dict)"
     )  # IMMUTABLE: Analysis-determined
-    code_owners: Optional[List[str]] = Field(
-        None, description="Code owners information"
+
+    @field_validator("fixing_upgrades", mode="before")
+    @classmethod
+    def validate_fixing_upgrades(cls, v):
+        """Normalize fixing_upgrades from dict with upgrade_list to list."""
+        if isinstance(v, dict) and "upgrade_list" in v:
+            return v["upgrade_list"]
+        # If it's already a list (of strings or dicts), return as-is
+        return v
+    code_owners: Optional[Union[List[str], dict]] = Field(
+        None, description="Code owners information (list or dict with owners/labels)"
     )  # IMMUTABLE: Analysis-determined
     location_urls: Optional[Union[List[str], dict]] = Field(
         None, description="Location URLs"

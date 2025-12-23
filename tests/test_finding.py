@@ -30,14 +30,17 @@ class TestFinding:
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits
+        # Get test data with pagination limits and traverse mode
         from endor_cockpit.types import ListParameters
         import conftest
 
         self.findings = finding.list_findings(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                include_child_namespaces=True,
+            ),
         )
         if not self.findings:
             pytest.skip("No findings available for testing")
