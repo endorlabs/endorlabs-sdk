@@ -1,0 +1,84 @@
+name: Schema Drift Detection
+
+on:
+  schedule:
+    # Run weekly on Mondays at 3 AM UTC (after docs sync at 2 AM)
+    - cron: '0 3 * * 1'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  detect-schema-drift:
+    name: Detect Schema Drift
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v3.0.0
+        with:
+          version: "0.9.3"
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Run schema drift detection
+        run: |
+          python scripts/detect_schema_drift.py --run-tests --test-path tests/
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+        continue-on-error: true  # Don't fail workflow if tests fail
+
+      - name: Create GitHub issues for new drifts
+        if: always()  # Run even if previous step failed
+        run: |
+          if [ -f schema_drift_report.json ]; then
+            python scripts/create_drift_issues.py \
+              --report schema_drift_report.json \
+              --repo ${{ github.repository }} \
+              --label "schema-drift"
+          else
+            echo "No drift report found - skipping issue creation"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schema-drift-report
+          path: schema_drift_report.json
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f schema_drift_report.json ]; then
+            echo "## Schema Drift Detection Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            python -c "
+            import json
+            with open('schema_drift_report.json') as f:
+                report = json.load(f)
+            summary = report.get('summary', {})
+            print(f\"- **New drifts detected**: {summary.get('new_drifts', 0)}\")
+            print(f\"- **Validation errors**: {summary.get('validation_errors', 0)}\")
+            print(f\"- **Test status**: {summary.get('test_status', 'unknown')}\")
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No drift report generated" >> $GITHUB_STEP_SUMMARY
+
