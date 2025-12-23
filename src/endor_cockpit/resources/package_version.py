@@ -85,6 +85,8 @@ class VersionInfo(BaseModel):
 class PackageVersionSourceCodeReference(BaseModel):
     """Source code reference for package version."""
 
+    model_config = ConfigDict(extra="allow")  # Allow flat structure from API
+
     version: Optional[VersionInfo] = Field(
         None, description="Version information (ref, sha, metadata)"
     )
@@ -306,6 +308,28 @@ class PackageVersionSpec(BaseSpec):
                     v["ref"] = version_info["ref"]
                 if "sha" not in v and "sha" in version_info:
                     v["sha"] = version_info.get("sha")
+        return v
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def detect_schema_drift(cls, v, info):
+        """Override BaseSpec drift detection to skip typed model fields."""
+        # Skip drift detection for typed nested models (they handle their own validation)
+        typed_model_fields = {
+            "source_code_reference",  # PackageVersionSourceCodeReference
+            "resolved_dependencies",  # Bom or dict
+            "resolution_errors",  # PackageVersionResolutionErrors
+            "code_owners",  # CodeOwnerData
+            "container_metadata",  # ContainerMetadata
+            "bazel_metadata",  # BazelMetadata
+        }
+        if (
+            info.field_name
+            and isinstance(v, dict)
+            and info.field_name not in typed_model_fields
+        ):
+            # Call parent validator for non-typed-model fields
+            return super().detect_schema_drift(v, info)
         return v
 
 
