@@ -27,14 +27,18 @@ class TestPackageVersion:
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
         
-        # Get test data with pagination limits
+        # Get test data with pagination limits and traverse mode
         from endor_cockpit.types import ListParameters
         import conftest
 
         self.package_versions = package_version.list_package_versions(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                include_child_namespaces=True,
+            ),
+            max_pages=2,
         )
         if not self.package_versions:
             pytest.skip("No package versions available for testing")
