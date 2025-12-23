@@ -53,6 +53,7 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+            max_pages=2,
         )
 
     def teardown_method(self):
@@ -75,6 +76,7 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+            max_pages=2,
         )
         assert isinstance(logs_list, list), "Should return a list of logs"
         print(f"Found {len(logs_list)} audit logs")
@@ -157,6 +159,7 @@ class TestAuditLog:
                     filter=f"spec.operation=='{operation_type.value}'",
                     page_size=conftest.TEST_PAGE_SIZE,
                 ),
+                max_pages=2,
             )
             print(f"{operation_type.value}: {len(filtered_logs)} logs")
 
@@ -180,6 +183,7 @@ class TestAuditLog:
                 filter=f"spec.message_kind=='{message_kind}'",
                 page_size=conftest.TEST_PAGE_SIZE,
             ),
+            max_pages=2,
         )
         print(f"Message Kind '{message_kind}': {len(filtered_logs)} logs")
 
@@ -211,8 +215,9 @@ class TestAuditLog:
                     f"meta.create_time>=date({from_date_str}) "
                     f"and meta.create_time<=date({to_date_str})"
                 ),
-                    page_size=conftest.TEST_PAGE_SIZE,
+                page_size=conftest.TEST_PAGE_SIZE,
             ),
+            max_pages=2,
         )
         print(
             f"Time range ({from_date_str} to {to_date_str}): {len(filtered_logs)} logs"
@@ -242,6 +247,7 @@ class TestAuditLog:
             list_params=ListParameters(
                 filter="spec.claims matches '.*api-key.*'", page_size=20
             ),
+            max_pages=2,
         )
         print(f"Claims containing 'api-key': {len(filtered_logs)} logs")
 
@@ -277,6 +283,7 @@ class TestAuditLog:
             list_params=ListParameters(
                 filter=f"spec.remote_address=='{remote_addr}'", page_size=20
             ),
+            max_pages=2,
         )
         print(f"Remote address '{remote_addr}': {len(filtered_logs)} logs")
 
@@ -299,6 +306,7 @@ class TestAuditLog:
             list_params=ListParameters(
                 filter="spec.claims matches '.*api-key.*'", page_size=20
             ),
+            max_pages=2,
         )
         print(f"Found {len(api_key_logs)} logs with potential API key activity")
 
@@ -327,6 +335,7 @@ class TestAuditLog:
                 self.client,
                 self.namespace,
                 list_params=ListParameters(filter=pattern, page_size=20),
+                max_pages=2,
             )
             print(f"Pattern '{pattern}': {len(filtered_logs)} logs")
 
@@ -340,6 +349,7 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(page_size=page_size),
+            max_pages=2,
         )
         print(f"Paginated logs (page_size={page_size}): {len(paginated_logs)}")
 
@@ -367,6 +377,7 @@ if __name__ == "__main__":
         test_instance.client,
         test_instance.namespace,
         list_params=ListParameters(page_size=20),
+        max_pages=2,
     )
 
     try:
