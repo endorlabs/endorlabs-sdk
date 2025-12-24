@@ -74,26 +74,111 @@ class GitHubIssueCreator:
         logger.info(f"Found {len(issues)} existing {self.label} issues")
         return issues
 
+    def get_resource_file_path(self, resource_name: str) -> str:
+        """Map resource name to source file path."""
+        if not resource_name:
+            return "src/endor_cockpit/models/base.py"
+        
+        # Map resource names to their file paths
+        resource_file_map = {
+            "Finding": "src/endor_cockpit/resources/finding.py",
+            "Policy": "src/endor_cockpit/resources/policy.py",
+            "Project": "src/endor_cockpit/resources/project.py",
+            "Namespace": "src/endor_cockpit/resources/namespace.py",
+            "Repository": "src/endor_cockpit/resources/repository.py",
+            "RepositoryVersion": "src/endor_cockpit/resources/repository_version.py",
+            "PackageVersion": "src/endor_cockpit/resources/package_version.py",
+            "DependencyMetadata": "src/endor_cockpit/resources/dependency_metadata.py",
+            "ScanResult": "src/endor_cockpit/resources/scan_result.py",
+            "LinterResult": "src/endor_cockpit/resources/linter_result.py",
+            "Metric": "src/endor_cockpit/resources/metric.py",
+            "User": "src/endor_cockpit/resources/user.py",
+            "Installation": "src/endor_cockpit/resources/installation.py",
+            "BaseResource": "src/endor_cockpit/models/base.py",
+            "BaseSpec": "src/endor_cockpit/models/base.py",
+        }
+        
+        return resource_file_map.get(resource_name, "src/endor_cockpit/models/base.py")
+    
+    def extract_model_class(self, model_path: str) -> str:
+        """Extract model class name from model path."""
+        # Format: "FindingSpec.actions" -> "FindingSpec"
+        # or "FindingSpec.actions.policy_uuids" -> "Actions"
+        parts = model_path.split(".")
+        if len(parts) >= 2:
+            # For nested paths, try to infer the model class
+            # "FindingSpec.actions.policy_uuids" -> "Actions"
+            if parts[1] in ["actions", "finding_metadata", "fixing_patch", "source_code_version"]:
+                # Map field names to model classes
+                field_to_model = {
+                    "actions": "Actions",
+                    "finding_metadata": "FindingMetadata",
+                    "fixing_patch": "FixingPatch",
+                    "source_code_version": "SourceCodeVersion",
+                }
+                return field_to_model.get(parts[1], parts[0])
+            return parts[0]
+        return model_path
+    
     def issue_exists(self, field_path: str, existing_issues: List[Dict]) -> Optional[int]:
         """Check if an issue already exists for this field path."""
         for issue in existing_issues:
             if field_path in issue.get("title", "") or field_path in issue.get("body", ""):
                 return issue.get("number")
         return None
+    
+    def _generate_example_fix(
+        self, resource_name: str, model_class: str, field: str, nested_depth: int
+    ) -> str:
+        """Generate example code snippet for fixing the drift."""
+        if nested_depth == 0:
+            # Simple field addition
+            return f"""class {model_class}(BaseModel):
+    # ... existing fields ...
+    {field}: Optional[str] = Field(
+        None, description="TODO: Add description from OpenAPI spec"
+    )"""
+        else:
+            # Nested field - may need to create a new model
+            return f"""# Option 1: Add to existing nested model
+class {model_class}(BaseModel):
+    # ... existing fields ...
+    {field}: Optional[str] = Field(
+        None, description="TODO: Add description from OpenAPI spec"
+    )
+
+# Option 2: If nested, may need to create a new model class
+# Check OpenAPI spec for the exact structure"""
 
     def create_issue(self, drift: Dict) -> Optional[Dict]:
         """Create a GitHub issue for a schema drift."""
         field_path = drift["field_path"]
-        model = drift["model"]
+        model_path = drift.get("model_path", drift.get("model", "Unknown"))
         field = drift["field"]
+        resource_name = drift.get("resource_name", "Unknown")
+        file_path = drift.get("file_path", self.get_resource_file_path(resource_name))
+        model_class = self.extract_model_class(model_path)
+        nested_depth = drift.get("nested_depth", 0)
         
-        title = f"Schema Drift: {field_path}"
+        title = f"Schema Drift: {resource_name}.{field_path}"
+        
+        # Build OpenAPI reference
+        openapi_ref = model_class
+        if resource_name != "Unknown":
+            openapi_ref = f"v1{resource_name}Spec" if "Spec" in model_class else f"v1{resource_name}"
+        
+        # Build example fix code
+        example_fix = self._generate_example_fix(resource_name, model_class, field, nested_depth)
         
         body = f"""## Schema Drift Detected
 
+**Resource**: `{resource_name}`
+**Model**: `{model_path}`
+**Model Class**: `{model_class}`
 **Field Path**: `{field_path}`
-**Model**: `{model}`
 **Field**: `{field}`
+**File to Modify**: `{file_path}`
+**Nested Depth**: {nested_depth}
 **First Seen**: {drift.get("first_seen", "Unknown")}
 
 ### Details
@@ -102,15 +187,27 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Action Required
 
-1. Review the API response structure for `{model}`
-2. Check if this field should be added to the model
-3. Update the Pydantic model if needed
-4. Add appropriate validation and documentation
+1. Review OpenAPI spec: `external_docs/openapi-swagger.json` (search for `{openapi_ref}`)
+2. Add field to model: `{file_path}` in class `{model_class}`
+3. Update drift detection known_fields if applicable
+4. Add validation and documentation
+
+### Code Location
+
+- **File**: `{file_path}`
+- **Class**: `{model_class}`
+- **Field**: `{field}`
+
+### Example Fix
+
+```python
+{example_fix}
+```
 
 ### Related
 
 - Check `external_docs/openapi-swagger.json` for API specification
-- Review `src/endor_cockpit/resources/{model.lower()}.py` for current model definition
+- Review `{file_path}` for current model definition
 
 ### Detection Method
 
