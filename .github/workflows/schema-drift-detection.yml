@@ -2,13 +2,87 @@ name: Schema Drift Detection
 
 on:
   schedule:
-    # Run weekly on Mondays at 3 AM UTC (after docs sync at 2 AM)
+    # Run hourly to check for endorctl version updates
+    - cron: '0 * * * *'
+    # Also run weekly on Mondays at 3 AM UTC (after docs sync at 2 AM)
     - cron: '0 3 * * 1'
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
+  check-version:
+    name: Check Endorctl Version
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.check.outputs.changed }}
+      latest-version: ${{ steps.check.outputs.version }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v3.0.0
+        with:
+          version: "0.9.3"
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Restore cached version
+        id: cache-version
+        uses: actions/cache@v4
+        with:
+          path: .github/cache/endorctl_version.txt
+          key: endorctl-version-${{ runner.os }}
+          restore-keys: |
+            endorctl-version-${{ runner.os }}
+
+      - name: Check for version update
+        id: check
+        run: |
+          STATE_FILE=".github/cache/endorctl_version.txt"
+          mkdir -p .github/cache
+          
+          # Run version check and capture exit code
+          set +e  # Don't exit on error
+          python scripts/check_endorctl_version.py \
+            --state-file "$STATE_FILE" \
+            --quiet
+          EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          LATEST_VERSION=$(cat "$STATE_FILE" 2>/dev/null || echo "")
+          
+          # Set outputs
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "🔄 Version update detected: $LATEST_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ No version update (current: $LATEST_VERSION)"
+          fi
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Save version to cache
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .github/cache/endorctl_version.txt
+          key: endorctl-version-${{ runner.os }}-${{ steps.check.outputs.version }}
+          restore-keys: |
+            endorctl-version-${{ runner.os }}
+
   detect-schema-drift:
     name: Detect Schema Drift
+    needs: check-version
+    # Only run if version changed OR manually triggered (workflow_dispatch)
+    if: needs.check-version.outputs.version-changed == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     
     steps:
@@ -60,7 +134,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: schema-drift-report
+          name: schema-drift-report-${{ needs.check-version.outputs.latest-version || 'manual' }}
           path: schema_drift_report.json
           retention-days: 30
 
@@ -70,6 +144,10 @@ jobs:
           if [ -f schema_drift_report.json ]; then
             echo "## Schema Drift Detection Summary" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.check-version.outputs.version-changed }}" == "true" ]; then
+              echo "**Triggered by endorctl version update**: ${{ needs.check-version.outputs.latest-version }}" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
             python -c "
             import json
             with open('schema_drift_report.json') as f:
