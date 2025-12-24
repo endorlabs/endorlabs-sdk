@@ -28,12 +28,22 @@ class ScoreCard(BaseModel):
 
 
 class MetricValue(BaseModel):
-    """Metric value for metrics."""
+    """Metric value for metrics.
+    
+    Note: MetricValue can contain many optional complex fields per OpenAPI spec
+    (e.g., ci_cd_tools, github_workflows, score_factor_list, time_tracker, etc.).
+    We model the core fields here and use extra="ignore" to handle unknown
+    complex nested structures gracefully.
+    """
 
-    category: str = Field(..., description="Metric value categories")
-    description: Optional[str] = Field(
-        None, description="Description of the metric value"
+    model_config = ConfigDict(extra="ignore")
+
+    category: Optional[str] = Field(
+        None, description="Metric value categories"
     )
+    description: str = Field(
+        ..., description="Description of the metric value"
+    )  # REQUIRED per OpenAPI spec
     int32_value: Optional[int] = Field(None, description="32-bit integer value")
     int64_value: Optional[str] = Field(
         None, description="64-bit integer value as string"
