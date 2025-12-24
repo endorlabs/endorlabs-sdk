@@ -77,6 +77,14 @@ ls external_docs/user-docs/ | grep -i policy
 uv run python maneuvers/cleanup_test_policies.py --dry-run
 ```
 
+**Automated Workflow**: Documentation and schema drift detection are automated via the [Unified Documentation & Schema Drift Workflow](docs/rules-of-engagement/docs-drift-workflow.md). This workflow:
+- Automatically updates OpenAPI spec and user docs weekly
+- Detects schema drift between API responses and Pydantic models
+- Creates GitHub issues for new drifts
+- Ensures documentation is fresh before drift detection
+
+Run manually: `python scripts/unified_docs_workflow.py --all`
+
 ---
 
 ## 🏗️ **Development**
