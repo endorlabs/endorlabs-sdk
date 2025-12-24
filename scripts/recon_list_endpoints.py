@@ -56,6 +56,8 @@ class EndpointRecon:
         """
         # Blacklist of resource names to skip
         blacklist = {"archived"}
+        # Also blacklist any resource ending in "-logs" except scan-related logs
+        log_whitelist = {"scan-logs"}  # Allow scan logs
         
         endpoints = []
         paths = self.spec.get("paths", {})
@@ -93,6 +95,11 @@ class EndpointRecon:
                     # Skip if resource_name is in blacklist
                     if resource_name.lower() in blacklist:
                         continue
+                    
+                    # Skip if resource_name ends with "-logs" (except whitelisted)
+                    if resource_name.lower().endswith("-logs"):
+                        if resource_name.lower() not in log_whitelist:
+                            continue
 
                     endpoints.append(
                         {
