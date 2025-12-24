@@ -112,34 +112,99 @@ class SchemaDriftDetector:
         """Parse schema drift warnings from test output."""
         drifts = []
         
-        # Pattern for schema drift warnings
+        # Pattern for schema drift warnings with resource context
+        # Matches: "API Schema Drift Detected in {Resource}.{Model}.{Field}: Unknown fields found: {fields}"
+        # or: "API Schema Drift Detected in {Model}.{Field}: Unknown fields found: {fields}" (legacy)
         pattern = re.compile(
-            r"API Schema Drift Detected in ([^:]+): "
+            r"API Schema Drift Detected in (?:([^.]+)\.)?([^:]+): "
             r"Unknown fields found: ([^.]+)"
         )
         
         for match in pattern.finditer(output):
-            model_name = match.group(1).strip()
-            fields_str = match.group(2).strip()
+            resource_name = match.group(1).strip() if match.group(1) else None
+            model_path = match.group(2).strip()
+            fields_str = match.group(3).strip()
             fields = [f.strip() for f in fields_str.split(",")]
             
+            # Extract model name and field name from model_path
+            # Format: "ResourceSpec.field" or "Resource.field" or "Model.field"
+            model_parts = model_path.split(".")
+            if len(model_parts) >= 2:
+                model_name = ".".join(model_parts[:-1])
+                base_field = model_parts[-1]
+            else:
+                model_name = model_path
+                base_field = None
+            
+            # Infer resource name from model name if not provided
+            if not resource_name:
+                # Try to extract from model name (e.g., "FindingSpec" -> "Finding")
+                if model_name.endswith("Spec"):
+                    resource_name = model_name[:-4]
+                elif "." in model_name:
+                    # Handle nested paths like "FindingSpec.actions"
+                    parts = model_name.split(".")
+                    resource_name = parts[0].replace("Spec", "")
+                else:
+                    resource_name = model_name
+            
+            # Determine file path based on resource name
+            file_path = self._get_resource_file_path(resource_name)
+            
+            # Calculate nested depth (count of dots in model_path)
+            nested_depth = model_path.count(".")
+            
             for field in fields:
-                field_path = f"{model_name}.{field}"
+                # Build full field path
+                if base_field:
+                    field_path = f"{model_path}.{field}"
+                else:
+                    field_path = f"{model_name}.{field}"
                 
                 # Check if this is a new drift
                 if field_path not in self.known_drifts:
                     drift = {
                         "field_path": field_path,
+                        "resource_name": resource_name,
+                        "model_path": model_path,
                         "model": model_name,
                         "field": field,
+                        "file_path": file_path,
+                        "nested_depth": nested_depth,
                         "first_seen": datetime.now(timezone.utc).isoformat(),
                         "status": "new",
                         "issue_number": None
                     }
                     drifts.append(drift)
-                    logger.info(f"New drift detected: {field_path}")
+                    logger.info(f"New drift detected: {field_path} (Resource: {resource_name})")
         
         return drifts
+    
+    def _get_resource_file_path(self, resource_name: str) -> str:
+        """Map resource name to source file path."""
+        if not resource_name:
+            return "src/endor_cockpit/models/base.py"
+        
+        # Map resource names to their file paths
+        resource_file_map = {
+            "Finding": "src/endor_cockpit/resources/finding.py",
+            "Policy": "src/endor_cockpit/resources/policy.py",
+            "Project": "src/endor_cockpit/resources/project.py",
+            "Namespace": "src/endor_cockpit/resources/namespace.py",
+            "Repository": "src/endor_cockpit/resources/repository.py",
+            "RepositoryVersion": "src/endor_cockpit/resources/repository_version.py",
+            "PackageVersion": "src/endor_cockpit/resources/package_version.py",
+            "DependencyMetadata": "src/endor_cockpit/resources/dependency_metadata.py",
+            "ScanResult": "src/endor_cockpit/resources/scan_result.py",
+            "LinterResult": "src/endor_cockpit/resources/linter_result.py",
+            "Metric": "src/endor_cockpit/resources/metric.py",
+            "User": "src/endor_cockpit/resources/user.py",
+            "Installation": "src/endor_cockpit/resources/installation.py",
+            "BaseResource": "src/endor_cockpit/models/base.py",
+            "BaseSpec": "src/endor_cockpit/models/base.py",
+        }
+        
+        return resource_file_map.get(resource_name, "src/endor_cockpit/models/base.py")
 
     def _parse_validation_errors(self, output: str) -> List[Dict]:
         """Parse Pydantic validation errors from test output."""
