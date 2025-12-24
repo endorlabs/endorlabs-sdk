@@ -108,27 +108,18 @@ jobs:
 
       - name: Run schema drift detection
         run: |
-          python scripts/detect_schema_drift.py --run-tests --test-path tests/
+          python scripts/unified_docs_workflow.py \
+            --check-drift-only \
+            --test-path tests/ \
+            --drift-report-output schema_drift_report.json
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-        continue-on-error: true  # Don't fail workflow if tests fail
-
-      - name: Create GitHub issues for new drifts
-        if: always()  # Run even if previous step failed
-        run: |
-          if [ -f schema_drift_report.json ]; then
-            python scripts/create_drift_issues.py \
-              --report schema_drift_report.json \
-              --repo ${{ github.repository }} \
-              --label "schema-drift"
-          else
-            echo "No drift report found - skipping issue creation"
-          fi
-        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true  # Don't fail workflow if tests fail
 
       - name: Upload drift report
         if: always()
