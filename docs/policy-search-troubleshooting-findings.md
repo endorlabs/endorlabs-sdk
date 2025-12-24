@@ -14,7 +14,7 @@ This document provides findings from troubleshooting three URL search queries fo
 ## Test Policy Details
 
 - **Policy UUID**: `692f5c0beb124423f4683ffc`
-- **Namespace**: `endor-solutions-tgowan.cockpit`
+- **Namespace**: `endor-solutions-tgowan`
 - **Policy Name**: `[ENGINEER GENERATED][vuln ticket = REL-1230239] Custom exception policy: GHSA-7jgj-8wvc-jh57: .NET Core Information Disclosure`
 - **Tags**: `['engineer_generated']`
 - **Key Finding**: The ticket ID `REL-1230239` is stored in `meta.name`, not in `meta.tags`

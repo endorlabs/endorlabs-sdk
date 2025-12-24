@@ -11,11 +11,11 @@ Based on the policy resource structure and API patterns.
 Example:
 
 uv run python maneuvers/cleanup_test_policies.py \
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --tenant-namespace "endor-solutions-tgowan" \
   --dry-run
 
 uv run python maneuvers/cleanup_test_policies.py \
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --tenant-namespace "endor-solutions-tgowan" \
   --confirm-delete
 
 ## Note: This script will delete ALL policies with test-related tags.
@@ -277,21 +277,21 @@ Examples:
 
 # Dry run to see what would be deleted
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+  --tenant-namespace "endor-solutions-tgowan" \\
   --dry-run
 
 # Delete with confirmation prompt
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan.cockpit"
+  --tenant-namespace "endor-solutions-tgowan"
 
 # Delete without confirmation (use with caution)
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+  --tenant-namespace "endor-solutions-tgowan" \\
   --confirm-delete
 
 # Include child namespaces in search
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+  --tenant-namespace "endor-solutions-tgowan" \\
   --include-child-namespaces \\
   --dry-run
         """

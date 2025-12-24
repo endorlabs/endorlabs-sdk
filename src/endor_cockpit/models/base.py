@@ -203,9 +203,15 @@ class BaseSpec(BaseModel):
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         # Skip drift detection for typed nested models (they handle their own validation)
-        typed_model_fields = {"notification", "finding", "exception"}
+        # These fields are defined in subclasses as typed Pydantic models
+        typed_model_fields = {
+            "notification",  # NotificationConfig
+            "finding",  # FindingConfig
+            "exception",  # ExceptionConfig
+            "git",  # GitInfo (in ProjectSpec)
+        }
         if info.field_name and isinstance(v, dict) and info.field_name not in typed_model_fields:
-            model_fields = {"notification", "finding", "exception"}
+            model_fields = {"notification", "finding", "exception", "git"}
             SchemaDriftDetector.extract_unknown_fields(
                 v, model_fields, f"BaseSpec.{info.field_name}"
             )

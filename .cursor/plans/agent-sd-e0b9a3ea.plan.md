@@ -11,9 +11,7 @@ todos:
 
 ## Overview
 
-Wayfinder is a graph-based navigation system for the Endor Labs data model. It uses NetworkX to represent resources, relationships, and definitions as an interactive graph that agents can traverse to understand the API structure and build complex workflows.
-
-**Key Design Principles:**
+Wayfinder is a graph-based navigation system for the Endor Labs data model. It uses NetworkX to represent resources, relationships, and definitions as an interactive graph that agents can traverse to understand the API structure and build complex workflows.**Key Design Principles:**
 
 - Resources (Finding, Project, etc.) are nodes
 - Definitions (v1Meta, v1FindingSpec, etc.) are subgraphs
@@ -33,7 +31,7 @@ Move `agent-sd.plan.md` to `.workspace/2025-10-24-agent-sdk-task-disambiguation.
 
 **Script: `scripts/index_openapi_definitions.py`**
 
-```python
+````python
 """
 Extract all definitions from OpenAPI spec and generate searchable index.
 Output: docs/OPENAPI_DEFINITIONS_INDEX.md
@@ -956,4 +954,6 @@ path = graph.find_path("Finding", "RepositoryVersion")
 # Execute workflow using endor_cockpit SDK
 from endor_cockpit.resources import finding, policy
 # ... implementation using learned structure
-```
+
+
+````

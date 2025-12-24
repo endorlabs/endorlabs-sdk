@@ -11,7 +11,7 @@ Based on the OpenAPI schema and finding resource structure.
 Example:
 
 uv run python maneuvers/tag_findings.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --project-uuid "your-project-uuid" \
   --finding-categories "FINDING_CATEGORY_SECRETS" \
   --tag "false-positive" \
@@ -218,14 +218,14 @@ def main():
 Examples:
   # Tag all secrets findings in a project
   python maneuvers/tag_findings.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --finding-categories "FINDING_CATEGORY_SECRETS" \\
     --tag "false-positive"
 
   # Tag findings in a specific file
   python maneuvers/tag_findings.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --finding-categories "FINDING_CATEGORY_SECRETS" \\
     --file-path "maneuvers/create_auth_policy.py" \\
@@ -233,7 +233,7 @@ Examples:
 
   # Find project by repository URL and tag findings
   python maneuvers/tag_findings.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \\
     --finding-categories "FINDING_CATEGORY_SECRETS" \\
     --tag "false-positive"

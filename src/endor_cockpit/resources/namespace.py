@@ -27,7 +27,7 @@ API FEATURES:
 Namespaces in Endor Labs follow a hierarchical structure with canonical naming:
 
 ```
-Tenant (endor-solutions-tgowan.cockpit)
+Tenant (endor-solutions-tgowan)
 ├── Namespace (tenant.namespace)
 │   ├── Child Namespace (tenant.namespace.child)
 │   │   └── Grandchild (tenant.namespace.child.grandchild)
@@ -107,7 +107,7 @@ from endor_cockpit.resources import namespace
 # List all namespaces in tenant
 all_namespaces = namespace.list_namespaces(
     client=client,
-    tenant_namespace="endor-solutions-tgowan.cockpit"
+    tenant_namespace="endor-solutions-tgowan"
 )
 ```
 
@@ -123,7 +123,7 @@ all_namespaces = namespace.list_namespaces(
 # Get specific namespace
 namespace = namespace.get_namespace(
     client=client,
-    parent_namespace="endor-solutions-tgowan.cockpit",
+    parent_namespace="endor-solutions-tgowan",
     namespace_uuid="namespace-uuid-here"
 )
 ```
@@ -152,7 +152,7 @@ payload = CreateNamespacePayload(
 
 namespace = namespace.create_namespace(
     client=client,
-    parent_namespace="endor-solutions-tgowan.cockpit",
+    parent_namespace="endor-solutions-tgowan",
     payload=payload
 )
 ```
@@ -182,7 +182,7 @@ payload = UpdateNamespacePayload(
 
 namespace = namespace.update_namespace(
     client=client,
-    parent_namespace="endor-solutions-tgowan.cockpit",
+    parent_namespace="endor-solutions-tgowan",
     namespace_uuid="namespace-uuid",
     payload=payload
 )
@@ -200,7 +200,7 @@ namespace = namespace.update_namespace(
 # Delete namespace
 success = namespace.delete_namespace(
     client=client,
-    parent_namespace="endor-solutions-tgowan.cockpit",
+    parent_namespace="endor-solutions-tgowan",
     namespace_uuid="namespace-uuid"
 )
 ```
@@ -234,7 +234,7 @@ Policies can be applied at namespace level to affect all contained resources.
 parent_namespace = "68f3b2956795a2693a0f5bec"
 
 # ✅ CORRECT
-parent_namespace = "endor-solutions-tgowan.cockpit.integration-test"
+parent_namespace = "endor-solutions-tgowan.integration-test"
 ```
 
 ### Issue: Cross-Tenant Operations
