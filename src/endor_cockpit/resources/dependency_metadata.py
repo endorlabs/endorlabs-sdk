@@ -84,15 +84,15 @@ class Ecosystem(FlexibleEnum):
 class DependencyData(BaseModel):
     """Dependency data for DependencyMetadata."""
 
-    project_uuid: str = Field(
-        ..., description="The UUID of the project to which the dependency belongs"
+    project_uuid: Optional[str] = Field(
+        None, description="The UUID of the project to which the dependency belongs"
     )
     package_name: str = Field(
         ...,
         description="Qualified dependency package name. Does not include the version.",
     )
-    package_version_uuid: str = Field(
-        ..., description="the UUID of the dependency package version object."
+    package_version_uuid: Optional[str] = Field(
+        None, description="the UUID of the dependency package version object."
     )
     unresolved_version: Optional[str] = Field(
         None, description="Unresolved dependency package version string."
