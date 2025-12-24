@@ -31,17 +31,17 @@ jobs:
         run: |
           uv pip install --system -e ".[docs]"
 
-      - name: Download OpenAPI Spec
+      - name: Update Documentation
         run: |
-          python scripts/sync_external_docs.py --download-openapi
+          python scripts/unified_docs_workflow.py \
+            --update-docs-only \
+            --download-openapi \
+            --download-user-docs \
+            --max-pages 100
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-
-      - name: Download User Documentation
-        run: |
-          python scripts/sync_external_docs.py --download-user-docs --max-pages 100
 
       - name: Commit changes
         run: |

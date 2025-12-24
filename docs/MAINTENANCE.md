@@ -66,6 +66,75 @@ The Endor Cockpit knowledge base is a **portable shared learning index** that co
 3. **Update Procedures**: Modify documentation when processes change
 4. **Share Knowledge**: Contribute operational insights to the knowledge base
 
+## Automated Documentation & Drift Detection
+
+The Endor Cockpit project includes automated workflows to maintain documentation freshness and detect schema drift:
+
+### Documentation Sync
+
+**Workflow**: `.github/workflows/sync-external-docs.yml`
+
+- **Schedule**: Weekly on Mondays at 2 AM UTC
+- **Purpose**: Downloads and updates external documentation
+- **Operations**:
+  - Downloads OpenAPI specification from Endor Labs API
+  - Downloads user documentation from docs.endorlabs.com
+  - Commits updates automatically
+
+**Manual Execution**:
+```bash
+python scripts/unified_docs_workflow.py --update-docs-only
+```
+
+### Schema Drift Detection
+
+**Workflow**: `.github/workflows/schema-drift-detection.yml`
+
+- **Schedule**: 
+  - Hourly (endorctl version checks)
+  - Weekly on Mondays at 3 AM UTC (after docs sync)
+- **Purpose**: Detects discrepancies between API responses and Pydantic models
+- **Operations**:
+  - Runs integration tests with drift detection
+  - Parses schema drift warnings
+  - Creates GitHub issues for new drifts
+  - Generates drift reports
+
+**Manual Execution**:
+```bash
+python scripts/unified_docs_workflow.py --check-drift-only
+```
+
+### Unified Workflow
+
+For complete workflow execution (docs + drift detection):
+
+```bash
+python scripts/unified_docs_workflow.py --all
+```
+
+**Key Features**:
+- Ensures docs are fresh before drift detection
+- Only runs drift detection if docs were updated (unless `--force`)
+- Creates actionable GitHub issues for new drifts
+- Provides comprehensive logging and reporting
+
+**Documentation**: See [Unified Documentation & Schema Drift Workflow](rules-of-engagement/docs-drift-workflow.md) for complete details.
+
+### When to Run Manually
+
+Run the unified workflow manually when:
+- **Before Major Changes**: Update docs and check drift before implementing new features
+- **After API Updates**: When Endor Labs API is updated, check for drift
+- **During Development**: Verify models match API responses during development
+- **Troubleshooting**: When encountering unexpected API behavior
+
+### Monitoring Workflows
+
+- **GitHub Actions**: Check workflow runs in the Actions tab
+- **Drift Issues**: Review issues with label `schema-drift`
+- **Drift Reports**: Check `schema_drift_report.json` artifacts in workflow runs
+
 ## Conclusion
 
 The knowledge base is a living system that requires active maintenance to remain valuable. By following these practices, we ensure that the Endor Cockpit knowledge base remains accurate, comprehensive, and useful for all AI agents and developers working with the system.
