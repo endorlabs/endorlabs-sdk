@@ -51,7 +51,7 @@ import os
 import json
 # Import implemented class objects for type safety.
 client = APIClient()
-namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan.cockpit')
+namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan')
 
 # Test the endpoint
 res = client.get(f"v1/namespaces/{namespace}/{resource}")
@@ -210,7 +210,7 @@ grep -A 20 "/v1/namespaces/{tenant_meta.namespace}/{resource}" external_docs/ope
 # Complete API response analysis
 def analyze_api_response(resource_name):
     client = APIClient()
-    namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan.cockpit')
+    namespace = os.getenv('ENDOR_NAMESPACE', 'endor-solutions-tgowan')
     
     # Test list endpoint
     res = client.get(f"v1/namespaces/{namespace}/{resource_name}")

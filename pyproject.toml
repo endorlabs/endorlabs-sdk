@@ -14,9 +14,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "requests==2.32.5",
+    "matplotlib==3.10.8",
+    "networkx==3.6.1",
     "pydantic==2.12.3",
     "pyyaml>=6.0.3",
+    "requests==2.32.5",
     "grpcio-tools>=1.76.0",
     "zstandard>=0.25.0",
 ]
