@@ -14,7 +14,7 @@ Tag all secrets findings in the `create_auth_policy.py` file:
 
 ```bash
 uv run python maneuvers/tag_findings.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \
   --finding-categories "FINDING_CATEGORY_SECRETS" \
   --file-path "maneuvers/create_auth_policy.py" \
@@ -36,7 +36,7 @@ Create a policy to suppress all findings tagged as 'false-positive':
 
 ```bash
 uv run python maneuvers/create_exception_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \
   --policy-name "Endor Cockpit - False Positive Exceptions" \
   --tag "false-positive" \
@@ -55,7 +55,7 @@ uv run python maneuvers/create_exception_policy.py \
 ```bash
 # Step 1: Tag the findings
 uv run python maneuvers/tag_findings.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \
   --finding-categories "FINDING_CATEGORY_SECRETS" \
   --file-path "maneuvers/create_auth_policy.py" \
@@ -63,7 +63,7 @@ uv run python maneuvers/tag_findings.py \
 
 # Step 2: Create the exception policy
 uv run python maneuvers/create_exception_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \
   --policy-name "Endor Cockpit - False Positive Exceptions" \
   --tag "false-positive" \
@@ -81,7 +81,7 @@ If you already know the project UUID, you can use it directly:
 ```bash
 # Step 1: Tag findings using project UUID
 uv run python maneuvers/tag_findings.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --project-uuid "your-project-uuid-here" \
   --finding-categories "FINDING_CATEGORY_SECRETS" \
   --file-path "maneuvers/create_auth_policy.py" \
@@ -89,7 +89,7 @@ uv run python maneuvers/tag_findings.py \
 
 # Step 2: Create exception policy using project UUID
 uv run python maneuvers/create_exception_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --project-uuid "your-project-uuid-here" \
   --policy-name "Endor Cockpit - False Positive Exceptions" \
   --tag "false-positive"

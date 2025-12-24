@@ -29,7 +29,7 @@ Example:
 
 # Vulnerability notification policy with Endor Patch
 uv run python maneuvers/create_notification_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --name "Vulnerability Notifications with Endor Patch" \
   --description "Notification policy for reachable dependency vulnerabilities with Endor Patch available" \
   --finding-categories "VULNERABILITY" \
@@ -40,7 +40,7 @@ uv run python maneuvers/create_notification_policy.py \
 
 # SAST notification policy
 uv run python maneuvers/create_notification_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --name "SAST Notifications" \
   --description "Notification policy for SAST findings" \
   --finding-categories "SAST" \
@@ -424,7 +424,7 @@ def main():
 Examples:
   # Vulnerability notification policy with Endor Patch
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --name "Vulnerability Notifications with Endor Patch" \\
     --description "Notification policy for reachable dependency vulnerabilities with Endor Patch available" \\
     --finding-categories "VULNERABILITY" \\
@@ -434,7 +434,7 @@ Examples:
 
   # SAST notification policy
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --name "SAST Notifications" \\
     --description "Notification policy for SAST findings" \\
     --finding-categories "SAST" \\
@@ -444,7 +444,7 @@ Examples:
 
   # Multiple finding categories
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --name "Security Notifications" \\
     --description "Notification policy for security findings" \\
     --finding-categories "VULNERABILITY,SECRETS,SAST" \\
@@ -454,7 +454,7 @@ Examples:
 
   # With system finding tags filter
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --name "Reachable Dependency Notifications" \\
     --description "Notification policy for reachable dependencies" \\
     --finding-categories "VULNERABILITY" \\

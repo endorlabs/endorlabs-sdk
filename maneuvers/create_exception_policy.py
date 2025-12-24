@@ -19,7 +19,7 @@ Examples:
 
 # Suppress custom tagged findings (manual triage)
 uv run python maneuvers/create_exception_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --project-uuid "your-project-uuid" \
   --policy-name "False Positive Exceptions" \
   --tag "false-positive" \
@@ -27,7 +27,7 @@ uv run python maneuvers/create_exception_policy.py \
 
 # Suppress system finding tags (automatic analysis)
 uv run python maneuvers/create_exception_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "endor-solutions-tgowan" \
   --project-uuid "your-project-uuid" \
   --policy-name "Unreachable Dependency Exceptions" \
   --finding-tag "FINDING_TAGS_UNREACHABLE_DEPENDENCY" \
@@ -239,14 +239,14 @@ def main():
 Examples:
   # Suppress false-positive tagged findings (manual triage)
   python maneuvers/create_exception_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --policy-name "False Positive Exceptions" \\
     --tag "false-positive"
 
   # Suppress custom tagged findings (manual triage)
   python maneuvers/create_exception_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --policy-name "False Positive Exceptions" \\
     --tag "false-positive" \\
@@ -254,7 +254,7 @@ Examples:
 
   # Suppress system finding tags (automatic analysis)
   python maneuvers/create_exception_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --policy-name "Unreachable Dependency Exceptions" \\
     --finding-tag "FINDING_TAGS_UNREACHABLE_DEPENDENCY" \\
@@ -262,7 +262,7 @@ Examples:
 
   # Suppress invalid secrets (system-determined)
   python maneuvers/create_exception_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --policy-name "Invalid Secret Exceptions" \\
     --finding-tag "FINDING_TAGS_INVALID_SECRET" \\
@@ -270,7 +270,7 @@ Examples:
 
   # Create exception policy with repository URL lookup and propagation
   python maneuvers/create_exception_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \\
     --policy-name "False Positive Exceptions" \\
     --tag "false-positive" \\
@@ -278,7 +278,7 @@ Examples:
 
   # Create exception policy with custom description
   python maneuvers/create_exception_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --policy-name "Custom Exception Policy" \\
     --description "Suppresses findings tagged as false-positive during manual triage" \\

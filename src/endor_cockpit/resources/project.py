@@ -181,6 +181,17 @@ class GitInfo(BaseModel):
     organization: str
     path: str
     web_url: str
+    external_installation_id: Optional[str] = Field(
+        None,
+        description="Endor Labs GitHub app installation ID of this project. "
+        "Optional and only available if the project is created through an installation.",
+    )
+    invalid_installation: Optional[bool] = Field(
+        None,
+        description="Indicates that Endor Labs installation no longer exists "
+        "for this project and was potentially deleted. Endor Labs can no longer "
+        "refresh or rescan this project.",
+    )
 
 
 class ProjectSpec(BaseSpec):
