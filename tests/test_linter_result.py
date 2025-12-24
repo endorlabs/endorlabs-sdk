@@ -149,7 +149,7 @@ class TestLinterResult:
 
         # List with traverse enabled
         list_params = ListParameters(
-            include_child_namespaces=True,
+            traverse=True,
         )
 
         linter_results_list = linter_result.list_linter_results(

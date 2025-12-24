@@ -108,7 +108,7 @@ class TestUser:
         print("\n=== TESTING LIST USERS WITH TRAVERSE ===")
 
         # List with traverse enabled
-        list_params = ListParameters(include_child_namespaces=True)
+        list_params = ListParameters(traverse=True)
 
         users_list = user.list_users(self.client, self.parent_namespace, list_params)
 
