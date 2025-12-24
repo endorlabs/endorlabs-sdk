@@ -8,7 +8,7 @@ backward compatibility.
 """
 
 import logging
-from typing import Dict, Set
+from typing import Dict, Optional, Set
 
 # Set up logger for schema drift detection
 logger = logging.getLogger(__name__)
@@ -25,7 +25,10 @@ class SchemaDriftDetector:
 
     @staticmethod
     def log_unknown_fields(
-        model_name: str, unknown_fields: Dict[str, any], context: str = ""
+        model_name: str,
+        unknown_fields: Dict[str, any],
+        context: str = "",
+        resource_name: Optional[str] = None,
     ) -> None:
         """
         Log unknown fields as warnings for schema drift detection.
@@ -34,6 +37,7 @@ class SchemaDriftDetector:
             model_name: Name of the model where drift was detected
             unknown_fields: Dictionary of unknown field names and values
             context: Additional context about where the drift occurred
+            resource_name: Name of the resource (e.g., "Finding", "Policy") for context
         """
         # Suppress known ignored fields that are expected in API responses
         known_ignored_fields = {
@@ -49,12 +53,21 @@ class SchemaDriftDetector:
 
         if filtered_unknown_fields:
             field_list = ", ".join(filtered_unknown_fields.keys())
-            logger.warning(
-                f"API Schema Drift Detected in {model_name}: "
-                f"Unknown fields found: {field_list}. "
-                f"Context: {context}. "
-                f"This may indicate API evolution or missing model fields."
-            )
+            # Include resource name in log message if provided
+            if resource_name:
+                log_message = (
+                    f"API Schema Drift Detected in {resource_name}.{model_name}: "
+                    f"Unknown fields found: {field_list}"
+                )
+            else:
+                log_message = (
+                    f"API Schema Drift Detected in {model_name}: "
+                    f"Unknown fields found: {field_list}"
+                )
+            if context:
+                log_message += f". Context: {context}"
+            log_message += ". This may indicate API evolution or missing model fields."
+            logger.warning(log_message)
             # Log detailed field information for debugging
             for field, value in unknown_fields.items():
                 logger.debug(
@@ -64,7 +77,10 @@ class SchemaDriftDetector:
 
     @staticmethod
     def extract_unknown_fields(
-        data: Dict[str, any], model_fields: Set[str], model_name: str
+        data: Dict[str, any],
+        model_fields: Set[str],
+        model_name: str,
+        resource_name: Optional[str] = None,
     ) -> Dict[str, any]:
         """
         Extract unknown fields from data and log them.
@@ -73,17 +89,22 @@ class SchemaDriftDetector:
             data: Dictionary containing the data to check
             model_fields: Set of known field names for the model
             model_name: Name of the model for logging purposes
+            resource_name: Name of the resource (e.g., "Finding", "Policy") for context
 
         Returns:
             Dictionary of unknown fields and their values
         """
         unknown_fields = {k: v for k, v in data.items() if k not in model_fields}
         if unknown_fields:
-            SchemaDriftDetector.log_unknown_fields(model_name, unknown_fields)
+            SchemaDriftDetector.log_unknown_fields(
+                model_name, unknown_fields, resource_name=resource_name
+            )
         return unknown_fields
 
     @staticmethod
-    def create_field_validator(model_fields: Set[str], model_name: str):
+    def create_field_validator(
+        model_fields: Set[str], model_name: str, resource_name: Optional[str] = None
+    ):
         """
         Create a Pydantic field validator for schema drift detection.
 
@@ -94,6 +115,7 @@ class SchemaDriftDetector:
         Args:
             model_fields: Set of known field names for the model
             model_name: Name of the model for logging purposes
+            resource_name: Name of the resource (e.g., "Finding", "Policy") for context
 
         Returns:
             Validator function for use with @field_validator
@@ -103,7 +125,10 @@ class SchemaDriftDetector:
             """Detect and log schema drift for unknown fields."""
             if info.field_name and isinstance(v, dict):
                 SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields, f"{model_name}.{info.field_name}"
+                    v,
+                    model_fields,
+                    f"{model_name}.{info.field_name}",
+                    resource_name=resource_name,
                 )
             return v
 

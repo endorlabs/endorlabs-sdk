@@ -212,8 +212,11 @@ class BaseSpec(BaseModel):
         }
         if info.field_name and isinstance(v, dict) and info.field_name not in typed_model_fields:
             model_fields = {"notification", "finding", "exception", "git"}
+            # Extract resource name from class name (e.g., FindingSpec -> Finding)
+            resource_name = cls.__name__.replace("Spec", "")
+            model_path = f"{resource_name}Spec"
             SchemaDriftDetector.extract_unknown_fields(
-                v, model_fields, f"BaseSpec.{info.field_name}"
+                v, model_fields, f"{model_path}.{info.field_name}", resource_name=resource_name
             )
         return v
 
@@ -321,8 +324,13 @@ class BaseResource(BaseModel):
                 }
 
                 if info.field_name in model_fields:
+                    # Extract resource name from class name (e.g., Finding -> Finding)
+                    resource_name = cls.__name__
                     SchemaDriftDetector.extract_unknown_fields(
-                        v, model_fields, f"BaseResource.{info.field_name}"
+                        v,
+                        model_fields,
+                        f"{resource_name}.{info.field_name}",
+                        resource_name=resource_name,
                     )
         return v
 

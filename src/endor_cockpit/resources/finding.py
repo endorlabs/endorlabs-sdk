@@ -18,7 +18,7 @@ be manually created or deleted. Only metadata updates (tags, dismissal status) a
 
 import logging
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -257,15 +257,120 @@ class FindingMeta(BaseMeta):
     pass  # No additional fields needed, all were universal
 
 
-class FindingMetadata(BaseModel):
-    """Finding metadata details."""
+class Actions(BaseModel):
+    """Actions metadata added by admission or notification policy scanner."""
 
-    title: str
-    description: str
+    policy_uuids: Optional[List[str]] = Field(
+        None, description="List of action policies triggered by this finding"
+    )
+
+
+class FixingPatch(BaseModel):
+    """Patch that can fix the finding."""
+
+    endor_patch_available: Optional[bool] = Field(
+        None, description="Whether an Endor patch is available"
+    )
+
+
+class SourceCodeVersion(BaseModel):
+    """Source code version information."""
+
+    sha: Optional[str] = Field(
+        None,
+        description=(
+            "SHA of the source control version. "
+            "Because the SHA might not be possible to resolve, this field is optional."
+        ),
+    )
+    ref: Optional[str] = Field(
+        None,
+        description=(
+            "Resolved ref of the source control version. "
+            "Can be a tag, a branch or a SHA."
+        ),
+    )
+    metadata: Optional[Dict[str, str]] = Field(
+        None, description="Version metadata as key-value pairs"
+    )
+
+
+class FindingMetadata(BaseModel):
+    """Finding metadata details.
+
+    This model extends the basic finding metadata with all fields from the OpenAPI spec.
+    Many fields are optional and only present for specific finding types.
+    """
+
+    title: Optional[str] = None
+    description: Optional[str] = None
     file_path: Optional[str] = None
     line_number: Optional[int] = None
     code_snippet: Optional[str] = None
     category: Optional[FindingCategory] = None
+
+    # Extended fields from OpenAPI spec v1FindingMetadata
+    root_package_score_card: Optional[dict] = Field(
+        None, description="The package scorecard for findings about low scores"
+    )
+    dependency_score_card: Optional[dict] = Field(
+        None, description="The dependency scorecard for findings about low scores"
+    )
+    root_package_score_factor_list: Optional[dict] = Field(
+        None,
+        description=(
+            "A list of (relevant) score factors, for the root package, "
+            "for findings about low scores"
+        ),
+    )
+    dependency_score_factor_list: Optional[dict] = Field(
+        None,
+        description=(
+            "A list of (relevant) score factors, for the dependency, "
+            "for findings about low scores"
+        ),
+    )
+    vulnerability: Optional[dict] = Field(
+        None, description="Vulnerability data for vulnerability related findings"
+    )
+    root_package_resolved_dependencies: Optional[dict] = Field(
+        None, description="The resolved dependencies of the root package"
+    )
+    source_policy_info: Optional[dict] = Field(
+        None, description="Details about the policy that created the finding"
+    )
+    ci_blocking_policy_info: Optional[dict] = Field(
+        None,
+        description=(
+            "This field is always empty. See spec.actions instead."
+        ),
+    )
+    root_package_version_metadata: Optional[dict] = Field(
+        None, description="Package metadata for the root package"
+    )
+    dependency_package_version_metadata: Optional[dict] = Field(
+        None, description="Package metadata for the dependency"
+    )
+    typosquatted_dependency_version_metadata: Optional[dict] = Field(
+        None,
+        description=(
+            "Package metadata for the typosquatted package, "
+            "for findings about typosquatting"
+        ),
+    )
+    container_data: Optional[dict] = Field(
+        None, description="Container image data of finding"
+    )
+    custom: Optional[dict] = Field(None, description="Custom finding metadata")
+    security_review_data: Optional[dict] = Field(
+        None, description="Security review data for security review findings"
+    )
+    malware: Optional[dict] = Field(
+        None, description="Malware data for malware related findings"
+    )
+    cvss_version: Optional[CvssVersion] = Field(
+        None, description="CVSS version of the vulnerability"
+    )
 
 
 class FindingSpec(BaseSpec):
@@ -306,9 +411,9 @@ class FindingSpec(BaseSpec):
     remediation: Optional[str] = Field(
         None, description="Remediation guidance"
     )  # MUTABLE: User can update
-    finding_metadata: Optional[dict] = Field(
+    finding_metadata: Optional[FindingMetadata] = Field(
         None,
-        description="Complex nested structure",  # IMMUTABLE: System-generated
+        description="Complex nested structure with finding-specific metadata",  # IMMUTABLE: System-generated
     )
     summary: Optional[str] = Field(
         None, description="Finding summary"
@@ -443,7 +548,7 @@ class FindingSpec(BaseSpec):
     remediation_action: Optional[FindingRemediation] = Field(
         None, description="Recommended action to resolve the finding"
     )  # IMMUTABLE: Analysis-determined
-    source_code_version: Optional[dict] = Field(
+    source_code_version: Optional[SourceCodeVersion] = Field(
         None,
         description="Ref of the source code repository for root package version",
     )  # IMMUTABLE: Analysis-determined
@@ -476,8 +581,8 @@ class FindingSpec(BaseSpec):
     exceptions: Optional[Union[List[str], dict]] = Field(
         None, description="Exception information"
     )  # IMMUTABLE: Analysis-determined
-    actions: Optional[Union[List[str], dict]] = Field(
-        None, description="Action information"
+    actions: Optional[Actions] = Field(
+        None, description="Tags and other fields set by action policies"
     )  # IMMUTABLE: Analysis-determined
     fixing_upgrades: Optional[Union[List[Union[str, dict]], dict]] = Field(
         None,
@@ -486,9 +591,77 @@ class FindingSpec(BaseSpec):
             "list of strings, list of dicts, or dict with upgrade_list key"
         ),
     )  # IMMUTABLE: Analysis-determined
-    fixing_patch: Optional[Union[List[str], dict]] = Field(
-        None, description="Fixing patch information (list or dict)"
+    fixing_patch: Optional[FixingPatch] = Field(
+        None, description="Patch that can fix the finding"
     )  # IMMUTABLE: Analysis-determined
+
+    @field_validator("finding_metadata", mode="before")
+    @classmethod
+    def validate_finding_metadata(cls, v):
+        """Handle finding_metadata as dict or FindingMetadata model."""
+        if v is None:
+            return None
+        if isinstance(v, FindingMetadata):
+            return v
+        if isinstance(v, dict):
+            return FindingMetadata(**v)
+        return v
+
+    @field_validator("actions", mode="before")
+    @classmethod
+    def validate_actions(cls, v):
+        """Handle actions as dict, list, or Actions model."""
+        if v is None:
+            return None
+        if isinstance(v, Actions):
+            return v
+        if isinstance(v, dict):
+            return Actions(**v)
+        # If it's a list (legacy format), return None as Actions expects dict
+        if isinstance(v, list):
+            return None
+        return v
+
+    @field_validator("fixing_patch", mode="before")
+    @classmethod
+    def validate_fixing_patch(cls, v):
+        """Handle fixing_patch as dict, list, or FixingPatch model."""
+        if v is None:
+            return None
+        if isinstance(v, FixingPatch):
+            return v
+        if isinstance(v, dict):
+            return FixingPatch(**v)
+        # If it's a list (legacy format), return None as FixingPatch expects dict
+        if isinstance(v, list):
+            return None
+        return v
+
+    @field_validator("source_code_version", mode="before")
+    @classmethod
+    def validate_source_code_version(cls, v):
+        """Handle source_code_version as dict or SourceCodeVersion model."""
+        if v is None:
+            return None
+        if isinstance(v, SourceCodeVersion):
+            return v
+        if isinstance(v, dict):
+            return SourceCodeVersion(**v)
+        return v
+
+    @field_validator("location_urls", mode="before")
+    @classmethod
+    def validate_location_urls(cls, v):
+        """Handle location_urls as dict, list, or Dict[str, str]."""
+        if v is None:
+            return None
+        if isinstance(v, dict):
+            # Ensure all values are strings
+            return {k: str(v) for k, v in v.items()}
+        if isinstance(v, list):
+            # Legacy format - convert to empty dict
+            return {}
+        return v
 
     @field_validator("fixing_upgrades", mode="before")
     @classmethod
@@ -501,12 +674,37 @@ class FindingSpec(BaseSpec):
     code_owners: Optional[Union[List[str], dict]] = Field(
         None, description="Code owners information (list or dict with owners/labels)"
     )  # IMMUTABLE: Analysis-determined
-    location_urls: Optional[Union[List[str], dict]] = Field(
-        None, description="Location URLs"
+    location_urls: Optional[Dict[str, str]] = Field(
+        None,
+        description=(
+            "The URLs that correspond to the paths contained in dependency_file_paths. "
+            "Keys are file paths, values are URLs."
+        ),
     )  # IMMUTABLE: Analysis-determined
     call_graph_analysis_type: Optional[CallGraphAnalysisType] = Field(
         None, description="Call graph analysis type"
     )  # IMMUTABLE: Analysis-determined
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def detect_schema_drift(cls, v, info):
+        """Override BaseSpec drift detection to skip typed nested model fields."""
+        # Skip drift detection for typed nested models (they handle their own validation)
+        typed_model_fields = {
+            "finding_metadata",  # FindingMetadata
+            "actions",  # Actions
+            "fixing_patch",  # FixingPatch
+            "source_code_version",  # SourceCodeVersion
+            "location_urls",  # Dict[str, str] - typed
+        }
+        if (
+            info.field_name
+            and isinstance(v, dict)
+            and info.field_name not in typed_model_fields
+        ):
+            # Call parent validator for non-typed-model fields
+            return super().detect_schema_drift(v, info)
+        return v
 
 
 class Context(BaseModel):
