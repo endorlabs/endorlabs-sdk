@@ -598,7 +598,7 @@ def list_authorization_policies_by_role(
         sort_field=None,
         sort_order=None,
         count=None,
-        include_child_namespaces=None,
+        traverse=None,
         from_date=None,
         to_date=None,
     )
@@ -621,7 +621,7 @@ def list_authorization_policies_by_namespace(
         sort_field=None,
         sort_order=None,
         count=None,
-        include_child_namespaces=None,
+        traverse=None,
         from_date=None,
         to_date=None,
     )
@@ -644,7 +644,7 @@ def list_authorization_policies_with_mask(
         sort_field=None,
         sort_order=None,
         count=None,
-        include_child_namespaces=None,
+        traverse=None,
         from_date=None,
         to_date=None,
     )
@@ -668,7 +668,7 @@ def list_authorization_policies_paginated(
         sort_field=None,
         sort_order=None,
         count=None,
-        include_child_namespaces=None,
+        traverse=None,
         from_date=None,
         to_date=None,
     )
@@ -692,7 +692,7 @@ def list_authorization_policies_sorted(
         sort_field=sort_field,
         sort_order="desc" if desc else "asc",
         count=None,
-        include_child_namespaces=None,
+        traverse=None,
         from_date=None,
         to_date=None,
     )

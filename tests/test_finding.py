@@ -39,7 +39,7 @@ class TestFinding:
             self.namespace,
             list_params=ListParameters(
                 page_size=conftest.TEST_PAGE_SIZE,
-                include_child_namespaces=True,
+                traverse=True,
             ),
         )
         if not self.findings:

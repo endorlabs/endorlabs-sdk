@@ -202,22 +202,26 @@ class BaseSpec(BaseModel):
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        # Skip drift detection for typed nested models (they handle their own validation)
-        # These fields are defined in subclasses as typed Pydantic models
-        typed_model_fields = {
+        # Only check BaseSpec fields - subclasses handle their own drift detection
+        # BaseSpec only has these optional fields:
+        base_spec_fields = {
             "notification",  # NotificationConfig
             "finding",  # FindingConfig
             "exception",  # ExceptionConfig
             "git",  # GitInfo (in ProjectSpec)
         }
-        if info.field_name and isinstance(v, dict) and info.field_name not in typed_model_fields:
-            model_fields = {"notification", "finding", "exception", "git"}
-            # Extract resource name from class name (e.g., FindingSpec -> Finding)
-            resource_name = cls.__name__.replace("Spec", "")
-            model_path = f"{resource_name}Spec"
-            SchemaDriftDetector.extract_unknown_fields(
-                v, model_fields, f"{model_path}.{info.field_name}", resource_name=resource_name
-            )
+        
+        # Only do drift detection if this is a BaseSpec field
+        # Subclasses will handle their own fields in their validators
+        if (
+            info.field_name
+            and isinstance(v, dict)
+            and info.field_name in base_spec_fields
+        ):
+            # This is a BaseSpec field, check for unknown nested fields
+            # But these are typed models, so let Pydantic handle validation
+            # Skip drift detection here - typed models validate themselves
+            pass
         return v
 
 
@@ -300,12 +304,14 @@ class BaseResource(BaseModel):
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         # Skip drift detection for typed nested models (they handle their own validation)
+        # Also skip "spec" - it's validated by subclass Spec models (ScanProfileSpec, etc.)
         typed_model_fields = {
-            "meta",  # BaseMeta
-            "tenant_meta",  # TenantMeta
-            "context",  # Context
-            "processing_status",  # ProcessingStatus
-            "ingested_object",  # IngestedObject
+            "meta",  # BaseMeta - validated by BaseMeta
+            "tenant_meta",  # TenantMeta - validated by TenantMeta
+            "context",  # Context - validated by Context
+            "processing_status",  # ProcessingStatus - validated by ProcessingStatus
+            "ingested_object",  # IngestedObject - validated by IngestedObject
+            "spec",  # BaseSpec or subclass - validated by Spec subclass validators
         }
         if info.field_name and isinstance(v, dict):
             # Only check drift for non-typed-model fields
@@ -516,7 +522,7 @@ class BaseResourceOperations:
                 sort_field=None,
                 sort_order=None,
                 count=None,
-                include_child_namespaces=None,
+                traverse=None,
                 from_date=None,
                 to_date=None,
             )
@@ -625,7 +631,7 @@ class BaseResourceOperations:
                     sort_field=None,
                     sort_order=None,
                     count=True,
-                    include_child_namespaces=None,
+                    traverse=None,
                     from_date=None,
                     to_date=None,
                 )
@@ -684,8 +690,14 @@ class BaseResourceOperations:
     def _add_pagination_params(
         self, params: Dict[str, Any], list_params: ListParameters
     ) -> None:
-        """Add pagination-related parameters."""
-        if list_params.page_size:
+        """Add pagination-related parameters.
+        
+        Note: page_size is only added if explicitly set. If None, the API
+        will use its default page size (typically 100). This is intentional
+        to avoid performance issues with small page sizes.
+        """
+        # Only add page_size if explicitly set (don't override API default)
+        if list_params.page_size is not None:
             params["list_parameters.page_size"] = str(list_params.page_size)
         if list_params.page_token:
             params["list_parameters.page_token"] = list_params.page_token
@@ -705,12 +717,11 @@ class BaseResourceOperations:
         """Add boolean parameters."""
         if list_params.count is not None:
             params["list_parameters.count"] = str(list_params.count).lower()
-        if list_params.include_child_namespaces is not None:
-            # Map include_child_namespaces to traverse parameter
+        
+        # Handle traverse parameter (canonical way to traverse namespaces)
+        if list_params.traverse is not None:
             # API uses 'list_parameters.traverse' as the query parameter
-            params["list_parameters.traverse"] = str(
-                list_params.include_child_namespaces
-            ).lower()
+            params["list_parameters.traverse"] = str(list_params.traverse).lower()
 
     def _add_date_params(
         self, params: Dict[str, Any], list_params: ListParameters

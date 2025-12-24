@@ -122,7 +122,7 @@ class TestScanResult:
         # Filter scan results by project
         list_params = ListParameters(
             filter=f'meta.parent_uuid=="{project_uuid}"',
-            include_child_namespaces=None,
+            traverse=None,
             mask=None,
             page_size=None,
             page_token=None,
@@ -159,7 +159,7 @@ class TestScanResult:
         # List with traverse enabled
         list_params = ListParameters(
             filter=None,
-            include_child_namespaces=True,
+            traverse=True,
             mask=None,
             page_size=None,
             page_token=None,

@@ -305,7 +305,7 @@ def collect_all_namespaces(
 
         try:
             # List direct children of this namespace
-            list_params = ListParameters(include_child_namespaces=False)
+            list_params = ListParameters(traverse=False)
             child_namespaces = namespace.list_namespaces(
                 client, parent_ns, list_params
             )

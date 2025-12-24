@@ -44,7 +44,7 @@ class TestInstallation:
             self.parent_namespace,
             list_params=ListParameters(
                 page_size=conftest.TEST_PAGE_SIZE,
-                include_child_namespaces=True,
+                traverse=True,
             ),
         )
         if not self.installations:
@@ -58,7 +58,7 @@ class TestInstallation:
         installations_list = installation.list_installations(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(include_child_namespaces=True),
+            list_params=ListParameters(traverse=True),
         )
         assert isinstance(installations_list, list), (
             "Should return a list of installations"
@@ -131,7 +131,7 @@ class TestInstallation:
         # Filter installations by platform
         list_params = ListParameters(
             filter=f'spec.platform_type=="{platform_type}"',
-            include_child_namespaces=True,
+            traverse=True,
         )
 
         filtered_results = installation.list_installations(
@@ -162,7 +162,7 @@ class TestInstallation:
 
         # List with traverse enabled
         list_params = ListParameters(
-            include_child_namespaces=True,
+            traverse=True,
         )
 
         installations_list = installation.list_installations(
@@ -194,7 +194,7 @@ class TestInstallation:
             self.client,
             self.parent_namespace,
             list_params=ListParameters(
-                page_size=5, include_child_namespaces=True
+                page_size=5, traverse=True
             ),
         )
         assert isinstance(paginated_results, list)

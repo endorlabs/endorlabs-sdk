@@ -122,6 +122,8 @@ class Environment(BaseModel):
     Contains host environment details and scan configuration.
     """
 
+    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+
     arch: str = Field(..., description="CPU architecture")
     endorctl_version: str = Field(..., description="Endorctl version used")
     config: Dict[str, Any] = Field(
@@ -165,6 +167,8 @@ class ToolChainsSource(FlexibleEnum):
 
 class SpecProvisioningResultData(BaseModel):
     """Provisioning result data."""
+
+    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
 
     provisioning_result_uuid: str = Field(
         ..., description="UUID of the provisioning result"
@@ -401,35 +405,41 @@ class ScanResult(BaseResource):
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
+            # Known top-level fields in ScanResultSpec
+            # Skip drift detection for nested typed models and dynamic dicts:
+            # - environment: Environment model (handles its own validation)
+            # - provisioning_result: SpecProvisioningResultData model
+            # - versions: List[Version] models
+            # - deleted_findings, all_findings, exception_findings: Dict[str, SpecFindingData]
+            # - stats, runtimes, ecosystem_pkg_counts, ecosystem_dep_counts: Dict with dynamic keys
             known_fields = {
                 "status",
                 "type",
                 "start_time",
                 "end_time",
-                "stats",
+                "stats",  # Dict[str, int] - dynamic keys
                 "refs",
-                "environment",
+                "environment",  # Environment model
                 "has_panic",
                 "exit_code",
                 "logs",
                 "policies_triggered",
                 "warning_findings",
                 "blocking_findings",
-                "runtimes",
+                "runtimes",  # Dict[str, int] - dynamic keys
                 "findings",
-                "deleted_findings",
+                "deleted_findings",  # Dict[str, SpecFindingData] - dynamic keys
                 "languages_detected",
                 "provisioning_result_uuid",
-                "versions",
-                "ecosystem_pkg_counts",
-                "ecosystem_dep_counts",
-                "provisioning_result",
+                "versions",  # List[Version] models
+                "ecosystem_pkg_counts",  # Dict[str, int] - dynamic ecosystem keys
+                "ecosystem_dep_counts",  # Dict[str, int] - dynamic ecosystem keys
+                "provisioning_result",  # SpecProvisioningResultData model
                 "errors",
                 "warnings",
                 "infos",
-                "all_findings",
-                "exception_findings",
+                "all_findings",  # Dict[str, SpecFindingData] - dynamic keys
+                "exception_findings",  # Dict[str, SpecFindingData] - dynamic keys
             }
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
