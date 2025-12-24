@@ -111,7 +111,8 @@ jobs:
           python scripts/unified_docs_workflow.py \
             --check-drift-only \
             --test-path tests/ \
-            --drift-report-output schema_drift_report.json
+            --drift-report-output schema_drift_report.json \
+            --force
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}

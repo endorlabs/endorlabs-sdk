@@ -199,6 +199,9 @@ class InstallationSpec(BaseSpec):
     installation_error_message: Optional[str] = Field(
         None, description="Message explaining why the installation is invalid"
     )  # MUTABLE: Can be updated
+    scm_app_uuid: Optional[str] = Field(
+        None, description="The UUID of the SCM app being installed"
+    )  # IMMUTABLE: Set at creation
 
     @field_validator("enabled_features", mode="before")
     @classmethod
@@ -335,6 +338,7 @@ class Installation(BaseResource):
                 "marked_for_deletion",
                 "include_archived_repos",
                 "installation_error_message",
+                "scm_app_uuid",
             }
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:

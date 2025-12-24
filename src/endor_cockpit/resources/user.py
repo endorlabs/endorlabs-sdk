@@ -20,6 +20,7 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
+import requests
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
@@ -184,17 +185,124 @@ def list_users(
     list_params: Optional[ListParameters] = None,
     **kwargs,
 ) -> List[User]:
-    """List users with advanced filtering and pagination."""
-    ops = _get_user_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    """List users with advanced filtering and pagination.
+    
+    Note: Users are accessed via /v1/users (not namespaced), so the
+    tenant_meta_namespace parameter is ignored but kept for API consistency.
+    """
+    # Users are accessed via /v1/users, not /v1/namespaces/{namespace}/users
+    url = "v1/users"
+    
+    # Build query parameters
+    params = {}
+    if list_params:
+        if list_params.filter:
+            params["filter"] = list_params.filter
+        if list_params.page_size:
+            params["page_size"] = list_params.page_size
+        if list_params.page_token:
+            params["page_token"] = list_params.page_token
+        if list_params.sort_field:
+            params["sort_field"] = list_params.sort_field
+        if list_params.sort_order:
+            params["sort_order"] = list_params.sort_order
+    
+    all_items = []
+    page_token = None
+    
+    while True:
+        if page_token:
+            params["page_token"] = page_token
+        
+        try:
+            res = client.get(url, params=params)
+            data = res.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 403:
+                logger.warning(
+                    "Access denied to users endpoint (403 Forbidden). "
+                    "This may be a permissions issue. Users may require "
+                    "special permissions to access."
+                )
+                break
+            else:
+                raise
+        
+        # Extract items from response
+        if "list" in data and "objects" in data["list"]:
+            items = data["list"]["objects"]
+        elif isinstance(data, list):
+            items = data
+        else:
+            items = []
+        
+        all_items.extend(items)
+        
+        # Check for next page token
+        if isinstance(data, dict) and "list" in data:
+            list_data = data["list"]
+            if isinstance(list_data, dict) and "response" in list_data:
+                response_data = list_data["response"]
+                if isinstance(response_data, dict):
+                    page_token = response_data.get("next_page_token")
+                else:
+                    page_token = None
+            else:
+                page_token = None
+        else:
+            page_token = None
+        
+        if not page_token:
+            break
+    
+    # Convert to User objects
+    users = []
+    for item in all_items:
+        try:
+            users.append(User(**item))
+        except Exception as e:
+            logger.warning(f"Failed to parse user: {e}")
+            continue
+    
+    return users
 
 
 def get_user(
     client: APIClient, tenant_meta_namespace: str, user_uuid: str
 ) -> Optional[User]:
-    """Get specific user by UUID."""
-    ops = _get_user_ops(client)
-    return ops.get(tenant_meta_namespace, user_uuid)  # type: ignore
+    """Get specific user by UUID.
+    
+    Note: Users are accessed via /v1/users/{uuid} (not namespaced), so the
+    tenant_meta_namespace parameter is ignored but kept for API consistency.
+    """
+    # Users are accessed via /v1/users/{uuid}, not /v1/namespaces/{namespace}/users/{uuid}
+    url = f"v1/users/{user_uuid}"
+    
+    try:
+        res = client.get(url)
+        data = res.json()
+        
+        # Handle both direct object and wrapped response
+        if "object" in data:
+            user_data = data["object"]
+        else:
+            user_data = data
+        
+        return User(**user_data)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 403:
+            logger.warning(
+                f"Access denied to users endpoint (403 Forbidden). "
+                f"This may be a permissions issue."
+            )
+        elif e.response.status_code == 404:
+            logger.debug(f"User {user_uuid} not found")
+        else:
+            logger.error(f"Failed to get user {user_uuid}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Failed to get user {user_uuid}: {e}")
+        return None
 
 
 def create_user(

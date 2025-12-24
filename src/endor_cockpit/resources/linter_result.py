@@ -72,30 +72,63 @@ class Ecosystem(FlexibleEnum):
     GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
 
 
+class SarifText(BaseModel):
+    """SARIF text object with text and markdown fields."""
+
+    text: Optional[str] = Field(None, description="The actual text content")
+    markdown: Optional[str] = Field(
+        None, description="Markdown representation of the content"
+    )
+
+
 class SarifResult(BaseModel):
     """SARIF result for linter."""
 
-    rule_id: str = Field(..., description="Rule ID")
-    message: str = Field(..., description="Result message")
-    level: str = Field(..., description="Result level")
-    locations: List[dict] = Field(..., description="Result locations")
+    rule_id: Optional[str] = Field(None, description="Rule ID")
+    message: Optional[SarifText] = Field(None, description="Result message")
+    level: Optional[str] = Field(None, description="Result level")
+    locations: Optional[List[dict]] = Field(None, description="Result locations")
+    fingerprints: Optional[dict] = Field(None, description="Fingerprints")
+    partial_fingerprints: Optional[dict] = Field(
+        None, description="Partial fingerprints"
+    )
+    properties: Optional[dict] = Field(None, description="Result properties")
+    suppressions: Optional[List[dict]] = Field(None, description="Suppressions")
+    code_flows: Optional[List[dict]] = Field(None, description="Code flows")
 
 
 class SemgrepSummary(BaseModel):
     """Semgrep summary for linter result."""
 
-    rule_id: str = Field(..., description="Semgrep rule ID")
-    message: str = Field(..., description="Result message")
-    severity: str = Field(..., description="Result severity")
-    confidence: str = Field(..., description="Result confidence")
+    severity: Optional[str] = Field(None, description="Result severity")
+    likelihood: Optional[str] = Field(None, description="Result likelihood")
+    confidence: Optional[str] = Field(None, description="Result confidence")
+    tags: Optional[List[str]] = Field(None, description="Result tags")
+    description: Optional[str] = Field(None, description="Result description")
+    explanation: Optional[str] = Field(None, description="Result explanation")
+    remediation: Optional[str] = Field(None, description="Result remediation")
+    impact: Optional[str] = Field(None, description="Result impact")
+    languages: Optional[List[str]] = Field(None, description="Result languages")
+    rule_name: Optional[str] = Field(None, description="Rule name")
+    rule_uuid: Optional[str] = Field(None, description="Rule UUID")
+    cwes: Optional[List[str]] = Field(None, description="CWE identifiers")
+    rule_version: Optional[str] = Field(None, description="Rule version")
+    references: Optional[List[str]] = Field(None, description="Rule references")
 
 
 class SecretSummary(BaseModel):
     """Secret summary for linter result."""
 
-    secret_type: str = Field(..., description="Type of secret found")
-    confidence: str = Field(..., description="Confidence level")
-    location: str = Field(..., description="Secret location")
+    validation: Optional[str] = Field(None, description="Validation status")
+    git_log_scanned: Optional[bool] = Field(
+        None, description="Whether secret was found in Git logs"
+    )
+    secret_id: Optional[str] = Field(
+        None, description="Unique identifier for the secret"
+    )
+    fs_scanned: Optional[bool] = Field(
+        None, description="Whether secret was found in filesystem"
+    )
 
 
 class AISastSummary(BaseModel):
@@ -170,15 +203,39 @@ class LinterResultSpec(BaseSpec):
     sarif_result: Optional[SarifResult] = Field(
         None, description="SARIF result data"
     )  # IMMUTABLE: Set at creation
+
+    @field_validator("sarif_result", mode="before")
+    @classmethod
+    def validate_sarif_result(cls, v):
+        """Handle sarif result validation."""
+        if isinstance(v, dict):
+            return SarifResult(**v)
+        return v
     ecosystem: Optional[Ecosystem] = Field(
         None, description="The result ecosystem"
     )  # IMMUTABLE: Set at creation
     semgrep: Optional[SemgrepSummary] = Field(
         None, description="Semgrep summary"
     )  # IMMUTABLE: Set at creation
+
+    @field_validator("semgrep", mode="before")
+    @classmethod
+    def validate_semgrep(cls, v):
+        """Handle semgrep validation."""
+        if isinstance(v, dict):
+            return SemgrepSummary(**v)
+        return v
     secret: Optional[SecretSummary] = Field(
         None, description="Secret summary"
     )  # IMMUTABLE: Set at creation
+
+    @field_validator("secret", mode="before")
+    @classmethod
+    def validate_secret(cls, v):
+        """Handle secret validation."""
+        if isinstance(v, dict):
+            return SecretSummary(**v)
+        return v
     aisast: Optional[AISastSummary] = Field(
         None, description="AI SAST summary"
     )  # IMMUTABLE: Set at creation

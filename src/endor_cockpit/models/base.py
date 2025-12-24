@@ -706,7 +706,9 @@ class BaseResourceOperations:
         if list_params.count is not None:
             params["list_parameters.count"] = str(list_params.count).lower()
         if list_params.include_child_namespaces is not None:
-            params["list_parameters.include_child_namespaces"] = str(
+            # Map include_child_namespaces to traverse parameter
+            # API uses 'list_parameters.traverse' as the query parameter
+            params["list_parameters.traverse"] = str(
                 list_params.include_child_namespaces
             ).lower()
 
