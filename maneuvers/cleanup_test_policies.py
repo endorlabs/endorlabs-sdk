@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 def find_test_policies(
     client: APIClient,
     tenant_namespace: str,
-    include_child_namespaces: bool = True
+    traverse: bool = True
 ) -> List[Policy]:
     """
     Find all policies with test-related tags in the specified namespace.
@@ -57,7 +57,7 @@ def find_test_policies(
     Args:
         client: Authenticated APIClient instance
         tenant_namespace: Target tenant namespace (canonical name)
-        include_child_namespaces: Whether to include child namespaces
+        traverse: Whether to traverse child namespaces (default: True)
 
     Returns:
         List of policies matching the criteria
@@ -80,7 +80,7 @@ def find_test_policies(
             sort_field="meta.create_time",
             sort_order="desc",
             count=None,
-            include_child_namespaces=include_child_namespaces,
+            traverse=traverse,
             from_date=None,
             to_date=None,
         )
@@ -289,10 +289,10 @@ uv run python maneuvers/cleanup_test_policies.py \\
   --tenant-namespace "endor-solutions-tgowan" \\
   --confirm-delete
 
-# Include child namespaces in search
+# Traverse child namespaces in search
 uv run python maneuvers/cleanup_test_policies.py \\
   --tenant-namespace "endor-solutions-tgowan" \\
-  --include-child-namespaces \\
+  --traverse \\
   --dry-run
         """
     )
@@ -306,9 +306,10 @@ uv run python maneuvers/cleanup_test_policies.py \\
 
     # Optional arguments
     parser.add_argument(
-        "--include-child-namespaces",
+        "--traverse",
         action="store_true",
-        help="Include child namespaces in the search (default: True)"
+        default=True,
+        help="Traverse child namespaces in the search (default: True)"
     )
     parser.add_argument(
         "--dry-run",
@@ -342,7 +343,7 @@ uv run python maneuvers/cleanup_test_policies.py \\
         test_policies = find_test_policies(
             client,
             args.tenant_namespace,
-            args.include_child_namespaces
+            args.traverse
         )
 
         if not test_policies:

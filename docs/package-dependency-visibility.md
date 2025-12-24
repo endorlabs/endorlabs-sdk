@@ -203,15 +203,19 @@ PackageVersion (importer)
 
 ### Query Dependencies by Visibility
 
-**Using DependencyMetadata** (recommended):
+**Using DependencyMetadata with Traverse** (recommended - most efficient):
 ```python
 from endor_cockpit.resources import dependency_metadata
+from endor_cockpit.types import ListParameters
 
-# List all private dependencies
-# Note: public field is in API but not explicitly modeled in DependencyData
+# Use traverse to automatically get all dependencies across all namespaces
+list_params = ListParameters(traverse=True)
 all_deps = dependency_metadata.list_dependency_metadata(
-    client, namespace
+    client, tenant_namespace, list_params
 )
+
+# Filter for private dependencies
+# Note: public field is in API but not explicitly modeled in DependencyData
 private_deps = [
     d for d in all_deps
     if d.spec.dependency_data
@@ -219,7 +223,21 @@ private_deps = [
 ]
 ```
 
-**Using PackageVersion BOM**:
+**Using endorctl CLI** (fastest for ad-hoc queries):
+```bash
+# List all DependencyMetadata with traverse (automatically handles all namespaces)
+endorctl api list -r DependencyMetadata --traverse
+
+# Filter for private dependencies only
+endorctl api list -r DependencyMetadata --traverse \
+  --filter "spec.dependency_data.public==false"
+
+# Filter for public dependencies only
+endorctl api list -r DependencyMetadata --traverse \
+  --filter "spec.dependency_data.public==true"
+```
+
+**Using PackageVersion BOM** (less efficient, but useful for single package):
 ```python
 from endor_cockpit.resources import package_version
 

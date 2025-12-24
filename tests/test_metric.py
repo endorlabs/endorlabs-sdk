@@ -44,7 +44,7 @@ class TestMetric:
             self.parent_namespace,
             list_params=ListParameters(
                 page_size=conftest.TEST_PAGE_SIZE,
-                include_child_namespaces=True,
+                traverse=True,
             ),
         )
         if not self.metrics:
@@ -58,7 +58,7 @@ class TestMetric:
         metrics_list = metric.list_metrics(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(include_child_namespaces=True),
+            list_params=ListParameters(traverse=True),
         )
         assert isinstance(metrics_list, list), "Should return a list of metrics"
         assert len(metrics_list) > 0, "Should have at least one metric"
@@ -125,7 +125,7 @@ class TestMetric:
         # Filter metrics by project
         list_params = ListParameters(
             filter=f'spec.project_uuid=="{project_uuid}"',
-            include_child_namespaces=True,
+            traverse=True,
         )
 
         filtered_results = metric.list_metrics(
@@ -164,7 +164,7 @@ class TestMetric:
         # Filter metrics by analytic
         list_params = ListParameters(
             filter=f'spec.analytic=="{analytic_name}"',
-            include_child_namespaces=True,
+            traverse=True,
         )
 
         filtered_results = metric.list_metrics(
@@ -192,7 +192,7 @@ class TestMetric:
 
         # List with traverse enabled
         list_params = ListParameters(
-            include_child_namespaces=True,
+            traverse=True,
         )
 
         metrics_list = metric.list_metrics(
@@ -223,7 +223,7 @@ class TestMetric:
             self.client,
             self.parent_namespace,
             list_params=ListParameters(
-                page_size=5, include_child_namespaces=True
+                page_size=5, traverse=True
             ),
         )
         assert isinstance(paginated_results, list)

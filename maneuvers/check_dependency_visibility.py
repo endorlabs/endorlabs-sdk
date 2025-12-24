@@ -28,6 +28,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import dependency_metadata
 from endor_cockpit.types import ListParameters
+from endor_cockpit.utils.traversal import create_traverse_params
 
 # Configure logging
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
@@ -59,15 +60,17 @@ def check_dependency_visibility(
         f"Querying DependencyMetadata with traverse from: {tenant_namespace}"
     )
 
-    # Use traverse to automatically get all dependencies across all namespaces
-    list_params = ListParameters(traverse=True)
-
-    # Build filter if needed
+    # Use canonical traverse pattern for tenant-wide query
+    # This automatically queries all namespaces in a single efficient API call
+    # Note: No page_size override - uses API default (typically 100)
+    #       max_pages controls the upper bound instead
     filter_expr = None
     if filter_public is not None:
         filter_expr = (
             f"spec.dependency_data.public=={str(filter_public).lower()}"
         )
+    
+    list_params = create_traverse_params(filter_expr=filter_expr)
 
     try:
         # Query all DependencyMetadata with traverse

@@ -36,7 +36,7 @@ class TestPackageVersion:
             self.namespace,
             list_params=ListParameters(
                 page_size=conftest.TEST_PAGE_SIZE,
-                include_child_namespaces=True,
+                traverse=True,
             ),
             max_pages=2,
         )

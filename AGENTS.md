@@ -160,6 +160,33 @@ payload = CreateNamespacePayload(meta=NamespaceMetaCreate(name="test", descripti
 created = namespace.create_namespace(client, canonical_parent, payload)
 ```
 
+### **Namespace Traversal (Tenant-Wide Queries)**
+**CRITICAL**: Use `traverse=True` for efficient tenant-wide queries across all namespaces.
+
+```python
+from endor_cockpit.resources import dependency_metadata, package_version, finding
+from endor_cockpit.types import ListParameters
+
+# Query all dependencies across entire tenant (single API call)
+list_params = ListParameters(traverse=True)
+all_deps = dependency_metadata.list_dependency_metadata(
+    client, "tenant-namespace", list_params
+)
+
+# Query all package versions across tenant
+packages = package_version.list_package_versions(
+    client, "tenant-namespace", ListParameters(traverse=True)
+)
+
+# Query with filtering
+private_deps = dependency_metadata.list_dependency_metadata(
+    client, "tenant-namespace",
+    ListParameters(traverse=True, filter="spec.dependency_data.public==false")
+)
+```
+
+**Why traverse?**: Automatically queries all child namespaces recursively in a single API call. Much faster than manually iterating through namespaces. See [Namespace Traversal Guide](docs/rules-of-engagement/namespace-traversal.md) for details.
+
 ### **Critical Patterns**
 - **✅ CORRECT**: Use canonical naming (`tenant.namespace.child`)
 - **❌ WRONG**: Don't use UUIDs as parents (403 Forbidden)
@@ -229,6 +256,7 @@ created = namespace.create_namespace(client, canonical_parent, payload)
 ## 📚 **Reference Guides & Rules of Engagement**
 
 ### **Specialized Guides**
+- **Namespace Traversal**: [docs/rules-of-engagement/namespace-traversal.md](docs/rules-of-engagement/namespace-traversal.md) - **Canonical pattern for tenant-wide queries**
 - **Rego Policy Development**: [docs/rego_guide.md](docs/rego_guide.md) - Complete Rego reference
 - **API Validation**: [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md) - Pre-implementation validation
 - **Troubleshooting**: [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md) - Issue resolution patterns

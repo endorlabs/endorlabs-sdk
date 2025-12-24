@@ -4,7 +4,7 @@ Reconnaissance script to test all list endpoints from OpenAPI spec.
 
 This script:
 1. Parses the OpenAPI spec to find all list endpoints
-2. Tests each endpoint with traverse enabled (page_size=1)
+2. Tests each endpoint with traverse enabled
 3. Captures response structure and attributes
 4. Outputs a comprehensive report of objects and attributes
 """
@@ -165,10 +165,9 @@ class EndpointRecon:
         }
 
         try:
-            # Test with traverse and page_size=1
+            # Test with traverse enabled
             params = {
                 "list_parameters.traverse": "true",
-                "list_parameters.page_size": "1",
             }
 
             response = self.client.get(test_path, params=params)
@@ -235,8 +234,7 @@ class EndpointRecon:
 
         print(f"\n🚀 Starting reconnaissance on {len(endpoints)} endpoints...")
         print(f"   Namespace: {self.namespace}")
-        print(f"   Traverse: enabled")
-        print(f"   Page size: 1\n")
+        print(f"   Traverse: enabled\n")
 
         for i, endpoint in enumerate(endpoints, 1):
             try:

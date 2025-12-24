@@ -171,8 +171,13 @@ class ListParameters(BaseModel):
     count: Optional[bool] = Field(
         None, description="Count only (return count instead of objects)"
     )
-    include_child_namespaces: Optional[bool] = Field(
-        None, description="Include child namespaces"
+    traverse: Optional[bool] = Field(
+        None,
+        description=(
+            "Traverse all child namespaces recursively. "
+            "When True, automatically queries all namespaces in the hierarchy. "
+            "Recommended for tenant-wide queries (e.g., all dependencies across all namespaces)."
+        ),
     )
     from_date: Optional[str] = Field(
         None, description="Created after date (ISO format)"
