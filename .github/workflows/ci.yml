@@ -1,5 +1,14 @@
 name: CI
 
+# Required Repository Configuration:
+# Variables (Settings > Secrets and variables > Actions > Variables):
+#   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
+#   - ENDOR_NAMESPACE: Endor namespace for CI/CD (e.g., "endor-solutions-tgowan.endor-tgowan")
+# Secrets (Settings > Secrets and variables > Actions > Secrets):
+#   - ENDOR_API_CREDENTIALS_KEY: API credentials key
+#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret
+#   - ENDOR_GITHUB_TOKEN: (Optional) GitHub token for PR comments, falls back to GITHUB_TOKEN
+
 on:
   push:
     branches: [ main, dev ]
@@ -15,6 +24,7 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
+  workflow_dispatch:  # Allow manual triggering for testing
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
@@ -134,7 +144,14 @@ jobs:
       - name: Run endorctl host-check with diagnostics
         run: |
           echo "Running endorctl host-check with DroidGPT for diagnostics..."
-          endorctl host-check --droid-gpt
+          if ! endorctl host-check --droid-gpt; then
+            echo "::error::endorctl host-check failed. Please verify:"
+            echo "  1. ENDOR_API_CREDENTIALS_KEY and ENDOR_API_CREDENTIALS_SECRET are correct"
+            echo "  2. The credentials have access to namespace: ${{ vars.ENDOR_NAMESPACE }}"
+            echo "  3. The credentials are not expired"
+            echo "  4. The namespace format is correct (tenant.namespace)"
+            exit 1
+          fi
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
