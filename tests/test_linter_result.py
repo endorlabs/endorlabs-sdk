@@ -42,7 +42,10 @@ class TestLinterResult:
         self.linter_results = linter_result.list_linter_results(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                traverse=True,
+            ),
         )
         if not self.linter_results:
             pytest.skip("No linter results available for testing")
@@ -81,8 +84,14 @@ class TestLinterResult:
         print("\n=== TESTING GET LINTER RESULT BY UUID ===")
 
         linter_result_item = self.linter_results[0]
+        # Use the linter result's actual namespace (may be in child namespace when traverse=True)
+        linter_result_namespace = (
+            linter_result_item.tenant_meta.namespace
+            if linter_result_item.tenant_meta
+            else self.parent_namespace
+        )
         retrieved_linter_result = linter_result.get_linter_result(
-            self.client, self.parent_namespace, linter_result_item.uuid
+            self.client, linter_result_namespace, linter_result_item.uuid
         )
 
         assert retrieved_linter_result is not None, (

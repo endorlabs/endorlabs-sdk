@@ -43,7 +43,7 @@ class TestMetric:
             self.client,
             self.parent_namespace,
             list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
             ),
         )
@@ -83,8 +83,14 @@ class TestMetric:
         print("\n=== TESTING GET METRIC BY UUID ===")
 
         metric_item = self.metrics[0]
+        # Use the metric's actual namespace (may be in child namespace when traverse=True)
+        metric_namespace = (
+            metric_item.tenant_meta.namespace
+            if metric_item.tenant_meta
+            else self.parent_namespace
+        )
         retrieved_metric = metric.get_metric(
-            self.client, self.parent_namespace, metric_item.uuid
+            self.client, metric_namespace, metric_item.uuid
         )
 
         assert retrieved_metric is not None, (

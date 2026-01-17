@@ -44,7 +44,10 @@ class TestScanResult:
         self.scan_results = scan_result.list_scan_results(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                traverse=True,
+            ),
         )
         if not self.scan_results:
             pytest.skip("No scan results available for testing")
@@ -83,8 +86,14 @@ class TestScanResult:
         print("\n=== TESTING GET SCAN RESULT BY UUID ===")
 
         scan_result_item = self.scan_results[0]
+        # Use the scan result's actual namespace (may be in child namespace when traverse=True)
+        scan_result_namespace = (
+            scan_result_item.tenant_meta.namespace
+            if scan_result_item.tenant_meta
+            else self.parent_namespace
+        )
         retrieved_scan_result = scan_result.get_scan_result(
-            self.client, self.parent_namespace, scan_result_item.uuid
+            self.client, scan_result_namespace, scan_result_item.uuid
         )
 
         assert retrieved_scan_result is not None, (
