@@ -42,7 +42,10 @@ class TestDependencyMetadata:
         self.dependency_metadata_list = dependency_metadata.list_dependency_metadata(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                traverse=True,
+            ),
         )
         if not self.dependency_metadata_list:
             pytest.skip("No dependency metadata available for testing")
@@ -93,8 +96,14 @@ class TestDependencyMetadata:
         print("\n=== TESTING GET DEPENDENCY METADATA BY UUID ===")
 
         test_dm = self.dependency_metadata_list[0]
+        # Use the dependency metadata's actual namespace (may be in child namespace when traverse=True)
+        dm_namespace = (
+            test_dm.tenant_meta.namespace
+            if test_dm.tenant_meta
+            else self.parent_namespace
+        )
         retrieved_dm = dependency_metadata.get_dependency_metadata(
-            self.client, self.parent_namespace, test_dm.uuid
+            self.client, dm_namespace, test_dm.uuid
         )
 
         assert retrieved_dm is not None, (

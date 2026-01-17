@@ -20,6 +20,7 @@ from endor_cockpit.types import ListParameters
 # Tests that need more should explicitly request it
 TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
 TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
+TEST_TRAVERSE_PAGE_SIZE = 2  # Minimal page size for traverse tests to limit network load
 
 
 @pytest.fixture

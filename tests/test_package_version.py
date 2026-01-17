@@ -35,10 +35,10 @@ class TestPackageVersion:
             self.client,
             self.namespace,
             list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
             ),
-            max_pages=2,
+            max_pages=1,
         )
         if not self.package_versions:
             pytest.skip("No package versions available for testing")
@@ -76,8 +76,14 @@ class TestPackageVersion:
     def test_package_version_get_by_uuid(self):
         """Test GET package-version by UUID operation."""
         test_package_version = self.package_versions[0]
+        # Use the package version's actual namespace (may be in child namespace when traverse=True)
+        package_namespace = (
+            test_package_version.tenant_meta.namespace
+            if test_package_version.tenant_meta
+            else self.namespace
+        )
         retrieved_package_version = package_version.get_package_version(
-            self.client, self.namespace, test_package_version.uuid
+            self.client, package_namespace, test_package_version.uuid
         )
         assert retrieved_package_version is not None
         assert retrieved_package_version.uuid == test_package_version.uuid

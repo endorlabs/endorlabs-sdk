@@ -43,7 +43,7 @@ class TestInstallation:
             self.client,
             self.parent_namespace,
             list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
             ),
         )
@@ -88,8 +88,14 @@ class TestInstallation:
         print("\n=== TESTING GET INSTALLATION BY UUID ===")
 
         installation_item = self.installations[0]
+        # Use the installation's actual namespace (may be in child namespace when traverse=True)
+        installation_namespace = (
+            installation_item.tenant_meta.namespace
+            if installation_item.tenant_meta
+            else self.parent_namespace
+        )
         retrieved_installation = installation.get_installation(
-            self.client, self.parent_namespace, installation_item.uuid
+            self.client, installation_namespace, installation_item.uuid
         )
 
         assert retrieved_installation is not None, (

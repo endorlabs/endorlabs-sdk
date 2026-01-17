@@ -38,7 +38,7 @@ class TestFinding:
             self.client,
             self.namespace,
             list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
             ),
         )
@@ -69,8 +69,14 @@ class TestFinding:
         print("\n=== TESTING GET FINDING BY UUID ===")
 
         finding_item = self.findings[0]
+        # Use the finding's actual namespace (may be in child namespace when traverse=True)
+        finding_namespace = (
+            finding_item.tenant_meta.namespace
+            if finding_item.tenant_meta
+            else self.namespace
+        )
         retrieved_finding = finding.get_finding(
-            self.client, self.namespace, finding_item.uuid
+            self.client, finding_namespace, finding_item.uuid
         )
 
         assert retrieved_finding is not None, (
