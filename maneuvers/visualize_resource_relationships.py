@@ -16,13 +16,13 @@ Requirements:
 Examples:
     # Project-centric view
     uv run python maneuvers/visualize_resource_relationships.py \
-      --namespace "endor-solutions-tgowan" \
+      --namespace "tenant.namespace" \
       --project-uuid "project-uuid-here" \
       --output "project_graph.png"
 
     # Finding-centric view
     uv run python maneuvers/visualize_resource_relationships.py \
-      --namespace "endor-solutions-tgowan" \
+      --namespace "tenant.namespace" \
       --finding-uuid "finding-uuid-here" \
       --output "finding_graph.png"
 """

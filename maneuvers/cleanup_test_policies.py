@@ -11,11 +11,11 @@ Based on the policy resource structure and API patterns.
 Example:
 
 uv run python maneuvers/cleanup_test_policies.py \
-  --tenant-namespace "endor-solutions-tgowan" \
+  --tenant-namespace "tenant.namespace" \
   --dry-run
 
 uv run python maneuvers/cleanup_test_policies.py \
-  --tenant-namespace "endor-solutions-tgowan" \
+  --tenant-namespace "tenant.namespace" \
   --confirm-delete
 
 ## Note: This script will delete ALL policies with test-related tags.
@@ -32,6 +32,8 @@ from typing import Any, Dict, List
 
 # Add the src directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add maneuvers directory for common utilities
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources.policy import (
@@ -40,6 +42,7 @@ from endor_cockpit.resources.policy import (
     list_policies,
 )
 from endor_cockpit.types import ListParameters
+from common.constants import DEFAULT_PAGE_SIZE, DEFAULT_TEST_TAGS
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -49,6 +52,7 @@ logger = logging.getLogger(__name__)
 def find_test_policies(
     client: APIClient,
     tenant_namespace: str,
+    test_tags: List[str],
     traverse: bool = True
 ) -> List[Policy]:
     """
@@ -57,6 +61,7 @@ def find_test_policies(
     Args:
         client: Authenticated APIClient instance
         tenant_namespace: Target tenant namespace (canonical name)
+        test_tags: List of test tags to search for
         traverse: Whether to traverse child namespaces (default: True)
 
     Returns:
@@ -64,18 +69,17 @@ def find_test_policies(
     """
     try:
         logger.info(f"Searching for test policies in namespace: {tenant_namespace}")
+        logger.info(f"Searching for tags: {test_tags}")
 
         # Create filter for policies with test-related tags
         # Using OR logic to find policies that have any test-related tags
-        filter_expression = (
-            "meta.tags in ['test', 'dummy', 'crud-test', "
-            "'integration-test', 'ml-finding']"
-        )
+        tags_str = ", ".join([f"'{tag}'" for tag in test_tags])
+        filter_expression = f"meta.tags in [{tags_str}]"
 
         list_params = ListParameters(
             filter=filter_expression,
             mask="uuid,meta.name,meta.tags,meta.create_time,tenant_meta.namespace",
-            page_size=100,
+            page_size=DEFAULT_PAGE_SIZE,
             page_token=None,
             sort_field="meta.create_time",
             sort_order="desc",
@@ -92,7 +96,6 @@ def find_test_policies(
         for policy in policies:
             tags = policy.meta.tags or []
             # Check for any test-related tags
-            test_tags = ['test', 'dummy', 'crud-test', 'integration-test', 'ml-finding']
             if any(tag in tags for tag in test_tags):
                 test_policies.append(policy)
 
@@ -277,21 +280,27 @@ Examples:
 
 # Dry run to see what would be deleted
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan" \\
+  --tenant-namespace "tenant.namespace" \\
   --dry-run
 
 # Delete with confirmation prompt
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan"
+  --tenant-namespace "tenant.namespace"
 
 # Delete without confirmation (use with caution)
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan" \\
+  --tenant-namespace "tenant.namespace" \\
   --confirm-delete
+
+# Use custom test tags
+uv run python maneuvers/cleanup_test_policies.py \\
+  --tenant-namespace "tenant.namespace" \\
+  --tags "test,consolidation-test" \\
+  --dry-run
 
 # Traverse child namespaces in search
 uv run python maneuvers/cleanup_test_policies.py \\
-  --tenant-namespace "endor-solutions-tgowan" \\
+  --tenant-namespace "tenant.namespace" \\
   --traverse \\
   --dry-run
         """
@@ -305,6 +314,15 @@ uv run python maneuvers/cleanup_test_policies.py \\
     )
 
     # Optional arguments
+    parser.add_argument(
+        "--tags",
+        type=str,
+        default=",".join(DEFAULT_TEST_TAGS),
+        help=(
+            f"Comma-separated list of test tags to search for "
+            f"(default: {','.join(DEFAULT_TEST_TAGS)})"
+        )
+    )
     parser.add_argument(
         "--traverse",
         action="store_true",
@@ -333,6 +351,9 @@ uv run python maneuvers/cleanup_test_policies.py \\
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
+    # Parse test tags from comma-separated string
+    test_tags = [tag.strip() for tag in args.tags.split(",") if tag.strip()]
+
     try:
         # Initialize API client
         logger.info("Initializing API client...")
@@ -343,6 +364,7 @@ uv run python maneuvers/cleanup_test_policies.py \\
         test_policies = find_test_policies(
             client,
             args.tenant_namespace,
+            test_tags,
             args.traverse
         )
 

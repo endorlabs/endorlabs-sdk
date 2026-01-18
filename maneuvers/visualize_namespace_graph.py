@@ -18,7 +18,7 @@ Requirements:
 
 Example:
     uv run python maneuvers/visualize_namespace_graph.py \
-      --namespace "endor-solutions-tgowan" \
+      --namespace "tenant.namespace" \
       --output "namespace_graph.png"
 """
 
