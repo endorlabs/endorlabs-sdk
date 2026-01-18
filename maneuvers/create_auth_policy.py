@@ -11,11 +11,11 @@ Based on the OpenAPI schema and example authorization policy structure.
 Example:
 
 uv run python .workspace/create_auth_policy_maneuver.py \
-  --tenant-namespace "endor-solutions-tgowan" \
+  --tenant-namespace "tenant.namespace" \
   --name "Read Only Policy for auditors" \
   --description "Authorization policy for sso.tools OIDC users" \
   --clause "*@endor.ai,68fae83022a47bdae812bb42" \
-  --target-namespaces "endor-solutions-tgowan" \
+  --target-namespaces "tenant.namespace" \
   --roles "SYSTEM_ROLE_READ_ONLY" \
   --resource-permissions "finding:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;namespace:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;package_version:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;policy:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;project:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;repository:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE" \
   --dry-run
@@ -331,20 +331,20 @@ def main():
 Examples:
   # Single user with specific identity provider
   python create_auth_policy_maneuver.py \\
-    --tenant-namespace "endor-solutions-tgowan" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Auth Policy for User: tgowan@endor.ai" \\
     --description "Authorization policy for specific user" \\
     --clause "tgowan@endor.ai,68fae83022a47bdae812bb42" \\
-    --target-namespaces "endor-solutions-tgowan" \\
+    --target-namespaces "tenant.namespace" \\
     --roles "SYSTEM_ROLE_READ_ONLY"
 
   # Domain-wide access for all users from identity provider
   python create_auth_policy_maneuver.py \\
-    --tenant-namespace "endor-solutions-tgowan" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Domain Access Policy" \\
     --description "Access for all @endor.ai users" \\
     --clause "*@endor.ai,68fae83022a47bdae812bb42" \\
-    --target-namespaces "endor-solutions-tgowan" \\
+    --target-namespaces "tenant.namespace" \\
     --roles "SYSTEM_ROLE_READ_ONLY" \\
     --propagate
 

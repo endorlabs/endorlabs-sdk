@@ -16,7 +16,7 @@ Example:
 
 # Create JIRA notification target
 uv run python maneuvers/create_notification_targets.py \
-  --tenant-namespace "endor-solutions-tgowan" \
+  --tenant-namespace "tenant.namespace" \
   --name "Security JIRA Integration" \
   --description "JIRA integration for security findings" \
   --action-type "jira" \
@@ -30,7 +30,7 @@ uv run python maneuvers/create_notification_targets.py \
 
 # Create GitHub PR Remediation notification target
 uv run python maneuvers/create_notification_targets.py \
-  --tenant-namespace "endor-solutions-tgowan" \
+  --tenant-namespace "tenant.namespace" \
   --name "GitHub PR Remediation" \
   --description "GitHub PR comments for security findings" \
   --action-type "github-pr" \
@@ -396,7 +396,7 @@ def main():
 Examples:
   # Create JIRA notification target with Basic Authentication
   python create_notification_targets.py \\
-    --tenant-namespace "endor-solutions-tgowan" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Security JIRA Integration" \\
     --description "JIRA integration for security findings" \\
     --action-type "jira" \\
@@ -424,7 +424,7 @@ Examples:
 
   # Create GitHub PR Remediation notification target
   python create_notification_targets.py \\
-    --tenant-namespace "endor-solutions-tgowan" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "GitHub PR Remediation" \\
     --description "GitHub PR comments for security findings" \\
     --action-type "github-pr" \\
@@ -432,7 +432,7 @@ Examples:
 
   # Force overwrite existing notification target
   python create_notification_targets.py \\
-    --tenant-namespace "endor-solutions-tgowan" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Updated JIRA Integration" \\
     --description "Updated JIRA integration with force flag" \\
     --action-type "jira" \\

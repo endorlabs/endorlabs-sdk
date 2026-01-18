@@ -11,7 +11,7 @@ Based on the OpenAPI schema and namespace resource structure.
 Example:
 
 uv run python maneuvers/create_namespace.py \
-  --parent-namespace "endor-solutions-tgowan" \
+  --parent-namespace "tenant.namespace" \
   --name "kessel" \
   --description "Kessel namespace for testing" \
   --dry-run
@@ -204,14 +204,14 @@ Examples:
 
 # Create a child namespace
 uv run python maneuvers/create_namespace.py \\
-  --parent-namespace "endor-solutions-tgowan" \\
+  --parent-namespace "tenant.namespace" \\
   --name "kessel" \\
   --description "Kessel namespace for testing" \\
   --dry-run
 
 # Create with tags
 uv run python maneuvers/create_namespace.py \\
-  --parent-namespace "endor-solutions-tgowan" \\
+  --parent-namespace "tenant.namespace" \\
   --name "production" \\
   --description "Production environment namespace" \\
   --tags "env:production,team:platform" \\
