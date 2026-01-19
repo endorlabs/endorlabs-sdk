@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/pr-comments/
 title: Pull Request comments | Endor Labs Docs
-downloaded: 2025-12-11 11:32:21
+downloaded: 2026-01-16 09:48:42
 ---
 
 Pull Request comments | Endor Labs Docs
@@ -9,7 +9,6 @@ Pull Request comments | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/pr-scans/pr-comments/_print.html)
 
@@ -353,28 +352,16 @@ See the following specification to understand the additional functions that are 
 ```
 // FuncMap contains the additional functions that are available to CommentTemplate.
 var FuncMap = template.FuncMap{
-	"now": toTime, // 'now' gives the current time
+	"now": utils.ToTime, // 'now' gives the current time
 
 	// 'enumToString' coverts the enums for finding level, finding category and finding tags to string
-	"enumToString": enumToString,
+	"enumToString": utils.EnumToString,
 
 	// 'getPackageVersionURL' returns the URL for a given PackageVersion
-	"getPackageVersionURL": func(apiURL string, packageVersion *endorpb.PackageVersion) string {
-		result, err := common.GetPackageVersionURL(apiURL, packageVersion)
-		if err != nil {
-			return ""
-		}
-		return result
-	},
+	"getPackageVersionURL": utils.GetPackageVersionURL,
 
 	// 'getFindingURL' returns the URL for a given Finding
-	"getFindingURL": func(apiURL string, finding *endorpb.Finding) string {
-		result, err := common.GetFindingURL(apiURL, finding)
-		if err != nil {
-			return ""
-		}
-		return result
-	},
+	"getFindingURL": utils.GetFindingURL,
 
 	// 'add' returns the sum of two integers
 	"add": func(n int, incr int) int {
@@ -392,56 +379,32 @@ var FuncMap = template.FuncMap{
 	"getOtherFindingsDependencyMarker": func() string { return _findingsWithNoDeps },
 
 	// 'getFindingsCountString' returns a string with number of findings, example - "5 findings"
-	"getFindingsCountString": func(dataMap *endorpb.PackageToDependencies) string {
-		count := 0
-
-		for _, depMap := range dataMap.PackageToDependencies {
-			for _, findingMap := range depMap.DependencyToFindings {
-				count += len(findingMap.Uuids)
-			}
-		}
-
-		findingsStr := "findings"
-		if count == 1 {
-			findingsStr = "finding"
-		}
-
-		return fmt.Sprintf("%d %s", count, findingsStr)
-	},
+	"getFindingsCountString": utils.GetFindingsCountString,
 
 	// 'hasFindingCategory' checks if a finding has a specific category
-	"hasFindingCategory": func(finding *endorpb.Finding, targetCategory string) bool {
-		for _, category := range finding.GetSpec().GetFindingCategories() {
-			if enumToString(category) == targetCategory {
-				return true
-			}
-		}
-		return false
-	},
+	"hasFindingCategory": utils.HasFindingCategory,
 
 	// 'isNotEmptyString' checks if a string is not empty
-	"isNotEmptyString": func(value string) bool {
-		return value != ""
-	},
+	"isNotEmptyString": utils.IsNotEmptyString,
 
 	// 'getCustomLocation' extracts the location from Custom field
 	"getCustomLocation": func(finding *endorpb.Finding) string {
-		return getCustomFieldValue(finding, "location")
+		return utils.GetCustomFieldValue(finding, "location")
 	},
 
 	// 'getCustomCodeSnippet' extracts the code snippet from Custom field
 	"getCustomCodeSnippet": func(finding *endorpb.Finding) string {
-		return getCustomFieldValue(finding, "code_snippet")
+		return utils.GetCustomFieldValue(finding, "code_snippet")
 	},
 
-	"fixBackticks": fixUnclosedBackticks,
+	"fixBackticks": utils.FixUnclosedBackticks,
 
 	// 'getFirstPartyReachableFunctions' extracts first-party functions from reachable paths
-	"getFirstPartyReachableFunctions": getFirstPartyReachableFunctions,
+	"getFirstPartyReachableFunctions": utils.GetFirstPartyReachableFunctions,
 
 	// 'groupFindingsByRemediation' groups findings by their remediation value
 	// Returns a slice of GroupedRemediation where findings with the same remediation are grouped together
-	"groupFindingsByRemediation": groupFindingsByRemediation,
+	"groupFindingsByRemediation": utils.GroupFindingsByRemediation,
 }
 ```
 

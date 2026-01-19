@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/use-cases/
 title: Use cases | Endor Labs Docs
-downloaded: 2025-12-11 11:35:13
+downloaded: 2026-01-16 09:51:00
 ---
 
 Use cases | Endor Labs Docs
@@ -9,7 +9,6 @@ Use cases | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/use-cases/_print.html)
 
@@ -412,6 +411,39 @@ Content-type: application/json
 Authorization: Bearer {{token}}
 ```
 
+## Get finding snooze history
+
+Snooze updates are captured as **FindingLog** objects.
+
+* endorctl
+* curl
+* HTTP
+
+```
+endorctl api list --resource FindingLog \
+  --filter "spec.finding_uuid==<finding-uuid> and spec.operation==OPERATION_UPDATE" \
+  --field-mask "meta.create_time,meta.created_by,spec.snooze"
+```
+
+```
+curl --get \
+  --header "Authorization: Bearer $ENDOR_TOKEN" \
+  --header "Accept-Encoding: gzip" \
+  --data-urlencode "list_parameters.filter=spec.finding_uuid==<finding-uuid> and spec.operation==OPERATION_UPDATE" \
+  --data-urlencode "list_parameters.mask=meta.create_time,meta.created_by,spec.snooze" \
+  https://api.endorlabs.com/v1/namespaces/$ENDOR_NAMESPACE/finding-logs
+```
+
+```
+@baseUrl = https://api.endorlabs.com
+@token = <endor-token>
+@namespace = <endor-namespace>
+
+###
+GET {{baseUrl}}/v1/namespaces/{{namespace}}/finding-logs?list_parameters.filter=spec.finding_uuid==<finding-uuid> and spec.operation==OPERATION_UPDATE&list_parameters.mask=meta.create_time,meta.created_by,spec.snooze HTTP/1.1
+Authorization: Bearer {{token}}
+```
+
 ## Get Endor Labs scores for an OSS package
 
 1. Set the namespace to `"oss"` as the data for OSS packages are stored in the OSS tenant.
@@ -713,8 +745,6 @@ endorctl api create --resource Policy \
   }'
 ```
 
-> Note: See also [`endorctl api create interactive mode`](../../../endorctl/commands/api/#endorctl-api-create-interactive-mode).
-
 ```
 curl --request POST \
   --header "Authorization: Bearer $ENDOR_TOKEN" \
@@ -803,8 +833,6 @@ endorctl api update --resource Policy --uuid <policy-uuid> \
   --data '{ "spec" : { "project_selector" : [ "$uuid=<project-uuid>" ] } }'
 ```
 
-> Note: See also [`endorctl api update interactive mode`](../../../endorctl/commands/api/#endorctl-api-update-interactive-mode).
-
 ```
 curl --request PATCH \
   --header "Authorization: Bearer $ENDOR_TOKEN" \
@@ -867,8 +895,6 @@ endorctl api update --resource Policy --uuid <policy-uuid> \
   --data '{ "spec" : { "project_exceptions" : [ "$uuid=<project-uuid>" ] } }'
 ```
 
-> Note: See also [`endorctl api update interactive mode`](../../../endorctl/commands/api/#endorctl-api-update-interactive-mode).
-
 ```
 curl --request PATCH \
   --header "Authorization: Bearer $ENDOR_TOKEN" \
@@ -930,8 +956,6 @@ endorctl api update --resource Policy --uuid <policy-uuid> \
   --field-mask "spec.exception.tags" \
   --data '{ "spec" : { "exception" : { "tags" : [ <tag1>, <tag2> ] } } }'
 ```
-
-> Note: See also [`endorctl api update interactive mode`](../../../endorctl/commands/api/#endorctl-api-update-interactive-mode).
 
 ```
 curl --request PATCH \
@@ -1085,8 +1109,6 @@ endorctl api update --resource Finding --uuid <finding-uuid> \
   --field-mask "meta.tags" \
   --data '{ "meta" : { "tags" : [ "tag1", "tag2", "tag3" ] } }'
 ```
-
-> Note: See also [`endorctl api update interactive mode`](../../../endorctl/commands/api/#endorctl-api-update-interactive-mode).
 
 ```
 curl --request PATCH \

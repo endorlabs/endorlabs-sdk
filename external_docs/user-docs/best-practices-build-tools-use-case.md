@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/build-tools-use-case/
 title: Best Practices: Build tools use cases | Endor Labs Docs
-downloaded: 2025-12-11 11:34:43
+downloaded: 2026-01-16 09:50:33
 ---
 
 Best Practices: Build tools use cases | Endor Labs Docs
@@ -9,7 +9,6 @@ Best Practices: Build tools use cases | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/best-practices/build-tools-use-case/_print.html)
 

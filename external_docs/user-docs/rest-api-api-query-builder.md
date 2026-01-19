@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/api-query-builder/
 title: endorctl API Query Builder | Endor Labs Docs
-downloaded: 2025-12-11 11:33:18
+downloaded: 2026-01-16 09:49:18
 ---
 
 endorctl API Query Builder | Endor Labs Docs
@@ -9,7 +9,6 @@ endorctl API Query Builder | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # endorctl API Query Builder
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/project-filters/
 title: Best practices: Working with project filters | Endor Labs Docs
-downloaded: 2025-12-11 11:34:44
+downloaded: 2026-01-16 09:50:34
 ---
 
 Best practices: Working with project filters | Endor Labs Docs
@@ -9,7 +9,6 @@ Best practices: Working with project filters | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/best-practices/project-filters/_print.html)
 

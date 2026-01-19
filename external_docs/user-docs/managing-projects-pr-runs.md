@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/pr-runs/
 title: PR runs | Endor Labs Docs
-downloaded: 2025-12-11 11:34:31
+downloaded: 2026-01-16 09:50:20
 ---
 
 PR runs | Endor Labs Docs
@@ -9,7 +9,6 @@ PR runs | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-projects/pr-runs/_print.html)
 

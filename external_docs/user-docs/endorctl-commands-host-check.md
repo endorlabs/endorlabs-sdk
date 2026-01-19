@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/host-check/
 title: host-check | Endor Labs Docs
-downloaded: 2025-12-11 11:31:27
+downloaded: 2026-01-16 09:47:37
 ---
 
 host-check | Endor Labs Docs
@@ -9,7 +9,6 @@ host-check | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/host-check/_print.html)
 

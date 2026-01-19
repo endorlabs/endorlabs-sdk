@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/
 title: Scan projects | Endor Labs Docs
-downloaded: 2025-12-11 11:33:39
+downloaded: 2026-01-16 09:49:39
 ---
 
 Scan projects | Endor Labs Docs
@@ -9,7 +9,6 @@ Scan projects | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/_print.html)
 
@@ -18,6 +17,10 @@ Scan projects | Endor Labs Docs
 # Scan projects
 
 This section provides in depth scanning strategies, reference architectures and guides to scanning with Endor Labs.
+
+**Tip**
+
+Endor Labs does not scan the files and paths included in `.gitignore` files during SCA scans. If certain dependencies or paths are not appearing in your scan results, verify they are not excluded by your `.gitignore` configuration.
 
 ---
 

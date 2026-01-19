@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/sign-in-to-endorlabs/
 title: Log in to Endor Labs | Endor Labs Docs
-downloaded: 2025-12-11 11:30:48
+downloaded: 2026-01-16 09:46:58
 ---
 
 Log in to Endor Labs | Endor Labs Docs
@@ -9,7 +9,6 @@ Log in to Endor Labs | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Log in to Endor Labs
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/scan/
 title: scan | Endor Labs Docs
-downloaded: 2025-12-11 11:31:44
+downloaded: 2026-01-16 09:48:05
 ---
 
 scan | Endor Labs Docs
@@ -9,7 +9,6 @@ scan | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/scan/_print.html)
 
@@ -180,7 +179,6 @@ The command `endorctl scan` uses the following flags and environment variables:
 | `disable-code-snippet-storage` | `ENDOR_SCAN_DISABLE_CODE_SNIPPET_STORAGE` | boolean (default:false) | Do not store or display the source code related to a finding. |
 | Not applicable | `ENDOR_SCAN_SEMGREP_VERBOSE` | boolean (default:false) | Enable verbose output for SAST scans to show detailed information about rule execution, file parsing status, and scan progress. |
 | Not applicable | `ENDOR_SCAN_SEMGREP_DEBUG` | boolean (default:false) | Enable debug output for SAST scans, which includes all verbose information plus additional debugging details to help troubleshoot scan issues. |
-| Not applicable | `ENDOR_SCAN_SEMGREP_PROGRAM` | string | Set the scan engine to use for SAST scans. Supported values are `semgrep` and `opengrep`. The default value is `opengrep`. |
 
 ### Sandbox flags
 
@@ -216,6 +214,7 @@ The command `endorctl scan` uses the following flags and environment variables:
 | `tags` | `ENDOR_SCAN_TAGS` | string | Specify a list of user-defined tags to add to this scan. Tags can be used to search and filter scans later. |
 | `use-local-repo-cache` | `ENDOR_SCAN_USE_LOCAL_CACHE` | boolean (default:false) | Use the local cache for dependency resolution. *Make sure that `mvn install -U` is successful and include [`mvn dependency`](https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-dependency-plugin) and [`mvn help`](https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-help-plugin) plugins in the local m2 cache. For Gradle complete `gradle assemble --refresh-dependencies`.* |
 | `uuid` | `ENDOR_SCAN_UUID` | string | Scan the specified project UUID. |
+| Not applicable | `ENDOR_SCAN_EMBEDDINGS` | boolean | Control the use of code segment embeddings during a scan. Set to `false` to disable embeddings for a specific scan, or `true` to enable them. This setting overrides the system-wide configuration. See [Enable code segment embeddings](../../../scan-with-endorlabs/language-scanning/c/#enable-code-segment-embeddings) for more information. |
 
 ## Feedback
 

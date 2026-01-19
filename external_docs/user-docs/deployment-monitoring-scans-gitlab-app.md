@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/gitlab-app/
 title: Deploy Endor Labs GitLab App | Endor Labs Docs
-downloaded: 2025-12-11 11:32:35
+downloaded: 2026-01-16 09:48:56
 ---
 
 Deploy Endor Labs GitLab App | Endor Labs Docs
@@ -9,7 +9,6 @@ Deploy Endor Labs GitLab App | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/gitlab-app/_print.html)
 

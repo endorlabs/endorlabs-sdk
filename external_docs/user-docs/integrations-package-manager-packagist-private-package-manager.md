@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/packagist-private-package-manager/
 title: Private package manager integration for Packagist | Endor Labs Docs
-downloaded: 2025-12-11 11:35:19
+downloaded: 2026-01-16 09:51:07
 ---
 
 Private package manager integration for Packagist | Endor Labs Docs
@@ -9,7 +9,6 @@ Private package manager integration for Packagist | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/package-manager/packagist-private-package-manager/_print.html)
 
@@ -46,21 +45,25 @@ To set up a package manager integration:
 6. Select either **Basic** or **AWS Code Artifactory** as **Authentication Type**.
 
    See [AWS authentication](../aws-codeartifact/) for more information.
-7. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
 
-**Maven**
-
-Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
-
-8. Select **Add Package Manager**.
+7. Enter the package manager hostname in the format `repo.packagist.com`.
+8. Select any one authentication method.
+   * For **Http Basic**, enter the username and password.
+   * For **Http Bearer**, enter the token.
+   * For **GitHub OAuth**, enter the token.
+   * For **GitLab OAuth**,enter the token.
+   * For **GitLab Token**, enter the username and token.
+   * For **Bitbucket OAuth**, enter the **Consumer Key** and **Consumer Secret**.
+9. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
+10. Click **Add Package Manager**.
 
 If you want to delete a package manager integration, click the trash can icon at the far right of the integration.
 
 ### Authenticate to Packagist private package repositories
 
-To connect to private repositories of Packagist enter the package manager URL and the package registry credentials such as username and password.
+To connect to private repositories of Packagist enter the package manager host, authentication type, and the package registry credentials such as username and password, or authentication token.
 
-![Basic Authentication for package manager integrations](../../../images/basicauthentication.png)
+![Basic Authentication for package manager integrations](../../../images/packagist-package-manager.png)
 
 ### Test private package manager connection
 

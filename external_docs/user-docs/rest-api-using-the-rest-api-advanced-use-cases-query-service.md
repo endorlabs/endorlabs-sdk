@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/advanced-use-cases/query-service/
 title: Using the query service | Endor Labs Docs
-downloaded: 2025-12-11 11:31:50
+downloaded: 2026-01-16 09:48:11
 ---
 
 Using the query service | Endor Labs Docs
@@ -9,7 +9,6 @@ Using the query service | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/advanced-use-cases/query-service/_print.html)
 

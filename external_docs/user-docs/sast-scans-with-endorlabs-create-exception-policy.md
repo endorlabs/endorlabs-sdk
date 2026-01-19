@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/create-exception-policy/
 title: Create Exception Policy for SAST Findings | Endor Labs Docs
-downloaded: 2025-12-11 11:33:13
+downloaded: 2026-01-16 09:49:13
 ---
 
 Create Exception Policy for SAST Findings | Endor Labs Docs
@@ -9,7 +9,6 @@ Create Exception Policy for SAST Findings | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/sast-scans-with-endorlabs/create-exception-policy/_print.html)
 

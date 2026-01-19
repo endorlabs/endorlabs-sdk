@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/august-2025/
 title: August 2025 | Endor Labs Docs
-downloaded: 2025-12-11 11:34:05
+downloaded: 2026-01-16 09:50:26
 ---
 
 August 2025 | Endor Labs Docs
@@ -9,7 +9,6 @@ August 2025 | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/releasenotes/august-2025/_print.html)
 

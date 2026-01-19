@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/scores/repository-scores/activity-score-factors/
 title: Activity score factors | Endor Labs Docs
-downloaded: 2025-12-11 11:30:54
+downloaded: 2026-01-16 09:47:03
 ---
 
 Activity score factors | Endor Labs Docs
@@ -9,7 +9,6 @@ Activity score factors | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/introduction/scores/repository-scores/activity-score-factors/_print.html)
 

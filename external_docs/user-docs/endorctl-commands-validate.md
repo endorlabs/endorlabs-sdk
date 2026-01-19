@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/validate/
 title: validate policy | Endor Labs Docs
-downloaded: 2025-12-11 11:31:51
+downloaded: 2026-01-16 09:48:12
 ---
 
 validate policy | Endor Labs Docs
@@ -9,7 +9,6 @@ validate policy | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/validate/_print.html)
 

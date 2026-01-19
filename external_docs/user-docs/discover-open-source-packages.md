@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/discover/open-source-packages/
 title: Search for Open Source Packages | Endor Labs Docs
-downloaded: 2025-12-11 11:32:28
+downloaded: 2026-01-16 09:48:49
 ---
 
 Search for Open Source Packages | Endor Labs Docs
@@ -9,7 +9,6 @@ Search for Open Source Packages | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/discover/open-source-packages/_print.html)
 
@@ -26,7 +25,7 @@ To look for open source packages, navigate to **Discover** > **OSS Packages**.
   ![Open source packages](../../images/oss-package-list.png)
 * Select a search result to view more details.
 * Choose the **Ecosystem** and click **Search Open Source Packages** to look for packages by their ecosystem.
-* You can view the list of package versions, their dependencies and dependents, Endor security scores, and whether each package version is identified as malware.
+* You can view the list of package versions, their dependencies and dependents, and Endor security scores.
 
   ![OSS packages table](../../images/oss-packages-table.png)
 

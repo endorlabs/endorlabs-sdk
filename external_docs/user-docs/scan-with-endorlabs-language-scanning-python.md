@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/python/
 title: Python | Endor Labs Docs
-downloaded: 2025-12-11 11:32:22
+downloaded: 2026-01-16 09:48:43
 ---
 
 Python | Endor Labs Docs
@@ -9,7 +9,6 @@ Python | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/python/_print.html)
 
@@ -42,7 +41,8 @@ Before you proceed to run a deep scan, ensure that your system meets the followi
 Ensure that the following prerequisites are complete:
 
 * Install Python 3.6 or higher versions. See the [Python documentation](https://wiki.python.org/moin/BeginnersGuide/Download) on how to install Python.
-* Ensure that the package manager [pip](https://pip.pypa.io/en/stable/installation/), [Poetry](https://python-poetry.org/docs/), [PDM](https://pdm-project.org/en/latest/), or [Pipenv](https://pipenv.pypa.io/en/latest/installation.html#installing-pipenv) is used by your projects to build your software packages.
+* For UV managed projects, Python 3.8 or higher is required. To enable UV support, set the environment variable `ENDOR_SCAN_ENABLE_UV_PACKAGE_MANAGER=true`.
+* Ensure that the package manager [pip](https://pip.pypa.io/en/stable/installation/), [Poetry](https://python-poetry.org/docs/), [PDM](https://pdm-project.org/en/latest/), [UV](https://docs.astral.sh/uv/), or [Pipenv](https://pipenv.pypa.io/en/latest/installation.html#installing-pipenv) is used by your projects to build your software packages.
 * If you are using pip with Python 3.12 or higher versions, install [setuptools](https://pypi.org/project/setuptools/).
 * Set up any build, code generation, or other dependencies that are required to install your project’s packages.
 * Organize the project as one or more packages using `setup.py`, `setup.cfg`, `pyproject.toml`, or `requirements.txt` package manifest files.
@@ -79,27 +79,27 @@ You must create a virtual environment and build your Python projects before runn
 
 ### Virtual environment support
 
-For Poetry, Pipenv, and PDM, virtual environments endorctl automatically picks the virtual environments.
+For Poetry, Pipenv, and PDM, endorctl automatically picks the virtual environments.
+
+For UV managed projects, endorctl automatically creates a temporary virtual environment and deletes it after the scan is complete. UV must be installed on your system for this automatic management to work.
 
 For pip, you need to use one of the following ways to specify the virtual environment details of your Python projects for both quick and deep scans.
 
 * Set up the virtual environment in the root folder that you want to scan and name it **venv** or **.venv**, it is automatically picked up by the Endor Labs application.
 
-```
-export PYTHONPATH=/usr/tmp/venv:/usr/tmp/another-venv
-```
-
+  ```
+  export PYTHONPATH=/usr/tmp/venv:/usr/tmp/another-venv
+  ```
 * Set the environment variable `ENDOR_SCAN_PYTHON_VIRTUAL_ENV` to the path of the virtual environment of your Python project.
 
-```
-export ENDOR_SCAN_PYTHON_VIRTUAL_ENV=/usr/tmp/venv
-```
-
+  ```
+  export ENDOR_SCAN_PYTHON_VIRTUAL_ENV=/usr/tmp/venv
+  ```
 * Set the environment variable `ENDOR_SCAN_PYTHON_GLOBAL_SITE_PACKAGES` to true to indicate that a virtual environment is not present and Endor Labs can use the system-wide Python installation packages and modules.
 
-```
-export ENDOR_SCAN_PYTHON_GLOBAL_SITE_PACKAGES=true
-```
+  ```
+  export ENDOR_SCAN_PYTHON_GLOBAL_SITE_PACKAGES=true
+  ```
 
 **Note**
 
@@ -177,9 +177,10 @@ In this method, Endor Labs analyzes the manifest files present in a project to d
 | Poetry | 1 | `poetry.lock`,`pyproject.toml` |
 | Pipenv | 2 | `Pipfile.lock`,`Pipfile` |
 | PDM | 3 | `pdm.lock`,`pyproject.toml` |
-| pip | 4 | `setup.py`,`setup.cfg`,`requirements.txt`,`pyproject.toml` |
+| UV | 4 | `uv.lock`,`pyproject.toml` |
+| pip | 5 | `setup.py`,`setup.cfg`,`requirements.txt`,`pyproject.toml` |
 
-For Poetry and PDM, when both `lock` and `toml` files are present, both files are analyzed to detect and resolve dependencies.
+For Poetry, PDM, and UV, when both `lock` and `toml` files are present, both files are analyzed to detect and resolve dependencies.
 
 For pip, the dependency resolution is as follows, where the first available file in the priority list is analyzed to detect and resolve dependencies, and others are ignored.
 
@@ -227,6 +228,14 @@ endorctl scan
 git clone https://github.com/HybirdCorp/creme_crm.git
 cd creme_crm
 pdm install
+endorctl scan
+```
+
+##### UV
+
+```
+git clone https://github.com/example/repo.git
+cd repo
 endorctl scan
 ```
 
@@ -286,6 +295,9 @@ Dependency resolution using static analysis is performed on deep scans only.
 * If a virtual environment is not provided, Python version constraints are not assumed based on the runtime environment of CI. Dependencies are shown for all possible versions of Python at runtime. If a virtual environment is provided, Endor Labs respects what is installed in the virtual environment.
 * Symbolic links into manifest files may result in the same package being duplicated in the project.
 * If a dependency is not available in the PyPI repository or in a configured private package repository, Endor Labs will be unable to build the software and scans may fail without first building the package in the local environment successfully.
+* A project is treated as UV-managed if its `pyproject.toml` file contains the `tool.uv` key. Additionally, any member of a UV workspace is also considered UV-managed, even if its individual manifest file does not include the `tool.uv` key.
+* When scanning UV workspaces, Endor Labs uses the workspace-level lock file for dependency resolution. Individual workspace members are not scanned as independent projects, ensuring consistency with UV’s workspace architecture.
+* Inline script dependencies defined within Python script files are not currently detected during scanning.
 
 #### Call Graph Limitations
 
@@ -300,13 +312,44 @@ Dependency resolution using static analysis is performed on deep scans only.
 
 Here are a few error scenarios that you can check for and attempt to resolve them.
 
-* **Virtual environment errors**: You can identify the errors that may occur during virtual environment installation by looking for the following message in the error logs;
-  *failed to create virtual environment* or *failed to install dependencies*.
-* **Missing environment dependency**: If your code depends on packages such as **psycopg2**, environment dependencies such as **PostgreSQL** are also required. The endorctl scan may fail if the environment where it is running does not have **PostgreSQL** installed.
-* **Incompatible Python version**: The default Python version in the environment where the endorctl scan is running is incompatible with one or more of the dependencies that are needed by the code.
-* **Incompatible architecture**: One or more dependencies are not compatible with the operating system architecture of the local system on which you are running the endorctl scan. For example, projects with dependency on **PyObjC** can be run on Mac-based systems, but not Linux systems. A few Python libraries are incompatible with x32 architectures and can only be run on x64 architectures.
-* **Resolved dependency errors**: A version of a dependency does not exist, or it cannot be found. It may have been removed from the repository.
-* **Call graph errors**: These errors come if pip or Poetry are unable to build the project because a required dependency cannot be located.
+Virtual environment errors
+
+You can identify the errors that may occur during virtual environment installation by looking for the following message in the error logs: *failed to create virtual environment* or *failed to install dependencies*.
+
+
+
+
+Missing environment dependency
+
+If your code depends on packages such as **psycopg2**, environment dependencies such as **PostgreSQL** are also required. The endorctl scan may fail if the environment where it is running does not have **PostgreSQL** installed.
+
+
+
+
+Incompatible Python version
+
+The default Python version in the environment where the endorctl scan is running is incompatible with one or more of the dependencies that are needed by the code.
+
+
+
+
+Incompatible architecture
+
+One or more dependencies are not compatible with the operating system architecture of the local system on which you are running the endorctl scan. For example, projects with dependency on **PyObjC** can be run on Mac-based systems, but not Linux systems. A few Python libraries are incompatible with x32 architectures and can only be run on x64 architectures.
+
+
+
+
+Resolved dependency errors
+
+A version of a dependency does not exist, or it cannot be found. It may have been removed from the repository.
+
+
+
+
+Call graph errors
+
+These errors occur if pip or Poetry are unable to build the project because a required dependency cannot be located.
 
 ## Feedback
 

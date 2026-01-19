@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/github-keyless-auth/
 title: Keyless authentication in GitHub | Endor Labs Docs
-downloaded: 2025-12-11 11:33:21
+downloaded: 2026-01-16 09:49:20
 ---
 
 Keyless authentication in GitHub | Endor Labs Docs
@@ -9,7 +9,6 @@ Keyless authentication in GitHub | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/ci-scans/keyless-authentication/github-keyless-auth/_print.html)
 
@@ -22,20 +21,20 @@ Learn how to implement keyless authentication in GitHub.
 To enable Keyless Authentication for GitHub Actions, you’ll need to perform the following steps:
 
 1. Ensure you are using the Endor Labs [GitHub Action](https://github.com/endorlabs/github-action.git) in your GitHub workflow.
-2. Edit your GitHub Action workflow to add permission settings for the GitHub `id-token`.
+2. Edit your GitHub Action workflow to add permission settings for the GitHub `id-token` and `contents`.
 3. Create an authorization policy for `GitHub Action OIDC`.
 4. Test that you can successfully scan a project using `GitHub Action OIDC`.
 
 ### Add a GitHub Action OIDC authorization policy
 
-To ensure that the GitHub Action OIDC identity can successfully login to Endor Labs you’ll need to create an authorization policy in Endor Labs.
+To ensure that the GitHub Action OIDC identity can successfully login to Endor Labs, create an authorization policy in Endor Labs.
 
 To create an authorization policy:
 
-1. Under Manage go to Access Control.
-2. Navigate to the “Auth Policy” tab.
-3. Click on the “Add Auth Policy” button.
-4. Select “GitHub Action OIDC” as your identity provider.
+1. Select **Access Control** from the left sidebar.
+2. Select **Auth Policy**.
+3. Click on **Add Auth Policy**.
+4. Select **GitHub Action OIDC** as your identity provider.
 5. Select the permission for the GitHub Action. This permission should be `Code Scanner`.
 6. For the claim use the key `user` and put in a matching value that maps to the organization of your GitHub repository.
 
@@ -46,7 +45,7 @@ To configure your GitHub Action workflow with GitHub Action OIDC you can use the
 The important items in this workflow are:
 
 1. The Usage of the Endor Labs GitHub Action.
-2. Setting Job level permissions to allow writing to the GitHub `id-token`.
+2. Setting Job level permissions to allow writing to the GitHub `id-token` and reading repository `contents`.
 
 ```
 name: Example Scan of OWASP Java
@@ -55,6 +54,7 @@ jobs:
   create_project_owasp:
     permissions:
       id-token: write # This is required for requesting the JWT
+      contents: read # This is required to checkout and read your repository code
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-review-pr-comments/
 title: PR Comments for AI security code review | Endor Labs Docs
-downloaded: 2025-12-11 11:34:30
+downloaded: 2026-01-16 09:50:19
 ---
 
 PR Comments for AI security code review | Endor Labs Docs
@@ -9,7 +9,6 @@ PR Comments for AI security code review | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/ai/ai-security-review/ai-security-review-pr-comments/_print.html)
 

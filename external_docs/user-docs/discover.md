@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/discover/
 title: Research Open Source Risks | Endor Labs Docs
-downloaded: 2025-12-11 11:35:28
+downloaded: 2026-01-16 09:51:16
 ---
 
 Research Open Source Risks | Endor Labs Docs
@@ -9,7 +9,6 @@ Research Open Source Risks | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Research Open Source Risks
 

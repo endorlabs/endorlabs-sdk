@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/
 title: SAST scan | Endor Labs Docs
-downloaded: 2025-12-11 11:34:52
+downloaded: 2026-01-16 09:50:40
 ---
 
 SAST scan | Endor Labs Docs
@@ -9,7 +9,6 @@ SAST scan | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/sast-scans-with-endorlabs/_print.html)
 
@@ -30,11 +29,7 @@ Endor Labs integrates [Opengrep](https://www.opengrep.dev/) to provide SAST scan
 
 Opengrep is an open-source, static analysis tool that finds bugs and vulnerabilities in the source code using pattern matching. Opengrep parses the source code, applies pattern matching based on rules, and reports matches based on the rule specifications. Opengrep rules are in the yaml format.
 
-When you run a SAST scan, Endor Labs downloads Opengrep and works seamlessly. If you wish, you can use Semgrep instead of Opengrep with Endor Labs. See [Use Semgrep with Endor Labs](../administration/use-semgrep-with-endorlabs/) for more information.
-
-**Warning**
-
-If you use Semgrep with Endor Labs, SAST scan is supported on macOS and Linux, and not supported on Windows.
+When you run a SAST scan, Endor Labs downloads Opengrep and works seamlessly.
 
 Endor Labs includes a set of [curated rules](../sast-scans-with-endorlabs/manage-sast-rules/). You can [create your own rules](../sast-scans-with-endorlabs/manage-sast-rules/create-sast-rule/) or [import rules](../sast-scans-with-endorlabs/manage-sast-rules/import-sast-rule/) with the rule designer.
 

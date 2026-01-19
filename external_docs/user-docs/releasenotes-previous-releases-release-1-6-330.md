@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/release-1-6-330/
 title: June 2024 | Endor Labs Docs
-downloaded: 2025-12-11 11:35:39
+downloaded: 2026-01-16 09:51:27
 ---
 
 June 2024 | Endor Labs Docs
@@ -9,7 +9,6 @@ June 2024 | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/releasenotes/previous-releases/release-1-6-330/_print.html)
 

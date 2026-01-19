@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/javascript/
 title: JavaScript/TypeScript | Endor Labs Docs
-downloaded: 2025-12-11 11:33:53
+downloaded: 2026-01-16 09:49:52
 ---
 
 JavaScript/TypeScript | Endor Labs Docs
@@ -9,7 +9,6 @@ JavaScript/TypeScript | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/javascript/_print.html)
 
@@ -164,28 +163,6 @@ Perform a scan to get visibility into your software composition and resolve depe
 ```
 endorctl scan
 ```
-
-### Detect dependencies with pnpm
-
-If you are using pnpm, set the environment variable `ENDOR_PNPM_ENABLED` to `true` and then run the scan. Otherwise, skip this step.
-
-```
-export ENDOR_PNPM_ENABLED=true
-```
-
-Next, run the scan:
-
-```
-endorctl scan
-```
-
-You can perform the scan from within the root directory of the Git project repository, and save the local results to a `results.json` file. The results and related analysis information are available on the Endor Labs user interface.
-
-```
-endorctl scan -o json | tee /path/to/results.json
-```
-
-You can sign in to the [Endor Labs user interface](https://app.endorlabs.com), click **Projects** on the left sidebar, and find your project to review its results.
 
 ### Understand the scan process
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/dotnet/
 title: .NET | Endor Labs Docs
-downloaded: 2025-12-11 11:34:59
+downloaded: 2026-01-16 09:50:46
 ---
 
 .NET | Endor Labs Docs
@@ -9,7 +9,6 @@ downloaded: 2025-12-11 11:34:59
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/dotnet/_print.html)
 

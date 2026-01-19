@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endor-labs-data-policy/
 title: How Endor Labs handles your data | Endor Labs Docs
-downloaded: 2025-12-11 11:35:46
+downloaded: 2026-01-16 09:51:34
 ---
 
 How Endor Labs handles your data | Endor Labs Docs
@@ -9,7 +9,6 @@ How Endor Labs handles your data | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endor-labs-data-policy/_print.html)
 

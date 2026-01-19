@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scan-containers/container-migration/
 title: Migrate to new container scan commands | Endor Labs Docs
-downloaded: 2025-12-11 11:31:34
+downloaded: 2026-01-16 09:47:42
 ---
 
 Migrate to new container scan commands | Endor Labs Docs
@@ -9,7 +9,6 @@ Migrate to new container scan commands | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/scan-containers/container-migration/_print.html)
 

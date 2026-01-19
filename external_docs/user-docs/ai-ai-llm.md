@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-llm/
 title: AI model findings | Endor Labs Docs
-downloaded: 2025-12-11 11:31:59
+downloaded: 2026-01-16 09:48:20
 ---
 
 AI model findings | Endor Labs Docs
@@ -9,7 +9,6 @@ AI model findings | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/ai/ai-llm/_print.html)
 
@@ -29,7 +28,7 @@ Run the following command to detect AI models in your repository.
 endorctl scan --ai-models
 ```
 
-When you run a scan with the `--ai-models` option, Endor Labs downloads Opengrep and runs Opengrep to detect AI models. If you wish, you can use Semgrep instead of Opengrep with Endor Labs. See [Use Semgrep with Endor Labs](../../administration/use-semgrep-with-endorlabs/) for more information.
+When you run a scan with the `--ai-models` option, Endor Labs downloads Opengrep and runs Opengrep to detect AI models.
 
 Endor Labs detects AI models using pattern matching and can use LLM processing to improve detection accuracy. LLM processing is disabled by default.
 

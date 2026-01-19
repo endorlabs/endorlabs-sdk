@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/common-fields/
 title: Common fields | Endor Labs Docs
-downloaded: 2025-12-11 11:31:07
+downloaded: 2026-01-16 09:47:16
 ---
 
 Common fields | Endor Labs Docs
@@ -9,7 +9,6 @@ Common fields | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/data-model/common-fields/_print.html)
 

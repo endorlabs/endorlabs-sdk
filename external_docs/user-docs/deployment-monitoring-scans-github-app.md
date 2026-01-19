@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/
 title: Deploy Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-12-11 11:30:56
+downloaded: 2026-01-16 09:47:06
 ---
 
 Deploy Endor Labs GitHub App | Endor Labs Docs
@@ -9,7 +9,6 @@ Deploy Endor Labs GitHub App | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/github-app/_print.html)
 
@@ -25,7 +24,7 @@ The Endor Labs GitHub App scans your repositories every 24 hours and reports new
 
 If you want to use PR remediations as part of your monitoring scan or need to export your findings to GitHub Advanced Security, you need to use [GitHub App (Pro)](../github-app/github-app-pro/).
 
-If you are using GitHub Enterprise Server, you can use the [GitHub Enterprise App](../github-app/github-enterprise-app/) to continuously monitor your environment.
+If you are using GitHub Enterprise Server, you can use the [GitHub Enterprise Server App](../github-app/github-enterprise-app/) to continuously monitor your environment.
 
 **Warning**
 
@@ -148,9 +147,9 @@ Understand the technical limitations associated with the GitHub App.
 
 Learn how to continuously monitor your environment with the Endor Labs GitHub App.
 
-##### [Deploy Endor Labs GitHub Enterprise App](/deployment/monitoring-scans/github-app/github-enterprise-app/)
+##### [Deploy Endor Labs GitHub Enterprise Server App](/deployment/monitoring-scans/github-app/github-enterprise-app/)
 
-Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise App.
+Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise Server App.
 
 ##### [Scan PRs using the Endor Labs GitHub app](/deployment/monitoring-scans/github-app/github-app-pr-scans/)
 

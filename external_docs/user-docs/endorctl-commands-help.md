@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/help/
 title: help | Endor Labs Docs
-downloaded: 2025-12-11 11:31:26
+downloaded: 2026-01-16 09:47:36
 ---
 
 help | Endor Labs Docs
@@ -9,7 +9,6 @@ help | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/help/_print.html)
 

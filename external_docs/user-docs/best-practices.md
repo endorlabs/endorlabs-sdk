@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/
 title: Best practices | Endor Labs Docs
-downloaded: 2025-12-11 11:35:29
+downloaded: 2026-01-16 09:51:17
 ---
 
 Best practices | Endor Labs Docs
@@ -9,7 +9,6 @@ Best practices | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Best practices
 

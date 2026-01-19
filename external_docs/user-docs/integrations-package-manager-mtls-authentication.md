@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/mtls-authentication/
 title: Authenticate to private packages using mTLS | Endor Labs Docs
-downloaded: 2025-12-11 11:32:00
+downloaded: 2026-01-16 09:48:21
 ---
 
 Authenticate to private packages using mTLS | Endor Labs Docs
@@ -9,7 +9,6 @@ Authenticate to private packages using mTLS | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/package-manager/mtls-authentication/_print.html)
 

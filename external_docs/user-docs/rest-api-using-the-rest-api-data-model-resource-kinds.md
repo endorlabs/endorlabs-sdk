@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/
 title: Resource kinds | Endor Labs Docs
-downloaded: 2025-12-11 11:32:25
+downloaded: 2026-01-16 09:48:46
 ---
 
 Resource kinds | Endor Labs Docs
@@ -9,7 +9,6 @@ Resource kinds | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/data-model/resource-kinds/_print.html)
 
@@ -282,6 +281,7 @@ The following system defined finding tags are supported as possible values in th
 | `FINDING_TAGS_REACHABLE_DEPENDENCY` | Reachable Dependency | Finding applies to a reachable dependency. |
 | `FINDING_TAGS_REACHABLE_FUNCTION` | Reachable Function | Finding applies to a reachable function. |
 | `FINDING_TAGS_SELF` | Self | Finding applies only to the analyzed package version, there is no dependency involved. |
+| `FINDING_TAGS_SNOOZED` | Snoozed | Finding has been manually snoozed. The details are stored in `spec.snooze` and `spec.dismiss` is set to `true`. |
 | `FINDING_TAGS_TEST` | Test | Finding applies to a dependency that is not in production code. |
 | `FINDING_TAGS_TRANSITIVE` | Transitive | Finding applies to a transitive (indirect) dependency. |
 | `FINDING_TAGS_UNDER_REVIEW` | Under Review | Finding applies to suspicious package under review. |
@@ -301,7 +301,7 @@ you want to mark findings as dismissed. You can apply an exception policy across
 or a specific project, within a tenant.
 Based on the criteria you set, the exception can persist across multiple package versions.
 
-Findings dismissed by one or more exception policies have the `spec.dismissed` field set to `true` and
+Findings dismissed by one or more exception policies have the `spec.dismiss` field set to `true` and
 the corresponding policy object UUIDs are listed under the `spec.exceptions.policy_uuids` field.
 They also carry the `FINDING_TAGS_EXCEPTION` tag.
 

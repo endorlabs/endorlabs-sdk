@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/
 title: Manage access to Endor Labs | Endor Labs Docs
-downloaded: 2025-12-11 11:30:51
+downloaded: 2026-01-16 09:47:00
 ---
 
 Manage access to Endor Labs | Endor Labs Docs
@@ -9,7 +9,6 @@ Manage access to Endor Labs | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/administration/access-endorlabs/_print.html)
 

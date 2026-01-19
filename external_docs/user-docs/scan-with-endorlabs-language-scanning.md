@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/
 title: Scan for open source risks | Endor Labs Docs
-downloaded: 2025-12-11 11:30:47
+downloaded: 2026-01-16 09:46:57
 ---
 
 Scan for open source risks | Endor Labs Docs
@@ -9,7 +9,6 @@ Scan for open source risks | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/_print.html)
 
@@ -85,6 +84,7 @@ The following comprehensive matrix lists the supported languages, build tools, m
 | [Python](../../scan-with-endorlabs/language-scanning/python/) | `pip` | `requirements.txt` | `.py` | Python 3.6 and higher versions; pip 10.0.0 and higher versions |
 |  | Poetry | `pyproject.toml`, `poetry.lock` | `.py` |  |
 |  | PyPI | `setup.py`, `setup.cfg`, `pyproject.toml` | `.py` |  |
+|  | UV | `uv.lock`, `pyproject.toml` | `.py` | Python 3.8 and higher versions |
 |  | Bazel | `workspace`, `MODULE.bazel` | `.py` | Bazel versions `5.x.x`, `6.x.x`, and `7.x.x` |
 | [.NET (C#)](../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | `.cs` | .NET 5.0 and higher versions; .NET Core 1.0 and higher versions; .NET Framework 4.5 and higher versions. |
 | [Scala](../../scan-with-endorlabs/language-scanning/scala/) | sbt | `build.sbt` | `.sc` or `.scala` | sbt 1.3 and higher versions |
@@ -93,7 +93,7 @@ The following comprehensive matrix lists the supported languages, build tools, m
 | [Ruby](../../scan-with-endorlabs/language-scanning/ruby/) | Bundler | `Gemfile`, `*.gemspec`, `gemfile.lock` | `.rb` | Ruby 2.6 and higher versions |
 | [Swift/Objective-C](../../scan-with-endorlabs/language-scanning/swift-objective-c/) | CocoaPods | `Podfile`, `Podfile.lock` | `.swift`, `.h`, `.m` | CocoaPods 0.9.0 and higher versions |
 |  | SwiftPM | `Package.swift` | `.swift`, `.h`, `.m` | SwiftPM 5.0.0 and higher versions |
-| [PHP](../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | `.php` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions except 2.9.1. |
+| [PHP](../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | `.php` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions |
 
 Define supported languages when running endorctl `scan` command as a comma-separated list: `c,c#,go,java,javascript,kotlin,php,python,ruby,rust,scala,swift,typescript,swifturl`
 

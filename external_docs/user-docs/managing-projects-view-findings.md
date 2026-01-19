@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/view-findings/
 title: Findings | Endor Labs Docs
-downloaded: 2025-12-11 11:31:22
+downloaded: 2026-01-16 09:47:32
 ---
 
 Findings | Endor Labs Docs
@@ -9,7 +9,6 @@ Findings | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-projects/view-findings/_print.html)
 
@@ -27,8 +26,7 @@ To view different types of findings associated with all projects or packages in 
 
 1. Select **Findings** from the left sidebar.
 2. The preset filters help you in locating the findings that matter most to you.
-   * Choose **Prioritized Findings** to view a list of critical vulnerability findings in the last 30 days that have either a reachable function or a reachable dependency, are not test dependencies, and have an available fix.
-   * Choose from a list of options under **Code Dependencies** to view a list of **SCA**, **Vulnerability**, **Operational**, **License Risk**, **Malware**, or **AI model** findings.
+   * Choose from a list of options under **Code Dependencies** to view a list of **SCA**, **Vulnerability**, **Operational**, **License Risk**, **Malware** or **AI model** findings.
    * Choose **Secrets** to find a list of findings related to exposed secrets.
    * Choose from a list of options under **CI/CD** to view findings related to **GitHub Actions** and **CI/CD Tools**.
    * Choose **RSPM** to view findings related to repository’s security posture.
@@ -36,8 +34,11 @@ To view different types of findings associated with all projects or packages in 
 3. Use **Saved Filters** to create and [save](#saved-filters) your frequently used searches, helping you save time.
 4. Search for findings using [basic filters](#search-for-findings-using-basic-filters).
 5. Toggle **Advanced** and search for findings using [advanced filters](#search-for-findings-using-advanced-filters).
-6. To apply [exceptions to findings](#apply-exception-to-findings), select findings and click the vertical three dots and select **Add Exception**.
-7. To [export findings](#export-findings), select the findings, and click the vertical three dots and select **Export Selected** or **Export All**.
+6. Use **Table preferences** to select the columns you want to view and customize the appearance of the findings table.
+7. Select **Notifications** in **Table preferences** to view notifications associated with a finding.
+8. Click **View Details** to see the notification details including Jira ticket links.
+9. To apply [exceptions to findings](#apply-exception-to-findings), select findings and click **Actions** > **Add Exception**.
+10. To [export findings](#export-findings), select the findings, and click **Actions** > **Export Selected** or **Export All**.
 
 ![Findings IA](../../images/findings-ui.png)
 
@@ -49,6 +50,7 @@ To view the findings associated with a project:
 2. Select the project for which you want to view the findings.
    The Findings page includes the list of findings specific to the project.
 3. Review the list of findings. Click the finding to see its details.
+4. Use **Grouped By** to group findings by attributes such as dependency, location, package, CWE, tags, code owner or rule name to filter and manage them collectively.
 
 ### Finding attributes
 
@@ -135,7 +137,7 @@ Use the following basic filters to search for information in your findings.
 
 Use the following options to filter findings using exceptions.
 
-* **Hide Exceptions** - Toggle it to view/hide exceptions from the findings display.
+* Select **Yes** or **No** to view/hide exceptions from the findings display.
 * Choose from one of the existing exception policies in the list or search for a specific exception using **Search Policy Name**.
 * Select from the following reasons why you are applying this exception:
   + **In Triage**: The finding has been triaged for more information.
@@ -144,7 +146,7 @@ Use the following options to filter findings using exceptions.
   + **Other**: Another reason applies for this exception.
 * **Expires Within** - Filter exceptions by expiration time-frame.
 
-![Exceptions as a filter](../../images/exception_filters.png)
+![Exceptions as a filter](../../images/exception-filters.png)
 
 See [Create exception policy](../../managing-policies/exception-policies/) for details on how to create and apply exceptions.
 
@@ -180,7 +182,7 @@ After running the sans, you can view the findings specific to the branches in th
 
    In the following example, `master` is the default branch. To view findings from other branches (for example, `test-branch`), choose the desired branch from the drop-down menu.
 
-   ![branch dropdown](../../images/findings-branches.png)
+   ![Branch dropdown](../../images/findings-branches.png)
 
 **Tip**
 

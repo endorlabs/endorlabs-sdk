@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/gradle-private-package-manager/
 title: Private package manager integration for Gradle | Endor Labs Docs
-downloaded: 2025-12-11 11:34:32
+downloaded: 2026-01-16 09:50:21
 ---
 
 Private package manager integration for Gradle | Endor Labs Docs
@@ -9,7 +9,6 @@ Private package manager integration for Gradle | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/package-manager/gradle-private-package-manager/_print.html)
 
@@ -46,13 +45,10 @@ To set up a package manager integration:
 6. Select either **Basic** or **AWS Code Artifactory** as **Authentication Type**.
 
    See [AWS authentication](../aws-codeartifact/) for more information.
-7. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
 
-**Maven**
-
-Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
-
-8. Select **Add Package Manager**.
+7. Enter the package registry property key and property value.
+8. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
+9. Select **Add Package Manager**.
 
 If you want to delete a package manager integration, click the trash can icon at the far right of the integration.
 
@@ -60,7 +56,7 @@ If you want to delete a package manager integration, click the trash can icon at
 
 To connect to private Gradle repositories, enter the package registry credentials such as property key and property value.
 
-![Basic Authentication for package manager integrations](../../../images/basic-authentication-gradle.png)
+![Basic Authentication for package manager integrations](../../../images/package-manager-gradle.png)
 
 ### Test private package manager connection
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/grouping/
 title: Grouping | Endor Labs Docs
-downloaded: 2025-12-11 11:35:02
+downloaded: 2026-01-16 09:50:49
 ---
 
 Grouping | Endor Labs Docs
@@ -9,7 +9,6 @@ Grouping | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/grouping/_print.html)
 
@@ -147,7 +146,7 @@ curl --get \
 @namespace = <insert-namespace>
 
 ###
-GET {{baseUrl}}/v1/namespaces/{{namespace}}/package-versions?list_parameters.filter=spec.resolution_errors.call_graph exists&list_parameters.group.aggregation_paths=spec.resolution_errors.call_graph.status_error&ist_parameters.group.show_aggregation_uuids=true&list_parameters.group.unique_value_paths=spec.ecosystem&list_parameters.group.unique_count_paths=spec.ecosystem HTTP/1.1
+GET {{baseUrl}}/v1/namespaces/{{namespace}}/package-versions?list_parameters.filter=spec.resolution_errors.call_graph exists&list_parameters.group.aggregation_paths=spec.resolution_errors.call_graph.status_error&list_parameters.group.show_aggregation_uuids=true&list_parameters.group.unique_value_paths=spec.ecosystem&list_parameters.group.unique_count_paths=spec.ecosystem HTTP/1.1
 Content-type: application/json
 Authorization: Bearer {{token}}
 Request-Timeout: 60

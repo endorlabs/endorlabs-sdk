@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/
 title: Endor patches | Endor Labs Docs
-downloaded: 2025-12-11 11:32:09
+downloaded: 2026-01-16 09:48:30
 ---
 
 Endor patches | Endor Labs Docs
@@ -9,7 +9,6 @@ Endor patches | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/upgrades-and-remediation/using-endor-patches/_print.html)
 

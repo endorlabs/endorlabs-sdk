@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/action-policies/
 title: Action policies | Endor Labs Docs
-downloaded: 2025-12-11 11:32:43
+downloaded: 2026-01-16 09:49:04
 ---
 
 Action policies | Endor Labs Docs
@@ -9,7 +9,6 @@ Action policies | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-policies/action-policies/_print.html)
 
@@ -75,7 +74,11 @@ You can create an action policy in Endor Labs to perform a given action when a g
      + A **Break the Build** enforcement action will return a non-zero (128) exit code, which will fail the job. This action will inform the user which findings violate the policy as part of the scan.
    * Choose **Send Notification** to create a ticket or send a custom message to an integrated notification system.
      + A **Notification Target** must be set to send a notification. A notification target may be defined as a notification integration. For more information, see [Endor Labs integrations](../../integrations/).
-     + Choose an **Aggregation Type** for notifications. Choose **Project** to trigger a single notification for all findings, choose **Dependency** to trigger multiple notifications for every dependency, or choose **Dependency per package version** to trigger multiple notifications for unique combinations of dependency and package. For more information, see [Aggregation types for notifications](#aggregation-types-for-notifications).
+     + Choose an **Aggregation Type** for notifications.
+       - Choose **None (Notify for each Finding)** to trigger a separate email for each finding. This is supported only for [SAST](../../managing-policies/action-policies/templates/#sast) and [Secrets](../../managing-policies/action-policies/templates/#secrets) action policies.
+       - Choose **Project** to trigger a single notification for all findings.
+       - Choose **Dependency** to trigger multiple notifications for every dependency.
+       - Choose **Dependency per package version** to trigger multiple notifications for unique combinations of dependency and package. For more information, see [Aggregation types for notifications](#aggregation-types-for-notifications).
 
 **Note**
 
@@ -218,7 +221,8 @@ Aggregation types for notifications streamline the organization and management o
 
 Endor Labs enables you to choose the following notification aggregation types, each offering distinct benefits.
 
-* **Project**: (Default) Select **Project** to create a single notification for all project findings.
+* **None (Notify for each Finding)**: Select **None (Notify for each Finding)** to create a separate notification for each finding in the project. This is supported only for [SAST](../action-policies/templates/#sast) and [Secrets](../action-policies/templates/#secrets) actions policies.
+* **Project**: (Default) Select **Project** to create a single notification for all findings in the project.
 * **Dependency**: Select **Dependency** to create separate notifications for each dependency in a project.
 * **Dependency per package version**: Select **Dependency per package version** to create separate notifications for each package in a project. Sub-tasks are created for each unique combination of dependency and package.
 

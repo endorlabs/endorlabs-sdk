@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/outpost/outpost-configuration/
 title: Outpost configuration | Endor Labs Docs
-downloaded: 2025-12-11 11:32:34
+downloaded: 2026-01-16 09:48:55
 ---
 
 Outpost configuration | Endor Labs Docs
@@ -9,7 +9,6 @@ Outpost configuration | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/outpost/outpost-configuration/_print.html)
 
@@ -577,7 +576,7 @@ Perform the following steps to add the self-signed certificate to the Outpost He
    ```
    kubectl -n onpremschedulertest describe pod $POD | grep -A3 github-cert
    ```
-9. [Install the GitHub Enterprise App.](../../github-app/github-enterprise-app/)
+9. [Install the GitHub Enterprise Server App.](../../github-app/github-enterprise-app/)
 
 ## Feedback
 

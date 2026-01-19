@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/
 title: Release notes | Endor Labs Docs
-downloaded: 2025-12-11 11:35:48
+downloaded: 2026-01-16 09:51:36
 ---
 
 Release notes | Endor Labs Docs
@@ -9,11 +9,20 @@ Release notes | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Release notes
 
 Endor Labs helps you select, secure, and maintain dependencies, so development moves fast and supply chain risk remains low. The following release notes highlight the most recent major capabilities and any major bug fixes published by Endor Labs.
+
+[January 2026](/releasenotes/january-2026/)
+
+We are excited to introduce the latest features and enhancements in Endor Labs.
+
+### Send separate notifications for each finding Enhancement
+
+You can now use the **None (Notify for each Finding)** aggregation type to send separate notifications for every finding generated from the configured action policy, making it easier to track and assign individual security issues. This aggregation type is supported only for SAST and Secrets action policies.
+
+For more information, see [Aggregation types for notifications](../../managing-policies/action-policies/#aggregation-types-for-notifications).
 
 [December 2025](/releasenotes/december-2025/)
 
@@ -31,11 +40,40 @@ For more information, see [Endor Labs MCP server](../../deployment/mcp/).
 
 The Endor Labs MCP server is now available as a Gemini extension. You can use natural language commands to interact with the MCP server. For more information, see [Endor Labs MCP server as a Gemini extension](../../deployment/mcp/gemini/).
 
+### Endor Labs GitHub Enterprise Server App Beta New
+
+You can now use the Endor Labs GitHub Enterprise Server App to continuously monitor repositories on your GitHub Enterprise Server (GHES) instances and gain visibility into security and operational risks.
+
+* Continuously monitor repositories hosted in your GitHub Enterprise Server instance for risk and compliance.
+* Scan repositories for Software Composition Analysis (SCA), secrets, and Static Application Security Testing (SAST).
+* Scan pull requests and receive automated PR comments to assist with secure code reviews.
+* Offer flexible deployment options through both Endor Labs’ cloud scanning and on-premises scanning with Outpost.
+
+For more information, see [Deploy Endor Labs GitHub Enterprise App](../../deployment/monitoring-scans/github-app/github-enterprise-app/).
+
+### View notifications in findings table Enhancement
+
+You can now view all notifications associated with a finding in the findings table, making it easier to access Jira tickets and other notification details.
+
+For more information, see [View all findings](../../managing-projects/view-findings/).
+
 ### Enhanced dependency graph visualization Enhancement
 
 The dependency graph now offers improved rendering performance and enhanced node interactions, making it easier to visualize and explore complex dependency trees.
 
 For more information, see [View dependency graph](../../managing-projects/dependencies/#view-dependency-graph).
+
+### UV support for Python projects Beta Enhancement
+
+Endor Labs now supports scanning Python projects that use UV by resolving dependencies from the `pyproject.toml` and `uv.lock` files.
+
+For more information, see [Scan Python projects](../../scan-with-endorlabs/language-scanning/python/).
+
+### Enhanced endorctl authentication Enhancement
+
+You can now authenticate to Endor Labs by running the `endorctl init` command without specifying further details. When you run the command, the browser window opens, where you can select your authentication provider from the available options and complete the authentication process.
+
+For more information, see [endorctl init command](../../endorctl/commands/init/).
 
 [November 2025](/releasenotes/november-2025/)
 
@@ -120,8 +158,6 @@ The old `endorctl scan --container` commands and their corresponding flags (`--c
 ### Opengrep support for SAST and AI model detection New
 
 Endor Labs now uses [Opengrep](https://www.opengrep.dev/) to scan your code for SAST and AI model findings instead of Semgrep. Opengrep is an open-source, static analysis tool that finds bugs and vulnerabilities in the source code using pattern matching. Endor Labs automatically downloads Opengrep for you when you run a scan that needs it.
-
-You can continue using Semgrep with Endor Labs if you prefer. See [Use Semgrep with Endor Labs](../../administration/use-semgrep-with-endorlabs/) for more information.
 
 ### Customize project scans using scan workflow New
 
@@ -261,48 +297,6 @@ For more information, see [Scan container image tarball](../../scan-with-endorla
 You can now use the MAL identifier to search for known malware in the Endor Labs vulnerability database and quickly identify malicious packages alongside existing vulnerabilities.
 
 For more information, see [Endor Labs vulnerability database](../../discover/vulnerability-db/).
-
-[July 2025](/releasenotes/july-2025/)
-
-We are excited to introduce the latest features and enhancements in Endor Labs.
-
-### Support for CVSS v4.0 scores New
-
-Endor Labs now supports CVSS v4.0, as an enhanced standard for vulnerability severity assessment.
-
-CVSS v4.x scores, including full vector strings and metadata are available in Endor Lab’s reporting and data exports. Note that Vanta exports continue to support only CVSS v3.x.
-
-By default, Endor Labs uses **CVSS v3.x**. You must explicitly configure the system to use **CVSS v4.x.**
-
-For more information, see [Configure CVSS score version](../../administration/configure-system-settings/)
-
-### Endor Labs Vulnerability Database New
-
-Endor Labs now includes a comprehensive vulnerability database to search and analyze known issues across software dependencies using CVE, GHSA, and PySEC identifiers. It maps vulnerable package versions to impacted projects and findings to support easier remediation.
-
-For more information, see [Endor Labs vulnerability database](../../discover/vulnerability-db/).
-
-### SARIF export to GitHub Advanced Security New
-
-Endor Labs now supports exporting findings to GitHub Advanced Security as SARIF files. You can use GitHub Advanced Security to analyze and triage findings from Endor Labs.
-
-For more information, see [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/).
-
-### Discover AI models Enhancement
-
-Endor Labs extends AI model detection to include external providers, listing detected models as dependencies. Hugging Face models are scored, as they are open source and provide extensive public metadata. Models from other providers are detected but not scored due to limited data.
-
-For more information, see [AI model detection](../../ai/ai-llm/#ai-model-detection).
-
-### C/C++ scan improvements Enhancement
-
-**Effective Monday, July 21, 2025**, Endor Labs is releasing new updates to the code segment analyzer and the underlying database of hashes and embeddings used in C/C++ Software Composition Analysis. If you use continuous integration workflows or perform local scans, you must update to the latest version of `endorctl` and re-run your scan with:
-
-```
-endorctl scan --languages=c
-```
-
-The first scan may take longer than usual, as it rebuilds the cache of code segments. You may also see differences in the results compared to previous scans. These changes improve the accuracy of dependency detection and matching.
 
 ## Feedback
 

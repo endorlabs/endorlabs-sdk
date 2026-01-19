@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/about/open-api/
 title: OpenAPI description | Endor Labs Docs
-downloaded: 2025-12-11 11:34:27
+downloaded: 2026-01-16 09:50:16
 ---
 
 OpenAPI description | Endor Labs Docs
@@ -9,7 +9,6 @@ OpenAPI description | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/about/open-api/_print.html)
 

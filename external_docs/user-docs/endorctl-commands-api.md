@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/api/
 title: endorctl api | Endor Labs Docs
-downloaded: 2025-12-11 11:31:17
+downloaded: 2026-01-16 09:47:26
 ---
 
 endorctl api | Endor Labs Docs
@@ -9,7 +9,6 @@ endorctl api | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/api/_print.html)
 

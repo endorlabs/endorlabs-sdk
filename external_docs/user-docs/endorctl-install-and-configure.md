@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/install-and-configure/
 title: Install and configure endorctl | Endor Labs Docs
-downloaded: 2025-12-11 11:31:31
+downloaded: 2026-01-16 09:47:40
 ---
 
 Install and configure endorctl | Endor Labs Docs
@@ -9,7 +9,6 @@ Install and configure endorctl | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/install-and-configure/_print.html)
 
@@ -77,41 +76,41 @@ To download the endorctl binary directly use the following commands:
 * Windows
 
 ```
-## Download the latest CLI for Linux amd64
+# Download the latest CLI for Linux amd64
 curl https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
 
-## Verify the checksum of the binary
+# Verify the checksum of the binary
 echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_linux_amd64)  endorctl" | sha256sum -c
 
-## Modify the permissions of the binary to ensure it is executable
+# Modify the permissions of the binary to ensure it is executable
 chmod +x ./endorctl
 
-## Create an alias endorctl of the binary to ensure it is available in other directory
+# Create an alias endorctl of the binary to ensure it is available in other directory
 alias endorctl="$PWD/endorctl"
 ```
 
 ```
-### Download the latest CLI for MacOS ARM64
+# Download the latest CLI for MacOS ARM64
 curl https://api.endorlabs.com/download/latest/endorctl_macos_arm64 -o endorctl
 
-### Verify the checksum of the binary
+# Verify the checksum of the binary
 echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_macos_arm64)  endorctl" | shasum -a 256 -c
 
-### Modify the permissions of the binary to ensure it is executable
+# Modify the permissions of the binary to ensure it is executable
 chmod +x ./endorctl
 
-### Create an alias endorctl of the binary to ensure it is available in other directory
+# Create an alias endorctl of the binary to ensure it is available in other directory
 alias endorctl="$PWD/endorctl"
 ```
 
 ```
-## Download the latest CLI for Windows amd64
+# Download the latest CLI for Windows amd64
 curl -O https://api.endorlabs.com/download/latest/endorctl_windows_amd64.exe
-## Check the expected checksum of the binary file
+# Check the expected checksum of the binary file
 curl https://api.endorlabs.com/sha/latest/endorctl_windows_amd64.exe
-## Verify the expected checksum and the actual checksum of the binary match
+# Verify the expected checksum and the actual checksum of the binary match
 certutil -hashfile .\endorctl_windows_amd64.exe SHA256
-## Rename the binary file
+# Rename the binary file
 ren endorctl_windows_amd64.exe endorctl.exe
 ```
 
@@ -134,7 +133,11 @@ Users can authenticate to Endor Labs several ways:
 
 ### Login with the init command
 
-To log in with your supported authentication provider:
+Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+![Init authentication through browser](../../images/init-auth-mode.png)
+
+You can also specify your supported authentication provider manually:
 
 * Google
 * GitHub

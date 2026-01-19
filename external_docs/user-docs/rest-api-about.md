@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/about/
 title: About the REST API | Endor Labs Docs
-downloaded: 2025-12-11 11:31:58
+downloaded: 2026-01-16 09:48:19
 ---
 
 About the REST API | Endor Labs Docs
@@ -9,7 +9,6 @@ About the REST API | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/about/_print.html)
 

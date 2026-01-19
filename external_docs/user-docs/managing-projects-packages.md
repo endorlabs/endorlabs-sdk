@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/packages/
 title: Packages | Endor Labs Docs
-downloaded: 2025-12-11 11:32:20
+downloaded: 2026-01-16 09:48:41
 ---
 
 Packages | Endor Labs Docs
@@ -9,7 +9,6 @@ Packages | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-projects/packages/_print.html)
 

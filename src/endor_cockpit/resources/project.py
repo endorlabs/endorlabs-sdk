@@ -566,6 +566,125 @@ def update_project(
         return None
 
 
+def associate_scan_profile_with_project(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    project_uuid: str,
+    scan_profile_uuid: str,
+) -> Optional[Project]:
+    """
+    Associate a scan profile with a project.
+
+    This is a convenience function that updates the project's scan_profile_uuid
+    field. The scan profile must exist in the same namespace.
+
+    Args:
+        client: The APIClient instance to use for the request
+        tenant_meta_namespace: The canonical namespace name
+            (e.g., 'tenant.namespace')
+        project_uuid: The UUID of the project to update
+        scan_profile_uuid: The UUID of the scan profile to associate
+
+    Returns:
+        Optional[Project]: The updated Project object, or None if update fails
+
+    Raises:
+        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
+        pydantic.ValidationError: If response data doesn't match expected schema
+
+    Example:
+        >>> project = associate_scan_profile_with_project(
+        ...     client, namespace, project_uuid, scan_profile_uuid
+        ... )
+    """
+    # Get current project to preserve all fields
+    current_project = get_project(client, tenant_meta_namespace, project_uuid)
+    if not current_project:
+        logger.error(f"Project {project_uuid} not found")
+        return None
+
+    # Update the spec with the new scan_profile_uuid
+    spec_dict = current_project.spec.model_dump()
+    spec_dict["scan_profile_uuid"] = scan_profile_uuid
+
+    # Build update payload
+    request_data = {
+        "object": {
+            "uuid": project_uuid,
+            "tenant_meta": current_project.tenant_meta.model_dump(),
+            "meta": {
+                "name": current_project.meta.name,
+            },
+            "spec": spec_dict,
+        },
+        "request": {"update_mask": "spec.scan_profile_uuid"},
+    }
+
+    try:
+        res = client.patch(
+            f"v1/namespaces/{tenant_meta_namespace}/projects",
+            json=request_data,
+            headers={"Accept": "application/json"},
+        )
+        if res.status_code == 200:
+            data = res.json()
+            updated_project = Project(**data)
+            logger.info(
+                f"✅ Associated scan profile {scan_profile_uuid} with project "
+                f"{project_uuid}"
+            )
+            return updated_project
+        else:
+            logger.error(
+                f"Failed to associate scan profile: {res.status_code} - {res.text}"
+            )
+            return None
+    except Exception as e:
+        logger.error(f"Error associating scan profile: {e}", exc_info=True)
+        return None
+
+
+def verify_scan_profile_association(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    project_uuid: str,
+    scan_profile_uuid: str,
+) -> bool:
+    """
+    Verify that a scan profile is associated with a project.
+
+    Args:
+        client: The APIClient instance to use for the request
+        tenant_meta_namespace: The canonical namespace name
+        project_uuid: The UUID of the project to check
+        scan_profile_uuid: The UUID of the scan profile to verify
+
+    Returns:
+        bool: True if the scan profile is associated, False otherwise
+    """
+    project = get_project(client, tenant_meta_namespace, project_uuid)
+    if not project:
+        logger.warning(f"Project {project_uuid} not found")
+        return False
+
+    current_scan_profile_uuid = getattr(project.spec, "scan_profile_uuid", None)
+    is_associated = current_scan_profile_uuid == scan_profile_uuid
+
+    if is_associated:
+        logger.info(
+            f"✅ Verified: Scan profile {scan_profile_uuid} is associated "
+            f"with project {project_uuid}"
+        )
+    else:
+        logger.warning(
+            f"⚠️ Scan profile mismatch: Project {project_uuid} has "
+            f"scan_profile_uuid={current_scan_profile_uuid}, expected "
+            f"{scan_profile_uuid}"
+        )
+
+    return is_associated
+
+
 def delete_project(
     client: APIClient, tenant_meta_namespace: str, project_uuid: str
 ) -> bool:

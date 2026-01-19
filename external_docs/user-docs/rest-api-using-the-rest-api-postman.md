@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/postman/
 title: Postman | Endor Labs Docs
-downloaded: 2025-12-11 11:35:18
+downloaded: 2026-01-16 09:51:06
 ---
 
 Postman | Endor Labs Docs
@@ -9,7 +9,6 @@ Postman | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/postman/_print.html)
 

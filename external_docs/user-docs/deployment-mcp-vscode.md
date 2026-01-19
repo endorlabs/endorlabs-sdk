@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/mcp/vscode/
 title: Endor Labs MCP server in Visual Studio Code | Endor Labs Docs
-downloaded: 2025-12-11 11:32:07
+downloaded: 2026-01-16 09:48:28
 ---
 
 Endor Labs MCP server in Visual Studio Code | Endor Labs Docs
@@ -9,7 +9,6 @@ Endor Labs MCP server in Visual Studio Code | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/mcp/vscode/_print.html)
 
@@ -57,6 +56,41 @@ Before running the Endor Labs MCP server, ensure that you have Visual Studio Cod
 Visual Studio Code allows you to set MCP configurations at the project and the user level.
 
 You can manually configure the MCP server or use the interactive configuration tool to generate a one-click installation link for Visual Studio Code.
+
+### Set up Endor Labs MCP server on Windows
+
+On Windows, ensure the following prerequisites are met:
+
+* [Node.js is installed](#install-nodejs)
+* [npm global bin directory is in your PATH](#configure-the-path-environment-variable)
+
+#### Install Node.js
+
+If Node.js is not installed, download and install the **LTS version** from [nodejs.org](https://nodejs.org/). During installation, ensure the option to add Node.js to PATH is selected.
+
+#### Configure the PATH environment variable
+
+After installing Node.js, verify that the npm global bin directory is in your PATH:
+
+1. Run the following command in the command line.
+
+   ```
+   npm config get prefix
+   ```
+
+   This returns the npm global directory path, typically `C:\Users\<YourUsername>\AppData\Roaming\npm`.
+2. Add the npm global directory path to the **Path** variable under **User variables** in your system’s environment variables settings.
+3. Restart for the PATH changes to take effect.
+
+#### Verify the setup
+
+Run the following command in your terminal.
+
+```
+npx --version
+```
+
+If this returns a version number, your Windows setup is complete and the MCP server can use `npx` to run endorctl.
 
 ### Developer Edition
 

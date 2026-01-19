@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/pypi-private-package-manager/
 title: Private package manager integration for PyPI | Endor Labs Docs
-downloaded: 2025-12-11 11:34:50
+downloaded: 2026-01-16 09:50:37
 ---
 
 Private package manager integration for PyPI | Endor Labs Docs
@@ -9,7 +9,6 @@ Private package manager integration for PyPI | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/package-manager/pypi-private-package-manager/_print.html)
 
@@ -46,13 +45,14 @@ To set up a package manager integration:
 6. Select either **Basic** or **AWS Code Artifactory** as **Authentication Type**.
 
    See [AWS authentication](../aws-codeartifact/) for more information.
-7. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
 
-**Maven**
+7. Specify the package manager URL. Some example formats include:
 
-Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
-
-8. Select **Add Package Manager**.
+   * `https://pypi.pkg.github.com/<your org>/simple`
+   * `https://gitlab.example.com/api/v4/projects/<project_id>/packages/pypi/simple`
+   * `https://gitlab.example.com/api/v4/groups/<group_id>/packages/pypi/simple`
+8. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
+9. Select **Add Package Manager**.
 
 If you want to delete a package manager integration, click the trash can icon at the far right of the integration.
 
