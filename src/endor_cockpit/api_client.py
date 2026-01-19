@@ -11,9 +11,11 @@ import logging
 import os
 import re
 import time
+from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
 import requests
+import yaml
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
@@ -56,6 +58,43 @@ class APIClient:
         logging_level: Logging level for the client's logger.
     """
 
+    @staticmethod
+    def _load_endorctl_config() -> Optional[Dict[str, str]]:
+        """
+        Load configuration from endorctl config.yaml file.
+
+        Checks ~/.endorctl/config.yaml (or C:\\Users\\<user>\\.endorctl\\config.yaml
+        on Windows) for API credentials and configuration.
+
+        Returns:
+            Dictionary with config values or None if file doesn't exist
+        """
+        home = Path.home()
+        config_path = home / ".endorctl" / "config.yaml"
+
+        if not config_path.exists():
+            return None
+
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = yaml.safe_load(f)
+                if not isinstance(config, dict):
+                    return None
+                # Convert to string values and filter for relevant keys
+                result = {}
+                for key in [
+                    "ENDOR_API",
+                    "ENDOR_API_CREDENTIALS_KEY",
+                    "ENDOR_API_CREDENTIALS_SECRET",
+                    "ENDOR_NAMESPACE",
+                ]:
+                    if key in config:
+                        result[key] = str(config[key])
+                return result if result else None
+        except Exception:
+            # Silently fail - config file may be malformed
+            return None
+
     def __init__(
         self,
         max_retries: int = 15,
@@ -69,15 +108,30 @@ class APIClient:
         self.logger = setup_logging("endor_cockpit")
         self.logger.addFilter(RedactingFilter([redaction_pattern]))
 
+        # Load config from endorctl config.yaml as fallback
+        config_file = self._load_endorctl_config()
+
         # Initialize API client parameters
-        self.base_url = os.getenv("ENDOR_API") or "https://api.endorlabs.com"
-        self.key = os.getenv("ENDOR_API_CREDENTIALS_KEY")
-        self.secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET")
+        # Precedence: environment variables > config file
+        self.base_url = (
+            os.getenv("ENDOR_API")
+            or (config_file.get("ENDOR_API") if config_file else None)
+            or "https://api.endorlabs.com"
+        )
+        self.key = os.getenv("ENDOR_API_CREDENTIALS_KEY") or (
+            config_file.get("ENDOR_API_CREDENTIALS_KEY") if config_file else None
+        )
+        self.secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET") or (
+            config_file.get("ENDOR_API_CREDENTIALS_SECRET") if config_file else None
+        )
+
         if not self.key or not self.secret:
             error_msg = (
-                "API credentials not found in environment variables, "
-                "provide ENDOR_API_CREDENTIALS_KEY and/or "
-                "ENDOR_API_CREDENTIALS_SECRET as environment variables."
+                "API credentials not found. Please provide credentials via:\n"
+                "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
+                "ENDOR_API_CREDENTIALS_SECRET\n"
+                "  - endorctl config file: ~/.endorctl/config.yaml "
+                "(or C:\\Users\\<user>\\.endorctl\\config.yaml on Windows)"
             )
             self.logger.error(error_msg)
             raise ValueError(error_msg)
