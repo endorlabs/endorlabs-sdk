@@ -25,14 +25,15 @@ class TestFinding:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        
+
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
         # Get test data with pagination limits and traverse mode
-        from endor_cockpit.types import ListParameters
         import conftest
+
+        from endor_cockpit.types import ListParameters
 
         self.findings = finding.list_findings(
             self.client,
@@ -69,7 +70,8 @@ class TestFinding:
         print("\n=== TESTING GET FINDING BY UUID ===")
 
         finding_item = self.findings[0]
-        # Use the finding's actual namespace (may be in child namespace when traverse=True)
+        # Use the finding's actual namespace
+        # (may be in child namespace when traverse=True)
         finding_namespace = (
             finding_item.tenant_meta.namespace
             if finding_item.tenant_meta
@@ -95,6 +97,7 @@ class TestFinding:
             print(f"Finding meta tags: {retrieved_finding.meta.tags}")
         if retrieved_finding.spec.finding_tags:
             print(f"Finding spec finding_tags: {retrieved_finding.spec.finding_tags}")
+
 
 if __name__ == "__main__":
     # Run tests directly

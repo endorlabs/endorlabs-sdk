@@ -42,8 +42,9 @@ class TestAuthorizationPolicy:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
         # Get test data with pagination limits
-        from endor_cockpit.types import ListParameters
         import conftest
+
+        from endor_cockpit.types import ListParameters
 
         self.policies = authorization_policy.list_authorization_policies(
             self.client,
@@ -62,7 +63,8 @@ class TestAuthorizationPolicy:
                     print(f"[CLEANUP] Deleted test authorization policy: {policy_uuid}")
                 except Exception as e:
                     print(
-                        f"[WARNING] Failed to delete test authorization policy {policy_uuid}: {e}"
+                        f"[WARNING] Failed to delete test authorization "
+                        f"policy {policy_uuid}: {e}"
                     )
             self.created_policy_uuids.clear()
 
@@ -185,9 +187,7 @@ class TestAuthorizationPolicy:
         )
 
         assert created_policy is not None, "Policy creation should succeed"
-        assert created_policy.spec.permissions.rules is not None, (
-            "Rules should be set"
-        )
+        assert created_policy.spec.permissions.rules is not None, "Rules should be set"
 
         # Track for cleanup
         self.created_policy_uuids.append(created_policy.uuid)
@@ -240,9 +240,7 @@ class TestAuthorizationPolicy:
         )
 
         assert updated is not None, "Update should succeed"
-        assert updated.meta.name == update_payload.meta.name, (
-            "Name should be updated"
-        )
+        assert updated.meta.name == update_payload.meta.name, "Name should be updated"
         assert updated.meta.description == update_payload.meta.description, (
             "Description should be updated"
         )
@@ -286,10 +284,10 @@ class TestAuthorizationPolicy:
         assert result is True, "Delete should succeed"
 
         # Verify it's deleted
-        deleted_policy = authorization_policy.get_authorization_policy(
+        # Note: API might return 404 or None, both are acceptable
+        _ = authorization_policy.get_authorization_policy(
             self.client, self.namespace, policy_uuid
         )
-        # Note: API might return 404 or None, both are acceptable
         print(f"Deleted policy UUID: {policy_uuid}")
 
     def test_authorization_policy_filter_by_role(self):
@@ -358,7 +356,3 @@ if __name__ == "__main__":
     finally:
         # Cleanup
         test_instance.teardown_method()
-
-
-
-

@@ -15,18 +15,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import scan_profile
-from endor_cockpit.resources.scan_profile import (
-    AISastAnalysisMode,
-    AISastAnalysisParameters,
-    AutomatedScanParameters,
-    CreateScanProfilePayload,
-    ExporterParameters,
-    RemediationParameters,
-    ScanProfileMetaCreate,
-    ScanProfileSpecCreate,
-    SecurityReviewScannerParameters,
-    UpdateScanProfilePayload,
-)
 from endor_cockpit.types import ListParameters
 
 
@@ -186,4 +174,3 @@ class TestScanProfile:
         print(f"Profiles with toolchain: {has_toolchain}")
 
         assert len(self.scan_profiles) > 0
-

@@ -88,7 +88,8 @@ class TestInstallation:
         print("\n=== TESTING GET INSTALLATION BY UUID ===")
 
         installation_item = self.installations[0]
-        # Use the installation's actual namespace (may be in child namespace when traverse=True)
+        # Use the installation's actual namespace
+        # (may be in child namespace when traverse=True)
         installation_namespace = (
             installation_item.tenant_meta.namespace
             if installation_item.tenant_meta
@@ -116,9 +117,7 @@ class TestInstallation:
             if retrieved_installation.spec.platform_type:
                 print(f"Platform: {retrieved_installation.spec.platform_type}")
             if retrieved_installation.spec.external_name:
-                print(
-                    f"External name: {retrieved_installation.spec.external_name}"
-                )
+                print(f"External name: {retrieved_installation.spec.external_name}")
 
     def test_installation_filter_by_platform(self):
         """Test filtering installations by platform type."""
@@ -199,9 +198,7 @@ class TestInstallation:
         paginated_results = installation.list_installations(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(
-                page_size=5, traverse=True
-            ),
+            list_params=ListParameters(page_size=5, traverse=True),
         )
         assert isinstance(paginated_results, list)
         assert len(paginated_results) > 0
@@ -234,9 +231,7 @@ class TestInstallation:
                 platform_counts[platform] = platform_counts.get(platform, 0) + 1
 
                 target_type = (
-                    str(inst.spec.target_type)
-                    if inst.spec.target_type
-                    else "Unknown"
+                    str(inst.spec.target_type) if inst.spec.target_type else "Unknown"
                 )
                 target_type_counts[target_type] = (
                     target_type_counts.get(target_type, 0) + 1
@@ -261,4 +256,3 @@ class TestInstallation:
             print(f"  {status}: {count}")
 
         assert len(installations_list) > 0
-
