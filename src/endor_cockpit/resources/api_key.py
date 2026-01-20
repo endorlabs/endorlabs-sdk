@@ -51,8 +51,7 @@ class PermissionsMethods(BaseModel):
     methods: List[str] = Field(
         ...,
         description=(
-            "Array of allowed methods "
-            "(e.g., ['METHOD_READ', 'METHOD_CREATE'])"
+            "Array of allowed methods (e.g., ['METHOD_READ', 'METHOD_CREATE'])"
         ),
     )
 
@@ -93,9 +92,7 @@ class APIKeyPermissions(BaseModel):
 
     @field_validator("except_resources")
     @classmethod
-    def validate_except_resources(
-        cls, v: Optional[List[str]]
-    ) -> Optional[List[str]]:
+    def validate_except_resources(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         """Validate except_resources are not empty strings."""
         if v:
             return [resource.strip() for resource in v if resource.strip()]
@@ -112,8 +109,7 @@ class APIKeySpec(BaseSpec):
     secret: Optional[str] = Field(
         None,
         description=(
-            "The secret for the specified API key "
-            "(read-only, returned by API)"
+            "The secret for the specified API key (read-only, returned by API)"
         ),
     )
     permissions: APIKeyPermissions = Field(
@@ -126,10 +122,7 @@ class APIKeySpec(BaseSpec):
     )
     issuing_user: Optional[Dict[str, Any]] = Field(
         None,
-        description=(
-            "The user that created this API key "
-            "(read-only, returned by API)"
-        ),
+        description=("The user that created this API key (read-only, returned by API)"),
     )
 
 
@@ -196,9 +189,7 @@ class APIKey(BaseResource):
     """
 
     # API key-specific fields (universal fields inherited from BaseResource)
-    spec: Optional[APIKeySpec] = Field(
-        None, description="API key specification"
-    )  # type: ignore
+    spec: Optional[APIKeySpec] = Field(None, description="API key specification")  # type: ignore
 
     model_config = {"extra": "ignore"}
 
@@ -333,8 +324,7 @@ def create_api_key(
         return ops.create(tenant_meta_namespace, payload)
     except Exception as e:
         logger.error(
-            f"Failed to create API key in namespace "
-            f"'{tenant_meta_namespace}': {e}"
+            f"Failed to create API key in namespace '{tenant_meta_namespace}': {e}"
         )
         return None
 
@@ -362,4 +352,3 @@ def delete_api_key(
     """
     ops = _get_api_key_ops(client)
     return ops.delete(tenant_meta_namespace, api_key_uuid)
-

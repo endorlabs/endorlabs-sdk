@@ -20,7 +20,7 @@ API FEATURES:
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -80,7 +80,8 @@ class PermissionsMethods(BaseModel):
     """Methods configuration for resource permissions."""
 
     methods: List[str] = Field(
-        ..., description="Array of allowed methods (e.g., ['METHOD_READ', 'METHOD_CREATE'])"
+        ...,
+        description="Array of allowed methods (e.g., ['METHOD_READ', 'METHOD_CREATE'])",
     )
 
 
@@ -89,15 +90,25 @@ class AuthorizationPolicyPermissions(BaseModel):
 
     roles: Optional[List[str]] = Field(
         None,
-        description="System roles - predefined role-based permissions (e.g., SYSTEM_ROLE_READ_ONLY, SYSTEM_ROLE_ADMIN)",
+        description=(
+            "System roles - predefined role-based permissions "
+            "(e.g., SYSTEM_ROLE_READ_ONLY, SYSTEM_ROLE_ADMIN)"
+        ),
     )
     rules: Optional[Dict[str, Dict[str, List[str]]]] = Field(
         None,
-        description="Resource-specific permissions - maps resource types to allowed methods (e.g., {'repository': {'methods': ['METHOD_READ', 'METHOD_CREATE']}})",
+        description=(
+            "Resource-specific permissions - maps resource types to allowed "
+            "methods (e.g., {'repository': {'methods': "
+            "['METHOD_READ', 'METHOD_CREATE']}})"
+        ),
     )
     except_resources: Optional[List[str]] = Field(
         None,
-        description="Excluded resources - list of resources to exclude from wildcard permissions",
+        description=(
+            "Excluded resources - list of resources to exclude from "
+            "wildcard permissions"
+        ),
     )
 
     @field_validator("roles")
@@ -110,9 +121,7 @@ class AuthorizationPolicyPermissions(BaseModel):
 
     @field_validator("except_resources")
     @classmethod
-    def validate_except_resources(
-        cls, v: Optional[List[str]]
-    ) -> Optional[List[str]]:
+    def validate_except_resources(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         """Validate except_resources are not empty strings."""
         if v:
             return [resource.strip() for resource in v if resource.strip()]
@@ -124,25 +133,35 @@ class AuthorizationPolicySpec(BaseSpec):
 
     clause: List[str] = Field(
         ...,
-        description="""Authorization clauses - list of claims that must match (AND operation).
-
-CLAUSE FORMATS:
-• User Email: 'user@endor.ai', 'tgowan@endor.ai'
-• Domain Wildcard: '*@endor.ai' (all users from domain)
-• Identity Provider UUID: '68fae83022a47bdae812bb42' (all users from this IDP)
-• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key' # endorctl:allow
-• Group Claims: 'group=developers', 'group=admins'
-• Mixed: 'tgowan@endor.ai,68fae83022a47bdae812bb42' (user + IDP)
-
-SECURITY: All clauses must match (AND logic) for policy to apply.""",
+        description=(
+            "Authorization clauses - list of claims that must match "
+            "(AND operation).\n\n"
+            "CLAUSE FORMATS:\n"
+            "• User Email: 'user@endor.ai', 'tgowan@endor.ai'\n"
+            "• Domain Wildcard: '*@endor.ai' (all users from domain)\n"
+            "• Identity Provider UUID: '68fae83022a47bdae812bb42' "
+            "(all users from this IDP)\n"
+            "• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key' "
+            "# endorctl:allow\n"
+            "• Group Claims: 'group=developers', 'group=admins'\n"
+            "• Mixed: 'tgowan@endor.ai,68fae83022a47bdae812bb42' "
+            "(user + IDP)\n\n"
+            "SECURITY: All clauses must match (AND logic) for policy to apply."
+        ),
     )
     target_namespaces: List[str] = Field(
         ...,
-        description="Target namespaces - list of namespaces where this policy applies (must be current namespace or its children)",
+        description=(
+            "Target namespaces - list of namespaces where this policy "
+            "applies (must be current namespace or its children)"
+        ),
     )
     propagate: bool = Field(
         default=False,
-        description="Propagation flag - whether policy should apply to child namespaces of target namespaces",
+        description=(
+            "Propagation flag - whether policy should apply to child "
+            "namespaces of target namespaces"
+        ),
     )
     permissions: AuthorizationPolicyPermissions = Field(
         ...,
@@ -150,11 +169,17 @@ SECURITY: All clauses must match (AND logic) for policy to apply.""",
     )
     expiration_time: Optional[str] = Field(
         None,
-        description="Expiration time - ISO 8601 datetime when policy expires (optional, defaults to never expire)",
+        description=(
+            "Expiration time - ISO 8601 datetime when policy expires "
+            "(optional, defaults to never expire)"
+        ),
     )
     is_support_policy: Optional[bool] = Field(
         None,
-        description="Indicates that the policy is a support policy and cannot be altered without using the SupportAccess API (read-only)",
+        description=(
+            "Indicates that the policy is a support policy and cannot be "
+            "altered without using the SupportAccess API (read-only)"
+        ),
     )
 
     @field_validator("clause")
@@ -183,7 +208,8 @@ SECURITY: All clauses must match (AND logic) for policy to apply.""",
 class AuthorizationPolicyMeta(BaseMeta):
     """Authorization policy metadata extending BaseMeta."""
 
-    # Authorization policy-specific fields only (universal fields inherited from BaseMeta)
+    # Authorization policy-specific fields only
+    # (universal fields inherited from BaseMeta)
     pass
 
     @field_validator("name")
@@ -243,7 +269,8 @@ class AuthorizationPolicy(BaseResource):
     - Expiration time support
     """
 
-    # Authorization policy-specific fields (universal fields inherited from BaseResource)
+    # Authorization policy-specific fields
+    # (universal fields inherited from BaseResource)
     spec: Optional[AuthorizationPolicySpec] = Field(
         None, description="Authorization policy specification"
     )  # type: ignore
@@ -284,9 +311,7 @@ class CreateAuthorizationPolicyPayload(BaseModel):
     spec: AuthorizationPolicySpec = Field(
         ..., description="Authorization policy specification"
     )
-    propagate: Optional[bool] = Field(
-        True, description="Propagate to child namespaces"
-    )
+    propagate: Optional[bool] = Field(True, description="Propagate to child namespaces")
 
 
 class UpdateAuthorizationPolicyPayload(BaseModel):
@@ -337,9 +362,7 @@ class UpdateAuthorizationPolicyPayload(BaseModel):
     spec: Optional[AuthorizationPolicySpec] = Field(
         None, description="Updated authorization policy specification"
     )
-    propagate: Optional[bool] = Field(
-        None, description="Propagate to child namespaces"
-    )
+    propagate: Optional[bool] = Field(None, description="Propagate to child namespaces")
 
 
 def list_authorization_policies(
@@ -415,9 +438,7 @@ def create_authorization_policy(
         return AuthorizationPolicy(**data)
 
     except Exception as e:
-        logger.error(
-            f"Error creating authorization policy: {e}", exc_info=True
-        )
+        logger.error(f"Error creating authorization policy: {e}", exc_info=True)
         return None
 
 
@@ -517,7 +538,7 @@ def update_authorization_policy(
                     ),
                 },
                 "spec": {
-                    **current_policy.spec.model_dump(),  # Include all existing spec fields
+                    **current_policy.spec.model_dump(),  # Include existing spec
                     **(
                         payload.spec.model_dump(exclude_none=True)
                         if payload.spec
@@ -699,4 +720,3 @@ def list_authorization_policies_sorted(
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
     )
-

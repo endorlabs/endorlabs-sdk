@@ -22,14 +22,15 @@ class TestPackageVersion:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        
+
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-        
+
         # Get test data with pagination limits and traverse mode
-        from endor_cockpit.types import ListParameters
         import conftest
+
+        from endor_cockpit.types import ListParameters
 
         self.package_versions = package_version.list_package_versions(
             self.client,
@@ -76,7 +77,8 @@ class TestPackageVersion:
     def test_package_version_get_by_uuid(self):
         """Test GET package-version by UUID operation."""
         test_package_version = self.package_versions[0]
-        # Use the package version's actual namespace (may be in child namespace when traverse=True)
+        # Use the package version's actual namespace
+        # (may be in child namespace when traverse=True)
         package_namespace = (
             test_package_version.tenant_meta.namespace
             if test_package_version.tenant_meta
@@ -96,6 +98,7 @@ class TestPackageVersion:
             retrieved_package_version.spec.ecosystem
             == test_package_version.spec.ecosystem
         )
+
 
 def add_package_version_tag(
     client: APIClient, namespace: str, package_version_uuid: str, tag: str

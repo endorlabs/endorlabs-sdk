@@ -211,6 +211,7 @@ class LinterResultSpec(BaseSpec):
         if isinstance(v, dict):
             return SarifResult(**v)
         return v
+
     ecosystem: Optional[Ecosystem] = Field(
         None, description="The result ecosystem"
     )  # IMMUTABLE: Set at creation
@@ -225,6 +226,7 @@ class LinterResultSpec(BaseSpec):
         if isinstance(v, dict):
             return SemgrepSummary(**v)
         return v
+
     secret: Optional[SecretSummary] = Field(
         None, description="Secret summary"
     )  # IMMUTABLE: Set at creation
@@ -236,6 +238,7 @@ class LinterResultSpec(BaseSpec):
         if isinstance(v, dict):
             return SecretSummary(**v)
         return v
+
     aisast: Optional[AISastSummary] = Field(
         None, description="AI SAST summary"
     )  # IMMUTABLE: Set at creation

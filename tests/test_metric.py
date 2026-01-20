@@ -83,7 +83,8 @@ class TestMetric:
         print("\n=== TESTING GET METRIC BY UUID ===")
 
         metric_item = self.metrics[0]
-        # Use the metric's actual namespace (may be in child namespace when traverse=True)
+        # Use the metric's actual namespace
+        # (may be in child namespace when traverse=True)
         metric_namespace = (
             metric_item.tenant_meta.namespace
             if metric_item.tenant_meta
@@ -228,9 +229,7 @@ class TestMetric:
         paginated_results = metric.list_metrics(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(
-                page_size=5, traverse=True
-            ),
+            list_params=ListParameters(page_size=5, traverse=True),
         )
         assert isinstance(paginated_results, list)
         assert len(paginated_results) > 0
@@ -260,4 +259,3 @@ class TestMetric:
             print(f"  {analytic}: {count}")
 
         assert len(metrics_list) > 0
-

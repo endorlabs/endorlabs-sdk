@@ -73,19 +73,6 @@ Some resources in the Endor Labs API are implemented in the SDK for internal ope
 - Most fields are system-generated and read-only
 - Customers should not create or modify ScanResult directly (though API supports CRUD operations)
 
-### User
-
-**Status**: Internal / Identity Provider-Managed  
-**Purpose**: Represents user accounts synchronized from identity providers  
-**Use Case**: User management and authentication  
-**Customer Access**: Read-only, managed by identity providers
-
-**Notes**:
-- User resources are synchronized from identity providers (SSO, LDAP, etc.)
-- Cannot be created, updated, or deleted via API
-- Used for authentication and authorization
-- Customers should not create or modify User directly
-
 ### Token (APIKey)
 
 **Status**: Internal / Administrative  

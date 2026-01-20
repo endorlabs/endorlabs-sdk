@@ -36,14 +36,15 @@ class TestProject:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        
+
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
         # Get test data with pagination limits
-        from endor_cockpit.types import ListParameters
         import conftest
+
+        from endor_cockpit.types import ListParameters
 
         self.projects = project.list_projects(
             self.client,
@@ -105,7 +106,7 @@ class TestProject:
         project_uuid = test_project.uuid
 
         # Create a test scan profile
-        print(f"Creating test scan profile...")
+        print("Creating test scan profile...")
         automated_params = AutomatedScanParameters(excluded_paths=["test/**"])
         payload = CreateScanProfilePayload(
             meta=ScanProfileMetaCreate(
@@ -141,11 +142,11 @@ class TestProject:
             assert updated_project is not None, (
                 "Should successfully associate scan profile"
             )
-            assert (
-                updated_project.spec.scan_profile_uuid == scan_profile_uuid
-            ), "Project should have the associated scan profile UUID"
+            assert updated_project.spec.scan_profile_uuid == scan_profile_uuid, (
+                "Project should have the associated scan profile UUID"
+            )
 
-            print(f"✅ Successfully associated scan profile with project")
+            print("✅ Successfully associated scan profile with project")
 
             # Verify association
             print("Verifying scan profile association...")
@@ -154,7 +155,7 @@ class TestProject:
             )
             assert is_associated, "Verification should confirm association"
 
-            print(f"✅ Verification successful")
+            print("✅ Verification successful")
 
         finally:
             # Clean up: Remove scan profile association
@@ -189,7 +190,7 @@ class TestProject:
                 scan_profile.delete_scan_profile(
                     self.client, self.namespace, scan_profile_uuid
                 )
-                print(f"✅ Deleted test scan profile")
+                print("✅ Deleted test scan profile")
             except Exception as e:
                 print(f"⚠️ Warning: Could not delete test scan profile: {e}")
 
@@ -239,6 +240,7 @@ class TestProject:
             self.client, self.namespace, "invalid-uuid"
         )
         assert invalid_project is None
+
 
 if __name__ == "__main__":
     # Run tests directly

@@ -114,10 +114,22 @@ class FindingDatabase:
             "CREATE INDEX IF NOT EXISTS idx_findings_language ON findings(language)",
             "CREATE INDEX IF NOT EXISTS idx_rules_rule_id ON rules(rule_id)",
             "CREATE INDEX IF NOT EXISTS idx_rules_language ON rules(language)",
-            "CREATE INDEX IF NOT EXISTS idx_rule_patterns_rule_uuid ON rule_patterns(rule_uuid)",
-            "CREATE INDEX IF NOT EXISTS idx_rule_patterns_rule_id ON rule_patterns(rule_id)",
-            "CREATE INDEX IF NOT EXISTS idx_rule_patterns_type ON rule_patterns(pattern_type)",
-            "CREATE INDEX IF NOT EXISTS idx_ground_truth_file ON ground_truth(file_path, line_number)",
+            (
+                "CREATE INDEX IF NOT EXISTS idx_rule_patterns_rule_uuid "
+                "ON rule_patterns(rule_uuid)"
+            ),
+            (
+                "CREATE INDEX IF NOT EXISTS idx_rule_patterns_rule_id "
+                "ON rule_patterns(rule_id)"
+            ),
+            (
+                "CREATE INDEX IF NOT EXISTS idx_rule_patterns_type "
+                "ON rule_patterns(pattern_type)"
+            ),
+            (
+                "CREATE INDEX IF NOT EXISTS idx_ground_truth_file "
+                "ON ground_truth(file_path, line_number)"
+            ),
             "CREATE INDEX IF NOT EXISTS idx_ground_truth_cwe ON ground_truth(cwe)",
         ]
 
@@ -157,7 +169,8 @@ class FindingDatabase:
             """
             INSERT OR REPLACE INTO findings (
                 uuid, rule_id, rule_name, file_path, line_number, code_snippet,
-                finding_metadata, cwe, language, label, project_uuid, level, summary, description
+                finding_metadata, cwe, language, label, project_uuid, level,
+                summary, description
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
@@ -200,7 +213,8 @@ class FindingDatabase:
         cursor.execute(
             """
             INSERT OR REPLACE INTO rules (
-                uuid, rule_id, rule_name, language, cwe, yaml_content, rule_json, disabled
+                uuid, rule_id, rule_name, language, cwe, yaml_content,
+                rule_json, disabled
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
@@ -321,9 +335,7 @@ class FindingDatabase:
                 (rule_id, pattern_type),
             )
         else:
-            cursor.execute(
-                "SELECT * FROM rule_patterns WHERE rule_id = ?", (rule_id,)
-            )
+            cursor.execute("SELECT * FROM rule_patterns WHERE rule_id = ?", (rule_id,))
 
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
@@ -368,7 +380,9 @@ class FindingDatabase:
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
 
-    def execute_query(self, sql: str, params: Optional[tuple] = None) -> List[Dict[str, Any]]:
+    def execute_query(
+        self, sql: str, params: Optional[tuple] = None
+    ) -> List[Dict[str, Any]]:
         """
         Execute a SQL query and return results.
 
@@ -404,4 +418,3 @@ class FindingDatabase:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-

@@ -122,7 +122,9 @@ class Environment(BaseModel):
     Contains host environment details and scan configuration.
     """
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     arch: str = Field(..., description="CPU architecture")
     endorctl_version: str = Field(..., description="Endorctl version used")
@@ -168,7 +170,9 @@ class ToolChainsSource(FlexibleEnum):
 class SpecProvisioningResultData(BaseModel):
     """Provisioning result data."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     provisioning_result_uuid: str = Field(
         ..., description="UUID of the provisioning result"
@@ -410,8 +414,10 @@ class ScanResult(BaseResource):
             # - environment: Environment model (handles its own validation)
             # - provisioning_result: SpecProvisioningResultData model
             # - versions: List[Version] models
-            # - deleted_findings, all_findings, exception_findings: Dict[str, SpecFindingData]
-            # - stats, runtimes, ecosystem_pkg_counts, ecosystem_dep_counts: Dict with dynamic keys
+            # - deleted_findings, all_findings, exception_findings:
+            #   Dict[str, SpecFindingData]
+            # - stats, runtimes, ecosystem_pkg_counts, ecosystem_dep_counts:
+            #   Dict with dynamic keys
             known_fields = {
                 "status",
                 "type",

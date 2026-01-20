@@ -5,8 +5,6 @@ This module provides shared test methods that can be used across
 all resource test classes to eliminate duplication.
 """
 
-import pytest
-
 from endor_cockpit.models.base import BaseMeta, BaseResource, BaseSpec
 
 
@@ -24,19 +22,19 @@ class BaseResourceTest:
                 subclass via fixture)
         """
         # Test BaseResource inheritance
-        assert isinstance(
-            resource_instance, BaseResource
-        ), "Resource should inherit from BaseResource"
+        assert isinstance(resource_instance, BaseResource), (
+            "Resource should inherit from BaseResource"
+        )
 
         # Test BaseMeta inheritance
-        assert isinstance(
-            resource_instance.meta, BaseMeta
-        ), "Resource meta should inherit from BaseMeta"
+        assert isinstance(resource_instance.meta, BaseMeta), (
+            "Resource meta should inherit from BaseMeta"
+        )
 
         # Test BaseSpec inheritance
-        assert isinstance(
-            resource_instance.spec, BaseSpec
-        ), "Resource spec should inherit from BaseSpec"
+        assert isinstance(resource_instance.spec, BaseSpec), (
+            "Resource spec should inherit from BaseSpec"
+        )
 
     def test_schema_drift_detection(self, resource_instance):
         """Test that schema drift detection is working.
@@ -55,13 +53,11 @@ class BaseResourceTest:
 
         # Test that unknown fields are handled gracefully
         # This is tested through the model's extra="ignore" configuration
-        assert hasattr(
-            resource_instance, "model_config"
-        ), "Resource should have model_config for Pydantic validation"
+        assert hasattr(resource_instance, "model_config"), (
+            "Resource should have model_config for Pydantic validation"
+        )
 
-    def test_get_list(
-        self, list_func, api_client, namespace, test_list_params
-    ):
+    def test_get_list(self, list_func, api_client, namespace, test_list_params):
         """Generic test for GET list operations.
 
         Args:
@@ -98,4 +94,3 @@ class BaseResourceTest:
         # Test with invalid UUID
         invalid_resource = get_func(api_client, namespace, "invalid-uuid")
         assert invalid_resource is None, "Should return None for invalid UUID"
-

@@ -17,7 +17,6 @@ from .resources import (
     project,
     repository,
     repository_version,
-    user,
 )
 
 __version__ = "0.1.0"
@@ -35,5 +34,4 @@ __all__ = [
     "project",
     "repository",
     "repository_version",
-    "user",
 ]
