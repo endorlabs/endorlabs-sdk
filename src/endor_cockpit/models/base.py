@@ -118,7 +118,7 @@ class BaseMeta(BaseModel):
         None,
         description="Key-value metadata pairs",  # MUTABLE: User can update
     )
-    
+
     @field_validator("annotations", mode="before")
     @classmethod
     def validate_annotations(cls, v):
@@ -154,7 +154,7 @@ class BaseMeta(BaseModel):
             flexible_dict_fields = {"annotations", "references", "index_data"}
             if info.field_name in flexible_dict_fields:
                 return v  # These are flexible dicts that can contain any keys
-            
+
             model_fields = {
                 "name",
                 "kind",
@@ -191,9 +191,7 @@ class BaseSpec(BaseModel):
     notification: Optional[NotificationConfig] = Field(
         None, description="Notification configuration"
     )
-    finding: Optional[FindingConfig] = Field(
-        None, description="Finding configuration"
-    )
+    finding: Optional[FindingConfig] = Field(None, description="Finding configuration")
     exception: Optional[ExceptionConfig] = Field(
         None, description="Exception configuration"
     )
@@ -210,7 +208,7 @@ class BaseSpec(BaseModel):
             "exception",  # ExceptionConfig
             "git",  # GitInfo (in ProjectSpec)
         }
-        
+
         # Only do drift detection if this is a BaseSpec field
         # Subclasses will handle their own fields in their validators
         if (
@@ -303,8 +301,10 @@ class BaseResource(BaseModel):
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
-        # Skip drift detection for typed nested models (they handle their own validation)
-        # Also skip "spec" - it's validated by subclass Spec models (ScanProfileSpec, etc.)
+        # Skip drift detection for typed nested models
+        # (they handle their own validation)
+        # Also skip "spec" - it's validated by subclass Spec models
+        # (ScanProfileSpec, etc.)
         typed_model_fields = {
             "meta",  # BaseMeta - validated by BaseMeta
             "tenant_meta",  # TenantMeta - validated by TenantMeta
@@ -691,7 +691,7 @@ class BaseResourceOperations:
         self, params: Dict[str, Any], list_params: ListParameters
     ) -> None:
         """Add pagination-related parameters.
-        
+
         Note: page_size is only added if explicitly set. If None, the API
         will use its default page size (typically 100). This is intentional
         to avoid performance issues with small page sizes.
@@ -717,7 +717,7 @@ class BaseResourceOperations:
         """Add boolean parameters."""
         if list_params.count is not None:
             params["list_parameters.count"] = str(list_params.count).lower()
-        
+
         # Handle traverse parameter (canonical way to traverse namespaces)
         if list_params.traverse is not None:
             # API uses 'list_parameters.traverse' as the query parameter

@@ -13,21 +13,21 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+# Import TEST_PAGE_SIZE from conftest in the same directory
+import sys
+from pathlib import Path
+
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import audit_log
 from endor_cockpit.resources.audit_log import AuditLogOperation
 from endor_cockpit.types import ListParameters
-
-# Import TEST_PAGE_SIZE from conftest in the same directory
-import sys
-from pathlib import Path
 
 # Add tests directory to path to import conftest
 tests_dir = Path(__file__).parent
 if str(tests_dir) not in sys.path:
     sys.path.insert(0, str(tests_dir))
 
-import conftest
+import conftest  # noqa: E402
 
 TEST_PAGE_SIZE = conftest.TEST_PAGE_SIZE
 
@@ -41,11 +41,11 @@ class TestAuditLog:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        
+
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-        
+
         self.created_audit_log_uuids = []  # Track created logs for cleanup
 
         # Get test data with pagination limits
@@ -357,6 +357,7 @@ class TestAuditLog:
         # Verify pagination works (should get at least some results)
         assert isinstance(paginated_logs, list), "Should return a list"
         print(f"Successfully retrieved {len(paginated_logs)} logs with pagination")
+
 
 if __name__ == "__main__":
     # Run tests directly

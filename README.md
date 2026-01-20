@@ -216,7 +216,6 @@ ls maneuvers/
 - **DependencyMetadata** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
 - **LinterResult** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
 - **Metric** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
-- **User** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 - **Installation** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 
 ### Completion Criteria

@@ -6,7 +6,7 @@ code duplication while maintaining functionality and type safety.
 """
 
 from .schema_drift import SchemaDriftDetector
-from .traversal import create_traverse_params, create_namespace_scoped_params
+from .traversal import create_namespace_scoped_params, create_traverse_params
 
 __all__ = [
     "SchemaDriftDetector",

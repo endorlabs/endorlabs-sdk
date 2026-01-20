@@ -22,7 +22,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient
 from ..models.base import BaseMeta, BaseResource, BaseSpec, FlexibleEnum
-from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +73,7 @@ class ScanLogRequestSpec(BaseSpec):
     """
 
     # Required fields
-    max_entries: int = Field(
-        ..., description="Maximum number of log entries to return"
-    )
+    max_entries: int = Field(..., description="Maximum number of log entries to return")
 
     # Optional filter fields
     start_time: Optional[str] = Field(
@@ -109,9 +106,7 @@ class ScanLogRequestSpec(BaseSpec):
         "spec.environment.config.ExecutionID in ScanResult. "
         "Performance: Provide spec.start_time to avoid DB lookups.",
     )
-    project_uuid: Optional[str] = Field(
-        None, description="Project UUID to filter logs"
-    )
+    project_uuid: Optional[str] = Field(None, description="Project UUID to filter logs")
     installation_uuid: Optional[str] = Field(
         None, description="Installation UUID to filter logs"
     )
@@ -209,9 +204,7 @@ class ScanLogRequest(BaseResource):
 class ScanLogRequestSpecCreate(BaseModel):
     """Specification for creating a ScanLogRequest."""
 
-    max_entries: int = Field(
-        ..., description="Maximum number of log entries to return"
-    )
+    max_entries: int = Field(..., description="Maximum number of log entries to return")
     start_time: Optional[str] = Field(
         None,
         description="Start time for log retrieval",
@@ -234,9 +227,7 @@ class ScanLogRequestSpecCreate(BaseModel):
     execution_id: Optional[str] = Field(
         None, description="Execution ID of scan to filter logs"
     )
-    project_uuid: Optional[str] = Field(
-        None, description="Project UUID to filter logs"
-    )
+    project_uuid: Optional[str] = Field(None, description="Project UUID to filter logs")
     installation_uuid: Optional[str] = Field(
         None, description="Installation UUID to filter logs"
     )
@@ -246,17 +237,13 @@ class ScanLogRequestSpecCreate(BaseModel):
     onprem_scheduler_uuid: Optional[str] = Field(
         None, description="On-prem scheduler UUID to filter logs"
     )
-    admin_filter: Optional[str] = Field(
-        None, description="Admin-only filter"
-    )
+    admin_filter: Optional[str] = Field(None, description="Admin-only filter")
 
 
 class ScanLogRequestMetaCreate(BaseModel):
     """Metadata for creating a ScanLogRequest."""
 
-    name: str = Field(
-        ..., description="Name for the log request (required)"
-    )
+    name: str = Field(..., description="Name for the log request (required)")
 
 
 class CreateScanLogRequestPayload(BaseModel):
@@ -358,9 +345,7 @@ def get_scan_result_logs(
         ...         print(f"{log.timestamp} [{log.level}]: {log.json_payload}")
     """
     payload = CreateScanLogRequestPayload(
-        meta=ScanLogRequestMetaCreate(
-            name=f"scan-logs-{scan_result_uuid[:8]}"
-        ),
+        meta=ScanLogRequestMetaCreate(name=f"scan-logs-{scan_result_uuid[:8]}"),
         spec=ScanLogRequestSpecCreate(
             max_entries=max_entries,
             scan_result_uuid=scan_result_uuid,
@@ -368,11 +353,10 @@ def get_scan_result_logs(
             start_time=start_time,
             end_time=end_time,
             newest_first=newest_first,
-        )
+        ),
     )
 
     request = create_scan_log_request(client, tenant_meta_namespace, payload)
     if request and request.spec and request.spec.log_messages:
         return request.spec.log_messages
     return None
-

@@ -23,7 +23,6 @@ from . import (
     scan_profile,
     scan_result,
     semgrep_rule,
-    user,
 )
 
 __all__ = [
@@ -45,5 +44,4 @@ __all__ = [
     "scan_profile",
     "scan_result",
     "semgrep_rule",
-    "user",
 ]

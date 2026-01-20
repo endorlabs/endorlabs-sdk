@@ -7,7 +7,6 @@ and persisting them to SQLite3 database.
 
 import json
 import logging
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..api_client import APIClient
@@ -176,7 +175,9 @@ class FindingDataLoader:
                             first_result = results[0]
                             if isinstance(first_result, dict):
                                 metadata["file_path"] = first_result.get("file_path")
-                                metadata["line_number"] = first_result.get("line_number")
+                                metadata["line_number"] = first_result.get(
+                                    "line_number"
+                                )
                                 metadata["code_snippet"] = first_result.get(
                                     "code_snippet"
                                 )
@@ -386,4 +387,3 @@ class FindingDataLoader:
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit."""
         self.close()
-

@@ -183,8 +183,11 @@ class GitInfo(BaseModel):
     web_url: str
     external_installation_id: Optional[str] = Field(
         None,
-        description="Endor Labs GitHub app installation ID of this project. "
-        "Optional and only available if the project is created through an installation.",
+        description=(
+            "Endor Labs GitHub app installation ID of this project. "
+            "Optional and only available if the project is created "
+            "through an installation."
+        ),
     )
     invalid_installation: Optional[bool] = Field(
         None,

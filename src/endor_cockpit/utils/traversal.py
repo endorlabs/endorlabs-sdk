@@ -58,7 +58,7 @@ def create_traverse_params(
     }
     if page_size is not None:
         params_dict["page_size"] = page_size
-    
+
     return ListParameters(**params_dict)
 
 
@@ -102,6 +102,5 @@ def create_namespace_scoped_params(
     }
     if page_size is not None:
         params_dict["page_size"] = page_size
-    
-    return ListParameters(**params_dict)
 
+    return ListParameters(**params_dict)

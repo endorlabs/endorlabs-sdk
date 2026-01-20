@@ -69,7 +69,7 @@ class TestScanLogRequest:
             spec=ScanLogRequestSpecCreate(
                 max_entries=10,
                 scan_result_uuid=self.test_scan_result_uuid,
-            )
+            ),
         )
 
         request = scan_log_request.create_scan_log_request(
@@ -121,7 +121,7 @@ class TestScanLogRequest:
                 scan_result_uuid=self.test_scan_result_uuid,
                 log_levels=[ScanLogLevel.ERROR, ScanLogLevel.WARNING],
                 newest_first=True,
-            )
+            ),
         )
 
         request = scan_log_request.create_scan_log_request(
@@ -146,7 +146,7 @@ class TestScanLogRequest:
             spec=ScanLogRequestSpecCreate(
                 max_entries=10,
                 scan_result_uuid="invalid-uuid",
-            )
+            ),
         )
 
         request = scan_log_request.create_scan_log_request(
@@ -169,4 +169,3 @@ class TestScanLogRequest:
         assert ScanLogLevel.DEBUG == "LOG_LEVEL_DEBUG"
 
         print("All log level enum values validated")
-

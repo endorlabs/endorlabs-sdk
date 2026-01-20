@@ -5,7 +5,7 @@ These models define the structure of notification configurations while
 maintaining flexibility for API evolution.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class NotificationConfig(BaseModel):
     """
     Notification configuration with known fields.
-    
+
     This model documents the known structure of notification configurations
     while allowing additional fields via extra="allow" for API evolution.
     """
@@ -26,9 +26,10 @@ class NotificationConfig(BaseModel):
         None, description="List of notification target UUIDs"
     )
     aggregation_type: Optional[str] = Field(
-        None, description="How to aggregate notifications (e.g., 'AGGREGATION_TYPE_PROJECT')"
+        None,
+        description="How to aggregate notifications (e.g., 'AGGREGATION_TYPE_PROJECT')",
     )
     bypass_exceptions: Optional[bool] = Field(
-        None, description="Whether to bypass exception policies when sending notifications"
+        None,
+        description="Whether to bypass exception policies when sending notifications",
     )
-

@@ -63,15 +63,15 @@ class AutomatedScanParametersBazelConfiguration(BaseModel):
     bazel_show_internal_targets: Optional[bool] = Field(
         None, description="Show internal Bazel targets"
     )
-    bazel_targets_query: Optional[str] = Field(
-        None, description="Bazel targets query"
-    )
+    bazel_targets_query: Optional[str] = Field(None, description="Bazel targets query")
 
 
 class AutomatedScanParameters(BaseModel):
     """Automated scan parameters configuration."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     full_pr_scan: Optional[bool] = Field(
         None, description="Enable full scan during PRs"
@@ -91,15 +91,13 @@ class AutomatedScanParameters(BaseModel):
     call_graph_languages: Optional[List[str]] = Field(
         None, description="Languages for call graph calculation"
     )
-    bazel_configuration: Optional[AutomatedScanParametersBazelConfiguration] = (
-        Field(None, description="Bazel build configuration")
+    bazel_configuration: Optional[AutomatedScanParametersBazelConfiguration] = Field(
+        None, description="Bazel build configuration"
     )
     additional_environment_variables: Optional[List[str]] = Field(
         None, description="Additional environment variables"
     )
-    enable_pr_comments: Optional[bool] = Field(
-        None, description="Enable PR comments"
-    )
+    enable_pr_comments: Optional[bool] = Field(None, description="Enable PR comments")
     enable_remediation_action: Optional[bool] = Field(
         None, description="Enable remediation actions"
     )
@@ -107,9 +105,7 @@ class AutomatedScanParameters(BaseModel):
         None, description="Enable automated PR scans"
     )
     enable_sast_scan: Optional[bool] = Field(None, description="Enable SAST scan")
-    enable_secret_scan: Optional[bool] = Field(
-        None, description="Enable secret scan"
-    )
+    enable_secret_scan: Optional[bool] = Field(None, description="Enable secret scan")
     enable_full_git_log_secret_scan: Optional[bool] = Field(
         None, description="Enable full git log secret scan"
     )
@@ -125,9 +121,7 @@ class AutomatedScanParameters(BaseModel):
     enable_pr_incremental_scan: Optional[bool] = Field(
         None, description="Enable PR incremental scan"
     )
-    enable_ai_sast_scan: Optional[bool] = Field(
-        None, description="Enable AI SAST scan"
-    )
+    enable_ai_sast_scan: Optional[bool] = Field(None, description="Enable AI SAST scan")
 
 
 class RemediationParametersAutomatedPRParameters(BaseModel):
@@ -140,7 +134,9 @@ class RemediationParametersAutomatedPRParameters(BaseModel):
 class RemediationParameters(BaseModel):
     """Remediation parameters configuration."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     automated_pr_parameters: Optional[RemediationParametersAutomatedPRParameters] = (
         Field(None, description="Automated PR parameters")
@@ -150,7 +146,9 @@ class RemediationParameters(BaseModel):
 class SecurityReviewScannerParameters(BaseModel):
     """Security review scanner parameters."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     user_prompt: Optional[str] = Field(
         None, description="User prompt for security review scanner"
@@ -163,7 +161,9 @@ class SecurityReviewScannerParameters(BaseModel):
 class ExporterParameters(BaseModel):
     """Exporter parameters configuration."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     exporter_uuids: Optional[List[str]] = Field(
         None, description="List of exporter UUIDs"
@@ -173,7 +173,9 @@ class ExporterParameters(BaseModel):
 class AISastAnalysisParameters(BaseModel):
     """AI SAST analysis parameters."""
 
-    model_config = ConfigDict(extra="allow")  # Allow unknown fields for forward compatibility
+    model_config = ConfigDict(
+        extra="allow"
+    )  # Allow unknown fields for forward compatibility
 
     retriage: Optional[bool] = Field(
         None, description="Enable retriage of SAST findings using AI"
@@ -227,10 +229,8 @@ class ScanProfileSpec(BaseSpec):
     is_default: Optional[bool] = Field(
         None, description="Indicates this is the namespace default profile"
     )
-    security_review_scanner_parameters: Optional[
-        SecurityReviewScannerParameters
-    ] = Field(
-        None, description="Parameters for security review scanner"
+    security_review_scanner_parameters: Optional[SecurityReviewScannerParameters] = (
+        Field(None, description="Parameters for security review scanner")
     )
     exporter_parameters: Optional[ExporterParameters] = Field(
         None, description="Parameters for exporter"
@@ -290,16 +290,9 @@ class ScanProfile(BaseResource):
     def detect_schema_drift(cls, v, info):
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
-            # Skip drift detection for typed nested models - they handle their own validation
+            # Skip drift detection for typed nested models
+            # - they handle their own validation
             # These will be converted to Pydantic models by the field validators
-            typed_model_fields = {
-                "automated_scan_parameters",  # AutomatedScanParameters
-                "remediation_parameters",  # RemediationParameters
-                "security_review_scanner_parameters",  # SecurityReviewScannerParameters
-                "exporter_parameters",  # ExporterParameters
-                "ai_sast_analysis_parameters",  # AISastAnalysisParameters
-            }
-            
             # Known top-level fields in ScanProfileSpec
             known_fields = {
                 "toolchain_profile",  # Dict[str, Any] - flexible structure
@@ -310,7 +303,7 @@ class ScanProfile(BaseResource):
                 "exporter_parameters",  # Typed model
                 "ai_sast_analysis_parameters",  # Typed model
             }
-            
+
             # Only check top-level fields, skip nested model fields
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
@@ -344,12 +337,10 @@ class ScanProfileSpecCreate(BaseModel):
     remediation_parameters: Optional[RemediationParameters] = Field(
         None, description="Remediation parameters"
     )
-    is_default: Optional[bool] = Field(
-        None, description="Set as default profile"
+    is_default: Optional[bool] = Field(None, description="Set as default profile")
+    security_review_scanner_parameters: Optional[SecurityReviewScannerParameters] = (
+        Field(None, description="Security review scanner parameters")
     )
-    security_review_scanner_parameters: Optional[
-        SecurityReviewScannerParameters
-    ] = Field(None, description="Security review scanner parameters")
     exporter_parameters: Optional[ExporterParameters] = Field(
         None, description="Exporter parameters"
     )
@@ -394,12 +385,10 @@ class ScanProfileSpecUpdate(BaseModel):
     remediation_parameters: Optional[RemediationParameters] = Field(
         None, description="Updated remediation parameters"
     )
-    is_default: Optional[bool] = Field(
-        None, description="Updated default profile flag"
+    is_default: Optional[bool] = Field(None, description="Updated default profile flag")
+    security_review_scanner_parameters: Optional[SecurityReviewScannerParameters] = (
+        Field(None, description="Updated security review scanner parameters")
     )
-    security_review_scanner_parameters: Optional[
-        SecurityReviewScannerParameters
-    ] = Field(None, description="Updated security review scanner parameters")
     exporter_parameters: Optional[ExporterParameters] = Field(
         None, description="Updated exporter parameters"
     )
@@ -603,4 +592,3 @@ def delete_scan_profile(
     """
     ops = _get_scan_profile_ops(client)
     return ops.delete(tenant_meta_namespace, scan_profile_uuid)
-

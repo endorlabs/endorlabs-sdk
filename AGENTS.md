@@ -214,7 +214,6 @@ private_deps = dependency_metadata.list_dependency_metadata(
 - **DependencyMetadata** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
 - **LinterResult** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
 - **Metric** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
-- **User** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 - **Installation** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 
 ### **Completion Criteria**
@@ -248,7 +247,6 @@ private_deps = dependency_metadata.list_dependency_metadata(
 - **Metric**: `list_metrics`, `get_metric`, `create_metric`, `update_metric`, `delete_metric`
 
 #### **Read-Only (GET Only)**
-- **User**: `list_users`, `get_user` (CREATE/UPDATE/DELETE: Managed by identity provider)
 - **Installation**: `list_installations`, `get_installation` (CREATE/UPDATE/DELETE: Managed by platform integrations)
 
 ---

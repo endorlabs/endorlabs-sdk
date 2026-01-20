@@ -7,7 +7,7 @@ the Endor Cockpit SDK across all modules.
 
 import logging
 import os
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 from unittest.mock import Mock
 
 import pytest
@@ -20,7 +20,9 @@ from endor_cockpit.types import ListParameters
 # Tests that need more should explicitly request it
 TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
 TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
-TEST_TRAVERSE_PAGE_SIZE = 2  # Minimal page size for traverse tests to limit network load
+TEST_TRAVERSE_PAGE_SIZE = (
+    2  # Minimal page size for traverse tests to limit network load
+)
 
 
 @pytest.fixture
@@ -195,9 +197,7 @@ def schema_drift_data():
     }
 
 
-def resource_list_fixture_factory(
-    list_func: Callable, resource_name: str
-) -> Callable:
+def resource_list_fixture_factory(list_func: Callable, resource_name: str) -> Callable:
     """Factory to create resource list fixtures with pagination limits.
 
     Args:

@@ -27,7 +27,7 @@ class TestScanResult:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        
+
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
@@ -38,8 +38,9 @@ class TestScanResult:
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
         # List scan results from parent namespace to get available data
-        from endor_cockpit.types import ListParameters
         import conftest
+
+        from endor_cockpit.types import ListParameters
 
         self.scan_results = scan_result.list_scan_results(
             self.client,
@@ -86,7 +87,8 @@ class TestScanResult:
         print("\n=== TESTING GET SCAN RESULT BY UUID ===")
 
         scan_result_item = self.scan_results[0]
-        # Use the scan result's actual namespace (may be in child namespace when traverse=True)
+        # Use the scan result's actual namespace
+        # (may be in child namespace when traverse=True)
         scan_result_namespace = (
             scan_result_item.tenant_meta.namespace
             if scan_result_item.tenant_meta

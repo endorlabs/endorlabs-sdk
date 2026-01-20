@@ -33,16 +33,17 @@ class TestPolicy:
         """Set up test environment."""
         self.client = APIClient()
         self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        
+
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-        
+
         self.created_policy_uuids = []  # Track created policies for cleanup
 
         # Get test data with pagination limits
-        from endor_cockpit.types import ListParameters
         import conftest
+
+        from endor_cockpit.types import ListParameters
 
         self.policies = policy.list_policies(
             self.client,

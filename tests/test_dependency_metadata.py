@@ -96,7 +96,8 @@ class TestDependencyMetadata:
         print("\n=== TESTING GET DEPENDENCY METADATA BY UUID ===")
 
         test_dm = self.dependency_metadata_list[0]
-        # Use the dependency metadata's actual namespace (may be in child namespace when traverse=True)
+        # Use the dependency metadata's actual namespace
+        # (may be in child namespace when traverse=True)
         dm_namespace = (
             test_dm.tenant_meta.namespace
             if test_dm.tenant_meta
@@ -121,13 +122,9 @@ class TestDependencyMetadata:
         if retrieved_dm.meta:
             print(f"Dependency metadata name: {retrieved_dm.meta.name}")
         if retrieved_dm.spec and retrieved_dm.spec.dependency_data:
-            print(
-                f"Package name: {retrieved_dm.spec.dependency_data.package_name}"
-            )
+            print(f"Package name: {retrieved_dm.spec.dependency_data.package_name}")
             if retrieved_dm.spec.dependency_data.ecosystem:
-                print(
-                    f"Ecosystem: {retrieved_dm.spec.dependency_data.ecosystem}"
-                )
+                print(f"Ecosystem: {retrieved_dm.spec.dependency_data.ecosystem}")
 
     def test_dependency_metadata_field_validation(self):
         """Test field validation and required fields."""
@@ -260,4 +257,3 @@ class TestDependencyMetadata:
             print(f"  {reachability}: {count}")
 
         assert len(dependency_metadata_list) > 0
-

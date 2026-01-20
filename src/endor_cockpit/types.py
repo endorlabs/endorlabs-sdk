@@ -176,7 +176,8 @@ class ListParameters(BaseModel):
         description=(
             "Traverse all child namespaces recursively. "
             "When True, automatically queries all namespaces in the hierarchy. "
-            "Recommended for tenant-wide queries (e.g., all dependencies across all namespaces)."
+            "Recommended for tenant-wide queries "
+            "(e.g., all dependencies across all namespaces)."
         ),
     )
     from_date: Optional[str] = Field(

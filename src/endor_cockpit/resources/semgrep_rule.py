@@ -21,10 +21,10 @@ API FEATURES:
 from __future__ import annotations
 
 import logging
-import yaml
 from typing import Any, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, Field, field_validator, ValidationError
+import yaml
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from ..api_client import APIClient
 from ..models.base import (
@@ -46,9 +46,7 @@ def _get_semgrep_rule_ops(client: APIClient) -> BaseResourceOperations:
     """Get or create semgrep rule operations instance."""
     global _semgrep_rule_ops
     if _semgrep_rule_ops is None:
-        _semgrep_rule_ops = BaseResourceOperations(
-            client, "semgrep-rules", SemgrepRule
-        )
+        _semgrep_rule_ops = BaseResourceOperations(client, "semgrep-rules", SemgrepRule)
     return _semgrep_rule_ops
 
 
@@ -98,9 +96,7 @@ class SemgrepRulePatternType(BaseModel):
     patterns: Optional[List["SemgrepRulePatternType"]] = Field(
         None, description="Nested patterns"
     )
-    pattern_not_regex: Optional[str] = Field(
-        None, description="Pattern not regex"
-    )
+    pattern_not_regex: Optional[str] = Field(None, description="Pattern not regex")
     pattern_regex: Optional[str] = Field(None, description="Pattern regex")
 
     class Config:
@@ -116,28 +112,14 @@ class SemgrepRuleMeta(BaseModel):
     category: Optional[str] = Field(None, description="Rule category")
     cwe: Optional[List[str]] = Field(None, description="CWE identifiers")
     owasp: Optional[List[str]] = Field(None, description="OWASP categories")
-    references: Optional[List[str]] = Field(
-        None, description="Reference URLs"
-    )
-    technology: Optional[List[str]] = Field(
-        None, description="Technology tags"
-    )
-    subcategory: Optional[List[str]] = Field(
-        None, description="Subcategory tags"
-    )
-    cwe2022_top25: Optional[bool] = Field(
-        None, description="CWE 2022 Top 25 flag"
-    )
-    cwe2021_top25: Optional[bool] = Field(
-        None, description="CWE 2021 Top 25 flag"
-    )
-    source_rule_url: Optional[str] = Field(
-        None, description="Source rule URL"
-    )
+    references: Optional[List[str]] = Field(None, description="Reference URLs")
+    technology: Optional[List[str]] = Field(None, description="Technology tags")
+    subcategory: Optional[List[str]] = Field(None, description="Subcategory tags")
+    cwe2022_top25: Optional[bool] = Field(None, description="CWE 2022 Top 25 flag")
+    cwe2021_top25: Optional[bool] = Field(None, description="CWE 2021 Top 25 flag")
+    source_rule_url: Optional[str] = Field(None, description="Source rule URL")
     impact: Optional[str] = Field(None, description="Impact level")
-    description: Optional[str] = Field(
-        None, description="Rule description"
-    )
+    description: Optional[str] = Field(None, description="Rule description")
     endor_targets: Optional[List[EndorTarget]] = Field(
         None, description="Endor target types"
     )
@@ -150,12 +132,8 @@ class SemgrepNativeRule(BaseModel):
     pattern: Optional[str] = Field(None, description="Pattern string")
     fix: Optional[str] = Field(None, description="Fix suggestion")
     severity: Optional[str] = Field(None, description="Severity level")
-    metadata: Optional[SemgrepRuleMeta] = Field(
-        None, description="Rule metadata"
-    )
-    languages: Optional[List[str]] = Field(
-        None, description="Supported languages"
-    )
+    metadata: Optional[SemgrepRuleMeta] = Field(None, description="Rule metadata")
+    languages: Optional[List[str]] = Field(None, description="Supported languages")
     message: Optional[str] = Field(None, description="Rule message")
     patterns: Optional[List[SemgrepRulePatternType]] = Field(
         None, description="Pattern list"
@@ -173,15 +151,11 @@ class SemgrepNativeRule(BaseModel):
     pattern_propagators: Optional[List[SemgrepRulePatternType]] = Field(
         None, description="Taint propagator patterns"
     )
-    options: Optional[SemgrepOptions] = Field(
-        None, description="Rule options"
-    )
+    options: Optional[SemgrepOptions] = Field(None, description="Rule options")
     pattern_either: Optional[List[SemgrepRulePatternType]] = Field(
         None, description="Pattern either list"
     )
-    paths: Optional[SemgrepPaths] = Field(
-        None, description="Path inclusion/exclusion"
-    )
+    paths: Optional[SemgrepPaths] = Field(None, description="Path inclusion/exclusion")
     pattern_sanitizers: Optional[List[SemgrepRulePatternType]] = Field(
         None, description="Taint sanitizer patterns"
     )
@@ -189,9 +163,7 @@ class SemgrepNativeRule(BaseModel):
         None, description="Pattern not list"
     )
     pattern_regex: Optional[str] = Field(None, description="Pattern regex")
-    references: Optional[List[str]] = Field(
-        None, description="Reference URLs"
-    )
+    references: Optional[List[str]] = Field(None, description="Reference URLs")
     metavariable_regex: Optional[SemgrepMetavariableRegex] = Field(
         None, description="Metavariable regex"
     )
@@ -202,9 +174,7 @@ class SemgrepNativeRule(BaseModel):
         None, description="Focus metavariables"
     )
     min_version: Optional[str] = Field(None, description="Minimum version")
-    pattern_inside: Optional[str] = Field(
-        None, description="Pattern inside"
-    )
+    pattern_inside: Optional[str] = Field(None, description="Pattern inside")
     pattern_inside_either: Optional[List[SemgrepRulePatternType]] = Field(
         None, description="Pattern inside either list"
     )
@@ -237,15 +207,9 @@ class SemgrepNativeRule(BaseModel):
 class SemgrepRuleSpec(BaseSpec):
     """Semgrep rule specification extending BaseSpec."""
 
-    rule: Optional[SemgrepNativeRule] = Field(
-        None, description="Semgrep native rule"
-    )
-    disabled: Optional[bool] = Field(
-        False, description="Whether rule is disabled"
-    )
-    yaml: Optional[str] = Field(
-        None, description="Original YAML format of the rule"
-    )
+    rule: Optional[SemgrepNativeRule] = Field(None, description="Semgrep native rule")
+    disabled: Optional[bool] = Field(False, description="Whether rule is disabled")
+    yaml: Optional[str] = Field(None, description="Original YAML format of the rule")
     defined_by: Optional[str] = Field(
         None, description="Rule creator (Endor Labs or tenant name)"
     )
@@ -261,7 +225,7 @@ class SemgrepRuleSpec(BaseSpec):
             try:
                 yaml.safe_load(v)
             except yaml.YAMLError as e:
-                raise ValueError(f"Invalid YAML format: {e}")
+                raise ValueError(f"Invalid YAML format: {e}") from e
         return v
 
 
@@ -317,9 +281,7 @@ class SemgrepRule(BaseResource):
     spec: Optional[SemgrepRuleSpec] = Field(
         None, description="Semgrep rule specification"
     )  # type: ignore
-    disabled: Optional[bool] = Field(
-        None, description="Whether rule is disabled"
-    )
+    disabled: Optional[bool] = Field(None, description="Whether rule is disabled")
 
     model_config = {"extra": "ignore"}
 
@@ -334,18 +296,10 @@ class SemgrepRule(BaseResource):
 class CreateSemgrepRulePayload(BaseModel):
     """Payload for creating a new Semgrep rule."""
 
-    meta: SemgrepRuleMetaCreate = Field(
-        ..., description="Semgrep rule metadata"
-    )
-    spec: SemgrepRuleSpec = Field(
-        ..., description="Semgrep rule specification"
-    )
-    propagate: Optional[bool] = Field(
-        True, description="Propagate to child namespaces"
-    )
-    disabled: Optional[bool] = Field(
-        None, description="Whether rule is disabled"
-    )
+    meta: SemgrepRuleMetaCreate = Field(..., description="Semgrep rule metadata")
+    spec: SemgrepRuleSpec = Field(..., description="Semgrep rule specification")
+    propagate: Optional[bool] = Field(True, description="Propagate to child namespaces")
+    disabled: Optional[bool] = Field(None, description="Whether rule is disabled")
 
 
 class UpdateSemgrepRulePayload(BaseModel):
@@ -357,12 +311,8 @@ class UpdateSemgrepRulePayload(BaseModel):
     spec: Optional[SemgrepRuleSpec] = Field(
         None, description="Updated semgrep rule specification"
     )
-    propagate: Optional[bool] = Field(
-        None, description="Propagate to child namespaces"
-    )
-    disabled: Optional[bool] = Field(
-        None, description="Whether rule is disabled"
-    )
+    propagate: Optional[bool] = Field(None, description="Propagate to child namespaces")
+    disabled: Optional[bool] = Field(None, description="Whether rule is disabled")
 
 
 def validate_semgrep_rule(
@@ -443,9 +393,7 @@ def validate_semgrep_rule(
         # Validate taint mode requirements
         if rule.mode == "taint":
             if not rule.pattern_sources or len(rule.pattern_sources) == 0:
-                errors.append(
-                    "pattern_sources is required when mode is 'taint'"
-                )
+                errors.append("pattern_sources is required when mode is 'taint'")
             if not rule.pattern_sinks or len(rule.pattern_sinks) == 0:
                 errors.append("pattern_sinks is required when mode is 'taint'")
 
@@ -575,7 +523,9 @@ def update_semgrep_rule(
         request_data = {
             "object": {
                 "uuid": rule_uuid,
-                "tenant_meta": current_rule.tenant_meta.model_dump() if current_rule.tenant_meta else {"namespace": tenant_meta_namespace},
+                "tenant_meta": current_rule.tenant_meta.model_dump()
+                if current_rule.tenant_meta
+                else {"namespace": tenant_meta_namespace},
             }
         }
 
@@ -589,7 +539,11 @@ def update_semgrep_rule(
             request_data["object"]["meta"] = current_rule.meta.model_dump()
 
         if payload.spec:
-            spec_dict = current_rule.spec.model_dump(exclude_none=True) if current_rule.spec else {}
+            spec_dict = (
+                current_rule.spec.model_dump(exclude_none=True)
+                if current_rule.spec
+                else {}
+            )
             spec_dict.update(payload.spec.model_dump(exclude_none=True))
             request_data["object"]["spec"] = spec_dict
         elif current_rule.spec:

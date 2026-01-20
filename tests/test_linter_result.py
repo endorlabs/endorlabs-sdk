@@ -61,9 +61,7 @@ class TestLinterResult:
         assert isinstance(linter_results_list, list), (
             "Should return a list of linter results"
         )
-        assert len(linter_results_list) > 0, (
-            "Should have at least one linter result"
-        )
+        assert len(linter_results_list) > 0, "Should have at least one linter result"
 
         print(f"Found {len(linter_results_list)} linter results")
 
@@ -84,7 +82,8 @@ class TestLinterResult:
         print("\n=== TESTING GET LINTER RESULT BY UUID ===")
 
         linter_result_item = self.linter_results[0]
-        # Use the linter result's actual namespace (may be in child namespace when traverse=True)
+        # Use the linter result's actual namespace
+        # (may be in child namespace when traverse=True)
         linter_result_namespace = (
             linter_result_item.tenant_meta.namespace
             if linter_result_item.tenant_meta
@@ -221,12 +220,8 @@ class TestLinterResult:
                 level = str(lr.spec.level) if lr.spec.level else "Unknown"
                 level_counts[level] = level_counts.get(level, 0) + 1
 
-                ecosystem = (
-                    str(lr.spec.ecosystem) if lr.spec.ecosystem else "Unknown"
-                )
-                ecosystem_counts[ecosystem] = (
-                    ecosystem_counts.get(ecosystem, 0) + 1
-                )
+                ecosystem = str(lr.spec.ecosystem) if lr.spec.ecosystem else "Unknown"
+                ecosystem_counts[ecosystem] = ecosystem_counts.get(ecosystem, 0) + 1
 
         print("\n=== Linter Result Distribution ===")
         print("Origin distribution:")
@@ -242,4 +237,3 @@ class TestLinterResult:
             print(f"  {ecosystem}: {count}")
 
         assert len(linter_results_list) > 0
-

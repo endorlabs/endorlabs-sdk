@@ -341,9 +341,7 @@ class FindingMetadata(BaseModel):
     )
     ci_blocking_policy_info: Optional[dict] = Field(
         None,
-        description=(
-            "This field is always empty. See spec.actions instead."
-        ),
+        description=("This field is always empty. See spec.actions instead."),
     )
     root_package_version_metadata: Optional[dict] = Field(
         None, description="Package metadata for the root package"
@@ -413,7 +411,9 @@ class FindingSpec(BaseSpec):
     )  # MUTABLE: User can update
     finding_metadata: Optional[FindingMetadata] = Field(
         None,
-        description="Complex nested structure with finding-specific metadata",  # IMMUTABLE: System-generated
+        description=(
+            "Complex nested structure with finding-specific metadata"
+        ),  # IMMUTABLE: System-generated
     )
     summary: Optional[str] = Field(
         None, description="Finding summary"
@@ -671,6 +671,7 @@ class FindingSpec(BaseSpec):
             return v["upgrade_list"]
         # If it's already a list (of strings or dicts), return as-is
         return v
+
     code_owners: Optional[Union[List[str], dict]] = Field(
         None, description="Code owners information (list or dict with owners/labels)"
     )  # IMMUTABLE: Analysis-determined
@@ -689,7 +690,8 @@ class FindingSpec(BaseSpec):
     @classmethod
     def detect_schema_drift(cls, v, info):
         """Override BaseSpec drift detection to skip typed nested model fields."""
-        # Skip drift detection for typed nested models (they handle their own validation)
+        # Skip drift detection for typed nested models
+        # (they handle their own validation)
         typed_model_fields = {
             "finding_metadata",  # FindingMetadata
             "actions",  # Actions
