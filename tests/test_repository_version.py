@@ -21,35 +21,49 @@ class TestRepositoryVersion:
     """Test cases for RepositoryVersion resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits
-        import conftest
-
+    @pytest.fixture
+    def sample_repository_version(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item for fast setup. Tests that need sample data should
+        request this fixture explicitly.
+        """
         from endor_cockpit.types import ListParameters
 
-        self.repository_versions = repository_version.list_repository_versions(
+        results = repository_version.list_repository_versions(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.repository_versions:
+        if not results:
             pytest.skip("No repository versions available for testing")
+        return results[0]  # Return single item, not list
 
     def test_repository_version_get_list(self):
         """Test GET repository versions operation."""
         print("\n=== TESTING GET REPOSITORY VERSIONS ===")
 
-        # Test list_repository_versions
+        # Test list_repository_versions with pagination limits
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
         repository_versions_list = repository_version.list_repository_versions(
-            self.client, self.namespace
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(repository_versions_list, list), (
             "Should return a list of repository versions"
@@ -69,9 +83,9 @@ class TestRepositoryVersion:
             print(f"  Version: {repo_version.spec.version}")
             print(f"  Parent UUID: {repo_version.meta.parent_uuid}")
 
-    def test_repository_version_get_by_uuid(self):
+    def test_repository_version_get_by_uuid(self, sample_repository_version):
         """Test GET repository version by UUID operation."""
-        test_repository_version = self.repository_versions[0]
+        test_repository_version = sample_repository_version
         retrieved_repository_version = repository_version.get_repository_version(
             self.client, self.namespace, test_repository_version.uuid
         )
@@ -81,9 +95,9 @@ class TestRepositoryVersion:
             retrieved_repository_version.meta.name == test_repository_version.meta.name
         )
 
-    def test_repository_version_conditional_attributes(self):
+    def test_repository_version_conditional_attributes(self, sample_repository_version):
         """Test conditional attributes in repository version."""
-        repository_version_obj = self.repository_versions[0]
+        repository_version_obj = sample_repository_version
 
         # Check for conditional attributes
         if (
@@ -104,28 +118,37 @@ class TestRepositoryVersion:
             assert "scan_time" in repository_version_obj.scan_object
             assert "status" in repository_version_obj.scan_object
 
-    def test_repository_version_advanced_filtering(self):
+    def test_repository_version_advanced_filtering(self, sample_repository_version):
         """Test advanced filtering capabilities."""
         from endor_cockpit.types import ListParameters
 
         # Test filtering by parent
-        if self.repository_versions:
-            parent_uuid = self.repository_versions[0].meta.parent_uuid
+        parent_uuid = sample_repository_version.meta.parent_uuid
+        if parent_uuid:
             if parent_uuid:
+                import conftest
+
                 filtered_versions = repository_version.list_repository_versions(
                     self.client,
                     self.namespace,
                     list_params=ListParameters(
-                        filter=f"meta.parent_uuid=={parent_uuid}"
+                        filter=f"meta.parent_uuid=={parent_uuid}",
+                        page_size=conftest.TEST_PAGE_SIZE,
                     ),
+                    max_pages=conftest.TEST_MAX_PAGES,
                 )
                 assert isinstance(filtered_versions, list)
-
         # Test field masking
+        import conftest
+
         masked_versions = repository_version.list_repository_versions(
             self.client,
             self.namespace,
-            list_params=ListParameters(mask="meta.name,spec.version"),
+            list_params=ListParameters(
+                mask="meta.name,spec.version",
+                page_size=conftest.TEST_PAGE_SIZE,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(masked_versions, list)
         if masked_versions:
@@ -142,9 +165,9 @@ class TestRepositoryVersion:
         )
         assert invalid_repository_version is None
 
-    def test_repository_version_hierarchical_relationships(self):
+    def test_repository_version_hierarchical_relationships(self, sample_repository_version):
         """Test hierarchical relationships in repository version."""
-        repository_version_obj = self.repository_versions[0]
+        repository_version_obj = sample_repository_version
 
         # Test parent relationship
         if (
@@ -165,6 +188,8 @@ class TestRepositoryVersion:
 
     def test_repository_version_pagination(self):
         """Test pagination capabilities."""
+        import conftest
+
         from endor_cockpit.types import ListParameters
 
         # Test with page size
@@ -173,13 +198,14 @@ class TestRepositoryVersion:
             self.client,
             self.namespace,
             list_params=ListParameters(page_size=5),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(paginated_versions, list)
         assert len(paginated_versions) > 0
 
-    def test_repository_version_field_validation(self):
+    def test_repository_version_field_validation(self, sample_repository_version):
         """Test field validation and required fields."""
-        repository_version_obj = self.repository_versions[0]
+        repository_version_obj = sample_repository_version
 
         # Verify required fields are present
         assert repository_version_obj.uuid is not None

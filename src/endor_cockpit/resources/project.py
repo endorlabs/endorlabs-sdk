@@ -356,6 +356,7 @@ def list_projects(
     client: APIClient,
     tenant_meta_namespace: str,
     list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,
 ) -> List[Project]:
     """
     List all projects in the specified namespace.
@@ -365,6 +366,9 @@ def list_projects(
         tenant_meta_namespace: The canonical namespace name
             (e.g., 'tenant.namespace')
         list_params: Optional list parameters for filtering, pagination, etc.
+        max_pages: Optional maximum number of pages to fetch.
+            If None and in test environment, defaults to 10 pages max.
+            If None in production, fetches all pages.
 
     Returns:
         List[Project]: A list of Project objects. Empty list if error occurs.
@@ -374,7 +378,7 @@ def list_projects(
         pydantic.ValidationError: If response data doesn't match expected schema
     """
     ops = _get_project_ops(client)
-    results = ops.list(tenant_meta_namespace, list_params)
+    results = ops.list(tenant_meta_namespace, list_params, max_pages)
     return [Project(**item.model_dump()) for item in results]  # type: ignore
 
 

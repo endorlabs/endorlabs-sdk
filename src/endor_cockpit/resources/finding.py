@@ -878,6 +878,7 @@ def list_findings(
     client: APIClient,
     tenant_meta_namespace: str,
     list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,
 ) -> List[Finding]:
     """
     List findings in a namespace.
@@ -886,12 +887,15 @@ def list_findings(
         client: APIClient instance
         tenant_meta_namespace: Canonical namespace name (e.g., 'tenant.namespace')
         list_params: Optional list parameters for filtering, pagination, etc.
+        max_pages: Optional maximum number of pages to fetch.
+            If None and in test environment, defaults to 10 pages max.
+            If None in production, fetches all pages.
 
     Returns:
         List of Finding objects
     """
     ops = _get_finding_ops(client)
-    results = ops.list(tenant_meta_namespace, list_params)
+    results = ops.list(tenant_meta_namespace, list_params, max_pages)
     return [Finding(**item.model_dump()) for item in results]  # type: ignore
 
 

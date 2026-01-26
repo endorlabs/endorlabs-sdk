@@ -480,6 +480,7 @@ def list_namespaces(
     client: APIClient,
     tenant_namespace: str,
     list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,
 ) -> List[Namespace]:
     """
     List all namespaces under the specified tenant namespace.
@@ -488,6 +489,9 @@ def list_namespaces(
         client: The APIClient instance to use for the request
         tenant_namespace: The parent namespace to list namespaces from
         list_params: Optional list parameters for filtering, pagination, etc.
+        max_pages: Optional maximum number of pages to fetch.
+            If None and in test environment, defaults to 10 pages max.
+            If None in production, fetches all pages.
 
     Returns:
         List[Namespace]: A list of Namespace objects. Empty list if error occurs.
@@ -497,7 +501,7 @@ def list_namespaces(
         pydantic.ValidationError: If response data doesn't match expected schema
     """
     ops = _get_namespace_ops(client)
-    results = ops.list(tenant_namespace, list_params)
+    results = ops.list(tenant_namespace, list_params, max_pages)
     return [Namespace(**item.model_dump()) for item in results]  # type: ignore
 
 

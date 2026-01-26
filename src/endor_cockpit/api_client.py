@@ -11,6 +11,7 @@ import logging
 import os
 import re
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -63,37 +64,64 @@ class APIClient:
         """
         Load configuration from endorctl config.yaml file.
 
-        Checks ~/.endorctl/config.yaml (or C:\\Users\\<user>\\.endorctl\\config.yaml
-        on Windows) for API credentials and configuration.
+        Checks multiple locations in order:
+        1. Project root .endorctl/config.yaml (for local development)
+        2. ~/.endorctl/config.yaml (or C:\\Users\\<user>\\.endorctl\\config.yaml
+           on Windows) for user-wide configuration
 
         Returns:
             Dictionary with config values or None if file doesn't exist
         """
-        home = Path.home()
-        config_path = home / ".endorctl" / "config.yaml"
+        config_paths = []
 
-        if not config_path.exists():
-            return None
-
+        # Check project root first (for local development)
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                config = yaml.safe_load(f)
-                if not isinstance(config, dict):
-                    return None
-                # Convert to string values and filter for relevant keys
-                result = {}
-                for key in [
-                    "ENDOR_API",
-                    "ENDOR_API_CREDENTIALS_KEY",
-                    "ENDOR_API_CREDENTIALS_SECRET",
-                    "ENDOR_NAMESPACE",
-                ]:
-                    if key in config:
-                        result[key] = str(config[key])
-                return result if result else None
+            # Try to find project root by looking for pyproject.toml
+            current = Path(__file__).parent
+            while current != current.parent:
+                pyproject = current / "pyproject.toml"
+                if pyproject.exists():
+                    project_config = current / ".endorctl" / "config.yaml"
+                    if project_config.exists():
+                        config_paths.append(project_config)
+                    break
+                current = current.parent
         except Exception:
-            # Silently fail - config file may be malformed
-            return None
+            pass
+
+        # Check user home directory
+        home = Path.home()
+        user_config = home / ".endorctl" / "config.yaml"
+        if user_config.exists():
+            config_paths.append(user_config)
+
+        # Try each config path in order
+        for config_path in config_paths:
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config = yaml.safe_load(f)
+                    if not isinstance(config, dict):
+                        continue
+                    # Convert to string values and filter for relevant keys
+                    result = {}
+                    for key in [
+                        "ENDOR_API",
+                        "ENDOR_API_CREDENTIALS_KEY",
+                        "ENDOR_API_CREDENTIALS_SECRET",
+                        "ENDOR_NAMESPACE",
+                        "ENDOR_TOKEN",
+                        "ENDOR_AUTH_METHOD",
+                        "ENDOR_BROWSER",
+                    ]:
+                        if key in config:
+                            result[key] = str(config[key])
+                    if result:
+                        return result
+            except Exception:
+                # Silently fail - config file may be malformed
+                continue
+
+        return None
 
     def __init__(
         self,
@@ -101,6 +129,9 @@ class APIClient:
         backoff_factor: float = 0.5,
         status_forcelist=(429, 500, 502, 503, 504),
         logging_level: str = "INFO",
+        token: Optional[str] = None,
+        auth_method: Optional[str] = None,
+        email: Optional[str] = None,
     ):
         # Set up logging
         from endor_cockpit.utils.logging_config import setup_logging
@@ -112,29 +143,74 @@ class APIClient:
         config_file = self._load_endorctl_config()
 
         # Initialize API client parameters
-        # Precedence: environment variables > config file
+        # Precedence: parameters > environment variables > config file > defaults
         self.base_url = (
             os.getenv("ENDOR_API")
             or (config_file.get("ENDOR_API") if config_file else None)
             or "https://api.endorlabs.com"
         )
-        self.key = os.getenv("ENDOR_API_CREDENTIALS_KEY") or (
-            config_file.get("ENDOR_API_CREDENTIALS_KEY") if config_file else None
-        )
-        self.secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET") or (
-            config_file.get("ENDOR_API_CREDENTIALS_SECRET") if config_file else None
+
+        # Determine authentication method
+        # Precedence: parameter > env var > config file > default (api-key)
+        self.auth_method = (
+            auth_method
+            or os.getenv("ENDOR_AUTH_METHOD")
+            or (config_file.get("ENDOR_AUTH_METHOD") if config_file else None)
+            or "api-key"
         )
 
-        if not self.key or not self.secret:
-            error_msg = (
-                "API credentials not found. Please provide credentials via:\n"
-                "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
-                "ENDOR_API_CREDENTIALS_SECRET\n"
-                "  - endorctl config file: ~/.endorctl/config.yaml "
-                "(or C:\\Users\\<user>\\.endorctl\\config.yaml on Windows)"
+        # Get token if provided directly
+        self._provided_token = (
+            token
+            or os.getenv("ENDOR_TOKEN")
+            or (config_file.get("ENDOR_TOKEN") if config_file else None)
+        )
+
+        # For browser auth, check if token is "browser" to trigger OAuth flow
+        if self._provided_token == "browser" or self.auth_method in [
+            "browser",
+            "admin",
+            "google",
+            "github",
+            "gitlab",
+            "email",
+        ]:
+            # Browser-based authentication
+            self.key = None
+            self.secret = None
+            self._auth_type = "browser"
+        else:
+            # API key authentication (default)
+            self.key = os.getenv("ENDOR_API_CREDENTIALS_KEY") or (
+                config_file.get("ENDOR_API_CREDENTIALS_KEY") if config_file else None
             )
-            self.logger.error(error_msg)
-            raise ValueError(error_msg)
+            self.secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET") or (
+                config_file.get("ENDOR_API_CREDENTIALS_SECRET") if config_file else None
+            )
+            self._auth_type = "api-key"
+
+            if not self.key or not self.secret:
+                error_msg = (
+                    "API credentials not found. Please provide credentials via:\n"
+                    "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
+                    "ENDOR_API_CREDENTIALS_SECRET\n"
+                    "  - endorctl config file: ~/.endorctl/config.yaml "
+                    "(or C:\\Users\\<user>\\.endorctl\\config.yaml on Windows)\n"
+                    "  - Or use browser authentication: APIClient(auth_method='browser')"
+                )
+                self.logger.error(error_msg)
+                raise ValueError(error_msg)
+
+        # Store browser auth parameters
+        self._browser_name = (
+            os.getenv("ENDOR_BROWSER")
+            or (config_file.get("ENDOR_BROWSER") if config_file else None)
+        )
+        self._email = email
+
+        # Initialize token expiration tracking
+        self._token: Optional[str] = None
+        self._token_expires: Optional[datetime] = None
 
         # Initialize session with retries
         self.session = requests.Session()
@@ -153,10 +229,11 @@ class APIClient:
         self.last_request_time = 0
         self.logger_len = 25
 
-        # Set initial headers
-        self.token = self.authenticate()
-        if self.token:
-            self.session.headers.update({"Authorization": f"Bearer {self.token}"})
+        # Authenticate and set initial headers
+        # Use token property to ensure fresh token with expiration tracking
+        _ = self.token
+        if self._token:
+            self.session.headers.update({"Authorization": f"Bearer {self._token}"})
         self.default_headers = self.session.headers.copy()
 
     def _rate_limit(self):
@@ -188,6 +265,19 @@ class APIClient:
         pattern = re.compile(redaction_pattern, re.IGNORECASE)
         data_str = pattern.sub(r"'\1': '***REDACTED***'", data_str)
         return data_str
+
+    def _ensure_authenticated(self):
+        """
+        Ensure token is fresh and session headers are updated.
+
+        This method should be called before making API requests to ensure
+        the token is valid and headers are up to date.
+        """
+        # Access token property to trigger refresh if needed
+        current_token = self.token
+        if current_token:
+            # Update session headers with current token
+            self.session.headers.update({"Authorization": f"Bearer {current_token}"})
 
     def _handle_response(
         self,
@@ -221,6 +311,7 @@ class APIClient:
                     f"Request to {response.url} was unauthorized."
                 )
                 self.logger.info("Attempting to reauthenticate...")
+                # Use authenticate() which will use the appropriate auth method
                 new_token = self.authenticate()
                 if new_token:
                     self.session.headers.update(
@@ -259,6 +350,7 @@ class APIClient:
     ) -> requests.Response:
         """GET request compatible with requests library signature."""
         self._rate_limit()
+        self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
         # Merge headers if provided
         request_kwargs = kwargs.copy()
@@ -308,6 +400,7 @@ class APIClient:
     ) -> requests.Response:
         """POST request compatible with requests library signature."""
         self._rate_limit()
+        self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
         # Merge headers if provided
         request_kwargs = kwargs.copy()
@@ -357,6 +450,7 @@ class APIClient:
     ) -> requests.Response:
         """PATCH request compatible with requests library signature."""
         self._rate_limit()
+        self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
         # Merge headers if provided
         request_kwargs = kwargs.copy()
@@ -406,6 +500,7 @@ class APIClient:
     ) -> requests.Response:
         """PUT request compatible with requests library signature."""
         self._rate_limit()
+        self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
         # Merge headers if provided
         request_kwargs = kwargs.copy()
@@ -455,6 +550,7 @@ class APIClient:
     ) -> requests.Response:
         """DELETE request compatible with requests library signature."""
         self._rate_limit()
+        self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
         # Merge headers if provided
         request_kwargs = kwargs.copy()
@@ -520,6 +616,7 @@ class APIClient:
         params: Optional[Dict] = None,
         data: Optional[Any] = None,
         json: Optional[Any] = None,
+        max_pages: Optional[int] = None,
         **kwargs,
     ) -> Iterator[Dict[str, Any]]:
         """
@@ -534,6 +631,8 @@ class APIClient:
             params: Query parameters (will be updated with page_token)
             data: Request body data
             json: Request body JSON
+            max_pages: Optional maximum number of pages to fetch.
+                If None, fetches all pages.
             **kwargs: Additional arguments passed to request
 
         Yields:
@@ -547,6 +646,14 @@ class APIClient:
         request_params = dict(params) if params else {}
 
         while True:
+            # Check max_pages limit before fetching page
+            if max_pages is not None and page_count >= max_pages:
+                self.logger.warning(
+                    f"Reached max_pages limit ({max_pages}). "
+                    f"Stopping pagination after {page_count} pages."
+                )
+                break
+
             # Update params with page_token if present
             if page_token is not None:
                 request_params["list_parameters.page_token"] = str(page_token)
@@ -582,8 +689,56 @@ class APIClient:
             f"Fetched all items from {normalized_url} across {page_count} pages"
         )
 
+    @property
+    def token(self) -> Optional[str]:
+        """
+        Get current token, automatically refreshing if expired or about to expire.
+
+        Returns:
+            Current bearer token string, or None if authentication fails.
+        """
+        # If no token or token expires within 30 minutes, re-authenticate
+        if self._token is None or self._token_expires is None:
+            self.authenticate()
+        else:
+            # Check if token expires within 30 minutes
+            now = datetime.now(timezone.utc)
+            time_until_expiry = (self._token_expires - now).total_seconds()
+            if time_until_expiry <= 30 * 60:  # 30 minutes in seconds
+                self.authenticate()
+        return self._token
+
+    @property
+    def is_expired(self) -> bool:
+        """
+        Check if the current token is expired or about to expire.
+
+        Returns:
+            True if token is expired or expires within 60 seconds, False otherwise.
+        """
+        if self._token_expires is None:
+            return True
+        # Check if token expires within 60 seconds
+        now = datetime.now(self._token_expires.tzinfo)
+        time_until_expiry = (self._token_expires - now).total_seconds()
+        return time_until_expiry <= 60
+
     def authenticate(self) -> Optional[str]:
-        """Authenticate and update session headers with bearer token."""
+        """
+        Authenticate and update session headers with bearer token.
+
+        Supports both API key and browser-based OAuth authentication.
+
+        Returns:
+            Bearer token string or None if authentication fails.
+        """
+        if self._auth_type == "browser":
+            return self._authenticate_browser()
+        else:
+            return self._authenticate_api_key()
+
+    def _authenticate_api_key(self) -> Optional[str]:
+        """Authenticate using API key and secret."""
         try:
             payload = {"key": self.key, "secret": self.secret}
             response = requests.post(
@@ -592,12 +747,156 @@ class APIClient:
                 json=payload,
             )
             response.raise_for_status()
-            token = response.json()["token"]
+            data = response.json()
+            token = data["token"]
+
+            # Parse expiration time from response
+            expires = None
+            if "expirationTime" in data:
+                expires = data["expirationTime"]
+            elif "expiration_time" in data:
+                expires = data["expiration_time"]
+
+            # Parse expiration datetime if present
+            if expires is not None:
+                try:
+                    # Replace 'Z' with '+00:00' for ISO format compatibility
+                    utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
+                    self._token_expires = datetime.fromisoformat(utc_datetime_str)
+                except Exception as e:
+                    # If parsing fails, log but don't error out
+                    self.logger.debug(
+                        f"Could not parse expiration time '{expires}': {e}"
+                    )
+                    self._token_expires = None
+            else:
+                self._token_expires = None
+
+            # Store token and update environment
+            self._token = token
             os.environ["ENDOR_TOKEN"] = token
+
             # Update session headers
             self.session.headers.update({"Authorization": f"Bearer {token}"})
             self.default_headers = self.session.headers.copy()
             return token
         except Exception as e:
-            self.logger.error(f"Unable to authenticate: {e}")
+            self.logger.error(f"Unable to authenticate with API key: {e}")
+            self._token = None
+            self._token_expires = None
+            return None
+
+    def _authenticate_browser(self) -> Optional[str]:
+        """
+        Authenticate using browser-based OAuth flow.
+
+        ⚠️  WARNING: This method requires human interaction and cannot be used
+        in CI/CD environments. It opens a browser window and waits for user
+        authentication. Use API key authentication (ENDOR_API_CREDENTIALS_KEY
+        and ENDOR_API_CREDENTIALS_SECRET) for automated environments.
+
+        Returns:
+            Bearer token string or None if authentication fails.
+        """
+        try:
+            from endor_cockpit.auth_server import get_token as get_browser_token
+
+            # Determine auth method for browser OAuth
+            if self._provided_token and self._provided_token != "browser":
+                # Direct token provided, validate it
+                token = self._provided_token
+                self.logger.info("Using provided token for authentication")
+            else:
+                # Trigger browser OAuth flow
+                # Map auth_method to browser OAuth method
+                browser_method = self.auth_method
+                if browser_method == "browser":
+                    browser_method = "admin"  # Default to admin SSO
+
+                # Extract environment from base_url
+                environment = self.base_url.replace("https://api.", "").replace(
+                    "http://api.", ""
+                )
+                if environment == self.base_url:
+                    # No api. prefix, use default
+                    environment = "endorlabs.com"
+
+                self.logger.info(
+                    f"Starting browser OAuth flow with method: {browser_method}"
+                )
+                token = get_browser_token(
+                    timeout=20,
+                    environment=environment,
+                    browser_name=self._browser_name,
+                    method=browser_method,
+                    email=self._email,
+                )
+
+            if not token:
+                self.logger.error("Browser authentication failed or was cancelled")
+                self._token = None
+                self._token_expires = None
+                return None
+
+            # Validate token by making a test request to get expiration info
+            # Some endpoints may return token metadata
+            try:
+                test_response = requests.get(
+                    f"{self.base_url}/meta/version",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=5,
+                )
+                test_response.raise_for_status()
+
+                # Try to extract expiration from response if available
+                # (Most endpoints don't return this, but we try)
+                try:
+                    data = test_response.json()
+                    if "expirationTime" in data:
+                        expires = data["expirationTime"]
+                    elif "expiration_time" in data:
+                        expires = data["expiration_time"]
+                    else:
+                        expires = None
+
+                    if expires is not None:
+                        try:
+                            utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
+                            self._token_expires = datetime.fromisoformat(
+                                utc_datetime_str
+                            )
+                        except Exception:
+                            self._token_expires = None
+                    else:
+                        # For browser tokens, we don't know expiration
+                        # Set to None (will be treated as expired when checked)
+                        self._token_expires = None
+                except Exception:
+                    self._token_expires = None
+            except Exception as e:
+                self.logger.debug(f"Token validation request failed: {e}")
+                # Token might still be valid, continue
+                self._token_expires = None
+
+            # Store token and update environment
+            self._token = token
+            os.environ["ENDOR_TOKEN"] = token
+
+            # Update session headers
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
+            self.default_headers = self.session.headers.copy()
+            self.logger.info("Browser authentication successful")
+            return token
+        except ImportError:
+            self.logger.error(
+                "Browser authentication requires auth_server module. "
+                "This should not happen."
+            )
+            self._token = None
+            self._token_expires = None
+            return None
+        except Exception as e:
+            self.logger.error(f"Unable to authenticate with browser: {e}")
+            self._token = None
+            self._token_expires = None
             return None

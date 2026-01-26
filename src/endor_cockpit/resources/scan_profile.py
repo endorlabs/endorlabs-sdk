@@ -441,6 +441,7 @@ def list_scan_profiles(
     client: APIClient,
     tenant_meta_namespace: str,
     list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,
 ) -> List[ScanProfile]:
     """
     List scan profiles in a namespace.
@@ -449,12 +450,15 @@ def list_scan_profiles(
         client: APIClient instance
         tenant_meta_namespace: Canonical namespace name (e.g., 'tenant.namespace')
         list_params: Optional list parameters for filtering, pagination, etc.
+        max_pages: Optional maximum number of pages to fetch.
+            If None and in test environment, defaults to 10 pages max.
+            If None in production, fetches all pages.
 
     Returns:
         List of ScanProfile objects
     """
     ops = _get_scan_profile_ops(client)
-    return ops.list(tenant_meta_namespace, list_params)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages)  # type: ignore
 
 
 def get_scan_profile(

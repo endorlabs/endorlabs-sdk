@@ -65,8 +65,12 @@ class GitHubConfig(BaseModel):
     """GitHub configuration for installation."""
 
     app_id: str = Field(..., description="GitHub App ID")
-    installation_id: str = Field(..., description="GitHub Installation ID")
-    private_key: str = Field(..., description="GitHub App Private Key")
+    installation_id: Optional[str] = Field(
+        None, description="GitHub Installation ID (may be masked in API responses)"
+    )
+    private_key: Optional[str] = Field(
+        None, description="GitHub App Private Key (may be masked in API responses)"
+    )
 
 
 class AzureConfig(BaseModel):
@@ -358,11 +362,12 @@ def list_installations(
     client: APIClient,
     tenant_meta_namespace: str,
     list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,
     **kwargs,
 ) -> List[Installation]:
     """List installations with advanced filtering and pagination."""
     ops = _get_installation_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)  # type: ignore
 
 
 def get_installation(

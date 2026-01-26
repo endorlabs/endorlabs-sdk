@@ -21,38 +21,65 @@ class TestRepository:
     """Test cases for Repository resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits
-        import conftest
+        # Get test data - use parent namespace to access child resources
+        parts = self.namespace.split(".")
+        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
+    @pytest.fixture
+    def sample_repository(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item for fast setup. Tests that need sample data should
+        request this fixture explicitly.
+        """
         from endor_cockpit.types import ListParameters
 
-        self.repositories = repository.list_repositories(
+        results = repository.list_repositories(
             self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            self.parent_namespace,
+            list_params=ListParameters(page_size=1, traverse=True),
+            max_pages=1,
         )
-        if not self.repositories:
+        if not results:
             pytest.skip("No repositories available for testing")
+        return results[0]  # Return single item, not list
 
     def test_repository_get_list(self):
         """Test GET repositories operation."""
         print("\n=== TESTING GET REPOSITORIES ===")
 
-        # Test list_repositories
-        repositories_list = repository.list_repositories(self.client, self.namespace)
+        # Test list_repositories with pagination limits
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        repositories_list = repository.list_repositories(
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         assert isinstance(repositories_list, list), (
             "Should return a list of repositories"
         )
-        assert len(repositories_list) > 0, "Should have at least one repository"
+        assert len(repositories_list) > 0, (
+            f"Should have at least one repository "
+            f"(namespace: {self.parent_namespace}, "
+            f"traverse: True, found: {len(repositories_list)})"
+        )
 
         print(f"Found {len(repositories_list)} repositories")
 
@@ -65,19 +92,26 @@ class TestRepository:
             print(f"  Platform: {repo.spec.platform_source}")
             print(f"  Clone URL: {repo.spec.http_clone_url}")
 
-    def test_repository_get_by_uuid(self):
+    def test_repository_get_by_uuid(self, sample_repository):
         """Test GET repository by UUID operation."""
-        test_repository = self.repositories[0]
+        test_repository = sample_repository
+        # Use the repository's actual namespace
+        # (may be in child namespace when traverse=True)
+        repository_namespace = (
+            test_repository.tenant_meta.namespace
+            if test_repository.tenant_meta
+            else self.parent_namespace
+        )
         retrieved_repository = repository.get_repository(
-            self.client, self.namespace, test_repository.uuid
+            self.client, repository_namespace, test_repository.uuid
         )
         assert retrieved_repository is not None
         assert retrieved_repository.uuid == test_repository.uuid
         assert retrieved_repository.meta.name == test_repository.meta.name
 
-    def test_repository_conditional_attributes(self):
+    def test_repository_conditional_attributes(self, sample_repository):
         """Test conditional attributes in repository."""
-        repository_obj = self.repositories[0]
+        repository_obj = sample_repository
 
         # Check for conditional attributes
         if (
@@ -91,23 +125,33 @@ class TestRepository:
 
     def test_repository_advanced_filtering(self):
         """Test advanced filtering capabilities."""
+        # Test filtering by platform
+        import conftest
+
         from endor_cockpit.types import ListParameters
 
-        # Test filtering by platform
         github_repos = repository.list_repositories(
             self.client,
-            self.namespace,
+            self.parent_namespace,
             list_params=ListParameters(
-                filter="spec.platform_source==PLATFORM_SOURCE_GITHUB"
+                filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
             ),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(github_repos, list)
 
         # Test field masking
         masked_repos = repository.list_repositories(
             self.client,
-            self.namespace,
-            list_params=ListParameters(mask="meta.name,spec.platform_source"),
+            self.parent_namespace,
+            list_params=ListParameters(
+                mask="meta.name,spec.platform_source",
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(masked_repos, list)
         if masked_repos:
@@ -120,6 +164,6 @@ class TestRepository:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID
         invalid_repository = repository.get_repository(
-            self.client, self.namespace, "invalid-uuid"
+            self.client, self.parent_namespace, "invalid-uuid"
         )
         assert invalid_repository is None

@@ -91,7 +91,7 @@ pytest tests/test_integration.py -m integration -v --no-cleanup
 
 ## 🏗️ Test Namespace
 
-All tests use the namespace: **`endor-solutions-tgowan`**
+All tests use the namespace: **`endor-solutions-tgowan.tgowan-endor`**
 
 Test objects are created with names like:
 - `integration-test-create-{timestamp}`
@@ -175,7 +175,7 @@ python -c "
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import namespace
 client = APIClient()
-ns = namespace.list_namespaces(client, 'endor-solutions-tgowan')
+ns = namespace.list_namespaces(client, 'endor-solutions-tgowan.tgowan-endor')
 print(f'Found {len(ns)} namespaces')
 "
 ```

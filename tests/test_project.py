@@ -34,8 +34,8 @@ class TestProject:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -50,6 +50,7 @@ class TestProject:
             self.client,
             self.namespace,
             list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not self.projects:
             pytest.skip("No projects available for testing")
@@ -58,8 +59,17 @@ class TestProject:
         """Test GET projects operation."""
         print("\n=== TESTING GET PROJECTS ===")
 
-        # Test list_projects
-        projects_list = project.list_projects(self.client, self.namespace)
+        # Test list_projects with pagination limits
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        projects_list = project.list_projects(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         assert isinstance(projects_list, list), "Should return a list of projects"
         assert len(projects_list) > 0, "Should have at least one project"
 
@@ -208,15 +218,19 @@ class TestProject:
 
     def test_project_advanced_filtering(self):
         """Test advanced filtering capabilities."""
+        # Test filtering by platform
+        import conftest
+
         from endor_cockpit.types import ListParameters
 
-        # Test filtering by platform
         github_projects = project.list_projects(
             self.client,
             self.namespace,
             list_params=ListParameters(
-                filter="spec.platform_source==PLATFORM_SOURCE_GITHUB"
+                filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
+                page_size=conftest.TEST_PAGE_SIZE,
             ),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(github_projects, list)
 
@@ -224,7 +238,11 @@ class TestProject:
         masked_projects = project.list_projects(
             self.client,
             self.namespace,
-            list_params=ListParameters(mask="meta.name,spec.platform_source"),
+            list_params=ListParameters(
+                mask="meta.name,spec.platform_source",
+                page_size=conftest.TEST_PAGE_SIZE,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(masked_projects, list)
         if masked_projects:
@@ -257,10 +275,17 @@ if __name__ == "__main__":
     test_instance = TestProject()
 
     # Manual setup
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    import conftest
+
+    from endor_cockpit.types import ListParameters
+
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     test_instance.projects = project.list_projects(
-        test_instance.client, test_instance.namespace
+        test_instance.client,
+        test_instance.namespace,
+        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        max_pages=conftest.TEST_MAX_PAGES,
     )
 
     try:

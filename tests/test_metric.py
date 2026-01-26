@@ -23,10 +23,10 @@ class TestMetric:
     """Test cases for Metric resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -36,29 +36,40 @@ class TestMetric:
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
-        # List metrics from parent namespace to get available data
-        import conftest
-
-        self.metrics = metric.list_metrics(
+    @pytest.fixture
+    def sample_metric(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
+        # Fetch 1 item without traverse (fast)
+        results = metric.list_metrics(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
-            ),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.metrics:
+        if not results:
             pytest.skip("No metrics available for testing")
+        return results[0]  # Return single item, not list
 
     def test_metric_list(self):
         """Test LIST metrics operation."""
         print("\n=== TESTING LIST METRICS ===")
 
         # Test list_metrics with traverse
+        import conftest
+
         metrics_list = metric.list_metrics(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(traverse=True),
+            list_params=ListParameters(
+                traverse=True,
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(metrics_list, list), "Should return a list of metrics"
         assert len(metrics_list) > 0, "Should have at least one metric"
@@ -78,11 +89,11 @@ class TestMetric:
                         f"  Metric values count: {len(metric_item.spec.metric_values)}"
                     )
 
-    def test_metric_get_by_uuid(self):
+    def test_metric_get_by_uuid(self, sample_metric):
         """Test GET metric by UUID operation."""
         print("\n=== TESTING GET METRIC BY UUID ===")
 
-        metric_item = self.metrics[0]
+        metric_item = sample_metric
         # Use the metric's actual namespace
         # (may be in child namespace when traverse=True)
         metric_namespace = (
@@ -115,28 +126,31 @@ class TestMetric:
                     f"Metric values: {list(retrieved_metric.spec.metric_values.keys())}"
                 )
 
-    def test_metric_filter_by_project(self):
+    def test_metric_filter_by_project(self, sample_metric):
         """Test filtering metrics by project UUID."""
         print("\n=== TESTING FILTER METRICS BY PROJECT ===")
 
         # Get first metric to extract project UUID
-        if not self.metrics:
-            pytest.skip("No metrics available for filtering test")
-
-        first_metric = self.metrics[0]
+        first_metric = sample_metric
         if not first_metric.spec or not first_metric.spec.project_uuid:
             pytest.skip("Metric has no project_uuid")
 
         project_uuid = first_metric.spec.project_uuid
 
         # Filter metrics by project
+        import conftest
+
         list_params = ListParameters(
             filter=f'spec.project_uuid=="{project_uuid}"',
             traverse=True,
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
         )
 
         filtered_results = metric.list_metrics(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(filtered_results, list), (
@@ -154,28 +168,31 @@ class TestMetric:
 
         print(f"Found {len(filtered_results)} metrics for project {project_uuid}")
 
-    def test_metric_filter_by_analytic(self):
+    def test_metric_filter_by_analytic(self, sample_metric):
         """Test filtering metrics by analytic name."""
         print("\n=== TESTING FILTER METRICS BY ANALYTIC ===")
 
         # Get first metric to extract analytic name
-        if not self.metrics:
-            pytest.skip("No metrics available for filtering test")
-
-        first_metric = self.metrics[0]
+        first_metric = sample_metric
         if not first_metric.spec or not first_metric.spec.analytic:
             pytest.skip("Metric has no analytic")
 
         analytic_name = first_metric.spec.analytic
 
         # Filter metrics by analytic
+        import conftest
+
         list_params = ListParameters(
             filter=f'spec.analytic=="{analytic_name}"',
             traverse=True,
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
         )
 
         filtered_results = metric.list_metrics(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(filtered_results, list), (
@@ -198,20 +215,26 @@ class TestMetric:
         print("\n=== TESTING LIST METRICS WITH TRAVERSE ===")
 
         # List with traverse enabled
+        import conftest
+
         list_params = ListParameters(
             traverse=True,
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
         )
 
         metrics_list = metric.list_metrics(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(metrics_list, list), "Should return a list of metrics"
         print(f"Found {len(metrics_list)} metrics (with traverse)")
 
-    def test_metric_field_validation(self):
+    def test_metric_field_validation(self, sample_metric):
         """Test field validation and required fields."""
-        metric_item = self.metrics[0]
+        metric_item = sample_metric
 
         # Verify required fields are present
         assert metric_item.uuid is not None
@@ -226,10 +249,13 @@ class TestMetric:
     def test_metric_pagination(self):
         """Test pagination capabilities."""
         # Test with page size
+        import conftest
+
         paginated_results = metric.list_metrics(
             self.client,
             self.parent_namespace,
             list_params=ListParameters(page_size=5, traverse=True),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(paginated_results, list)
         assert len(paginated_results) > 0
@@ -244,7 +270,17 @@ class TestMetric:
 
     def test_metric_analytic_distribution(self):
         """Test and analyze metric analytic distribution."""
-        metrics_list = metric.list_metrics(self.client, self.parent_namespace)
+        import conftest
+
+        metrics_list = metric.list_metrics(
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
 
         analytic_counts = {}
 

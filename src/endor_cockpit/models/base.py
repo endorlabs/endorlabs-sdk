@@ -419,10 +419,6 @@ class BaseResourceOperations:
         try:
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
-            all_items = []
-            page_token = None
-            page_count = 0
-
             # Check if we're in a test environment and set default max_pages
             import os
 
@@ -436,41 +432,15 @@ class BaseResourceOperations:
                     f"{max_pages} pages max"
                 )
 
-            while True:
-                # Check max_pages limit
-                if max_pages is not None and page_count >= max_pages:
-                    self.logger.warning(
-                        f"Reached max_pages limit ({max_pages}). "
-                        f"Stopping pagination after {page_count} pages. "
-                        f"Fetched {len(all_items)} items so far."
-                    )
-                    break
+            # Build query parameters once
+            params = self._build_params(list_params, **kwargs)
 
-                # Build query parameters for this page
-                params = self._build_params(list_params, **kwargs)
-
-                # Add page_token to params if present
-                if page_token is not None:
-                    params["list_parameters.page_token"] = str(page_token)
-
-                res = self.client.get(url, params=params)
-                data = res.json()
-
-                # Extract objects from this page
-                items = self._extract_items_from_page(data)
-                all_items.extend(items)
-                page_count += 1
-
-                # Check for next page token
-                page_token = self._extract_page_token(data)
-
-                # Break if no more pages
-                if not page_token:
-                    break
+            # Use get_all() for pagination instead of manual loop
+            all_items = list(self.client.get_all(url, params=params, max_pages=max_pages))
 
             self.logger.debug(
                 f"Fetched {len(all_items)} {self.resource_name} items "
-                f"across {page_count} pages from namespace '{tenant_meta_namespace}'"
+                f"from namespace '{tenant_meta_namespace}'"
             )
 
             return [self.model_class(**item) for item in all_items]

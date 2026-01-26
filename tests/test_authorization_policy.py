@@ -32,25 +32,14 @@ class TestAuthorizationPolicy:
     """Test cases for AuthorizationPolicy resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
         self.created_policy_uuids = []  # Track created policies for cleanup
 
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Get test data with pagination limits
-        import conftest
-
-        from endor_cockpit.types import ListParameters
-
-        self.policies = authorization_policy.list_authorization_policies(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-        )
 
     def teardown_method(self):
         """Clean up any policies created during tests."""
@@ -72,8 +61,15 @@ class TestAuthorizationPolicy:
         """Test GET authorization policies operation."""
         print("\n=== TESTING AUTHORIZATION POLICY LIST ===")
 
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
         policies = authorization_policy.list_authorization_policies(
-            self.client, self.namespace
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
 
         assert isinstance(policies, list), "Should return a list"
@@ -92,8 +88,15 @@ class TestAuthorizationPolicy:
         """Test GET authorization policy by UUID operation."""
         print("\n=== TESTING AUTHORIZATION POLICY GET BY UUID ===")
 
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
         policies = authorization_policy.list_authorization_policies(
-            self.client, self.namespace
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not policies:
             pytest.skip("No authorization policies available for testing")
@@ -323,10 +326,17 @@ if __name__ == "__main__":
     test_instance = TestAuthorizationPolicy()
 
     # Manual setup
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    import conftest
+
+    from endor_cockpit.types import ListParameters
+
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     test_instance.policies = authorization_policy.list_authorization_policies(
-        test_instance.client, test_instance.namespace
+        test_instance.client,
+        test_instance.namespace,
+        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        max_pages=conftest.TEST_MAX_PAGES,
     )
 
     try:

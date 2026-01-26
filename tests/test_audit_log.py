@@ -39,8 +39,8 @@ class TestAuditLog:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -373,8 +373,8 @@ if __name__ == "__main__":
     test_instance = TestAuditLog()
 
     # Manual setup
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     test_instance.audit_logs = audit_log.list_audit_logs(
         test_instance.client,
         test_instance.namespace,

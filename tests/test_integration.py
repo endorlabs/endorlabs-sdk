@@ -44,7 +44,7 @@ class TestEndorCockpitIntegration:
         if missing_vars:
             pytest.skip(f"Missing required environment variables: {missing_vars}")
 
-        client = APIClient()
+        client = APIClient(auth_method="api-key")
         return client
 
     @pytest.fixture(scope="class")
@@ -110,7 +110,16 @@ class TestEndorCockpitIntegration:
     def test_api_connection(self, api_client, tenant_namespace):
         """Test basic API connection and authentication."""
         # Test connection by listing namespaces
-        namespaces_list = namespace.list_namespaces(api_client, tenant_namespace)
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        namespaces_list = namespace.list_namespaces(
+            api_client,
+            tenant_namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
 
         assert namespaces_list is not None
         assert isinstance(namespaces_list, list)

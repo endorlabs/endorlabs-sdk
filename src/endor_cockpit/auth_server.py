@@ -1,0 +1,220 @@
+"""
+Browser-based OAuth authentication server for Endor Labs.
+
+This module provides browser-based OAuth authentication by starting a local
+HTTP server to capture the bearer token from the OAuth redirect callback.
+
+⚠️  WARNING: Browser authentication requires human interaction and cannot be
+used in CI/CD environments. Use API key authentication (ENDOR_API_CREDENTIALS_KEY
+and ENDOR_API_CREDENTIALS_SECRET) for automated environments.
+"""
+
+import logging
+import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from typing import Optional
+from webbrowser import get as get_browser
+
+logger = logging.getLogger(__name__)
+
+# Global variable to store the captured token
+LAST_TOKEN = None
+
+# Default environment
+DEFAULT_ENV = "endorlabs.com"
+
+# Authentication method URLs
+AUTH_METHODS = {
+    "admin": "https://api.{environment}/v1/auth/sso?tenant=endor-admin",
+    "google": "https://api.{environment}/v1/auth/google",
+    "github": "https://api.{environment}/v1/auth/github",
+    "gitlab": "https://api.{environment}/v1/auth/gitlab",
+    "email": "https://api.{environment}/v1/auth/login",
+}
+
+
+class TokenHandler(BaseHTTPRequestHandler):
+    """HTTP request handler for OAuth callback that captures the bearer token."""
+
+    def do_GET(self):
+        """Handle GET request from OAuth redirect."""
+        global LAST_TOKEN
+        try:
+            # Ignore favicon requests
+            if self.path == "/favicon.ico":
+                self.send_response(404)
+                self.end_headers()
+                return
+
+            # Parse query parameters (matches ewok-util approach)
+            if "?" not in self.path:
+                logger.warning(f"No query parameters in redirect: {self.path}")
+                self.send_response(404)
+                self.end_headers()
+                return
+
+            loc, query = self.path.split("?", 1)
+            params = {}
+            for param in query.split("&"):
+                if "=" in param:
+                    k, v = param.split("=", 1)
+                    params[k] = v
+
+            if "token" in params:
+                LAST_TOKEN = params["token"]
+                logger.info("Token captured successfully")
+                # Return simple HTML page instead of redirect to prevent new tabs
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                try:
+                    self.wfile.write(
+                        b"<html><head><title>Authentication Successful</title></head>"
+                        b"<body><h1>Authentication successful!</h1>"
+                        b"<p>You can close this window.</p></body></html>"
+                    )
+                except Exception:
+                    pass
+            else:
+                logger.warning(f"Token not found in redirect: {self.path}")
+                # Redirect to success page only if token not found
+                self.send_response(302)
+                self.send_header(
+                    "Location", f"https://app.{DEFAULT_ENV}/endorctl-success"
+                )
+                self.end_headers()
+            self.close_connection = True
+        except Exception as e:
+            logger.error(f"Error handling OAuth callback: {e}")
+            self.send_response(500)
+            self.end_headers()
+            self.close_connection = True
+
+    def do_POST(self):
+        """Handle POST request from OAuth redirect (SSO may use POST)."""
+        # SSO auth may come back with POST, but we handle it the same as GET
+        self.do_GET()
+
+    def log_message(self, format, *args, **kwargs):
+        """Suppress default HTTP server logs."""
+        # Optionally enable in debug mode
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"HTTP Server: {format % args}")
+
+
+def get_token(
+    timeout: int = 20,
+    environment: str = DEFAULT_ENV,
+    browser_name: Optional[str] = None,
+    method: str = "admin",
+    email: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Get bearer token via browser OAuth flow.
+
+    Starts a local HTTP server on localhost:30000, opens a browser to the
+    OAuth URL, and captures the token from the redirect callback.
+
+    ⚠️  WARNING: This function requires human interaction (opens browser window)
+    and cannot be used in CI/CD environments. Use API key authentication instead.
+
+    Args:
+        timeout: Server timeout in seconds (default: 20)
+        environment: API environment domain (default: "endorlabs.com")
+        browser_name: Browser name for webbrowser.get() (optional)
+        method: Auth method - 'admin', 'google', 'github', 'gitlab', or 'email'
+        email: Email address for email-based authentication (required if method='email')
+
+    Returns:
+        Bearer token string or None if authentication failed or timed out
+
+    Raises:
+        ValueError: If method is not supported, email is required but not provided,
+            or if called in a CI/CD environment
+    """
+    global LAST_TOKEN
+    LAST_TOKEN = None
+
+    # Detect CI/CD environments and prevent browser auth
+    ci_indicators = [
+        "CI",  # Generic CI flag (GitHub Actions, GitLab CI, etc.)
+        "CONTINUOUS_INTEGRATION",  # Travis CI
+        "GITHUB_ACTIONS",  # GitHub Actions
+        "GITLAB_CI",  # GitLab CI
+        "JENKINS_URL",  # Jenkins
+        "BUILDKITE",  # Buildkite
+        "CIRCLECI",  # CircleCI
+    ]
+    is_ci = any(os.getenv(indicator) for indicator in ci_indicators)
+
+    if is_ci:
+        raise ValueError(
+            "Browser authentication cannot be used in CI/CD environments. "
+            "Browser authentication requires human interaction (opens browser window). "
+            "Use API key authentication instead by setting ENDOR_API_CREDENTIALS_KEY "
+            "and ENDOR_API_CREDENTIALS_SECRET environment variables."
+        )
+
+    if method not in AUTH_METHODS:
+        raise ValueError(
+            f"Unsupported auth method: {method}. "
+            f"Supported methods: {', '.join(AUTH_METHODS.keys())}"
+        )
+
+    if method == "email" and not email:
+        raise ValueError("Email address required for email-based authentication")
+
+    # Build OAuth URL
+    auth_url_template = AUTH_METHODS[method]
+    auth_url = auth_url_template.format(environment=environment)
+
+    # Add email parameter for email auth
+    if method == "email":
+        auth_url = f"{auth_url}?email={email}"
+
+    # Add redirect parameter
+    redirect_param = "&" if "?" in auth_url else "?"
+    auth_url = f"{auth_url}{redirect_param}redirect=cli"
+
+    try:
+        # Start local HTTP server
+        server = HTTPServer(("localhost", 30000), TokenHandler)
+        server.timeout = timeout
+
+        # Open browser (only once)
+        browser = get_browser(browser_name)
+        logger.info(f"Opening browser for {method} authentication...")
+        browser.open_new_tab(auth_url)
+
+        # Wait for callback (blocks until request received or timeout)
+        logger.info(
+            f"Waiting for OAuth callback on localhost:30000 "
+            f"(timeout: {timeout}s)..."
+        )
+
+        # Handle request - this will block until ONE request is received or timeout
+        # After handling one request, server stops listening (handle_request only processes one)
+        server.handle_request()
+
+        # Clean up server
+        server.server_close()
+
+        if LAST_TOKEN:
+            logger.info("Browser authentication successful")
+            return LAST_TOKEN
+        else:
+            logger.warning("No token received from OAuth callback")
+            return None
+
+    except OSError as e:
+        if "Address already in use" in str(e):
+            logger.error(
+                "Port 30000 is already in use. "
+                "Please close any other applications using this port."
+            )
+        else:
+            logger.error(f"Failed to start OAuth server: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Browser authentication failed: {e}")
+        return None
