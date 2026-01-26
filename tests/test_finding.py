@@ -21,37 +21,51 @@ class TestFinding:
     """Test cases for Finding resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits and traverse mode
-        import conftest
-
+    @pytest.fixture
+    def sample_finding(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
         from endor_cockpit.types import ListParameters
 
-        self.findings = finding.list_findings(
+        # Fetch 1 item without traverse (fast)
+        results = finding.list_findings(
             self.client,
             self.namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
-            ),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.findings:
+        if not results:
             pytest.skip("No findings available for testing")
+        return results[0]  # Return single item, not list
 
     def test_finding_get_list(self):
         """Test GET findings operation."""
         print("\n=== TESTING GET FINDINGS ===")
 
-        # Test list_findings
-        findings_list = finding.list_findings(self.client, self.namespace)
+        # Test list_findings with pagination limits
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        findings_list = finding.list_findings(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         assert isinstance(findings_list, list), "Should return a list of findings"
         assert len(findings_list) > 0, "Should have at least one finding"
 
@@ -65,13 +79,12 @@ class TestFinding:
             if finding_item.spec.finding_tags:
                 print(f"  Finding spec finding_tags: {finding_item.spec.finding_tags}")
 
-    def test_finding_get_by_uuid(self):
+    def test_finding_get_by_uuid(self, sample_finding):
         """Test GET finding by UUID operation."""
         print("\n=== TESTING GET FINDING BY UUID ===")
 
-        finding_item = self.findings[0]
+        finding_item = sample_finding
         # Use the finding's actual namespace
-        # (may be in child namespace when traverse=True)
         finding_namespace = (
             finding_item.tenant_meta.namespace
             if finding_item.tenant_meta
@@ -114,10 +127,17 @@ if __name__ == "__main__":
     test_instance = TestFinding()
 
     # Manual setup
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    import conftest
+
+    from endor_cockpit.types import ListParameters
+
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     test_instance.findings = finding.list_findings(
-        test_instance.client, test_instance.namespace
+        test_instance.client,
+        test_instance.namespace,
+        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        max_pages=conftest.TEST_MAX_PAGES,
     )
 
     try:

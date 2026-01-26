@@ -32,8 +32,8 @@ def test_namespaces_main_flow():
         pytest.skip(f"Missing required environment variables: {missing_vars}")
 
     # Setup APIClient
-    client = APIClient(max_retries=2, backoff_factor=0.1)
-    tenant_namespace = os.getenv("ENDOR_NAMESPACE", "")
+    client = APIClient(max_retries=2, backoff_factor=0.1, auth_method="api-key")
+    tenant_namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     if not tenant_namespace:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     # Create mock namespaces
@@ -63,7 +63,16 @@ def test_namespaces_main_flow():
             print(f"Warning: Failed to create namespace {payload.meta.name}: {e}")
             # Continue with other namespaces
     # List and check created
-    all_namespaces = list_namespaces(client, tenant_namespace)
+    import conftest
+
+    from endor_cockpit.types import ListParameters
+
+    all_namespaces = list_namespaces(
+        client,
+        tenant_namespace,
+        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        max_pages=conftest.TEST_MAX_PAGES,
+    )
     mock_names = {p.meta.name for p in mock_namespaces_to_create}
     found = [ns for ns in all_namespaces if ns.meta.name in mock_names]
     # Assert that at least one namespace was created successfully

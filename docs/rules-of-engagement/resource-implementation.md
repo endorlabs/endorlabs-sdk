@@ -96,6 +96,39 @@ def get_{resource}(client: APIClient, tenant_meta_namespace: str, {resource}_uui
         return None
 ```
 
+#### **List Operations with Pagination Control**
+
+All `list_*` functions support the `max_pages` parameter for controlling pagination:
+
+```python
+def list_{resource}s(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,  # Required parameter
+) -> List[{Resource}]:
+    """List all {resource}s in the specified namespace.
+    
+    Args:
+        client: The APIClient instance
+        tenant_meta_namespace: The canonical namespace name
+        list_params: Optional list parameters for filtering, pagination, etc.
+        max_pages: Optional maximum number of pages to fetch.
+            If None and in test environment, defaults to 10 pages max.
+            If None in production, fetches all pages.
+    
+    Returns:
+        List[{Resource}]: A list of {Resource} objects
+    """
+    ops = _get_{resource}_ops(client)
+    return ops.list(tenant_meta_namespace, list_params, max_pages)
+```
+
+**Important Notes:**
+- Always include `max_pages: Optional[int] = None` in function signature
+- Pass `max_pages` directly to `ops.list()` call
+- The `BaseResourceOperations.list()` method handles test environment detection automatically
+
 ### 2. Advanced Resource Patterns
 
 #### **Schema Drift Detection**

@@ -23,10 +23,10 @@ class TestInstallation:
     """Test cases for Installation resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -36,34 +36,49 @@ class TestInstallation:
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
-        # List installations from parent namespace to get available data
-        import conftest
-
-        self.installations = installation.list_installations(
+    @pytest.fixture
+    def sample_installation(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
+        # Fetch 1 item without traverse (fast)
+        results = installation.list_installations(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
-            ),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.installations:
+        if not results:
             pytest.skip("No installations available for testing")
+        return results[0]  # Return single item, not list
 
     def test_installation_list(self):
         """Test LIST installations operation."""
         print("\n=== TESTING LIST INSTALLATIONS ===")
 
         # Test list_installations with traverse
+        import conftest
+
         installations_list = installation.list_installations(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(traverse=True),
+            list_params=ListParameters(
+                traverse=True,
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(installations_list, list), (
             "Should return a list of installations"
         )
-        assert len(installations_list) > 0, "Should have at least one installation"
+        assert len(installations_list) > 0, (
+            f"Should have at least one installation "
+            f"(namespace: {self.parent_namespace}, "
+            f"traverse: True, found: {len(installations_list)})"
+        )
 
         print(f"Found {len(installations_list)} installations")
 
@@ -83,11 +98,11 @@ class TestInstallation:
                 if installation_item.spec.suspended is not None:
                     print(f"  Suspended: {installation_item.spec.suspended}")
 
-    def test_installation_get_by_uuid(self):
+    def test_installation_get_by_uuid(self, sample_installation):
         """Test GET installation by UUID operation."""
         print("\n=== TESTING GET INSTALLATION BY UUID ===")
 
-        installation_item = self.installations[0]
+        installation_item = sample_installation
         # Use the installation's actual namespace
         # (may be in child namespace when traverse=True)
         installation_namespace = (
@@ -119,15 +134,12 @@ class TestInstallation:
             if retrieved_installation.spec.external_name:
                 print(f"External name: {retrieved_installation.spec.external_name}")
 
-    def test_installation_filter_by_platform(self):
+    def test_installation_filter_by_platform(self, sample_installation):
         """Test filtering installations by platform type."""
         print("\n=== TESTING FILTER INSTALLATIONS BY PLATFORM ===")
 
         # Get first installation to extract platform type
-        if not self.installations:
-            pytest.skip("No installations available for filtering test")
-
-        first_installation = self.installations[0]
+        first_installation = sample_installation
         if not first_installation.spec or not first_installation.spec.platform_type:
             pytest.skip("Installation has no platform_type")
 
@@ -166,12 +178,18 @@ class TestInstallation:
         print("\n=== TESTING LIST INSTALLATIONS WITH TRAVERSE ===")
 
         # List with traverse enabled
+        import conftest
+
         list_params = ListParameters(
             traverse=True,
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
         )
 
         installations_list = installation.list_installations(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(installations_list, list), (
@@ -179,9 +197,9 @@ class TestInstallation:
         )
         print(f"Found {len(installations_list)} installations (with traverse)")
 
-    def test_installation_field_validation(self):
+    def test_installation_field_validation(self, sample_installation):
         """Test field validation and required fields."""
-        installation_item = self.installations[0]
+        installation_item = sample_installation
 
         # Verify required fields are present
         assert installation_item.uuid is not None
@@ -195,13 +213,20 @@ class TestInstallation:
     def test_installation_pagination(self):
         """Test pagination capabilities."""
         # Test with page size
+        import conftest
+
         paginated_results = installation.list_installations(
             self.client,
             self.parent_namespace,
             list_params=ListParameters(page_size=5, traverse=True),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(paginated_results, list)
-        assert len(paginated_results) > 0
+        assert len(paginated_results) > 0, (
+            f"Should have at least one installation "
+            f"(namespace: {self.parent_namespace}, "
+            f"traverse: True, found: {len(paginated_results)})"
+        )
 
     def test_installation_error_handling(self):
         """Test error handling for invalid UUID."""
@@ -213,8 +238,16 @@ class TestInstallation:
 
     def test_installation_platform_distribution(self):
         """Test and analyze installation platform distribution."""
+        import conftest
+
         installations_list = installation.list_installations(
-            self.client, self.parent_namespace
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         platform_counts = {}
@@ -255,4 +288,8 @@ class TestInstallation:
         for status, count in suspended_counts.items():
             print(f"  {status}: {count}")
 
-        assert len(installations_list) > 0
+        assert len(installations_list) > 0, (
+            f"Should have at least one installation "
+            f"(namespace: {self.parent_namespace}, "
+            f"traverse: True, found: {len(installations_list)})"
+        )

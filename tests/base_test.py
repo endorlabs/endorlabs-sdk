@@ -66,7 +66,14 @@ class BaseResourceTest:
             namespace: Namespace string
             test_list_params: ListParameters with pagination limits
         """
-        resources = list_func(api_client, namespace, list_params=test_list_params)
+        import conftest
+
+        resources = list_func(
+            api_client,
+            namespace,
+            list_params=test_list_params,
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         assert isinstance(resources, list), "Should return a list"
         assert len(resources) > 0, "Should have at least one resource"
 

@@ -18,36 +18,50 @@ class TestPackageVersion:
     """Test cases for Package Version operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits and traverse mode
+    @pytest.fixture
+    def sample_package_version(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
+        from endor_cockpit.types import ListParameters
+
+        # Fetch 1 item without traverse (fast)
+        results = package_version.list_package_versions(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
+        )
+        if not results:
+            pytest.skip("No package versions available for testing")
+        return results[0]  # Return single item, not list
+
+    def test_package_version_get_list(self):
+        """Test GET package-versions operation."""
         import conftest
 
         from endor_cockpit.types import ListParameters
 
-        self.package_versions = package_version.list_package_versions(
+        package_versions_list = package_version.list_package_versions(
             self.client,
             self.namespace,
             list_params=ListParameters(
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                page_size=conftest.TEST_PAGE_SIZE,
                 traverse=True,
             ),
-            max_pages=1,
-        )
-        if not self.package_versions:
-            pytest.skip("No package versions available for testing")
-
-    def test_package_version_get_list(self):
-        """Test GET package-versions operation."""
-        package_versions_list = package_version.list_package_versions(
-            self.client, self.namespace
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(package_versions_list, list)
         assert len(package_versions_list) > 0
@@ -74,11 +88,10 @@ class TestPackageVersion:
             assert hasattr(pv.spec, "language")
             assert hasattr(pv.spec, "project_uuid")
 
-    def test_package_version_get_by_uuid(self):
+    def test_package_version_get_by_uuid(self, sample_package_version):
         """Test GET package-version by UUID operation."""
-        test_package_version = self.package_versions[0]
+        test_package_version = sample_package_version
         # Use the package version's actual namespace
-        # (may be in child namespace when traverse=True)
         package_namespace = (
             test_package_version.tenant_meta.namespace
             if test_package_version.tenant_meta

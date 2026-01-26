@@ -32,7 +32,10 @@ def pytest_collection_modifyitems(config, items):
 
 
 def _has_credentials() -> bool:
-    """Check if Endor Labs credentials are available."""
+    """Check if Endor Labs API key credentials are available.
+    
+    Tests only support API key authentication, not browser-based auth.
+    """
     required_vars = [
         "ENDOR_API",
         "ENDOR_API_CREDENTIALS_KEY",
@@ -44,7 +47,8 @@ def _has_credentials() -> bool:
 @pytest.fixture(scope="session")
 def integration_config():
     """Integration test configuration."""
-    namespace = os.getenv("ENDOR_NAMESPACE", "")
+    # Default to endor-solutions-tgowan.tgowan-endor namespace for tests
+    namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     if not namespace:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     return {

@@ -23,10 +23,10 @@ class TestScanResult:
     """Test cases for ScanResult resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -37,29 +37,42 @@ class TestScanResult:
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
-        # List scan results from parent namespace to get available data
-        import conftest
-
+    @pytest.fixture
+    def sample_scan_result(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
         from endor_cockpit.types import ListParameters
 
-        self.scan_results = scan_result.list_scan_results(
+        # Fetch 1 item without traverse (fast)
+        results = scan_result.list_scan_results(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
-            ),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.scan_results:
+        if not results:
             pytest.skip("No scan results available for testing")
+        return results[0]  # Return single item, not list
 
     def test_scan_result_list(self):
         """Test LIST scan results operation."""
         print("\n=== TESTING LIST SCAN RESULTS ===")
 
-        # Test list_scan_results
+        # Test list_scan_results with pagination limits
+        import conftest
+
         scan_results_list = scan_result.list_scan_results(
-            self.client, self.parent_namespace
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(scan_results_list, list), (
             "Should return a list of scan results"
@@ -82,11 +95,11 @@ class TestScanResult:
                 if scan_result_item.spec.end_time:
                     print(f"  End: {scan_result_item.spec.end_time}")
 
-    def test_scan_result_get_by_uuid(self):
+    def test_scan_result_get_by_uuid(self, sample_scan_result):
         """Test GET scan result by UUID operation."""
         print("\n=== TESTING GET SCAN RESULT BY UUID ===")
 
-        scan_result_item = self.scan_results[0]
+        scan_result_item = sample_scan_result
         # Use the scan result's actual namespace
         # (may be in child namespace when traverse=True)
         scan_result_namespace = (
@@ -116,36 +129,30 @@ class TestScanResult:
             print(f"Status: {retrieved_scan_result.spec.status}")
             print(f"Type: {retrieved_scan_result.spec.type}")
 
-    def test_scan_result_filter_by_project(self):
+    def test_scan_result_filter_by_project(self, sample_scan_result):
         """Test filtering scan results by project UUID."""
         print("\n=== TESTING FILTER SCAN RESULTS BY PROJECT ===")
 
         # Get first scan result to extract project UUID
-        if not self.scan_results:
-            pytest.skip("No scan results available for filtering test")
-
-        first_scan = self.scan_results[0]
+        first_scan = sample_scan_result
         if not first_scan.meta or not first_scan.meta.parent_uuid:
             pytest.skip("Scan result has no parent_uuid (project)")
 
         project_uuid = first_scan.meta.parent_uuid
 
         # Filter scan results by project
+        import conftest
+
         list_params = ListParameters(
             filter=f'meta.parent_uuid=="{project_uuid}"',
-            traverse=None,
-            mask=None,
-            page_size=None,
-            page_token=None,
-            sort_field=None,
-            sort_order=None,
-            count=None,
-            from_date=None,
-            to_date=None,
+            page_size=conftest.TEST_PAGE_SIZE,
         )
 
         filtered_results = scan_result.list_scan_results(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(filtered_results, list), (
@@ -168,21 +175,18 @@ class TestScanResult:
         print("\n=== TESTING LIST SCAN RESULTS WITH TRAVERSE ===")
 
         # List with traverse enabled
+        import conftest
+
         list_params = ListParameters(
-            filter=None,
             traverse=True,
-            mask=None,
-            page_size=None,
-            page_token=None,
-            sort_field=None,
-            sort_order=None,
-            count=None,
-            from_date=None,
-            to_date=None,
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
         )
 
         scan_results_list = scan_result.list_scan_results(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(scan_results_list, list), (
@@ -190,9 +194,9 @@ class TestScanResult:
         )
         print(f"Found {len(scan_results_list)} scan results (with traverse)")
 
-    def test_scan_result_field_validation(self):
+    def test_scan_result_field_validation(self, sample_scan_result):
         """Test field validation and required fields."""
-        scan_result_item = self.scan_results[0]
+        scan_result_item = sample_scan_result
 
         # Verify required fields are present
         assert scan_result_item.uuid is not None
@@ -206,10 +210,13 @@ class TestScanResult:
         """Test pagination capabilities."""
         # Test with page size
         # Note: API may return more than page_size if it has a minimum page size
+        import conftest
+
         paginated_results = scan_result.list_scan_results(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=5),
+            list_params=ListParameters(page_size=5, traverse=True),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(paginated_results, list)
         assert len(paginated_results) > 0
@@ -224,8 +231,16 @@ class TestScanResult:
 
     def test_scan_result_status_distribution(self):
         """Test and analyze scan result status distribution."""
+        import conftest
+
         scan_results_list = scan_result.list_scan_results(
-            self.client, self.parent_namespace
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         status_counts = {}
@@ -265,14 +280,24 @@ if __name__ == "__main__":
     test_instance = TestScanResult()
 
     # Manual setup
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     parts = test_instance.namespace.split(".")
     test_instance.parent_namespace = (
         parts[0] if len(parts) > 1 else test_instance.namespace
     )
+    import conftest
+
+    from endor_cockpit.types import ListParameters
+
     test_instance.scan_results = scan_result.list_scan_results(
-        test_instance.client, test_instance.parent_namespace
+        test_instance.client,
+        test_instance.parent_namespace,
+        list_params=ListParameters(
+            page_size=conftest.TEST_PAGE_SIZE,
+            traverse=True,
+        ),
+        max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
     )
 
     try:

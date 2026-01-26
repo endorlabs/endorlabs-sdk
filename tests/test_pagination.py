@@ -26,8 +26,8 @@ class TestPagination:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -207,7 +207,16 @@ class TestPagination:
         """Test pagination with real API data (integration test)."""
         # This test will only run if we have real API access
         try:
-            findings = finding.list_findings(self.client, self.namespace)
+            import conftest
+
+            from endor_cockpit.types import ListParameters
+
+            findings = finding.list_findings(
+                self.client,
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
             assert isinstance(findings, list), "Should return a list of findings"
 
             # Log pagination info for debugging
@@ -226,7 +235,16 @@ class TestPagination:
     def test_real_pagination_with_projects(self):
         """Test pagination with real projects data (integration test)."""
         try:
-            projects = project.list_projects(self.client, self.namespace)
+            import conftest
+
+            from endor_cockpit.types import ListParameters
+
+            projects = project.list_projects(
+                self.client,
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
             assert isinstance(projects, list), "Should return a list of projects"
 
             print(f"Fetched {len(projects)} projects from API")
@@ -254,8 +272,8 @@ if __name__ == "__main__":
     test_instance = TestPagination()
 
     # Manual setup without using pytest fixture
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
     try:
         print("Running pagination tests...")
