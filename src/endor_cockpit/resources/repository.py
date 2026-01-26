@@ -56,14 +56,20 @@ class PlatformSource(FlexibleEnum):
 class PlatformAccount(BaseModel):
     """Platform account information."""
 
-    external_id: str = Field(..., description="External ID of the platform account")
-    platform_source: PlatformSource = Field(..., description="Platform source")
+    external_id: Optional[str] = Field(
+        None, description="External ID of the platform account (may be masked)"
+    )
+    platform_source: Optional[PlatformSource] = Field(
+        None, description="Platform source (may be masked)"
+    )
 
 
 class Languages(BaseModel):
     """Repository languages information."""
 
-    languages: List[str] = Field(..., description="List of programming languages")
+    languages: Optional[List[str]] = Field(
+        None, description="List of programming languages (may be masked)"
+    )
 
 
 class Tag(BaseModel):
@@ -89,16 +95,20 @@ class BranchProtection(BaseModel):
 class Organization(BaseModel):
     """Organization information."""
 
-    external_id: str = Field(..., description="Organization external ID")
-    name: str = Field(..., description="Organization name")
-    platform_source: PlatformSource = Field(..., description="Platform source")
+    external_id: Optional[str] = Field(
+        None, description="Organization external ID (may be masked)"
+    )
+    name: Optional[str] = Field(None, description="Organization name (may be masked)")
+    platform_source: Optional[PlatformSource] = Field(
+        None, description="Platform source (may be masked)"
+    )
 
 
 class RepositoryLicense(BaseModel):
     """Repository license information."""
 
-    key: str = Field(..., description="License key")
-    name: str = Field(..., description="License name")
+    key: Optional[str] = Field(None, description="License key (may be masked)")
+    name: Optional[str] = Field(None, description="License name (may be masked)")
     spdx_id: Optional[str] = Field(None, description="SPDX ID")
     url: Optional[str] = Field(None, description="License URL")
 
@@ -264,11 +274,12 @@ def list_repositories(
     client: APIClient,
     tenant_meta_namespace: str,
     list_params: Optional[ListParameters] = None,
+    max_pages: Optional[int] = None,
     **kwargs,
 ) -> List[Repository]:
     """List repositories with advanced filtering and pagination."""
     ops = _get_repository_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)  # type: ignore
 
 
 def get_repository(

@@ -123,6 +123,28 @@ jobs:
           fi
           echo "✅ All required secrets and variables are present"
 
+      - name: Validate no browser auth in CI
+        run: |
+          # Browser authentication methods require human interaction and cannot be used in CI
+          browser_auth_methods=("browser" "admin" "google" "github" "gitlab" "email")
+          if [ -n "${ENDOR_AUTH_METHOD:-}" ]; then
+            for method in "${browser_auth_methods[@]}"; do
+              if [ "${ENDOR_AUTH_METHOD}" = "$method" ]; then
+                echo "❌ ERROR: Browser authentication method '$method' cannot be used in CI"
+                echo "Browser authentication requires human interaction (opens browser window)"
+                echo "Use API key authentication instead: ENDOR_API_CREDENTIALS_KEY and ENDOR_API_CREDENTIALS_SECRET"
+                exit 1
+              fi
+            done
+          fi
+          # Also check if ENDOR_TOKEN is set to "browser" (triggers browser auth)
+          if [ "${ENDOR_TOKEN:-}" = "browser" ]; then
+            echo "❌ ERROR: ENDOR_TOKEN='browser' triggers browser authentication and cannot be used in CI"
+            echo "Use API key authentication instead: ENDOR_API_CREDENTIALS_KEY and ENDOR_API_CREDENTIALS_SECRET"
+            exit 1
+          fi
+          echo "✅ Authentication method validated (API key only in CI)"
+
       - name: Install endorctl
         run: |
           # Install endorctl binary using official Endor Labs download
@@ -199,6 +221,19 @@ jobs:
           GITHUB_API_URL: ${{ github.api_url }}
           ENDOR_LOG_LEVEL: "debug"
           ENDOR_LOG_VERBOSE: "true"
+
+      - name: Test retrieving-scan-results workflow
+        run: |
+          echo "Testing retrieving-scan-results workflow end-to-end..."
+          echo "This validates the workflow: Repository URL → Project → ScanResult → Findings"
+          echo "Repository URL: ${{ github.server_url }}/${{ github.repository }}.git"
+          uv run pytest tests/test_retrieving_scan_results_workflow.py::TestRetrievingScanResultsWorkflow::test_complete_workflow_end_to_end -v
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          TEST_REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
 
   # Lint job - runs after security passes
   lint:

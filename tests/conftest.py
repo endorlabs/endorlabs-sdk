@@ -7,6 +7,7 @@ the Endor Cockpit SDK across all modules.
 
 import logging
 import os
+from pathlib import Path
 from typing import Any, Callable, Dict
 from unittest.mock import Mock
 
@@ -15,6 +16,39 @@ import pytest
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.types import ListParameters
 
+
+def pytest_configure(config):
+    """Load .env file before tests run to ensure environment variables are set.
+    
+    This hook only loads variables from .env if they're not already set in the
+    environment. This ensures:
+    - Local development: .env file is loaded if present
+    - CI/CD: GitHub Actions Secrets/Variables take precedence (not overridden)
+    - The .env file is in .gitignore, so it won't exist in CI anyway
+    """
+    env_file = Path(".env")
+    if env_file.exists():
+        # Load .env file manually if UV didn't load it automatically
+        with open(env_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                # Skip comments and empty lines
+                if not line or line.startswith("#"):
+                    continue
+                # Parse KEY=VALUE format
+                if "=" in line:
+                    key, value = line.split("=", 1)
+                    key = key.strip()
+                    value = value.strip()
+                    # Remove quotes if present
+                    if value.startswith('"') and value.endswith('"'):
+                        value = value[1:-1]
+                    elif value.startswith("'") and value.endswith("'"):
+                        value = value[1:-1]
+                    # Only set if not already in environment (CI variables take precedence)
+                    if key and not os.getenv(key):
+                        os.environ[key] = value
+
 # Test pagination limits
 # Tests fetch limited resources for setup (page_size=10, max 5 pages = 50 items max)
 # Tests that need more should explicitly request it
@@ -22,6 +56,9 @@ TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
 TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
 TEST_TRAVERSE_PAGE_SIZE = (
     2  # Minimal page size for traverse tests to limit network load
+)
+TEST_MAX_PAGES_TRAVERSE = (
+    2  # Max pages for traverse queries (slower, so more restrictive)
 )
 
 
@@ -46,14 +83,20 @@ def sample_namespace():
 
 @pytest.fixture
 def api_client():
-    """Create a real APIClient instance for integration tests."""
-    return APIClient()
+    """Create a real APIClient instance for integration tests.
+    
+    Uses API key authentication only (not browser auth).
+    """
+    return APIClient(auth_method="api-key")
 
 
 @pytest.fixture
 def namespace():
-    """Get namespace from environment for testing."""
-    namespace = os.getenv("ENDOR_NAMESPACE", "")
+    """Get namespace from environment for testing.
+    
+    Defaults to 'endor-solutions-tgowan.tgowan-endor' if not set.
+    """
+    namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     if not namespace:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     return namespace

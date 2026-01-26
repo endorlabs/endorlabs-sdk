@@ -29,10 +29,10 @@ class TestPolicy:
     """Test cases for Policy resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -40,18 +40,25 @@ class TestPolicy:
 
         self.created_policy_uuids = []  # Track created policies for cleanup
 
-        # Get test data with pagination limits
-        import conftest
-
+    @pytest.fixture
+    def sample_policy(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item for fast setup. Tests that need sample data should
+        request this fixture explicitly.
+        """
         from endor_cockpit.types import ListParameters
 
-        self.policies = policy.list_policies(
+        results = policy.list_policies(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.policies:
+        if not results:
             pytest.skip("No policies available for testing")
+        return results[0]  # Return single item, not list
 
     def _create_test_policy(self, name_suffix: str = ""):
         """Helper method to create a test policy for CRUD operations.
@@ -132,8 +139,17 @@ configure[result] {
         """Test GET policies operation."""
         print("\n=== TESTING GET POLICIES ===")
 
-        # Test list_policies
-        policies_list = policy.list_policies(self.client, self.namespace)
+        # Test list_policies with pagination limits
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        policies_list = policy.list_policies(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         assert isinstance(policies_list, list), "Should return a list of policies"
         assert len(policies_list) > 0, "Should have at least one policy"
 
@@ -146,11 +162,11 @@ configure[result] {
             if policy_item.meta.tags:
                 print(f"  Meta tags: {policy_item.meta.tags}")
 
-    def test_policy_get_by_uuid(self):
+    def test_policy_get_by_uuid(self, sample_policy):
         """Test GET policy by UUID operation."""
         print("\n=== TESTING GET POLICY BY UUID ===")
 
-        policy_item = self.policies[0]
+        policy_item = sample_policy
         retrieved_policy = policy.get_policy(
             self.client, self.namespace, policy_item.uuid
         )
@@ -186,9 +202,17 @@ configure[result] {
             PolicyType.NOTIFICATION,
         ]
 
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
         for policy_type in policy_types:
             filtered_policies = policy.list_policies(
-                self.client, self.namespace, policy_type
+                self.client,
+                self.namespace,
+                policy_type,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
             )
             print(f"{policy_type.value}: {len(filtered_policies)} policies")
 
@@ -202,16 +226,27 @@ configure[result] {
         """Test and analyze policy rules."""
         print("\n=== POLICY RULE ANALYSIS ===")
 
+        # Fetch policies for analysis
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        policies = policy.list_policies(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         # Find policies with rules
-        policies_with_rules = [p for p in self.policies if p.spec.rule]
+        policies_with_rules = [p for p in policies if p.spec.rule]
         print(f"Found {len(policies_with_rules)} policies with rules")
 
         if policies_with_rules:
-            policy = policies_with_rules[0]
-            print(f"Analyzing rule for policy: {policy.meta.name}")
+            policy_obj = policies_with_rules[0]
+            print(f"Analyzing rule for policy: {policy_obj.meta.name}")
 
             # Analyze rule content
-            rule = policy.spec.rule
+            rule = policy_obj.spec.rule
             print(f"Rule length: {len(rule)} characters")
             print(f"Rule type: {type(rule)}")
 
@@ -229,60 +264,71 @@ configure[result] {
         """Test and analyze policy templates."""
         print("\n=== POLICY TEMPLATE ANALYSIS ===")
 
+        # Fetch policies for analysis
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        policies = policy.list_policies(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
         # Find policies with templates
-        policies_with_templates = [p for p in self.policies if p.spec.template_uuid]
+        policies_with_templates = [p for p in policies if p.spec.template_uuid]
         print(f"Found {len(policies_with_templates)} policies with templates")
 
         if policies_with_templates:
-            policy = policies_with_templates[0]
-            print(f"Analyzing template for policy: {policy.meta.name}")
+            policy_obj = policies_with_templates[0]
+            print(f"Analyzing template for policy: {policy_obj.meta.name}")
 
             # Analyze template information
-            print(f"Template UUID: {policy.spec.template_uuid}")
-            print(f"Template Version: {policy.spec.template_version}")
+            print(f"Template UUID: {policy_obj.spec.template_uuid}")
+            print(f"Template Version: {policy_obj.spec.template_version}")
 
-            if policy.spec.template_parameters:
-                print(f"Template Parameters: {len(policy.spec.template_parameters)}")
-                for param in policy.spec.template_parameters:
+            if policy_obj.spec.template_parameters:
+                print(f"Template Parameters: {len(policy_obj.spec.template_parameters)}")
+                for param in policy_obj.spec.template_parameters:
                     print(f"  - {param}")
 
-            if policy.spec.template_values:
-                print(f"Template Values: {policy.spec.template_values}")
+            if policy_obj.spec.template_values:
+                print(f"Template Values: {policy_obj.spec.template_values}")
 
-    def test_policy_configuration_analysis(self):
+    def test_policy_configuration_analysis(self, sample_policy):
         """Test and analyze policy configuration."""
         print("\n=== POLICY CONFIGURATION ANALYSIS ===")
 
-        policy = self.policies[0]
-        print(f"Analyzing configuration for policy: {policy.meta.name}")
+        policy_obj = sample_policy
+        print(f"Analyzing configuration for policy: {policy_obj.meta.name}")
 
         # Analyze policy configuration
-        print(f"Policy Type: {policy.spec.policy_type}")
-        print(f"Disabled: {policy.spec.disable}")
-        print(f"Propagate: {policy.propagate}")
+        print(f"Policy Type: {policy_obj.spec.policy_type}")
+        print(f"Disabled: {policy_obj.spec.disable}")
+        print(f"Propagate: {policy_obj.propagate}")
 
         # Analyze resource kinds
-        if policy.spec.resource_kinds:
-            print(f"Resource Kinds: {policy.spec.resource_kinds}")
+        if policy_obj.spec.resource_kinds:
+            print(f"Resource Kinds: {policy_obj.spec.resource_kinds}")
 
         # Analyze project selectors
-        if policy.spec.project_selector:
-            print(f"Project Selector: {policy.spec.project_selector}")
+        if policy_obj.spec.project_selector:
+            print(f"Project Selector: {policy_obj.spec.project_selector}")
 
-        if policy.spec.project_exceptions:
-            print(f"Project Exceptions: {policy.spec.project_exceptions}")
+        if policy_obj.spec.project_exceptions:
+            print(f"Project Exceptions: {policy_obj.spec.project_exceptions}")
 
         # Analyze finding configuration
-        if policy.spec.finding:
-            print(f"Finding Configuration: {policy.spec.finding}")
+        if policy_obj.spec.finding:
+            print(f"Finding Configuration: {policy_obj.spec.finding}")
 
         # Analyze admission configuration
-        if policy.spec.admission:
-            print(f"Admission Configuration: {policy.spec.admission}")
+        if policy_obj.spec.admission:
+            print(f"Admission Configuration: {policy_obj.spec.admission}")
 
         # Analyze notification configuration
-        if policy.spec.notification:
-            print(f"Notification Configuration: {policy.spec.notification}")
+        if policy_obj.spec.notification:
+            print(f"Notification Configuration: {policy_obj.spec.notification}")
 
     def test_policy_create_ml_finding(self):
         """Test CREATE policy operation using ML_FINDING pattern."""
@@ -504,10 +550,17 @@ if __name__ == "__main__":
     test_instance = TestPolicy()
 
     # Manual setup
-    test_instance.client = APIClient()
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    import conftest
+
+    from endor_cockpit.types import ListParameters
+
+    test_instance.client = APIClient(auth_method="api-key")
+    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
     test_instance.policies = policy.list_policies(
-        test_instance.client, test_instance.namespace
+        test_instance.client,
+        test_instance.namespace,
+        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        max_pages=conftest.TEST_MAX_PAGES,
     )
 
     try:

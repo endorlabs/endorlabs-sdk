@@ -23,10 +23,10 @@ class TestScanProfile:
     """Test cases for ScanProfile resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -36,22 +36,39 @@ class TestScanProfile:
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
-        # List scan profiles from parent namespace to get available data
-        import conftest
+    @pytest.fixture
+    def sample_scan_profile(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item for fast setup. Tests that need sample data should
+        request this fixture explicitly.
+        """
 
-        self.scan_profiles = scan_profile.list_scan_profiles(
+        results = scan_profile.list_scan_profiles(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
+        if not results:
+            pytest.skip("No scan profiles available for testing")
+        return results[0]  # Return single item, not list
 
     def test_scan_profile_list(self):
         """Test LIST scan profiles operation."""
         print("\n=== TESTING LIST SCAN PROFILES ===")
 
-        # Test list_scan_profiles
+        # Test list_scan_profiles with pagination limits
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
         scan_profiles_list = scan_profile.list_scan_profiles(
-            self.client, self.parent_namespace
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(scan_profiles_list, list), (
             "Should return a list of scan profiles"
@@ -71,14 +88,11 @@ class TestScanProfile:
                 if profile.propagate:
                     print("  Propagate: Yes")
 
-    def test_scan_profile_get_by_uuid(self):
+    def test_scan_profile_get_by_uuid(self, sample_scan_profile):
         """Test GET scan profile by UUID operation."""
         print("\n=== TESTING GET SCAN PROFILE BY UUID ===")
 
-        if not self.scan_profiles:
-            pytest.skip("No scan profiles available for testing")
-
-        profile = self.scan_profiles[0]
+        profile = sample_scan_profile
         retrieved_profile = scan_profile.get_scan_profile(
             self.client, self.parent_namespace, profile.uuid
         )
@@ -98,12 +112,9 @@ class TestScanProfile:
         if retrieved_profile.meta:
             print(f"Scan profile name: {retrieved_profile.meta.name}")
 
-    def test_scan_profile_field_validation(self):
+    def test_scan_profile_field_validation(self, sample_scan_profile):
         """Test field validation and required fields."""
-        if not self.scan_profiles:
-            pytest.skip("No scan profiles available for testing")
-
-        profile = self.scan_profiles[0]
+        profile = sample_scan_profile
 
         # Verify required fields are present
         assert profile.uuid is not None
@@ -116,10 +127,18 @@ class TestScanProfile:
         print("\n=== TESTING LIST SCAN PROFILES WITH TRAVERSE ===")
 
         # List with traverse enabled
-        list_params = ListParameters(traverse=True)
+        import conftest
+
+        list_params = ListParameters(
+            traverse=True,
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+        )
 
         scan_profiles_list = scan_profile.list_scan_profiles(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(scan_profiles_list, list), (
@@ -130,10 +149,13 @@ class TestScanProfile:
     def test_scan_profile_pagination(self):
         """Test pagination capabilities."""
         # Test with page size
+        import conftest
+
         paginated_profiles = scan_profile.list_scan_profiles(
             self.client,
             self.parent_namespace,
             list_params=ListParameters(page_size=5),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(paginated_profiles, list)
 
@@ -147,7 +169,16 @@ class TestScanProfile:
 
     def test_scan_profile_structure_analysis(self):
         """Test and analyze scan profile structure."""
-        if not self.scan_profiles:
+        import conftest
+
+        # Fetch scan profiles for analysis
+        scan_profiles = scan_profile.list_scan_profiles(
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
+        if not scan_profiles:
             pytest.skip("No scan profiles available for testing")
 
         print("\n=== Scan Profile Structure Analysis ===")
@@ -156,7 +187,7 @@ class TestScanProfile:
         has_automated_params = 0
         has_toolchain = 0
 
-        for profile in self.scan_profiles:
+        for profile in scan_profiles:
             if profile.spec:
                 if profile.spec.is_default:
                     default_count += 1
@@ -167,10 +198,10 @@ class TestScanProfile:
             if profile.propagate:
                 propagate_count += 1
 
-        print(f"Total profiles: {len(self.scan_profiles)}")
+        print(f"Total profiles: {len(scan_profiles)}")
         print(f"Default profiles: {default_count}")
         print(f"Propagated profiles: {propagate_count}")
         print(f"Profiles with automated params: {has_automated_params}")
         print(f"Profiles with toolchain: {has_toolchain}")
 
-        assert len(self.scan_profiles) > 0
+        assert len(scan_profiles) > 0

@@ -194,6 +194,28 @@ private_deps = dependency_metadata.list_dependency_metadata(
 - **Payloads**: Use Pydantic models for type safety
 - **API Understanding**: Check OpenAPI spec → Review docs → Validate implementation
 
+### **Pagination Control**
+
+All `list_*` functions support `max_pages` parameter for safety:
+
+```python
+from endor_cockpit.resources import finding
+from endor_cockpit.types import ListParameters
+import conftest
+
+# Limit pagination in tests
+findings = finding.list_findings(
+    client, "tenant.namespace",
+    list_params=ListParameters(page_size=10),
+    max_pages=conftest.TEST_MAX_PAGES  # Safety limit
+)
+```
+
+**Best Practices:**
+- Use `max_pages` in tests to prevent excessive API calls
+- In production, `max_pages=None` fetches all pages automatically
+- Test environment auto-limits to 10 pages if `max_pages=None`
+
 ---
 
 ## 📊 **Resource Implementation Status**

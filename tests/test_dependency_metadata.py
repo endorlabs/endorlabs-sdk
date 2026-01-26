@@ -23,40 +23,51 @@ class TestDependencyMetadata:
     """Test cases for DependencyMetadata resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits
-        import conftest
-
         # Extract parent namespace from child namespace if needed
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
-        self.dependency_metadata_list = dependency_metadata.list_dependency_metadata(
+    @pytest.fixture
+    def sample_dependency_metadata(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
+
+        # Fetch 1 item without traverse (fast)
+        results = dependency_metadata.list_dependency_metadata(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
-            ),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if not self.dependency_metadata_list:
+        if not results:
             pytest.skip("No dependency metadata available for testing")
+        return results[0]  # Return single item, not list
 
     def test_dependency_metadata_get_list(self):
         """Test GET dependency-metadata operation."""
         print("\n=== TESTING GET DEPENDENCY METADATA ===")
 
-        # Test list_dependency_metadata
+        # Test list_dependency_metadata with pagination limits
+        import conftest
+
         dependency_metadata_list = dependency_metadata.list_dependency_metadata(
-            self.client, self.parent_namespace
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(dependency_metadata_list, list), (
             "Should return a list of dependency metadata"
@@ -91,13 +102,12 @@ class TestDependencyMetadata:
                     if dm.spec.dependency_data.ecosystem:
                         print(f"  Ecosystem: {dm.spec.dependency_data.ecosystem}")
 
-    def test_dependency_metadata_get_by_uuid(self):
+    def test_dependency_metadata_get_by_uuid(self, sample_dependency_metadata):
         """Test GET dependency-metadata by UUID operation."""
         print("\n=== TESTING GET DEPENDENCY METADATA BY UUID ===")
 
-        test_dm = self.dependency_metadata_list[0]
+        test_dm = sample_dependency_metadata
         # Use the dependency metadata's actual namespace
-        # (may be in child namespace when traverse=True)
         dm_namespace = (
             test_dm.tenant_meta.namespace
             if test_dm.tenant_meta
@@ -126,9 +136,9 @@ class TestDependencyMetadata:
             if retrieved_dm.spec.dependency_data.ecosystem:
                 print(f"Ecosystem: {retrieved_dm.spec.dependency_data.ecosystem}")
 
-    def test_dependency_metadata_field_validation(self):
+    def test_dependency_metadata_field_validation(self, sample_dependency_metadata):
         """Test field validation and required fields."""
-        dm = self.dependency_metadata_list[0]
+        dm = sample_dependency_metadata
 
         # Verify required fields are present
         assert dm.uuid is not None
@@ -149,11 +159,14 @@ class TestDependencyMetadata:
 
     def test_dependency_metadata_pagination(self):
         """Test pagination capabilities."""
-        # Test with page size
+        # Test with page size and max_pages limit
+        import conftest
+
         paginated_results = dependency_metadata.list_dependency_metadata(
             self.client,
             self.parent_namespace,
             list_params=ListParameters(page_size=5),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(paginated_results, list)
         assert len(paginated_results) > 0
@@ -166,27 +179,30 @@ class TestDependencyMetadata:
         )
         assert invalid_dm is None
 
-    def test_dependency_metadata_filter_by_project(self):
+    def test_dependency_metadata_filter_by_project(self, sample_dependency_metadata):
         """Test filtering dependency metadata by project UUID."""
         print("\n=== TESTING FILTER DEPENDENCY METADATA BY PROJECT ===")
 
         # Get first dependency metadata to extract project UUID
-        if not self.dependency_metadata_list:
-            pytest.skip("No dependency metadata available for filtering test")
-
-        first_dm = self.dependency_metadata_list[0]
+        first_dm = sample_dependency_metadata
         if not first_dm.spec or not first_dm.spec.dependency_data:
             pytest.skip("Dependency metadata has no dependency_data")
 
         project_uuid = first_dm.spec.dependency_data.project_uuid
 
-        # Filter dependency metadata by project
+        # Filter dependency metadata by project with pagination limits
+        import conftest
+
         list_params = ListParameters(
             filter=f'spec.dependency_data.project_uuid=="{project_uuid}"',
+            page_size=conftest.TEST_PAGE_SIZE,
         )
 
         filtered_results = dependency_metadata.list_dependency_metadata(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES,
         )
 
         assert isinstance(filtered_results, list), (
@@ -210,8 +226,14 @@ class TestDependencyMetadata:
 
     def test_dependency_metadata_ecosystem_distribution(self):
         """Test and analyze dependency metadata ecosystem distribution."""
+        # Use pagination limits to prevent slow queries
+        import conftest
+
         dependency_metadata_list = dependency_metadata.list_dependency_metadata(
-            self.client, self.parent_namespace
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
 
         ecosystem_counts = {}

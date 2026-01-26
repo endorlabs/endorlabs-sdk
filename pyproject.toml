@@ -59,6 +59,7 @@ exclude = [
     "maneuvers/",  # Maneuver scripts - utility automation scripts
     "maneuvers/**",  
     "*.log",
+    "*.md",  # Markdown files - not Python code
     "__pycache__",
     "*.pyc",
     "*.pyo",

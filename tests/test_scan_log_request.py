@@ -30,10 +30,10 @@ class TestScanLogRequest:
     """Test cases for ScanLogRequest resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self):
+        """Fast setup: client and namespace only (runs before each test)."""
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
 
         # Validate namespace is set
         if not self.namespace:
@@ -43,32 +43,35 @@ class TestScanLogRequest:
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
+    @pytest.fixture
+    def sample_scan_result_uuid(self):
+        """Fetch minimal sample scan result UUID for testing.
+        
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item for fast setup. Tests that need sample data should
+        request this fixture explicitly.
+        """
         # Get a scan result to test log retrieval
-        import conftest
-
         scan_results = scan_result.list_scan_results(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(page_size=1),
+            max_pages=1,
         )
-        if scan_results:
-            self.test_scan_result_uuid = scan_results[0].uuid
-        else:
-            self.test_scan_result_uuid = None
+        if not scan_results:
+            pytest.skip("No scan results available for testing")
+        return scan_results[0].uuid
 
-    def test_create_scan_log_request(self):
+    def test_create_scan_log_request(self, sample_scan_result_uuid):
         """Test creating a scan log request."""
         print("\n=== TESTING CREATE SCAN LOG REQUEST ===")
-
-        if not self.test_scan_result_uuid:
-            pytest.skip("No scan results available for testing")
 
         # Create a log request for a scan result
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-scan-log-request"),
             spec=ScanLogRequestSpecCreate(
                 max_entries=10,
-                scan_result_uuid=self.test_scan_result_uuid,
+                scan_result_uuid=sample_scan_result_uuid,
             ),
         )
 
@@ -84,18 +87,15 @@ class TestScanLogRequest:
         if request.spec.log_messages:
             print(f"Retrieved {len(request.spec.log_messages)} log messages")
 
-    def test_get_scan_result_logs_helper(self):
+    def test_get_scan_result_logs_helper(self, sample_scan_result_uuid):
         """Test the convenience helper function."""
         print("\n=== TESTING GET SCAN RESULT LOGS HELPER ===")
-
-        if not self.test_scan_result_uuid:
-            pytest.skip("No scan results available for testing")
 
         # Use the convenience helper
         logs = scan_log_request.get_scan_result_logs(
             self.client,
             self.parent_namespace,
-            self.test_scan_result_uuid,
+            sample_scan_result_uuid,
             max_entries=10,
         )
 
@@ -106,19 +106,16 @@ class TestScanLogRequest:
                 if log.timestamp and log.level:
                     print(f"  {log.timestamp} [{log.level}]")
 
-    def test_scan_log_request_with_filters(self):
+    def test_scan_log_request_with_filters(self, sample_scan_result_uuid):
         """Test creating log request with various filters."""
         print("\n=== TESTING SCAN LOG REQUEST WITH FILTERS ===")
-
-        if not self.test_scan_result_uuid:
-            pytest.skip("No scan results available for testing")
 
         # Test with log level filter
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-filtered-log-request"),
             spec=ScanLogRequestSpecCreate(
                 max_entries=20,
-                scan_result_uuid=self.test_scan_result_uuid,
+                scan_result_uuid=sample_scan_result_uuid,
                 log_levels=[ScanLogLevel.ERROR, ScanLogLevel.WARNING],
                 newest_first=True,
             ),
