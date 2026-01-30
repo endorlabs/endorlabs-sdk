@@ -7,7 +7,7 @@ alwaysApply: false
 # Resource Patterns
 
 - Use `BaseResourceOperations(client, "resources", Resource)`; one `_get_*_ops()` per module; return typed models, not dicts.
-- **List**: Accept `list_params: Optional[ListParameters]`, `max_pages: Optional[int]`; pass through to `ops.list()`. Docstring: filter, mask, page_size, traverse.
-- **Update**: Accept `update_mask: Optional[str]` (comma-separated); convert to `List[str]` and pass to `ops.update()`. Exception: `namespace` **requires** `update_mask` (e.g. `meta.description`); namespace uses collection PATCH with UUID in body.
+- **List**: Accept `list_params: ListParameters | None`, `max_pages: int | None`; pass through to `ops.list()`. Docstring: filter, mask, page_size, traverse.
+- **Update**: Accept `update_mask: str | None` (comma-separated); convert to `list[str]` and pass to `ops.update()`. Exception: `namespace` **requires** `update_mask` (e.g. `meta.description`); namespace uses collection PATCH with UUID in body.
 - **Errors**: Use `endor_cockpit.exceptions`; resources may return `None` on 404; log full `response.text`; no truncation.
-- See AGENTS.md for code samples; deep dives in [docs/reference/namespace.md](docs/reference/namespace.md), [docs/conventions.md](docs/conventions.md), [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md), and [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md).
+- See [AGENTS.md](AGENTS.md) for code samples; deep dives in [docs/reference/namespace.md](docs/reference/namespace.md), [docs/conventions.md](docs/conventions.md), [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md), and [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md).
