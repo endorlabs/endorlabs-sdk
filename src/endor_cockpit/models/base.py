@@ -9,7 +9,7 @@ import logging
 import sys
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Literal, TypeVar
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -92,8 +92,8 @@ class TenantMeta(BaseModel):
         self,
         *,
         mode: Literal["json", "python"] = "json",
-        include: Union[set[str], dict[str, Any]] | None = None,
-        exclude: Union[set[str], dict[str, Any]] | None = None,
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -147,8 +147,8 @@ class Context(BaseModel):
         self,
         *,
         mode: Literal["json", "python"] = "json",
-        include: Union[set[str], dict[str, Any]] | None = None,
-        exclude: Union[set[str], dict[str, Any]] | None = None,
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -267,8 +267,8 @@ class BaseMeta(BaseModel):
         self,
         *,
         mode: Literal["json", "python"] = "json",
-        include: Union[set[str], dict[str, Any]] | None = None,
-        exclude: Union[set[str], dict[str, Any]] | None = None,
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -411,8 +411,8 @@ class BaseSpec(BaseModel):
         self,
         *,
         mode: Literal["json", "python"] = "json",
-        include: Union[set[str], dict[str, Any]] | None = None,
-        exclude: Union[set[str], dict[str, Any]] | None = None,
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
@@ -606,8 +606,8 @@ class BaseResource(BaseModel):
         self,
         *,
         mode: Literal["json", "python"] = "json",
-        include: Union[set[str], dict[str, Any]] | None = None,
-        exclude: Union[set[str], dict[str, Any]] | None = None,
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
         by_alias: bool = False,
         exclude_unset: bool = False,
         exclude_defaults: bool = False,
