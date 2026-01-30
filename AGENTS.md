@@ -56,6 +56,7 @@ endor_cockpit/
 
 - **User docs:** <https://docs.endorlabs.com/>
 - **API spec:** <https://api.endorlabs.com/download/openapiv2.swagger.json> — use for required/optional fields, types, read-only; schema drift workflow downloads to `external_docs/` in CI.
+- **Advanced users (IDE context):** One workflow creates the gitignored `external_docs/` folder with spec + user docs: `uv sync --extra docs` then `uv run python scripts/sync_external_docs.py --all`. See [CONTRIBUTORS.md](CONTRIBUTORS.md) (optional: sync external docs) and [scripts/README.md](scripts/README.md) for sync options; [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
 
 ## Reference — In-Repo
 

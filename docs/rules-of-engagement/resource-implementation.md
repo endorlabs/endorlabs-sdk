@@ -17,5 +17,6 @@ Checklists for implementing new Endor Labs resources. Use BaseResourceOperations
 - [ ] Get/Create/Update/Delete: pass through to ops; update accepts update_mask (comma-separated string → list). Namespace: update_mask required.
 - [ ] Errors: use endor_cockpit.exceptions; log full response.text; no truncation.
 - [ ] Add resource to RESOURCE_NAME_TO_TYPE and get_immutable_fields (in model_validation) if update is supported.
+- [ ] Docstrings: Args, Returns, Raises so Pydantic/Pyright and IDE are self-explanatory; if a resource module lacks these, treat as a gap and add them.
 
 No full code templates here; follow existing resource modules and [resource-patterns.mdc](../../.cursor/rules/resource-patterns.mdc).

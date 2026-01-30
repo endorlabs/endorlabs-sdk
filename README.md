@@ -1,6 +1,6 @@
 # 🚀 Endor Cockpit
 
-[![Python CI](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml)
+[![Python CI](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml/badge.svg)](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml)
 
 > **Starfighter Ready**: Navigate the Endor Labs security platform with tactical precision. This cockpit is designed for AI agents, human pilots, and autonomous security operations.
 
@@ -58,9 +58,14 @@ source .venv/bin/activate  # Linux/Mac
 # Install dependencies
 uv pip install -e .
 
-# Optional: Install dependencies for documentation sync scripts (contributors)
-uv pip install -e ".[docs]"
+# Optional: Sync external docs (recommended for advanced users — full IDE context)
+uv sync --extra docs
+uv run python scripts/sync_external_docs.py --all
 ```
+
+Contributors: see [CONTRIBUTORS.md](CONTRIBUTORS.md) for environment setup and validation.
+
+This creates the gitignored `external_docs/` folder with the OpenAPI spec and user documentation from [docs.endorlabs.com](https://docs.endorlabs.com/). See [scripts/README.md](scripts/README.md).
 
 API spec: <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/` (gitignored) in CI.
 
@@ -98,15 +103,7 @@ export ENDOR_MAX_RETRIES="5"  # Optional: Maximum number of retries (default: 5)
 
 ### Local Development Setup
 
-For local development, use environment variables or the setup/validation scripts:
-
-```bash
-# Validate environment (ENDOR_API, credentials, namespace)
-uv run python scripts/validate_environment.py
-
-# Interactive setup (optional)
-uv run python scripts/setup_environment.py
-```
+Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET` (and optionally `ENDOR_NAMESPACE`) in your environment or a `.env` file. Contributors: see [CONTRIBUTORS.md](CONTRIBUTORS.md) for full setup and validation.
 
 ### Configuration Management
 
@@ -155,27 +152,33 @@ This cockpit is specifically engineered for AI-powered development environments.
 
 ## 🛠️ **Development & Operations**
 
+Contributing: see [CONTRIBUTORS.md](CONTRIBUTORS.md) for repo setup, tests, and linting.
+
 ### Testing Arsenal
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
+
+# With env from file (if .env not loaded in shell)
+uv run --env-file .env pytest
 
 # Run with coverage
-pytest --cov=endor_cockpit --cov-report=html
+uv run pytest --cov=endor_cockpit --cov-report=html
 
 # Run integration tests (requires valid credentials)
-pytest -m integration -v
+uv run pytest -m integration -v
 ```
 
 ### Code Quality & Linting
 
 ```bash
 # Linting & Formatting
-ruff check .
+uv run ruff check .
+uv run ruff format .
 
 # Type checking
-mypy src/
+uv run pyright --project pyproject.toml
 ```
 
 ### Security Scanning
@@ -242,7 +245,7 @@ ls maneuvers/
 ## 📚 **Documentation & Intelligence**
 
 - **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
-- **[Documentation index](./docs/README.md)** - SDK docs (conventions, reference, guides, rules of engagement); non-SDK content in `.tmp/docs-revamp/`
+- **[Documentation index](./docs/README.md)** - SDK docs (conventions, reference, guides, rules of engagement)
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
 - **[Rego (SDK usage)](./docs/guides/rego-policies.md)** - How the SDK is used with policies; link to official Rego docs
 - **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
@@ -281,7 +284,7 @@ For questions and support:
 - **🐛 Issues**: Create an issue in the repository
 - **🛡️ Security**: Follow the security guidelines in the documentation
 - **🎭 Maneuvers**: Check the `maneuvers/` directory for tactical scripts
-- **📋 Protocols**: Review `protocols/` for operational procedures
+- **📋 Rules of engagement**: Review [docs/rules-of-engagement/](./docs/rules-of-engagement/) for operational procedures
 
 ---
 

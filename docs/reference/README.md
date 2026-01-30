@@ -1,10 +1,12 @@
 # Reference
 
+**For SDK usage:** Start with [AGENTS.md](../../AGENTS.md) (install, APIClient, resource usage). This section is reference and boundaries.
+
 SDK reference documentation. OpenAPI spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI).
 
 ## Public API
 
-Stable surface: `endor_cockpit.__all__` — APIClient, exceptions (EndorAPIError, NotFoundError, etc.), resource submodules (finding, namespace, policy, project, etc.). See [resources.md](resources.md).
+Stable surface: `endor_cockpit.__all__` — APIClient, exceptions (EndorAPIError, NotFoundError, etc.). The **full** resource set is under `endor_cockpit.resources` (list in [resources.md](resources.md)); the top-level package re-exports a subset. Signatures and behavior: see module and function docstrings (Pydantic/Pyright).
 
 ## Other surfaces
 
