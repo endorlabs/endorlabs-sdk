@@ -1,10 +1,15 @@
 name: Schema Drift Detection
 
+# GITHUB_TOKEN needs issues: write to create one issue per detected drift
+permissions:
+  contents: read
+  issues: write
+
 on:
   schedule:
     # Run hourly to check for endorctl version updates
     - cron: '0 * * * *'
-    # Also run weekly on Mondays at 3 AM UTC (after docs sync at 2 AM)
+    # Also run weekly on Mondays at 3 AM UTC
     - cron: '0 3 * * 1'
   workflow_dispatch:  # Allow manual triggering
 
@@ -110,15 +115,77 @@ jobs:
             --check-drift-only \
             --test-path tests/ \
             --drift-report-output schema_drift_report.json \
+            --no-create-issues \
             --force
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true  # Don't fail workflow if tests fail
+
+      - name: Create GitHub issues from drift report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const reportPath = path.join(process.env.GITHUB_WORKSPACE || '.', 'schema_drift_report.json');
+            let report;
+            try {
+              report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            } catch (e) {
+              core.info('No drift report or invalid JSON - skipping issue creation');
+              return;
+            }
+            const newDrifts = (report.drifts || []).filter(d => d.status === 'new');
+            if (newDrifts.length === 0) {
+              core.info('No new drifts to report');
+              return;
+            }
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'schema-drift',
+              per_page: 100
+            });
+            const existingTitles = new Set(openIssues.map(i => i.title));
+            let created = 0;
+            for (const d of newDrifts) {
+              const title = `Schema Drift: ${d.resource_name || 'Unknown'}.${d.field_path || d.field || 'unknown'}`;
+              if (existingTitles.has(title)) continue;
+              const body = `## Schema Drift Detected
+
+**Resource**: \`${d.resource_name || 'Unknown'}\`
+**Model**: \`${d.model_path || d.model || 'Unknown'}\`
+**Field Path**: \`${d.field_path || 'unknown'}\`
+**Field**: \`${d.field || 'unknown'}\`
+**File to Modify**: \`${d.file_path || 'see OpenAPI spec'}\`
+
+This field was detected in API responses but is not defined in the Pydantic model.
+
+### Action Required
+
+1. Review OpenAPI spec: \`external_docs/openapi-swagger.json\`
+2. Add field to model: \`${d.file_path || 'resource file'}\`
+3. Update drift detection known_fields if applicable
+
+### Detection
+
+Automatically created by the schema drift detection workflow.`;
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['schema-drift', 'automated', 'api-schema']
+              });
+              existingTitles.add(title);
+              created++;
+            }
+            core.info(`Created ${created} issue(s) for new drifts.`);
 
       - name: Upload drift report
         if: always()

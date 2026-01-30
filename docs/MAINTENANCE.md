@@ -15,6 +15,6 @@ When to update docs; link to docs-drift-workflow and [conventions.md](convention
 
 ## Automated Workflows
 
-- **Docs sync**: `.github/workflows/sync-external-docs.yml` — updates OpenAPI and user docs.
+- **Docs sync**: `.github/workflows/sync-external-docs.yml` — not run on schedule in main CI; available for manual trigger or a personal branch.
 - **Schema drift**: `.github/workflows/schema-drift-detection.yml` — detects model/API mismatches.
 - **Unified**: See [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md) for manual commands and details.
