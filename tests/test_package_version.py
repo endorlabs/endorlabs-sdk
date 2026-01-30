@@ -112,8 +112,12 @@ class TestPackageVersion:
             == test_package_version.spec.ecosystem
         )
 
+    @pytest.mark.local
     def test_package_version_update_with_mask(self, sample_package_version) -> None:
-        """Test UPDATE package version operation with update_mask parameter."""
+        """Test UPDATE package version operation with update_mask parameter.
+
+        Local-only: updating package versions requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING PACKAGE VERSION UPDATE WITH MASK ===")
 
         package_version_uuid = sample_package_version.uuid

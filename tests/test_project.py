@@ -125,8 +125,12 @@ class TestProject:
         if retrieved_project.meta.tags:
             print(f"Project tags: {retrieved_project.meta.tags}")
 
+    @pytest.mark.local
     def test_associate_scan_profile_with_project(self) -> None:
-        """Test associating a scan profile with a project."""
+        """Test associating a scan profile with a project.
+
+        Local-only: creates scan profile and mutates project (403 in CI).
+        """
         print("\n=== TESTING ASSOCIATE SCAN PROFILE WITH PROJECT ===")
 
         if not self.projects:
@@ -253,8 +257,12 @@ class TestProject:
             assert hasattr(proj, "meta")
             assert hasattr(proj, "spec")
 
+    @pytest.mark.local
     def test_project_update_with_mask(self) -> None:
-        """Test UPDATE project operation with update_mask parameter."""
+        """Test UPDATE project operation with update_mask parameter.
+
+        Local-only: updating projects requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING PROJECT UPDATE WITH MASK ===")
 
         if not self.projects:

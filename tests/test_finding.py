@@ -407,8 +407,12 @@ class TestFinding:
         else:
             print("No SCPM findings found (may not exist in platform yet)")
 
+    @pytest.mark.local
     def test_finding_update_with_mask(self, sample_finding) -> None:
-        """Test UPDATE finding operation with update_mask parameter."""
+        """Test UPDATE finding operation with update_mask parameter.
+
+        Local-only: updating findings requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING FINDING UPDATE WITH MASK ===")
 
         finding_uuid = sample_finding.uuid
