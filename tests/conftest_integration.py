@@ -3,10 +3,10 @@
 This file provides fixtures and configuration for integration tests
 that use the real Endor Labs API.
 
-CI runs integration tests with read-only API credentials. Any test that
-calls create, update, or delete must be marked @pytest.mark.local so it
-is excluded from CI (pytest -m "integration and not local"). Run local
-tests only in environments where write permissions are available.
+CI runs all integration tests (including those that perform writes) using admin
+credentials on the isolated root namespace. Tests that create/update/delete are
+marked @pytest.mark.writes for optional selective runs
+(e.g. -m "integration and not writes" for read-only; -m "writes" for write-only).
 """
 
 import os
@@ -28,11 +28,10 @@ def pytest_collection_modifyitems(config, items) -> None:
             item.add_marker(pytest.mark.integration)
 
         # Skip integration tests if no credentials
-        if not _has_credentials():
-            if "integration" in item.nodeid:
-                item.add_marker(
-                    pytest.mark.skip(reason="No Endor Labs credentials available")
-                )
+        if not _has_credentials() and "integration" in item.nodeid:
+            item.add_marker(
+                pytest.mark.skip(reason="No Endor Labs credentials available")
+            )
 
 
 def _has_credentials() -> bool:

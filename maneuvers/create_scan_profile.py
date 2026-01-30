@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional
 # Add the src directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Set up logging
 import logging
@@ -223,4 +223,5 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 

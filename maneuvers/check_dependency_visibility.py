@@ -25,14 +25,14 @@ from typing import Any, Dict, List, Optional
 # Add the src directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import dependency_metadata
-from endor_cockpit.types import ListParameters
-from endor_cockpit.utils.traversal import create_traverse_params
+from endorlabs.api_client import APIClient
+from endorlabs.resources import dependency_metadata
+from endorlabs.types import ListParameters
+from endorlabs.utils.traversal import create_traverse_params
 
 # Configure logging
 logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
-logging.getLogger("endor_cockpit").setLevel(logging.INFO)
+logging.getLogger("endorlabs").setLevel(logging.INFO)
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -284,4 +284,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

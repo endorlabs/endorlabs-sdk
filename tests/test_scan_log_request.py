@@ -15,15 +15,15 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import conftest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import scan_log_request, scan_result
-from endor_cockpit.resources.scan_log_request import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources import scan_log_request, scan_result
+from endorlabs.resources.scan_log_request import (
     CreateScanLogRequestPayload,
     ScanLogLevel,
     ScanLogRequestMetaCreate,
     ScanLogRequestSpecCreate,
 )
-from endor_cockpit.types import ListParameters
+from endorlabs.types import ListParameters
 
 
 @pytest.mark.integration
@@ -49,21 +49,20 @@ class TestScanLogRequest:
         """Fetch minimal sample scan result UUID for testing.
 
         Function-scoped but only fetches when explicitly requested by tests.
-        Only fetches 1 item for fast setup. Tests that need sample data should
-        request this fixture explicitly.
+        Uses traverse=True to search across namespaces for scan results.
         """
         # Get a scan result to test log retrieval
         scan_results = scan_result.list_scan_results(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=1, traverse=True),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         if not scan_results:
-            pytest.skip("No scan results available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return scan_results[0].uuid
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_create_scan_log_request(self, sample_scan_result_uuid) -> None:
         """Test creating a scan log request.
 
@@ -111,7 +110,7 @@ class TestScanLogRequest:
                 if log.timestamp and log.level:
                     print(f"  {log.timestamp} [{log.level}]")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_scan_log_request_with_filters(self, sample_scan_result_uuid) -> None:
         """Test creating log request with various filters.
 
@@ -142,7 +141,7 @@ class TestScanLogRequest:
 
         print(f"Created filtered log request: {request.uuid}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_scan_log_request_error_handling(self) -> None:
         """Test error handling for invalid scan result UUID.
 
@@ -152,7 +151,7 @@ class TestScanLogRequest:
 
         # Test with invalid scan result UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endor_cockpit.exceptions import ValidationError
+        from endorlabs.exceptions import ValidationError
 
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-invalid-uuid-request"),

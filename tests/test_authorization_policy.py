@@ -16,9 +16,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import conftest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import authorization_policy
-from endor_cockpit.resources.authorization_policy import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources import authorization_policy
+from endorlabs.resources.authorization_policy import (
     AuthorizationPolicyMeta,
     AuthorizationPolicyPermissions,
     AuthorizationPolicySpec,
@@ -64,7 +64,7 @@ class TestAuthorizationPolicy:
 
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         policies = authorization_policy.list_authorization_policies(
             self.client,
@@ -91,7 +91,7 @@ class TestAuthorizationPolicy:
 
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         policies = authorization_policy.list_authorization_policies(
             self.client,
@@ -100,7 +100,7 @@ class TestAuthorizationPolicy:
             max_pages=conftest.TEST_MAX_PAGES,
         )
         if not policies:
-            pytest.skip("No authorization policies available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         test_policy = policies[0]
         retrieved = authorization_policy.get_authorization_policy(
@@ -112,7 +112,7 @@ class TestAuthorizationPolicy:
         assert retrieved.meta.name == test_policy.meta.name, "Name should match"
         print(f"Retrieved policy: {retrieved.meta.name}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_authorization_policy_create_with_role(self) -> None:
         """Test CREATE authorization policy operation with system role.
 
@@ -160,7 +160,7 @@ class TestAuthorizationPolicy:
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"Created policy UUID: {created_policy.uuid}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_authorization_policy_create_with_resource_permissions(self) -> None:
         """Test CREATE authorization policy with resource-specific permissions.
 
@@ -205,7 +205,7 @@ class TestAuthorizationPolicy:
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"Created policy UUID: {created_policy.uuid}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_authorization_policy_update(self) -> None:
         """Test UPDATE authorization policy operation.
 
@@ -262,7 +262,7 @@ class TestAuthorizationPolicy:
         )
         print(f"Updated policy name: {updated.meta.name}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_authorization_policy_delete(self) -> None:
         """Test DELETE authorization policy operation.
 
@@ -270,7 +270,7 @@ class TestAuthorizationPolicy:
         """
         import time
 
-        from endor_cockpit.exceptions import NotFoundError
+        from endorlabs.exceptions import NotFoundError
 
         print("\n=== TESTING AUTHORIZATION POLICY DELETE ===")
 
@@ -313,15 +313,24 @@ class TestAuthorizationPolicy:
 
         assert result is True, "Delete should succeed"
 
-        # Verify deleted: get should raise NotFoundError (404) or return None
-        try:
-            still = authorization_policy.get_authorization_policy(
-                self.client, self.namespace, policy_uuid
-            )
-            if still is not None:
-                pytest.fail("Policy should be deleted (get returned object)")
-        except NotFoundError:
-            pass  # Expected: 404 after delete
+        # Verify deleted: get should eventually raise NotFoundError (404)
+        # Retry a few times to tolerate backend eventual consistency
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            time.sleep(2)
+            try:
+                still = authorization_policy.get_authorization_policy(
+                    self.client, self.namespace, policy_uuid
+                )
+                if still is None:
+                    break
+                if attempt == max_attempts - 1:
+                    pytest.fail(
+                        "Policy should be deleted (get returned object after "
+                        f"{max_attempts} attempts)"
+                    )
+            except NotFoundError:
+                break  # Expected: 404 after delete
         print(f"Deleted policy UUID: {policy_uuid}")
 
     def test_authorization_policy_filter_by_role(self) -> None:
@@ -342,6 +351,19 @@ class TestAuthorizationPolicy:
                     "All policies should have CODE_SCANNER role"
                 )
 
+    def test_client_recommended_ux_list_authorization_policies(self) -> None:
+        """Recommended UX: Client(tenant=...); client.authorization_policies.list()."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        policies = client.authorization_policies.list(max_pages=1)
+        assert isinstance(policies, list)
+
 
 if __name__ == "__main__":
     # Run tests directly
@@ -357,7 +379,7 @@ if __name__ == "__main__":
     test_instance = TestAuthorizationPolicy()
 
     # Manual setup
-    from endor_cockpit.types import ListParameters
+    from endorlabs.types import ListParameters
 
     test_instance.client = APIClient(auth_method="api-key")
     test_instance.namespace = os.getenv(

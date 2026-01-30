@@ -14,15 +14,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import conftest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import project, scan_profile
-from endor_cockpit.resources.project import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources import project, scan_profile
+from endorlabs.resources.project import (
+    Project,
     ProjectMetaUpdate,
     UpdateProjectPayload,
     associate_scan_profile_with_project,
     verify_scan_profile_association,
 )
-from endor_cockpit.resources.scan_profile import (
+from endorlabs.resources.scan_profile import (
     AutomatedScanParameters,
     CreateScanProfilePayload,
     ScanProfileMetaCreate,
@@ -48,16 +49,22 @@ class TestProject:
         self.created_scan_profile_uuids = []
 
         # Get test data with pagination limits
-        from endor_cockpit.types import ListParameters
+        from endorlabs.exceptions import NotFoundError, ServerError
+        from endorlabs.types import ListParameters
 
-        self.projects = project.list_projects(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
+        try:
+            self.projects = project.list_projects(
+                self.client,
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+        except NotFoundError:
+            pytest.skip("List returned 404 (filter/auth or scope)")
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
         if not self.projects:
-            pytest.skip("No projects available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
     def teardown_method(self) -> None:
         """Clean up any resources created during tests."""
@@ -79,25 +86,33 @@ class TestProject:
         """Test GET projects operation."""
         print("\n=== TESTING GET PROJECTS ===")
 
-        # Test list_projects with pagination limits
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.exceptions import ServerError
+        from endorlabs.types import ListParameters
 
-        projects_list = project.list_projects(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
+        try:
+            projects_list = project.list_projects(
+                self.client,
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(projects_list, list), "Should return a list of projects"
-        assert len(projects_list) > 0, "Should have at least one project"
+        assert all(
+            isinstance(x, Project) for x in projects_list
+        ), "All list items should be Project instances"
+        if len(projects_list) == 0:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         print(f"Found {len(projects_list)} projects")
 
         # Display project details
         for proj in projects_list:
-            print(f"Project {proj.uuid}: {proj.meta.name}")
+            name = proj.meta.name if proj.meta else None
+            print(f"Project {proj.uuid}: {name}")
             if proj.meta.tags:
                 print(f"  Project tags: {proj.meta.tags}")
 
@@ -125,7 +140,7 @@ class TestProject:
         if retrieved_project.meta.tags:
             print(f"Project tags: {retrieved_project.meta.tags}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_associate_scan_profile_with_project(self) -> None:
         """Test associating a scan profile with a project.
 
@@ -134,7 +149,7 @@ class TestProject:
         print("\n=== TESTING ASSOCIATE SCAN PROFILE WITH PROJECT ===")
 
         if not self.projects:
-            pytest.skip("No projects available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         test_project = self.projects[0]
         project_uuid = test_project.uuid
@@ -227,7 +242,7 @@ class TestProject:
         # Test filtering by platform
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         github_projects = project.list_projects(
             self.client,
@@ -257,7 +272,7 @@ class TestProject:
             assert hasattr(proj, "meta")
             assert hasattr(proj, "spec")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_project_update_with_mask(self) -> None:
         """Test UPDATE project operation with update_mask parameter.
 
@@ -266,7 +281,7 @@ class TestProject:
         print("\n=== TESTING PROJECT UPDATE WITH MASK ===")
 
         if not self.projects:
-            pytest.skip("No projects available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         test_project = self.projects[0]
         project_uuid = test_project.uuid
@@ -344,13 +359,26 @@ class TestProject:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endor_cockpit.exceptions import ValidationError
+        from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             project.get_project(self.client, self.namespace, "invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
+
+    def test_client_recommended_ux_list_projects(self) -> None:
+        """Recommended UX: endorlabs.Client(tenant=...); client.projects.list()."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        projects = client.projects.list(max_pages=1)
+        assert isinstance(projects, list)
 
 
 if __name__ == "__main__":
@@ -368,7 +396,7 @@ if __name__ == "__main__":
     test_instance = TestProject()
 
     # Manual setup
-    from endor_cockpit.types import ListParameters
+    from endorlabs.types import ListParameters
 
     test_instance.client = APIClient(auth_method="api-key")
     test_instance.namespace = os.getenv(

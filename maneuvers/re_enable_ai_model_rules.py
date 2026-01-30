@@ -20,15 +20,15 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.semgrep_rule import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources.semgrep_rule import (
     SemgrepRule,
     list_semgrep_rules,
     update_semgrep_rule,
     UpdateSemgrepRulePayload,
     SemgrepRuleSpec,
 )
-from endor_cockpit.utils.logging_config import setup_logging
+from endorlabs.utils.logging_config import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -285,3 +285,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

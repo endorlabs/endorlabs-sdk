@@ -4,7 +4,7 @@ Tests SchemaDriftDetector.log_unknown_fields and extract_unknown_fields
 used by base and resource models.
 """
 
-from endor_cockpit.utils.schema_drift import SchemaDriftDetector
+from endorlabs.utils.schema_drift import SchemaDriftDetector
 
 
 class TestSchemaDriftDetectorExtractUnknownFields:

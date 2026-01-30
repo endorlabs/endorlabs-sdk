@@ -1,7 +1,7 @@
 """Tests for browser OAuth authentication server.
 
-Browser OAuth tests are marked @pytest.mark.local so CI runs
-`pytest -m \"integration and not local\"` and excludes them; run with mocks locally.
+Browser OAuth tests are marked @pytest.mark.writes. CI runs all integration tests;
+the marker allows optional filtering (e.g. -m "integration and not writes").
 """
 
 import os
@@ -12,8 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-import endor_cockpit.auth_server as auth_server_mod
-from endor_cockpit.auth_server import (
+import endorlabs.auth_server as auth_server_mod
+from endorlabs.auth_server import (
     AUTH_METHODS,
     TokenHandler,
     get_token,
@@ -111,9 +111,9 @@ class TestTokenHandler:
 class TestGetToken:
     """Test get_token function for browser OAuth flow."""
 
-    @pytest.mark.local
-    @patch("endor_cockpit.auth_server.HTTPServer")
-    @patch("endor_cockpit.auth_server.get_browser")
+    @pytest.mark.writes
+    @patch("endorlabs.auth_server.HTTPServer")
+    @patch("endorlabs.auth_server.get_browser")
     def test_get_token_success(self, mock_get_browser, mock_server_class) -> None:
         """Test successful token retrieval via browser OAuth."""
         auth_server_mod._captured_token = None
@@ -142,9 +142,9 @@ class TestGetToken:
         mock_server.handle_request.assert_called_once()
         mock_server.server_close.assert_called_once()
 
-    @pytest.mark.local
-    @patch("endor_cockpit.auth_server.HTTPServer")
-    @patch("endor_cockpit.auth_server.get_browser")
+    @pytest.mark.writes
+    @patch("endorlabs.auth_server.HTTPServer")
+    @patch("endorlabs.auth_server.get_browser")
     def test_get_token_timeout(self, mock_get_browser, mock_server_class) -> None:
         """Test token retrieval timeout."""
         auth_server_mod._captured_token = None
@@ -164,21 +164,21 @@ class TestGetToken:
         assert token is None
         mock_server.server_close.assert_called_once()
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_get_token_invalid_method(self) -> None:
         """Test get_token raises ValueError for invalid method."""
         with pytest.raises(ValueError, match="Unsupported auth method"):
             get_token(method="invalid_method")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_get_token_email_required(self) -> None:
         """Test get_token requires email for email auth method."""
         with pytest.raises(ValueError, match="Email address required"):
             get_token(method="email")
 
-    @pytest.mark.local
-    @patch("endor_cockpit.auth_server.HTTPServer")
-    @patch("endor_cockpit.auth_server.get_browser")
+    @pytest.mark.writes
+    @patch("endorlabs.auth_server.HTTPServer")
+    @patch("endorlabs.auth_server.get_browser")
     def test_get_token_email_method(self, mock_get_browser, mock_server_class) -> None:
         """Test get_token with email method includes email in URL."""
         auth_server_mod._captured_token = None
@@ -215,8 +215,8 @@ class TestGetToken:
         for method in expected_methods:
             assert method in AUTH_METHODS, f"Auth method '{method}' not defined"
 
-    @pytest.mark.local
-    @patch("endor_cockpit.auth_server.HTTPServer")
+    @pytest.mark.writes
+    @patch("endorlabs.auth_server.HTTPServer")
     def test_get_token_port_in_use(self, mock_server_class) -> None:
         """Test get_token handles port already in use error."""
         # Mock OSError for port in use

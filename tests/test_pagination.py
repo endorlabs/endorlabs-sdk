@@ -15,9 +15,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import conftest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.models.base import BaseResourceOperations
-from endor_cockpit.types import ListParameters
+from endorlabs.api_client import APIClient
+from endorlabs.models.base import BaseResourceOperations
+from endorlabs.types import ListParameters
 
 
 class TestPagination:

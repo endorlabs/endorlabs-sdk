@@ -63,9 +63,9 @@ from typing import List, Optional
 # Add the src directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import policy, project
-from endor_cockpit.resources.policy import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources import policy, project
+from endorlabs.resources.policy import (
     CreatePolicyPayload,
     ExceptionReason,
     PolicyMeta,
@@ -79,7 +79,7 @@ from common.project_lookup import find_project_by_repository_url
 
 # Configure logging to reduce verbosity
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-logging.getLogger('endor_cockpit').setLevel(logging.INFO)
+logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -845,3 +845,4 @@ match_finding[result] {{
 
 if __name__ == "__main__":
     main()
+

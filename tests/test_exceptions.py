@@ -6,7 +6,7 @@ for stable public API behavior.
 
 import pytest
 
-from endor_cockpit.exceptions import (
+from endorlabs.exceptions import (
     ConflictError,
     EndorAPIError,
     NotFoundError,
@@ -62,7 +62,7 @@ class TestEndorAPIError:
 
 
 @pytest.mark.parametrize(
-    "exc_class,expected_status",
+    ("exc_class", "expected_status"),
     [
         (NotFoundError, 404),
         (ValidationError, 400),
@@ -124,7 +124,7 @@ def test_map_status_code_to_exception_429() -> None:
 
 
 def test_map_status_code_to_exception_501() -> None:
-    from endor_cockpit.exceptions import NotImplementedError
+    from endorlabs.exceptions import NotImplementedError
 
     exc = map_status_code_to_exception(501)
     assert isinstance(exc, NotImplementedError)

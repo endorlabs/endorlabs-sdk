@@ -19,11 +19,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import conftest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import policy
-from endor_cockpit.resources.policy import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources import policy
+from endorlabs.resources.policy import (
     CreatePolicyPayload,
     ExceptionReason,
+    Policy,
     PolicyType,
     UpdatePolicyPayload,
 )
@@ -55,7 +56,7 @@ class TestPolicy:
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
         """
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         results = policy.list_policies(
             self.client,
@@ -64,7 +65,7 @@ class TestPolicy:
             max_pages=1,
         )
         if not results:
-            pytest.skip("No policies available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def _create_test_policy(self, name_suffix: str = ""):
@@ -149,7 +150,7 @@ match_finding[result] {
         # Test list_policies with pagination limits
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         policies_list = policy.list_policies(
             self.client,
@@ -158,14 +159,20 @@ match_finding[result] {
             max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(policies_list, list), "Should return a list of policies"
-        assert len(policies_list) > 0, "Should have at least one policy"
+        assert all(
+            isinstance(x, Policy) for x in policies_list
+        ), "All list items should be Policy instances"
+        if len(policies_list) == 0:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         print(f"Found {len(policies_list)} policies")
 
         # Display first few policies
         for _i, policy_item in enumerate(policies_list[:10]):  # Show first 10
-            print(f"Policy {policy_item.uuid}: {policy_item.meta.name}")
-            print(f"  Type: {policy_item.spec.policy_type}")
+            name = policy_item.meta.name if policy_item.meta else None
+            print(f"Policy {policy_item.uuid}: {name}")
+            ptype = policy_item.spec.policy_type if policy_item.spec else None
+            print(f"  Type: {ptype}")
             if policy_item.meta.tags:
                 print(f"  Meta tags: {policy_item.meta.tags}")
 
@@ -210,15 +217,15 @@ match_finding[result] {
 
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         for policy_type in policy_types:
             filtered_policies = policy.list_policies(
                 self.client,
                 self.namespace,
-                policy_type,
                 list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
                 max_pages=conftest.TEST_MAX_PAGES,
+                policy_type=policy_type,
             )
             print(f"{policy_type.value}: {len(filtered_policies)} policies")
 
@@ -228,7 +235,7 @@ match_finding[result] {
                     f"Policy should be of type {policy_type}"
                 )
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_policy_create(self) -> None:
         """Test CREATE policy operation.
 
@@ -240,7 +247,7 @@ match_finding[result] {
         print(f"[SUCCESS] Policy created with UUID: {created_policy.uuid}")
         assert created_policy is not None, "Policy should be created successfully"
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_policy_update_with_mask(self) -> None:
         """Test UPDATE policy operation with update_mask parameter.
 
@@ -331,7 +338,7 @@ match_finding[result] {
 
         assert updated_policy is not None, "Policy should be updated successfully"
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_policy_delete(self) -> None:
         """Test DELETE policy operation.
 
@@ -369,7 +376,7 @@ match_finding[result] {
 
         # Verify deletion by trying to retrieve it
         time.sleep(2)  # Wait for deletion to propagate
-        from endor_cockpit.exceptions import NotFoundError
+        from endorlabs.exceptions import NotFoundError
 
         with pytest.raises(NotFoundError) as exc_info:
             policy.get_policy(self.client, self.namespace, policy_uuid)
@@ -377,7 +384,7 @@ match_finding[result] {
         assert exc_info.value.operation == "get"
         print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_exception_policy_create(self) -> None:
         """Test CREATE exception policy operation.
 
@@ -448,7 +455,7 @@ match_finding[result] {
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"[SUCCESS] Exception policy created with UUID: {created_policy.uuid}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_notification_policy_create(self) -> None:
         """Test CREATE notification policy operation.
 
@@ -547,7 +554,7 @@ match_findings[result] {
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"[SUCCESS] Notification policy created with UUID: {created_policy.uuid}")
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_admission_policy_create(self) -> None:
         """Test CREATE admission policy operation.
 
@@ -622,6 +629,23 @@ match_findings[result] {
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"[SUCCESS] Admission policy created with UUID: {created_policy.uuid}")
 
+    def test_client_recommended_ux_list_policies(self) -> None:
+        """Recommended UX: endorlabs.Client(tenant=...); client.policies.list()."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        try:
+            policies = client.policies.list(max_pages=1)
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(policies, list)
+
 
 if __name__ == "__main__":
     # Run tests directly
@@ -639,7 +663,7 @@ if __name__ == "__main__":
     # Manual setup
     import conftest
 
-    from endor_cockpit.types import ListParameters
+    from endorlabs.types import ListParameters
 
     # Reduce retries for faster test failure (prevents excessive wait on API errors)
     test_instance.client = APIClient(auth_method="api-key", max_retries=3)

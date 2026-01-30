@@ -50,7 +50,7 @@ coverage.xml
 .ruff_cache/
 
 # External documentation (gitignored; obtain via sync script or workflow)
-external_docs/
+# external_docs/
 
 # OS
 .DS_Store

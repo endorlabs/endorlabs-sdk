@@ -8,9 +8,9 @@ extracting common patterns used across multiple maneuver scripts.
 import logging
 from typing import Optional
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import project
-from endor_cockpit.types import ListParameters
+from endorlabs.api_client import APIClient
+from endorlabs.resources import project
+from endorlabs.types import ListParameters
 
 logger = logging.getLogger(__name__)
 
@@ -81,3 +81,4 @@ def find_project_by_repository_url(
     except Exception as e:
         logger.error(f"Error finding project: {e}")
         return None
+

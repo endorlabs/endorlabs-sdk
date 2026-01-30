@@ -4,11 +4,12 @@ Tests ENDOR_MAX_RETRIES and ENDOR_LOG_LEVEL environment variables,
 and verifies backward compatibility is removed for LOG_LEVEL.
 """
 
+import logging
 import os
 from unittest.mock import Mock, patch
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.utils.logging_config import setup_logging
+from endorlabs.api_client import APIClient
+from endorlabs.utils.logging_config import setup_logging
 
 
 class TestEndorMaxRetries:
@@ -25,7 +26,7 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_endor_max_retries_from_env(self, mock_post) -> None:
         """Test that ENDOR_MAX_RETRIES environment variable is respected."""
         mock_response = Mock()
@@ -50,7 +51,7 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_endor_max_retries_custom_value(self, mock_post) -> None:
         """Test ENDOR_MAX_RETRIES with custom value."""
         mock_response = Mock()
@@ -73,7 +74,7 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_max_retries_default_when_env_not_set(self, mock_post) -> None:
         """Test default max_retries=5 when ENDOR_MAX_RETRIES not set."""
         mock_response = Mock()
@@ -97,7 +98,7 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_parameter_override_takes_precedence(self, mock_post) -> None:
         """Test that parameter override takes precedence over env var."""
         mock_response = Mock()
@@ -171,6 +172,40 @@ class TestEndorLogLevel:
             setup_logging("test_module")
             # Check root logger level
             assert logging.root.level == 40  # ERROR level
+
+
+class TestClientSessionLogLevel:
+    """Test that APIClient(logging_level=...) applies to all session loggers."""
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    @patch("endorlabs.api_client.requests.post")
+    def test_logging_level_applied_to_session_loggers(self, mock_post) -> None:
+        """APIClient(logging_level='ERROR') sets session loggers to ERROR."""
+        mock_response = Mock()
+        mock_response.json.return_value = {"token": "test-token"}
+        mock_response.raise_for_status = Mock()
+        mock_post.return_value = mock_response
+
+        # Save current levels so we don't affect other tests
+        names = ("endorlabs", "urllib3", "requests")
+        saved = {n: logging.getLogger(n).level for n in names}
+        try:
+            client = APIClient(logging_level="ERROR")
+            assert client.logger.level == logging.ERROR
+            for name in names:
+                assert logging.getLogger(name).level == logging.ERROR
+        finally:
+            for n, level in saved.items():
+                logging.getLogger(n).setLevel(level)
 
 
 class TestLogLevelBackwardCompatibility:

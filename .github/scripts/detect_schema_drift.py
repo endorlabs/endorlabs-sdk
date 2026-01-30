@@ -249,28 +249,28 @@ class SchemaDriftDetector:
     def _get_resource_file_path(self, resource_name: str) -> str:
         """Map resource name to source file path."""
         if not resource_name:
-            return "src/endor_cockpit/models/base.py"
+            return "src/endorlabs/models/base.py"
 
         # Map resource names to their file paths
         resource_file_map = {
-            "Finding": "src/endor_cockpit/resources/finding.py",
-            "Policy": "src/endor_cockpit/resources/policy.py",
-            "Project": "src/endor_cockpit/resources/project.py",
-            "Namespace": "src/endor_cockpit/resources/namespace.py",
-            "Repository": "src/endor_cockpit/resources/repository.py",
-            "RepositoryVersion": "src/endor_cockpit/resources/repository_version.py",
-            "PackageVersion": "src/endor_cockpit/resources/package_version.py",
-            "DependencyMetadata": "src/endor_cockpit/resources/dependency_metadata.py",
-            "ScanResult": "src/endor_cockpit/resources/scan_result.py",
-            "LinterResult": "src/endor_cockpit/resources/linter_result.py",
-            "Metric": "src/endor_cockpit/resources/metric.py",
-            "User": "src/endor_cockpit/resources/user.py",
-            "Installation": "src/endor_cockpit/resources/installation.py",
-            "BaseResource": "src/endor_cockpit/models/base.py",
-            "BaseSpec": "src/endor_cockpit/models/base.py",
+            "Finding": "src/endorlabs/resources/finding.py",
+            "Policy": "src/endorlabs/resources/policy.py",
+            "Project": "src/endorlabs/resources/project.py",
+            "Namespace": "src/endorlabs/resources/namespace.py",
+            "Repository": "src/endorlabs/resources/repository.py",
+            "RepositoryVersion": "src/endorlabs/resources/repository_version.py",
+            "PackageVersion": "src/endorlabs/resources/package_version.py",
+            "DependencyMetadata": "src/endorlabs/resources/dependency_metadata.py",
+            "ScanResult": "src/endorlabs/resources/scan_result.py",
+            "LinterResult": "src/endorlabs/resources/linter_result.py",
+            "Metric": "src/endorlabs/resources/metric.py",
+            "User": "src/endorlabs/resources/user.py",
+            "Installation": "src/endorlabs/resources/installation.py",
+            "BaseResource": "src/endorlabs/models/base.py",
+            "BaseSpec": "src/endorlabs/models/base.py",
         }
 
-        return resource_file_map.get(resource_name, "src/endor_cockpit/models/base.py")
+        return resource_file_map.get(resource_name, "src/endorlabs/models/base.py")
 
     def _parse_validation_errors(self, output: str) -> List[Dict]:
         """Parse Pydantic validation errors from test output."""

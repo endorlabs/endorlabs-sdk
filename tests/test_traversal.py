@@ -4,8 +4,8 @@ Tests create_traverse_params and create_namespace_scoped_params
 returning ListParameters.
 """
 
-from endor_cockpit.types import ListParameters
-from endor_cockpit.utils.traversal import (
+from endorlabs.types import ListParameters
+from endorlabs.utils.traversal import (
     create_namespace_scoped_params,
     create_traverse_params,
 )
