@@ -63,8 +63,12 @@ class TestScanLogRequest:
             pytest.skip("No scan results available for testing")
         return scan_results[0].uuid
 
+    @pytest.mark.local
     def test_create_scan_log_request(self, sample_scan_result_uuid) -> None:
-        """Test creating a scan log request."""
+        """Test creating a scan log request.
+
+        Local-only: creating scan log requests requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING CREATE SCAN LOG REQUEST ===")
 
         # Create a log request for a scan result
@@ -107,8 +111,12 @@ class TestScanLogRequest:
                 if log.timestamp and log.level:
                     print(f"  {log.timestamp} [{log.level}]")
 
+    @pytest.mark.local
     def test_scan_log_request_with_filters(self, sample_scan_result_uuid) -> None:
-        """Test creating log request with various filters."""
+        """Test creating log request with various filters.
+
+        Local-only: creating scan log requests requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING SCAN LOG REQUEST WITH FILTERS ===")
 
         # Test with log level filter
@@ -134,8 +142,12 @@ class TestScanLogRequest:
 
         print(f"Created filtered log request: {request.uuid}")
 
+    @pytest.mark.local
     def test_scan_log_request_error_handling(self) -> None:
-        """Test error handling for invalid scan result UUID."""
+        """Test error handling for invalid scan result UUID.
+
+        Local-only: calls create endpoint (403 with read-only CI credentials).
+        """
         print("\n=== TESTING ERROR HANDLING ===")
 
         # Test with invalid scan result UUID format - should raise ValidationError

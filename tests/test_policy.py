@@ -228,16 +228,24 @@ match_finding[result] {
                     f"Policy should be of type {policy_type}"
                 )
 
+    @pytest.mark.local
     def test_policy_create(self) -> None:
-        """Test CREATE policy operation."""
+        """Test CREATE policy operation.
+
+        Local-only: creating policies requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING POLICY CREATE ===")
 
         created_policy = self._create_test_policy()
         print(f"[SUCCESS] Policy created with UUID: {created_policy.uuid}")
         assert created_policy is not None, "Policy should be created successfully"
 
+    @pytest.mark.local
     def test_policy_update_with_mask(self) -> None:
-        """Test UPDATE policy operation with update_mask parameter."""
+        """Test UPDATE policy operation with update_mask parameter.
+
+        Local-only: requires create and update permissions (403 in CI).
+        """
         print("\n=== TESTING POLICY UPDATE WITH MASK ===")
 
         # Create a fresh policy for this test
@@ -323,8 +331,12 @@ match_finding[result] {
 
         assert updated_policy is not None, "Policy should be updated successfully"
 
+    @pytest.mark.local
     def test_policy_delete(self) -> None:
-        """Test DELETE policy operation."""
+        """Test DELETE policy operation.
+
+        Local-only: requires create and delete permissions (403 in CI).
+        """
         print("\n=== TESTING POLICY DELETE ===")
 
         # Create a fresh policy for this test
@@ -365,8 +377,12 @@ match_finding[result] {
         assert exc_info.value.operation == "get"
         print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
 
+    @pytest.mark.local
     def test_exception_policy_create(self) -> None:
-        """Test CREATE exception policy operation."""
+        """Test CREATE exception policy operation.
+
+        Local-only: creating policies requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING EXCEPTION POLICY CREATE ===")
 
         timestamp = int(time.time())
@@ -432,8 +448,12 @@ match_finding[result] {
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"[SUCCESS] Exception policy created with UUID: {created_policy.uuid}")
 
+    @pytest.mark.local
     def test_notification_policy_create(self) -> None:
-        """Test CREATE notification policy operation."""
+        """Test CREATE notification policy operation.
+
+        Local-only: creating policies requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING NOTIFICATION POLICY CREATE ===")
 
         # First, try to find an existing notification target
@@ -527,8 +547,12 @@ match_findings[result] {
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"[SUCCESS] Notification policy created with UUID: {created_policy.uuid}")
 
+    @pytest.mark.local
     def test_admission_policy_create(self) -> None:
-        """Test CREATE admission policy operation."""
+        """Test CREATE admission policy operation.
+
+        Local-only: creating policies requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING ADMISSION POLICY CREATE ===")
 
         timestamp = int(time.time())

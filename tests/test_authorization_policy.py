@@ -205,8 +205,12 @@ class TestAuthorizationPolicy:
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"Created policy UUID: {created_policy.uuid}")
 
+    @pytest.mark.local
     def test_authorization_policy_update(self) -> None:
-        """Test UPDATE authorization policy operation."""
+        """Test UPDATE authorization policy operation.
+
+        Local-only: requires create (and update) permissions (403 in CI).
+        """
         print("\n=== TESTING AUTHORIZATION POLICY UPDATE ===")
 
         # First create a policy to update
@@ -258,8 +262,12 @@ class TestAuthorizationPolicy:
         )
         print(f"Updated policy name: {updated.meta.name}")
 
+    @pytest.mark.local
     def test_authorization_policy_delete(self) -> None:
-        """Test DELETE authorization policy operation."""
+        """Test DELETE authorization policy operation.
+
+        Local-only: requires create (and delete) permissions (403 in CI).
+        """
         import time
 
         from endor_cockpit.exceptions import NotFoundError

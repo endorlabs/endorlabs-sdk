@@ -66,7 +66,7 @@ jobs:
       - name: Cache UV dependencies
         uses: actions/cache@v4.3.0
         with:
-          path: ~/.cache/uv
+          path: ${{ env.HOME }}/.cache/uv
           key: ${{ steps.cache-key.outputs.key }}
           restore-keys: |
             ${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-
@@ -303,6 +303,7 @@ jobs:
 
       - name: Run integration tests
         run: |
+          # CI uses read-only API credentials; tests marked @pytest.mark.local (create/update/delete) are excluded
           uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration and not local"
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
