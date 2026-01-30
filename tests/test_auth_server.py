@@ -191,11 +191,25 @@ class TestGetToken:
         assert token is None
         mock_server.server_close.assert_called_once()
 
+    @pytest.mark.skipif(
+        is_ci_environment(),
+        reason=(
+            "Browser authentication requires human interaction "
+            "and cannot be tested in CI"
+        ),
+    )
     def test_get_token_invalid_method(self) -> None:
         """Test get_token raises ValueError for invalid method."""
         with pytest.raises(ValueError, match="Unsupported auth method"):
             get_token(method="invalid_method")
 
+    @pytest.mark.skipif(
+        is_ci_environment(),
+        reason=(
+            "Browser authentication requires human interaction "
+            "and cannot be tested in CI"
+        ),
+    )
     def test_get_token_email_required(self) -> None:
         """Test get_token requires email for email auth method."""
         with pytest.raises(ValueError, match="Email address required"):
