@@ -22,8 +22,8 @@ The `traverse` parameter in `ListParameters` automatically queries all child nam
 ### Basic Usage
 
 ```python
-from endor_cockpit.resources import dependency_metadata
-from endor_cockpit.types import ListParameters
+from endorlabs.resources import dependency_metadata
+from endorlabs.types import ListParameters
 
 # Query all DependencyMetadata across all namespaces
 # Uses API default page size (typically 100) - no page_size override
@@ -36,8 +36,8 @@ all_deps = dependency_metadata.list_dependency_metadata(
 ### With Filtering
 
 ```python
-from endor_cockpit.resources import dependency_metadata
-from endor_cockpit.types import ListParameters
+from endorlabs.resources import dependency_metadata
+from endorlabs.types import ListParameters
 
 # Query all private dependencies across all namespaces
 list_params = ListParameters(
@@ -54,8 +54,8 @@ private_deps = dependency_metadata.list_dependency_metadata(
 #### DependencyMetadata (Recommended Pattern)
 
 ```python
-from endor_cockpit.resources import dependency_metadata
-from endor_cockpit.types import ListParameters
+from endorlabs.resources import dependency_metadata
+from endorlabs.types import ListParameters
 
 # Get all dependencies across tenant
 list_params = ListParameters(traverse=True)
@@ -67,8 +67,8 @@ deps = dependency_metadata.list_dependency_metadata(
 #### PackageVersion
 
 ```python
-from endor_cockpit.resources import package_version
-from endor_cockpit.types import ListParameters
+from endorlabs.resources import package_version
+from endorlabs.types import ListParameters
 
 # Get all package versions across tenant
 list_params = ListParameters(traverse=True)
@@ -80,8 +80,8 @@ packages = package_version.list_package_versions(
 #### Finding
 
 ```python
-from endor_cockpit.resources import finding
-from endor_cockpit.types import ListParameters
+from endorlabs.resources import finding
+from endorlabs.types import ListParameters
 
 # Get all findings across tenant
 list_params = ListParameters(traverse=True)
@@ -227,6 +227,7 @@ def count_all_findings(client, tenant_namespace):
 
 ## Related Documentation
 
-- [ListParameters API Reference](../../src/endor_cockpit/types.py)
-- [BaseResourceOperations Implementation](../../src/endor_cockpit/models/base.py)
-- DependencyMetadata: `endor_cockpit.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.
+- [ListParameters API Reference](../../src/endorlabs/types.py)
+- [BaseResourceOperations Implementation](../../src/endorlabs/models/base.py)
+- DependencyMetadata: `endorlabs.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.
+

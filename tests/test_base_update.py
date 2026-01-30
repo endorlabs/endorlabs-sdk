@@ -10,8 +10,8 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from endor_cockpit.exceptions import ValidationError as EndorValidationError
-from endor_cockpit.models.base import BaseResourceOperations
+from endorlabs.exceptions import ValidationError as EndorValidationError
+from endorlabs.models.base import BaseResourceOperations
 
 
 class MinimalPayload(BaseModel):

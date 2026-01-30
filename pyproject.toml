@@ -14,7 +14,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pydantic==2.12.3",
+    "pydantic==2.12.5",
     "pyyaml==6.0.3",
     "requests==2.32.5",
 ]
@@ -30,10 +30,11 @@ requires = ["hatchling>=1.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/endor_cockpit"]
+packages = ["src/endorlabs"]
+artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 
-# Endor Cockpit configuration
-[tool.endor_cockpit]
+# Endor Labs SDK configuration
+[tool.endorlabs]
 # Configuration precedence (highest to lowest):
 # 1. Constructor parameters (APIClient(logging_level="DEBUG"))
 # 2. Environment variables (ENDOR_LOG_LEVEL, ENDOR_API, ENDOR_MAX_RETRIES, etc.)
@@ -116,6 +117,11 @@ select = [
     "ANN",   # flake8-annotations
     "D",     # pydocstyle
     "PERF",  # perflint
+    "SLF",   # flake8-self: Prevents accessing private members (_api_key) from outside
+    "TCH",   # flake8-type-checking: Moves circular imports to TYPE_CHECKING blocks
+    "ARG",   # flake8-unused-arguments: Finds unused arguments (critical for API signatures)
+    "PT",    # flake8-pytest-style: Enforces standard testing patterns
+    "SIM",   # flake8-simplify: Simplifies code (better readability for open source)
 ]
 
 # Ignore rules that conflict with SDK patterns
@@ -130,15 +136,21 @@ ignore = [
 
 [tool.ruff.lint.isort]
 # Forces strict separation of standard lib, 3rd party, and local imports
-known-first-party = ["endor_cockpit"]
+known-first-party = ["endorlabs"]
 
 # Per-file ignores for known issues (temporary - remove after fixing)
 [tool.ruff.lint.per-file-ignores]
 # TODO: Remove these after fixing the inconsistencies:
-"src/endor_cockpit/resources/project.py" = ["F811"]  # TenantMeta duplicate
-"src/endor_cockpit/resources/finding.py" = ["F811"]  # TenantMeta duplicate
-# Tests: relax annotations and docstyle; fixtures and mocks often use Any/dynamic types
-"tests/**" = ["ANN", "D", "E402"]
+"src/endorlabs/resources/project.py" = ["F811"]  # TenantMeta duplicate
+"src/endorlabs/resources/finding.py" = ["F811"]  # TenantMeta duplicate
+# Internal/API compatibility: private helpers and unused params kept for API surface
+"src/endorlabs/models/base.py" = ["SLF001"]
+"src/endorlabs/resources/audit_log.py" = ["SLF001"]
+"src/endorlabs/resources/dependency_metadata.py" = ["ARG001"]
+"src/endorlabs/resources/package_license.py" = ["ARG001"]
+"src/endorlabs/resources/semgrep_rule.py" = ["ARG003"]
+# Tests: relax annotations, docstyle, private access for assertions, fixture params
+"tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -159,7 +171,7 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "local: marks tests as local-only (excluded from CI; CI uses read-only credentials)"
+    "writes: marks tests that perform create/update/delete (write operations) against the API"
 ]
 
 [tool.pyright]
@@ -170,8 +182,8 @@ typeCheckingMode = "standard"
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
-    { root = "src/endor_cockpit/analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
-    { root = "src/endor_cockpit/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src", pythonVersion = "3.13" },
     { root = "tests", pythonVersion = "3.13", extraPaths = ["src"] },
 ]
@@ -329,4 +341,5 @@ dev = [
     "pytest-cov==7.0.0",
     "ruff==0.14.14",
     "pyright==1.1.408",
+    "pre-commit==4.5.1",
 ]

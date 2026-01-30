@@ -10,7 +10,7 @@ from enum import Enum
 import pytest
 from pydantic import BaseModel
 
-from endor_cockpit.utils.model_validation import (
+from endorlabs.utils.model_validation import (
     create_minimal_payload,
     ensure_required_fields,
     get_immutable_fields,

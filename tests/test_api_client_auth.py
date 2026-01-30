@@ -1,7 +1,7 @@
 """Tests for APIClient authentication with token expiration tracking.
 
-Browser auth tests are marked @pytest.mark.local so CI runs
-`pytest -m \"integration and not local\"` and excludes them; run with mocks locally.
+Browser auth tests are marked @pytest.mark.writes. CI runs all integration tests;
+the marker allows optional filtering (e.g. -m "integration and not writes").
 """
 
 import os
@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 
 class TestTokenExpirationTracking:
@@ -26,7 +26,7 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_token_expiration_parsing(self, mock_post) -> None:
         """Test that token expiration is parsed from API response."""
         # Mock response with expiration
@@ -58,7 +58,7 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_token_expiration_alternative_field(self, mock_post) -> None:
         """Test parsing expiration_time field (alternative to expirationTime)."""
         future_time = datetime.now(UTC) + timedelta(hours=1)
@@ -87,7 +87,7 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_token_property_refresh(self, mock_post) -> None:
         """Test token property triggers refresh when expired."""
         # First authentication
@@ -135,7 +135,7 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_is_expired_property(self, mock_post) -> None:
         """Test is_expired property correctly identifies expired tokens."""
         future_time = datetime.now(UTC) + timedelta(hours=1)
@@ -172,7 +172,7 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_proactive_refresh_30_minutes(self, mock_post) -> None:
         """Test proactive refresh triggers 30 minutes before expiration."""
         # Set expiration to 25 minutes from now (within 30-minute buffer)
@@ -208,13 +208,13 @@ class TestTokenExpirationTracking:
         assert mock_post.call_count == 2
 
 
-@pytest.mark.local
+@pytest.mark.writes
 class TestBrowserAuthentication:
     """Test browser-based OAuth authentication."""
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
-    @patch("endor_cockpit.auth_server.get_token")
-    @patch("endor_cockpit.api_client.requests.get")
+    @patch("endorlabs.auth_server.get_token")
+    @patch("endorlabs.api_client.requests.get")
     def test_browser_auth_method(self, mock_get, mock_get_token) -> None:
         """Test browser authentication method."""
         mock_get_token.return_value = "browser-token-123"
@@ -231,8 +231,8 @@ class TestBrowserAuthentication:
         mock_get_token.assert_called_once()
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
-    @patch("endor_cockpit.auth_server.get_token")
-    @patch("endor_cockpit.api_client.requests.get")
+    @patch("endorlabs.auth_server.get_token")
+    @patch("endorlabs.api_client.requests.get")
     def test_browser_auth_with_provided_token(self, mock_get, mock_get_token) -> None:
         """Test browser auth with directly provided token."""
         mock_response = Mock()
@@ -255,7 +255,7 @@ class TestBrowserAuthentication:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.get")
+    @patch("endorlabs.api_client.requests.get")
     def test_browser_auth_from_env(self, mock_get) -> None:
         """Test browser auth from environment variables."""
         mock_response = Mock()
@@ -282,7 +282,7 @@ class TestAuthenticationBackwardCompatibility:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_api_key_auth_default(self, mock_post) -> None:
         """Test that API key auth is still the default."""
         mock_response = Mock()
@@ -306,7 +306,7 @@ class TestAuthenticationBackwardCompatibility:
         },
         clear=True,
     )
-    @patch("endor_cockpit.api_client.requests.post")
+    @patch("endorlabs.api_client.requests.post")
     def test_explicit_api_key_auth(self, mock_post) -> None:
         """Test explicit API key authentication method."""
         mock_response = Mock()

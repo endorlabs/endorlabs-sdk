@@ -13,8 +13,25 @@ from unittest.mock import Mock
 
 import pytest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.types import ListParameters
+from endorlabs.api_client import APIClient
+from endorlabs.exceptions import NotFoundError, ServerError
+from endorlabs.types import ListParameters
+
+# Test pagination limits
+# Tests fetch limited resources for setup (page_size=10, max 5 pages = 50 items max)
+# Tests that need more should explicitly request it
+TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
+TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
+TEST_TRAVERSE_PAGE_SIZE = (
+    2  # Minimal page size for traverse tests to limit network load
+)
+TEST_MAX_PAGES_TRAVERSE = (
+    2  # Max pages for traverse queries (slower, so more restrictive)
+)
+# Single source for test namespace: use env ENDOR_NAMESPACE or this default.
+# Tests should use the `namespace` fixture (or this constant) instead of
+# hardcoding a default. See docs/rules-of-engagement/test-and-spec-findings.md.
+TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
 
 def pytest_configure(config) -> None:
@@ -41,32 +58,15 @@ def pytest_configure(config) -> None:
                     key = key.strip()
                     value = value.strip()
                     # Remove quotes if present
-                    if value.startswith('"') and value.endswith('"'):
-                        value = value[1:-1]
-                    elif value.startswith("'") and value.endswith("'"):
+                    quoted = (value.startswith('"') and value.endswith('"')) or (
+                        value.startswith("'") and value.endswith("'")
+                    )
+                    if quoted:
                         value = value[1:-1]
                     # Only set if not already in environment
                     # (CI variables take precedence)
                     if key and not os.getenv(key):
                         os.environ[key] = value
-
-
-# Test pagination limits
-# Tests fetch limited resources for setup (page_size=10, max 5 pages = 50 items max)
-# Tests that need more should explicitly request it
-TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
-TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
-TEST_TRAVERSE_PAGE_SIZE = (
-    2  # Minimal page size for traverse tests to limit network load
-)
-TEST_MAX_PAGES_TRAVERSE = (
-    2  # Max pages for traverse queries (slower, so more restrictive)
-)
-
-# Single source for test namespace: use env ENDOR_NAMESPACE or this default.
-# Tests should use the `namespace` fixture (or this constant) instead of
-# hardcoding a default. See docs/rules-of-engagement/test-and-spec-findings.md.
-TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
 
 @pytest.fixture
@@ -134,7 +134,7 @@ def setup_logging() -> None:
     """Setup logging for tests."""
     logging.basicConfig(level=logging.DEBUG)
     # Suppress schema drift warnings in tests
-    logging.getLogger("endor_cockpit.utils.schema_drift").setLevel(logging.ERROR)
+    logging.getLogger("endorlabs.utils.schema_drift").setLevel(logging.ERROR)
 
 
 @pytest.fixture
@@ -170,10 +170,20 @@ def resource_list_fixture_factory(list_func: Callable, resource_name: str) -> Ca
 
     @pytest.fixture
     def _resource_list(api_client, namespace, test_list_params):
-        """Get limited list of resources for testing."""
-        resources = list_func(api_client, namespace, list_params=test_list_params)
+        """Get limited list of resources for testing.
+
+        Skips when list returns empty or 404/ServerError so dependents
+        do not run with no data. Uses clear skip reasons to avoid
+        conflating empty/404 with "no data".
+        """
+        try:
+            resources = list_func(api_client, namespace, list_params=test_list_params)
+        except NotFoundError:
+            pytest.skip("List returned 404 (filter/auth or scope)")
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
         if not resources:
-            pytest.skip(f"No {resource_name} available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return resources
 
     return _resource_list

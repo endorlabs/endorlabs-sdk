@@ -1,6 +1,6 @@
 ---
 description: API understanding workflow before model or API changes
-globs: "src/endor_cockpit/models/**/*.py, src/endor_cockpit/resources/**/*.py"
+globs: "src/endorlabs/models/**/*.py, src/endorlabs/resources/**/*.py"
 alwaysApply: false
 ---
 

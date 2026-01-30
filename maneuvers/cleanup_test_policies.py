@@ -35,13 +35,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 # Add maneuvers directory for common utilities
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources.policy import (
+from endorlabs.api_client import APIClient
+from endorlabs.resources.policy import (
     Policy,
     delete_policy,
     list_policies,
 )
-from endor_cockpit.types import ListParameters
+from endorlabs.types import ListParameters
 from common.constants import DEFAULT_PAGE_SIZE, DEFAULT_TEST_TAGS
 
 # Set up logging
@@ -425,3 +425,4 @@ uv run python maneuvers/cleanup_test_policies.py \\
 
 if __name__ == "__main__":
     main()
+

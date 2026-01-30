@@ -4,7 +4,7 @@ When to update docs; link to docs-drift-workflow and [conventions.md](convention
 
 ## SDK surface boundaries
 
-- **Experimental:** `endor_cockpit.analysis` — may change without the same stability guarantees as the rest of the SDK.
+- **Experimental:** `endorlabs.analysis` — may change without the same stability guarantees as the rest of the SDK.
 - **Internal:** `utils` (model_validation, schema_drift, traversal), `operations` — used by or re-exported from the stable API; not in top-level `__all__`.
 
 ## When to Update
@@ -17,3 +17,4 @@ When to update docs; link to docs-drift-workflow and [conventions.md](convention
 
 - **Schema drift**: `.github/workflows/schema-drift-detection.yml` — detects model/API mismatches.
 - **Unified**: See [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md) for manual commands and details.
+

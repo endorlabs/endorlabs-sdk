@@ -23,10 +23,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.2
 
       - name: Set up Python
-        uses: actions/setup-python@v6.0.0
+        uses: actions/setup-python@v6.2.0
         with:
           python-version: "3.13"
 
@@ -41,7 +41,7 @@ jobs:
 
       - name: Restore cached version
         id: cache-version
-        uses: actions/cache@v4
+        uses: actions/cache@v5.0.2
         with:
           path: .github/cache/endorctl_version.txt
           key: endorctl-version-${{ runner.os }}
@@ -76,7 +76,7 @@ jobs:
 
       - name: Save version to cache
         if: steps.check.outputs.changed == 'true'
-        uses: actions/cache@v4
+        uses: actions/cache@v5.0.2
         with:
           path: .github/cache/endorctl_version.txt
           key: endorctl-version-${{ runner.os }}-${{ steps.check.outputs.version }}
@@ -92,7 +92,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v6.0.2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -192,7 +192,7 @@ Automatically created by the schema drift detection workflow.`;
 
       - name: Upload drift report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6.0.0
         with:
           name: schema-drift-report-${{ needs.check-version.outputs.latest-version || 'manual' }}
           path: schema_drift_report.json

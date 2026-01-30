@@ -19,6 +19,27 @@ uv sync
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
 
+### Pre-commit hook (recommended)
+
+Run the same lint/format/typecheck as CI before each commit. Pre-commit is a dev dependency; use it so hooks run automatically for all maintainers.
+
+From the repo root after `uv sync`:
+
+```bash
+uv run pre-commit install
+```
+
+That installs the git hook so every `git commit` runs ruff check, ruff format (check), and pyright. Skipping with `--no-verify` should be rare (e.g. WIP commits) and not for normal upstream contributions.
+
+Alternative (no pre-commit framework): copy the native hook so it runs the same commands:
+
+```bash
+cp githooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+The repo uses [.pre-commit-config.yaml](.pre-commit-config.yaml) with `minimum_pre_commit_version` and `default_install_hook_types` so a single `pre-commit install` is enough.
+
 ## Environment
 
 The SDK uses environment variables only (no config file loading). Set these for local development:
@@ -63,7 +84,7 @@ uv run --env-file .env pytest
 With coverage:
 
 ```bash
-uv run pytest --cov=endor_cockpit --cov-report=html
+uv run pytest --cov=endorlabs --cov-report=html
 ```
 
 Integration tests (require valid credentials):
@@ -80,7 +101,7 @@ uv run ruff format .
 uv run pyright
 ```
 
-CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml).
+CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). They also run automatically before commit when the pre-commit hook is installed (see [Pre-commit hook](#pre-commit-hook-recommended) above).
 
 ## Optional: direnv
 
@@ -96,3 +117,4 @@ uv run python scripts/sync_external_docs.py --all
 ```
 
 See [scripts/README.md](scripts/README.md) for options (spec-only, `--max-pages`, `--force`). For CI and schema drift workflow, see [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
+

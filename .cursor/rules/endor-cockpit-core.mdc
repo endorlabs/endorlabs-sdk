@@ -11,8 +11,9 @@ alwaysApply: true
 - Canonical naming: `tenant.namespace.child` only; never UUIDs in paths.
 - Env: `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`.
 - Python 3.13+; deps pinned (no `latest`). Style (line length, imports, format) enforced by Ruff — see [pyproject.toml](pyproject.toml).
-- Security: run `endorctl scan` before code changes. No PII; secrets via env only.
+- Security: run `endorctl scan` before code changes. secrets via env only, logging redaction for all secrets.
 
-**Structure**: `src/endor_cockpit/` — `api_client.py`, `resources/`, `models/`. See [AGENTS.md](AGENTS.md) and `docs/rules-of-engagement/` for patterns and guides.
+**Structure**: `src/endorlabs/` — `api_client.py`, `client_surface.py`, `facade.py`, `registry.py`, `resources/`, `models/`. See [AGENTS.md](AGENTS.md), [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md), and `docs/rules-of-engagement/` for patterns and guides.
 
-**Quick**: `from endor_cockpit.api_client import APIClient` then resource modules under `endor_cockpit.resources`. All list/get/create/update/delete use `BaseResourceOperations`; functions return `Resource | None` or `list[Resource]`.
+**Quick**: `import endorlabs`; recommended entry is `endorlabs.Client(tenant="...")` then `client.namespaces.list()`, etc. Alternative: resource modules under `endorlabs.resources`. All list/get/create/update/delete use `BaseResourceOperations`; functions return `Resource | None` or `list[Resource]`.
+

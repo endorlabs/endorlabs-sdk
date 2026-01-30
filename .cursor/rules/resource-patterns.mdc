@@ -1,6 +1,6 @@
 ---
 description: Resource implementation patterns (BaseResourceOperations, list/update/error)
-globs: "src/endor_cockpit/resources/**/*.py"
+globs: "src/endorlabs/resources/**/*.py"
 alwaysApply: false
 ---
 
@@ -9,5 +9,6 @@ alwaysApply: false
 - Use `BaseResourceOperations(client, "resources", Resource)`; one `_get_*_ops()` per module; return typed models, not dicts.
 - **List**: Accept `list_params: ListParameters | None`, `max_pages: int | None`; pass through to `ops.list()`. Docstring: filter, mask, page_size, traverse.
 - **Update**: Accept `update_mask: str | None` (comma-separated); convert to `list[str]` and pass to `ops.update()`. Exception: `namespace` **requires** `update_mask` (e.g. `meta.description`); namespace uses collection PATCH with UUID in body.
-- **Errors**: Use `endor_cockpit.exceptions`; resources may return `None` on 404; log full `response.text`; no truncation.
+- **Errors**: Use `endorlabs.exceptions`; resources may return `None` on 404; log full `response.text`; no truncation.
 - See [AGENTS.md](AGENTS.md) for code samples; deep dives in [docs/reference/namespace.md](docs/reference/namespace.md), [docs/conventions.md](docs/conventions.md), [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md), and [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md).
+

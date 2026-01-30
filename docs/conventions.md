@@ -26,8 +26,8 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 - **page_size**, **page_token**: Pagination; only set `page_size` when you need a specific size (API default otherwise).
 - **sort_field**, **sort_order**: Sorting.
 - **traverse**: See above.
-- **count**, **from_date**, **to_date**: see `endor_cockpit.types.ListParameters` (Field descriptions there).
-- Defined in `endor_cockpit.types.ListParameters`; see [src/endor_cockpit/types.py](../src/endor_cockpit/types.py).
+- **count**, **from_date**, **to_date**: see `endorlabs.types.ListParameters` (Field descriptions there).
+- Defined in `endorlabs.types.ListParameters`; see [src/endorlabs/types.py](../src/endorlabs/types.py).
 
 ## Update and update_mask
 
@@ -37,6 +37,7 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## Errors
 
-- Use `endor_cockpit.exceptions`; resources may return `None` on 404 where documented.
+- Use `endorlabs.exceptions`; resources may return `None` on 404 where documented.
 - Log full `response.text` on errors; no truncation in error handling.
 - gRPC-derived status codes are mapped to HTTP and typed exceptions where documented.
+

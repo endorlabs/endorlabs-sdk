@@ -1,6 +1,6 @@
 # Resources (SDK API Surface)
 
-The table reflects typical API semantics (e.g. platform-managed, scan-generated). The SDK exposes all operations; see `endor_cockpit.resources.<name>` and docstrings for signatures, return types, and raised exceptions.
+The table reflects typical API semantics (e.g. platform-managed, scan-generated). The SDK exposes all operations; see `endorlabs.resources.<name>` and docstrings for signatures, return types, and raised exceptions.
 
 One table: resource name, operations, limitations. See OpenAPI spec for full schema.
 
@@ -28,3 +28,4 @@ One table: resource name, operations, limitations. See OpenAPI spec for full sch
 | semgrep_rule | yes | yes | yes | yes (update_mask) | yes | — |
 
 Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (workflow downloads to `external_docs/` in CI). Deep-dive: [namespace.md](namespace.md).
+

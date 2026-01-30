@@ -10,11 +10,11 @@ import requests
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
 )
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.exceptions import (
+from endorlabs.api_client import APIClient
+from endorlabs.exceptions import (
     ValidationError as EndorValidationError,
 )
-from endor_cockpit.resources.namespace import (
+from endorlabs.resources.namespace import (
     CreateNamespacePayload,
     NamespaceMetaCreate,
     NamespaceMetaUpdate,
@@ -102,7 +102,7 @@ class TestNamespaces:
         # List and check created
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         all_namespaces = list_namespaces(
             self.client,
@@ -234,3 +234,16 @@ class TestNamespaces:
         assert "field mask" in (exc_info.value.message or "").lower() or (
             "fieldmask" in (exc_info.value.message or "").lower()
         )
+
+    def test_client_recommended_ux_list_namespaces(self) -> None:
+        """Recommended UX: endorlabs.Client(tenant=...); client.namespaces.list()."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        namespaces = client.namespaces.list(traverse=True, max_pages=1)
+        assert isinstance(namespaces, list)

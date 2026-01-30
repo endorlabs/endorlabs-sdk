@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pydantic import BaseModel, Field
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -551,3 +551,4 @@ SECURITY NOTE: Clauses work as AND operator - ALL must match for policy to apply
 
 if __name__ == "__main__":
     main()
+

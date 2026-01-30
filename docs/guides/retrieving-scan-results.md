@@ -14,6 +14,7 @@ Use **traverse** when namespace is unknown or you need to search across namespac
 2. List ScanResults by meta.parent_uuid == Project UUID; sort by meta.create_time desc; take first for "most recent."
 3. Get Finding by UUID (or list findings filtered by spec.project_uuid / context.scan_uuid as needed).
 
-Resources: `endor_cockpit.resources.finding`, `.scan_result`, `.project`; [conventions.md](../conventions.md) (traverse, mask); [reference/resources.md](../reference/resources.md).
+Resources: `endorlabs.resources.finding`, `.scan_result`, `.project`; [conventions.md](../conventions.md) (traverse, mask); [reference/resources.md](../reference/resources.md).
 
 Runnable patterns: `tests/`, `maneuvers/`; full platform workflows: [docs.endorlabs.com](https://docs.endorlabs.com/).
+
