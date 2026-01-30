@@ -20,13 +20,13 @@ Full-featured version with proper version comparison and error handling.
 
 ```bash
 # Simple check (just print latest version)
-python scripts/check_endorctl_version.py
+python .github/scripts/check_endorctl_version.py
 
 # Check with state file (tracks last known version)
-python scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state
+python .github/scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state
 
 # Check and notify if update available
-python scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state --notify
+python .github/scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state --notify
 ```
 
 **Exit codes:**
@@ -57,7 +57,7 @@ Lightweight shell script - fastest option for cron jobs.
 
 ```bash
 # Python version
-0 */6 * * * /usr/bin/python3 /path/to/scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state --notify
+0 */6 * * * /usr/bin/python3 /path/to/.github/scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state --notify
 
 # Shell version (faster)
 0 */6 * * * /path/to/scripts/check_endorctl_version.sh --state-file /tmp/endorctl_version.state --notify
@@ -72,7 +72,7 @@ Lightweight shell script - fastest option for cron jobs.
 ### Check hourly (quiet mode, only exit code)
 
 ```bash
-0 * * * * /path/to/scripts/check_endorctl_version.sh --state-file /tmp/endorctl_version.state --quiet
+0 * * * * /path/to/.github/scripts/check_endorctl_version.py --state-file /tmp/endorctl_version.state --quiet
 ```
 
 ## Integration Examples

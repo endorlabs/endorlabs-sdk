@@ -1,5 +1,4 @@
-"""
-AuditLog resource module for Endor Labs API.
+"""AuditLog resource module for Endor Labs API.
 
 This module provides comprehensive audit log querying capabilities including
 listing, examining, and filtering audit logs to track user actions and system
@@ -28,8 +27,10 @@ Audit log queries may take longer than other API operations. Default timeout
 is 20 seconds. Use --timeout option to override if needed.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -45,16 +46,11 @@ from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
 
+
 # Global resource instance
-_audit_log_ops = None
-
-
-def _get_audit_log_ops(client: APIClient) -> BaseResourceOperations:
-    """Get or create audit log operations instance."""
-    global _audit_log_ops
-    if _audit_log_ops is None:
-        _audit_log_ops = BaseResourceOperations(client, "audit-logs", AuditLog)
-    return _audit_log_ops
+def _get_audit_log_ops(client: APIClient) -> BaseResourceOperations[AuditLog]:
+    """Get BaseResourceOperations instance for audit logs."""
+    return BaseResourceOperations(client, "audit-logs", AuditLog)
 
 
 class AuditLogOperation(FlexibleEnum):
@@ -70,13 +66,13 @@ class AuditLogOperation(FlexibleEnum):
 class AuditLogSpec(BaseSpec):
     """Audit log specification extending BaseSpec."""
 
-    message_uuid: Optional[str] = Field(
+    message_uuid: str | None = Field(
         None,
         description=(
             "The UUID of the resource which was accessed/modified in this operation"
         ),
     )
-    message_kind: Optional[str] = Field(
+    message_kind: str | None = Field(
         None,
         description=(
             "The kind of the message/resource type. "
@@ -89,21 +85,21 @@ class AuditLogSpec(BaseSpec):
             "The type of operation performed (CREATE, UPDATE, DELETE, UPSERT)"
         ),
     )
-    payload: Optional[Dict[str, Any]] = Field(
+    payload: dict[str, Any] | None = Field(
         None,
         description=(
             "The operation payload containing the message that was "
             "created or updated (protobuf Any format)"
         ),
     )
-    error: Optional[Dict[str, Any]] = Field(
+    error: dict[str, Any] | None = Field(
         None,
         description=(
             "Error information if the operation failed "
             "(gRPC Status format with code, message, details)"
         ),
     )
-    claims: Optional[List[str]] = Field(
+    claims: list[str] | None = Field(
         None,
         description=(
             "Authentication claims array containing authentication "
@@ -116,13 +112,13 @@ class AuditLogSpec(BaseSpec):
             "  - 'issuer=https://api.endorlabs.com/v1'"
         ),
     )
-    remote_address: Optional[str] = Field(
+    remote_address: str | None = Field(
         None, description="The source IP address of the request"
     )
 
     @field_validator("claims")
     @classmethod
-    def validate_claims(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_claims(cls, v: list[str] | None) -> list[str] | None:
         """Validate claims are not empty strings."""
         if v:
             return [claim.strip() for claim in v if claim.strip()]
@@ -137,8 +133,7 @@ class AuditLogMeta(BaseMeta):
 
 
 class AuditLog(BaseResource):
-    """
-    Audit Log resource model extending BaseResource.
+    """Audit Log resource model extending BaseResource.
 
     OPERATION SUPPORT:
     ==================
@@ -208,13 +203,13 @@ class AuditLog(BaseResource):
     """
 
     # Audit log-specific fields (universal fields inherited from BaseResource)
-    spec: Optional[AuditLogSpec] = Field(None, description="Audit log specification")  # type: ignore
+    spec: AuditLogSpec | None = Field(None, description="Audit log specification")  # type: ignore
 
-    model_config = {"extra": "ignore"}
+    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift in audit log responses."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -243,19 +238,16 @@ class CreateAuditLogPayload(BaseModel):
 
     meta: AuditLogMeta = Field(..., description="Audit log metadata")
     spec: AuditLogSpec = Field(..., description="Audit log specification")
-    propagate: Optional[bool] = Field(
-        False, description="Propagate to child namespaces"
-    )
+    propagate: bool | None = Field(False, description="Propagate to child namespaces")
 
 
 def list_audit_logs(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[AuditLog]:
-    """
-    List active audit logs in the specified namespace (last 30 days).
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[AuditLog]:
+    """List active audit logs in the specified namespace (last 30 days).
 
     Active audit logs remain in the active database for 30 days before being
     automatically moved to archive storage. Use list_archived_audit_logs()
@@ -293,19 +285,19 @@ def list_audit_logs(
         ...         )
         ...     )
         ... )
+
     """
     ops = _get_audit_log_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)
 
 
 def list_archived_audit_logs(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[AuditLog]:
-    """
-    List archived audit logs in the specified namespace (30+ days old).
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[AuditLog]:
+    """List archived audit logs in the specified namespace (30+ days old).
 
     Archived audit logs are logs older than 30 days that have been moved to
     archive storage. They are retained for 3 years. Both active and archived
@@ -341,6 +333,7 @@ def list_archived_audit_logs(
         ...         )
         ...     )
         ... )
+
     """
     try:
         url = f"v1/namespaces/{tenant_meta_namespace}/audit-logs/archived"
@@ -364,7 +357,7 @@ def list_archived_audit_logs(
                 break
 
             # Build query parameters using BaseResourceOperations helper
-            params = ops._build_params(list_params, **kwargs)
+            params = ops._build_params(list_params, **kwargs)  # pyright: ignore[reportPrivateUsage]
 
             # Add page_token to params if present
             if page_token is not None:
@@ -374,12 +367,12 @@ def list_archived_audit_logs(
             data = res.json()
 
             # Extract objects from this page
-            items = ops._extract_items_from_page(data)
+            items = ops._extract_items_from_page(data)  # pyright: ignore[reportPrivateUsage]
             all_items.extend(items)
             page_count += 1
 
             # Check for next page token
-            page_token = ops._extract_page_token(data)
+            page_token = ops._extract_page_token(data)  # pyright: ignore[reportPrivateUsage]
 
             # Break if no more pages
             if not page_token:
@@ -403,9 +396,8 @@ def list_archived_audit_logs(
 
 def get_audit_log(
     client: APIClient, tenant_meta_namespace: str, audit_log_uuid: str
-) -> Optional[AuditLog]:
-    """
-    Get an audit log by UUID.
+) -> AuditLog:
+    """Get an audit log by UUID.
 
     Args:
         client: Authenticated APIClient instance
@@ -413,29 +405,34 @@ def get_audit_log(
         audit_log_uuid: UUID of the audit log
 
     Returns:
-        AuditLog resource or None if not found
+        AuditLog resource
+
+    Raises:
+        NotFoundError: If audit log doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> from endor_cockpit.api_client import APIClient
         >>> client = APIClient()
         >>> log = get_audit_log(client, "tenant.namespace", "uuid-here")
-        >>> if log:
-        ...     print(f"Operation: {log.spec.operation}")
-        ...     print(f"Message Kind: {log.spec.message_kind}")
+        >>> print(f"Operation: {log.spec.operation}")
+        >>> print(f"Message Kind: {log.spec.message_kind}")
+
     """
     ops = _get_audit_log_ops(client)
-    return ops.get(tenant_meta_namespace, audit_log_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, audit_log_uuid)
 
 
 def create_audit_log(
     client: APIClient,
     tenant_meta_namespace: str,
     payload: CreateAuditLogPayload,
-) -> Optional[AuditLog]:
-    """
-    Create a new audit log entry (manual creation).
+) -> AuditLog:
+    """Create a new audit log entry (manual creation).
 
-    Note: Audit logs are typically system-generated. Manual creation is
+    Uses pre-validation and typed errors. Audit logs are typically
+    system-generated. Manual creation is
     available for special use cases.
 
     Args:
@@ -444,7 +441,14 @@ def create_audit_log(
         payload: Audit log creation payload
 
     Returns:
-        Created AuditLog resource or None if creation failed
+        Created AuditLog resource
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If audit log already exists
+        ServerError: If server error occurs
 
     Example:
         >>> from endor_cockpit.api_client import APIClient
@@ -464,22 +468,16 @@ def create_audit_log(
         ...     )
         ... )
         >>> log = create_audit_log(client, "tenant.namespace", payload)
+
     """
-    try:
-        ops = _get_audit_log_ops(client)
-        return ops.create(tenant_meta_namespace, payload)  # type: ignore
-    except Exception as e:
-        logger.error(
-            f"Failed to create audit log in namespace '{tenant_meta_namespace}': {e}"
-        )
-        return None
+    ops = _get_audit_log_ops(client)
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def delete_audit_log(
     client: APIClient, tenant_meta_namespace: str, audit_log_uuid: str
 ) -> bool:
-    """
-    Delete an audit log by UUID.
+    """Delete an audit log by UUID.
 
     Args:
         client: Authenticated APIClient instance
@@ -497,6 +495,7 @@ def delete_audit_log(
         ... )
         >>> if success:
         ...     print("Audit log deleted successfully")
+
     """
     ops = _get_audit_log_ops(client)
     return ops.delete(tenant_meta_namespace, audit_log_uuid)

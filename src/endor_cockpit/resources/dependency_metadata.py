@@ -1,12 +1,18 @@
-"""
-DependencyMetadata resource module for Endor Labs API.
+"""DependencyMetadata resource module for Endor Labs API.
 
 This module provides CRUD operations for DependencyMetadata resources following the
 established patterns from the base class implementation.
+
+IMPORTANT: All DependencyMetadata operations are hardcoded to use the "oss" namespace.
+The tenant_meta_namespace parameter in all functions is kept for API compatibility
+but is ignored - all operations always use the "oss" namespace regardless of the
+parameter value passed.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -23,6 +29,11 @@ from ..types import ListParameters
 # Set up logger with redaction filter
 logger = logging.getLogger(__name__)
 logger.addFilter(RedactingFilter([redaction_pattern]))
+
+# Hardcoded namespace for DependencyMetadata operations
+# All DependencyMetadata operations use the "oss" namespace regardless of
+# the tenant_meta_namespace parameter passed to functions
+DEPENDENCY_METADATA_NAMESPACE = "oss"
 
 
 class DependencyScope(FlexibleEnum):
@@ -67,49 +78,57 @@ class Ecosystem(FlexibleEnum):
     """Ecosystem enumeration."""
 
     UNSPECIFIED = "ECOSYSTEM_UNSPECIFIED"
-    GO = "ECOSYSTEM_GO"
-    MAVEN = "ECOSYSTEM_MAVEN"
-    PYPI = "ECOSYSTEM_PYPI"
+    AI_MODEL = "ECOSYSTEM_AI_MODEL"
+    APK = "ECOSYSTEM_APK"
+    C = "ECOSYSTEM_C"
     CARGO = "ECOSYSTEM_CARGO"
-    NPM = "ECOSYSTEM_NPM"
+    COCOAPOD = "ECOSYSTEM_COCOAPOD"
+    CONTAINER = "ECOSYSTEM_CONTAINER"
+    DEBIAN = "ECOSYSTEM_DEBIAN"
     GEM = "ECOSYSTEM_GEM"
+    GIT = "ECOSYSTEM_GIT"
+    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+    GO = "ECOSYSTEM_GO"
+    HUGGING_FACE = "ECOSYSTEM_HUGGING_FACE"
+    MAVEN = "ECOSYSTEM_MAVEN"
+    NPM = "ECOSYSTEM_NPM"
     NUGET = "ECOSYSTEM_NUGET"
     PACKAGIST = "ECOSYSTEM_PACKAGIST"
-    SBOM = "ECOSYSTEM_SBOM"
+    PYPI = "ECOSYSTEM_PYPI"
     RPM = "ECOSYSTEM_RPM"
-    DEBIAN = "ECOSYSTEM_DEBIAN"
-    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+    SBOM = "ECOSYSTEM_SBOM"
+    SWIFT = "ECOSYSTEM_SWIFT"
 
 
 class DependencyData(BaseModel):
     """Dependency data for DependencyMetadata."""
 
-    project_uuid: Optional[str] = Field(
+    project_uuid: str | None = Field(
         None, description="The UUID of the project to which the dependency belongs"
     )
     package_name: str = Field(
         ...,
         description="Qualified dependency package name. Does not include the version.",
     )
-    package_version_uuid: Optional[str] = Field(
+    package_version_uuid: str | None = Field(
         None, description="the UUID of the dependency package version object."
     )
-    unresolved_version: Optional[str] = Field(
+    unresolved_version: str | None = Field(
         None, description="Unresolved dependency package version string."
     )
-    resolved_version: Optional[str] = Field(
+    resolved_version: str | None = Field(
         None, description="Resolved dependency package version."
     )
-    ecosystem: Optional[Ecosystem] = Field(None, description="Dependency ecosystem.")
-    scope: Optional[DependencyScope] = Field(None, description="Dependency scope.")
-    reachability: Optional[ReachabilityType] = Field(
+    ecosystem: Ecosystem | None = Field(None, description="Dependency ecosystem.")
+    scope: DependencyScope | None = Field(None, description="Dependency scope.")
+    reachability: ReachabilityType | None = Field(
         None, description="Dependency reachability."
     )
-    utilization: Optional[float] = Field(
+    utilization: float | None = Field(
         None, description="The fraction of the dependency that is used by this package."
     )
-    imported_type: Optional[ImportedType] = Field(None, description="Imported type.")
-    discovery_type: Optional[DiscoveryType] = Field(None, description="Discovery type.")
+    imported_type: ImportedType | None = Field(None, description="Imported type.")
+    discovery_type: DiscoveryType | None = Field(None, description="Discovery type.")
 
 
 class ImporterData(BaseModel):
@@ -127,11 +146,11 @@ class ImporterData(BaseModel):
     package_version_name: str = Field(
         ..., description="Fully qualified name of the root package version."
     )
-    package_version_sha: Optional[str] = Field(
+    package_version_sha: str | None = Field(
         None,
         description="SHA of the source control version for the root package version.",
     )
-    package_version_ref: Optional[str] = Field(
+    package_version_ref: str | None = Field(
         None,
         description="Resolved ref of the source control version for the root package.",
     )
@@ -158,16 +177,16 @@ class DependencyMetadataSpec(BaseSpec):
     - None (DependencyMetadata is typically immutable after creation)
     """
 
-    dependency_data: Optional[DependencyData] = Field(
+    dependency_data: DependencyData | None = Field(
         None, description="Information about the dependency"
     )  # IMMUTABLE: Set at creation
-    importer_data: Optional[ImporterData] = Field(
+    importer_data: ImporterData | None = Field(
         None, description="Information about the root package version (importer)"
     )  # IMMUTABLE: Set at creation
 
     @field_validator("dependency_data", mode="before")
     @classmethod
-    def validate_dependency_data(cls, v):
+    def validate_dependency_data(cls, v: Any) -> Any:
         """Handle dependency data validation."""
         if isinstance(v, dict):
             return DependencyData(**v)
@@ -175,7 +194,7 @@ class DependencyMetadataSpec(BaseSpec):
 
     @field_validator("importer_data", mode="before")
     @classmethod
-    def validate_importer_data(cls, v):
+    def validate_importer_data(cls, v: Any) -> Any:
         """Handle importer data validation."""
         if isinstance(v, dict):
             return ImporterData(**v)
@@ -183,16 +202,22 @@ class DependencyMetadataSpec(BaseSpec):
 
 
 class DependencyMetadata(BaseResource):
-    """DependencyMetadata resource model extending BaseResource."""
+    """DependencyMetadata resource model extending BaseResource.
+
+    IMPORTANT: All DependencyMetadata operations are hardcoded to use
+    the "oss" namespace. This resource always queries the OSS (Open Source
+    Software) namespace regardless of the namespace parameter passed to
+    the operation functions.
+    """
 
     # DependencyMetadata-specific fields (universal fields inherited from BaseResource)
-    spec: DependencyMetadataSpec = Field(
+    spec: DependencyMetadataSpec = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         ..., description="DependencyMetadata specification"
-    )  # type: ignore
+    )
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to DependencyMetadataSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = DependencyMetadataSpec(**data["spec"])
@@ -200,7 +225,7 @@ class DependencyMetadata(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -214,67 +239,134 @@ class DependencyMetadata(BaseResource):
         return v
 
 
-def _get_dependency_metadata_ops(client: APIClient) -> BaseResourceOperations:
+def _get_dependency_metadata_ops(
+    client: APIClient,
+) -> BaseResourceOperations[DependencyMetadata]:
     """Get BaseResourceOperations instance for DependencyMetadata."""
     return BaseResourceOperations(client, "dependency-metadata", DependencyMetadata)
 
 
 def list_dependency_metadata(
     client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[DependencyMetadata]:
-    """List dependency metadata with advanced filtering and pagination."""
+    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[DependencyMetadata]:
+    """List dependency metadata with advanced filtering and pagination.
+
+    Note: This function hardcodes the namespace to "oss" regardless of the
+    tenant_meta_namespace parameter value.
+    """
     ops = _get_dependency_metadata_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(DEPENDENCY_METADATA_NAMESPACE, list_params, **kwargs)
 
 
 def get_dependency_metadata(
-    client: APIClient, tenant_meta_namespace: str, dependency_metadata_uuid: str
-) -> Optional[DependencyMetadata]:
-    """Get specific dependency metadata by UUID."""
+    client: APIClient,
+    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
+    dependency_metadata_uuid: str,
+) -> DependencyMetadata:
+    """Get specific dependency metadata by UUID.
+
+    Note: This function hardcodes the namespace to "oss" regardless of the
+    tenant_meta_namespace parameter value.
+
+    Raises:
+        NotFoundError: If dependency metadata doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
     ops = _get_dependency_metadata_ops(client)
-    return ops.get(tenant_meta_namespace, dependency_metadata_uuid)  # type: ignore
+    return ops.get(DEPENDENCY_METADATA_NAMESPACE, dependency_metadata_uuid)
 
 
 def create_dependency_metadata(
     client: APIClient,
-    tenant_meta_namespace: str,
-    payload: "CreateDependencyMetadataPayload",
-) -> Optional[DependencyMetadata]:
-    """Create a new dependency metadata."""
+    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
+    payload: CreateDependencyMetadataPayload,
+) -> DependencyMetadata:
+    """Create a new dependency metadata with pre-validation and typed errors.
+
+    Note: This function hardcodes the namespace to "oss" regardless of the
+    tenant_meta_namespace parameter value.
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If dependency metadata already exists
+        ServerError: If server error occurs
+
+    """
     ops = _get_dependency_metadata_ops(client)
-    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+    return ops.create(DEPENDENCY_METADATA_NAMESPACE, payload)
 
 
 def update_dependency_metadata(
     client: APIClient,
-    tenant_meta_namespace: str,
+    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
     dependency_metadata_uuid: str,
-    payload: "UpdateDependencyMetadataPayload",
-    update_mask: Optional[List[str]] = None,
-) -> Optional[DependencyMetadata]:
-    """Update an existing dependency metadata with partial updates."""
+    payload: UpdateDependencyMetadataPayload,
+    update_mask: str | None = None,
+) -> DependencyMetadata | None:
+    """Update an existing dependency metadata with partial updates.
+
+    Note: This function hardcodes the namespace to "oss" regardless of the
+    tenant_meta_namespace parameter value.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Parameter kept for API compatibility but ignored
+        dependency_metadata_uuid: UUID of the dependency metadata to update
+        payload: DependencyMetadata update payload
+        update_mask: Optional comma-separated list of fields to update
+            (e.g., "meta.tags,meta.description"). If provided, only these
+            fields will be updated. If omitted, all non-None fields in
+            payload will be updated.
+
+    Returns:
+        Updated DependencyMetadata object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If dependency metadata doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
     ops = _get_dependency_metadata_ops(client)
     return ops.update(
-        tenant_meta_namespace, dependency_metadata_uuid, payload, update_mask
-    )  # type: ignore
+        DEPENDENCY_METADATA_NAMESPACE,
+        dependency_metadata_uuid,
+        payload,
+        update_mask_list,
+    )
 
 
 def delete_dependency_metadata(
-    client: APIClient, tenant_meta_namespace: str, dependency_metadata_uuid: str
+    client: APIClient,
+    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
+    dependency_metadata_uuid: str,
 ) -> bool:
-    """Delete a dependency metadata by UUID."""
+    """Delete a dependency metadata by UUID.
+
+    Note: This function hardcodes the namespace to "oss" regardless of the
+    tenant_meta_namespace parameter value.
+    """
     ops = _get_dependency_metadata_ops(client)
-    return ops.delete(tenant_meta_namespace, dependency_metadata_uuid)  # type: ignore
+    return ops.delete(DEPENDENCY_METADATA_NAMESPACE, dependency_metadata_uuid)
 
 
 # Payload models for create and update operations
 class CreateDependencyMetadataPayload(BaseModel):
     """Payload for creating a dependency metadata."""
 
-    meta: "DependencyMetadataMetaCreate" = Field(
+    meta: DependencyMetadataMetaCreate = Field(
         ..., description="DependencyMetadata metadata for creation"
     )
     spec: DependencyMetadataSpec = Field(
@@ -285,10 +377,10 @@ class CreateDependencyMetadataPayload(BaseModel):
 class UpdateDependencyMetadataPayload(BaseModel):
     """Payload for updating a dependency metadata."""
 
-    meta: Optional["DependencyMetadataMetaUpdate"] = Field(
+    meta: DependencyMetadataMetaUpdate | None = Field(
         None, description="DependencyMetadata metadata for update"
     )
-    spec: Optional[DependencyMetadataSpec] = Field(
+    spec: DependencyMetadataSpec | None = Field(
         None, description="DependencyMetadata specification for update"
     )
 
@@ -297,14 +389,10 @@ class DependencyMetadataMetaCreate(BaseModel):
     """DependencyMetadata metadata for creation."""
 
     name: str = Field(..., description="DependencyMetadata name")
-    description: Optional[str] = Field(
-        None, description="DependencyMetadata description"
-    )
+    description: str | None = Field(None, description="DependencyMetadata description")
 
 
 class DependencyMetadataMetaUpdate(BaseModel):
     """DependencyMetadata metadata for update."""
 
-    description: Optional[str] = Field(
-        None, description="DependencyMetadata description"
-    )
+    description: str | None = Field(None, description="DependencyMetadata description")

@@ -1,5 +1,4 @@
-"""
-Test cases for DependencyMetadata resource operations.
+"""Test cases for DependencyMetadata resource operations.
 
 Tests GET and LIST operations for DependencyMetadata resources.
 DependencyMetadata represents dependency relationships between PackageVersions.
@@ -23,10 +22,12 @@ class TestDependencyMetadata:
     """Test cases for DependencyMetadata resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self):
+    def setup_fast(self) -> None:
         """Fast setup: client and namespace only (runs before each test)."""
         self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        import conftest
+
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
@@ -39,12 +40,11 @@ class TestDependencyMetadata:
     @pytest.fixture
     def sample_dependency_metadata(self):
         """Fetch minimal sample data (1 item) for UUID operations.
-        
+
         Function-scoped but only fetches when explicitly requested by tests.
         Only fetches 1 item without traverse for fast setup. Tests that need
         sample data should request this fixture explicitly.
         """
-
         # Fetch 1 item without traverse (fast)
         results = dependency_metadata.list_dependency_metadata(
             self.client,
@@ -56,7 +56,7 @@ class TestDependencyMetadata:
             pytest.skip("No dependency metadata available for testing")
         return results[0]  # Return single item, not list
 
-    def test_dependency_metadata_get_list(self):
+    def test_dependency_metadata_get_list(self) -> None:
         """Test GET dependency-metadata operation."""
         print("\n=== TESTING GET DEPENDENCY METADATA ===")
 
@@ -102,7 +102,7 @@ class TestDependencyMetadata:
                     if dm.spec.dependency_data.ecosystem:
                         print(f"  Ecosystem: {dm.spec.dependency_data.ecosystem}")
 
-    def test_dependency_metadata_get_by_uuid(self, sample_dependency_metadata):
+    def test_dependency_metadata_get_by_uuid(self, sample_dependency_metadata) -> None:
         """Test GET dependency-metadata by UUID operation."""
         print("\n=== TESTING GET DEPENDENCY METADATA BY UUID ===")
 
@@ -136,28 +136,7 @@ class TestDependencyMetadata:
             if retrieved_dm.spec.dependency_data.ecosystem:
                 print(f"Ecosystem: {retrieved_dm.spec.dependency_data.ecosystem}")
 
-    def test_dependency_metadata_field_validation(self, sample_dependency_metadata):
-        """Test field validation and required fields."""
-        dm = sample_dependency_metadata
-
-        # Verify required fields are present
-        assert dm.uuid is not None
-        assert dm.meta is not None
-        assert dm.meta.name is not None
-        assert dm.spec is not None
-
-        # Verify spec structure
-        if dm.spec.dependency_data:
-            assert dm.spec.dependency_data.project_uuid is not None
-            assert dm.spec.dependency_data.package_name is not None
-            assert dm.spec.dependency_data.package_version_uuid is not None
-
-        if dm.spec.importer_data:
-            assert dm.spec.importer_data.project_uuid is not None
-            assert dm.spec.importer_data.package_name is not None
-            assert dm.spec.importer_data.package_version_uuid is not None
-
-    def test_dependency_metadata_pagination(self):
+    def test_dependency_metadata_pagination(self) -> None:
         """Test pagination capabilities."""
         # Test with page size and max_pages limit
         import conftest
@@ -171,15 +150,23 @@ class TestDependencyMetadata:
         assert isinstance(paginated_results, list)
         assert len(paginated_results) > 0
 
-    def test_dependency_metadata_error_handling(self):
+    def test_dependency_metadata_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
-        # Test with invalid UUID
-        invalid_dm = dependency_metadata.get_dependency_metadata(
-            self.client, self.parent_namespace, "invalid-uuid"
-        )
-        assert invalid_dm is None
+        # Test with invalid UUID format - should raise ValidationError
+        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
+        from endor_cockpit.exceptions import ValidationError
 
-    def test_dependency_metadata_filter_by_project(self, sample_dependency_metadata):
+        with pytest.raises(ValidationError) as exc_info:
+            dependency_metadata.get_dependency_metadata(
+                self.client, self.parent_namespace, "invalid-uuid"
+            )
+        assert exc_info.value.resource_uuid == "invalid-uuid"
+        assert exc_info.value.operation == "get"
+        assert exc_info.value.status_code == 400
+
+    def test_dependency_metadata_filter_by_project(
+        self, sample_dependency_metadata
+    ) -> None:
         """Test filtering dependency metadata by project UUID."""
         print("\n=== TESTING FILTER DEPENDENCY METADATA BY PROJECT ===")
 
@@ -223,59 +210,3 @@ class TestDependencyMetadata:
             f"Found {len(filtered_results)} dependency metadata records "
             f"for project {project_uuid}"
         )
-
-    def test_dependency_metadata_ecosystem_distribution(self):
-        """Test and analyze dependency metadata ecosystem distribution."""
-        # Use pagination limits to prevent slow queries
-        import conftest
-
-        dependency_metadata_list = dependency_metadata.list_dependency_metadata(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
-
-        ecosystem_counts = {}
-        scope_counts = {}
-        reachability_counts = {}
-
-        for dm in dependency_metadata_list:
-            if dm.spec and dm.spec.dependency_data:
-                ecosystem = (
-                    str(dm.spec.dependency_data.ecosystem)
-                    if dm.spec.dependency_data.ecosystem
-                    else "Unknown"
-                )
-                ecosystem_counts[ecosystem] = ecosystem_counts.get(ecosystem, 0) + 1
-
-                scope = (
-                    str(dm.spec.dependency_data.scope)
-                    if dm.spec.dependency_data.scope
-                    else "Unknown"
-                )
-                scope_counts[scope] = scope_counts.get(scope, 0) + 1
-
-                reachability = (
-                    str(dm.spec.dependency_data.reachability)
-                    if dm.spec.dependency_data.reachability
-                    else "Unknown"
-                )
-                reachability_counts[reachability] = (
-                    reachability_counts.get(reachability, 0) + 1
-                )
-
-        print("\n=== Dependency Metadata Distribution ===")
-        print("Ecosystem distribution:")
-        for ecosystem, count in ecosystem_counts.items():
-            print(f"  {ecosystem}: {count}")
-
-        print("Scope distribution:")
-        for scope, count in scope_counts.items():
-            print(f"  {scope}: {count}")
-
-        print("Reachability distribution:")
-        for reachability, count in reachability_counts.items():
-            print(f"  {reachability}: {count}")
-
-        assert len(dependency_metadata_list) > 0

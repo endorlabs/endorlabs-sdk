@@ -1,129 +1,15 @@
 # Troubleshooting Rules of Engagement
 
-> **Tactical Operations**: These rules guide systematic issue resolution and debugging patterns for the Endor Cockpit.
+Workflow only. Detailed debugging stories (PATCH 501, tags not persisting, update_mask discovery, etc.) are in `.tmp/docs-revamp/kb-articles/` or `.tmp/docs-revamp/internal-wiki/troubleshooting-stories.md`.
 
-## Overview
+## Workflow
 
-These rules provide a systematic approach to resolving development issues while capturing learnings for future reference.
+1. **Document** — Task, context, approach, errors and stack traces.
+2. **Research** — Search codebase and docs; review API spec (see [conventions.md](../conventions.md)); check external_docs/.
+3. **Investigate** — Read SDK code and spec; test with endorctl; validate theories.
+4. **Resolve** — Implement fix; document signatures and learnings.
 
-## Troubleshooting Workflow
+## References
 
-### 1. Document the Issue
-- [ ] Document task being attempted
-- [ ] Record context (resource types, files, terminal output)
-- [ ] Note attempted approach with specific function calls
-- [ ] Capture error messages and stack traces
-
-### 2. Research Phase
-- [ ] Search codebase using IDE semantic search for similar issues
-- [ ] Search existing documentation for similar problems
-- [ ] Review API specification for expected behavior
-- [ ] Check external_docs/ for relevant patterns
-
-### 3. Investigation Phase
-- [ ] Read SDK code and API spec
-- [ ] Check error logs and validation output
-- [ ] Test with endorctl to verify API behavior
-- [ ] User knowledge checkpoint (ask if they know something not captured)
-
-### 4. Validation Phase
-- [ ] Write ephemeral tests to validate theories
-- [ ] Test different approaches systematically
-- [ ] Document unexpected behavior vs expected
-- [ ] Capture error messages and stack traces
-
-### 5. Resolution Phase
-- [ ] Implement working solution
-- [ ] Document exact function signatures that work
-- [ ] Test solution thoroughly
-- [ ] Document learnings in code comments for future reference
-
-## Critical Debugging Patterns
-
-### 1. PATCH Endpoint Debugging Journey
-
-#### **Problem**: PATCH operations failing with 501 "Method Not Allowed"
-**Initial Error**: `requests.exceptions.HTTPError: 501 Server Error: Not Implemented`
-
-**Debugging Steps**:
-1. **Wrong URL Pattern**: Initially used `PATCH /v1/namespaces/{namespace}/projects/{uuid}`
-2. **OpenAPI Spec Check**: Found correct pattern in `external_docs/openapi-swagger.json`
-3. **Discovery**: PATCH endpoints expect UUID in request body, not URL path
-4. **Solution**: Changed to `PATCH /v1/namespaces/{namespace}/projects` with UUID in body
-
-**Key Learning**: Always check OpenAPI spec for actual endpoint patterns, not assumptions.
-
-#### **Problem**: PATCH requiring full object structure
-**Error**: `400 Bad Request - invalid Project.Meta.Name: value is required`
-
-**Debugging Steps**:
-1. **Full Object Required**: API complained about missing required fields
-2. **OpenAPI Spec Re-examination**: Found `v1UpdateRequest` with `update_mask` field
-3. **Discovery**: `update_mask` allows partial updates
-4. **Solution**: Implemented `update_mask` for efficient partial updates
-
-**Key Learning**: API specs contain critical fields like `update_mask` that enable efficient operations.
-
-#### **Problem**: Tags not persisting despite 200 OK response
-**Symptoms**: API returns success but tags don't appear in subsequent GET requests
-
-**Debugging Steps**:
-1. **Response Analysis**: API returned updated tags in response
-2. **Persistence Check**: Re-fetching showed tags missing
-3. **Pydantic Model Investigation**: Found missing `tags` field in `ProjectMeta`
-4. **Root Cause**: Pydantic model didn't include `tags: Optional[List[str]] = None`
-5. **Solution**: Added missing field to model
-
-**Key Learning**: API responses can be correct but Pydantic models must include all fields for proper parsing.
-
-### 2. Test Structure Restructuring Debugging
-
-#### **Problem**: Multiple redundant test files with overlapping functionality
-**Symptoms**: 5+ test files with similar test cases, hard to maintain
-
-**Debugging Steps**:
-1. **Pattern Analysis**: Identified `test_<resource>.py` pattern from existing `test_namespace.py`
-2. **Consolidation Strategy**: Group all operations per resource in single files
-3. **Naming Convention**: Follow `endorctl` pattern with singular resource names
-4. **Implementation**: Created `test_project.py`, `test_finding.py` with comprehensive coverage
-
-**Key Learning**: Follow existing patterns and consolidate related functionality.
-
-#### **Problem**: Test execution failures due to class name mismatches
-**Error**: `NameError: name 'TestResourceGetOperations' is not defined`
-
-**Debugging Steps**:
-1. **Class Renaming**: Changed from `TestResourceGetOperations` to `TestResourceOperations`
-2. **Main Execution Block**: Updated class references in `if __name__ == "__main__"`
-3. **Method Updates**: Updated test method calls to match new class structure
-
-**Key Learning**: Maintain consistency between class names and references throughout test files.
-
-## Common Issue Patterns
-
-### API Endpoint Issues
-- **Wrong URL patterns**: Check OpenAPI spec for actual endpoint structure
-- **Missing required fields**: Validate against OpenAPI specification
-- **Authentication failures**: Verify environment variables and credentials
-
-### Pydantic Model Issues
-- **Missing fields**: Ensure all API response fields are modeled
-- **Type mismatches**: Validate field types against OpenAPI spec
-- **Validation errors**: Check required vs optional field definitions
-
-### Test Structure Issues
-- **Redundant test files**: Consolidate by resource type
-- **Class naming**: Maintain consistency between class names and references
-- **Test organization**: Follow established patterns from existing tests
-
-## Success Criteria
-
-- ✅ Issue resolved with working solution
-- ✅ Solution documented in code comments
-- ✅ Knowledge captured for future reference
-- ✅ Documentation updated if applicable
-- ✅ Patterns documented for team knowledge
-
----
-
-*These rules ensure systematic issue resolution while building institutional knowledge for the Endor Cockpit.*
+- OpenAPI/spec path and list/update patterns: [conventions.md](../conventions.md).
+- For resolved-case narratives (wrong URL pattern, update_mask, tags): see `.tmp/docs-revamp/` by classification.

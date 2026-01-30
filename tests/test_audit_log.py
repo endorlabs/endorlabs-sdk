@@ -1,5 +1,4 @@
-"""
-Test cases for AuditLog resource operations.
+"""Test cases for AuditLog resource operations.
 
 Tests full CRUD operations for AuditLog resources including active and archived
 logs, filtering capabilities, and API key activity identification.
@@ -27,7 +26,9 @@ tests_dir = Path(__file__).parent
 if str(tests_dir) not in sys.path:
     sys.path.insert(0, str(tests_dir))
 
-import conftest  # noqa: E402
+from datetime import UTC
+
+import conftest
 
 TEST_PAGE_SIZE = conftest.TEST_PAGE_SIZE
 
@@ -37,14 +38,18 @@ class TestAuditLog:
     """Test cases for AuditLog resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """Set up test environment."""
         self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+
+        # Extract tenant root namespace for traverse operations
+        # Tenant root is the first part before the first dot
+        self.tenant_root = self.namespace.split(".")[0]
 
         self.created_audit_log_uuids = []  # Track created logs for cleanup
 
@@ -56,7 +61,7 @@ class TestAuditLog:
             max_pages=2,
         )
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up any audit logs created during tests."""
         if hasattr(self, "created_audit_log_uuids"):
             for log_uuid in self.created_audit_log_uuids:
@@ -67,7 +72,7 @@ class TestAuditLog:
                     print(f"[WARNING] Failed to delete test audit log {log_uuid}: {e}")
             self.created_audit_log_uuids.clear()
 
-    def test_audit_log_list(self):
+    def test_audit_log_list(self) -> None:
         """Test GET audit logs operation."""
         print("\n=== TESTING GET AUDIT LOGS ===")
 
@@ -91,7 +96,7 @@ class TestAuditLog:
                 if log_item.meta.create_time:
                     print(f"  Create Time: {log_item.meta.create_time}")
 
-    def test_audit_log_list_archived(self):
+    def test_audit_log_list_archived(self) -> None:
         """Test GET archived audit logs operation."""
         print("\n=== TESTING GET ARCHIVED AUDIT LOGS ===")
 
@@ -114,7 +119,7 @@ class TestAuditLog:
                     if log_item.meta.create_time:
                         print(f"  Create Time: {log_item.meta.create_time}")
 
-    def test_audit_log_get_by_uuid(self):
+    def test_audit_log_get_by_uuid(self) -> None:
         """Test GET audit log by UUID operation."""
         print("\n=== TESTING GET AUDIT LOG BY UUID ===")
 
@@ -140,7 +145,7 @@ class TestAuditLog:
                 f"(API limitation)"
             )
 
-    def test_audit_log_filter_by_operation(self):
+    def test_audit_log_filter_by_operation(self) -> None:
         """Test filtering audit logs by operation type."""
         print("\n=== TESTING FILTER BY OPERATION ===")
 
@@ -171,7 +176,7 @@ class TestAuditLog:
                         f"Log should be of operation type {operation_type}"
                     )
 
-    def test_audit_log_filter_by_message_kind(self):
+    def test_audit_log_filter_by_message_kind(self) -> None:
         """Test filtering audit logs by message kind."""
         print("\n=== TESTING FILTER BY MESSAGE KIND ===")
 
@@ -195,14 +200,14 @@ class TestAuditLog:
                     f"Log should be of message kind {message_kind}"
                 )
 
-    def test_audit_log_filter_by_time_range(self):
+    def test_audit_log_filter_by_time_range(self) -> None:
         """Test filtering audit logs by time range."""
         print("\n=== TESTING FILTER BY TIME RANGE ===")
 
         # Test filtering by recent time range (last 7 days)
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
-        to_date = datetime.now(timezone.utc)
+        to_date = datetime.now(UTC)
         from_date = to_date - timedelta(days=7)
 
         to_date_str = to_date.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -231,12 +236,12 @@ class TestAuditLog:
                 log_time = datetime.fromisoformat(log_time_str)
                 # Ensure both datetimes are timezone-aware for comparison
                 if log_time.tzinfo is None:
-                    log_time = log_time.replace(tzinfo=timezone.utc)
+                    log_time = log_time.replace(tzinfo=UTC)
                 assert from_date <= log_time <= to_date, (
                     "Log should be within time range"
                 )
 
-    def test_audit_log_filter_by_claims(self):
+    def test_audit_log_filter_by_claims(self) -> None:
         """Test filtering audit logs by authentication claims."""
         print("\n=== TESTING FILTER BY CLAIMS ===")
 
@@ -257,34 +262,55 @@ class TestAuditLog:
             if log_item.spec and log_item.spec.claims:
                 print(f"  Log {log_item.uuid} claims: {log_item.spec.claims}")
 
-    def test_audit_log_filter_by_remote_address(self):
-        """Test filtering audit logs by remote address."""
+    def test_audit_log_filter_by_remote_address(self) -> None:
+        """Test filtering audit logs by remote address.
+
+        Uses traverse=True to search across all namespaces for logs with
+        remote_address, similar to test_audit_log_traverse pattern.
+        """
         print("\n=== TESTING FILTER BY REMOTE ADDRESS ===")
+        import conftest
 
-        # Get a sample log to find a remote address to filter by
-        if not self.audit_logs:
-            pytest.skip("No audit logs available for testing")
+        from endor_cockpit.types import ListParameters
 
-        # Find a log with a remote address
-        sample_log = None
-        for log_item in self.audit_logs:
-            if log_item.spec and log_item.spec.remote_address:
-                sample_log = log_item
-                break
+        # Use traverse with filter to find logs with remote_address across namespaces
+        # Filter to find logs that have a non-empty remote_address
+        list_params = ListParameters(
+            filter="spec.remote_address!=''",
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+            traverse=True,
+        )
 
-        if not sample_log or not sample_log.spec:
+        logs_with_remote = audit_log.list_audit_logs(
+            self.client,
+            self.tenant_root,
+            list_params=list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+
+        if not logs_with_remote:
+            pytest.skip("No audit logs with remote address available")
+
+        # Get first log with remote address to use as filter target
+        sample_log = logs_with_remote[0]
+        if not sample_log.spec or not sample_log.spec.remote_address:
             pytest.skip("No audit logs with remote address available")
 
         remote_addr = sample_log.spec.remote_address
         print(f"Filtering by remote address: {remote_addr}")
 
+        # Now filter by the specific remote address
+        filter_params = ListParameters(
+            filter=f"spec.remote_address=='{remote_addr}'",
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+            traverse=True,
+        )
+
         filtered_logs = audit_log.list_audit_logs(
             self.client,
-            self.namespace,
-            list_params=ListParameters(
-                filter=f"spec.remote_address=='{remote_addr}'", page_size=20
-            ),
-            max_pages=2,
+            self.tenant_root,
+            list_params=filter_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         print(f"Remote address '{remote_addr}': {len(filtered_logs)} logs")
 
@@ -295,7 +321,7 @@ class TestAuditLog:
                     f"Log should have remote address {remote_addr}"
                 )
 
-    def test_audit_log_api_key_activity(self):
+    def test_audit_log_api_key_activity(self) -> None:
         """Test identifying API key activity via claims."""
         print("\n=== TESTING API KEY ACTIVITY IDENTIFICATION ===")
 
@@ -340,7 +366,7 @@ class TestAuditLog:
             )
             print(f"Pattern '{pattern}': {len(filtered_logs)} logs")
 
-    def test_audit_log_pagination(self):
+    def test_audit_log_pagination(self) -> None:
         """Test pagination support for audit logs."""
         print("\n=== TESTING PAGINATION ===")
 
@@ -358,6 +384,47 @@ class TestAuditLog:
         assert isinstance(paginated_logs, list), "Should return a list"
         print(f"Successfully retrieved {len(paginated_logs)} logs with pagination")
 
+    def test_audit_log_traverse(self) -> None:
+        """Test namespace traversal for audit logs with filter.
+
+        Note: AuditLogs traverse without filter can timeout due to large
+        dataset and timeout considerations (default 20s). This test uses
+        a filter to limit the query scope.
+        """
+        print("\n=== TESTING AUDIT LOG TRAVERSE ===")
+        import conftest
+
+        from endor_cockpit.types import ListParameters
+
+        # Use a filter to limit scope and avoid timeout
+        # Filter by CREATE operation to reduce dataset size
+        list_params = ListParameters(
+            filter="spec.operation=='OPERATION_CREATE'",
+            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+            traverse=True,
+        )
+
+        logs = audit_log.list_audit_logs(
+            self.client,
+            self.tenant_root,
+            list_params=list_params,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+
+        assert isinstance(logs, list), "Should return a list of audit logs"
+        print(f"Found {len(logs)} CREATE audit logs across all namespaces")
+
+        if logs:
+            # Show namespace distribution
+            namespaces = {}
+            for log in logs:
+                ns = log.tenant_meta.namespace if log.tenant_meta else "unknown"
+                namespaces[ns] = namespaces.get(ns, 0) + 1
+
+            print(f"Audit logs found in {len(namespaces)} namespaces:")
+            for ns, count in list(namespaces.items())[:5]:  # Show first 5
+                print(f"  {ns}: {count} logs")
+
 
 if __name__ == "__main__":
     # Run tests directly
@@ -374,7 +441,9 @@ if __name__ == "__main__":
 
     # Manual setup
     test_instance.client = APIClient(auth_method="api-key")
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+    test_instance.namespace = os.getenv(
+        "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
+    )
     test_instance.audit_logs = audit_log.list_audit_logs(
         test_instance.client,
         test_instance.namespace,

@@ -1,5 +1,4 @@
-"""
-Browser-based OAuth authentication server for Endor Labs.
+"""Browser-based OAuth authentication server for Endor Labs.
 
 This module provides browser-based OAuth authentication by starting a local
 HTTP server to capture the bearer token from the OAuth redirect callback.
@@ -12,13 +11,13 @@ and ENDOR_API_CREDENTIALS_SECRET) for automated environments.
 import logging
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Optional
+from typing import Any
 from webbrowser import get as get_browser
 
 logger = logging.getLogger(__name__)
 
-# Global variable to store the captured token
-LAST_TOKEN = None
+# Module-level storage for the captured token (lowercase to allow reassignment)
+_captured_token: str | None = None
 
 # Default environment
 DEFAULT_ENV = "endorlabs.com"
@@ -36,9 +35,9 @@ AUTH_METHODS = {
 class TokenHandler(BaseHTTPRequestHandler):
     """HTTP request handler for OAuth callback that captures the bearer token."""
 
-    def do_GET(self):
+    def do_GET(self) -> None:
         """Handle GET request from OAuth redirect."""
-        global LAST_TOKEN
+        global _captured_token
         try:
             # Ignore favicon requests
             if self.path == "/favicon.ico":
@@ -53,7 +52,7 @@ class TokenHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            loc, query = self.path.split("?", 1)
+            _loc, query = self.path.split("?", 1)
             params = {}
             for param in query.split("&"):
                 if "=" in param:
@@ -61,14 +60,14 @@ class TokenHandler(BaseHTTPRequestHandler):
                     params[k] = v
 
             if "token" in params:
-                LAST_TOKEN = params["token"]
+                _captured_token = params["token"]
                 logger.info("Token captured successfully")
                 # Return simple HTML page instead of redirect to prevent new tabs
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
                 try:
-                    self.wfile.write(
+                    _ = self.wfile.write(
                         b"<html><head><title>Authentication Successful</title></head>"
                         b"<body><h1>Authentication successful!</h1>"
                         b"<p>You can close this window.</p></body></html>"
@@ -90,12 +89,12 @@ class TokenHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.close_connection = True
 
-    def do_POST(self):
+    def do_POST(self) -> None:
         """Handle POST request from OAuth redirect (SSO may use POST)."""
         # SSO auth may come back with POST, but we handle it the same as GET
         self.do_GET()
 
-    def log_message(self, format, *args, **kwargs):
+    def log_message(self, format: str, *args: Any, **kwargs: Any) -> None:
         """Suppress default HTTP server logs."""
         # Optionally enable in debug mode
         if logger.isEnabledFor(logging.DEBUG):
@@ -105,12 +104,11 @@ class TokenHandler(BaseHTTPRequestHandler):
 def get_token(
     timeout: int = 20,
     environment: str = DEFAULT_ENV,
-    browser_name: Optional[str] = None,
+    browser_name: str | None = None,
     method: str = "admin",
-    email: Optional[str] = None,
-) -> Optional[str]:
-    """
-    Get bearer token via browser OAuth flow.
+    email: str | None = None,
+) -> str | None:
+    """Get bearer token via browser OAuth flow.
 
     Starts a local HTTP server on localhost:30000, opens a browser to the
     OAuth URL, and captures the token from the redirect callback.
@@ -131,9 +129,10 @@ def get_token(
     Raises:
         ValueError: If method is not supported, email is required but not provided,
             or if called in a CI/CD environment
+
     """
-    global LAST_TOKEN
-    LAST_TOKEN = None
+    global _captured_token
+    _captured_token = None
 
     # Detect CI/CD environments and prevent browser auth
     ci_indicators = [
@@ -184,24 +183,24 @@ def get_token(
         # Open browser (only once)
         browser = get_browser(browser_name)
         logger.info(f"Opening browser for {method} authentication...")
-        browser.open_new_tab(auth_url)
+        _ = browser.open_new_tab(auth_url)
 
         # Wait for callback (blocks until request received or timeout)
         logger.info(
-            f"Waiting for OAuth callback on localhost:30000 "
-            f"(timeout: {timeout}s)..."
+            f"Waiting for OAuth callback on localhost:30000 (timeout: {timeout}s)..."
         )
 
-        # Handle request - this will block until ONE request is received or timeout
-        # After handling one request, server stops listening (handle_request only processes one)
-        server.handle_request()
+        # Handle request - this will block until ONE request is received
+        # or timeout. After handling one request, server stops listening
+        # (handle_request only processes one)
+        _ = server.handle_request()
 
         # Clean up server
         server.server_close()
 
-        if LAST_TOKEN:
+        if _captured_token:
             logger.info("Browser authentication successful")
-            return LAST_TOKEN
+            return _captured_token
         else:
             logger.warning("No token received from OAuth callback")
             return None

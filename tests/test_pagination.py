@@ -1,5 +1,4 @@
-"""
-Test cases for automatic pagination functionality.
+"""Test cases for automatic pagination functionality.
 
 Tests the new automatic pagination feature in BaseResourceOperations.list()
 to ensure all pages are fetched correctly.
@@ -14,9 +13,10 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+import conftest
+
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.models.base import BaseResourceOperations
-from endor_cockpit.resources import finding, project
 from endor_cockpit.types import ListParameters
 
 
@@ -24,16 +24,16 @@ class TestPagination:
     """Test cases for automatic pagination functionality."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """Set up test environment."""
         self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-    def test_pagination_with_mock_data(self):
+    def test_pagination_with_mock_data(self) -> None:
         """Test pagination with mock API responses."""
         # Mock response data simulating multiple pages
         mock_responses = [
@@ -90,7 +90,7 @@ class TestPagination:
                 f"Expected 3 API calls, got {mock_get.call_count}"
             )
 
-    def test_pagination_with_unlimited_pages(self):
+    def test_pagination_with_unlimited_pages(self) -> None:
         """Test pagination fetches all pages without limits."""
         # Mock response data with many pages
         mock_responses = [
@@ -124,7 +124,7 @@ class TestPagination:
                 f"Expected 5 API calls, got {mock_get.call_count}"
             )
 
-    def test_pagination_with_list_parameters(self):
+    def test_pagination_with_list_parameters(self) -> None:
         """Test pagination with ListParameters (no max_pages limit)."""
         mock_responses = [
             {
@@ -158,7 +158,7 @@ class TestPagination:
                 f"Expected 3 API calls, got {mock_get.call_count}"
             )
 
-    def test_pagination_with_no_pages(self):
+    def test_pagination_with_no_pages(self) -> None:
         """Test pagination with single page (no next_page_token)."""
         mock_response = {
             "list": {
@@ -184,7 +184,7 @@ class TestPagination:
                 f"Expected 1 API call, got {mock_get.call_count}"
             )
 
-    def test_pagination_with_empty_response(self):
+    def test_pagination_with_empty_response(self) -> None:
         """Test pagination with empty response."""
         mock_response = {"list": {"objects": [], "response": {}}}
 
@@ -202,61 +202,6 @@ class TestPagination:
                 f"Expected 1 API call, got {mock_get.call_count}"
             )
 
-    @pytest.mark.integration
-    def test_real_pagination_with_findings(self):
-        """Test pagination with real API data (integration test)."""
-        # This test will only run if we have real API access
-        try:
-            import conftest
-
-            from endor_cockpit.types import ListParameters
-
-            findings = finding.list_findings(
-                self.client,
-                self.namespace,
-                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-                max_pages=conftest.TEST_MAX_PAGES,
-            )
-            assert isinstance(findings, list), "Should return a list of findings"
-
-            # Log pagination info for debugging
-            print(f"Fetched {len(findings)} findings from API")
-
-            # If we have many findings, verify we got them all
-            if len(findings) > 0:
-                print(f"First finding: {findings[0].uuid}")
-                if len(findings) > 1:
-                    print(f"Last finding: {findings[-1].uuid}")
-
-        except Exception as e:
-            pytest.skip(f"Integration test skipped due to API error: {e}")
-
-    @pytest.mark.integration
-    def test_real_pagination_with_projects(self):
-        """Test pagination with real projects data (integration test)."""
-        try:
-            import conftest
-
-            from endor_cockpit.types import ListParameters
-
-            projects = project.list_projects(
-                self.client,
-                self.namespace,
-                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-                max_pages=conftest.TEST_MAX_PAGES,
-            )
-            assert isinstance(projects, list), "Should return a list of projects"
-
-            print(f"Fetched {len(projects)} projects from API")
-
-            if len(projects) > 0:
-                print(f"First project: {projects[0].uuid}")
-                if len(projects) > 1:
-                    print(f"Last project: {projects[-1].uuid}")
-
-        except Exception as e:
-            pytest.skip(f"Integration test skipped due to API error: {e}")
-
 
 if __name__ == "__main__":
     # Run tests directly
@@ -273,7 +218,9 @@ if __name__ == "__main__":
 
     # Manual setup without using pytest fixture
     test_instance.client = APIClient(auth_method="api-key")
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+    test_instance.namespace = os.getenv(
+        "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
+    )
 
     try:
         print("Running pagination tests...")

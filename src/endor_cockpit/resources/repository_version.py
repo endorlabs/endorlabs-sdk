@@ -1,5 +1,4 @@
-"""
-RepositoryVersion resource module for Endor Labs API.
+"""RepositoryVersion resource module for Endor Labs API.
 
 This module provides CRUD operations for RepositoryVersion resources following the
 established patterns from the base class implementation.
@@ -16,9 +15,11 @@ Note: Repository versions are automatically discovered and managed through platf
 integrations and cannot be manually created, updated, or deleted through the API.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -41,15 +42,15 @@ class RepositoryVersionMeta(BaseMeta):
 class VersionInfo(BaseModel):
     """Version information for RepositoryVersion matching v1Version spec."""
 
-    sha: Optional[str] = Field(
+    sha: str | None = Field(
         None,
         description="SHA of source control version. Optional if SHA cannot resolve.",
     )
-    ref: Optional[str] = Field(
+    ref: str | None = Field(
         None,
         description="Resolved ref of source control version: tag, branch, or SHA",
     )
-    metadata: Optional[dict] = Field(None, description="Version metadata.")
+    metadata: dict[str, Any] | None = Field(None, description="Version metadata.")
 
 
 class RepositoryVersionSpec(BaseSpec):
@@ -68,17 +69,16 @@ class RepositoryVersionSpec(BaseSpec):
     typically managed by platform integrations.
     """
 
-    version: Optional[VersionInfo] = Field(
+    version: VersionInfo | None = Field(
         None, description="Version information with ref, sha, and metadata"
     )  # IMMUTABLE: Set at creation
-    last_commit_date: Optional[datetime] = Field(
+    last_commit_date: datetime | None = Field(
         None, description="The last known time when the repository version was updated"
     )  # IMMUTABLE: System-managed
 
 
 class RepositoryVersion(BaseResource):
-    """
-    RepositoryVersion resource model extending BaseResource.
+    """RepositoryVersion resource model extending BaseResource.
 
     OPERATION SUPPORT:
     ==================
@@ -110,20 +110,20 @@ class RepositoryVersion(BaseResource):
     """
 
     # RepositoryVersion-specific fields (universal fields inherited from BaseResource)
-    spec: RepositoryVersionSpec = Field(
+    spec: RepositoryVersionSpec = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         ..., description="RepositoryVersion specification"
-    )  # type: ignore
+    )
     # Conditional attributes from Resource Guide example
-    context: Optional[dict] = Field(
+    context: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Contextual information", alias="context"
     )
-    scan_object: Optional[dict] = Field(
+    scan_object: dict[str, Any] | None = Field(
         None, description="Scan object information", alias="scan_object"
     )
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to RepositoryVersionSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = RepositoryVersionSpec(**data["spec"])
@@ -131,7 +131,7 @@ class RepositoryVersion(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -145,7 +145,9 @@ class RepositoryVersion(BaseResource):
         return v
 
 
-def _get_repository_version_ops(client: APIClient) -> BaseResourceOperations:
+def _get_repository_version_ops(
+    client: APIClient,
+) -> BaseResourceOperations[RepositoryVersion]:
     """Get BaseResourceOperations instance for RepositoryVersion."""
     return BaseResourceOperations(client, "repository-versions", RepositoryVersion)
 
@@ -153,44 +155,85 @@ def _get_repository_version_ops(client: APIClient) -> BaseResourceOperations:
 def list_repository_versions(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[RepositoryVersion]:
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[RepositoryVersion]:
     """List repository versions with advanced filtering and pagination."""
     ops = _get_repository_version_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)
 
 
 def get_repository_version(
     client: APIClient, tenant_meta_namespace: str, repository_version_uuid: str
-) -> Optional[RepositoryVersion]:
-    """Get specific repository version by UUID."""
+) -> RepositoryVersion:
+    """Get specific repository version by UUID.
+
+    Raises:
+        NotFoundError: If repository version doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
     ops = _get_repository_version_ops(client)
-    return ops.get(tenant_meta_namespace, repository_version_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, repository_version_uuid)
 
 
 def create_repository_version(
     client: APIClient,
     tenant_meta_namespace: str,
-    payload: "CreateRepositoryVersionPayload",
-) -> Optional[RepositoryVersion]:
-    """Create a new repository version."""
+    payload: CreateRepositoryVersionPayload,
+) -> RepositoryVersion:
+    """Create a new repository version with pre-validation and typed errors.
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If repository version already exists
+        ServerError: If server error occurs
+
+    """
     ops = _get_repository_version_ops(client)
-    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_repository_version(
     client: APIClient,
     tenant_meta_namespace: str,
     repository_version_uuid: str,
-    payload: "UpdateRepositoryVersionPayload",
-    update_mask: Optional[List[str]] = None,
-) -> Optional[RepositoryVersion]:
-    """Update an existing repository version with partial updates."""
+    payload: UpdateRepositoryVersionPayload,
+    update_mask: str | None = None,
+) -> RepositoryVersion | None:
+    """Update an existing repository version with partial updates.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        repository_version_uuid: UUID of the repository version to update
+        payload: RepositoryVersion update payload
+        update_mask: Optional comma-separated list of fields to update
+            (e.g., "meta.tags,meta.description"). If provided, only these
+            fields will be updated. If omitted, all non-None fields in
+            payload will be updated.
+
+    Returns:
+        Updated RepositoryVersion object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If repository version doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
     ops = _get_repository_version_ops(client)
     return ops.update(
-        tenant_meta_namespace, repository_version_uuid, payload, update_mask
-    )  # type: ignore
+        tenant_meta_namespace, repository_version_uuid, payload, update_mask_list
+    )
 
 
 def delete_repository_version(
@@ -198,14 +241,14 @@ def delete_repository_version(
 ) -> bool:
     """Delete a repository version by UUID."""
     ops = _get_repository_version_ops(client)
-    return ops.delete(tenant_meta_namespace, repository_version_uuid)  # type: ignore
+    return ops.delete(tenant_meta_namespace, repository_version_uuid)
 
 
 # Payload models for create and update operations
 class CreateRepositoryVersionPayload(BaseModel):
     """Payload for creating a repository version."""
 
-    meta: "RepositoryVersionMetaCreate" = Field(
+    meta: RepositoryVersionMetaCreate = Field(
         ..., description="RepositoryVersion metadata for creation"
     )
     spec: RepositoryVersionSpec = Field(
@@ -216,10 +259,10 @@ class CreateRepositoryVersionPayload(BaseModel):
 class UpdateRepositoryVersionPayload(BaseModel):
     """Payload for updating a repository version."""
 
-    meta: Optional["RepositoryVersionMetaUpdate"] = Field(
+    meta: RepositoryVersionMetaUpdate | None = Field(
         None, description="RepositoryVersion metadata for update"
     )
-    spec: Optional[RepositoryVersionSpec] = Field(
+    spec: RepositoryVersionSpec | None = Field(
         None, description="RepositoryVersion specification for update"
     )
 
@@ -228,14 +271,10 @@ class RepositoryVersionMetaCreate(BaseModel):
     """RepositoryVersion metadata for creation."""
 
     name: str = Field(..., description="RepositoryVersion name")
-    description: Optional[str] = Field(
-        None, description="RepositoryVersion description"
-    )
+    description: str | None = Field(None, description="RepositoryVersion description")
 
 
 class RepositoryVersionMetaUpdate(BaseModel):
     """RepositoryVersion metadata for update."""
 
-    description: Optional[str] = Field(
-        None, description="RepositoryVersion description"
-    )
+    description: str | None = Field(None, description="RepositoryVersion description")

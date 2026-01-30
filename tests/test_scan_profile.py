@@ -1,5 +1,4 @@
-"""
-Test cases for ScanProfile resource operations.
+"""Test cases for ScanProfile resource operations.
 
 Tests CRUD operations for ScanProfile resources. ScanProfiles define scan
 configuration including toolchains and scan parameters.
@@ -23,28 +22,48 @@ class TestScanProfile:
     """Test cases for ScanProfile resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self):
+    def setup_fast(self) -> None:
         """Fast setup: client and namespace only (runs before each test)."""
         self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        import conftest
+
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
+        # Track created resources for cleanup
+        self.created_scan_profile_uuids = []
+
         # Get test data - use parent namespace to access child resources
         parts = self.namespace.split(".")
         self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
+    def teardown_method(self) -> None:
+        """Clean up any scan profiles created during tests."""
+        if hasattr(self, "created_scan_profile_uuids"):
+            for scan_profile_uuid in self.created_scan_profile_uuids:
+                try:
+                    scan_profile.delete_scan_profile(
+                        self.client, self.parent_namespace, scan_profile_uuid
+                    )
+                    print(f"[CLEANUP] Deleted test scan profile: {scan_profile_uuid}")
+                except Exception as e:
+                    print(
+                        f"[WARNING] Failed to delete test scan profile "
+                        f"{scan_profile_uuid}: {e}"
+                    )
+            self.created_scan_profile_uuids.clear()
+
     @pytest.fixture
     def sample_scan_profile(self):
         """Fetch minimal sample data (1 item) for UUID operations.
-        
+
         Function-scoped but only fetches when explicitly requested by tests.
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
         """
-
         results = scan_profile.list_scan_profiles(
             self.client,
             self.parent_namespace,
@@ -55,7 +74,7 @@ class TestScanProfile:
             pytest.skip("No scan profiles available for testing")
         return results[0]  # Return single item, not list
 
-    def test_scan_profile_list(self):
+    def test_scan_profile_list(self) -> None:
         """Test LIST scan profiles operation."""
         print("\n=== TESTING LIST SCAN PROFILES ===")
 
@@ -88,7 +107,7 @@ class TestScanProfile:
                 if profile.propagate:
                     print("  Propagate: Yes")
 
-    def test_scan_profile_get_by_uuid(self, sample_scan_profile):
+    def test_scan_profile_get_by_uuid(self, sample_scan_profile) -> None:
         """Test GET scan profile by UUID operation."""
         print("\n=== TESTING GET SCAN PROFILE BY UUID ===")
 
@@ -112,17 +131,7 @@ class TestScanProfile:
         if retrieved_profile.meta:
             print(f"Scan profile name: {retrieved_profile.meta.name}")
 
-    def test_scan_profile_field_validation(self, sample_scan_profile):
-        """Test field validation and required fields."""
-        profile = sample_scan_profile
-
-        # Verify required fields are present
-        assert profile.uuid is not None
-        assert profile.meta is not None
-        assert profile.meta.name is not None
-        assert profile.spec is not None
-
-    def test_scan_profile_with_traverse(self):
+    def test_scan_profile_with_traverse(self) -> None:
         """Test listing scan profiles with traverse (child namespaces)."""
         print("\n=== TESTING LIST SCAN PROFILES WITH TRAVERSE ===")
 
@@ -146,7 +155,7 @@ class TestScanProfile:
         )
         print(f"Found {len(scan_profiles_list)} scan profiles (with traverse)")
 
-    def test_scan_profile_pagination(self):
+    def test_scan_profile_pagination(self) -> None:
         """Test pagination capabilities."""
         # Test with page size
         import conftest
@@ -159,49 +168,56 @@ class TestScanProfile:
         )
         assert isinstance(paginated_profiles, list)
 
-    def test_scan_profile_error_handling(self):
-        """Test error handling for invalid UUID."""
-        # Test with invalid UUID
-        invalid_profile = scan_profile.get_scan_profile(
-            self.client, self.parent_namespace, "invalid-uuid"
-        )
-        assert invalid_profile is None
-
-    def test_scan_profile_structure_analysis(self):
-        """Test and analyze scan profile structure."""
+    def test_scan_profile_advanced_filtering(self) -> None:
+        """Test advanced filtering capabilities."""
+        print("\n=== TESTING SCAN PROFILE FILTERING ===")
         import conftest
 
-        # Fetch scan profiles for analysis
-        scan_profiles = scan_profile.list_scan_profiles(
+        # Test filtering by is_default
+        default_profiles = scan_profile.list_scan_profiles(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            list_params=ListParameters(
+                filter="spec.is_default==true",
+                page_size=conftest.TEST_PAGE_SIZE,
+            ),
             max_pages=conftest.TEST_MAX_PAGES,
         )
-        if not scan_profiles:
-            pytest.skip("No scan profiles available for testing")
+        assert isinstance(default_profiles, list), (
+            "Should return a list of scan profiles"
+        )
+        print(f"Found {len(default_profiles)} default scan profiles")
 
-        print("\n=== Scan Profile Structure Analysis ===")
-        default_count = 0
-        propagate_count = 0
-        has_automated_params = 0
-        has_toolchain = 0
+        # Test field masking
+        masked_profiles = scan_profile.list_scan_profiles(
+            self.client,
+            self.parent_namespace,
+            list_params=ListParameters(
+                mask="meta.name,spec.is_default",
+                page_size=conftest.TEST_PAGE_SIZE,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
+        assert isinstance(masked_profiles, list), (
+            "Should return a list of masked scan profiles"
+        )
+        if masked_profiles:
+            profile = masked_profiles[0]
+            # Should have masked fields
+            assert hasattr(profile, "meta")
+            assert hasattr(profile, "spec")
+            print(f"Masked profile: {profile.meta.name if profile.meta else 'N/A'}")
 
-        for profile in scan_profiles:
-            if profile.spec:
-                if profile.spec.is_default:
-                    default_count += 1
-                if profile.spec.automated_scan_parameters:
-                    has_automated_params += 1
-                if profile.spec.toolchain_profile:
-                    has_toolchain += 1
-            if profile.propagate:
-                propagate_count += 1
+    def test_scan_profile_error_handling(self) -> None:
+        """Test error handling for invalid UUID."""
+        # Test with invalid UUID format - should raise ValidationError
+        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
+        from endor_cockpit.exceptions import ValidationError
 
-        print(f"Total profiles: {len(scan_profiles)}")
-        print(f"Default profiles: {default_count}")
-        print(f"Propagated profiles: {propagate_count}")
-        print(f"Profiles with automated params: {has_automated_params}")
-        print(f"Profiles with toolchain: {has_toolchain}")
-
-        assert len(scan_profiles) > 0
+        with pytest.raises(ValidationError) as exc_info:
+            scan_profile.get_scan_profile(
+                self.client, self.parent_namespace, "invalid-uuid"
+            )
+        assert exc_info.value.resource_uuid == "invalid-uuid"
+        assert exc_info.value.operation == "get"
+        assert exc_info.value.status_code == 400

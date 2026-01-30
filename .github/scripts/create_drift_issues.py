@@ -6,7 +6,7 @@ This script reads schema drift reports and creates GitHub issues,
 avoiding duplicates by checking existing issues.
 
 Usage:
-    python scripts/create_drift_issues.py --report schema_drift_report.json
+    python .github/scripts/create_drift_issues.py --report schema_drift_report.json
 """
 
 import argparse
@@ -14,7 +14,6 @@ import json
 import logging
 import os
 import sys
-from pathlib import Path
 from typing import Dict, List, Optional
 
 import requests
@@ -51,7 +50,7 @@ class GitHubIssueCreator:
         issues = []
         page = 1
         per_page = 100
-        
+
         while True:
             url = f"{self.base_url}/issues"
             params = {
@@ -60,17 +59,17 @@ class GitHubIssueCreator:
                 "per_page": per_page,
                 "page": page
             }
-            
+
             response = requests.get(url, headers=self.headers, params=params)
             response.raise_for_status()
-            
+
             page_issues = response.json()
             if not page_issues:
                 break
-            
+
             issues.extend(page_issues)
             page += 1
-        
+
         logger.info(f"Found {len(issues)} existing {self.label} issues")
         return issues
 
@@ -78,7 +77,7 @@ class GitHubIssueCreator:
         """Map resource name to source file path."""
         if not resource_name:
             return "src/endor_cockpit/models/base.py"
-        
+
         # Map resource names to their file paths
         resource_file_map = {
             "Finding": "src/endor_cockpit/resources/finding.py",
@@ -97,9 +96,9 @@ class GitHubIssueCreator:
             "BaseResource": "src/endor_cockpit/models/base.py",
             "BaseSpec": "src/endor_cockpit/models/base.py",
         }
-        
+
         return resource_file_map.get(resource_name, "src/endor_cockpit/models/base.py")
-    
+
     def extract_model_class(self, model_path: str) -> str:
         """Extract model class name from model path."""
         # Format: "FindingSpec.actions" -> "FindingSpec"
@@ -108,7 +107,12 @@ class GitHubIssueCreator:
         if len(parts) >= 2:
             # For nested paths, try to infer the model class
             # "FindingSpec.actions.policy_uuids" -> "Actions"
-            if parts[1] in ["actions", "finding_metadata", "fixing_patch", "source_code_version"]:
+            if parts[1] in [
+                "actions",
+                "finding_metadata",
+                "fixing_patch",
+                "source_code_version",
+            ]:
                 # Map field names to model classes
                 field_to_model = {
                     "actions": "Actions",
@@ -119,14 +123,18 @@ class GitHubIssueCreator:
                 return field_to_model.get(parts[1], parts[0])
             return parts[0]
         return model_path
-    
-    def issue_exists(self, field_path: str, existing_issues: List[Dict]) -> Optional[int]:
+
+    def issue_exists(
+        self, field_path: str, existing_issues: List[Dict]
+    ) -> Optional[int]:
         """Check if an issue already exists for this field path."""
         for issue in existing_issues:
-            if field_path in issue.get("title", "") or field_path in issue.get("body", ""):
+            if field_path in issue.get("title", "") or field_path in issue.get(
+                "body", ""
+            ):
                 return issue.get("number")
         return None
-    
+
     def _generate_example_fix(
         self, resource_name: str, model_class: str, field: str, nested_depth: int
     ) -> str:
@@ -159,17 +167,23 @@ class {model_class}(BaseModel):
         file_path = drift.get("file_path", self.get_resource_file_path(resource_name))
         model_class = self.extract_model_class(model_path)
         nested_depth = drift.get("nested_depth", 0)
-        
+
         title = f"Schema Drift: {resource_name}.{field_path}"
-        
+
         # Build OpenAPI reference
         openapi_ref = model_class
         if resource_name != "Unknown":
-            openapi_ref = f"v1{resource_name}Spec" if "Spec" in model_class else f"v1{resource_name}"
-        
+            openapi_ref = (
+                f"v1{resource_name}Spec"
+                if "Spec" in model_class
+                else f"v1{resource_name}"
+            )
+
         # Build example fix code
-        example_fix = self._generate_example_fix(resource_name, model_class, field, nested_depth)
-        
+        example_fix = self._generate_example_fix(
+            resource_name, model_class, field, nested_depth
+        )
+
         body = f"""## Schema Drift Detected
 
 **Resource**: `{resource_name}`
@@ -187,7 +201,8 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Action Required
 
-1. Review OpenAPI spec: `external_docs/openapi-swagger.json` (search for `{openapi_ref}`)
+1. Review OpenAPI spec: `external_docs/openapi-swagger.json`
+   (search for `{openapi_ref}`)
 2. Add field to model: `{file_path}` in class `{model_class}`
 3. Update drift detection known_fields if applicable
 4. Add validation and documentation
@@ -213,13 +228,13 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 This issue was automatically created by the schema drift detection workflow.
 """
-        
+
         payload = {
             "title": title,
             "body": body,
             "labels": [self.label, "automated", "api-schema"]
         }
-        
+
         try:
             response = requests.post(
                 f"{self.base_url}/issues",
@@ -227,11 +242,11 @@ This issue was automatically created by the schema drift detection workflow.
                 json=payload
             )
             response.raise_for_status()
-            
+
             issue = response.json()
             logger.info(f"Created issue #{issue['number']}: {title}")
             return issue
-            
+
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to create issue: {e}")
             if hasattr(e, 'response') and e.response is not None:
@@ -242,19 +257,19 @@ This issue was automatically created by the schema drift detection workflow.
         """Create issues for all new drifts in the report."""
         with open(report_file) as f:
             report = json.load(f)
-        
+
         existing_issues = self.get_existing_issues()
         new_drifts = [
             d for d in report.get("drifts", [])
             if d.get("status") == "new"
         ]
-        
+
         created = []
         skipped = []
-        
+
         for drift in new_drifts:
             field_path = drift["field_path"]
-            
+
             # Check if issue already exists
             existing_issue_num = self.issue_exists(field_path, existing_issues)
             if existing_issue_num:
@@ -266,7 +281,7 @@ This issue was automatically created by the schema drift detection workflow.
                     "existing_issue": existing_issue_num
                 })
                 continue
-            
+
             # Create new issue
             issue = self.create_issue(drift)
             if issue:
@@ -275,7 +290,7 @@ This issue was automatically created by the schema drift detection workflow.
                     "issue_number": issue["number"],
                     "issue_url": issue["html_url"]
                 })
-        
+
         return {
             "created": created,
             "skipped": skipped,
@@ -313,26 +328,26 @@ def main():
         action="store_true",
         help="Don't create issues, just show what would be created"
     )
-    
+
     args = parser.parse_args()
-    
+
     if not args.repo:
         logger.error("Repository not specified. Use --repo or set GITHUB_REPOSITORY")
         return 1
-    
+
     if not args.token:
         logger.error("GitHub token not specified. Use --token or set GITHUB_TOKEN")
         return 1
-    
+
     if args.dry_run:
         logger.info("DRY RUN MODE - No issues will be created")
-    
+
     creator = GitHubIssueCreator(
         repo=args.repo,
         token=args.token,
         label=args.label
     )
-    
+
     if args.dry_run:
         # Just show what would be created
         with open(args.report) as f:
@@ -345,22 +360,22 @@ def main():
         for drift in new_drifts:
             print(f"  - {drift['field_path']}")
         return 0
-    
+
     result = creator.create_issues_from_report(args.report)
-    
+
     print("\n" + "="*60)
     print("GITHUB ISSUE CREATION SUMMARY")
     print("="*60)
     print(f"Total new drifts: {result['total_new_drifts']}")
     print(f"Issues created: {len(result['created'])}")
     print(f"Issues skipped (duplicates): {len(result['skipped'])}")
-    
+
     if result['created']:
         print("\nCreated issues:")
         for item in result['created']:
             print(f"  #{item['issue_number']}: {item['drift']['field_path']}")
             print(f"    {item['issue_url']}")
-    
+
     return 0 if result['total_new_drifts'] == 0 else 1
 
 

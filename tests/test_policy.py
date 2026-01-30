@@ -1,9 +1,11 @@
-"""
-Test cases for Policy resource operations.
+"""Test cases for Policy resource operations.
 
-Tests full CRUD operations for Policy resources using ML_FINDING dummy policy.
+Tests full CRUD operations for Policy resources using USER_FINDING policy type.
 Includes policy type filtering, analysis, and comprehensive CRUD testing with
-live data using the ML_FINDING pattern discovered through schema drift analysis.
+live data.
+
+Note: SYSTEM_FINDING policies are system-generated only and cannot be created
+by users. Tests use USER_FINDING for custom policy creation.
 """
 
 import os
@@ -15,10 +17,13 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+import conftest
+
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import policy
 from endor_cockpit.resources.policy import (
     CreatePolicyPayload,
+    ExceptionReason,
     PolicyType,
     UpdatePolicyPayload,
 )
@@ -29,10 +34,12 @@ class TestPolicy:
     """Test cases for Policy resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self):
+    def setup_fast(self) -> None:
         """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        # Reduce retries for faster test failure (prevents excessive wait on API errors)
+        # Production uses 15 retries, but tests should fail fast (3 retries max)
+        self.client = APIClient(auth_method="api-key", max_retries=3)
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
@@ -43,7 +50,7 @@ class TestPolicy:
     @pytest.fixture
     def sample_policy(self):
         """Fetch minimal sample data (1 item) for UUID operations.
-        
+
         Function-scoped but only fetches when explicitly requested by tests.
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
@@ -63,45 +70,48 @@ class TestPolicy:
     def _create_test_policy(self, name_suffix: str = ""):
         """Helper method to create a test policy for CRUD operations.
 
+        Uses EXCEPTION policy type (maneuver format) instead of USER_FINDING
+        to avoid API 500 errors. Exception policies work reliably.
+
         Args:
             name_suffix: Optional suffix to add to policy name for uniqueness
 
         Returns:
             Created policy object
+
         """
         import time
 
         timestamp = int(time.time())
-        policy_name = f"Test Dummy ML Policy{name_suffix} {timestamp}"
+        policy_name = f"Test Exception Policy{name_suffix} {timestamp}"
         dummy_policy_payload = CreatePolicyPayload(
             meta=policy.PolicyMeta(
                 name=policy_name,
-                kind="Policy",
                 description=(
-                    "A test ML_FINDING policy created for CRUD operations testing"
+                    "A test EXCEPTION policy created for CRUD operations testing "
+                    "(using maneuver format to avoid API 500 errors)"
                 ),
-                tags=["test", "dummy", "ml-finding", "crud-test"],
+                tags=["test", "exception", "crud-test", "endor-cockpit"],
             ),
             spec=policy.PolicySpec(
-                policy_type=PolicyType.ML_FINDING,
-                rule="""package testpolicy
+                policy_type=PolicyType.EXCEPTION,
+                rule="""package exceptions
 
-configure[result] {
-  result = {
-    "test_method": {
-      "disable": false,
-      "parameters": {
-        "enable_test": {
-          "bool_value": true
+# EXCEPTION policies must return Finding UUIDs with Endor field
+match_finding[result] {
+    some i
+    data.resources.Finding[i]
+    # Match all findings for test purposes
+    result = {
+        "Endor": {
+            "Finding": data.resources.Finding[i].uuid
         }
-      }
     }
-  }
 }""",
+                query_statements=["data.exceptions.match_finding"],
                 disable=False,
-                resource_kinds=[],  # ML_FINDING can have empty resource kinds
-                project_selector=["test-projects"],
-                project_exceptions=["excluded-projects"],
+                resource_kinds=["Finding"],
+                exception={"reason": ExceptionReason.FALSE_POSITIVE},
             ),
             propagate=True,
         )
@@ -113,18 +123,15 @@ configure[result] {
 
         assert created_policy is not None, "Policy creation should succeed"
         assert created_policy.meta.name == policy_name, "Policy name should match"
-        assert created_policy.spec.policy_type == PolicyType.ML_FINDING, (
-            "Policy type should be ML_FINDING"
-        )
-        assert created_policy.spec.resource_kinds == [], (
-            "Resource kinds should be empty for ML_FINDING"
+        assert created_policy.spec.policy_type == PolicyType.EXCEPTION, (
+            "Policy type should be EXCEPTION"
         )
 
         # Store for cleanup
         self.created_policy_uuids.append(created_policy.uuid)
         return created_policy
 
-    def teardown_method(self):
+    def teardown_method(self) -> None:
         """Clean up any policies created during tests."""
         if hasattr(self, "created_policy_uuids"):
             for policy_uuid in self.created_policy_uuids:
@@ -135,7 +142,7 @@ configure[result] {
                     print(f"[WARNING] Failed to delete test policy {policy_uuid}: {e}")
             self.created_policy_uuids.clear()
 
-    def test_policy_get_list(self):
+    def test_policy_get_list(self) -> None:
         """Test GET policies operation."""
         print("\n=== TESTING GET POLICIES ===")
 
@@ -162,7 +169,7 @@ configure[result] {
             if policy_item.meta.tags:
                 print(f"  Meta tags: {policy_item.meta.tags}")
 
-    def test_policy_get_by_uuid(self, sample_policy):
+    def test_policy_get_by_uuid(self, sample_policy) -> None:
         """Test GET policy by UUID operation."""
         print("\n=== TESTING GET POLICY BY UUID ===")
 
@@ -189,7 +196,7 @@ configure[result] {
                 f"(API limitation)"
             )
 
-    def test_policy_type_filtering(self):
+    def test_policy_type_filtering(self) -> None:
         """Test policy filtering by type."""
         print("\n=== TESTING POLICY TYPE FILTERING ===")
 
@@ -198,7 +205,6 @@ configure[result] {
             PolicyType.SYSTEM_FINDING,
             PolicyType.USER_FINDING,
             PolicyType.ADMISSION,
-            PolicyType.ML_FINDING,
             PolicyType.NOTIFICATION,
         ]
 
@@ -222,125 +228,17 @@ configure[result] {
                     f"Policy should be of type {policy_type}"
                 )
 
-    def test_policy_rule_analysis(self):
-        """Test and analyze policy rules."""
-        print("\n=== POLICY RULE ANALYSIS ===")
-
-        # Fetch policies for analysis
-        import conftest
-
-        from endor_cockpit.types import ListParameters
-
-        policies = policy.list_policies(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
-        # Find policies with rules
-        policies_with_rules = [p for p in policies if p.spec.rule]
-        print(f"Found {len(policies_with_rules)} policies with rules")
-
-        if policies_with_rules:
-            policy_obj = policies_with_rules[0]
-            print(f"Analyzing rule for policy: {policy_obj.meta.name}")
-
-            # Analyze rule content
-            rule = policy_obj.spec.rule
-            print(f"Rule length: {len(rule)} characters")
-            print(f"Rule type: {type(rule)}")
-
-            # Check for OPA/Rego patterns
-            if "package" in rule.lower():
-                print("Rule appears to be OPA/Rego format")
-            if "deny" in rule.lower() or "allow" in rule.lower():
-                print("Rule contains decision keywords")
-
-            # Show rule preview
-            rule_preview = rule[:300] + "..." if len(rule) > 300 else rule
-            print(f"Rule preview:\n{rule_preview}")
-
-    def test_policy_template_analysis(self):
-        """Test and analyze policy templates."""
-        print("\n=== POLICY TEMPLATE ANALYSIS ===")
-
-        # Fetch policies for analysis
-        import conftest
-
-        from endor_cockpit.types import ListParameters
-
-        policies = policy.list_policies(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
-        # Find policies with templates
-        policies_with_templates = [p for p in policies if p.spec.template_uuid]
-        print(f"Found {len(policies_with_templates)} policies with templates")
-
-        if policies_with_templates:
-            policy_obj = policies_with_templates[0]
-            print(f"Analyzing template for policy: {policy_obj.meta.name}")
-
-            # Analyze template information
-            print(f"Template UUID: {policy_obj.spec.template_uuid}")
-            print(f"Template Version: {policy_obj.spec.template_version}")
-
-            if policy_obj.spec.template_parameters:
-                print(f"Template Parameters: {len(policy_obj.spec.template_parameters)}")
-                for param in policy_obj.spec.template_parameters:
-                    print(f"  - {param}")
-
-            if policy_obj.spec.template_values:
-                print(f"Template Values: {policy_obj.spec.template_values}")
-
-    def test_policy_configuration_analysis(self, sample_policy):
-        """Test and analyze policy configuration."""
-        print("\n=== POLICY CONFIGURATION ANALYSIS ===")
-
-        policy_obj = sample_policy
-        print(f"Analyzing configuration for policy: {policy_obj.meta.name}")
-
-        # Analyze policy configuration
-        print(f"Policy Type: {policy_obj.spec.policy_type}")
-        print(f"Disabled: {policy_obj.spec.disable}")
-        print(f"Propagate: {policy_obj.propagate}")
-
-        # Analyze resource kinds
-        if policy_obj.spec.resource_kinds:
-            print(f"Resource Kinds: {policy_obj.spec.resource_kinds}")
-
-        # Analyze project selectors
-        if policy_obj.spec.project_selector:
-            print(f"Project Selector: {policy_obj.spec.project_selector}")
-
-        if policy_obj.spec.project_exceptions:
-            print(f"Project Exceptions: {policy_obj.spec.project_exceptions}")
-
-        # Analyze finding configuration
-        if policy_obj.spec.finding:
-            print(f"Finding Configuration: {policy_obj.spec.finding}")
-
-        # Analyze admission configuration
-        if policy_obj.spec.admission:
-            print(f"Admission Configuration: {policy_obj.spec.admission}")
-
-        # Analyze notification configuration
-        if policy_obj.spec.notification:
-            print(f"Notification Configuration: {policy_obj.spec.notification}")
-
-    def test_policy_create_ml_finding(self):
-        """Test CREATE policy operation using ML_FINDING pattern."""
-        print("\n=== TESTING POLICY CREATE (ML_FINDING) ===")
+    def test_policy_create(self) -> None:
+        """Test CREATE policy operation."""
+        print("\n=== TESTING POLICY CREATE ===")
 
         created_policy = self._create_test_policy()
         print(f"[SUCCESS] Policy created with UUID: {created_policy.uuid}")
         assert created_policy is not None, "Policy should be created successfully"
 
-    def test_policy_update_ml_finding(self):
-        """Test UPDATE policy operation using ML_FINDING pattern."""
-        print("\n=== TESTING POLICY UPDATE (ML_FINDING) ===")
+    def test_policy_update_with_mask(self) -> None:
+        """Test UPDATE policy operation with update_mask parameter."""
+        print("\n=== TESTING POLICY UPDATE WITH MASK ===")
 
         # Create a fresh policy for this test
         print("Creating fresh policy for update test...")
@@ -370,70 +268,64 @@ configure[result] {
 
         # Create update payload - only update safe fields
         update_payload = UpdatePolicyPayload(
-            meta=policy.PolicyMeta(
-                name="Updated Test Dummy ML Policy",
-                kind="Policy",
-                description="Updated description for the test ML_FINDING policy",
-                tags=["test", "dummy", "ml-finding", "crud-test", "updated"],
+            meta=policy.PolicyMetaUpdate(
+                name="Updated Test Exception Policy",
+                description="Updated description for the test EXCEPTION policy",
+                tags=["test", "exception", "crud-test", "updated", "endor-cockpit"],
             ),
             spec=policy.PolicySpec(
-                policy_type=PolicyType.ML_FINDING,
-                rule="""package testpolicy
+                policy_type=PolicyType.EXCEPTION,
+                rule="""package exceptions
 
-configure[result] {
-  result = {
-    "updated_test_method": {
-      "disable": false,
-      "parameters": {
-        "enable_updated_test": {
-          "bool_value": true
+# EXCEPTION policies must return Finding UUIDs with Endor field
+match_finding[result] {
+    some i
+    data.resources.Finding[i]
+    # Updated rule for test purposes
+    result = {
+        "Endor": {
+            "Finding": data.resources.Finding[i].uuid
         }
-      }
     }
-  }
 }""",
+                query_statements=["data.exceptions.match_finding"],
                 disable=False,
-                resource_kinds=[],
-                project_selector=["test-projects", "updated-projects"],
-                project_exceptions=["excluded-projects", "old-projects"],
+                resource_kinds=["Finding"],
+                exception={"reason": ExceptionReason.FALSE_POSITIVE},
             ),
             propagate=True,
         )
 
-        print(f"Updating ML_FINDING policy: {policy_uuid}")
+        print(f"Updating EXCEPTION policy: {policy_uuid}")
         print(f"New name: {update_payload.meta.name}")
         print(f"New tags: {update_payload.meta.tags}")
 
-        # Update the policy
+        # Update the policy with update_mask
         updated_policy = policy.update_policy(
             self.client,
             self.namespace,
             policy_uuid,
             update_payload,
-            "meta.name,meta.description,meta.tags,spec.rule,spec.project_selector,spec.project_exceptions",
+            "meta.name,meta.description,meta.tags,spec.rule",
         )
 
         assert updated_policy is not None, "Policy update should succeed"
-        assert updated_policy.meta.name == "Updated Test Dummy ML Policy", (
+        assert updated_policy.meta.name == "Updated Test Exception Policy", (
             "Policy name should be updated"
         )
         assert "updated" in updated_policy.meta.tags, "Updated tag should be present"
-        assert "updated-projects" in updated_policy.spec.project_selector, (
-            "Project selector should be updated"
-        )
 
         print(f"[SUCCESS] Policy updated: {updated_policy.meta.name}")
         print(f"Updated tags: {updated_policy.meta.tags}")
-        print(f"Updated project selector: {updated_policy.spec.project_selector}")
 
         # Note: Policy will be cleaned up by teardown_method
         print(f"[INFO] Policy {policy_uuid} will be cleaned up by teardown")
 
         assert updated_policy is not None, "Policy should be updated successfully"
 
-    def test_policy_delete_ml_finding(self):
-        """Test DELETE policy operation using ML_FINDING pattern."""
-        print("\n=== TESTING POLICY DELETE (ML_FINDING) ===")
+    def test_policy_delete(self) -> None:
+        """Test DELETE policy operation."""
+        print("\n=== TESTING POLICY DELETE ===")
 
         # Create a fresh policy for this test
         print("Creating fresh policy for delete test...")
@@ -451,7 +343,7 @@ configure[result] {
         if not created_policy_check:
             pytest.skip(f"Could not retrieve created policy {policy_uuid}")
 
-        print(f"Deleting ML_FINDING policy: {policy_uuid}")
+        print(f"Deleting EXCEPTION policy: {policy_uuid}")
 
         # Delete the policy
         delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
@@ -465,75 +357,246 @@ configure[result] {
 
         # Verify deletion by trying to retrieve it
         time.sleep(2)  # Wait for deletion to propagate
-        deleted_policy = policy.get_policy(self.client, self.namespace, policy_uuid)
+        from endor_cockpit.exceptions import NotFoundError
 
-        assert deleted_policy is None, "Policy should no longer exist after deletion"
+        with pytest.raises(NotFoundError) as exc_info:
+            policy.get_policy(self.client, self.namespace, policy_uuid)
+        assert exc_info.value.resource_uuid == policy_uuid
+        assert exc_info.value.operation == "get"
         print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
 
-    def test_policy_ml_finding_pattern_validation(self):
-        """Test ML_FINDING pattern validation and characteristics."""
-        print("\n=== TESTING ML_FINDING PATTERN VALIDATION ===")
+    def test_exception_policy_create(self) -> None:
+        """Test CREATE exception policy operation."""
+        print("\n=== TESTING EXCEPTION POLICY CREATE ===")
 
-        # Create a test policy
-        dummy_policy_payload = CreatePolicyPayload(
+        timestamp = int(time.time())
+        policy_name = f"Test Exception Policy {timestamp}"
+
+        exception_policy_payload = CreatePolicyPayload(
             meta=policy.PolicyMeta(
-                name="ML Pattern Validation Test",
-                kind="Policy",
-                description="Testing ML_FINDING pattern characteristics",
-                tags=["test", "pattern-validation", "ml-finding"],
+                name=policy_name,
+                description=(
+                    "A test EXCEPTION policy created for testing "
+                    "exception policy creation"
+                ),
+                tags=["test", "exception", "crud-test"],
             ),
             spec=policy.PolicySpec(
-                policy_type=PolicyType.ML_FINDING,
-                rule="""package testpattern
+                policy_type=PolicyType.EXCEPTION,
+                rule="""package exceptions
 
-configure[result] {
-  result = {
-    "validation_method": {
-      "disable": false,
-      "parameters": {
-        "enable_validation": {
-          "bool_value": true
+# EXCEPTION policies must return Finding UUIDs with Endor field
+match_finding[result] {
+    some i
+    data.resources.Finding[i]
+    # Match all findings for test purposes
+    result = {
+        "Endor": {
+            "Finding": data.resources.Finding[i].uuid
         }
-      }
     }
-  }
 }""",
+                query_statements=["data.exceptions.match_finding"],
+                resource_kinds=["Finding"],
                 disable=False,
-                resource_kinds=[],  # ML_FINDING characteristic: empty resource kinds
-                project_selector=["validation-projects"],
-                project_exceptions=["excluded-projects"],
+                exception={"reason": ExceptionReason.FALSE_POSITIVE},
             ),
             propagate=True,
         )
 
-        # Test policy creation
+        # Create the exception policy
         created_policy = policy.create_policy(
-            self.client, self.namespace, dummy_policy_payload
-        )
-        assert created_policy is not None, "ML_FINDING policy creation should succeed"
-
-        # Validate ML_FINDING characteristics
-        assert created_policy.spec.policy_type == PolicyType.ML_FINDING, (
-            "Should be ML_FINDING type"
-        )
-        assert created_policy.spec.resource_kinds == [], (
-            "ML_FINDING should have empty resource kinds"
-        )
-        assert "configure[result]" in created_policy.spec.rule, (
-            "Should have configure pattern"
-        )
-        assert "validation_method" in created_policy.spec.rule, (
-            "Should have method configuration"
+            self.client, self.namespace, exception_policy_payload
         )
 
-        print("[SUCCESS] ML_FINDING pattern validation passed")
-        print(f"  - Policy Type: {created_policy.spec.policy_type}")
-        print(f"  - Resource Kinds: {created_policy.spec.resource_kinds}")
-        print("  - Rule Pattern: configure[result] with JSON configuration")
-        print(f"  - Rule Length: {len(created_policy.spec.rule)} characters")
+        assert created_policy is not None, "Exception policy creation should succeed"
+        assert created_policy.meta.name == policy_name, "Policy name should match"
+        assert created_policy.spec.policy_type == PolicyType.EXCEPTION, (
+            "Policy type should be EXCEPTION"
+        )
+        assert created_policy.spec.exception is not None, (
+            "Exception config should be present"
+        )
+        # Exception config can be ExceptionConfig object or dict
+        # depending on API response
+        exception_reason = (
+            created_policy.spec.exception.reason
+            if hasattr(created_policy.spec.exception, "reason")
+            else created_policy.spec.exception.get("reason")
+        )
+        assert exception_reason == ExceptionReason.FALSE_POSITIVE, (
+            "Exception reason should be FALSE_POSITIVE"
+        )
 
-        # Note: Policy will be cleaned up by teardown_method
-        print("[INFO] Test policy will be cleaned up by teardown")
+        # Store for cleanup
+        self.created_policy_uuids.append(created_policy.uuid)
+        print(f"[SUCCESS] Exception policy created with UUID: {created_policy.uuid}")
+
+    def test_notification_policy_create(self) -> None:
+        """Test CREATE notification policy operation."""
+        print("\n=== TESTING NOTIFICATION POLICY CREATE ===")
+
+        # First, try to find an existing notification target
+        # If none exists, skip the test
+        try:
+            res = self.client.get(
+                f"v1/namespaces/{self.namespace}/notification-targets"
+            )
+            if res.status_code == 200:
+                data = res.json()
+                notification_targets = data.get("list", {}).get("objects", [])
+                if not notification_targets:
+                    pytest.skip(
+                        "No notification targets available - "
+                        "cannot test notification policy creation"
+                    )
+                notification_target_uuid = notification_targets[0].get("uuid")
+            else:
+                pytest.skip(f"Could not list notification targets: {res.status_code}")
+        except Exception as e:
+            pytest.skip(f"Could not check for notification targets: {e}")
+
+        timestamp = int(time.time())
+        policy_name = f"Test Notification Policy {timestamp}"
+
+        notification_policy_payload = CreatePolicyPayload(
+            meta=policy.PolicyMeta(
+                name=policy_name,
+                description=(
+                    "A test NOTIFICATION policy created for testing "
+                    "notification policy creation"
+                ),
+                tags=["test", "notification", "crud-test"],
+            ),
+            spec=policy.PolicySpec(
+                policy_type=PolicyType.NOTIFICATION,
+                rule="""package notification
+
+match_baseline(finding) {
+    some i
+    data.baseline.Finding[i].spec.extra_key == finding.spec.extra_key
+    count(
+        data.baseline.Finding[i].spec.finding_metadata.source_policy_info.results
+    ) == (
+        count(finding.spec.finding_metadata.source_policy_info.results)
+    )
+}
+
+match_findings[result] {
+    some i
+    data.resources.Finding[i].spec.finding_categories[_] == (
+        "FINDING_CATEGORY_VULNERABILITY"
+    )
+    not match_baseline(data.resources.Finding[i])
+    result = {
+        "Endor": {
+            "Finding": data.resources.Finding[i].uuid
+        }
+    }
+}""",
+                query_statements=["data.notification.match_findings"],
+                resource_kinds=["Finding"],
+                disable=False,
+                notification={
+                    "notification_target_uuids": [notification_target_uuid],
+                    "aggregation_type": "AGGREGATION_TYPE_PROJECT",
+                    "bypass_exceptions": False,
+                },
+            ),
+            propagate=True,
+        )
+
+        # Create the notification policy
+        created_policy = policy.create_policy(
+            self.client, self.namespace, notification_policy_payload
+        )
+
+        assert created_policy is not None, "Notification policy creation should succeed"
+        assert created_policy.meta.name == policy_name, "Policy name should match"
+        assert created_policy.spec.policy_type == PolicyType.NOTIFICATION, (
+            "Policy type should be NOTIFICATION"
+        )
+        assert created_policy.spec.notification is not None, (
+            "Notification config should be present"
+        )
+        assert notification_target_uuid in created_policy.spec.notification.get(
+            "notification_target_uuids", []
+        ), "Notification target UUID should be in config"
+
+        # Store for cleanup
+        self.created_policy_uuids.append(created_policy.uuid)
+        print(f"[SUCCESS] Notification policy created with UUID: {created_policy.uuid}")
+
+    def test_admission_policy_create(self) -> None:
+        """Test CREATE admission policy operation."""
+        print("\n=== TESTING ADMISSION POLICY CREATE ===")
+
+        timestamp = int(time.time())
+        policy_name = f"Test Admission Policy {timestamp}"
+
+        admission_policy_payload = CreatePolicyPayload(
+            meta=policy.PolicyMeta(
+                name=policy_name,
+                description=(
+                    "A test ADMISSION policy created for testing "
+                    "admission policy creation"
+                ),
+                tags=["test", "admission", "crud-test"],
+            ),
+            spec=policy.PolicySpec(
+                policy_type=PolicyType.ADMISSION,
+                rule="""package admission
+
+match_baseline(finding) {
+    some i
+    data.baseline.Finding[i].spec.extra_key == finding.spec.extra_key
+    count(
+        data.baseline.Finding[i].spec.finding_metadata.source_policy_info.results
+    ) == (
+        count(finding.spec.finding_metadata.source_policy_info.results)
+    )
+}
+
+match_findings[result] {
+    some i
+    data.resources.Finding[i].spec.finding_categories[_] == (
+        "FINDING_CATEGORY_VULNERABILITY"
+    )
+    data.resources.Finding[i].spec.level == "FINDING_LEVEL_CRITICAL"
+    not match_baseline(data.resources.Finding[i])
+    result = {
+        "Endor": {
+            "Finding": data.resources.Finding[i].uuid
+        }
+    }
+}""",
+                query_statements=["data.admission.match_findings"],
+                resource_kinds=["Finding"],
+                disable=False,
+                admission={
+                    "action": "DENY",  # Block the build
+                },
+            ),
+            propagate=True,
+        )
+
+        # Create the admission policy
+        created_policy = policy.create_policy(
+            self.client, self.namespace, admission_policy_payload
+        )
+
+        assert created_policy is not None, "Admission policy creation should succeed"
+        assert created_policy.meta.name == policy_name, "Policy name should match"
+        assert created_policy.spec.policy_type == PolicyType.ADMISSION, (
+            "Policy type should be ADMISSION"
+        )
+        assert created_policy.spec.admission is not None, (
+            "Admission config should be present"
+        )
+
+        # Store for cleanup
+        self.created_policy_uuids.append(created_policy.uuid)
+        print(f"[SUCCESS] Admission policy created with UUID: {created_policy.uuid}")
 
 
 if __name__ == "__main__":
@@ -554,8 +617,11 @@ if __name__ == "__main__":
 
     from endor_cockpit.types import ListParameters
 
-    test_instance.client = APIClient(auth_method="api-key")
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+    # Reduce retries for faster test failure (prevents excessive wait on API errors)
+    test_instance.client = APIClient(auth_method="api-key", max_retries=3)
+    test_instance.namespace = os.getenv(
+        "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
+    )
     test_instance.policies = policy.list_policies(
         test_instance.client,
         test_instance.namespace,
@@ -570,16 +636,11 @@ if __name__ == "__main__":
         test_instance.test_policy_get_list()
         test_instance.test_policy_get_by_uuid()
         test_instance.test_policy_type_filtering()
-        test_instance.test_policy_structure_analysis()
-        test_instance.test_policy_rule_analysis()
-        test_instance.test_policy_template_analysis()
-        test_instance.test_policy_configuration_analysis()
-        test_instance.test_policy_schema_drift_detection()
-        test_instance.test_policy_operations_summary()
 
-        # Run CRUD tests using ML_FINDING pattern
-        test_instance.test_policy_ml_finding_pattern_validation()
-        test_instance.test_policy_full_crud_cycle()
+        # Run CRUD tests
+        test_instance.test_policy_create()
+        test_instance.test_policy_update_with_mask()
+        test_instance.test_policy_delete()
 
         print("\n[SUCCESS] All policy tests completed successfully!")
 

@@ -1,5 +1,4 @@
-"""
-APIKey resource module for Endor Labs API.
+"""APIKey resource module for Endor Labs API.
 
 This module provides comprehensive API key management capabilities including
 listing, examining, creating, and deleting API keys.
@@ -17,8 +16,10 @@ API FEATURES:
 - Namespace propagation control
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -33,22 +34,17 @@ from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
 
+
 # Global resource instance
-_api_key_ops = None
-
-
-def _get_api_key_ops(client: APIClient) -> BaseResourceOperations:
-    """Get or create API key operations instance."""
-    global _api_key_ops
-    if _api_key_ops is None:
-        _api_key_ops = BaseResourceOperations(client, "api-keys", APIKey)
-    return _api_key_ops
+def _get_api_key_ops(client: APIClient) -> BaseResourceOperations[APIKey]:
+    """Get BaseResourceOperations instance for API keys."""
+    return BaseResourceOperations(client, "api-keys", APIKey)
 
 
 class PermissionsMethods(BaseModel):
     """Methods configuration for resource permissions."""
 
-    methods: List[str] = Field(
+    methods: list[str] = Field(
         ...,
         description=(
             "Array of allowed methods (e.g., ['METHOD_READ', 'METHOD_CREATE'])"
@@ -59,14 +55,14 @@ class PermissionsMethods(BaseModel):
 class APIKeyPermissions(BaseModel):
     """Permissions configuration for API key."""
 
-    roles: Optional[List[str]] = Field(
+    roles: list[str] | None = Field(
         None,
         description=(
             "System roles - predefined role-based permissions "
             "(e.g., SYSTEM_ROLE_READ_ONLY, SYSTEM_ROLE_ADMIN)"
         ),
     )
-    rules: Optional[Dict[str, Dict[str, List[str]]]] = Field(
+    rules: dict[str, dict[str, list[str]]] | None = Field(
         None,
         description=(
             "Resource-specific permissions - maps resource types to "
@@ -74,7 +70,7 @@ class APIKeyPermissions(BaseModel):
             "{'methods': ['METHOD_READ', 'METHOD_CREATE']}})"
         ),
     )
-    except_resources: Optional[List[str]] = Field(
+    except_resources: list[str] | None = Field(
         None,
         description=(
             "Excluded resources - list of resources to exclude from "
@@ -84,7 +80,7 @@ class APIKeyPermissions(BaseModel):
 
     @field_validator("roles")
     @classmethod
-    def validate_roles(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_roles(cls, v: list[str] | None) -> list[str] | None:
         """Validate roles are not empty strings."""
         if v:
             return [role.strip() for role in v if role.strip()]
@@ -92,7 +88,7 @@ class APIKeyPermissions(BaseModel):
 
     @field_validator("except_resources")
     @classmethod
-    def validate_except_resources(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_except_resources(cls, v: list[str] | None) -> list[str] | None:
         """Validate except_resources are not empty strings."""
         if v:
             return [resource.strip() for resource in v if resource.strip()]
@@ -102,11 +98,11 @@ class APIKeyPermissions(BaseModel):
 class APIKeySpec(BaseSpec):
     """API key specification extending BaseSpec."""
 
-    key: Optional[str] = Field(
+    key: str | None = Field(
         None,
         description="The identifier of an API key (read-only, returned by API)",
     )
-    secret: Optional[str] = Field(
+    secret: str | None = Field(
         None,
         description=(
             "The secret for the specified API key (read-only, returned by API)"
@@ -120,7 +116,7 @@ class APIKeySpec(BaseSpec):
         ...,
         description="The expiration time of the API key (ISO 8601 datetime)",
     )
-    issuing_user: Optional[Dict[str, Any]] = Field(
+    issuing_user: dict[str, Any] | None = Field(
         None,
         description=("The user that created this API key (read-only, returned by API)"),
     )
@@ -142,7 +138,7 @@ class APIKeyMeta(BaseMeta):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+    def validate_description(cls, v: str | None) -> str | None:
         """Validate API key description."""
         if v is not None and not v.strip():
             raise ValueError("description cannot be empty or whitespace")
@@ -150,8 +146,7 @@ class APIKeyMeta(BaseMeta):
 
 
 class APIKey(BaseResource):
-    """
-    API Key resource model extending BaseResource.
+    """API Key resource model extending BaseResource.
 
     OPERATION SUPPORT:
     ==================
@@ -189,13 +184,13 @@ class APIKey(BaseResource):
     """
 
     # API key-specific fields (universal fields inherited from BaseResource)
-    spec: Optional[APIKeySpec] = Field(None, description="API key specification")  # type: ignore
+    spec: APIKeySpec | None = Field(None, description="API key specification")  # type: ignore
 
-    model_config = {"extra": "ignore"}
+    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift in API key responses."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -222,19 +217,16 @@ class CreateAPIKeyPayload(BaseModel):
 
     meta: APIKeyMeta = Field(..., description="API key metadata")
     spec: APIKeySpec = Field(..., description="API key specification")
-    propagate: Optional[bool] = Field(
-        False, description="Propagate to child namespaces"
-    )
+    propagate: bool | None = Field(False, description="Propagate to child namespaces")
 
 
 def list_api_keys(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[APIKey]:
-    """
-    List API keys in the specified namespace.
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[APIKey]:
+    """List API keys in the specified namespace.
 
     Args:
         client: Authenticated APIClient instance
@@ -251,6 +243,7 @@ def list_api_keys(
         >>> api_keys = list_api_keys(client, "tenant.namespace")
         >>> for key in api_keys:
         ...     print(f"{key.meta.name}: {key.uuid}")
+
     """
     ops = _get_api_key_ops(client)
     return ops.list(tenant_meta_namespace, list_params, **kwargs)
@@ -258,9 +251,8 @@ def list_api_keys(
 
 def get_api_key(
     client: APIClient, tenant_meta_namespace: str, api_key_uuid: str
-) -> Optional[APIKey]:
-    """
-    Get an API key by UUID.
+) -> APIKey:
+    """Get an API key by UUID.
 
     Args:
         client: Authenticated APIClient instance
@@ -268,14 +260,19 @@ def get_api_key(
         api_key_uuid: UUID of the API key
 
     Returns:
-        APIKey resource or None if not found
+        APIKey resource
+
+    Raises:
+        NotFoundError: If API key doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> from endor_cockpit.api_client import APIClient
         >>> client = APIClient()
         >>> api_key = get_api_key(client, "tenant.namespace", "uuid-here")
-        >>> if api_key:
-        ...     print(f"Key: {api_key.meta.name}")
+        >>> print(f"Key: {api_key.meta.name}")
+
     """
     ops = _get_api_key_ops(client)
     return ops.get(tenant_meta_namespace, api_key_uuid)
@@ -285,9 +282,8 @@ def create_api_key(
     client: APIClient,
     tenant_meta_namespace: str,
     payload: CreateAPIKeyPayload,
-) -> Optional[APIKey]:
-    """
-    Create a new API key.
+) -> APIKey:
+    """Create a new API key with pre-validation and typed errors.
 
     Args:
         client: Authenticated APIClient instance
@@ -296,6 +292,13 @@ def create_api_key(
 
     Returns:
         Created APIKey resource with key and secret in spec
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If API key already exists
+        ServerError: If server error occurs
 
     Example:
         >>> from endor_cockpit.api_client import APIClient
@@ -315,25 +318,18 @@ def create_api_key(
         ...     )
         ... )
         >>> api_key = create_api_key(client, "tenant.namespace", payload)
-        >>> if api_key and api_key.spec:
-        ...     print(f"Key: {api_key.spec.key}")
-        ...     print(f"Secret: {api_key.spec.secret}")
+        >>> print(f"Key: {api_key.spec.key}")
+        >>> print(f"Secret: {api_key.spec.secret}")
+
     """
-    try:
-        ops = _get_api_key_ops(client)
-        return ops.create(tenant_meta_namespace, payload)
-    except Exception as e:
-        logger.error(
-            f"Failed to create API key in namespace '{tenant_meta_namespace}': {e}"
-        )
-        return None
+    ops = _get_api_key_ops(client)
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def delete_api_key(
     client: APIClient, tenant_meta_namespace: str, api_key_uuid: str
 ) -> bool:
-    """
-    Delete an API key by UUID.
+    """Delete an API key by UUID.
 
     Args:
         client: Authenticated APIClient instance
@@ -349,6 +345,7 @@ def delete_api_key(
         >>> success = delete_api_key(client, "tenant.namespace", "uuid-here")
         >>> if success:
         ...     print("API key deleted successfully")
+
     """
     ops = _get_api_key_ops(client)
     return ops.delete(tenant_meta_namespace, api_key_uuid)

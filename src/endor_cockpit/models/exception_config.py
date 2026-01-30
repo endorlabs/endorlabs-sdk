@@ -1,18 +1,14 @@
-"""
-Exception configuration models for policy specifications.
+"""Exception configuration models for policy specifications.
 
 These models define the structure of exception configurations while
 maintaining flexibility for API evolution.
 """
 
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class ExceptionConfig(BaseModel):
-    """
-    Exception configuration with known fields.
+    """Exception configuration with known fields.
 
     This model documents the known structure of exception configurations
     while allowing additional fields via extra="allow" for API evolution.
@@ -22,6 +18,6 @@ class ExceptionConfig(BaseModel):
         extra="allow"  # Allow unknown fields for forward compatibility
     )
 
-    reason: Optional[str] = Field(
+    reason: str | None = Field(
         None, description="Exception reason (e.g., 'EXCEPTION_REASON_FALSE_POSITIVE')"
     )

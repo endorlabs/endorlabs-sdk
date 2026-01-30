@@ -1,5 +1,4 @@
-"""
-Test cases for ScanLogRequest resource operations.
+"""Test cases for ScanLogRequest resource operations.
 
 Tests the request-based API for retrieving scan result logs. ScanLogRequest
 is a special case - it's not standard CRUD, but a request-based API that
@@ -13,6 +12,8 @@ import pytest
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+import conftest
 
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import scan_log_request, scan_result
@@ -30,10 +31,10 @@ class TestScanLogRequest:
     """Test cases for ScanLogRequest resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self):
+    def setup_fast(self) -> None:
         """Fast setup: client and namespace only (runs before each test)."""
         self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
@@ -46,7 +47,7 @@ class TestScanLogRequest:
     @pytest.fixture
     def sample_scan_result_uuid(self):
         """Fetch minimal sample scan result UUID for testing.
-        
+
         Function-scoped but only fetches when explicitly requested by tests.
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
@@ -62,7 +63,7 @@ class TestScanLogRequest:
             pytest.skip("No scan results available for testing")
         return scan_results[0].uuid
 
-    def test_create_scan_log_request(self, sample_scan_result_uuid):
+    def test_create_scan_log_request(self, sample_scan_result_uuid) -> None:
         """Test creating a scan log request."""
         print("\n=== TESTING CREATE SCAN LOG REQUEST ===")
 
@@ -87,7 +88,7 @@ class TestScanLogRequest:
         if request.spec.log_messages:
             print(f"Retrieved {len(request.spec.log_messages)} log messages")
 
-    def test_get_scan_result_logs_helper(self, sample_scan_result_uuid):
+    def test_get_scan_result_logs_helper(self, sample_scan_result_uuid) -> None:
         """Test the convenience helper function."""
         print("\n=== TESTING GET SCAN RESULT LOGS HELPER ===")
 
@@ -106,7 +107,7 @@ class TestScanLogRequest:
                 if log.timestamp and log.level:
                     print(f"  {log.timestamp} [{log.level}]")
 
-    def test_scan_log_request_with_filters(self, sample_scan_result_uuid):
+    def test_scan_log_request_with_filters(self, sample_scan_result_uuid) -> None:
         """Test creating log request with various filters."""
         print("\n=== TESTING SCAN LOG REQUEST WITH FILTERS ===")
 
@@ -133,11 +134,14 @@ class TestScanLogRequest:
 
         print(f"Created filtered log request: {request.uuid}")
 
-    def test_scan_log_request_error_handling(self):
+    def test_scan_log_request_error_handling(self) -> None:
         """Test error handling for invalid scan result UUID."""
         print("\n=== TESTING ERROR HANDLING ===")
 
-        # Test with invalid scan result UUID
+        # Test with invalid scan result UUID format - should raise ValidationError
+        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
+        from endor_cockpit.exceptions import ValidationError
+
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-invalid-uuid-request"),
             spec=ScanLogRequestSpecCreate(
@@ -146,16 +150,17 @@ class TestScanLogRequest:
             ),
         )
 
-        request = scan_log_request.create_scan_log_request(
-            self.client, self.parent_namespace, payload
+        with pytest.raises(ValidationError) as exc_info:
+            scan_log_request.create_scan_log_request(
+                self.client, self.parent_namespace, payload
+            )
+        assert exc_info.value.status_code == 400
+        assert (
+            "invalid" in exc_info.value.message.lower()
+            or "uuid" in exc_info.value.message.lower()
         )
 
-        # Request may succeed but return empty logs, or fail
-        # Either way, we should handle it gracefully
-        if request:
-            print("Request created (may have empty logs)")
-
-    def test_scan_log_level_enum(self):
+    def test_scan_log_level_enum(self) -> None:
         """Test ScanLogLevel enum values."""
         print("\n=== TESTING SCAN LOG LEVEL ENUM ===")
 

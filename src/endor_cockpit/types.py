@@ -1,11 +1,12 @@
-"""
-Type definitions for Endor Cockpit SDK.
+"""Type definitions for Endor Cockpit SDK.
 
 This module provides common type definitions used across the SDK
 for enhanced type safety and LLM understanding.
 """
+# APIResponse uses key "list" (API contract); Pyright treats it as builtin
+# pyright: reportInvalidTypeForm=false
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
@@ -75,12 +76,12 @@ class ResourceMeta(TypedDict, total=False):
     """Common metadata structure for all resources."""
 
     name: str
-    description: Optional[str]
-    create_time: Optional[str]
-    created_by: Optional[str]
-    update_time: Optional[str]
-    updated_by: Optional[str]
-    tags: Optional[List[str]]
+    description: str | None
+    create_time: str | None
+    created_by: str | None
+    update_time: str | None
+    updated_by: str | None
+    tags: list[str] | None
 
 
 class TenantMeta(TypedDict):
@@ -90,12 +91,12 @@ class TenantMeta(TypedDict):
 
 
 class APIResponse(TypedDict, total=False):
-    """Standard API response structure."""
+    """Standard API response structure (API returns key 'list')."""
 
-    list: Dict[str, Any]
-    objects: List[Dict[str, Any]]
-    total: Optional[int]
-    next_page_token: Optional[str]
+    list: dict[str, Any]
+    objects: list[dict[str, Any]]
+    total: int | None
+    next_page_token: str | None
 
 
 class ErrorResponse(TypedDict):
@@ -104,15 +105,15 @@ class ErrorResponse(TypedDict):
     error: str
     message: str
     code: int
-    details: Optional[Dict[str, Any]]
+    details: dict[str, Any] | None
 
 
 # Generic Types
-ResourceDict = Dict[str, Any]
-ResourceList = List[ResourceDict]
+ResourceDict = dict[str, Any]
+ResourceList = list[ResourceDict]
 NamespaceStr = str
 UUIDStr = str
-TagList = List[str]
+TagList = list[str]
 UpdateMask = str
 
 # Function Signatures
@@ -139,39 +140,47 @@ ResourceOperation = Literal[
     "delete_namespace",
 ]
 
+
 # Validation Types
-ValidationResult = TypedDict(
-    "ValidationResult", {"valid": bool, "errors": List[str], "warnings": List[str]}
-)
+class ValidationResult(TypedDict):
+    """Result of validation with errors and warnings."""
+
+    valid: bool
+    errors: list[str]
+    warnings: list[str]
+
 
 # Schema Drift Types
-SchemaDriftInfo = TypedDict(
-    "SchemaDriftInfo",
-    {"model_name": str, "unknown_fields": List[str], "context": str, "timestamp": str},
-)
+class SchemaDriftInfo(TypedDict):
+    """Schema drift detection result with unknown fields and context."""
+
+    model_name: str
+    unknown_fields: list[str]
+    context: str
+    timestamp: str
 
 
 # Universal List Parameters
 class ListParameters(BaseModel):
     """Universal list parameters for all Endor Labs resources."""
 
-    filter: Optional[str] = Field(
+    filter: str | None = Field(
         None,
         description="Filter expression (e.g., 'spec.level==FINDING_LEVEL_CRITICAL')",
     )
-    mask: Optional[str] = Field(
+    mask: str | None = Field(
         None, description="Field mask (e.g., 'meta.name,spec.level')"
     )
-    page_size: Optional[int] = Field(None, description="Results per page")
-    page_token: Optional[str] = Field(None, description="Page token for pagination")
-    sort_field: Optional[str] = Field(
+    page_size: int | None = Field(None, description="Results per page")
+    page_token: str | None = Field(None, description="Page token for pagination")
+    sort_field: str | None = Field(
         None, description="Sort field (e.g., 'meta.create_time')"
     )
-    sort_order: Optional[str] = Field("asc", description="Sort order (asc/desc)")
-    count: Optional[bool] = Field(
+    sort_order: str | None = Field("asc", description="Sort order (asc/desc)")
+    count: bool | None = Field(
         None, description="Count only (return count instead of objects)"
     )
-    traverse: Optional[bool] = Field(
+    traverse: bool | None = Field(
         None,
         description=(
             "Traverse all child namespaces recursively. "
@@ -180,7 +189,5 @@ class ListParameters(BaseModel):
             "(e.g., all dependencies across all namespaces)."
         ),
     )
-    from_date: Optional[str] = Field(
-        None, description="Created after date (ISO format)"
-    )
-    to_date: Optional[str] = Field(None, description="Created before date (ISO format)")
+    from_date: str | None = Field(None, description="Created after date (ISO format)")
+    to_date: str | None = Field(None, description="Created before date (ISO format)")

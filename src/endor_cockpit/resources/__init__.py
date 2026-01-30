@@ -1,5 +1,4 @@
-"""
-Endor Cockpit resources module.
+"""Endor Cockpit resources module.
 
 This module provides CRUD operations for all Endor Labs API resources.
 """
@@ -10,10 +9,12 @@ from . import (
     authorization_policy,
     dependency_metadata,
     finding,
+    finding_log,
     installation,
     linter_result,
     metric,
     namespace,
+    package_license,
     package_version,
     policy,
     project,
@@ -31,10 +32,12 @@ __all__ = [
     "authorization_policy",
     "dependency_metadata",
     "finding",
+    "finding_log",
     "installation",
     "linter_result",
     "metric",
     "namespace",
+    "package_license",
     "package_version",
     "policy",
     "project",

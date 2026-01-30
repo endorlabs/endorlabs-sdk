@@ -1,5 +1,4 @@
-"""
-PackageVersion resource module for Endor Labs API.
+"""PackageVersion resource module for Endor Labs API.
 
 This module provides CRUD operations for PackageVersion resources following the
 established patterns from the base class implementation.
@@ -17,9 +16,11 @@ be manually created, updated, or deleted. The API returns 501 Not Allowed for
 PATCH operations on package versions.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Any, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -42,44 +43,56 @@ class Ecosystem(FlexibleEnum):
     """Ecosystem enumeration."""
 
     UNSPECIFIED = "ECOSYSTEM_UNSPECIFIED"
-    GO = "ECOSYSTEM_GO"
-    MAVEN = "ECOSYSTEM_MAVEN"
-    PYPI = "ECOSYSTEM_PYPI"
+    AI_MODEL = "ECOSYSTEM_AI_MODEL"
+    APK = "ECOSYSTEM_APK"
+    C = "ECOSYSTEM_C"
     CARGO = "ECOSYSTEM_CARGO"
-    NPM = "ECOSYSTEM_NPM"
+    COCOAPOD = "ECOSYSTEM_COCOAPOD"
+    CONTAINER = "ECOSYSTEM_CONTAINER"
+    DEBIAN = "ECOSYSTEM_DEBIAN"
     GEM = "ECOSYSTEM_GEM"
+    GIT = "ECOSYSTEM_GIT"
+    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+    GO = "ECOSYSTEM_GO"
+    HUGGING_FACE = "ECOSYSTEM_HUGGING_FACE"
+    MAVEN = "ECOSYSTEM_MAVEN"
+    NPM = "ECOSYSTEM_NPM"
     NUGET = "ECOSYSTEM_NUGET"
     PACKAGIST = "ECOSYSTEM_PACKAGIST"
-    SBOM = "ECOSYSTEM_SBOM"
+    PYPI = "ECOSYSTEM_PYPI"
     RPM = "ECOSYSTEM_RPM"
-    DEBIAN = "ECOSYSTEM_DEBIAN"
-    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+    SBOM = "ECOSYSTEM_SBOM"
+    SWIFT = "ECOSYSTEM_SWIFT"
 
 
 class Language(FlexibleEnum):
     """Language enumeration."""
 
     UNSPECIFIED = "LANGUAGE_UNSPECIFIED"
+    C = "LANGUAGE_C"
+    CPP = "LANGUAGE_CPP"
+    CSHARP = "LANGUAGE_CSHARP"
     GO = "LANGUAGE_GO"
     JAVA = "LANGUAGE_JAVA"
-    SCALA = "LANGUAGE_SCALA"
-    PYTHON = "LANGUAGE_PYTHON"
-    RUST = "LANGUAGE_RUST"
     JS = "LANGUAGE_JS"
-    RUBY = "LANGUAGE_RUBY"
-    CSHARP = "LANGUAGE_CSHARP"
-    PHP = "LANGUAGE_PHP"
-    TYPESCRIPT = "LANGUAGE_TYPESCRIPT"
     KOTLIN = "LANGUAGE_KOTLIN"
+    OBJECTIVEC = "LANGUAGE_OBJECTIVEC"
+    PHP = "LANGUAGE_PHP"
+    PYTHON = "LANGUAGE_PYTHON"
+    RUBY = "LANGUAGE_RUBY"
+    RUST = "LANGUAGE_RUST"
+    SCALA = "LANGUAGE_SCALA"
     SWIFT = "LANGUAGE_SWIFT"
+    SWIFTURL = "LANGUAGE_SWIFTURL"
+    TYPESCRIPT = "LANGUAGE_TYPESCRIPT"
 
 
 class VersionInfo(BaseModel):
     """Version information with ref, sha, and metadata."""
 
     ref: str = Field(..., description="Reference (branch, tag, or commit)")
-    sha: Optional[str] = Field(None, description="Commit SHA")
-    metadata: Optional[dict] = Field(None, description="Version metadata")
+    sha: str | None = Field(None, description="Commit SHA")
+    metadata: dict[str, Any] | None = Field(None, description="Version metadata")
 
 
 class PackageVersionSourceCodeReference(BaseModel):
@@ -87,26 +100,26 @@ class PackageVersionSourceCodeReference(BaseModel):
 
     model_config = ConfigDict(extra="allow")  # Allow flat structure from API
 
-    version: Optional[VersionInfo] = Field(
+    version: VersionInfo | None = Field(
         None, description="Version information (ref, sha, metadata)"
     )
-    ref: Optional[str] = Field(
+    ref: str | None = Field(
         None, description="Reference (branch, tag, or commit) - legacy field"
     )
-    sha: Optional[str] = Field(None, description="Commit SHA - legacy field")
-    http_clone_url: Optional[str] = Field(None, description="HTTP clone URL")
-    platform_source: Optional[str] = Field(None, description="Platform source")
-    repository_uuid: Optional[str] = Field(None, description="Repository UUID")
+    sha: str | None = Field(None, description="Commit SHA - legacy field")
+    http_clone_url: str | None = Field(None, description="HTTP clone URL")
+    platform_source: str | None = Field(None, description="Platform source")
+    repository_uuid: str | None = Field(None, description="Repository UUID")
 
 
 class PackageVersionDependency(BaseModel):
     """Package version dependency."""
 
     name: str = Field(..., description="Dependency name (may include version)")
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None, description="Dependency version (may be in name field)"
     )
-    ecosystem: Optional[Ecosystem] = Field(None, description="Dependency ecosystem")
+    ecosystem: Ecosystem | None = Field(None, description="Dependency ecosystem")
 
     model_config = ConfigDict(extra="allow")  # Allow ecosystem-specific fields
 
@@ -114,16 +127,16 @@ class PackageVersionDependency(BaseModel):
 class Bom(BaseModel):
     """Bill of Materials for resolved dependencies."""
 
-    resolution_timestamp: Optional[datetime] = Field(
+    resolution_timestamp: datetime | None = Field(
         None, description="Resolution timestamp"
     )
-    dependency_graph: Optional[dict] = Field(
+    dependency_graph: dict[str, Any] | None = Field(
         None, description="Dependency graph structure"
     )
-    dependencies: Optional[List[Union[PackageVersionDependency, dict]]] = Field(
+    dependencies: list[Union[PackageVersionDependency, dict[str, Any]]] | None = Field(
         None, description="Resolved dependencies (can be objects or dicts)"
     )
-    dependency_files: Optional[List[str]] = Field(
+    dependency_files: list[str] | None = Field(
         None, description="Dependency file paths"
     )
 
@@ -133,10 +146,14 @@ class Bom(BaseModel):
 class PackageVersionResolutionErrors(BaseModel):
     """Resolution errors for package version."""
 
-    errors: Optional[List[str]] = Field(None, description="List of resolution errors")
-    unresolved: Optional[dict] = Field(None, description="Unresolved dependency errors")
-    resolved: Optional[dict] = Field(None, description="Resolved dependency errors")
-    call_graph: Optional[dict] = Field(None, description="Call graph errors")
+    errors: list[str] | None = Field(None, description="List of resolution errors")
+    unresolved: dict[str, Any] | None = Field(
+        None, description="Unresolved dependency errors"
+    )
+    resolved: dict[str, Any] | None = Field(
+        None, description="Resolved dependency errors"
+    )
+    call_graph: dict[str, Any] | None = Field(None, description="Call graph errors")
 
     model_config = ConfigDict(extra="allow")  # Allow additional fields
 
@@ -145,23 +162,23 @@ class ContainerMetadata(BaseModel):
     """Container metadata."""
 
     image_name: str = Field(..., description="Container image name")
-    tag: Optional[str] = Field(None, description="Container tag")
-    digest: Optional[str] = Field(None, description="Container digest")
+    tag: str | None = Field(None, description="Container tag")
+    digest: str | None = Field(None, description="Container digest")
 
 
 class BazelMetadata(BaseModel):
     """Bazel metadata."""
 
     target: str = Field(..., description="Bazel target")
-    package: Optional[str] = Field(None, description="Bazel package")
+    package: str | None = Field(None, description="Bazel package")
 
 
 class CodeOwnerData(BaseModel):
     """Code owner data."""
 
-    owners: List[str] = Field(..., description="List of code owners")
-    paths: Optional[List[str]] = Field(None, description="List of owned paths")
-    labels: Optional[List[str]] = Field(None, description="List of labels")
+    owners: list[str] = Field(..., description="List of code owners")
+    paths: list[str] | None = Field(None, description="List of owned paths")
+    labels: list[str] | None = Field(None, description="List of labels")
 
     model_config = ConfigDict(extra="allow")  # Allow additional fields
 
@@ -170,7 +187,7 @@ class PrecomputedState(BaseModel):
     """Precomputed state for call graph."""
 
     state: str = Field(..., description="Precomputed state")
-    timestamp: Optional[datetime] = Field(None, description="State timestamp")
+    timestamp: datetime | None = Field(None, description="State timestamp")
 
 
 class PackageVersionMeta(BaseMeta):
@@ -210,58 +227,60 @@ class PackageVersionSpec(BaseSpec):
     project_uuid: str = Field(
         ..., description="The UUID of the project to which this package version belongs"
     )  # IMMUTABLE: Set at creation
-    source_code_reference: Optional[PackageVersionSourceCodeReference] = Field(
+    source_code_reference: PackageVersionSourceCodeReference | None = Field(
         None,
         description="Ref info of source code repository from which package was created",
     )  # IMMUTABLE: Set at creation
-    release_timestamp: Optional[datetime] = Field(
+    release_timestamp: datetime | None = Field(
         None,
         description="Release timestamp when this package version was released",
     )  # IMMUTABLE: Set at creation
-    unresolved_dependencies: Optional[List[dict]] = Field(
+    unresolved_dependencies: list[dict[str, Any]] | None = Field(
         None,
         description=(
             "Exact dependency declarations in package manager descriptor file. "
             "Each item is a dict with ecosystem-specific keys (e.g., 'pypi', 'npm')"
         ),
     )  # MUTABLE: Can be updated
-    resolved_dependencies: Optional[Union[Bom, dict]] = Field(
+    resolved_dependencies: Union[Bom, dict[str, Any]] | None = Field(
         None, description="A graph of resolved dependencies (Bom or dict)"
     )  # MUTABLE: Can be updated
-    resolution_errors: Optional[PackageVersionResolutionErrors] = Field(
+    resolution_errors: PackageVersionResolutionErrors | None = Field(
         None, description="Captures any errors during dependency resolution"
     )  # MUTABLE: Can be updated
-    ecosystem: Optional[Ecosystem] = Field(
+    ecosystem: Ecosystem | None = Field(
         None, description="Dependency ecosystem"
     )  # IMMUTABLE: Analysis-determined
-    package_name: Optional[str] = Field(
+    package_name: str | None = Field(
         None, description="The name of the package of this package version"
     )  # IMMUTABLE: Analysis-determined
-    language: Optional[Language] = Field(
+    language: Language | None = Field(
         None, description="Language of the package_version"
     )  # IMMUTABLE: Analysis-determined
-    relative_path: Optional[str] = Field(
+    relative_path: str | None = Field(
         None,
         description="Relative path of package from discovery point to workspace root",
     )  # IMMUTABLE: Set at creation
-    container_metadata: Optional[ContainerMetadata] = Field(
+    container_metadata: ContainerMetadata | None = Field(
         None, description="The metadata of the container image"
     )  # IMMUTABLE: Analysis-determined
-    bazel_metadata: Optional[BazelMetadata] = Field(
+    bazel_metadata: BazelMetadata | None = Field(
         None, description="The metadata of the bazel target"
     )  # IMMUTABLE: Analysis-determined
-    code_owners: Optional[CodeOwnerData] = Field(
+    code_owners: CodeOwnerData | None = Field(
         None, description="Code owner data for the package"
     )  # IMMUTABLE: Analysis-determined
-    call_graph_available: Optional[bool] = Field(
+    call_graph_available: bool | None = Field(
         None,
         description="True if call graph was successfully created by latest scan",
     )  # MUTABLE: Can be updated
-    internal_reference_key: Optional[str] = Field(
+    internal_reference_key: str | None = Field(
         None,
         description="Unique key for package generated by Endor Labs for lookups",
     )  # IMMUTABLE: System-generated
-    precomputed_call_graph_state: Optional[Union[PrecomputedState, str, dict]] = Field(
+    precomputed_call_graph_state: (
+        Union[PrecomputedState, str, dict[str, Any]] | None
+    ) = Field(
         None,
         description=(
             "The state of the precomputed callgraph. "
@@ -271,7 +290,7 @@ class PackageVersionSpec(BaseSpec):
 
     @field_validator("ecosystem", mode="before")
     @classmethod
-    def validate_ecosystem(cls, v):
+    def validate_ecosystem(cls, v: Any) -> Any:
         """Handle unknown ecosystem values gracefully."""
         if isinstance(v, str):
             try:
@@ -283,7 +302,7 @@ class PackageVersionSpec(BaseSpec):
 
     @field_validator("language", mode="before")
     @classmethod
-    def validate_language(cls, v):
+    def validate_language(cls, v: Any) -> Any:
         """Handle unknown language values gracefully."""
         if isinstance(v, str):
             try:
@@ -295,7 +314,7 @@ class PackageVersionSpec(BaseSpec):
 
     @field_validator("source_code_reference", mode="before")
     @classmethod
-    def validate_source_code_reference(cls, v):
+    def validate_source_code_reference(cls, v: Any) -> Any:
         """Handle source_code_reference with nested version structure."""
         if isinstance(v, dict):
             # If version is nested, extract ref and sha to top level
@@ -311,7 +330,7 @@ class PackageVersionSpec(BaseSpec):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Override BaseSpec drift detection to skip typed model fields."""
         # Skip drift detection for typed nested models
         # (they handle their own validation)
@@ -334,8 +353,7 @@ class PackageVersionSpec(BaseSpec):
 
 
 class PackageVersion(BaseResource):
-    """
-    PackageVersion resource model extending BaseResource.
+    """PackageVersion resource model extending BaseResource.
 
     OPERATION SUPPORT:
     ==================
@@ -387,16 +405,16 @@ class PackageVersion(BaseResource):
     # PackageVersion-specific fields (universal fields inherited from BaseResource)
     spec: PackageVersionSpec = Field(..., description="PackageVersion specification")  # type: ignore
     # Conditional attributes from Resource Guide example
-    context: Optional[dict] = Field(
+    context: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Contextual information", alias="context"
     )
-    processing_status: Optional[dict] = Field(
+    processing_status: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Processing status information", alias="processing_status"
     )
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to PackageVersionSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = PackageVersionSpec(**data["spec"])
@@ -404,7 +422,7 @@ class PackageVersion(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -438,12 +456,14 @@ class PackageVersion(BaseResource):
 class UpdatePackageVersionPayload(BaseModel):
     """Payload for updating PackageVersion resources."""
 
-    meta: Optional[dict] = None
-    spec: Optional[PackageVersionSpec] = None
-    update_mask: Optional[List[str]] = None
+    meta: dict[str, Any] | None = None
+    spec: PackageVersionSpec | None = None
+    update_mask: list[str] | None = None
 
 
-def _get_package_version_ops(client: APIClient) -> BaseResourceOperations:
+def _get_package_version_ops(
+    client: APIClient,
+) -> BaseResourceOperations[PackageVersion]:
     """Get BaseResourceOperations instance for PackageVersion."""
     return BaseResourceOperations(client, "package-versions", PackageVersion)
 
@@ -451,30 +471,46 @@ def _get_package_version_ops(client: APIClient) -> BaseResourceOperations:
 def list_package_versions(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[PackageVersion]:
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[PackageVersion]:
     """List package versions with advanced filtering and pagination."""
     ops = _get_package_version_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)
 
 
 def get_package_version(
     client: APIClient, tenant_meta_namespace: str, package_version_uuid: str
-) -> Optional[PackageVersion]:
-    """Get specific package version by UUID."""
+) -> PackageVersion:
+    """Get specific package version by UUID.
+
+    Raises:
+        NotFoundError: If package version doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
     ops = _get_package_version_ops(client)
-    return ops.get(tenant_meta_namespace, package_version_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, package_version_uuid)
 
 
 def create_package_version(
     client: APIClient,
     tenant_meta_namespace: str,
-    payload: "CreatePackageVersionPayload",
-) -> Optional[PackageVersion]:
-    """Create a new package version."""
+    payload: CreatePackageVersionPayload,
+) -> PackageVersion:
+    """Create a new package version with pre-validation and typed errors.
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If package version already exists
+        ServerError: If server error occurs
+
+    """
     ops = _get_package_version_ops(client)
-    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_package_version(
@@ -482,11 +518,38 @@ def update_package_version(
     tenant_meta_namespace: str,
     package_version_uuid: str,
     payload: UpdatePackageVersionPayload,
-    update_mask: Optional[List[str]] = None,
-) -> Optional[PackageVersion]:
-    """Update package version using base class operations."""
+    update_mask: str | None = None,
+) -> PackageVersion | None:
+    """Update package version using base class operations.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        package_version_uuid: UUID of the package version to update
+        payload: PackageVersion update payload
+        update_mask: Optional comma-separated list of fields to update
+            (e.g., "meta.tags,meta.description"). If provided, only these
+            fields will be updated. If omitted, all non-None fields in
+            payload will be updated.
+
+    Returns:
+        Updated PackageVersion object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If package version doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
     ops = _get_package_version_ops(client)
-    return ops.update(tenant_meta_namespace, package_version_uuid, payload, update_mask)  # type: ignore
+    return ops.update(
+        tenant_meta_namespace, package_version_uuid, payload, update_mask_list
+    )
 
 
 def delete_package_version(
@@ -494,14 +557,14 @@ def delete_package_version(
 ) -> bool:
     """Delete a package version by UUID."""
     ops = _get_package_version_ops(client)
-    return ops.delete(tenant_meta_namespace, package_version_uuid)  # type: ignore
+    return ops.delete(tenant_meta_namespace, package_version_uuid)
 
 
 # Payload models for create and update operations
 class CreatePackageVersionPayload(BaseModel):
     """Payload for creating a package version."""
 
-    meta: "PackageVersionMetaCreate" = Field(
+    meta: PackageVersionMetaCreate = Field(
         ..., description="PackageVersion metadata for creation"
     )
     spec: PackageVersionSpec = Field(..., description="PackageVersion specification")
@@ -511,10 +574,10 @@ class PackageVersionMetaCreate(BaseModel):
     """PackageVersion metadata for creation."""
 
     name: str = Field(..., description="PackageVersion name")
-    description: Optional[str] = Field(None, description="PackageVersion description")
+    description: str | None = Field(None, description="PackageVersion description")
 
 
 class PackageVersionMetaUpdate(BaseModel):
     """PackageVersion metadata for update."""
 
-    description: Optional[str] = Field(None, description="PackageVersion description")
+    description: str | None = Field(None, description="PackageVersion description")

@@ -1,22 +1,20 @@
-"""
-Namespace traversal utilities for tenant-wide queries.
+"""Namespace traversal utilities for tenant-wide queries.
 
 This module provides canonical patterns and helpers for efficiently
 querying resources across all namespaces using the traverse parameter.
 """
 
-from typing import Optional
+from typing import Any
 
 from ..types import ListParameters
 
 
 def create_traverse_params(
-    filter_expr: Optional[str] = None,
-    page_size: Optional[int] = None,
-    **kwargs,
+    filter_expr: str | None = None,
+    page_size: int | None = None,
+    **kwargs: Any,
 ) -> ListParameters:
-    """
-    Create ListParameters with traverse enabled for tenant-wide queries.
+    """Create ListParameters with traverse enabled for tenant-wide queries.
 
     This is the canonical way to query resources across all namespaces
     in a single efficient API call.
@@ -49,6 +47,7 @@ def create_traverse_params(
             client, tenant_namespace, params
         )
         ```
+
     """
     # Don't set page_size unless explicitly provided (let API use default)
     params_dict = {
@@ -63,12 +62,11 @@ def create_traverse_params(
 
 
 def create_namespace_scoped_params(
-    filter_expr: Optional[str] = None,
-    page_size: Optional[int] = None,
-    **kwargs,
+    filter_expr: str | None = None,
+    page_size: int | None = None,
+    **kwargs: Any,
 ) -> ListParameters:
-    """
-    Create ListParameters for namespace-scoped queries (no traversal).
+    """Create ListParameters for namespace-scoped queries (no traversal).
 
     Use this when you only need resources from a specific namespace,
     not across the entire tenant hierarchy.
@@ -93,6 +91,7 @@ def create_namespace_scoped_params(
             client, "tenant.namespace", params
         )
         ```
+
     """
     # Don't set page_size unless explicitly provided (let API use default)
     params_dict = {

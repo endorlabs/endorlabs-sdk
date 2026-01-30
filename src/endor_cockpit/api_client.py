@@ -1,24 +1,30 @@
-"""
-Description:
-    API Client to provide REST calls with retry, rate limiting, pagination,
+"""API Client for Endor Labs REST API.
+
+    Provides REST calls with retry, rate limiting, pagination,
     and logging with redaction.
 
 Author:
     tgowan@endor.ai
 """
 
+import html
 import logging
 import os
 import re
 import time
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from collections.abc import Iterator
+from datetime import UTC, datetime
+from typing import Any, cast
 
 import requests
-import yaml
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+
+from .exceptions import (
+    EndorAPIError,
+    map_status_code_to_exception,
+)
+from .types import ErrorResponse
 
 ENDOR_NAMESPACE = os.getenv("ENDOR_NAMESPACE")
 # TODO: Determine if needed or as an init param or env var
@@ -31,17 +37,20 @@ redaction_pattern = (
 
 
 class RedactingFilter(logging.Filter):
-    def __init__(self, patterns):
+    """Filter that redacts sensitive keys from log records."""
+
+    def __init__(self, patterns: list[str]) -> None:
         super().__init__()
         self._patterns = [re.compile(p, re.IGNORECASE) for p in patterns]
 
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
+        """Redact sensitive data from the log record."""
         record.msg = self._redact(record.msg)
         if isinstance(record.args, dict):
             record.args = {k: self._redact(v) for k, v in record.args.items()}
         return True
 
-    def _redact(self, message):
+    def _redact(self, message: str | object) -> str:
         if not isinstance(message, str):
             message = str(message)
         for pattern in self._patterns:
@@ -52,119 +61,79 @@ class RedactingFilter(logging.Filter):
 class APIClient:
     """Simple API client with retry, rate limiting handling and redacted logging.
 
+    Retry Behavior:
+        The client automatically retries requests for network-related errors and
+        specific HTTP status codes. Retries use exponential backoff.
+
+        Retryable Errors:
+        - Network errors: ConnectionError, Timeout (all retried automatically)
+        - HTTP 429 (Rate Limit): Retried with exponential backoff, respects
+          Retry-After header
+        - HTTP 500, 502, 503, 504 (Server Errors): Retried as transient server issues
+
+        Non-Retryable Errors (Graceful Exit):
+        - HTTP 400 (Validation Error): Client error, not retried
+        - HTTP 401 (Unauthorized): Single retry after reauthentication, then exit
+        - HTTP 403 (Permission Denied): Client error, not retried
+        - HTTP 404 (Not Found): Client error, not retried
+        - HTTP 409 (Conflict): Client error, not retried
+
+        Retry Limits:
+        - Default max_retries: 5 (configurable via ENDOR_MAX_RETRIES env var)
+        - Backoff factor: 0.5 (exponential: 0.5s, 1s, 2s, 4s, 8s)
+        - Maximum retry time: ~16 seconds for 5 retries
+
     Args:
-        max_retries: Maximum number of retries for requests.
-        backoff_factor: Backoff factor for retries.
+        max_retries: Maximum number of retries for requests. Default: 5.
+            If not provided, uses ENDOR_MAX_RETRIES environment variable.
+            If neither provided, defaults to 5.
+            Reduces excessive retry time on persistent network issues.
+        backoff_factor: Backoff factor for retries. Default: 0.5.
         status_forcelist: HTTP status codes that trigger a retry.
+            Default: (429, 500, 502, 503, 504). Network errors are always retried.
         logging_level: Logging level for the client's logger.
+            If None, uses ENDOR_LOG_LEVEL environment variable.
+            Valid values: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+
     """
-
-    @staticmethod
-    def _load_endorctl_config() -> Optional[Dict[str, str]]:
-        """
-        Load configuration from endorctl config.yaml file.
-
-        Checks multiple locations in order:
-        1. Project root .endorctl/config.yaml (for local development)
-        2. ~/.endorctl/config.yaml (or C:\\Users\\<user>\\.endorctl\\config.yaml
-           on Windows) for user-wide configuration
-
-        Returns:
-            Dictionary with config values or None if file doesn't exist
-        """
-        config_paths = []
-
-        # Check project root first (for local development)
-        try:
-            # Try to find project root by looking for pyproject.toml
-            current = Path(__file__).parent
-            while current != current.parent:
-                pyproject = current / "pyproject.toml"
-                if pyproject.exists():
-                    project_config = current / ".endorctl" / "config.yaml"
-                    if project_config.exists():
-                        config_paths.append(project_config)
-                    break
-                current = current.parent
-        except Exception:
-            pass
-
-        # Check user home directory
-        home = Path.home()
-        user_config = home / ".endorctl" / "config.yaml"
-        if user_config.exists():
-            config_paths.append(user_config)
-
-        # Try each config path in order
-        for config_path in config_paths:
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config = yaml.safe_load(f)
-                    if not isinstance(config, dict):
-                        continue
-                    # Convert to string values and filter for relevant keys
-                    result = {}
-                    for key in [
-                        "ENDOR_API",
-                        "ENDOR_API_CREDENTIALS_KEY",
-                        "ENDOR_API_CREDENTIALS_SECRET",
-                        "ENDOR_NAMESPACE",
-                        "ENDOR_TOKEN",
-                        "ENDOR_AUTH_METHOD",
-                        "ENDOR_BROWSER",
-                    ]:
-                        if key in config:
-                            result[key] = str(config[key])
-                    if result:
-                        return result
-            except Exception:
-                # Silently fail - config file may be malformed
-                continue
-
-        return None
 
     def __init__(
         self,
-        max_retries: int = 15,
+        max_retries: int = 5,
         backoff_factor: float = 0.5,
-        status_forcelist=(429, 500, 502, 503, 504),
-        logging_level: str = "INFO",
-        token: Optional[str] = None,
-        auth_method: Optional[str] = None,
-        email: Optional[str] = None,
-    ):
+        status_forcelist: tuple[int, ...] = (429, 500, 502, 503, 504),
+        logging_level: str | None = None,
+        token: str | None = None,
+        auth_method: str | None = None,
+        email: str | None = None,
+    ) -> None:
+        super().__init__()
         # Set up logging
         from endor_cockpit.utils.logging_config import setup_logging
 
         self.logger = setup_logging("endor_cockpit")
         self.logger.addFilter(RedactingFilter([redaction_pattern]))
 
-        # Load config from endorctl config.yaml as fallback
-        config_file = self._load_endorctl_config()
+        # Set log level with precedence: parameter > env var > default
+        # setup_logging already handles env var (ENDOR_LOG_LEVEL),
+        # so we only override if parameter is explicitly provided
+        if logging_level is not None:
+            # Parameter takes highest precedence
+            level = logging_level.upper()
+            # Convert string to logging level constant
+            numeric_level = getattr(logging, level, logging.INFO)
+            self.logger.setLevel(numeric_level)
 
         # Initialize API client parameters
-        # Precedence: parameters > environment variables > config file > defaults
-        self.base_url = (
-            os.getenv("ENDOR_API")
-            or (config_file.get("ENDOR_API") if config_file else None)
-            or "https://api.endorlabs.com"
-        )
+        # Precedence: parameters > environment variables > defaults
+        self.base_url = os.getenv("ENDOR_API") or "https://api.endorlabs.com"
 
         # Determine authentication method
-        # Precedence: parameter > env var > config file > default (api-key)
-        self.auth_method = (
-            auth_method
-            or os.getenv("ENDOR_AUTH_METHOD")
-            or (config_file.get("ENDOR_AUTH_METHOD") if config_file else None)
-            or "api-key"
-        )
+        # Precedence: parameter > env var > default (api-key)
+        self.auth_method = auth_method or os.getenv("ENDOR_AUTH_METHOD") or "api-key"
 
         # Get token if provided directly
-        self._provided_token = (
-            token
-            or os.getenv("ENDOR_TOKEN")
-            or (config_file.get("ENDOR_TOKEN") if config_file else None)
-        )
+        self._provided_token = token or os.getenv("ENDOR_TOKEN")
 
         # For browser auth, check if token is "browser" to trigger OAuth flow
         if self._provided_token == "browser" or self.auth_method in [
@@ -181,12 +150,8 @@ class APIClient:
             self._auth_type = "browser"
         else:
             # API key authentication (default)
-            self.key = os.getenv("ENDOR_API_CREDENTIALS_KEY") or (
-                config_file.get("ENDOR_API_CREDENTIALS_KEY") if config_file else None
-            )
-            self.secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET") or (
-                config_file.get("ENDOR_API_CREDENTIALS_SECRET") if config_file else None
-            )
+            self.key = os.getenv("ENDOR_API_CREDENTIALS_KEY")
+            self.secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET")
             self._auth_type = "api-key"
 
             if not self.key or not self.secret:
@@ -194,23 +159,31 @@ class APIClient:
                     "API credentials not found. Please provide credentials via:\n"
                     "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
                     "ENDOR_API_CREDENTIALS_SECRET\n"
-                    "  - endorctl config file: ~/.endorctl/config.yaml "
-                    "(or C:\\Users\\<user>\\.endorctl\\config.yaml on Windows)\n"
-                    "  - Or use browser authentication: APIClient(auth_method='browser')"
+                    "  - Or use browser authentication: "
+                    "APIClient(auth_method='browser')"
                 )
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
 
         # Store browser auth parameters
-        self._browser_name = (
-            os.getenv("ENDOR_BROWSER")
-            or (config_file.get("ENDOR_BROWSER") if config_file else None)
-        )
+        self._browser_name = os.getenv("ENDOR_BROWSER")
         self._email = email
 
         # Initialize token expiration tracking
-        self._token: Optional[str] = None
-        self._token_expires: Optional[datetime] = None
+        self._token: str | None = None
+        self._token_expires: datetime | None = None
+
+        # Get max_retries with precedence: parameter > env var > default
+        # If max_retries is the default (5), check env var; otherwise use provided value
+        if max_retries == 5:
+            # Check if env var is set, otherwise use default 5
+            env_max_retries = os.getenv("ENDOR_MAX_RETRIES")
+            if env_max_retries is not None:
+                max_retries = int(env_max_retries)
+        # else: max_retries was explicitly provided (not default), use it
+
+        # Store retry configuration for error messages
+        self.max_retries = max_retries
 
         # Initialize session with retries
         self.session = requests.Session()
@@ -234,10 +207,10 @@ class APIClient:
         _ = self.token
         if self._token:
             self.session.headers.update({"Authorization": f"Bearer {self._token}"})
-        self.default_headers = self.session.headers.copy()
+        self.default_headers = self._headers_copy()
 
-    def _rate_limit(self):
-        """Applies a delay if a rate limit was previously encountered."""
+    def _rate_limit(self) -> None:
+        """Apply a delay if a rate limit was previously encountered."""
         if self.rate_limit_delay > 0:
             wait_time = self.rate_limit_delay - (time.time() - self.last_request_time)
             if wait_time > 0:
@@ -246,6 +219,13 @@ class APIClient:
                 )
                 time.sleep(wait_time)
             self.rate_limit_delay = 0
+
+    def _headers_copy(self) -> dict[str, str]:
+        """Return a mutable copy of session headers with string values."""
+        return {
+            k: v.decode() if isinstance(v, bytes) else str(v)
+            for k, v in self.session.headers.items()
+        }
 
     def _normalize_url(self, url: str) -> str:
         """Normalize URL: use as-is if absolute, prepend base_url if relative."""
@@ -266,9 +246,337 @@ class APIClient:
         data_str = pattern.sub(r"'\1': '***REDACTED***'", data_str)
         return data_str
 
-    def _ensure_authenticated(self):
+    def _truncate_for_logging(self, text: str, max_length: int = 500) -> str:
+        """Truncate text for logging purposes only (not for error handling).
+
+        This is used for debug logs to prevent excessive log output.
+        For actual error handling, use full error text.
         """
-        Ensure token is fresh and session headers are updated.
+        if not text:
+            return ""
+        if len(text) <= max_length:
+            return text
+        return f"{text[:max_length]}... (truncated, {len(text)} chars total)"
+
+    def _parse_error_response(self, response: requests.Response) -> str:
+        """Parse error response and return full error details.
+
+        Attempts to parse structured error response, falls back to full text.
+        """
+        try:
+            # Try to parse as JSON first
+            error_data = response.json()
+            if isinstance(error_data, dict):
+                err = cast(dict[str, Any], error_data)
+                # Try to extract structured error information
+                error_msg: str = (
+                    err.get("message") or err.get("error") or str(error_data)
+                )
+                error_code: int | str = err.get("code") or response.status_code
+                error_details: Any = err.get("details")
+
+                result = f"Error {error_code}: {error_msg}"
+                if error_details:
+                    result += f"\nDetails: {error_details}"
+                return result
+            return str(error_data)
+        except (ValueError, AttributeError):
+            # If JSON parsing fails, return full text
+            return response.text
+
+    def _extract_grpc_code(self, error_data: dict[str, Any]) -> int | None:
+        """Extract gRPC code from error data.
+
+        Tries multiple methods:
+        1. Direct numeric "code" field
+        2. Parse error string (e.g., "invalid-args" -> 3, "not-found" -> 5)
+        """
+        # Method 1: Try direct numeric code field
+        grpc_code = error_data.get("code")
+        if grpc_code is not None:
+            if isinstance(grpc_code, int):
+                return grpc_code
+            # Try to convert string to int
+            try:
+                return int(grpc_code)
+            except (ValueError, TypeError):
+                pass
+
+        # Method 2: Parse error string to gRPC code
+        error_str = error_data.get("error", "").lower()
+        error_to_code_map = {
+            "invalid-args": 3,  # INVALID_ARGUMENT
+            "invalid_argument": 3,
+            "not-found": 5,  # NOT_FOUND
+            "not_found": 5,
+            "permission-denied": 7,  # PERMISSION_DENIED
+            "permission_denied": 7,
+            "unauthenticated": 16,  # UNAUTHENTICATED
+            "already-exists": 6,  # ALREADY_EXISTS
+            "already_exists": 6,
+            "unavailable": 14,  # UNAVAILABLE
+            "internal": 13,  # INTERNAL
+            "deadline-exceeded": 4,  # DEADLINE_EXCEEDED
+            "deadline_exceeded": 4,
+            "unknown": 2,  # UNKNOWN
+            "cancelled": 1,  # CANCELLED
+        }
+
+        if error_str in error_to_code_map:
+            return error_to_code_map[error_str]
+
+        return None
+
+    def _extract_error_message(self, error_data: dict[str, Any]) -> str | None:
+        """Extract and clean error message."""
+        error_msg = error_data.get("message") or error_data.get("error")
+        if not error_msg:
+            return None
+
+        # Decode HTML entities
+        error_msg = html.unescape(error_msg)
+
+        # Remove "Error X:" prefix if present
+        if error_msg.startswith("Error "):
+            error_msg = re.sub(r"^Error \d+:\s*", "", error_msg)
+
+        return error_msg
+
+    def _parse_invalid_path_error(self, error_msg: str) -> str | None:
+        """Parse 'invalid path' errors specifically."""
+        if "invalid path" not in error_msg:
+            return None
+
+        match = re.search(r"invalid path\s+['\"]([^'\"]+)['\"]", error_msg)
+        if match:
+            return f"Invalid filter path: '{match.group(1)}'"
+        return None
+
+    def _parse_error_response_succinct(
+        self, response: requests.Response
+    ) -> tuple[int | None, str]:
+        """Parse error response and return gRPC code and succinct message.
+
+        Extracts the actionable error message, decodes HTML entities,
+        and removes verbose technical details. Also extracts gRPC status code.
+
+        Returns:
+            Tuple of (grpc_code, error_message)
+            - grpc_code: gRPC status code if available, None otherwise
+            - error_message: Succinct, user-friendly error message
+
+        """
+        try:
+            # Try to parse as JSON first
+            error_data = response.json()
+            if isinstance(error_data, dict):
+                err = cast(dict[str, Any], error_data)
+                grpc_code = self._extract_grpc_code(err)
+                error_msg = self._extract_error_message(err)
+
+                if error_msg:
+                    # Check for invalid path errors first
+                    invalid_path_msg = self._parse_invalid_path_error(error_msg)
+                    if invalid_path_msg:
+                        return (grpc_code, invalid_path_msg)
+                    return (grpc_code, error_msg)
+
+                # Fallback to string representation
+                return (grpc_code, str(error_data))
+        except (ValueError, AttributeError):
+            pass
+
+        # If JSON parsing fails, try to extract from text
+        text = response.text
+        if text:
+            # Decode HTML entities
+            text = html.unescape(text)
+            # Try to extract meaningful error message
+            invalid_path_msg = self._parse_invalid_path_error(text)
+            if invalid_path_msg:
+                return (None, invalid_path_msg)
+            return (None, text)
+        return (None, f"HTTP {response.status_code} error")
+
+    def _get_grpc_error_context(self, grpc_code: int) -> tuple[int | None, str, str]:
+        """Get error context for documented gRPC codes.
+
+        Maps documented gRPC status codes to HTTP status codes,
+        error context descriptions, and user-friendly messages.
+
+        Args:
+            grpc_code: gRPC status code
+
+        Returns:
+            Tuple of (http_status_code, error_context, user_message)
+            - http_status_code: HTTP status code if documented, None otherwise
+            - error_context: Human-readable error context description
+            - user_message: User-friendly error message (if documented)
+
+        """
+        # Map documented gRPC codes based on Endor Labs documentation
+        # and Go test file (status_test.go)
+        grpc_code_map = {
+            1: (  # CANCELLED
+                408,
+                "Request cancelled",
+                "The command has been canceled. Please wait and try again.",
+            ),
+            2: (  # UNKNOWN
+                500,
+                "Unknown error",
+                "An unknown error occurred. If this issue persists "
+                "please provide feedback to Endor Labs.",
+            ),
+            3: (  # INVALID_ARGUMENT
+                400,
+                "Validation error",
+                "",  # Message will be provided by specific error parsing
+            ),
+            4: (  # DEADLINE_EXCEEDED
+                504,
+                "Deadline exceeded",
+                "The deadline expired before the operation could be completed. "
+                "Please consider using pagination for list requests.",
+            ),
+            5: (  # NOT_FOUND
+                404,
+                "Resource not found",
+                "The resource or object that you have requested does not exist. "
+                "Please check your command for mistakes in resource names or spelling.",
+            ),
+            6: (  # ALREADY_EXISTS
+                409,
+                "Resource already exists",
+                "You have attempted to create an object that already exists. "
+                "If you would like to update that object please use the "
+                "update command instead.",
+            ),
+            7: (  # PERMISSION_DENIED
+                403,
+                "Permission denied",
+                "You do not have the appropriate permissions to perform "
+                "this operation. Please check that you are using the correct "
+                "API key and check the API key permissions.",
+            ),
+            13: (  # INTERNAL
+                500,
+                "Internal server error",
+                "An internal error occurred. It's not you, it's us. "
+                "Please try again or contact Endor Labs for support.",
+            ),
+            14: (  # UNAVAILABLE
+                503,
+                "Service unavailable",
+                "The service is currently unavailable. "
+                "Please wait and try again or contact Endor Labs for support.",
+            ),
+            16: (  # UNAUTHENTICATED
+                401,
+                "Authentication failed",
+                "You have not successfully authenticated in order to complete "
+                "this operation. Please pass an API key and secret as an "
+                "environment variable or argument or run the command "
+                "endorctl init.",
+            ),
+        }
+
+        if grpc_code in grpc_code_map:
+            http_code, context, user_msg = grpc_code_map[grpc_code]
+            return (http_code, context, user_msg)
+
+        # Undocumented gRPC code - return None to trigger fallback
+        return (None, "", "")
+
+    def parse_error_response_structured(
+        self, response: requests.Response
+    ) -> ErrorResponse | None:
+        """Parse error response into structured ErrorResponse format.
+
+        Returns ErrorResponse dict if parsing succeeds, None otherwise.
+        """
+        try:
+            error_data = response.json()
+            if isinstance(error_data, dict):
+                err = cast(dict[str, Any], error_data)
+                return ErrorResponse(
+                    error=err.get("error", "Unknown error"),
+                    message=err.get("message", str(error_data)),
+                    code=err.get("code", response.status_code),
+                    details=err.get("details"),
+                )
+        except (ValueError, AttributeError, TypeError):
+            # If parsing fails, return None
+            pass
+        return None
+
+    def map_http_error_to_exception(
+        self,
+        error: requests.exceptions.HTTPError,
+        operation: str,
+        namespace: str,
+        resource_uuid: str | None = None,
+    ) -> EndorAPIError:
+        """Map HTTP error to typed exception with full context.
+
+        Uses gRPC codes first for precise error classification, matching
+        server-side error semantics. Falls back to HTTP status codes for
+        undocumented gRPC codes.
+
+        Args:
+            error: HTTPError exception from requests
+            operation: Operation that failed (e.g., 'create', 'update', 'delete')
+            namespace: Namespace where the operation was attempted
+            resource_uuid: Optional UUID of the resource involved
+
+        Returns:
+            Appropriate EndorAPIError subclass with full context
+
+        """
+        response = error.response
+        http_status_code = response.status_code
+
+        # Parse structured error response if available
+        error_response = self.parse_error_response_structured(response)
+
+        # Extract gRPC code and error message (gRPC codes are more precise)
+        grpc_code, error_message = self._parse_error_response_succinct(response)
+
+        # Use gRPC code to determine exception type if available
+        if grpc_code is not None:
+            grpc_http_code, _, _ = self._get_grpc_error_context(grpc_code)
+            if grpc_http_code is not None:
+                # Use HTTP status code derived from gRPC code for precision
+                effective_status_code = grpc_http_code
+            else:
+                # Undocumented gRPC code, fall back to HTTP status
+                effective_status_code = http_status_code
+        else:
+            # No gRPC code, use HTTP status code
+            effective_status_code = http_status_code
+
+        # Extract error message
+        if not error_message:
+            if error_response:
+                error_message = error_response.get(
+                    "message", response.text or f"HTTP {http_status_code}"
+                )
+            else:
+                error_message = response.text or f"HTTP {http_status_code}"
+
+        # Map to exception using the helper function with effective status code
+        return map_status_code_to_exception(
+            status_code=effective_status_code,
+            message=error_message,
+            error_response=error_response,
+            response_text=response.text,
+            operation=operation,
+            resource_uuid=resource_uuid,
+            namespace=namespace,
+        )
+
+    def _ensure_authenticated(self) -> None:
+        """Ensure token is fresh and session headers are updated.
 
         This method should be called before making API requests to ensure
         the token is valid and headers are up to date.
@@ -282,20 +590,24 @@ class APIClient:
     def _handle_response(
         self,
         response: requests.Response,
-        method: str = None,
-        url: str = None,
-        **kwargs,
+        method: str | None = None,
+        url: str | None = None,
+        **kwargs: Any,
     ) -> Any:
         self.last_request_time = time.time()
         try:
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if response.status_code == 429:
+            status_code = response.status_code
+
+            # Handle rate limiting (429) - retryable with backoff
+            if status_code == 429:
                 retry_info = response.headers.get("Retry-After", "no retry info")
                 self.logger.warning(
                     f"Rate limit encountered (429): {retry_info}. "
-                    f"Request to {response.url} was throttled."
+                    f"Request to {response.url} was throttled. "
+                    f"Will retry with exponential backoff."
                 )
                 retry_after = response.headers.get("Retry-After")
                 if retry_after and retry_after.isdigit():
@@ -305,7 +617,9 @@ class APIClient:
                         self.rate_limit_delay if self.rate_limit_delay > 0 else 5
                     )
                 raise
-            if response.status_code == 401:
+
+            # Handle authentication failure (401) - single retry after reauth
+            if status_code == 401:
                 self.logger.warning(
                     f"Authentication failed (401): Invalid or expired credentials. "
                     f"Request to {response.url} was unauthorized."
@@ -317,9 +631,9 @@ class APIClient:
                     self.session.headers.update(
                         {"Authorization": f"Bearer {new_token}"}
                     )
-                    self.default_headers = self.session.headers.copy()
+                    self.default_headers = self._headers_copy()
                     self.logger.info("Reauthentication completed.")
-                    # Retry the original request
+                    # Retry the original request once
                     if method and url:
                         self.logger.info(f"Retrying {method} request to {url}")
                         retry_response = self.session.request(
@@ -329,24 +643,99 @@ class APIClient:
                             retry_response, method=method, url=url, **kwargs
                         )
                 raise
-            else:
+
+            # Handle 501 Not Implemented - non-retryable client error
+            # (method/operation not supported, not a transient server error)
+            if status_code == 501:
+                error_details = self._parse_error_response(response)
                 self.logger.error(
-                    f"API error {response.status_code}: {e}. "
-                    f"Request to {response.url} failed. "
-                    f"Response: {response.text[:200]}..."
+                    f"Method not implemented (501) on {method or 'UNKNOWN'} "
+                    f"request to {response.url}. "
+                    f"This operation is not supported by the API. "
+                    f"Error: {error_details}"
                 )
                 raise
+
+            # Handle server errors (5xx) - retryable
+            if status_code >= 500:
+                error_details = self._parse_error_response(response)
+                self.logger.warning(
+                    f"Server error {status_code} on {method or 'UNKNOWN'} "
+                    f"request to {response.url}. "
+                    f"Will retry with exponential backoff. "
+                    f"Error: {error_details}"
+                )
+                raise
+
+            # Handle client errors (400, 403, 404, 409) - not retried, graceful exit
+            if status_code in (400, 403, 404, 409):
+                error_details = self._parse_error_response(response)
+                error_type = {
+                    400: "Validation error",
+                    403: "Permission denied",
+                    404: "Resource not found",
+                    409: "Conflict",
+                }.get(status_code, f"Client error {status_code}")
+                self.logger.error(
+                    f"{error_type} ({status_code}) on {method or 'UNKNOWN'} "
+                    f"request to {response.url}. "
+                    f"This error will not be retried. "
+                    f"Response: {error_details}"
+                )
+                raise
+
+            # Other HTTP errors
+            error_details = self._parse_error_response(response)
+            self.logger.debug(
+                f"API error {status_code} on {method or 'UNKNOWN'} "
+                f"request to {response.url}: {e}. "
+                f"Response: {error_details}"
+            )
+            raise
+
+        except requests.exceptions.ConnectionError as e:
+            # Network connection errors - retryable
+            # Note: urllib3 handles retries internally. If this exception
+            # reaches here, all retries have been exhausted.
+            self.logger.error(
+                f"Network connection failed for {method or 'UNKNOWN'} "
+                f"request to {url or 'unknown URL'}: {e}. "
+                f"All {self.max_retries} retry attempts exhausted. "
+                f"Check network connectivity and API endpoint availability."
+            )
+            raise
+
+        except requests.exceptions.Timeout as e:
+            # Request timeout errors - retryable
+            # Note: urllib3 handles retries internally. If this exception
+            # reaches here, all retries have been exhausted.
+            self.logger.error(
+                f"Request timeout exceeded for {method or 'UNKNOWN'} "
+                f"request to {url or 'unknown URL'}: {e}. "
+                f"All {self.max_retries} retry attempts exhausted. "
+                f"Request took too long to complete."
+            )
+            raise
+
         except requests.exceptions.RequestException as e:
-            self.logger.error(f"Request exception: {e}")
+            # Other network-related errors - retryable
+            # Note: urllib3 handles retries internally. If this exception
+            # reaches here, all retries have been exhausted.
+            self.logger.error(
+                f"Network request failed for {method or 'UNKNOWN'} "
+                f"request to {url or 'unknown URL'}: {e}. "
+                f"All {self.max_retries} retry attempts exhausted. "
+                f"Check network connectivity and API endpoint availability."
+            )
             raise
 
     def get(
         self,
         url: str,
-        params: Optional[Dict] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        **kwargs,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
     ) -> requests.Response:
         """GET request compatible with requests library signature."""
         self._rate_limit()
@@ -356,11 +745,11 @@ class APIClient:
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
             # Merge with session headers
-            merged_headers = self.session.headers.copy()
+            merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
-            request_kwargs["headers"] = self.session.headers.copy()
+            request_kwargs["headers"] = self._headers_copy()
 
         # Log with redaction
         log_data = self._redact_log_data(data) if data else None
@@ -378,7 +767,8 @@ class APIClient:
             **request_kwargs,
         )
         self.logger.debug(
-            f"GET response: {response.status_code} - {response.text[:200]}..."
+            f"GET response: {response.status_code} - "
+            f"{self._truncate_for_logging(response.text)}"
         )
         return self._handle_response(
             response,
@@ -393,10 +783,10 @@ class APIClient:
     def post(
         self,
         url: str,
-        params: Optional[Dict] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        **kwargs,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
     ) -> requests.Response:
         """POST request compatible with requests library signature."""
         self._rate_limit()
@@ -406,11 +796,11 @@ class APIClient:
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
             # Merge with session headers
-            merged_headers = self.session.headers.copy()
+            merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
-            request_kwargs["headers"] = self.session.headers.copy()
+            request_kwargs["headers"] = self._headers_copy()
 
         # Log with redaction
         log_data = self._redact_log_data(data) if data else None
@@ -428,7 +818,8 @@ class APIClient:
             **request_kwargs,
         )
         self.logger.debug(
-            f"POST response: {response.status_code} - {response.text[:200]}..."
+            f"POST response: {response.status_code} - "
+            f"{self._truncate_for_logging(response.text)}"
         )
         return self._handle_response(
             response,
@@ -443,10 +834,10 @@ class APIClient:
     def patch(
         self,
         url: str,
-        params: Optional[Dict] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        **kwargs,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
     ) -> requests.Response:
         """PATCH request compatible with requests library signature."""
         self._rate_limit()
@@ -456,11 +847,11 @@ class APIClient:
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
             # Merge with session headers
-            merged_headers = self.session.headers.copy()
+            merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
-            request_kwargs["headers"] = self.session.headers.copy()
+            request_kwargs["headers"] = self._headers_copy()
 
         # Log with redaction
         log_data = self._redact_log_data(data) if data else None
@@ -478,7 +869,8 @@ class APIClient:
             **request_kwargs,
         )
         self.logger.debug(
-            f"PATCH response: {response.status_code} - {response.text[:200]}..."
+            f"PATCH response: {response.status_code} - "
+            f"{self._truncate_for_logging(response.text)}"
         )
         return self._handle_response(
             response,
@@ -493,10 +885,10 @@ class APIClient:
     def put(
         self,
         url: str,
-        params: Optional[Dict] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        **kwargs,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
     ) -> requests.Response:
         """PUT request compatible with requests library signature."""
         self._rate_limit()
@@ -506,11 +898,11 @@ class APIClient:
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
             # Merge with session headers
-            merged_headers = self.session.headers.copy()
+            merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
-            request_kwargs["headers"] = self.session.headers.copy()
+            request_kwargs["headers"] = self._headers_copy()
 
         # Log with redaction
         log_data = self._redact_log_data(data) if data else None
@@ -528,7 +920,8 @@ class APIClient:
             **request_kwargs,
         )
         self.logger.debug(
-            f"PUT response: {response.status_code} - {response.text[:200]}..."
+            f"PUT response: {response.status_code} - "
+            f"{self._truncate_for_logging(response.text)}"
         )
         return self._handle_response(
             response,
@@ -543,10 +936,10 @@ class APIClient:
     def delete(
         self,
         url: str,
-        params: Optional[Dict] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        **kwargs,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
     ) -> requests.Response:
         """DELETE request compatible with requests library signature."""
         self._rate_limit()
@@ -556,11 +949,11 @@ class APIClient:
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
             # Merge with session headers
-            merged_headers = self.session.headers.copy()
+            merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
-            request_kwargs["headers"] = self.session.headers.copy()
+            request_kwargs["headers"] = self._headers_copy()
 
         # Log with redaction
         log_data = self._redact_log_data(data) if data else None
@@ -578,7 +971,8 @@ class APIClient:
             **request_kwargs,
         )
         self.logger.debug(
-            f"DELETE response: {response.status_code} - {response.text[:200]}..."
+            f"DELETE response: {response.status_code} - "
+            f"{self._truncate_for_logging(response.text)}"
         )
         return self._handle_response(
             response,
@@ -590,40 +984,39 @@ class APIClient:
             **request_kwargs,
         )
 
-    def _extract_items_from_response(self, response_data: Any) -> List[Any]:
+    def _extract_items_from_response(self, response_data: Any) -> list[Any]:
         """Extract items from paginated response."""
         if isinstance(response_data, dict) and "list" in response_data:
-            list_data = response_data["list"]
+            list_data: Any = response_data["list"]
             if isinstance(list_data, dict) and "objects" in list_data:
-                return list_data["objects"]
+                return cast(list[Any], list_data["objects"])
         elif isinstance(response_data, list):
             return response_data
         return []
 
-    def _extract_next_page_token(self, response_data: Any) -> Optional[str]:
+    def _extract_next_page_token(self, response_data: Any) -> str | None:
         """Extract next page token from paginated response."""
         if isinstance(response_data, dict) and "list" in response_data:
-            list_data = response_data["list"]
+            list_data: Any = response_data["list"]
             if isinstance(list_data, dict) and "response" in list_data:
-                response_meta = list_data["response"]
+                response_meta: Any = list_data["response"]
                 if isinstance(response_meta, dict):
-                    return response_meta.get("next_page_token")
+                    return cast(dict[str, Any], response_meta).get("next_page_token")
         return None
 
     def get_all(
         self,
         url: str,
-        params: Optional[Dict] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        max_pages: Optional[int] = None,
-        **kwargs,
-    ) -> Iterator[Dict[str, Any]]:
-        """
-        Get all items from a paginated endpoint, automatically handling
-        page_token pagination.
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        max_pages: int | None = None,
+        **kwargs: Any,
+    ) -> Iterator[dict[str, Any]]:
+        """Get all items from a paginated endpoint.
 
-        Yields individual items from paginated responses. Handles Endor Labs
+        Automatically handles page_token pagination. Yields individual items
+        from paginated responses. Handles Endor Labs
         pagination format with list.objects and next_page_token.
 
         Args:
@@ -637,6 +1030,7 @@ class APIClient:
 
         Yields:
             Individual items from paginated responses
+
         """
         normalized_url = self._normalize_url(url)
         page_token = None
@@ -673,8 +1067,7 @@ class APIClient:
 
             # Extract and yield items from this page
             items = self._extract_items_from_response(response_data)
-            for item in items:
-                yield item
+            yield from items
 
             page_count += 1
 
@@ -686,35 +1079,37 @@ class APIClient:
                 break
 
         self.logger.debug(
-            f"Fetched all items from {normalized_url} across {page_count} pages"
+            "Fetched all items from %s across %s pages",
+            normalized_url,
+            page_count,
         )
 
     @property
-    def token(self) -> Optional[str]:
-        """
-        Get current token, automatically refreshing if expired or about to expire.
+    def token(self) -> str | None:
+        """Get current token, automatically refreshing if expired or about to expire.
 
         Returns:
             Current bearer token string, or None if authentication fails.
+
         """
         # If no token or token expires within 30 minutes, re-authenticate
         if self._token is None or self._token_expires is None:
-            self.authenticate()
+            _ = self.authenticate()
         else:
             # Check if token expires within 30 minutes
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             time_until_expiry = (self._token_expires - now).total_seconds()
             if time_until_expiry <= 30 * 60:  # 30 minutes in seconds
-                self.authenticate()
+                _ = self.authenticate()
         return self._token
 
     @property
     def is_expired(self) -> bool:
-        """
-        Check if the current token is expired or about to expire.
+        """Check if the current token is expired or about to expire.
 
         Returns:
             True if token is expired or expires within 60 seconds, False otherwise.
+
         """
         if self._token_expires is None:
             return True
@@ -723,21 +1118,21 @@ class APIClient:
         time_until_expiry = (self._token_expires - now).total_seconds()
         return time_until_expiry <= 60
 
-    def authenticate(self) -> Optional[str]:
-        """
-        Authenticate and update session headers with bearer token.
+    def authenticate(self) -> str | None:
+        """Authenticate and update session headers with bearer token.
 
         Supports both API key and browser-based OAuth authentication.
 
         Returns:
             Bearer token string or None if authentication fails.
+
         """
         if self._auth_type == "browser":
             return self._authenticate_browser()
         else:
             return self._authenticate_api_key()
 
-    def _authenticate_api_key(self) -> Optional[str]:
+    def _authenticate_api_key(self) -> str | None:
         """Authenticate using API key and secret."""
         try:
             payload = {"key": self.key, "secret": self.secret}
@@ -772,13 +1167,12 @@ class APIClient:
             else:
                 self._token_expires = None
 
-            # Store token and update environment
+            # Store token
             self._token = token
-            os.environ["ENDOR_TOKEN"] = token
 
             # Update session headers
             self.session.headers.update({"Authorization": f"Bearer {token}"})
-            self.default_headers = self.session.headers.copy()
+            self.default_headers = self._headers_copy()
             return token
         except Exception as e:
             self.logger.error(f"Unable to authenticate with API key: {e}")
@@ -786,9 +1180,88 @@ class APIClient:
             self._token_expires = None
             return None
 
-    def _authenticate_browser(self) -> Optional[str]:
-        """
-        Authenticate using browser-based OAuth flow.
+    def _determine_browser_method(self) -> str | None:
+        """Determine browser OAuth method."""
+        if self._provided_token and self._provided_token != "browser":
+            return None  # Direct token provided, no browser method needed
+        browser_method = self.auth_method
+        if browser_method == "browser":
+            browser_method = "admin"  # Default to admin SSO
+        return browser_method
+
+    def _extract_environment(self) -> str:
+        """Extract environment from base_url."""
+        environment = self.base_url.replace("https://api.", "").replace(
+            "http://api.", ""
+        )
+        if environment == self.base_url:
+            # No api. prefix, use default
+            environment = "endorlabs.com"
+        return environment
+
+    def _get_browser_token(self, browser_method: str, environment: str) -> str | None:
+        """Get token from browser OAuth flow."""
+        from endor_cockpit.auth_server import get_token as get_browser_token
+
+        self.logger.info(f"Starting browser OAuth flow with method: {browser_method}")
+        return get_browser_token(
+            timeout=20,
+            environment=environment,
+            browser_name=self._browser_name,
+            method=browser_method,
+            email=self._email,
+        )
+
+    def _validate_and_store_token(self, token: str) -> None:
+        """Validate token and store it."""
+        # Validate token by making a test request to get expiration info
+        # Some endpoints may return token metadata
+        try:
+            test_response = requests.get(
+                f"{self.base_url}/meta/version",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5,
+            )
+            test_response.raise_for_status()
+
+            # Try to extract expiration from response if available
+            # (Most endpoints don't return this, but we try)
+            try:
+                data = test_response.json()
+                if "expirationTime" in data:
+                    expires = data["expirationTime"]
+                elif "expiration_time" in data:
+                    expires = data["expiration_time"]
+                else:
+                    expires = None
+
+                if expires is not None:
+                    try:
+                        utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
+                        self._token_expires = datetime.fromisoformat(utc_datetime_str)
+                    except Exception:
+                        self._token_expires = None
+                else:
+                    # For browser tokens, we don't know expiration
+                    # Set to None (will be treated as expired when checked)
+                    self._token_expires = None
+            except Exception:
+                self._token_expires = None
+        except Exception as e:
+            self.logger.debug(f"Token validation request failed: {e}")
+            # Token might still be valid, continue
+            self._token_expires = None
+
+        # Store token
+        self._token = token
+
+        # Update session headers
+        self.session.headers.update({"Authorization": f"Bearer {token}"})
+        self.default_headers = self._headers_copy()
+        self.logger.info("Browser authentication successful")
+
+    def _authenticate_browser(self) -> str | None:
+        """Authenticate using browser-based OAuth flow.
 
         ⚠️  WARNING: This method requires human interaction and cannot be used
         in CI/CD environments. It opens a browser window and waits for user
@@ -797,10 +1270,9 @@ class APIClient:
 
         Returns:
             Bearer token string or None if authentication fails.
+
         """
         try:
-            from endor_cockpit.auth_server import get_token as get_browser_token
-
             # Determine auth method for browser OAuth
             if self._provided_token and self._provided_token != "browser":
                 # Direct token provided, validate it
@@ -808,29 +1280,12 @@ class APIClient:
                 self.logger.info("Using provided token for authentication")
             else:
                 # Trigger browser OAuth flow
-                # Map auth_method to browser OAuth method
-                browser_method = self.auth_method
-                if browser_method == "browser":
-                    browser_method = "admin"  # Default to admin SSO
-
-                # Extract environment from base_url
-                environment = self.base_url.replace("https://api.", "").replace(
-                    "http://api.", ""
-                )
-                if environment == self.base_url:
-                    # No api. prefix, use default
-                    environment = "endorlabs.com"
-
-                self.logger.info(
-                    f"Starting browser OAuth flow with method: {browser_method}"
-                )
-                token = get_browser_token(
-                    timeout=20,
-                    environment=environment,
-                    browser_name=self._browser_name,
-                    method=browser_method,
-                    email=self._email,
-                )
+                browser_method = self._determine_browser_method()
+                if browser_method is None:
+                    token = None
+                else:
+                    environment = self._extract_environment()
+                    token = self._get_browser_token(browser_method, environment)
 
             if not token:
                 self.logger.error("Browser authentication failed or was cancelled")
@@ -838,54 +1293,7 @@ class APIClient:
                 self._token_expires = None
                 return None
 
-            # Validate token by making a test request to get expiration info
-            # Some endpoints may return token metadata
-            try:
-                test_response = requests.get(
-                    f"{self.base_url}/meta/version",
-                    headers={"Authorization": f"Bearer {token}"},
-                    timeout=5,
-                )
-                test_response.raise_for_status()
-
-                # Try to extract expiration from response if available
-                # (Most endpoints don't return this, but we try)
-                try:
-                    data = test_response.json()
-                    if "expirationTime" in data:
-                        expires = data["expirationTime"]
-                    elif "expiration_time" in data:
-                        expires = data["expiration_time"]
-                    else:
-                        expires = None
-
-                    if expires is not None:
-                        try:
-                            utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
-                            self._token_expires = datetime.fromisoformat(
-                                utc_datetime_str
-                            )
-                        except Exception:
-                            self._token_expires = None
-                    else:
-                        # For browser tokens, we don't know expiration
-                        # Set to None (will be treated as expired when checked)
-                        self._token_expires = None
-                except Exception:
-                    self._token_expires = None
-            except Exception as e:
-                self.logger.debug(f"Token validation request failed: {e}")
-                # Token might still be valid, continue
-                self._token_expires = None
-
-            # Store token and update environment
-            self._token = token
-            os.environ["ENDOR_TOKEN"] = token
-
-            # Update session headers
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
-            self.default_headers = self.session.headers.copy()
-            self.logger.info("Browser authentication successful")
+            self._validate_and_store_token(token)
             return token
         except ImportError:
             self.logger.error(

@@ -1,32 +1,31 @@
-"""
-CRUD operations for Endor Labs resources.
+"""CRUD operations for Endor Labs resources.
 
 This module provides high-level operations for all Endor Labs resources,
 following a consistent pattern for API interaction.
 """
 
-from .finding import (
+from ..resources.finding import (
     create_finding,
     delete_finding,
     get_finding,
     list_findings,
     update_finding,
 )
-from .namespace import (
+from ..resources.namespace import (
     create_namespace,
     delete_namespace,
     get_namespace,
     list_namespaces,
     update_namespace,
 )
-from .policy import (
+from ..resources.policy import (
     create_policy,
     delete_policy,
     get_policy,
     list_policies,
     update_policy,
 )
-from .project import (
+from ..resources.project import (
     create_project,
     delete_project,
     get_project,
@@ -35,28 +34,28 @@ from .project import (
 )
 
 __all__ = [
-    # Project operations
-    "list_projects",
-    "get_project",
+    "create_finding",
+    "create_namespace",
+    "create_policy",
     "create_project",
-    "update_project",
+    "delete_finding",
+    "delete_namespace",
+    "delete_policy",
     "delete_project",
+    "get_finding",
+    "get_namespace",
+    "get_policy",
+    "get_project",
     # Finding operations
     "list_findings",
-    "get_finding",
-    "create_finding",
-    "update_finding",
-    "delete_finding",
-    # Policy operations
-    "list_policies",
-    "get_policy",
-    "create_policy",
-    "update_policy",
-    "delete_policy",
     # Namespace operations
     "list_namespaces",
-    "get_namespace",
-    "create_namespace",
+    # Policy operations
+    "list_policies",
+    # Project operations
+    "list_projects",
+    "update_finding",
     "update_namespace",
-    "delete_namespace",
+    "update_policy",
+    "update_project",
 ]
