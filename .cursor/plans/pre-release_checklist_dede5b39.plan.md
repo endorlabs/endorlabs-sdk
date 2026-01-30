@@ -18,8 +18,8 @@ Consolidated ordering: **versioning** (single source of truth from GitHub tags) 
 1. **Build system** — In [pyproject.toml](pyproject.toml): add `hatch-vcs` to `[build-system].requires` (e.g. `requires = ["hatchling>=1.0", "hatch-vcs"]`).
 2. **Dynamic version** — In `[project]`: add `dynamic = ["version"]` and remove the static `version = "0.0.1"` line.
 3. **hatch-vcs config** — Add `[tool.hatch.version]`: `source = "vcs"`, `fallback-version = "0.1.0rc1"`. Optional: `[tool.hatch.version.raw-options]` with `version_scheme = "no-guess-dev"`; optional `tag-pattern` to enforce tags like `v0.1.0rc1`, `v0.1.0`.
-4. **Build hook** — Add `[tool.hatch.build.hooks.vcs]` with `version-file = "src/endor_cockpit/_version.py"`. Add `src/endor_cockpit/_version.py` to [.gitignore](.gitignore).
-5. **Runtime version** — In [src/endor_cockpit/**init**.py](src/endor_cockpit/__init__.py): remove hardcoded `__version__`; add `try: from ._version import __version__\nexcept ImportError: __version__ = "0.1.0rc1"`.
+4. **Build hook** — Add `[tool.hatch.build.hooks.vcs]` with `version-file = "src/endorlabs/_version.py"`. Add `src/endorlabs/_version.py` to [.gitignore](.gitignore).
+5. **Runtime version** — In [src/endorlabs/**init**.py](src/endorlabs/__init__.py): remove hardcoded `__version__`; add `try: from ._version import __version__\nexcept ImportError: __version__ = "0.1.0rc1"`.
 6. **First tag** — Create and push tag `v0.1.0rc1` when ready; create GitHub Release for it and build from that tag so the built package version is `0.1.0rc1`.
 
 ---
@@ -40,9 +40,9 @@ Consolidated ordering: **versioning** (single source of truth from GitHub tags) 
 **Goal:** PyPI-friendly metadata, consistent docs, and a quick verification before release.
 
 1. **PyPI metadata** — In [pyproject.toml](pyproject.toml) `[project]`: add `keywords` (e.g. endor, endor-labs, sdk, security, api, appsec), add `[project.urls]` (Homepage, Documentation, Repository) with real repo URL, add classifiers (e.g. `Development Status :: 4 - Beta`, `Intended Audience :: Developers`, `Programming Language :: Python :: 3.13`).
-2. **Config precedence** — In [pyproject.toml](pyproject.toml) `[tool.endor_cockpit]` comments: remove “Config files (~/.endorctl/config.yaml)” from the precedence list; state only constructor, env, and defaults so it matches README and code.
-3. **README** — In [README.md](README.md): fix CI badge (replace `<your-org>/<your-repo>` with actual repo); remove or fix broken refs (`.tmp/docs-revamp/`, `.workspace/OPERATIONAL_CONTEXT.md`, `protocols/`); add “Install from PyPI” line for end users (`pip install endor-cockpit` or `uv add endor-cockpit`) once published; add one sentence that the stable public API is what is in `endor_cockpit.__all__` (other submodules may change).
-4. **Pre-release verification** — Run `uv build`; install the wheel in a clean env; `import endor_cockpit` and `print(endor_cockpit.__version__)` (expect `0.1.0rc1` when on tag or fallback); run a minimal test or smoke call. Ensure CI is green on the branch to be tagged.
+2. **Config precedence** — In [pyproject.toml](pyproject.toml) `[tool.endorlabs]` comments: remove “Config files (~/.endorctl/config.yaml)” from the precedence list; state only constructor, env, and defaults so it matches README and code.
+3. **README** — In [README.md](README.md): fix CI badge (replace `<your-org>/<your-repo>` with actual repo); remove or fix broken refs (`.tmp/docs-revamp/`, `.workspace/OPERATIONAL_CONTEXT.md`, `protocols/`); add “Install from PyPI” line for end users (`pip install endor-cockpit` or `uv add endor-cockpit`) once published; add one sentence that the stable public API is what is in `endorlabs.__all__` (other submodules may change).
+4. **Pre-release verification** — Run `uv build`; install the wheel in a clean env; `import endorlabs` and `print(endorlabs.__version__)` (expect `0.1.0rc1` when on tag or fallback); run a minimal test or smoke call. Ensure CI is green on the branch to be tagged.
 5. **Tag and release** — Tag `v0.1.0rc1`, push tag, create GitHub Release, attach built artifacts. Optionally add a short “Pre-Release Checklist” or “Releasing” section to [docs/maintenance.md](docs/maintenance.md) that references Phases 1–3 and the command to generate CHANGELOG before tagging.
 
 ---
@@ -50,11 +50,11 @@ Consolidated ordering: **versioning** (single source of truth from GitHub tags) 
 ## Ordering summary
 
 
-| Phase | Focus                                     | Key files                                                                                                                  |
-| ----- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Versioning (hatch-vcs, 0.1.0rc1, PEP 440) | [pyproject.toml](pyproject.toml), [src/endor_cockpit/**init**.py](src/endor_cockpit/__init__.py), [.gitignore](.gitignore) |
-| 2     | Changelog (git-cliff)                     | [pyproject.toml](pyproject.toml), [docs/maintenance.md](docs/maintenance.md), CHANGELOG.md                                 |
-| 3     | Release readiness                         | [pyproject.toml](pyproject.toml), [README.md](README.md), [docs/maintenance.md](docs/maintenance.md)                       |
+| Phase | Focus                                     | Key files                                                                                                          |
+| ----- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1     | Versioning (hatch-vcs, 0.1.0rc1, PEP 440) | [pyproject.toml](pyproject.toml), [src/endorlabs/**init**.py](src/endorlabs/__init__.py), [.gitignore](.gitignore) |
+| 2     | Changelog (git-cliff)                     | [pyproject.toml](pyproject.toml), [docs/maintenance.md](docs/maintenance.md), CHANGELOG.md                         |
+| 3     | Release readiness                         | [pyproject.toml](pyproject.toml), [README.md](README.md), [docs/maintenance.md](docs/maintenance.md)               |
 
 
 Do Phase 1 first so version is correct everywhere; then Phase 2 so CHANGELOG can be generated before the first tag; then Phase 3 so metadata and docs are correct before tagging v0.1.0rc1 and publishing.

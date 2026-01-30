@@ -47,7 +47,7 @@ except ImportError:
 # Add src to path for imports (scripts/ is one level below repo root)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -496,3 +496,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

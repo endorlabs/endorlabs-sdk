@@ -5,17 +5,38 @@
 ## Consuming the SDK
 
 - **Install:** `uv add endor-cockpit` or, in this repo, `uv sync`.
-- **Entry:** `from endor_cockpit.api_client import APIClient`; then resource modules under `endor_cockpit.resources` (e.g. `namespace`, `finding`, `project`).
-- **Pattern:** `APIClient()` reads env (`ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`); resource functions take `client` and namespace/path; they return typed models or `None` (e.g. 404).
-- **Errors:** `endor_cockpit.exceptions`; see [docs/conventions.md](docs/conventions.md) (Errors section).
+- **Recommended entry:** `endorlabs.Client(tenant="...")`; then `client.namespaces.list(traverse=True)`, `client.projects.get(uuid)`, etc. See [Architecture](#architecture) below.
+- **Alternative:** `APIClient()` and resource modules under `endorlabs.resources` (e.g. `namespace.list_namespaces(client, "tenant.namespace")`). Same behavior; use when you need the transport only or module-level calls.
+- **Errors:** `endorlabs.exceptions`; see [docs/conventions.md](docs/conventions.md) (Errors section).
 
 ```python
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespace
+import endorlabs
+
+# Recommended: resource-oriented client with default namespace
+client = endorlabs.Client(tenant="tenant.namespace")
+namespaces = client.namespaces.list(traverse=True)
+projects = client.projects.list(max_pages=2)
+```
+
+```python
+# Alternative: transport + module-level functions
+from endorlabs.api_client import APIClient
+from endorlabs.resources import namespace
 
 client = APIClient()
 namespaces = namespace.list_namespaces(client, "tenant.namespace")
 ```
+
+## Architecture
+
+The SDK uses a two-layer, registry-driven design so the same pattern applies to all resources.
+
+- **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only. No resource concepts; no Pydantic models.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` holds default namespace and exposes resource facades (e.g. `client.namespaces`, `client.projects`). Each facade is a `ResourceFacade[T]` in `facade.py` that resolves namespace, builds `ListParameters` from kwargs, and delegates to existing module-level list/get/create/update/delete functions.
+- **Registry:** Which resources exist on `Client` is defined in a single registry in `endorlabs.registry`. `Client` exposes all resources via `client.<resource>.list(...)`, `client.<resource>.get(...)`, etc. Adding a resource = one registry entry; no hand-wiring in `Client`. Resources without update or delete (e.g. api_keys, audit_logs, finding_logs) raise `NotImplementedError` for those operations.
+- **Pydantic models:** Request/response types live in resource modules and `models/`; used by module functions and by `ResourceFacade[T]` only as the type parameter. No HTTP or registry logic in models.
+
+When editing the client surface, facade, or registry, follow [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md) and `.cursor/rules/architecture.mdc`.
 
 ## Critical Project Rules
 
@@ -25,7 +46,7 @@ namespaces = namespace.list_namespaces(client, "tenant.namespace")
 
 ## Automation
 
-Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Pyright enforces types in CI; public API must be fully typed (see pyproject.toml). For the exact command list, see [.github/workflows/ci.yml](.github/workflows/ci.yml).
+Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. The same lint/format/typecheck run locally via the repo's pre-commit hook when installed (see [CONTRIBUTORS.md](CONTRIBUTORS.md)). Pyright enforces types in CI; public API must be fully typed (see pyproject.toml). For the exact command list, see [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ## Repository-Scoped Rules (`.cursor/rules/`)
 
@@ -34,7 +55,8 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 | Rule | When it applies |
 |------|------------------|
 | **endor-cockpit-core.mdc** | Always (project context and critical requirements) |
-| **resource-patterns.mdc** | When editing `src/endor_cockpit/resources/**/*.py` |
+| **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
+| **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
 | **api-workflow.mdc** | When editing models, resources, or OpenAPI spec |
 | **test-driven-development.mdc** | When editing tests or `src/**/*.py` |
 
@@ -43,13 +65,16 @@ Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in
 ## Project Structure
 
 ```
-endor_cockpit/
-├── api_client.py
-├── resources/
+endorlabs/
+├── api_client.py      # Transport only (Layer 1)
+├── client_surface.py  # Client facade (Layer 2 entry point)
+├── facade.py          # ResourceFacade[T]; delegates to module functions
+├── registry.py        # Registry of resources exposed on Client
+├── resources/         # Module-level list/get/create/update/delete
 └── models/
 ```
 
-- **Experimental:** `endor_cockpit.analysis` — may change without same stability guarantees.
+- **Experimental:** `endorlabs.analysis` — may change without same stability guarantees.
 - **Internal:** utils (model_validation, schema_drift, traversal), operations.
 
 ## Reference — External
@@ -84,3 +109,4 @@ For preferences that apply across all your projects (TDD, OS-agnostic scripts, c
 ---
 
 Index for AI agents; in-repo behavior and patterns are defined by `.cursor/rules/*.mdc` and the linked docs.
+

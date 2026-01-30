@@ -12,9 +12,9 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import scan_profile
-from endor_cockpit.types import ListParameters
+from endorlabs.api_client import APIClient
+from endorlabs.resources import scan_profile
+from endorlabs.types import ListParameters
 
 
 @pytest.mark.integration
@@ -71,7 +71,7 @@ class TestScanProfile:
             max_pages=1,
         )
         if not results:
-            pytest.skip("No scan profiles available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def test_scan_profile_list(self) -> None:
@@ -81,7 +81,7 @@ class TestScanProfile:
         # Test list_scan_profiles with pagination limits
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         scan_profiles_list = scan_profile.list_scan_profiles(
             self.client,
@@ -212,7 +212,7 @@ class TestScanProfile:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endor_cockpit.exceptions import ValidationError
+        from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             scan_profile.get_scan_profile(
@@ -221,3 +221,16 @@ class TestScanProfile:
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
+
+    def test_client_recommended_ux_list_scan_profiles(self) -> None:
+        """Recommended UX: Client(tenant=...); client.scan_profiles.list()."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        profiles = client.scan_profiles.list(max_pages=1)
+        assert isinstance(profiles, list)

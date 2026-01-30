@@ -16,10 +16,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 import sys
 from pathlib import Path
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import audit_log
-from endor_cockpit.resources.audit_log import AuditLogOperation
-from endor_cockpit.types import ListParameters
+from endorlabs.api_client import APIClient
+from endorlabs.resources import audit_log
+from endorlabs.resources.audit_log import AuditLogOperation
+from endorlabs.types import ListParameters
 
 # Add tests directory to path to import conftest
 tests_dir = Path(__file__).parent
@@ -124,7 +124,7 @@ class TestAuditLog:
         print("\n=== TESTING GET AUDIT LOG BY UUID ===")
 
         if not self.audit_logs:
-            pytest.skip("No audit logs available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         log_item = self.audit_logs[0]
         retrieved_log = audit_log.get_audit_log(
@@ -271,7 +271,7 @@ class TestAuditLog:
         print("\n=== TESTING FILTER BY REMOTE ADDRESS ===")
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         # Use traverse with filter to find logs with remote_address across namespaces
         # Filter to find logs that have a non-empty remote_address
@@ -289,12 +289,12 @@ class TestAuditLog:
         )
 
         if not logs_with_remote:
-            pytest.skip("No audit logs with remote address available")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         # Get first log with remote address to use as filter target
         sample_log = logs_with_remote[0]
         if not sample_log.spec or not sample_log.spec.remote_address:
-            pytest.skip("No audit logs with remote address available")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         remote_addr = sample_log.spec.remote_address
         print(f"Filtering by remote address: {remote_addr}")
@@ -394,7 +394,7 @@ class TestAuditLog:
         print("\n=== TESTING AUDIT LOG TRAVERSE ===")
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         # Use a filter to limit scope and avoid timeout
         # Filter by CREATE operation to reduce dataset size
@@ -424,6 +424,19 @@ class TestAuditLog:
             print(f"Audit logs found in {len(namespaces)} namespaces:")
             for ns, count in list(namespaces.items())[:5]:  # Show first 5
                 print(f"  {ns}: {count} logs")
+
+    def test_client_recommended_ux_list_audit_logs(self) -> None:
+        """Recommended UX: Client(tenant=...); client.audit_logs.list()."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        logs = client.audit_logs.list(max_pages=1)
+        assert isinstance(logs, list)
 
 
 if __name__ == "__main__":

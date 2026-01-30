@@ -15,8 +15,8 @@ This cockpit is specifically engineered for AI-powered development environments.
 **For AI Agents in IDEs**: This toolkit is designed to be seamlessly integrated into AI-powered development environments. See [AGENTS.md](./AGENTS.md) for comprehensive integration guidance.
 
 ```python
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespace
+from endorlabs.api_client import APIClient
+from endorlabs.resources import namespace
 
 # Initialize client (auto-authenticates via environment variables)
 client = APIClient()
@@ -125,8 +125,8 @@ Environment variables are configured in GitHub repository settings:
 ### For Human Pilots
 
 ```python
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespace
+from endorlabs.api_client import APIClient
+from endorlabs.resources import namespace
 
 # Initialize the client (uses environment variables for auth)
 client = APIClient()
@@ -164,7 +164,7 @@ uv run pytest
 uv run --env-file .env pytest
 
 # Run with coverage
-uv run pytest --cov=endor_cockpit --cov-report=html
+uv run pytest --cov=endorlabs --cov-report=html
 
 # Run integration tests (requires valid credentials)
 uv run pytest -m integration -v
@@ -248,7 +248,7 @@ ls maneuvers/
 - **[Documentation index](./docs/README.md)** - SDK docs (conventions, reference, guides, rules of engagement)
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
 - **[Rego (SDK usage)](./docs/guides/rego-policies.md)** - How the SDK is used with policies; link to official Rego docs
-- **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
+- **[SDK Docstrings](./src/endorlabs/)** - Inline documentation for all resources
 - **External documentation**: Platform docs at <https://docs.endorlabs.com/> (context via Cursor rules / DeepWiki)
 
 ## 🗂️ **Workspace & Mission Files**
@@ -289,3 +289,4 @@ For questions and support:
 ---
 
 > **May the Force be with you, pilot. The Endor Cockpit is ready for your mission.** 🚀
+

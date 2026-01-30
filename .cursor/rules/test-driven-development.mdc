@@ -23,3 +23,13 @@ alwaysApply: false
 - Use `BaseResourceOperations` and existing list/update patterns (see AGENTS.md).
 - Tests: typed fixtures, canonical namespaces, no UUIDs in paths.
 - **Garbage Collection** clean up any modifications by reverting (on Update) or deletion (on create)
+- Use PEP8 and PEP257
+
+## 4. Resource-centric entrypoints and architecture
+
+When implementing or modifying a resource, check:
+
+- **Registry (source of truth):** Everything exposed on `Client` is defined in [src/endorlabs/registry.py](src/endorlabs/registry.py). CRUD resources go in `RESOURCE_REGISTRY` (attr_name, model_class, list_fn, get_fn, create_fn, update_fn or None, delete_fn or None). Resources with non-CRUD APIs (e.g. scan_logs) go in `CUSTOM_FACADE_REGISTRY` (attr_name, factory). No direct facade wiring in Client.
+- **Registry consistency:** When modifying a resource (e.g. adding or removing update/delete), update the registry entry to match (update_fn/delete_fn None when the operation is not supported).
+- **Tests — facade coverage:** The facade is covered by [tests/test_client_facade.py](tests/test_client_facade.py). For a new CRUD resource, add it to `RESOURCE_REGISTRY` so `test_client_exposes_all_registry_resources` remains valid; for a new custom facade, add it to `CUSTOM_FACADE_REGISTRY` so `test_client_exposes_all_custom_facades` remains valid.
+- **Tests — recommended UX:** Where a resource has integration tests, add at least one test that uses the recommended entrypoint: `import endorlabs`; `client = endorlabs.Client(tenant=..., auth_method="api-key")`; `client.<resource>.list(max_pages=1)` or `.get(...)`. Follow [tests/test_namespaces.py](tests/test_namespaces.py) (`test_client_recommended_ux_list_namespaces`). See [resource-implementation.md](docs/rules-of-engagement/resource-implementation.md) Phase 2 and [architecture.md](docs/rules-of-engagement/architecture.md).

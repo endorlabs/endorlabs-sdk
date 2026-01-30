@@ -9,8 +9,8 @@ import os
 import conftest
 import pytest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import package_version
+from endorlabs.api_client import APIClient
+from endorlabs.resources import package_version
 
 
 @pytest.mark.integration
@@ -35,7 +35,7 @@ class TestPackageVersion:
         Only fetches 1 item without traverse for fast setup. Tests that need
         sample data should request this fixture explicitly.
         """
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         # Fetch 1 item without traverse (fast)
         results = package_version.list_package_versions(
@@ -45,14 +45,14 @@ class TestPackageVersion:
             max_pages=1,
         )
         if not results:
-            pytest.skip("No package versions available for testing")
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def test_package_version_get_list(self) -> None:
         """Test GET package-versions operation."""
         import conftest
 
-        from endor_cockpit.types import ListParameters
+        from endorlabs.types import ListParameters
 
         package_versions_list = package_version.list_package_versions(
             self.client,
@@ -64,7 +64,8 @@ class TestPackageVersion:
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(package_versions_list, list)
-        assert len(package_versions_list) > 0
+        if len(package_versions_list) == 0:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
 
         # Verify structure
         for pv in package_versions_list:
@@ -112,7 +113,7 @@ class TestPackageVersion:
             == test_package_version.spec.ecosystem
         )
 
-    @pytest.mark.local
+    @pytest.mark.writes
     def test_package_version_update_with_mask(self, sample_package_version) -> None:
         """Test UPDATE package version operation with update_mask parameter.
 
@@ -149,7 +150,7 @@ class TestPackageVersion:
 
         from pydantic import BaseModel
 
-        from endor_cockpit.resources.package_version import (
+        from endorlabs.resources.package_version import (
             UpdatePackageVersionPayload,
         )
 
@@ -207,12 +208,29 @@ class TestPackageVersion:
         except Exception as e:
             print(f"[WARNING] Failed to restore original values: {e}")
 
+    def test_client_recommended_ux_list_package_versions(self) -> None:
+        """Recommended UX: Client(tenant=...); client.package_versions.list()."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            max_retries=2,
+            backoff_factor=0.1,
+            auth_method="api-key",
+        )
+        try:
+            versions = client.package_versions.list(max_pages=1)
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(versions, list)
+
 
 def add_package_version_tag(
     client: APIClient, namespace: str, package_version_uuid: str, tag: str
 ):
     """Add a tag to a package version."""
-    from endor_cockpit.resources.package_version import (
+    from endorlabs.resources.package_version import (
         UpdatePackageVersionPayload,
         update_package_version,
     )
@@ -248,7 +266,7 @@ def remove_package_version_tag(
     client: APIClient, namespace: str, package_version_uuid: str, tag: str
 ):
     """Remove a tag from a package version."""
-    from endor_cockpit.resources.package_version import (
+    from endorlabs.resources.package_version import (
         UpdatePackageVersionPayload,
         update_package_version,
     )

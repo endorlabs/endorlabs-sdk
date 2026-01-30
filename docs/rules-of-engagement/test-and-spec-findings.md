@@ -47,7 +47,7 @@
 - **Assumption check**: Warnings are not necessarily from “backend incorrectness”. They come from the **test run** (pytest, Pydantic, dependencies, or SDK code).
 - **How to triage**:
   1. Run pytest **without** `--disable-warnings` and with `-W default` or `-W always` to see full warning text.
-  2. Inspect stack traces to see whether the source is pytest, a library, or SDK (e.g. `endor_cockpit`).
+  2. Inspect stack traces to see whether the source is pytest, a library, or SDK (e.g. `endorlabs`).
   3. If the source is SDK code, fix the code or assertions; if it is a dependency, consider `filterwarnings` in **conftest** or pinning/upgrading the dependency.
 - **Location for suppression**: Prefer **conftest** (e.g. `pytest_configure` or `filterwarnings`) for project-wide warning policy; per-test only when a single test intentionally triggers a warning.
 
@@ -61,6 +61,16 @@
   - Provide a **`namespace`** fixture that returns `os.getenv("ENDOR_NAMESPACE", TEST_NAMESPACE_DEFAULT)` and skips if empty (when strict).
   - Tests that need a namespace should **use the `namespace` fixture** (or, if they must read env, use the same constant from conftest so the default is not duplicated).
 - **Env-only option**: To rely only on env vars, do not set a default in conftest; the fixture returns `os.getenv("ENDOR_NAMESPACE")` and skips when unset. CI must set `ENDOR_NAMESPACE`.
+
+### List 404 and skip behavior
+
+- **Backend**: The API may return **404** for list when a valid filter matches nothing or when authorization scopes do not apply. Do not treat empty list or 404 as “no data for testing”.
+- **Fixtures**: `resource_list_fixture_factory` in conftest returns an empty list when no resources; it does not skip with “No X available for testing”. On **NotFoundError** (list returned 404), the fixture skips with reason `"List returned 404 (filter/auth or scope)"`.
+- **Per-test skips**: When a test or fixture needs at least one item and the list is empty, skip with `"No resources in scope (empty; may be filter/auth/scope)"` so it is clear the cause may be filter or auth, not missing data.
+
+### List mask / partial response leniency
+
+- List responses may omit spec-required fields when using a mask or at certain scopes. The SDK accepts partial list responses: **Finding** `context`, **Project** `spec.platform_source`, and **BaseMeta** `name` are optional when the list response or mask omits them. Tests that access these fields should handle `None`.
 
 ---
 
@@ -111,18 +121,18 @@ v1Meta readOnly (from OpenAPI): meta.create_time, meta.update_time, meta.upsert_
 
 ---
 
-## 5. CI: read-only credentials and local marker
+## 5. CI: parity and writes marker
 
-**Assumption**: CI runs integration tests with **read-only** API credentials. Admin/write keys are not used in CI/CD.
+**Assumption**: CI and maintainer environment use the same isolated namespace with admin credentials.
 
-- **Marker**: Any test that calls create, update, or delete must be marked `@pytest.mark.local` so it is excluded from CI (`pytest -m "integration and not local"`).
-- **Rationale**: Write operations require elevated permissions; with read-only credentials they return 403. Marking them local keeps CI green without storing admin keys in secrets.
-- **Run local tests**: Use API credentials with write access and run `pytest -m "integration"` (or omit the filter) to include local tests.
+- **Marker**: Tests that perform create, update, or delete are marked `@pytest.mark.writes`.
+- **CI**: Runs all tests (no exclusion by marker). The `writes` marker is for selective runs (e.g. read-only integration: `-m "integration and not writes"`).
 
 ---
 
 ## 6. References
 
 - OpenAPI: <https://api.endorlabs.com/download/openapiv2.swagger.json> (paths for namespaces, `NamespaceServiceUpdateNamespaceBody`, `v1UpdateRequest`).
-- SDK: `src/endor_cockpit/resources/namespace.py` (`update_namespace`), `src/endor_cockpit/models/base.py` (update with mask).
+- SDK: `src/endorlabs/resources/namespace.py` (`update_namespace`), `src/endorlabs/models/base.py` (update with mask).
 - Troubleshooting: [troubleshooting.md](troubleshooting.md).
+
