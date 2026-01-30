@@ -1,6 +1,6 @@
 # Namespace Traversal
 
-Use `ListParameters(traverse=True)` with the resource's `list_*` function for tenant-wide list operations. The API then queries all child namespaces recursively in a single call. Applies to list operations across resources (e.g. finding, package_version, dependency_metadata, project, scan_result). Pass the same `list_params` to filter, mask, page_size, etc. See [conventions.md](../conventions.md) for traverse and list params. See notebooks for runnable examples.
+Use `ListParameters(traverse=True)` with the resource's `list_*` function for tenant-wide list operations. The API then queries all child namespaces recursively in a single call. Applies to list operations across resources (e.g. finding, package_version, dependency_metadata, project, scan_result). Pass the same `list_params` to filter, mask, page_size, etc. See [conventions.md](../conventions.md) for traverse and list params. Runnable patterns: `tests/`, `maneuvers/`.
 
 ## Long-running operations and progress
 

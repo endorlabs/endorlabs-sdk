@@ -1,6 +1,6 @@
 # Endor Cockpit SDK Documentation
 
-Index for SDK-only documentation. Non-SDK content (user docs, KB, internal wiki) has been moved to `.tmp/docs-revamp/` by classification; see `.tmp/docs-revamp/README.md`.
+Index for SDK-only documentation. Platform concepts and user docs: [docs.endorlabs.com](https://docs.endorlabs.com/).
 
 ## Conventions
 
@@ -29,4 +29,4 @@ Index for SDK-only documentation. Non-SDK content (user docs, KB, internal wiki)
 
 ## Maintenance
 
-- [maintenance.md](maintenance.md) — When to update docs; link to docs-drift-workflow and conventions. `.tmp/docs-revamp/` holds exported non-SDK content (not versioned in repo).
+- [maintenance.md](maintenance.md) — When to update docs; link to docs-drift-workflow and conventions.

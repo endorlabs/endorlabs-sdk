@@ -1,6 +1,6 @@
 # Namespace (SDK)
 
-Namespace in the SDK: list, get, create, update, delete. Parameters use canonical name and UUID. Full platform concepts (hierarchy, tenant isolation) see `.tmp/docs-revamp/core-user-documentation/` or official user docs.
+Namespace in the SDK: list, get, create, update, delete. Parameters use canonical name and UUID. Full platform concepts (hierarchy, tenant isolation): [docs.endorlabs.com](https://docs.endorlabs.com/).
 
 ## Operations
 
@@ -21,4 +21,4 @@ Namespace in the SDK: list, get, create, update, delete. Parameters use canonica
 - Omitting `update_mask` on update — namespace requires at least one field (e.g. `"meta.description"`).
 - Cross-tenant operations — ensure all operations use the same tenant namespace.
 
-See notebooks for runnable examples.
+Runnable patterns: `tests/`, `maneuvers/`.

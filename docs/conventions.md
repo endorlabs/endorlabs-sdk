@@ -9,7 +9,7 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## OpenAPI / spec
 
-- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/openapi-swagger.json` (gitignored) in CI but it is useful for local development when fresh.
+- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/openapi-swagger.json` (gitignored) in CI. For a single local step that creates `external_docs/` with both spec and user docs (recommended for advanced users / IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
 - List endpoints: `v1/namespaces/{tenant_meta.namespace}/{resource_name}` (e.g. `findings`, `projects`).
 - Update (PATCH): Collection URL; UUID and payload in request body; optional `request.update_mask`.
 
@@ -26,6 +26,7 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 - **page_size**, **page_token**: Pagination; only set `page_size` when you need a specific size (API default otherwise).
 - **sort_field**, **sort_order**: Sorting.
 - **traverse**: See above.
+- **count**, **from_date**, **to_date**: see `endor_cockpit.types.ListParameters` (Field descriptions there).
 - Defined in `endor_cockpit.types.ListParameters`; see [src/endor_cockpit/types.py](../src/endor_cockpit/types.py).
 
 ## Update and update_mask
