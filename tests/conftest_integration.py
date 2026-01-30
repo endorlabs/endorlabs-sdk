@@ -1,5 +1,4 @@
-"""
-Configuration for integration tests.
+"""Configuration for integration tests.
 
 This file provides fixtures and configuration for integration tests
 that use the real Endor Labs API.
@@ -10,13 +9,13 @@ import os
 import pytest
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Configure pytest for integration tests."""
     # Add integration test marker
     config.addinivalue_line("markers", "integration: mark test as integration test")
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     """Modify test collection to handle integration tests."""
     for item in items:
         # Mark integration tests
@@ -33,7 +32,7 @@ def pytest_collection_modifyitems(config, items):
 
 def _has_credentials() -> bool:
     """Check if Endor Labs API key credentials are available.
-    
+
     Tests only support API key authentication, not browser-based auth.
     """
     required_vars = [
@@ -47,8 +46,9 @@ def _has_credentials() -> bool:
 @pytest.fixture(scope="session")
 def integration_config():
     """Integration test configuration."""
-    # Default to endor-solutions-tgowan.tgowan-endor namespace for tests
-    namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+    import conftest
+
+    namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
     if not namespace:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     return {
@@ -60,7 +60,7 @@ def integration_config():
 
 
 @pytest.fixture(scope="session")
-def requires_credentials():
+def requires_credentials() -> bool:
     """Fixture that requires valid credentials."""
     if not _has_credentials():
         pytest.skip("Endor Labs credentials not available")
@@ -68,7 +68,7 @@ def requires_credentials():
 
 
 @pytest.fixture(scope="session")
-def requires_endorctl():
+def requires_endorctl() -> bool:
     """Fixture that requires endorctl to be installed."""
     import shutil
 

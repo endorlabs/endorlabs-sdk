@@ -1,26 +1,22 @@
 [project]
 name = "endor-cockpit"
-version = "0.1.0"
+version = "0.0.1"
 description = "A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.12,<3.16"
+requires-python = ">=3.13,<3.16"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "matplotlib==3.10.8",
-    "networkx==3.6.1",
     "pydantic==2.12.3",
-    "pyyaml>=6.0.3",
+    "pyyaml==6.0.3",
     "requests==2.32.5",
-    "grpcio-tools>=1.76.0",
-    "zstandard>=0.25.0",
 ]
 
 [project.optional-dependencies]
@@ -36,8 +32,30 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/endor_cockpit"]
 
+# Endor Cockpit configuration
+[tool.endor_cockpit]
+# Configuration precedence (highest to lowest):
+# 1. Constructor parameters (APIClient(logging_level="DEBUG"))
+# 2. Environment variables (ENDOR_LOG_LEVEL, ENDOR_API, ENDOR_MAX_RETRIES, etc.)
+# 3. Config files (~/.endorctl/config.yaml)
+# 4. Defaults (built-in SDK defaults)
+#
+# Environment variables override config files to allow deployment-specific
+# settings while maintaining project defaults for local development.
+#
+# Configuration values:
+# ENDOR_API: Endor Labs API endpoint (default: https://api.endorlabs.com)
+# ENDOR_NAMESPACE: Tenant namespace for operations (required)
+# ENDOR_API_CREDENTIALS_KEY: API authentication key (required)
+# ENDOR_API_CREDENTIALS_SECRET: API authentication secret (required)
+# ENDOR_LOG_LEVEL: Logging level - DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
+# ENDOR_MAX_RETRIES: Maximum number of retries for API requests (default: 5)
+
+
+
 [tool.ruff]
 line-length = 88
+# Note: exclude patterns should match [tool.pyright] exclude for consistency
 exclude = [
     ".git",
     ".venv",
@@ -54,29 +72,68 @@ exclude = [
     ".ruff_cache",
     "workspace",
     "workspace/**",
-    "scripts/",  # Root-level utility scripts
-    "scripts/**",  # Allow complexity in utility scripts
-    "maneuvers/",  # Maneuver scripts - utility automation scripts
-    "maneuvers/**",  
+    "scripts",
+    "scripts/**",
+    ".github/scripts",
+    ".github/scripts/**",
+    "maneuvers",
+    "maneuvers/**",
     "*.log",
-    "*.md",  # Markdown files - not Python code
+    "*.md",
     "__pycache__",
+    "**/__pycache__",
     "*.pyc",
     "*.pyo",
     "*.pyd",
     "build",
     "dist",
     "*.egg-info",
+    "**/*.egg-info",
     ".coverage",
+    "**/.coverage",
     "coverage.xml",
+    "**/coverage.xml",
     ".hypothesis",
+    "**/.hypothesis",
     ".DS_Store",
-    "Thumbs.db"
+    "Thumbs.db",
 ]
 
 [tool.ruff.lint]
-select = ["E", "W", "F", "I", "C", "B"]
+# Enable comprehensive linting
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes (includes F811 for duplicate definitions)
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C90",   # mccabe complexity
+    "C901",  # too-complex
+    "RUF",   # Ruff-specific rules
+    "ANN",   # flake8-annotations
+    "D",     # pydocstyle
+    "PERF",  # perflint
+]
 
+# Ignore rules that conflict with SDK patterns
+ignore = [
+    "UP007",  # Don't enforce X | Y syntax - prefer Optional[X] for compatibility
+    "D107",   # Missing docstring in __init__ (covered by class docstring)
+    "D203",   # Blank line before class docstring (conflicts with D211)
+    "D213",   # Multi-line summary second line (conflicts with D212)
+    "ANN401",  # Any acceptable for validators, **kwargs, and API payloads
+    "C901",   # Allow complex _handle_response (error mapping logic)
+]
+
+# Per-file ignores for known issues (temporary - remove after fixing)
+[tool.ruff.lint.per-file-ignores]
+# TODO: Remove these after fixing the inconsistencies:
+"src/endor_cockpit/resources/project.py" = ["F811"]  # TenantMeta duplicate
+"src/endor_cockpit/resources/finding.py" = ["F811"]  # TenantMeta duplicate
+# Tests: relax annotations and docstyle; fixtures and mocks often use Any/dynamic types
+"tests/**" = ["ANN", "D", "E402"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -91,7 +148,8 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--disable-warnings"
+    "-ra",
+    "-W default"
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -99,27 +157,171 @@ markers = [
     "local: marks tests as local-only (excluded from CI)"
 ]
 
-[dependency-groups]
-dev = [
-    "jsonschema==4.25.1",
-    "pytest==8.4.2",
-    "pytest-cov==7.0.0",
-    "ruff==0.14.1",
+[tool.pyright]
+pythonVersion = "3.13"
+pythonPlatform = "All"
+typeCheckingMode = "standard"
+
+# More specific roots first (first match wins). Internal modules use relaxed
+# unknown-type rules so we focus on public API type quality.
+executionEnvironments = [
+    { root = "src/endor_cockpit/analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endor_cockpit/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src", pythonVersion = "3.13" },
+    { root = "tests", pythonVersion = "3.13", extraPaths = ["src"] },
 ]
 
-# Endor Cockpit configuration
-[tool.endor_cockpit]
-# Configuration values come from environment variables
-# ENDOR_API: Endor Labs API endpoint (default: https://api.endorlabs.com)
-# ENDOR_NAMESPACE: Tenant namespace for operations (required)
-# ENDOR_API_CREDENTIALS_KEY: API authentication key (required)
-# ENDOR_API_CREDENTIALS_SECRET: API authentication secret (required)
+# Note: stubPath, venvPath, and venv are omitted for portability.
+# Pyright/Pylance will auto-discover virtual environments and use default stub paths.
 
-# Logging configuration
-[tool.logging]
-level = "INFO"
-format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+# ============================================================================
+# Import & Visibility Configuration
+# ============================================================================
+reportMissingImports = "error"              # Critical for SDK - catch missing imports
+reportMissingTypeStubs = "warning"          # Warn about untyped dependencies
+reportUnusedImport = "warning"              # Clean up unused imports
+reportDuplicateImport = "error"             # Prevent duplicate imports
+reportPrivateImportUsage = "warning"        # Warn about private API usage
 
-[tool.logging.endor_cockpit]
-level = "INFO"
-format = "%(asctime)s - %(levelname)s - %(message)s"
+# ============================================================================
+# Type Completeness (Critical for SDK Public APIs)
+# ============================================================================
+reportMissingParameterType = "warning"      # All public function params should be typed
+reportMissingTypeArgument = "warning"       # Generic types should have type args
+reportUnknownParameterType = "warning"      # Catch untyped parameters
+reportUnknownArgumentType = "warning"        # Catch untyped arguments
+reportUnknownVariableType = "warning"        # Catch untyped variables
+reportUnknownMemberType = "warning"         # Catch untyped class members
+reportIncompatibleMethodOverride = "error"  # Catch BaseMeta inheritance issues
+reportIncompatibleVariableOverride = "error" # Catch model_config type issues
+reportInconsistentConstructor = "error"     # Catch constructor inconsistencies
+
+# ============================================================================
+# Generic Types & Type Variables
+# ============================================================================
+reportInvalidTypeVarUse = "error"           # Catch invalid TypeVar usage (T = TypeVar(...))
+reportInvalidStubStatement = "error"        # Catch invalid stub statements
+
+# ============================================================================
+# Pydantic-Specific Considerations
+# ============================================================================
+# Pydantic models use runtime validation, but we still want type safety
+reportCallInDefaultInitializer = "error"    # Catch issues in Field(default=...)
+reportUnnecessaryIsInstance = "warning"     # Pydantic validators may trigger this
+reportUnnecessaryCast = "warning"           # Pydantic serialization may trigger this
+reportAssignmentType = "warning"            # Catch type mismatches in assignments
+
+# ============================================================================
+# Type Narrowing (Important for Optional types)
+# ============================================================================
+reportOptionalMemberAccess = "error"         # Catch None access (Optional[...])
+reportOptionalSubscript = "error"           # Catch None subscript (Optional[List[...]])
+reportOptionalIterable = "error"            # Catch None iteration
+reportOptionalContextManager = "error"      # Catch None context manager
+reportOptionalOperand = "error"             # Catch None operations
+reportOptionalCall = "error"                # Catch None function calls
+reportAssertAlwaysTrue = "warning"           # Catch always-true assertions
+reportSelfClsParameterName = "warning"       # Enforce self/cls naming
+
+# ============================================================================
+# Literal Types & TypedDict
+# ============================================================================
+# Your SDK uses many Literal types and TypedDict - ensure they're correct
+reportOverlappingOverload = "error"          # Catch overload conflicts
+reportUninitializedInstanceVariable = "warning" # Catch uninitialized TypedDict fields
+
+# ============================================================================
+# Code Quality & Best Practices
+# ============================================================================
+reportUnusedClass = "warning"                # Catch duplicate class definitions
+reportUnusedFunction = "warning"             # Catch unused functions
+reportUnusedVariable = "warning"             # Catch unused variables
+reportUnusedCallResult = "warning"           # Catch ignored return values
+reportUnusedExpression = "warning"           # Catch unused expressions
+reportUnnecessaryTypeIgnoreComment = "warning" # Clean up unnecessary type: ignore
+reportMatchNotExhaustive = "warning"         # Catch non-exhaustive match statements
+
+# ============================================================================
+# Error Handling & Validation
+# ============================================================================
+reportInvalidStringEscapeSequence = "error" # Catch invalid escape sequences
+reportMissingSuperCall = "warning"          # Catch missing super() calls
+
+# ============================================================================
+# Performance & Optimization
+# ============================================================================
+reportUnnecessaryComparison = "warning"      # Catch unnecessary comparisons
+reportUnnecessaryContains = "warning"       # Catch unnecessary contains checks
+
+# ============================================================================
+# SDK-Specific: Public API Validation
+# ============================================================================
+# Ensure all public APIs (in __init__.py) are properly typed
+reportPrivateUsage = "warning"              # Warn about private API usage
+reportConstantRedefinition = "error"         # Catch constant redefinitions
+reportDeprecated = "warning"                # Catch deprecated API usage
+
+# ============================================================================
+# Type Narrowing for Union Types
+# ============================================================================
+# Your SDK uses Union types (Optional, etc.) - ensure proper narrowing
+reportImplicitStringConcatenation = "none"  # Allow multi-line strings (for docstrings)
+
+# ============================================================================
+# Include/Exclude Patterns
+# ============================================================================
+# Note: exclude patterns should match [tool.ruff] exclude for consistency
+include = ["src"]
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "ENV",
+    "env.bak",
+    "venv.bak",
+    ".vscode",
+    ".idea",
+    ".pytest_cache",
+    "**/.pytest_cache",
+    ".tox",
+    ".nox",
+    ".ruff_cache",
+    "**/.ruff_cache",
+    "workspace",
+    "workspace/**",
+    "scripts",
+    "scripts/**",
+    ".github/scripts",
+    ".github/scripts/**",
+    "maneuvers",
+    "maneuvers/**",
+    "*.log",
+    "*.md",
+    "__pycache__",
+    "**/__pycache__",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "build",
+    "dist",
+    "*.egg-info",
+    "**/*.egg-info",
+    ".coverage",
+    "**/.coverage",
+    "coverage.xml",
+    "**/coverage.xml",
+    ".hypothesis",
+    "**/.hypothesis",
+    ".DS_Store",
+    "Thumbs.db",
+    "**/node_modules",  # Pyright-specific
+]
+[dependency-groups]
+dev = [
+    "jsonschema==4.26.0",
+    "pytest==9.0.2",
+    "pytest-cov==7.0.0",
+    "ruff==0.14.14",
+    "pyright==1.1.408",
+]

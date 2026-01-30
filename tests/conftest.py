@@ -1,5 +1,4 @@
-"""
-Pytest configuration and fixtures for Endor Cockpit tests.
+"""Pytest configuration and fixtures for Endor Cockpit tests.
 
 This module provides common fixtures and configuration for testing
 the Endor Cockpit SDK across all modules.
@@ -7,8 +6,9 @@ the Endor Cockpit SDK across all modules.
 
 import logging
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -17,9 +17,9 @@ from endor_cockpit.api_client import APIClient
 from endor_cockpit.types import ListParameters
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Load .env file before tests run to ensure environment variables are set.
-    
+
     This hook only loads variables from .env if they're not already set in the
     environment. This ensures:
     - Local development: .env file is loaded if present
@@ -29,7 +29,7 @@ def pytest_configure(config):
     env_file = Path(".env")
     if env_file.exists():
         # Load .env file manually if UV didn't load it automatically
-        with open(env_file, "r", encoding="utf-8") as f:
+        with open(env_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 # Skip comments and empty lines
@@ -45,9 +45,11 @@ def pytest_configure(config):
                         value = value[1:-1]
                     elif value.startswith("'") and value.endswith("'"):
                         value = value[1:-1]
-                    # Only set if not already in environment (CI variables take precedence)
+                    # Only set if not already in environment
+                    # (CI variables take precedence)
                     if key and not os.getenv(key):
                         os.environ[key] = value
+
 
 # Test pagination limits
 # Tests fetch limited resources for setup (page_size=10, max 5 pages = 50 items max)
@@ -60,6 +62,11 @@ TEST_TRAVERSE_PAGE_SIZE = (
 TEST_MAX_PAGES_TRAVERSE = (
     2  # Max pages for traverse queries (slower, so more restrictive)
 )
+
+# Single source for test namespace: use env ENDOR_NAMESPACE or this default.
+# Tests should use the `namespace` fixture (or this constant) instead of
+# hardcoding a default. See docs/rules-of-engagement/test-and-spec-findings.md.
+TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
 
 @pytest.fixture
@@ -76,15 +83,14 @@ def mock_client():
 
 @pytest.fixture
 def sample_namespace():
-    """Sample namespace for testing."""
-    namespace = os.getenv("ENDOR_NAMESPACE", "test.tenant.namespace")
-    return namespace
+    """Sample namespace for testing (no skip when unset; use for mocks)."""
+    return os.getenv("ENDOR_NAMESPACE", "test.tenant.namespace")
 
 
 @pytest.fixture
 def api_client():
     """Create a real APIClient instance for integration tests.
-    
+
     Uses API key authentication only (not browser auth).
     """
     return APIClient(auth_method="api-key")
@@ -93,13 +99,14 @@ def api_client():
 @pytest.fixture
 def namespace():
     """Get namespace from environment for testing.
-    
-    Defaults to 'endor-solutions-tgowan.tgowan-endor' if not set.
+
+    Single source: uses ENDOR_NAMESPACE or conftest TEST_NAMESPACE_DEFAULT.
+    Skips when unset (strict env-only: set ENDOR_NAMESPACE in CI).
     """
-    namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
-    if not namespace:
+    ns = os.getenv("ENDOR_NAMESPACE", TEST_NAMESPACE_DEFAULT)
+    if not ns:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-    return namespace
+    return ns
 
 
 @pytest.fixture
@@ -109,101 +116,10 @@ def test_list_params():
 
 
 @pytest.fixture
-def sample_project_data():
-    """Sample project data for testing."""
-    return {
-        "uuid": "project-uuid-123",
-        "meta": {
-            "name": "https://github.com/org/repo.git",
-            "description": "Test repository",
-            "create_time": "2025-10-19T10:00:00Z",
-            "created_by": "test@endor.ai",
-            "tags": ["test", "example"],
-        },
-        "spec": {
-            "git": {
-                "full_name": "org/repo",
-                "git_clone_url": "git@github.com:org/repo.git",
-                "http_clone_url": "https://github.com/org/repo.git",
-            },
-            "platform_source": "PLATFORM_SOURCE_GITHUB",
-        },
-        "tenant_meta": {"namespace": "test.tenant.namespace"},
-    }
-
-
-@pytest.fixture
-def sample_finding_data():
-    """Sample finding data for testing."""
-    return {
-        "uuid": "finding-uuid-123",
-        "meta": {
-            "name": "vulnerability-finding-1",
-            "description": "Test vulnerability finding",
-            "create_time": "2025-10-19T10:00:00Z",
-            "created_by": "test@endor.ai",
-            "tags": ["security", "vulnerability"],
-        },
-        "spec": {
-            "level": "FINDING_LEVEL_HIGH",
-            "method": "SYSTEM_EVALUATION_METHOD_SCA",
-            "ecosystem": "ECOSYSTEM_NPM",
-            "finding_categories": ["FINDING_CATEGORY_VULNERABILITY"],
-            "project_uuid": "project-uuid-123",
-        },
-        "tenant_meta": {"namespace": "test.tenant.namespace"},
-    }
-
-
-@pytest.fixture
-def sample_policy_data():
-    """Sample policy data for testing."""
-    return {
-        "uuid": "policy-uuid-123",
-        "meta": {
-            "name": "security-policy",
-            "description": "Test security policy",
-            "create_time": "2025-10-19T10:00:00Z",
-            "created_by": "test@endor.ai",
-            "tags": ["security", "policy"],
-        },
-        "spec": {
-            "policy_type": "POLICY_TYPE_ML_FINDING",
-            "rule": (
-                "package security\n\nconfigure[result] {\n  result = {\n    "
-                '"security_method": {\n      "disable": false\n    }\n  }\n}'
-            ),
-            "disable": False,
-        },
-        "tenant_meta": {"namespace": "test.tenant.namespace"},
-    }
-
-
-@pytest.fixture
-def sample_namespace_data():
-    """Sample namespace data for testing."""
-    return {
-        "uuid": "namespace-uuid-123",
-        "meta": {
-            "name": "test-namespace",
-            "description": "Test namespace",
-            "create_time": "2025-10-19T10:00:00Z",
-            "created_by": "test@endor.ai",
-            "tags": ["test", "namespace"],
-        },
-        "spec": {
-            "parent_namespace": "test.tenant.namespace",
-            "description": "Test namespace for development",
-        },
-        "tenant_meta": {"namespace": "test.tenant.namespace.test-namespace"},
-    }
-
-
-@pytest.fixture
 def mock_api_response():
     """Mock API response for testing."""
 
-    def _mock_response(data: Dict[str, Any], status_code: int = 200):
+    def _mock_response(data: dict[str, Any], status_code: int = 200):
         response = Mock()
         response.status_code = status_code
         response.json.return_value = data
@@ -214,7 +130,7 @@ def mock_api_response():
 
 
 @pytest.fixture(autouse=True)
-def setup_logging():
+def setup_logging() -> None:
     """Setup logging for tests."""
     logging.basicConfig(level=logging.DEBUG)
     # Suppress schema drift warnings in tests
@@ -249,6 +165,7 @@ def resource_list_fixture_factory(list_func: Callable, resource_name: str) -> Ca
 
     Returns:
         A pytest fixture function
+
     """
 
     @pytest.fixture

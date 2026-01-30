@@ -259,6 +259,9 @@ jobs:
         run: |
           uv run ruff format --check .
 
+      - name: Run pyright
+        run: |
+          uv run pyright --project pyproject.toml
 
   # Integration tests - slower, requires secrets
   test-integration:

@@ -1,17 +1,23 @@
-"""
-Base test class for Endor Cockpit resource tests.
+"""Base test class for Endor Cockpit resource tests.
 
-This module provides shared test methods that can be used across
-all resource test classes to eliminate duplication.
+This module provides shared test methods and patterns that can be used across
+all resource test classes to eliminate duplication and ensure consistency.
 """
 
+import os
+from typing import Any
+
+import conftest
+import pytest
+
+from endor_cockpit.api_client import APIClient
 from endor_cockpit.models.base import BaseMeta, BaseResource, BaseSpec
 
 
 class BaseResourceTest:
     """Base test class with shared test methods for all resources."""
 
-    def test_base_class_inheritance(self, resource_instance):
+    def test_base_class_inheritance(self, resource_instance: Any) -> None:
         """Test that resource inherits from base classes.
 
         This test validates that all resources properly inherit from
@@ -20,6 +26,7 @@ class BaseResourceTest:
         Args:
             resource_instance: A resource instance to test (provided by
                 subclass via fixture)
+
         """
         # Test BaseResource inheritance
         assert isinstance(resource_instance, BaseResource), (
@@ -36,7 +43,7 @@ class BaseResourceTest:
             "Resource spec should inherit from BaseSpec"
         )
 
-    def test_schema_drift_detection(self, resource_instance):
+    def test_schema_drift_detection(self, resource_instance: Any) -> None:
         """Test that schema drift detection is working.
 
         This test validates that schema drift detection is functional
@@ -46,6 +53,7 @@ class BaseResourceTest:
         Args:
             resource_instance: A resource instance to test (provided by
                 subclass via fixture)
+
         """
         # Test that schema drift detection is working
         # This is tested implicitly through the model validation
@@ -57,7 +65,13 @@ class BaseResourceTest:
             "Resource should have model_config for Pydantic validation"
         )
 
-    def test_get_list(self, list_func, api_client, namespace, test_list_params):
+    def test_get_list(
+        self,
+        list_func: Any,
+        api_client: APIClient,
+        namespace: str,
+        test_list_params: Any,
+    ) -> None:
         """Generic test for GET list operations.
 
         Args:
@@ -65,6 +79,7 @@ class BaseResourceTest:
             api_client: APIClient instance
             namespace: Namespace string
             test_list_params: ListParameters with pagination limits
+
         """
         import conftest
 
@@ -77,7 +92,7 @@ class BaseResourceTest:
         assert isinstance(resources, list), "Should return a list"
         assert len(resources) > 0, "Should have at least one resource"
 
-    def test_get_by_uuid(self, get_func, api_client, namespace, resource_uuid):
+    def test_get_by_uuid(self, get_func, api_client, namespace, resource_uuid) -> None:
         """Generic test for GET by UUID operations.
 
         Args:
@@ -85,19 +100,72 @@ class BaseResourceTest:
             api_client: APIClient instance
             namespace: Namespace string
             resource_uuid: UUID of resource to retrieve
+
         """
         resource = get_func(api_client, namespace, resource_uuid)
         assert resource is not None, "Should successfully retrieve resource by UUID"
         assert resource.uuid == resource_uuid, "Retrieved resource UUID should match"
 
-    def test_error_handling(self, get_func, api_client, namespace):
+    def test_error_handling(self, get_func, api_client, namespace) -> None:
         """Generic test for error handling with invalid UUID.
 
         Args:
             get_func: The get function to test (e.g., project.get_project)
             api_client: APIClient instance
             namespace: Namespace string
+
         """
-        # Test with invalid UUID
-        invalid_resource = get_func(api_client, namespace, "invalid-uuid")
-        assert invalid_resource is None, "Should return None for invalid UUID"
+        # Test with invalid UUID format - should raise ValidationError
+        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
+        from endor_cockpit.exceptions import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            get_func(api_client, namespace, "invalid-uuid")
+        assert exc_info.value.resource_uuid == "invalid-uuid"
+        assert exc_info.value.operation == "get"
+        assert exc_info.value.status_code == 400
+
+
+class BaseIntegrationTest:
+    """Base class for integration tests with common setup and cleanup patterns.
+
+    This class provides:
+    - Standardized setup with client and namespace
+    - Resource tracking for cleanup
+    - Teardown method pattern
+    """
+
+    @pytest.fixture(autouse=True)
+    def base_setup(self) -> None:
+        """Base setup for all integration tests.
+
+        Sets up client, namespace, and resource tracking.
+        Subclasses should override this and call super().base_setup() if needed.
+        """
+        self.client = APIClient(auth_method="api-key")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
+
+        # Validate namespace is set
+        if not self.namespace:
+            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+
+        # Initialize resource tracking (subclasses should override with specific lists)
+        # Example: self.created_policy_uuids = []
+        # This is a placeholder - subclasses should define their own tracking lists
+
+    def teardown_method(self) -> None:
+        """Base teardown method.
+
+        Subclasses should override this to clean up their specific resources.
+        This method exists to ensure the pattern is consistent across all tests.
+        """
+        # Subclasses should implement cleanup logic here
+        # Example:
+        # if hasattr(self, "created_policy_uuids"):
+        #     for uuid in self.created_policy_uuids:
+        #         try:
+        #             policy.delete_policy(self.client, self.namespace, uuid)
+        #         except Exception as e:
+        #             print(f"[WARNING] Failed to delete {uuid}: {e}")
+        #     self.created_policy_uuids.clear()
+        pass
