@@ -1,8 +1,7 @@
 """Tests for browser OAuth authentication server.
 
-⚠️  NOTE: These tests are skipped in CI environments because browser
-authentication requires human interaction. The tests use mocks to avoid
-actually opening a browser.
+Browser OAuth tests are marked @pytest.mark.local so CI runs
+`pytest -m \"integration and not local\"` and excludes them; run with mocks locally.
 """
 
 import os
@@ -19,20 +18,6 @@ from endor_cockpit.auth_server import (
     TokenHandler,
     get_token,
 )
-
-
-def is_ci_environment() -> bool:
-    """Check if running in a CI/CD environment."""
-    ci_indicators = [
-        "CI",
-        "CONTINUOUS_INTEGRATION",
-        "GITHUB_ACTIONS",
-        "GITLAB_CI",
-        "JENKINS_URL",
-        "BUILDKITE",
-        "CIRCLECI",
-    ]
-    return any(os.getenv(indicator) for indicator in ci_indicators)
 
 
 class TestTokenHandler:
@@ -126,13 +111,7 @@ class TestTokenHandler:
 class TestGetToken:
     """Test get_token function for browser OAuth flow."""
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
+    @pytest.mark.local
     @patch("endor_cockpit.auth_server.HTTPServer")
     @patch("endor_cockpit.auth_server.get_browser")
     def test_get_token_success(self, mock_get_browser, mock_server_class) -> None:
@@ -163,13 +142,7 @@ class TestGetToken:
         mock_server.handle_request.assert_called_once()
         mock_server.server_close.assert_called_once()
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
+    @pytest.mark.local
     @patch("endor_cockpit.auth_server.HTTPServer")
     @patch("endor_cockpit.auth_server.get_browser")
     def test_get_token_timeout(self, mock_get_browser, mock_server_class) -> None:
@@ -191,37 +164,19 @@ class TestGetToken:
         assert token is None
         mock_server.server_close.assert_called_once()
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
+    @pytest.mark.local
     def test_get_token_invalid_method(self) -> None:
         """Test get_token raises ValueError for invalid method."""
         with pytest.raises(ValueError, match="Unsupported auth method"):
             get_token(method="invalid_method")
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
+    @pytest.mark.local
     def test_get_token_email_required(self) -> None:
         """Test get_token requires email for email auth method."""
         with pytest.raises(ValueError, match="Email address required"):
             get_token(method="email")
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
+    @pytest.mark.local
     @patch("endor_cockpit.auth_server.HTTPServer")
     @patch("endor_cockpit.auth_server.get_browser")
     def test_get_token_email_method(self, mock_get_browser, mock_server_class) -> None:
@@ -260,13 +215,7 @@ class TestGetToken:
         for method in expected_methods:
             assert method in AUTH_METHODS, f"Auth method '{method}' not defined"
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
+    @pytest.mark.local
     @patch("endor_cockpit.auth_server.HTTPServer")
     def test_get_token_port_in_use(self, mock_server_class) -> None:
         """Test get_token handles port already in use error."""
