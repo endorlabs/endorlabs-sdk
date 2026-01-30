@@ -67,7 +67,7 @@ class TestScanLogRequest:
     def test_create_scan_log_request(self, sample_scan_result_uuid) -> None:
         """Test creating a scan log request.
 
-        Local-only: creating scan log requests requires elevated permissions (403 in CI).
+        Local-only: scan log request creation requires elevated permissions (403 in CI).
         """
         print("\n=== TESTING CREATE SCAN LOG REQUEST ===")
 
@@ -115,7 +115,7 @@ class TestScanLogRequest:
     def test_scan_log_request_with_filters(self, sample_scan_result_uuid) -> None:
         """Test creating log request with various filters.
 
-        Local-only: creating scan log requests requires elevated permissions (403 in CI).
+        Local-only: scan log request creation requires elevated permissions (403 in CI).
         """
         print("\n=== TESTING SCAN LOG REQUEST WITH FILTERS ===")
 
