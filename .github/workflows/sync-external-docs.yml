@@ -44,11 +44,9 @@ jobs:
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
 
-      - name: Commit changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add external_docs/
-          git diff --staged --quiet || git commit -m "chore: Update external documentation [skip ci]"
-          git push
-
+      - name: Upload external_docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: external_docs-${{ github.run_id }}
+          path: external_docs/
+          retention-days: 7

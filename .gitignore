@@ -49,8 +49,8 @@ coverage.xml
 # Linting
 .ruff_cache/
 
-# External documentation (committed)
-# external_docs/ - intentionally NOT ignored
+# External documentation (gitignored; obtain via sync script or workflow)
+external_docs/
 
 # OS
 .DS_Store

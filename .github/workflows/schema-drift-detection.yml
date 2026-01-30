@@ -168,7 +168,7 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Action Required
 
-1. Review OpenAPI spec: \`external_docs/openapi-swagger.json\`
+1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` or obtain locally by running \`.github/scripts/sync_external_docs.py --download-openapi\` (writes to \`external_docs/openapi-swagger.json\`).
 2. Add field to model: \`${d.file_path || 'resource file'}\`
 3. Update drift detection known_fields if applicable
 
