@@ -8,7 +8,7 @@ alwaysApply: false
 
 Before changing models or API usage:
 
-1. **OpenAPI**: <https://api.endorlabs.com/download/openapiv2.swagger.json>. Check required/optional, types, read-only, masking. (Schema drift workflow downloads to `external_docs/` in CI.)
+1. **API spec**: <https://api.endorlabs.com/download/openapiv2.swagger.json>. Check required/optional, types, read-only, masking. When present locally: `external_docs/openapi-swagger.json` (schema drift workflow in CI).
 2. **User docs**: <https://docs.endorlabs.com/>; context via Cursor rules / DeepWiki.
 3. **Implementation**: Align Pydantic with spec; test masked and unmasked responses; keep backward compatibility.
 

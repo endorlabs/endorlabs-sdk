@@ -1,8 +1,7 @@
 """Tests for APIClient authentication with token expiration tracking.
 
-⚠️  NOTE: Browser authentication tests are skipped in CI environments because
-browser authentication requires human interaction. These tests use mocks to avoid
-actually opening a browser.
+Browser auth tests are marked @pytest.mark.local so CI runs
+`pytest -m \"integration and not local\"` and excludes them; run with mocks locally.
 """
 
 import os
@@ -12,20 +11,6 @@ from unittest.mock import Mock, patch
 import pytest
 
 from endor_cockpit.api_client import APIClient
-
-
-def is_ci_environment() -> bool:
-    """Check if running in a CI/CD environment."""
-    ci_indicators = [
-        "CI",
-        "CONTINUOUS_INTEGRATION",
-        "GITHUB_ACTIONS",
-        "GITLAB_CI",
-        "JENKINS_URL",
-        "BUILDKITE",
-        "CIRCLECI",
-    ]
-    return any(os.getenv(indicator) for indicator in ci_indicators)
 
 
 class TestTokenExpirationTracking:
@@ -223,16 +208,10 @@ class TestTokenExpirationTracking:
         assert mock_post.call_count == 2
 
 
+@pytest.mark.local
 class TestBrowserAuthentication:
     """Test browser-based OAuth authentication."""
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
     @patch("endor_cockpit.auth_server.get_token")
     @patch("endor_cockpit.api_client.requests.get")
@@ -251,13 +230,6 @@ class TestBrowserAuthentication:
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
     @patch("endor_cockpit.auth_server.get_token")
     @patch("endor_cockpit.api_client.requests.get")
@@ -275,13 +247,6 @@ class TestBrowserAuthentication:
         # Should not call get_token if token is provided
         mock_get_token.assert_not_called()
 
-    @pytest.mark.skipif(
-        is_ci_environment(),
-        reason=(
-            "Browser authentication requires human interaction "
-            "and cannot be tested in CI"
-        ),
-    )
     @patch.dict(
         os.environ,
         {
