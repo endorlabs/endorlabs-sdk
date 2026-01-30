@@ -116,7 +116,7 @@ class TestAuthorizationPolicy:
     def test_authorization_policy_create_with_role(self) -> None:
         """Test CREATE authorization policy operation with system role.
 
-        Local-only: creating authorization policies requires elevated permissions (403 in CI).
+        Local-only: creating auth policies requires elevated permissions (403 in CI).
         """
         print("\n=== TESTING AUTHORIZATION POLICY CREATE (WITH ROLE) ===")
 
@@ -164,7 +164,7 @@ class TestAuthorizationPolicy:
     def test_authorization_policy_create_with_resource_permissions(self) -> None:
         """Test CREATE authorization policy with resource-specific permissions.
 
-        Local-only: creating authorization policies requires elevated permissions (403 in CI).
+        Local-only: creating auth policies requires elevated permissions (403 in CI).
         """
         print(
             "\n=== TESTING AUTHORIZATION POLICY CREATE (WITH RESOURCE PERMISSIONS) ==="
