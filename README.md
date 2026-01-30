@@ -36,7 +36,7 @@ for ns in namespaces:
 - **🎪 Type-Safe Operations**: Pydantic-powered data structures with field mutability tracking
 - **🏗️ Resource-Oriented Architecture**: Intuitive modules for specific API resources
 - **🚀 Production-Ready**: Robust error handling, authentication, rate limiting, and retry mechanisms
-- **📚 API Spec & Sitemap**: OpenAPI obtainable via `.github/scripts/sync_external_docs.py --download-openapi` (writes to `external_docs/`; folder is gitignored) or <https://api.endorlabs.com/download/openapiv2.swagger.json>; sitemap and sync scripts in `.github/scripts` for optional refresh
+- **📚 API Spec**: OpenAPI at <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI; folder is gitignored)
 - **🎭 Maneuvers & Protocols**: Pre-built tactical scripts for common security operations
 - **🔍 Schema Drift Detection**: Advanced monitoring for API specification changes
 
@@ -62,7 +62,7 @@ uv pip install -e .
 uv pip install -e ".[docs]"
 ```
 
-API spec: `external_docs/` is gitignored; obtain via `.github/scripts/sync_external_docs.py --download-openapi` (writes to `external_docs/openapi-swagger.json`) or use <https://api.endorlabs.com/download/openapiv2.swagger.json>. To refresh the spec or user-docs from sitemap, use scripts under `.github/scripts`.
+API spec: <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/` (gitignored) in CI.
 
 ## 🔐 **Environment Configuration**
 
@@ -151,7 +151,7 @@ This cockpit is specifically engineered for AI-powered development environments.
 - **🛡️ Security Protocols**: Built-in security scanning and compliance
 - **📋 Best Practices**: Patterns for reliable agent operations
 - **🎭 Maneuvers**: Pre-built tactical scripts for common operations
-- **📚 API Spec & Docs**: SDK, docstrings, and Pyright are the primary consumption path; spec obtainable via sync script (writes to `external_docs/openapi-swagger.json`) or <https://api.endorlabs.com/download/openapiv2.swagger.json>
+- **📚 API Spec & Docs**: SDK, docstrings, and Pyright are the primary consumption path; spec at <https://api.endorlabs.com/download/openapiv2.swagger.json>
 
 ## 🛠️ **Development & Operations**
 
@@ -246,7 +246,7 @@ ls maneuvers/
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
 - **[Rego (SDK usage)](./docs/guides/rego-policies.md)** - How the SDK is used with policies; link to official Rego docs
 - **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
-- **External documentation**: Obtain via sync script or Sync External Documentation workflow (writes to `external_docs/`; folder is gitignored); platform docs at <https://docs.endorlabs.com/>
+- **External documentation**: Platform docs at <https://docs.endorlabs.com/> (context via Cursor rules / DeepWiki)
 
 ## 🗂️ **Workspace & Mission Files**
 

@@ -5,7 +5,7 @@ Workflow only. Detailed debugging stories (PATCH 501, tags not persisting, updat
 ## Workflow
 
 1. **Document** — Task, context, approach, errors and stack traces.
-2. **Research** — Search codebase and docs; review API spec (see [conventions.md](../conventions.md)); check external_docs/.
+2. **Research** — Search codebase and docs; review API spec (see [conventions.md](../conventions.md)).
 3. **Investigate** — Read SDK code and spec; test with endorctl; validate theories.
 4. **Resolve** — Implement fix; document signatures and learnings.
 

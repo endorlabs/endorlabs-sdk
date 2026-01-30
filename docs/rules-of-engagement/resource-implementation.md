@@ -4,7 +4,7 @@ Checklists for implementing new Endor Labs resources. Use BaseResourceOperations
 
 ## Phase 0: API Analysis (MANDATORY)
 
-- [ ] Review OpenAPI spec: `external_docs/openapi-swagger.json` for the resource (see [conventions.md](../conventions.md)).
+- [ ] Review OpenAPI spec for the resource (see [conventions.md](../conventions.md); spec at <https://api.endorlabs.com/download/openapiv2.swagger.json>).
 - [ ] Note service name, URL endpoints, HTTP methods.
 - [ ] Use live API responses as canonical structure; run endorctl list/get as needed.
 - [ ] Confirm BaseResource compatibility; list_params (filter, mask, page_size, traverse) and update_mask support.

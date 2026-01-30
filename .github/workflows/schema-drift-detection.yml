@@ -109,20 +109,23 @@ jobs:
           python -c "import pydantic; print(f'✅ pydantic {pydantic.__version__}')" || (echo "❌ pydantic not found" && exit 1)
           echo "✅ All required dependencies are installed"
 
+      - name: Download OpenAPI spec
+        run: |
+          mkdir -p external_docs
+          curl -sSfL -o external_docs/openapi-swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+
       - name: Run schema drift detection
         run: |
-          python .github/scripts/unified_docs_workflow.py \
-            --check-drift-only \
+          python .github/scripts/detect_schema_drift.py \
+            --run-tests \
             --test-path tests/ \
-            --drift-report-output schema_drift_report.json \
-            --no-create-issues \
-            --force
+            --output schema_drift_report.json
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-        continue-on-error: true  # Don't fail workflow if tests fail
+        continue-on-error: true  # Don't fail workflow if drift or tests fail
 
       - name: Create GitHub issues from drift report
         if: always()
@@ -168,7 +171,7 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Action Required
 
-1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` or obtain locally by running \`.github/scripts/sync_external_docs.py --download-openapi\` (writes to \`external_docs/openapi-swagger.json\`).
+1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` (workflow downloads it to \`external_docs/openapi-swagger.json\`).
 2. Add field to model: \`${d.file_path || 'resource file'}\`
 3. Update drift detection known_fields if applicable
 

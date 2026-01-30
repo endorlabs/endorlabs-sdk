@@ -56,8 +56,8 @@ endor_cockpit/
 
 ## Reference Guides
 
-- **API spec**: `external_docs/openapi-swagger.json` (or `https://api.endorlabs.com/download/openapiv2.swagger.json`).
-- **Sitemap** (for user-docs sync, e.g. future branch): `https://docs.endorlabs.com/sitemap.xml`; sync scripts: `.github/scripts` (e.g. `sync_external_docs.py`, `unified_docs_workflow.py`).
+- **API spec**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI).
+- **User docs**: <https://docs.endorlabs.com/>; context via Cursor rules / DeepWiki.
 - **Documentation index**: [docs/README.md](docs/README.md) — what lives where; [docs/conventions.md](docs/conventions.md) — canonical naming, traverse, ListParameters, OpenAPI path, error handling.
 - **Namespace**: [docs/reference/namespace.md](docs/reference/namespace.md) — list/get/create/update/delete; [docs/guides/namespace-traversal.md](docs/guides/namespace-traversal.md) — use `traverse=True` for tenant-wide queries.
 - **API validation**: [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md)
