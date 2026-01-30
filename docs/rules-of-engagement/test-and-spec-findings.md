@@ -111,7 +111,17 @@ v1Meta readOnly (from OpenAPI): meta.create_time, meta.update_time, meta.upsert_
 
 ---
 
-## 5. References
+## 5. CI: read-only credentials and local marker
+
+**Assumption**: CI runs integration tests with **read-only** API credentials. Admin/write keys are not used in CI/CD.
+
+- **Marker**: Any test that calls create, update, or delete must be marked `@pytest.mark.local` so it is excluded from CI (`pytest -m "integration and not local"`).
+- **Rationale**: Write operations require elevated permissions; with read-only credentials they return 403. Marking them local keeps CI green without storing admin keys in secrets.
+- **Run local tests**: Use API credentials with write access and run `pytest -m "integration"` (or omit the filter) to include local tests.
+
+---
+
+## 6. References
 
 - OpenAPI: <https://api.endorlabs.com/download/openapiv2.swagger.json> (paths for namespaces, `NamespaceServiceUpdateNamespaceBody`, `v1UpdateRequest`).
 - SDK: `src/endor_cockpit/resources/namespace.py` (`update_namespace`), `src/endor_cockpit/models/base.py` (update with mask).

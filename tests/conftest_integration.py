@@ -2,6 +2,11 @@
 
 This file provides fixtures and configuration for integration tests
 that use the real Endor Labs API.
+
+CI runs integration tests with read-only API credentials. Any test that
+calls create, update, or delete must be marked @pytest.mark.local so it
+is excluded from CI (pytest -m "integration and not local"). Run local
+tests only in environments where write permissions are available.
 """
 
 import os

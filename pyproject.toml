@@ -159,7 +159,7 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "local: marks tests as local-only (excluded from CI)"
+    "local: marks tests as local-only (excluded from CI; CI uses read-only credentials)"
 ]
 
 [tool.pyright]
