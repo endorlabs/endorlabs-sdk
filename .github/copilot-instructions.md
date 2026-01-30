@@ -16,7 +16,7 @@
 
 ## Reference – API spec and user docs
 
-- **API spec (OpenAPI)**: Obtain via `.github/scripts/sync_external_docs.py --download-openapi` (writes to `external_docs/openapi-swagger.json`) or <https://api.endorlabs.com/download/openapiv2.swagger.json> (`external_docs/` is gitignored)
+- **API spec (OpenAPI)**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI; folder is gitignored)
 - **User documentation**: <https://docs.endorlabs.com/> — sitemap <https://docs.endorlabs.com/sitemap.xml>
 - **In-repo docs**: `docs/README.md` (index), `docs/conventions.md` (naming, traverse, ListParameters), `docs/reference/namespace.md`, `docs/rules-of-engagement/api-validation.md`, `docs/rules-of-engagement/resource-implementation.md`, `docs/rules-of-engagement/docs-drift-workflow.md`
 

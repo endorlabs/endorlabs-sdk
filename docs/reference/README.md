@@ -1,6 +1,6 @@
 # Reference
 
-SDK reference documentation. OpenAPI spec: `external_docs/openapi-swagger.json`.
+SDK reference documentation. OpenAPI spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI).
 
 ## Public API
 
