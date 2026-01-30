@@ -16,14 +16,12 @@ on:
       - '**.md'
       - 'docs/**'
       - '.gitignore'
-      - 'LICENSE'
   pull_request:
     branches: [ main, dev ]
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - '.gitignore'
-      - 'LICENSE'
   workflow_dispatch:  # Allow manual triggering for testing
 
 concurrency:
