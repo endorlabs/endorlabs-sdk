@@ -40,7 +40,7 @@ env:
   ACTIONS_CHECKOUT_VERSION: "v5.0.0"
   ACTIONS_SETUP_PYTHON_VERSION: "v6.0.0"
   ACTIONS_CACHE_VERSION: "v4.3.0"
-  ASTRAL_SETUP_UV_VERSION: "v3.0.0"
+  ASTRAL_SETUP_UV_VERSION: "v7.2.0"
 
 jobs:
   # Dependency resolution job - runs once and caches dependencies
