@@ -138,7 +138,7 @@ all_deps = dependency_metadata.list_dependency_metadata(
 
 ```python
 class ListParameters(BaseModel):
-    traverse: Optional[bool] = Field(
+    traverse: bool | None = Field(
         None,
         description=(
             "Traverse all child namespaces recursively. "
@@ -229,4 +229,4 @@ def count_all_findings(client, tenant_namespace):
 
 - [ListParameters API Reference](../../src/endor_cockpit/types.py)
 - [BaseResourceOperations Implementation](../../src/endor_cockpit/models/base.py)
-- [DependencyMetadata Usage](../../docs/package-dependency-visibility.md)
+- DependencyMetadata: `endor_cockpit.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.

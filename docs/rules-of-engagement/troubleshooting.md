@@ -1,6 +1,6 @@
 # Troubleshooting Rules of Engagement
 
-Workflow only. Detailed debugging stories (PATCH 501, tags not persisting, update_mask discovery, etc.) are in `.tmp/docs-revamp/kb-articles/` or `.tmp/docs-revamp/internal-wiki/troubleshooting-stories.md`.
+Workflow only. Resolved-case narratives: [docs.endorlabs.com](https://docs.endorlabs.com/) or search repo issues. Workflow below.
 
 ## Workflow
 
@@ -12,4 +12,4 @@ Workflow only. Detailed debugging stories (PATCH 501, tags not persisting, updat
 ## References
 
 - OpenAPI/spec path and list/update patterns: [conventions.md](../conventions.md).
-- For resolved-case narratives (wrong URL pattern, update_mask, tags): see `.tmp/docs-revamp/` by classification.
+- For resolved-case narratives (wrong URL pattern, update_mask, tags): see [docs.endorlabs.com](https://docs.endorlabs.com/) or repo issues.

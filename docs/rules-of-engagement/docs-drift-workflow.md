@@ -2,15 +2,31 @@
 
 > **Automated workflow for detecting discrepancies between API responses and Pydantic models**
 
-## Overview
+Local setup: see [CONTRIBUTORS.md](../../CONTRIBUTORS.md).
+
+## Sync external docs (recommended for advanced users)
+
+A single workflow creates the gitignored `external_docs/` folder with both the OpenAPI spec and user documentation from [docs.endorlabs.com](https://docs.endorlabs.com/). **Recommended for advanced users** to pull full platform-admin context into the IDE.
+
+```bash
+uv sync --extra docs
+uv run python scripts/sync_external_docs.py --all
+```
+
+This creates:
+
+- `external_docs/openapi-swagger.json` — API spec
+- `external_docs/user-docs/*.md` — User docs (sitemap-based, parallel download)
+
+See [scripts/README.md](../../scripts/README.md#sync_external_docspy) for options (e.g. spec-only, `--max-pages`, `--force`).
+
+## Schema drift workflow (CI and local)
 
 The schema drift workflow:
 
-1. **Download OpenAPI spec** — Workflow downloads the spec to `external_docs/openapi-swagger.json` (gitignored) in the runner for reference.
+1. **Download OpenAPI spec** — CI downloads the spec to `external_docs/openapi-swagger.json` (gitignored) in the runner for reference.
 2. **Run drift detection** — Runs integration tests and parses schema drift warnings via `.github/scripts/detect_schema_drift.py`.
 3. **Create issues** — GitHub Action creates one issue per new drift (inline script; no separate script).
-
-User-docs sync and sitemap downloads are deprecated in this repo; context is handled via Cursor rules and DeepWiki.
 
 ## GitHub Actions
 
@@ -23,11 +39,12 @@ User-docs sync and sitemap downloads are deprecated in this repo; context is han
 
 ## Local Use
 
-Download the OpenAPI spec and run drift detection:
+**Option A — Full context:** Sync spec + user docs into `external_docs/`, then run drift detection (see [Sync external docs](#sync-external-docs-recommended-for-advanced-users) above).
+
+**Option B — Spec only:** Create `external_docs/` and download the spec with the sync script, then run drift detection:
 
 ```bash
-mkdir -p external_docs
-curl -sSfL -o external_docs/openapi-swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+uv run python scripts/sync_external_docs.py --download-openapi
 
 export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-key"
@@ -47,6 +64,7 @@ python .github/scripts/detect_schema_drift.py --check-existing
 
 - **`.github/scripts/check_endorctl_version.py`** — Version check (used by first job).
 - **`.github/scripts/detect_schema_drift.py`** — Runs tests, parses drift warnings, writes `schema_drift_report.json`. No OpenAPI or user-docs download.
+- **`scripts/sync_external_docs.py`** — Single script that creates `external_docs/` with OpenAPI spec and/or user docs (sitemap). Use `--all` for full IDE context. See [scripts/README.md](../../scripts/README.md#sync_external_docspy).
 
 ## Related
 

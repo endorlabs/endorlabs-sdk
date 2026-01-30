@@ -1,6 +1,6 @@
 # Documentation Maintenance
 
-When to update docs; link to docs-drift-workflow and [conventions.md](conventions.md). Non-SDK content (user docs, KB, internal wiki) has been moved to `.tmp/docs-revamp/` by classification; that directory is not versioned in the repo (`.tmp` is gitignored).
+When to update docs; link to docs-drift-workflow and [conventions.md](conventions.md). Non-SDK content: see [docs.endorlabs.com](https://docs.endorlabs.com/).
 
 ## SDK surface boundaries
 

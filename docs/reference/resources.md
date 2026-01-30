@@ -1,5 +1,7 @@
 # Resources (SDK API Surface)
 
+The table reflects typical API semantics (e.g. platform-managed, scan-generated). The SDK exposes all operations; see `endor_cockpit.resources.<name>` and docstrings for signatures, return types, and raised exceptions.
+
 One table: resource name, operations, limitations. See OpenAPI spec for full schema.
 
 | Resource | List | Get | Create | Update | Delete | Limitations |
