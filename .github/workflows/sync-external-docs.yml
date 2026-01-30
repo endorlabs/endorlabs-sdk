@@ -1,10 +1,8 @@
 name: Sync External Documentation
 
+# Scheduled sync disabled in main CI; full sync is for a personal branch or manual run (workflow_dispatch).
 on:
-  schedule:
-    # Run weekly on Mondays at 2 AM UTC
-    - cron: '0 2 * * 1'
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
 
 jobs:
   sync-docs:

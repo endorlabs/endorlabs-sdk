@@ -9,7 +9,7 @@ alwaysApply: false
 Before changing models or API usage:
 
 1. **OpenAPI**: Use `external_docs/openapi-swagger.json` (or sync via `.github/scripts`). Check required/optional, types, read-only, masking.
-2. **Docs**: Check `external_docs/user-docs/` for context, masking, edge cases.
+2. **User-docs from sitemap**: `https://docs.endorlabs.com/sitemap.xml`; local copy in `external_docs/user-docs/` if synced via `.github/scripts`.
 3. **Implementation**: Align Pydantic with spec; test masked and unmasked responses; keep backward compatibility.
 
 Drift and docs: see `docs/rules-of-engagement/docs-drift-workflow.md`. Run `python .github/scripts/unified_docs_workflow.py --all` to refresh.
