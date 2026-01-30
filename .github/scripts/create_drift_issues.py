@@ -201,7 +201,7 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Action Required
 
-1. Review OpenAPI spec: `external_docs/openapi-swagger.json`
+1. Review OpenAPI spec: https://api.endorlabs.com/download/openapiv2.swagger.json or obtain locally by running `.github/scripts/sync_external_docs.py --download-openapi` (writes to `external_docs/openapi-swagger.json`).
    (search for `{openapi_ref}`)
 2. Add field to model: `{file_path}` in class `{model_class}`
 3. Update drift detection known_fields if applicable
@@ -221,7 +221,7 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Related
 
-- Check `external_docs/openapi-swagger.json` for API specification
+- Check https://api.endorlabs.com/download/openapiv2.swagger.json (or obtain locally via sync script) for API specification
 - Review `{file_path}` for current model definition
 
 ### Detection Method
