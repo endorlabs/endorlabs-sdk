@@ -1,6 +1,6 @@
 ---
 description: API understanding workflow before model or API changes
-globs: "src/endor_cockpit/models/**/*.py, src/endor_cockpit/resources/**/*.py, external_docs/openapi-swagger.json"
+globs: "src/endor_cockpit/models/**/*.py, src/endor_cockpit/resources/**/*.py"
 alwaysApply: false
 ---
 
@@ -8,8 +8,8 @@ alwaysApply: false
 
 Before changing models or API usage:
 
-1. **OpenAPI**: Obtain via `.github/scripts/sync_external_docs.py --download-openapi` (writes to `external_docs/openapi-swagger.json`) or use <https://api.endorlabs.com/download/openapiv2.swagger.json>. Check required/optional, types, read-only, masking.
-2. **User-docs from sitemap**: `https://docs.endorlabs.com/sitemap.xml`; local copy in `external_docs/user-docs/` if synced via `.github/scripts` (folder is gitignored).
+1. **OpenAPI**: <https://api.endorlabs.com/download/openapiv2.swagger.json>. Check required/optional, types, read-only, masking. (Schema drift workflow downloads to `external_docs/` in CI.)
+2. **User docs**: <https://docs.endorlabs.com/>; context via Cursor rules / DeepWiki.
 3. **Implementation**: Align Pydantic with spec; test masked and unmasked responses; keep backward compatibility.
 
-Drift and docs: see `docs/rules-of-engagement/docs-drift-workflow.md`. Run `python .github/scripts/unified_docs_workflow.py --all` to refresh.
+Drift: see `docs/rules-of-engagement/docs-drift-workflow.md`. Run schema drift workflow or `python .github/scripts/detect_schema_drift.py --run-tests` locally.

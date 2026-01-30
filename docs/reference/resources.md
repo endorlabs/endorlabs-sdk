@@ -25,4 +25,4 @@ One table: resource name, operations, limitations. See OpenAPI spec for full sch
 | scan_log_request | no | no | yes (request-based) | no | no | Request-based API; see module |
 | semgrep_rule | yes | yes | yes | yes (update_mask) | yes | — |
 
-Spec path: `external_docs/openapi-swagger.json`. Deep-dive: [namespace.md](namespace.md).
+Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (workflow downloads to `external_docs/` in CI). Deep-dive: [namespace.md](namespace.md).

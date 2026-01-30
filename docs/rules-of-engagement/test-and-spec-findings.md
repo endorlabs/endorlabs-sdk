@@ -113,6 +113,6 @@ v1Meta readOnly (from OpenAPI): meta.create_time, meta.update_time, meta.upsert_
 
 ## 5. References
 
-- OpenAPI: `external_docs/openapi-swagger.json` (paths for namespaces, `NamespaceServiceUpdateNamespaceBody`, `v1UpdateRequest`).
+- OpenAPI: <https://api.endorlabs.com/download/openapiv2.swagger.json> (paths for namespaces, `NamespaceServiceUpdateNamespaceBody`, `v1UpdateRequest`).
 - SDK: `src/endor_cockpit/resources/namespace.py` (`update_namespace`), `src/endor_cockpit/models/base.py` (update with mask).
 - Troubleshooting: [troubleshooting.md](troubleshooting.md).

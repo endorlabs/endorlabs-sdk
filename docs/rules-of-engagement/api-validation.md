@@ -1,6 +1,6 @@
 # API Validation Rules of Engagement
 
-Pre-implementation validation. Spec path: see [conventions.md](../conventions.md) (external_docs/openapi-swagger.json).
+Pre-implementation validation. Spec: see [conventions.md](../conventions.md) (OpenAPI URL; workflow downloads to `external_docs/` in CI).
 
 ## Phase 1: OpenAPI
 
