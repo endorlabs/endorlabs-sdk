@@ -112,8 +112,12 @@ class TestAuthorizationPolicy:
         assert retrieved.meta.name == test_policy.meta.name, "Name should match"
         print(f"Retrieved policy: {retrieved.meta.name}")
 
+    @pytest.mark.local
     def test_authorization_policy_create_with_role(self) -> None:
-        """Test CREATE authorization policy operation with system role."""
+        """Test CREATE authorization policy operation with system role.
+
+        Local-only: creating authorization policies requires elevated permissions (403 in CI).
+        """
         print("\n=== TESTING AUTHORIZATION POLICY CREATE (WITH ROLE) ===")
 
         # Create test policy with CODE_SCANNER role
@@ -156,8 +160,12 @@ class TestAuthorizationPolicy:
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"Created policy UUID: {created_policy.uuid}")
 
+    @pytest.mark.local
     def test_authorization_policy_create_with_resource_permissions(self) -> None:
-        """Test CREATE authorization policy with resource-specific permissions."""
+        """Test CREATE authorization policy with resource-specific permissions.
+
+        Local-only: creating authorization policies requires elevated permissions (403 in CI).
+        """
         print(
             "\n=== TESTING AUTHORIZATION POLICY CREATE (WITH RESOURCE PERMISSIONS) ==="
         )

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Union, cast
+from typing import Any, cast
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -548,20 +548,18 @@ class FindingSpec(BaseSpec):
     proposed_version: str | None = Field(
         None, description="Proposed version for remediation"
     )  # IMMUTABLE: Analysis-determined
-    exceptions: Union[list[str], dict[str, Any]] | None = Field(
+    exceptions: list[str] | dict[str, Any] | None = Field(
         None, description="Exception information"
     )  # IMMUTABLE: Analysis-determined
     actions: Actions | None = Field(
         None, description="Tags and other fields set by action policies"
     )  # IMMUTABLE: Analysis-determined
-    fixing_upgrades: Union[list[Union[str, dict[str, Any]]], dict[str, Any]] | None = (
-        Field(
-            None,
-            description=(
-                "Fixing upgrade information. Can be: "
-                "list of strings, list of dicts, or dict with upgrade_list key"
-            ),
-        )
+    fixing_upgrades: list[str | dict[str, Any]] | dict[str, Any] | None = Field(
+        None,
+        description=(
+            "Fixing upgrade information. Can be: "
+            "list of strings, list of dicts, or dict with upgrade_list key"
+        ),
     )  # IMMUTABLE: Analysis-determined
     fixing_patch: FixingPatch | None = Field(
         None, description="Patch that can fix the finding"
@@ -644,7 +642,7 @@ class FindingSpec(BaseSpec):
         # If it's already a list (of strings or dicts), return as-is
         return v
 
-    code_owners: Union[list[str], dict[str, Any]] | None = Field(
+    code_owners: list[str] | dict[str, Any] | None = Field(
         None,
         description="Code owners information (list or dict with owners/labels)",
     )  # IMMUTABLE: Analysis-determined

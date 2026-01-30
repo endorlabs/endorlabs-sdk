@@ -55,6 +55,7 @@ packages = ["src/endor_cockpit"]
 
 [tool.ruff]
 line-length = 88
+target-version = "py313"  
 # Note: exclude patterns should match [tool.pyright] exclude for consistency
 exclude = [
     ".git",
@@ -119,13 +120,17 @@ select = [
 
 # Ignore rules that conflict with SDK patterns
 ignore = [
-    "UP007",  # Don't enforce X | Y syntax - prefer Optional[X] for compatibility
+    # UP007 removed: Ruff now forces Optional[str] -> str | None (py313)
     "D107",   # Missing docstring in __init__ (covered by class docstring)
     "D203",   # Blank line before class docstring (conflicts with D211)
     "D213",   # Multi-line summary second line (conflicts with D212)
     "ANN401",  # Any acceptable for validators, **kwargs, and API payloads
     "C901",   # Allow complex _handle_response (error mapping logic)
 ]
+
+[tool.ruff.lint.isort]
+# Forces strict separation of standard lib, 3rd party, and local imports
+known-first-party = ["endor_cockpit"]
 
 # Per-file ignores for known issues (temporary - remove after fixing)
 [tool.ruff.lint.per-file-ignores]
