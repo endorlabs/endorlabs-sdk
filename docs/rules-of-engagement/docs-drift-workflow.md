@@ -2,6 +2,8 @@
 
 > **Automated workflow for keeping documentation and schema models in sync**
 
+**Note:** Documentation Sync (OpenAPI + user docs from sitemap) is not run in main CI; use for personal branch or local refresh.
+
 ## Overview
 
 The unified documentation and schema drift workflow orchestrates two critical maintenance tasks:

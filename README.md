@@ -36,7 +36,7 @@ for ns in namespaces:
 - **🎪 Type-Safe Operations**: Pydantic-powered data structures with field mutability tracking
 - **🏗️ Resource-Oriented Architecture**: Intuitive modules for specific API resources
 - **🚀 Production-Ready**: Robust error handling, authentication, rate limiting, and retry mechanisms
-- **📚 External Documentation Sync**: Automated helpers to pull API specs and user docs
+- **📚 API Spec & Sitemap**: OpenAPI at `external_docs/openapi-swagger.json`; sitemap and sync scripts in `.github/scripts` for optional refresh
 - **🎭 Maneuvers & Protocols**: Pre-built tactical scripts for common security operations
 - **🔍 Schema Drift Detection**: Advanced monitoring for API specification changes
 
@@ -58,21 +58,11 @@ source .venv/bin/activate  # Linux/Mac
 # Install dependencies
 uv pip install -e .
 
-# Optional: Install dependencies for documentation sync scripts
+# Optional: Install dependencies for documentation sync scripts (contributors)
 uv pip install -e ".[docs]"
 ```
 
-### External Documentation Sync
-
-Pull the latest API specifications and user documentation:
-
-```bash
-# Download user documentation from Endor Labs (CI-only, use unified workflow instead)
-# Note: download_user_docs.py has been moved to .github/scripts/ for CI use
-# For manual use, use: python .github/scripts/unified_docs_workflow.py --update-docs-only --download-user-docs
-
-# The OpenAPI specification is already included in external_docs/openapi-swagger.json
-```
+API spec: `external_docs/openapi-swagger.json`. To refresh the spec or user-docs from sitemap, use scripts under `.github/scripts` (e.g. for a personal branch).
 
 ## 🔐 **Environment Configuration**
 
@@ -161,7 +151,7 @@ This cockpit is specifically engineered for AI-powered development environments.
 - **🛡️ Security Protocols**: Built-in security scanning and compliance
 - **📋 Best Practices**: Patterns for reliable agent operations
 - **🎭 Maneuvers**: Pre-built tactical scripts for common operations
-- **📚 External Docs**: Automated sync with API specifications and user documentation
+- **📚 API Spec & Docs**: SDK, docstrings, and Pyright are the primary consumption path; spec at `external_docs/openapi-swagger.json`
 
 ## 🛠️ **Development & Operations**
 
