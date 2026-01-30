@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/
 title: Pull Request scans | Endor Labs Docs
-downloaded: 2026-01-16 09:49:25
+downloaded: 2026-01-26 10:07:33
 ---
 
 Pull Request scans | Endor Labs Docs
@@ -79,7 +79,7 @@ To initiate an incremental PR scan:
    endorctl scan --pr --pr-baseline=main --pr-incremental
    ```
 
-During an incremental PR scan, Endor Labs first identifies packages and their dependencies. If changes are detected, only the modified packages are scanned. If the packages remain unchanged, the scan is skipped, and the `No changes found` message is displayed. The results of the PR incremental scan are available in **Projects** > **PR Runs**. Call graphs are generated only for the modified packages.
+During an incremental PR scan, Endor Labs first identifies packages and their dependencies. If changes are detected, only the modified packages are scanned. If the packages remain unchanged, the scan is skipped, and the `No changes found` message is displayed. The results of the PR incremental scan are available in **Projects** > **PR Runs**. Call graphs are generated only for the modified packages. You can also use the `--pr-incremental` flag to scan your PRs for SAST issues or secret leaks. See [SAST incremental scans](../../sast-scans-with-endorlabs/#sast-incremental-scans) and [Incremental secret scans](../../secrets-leak-detection/#incremental-secret-scans) for more information.
 
 Incremental scans fail in the following cases.
 

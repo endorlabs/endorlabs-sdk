@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/
 title: Monitoring or supervisory scans | Endor Labs Docs
-downloaded: 2026-01-16 09:46:59
+downloaded: 2026-01-26 10:05:23
 ---
 
 Monitoring or supervisory scans | Endor Labs Docs

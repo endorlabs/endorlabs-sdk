@@ -7,20 +7,20 @@ workflows, ensuring documentation is fresh before detecting drift.
 
 Usage:
     # Full workflow (docs + drift detection)
-    python scripts/unified_docs_workflow.py --all
+    python .github/scripts/unified_docs_workflow.py --all
 
     # Only update docs
-    python scripts/unified_docs_workflow.py --update-docs-only
+    python .github/scripts/unified_docs_workflow.py --update-docs-only
 
     # Only check drift (assumes docs are up to date)
-    python scripts/unified_docs_workflow.py --check-drift-only
+    python .github/scripts/unified_docs_workflow.py --check-drift-only
 
     # Force update docs and check drift
-    python scripts/unified_docs_workflow.py --all --force
+    python .github/scripts/unified_docs_workflow.py --all --force
 """
 
 import argparse
-import json
+import importlib.util
 import logging
 import os
 import sys
@@ -30,11 +30,8 @@ from typing import Dict, Optional, Tuple
 
 # Add src and scripts to path for imports
 scripts_dir = Path(__file__).parent
-sys.path.insert(0, str(scripts_dir.parent / "src"))
+sys.path.insert(0, str(scripts_dir.parent.parent / "src"))
 sys.path.insert(0, str(scripts_dir))
-
-# Import functions from existing scripts using importlib
-import importlib.util
 
 # Load sync_external_docs module
 spec_sync = importlib.util.spec_from_file_location(
@@ -86,6 +83,87 @@ class UnifiedDocsWorkflow:
         self.docs_updated = False
         self.drift_detected = False
 
+    def _download_openapi_spec(
+        self, force: bool, summary: Dict
+    ) -> bool:
+        """Handle OpenAPI spec download logic."""
+        logger.info("Downloading OpenAPI specification...")
+        try:
+            # Check if file exists before download
+            file_existed_before = self.openapi_output.exists()
+            file_mtime_before = (
+                self.openapi_output.stat().st_mtime
+                if file_existed_before
+                else None
+            )
+
+            openapi_updated = sync_external_docs.download_openapi_spec(
+                str(self.openapi_output), force=force
+            )
+            summary["openapi_updated"] = openapi_updated
+
+            if openapi_updated:
+                # Check if file was actually updated
+                if force or not file_existed_before:
+                    # Forced download or new file - definitely updated
+                    self.docs_updated = True
+                    logger.info("OpenAPI spec updated successfully")
+                elif file_existed_before and self.openapi_output.exists():
+                    # File existed - check if it was modified
+                    file_mtime_after = self.openapi_output.stat().st_mtime
+                    if file_mtime_after > file_mtime_before:
+                        self.docs_updated = True
+                        logger.info("OpenAPI spec updated successfully")
+                    else:
+                        logger.info(
+                            "OpenAPI spec already exists "
+                            "(use --force to re-download)"
+                        )
+                else:
+                    logger.info("OpenAPI spec downloaded successfully")
+                    self.docs_updated = True
+            else:
+                logger.error("Failed to download OpenAPI spec")
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Error downloading OpenAPI spec: {e}")
+            return False
+
+    def _download_user_docs(
+        self, force: bool, summary: Dict
+    ) -> bool:
+        """Handle user docs download logic."""
+        logger.info("Downloading user documentation...")
+        try:
+            sitemap_urls = sync_external_docs.download_sitemap_urls(
+                self.sitemap_url, timeout=10
+            )
+            if not sitemap_urls:
+                logger.warning("No URLs found in sitemap")
+                return True  # Not a failure, just no URLs
+
+            downloaded_count = sync_external_docs.download_user_docs(
+                sitemap_urls=sitemap_urls,
+                output_dir=self.user_docs_output,
+                max_pages=self.max_pages,
+                timeout=10,
+                force=force,
+            )
+            summary["user_docs_updated"] = downloaded_count > 0
+            summary["user_docs_downloaded"] = downloaded_count
+            if downloaded_count > 0:
+                self.docs_updated = True
+                logger.info(
+                    f"User docs updated: {downloaded_count} pages downloaded"
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Error downloading user docs: {e}")
+            # Don't fail the whole workflow if user docs fail
+            logger.warning("Continuing without user docs...")
+            return True  # Don't fail the whole workflow
+
     def update_docs(
         self,
         download_openapi: bool = True,
@@ -118,76 +196,14 @@ class UnifiedDocsWorkflow:
 
         # Download OpenAPI spec
         if download_openapi:
-            logger.info("Downloading OpenAPI specification...")
-            try:
-                # Check if file exists before download
-                file_existed_before = self.openapi_output.exists()
-                file_mtime_before = (
-                    self.openapi_output.stat().st_mtime
-                    if file_existed_before
-                    else None
-                )
-
-                openapi_updated = sync_external_docs.download_openapi_spec(
-                    str(self.openapi_output), force=force
-                )
-                summary["openapi_updated"] = openapi_updated
-
-                if openapi_updated:
-                    # Check if file was actually updated
-                    if force or not file_existed_before:
-                        # Forced download or new file - definitely updated
-                        self.docs_updated = True
-                        logger.info("OpenAPI spec updated successfully")
-                    elif file_existed_before and self.openapi_output.exists():
-                        # File existed - check if it was modified
-                        file_mtime_after = self.openapi_output.stat().st_mtime
-                        if file_mtime_after > file_mtime_before:
-                            self.docs_updated = True
-                            logger.info("OpenAPI spec updated successfully")
-                        else:
-                            logger.info(
-                                "OpenAPI spec already exists "
-                                "(use --force to re-download)"
-                            )
-                    else:
-                        logger.info("OpenAPI spec downloaded successfully")
-                        self.docs_updated = True
-                else:
-                    logger.error("Failed to download OpenAPI spec")
-                    success = False
-            except Exception as e:
-                logger.error(f"Error downloading OpenAPI spec: {e}")
+            if not self._download_openapi_spec(force, summary):
                 success = False
 
         # Download user docs
         if download_user_docs:
-            logger.info("Downloading user documentation...")
-            try:
-                sitemap_urls = sync_external_docs.download_sitemap_urls(
-                    self.sitemap_url, timeout=10
-                )
-                if not sitemap_urls:
-                    logger.warning("No URLs found in sitemap")
-                else:
-                    downloaded_count = sync_external_docs.download_user_docs(
-                        sitemap_urls=sitemap_urls,
-                        output_dir=self.user_docs_output,
-                        max_pages=self.max_pages,
-                        timeout=10,
-                        force=force,
-                    )
-                    summary["user_docs_updated"] = downloaded_count > 0
-                    summary["user_docs_downloaded"] = downloaded_count
-                    if downloaded_count > 0:
-                        self.docs_updated = True
-                        logger.info(
-                            f"User docs updated: {downloaded_count} pages downloaded"
-                        )
-            except Exception as e:
-                logger.error(f"Error downloading user docs: {e}")
-                # Don't fail the whole workflow if user docs fail
-                logger.warning("Continuing without user docs...")
+            if not self._download_user_docs(force, summary):
+                # User docs failure doesn't fail the whole workflow
+                pass
 
         logger.info("=" * 80)
         logger.info(f"PHASE 1 COMPLETE: {'SUCCESS' if success else 'FAILED'}")
@@ -223,6 +239,15 @@ class UnifiedDocsWorkflow:
         logger.info("=" * 80)
         logger.info("PHASE 2: SCHEMA DRIFT DETECTION")
         logger.info("=" * 80)
+        logger.info("This phase will:")
+        logger.info("  1. Run integration tests to exercise API models")
+        logger.info("  2. Capture schema drift warnings from test output")
+        logger.info("  3. Parse validation errors")
+        logger.info("  4. Generate drift report")
+        logger.info("")
+        logger.info("Note: Test output will stream in real-time below.")
+        logger.info("      This may take several minutes depending on test count.")
+        logger.info("=" * 80)
 
         try:
             # Initialize drift detector
@@ -231,7 +256,10 @@ class UnifiedDocsWorkflow:
             )
 
             # Run tests to detect drift
-            logger.info(f"Running tests in {self.test_path} to detect drift...")
+            logger.info("Initializing drift detector...")
+            logger.info(f"Test path: {self.test_path}")
+            logger.info(f"Report output: {self.drift_report_output}")
+            logger.info("")
             test_results = detector.run_tests(self.test_path)
 
             if "error" in test_results:
@@ -250,10 +278,12 @@ class UnifiedDocsWorkflow:
             logger.info("=" * 80)
             logger.info(f"New drifts detected: {new_drifts}")
             logger.info(
-                f"Validation errors: {report.get('summary', {}).get('validation_errors', 0)}"
+                f"Validation errors: "
+                f"{report.get('summary', {}).get('validation_errors', 0)}"
             )
             logger.info(
-                f"Test status: {report.get('summary', {}).get('test_status', 'unknown')}"
+                f"Test status: "
+                f"{report.get('summary', {}).get('test_status', 'unknown')}"
             )
             logger.info(f"Report saved to: {self.drift_report_output}")
 
@@ -270,7 +300,8 @@ class UnifiedDocsWorkflow:
 
             logger.info("=" * 80)
             logger.info(
-                f"PHASE 2 COMPLETE: {'DRIFT DETECTED' if self.drift_detected else 'NO DRIFT'}"
+                f"PHASE 2 COMPLETE: "
+                f"{'DRIFT DETECTED' if self.drift_detected else 'NO DRIFT'}"
             )
             logger.info("=" * 80)
 
@@ -306,7 +337,9 @@ class UnifiedDocsWorkflow:
             result = creator.create_issues_from_report(str(self.drift_report_output))
 
             logger.info(f"Issues created: {len(result.get('created', []))}")
-            logger.info(f"Issues skipped (duplicates): {len(result.get('skipped', []))}")
+            logger.info(
+                f"Issues skipped (duplicates): {len(result.get('skipped', []))}"
+            )
 
             if result.get("created"):
                 logger.info("\nCreated issues:")
@@ -418,19 +451,20 @@ def main():
         epilog="""
 Examples:
   # Full workflow (docs + drift detection)
-  python scripts/unified_docs_workflow.py --all
+  python .github/scripts/unified_docs_workflow.py --all
 
   # Only update docs
-  python scripts/unified_docs_workflow.py --update-docs-only
+  python .github/scripts/unified_docs_workflow.py --update-docs-only
 
   # Only check drift
-  python scripts/unified_docs_workflow.py --check-drift-only
+  python .github/scripts/unified_docs_workflow.py --check-drift-only
 
   # Force update and check
-  python scripts/unified_docs_workflow.py --all --force
+  python .github/scripts/unified_docs_workflow.py --all --force
 
   # Update docs with user docs included
-  python scripts/unified_docs_workflow.py --update-docs-only --download-user-docs
+  python .github/scripts/unified_docs_workflow.py \\
+    --update-docs-only --download-user-docs
         """,
     )
 

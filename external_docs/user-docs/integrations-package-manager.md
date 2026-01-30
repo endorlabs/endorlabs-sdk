@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/
 title: Set up custom package repositories | Endor Labs Docs
-downloaded: 2026-01-16 09:47:08
+downloaded: 2026-01-26 10:05:32
 ---
 
 Set up custom package repositories | Endor Labs Docs

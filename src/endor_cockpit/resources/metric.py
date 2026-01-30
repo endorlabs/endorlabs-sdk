@@ -1,12 +1,13 @@
-"""
-Metric resource module for Endor Labs API.
+"""Metric resource module for Endor Labs API.
 
 This module provides CRUD operations for Metric resources following the
 established patterns from the base class implementation.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -24,7 +25,7 @@ class ScoreCard(BaseModel):
 
     score: float = Field(..., description="Score value")
     max_score: float = Field(..., description="Maximum possible score")
-    factors: List[str] = Field(..., description="Score factors")
+    factors: list[str] = Field(..., description="Score factors")
 
 
 class MetricValue(BaseModel):
@@ -38,17 +39,15 @@ class MetricValue(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    category: Optional[str] = Field(None, description="Metric value categories")
+    category: str | None = Field(None, description="Metric value categories")
     description: str = Field(
         ..., description="Description of the metric value"
     )  # REQUIRED per OpenAPI spec
-    int32_value: Optional[int] = Field(None, description="32-bit integer value")
-    int64_value: Optional[str] = Field(
-        None, description="64-bit integer value as string"
-    )
-    string_value: Optional[str] = Field(None, description="String value")
-    float_value: Optional[float] = Field(None, description="Float value")
-    score_card: Optional[ScoreCard] = Field(None, description="Score card")
+    int32_value: int | None = Field(None, description="32-bit integer value")
+    int64_value: str | None = Field(None, description="64-bit integer value as string")
+    string_value: str | None = Field(None, description="String value")
+    float_value: float | None = Field(None, description="Float value")
+    score_card: ScoreCard | None = Field(None, description="Score card")
 
 
 class MetricMeta(BaseMeta):
@@ -81,18 +80,18 @@ class MetricSpec(BaseSpec):
     project_uuid: str = Field(
         ..., description="The UUID of the project to which this metric relates"
     )  # IMMUTABLE: Set at creation
-    metric_values: Dict[str, MetricValue] = Field(
+    metric_values: dict[str, MetricValue] = Field(
         ...,
         description="Map of metric values including scores and score factors",
     )  # IMMUTABLE: Set at creation
-    raw: Optional[dict] = Field(
+    raw: dict[str, Any] | None = Field(
         None,
         description="Superset of information included in the specification",
     )  # IMMUTABLE: Set at creation
 
     @field_validator("metric_values", mode="before")
     @classmethod
-    def validate_metric_values(cls, v):
+    def validate_metric_values(cls, v: Any) -> Any:
         """Handle metric values validation."""
         if isinstance(v, dict):
             validated_values = {}
@@ -113,7 +112,7 @@ class Metric(BaseResource):
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to MetricSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = MetricSpec(**data["spec"])
@@ -121,7 +120,7 @@ class Metric(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -135,7 +134,7 @@ class Metric(BaseResource):
         return v
 
 
-def _get_metric_ops(client: APIClient) -> BaseResourceOperations:
+def _get_metric_ops(client: APIClient) -> BaseResourceOperations[Metric]:
     """Get BaseResourceOperations instance for Metric."""
     return BaseResourceOperations(client, "metrics", Metric)
 
@@ -143,42 +142,83 @@ def _get_metric_ops(client: APIClient) -> BaseResourceOperations:
 def list_metrics(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[Metric]:
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[Metric]:
     """List metrics with advanced filtering and pagination."""
     ops = _get_metric_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)
 
 
 def get_metric(
     client: APIClient, tenant_meta_namespace: str, metric_uuid: str
-) -> Optional[Metric]:
-    """Get specific metric by UUID."""
+) -> Metric:
+    """Get specific metric by UUID.
+
+    Raises:
+        NotFoundError: If metric doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
     ops = _get_metric_ops(client)
-    return ops.get(tenant_meta_namespace, metric_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, metric_uuid)
 
 
 def create_metric(
     client: APIClient,
     tenant_meta_namespace: str,
-    payload: "CreateMetricPayload",
-) -> Optional[Metric]:
-    """Create a new metric."""
+    payload: CreateMetricPayload,
+) -> Metric:
+    """Create a new metric with pre-validation and typed errors.
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If metric already exists
+        ServerError: If server error occurs
+
+    """
     ops = _get_metric_ops(client)
-    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_metric(
     client: APIClient,
     tenant_meta_namespace: str,
     metric_uuid: str,
-    payload: "UpdateMetricPayload",
-    update_mask: Optional[List[str]] = None,
-) -> Optional[Metric]:
-    """Update an existing metric with partial updates."""
+    payload: UpdateMetricPayload,
+    update_mask: str | None = None,
+) -> Metric:
+    """Update an existing metric with partial updates.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        metric_uuid: UUID of the metric to update
+        payload: Metric update payload
+        update_mask: Optional comma-separated list of fields to update
+            (e.g., "meta.tags,meta.description"). If provided, only these
+            fields will be updated. If omitted, all non-None fields in
+            payload will be updated.
+
+    Returns:
+        Updated Metric object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If metric doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
     ops = _get_metric_ops(client)
-    return ops.update(tenant_meta_namespace, metric_uuid, payload, update_mask)  # type: ignore
+    return ops.update(tenant_meta_namespace, metric_uuid, payload, update_mask_list)
 
 
 def delete_metric(
@@ -186,36 +226,34 @@ def delete_metric(
 ) -> bool:
     """Delete a metric by UUID."""
     ops = _get_metric_ops(client)
-    return ops.delete(tenant_meta_namespace, metric_uuid)  # type: ignore
+    return ops.delete(tenant_meta_namespace, metric_uuid)
 
 
 # Payload models for create and update operations
 class CreateMetricPayload(BaseModel):
     """Payload for creating a metric."""
 
-    meta: "MetricMetaCreate" = Field(..., description="Metric metadata for creation")
+    meta: MetricMetaCreate = Field(..., description="Metric metadata for creation")
     spec: MetricSpec = Field(..., description="Metric specification")
 
 
 class UpdateMetricPayload(BaseModel):
     """Payload for updating a metric."""
 
-    meta: Optional["MetricMetaUpdate"] = Field(
+    meta: MetricMetaUpdate | None = Field(
         None, description="Metric metadata for update"
     )
-    spec: Optional[MetricSpec] = Field(
-        None, description="Metric specification for update"
-    )
+    spec: MetricSpec | None = Field(None, description="Metric specification for update")
 
 
 class MetricMetaCreate(BaseModel):
     """Metric metadata for creation."""
 
     name: str = Field(..., description="Metric name")
-    description: Optional[str] = Field(None, description="Metric description")
+    description: str | None = Field(None, description="Metric description")
 
 
 class MetricMetaUpdate(BaseModel):
     """Metric metadata for update."""
 
-    description: Optional[str] = Field(None, description="Metric description")
+    description: str | None = Field(None, description="Metric description")

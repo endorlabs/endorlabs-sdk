@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/scan-history/
 title: Scan history | Endor Labs Docs
-downloaded: 2026-01-16 09:49:57
+downloaded: 2026-01-26 10:08:07
 ---
 
 Scan history | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/scores/repository-scores/
 title: Package scores | Endor Labs Docs
-downloaded: 2026-01-16 09:47:05
+downloaded: 2026-01-26 10:05:29
 ---
 
 Package scores | Endor Labs Docs

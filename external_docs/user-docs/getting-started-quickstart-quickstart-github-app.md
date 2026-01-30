@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-github-app/
 title: Quick start with GitHub App | Endor Labs Docs
-downloaded: 2026-01-16 09:47:46
+downloaded: 2026-01-26 10:06:10
 ---
 
 Quick start with GitHub App | Endor Labs Docs

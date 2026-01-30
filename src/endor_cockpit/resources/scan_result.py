@@ -1,5 +1,4 @@
-"""
-ScanResult resource module for Endor Labs API.
+"""ScanResult resource module for Endor Labs API.
 
 This module provides CRUD operations for ScanResult resources following the established
 patterns from the Project and Finding resource implementations.
@@ -18,8 +17,10 @@ API USAGE NOTES:
 - For more information, see the ScanResultService REST API documentation
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -37,7 +38,9 @@ from ..types import ListParameters
 logger = logging.getLogger(__name__)
 
 
-def _get_scan_result_ops(client: APIClient) -> BaseResourceOperations:
+def _get_scan_result_ops(
+    client: APIClient,
+) -> BaseResourceOperations[ScanResult]:
     """Get BaseResourceOperations instance for scan results."""
     return BaseResourceOperations(client, "scan-results", ScanResult)
 
@@ -56,14 +59,31 @@ class ScanResultSpecType(FlexibleEnum):
     """Scan result type enumeration."""
 
     UNSPECIFIED = "TYPE_UNSPECIFIED"
-    GITHUB = "TYPE_GITHUB"
+    ADMISSION_POLICIES = "TYPE_ADMISSION_POLICIES"
+    ALERT_POLICIES = "TYPE_ALERT_POLICIES"
+    ALL_SCANS = "TYPE_ALL_SCANS"
+    ANALYTICS = "TYPE_ANALYTICS"
+    ANALYTICS_CHECK = "TYPE_ANALYTICS_CHECK"
+    CALL_GRAPH = "TYPE_CALL_GRAPH"
+    DEPENDENCY_RESOLUTION = "TYPE_DEPENDENCY_RESOLUTION"
+    DOCTOR = "TYPE_DOCTOR"
+    EXCEPTION_POLICIES = "TYPE_EXCEPTION_POLICIES"
+    FILE_ANALYTICS = "TYPE_FILE_ANALYTICS"
+    FINDINGS = "TYPE_FINDINGS"
     GIT = "TYPE_GIT"
+    GITHUB = "TYPE_GITHUB"
+    HOST_CHECK = "TYPE_HOST_CHECK"
+    HUGGING_FACE = "TYPE_HUGGING_FACE"
+    LICENSE_DISCOVERY = "TYPE_LICENSE_DISCOVERY"
+    LINTER = "TYPE_LINTER"
+    NOTIFICATION_POLICIES = "TYPE_NOTIFICATION_POLICIES"
     ORG = "TYPE_ORG"
     PACKAGE = "TYPE_PACKAGE"
-    ANALYTICS = "TYPE_ANALYTICS"
-    FINDINGS = "TYPE_FINDINGS"
+    PR_SECURITY_REVIEW = "TYPE_PR_SECURITY_REVIEW"
+    PROVISIONING = "TYPE_PROVISIONING"
     SBOM_IMPORT = "TYPE_SBOM_IMPORT"
-    TYPE_ALL_SCANS = "TYPE_ALL_SCANS"
+    UIA = "TYPE_UIA"
+    WORKFLOW_SCAN = "TYPE_WORKFLOW_SCAN"
 
 
 class EndorctlRC(FlexibleEnum):
@@ -107,6 +127,15 @@ class EndorctlRC(FlexibleEnum):
     ARTIFACT_OPERATION_FAILURE = "ENDORCTL_RC_ARTIFACT_OPERATION_FAILURE"
     SEGMENTATION_ERROR = "ENDORCTL_RC_SEGMENTATION_ERROR"
     TOOLCHAIN_ERROR = "ENDORCTL_RC_TOOLCHAIN_ERROR"
+    SANDBOX_ERROR = "ENDORCTL_RC_SANDBOX_ERROR"
+    RULE_SET_ERROR = "ENDORCTL_RC_RULE_SET_ERROR"
+    SECURITY_REVIEW_ERROR = "ENDORCTL_RC_SECURITY_REVIEW_ERROR"
+    CODE_API_ERROR = "ENDORCTL_RC_CODE_API_ERROR"
+    POLICY_VIOLATION = "ENDORCTL_RC_POLICY_VIOLATION"
+    POLICY_WARNING = "ENDORCTL_RC_POLICY_WARNING"
+    PR_SECURITY_REVIEW_ERROR = "ENDORCTL_RC_PR_SECURITY_REVIEW_ERROR"
+    EXPORTER_WARNING = "ENDORCTL_RC_EXPORTER_WARNING"
+    CONTAINER_PROFILING_WARNING = "ENDORCTL_RC_CONTAINER_PROFILING_WARNING"
 
 
 class EnvironmentTool(BaseModel):
@@ -128,7 +157,7 @@ class Environment(BaseModel):
 
     arch: str = Field(..., description="CPU architecture")
     endorctl_version: str = Field(..., description="Endorctl version used")
-    config: Dict[str, Any] = Field(
+    config: dict[str, Any] = Field(
         ...,
         description="Configuration used by endorctl. Contains everything "
         "except credential values.",
@@ -136,7 +165,7 @@ class Environment(BaseModel):
     os: str = Field(..., description="Operating system")
     memory: float = Field(..., description="Memory available (in bytes)")
     num_cpus: int = Field(..., description="Number of CPUs")
-    tools: Optional[List[EnvironmentTool]] = Field(
+    tools: list[EnvironmentTool] | None = Field(
         None, description="List of tools available in the environment"
     )
 
@@ -144,16 +173,16 @@ class Environment(BaseModel):
 class SpecFindingData(BaseModel):
     """Finding data metadata (deprecated but kept for backward compatibility)."""
 
-    uuid: Optional[str] = Field(None, description="Finding UUID")
-    name: Optional[str] = Field(None, description="Finding name")
-    description: Optional[str] = Field(None, description="Finding description")
-    level: Optional[str] = Field(None, description="Finding level")
-    tags: Optional[List[str]] = Field(None, description="Finding tags")
-    categories: Optional[List[str]] = Field(None, description="Finding categories")
-    approximation: Optional[bool] = Field(
+    uuid: str | None = Field(None, description="Finding UUID")
+    name: str | None = Field(None, description="Finding name")
+    description: str | None = Field(None, description="Finding description")
+    level: str | None = Field(None, description="Finding level")
+    tags: list[str] | None = Field(None, description="Finding tags")
+    categories: list[str] | None = Field(None, description="Finding categories")
+    approximation: bool | None = Field(
         None, description="True if finding is for approximate dependency"
     )
-    create_time: Optional[str] = Field(None, description="Finding creation time")
+    create_time: str | None = Field(None, description="Finding creation time")
 
 
 class ToolChainsSource(FlexibleEnum):
@@ -161,9 +190,9 @@ class ToolChainsSource(FlexibleEnum):
 
     UNSPECIFIED = "TOOL_CHAINS_SOURCE_UNSPECIFIED"
     API = "TOOL_CHAINS_SOURCE_API"
-    FILE = "TOOL_CHAINS_SOURCE_FILE"
     AUTO_DETECTION = "TOOL_CHAINS_SOURCE_AUTO_DETECTION"
     DEFAULTS = "TOOL_CHAINS_SOURCE_DEFAULTS"
+    FILE = "TOOL_CHAINS_SOURCE_FILE"
     NAMESPACE_DEFAULT = "TOOL_CHAINS_SOURCE_NAMESPACE_DEFAULT"
 
 
@@ -177,21 +206,19 @@ class SpecProvisioningResultData(BaseModel):
     provisioning_result_uuid: str = Field(
         ..., description="UUID of the provisioning result"
     )
-    exit_code: Optional[int] = Field(None, description="Provisioning exit code")
-    error: Optional[str] = Field(None, description="Provisioning error message")
-    automated_scan_parameters_config: Optional[Dict[str, Any]] = Field(
+    exit_code: int | None = Field(None, description="Provisioning exit code")
+    error: str | None = Field(None, description="Provisioning error message")
+    automated_scan_parameters_config: dict[str, Any] | None = Field(
         None, description="Automated scan parameter configuration"
     )
-    auto_detect_result: Optional[Dict[str, Any]] = Field(
+    auto_detect_result: dict[str, Any] | None = Field(
         None, description="Auto detect results"
     )
-    tool_chains_source: Optional[str] = Field(
+    tool_chains_source: str | None = Field(
         None, description="Toolchain source (enum: TOOL_CHAINS_SOURCE_*)"
     )
-    tool_chains: Optional[Dict[str, Any]] = Field(
-        None, description="Toolchains installed"
-    )
-    scan_profile: Optional[Dict[str, Any]] = Field(
+    tool_chains: dict[str, Any] | None = Field(None, description="Toolchains installed")
+    scan_profile: dict[str, Any] | None = Field(
         None, description="Scan profile used for provisioning"
     )
 
@@ -200,8 +227,8 @@ class Version(BaseModel):
     """Version information for a ref."""
 
     ref: str = Field(..., description="Resolved ref (tag, branch, or SHA)")
-    sha: Optional[str] = Field(None, description="SHA of the source control version")
-    metadata: Optional[Dict[str, str]] = Field(None, description="Version metadata")
+    sha: str | None = Field(None, description="SHA of the source control version")
+    metadata: dict[str, str] | None = Field(None, description="Version metadata")
 
 
 class ScanResultMeta(BaseMeta):
@@ -263,101 +290,94 @@ class ScanResultSpec(BaseSpec):
     )
 
     # Optional fields
-    start_time: Optional[str] = Field(
+    start_time: str | None = Field(
         None,
         description="Time the scan started",
         json_schema_extra={"format": "date-time"},
     )
-    end_time: Optional[str] = Field(
+    end_time: str | None = Field(
         None,
         description="Time the scan ended",
         json_schema_extra={"format": "date-time"},
     )
-    stats: Optional[Dict[str, int]] = Field(
+    stats: dict[str, int] | None = Field(
         None,
         description="Map of stats such as how many issues were ingested "
         "during the scan.",
     )
-    refs: Optional[List[str]] = Field(None, description="List of branches scanned")
-    environment: Optional[Environment] = Field(
+    refs: list[str] | None = Field(None, description="List of branches scanned")
+    environment: Environment | None = Field(
         None,
         description="All the information available about the input "
         "parameters and the host environment.",
     )
-    has_panic: Optional[bool] = Field(
+    has_panic: bool | None = Field(
         None, description="True if there was a panic during the scan"
     )
-    exit_code: Optional[EndorctlRC] = Field(
-        None, description="The exit code of the scan"
-    )
-    logs: Optional[List[str]] = Field(
+    exit_code: EndorctlRC | None = Field(None, description="The exit code of the scan")
+    logs: list[str] | None = Field(
         None, description="User facing log output for the scan"
     )
-    policies_triggered: Optional[List[str]] = Field(
+    policies_triggered: list[str] | None = Field(
         None, description="List of policy uuids triggered during the scan"
     )
-    warning_findings: Optional[List[str]] = Field(
+    warning_findings: list[str] | None = Field(
         None, description="List of warning finding uuids identified by the scan"
     )
-    blocking_findings: Optional[List[str]] = Field(
+    blocking_findings: list[str] | None = Field(
         None, description="List of blocking finding uuids identified by the scan"
     )
-    runtimes: Optional[Dict[str, int]] = Field(
+    runtimes: dict[str, int] | None = Field(
         None,
         description="A map of internal scan type runtimes (in milliseconds) "
         "indexed by internal scan type string.",
     )
-    findings: Optional[List[str]] = Field(
+    findings: list[str] | None = Field(
         None, description="List of all finding UUIDs identified by the scan"
     )
-    deleted_findings: Optional[Dict[str, SpecFindingData]] = Field(
+    deleted_findings: dict[str, SpecFindingData] | None = Field(
         None,
         description="Map of basic metadata for all findings deleted by the "
         "scan, indexed by finding uuid. Not available for CI runs.",
     )
-    languages_detected: Optional[List[str]] = Field(
+    languages_detected: list[str] | None = Field(
         None, description="List of languages detected by the scan"
     )
-    provisioning_result_uuid: Optional[str] = Field(
+    provisioning_result_uuid: str | None = Field(
         None, description="UUID of the provisioning result"
     )
-    versions: Optional[List[Version]] = Field(
+    versions: list[Version] | None = Field(
         None, description="Version information for each ref"
     )
-    ecosystem_pkg_counts: Optional[Dict[str, int]] = Field(
+    ecosystem_pkg_counts: dict[str, int] | None = Field(
         None,
         description="Number of package versions per ecosystems processed "
         "during the scan.",
     )
-    ecosystem_dep_counts: Optional[Dict[str, int]] = Field(
+    ecosystem_dep_counts: dict[str, int] | None = Field(
         None,
         description="Number of dependencies per ecosystems processed during the scan.",
     )
-    provisioning_result: Optional[SpecProvisioningResultData] = Field(
+    provisioning_result: SpecProvisioningResultData | None = Field(
         None, description="Provisioning result data"
     )
 
     # Deprecated fields (kept for backward compatibility)
-    errors: Optional[List[str]] = Field(
+    errors: list[str] | None = Field(None, description="Deprecated. Use logs instead.")
+    warnings: list[str] | None = Field(
         None, description="Deprecated. Use logs instead."
     )
-    warnings: Optional[List[str]] = Field(
-        None, description="Deprecated. Use logs instead."
-    )
-    infos: Optional[List[str]] = Field(
-        None, description="Deprecated. Use logs instead."
-    )
-    all_findings: Optional[Dict[str, SpecFindingData]] = Field(
+    infos: list[str] | None = Field(None, description="Deprecated. Use logs instead.")
+    all_findings: dict[str, SpecFindingData] | None = Field(
         None, description="Deprecated."
     )
-    exception_findings: Optional[Dict[str, SpecFindingData]] = Field(
+    exception_findings: dict[str, SpecFindingData] | None = Field(
         None, description="Deprecated."
     )
 
 
 class ScanResult(BaseResource):
-    """
-    An Endor Labs ScanResult entity extending BaseResource.
+    """An Endor Labs ScanResult entity extending BaseResource.
 
     ScanResult-specific fields (universal fields inherited from BaseResource).
 
@@ -398,7 +418,7 @@ class ScanResult(BaseResource):
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to ScanResultSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = ScanResultSpec(**data["spec"])
@@ -406,7 +426,7 @@ class ScanResult(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Known top-level fields in ScanResultSpec
@@ -462,9 +482,7 @@ class ScanResultMetaCreate(BaseModel):
     name: str = Field(
         ..., min_length=1, max_length=255, description="The name of the scan result"
     )
-    description: Optional[str] = Field(
-        None, description="Description of the scan result"
-    )
+    description: str | None = Field(None, description="Description of the scan result")
 
 
 class ScanResultSpecCreate(BaseModel):
@@ -472,9 +490,9 @@ class ScanResultSpecCreate(BaseModel):
 
     status: ScanResultSpecStatus = Field(..., description="Scan status")
     type: ScanResultSpecType = Field(..., description="Scan type")
-    start_time: Optional[str] = Field(None, description="Scan start time")
-    end_time: Optional[str] = Field(None, description="Scan end time")
-    environment: Optional[Environment] = Field(None, description="Environment info")
+    start_time: str | None = Field(None, description="Scan start time")
+    end_time: str | None = Field(None, description="Scan end time")
+    environment: Environment | None = Field(None, description="Environment info")
 
 
 class CreateScanResultPayload(BaseModel):
@@ -488,13 +506,11 @@ class CreateScanResultPayload(BaseModel):
 class ScanResultMetaUpdate(BaseModel):
     """Metadata for updating a ScanResult."""
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, description="Updated description of the scan result"
     )
-    tags: Optional[List[str]] = Field(
-        None, description="Updated tags for the scan result"
-    )
-    annotations: Optional[Dict[str, Any]] = Field(
+    tags: list[str] | None = Field(None, description="Updated tags for the scan result")
+    annotations: dict[str, Any] | None = Field(
         None, description="Updated annotations for the scan result"
     )
 
@@ -510,8 +526,7 @@ class ScanResultSpecUpdate(BaseModel):
 
 
 class UpdateScanResultPayload(BaseModel):
-    """
-    Payload for updating an Endor Labs ScanResult.
+    """Payload for updating an Endor Labs ScanResult.
 
     MUTABLE FIELDS (can be updated via PATCH):
     - meta.tags: General resource tags
@@ -537,25 +552,25 @@ class UpdateScanResultPayload(BaseModel):
         >>> scan_result = update_scan_result(
         ...     client, namespace, uuid, payload, "meta.tags"
         ... )
+
     """
 
-    meta: Optional[ScanResultMetaUpdate] = Field(
+    meta: ScanResultMetaUpdate | None = Field(
         None, description="Updated scan result metadata"
     )
-    spec: Optional[ScanResultSpecUpdate] = Field(
+    spec: ScanResultSpecUpdate | None = Field(
         None, description="Updated scan result specification"
     )
-    context: Optional[Context] = Field(None, description="Updated scan result context")
+    context: Context | None = Field(None, description="Updated scan result context")
 
 
 def list_scan_results(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    max_pages: Optional[int] = None,
-) -> List[ScanResult]:
-    """
-    List scan results in a namespace.
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+) -> list[ScanResult]:
+    """List scan results in a namespace.
 
     Args:
         client: APIClient instance
@@ -567,16 +582,16 @@ def list_scan_results(
 
     Returns:
         List of ScanResult objects
+
     """
     ops = _get_scan_result_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages)
 
 
 def get_scan_result(
     client: APIClient, tenant_meta_namespace: str, scan_result_uuid: str
-) -> Optional[ScanResult]:
-    """
-    Get a specific scan result by UUID.
+) -> ScanResult:
+    """Get a specific scan result by UUID.
 
     Args:
         client: APIClient instance
@@ -584,19 +599,24 @@ def get_scan_result(
         scan_result_uuid: UUID of the scan result to retrieve
 
     Returns:
-        ScanResult object if found, None otherwise
+        ScanResult object
+
+    Raises:
+        NotFoundError: If scan result doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
     """
     ops = _get_scan_result_ops(client)
-    return ops.get(tenant_meta_namespace, scan_result_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, scan_result_uuid)
 
 
 def create_scan_result(
     client: APIClient,
     tenant_meta_namespace: str,
     payload: CreateScanResultPayload,
-) -> Optional[ScanResult]:
-    """
-    Create a new scan result.
+) -> ScanResult:
+    """Create a new scan result with pre-validation and typed errors.
 
     Note: ScanResults are typically generated automatically by endorctl scans.
     This function is provided for completeness but is rarely used by end users.
@@ -607,19 +627,18 @@ def create_scan_result(
         payload: ScanResult creation payload
 
     Returns:
-        Created ScanResult object if successful, None otherwise
-    """
-    url = f"v1/namespaces/{tenant_meta_namespace}/scan-results"
+        Created ScanResult object
 
-    try:
-        response = client.post(url, json=payload.model_dump())
-        if response:
-            data = response.json()
-            return ScanResult(**data)
-        return None
-    except Exception as e:
-        logger.error(f"Error creating scan result: {e}")
-        return None
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If scan result already exists
+        ServerError: If server error occurs
+
+    """
+    ops = _get_scan_result_ops(client)
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_scan_result(
@@ -627,10 +646,9 @@ def update_scan_result(
     tenant_meta_namespace: str,
     scan_result_uuid: str,
     payload: UpdateScanResultPayload,
-    update_mask: Optional[str] = None,
-) -> Optional[ScanResult]:
-    """
-    Update an existing scan result using partial updates.
+    update_mask: str | None = None,
+) -> ScanResult | None:
+    """Update an existing scan result using partial updates.
 
     This function supports updating only specific fields using the update_mask
     parameter, which enables efficient partial updates without overwriting
@@ -669,11 +687,13 @@ def update_scan_result(
             payload will be updated.
 
     Returns:
-        Updated ScanResult object if successful, None otherwise
+        Updated ScanResult object
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
-        pydantic.ValidationError: If response data doesn't match expected schema
+        ValidationError: If payload is invalid
+        NotFoundError: If scan result doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> # Update scan result tags
@@ -683,37 +703,31 @@ def update_scan_result(
         >>> scan_result = update_scan_result(
         ...     client, namespace, uuid, payload, "meta.tags"
         ... )
+
     """
-    url = f"v1/namespaces/{tenant_meta_namespace}/scan-results"
+    # Build ScanResult object with UUID and payload
+    scan_result_dict = {
+        "uuid": scan_result_uuid,
+        **payload.model_dump(exclude_none=True),
+    }
+    scan_result_obj = ScanResult(**scan_result_dict)
 
-    try:
-        # Build update request body
-        update_data = {
-            "object": {
-                "uuid": scan_result_uuid,
-                **payload.model_dump(exclude_none=True),
-            }
-        }
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
 
-        # Add update mask if provided
-        if update_mask:
-            update_data["request"] = {"update_mask": update_mask}
-
-        response = client.patch(url, json=update_data)
-        if response:
-            data = response.json()
-            return ScanResult(**data)
-        return None
-    except Exception as e:
-        logger.error(f"Error updating scan result: {e}")
-        return None
+    # Use base class update method
+    ops = _get_scan_result_ops(client)
+    return ops.update(
+        tenant_meta_namespace, scan_result_uuid, scan_result_obj, update_mask_list
+    )
 
 
 def delete_scan_result(
     client: APIClient, tenant_meta_namespace: str, scan_result_uuid: str
 ) -> bool:
-    """
-    Delete a scan result.
+    """Delete a scan result.
 
     Args:
         client: APIClient instance
@@ -722,6 +736,7 @@ def delete_scan_result(
 
     Returns:
         True if deletion was successful, False otherwise
+
     """
     ops = _get_scan_result_ops(client)
     return ops.delete(tenant_meta_namespace, scan_result_uuid)

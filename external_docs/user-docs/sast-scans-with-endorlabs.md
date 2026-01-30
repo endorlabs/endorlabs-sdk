@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/
 title: SAST scan | Endor Labs Docs
-downloaded: 2026-01-16 09:50:40
+downloaded: 2026-01-26 10:08:50
 ---
 
 SAST scan | Endor Labs Docs
@@ -65,52 +65,9 @@ The following matrix shows how Endor Labs resolves severity by combining impact 
 
 ## Language support
 
-Endor Labs supports single-function analysis for the following languages through curated rules and custom user rules.
+Endor Labs supports single-function analysis for the following languages through curated rules and custom user rules:
 
-```
-- Apex
-- Bash
-- C
-- Cairo
-- Circom
-- Clojure
-- CPP
-- CSharp
-- Dart
-- Dockerfile
-- Elixir
-- Generic
-- Go
-- Hack
-- Html
-- Java
-- Javascript
-- Json
-- Jsonnet
-- Julia
-- Kotlin
-- Lisp
-- Lua
-- Move
-- Ocaml
-- PHP
-- PromQL
-- Protobuf
-- Python
-- QL
-- R
-- Regex
-- Ruby
-- Rust
-- Scala
-- Scheme
-- Solidity
-- Swift
-- Terraform
-- Typescript
-- XML
-- Yaml
-```
+`Apex` `Bash` `C` `Cairo` `Circom` `Clojure` `C++` `C#` `Dart` `Dockerfile` `Elixir` `Generic` `Go` `Hack` `HTML` `Java` `JavaScript` `JSON` `Jsonnet` `Julia` `Kotlin` `Lisp` `Lua` `Move` `OCaml` `PHP` `PromQL` `Protobuf` `Python` `QL` `R` `Regex` `Ruby` `Rust` `Scala` `Scheme` `Solidity` `Swift` `Terraform` `TypeScript` `XML` `YAML`
 
 ## SAST scan with endorctl
 
@@ -130,11 +87,15 @@ See [Run a SAST scan](../sast-scans-with-endorlabs/run-a-sast-scan/) for more in
 
 ## SAST scan in monitoring scans
 
-You can enable SAST scans when you configure monitoring or supervisory scans using the Endor Labs GitHub App, Azure DevOps App, and GitLab App. See [Monitoring scans](../deployment/monitoring-scans/) for more information. To disable the storage of code snippet in SAST scans for monitoring scans, you need to create a scan profile for your monitoring scan with disable code snippet storage as enabled. Note that the setting applies to all scans that you use this scan profile and not just the monitoring scans.
+You can enable SAST scans when you configure monitoring or supervisory scans using the Endor Labs GitHub App, Azure DevOps App, Bitbucket App, and GitLab App. See [Monitoring scans](../deployment/monitoring-scans/) for more information. To disable the storage of code snippet in SAST scans for monitoring scans, you need to create a scan profile for your monitoring scan with disable code snippet storage as enabled. This setting applies to all scans that you use this scan profile, not just the monitoring scans.
 
 ## SAST scan in Endor Labs GitHub Action
 
 You can also enable SAST scan in the Endor Labs GitHub Action. Set the scanning parameter, `scan_sast` as `true`. To disable code snippet storage for SAST scans, set `disable_code_snippet_storage` as `true`. See [Scan with GitHub Actions](../deployment/ci-scans/scan-with-github-actions/) for more information.
+
+## SAST incremental scans
+
+You can use the `--pr-incremental` flag to perform an [incremental scan](../scan-with-endorlabs/pr-scans/#perform-incremental-pr-scan) on your pull requests or merge requests for SAST. In [monitoring scans](#sast-scan-in-monitoring-scans), incremental scans are done by default for PR scans. Endor Labs only scans the files that have changed since the last scan on the baseline branch. Endor Labs computes a diff between the target branch and the baseline branch to identify the changed files. Any modified file is sent through Opengrep to fully scan for SAST issues, and unchanged files are skipped. Endor Labs does not perform chunk-level or line-level code diff analysis for SAST. If there are more than 1000 modified files, Endor Labs performs a complete scan.
 
 ## Feedback
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/scanning-strategies/
 title: Scanning strategies | Endor Labs Docs
-downloaded: 2026-01-16 09:48:48
+downloaded: 2026-01-26 10:06:58
 ---
 
 Scanning strategies | Endor Labs Docs
@@ -308,7 +308,7 @@ GitHub Security supports SARIF file uploads, allowing you to view Endor Labs fin
 
 #### Automatic upload using GitHub App (Pro)
 
-When you configure Endor Labs GitHub App (Pro) with a GHAS SARIF exporter, findings are automatically exported and uploaded to GitHub after each scan. See [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/) for detailed setup instructions.
+When you configure Endor Labs GitHub App (Pro) with a GHAS SARIF exporter, findings are automatically exported and uploaded to GitHub after each scan. See [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/) for detailed setup instructions.
 
 #### Automated upload using GitHub Actions
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/data-model/resource-kinds/
 title: Resource kinds | Endor Labs Docs
-downloaded: 2026-01-16 09:48:46
+downloaded: 2026-01-26 10:06:57
 ---
 
 Resource kinds | Endor Labs Docs

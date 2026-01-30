@@ -1,5 +1,4 @@
-"""
-Model validation utilities for Endor Labs resources.
+"""Model validation utilities for Endor Labs resources.
 
 This module provides utilities for safe serialization, partial updates,
 and enum validation to handle API evolution gracefully.
@@ -7,7 +6,7 @@ and enum validation to handle API evolution gracefully.
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -17,8 +16,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 def safe_serialize(obj: Any) -> Any:
-    """
-    Safely serialize objects to JSON-compatible format.
+    """Safely serialize objects to JSON-compatible format.
 
     Handles datetime objects, enums, and other special types that
     can't be directly JSON serialized.
@@ -28,6 +26,7 @@ def safe_serialize(obj: Any) -> Any:
 
     Returns:
         JSON-serializable representation of the object
+
     """
     if isinstance(obj, datetime):
         return obj.isoformat()
@@ -44,12 +43,11 @@ def safe_serialize(obj: Any) -> Any:
 
 
 def merge_partial_update(
-    existing_data: Dict[str, Any],
-    update_data: Dict[str, Any],
-    update_mask: Optional[List[str]] = None,
-) -> Dict[str, Any]:
-    """
-    Merge partial update data with existing data.
+    existing_data: dict[str, Any],
+    update_data: dict[str, Any],
+    update_mask: list[str] | None = None,
+) -> dict[str, Any]:
+    """Merge partial update data with existing data.
 
     Only updates fields specified in update_mask or non-None fields in update_data.
 
@@ -60,6 +58,7 @@ def merge_partial_update(
 
     Returns:
         Merged data dictionary
+
     """
     result = existing_data.copy()
 
@@ -78,7 +77,7 @@ def merge_partial_update(
     return result
 
 
-def _get_nested_field(data: Dict[str, Any], field_path: str) -> Any:
+def _get_nested_field(data: dict[str, Any], field_path: str) -> Any:
     """Get value from nested field path (e.g., 'spec.level')."""
     keys = field_path.split(".")
     value = data
@@ -90,7 +89,7 @@ def _get_nested_field(data: Dict[str, Any], field_path: str) -> Any:
     return value
 
 
-def _set_nested_field(data: Dict[str, Any], field_path: str, value: Any) -> None:
+def _set_nested_field(data: dict[str, Any], field_path: str, value: Any) -> None:
     """Set value in nested field path (e.g., 'spec.level')."""
     keys = field_path.split(".")
     current = data
@@ -101,9 +100,8 @@ def _set_nested_field(data: Dict[str, Any], field_path: str, value: Any) -> None
     current[keys[-1]] = value
 
 
-def validate_enum_value(enum_class: Type, value: Any) -> Any:
-    """
-    Validate enum value with fallback for unknown values.
+def validate_enum_value(enum_class: type, value: Any) -> Any:
+    """Validate enum value with fallback for unknown values.
 
     Args:
         enum_class: Enum class to validate against
@@ -111,6 +109,7 @@ def validate_enum_value(enum_class: Type, value: Any) -> Any:
 
     Returns:
         Valid enum value or original value if validation fails
+
     """
     try:
         return enum_class(value)
@@ -120,10 +119,9 @@ def validate_enum_value(enum_class: Type, value: Any) -> Any:
 
 
 def ensure_required_fields(
-    data: Dict[str, Any], required_fields: List[str], context: str = "validation"
-) -> Dict[str, Any]:
-    """
-    Ensure required fields are present with helpful error messages.
+    data: dict[str, Any], required_fields: list[str], context: str = "validation"
+) -> dict[str, Any]:
+    """Ensure required fields are present with helpful error messages.
 
     Args:
         data: Data dictionary to validate
@@ -135,12 +133,11 @@ def ensure_required_fields(
 
     Raises:
         ValueError: If required fields are missing
-    """
-    missing_fields = []
 
-    for field_path in required_fields:
-        if _get_nested_field(data, field_path) is None:
-            missing_fields.append(field_path)
+    """
+    missing_fields = [
+        fp for fp in required_fields if _get_nested_field(data, fp) is None
+    ]
 
     if missing_fields:
         raise ValueError(
@@ -151,9 +148,8 @@ def ensure_required_fields(
     return data
 
 
-def create_minimal_payload(model_class: Type[T], **kwargs) -> T:
-    """
-    Create minimal payload with only provided fields.
+def create_minimal_payload[T: BaseModel](model_class: type[T], **kwargs: Any) -> T:
+    """Create minimal payload with only provided fields.
 
     Useful for partial updates where you only want to update specific fields.
 
@@ -163,6 +159,7 @@ def create_minimal_payload(model_class: Type[T], **kwargs) -> T:
 
     Returns:
         Model instance with only specified fields
+
     """
     # Filter out None values
     filtered_kwargs = {k: v for k, v in kwargs.items() if v is not None}
@@ -176,9 +173,8 @@ def create_minimal_payload(model_class: Type[T], **kwargs) -> T:
 
 def safe_model_dump(
     model: BaseModel, exclude_none: bool = True, exclude_unset: bool = True
-) -> Dict[str, Any]:
-    """
-    Safely dump Pydantic model to dictionary with proper serialization.
+) -> dict[str, Any]:
+    """Safely dump Pydantic model to dictionary with proper serialization.
 
     Args:
         model: Pydantic model instance
@@ -187,6 +183,7 @@ def safe_model_dump(
 
     Returns:
         Dictionary representation of the model
+
     """
     try:
         return model.model_dump(
@@ -205,10 +202,9 @@ def safe_model_dump(
 
 
 def validate_update_mask(
-    update_mask: str, allowed_fields: List[str], resource_type: str = "resource"
+    update_mask: str, allowed_fields: list[str], resource_type: str = "resource"
 ) -> bool:
-    """
-    Validate that update_mask only contains allowed fields.
+    """Validate that update_mask only contains allowed fields.
 
     Args:
         update_mask: Comma-separated list of fields to update
@@ -217,6 +213,7 @@ def validate_update_mask(
 
     Returns:
         True if valid, False otherwise
+
     """
     if not update_mask:
         return True
@@ -234,15 +231,15 @@ def validate_update_mask(
     return True
 
 
-def get_mutable_fields(resource_type: str) -> List[str]:
-    """
-    Get list of mutable fields for a resource type.
+def get_mutable_fields(resource_type: str) -> list[str]:
+    """Get list of mutable fields for a resource type.
 
     Args:
         resource_type: Type of resource (e.g., 'finding', 'policy')
 
     Returns:
         List of mutable field paths
+
     """
     # Define mutable fields for each resource type
     mutable_fields_map = {
@@ -266,22 +263,77 @@ def get_mutable_fields(resource_type: str) -> List[str]:
         ],
         "project": ["meta.description", "meta.tags"],
         "namespace": ["meta.description"],
+        "authorization_policy": [
+            "meta.name",
+            "meta.description",
+            "meta.tags",
+            "spec",
+            "propagate",
+        ],
+        "scan_profile": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "repository": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "repository_version": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "package_version": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "metric": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "linter_result": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "dependency_metadata": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "installation": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "package_license": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "semgrep_rule": ["meta.name", "meta.description", "meta.tags", "spec"],
+        "scan_result": ["meta.name", "meta.description", "meta.tags", "spec"],
     }
 
     return mutable_fields_map.get(resource_type, [])
 
 
-def get_immutable_fields(resource_type: str) -> List[str]:
-    """
-    Get list of immutable fields for a resource type.
+def get_immutable_fields(resource_type: str) -> list[str]:
+    """Get list of immutable fields for a resource type.
+
+    Used by BaseResourceOperations.update() to block PATCH of read-only fields.
+    All 16 update-capable resources are in RESOURCE_NAME_TO_TYPE and get this
+    check. The 4 original types (finding, policy, project, namespace) have
+    spec-derived resource-specific immutable fields; the 12 others use v1Meta-
+    derived common set; add resource-specific spec readOnly per-resource from
+    OpenAPI when needed.
 
     Args:
         resource_type: Type of resource (e.g., 'finding', 'policy')
 
     Returns:
         List of immutable field paths
+
     """
-    # Define immutable fields for each resource type
+    # v1Meta readOnly (OpenAPI): create_time, update_time, upsert_time, kind,
+    # version, created_by, updated_by, references, index_data
+    _v1meta_readonly = [
+        "uuid",
+        "meta.create_time",
+        "meta.created_by",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.kind",
+        "meta.version",
+        "meta.references",
+        "meta.index_data",
+        "tenant_meta.namespace",
+    ]
+    # Spec-derived readOnly (OpenAPI Update body object.spec) for 12 resources
+    _authz_spec_readonly = ["spec.is_support_policy"]
+    _installation_spec_readonly = [
+        "spec.external_name",
+        "spec.user",
+        "spec.ingestion_time",
+        "spec.target_type",
+        "spec.ingestion_token",
+        "spec.marked_for_deletion",
+    ]
+    _package_version_spec_readonly = [
+        "spec.ecosystem",
+        "spec.package_name",
+        "spec.internal_reference_key",
+    ]
+    _semgrep_rule_spec_readonly = ["spec.defined_by", "spec.severity_level"]
     immutable_fields_map = {
         "finding": [
             "uuid",
@@ -324,6 +376,18 @@ def get_immutable_fields(resource_type: str) -> List[str]:
             "meta.updated_by",
             "tenant_meta.namespace",
         ],
+        "authorization_policy": _v1meta_readonly + _authz_spec_readonly,
+        "scan_profile": _v1meta_readonly,
+        "repository": _v1meta_readonly,
+        "repository_version": _v1meta_readonly,
+        "package_version": _v1meta_readonly + _package_version_spec_readonly,
+        "metric": _v1meta_readonly,
+        "linter_result": _v1meta_readonly,
+        "dependency_metadata": _v1meta_readonly,
+        "installation": _v1meta_readonly + _installation_spec_readonly,
+        "package_license": _v1meta_readonly,
+        "semgrep_rule": _v1meta_readonly + _semgrep_rule_spec_readonly,
+        "scan_result": _v1meta_readonly,
     }
 
     return immutable_fields_map.get(resource_type, [])

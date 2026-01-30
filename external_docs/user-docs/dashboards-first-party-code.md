@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/dashboards/first-party-code/
 title: First-party code | Endor Labs Docs
-downloaded: 2026-01-16 09:49:20
+downloaded: 2026-01-26 10:07:28
 ---
 
 First-party code | Endor Labs Docs

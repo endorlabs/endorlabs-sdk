@@ -21,15 +21,22 @@ jobs:
         uses: ./.github/actions/setup-python-uv
         with:
           python-version: "3.13"
-          install-dependencies: "false"
 
       - name: Install documentation dependencies
         run: |
           uv sync --dev --extra docs
 
+      - name: Validate documentation dependencies
+        run: |
+          echo "Validating documentation dependencies are installed..."
+          python -c "import bs4; print(f'✅ beautifulsoup4 {bs4.__version__}')" || (echo "❌ beautifulsoup4 not found" && exit 1)
+          python -c "import markdownify; print(f'✅ markdownify installed')" || (echo "❌ markdownify not found" && exit 1)
+          python -c "import requests; print(f'✅ requests {requests.__version__}')" || (echo "❌ requests not found" && exit 1)
+          echo "✅ All documentation dependencies are installed"
+
       - name: Update Documentation
         run: |
-          uv run python scripts/unified_docs_workflow.py \
+          uv run python .github/scripts/unified_docs_workflow.py \
             --update-docs-only \
             --download-openapi \
             --download-user-docs \

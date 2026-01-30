@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/
 title: Release notes | Endor Labs Docs
-downloaded: 2026-01-16 09:51:36
+downloaded: 2026-01-26 10:09:47
 ---
 
 Release notes | Endor Labs Docs
@@ -18,11 +18,23 @@ Endor Labs helps you select, secure, and maintain dependencies, so development m
 
 We are excited to introduce the latest features and enhancements in Endor Labs.
 
+### Export scan data to Amazon S3 New
+
+Endor Labs now supports exporting scan data to an Amazon S3 storage bucket for archival, compliance, or integration with other tools. The S3 exporter supports exporting findings in JSON or SARIF format.
+
+For more information, see [Export findings to S3](../../scan-with-endorlabs/data-exporters/export-to-s3/).
+
 ### Send separate notifications for each finding Enhancement
 
 You can now use the **None (Notify for each Finding)** aggregation type to send separate notifications for every finding generated from the configured action policy, making it easier to track and assign individual security issues. This aggregation type is supported only for SAST and Secrets action policies.
 
 For more information, see [Aggregation types for notifications](../../managing-policies/action-policies/#aggregation-types-for-notifications).
+
+### Filter findings by tags in GitHub Advanced Security Enhancement
+
+Endor Labs now includes finding tags and categories in the SARIF output when exporting findings to GitHub Advanced Security (GHAS). You can use these tags to filter and identify specific types of findings in GitHub code scanning, such as reachable vulnerabilities, findings with available fixes, or findings by category, like SCA, SAST, and Secrets.
+
+For more information, see [Filter findings by tags in GitHub](../../scan-with-endorlabs/data-exporters/export-to-ghas/#filter-findings-by-tags-in-github).
 
 [December 2025](/releasenotes/december-2025/)
 
@@ -196,7 +208,7 @@ For more information, see [Scan Swift projects](../../scan-with-endorlabs/langua
 
 Endor Labs now supports filtering findings exported to GitHub Advanced Security through action policies. Findings are exported only from projects covered by configured action policies.
 
-For more information, see [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/#filter-findings-exported-to-github).
+For more information, see [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/#filter-findings-exported-to-github).
 
 ### Top 10 secret rules by severity Enhancement
 
@@ -278,7 +290,7 @@ For more information see [Export SBOM in Endor Labs](../../managing-sboms/export
 
 The GHAS SARIF exporter now supports pull request scans for GitHub App (Pro). If you have enabled pull request scans in your GitHub App, the GHAS SARIF exporter exports the findings for each pull request. You can view the findings for the pull request in GitHub Advanced Security.
 
-For more information, see [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/).
+For more information, see [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/).
 
 ### Azure OpenAI model detection Enhancement
 

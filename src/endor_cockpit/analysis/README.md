@@ -1,10 +1,14 @@
 # Finding Correlation Analysis - Simple API
 
+**Experimental:** This feature may change; it is not covered by the same stability guarantees as the rest of the SDK.
+
 Simple tools for loading findings/rules from API and querying via SQL.
 
 ## Usage
 
 ### Load Data from API
+
+Demonstrates loading findings and Opengrep/Semgrep rules from the Endor API and persisting to SQLite.
 
 ```python
 from endor_cockpit.analysis import FindingDataLoader
@@ -13,27 +17,25 @@ from endor_cockpit.api_client import APIClient
 client = APIClient()
 loader = FindingDataLoader(".tmp/findings_correlation.db")
 
-# Load from API
-findings = loader.load_findings_from_api(client, "namespace")
+findings = loader.load_findings_from_api(client, "tenant.namespace")
 loader.save_findings_to_db(findings)
 
-rules = loader.load_rules_from_api(client, "namespace")
+rules = loader.load_rules_from_api(client, "tenant.namespace")
 loader.save_rules_to_db(rules)
 ```
 
 ### Query with SQL
 
+Demonstrates querying persisted findings and rules by rule ID and label.
+
 ```python
 from endor_cockpit.analysis import FindingDatabase
 
 with FindingDatabase(".tmp/findings_correlation.db") as db:
-    # Execute any SQL query
     results = db.execute_query(
-        "SELECT * FROM findings WHERE rule_id = ? AND label = 'FP'",
-        ("java-stack-trace-exposed",)
+        "SELECT * FROM findings WHERE rule_id = ? AND label = ?",
+        ("java-stack-trace-exposed", "FP"),
     )
-    
-    # Or use helper methods
     findings = db.get_findings_by_rule("java-stack-trace-exposed", label="FP")
     rule = db.get_rule_by_id("java-stack-trace-exposed")
 ```
@@ -47,5 +49,5 @@ with FindingDatabase(".tmp/findings_correlation.db") as db:
 
 ## SQL Query Examples
 
-See `maneuvers/example_sql_queries.py` for examples.
+The snippets above show typical usage. Adapt the SQL to your schema and labels; the `findings` and `rules` tables support standard SQL filters and joins.
 

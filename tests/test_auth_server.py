@@ -1,5 +1,4 @@
-"""
-Tests for browser OAuth authentication server.
+"""Tests for browser OAuth authentication server.
 
 ⚠️  NOTE: These tests are skipped in CI environments because browser
 authentication requires human interaction. The tests use mocks to avoid
@@ -7,11 +6,14 @@ actually opening a browser.
 """
 
 import os
+import threading
+import urllib.request
 from http.server import HTTPServer
 from unittest.mock import Mock, patch
 
 import pytest
 
+import endor_cockpit.auth_server as auth_server_mod
 from endor_cockpit.auth_server import (
     AUTH_METHODS,
     TokenHandler,
@@ -36,13 +38,9 @@ def is_ci_environment() -> bool:
 class TestTokenHandler:
     """Test TokenHandler for OAuth callback processing."""
 
-    @patch("endor_cockpit.auth_server.LAST_TOKEN", None)
-    def test_token_handler_get_with_token(self):
+    def test_token_handler_get_with_token(self) -> None:
         """Test TokenHandler captures token from GET request."""
-        global LAST_TOKEN
-        LAST_TOKEN = None
-
-        # Test token parsing logic directly
+        auth_server_mod._captured_token = None
 
         # Create a real server to test the handler properly
         server = HTTPServer(("localhost", 0), TokenHandler)
@@ -51,54 +49,78 @@ class TestTokenHandler:
         # This tests the core functionality without needing a full HTTP request
         test_path = "/?token=test-token-123"
         if "?" in test_path:
-            loc, query = test_path.split("?", 1)
+            _loc, query = test_path.split("?", 1)
             params = {}
             for param in query.split("&"):
                 if "=" in param:
                     k, v = param.split("=", 1)
                     params[k] = v
             if "token" in params:
-                LAST_TOKEN = params["token"]
+                auth_server_mod._captured_token = params["token"]
 
-        assert LAST_TOKEN == "test-token-123"
+        assert auth_server_mod._captured_token == "test-token-123"
         server.server_close()
 
-    def test_token_parsing_logic(self):
+    def test_token_parsing_logic(self) -> None:
         """Test token parsing from query string."""
-        global LAST_TOKEN
-        LAST_TOKEN = None
+        auth_server_mod._captured_token = None
 
         # Test the parsing logic used in TokenHandler
         test_path = "/?token=parsed-token-456"
         if "?" in test_path:
-            loc, query = test_path.split("?", 1)
+            _loc, query = test_path.split("?", 1)
             params = {}
             for param in query.split("&"):
                 if "=" in param:
                     k, v = param.split("=", 1)
                     params[k] = v
             if "token" in params:
-                LAST_TOKEN = params["token"]
+                auth_server_mod._captured_token = params["token"]
 
-        assert LAST_TOKEN == "parsed-token-456"
+        assert auth_server_mod._captured_token == "parsed-token-456"
 
-    def test_token_parsing_without_token(self):
+    def test_token_parsing_without_token(self) -> None:
         """Test parsing when token is not in query string."""
-        global LAST_TOKEN
-        LAST_TOKEN = None
+        auth_server_mod._captured_token = None
 
         test_path = "/?other=value&another=param"
         if "?" in test_path:
-            loc, query = test_path.split("?", 1)
+            _loc, query = test_path.split("?", 1)
             params = {}
             for param in query.split("&"):
                 if "=" in param:
                     k, v = param.split("=", 1)
                     params[k] = v
             if "token" in params:
-                LAST_TOKEN = params["token"]
+                auth_server_mod._captured_token = params["token"]
 
-        assert LAST_TOKEN is None
+        assert auth_server_mod._captured_token is None
+
+    def test_token_handler_do_get_via_http_request(self) -> None:
+        """Test TokenHandler.do_GET by making a real HTTP request with token."""
+        auth_server_mod._captured_token = None
+        server = HTTPServer(("localhost", 0), TokenHandler)
+        port = server.server_address[1]
+        handled = threading.Event()
+
+        def handle_one() -> None:
+            server.handle_request()
+            handled.set()
+
+        try:
+            thread = threading.Thread(target=handle_one)
+            thread.start()
+            with urllib.request.urlopen(
+                f"http://localhost:{port}/?token=xyz-captured",
+                timeout=5,
+            ) as resp:
+                assert resp.status == 200
+            handled.wait(timeout=5)
+            thread.join(timeout=5)
+            assert auth_server_mod._captured_token == "xyz-captured"
+        finally:
+            server.server_close()
+        auth_server_mod._captured_token = None
 
 
 class TestGetToken:
@@ -106,15 +128,16 @@ class TestGetToken:
 
     @pytest.mark.skipif(
         is_ci_environment(),
-        reason="Browser authentication requires human interaction and cannot be tested in CI",
+        reason=(
+            "Browser authentication requires human interaction "
+            "and cannot be tested in CI"
+        ),
     )
     @patch("endor_cockpit.auth_server.HTTPServer")
     @patch("endor_cockpit.auth_server.get_browser")
-    def test_get_token_success(self, mock_get_browser, mock_server_class):
+    def test_get_token_success(self, mock_get_browser, mock_server_class) -> None:
         """Test successful token retrieval via browser OAuth."""
-        # Reset LAST_TOKEN in the module
-        import endor_cockpit.auth_server
-        endor_cockpit.auth_server.LAST_TOKEN = None
+        auth_server_mod._captured_token = None
 
         # Mock browser
         mock_browser = Mock()
@@ -127,15 +150,13 @@ class TestGetToken:
         mock_server.server_close = Mock()
 
         # Create a mock request handler that will set the token in the module
-        def handle_request_side_effect():
-            endor_cockpit.auth_server.LAST_TOKEN = "test-bearer-token"
+        def handle_request_side_effect() -> None:
+            auth_server_mod._captured_token = "test-bearer-token"
 
         mock_server.handle_request = Mock(side_effect=handle_request_side_effect)
         mock_server_class.return_value = mock_server
 
-        token = get_token(
-            timeout=20, environment="endorlabs.com", method="admin"
-        )
+        token = get_token(timeout=20, environment="endorlabs.com", method="admin")
 
         assert token == "test-bearer-token"
         mock_browser.open_new_tab.assert_called_once()
@@ -144,14 +165,16 @@ class TestGetToken:
 
     @pytest.mark.skipif(
         is_ci_environment(),
-        reason="Browser authentication requires human interaction and cannot be tested in CI",
+        reason=(
+            "Browser authentication requires human interaction "
+            "and cannot be tested in CI"
+        ),
     )
     @patch("endor_cockpit.auth_server.HTTPServer")
     @patch("endor_cockpit.auth_server.get_browser")
-    def test_get_token_timeout(self, mock_get_browser, mock_server_class):
+    def test_get_token_timeout(self, mock_get_browser, mock_server_class) -> None:
         """Test token retrieval timeout."""
-        global LAST_TOKEN
-        LAST_TOKEN = None
+        auth_server_mod._captured_token = None
 
         mock_browser = Mock()
         mock_browser.open_new_tab = Mock()
@@ -168,27 +191,28 @@ class TestGetToken:
         assert token is None
         mock_server.server_close.assert_called_once()
 
-    def test_get_token_invalid_method(self):
+    def test_get_token_invalid_method(self) -> None:
         """Test get_token raises ValueError for invalid method."""
         with pytest.raises(ValueError, match="Unsupported auth method"):
             get_token(method="invalid_method")
 
-    def test_get_token_email_required(self):
+    def test_get_token_email_required(self) -> None:
         """Test get_token requires email for email auth method."""
         with pytest.raises(ValueError, match="Email address required"):
             get_token(method="email")
 
     @pytest.mark.skipif(
         is_ci_environment(),
-        reason="Browser authentication requires human interaction and cannot be tested in CI",
+        reason=(
+            "Browser authentication requires human interaction "
+            "and cannot be tested in CI"
+        ),
     )
     @patch("endor_cockpit.auth_server.HTTPServer")
     @patch("endor_cockpit.auth_server.get_browser")
-    def test_get_token_email_method(self, mock_get_browser, mock_server_class):
+    def test_get_token_email_method(self, mock_get_browser, mock_server_class) -> None:
         """Test get_token with email method includes email in URL."""
-        # Reset LAST_TOKEN in the module
-        import endor_cockpit.auth_server
-        endor_cockpit.auth_server.LAST_TOKEN = None
+        auth_server_mod._captured_token = None
 
         mock_browser = Mock()
         mock_browser.open_new_tab = Mock()
@@ -198,8 +222,8 @@ class TestGetToken:
         mock_server.timeout = 20
         mock_server.server_close = Mock()
 
-        def handle_request_side_effect():
-            endor_cockpit.auth_server.LAST_TOKEN = "email-token"
+        def handle_request_side_effect() -> None:
+            auth_server_mod._captured_token = "email-token"
 
         mock_server.handle_request = Mock(side_effect=handle_request_side_effect)
         mock_server_class.return_value = mock_server
@@ -216,7 +240,7 @@ class TestGetToken:
         call_args = mock_browser.open_new_tab.call_args[0][0]
         assert "email=test@example.com" in call_args
 
-    def test_auth_methods_defined(self):
+    def test_auth_methods_defined(self) -> None:
         """Test that all expected auth methods are defined."""
         expected_methods = ["admin", "google", "github", "gitlab", "email"]
         for method in expected_methods:
@@ -224,12 +248,14 @@ class TestGetToken:
 
     @pytest.mark.skipif(
         is_ci_environment(),
-        reason="Browser authentication requires human interaction and cannot be tested in CI",
+        reason=(
+            "Browser authentication requires human interaction "
+            "and cannot be tested in CI"
+        ),
     )
     @patch("endor_cockpit.auth_server.HTTPServer")
-    def test_get_token_port_in_use(self, mock_server_class):
+    def test_get_token_port_in_use(self, mock_server_class) -> None:
         """Test get_token handles port already in use error."""
-
         # Mock OSError for port in use
         mock_server_class.side_effect = OSError("Address already in use")
 
@@ -238,13 +264,17 @@ class TestGetToken:
         assert token is None
 
     @patch.dict(os.environ, {"CI": "true"}, clear=False)
-    def test_get_token_prevents_ci_usage(self):
+    def test_get_token_prevents_ci_usage(self) -> None:
         """Test that get_token raises ValueError in CI environments."""
-        with pytest.raises(ValueError, match="Browser authentication cannot be used in CI"):
+        with pytest.raises(
+            ValueError, match="Browser authentication cannot be used in CI"
+        ):
             get_token(method="admin")
 
     @patch.dict(os.environ, {"GITHUB_ACTIONS": "true"}, clear=False)
-    def test_get_token_prevents_github_actions_usage(self):
+    def test_get_token_prevents_github_actions_usage(self) -> None:
         """Test that get_token raises ValueError in GitHub Actions."""
-        with pytest.raises(ValueError, match="Browser authentication cannot be used in CI"):
+        with pytest.raises(
+            ValueError, match="Browser authentication cannot be used in CI"
+        ):
             get_token(method="browser")

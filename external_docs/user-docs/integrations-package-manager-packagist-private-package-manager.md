@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/packagist-private-package-manager/
 title: Private package manager integration for Packagist | Endor Labs Docs
-downloaded: 2026-01-16 09:51:07
+downloaded: 2026-01-26 10:09:18
 ---
 
 Private package manager integration for Packagist | Endor Labs Docs

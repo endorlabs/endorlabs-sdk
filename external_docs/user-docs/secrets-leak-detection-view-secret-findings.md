@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/secrets-leak-detection/view-secret-findings/
 title: View secret findings | Endor Labs Docs
-downloaded: 2026-01-16 09:48:58
+downloaded: 2026-01-26 10:07:09
 ---
 
 View secret findings | Endor Labs Docs

@@ -51,7 +51,7 @@ jobs:
           
           # Run version check and capture exit code
           set +e  # Don't exit on error
-          python scripts/check_endorctl_version.py \
+          python .github/scripts/check_endorctl_version.py \
             --state-file "$STATE_FILE" \
             --quiet
           EXIT_CODE=$?
@@ -92,23 +92,21 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v6.0.0
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: "3.13"
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v3.0.0
-        with:
-          version: "0.9.3"
-
-      - name: Install dependencies
+      - name: Validate dependencies
         run: |
-          uv sync --dev
+          echo "Validating required dependencies are installed..."
+          python -c "import pytest; print(f'✅ pytest {pytest.__version__}')" || (echo "❌ pytest not found" && exit 1)
+          python -c "import pydantic; print(f'✅ pydantic {pydantic.__version__}')" || (echo "❌ pydantic not found" && exit 1)
+          echo "✅ All required dependencies are installed"
 
       - name: Run schema drift detection
         run: |
-          python scripts/unified_docs_workflow.py \
+          python .github/scripts/unified_docs_workflow.py \
             --check-drift-only \
             --test-path tests/ \
             --drift-report-output schema_drift_report.json \

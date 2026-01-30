@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-enterprise-app/manage-githubapp-enterprise/
 title: Manage GitHub Enterprise Server App on Endor Labs | Endor Labs Docs
-downloaded: 2026-01-16 09:48:39
+downloaded: 2026-01-26 10:06:50
 ---
 
 Manage GitHub Enterprise Server App on Endor Labs | Endor Labs Docs

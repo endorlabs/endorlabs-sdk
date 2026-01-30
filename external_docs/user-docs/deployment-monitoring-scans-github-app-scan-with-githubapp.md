@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/scan-with-githubapp/
 title: Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
-downloaded: 2026-01-16 09:47:07
+downloaded: 2026-01-26 10:05:31
 ---
 
 Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
@@ -296,6 +296,8 @@ var FuncMap = template.FuncMap{
 	// 'groupFindingsByRemediation' groups findings by their remediation value
 	// Returns a slice of GroupedRemediation where findings with the same remediation are grouped together
 	"groupFindingsByRemediation": utils.GroupFindingsByRemediation,
+
+	"consolidateRemediations": utils.ConsolidateRemediations,
 }
 ```
 

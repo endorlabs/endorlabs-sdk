@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/license-policies/
 title: License policies | Endor Labs Docs
-downloaded: 2026-01-16 09:49:21
+downloaded: 2026-01-26 10:07:30
 ---
 
 License policies | Endor Labs Docs

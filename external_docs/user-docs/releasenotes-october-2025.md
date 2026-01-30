@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/october-2025/
 title: October 2025 | Endor Labs Docs
-downloaded: 2026-01-16 09:49:37
+downloaded: 2026-01-26 10:07:46
 ---
 
 October 2025 | Endor Labs Docs

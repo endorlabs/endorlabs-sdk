@@ -9,15 +9,16 @@ Consolidated script for downloading and refreshing:
 Example:
   # Install dependencies first (if not already installed)
   uv pip install -e ".[docs]"
-  
+
   # Download both OpenAPI spec and user docs
-  uv run python scripts/sync_external_docs.py --all
+  uv run python .github/scripts/sync_external_docs.py --all
 
   # Download only OpenAPI spec
-  uv run python scripts/sync_external_docs.py --download-openapi
+  uv run python .github/scripts/sync_external_docs.py --download-openapi
 
   # Download only user docs
-  uv run python scripts/sync_external_docs.py --download-user-docs --max-pages 100
+  uv run python .github/scripts/sync_external_docs.py \\
+    --download-user-docs --max-pages 100
 """
 
 import argparse
@@ -43,7 +44,7 @@ except ImportError:
     HAS_DOCS_DEPS = False
 
 # Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from endor_cockpit.api_client import APIClient
 
@@ -90,6 +91,72 @@ def download_sitemap_urls(sitemap_url: str, timeout: int = 10) -> List[str]:
         return []
 
 
+def _normalize_url(url: str) -> str:
+    """Normalize URL (handle relative/absolute)."""
+    if url.startswith("/"):
+        return f"https://docs.endorlabs.com{url}"
+    elif not url.startswith("http"):
+        return f"https://docs.endorlabs.com/{url}"
+    else:
+        return url
+
+
+def _generate_filename(full_url: str) -> str:
+    """Generate filename from URL."""
+    parsed_url = urlparse(full_url)
+    path_parts = parsed_url.path.strip("/").split("/")
+    if not path_parts or path_parts == [""]:
+        return "index.md"
+    else:
+        # Clean path parts and create filename
+        clean_parts = [
+            re.sub(r"[^\w\-_.]", "_", part) for part in path_parts if part
+        ]
+        if clean_parts:
+            return f"{'-'.join(clean_parts)}.md"
+        else:
+            return "index.md"
+
+
+def _download_single_page(
+    full_url: str,
+    output_file: Path,
+    timeout: int,
+) -> bool:
+    """Download and convert single page."""
+    try:
+        # Download page
+        response = requests.get(full_url, timeout=timeout)
+        response.raise_for_status()
+
+        # Parse HTML and extract content
+        soup = BeautifulSoup(response.content, "html.parser")
+
+        # Remove unwanted elements
+        for element in soup(["script", "style", "nav", "footer", "header"]):
+            element.decompose()
+
+        # Convert to markdown
+        markdown_content = md(str(soup), heading_style="ATX")
+
+        # Add metadata header
+        metadata = f"""---
+url: {full_url}
+title: {soup.title.string if soup.title else 'Untitled'}
+downloaded: {time.strftime('%Y-%m-%d %H:%M:%S')}
+---
+
+{markdown_content}
+"""
+
+        # Save to file
+        output_file.write_text(metadata, encoding="utf-8")
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to download {full_url}: {e}")
+        return False
+
+
 def download_user_docs(
     sitemap_urls: List[str],
     output_dir: Path,
@@ -124,29 +191,8 @@ def download_user_docs(
             sitemap_urls[:max_pages] if max_pages else sitemap_urls
         ):
             try:
-                # Handle relative URLs by prepending the base domain
-                if url.startswith("/"):
-                    full_url = f"https://docs.endorlabs.com{url}"
-                elif not url.startswith("http"):
-                    full_url = f"https://docs.endorlabs.com/{url}"
-                else:
-                    full_url = url
-
-                # Generate filename from URL
-                parsed_url = urlparse(full_url)
-                path_parts = parsed_url.path.strip("/").split("/")
-                if not path_parts or path_parts == [""]:
-                    filename = "index.md"
-                else:
-                    # Clean path parts and create filename
-                    clean_parts = [
-                        re.sub(r"[^\w\-_.]", "_", part) for part in path_parts if part
-                    ]
-                    if clean_parts:
-                        filename = f"{'-'.join(clean_parts)}.md"
-                    else:
-                        filename = "index.md"
-
+                full_url = _normalize_url(url)
+                filename = _generate_filename(full_url)
                 output_file = output_dir / filename
 
                 # Skip if file exists and not forcing
@@ -156,39 +202,13 @@ def download_user_docs(
 
                 logger.info(f"Downloading ({i+1}/{total_urls}): {full_url}")
 
-                # Download page
-                response = requests.get(full_url, timeout=timeout)
-                response.raise_for_status()
-
-                # Parse HTML and extract content
-                soup = BeautifulSoup(response.content, "html.parser")
-
-                # Remove unwanted elements
-                for element in soup(["script", "style", "nav", "footer", "header"]):
-                    element.decompose()
-
-                # Convert to markdown
-                markdown_content = md(str(soup), heading_style="ATX")
-
-                # Add metadata header
-                metadata = f"""---
-url: {full_url}
-title: {soup.title.string if soup.title else 'Untitled'}
-downloaded: {time.strftime('%Y-%m-%d %H:%M:%S')}
----
-
-{markdown_content}
-"""
-
-                # Save to file
-                output_file.write_text(metadata, encoding="utf-8")
-                downloaded_count += 1
-
-                # Small delay to be respectful
-                time.sleep(0.5)
+                if _download_single_page(full_url, output_file, timeout):
+                    downloaded_count += 1
+                    # Small delay to be respectful
+                    time.sleep(0.5)
 
             except Exception as e:
-                logger.warning(f"Failed to download {url}: {e}")
+                logger.warning(f"Failed to process {url}: {e}")
                 continue
 
         logger.info(f"Successfully downloaded {downloaded_count} pages")
@@ -244,24 +264,24 @@ def download_openapi_spec(
         return False
 
 
-def main():
-    """Main function to sync external documentation."""
+def _setup_parser() -> argparse.ArgumentParser:
+    """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
         description="Sync external documentation (OpenAPI spec and user docs)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   # Download both OpenAPI spec and user docs
-  python sync_external_docs.py --all
+  python .github/scripts/sync_external_docs.py --all
 
   # Download only OpenAPI spec
-  python sync_external_docs.py --download-openapi
+  python .github/scripts/sync_external_docs.py --download-openapi
 
   # Download only user docs with limit
-  python sync_external_docs.py --download-user-docs --max-pages 100
+  python .github/scripts/sync_external_docs.py --download-user-docs --max-pages 100
 
   # Force re-download everything
-  python sync_external_docs.py --all --force
+  python .github/scripts/sync_external_docs.py --all --force
         """,
     )
 
@@ -286,7 +306,10 @@ Examples:
     parser.add_argument(
         "--openapi-output",
         default="external_docs/openapi-swagger.json",
-        help="Output path for OpenAPI spec (default: external_docs/openapi-swagger.json)",
+        help=(
+            "Output path for OpenAPI spec "
+            "(default: external_docs/openapi-swagger.json)"
+        ),
     )
 
     # User docs options
@@ -323,7 +346,91 @@ Examples:
         action="store_true",
         help="Enable verbose logging",
     )
+    return parser
 
+
+def _download_user_docs_section(args) -> bool:
+    """Handle user docs download section."""
+    if not HAS_DOCS_DEPS:
+        logger.error(
+            "Missing required dependencies for user docs download.\n"
+            "Install them with: uv pip install -e '.[docs]'"
+        )
+        return False
+
+    logger.info("=" * 80)
+    logger.info("DOWNLOADING USER DOCUMENTATION")
+    logger.info("=" * 80)
+
+    try:
+        output_dir = Path(args.user_docs_output)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Download sitemap and extract URLs
+        sitemap_urls = download_sitemap_urls(args.sitemap_url, args.timeout)
+        if not sitemap_urls:
+            logger.error("No URLs found in sitemap")
+            return False
+
+        logger.info(f"Found {len(sitemap_urls)} URLs in sitemap")
+
+        downloaded_count = download_user_docs(
+            sitemap_urls=sitemap_urls,
+            output_dir=output_dir,
+            max_pages=args.max_pages,
+            timeout=args.timeout,
+            force=args.force,
+        )
+
+        logger.info("=" * 80)
+        logger.info("USER DOCUMENTATION DOWNLOAD COMPLETE")
+        logger.info("=" * 80)
+        logger.info(f"Successfully downloaded: {downloaded_count} pages")
+        logger.info(f"Output directory: {output_dir}")
+
+        if downloaded_count < len(sitemap_urls):
+            logger.info(
+                f"Note: {len(sitemap_urls) - downloaded_count} URLs were "
+                "skipped or failed"
+            )
+
+        return True
+
+    except KeyboardInterrupt:
+        logger.info("Operation cancelled by user")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}", exc_info=True)
+        return False
+
+
+def _execute_downloads(args) -> bool:
+    """Execute download operations based on args."""
+    success = True
+
+    # Determine what to download
+    download_openapi = args.download_openapi or args.all
+    should_download_user_docs = args.download_user_docs or args.all
+
+    # Download OpenAPI spec
+    if download_openapi:
+        logger.info("=" * 80)
+        logger.info("DOWNLOADING OPENAPI SPECIFICATION")
+        logger.info("=" * 80)
+        if not download_openapi_spec(args.openapi_output, args.force):
+            success = False
+
+    # Download user docs
+    if should_download_user_docs:
+        if not _download_user_docs_section(args):
+            success = False
+
+    return success
+
+
+def main():
+    """Main function to sync external documentation."""
+    parser = _setup_parser()
     args = parser.parse_args()
 
     # Set logging level
@@ -337,67 +444,7 @@ Examples:
     if not download_openapi and not should_download_user_docs:
         parser.error("Must specify --download-openapi, --download-user-docs, or --all")
 
-    success = True
-
-    # Download OpenAPI spec
-    if download_openapi:
-        logger.info("=" * 80)
-        logger.info("DOWNLOADING OPENAPI SPECIFICATION")
-        logger.info("=" * 80)
-        if not download_openapi_spec(args.openapi_output, args.force):
-            success = False
-
-    # Download user docs
-    if should_download_user_docs:
-        if not HAS_DOCS_DEPS:
-            logger.error(
-                "Missing required dependencies for user docs download.\n"
-                "Install them with: uv pip install -e '.[docs]'"
-            )
-            success = False
-        else:
-            logger.info("=" * 80)
-            logger.info("DOWNLOADING USER DOCUMENTATION")
-            logger.info("=" * 80)
-
-            try:
-                output_dir = Path(args.user_docs_output)
-                output_dir.mkdir(parents=True, exist_ok=True)
-
-                # Download sitemap and extract URLs
-                sitemap_urls = download_sitemap_urls(args.sitemap_url, args.timeout)
-                if not sitemap_urls:
-                    logger.error("No URLs found in sitemap")
-                    success = False
-                else:
-                    logger.info(f"Found {len(sitemap_urls)} URLs in sitemap")
-
-                    downloaded_count = download_user_docs(
-                        sitemap_urls=sitemap_urls,
-                        output_dir=output_dir,
-                        max_pages=args.max_pages,
-                        timeout=args.timeout,
-                        force=args.force,
-                    )
-
-                    logger.info("=" * 80)
-                    logger.info("USER DOCUMENTATION DOWNLOAD COMPLETE")
-                    logger.info("=" * 80)
-                    logger.info(f"Successfully downloaded: {downloaded_count} pages")
-                    logger.info(f"Output directory: {output_dir}")
-
-                    if downloaded_count < len(sitemap_urls):
-                        logger.info(
-                            f"Note: {len(sitemap_urls) - downloaded_count} URLs were "
-                            "skipped or failed"
-                        )
-
-            except KeyboardInterrupt:
-                logger.info("Operation cancelled by user")
-                sys.exit(1)
-            except Exception as e:
-                logger.error(f"Unexpected error: {e}", exc_info=True)
-                success = False
+    success = _execute_downloads(args)
 
     # Summary
     logger.info("=" * 80)

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/
 title: Scan projects | Endor Labs Docs
-downloaded: 2026-01-16 09:49:39
+downloaded: 2026-01-26 10:07:48
 ---
 
 Scan projects | Endor Labs Docs
@@ -31,6 +31,10 @@ Scan and detect publicly exposed open source issues posing risks to your organiz
 ##### [Scanning strategies](/scan-with-endorlabs/scanning-strategies/)
 
 Learn strategies to best scan your projects with Endor Labs.
+
+##### [Data exporters](/scan-with-endorlabs/data-exporters/)
+
+Learn how to export findings and scan data from Endor Labs to external storage and security platforms using the export framework.
 
 ##### [Pull Request scans](/scan-with-endorlabs/pr-scans/)
 

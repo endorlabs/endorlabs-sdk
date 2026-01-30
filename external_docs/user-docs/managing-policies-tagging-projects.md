@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/tagging-projects/
 title: Tag projects | Endor Labs Docs
-downloaded: 2026-01-16 09:50:25
+downloaded: 2026-01-26 10:08:35
 ---
 
 Tag projects | Endor Labs Docs

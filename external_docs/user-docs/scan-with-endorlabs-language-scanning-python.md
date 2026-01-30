@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/python/
 title: Python | Endor Labs Docs
-downloaded: 2026-01-16 09:48:43
+downloaded: 2026-01-26 10:06:54
 ---
 
 Python | Endor Labs Docs
@@ -50,11 +50,11 @@ Ensure that the following prerequisites are complete:
 
 ## Build Python projects
 
-You must create a virtual environment and build your Python projects before running the endorctl scan. Additionally, ensure that the packages are downloaded into the local package caches and that the build artifacts are present in the standard locations.
+Creating a virtual environment and building your Python projects before running the endorctl scan is recommended for the most accurate results. Endor Labs attempts to automatically create and configure a virtual environment when one is not provided, but this may not work for complex projects. Ensure that the packages are downloaded into the local package caches and that the build artifacts are present in the standard locations.
 
 1. Configure any private repositories
    * If you use dependencies from a PyPI compatible repository *other than* `pypi.org`, configure it in the **Integrations** section of the Endor Labs web application. See [Configure Python private repositories](#configure-private-python-repositories) for more details.
-2. Clone the repository and create a virtual environment inside it
+2. Clone the repository and optionally create a virtual environment inside it
    1. Clone the repository using `git clone` or an equivalent workflow.
    2. Enter the working copy root directory that’s created.
    3. Create a virtual environment based on your package manager:
@@ -79,11 +79,32 @@ You must create a virtual environment and build your Python projects before runn
 
 ### Virtual environment support
 
-For Poetry, Pipenv, and PDM, endorctl automatically picks the virtual environments.
+Creating a virtual environment is recommended to ensure consistent and accurate scan results, and to verify that all dependencies install correctly before scanning. Automatic setup may encounter issues such as:
 
-For UV managed projects, endorctl automatically creates a temporary virtual environment and deletes it after the scan is complete. UV must be installed on your system for this automatic management to work.
+* Complex dependency chains or conflicting package requirements
+* Private packages requiring authentication
+* System-level dependencies not available in the scan environment
+* Non-standard project structures or custom build scripts
 
-For pip, you need to use one of the following ways to specify the virtual environment details of your Python projects for both quick and deep scans.
+Endor Labs attempts to automatically detect, create, or configure virtual environments for your projects. The behavior varies by package manager.
+
+Poetry, Pipenv, and PDM
+
+endorctl automatically detects and uses existing virtual environments managed by these tools.
+
+
+
+
+UV
+
+endorctl automatically creates a temporary virtual environment and deletes it after the scan is complete. UV must be installed on your system for this automatic management to work.
+
+
+
+
+pip
+
+endorctl attempts to detect virtual environments in standard locations, such as `venv` or `.venv` directories in your project root. You can also use one of the following methods to specify the virtual environment:
 
 * Set up the virtual environment in the root folder that you want to scan and name it **venv** or **.venv**, it is automatically picked up by the Endor Labs application.
 

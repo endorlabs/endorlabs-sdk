@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/mcp/intellij/
 title: Endor Labs MCP server in IntelliJ IDEA | Endor Labs Docs
-downloaded: 2026-01-16 09:49:50
+downloaded: 2026-01-26 10:08:00
 ---
 
 Endor Labs MCP server in IntelliJ IDEA | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/july-2025/
 title: July 2025 | Endor Labs Docs
-downloaded: 2026-01-16 09:50:28
+downloaded: 2026-01-26 10:08:38
 ---
 
 July 2025 | Endor Labs Docs
@@ -38,7 +38,7 @@ For more information, see [Endor Labs vulnerability database](../../../discover/
 
 Endor Labs now supports exporting findings to GitHub Advanced Security as SARIF files. You can use GitHub Advanced Security to analyze and triage findings from Endor Labs.
 
-For more information, see [Export findings to GitHub Advanced Security](../../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/).
+For more information, see [Export findings to GitHub Advanced Security](../../../scan-with-endorlabs/data-exporters/export-to-ghas/).
 
 ### Discover AI models Enhancement
 

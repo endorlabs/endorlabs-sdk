@@ -1,5 +1,4 @@
-"""
-Test cases for Project resource operations.
+"""Test cases for Project resource operations.
 
 Tests GET and PATCH operations for Project resources, including tag management.
 Follows the testing protocol for comprehensive coverage.
@@ -13,9 +12,13 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
+import conftest
+
 from endor_cockpit.api_client import APIClient
 from endor_cockpit.resources import project, scan_profile
 from endor_cockpit.resources.project import (
+    ProjectMetaUpdate,
+    UpdateProjectPayload,
     associate_scan_profile_with_project,
     verify_scan_profile_association,
 )
@@ -32,18 +35,19 @@ class TestProject:
     """Test cases for Project resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
+    def setup(self) -> None:
         """Set up test environment."""
         self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
 
         # Validate namespace is set
         if not self.namespace:
             pytest.skip("ENDOR_NAMESPACE environment variable must be set")
 
-        # Get test data with pagination limits
-        import conftest
+        # Track created resources for cleanup
+        self.created_scan_profile_uuids = []
 
+        # Get test data with pagination limits
         from endor_cockpit.types import ListParameters
 
         self.projects = project.list_projects(
@@ -55,7 +59,23 @@ class TestProject:
         if not self.projects:
             pytest.skip("No projects available for testing")
 
-    def test_project_get_list(self):
+    def teardown_method(self) -> None:
+        """Clean up any resources created during tests."""
+        if hasattr(self, "created_scan_profile_uuids"):
+            for scan_profile_uuid in self.created_scan_profile_uuids:
+                try:
+                    scan_profile.delete_scan_profile(
+                        self.client, self.namespace, scan_profile_uuid
+                    )
+                    print(f"[CLEANUP] Deleted test scan profile: {scan_profile_uuid}")
+                except Exception as e:
+                    print(
+                        f"[WARNING] Failed to delete test scan profile "
+                        f"{scan_profile_uuid}: {e}"
+                    )
+            self.created_scan_profile_uuids.clear()
+
+    def test_project_get_list(self) -> None:
         """Test GET projects operation."""
         print("\n=== TESTING GET PROJECTS ===")
 
@@ -81,7 +101,7 @@ class TestProject:
             if proj.meta.tags:
                 print(f"  Project tags: {proj.meta.tags}")
 
-    def test_project_get_by_uuid(self):
+    def test_project_get_by_uuid(self) -> None:
         """Test GET project by UUID operation."""
         print("\n=== TESTING GET PROJECT BY UUID ===")
 
@@ -105,7 +125,7 @@ class TestProject:
         if retrieved_project.meta.tags:
             print(f"Project tags: {retrieved_project.meta.tags}")
 
-    def test_associate_scan_profile_with_project(self):
+    def test_associate_scan_profile_with_project(self) -> None:
         """Test associating a scan profile with a project."""
         print("\n=== TESTING ASSOCIATE SCAN PROFILE WITH PROJECT ===")
 
@@ -138,6 +158,9 @@ class TestProject:
 
         scan_profile_uuid = created_profile.uuid
         print(f"Created scan profile: {scan_profile_uuid}")
+
+        # Track for cleanup
+        self.created_scan_profile_uuids.append(scan_profile_uuid)
 
         try:
             # Associate scan profile with project
@@ -195,28 +218,7 @@ class TestProject:
                 except Exception as e:
                     print(f"⚠️ Warning: Could not clean up association: {e}")
 
-            # Delete test scan profile
-            try:
-                scan_profile.delete_scan_profile(
-                    self.client, self.namespace, scan_profile_uuid
-                )
-                print("✅ Deleted test scan profile")
-            except Exception as e:
-                print(f"⚠️ Warning: Could not delete test scan profile: {e}")
-
-    def test_project_conditional_attributes(self):
-        """Test conditional attributes in project."""
-        project_obj = self.projects[0]
-
-        # Check for conditional attributes
-        if hasattr(project_obj, "processing_status") and project_obj.processing_status:
-            print("Project has processing_status attribute")
-            # processing_status is a Pydantic model, not a dict
-            assert hasattr(project_obj.processing_status, "scan_state")
-            assert hasattr(project_obj.processing_status, "scan_time")
-            assert hasattr(project_obj.processing_status, "disable_automated_scan")
-
-    def test_project_advanced_filtering(self):
+    def test_project_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
         # Test filtering by platform
         import conftest
@@ -251,13 +253,96 @@ class TestProject:
             assert hasattr(proj, "meta")
             assert hasattr(proj, "spec")
 
-    def test_project_error_handling(self):
-        """Test error handling for invalid UUID."""
-        # Test with invalid UUID
-        invalid_project = project.get_project(
-            self.client, self.namespace, "invalid-uuid"
+    def test_project_update_with_mask(self) -> None:
+        """Test UPDATE project operation with update_mask parameter."""
+        print("\n=== TESTING PROJECT UPDATE WITH MASK ===")
+
+        if not self.projects:
+            pytest.skip("No projects available for testing")
+
+        test_project = self.projects[0]
+        project_uuid = test_project.uuid
+
+        # Get current project state
+        current_project = project.get_project(self.client, self.namespace, project_uuid)
+        if not current_project:
+            pytest.skip(f"Could not retrieve project {project_uuid}")
+
+        # Store original values
+        original_description = current_project.meta.description
+        original_tags = current_project.meta.tags or []
+
+        # Create update payload - only update safe fields
+        new_description = (
+            f"{original_description} [Updated by test]"
+            if original_description
+            else "Updated description for test"
         )
-        assert invalid_project is None
+        new_tags = [*original_tags, "test-update", "mask-test"]
+
+        update_payload = UpdateProjectPayload(
+            meta=ProjectMetaUpdate(
+                description=new_description,
+                tags=new_tags,
+            )
+        )
+
+        print(f"Updating project: {project_uuid}")
+        print(f"New description: {new_description}")
+        print(f"New tags: {new_tags}")
+
+        # Update the project with update_mask
+        updated_project = project.update_project(
+            self.client,
+            self.namespace,
+            project_uuid,
+            update_payload,
+            "meta.description,meta.tags",
+        )
+
+        assert updated_project is not None, "Project update should succeed"
+        assert updated_project.meta.description == new_description, (
+            "Project description should be updated"
+        )
+        assert "test-update" in updated_project.meta.tags, (
+            "Updated tag should be present"
+        )
+        assert "mask-test" in updated_project.meta.tags, "Updated tag should be present"
+
+        print(f"[SUCCESS] Project updated: {updated_project.uuid}")
+        print(f"Updated description: {updated_project.meta.description}")
+        print(f"Updated tags: {updated_project.meta.tags}")
+
+        # Restore original values if possible
+        restore_payload = UpdateProjectPayload(
+            meta=ProjectMetaUpdate(
+                description=original_description,
+                tags=original_tags,
+            )
+        )
+        try:
+            project.update_project(
+                self.client,
+                self.namespace,
+                project_uuid,
+                restore_payload,
+                "meta.description,meta.tags",
+            )
+            print("[CLEANUP] Restored original project values")
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original values: {e}")
+
+    def test_project_error_handling(self) -> None:
+        """Test error handling for invalid UUID."""
+        # Test with invalid UUID format - should raise ValidationError
+        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
+        from endor_cockpit.exceptions import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            project.get_project(self.client, self.namespace, "invalid-uuid")
+        assert exc_info.value.resource_uuid == "invalid-uuid"
+        assert exc_info.value.operation == "get"
+        assert exc_info.value.status_code == 400
 
 
 if __name__ == "__main__":
@@ -275,12 +360,12 @@ if __name__ == "__main__":
     test_instance = TestProject()
 
     # Manual setup
-    import conftest
-
     from endor_cockpit.types import ListParameters
 
     test_instance.client = APIClient(auth_method="api-key")
-    test_instance.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan.tgowan-endor")
+    test_instance.namespace = os.getenv(
+        "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
+    )
     test_instance.projects = project.list_projects(
         test_instance.client,
         test_instance.namespace,

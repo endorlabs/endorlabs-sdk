@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/auto-detect-toolchains/
 title: Enable auto detection | Endor Labs Docs
-downloaded: 2026-01-16 09:48:27
+downloaded: 2026-01-26 10:06:37
 ---
 
 Enable auto detection | Endor Labs Docs

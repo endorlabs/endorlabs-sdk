@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/authentication/
 title: Authentication | Endor Labs Docs
-downloaded: 2026-01-16 09:49:43
+downloaded: 2026-01-26 10:07:52
 ---
 
 Authentication | Endor Labs Docs

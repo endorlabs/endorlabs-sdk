@@ -67,16 +67,24 @@ uv pip install -e ".[docs]"
 Pull the latest API specifications and user documentation:
 
 ```bash
-# Download user documentation from Endor Labs
-uv run python scripts/download_user_docs.py \
-  --sitemap-url "https://docs.endorlabs.com/sitemap.xml" \
-  --output-dir "external_docs/user-docs" \
-  --max-pages 100
+# Download user documentation from Endor Labs (CI-only, use unified workflow instead)
+# Note: download_user_docs.py has been moved to .github/scripts/ for CI use
+# For manual use, use: python .github/scripts/unified_docs_workflow.py --update-docs-only --download-user-docs
 
 # The OpenAPI specification is already included in external_docs/openapi-swagger.json
 ```
 
 ## 🔐 **Environment Configuration**
+
+### Configuration Precedence
+
+The SDK uses environment variables only (no config file loading). Precedence is:
+
+1. **Constructor Parameters** - Explicit values passed to `APIClient()`
+2. **Environment Variables** - System/process environment variables
+3. **Defaults** - Built-in SDK defaults
+
+This follows 12-factor app principles: deployment-specific settings via environment variables.
 
 ### Required Environment Variables
 
@@ -87,34 +95,43 @@ export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-api-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
 export ENDOR_NAMESPACE="your-tenant-namespace"  # Required for operations
+export ENDOR_LOG_LEVEL="INFO"  # Optional: DEBUG, INFO, WARNING, ERROR, CRITICAL
+export ENDOR_MAX_RETRIES="5"  # Optional: Maximum number of retries (default: 5)
 ```
+
+### Configuration Sources
+
+**Environment Variables** (used by the SDK):
+- Highest precedence after constructor parameters
+- Secure for CI/CD and production environments
+- The SDK does not read from `.endorctl/config.yaml`; use environment variables or constructor parameters.
 
 ### Local Development Setup
 
-For local development, you can use the admin setup script:
+For local development, use environment variables or the setup/validation scripts:
 
 ```bash
-# Initialize environment (creates .env file from template)
-uv run python scripts/admin_setup.py init
+# Validate environment (ENDOR_API, credentials, namespace)
+uv run python scripts/validate_environment.py
 
-# Validate environment configuration
-uv run python scripts/admin_setup.py validate
-
-# Quick health check
-uv run python scripts/admin_setup.py check
+# Interactive setup (optional)
+uv run python scripts/setup_environment.py
 ```
 
 ### Configuration Management
 
-**Local Development**: Use `.env` file or environment variables directly.
+**Local Development**:
+- Set environment variables (e.g. in shell or `.env` with `python-dotenv`)
+- Or pass credentials to `APIClient()` constructor
 
-**CI/CD**: Environment variables are configured in GitHub repository settings:
+**CI/CD**: 
+Environment variables are configured in GitHub repository settings:
 - `ENDOR_API` - Repository variable
 - `ENDOR_NAMESPACE` - Repository variable  
 - `ENDOR_API_CREDENTIALS_KEY` - Repository secret
 - `ENDOR_API_CREDENTIALS_SECRET` - Repository secret
-
-The SDK reads configuration from environment variables only - no hardcoded values or configuration files. This follows 12-factor app principles and ensures security and flexibility across different environments.
+- `ENDOR_LOG_LEVEL` - Optional repository variable (default: INFO)
+- `ENDOR_MAX_RETRIES` - Optional repository variable (default: 5)
 
 ## Quick Start
 
@@ -158,7 +175,7 @@ pytest
 pytest --cov=endor_cockpit --cov-report=html
 
 # Run integration tests (requires valid credentials)
-pytest tests/test_integration.py -v
+pytest -m integration -v
 ```
 
 ### Code Quality & Linting
@@ -235,8 +252,9 @@ ls maneuvers/
 ## 📚 **Documentation & Intelligence**
 
 - **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
+- **[Documentation index](./docs/README.md)** - SDK docs (conventions, reference, guides, rules of engagement); non-SDK content in `.tmp/docs-revamp/`
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
-- **[Rego Policy Guide](./docs/rego_guide.md)** - Complete Rego policy development reference
+- **[Rego (SDK usage)](./docs/guides/rego-policies.md)** - How the SDK is used with policies; link to official Rego docs
 - **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
 - **[External Documentation](./external_docs/)** - Endor Labs API and user documentation
 

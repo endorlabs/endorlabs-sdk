@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/
 title: Authentication providers | Endor Labs Docs
-downloaded: 2026-01-16 09:47:00
+downloaded: 2026-01-26 10:05:24
 ---
 
 Authentication providers | Endor Labs Docs

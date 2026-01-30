@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/slack-integration/
 title: Set up Slack integration | Endor Labs Docs
-downloaded: 2026-01-16 09:50:43
+downloaded: 2026-01-26 10:08:53
 ---
 
 Set up Slack integration | Endor Labs Docs

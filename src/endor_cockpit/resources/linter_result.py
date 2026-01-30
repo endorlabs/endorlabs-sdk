@@ -1,12 +1,44 @@
-"""
-LinterResult resource module for Endor Labs API.
+"""LinterResult resource module for Endor Labs API.
 
 This module provides CRUD operations for LinterResult resources following the
 established patterns from the base class implementation.
+
+**INTERMEDIATE RESOURCE (IR) - Debugging Value:**
+
+LinterResult is an intermediate resource that sits between scan execution and
+Finding generation. It's primarily useful for debugging and troubleshooting
+the scan → finding pipeline.
+
+**When to Use LinterResult vs Finding:**
+
+- **Use Finding** for normal operations (most users should use this)
+- **Use LinterResult** for debugging when you need:
+  - Full SARIF output with structured locations and code flows
+  - Scan execution context (Git reference, version, ecosystem at scan time)
+  - Code fingerprints for deduplication analysis
+  - Correctness analysis results (taint analysis, reachability)
+  - Understanding severity transformations (rule → scan → finding)
+  - Tracing scan results that didn't become findings
+
+**Key Debugging Value:**
+
+1. **Full SARIF Output**: Complete scan results with structured locations,
+   code snippets, and code flows (data flow analysis)
+2. **Scan Context**: Git reference, version, ecosystem preserved at scan time
+3. **Fingerprints**: Code fingerprints used for deduplication logic
+4. **Correctness Analysis**: Taint analysis and reachability results
+5. **Severity Tracking**: See intermediate severity after rule evaluation
+   but before finding generation
+
+**Note**: Most rule metadata (rule_uuid, message, CWEs, etc.) is also
+available in Finding.finding_metadata.custom, but LinterResult provides
+the raw scan output and execution context that's lost in Finding.
 """
 
+from __future__ import annotations
+
 import logging
-from typing import List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -50,33 +82,42 @@ class DistributionFormatType(FlexibleEnum):
     """Distribution format type enumeration."""
 
     UNSPECIFIED = "DISTRIBUTION_FORMAT_TYPE_UNSPECIFIED"
-    SOURCE = "DISTRIBUTION_FORMAT_TYPE_SOURCE"
-    BINARY = "DISTRIBUTION_FORMAT_TYPE_BINARY"
+    PYTHON_EGG = "DISTRIBUTION_FORMAT_TYPE_PYTHON_EGG"
+    PYTHON_SOURCE = "DISTRIBUTION_FORMAT_TYPE_PYTHON_SOURCE"
+    PYTHON_WHEEL = "DISTRIBUTION_FORMAT_TYPE_PYTHON_WHEEL"
 
 
 class Ecosystem(FlexibleEnum):
     """Ecosystem enumeration."""
 
     UNSPECIFIED = "ECOSYSTEM_UNSPECIFIED"
-    GO = "ECOSYSTEM_GO"
-    MAVEN = "ECOSYSTEM_MAVEN"
-    PYPI = "ECOSYSTEM_PYPI"
+    AI_MODEL = "ECOSYSTEM_AI_MODEL"
+    APK = "ECOSYSTEM_APK"
+    C = "ECOSYSTEM_C"
     CARGO = "ECOSYSTEM_CARGO"
-    NPM = "ECOSYSTEM_NPM"
+    COCOAPOD = "ECOSYSTEM_COCOAPOD"
+    CONTAINER = "ECOSYSTEM_CONTAINER"
+    DEBIAN = "ECOSYSTEM_DEBIAN"
     GEM = "ECOSYSTEM_GEM"
+    GIT = "ECOSYSTEM_GIT"
+    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+    GO = "ECOSYSTEM_GO"
+    HUGGING_FACE = "ECOSYSTEM_HUGGING_FACE"
+    MAVEN = "ECOSYSTEM_MAVEN"
+    NPM = "ECOSYSTEM_NPM"
     NUGET = "ECOSYSTEM_NUGET"
     PACKAGIST = "ECOSYSTEM_PACKAGIST"
-    SBOM = "ECOSYSTEM_SBOM"
+    PYPI = "ECOSYSTEM_PYPI"
     RPM = "ECOSYSTEM_RPM"
-    DEBIAN = "ECOSYSTEM_DEBIAN"
-    GITHUB_ACTION = "ECOSYSTEM_GITHUB_ACTION"
+    SBOM = "ECOSYSTEM_SBOM"
+    SWIFT = "ECOSYSTEM_SWIFT"
 
 
 class SarifText(BaseModel):
     """SARIF text object with text and markdown fields."""
 
-    text: Optional[str] = Field(None, description="The actual text content")
-    markdown: Optional[str] = Field(
+    text: str | None = Field(None, description="The actual text content")
+    markdown: str | None = Field(
         None, description="Markdown representation of the content"
     )
 
@@ -84,49 +125,47 @@ class SarifText(BaseModel):
 class SarifResult(BaseModel):
     """SARIF result for linter."""
 
-    rule_id: Optional[str] = Field(None, description="Rule ID")
-    message: Optional[SarifText] = Field(None, description="Result message")
-    level: Optional[str] = Field(None, description="Result level")
-    locations: Optional[List[dict]] = Field(None, description="Result locations")
-    fingerprints: Optional[dict] = Field(None, description="Fingerprints")
-    partial_fingerprints: Optional[dict] = Field(
+    rule_id: str | None = Field(None, description="Rule ID")
+    message: SarifText | None = Field(None, description="Result message")
+    level: str | None = Field(None, description="Result level")
+    locations: list[dict[str, Any]] | None = Field(None, description="Result locations")
+    fingerprints: dict[str, Any] | None = Field(None, description="Fingerprints")
+    partial_fingerprints: dict[str, Any] | None = Field(
         None, description="Partial fingerprints"
     )
-    properties: Optional[dict] = Field(None, description="Result properties")
-    suppressions: Optional[List[dict]] = Field(None, description="Suppressions")
-    code_flows: Optional[List[dict]] = Field(None, description="Code flows")
+    properties: dict[str, Any] | None = Field(None, description="Result properties")
+    suppressions: list[dict[str, Any]] | None = Field(None, description="Suppressions")
+    code_flows: list[dict[str, Any]] | None = Field(None, description="Code flows")
 
 
 class SemgrepSummary(BaseModel):
     """Semgrep summary for linter result."""
 
-    severity: Optional[str] = Field(None, description="Result severity")
-    likelihood: Optional[str] = Field(None, description="Result likelihood")
-    confidence: Optional[str] = Field(None, description="Result confidence")
-    tags: Optional[List[str]] = Field(None, description="Result tags")
-    description: Optional[str] = Field(None, description="Result description")
-    explanation: Optional[str] = Field(None, description="Result explanation")
-    remediation: Optional[str] = Field(None, description="Result remediation")
-    impact: Optional[str] = Field(None, description="Result impact")
-    languages: Optional[List[str]] = Field(None, description="Result languages")
-    rule_name: Optional[str] = Field(None, description="Rule name")
-    rule_uuid: Optional[str] = Field(None, description="Rule UUID")
-    cwes: Optional[List[str]] = Field(None, description="CWE identifiers")
-    rule_version: Optional[str] = Field(None, description="Rule version")
-    references: Optional[List[str]] = Field(None, description="Rule references")
+    severity: str | None = Field(None, description="Result severity")
+    likelihood: str | None = Field(None, description="Result likelihood")
+    confidence: str | None = Field(None, description="Result confidence")
+    tags: list[str] | None = Field(None, description="Result tags")
+    description: str | None = Field(None, description="Result description")
+    explanation: str | None = Field(None, description="Result explanation")
+    remediation: str | None = Field(None, description="Result remediation")
+    impact: str | None = Field(None, description="Result impact")
+    languages: list[str] | None = Field(None, description="Result languages")
+    rule_name: str | None = Field(None, description="Rule name")
+    rule_uuid: str | None = Field(None, description="Rule UUID")
+    cwes: list[str] | None = Field(None, description="CWE identifiers")
+    rule_version: str | None = Field(None, description="Rule version")
+    references: list[str] | None = Field(None, description="Rule references")
 
 
 class SecretSummary(BaseModel):
     """Secret summary for linter result."""
 
-    validation: Optional[str] = Field(None, description="Validation status")
-    git_log_scanned: Optional[bool] = Field(
+    validation: str | None = Field(None, description="Validation status")
+    git_log_scanned: bool | None = Field(
         None, description="Whether secret was found in Git logs"
     )
-    secret_id: Optional[str] = Field(
-        None, description="Unique identifier for the secret"
-    )
-    fs_scanned: Optional[bool] = Field(
+    secret_id: str | None = Field(None, description="Unique identifier for the secret")
+    fs_scanned: bool | None = Field(
         None, description="Whether secret was found in filesystem"
     )
 
@@ -145,7 +184,7 @@ class LinterCorrectnessAnalysis(BaseModel):
 
     analysis_type: str = Field(..., description="Type of analysis")
     result: str = Field(..., description="Analysis result")
-    confidence: Optional[float] = Field(None, description="Analysis confidence")
+    confidence: float | None = Field(None, description="Analysis confidence")
 
 
 class LinterResultMeta(BaseMeta):
@@ -197,77 +236,77 @@ class LinterResultSpec(BaseSpec):
         ...,
         description="Additional info that may create a unique linter result",
     )  # IMMUTABLE: Set at creation
-    version: Optional[str] = Field(
+    version: str | None = Field(
         None, description="Version information"
     )  # IMMUTABLE: Set at creation
-    sarif_result: Optional[SarifResult] = Field(
+    sarif_result: SarifResult | None = Field(
         None, description="SARIF result data"
     )  # IMMUTABLE: Set at creation
 
     @field_validator("sarif_result", mode="before")
     @classmethod
-    def validate_sarif_result(cls, v):
+    def validate_sarif_result(cls, v: Any) -> Any:
         """Handle sarif result validation."""
         if isinstance(v, dict):
             return SarifResult(**v)
         return v
 
-    ecosystem: Optional[Ecosystem] = Field(
+    ecosystem: Ecosystem | None = Field(
         None, description="The result ecosystem"
     )  # IMMUTABLE: Set at creation
-    semgrep: Optional[SemgrepSummary] = Field(
+    semgrep: SemgrepSummary | None = Field(
         None, description="Semgrep summary"
     )  # IMMUTABLE: Set at creation
 
     @field_validator("semgrep", mode="before")
     @classmethod
-    def validate_semgrep(cls, v):
+    def validate_semgrep(cls, v: Any) -> Any:
         """Handle semgrep validation."""
         if isinstance(v, dict):
             return SemgrepSummary(**v)
         return v
 
-    secret: Optional[SecretSummary] = Field(
+    secret: SecretSummary | None = Field(
         None, description="Secret summary"
     )  # IMMUTABLE: Set at creation
 
     @field_validator("secret", mode="before")
     @classmethod
-    def validate_secret(cls, v):
+    def validate_secret(cls, v: Any) -> Any:
         """Handle secret validation."""
         if isinstance(v, dict):
             return SecretSummary(**v)
         return v
 
-    aisast: Optional[AISastSummary] = Field(
+    aisast: AISastSummary | None = Field(
         None, description="AI SAST summary"
     )  # IMMUTABLE: Set at creation
-    fingerprints: Optional[List[str]] = Field(
+    fingerprints: list[str] | None = Field(
         None, description="The list and count of found fingerprints"
     )  # IMMUTABLE: Set at creation
-    fingerprint_count: Optional[int] = Field(
+    fingerprint_count: int | None = Field(
         None, description="Fingerprint count"
     )  # IMMUTABLE: Set at creation
-    distribution_format: Optional[DistributionFormatType] = Field(
+    distribution_format: DistributionFormatType | None = Field(
         None, description="The distribution format of the package"
     )  # IMMUTABLE: Set at creation
-    ref: Optional[str] = Field(
+    ref: str | None = Field(
         None, description="The Git reference of the repository version"
     )  # IMMUTABLE: Set at creation
-    storage_location: Optional[str] = Field(
+    storage_location: str | None = Field(
         None,
         description="The storage location of the package related to this linter result",
     )  # IMMUTABLE: Set at creation
-    suppressed: Optional[bool] = Field(
+    suppressed: bool | None = Field(
         None, description="Result was suppressed by semgrep"
     )  # IMMUTABLE: Set at creation
-    linter_correctness_analyses: Optional[List[LinterCorrectnessAnalysis]] = Field(
+    linter_correctness_analyses: list[LinterCorrectnessAnalysis] | None = Field(
         None, description="An analysis of the linter result"
     )  # IMMUTABLE: Set at creation
 
     @field_validator("origin", mode="before")
     @classmethod
-    def validate_origin(cls, v):
+    def validate_origin(cls, v: Any) -> Any:
         """Handle unknown origin values gracefully."""
         if isinstance(v, str):
             try:
@@ -279,7 +318,7 @@ class LinterResultSpec(BaseSpec):
 
     @field_validator("level", mode="before")
     @classmethod
-    def validate_level(cls, v):
+    def validate_level(cls, v: Any) -> Any:
         """Handle unknown level values gracefully."""
         if isinstance(v, str):
             try:
@@ -291,7 +330,7 @@ class LinterResultSpec(BaseSpec):
 
     @field_validator("ecosystem", mode="before")
     @classmethod
-    def validate_ecosystem(cls, v):
+    def validate_ecosystem(cls, v: Any) -> Any:
         """Handle unknown ecosystem values gracefully."""
         if isinstance(v, str):
             try:
@@ -303,7 +342,7 @@ class LinterResultSpec(BaseSpec):
 
     @field_validator("distribution_format", mode="before")
     @classmethod
-    def validate_distribution_format(cls, v):
+    def validate_distribution_format(cls, v: Any) -> Any:
         """Handle unknown distribution format values gracefully."""
         if isinstance(v, str):
             try:
@@ -317,14 +356,36 @@ class LinterResultSpec(BaseSpec):
 
 
 class LinterResult(BaseResource):
-    """LinterResult resource model extending BaseResource."""
+    """LinterResult resource model extending BaseResource.
+
+    **Intermediate Resource (IR) for Debugging:**
+
+    LinterResult contains raw scan output from security scanning tools
+    (Semgrep, Gitleaks, etc.) before it's processed into Findings. This
+    resource is valuable for debugging the scan → finding pipeline.
+
+    **Key Attributes for Debugging:**
+
+    - `spec.sarif_result`: Full SARIF output with structured locations,
+      code snippets, and code flows
+    - `spec.semgrep`: Semgrep scan results with rule metadata
+    - `spec.origin`: Scan tool origin (SEMGREP, SECRETS_SCANNER, etc.)
+    - `spec.ref`: Git reference scanned
+    - `spec.version`: Version information at scan time
+    - `spec.ecosystem`: Package ecosystem scanned
+    - `spec.fingerprints`: Code fingerprints for deduplication
+    - `spec.linter_correctness_analyses`: Correctness analysis results
+
+    **Most users should use Finding instead**, but LinterResult is
+    essential for troubleshooting finding generation issues.
+    """
 
     # LinterResult-specific fields (universal fields inherited from BaseResource)
     spec: LinterResultSpec = Field(..., description="LinterResult specification")  # type: ignore
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to LinterResultSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = LinterResultSpec(**data["spec"])
@@ -332,7 +393,7 @@ class LinterResult(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -364,7 +425,7 @@ class LinterResult(BaseResource):
         return v
 
 
-def _get_linter_result_ops(client: APIClient) -> BaseResourceOperations:
+def _get_linter_result_ops(client: APIClient) -> BaseResourceOperations[LinterResult]:
     """Get BaseResourceOperations instance for LinterResult."""
     return BaseResourceOperations(client, "linter-results", LinterResult)
 
@@ -372,42 +433,125 @@ def _get_linter_result_ops(client: APIClient) -> BaseResourceOperations:
 def list_linter_results(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[LinterResult]:
-    """List linter results with advanced filtering and pagination."""
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[LinterResult]:
+    """List linter results with advanced filtering and pagination.
+
+    **Debugging Use Cases:**
+
+    - Query scan results that didn't become findings
+    - Analyze scan execution context (Git ref, version, ecosystem)
+    - Access full SARIF output for code flow analysis
+    - Investigate deduplication logic via fingerprints
+    - Trace severity transformations from rule → scan → finding
+
+    **Note**: Most users should query Findings instead. Use LinterResult
+    when you need the raw scan output or execution context for debugging.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        list_params: Optional list parameters for filtering, pagination, etc.
+        **kwargs: Additional query parameters
+
+    Returns:
+        List of LinterResult objects
+
+    """
     ops = _get_linter_result_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)
 
 
 def get_linter_result(
     client: APIClient, tenant_meta_namespace: str, linter_result_uuid: str
-) -> Optional[LinterResult]:
-    """Get specific linter result by UUID."""
+) -> LinterResult:
+    """Get specific linter result by UUID.
+
+    **Debugging Use Cases:**
+
+    - Access full SARIF output with code flows and locations
+    - View scan execution context (Git ref, version, ecosystem)
+    - Inspect code fingerprints and correctness analysis
+    - Understand why a scan result did or didn't become a finding
+
+    **Note**: Most users should query Findings instead. Use LinterResult
+    when you need the raw scan output for debugging.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        linter_result_uuid: UUID of the linter result
+
+    Returns:
+        LinterResult object
+
+    Raises:
+        NotFoundError: If linter result doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
     ops = _get_linter_result_ops(client)
-    return ops.get(tenant_meta_namespace, linter_result_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, linter_result_uuid)
 
 
 def create_linter_result(
     client: APIClient,
     tenant_meta_namespace: str,
-    payload: "CreateLinterResultPayload",
-) -> Optional[LinterResult]:
-    """Create a new linter result."""
+    payload: CreateLinterResultPayload,
+) -> LinterResult:
+    """Create a new linter result with pre-validation and typed errors.
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If linter result already exists
+        ServerError: If server error occurs
+
+    """
     ops = _get_linter_result_ops(client)
-    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_linter_result(
     client: APIClient,
     tenant_meta_namespace: str,
     linter_result_uuid: str,
-    payload: "UpdateLinterResultPayload",
-    update_mask: Optional[List[str]] = None,
-) -> Optional[LinterResult]:
-    """Update an existing linter result with partial updates."""
+    payload: UpdateLinterResultPayload,
+    update_mask: str | None = None,
+) -> LinterResult | None:
+    """Update an existing linter result with partial updates.
+
+    Args:
+        client: APIClient instance
+        tenant_meta_namespace: Canonical namespace name
+        linter_result_uuid: UUID of the linter result to update
+        payload: LinterResult update payload
+        update_mask: Optional comma-separated list of fields to update
+            (e.g., "meta.tags,meta.description"). If provided, only these
+            fields will be updated. If omitted, all non-None fields in
+            payload will be updated.
+
+    Returns:
+        Updated LinterResult object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If linter result doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
     ops = _get_linter_result_ops(client)
-    return ops.update(tenant_meta_namespace, linter_result_uuid, payload, update_mask)  # type: ignore
+    return ops.update(
+        tenant_meta_namespace, linter_result_uuid, payload, update_mask_list
+    )
 
 
 def delete_linter_result(
@@ -415,14 +559,14 @@ def delete_linter_result(
 ) -> bool:
     """Delete a linter result by UUID."""
     ops = _get_linter_result_ops(client)
-    return ops.delete(tenant_meta_namespace, linter_result_uuid)  # type: ignore
+    return ops.delete(tenant_meta_namespace, linter_result_uuid)
 
 
 # Payload models for create and update operations
 class CreateLinterResultPayload(BaseModel):
     """Payload for creating a linter result."""
 
-    meta: "LinterResultMetaCreate" = Field(
+    meta: LinterResultMetaCreate = Field(
         ..., description="LinterResult metadata for creation"
     )
     spec: LinterResultSpec = Field(..., description="LinterResult specification")
@@ -431,10 +575,10 @@ class CreateLinterResultPayload(BaseModel):
 class UpdateLinterResultPayload(BaseModel):
     """Payload for updating a linter result."""
 
-    meta: Optional["LinterResultMetaUpdate"] = Field(
+    meta: LinterResultMetaUpdate | None = Field(
         None, description="LinterResult metadata for update"
     )
-    spec: Optional[LinterResultSpec] = Field(
+    spec: LinterResultSpec | None = Field(
         None, description="LinterResult specification for update"
     )
 
@@ -443,10 +587,10 @@ class LinterResultMetaCreate(BaseModel):
     """LinterResult metadata for creation."""
 
     name: str = Field(..., description="LinterResult name")
-    description: Optional[str] = Field(None, description="LinterResult description")
+    description: str | None = Field(None, description="LinterResult description")
 
 
 class LinterResultMetaUpdate(BaseModel):
     """LinterResult metadata for update."""
 
-    description: Optional[str] = Field(None, description="LinterResult description")
+    description: str | None = Field(None, description="LinterResult description")

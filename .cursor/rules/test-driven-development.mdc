@@ -1,0 +1,27 @@
+---
+description: TDD and regression avoidance (spec first, ruff, pytest, repo patterns)
+globs: "**/test_*.py, **/tests/**, **/conftest*.py, src/**/*.py"
+alwaysApply: false
+---
+
+# Test-Driven Development
+
+**Workflow**: Research API spec → Write tests → Implement → Lint + test to avoid regressions.
+
+## 1. Research API spec before writing tests
+
+- **Local first**: Use `external_docs/openapi-swagger.json` if present.
+- **Else build**: Fetch from the API. Spec source: `https://api.endorlabs.com/download/openapiv2.swagger.json`.
+- Confirm required/optional fields, types, and read-only fields so tests and models match the spec.
+
+## 2. Avoid regressions
+
+- **Linters**: `uv run ruff check .` and `uv run ruff format .` before committing.
+- **Tests**: `uv run pytest`; use `max_pages` in list tests and follow existing patterns in `tests/`.
+- Keep resource tests aligned with [API Validation](docs/rules-of-engagement/api-validation.md) and [Resource Implementation](docs/rules-of-engagement/resource-implementation.md).
+
+## 3. Consistency
+
+- Use `BaseResourceOperations` and existing list/update patterns (see AGENTS.md).
+- Tests: typed fixtures, canonical namespaces, no UUIDs in paths.
+- **Garbage Collection** clean up any modifications by reverting (on Update) or deletion (on create)

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/kotlin/
 title: Kotlin | Endor Labs Docs
-downloaded: 2026-01-16 09:48:16
+downloaded: 2026-01-26 10:06:24
 ---
 
 Kotlin | Endor Labs Docs

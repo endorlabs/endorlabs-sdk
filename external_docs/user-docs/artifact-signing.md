@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/artifact-signing/
 title: Sign artifacts | Endor Labs Docs
-downloaded: 2026-01-16 09:51:15
+downloaded: 2026-01-26 10:09:26
 ---
 
 Sign artifacts | Endor Labs Docs

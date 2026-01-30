@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/september-2025/
 title: September 2025 | Endor Labs Docs
-downloaded: 2026-01-16 09:50:04
+downloaded: 2026-01-26 10:08:14
 ---
 
 September 2025 | Endor Labs Docs
@@ -71,7 +71,7 @@ For more information, see [Scan Swift projects](../../scan-with-endorlabs/langua
 
 Endor Labs now supports filtering findings exported to GitHub Advanced Security through action policies. Findings are exported only from projects covered by configured action policies.
 
-For more information, see [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/#filter-findings-exported-to-github).
+For more information, see [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/#filter-findings-exported-to-github).
 
 ### Top 10 secret rules by severity Enhancement
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-cloud/
 title: Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
-downloaded: 2026-01-16 09:50:05
+downloaded: 2026-01-26 10:08:15
 ---
 
 Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/pr-scans/pr-comments/
 title: Pull Request comments | Endor Labs Docs
-downloaded: 2026-01-16 09:48:42
+downloaded: 2026-01-26 10:06:53
 ---
 
 Pull Request comments | Endor Labs Docs
@@ -405,6 +405,8 @@ var FuncMap = template.FuncMap{
 	// 'groupFindingsByRemediation' groups findings by their remediation value
 	// Returns a slice of GroupedRemediation where findings with the same remediation are grouped together
 	"groupFindingsByRemediation": utils.GroupFindingsByRemediation,
+
+	"consolidateRemediations": utils.ConsolidateRemediations,
 }
 ```
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-sboms/exporting-sboms/
 title: Export SBOMs and VEX | Endor Labs Docs
-downloaded: 2026-01-16 09:50:13
+downloaded: 2026-01-26 10:08:23
 ---
 
 Export SBOMs and VEX | Endor Labs Docs

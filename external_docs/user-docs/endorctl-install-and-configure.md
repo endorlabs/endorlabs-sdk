@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/install-and-configure/
 title: Install and configure endorctl | Endor Labs Docs
-downloaded: 2026-01-16 09:47:40
+downloaded: 2026-01-26 10:06:05
 ---
 
 Install and configure endorctl | Endor Labs Docs

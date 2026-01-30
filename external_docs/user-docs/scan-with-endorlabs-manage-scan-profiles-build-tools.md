@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/build-tools/
 title: Configure build tools | Endor Labs Docs
-downloaded: 2026-01-16 09:47:18
+downloaded: 2026-01-26 10:05:42
 ---
 
 Configure build tools | Endor Labs Docs
@@ -70,15 +70,15 @@ The following table outlines the toolchain profile support details across differ
 | **Maven** | Supported | Supported | Maven 3.8.8, 3.9.4, 3.9.5, 3.9.6, 3.9.7, 3.9.8, 3.9.9, 3.9.10, 3.9.11 | Maven 3.9.4 | Linux, Darwin |
 | **Gradle** | Supported | Supported | Gradle 6.9.4, 7.6.4, 8.4, 9.0.0 | Gradle 8.4 | Linux, Darwin |
 | **Python** | Supported | Supported | Python 3.8, 3.9, 3.10, 3.11, 3.12, 3.13 | Python 3.10 | Linux, Darwin |
-| **NodeJS** | Supported | Supported | Node.js 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8 | Node.js 20.10.0 | Linux, Darwin |
+| **NodeJS** | Supported | Supported | Node.js 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8, 24.12, 25.4 | Node.js 20.10.0 | Linux, Darwin |
 | **Yarn** | Supported | Supported | Yarn 1.22, 2, 3, 4 | Yarn 1.22.19 | Linux, Darwin |
 | **pnpm** | Supported | Supported | pnpm 6.35, 7.33, 8.15, 9.15, 10.14, 10.15.0, 10.15.1, 10.16.0, 10.16.1 | pnpm 8.10.2 | Linux, Darwin |
-| **Golang** | Supported | Supported | Golang 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19, 1.20, 1.21, 1.22, 1.24 | Golang 1.24.6 | Linux, Darwin |
+| **Golang** | Supported | Supported | Golang 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19, 1.20, 1.21, 1.22, 1.24, 1.25 | Golang 1.24.6 | Linux, Darwin |
 | **.NET** | Supported | Supported | .NET 6, 7, 8, 9, 10 | .NET 7.0.401 | Linux, Darwin |
-| **Scala** | Supported | Supported | Scala 1.10.0, 1.11.0 | Scala 1.9.0 | Linux, Darwin |
+| **Scala** | Supported | Supported | Scala 1.10.0, 1.11.0, 1.12.0 | Scala 1.9.0 | Linux, Darwin |
 | **Rust** | Supported | Supported | Rust 1.89.0 | Rust 1.89.0 | Linux, Darwin |
 | **Kotlin** | Supported | Supported |  | Java 17 | Linux, Darwin |
-| **Typescript** | Supported | Supported | 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8 | Node.js 20.10.0 | Linux, Darwin |
+| **Typescript** | Supported | Supported | 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8, 24.12 | Node.js 20.10.0 | Linux, Darwin |
 | **Android** | Supported | Supported |  | platform-tools | Linux, Darwin |
 | **PHP** | Supported | Supported |  | 8.2 | Linux |
 | **Ruby** | Supported | Supported | Ruby 3.2.9, 3.3.9, 3.4.5 | Ruby 3.2.9 | Linux |

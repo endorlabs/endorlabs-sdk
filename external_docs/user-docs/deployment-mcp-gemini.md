@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/mcp/gemini/
 title: Endor Labs MCP server as a Gemini Extension | Endor Labs Docs
-downloaded: 2026-01-16 09:49:16
+downloaded: 2026-01-26 10:07:25
 ---
 
 Endor Labs MCP server as a Gemini Extension | Endor Labs Docs

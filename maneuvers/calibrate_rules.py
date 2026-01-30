@@ -14,6 +14,7 @@ Priority Logic:
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import List, Tuple
@@ -193,8 +194,8 @@ def main():
     )
     parser.add_argument(
         "--namespace",
-        required=True,
-        help="Tenant namespace (e.g., 'tenant.namespace')",
+        default=os.getenv("ENDOR_NAMESPACE"),
+        help="Tenant namespace (e.g., 'tenant.namespace'). Defaults to ENDOR_NAMESPACE env var if set.",
     )
     parser.add_argument(
         "--dry-run",
@@ -218,6 +219,13 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # Validate namespace is provided
+    if not args.namespace:
+        logger.error(
+            "Namespace is required. Set --namespace argument or ENDOR_NAMESPACE environment variable."
+        )
+        return 1
 
     setup_logging()
     logger.info("Starting Day1 rules calibration")

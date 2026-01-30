@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/mcp/cursor/
 title: Endor Labs MCP server in Cursor | Endor Labs Docs
-downloaded: 2026-01-16 09:47:25
+downloaded: 2026-01-26 10:05:49
 ---
 
 Endor Labs MCP server in Cursor | Endor Labs Docs

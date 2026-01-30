@@ -1,5 +1,4 @@
-"""
-Data loading from Endor API and database persistence.
+"""Data loading from Endor API and database persistence.
 
 This module handles loading findings and rules from the Endor API
 and persisting them to SQLite3 database.
@@ -7,7 +6,8 @@ and persisting them to SQLite3 database.
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+import types
+from typing import Any, Self
 
 from ..api_client import APIClient
 from ..resources.finding import Finding, FindingCategory
@@ -20,13 +20,14 @@ logger = logging.getLogger(__name__)
 class FindingDataLoader:
     """Load findings and rules from API and persist to database."""
 
-    def __init__(self, db_path: str):
-        """
-        Initialize data loader.
+    def __init__(self, db_path: str) -> None:
+        """Initialize data loader.
 
         Args:
             db_path: Path to SQLite3 database file
+
         """
+        super().__init__()
         self.db_path = db_path
         self.db = FindingDatabase(db_path)
 
@@ -34,10 +35,9 @@ class FindingDataLoader:
         self,
         client: APIClient,
         namespace: str,
-        project_uuids: Optional[List[str]] = None,
-    ) -> List[Finding]:
-        """
-        Load findings from Endor API.
+        project_uuids: list[str] | None = None,
+    ) -> list[Finding]:
+        """Load findings from Endor API.
 
         Args:
             client: APIClient instance
@@ -46,6 +46,7 @@ class FindingDataLoader:
 
         Returns:
             List of Finding objects
+
         """
         from ..resources.finding import list_findings
 
@@ -75,9 +76,8 @@ class FindingDataLoader:
 
     def load_rules_from_api(
         self, client: APIClient, namespace: str
-    ) -> List[SemgrepRule]:
-        """
-        Load semgrep rules from Endor API.
+    ) -> list[SemgrepRule]:
+        """Load semgrep rules from Endor API.
 
         Args:
             client: APIClient instance
@@ -85,6 +85,7 @@ class FindingDataLoader:
 
         Returns:
             List of SemgrepRule objects
+
         """
         from ..resources.semgrep_rule import list_semgrep_rules
 
@@ -100,15 +101,15 @@ class FindingDataLoader:
 
         return rules
 
-    def extract_rule_id_from_finding(self, finding: Finding) -> Optional[str]:
-        """
-        Extract rule_id from finding metadata.
+    def extract_rule_id_from_finding(self, finding: Finding) -> str | None:
+        """Extract rule_id from finding metadata.
 
         Args:
             finding: Finding object
 
         Returns:
             Rule ID if found, None otherwise
+
         """
         if not finding.spec.finding_metadata:
             return None
@@ -142,15 +143,15 @@ class FindingDataLoader:
 
         return None
 
-    def extract_finding_metadata(self, finding: Finding) -> Dict[str, Any]:
-        """
-        Extract metadata fields from finding.
+    def extract_finding_metadata(self, finding: Finding) -> dict[str, Any]:
+        """Extract metadata fields from finding.
 
         Args:
             finding: Finding object
 
         Returns:
             Dictionary with extracted metadata
+
         """
         metadata = {
             "file_path": None,
@@ -184,15 +185,15 @@ class FindingDataLoader:
 
         return metadata
 
-    def extract_cwe_from_finding(self, finding: Finding) -> Optional[str]:
-        """
-        Extract CWE from finding.
+    def extract_cwe_from_finding(self, finding: Finding) -> str | None:
+        """Extract CWE from finding.
 
         Args:
             finding: Finding object
 
         Returns:
             CWE identifier if found, None otherwise
+
         """
         # Check finding_metadata for CWE
         if finding.spec.finding_metadata:
@@ -212,15 +213,15 @@ class FindingDataLoader:
 
         return None
 
-    def extract_language_from_finding(self, finding: Finding) -> Optional[str]:
-        """
-        Extract language from finding.
+    def extract_language_from_finding(self, finding: Finding) -> str | None:
+        """Extract language from finding.
 
         Args:
             finding: Finding object
 
         Returns:
             Language identifier if found, None otherwise
+
         """
         if finding.spec.finding_metadata:
             metadata = finding.spec.finding_metadata
@@ -244,14 +245,14 @@ class FindingDataLoader:
         return None
 
     def save_findings_to_db(
-        self, findings: List[Finding], labels: Optional[Dict[str, str]] = None
+        self, findings: list[Finding], labels: dict[str, str] | None = None
     ) -> None:
-        """
-        Save findings to database.
+        """Save findings to database.
 
         Args:
             findings: List of Finding objects
             labels: Optional dictionary mapping finding UUID to label (TP/FP/FN/TN)
+
         """
         logger.info(f"Saving {len(findings)} findings to database")
         labels = labels or {}
@@ -273,6 +274,7 @@ class FindingDataLoader:
             if not rule_name and finding.meta.name:
                 rule_name = finding.meta.name
 
+            meta = finding.spec.finding_metadata
             self.db.insert_finding(
                 uuid=finding.uuid,
                 rule_id=rule_id,
@@ -280,7 +282,9 @@ class FindingDataLoader:
                 file_path=finding_meta.get("file_path"),
                 line_number=finding_meta.get("line_number"),
                 code_snippet=finding_meta.get("code_snippet"),
-                finding_metadata=finding.spec.finding_metadata,
+                finding_metadata=(
+                    meta.model_dump(mode="json") if meta is not None else None
+                ),
                 cwe=cwe,
                 language=language,
                 label=label,
@@ -292,12 +296,12 @@ class FindingDataLoader:
 
         logger.info("Finished saving findings to database")
 
-    def save_rules_to_db(self, rules: List[SemgrepRule]) -> None:
-        """
-        Save rules to database and extract patterns.
+    def save_rules_to_db(self, rules: list[SemgrepRule]) -> None:
+        """Save rules to database and extract patterns.
 
         Args:
             rules: List of SemgrepRule objects
+
         """
         logger.info(f"Saving {len(rules)} rules to database")
 
@@ -339,16 +343,16 @@ class FindingDataLoader:
         logger.info("Finished saving rules to database")
 
     def load_ground_truth(self, file_path: str) -> None:
-        """
-        Load ground truth labels from JSON file.
+        """Load ground truth labels from JSON file.
 
         Args:
             file_path: Path to ground truth JSON file
+
         """
         logger.info(f"Loading ground truth from {file_path}")
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             if not isinstance(data, list):
@@ -380,10 +384,15 @@ class FindingDataLoader:
         """Close database connection."""
         self.db.close()
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         """Context manager exit."""
         self.close()

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-enterprise-app/
 title: Deploy Endor Labs GitHub Enterprise Server App | Endor Labs Docs
-downloaded: 2026-01-16 09:50:11
+downloaded: 2026-01-26 10:08:21
 ---
 
 Deploy Endor Labs GitHub Enterprise Server App | Endor Labs Docs
@@ -127,7 +127,7 @@ If you have already created a GitHub App for Endor Labs, skip to [register appli
 1. Sign in to Endor Labs.
 2. Select **Integrations** from the left sidebar.
 3. Click **Create App** next to **GitHub Enterprise Server** under **Source Control Managers**.
-4. Enter the **Host URL** of your GitHub Enterprise Server instance.
+4. Enter the **Host URL** of your GitHub Enterprise Server instance in the format `https://github.company.com`.
 5. Enter the **GitHub Organization Name** that will be the owner of this app.
 6. Click **Create** to launch a [GitHub app registration form](#create-an-endor-labs-github-app-in-github-enterprise-server) in a new tab.
 

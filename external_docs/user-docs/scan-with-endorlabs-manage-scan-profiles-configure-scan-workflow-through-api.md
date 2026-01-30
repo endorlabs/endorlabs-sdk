@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/configure-scan-workflow-through-api/
 title: Configure scan workflow through Endor Labs API | Endor Labs Docs
-downloaded: 2026-01-16 09:50:35
+downloaded: 2026-01-26 10:08:44
 ---
 
 Configure scan workflow through Endor Labs API | Endor Labs Docs

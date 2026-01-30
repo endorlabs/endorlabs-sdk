@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/
 title: Deploy Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2026-01-16 09:47:06
+downloaded: 2026-01-26 10:05:30
 ---
 
 Deploy Endor Labs GitHub App | Endor Labs Docs
@@ -98,7 +98,9 @@ If the button to install says **Install and Request** instead of **Install and A
 
 10. Choose a namespace and click **Next**.
 
-    ![Choose namespace](../../../images/GitHubApp_namespace.png)
+    ![Choose namespace](../../../images/github-app-namespace.png)
+
+    Select **Manage Namespaces** if you need to create a new namespace or if you don’t see the namespace you want to use in the list.
 11. Based on your license, select and enable the scanners.
 
     * **SCA**: Perform software composition analysis and discover AI models used in your repository.

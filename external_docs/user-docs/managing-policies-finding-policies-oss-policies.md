@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/oss-policies/
 title: Open-source policies | Endor Labs Docs
-downloaded: 2026-01-16 09:49:23
+downloaded: 2026-01-26 10:07:32
 ---
 
 Open-source policies | Endor Labs Docs

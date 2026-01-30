@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/aws-codeartifact/
 title: Configure integration with AWS | Endor Labs Docs
-downloaded: 2026-01-16 09:49:02
+downloaded: 2026-01-26 10:07:14
 ---
 
 Configure integration with AWS | Endor Labs Docs

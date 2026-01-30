@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/
 title: Previous releases | Endor Labs Docs
-downloaded: 2026-01-16 09:51:37
+downloaded: 2026-01-26 10:09:48
 ---
 
 Previous releases | Endor Labs Docs

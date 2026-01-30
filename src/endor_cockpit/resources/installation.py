@@ -1,5 +1,4 @@
-"""
-Installation resource module for Endor Labs API.
+"""Installation resource module for Endor Labs API.
 
 This module provides CRUD operations for Installation resources following the
 established patterns from the base class implementation.
@@ -17,9 +16,11 @@ integrations (GitHub, GitLab, Azure, Bitbucket) and cannot be manually
 created, updated, or deleted.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -41,8 +42,14 @@ logger.addFilter(RedactingFilter([redaction_pattern]))
 class EnabledFeatureType(FlexibleEnum):
     """Enabled feature type enumeration."""
 
-    GIT = "GIT"
-    GITHUB = "GITHUB"
+    UNSPECIFIED = "ENABLED_FEATURE_TYPE_UNSPECIFIED"
+    AI_MODELS_SCAN = "ENABLED_FEATURE_TYPE_AI_MODELS_SCAN"
+    GIT_SCAN = "ENABLED_FEATURE_TYPE_GIT_SCAN"
+    GITHUB_ACTION_SCAN = "ENABLED_FEATURE_TYPE_GITHUB_ACTION_SCAN"
+    GITHUB_SCAN = "ENABLED_FEATURE_TYPE_GITHUB_SCAN"
+    SAST_SCAN = "ENABLED_FEATURE_TYPE_SAST_SCAN"
+    SECRETS_SCAN = "ENABLED_FEATURE_TYPE_SECRETS_SCAN"
+    TOOLS_SCAN = "ENABLED_FEATURE_TYPE_TOOLS_SCAN"
 
 
 class PlatformSourceType(FlexibleEnum):
@@ -65,10 +72,10 @@ class GitHubConfig(BaseModel):
     """GitHub configuration for installation."""
 
     app_id: str = Field(..., description="GitHub App ID")
-    installation_id: Optional[str] = Field(
+    installation_id: str | None = Field(
         None, description="GitHub Installation ID (may be masked in API responses)"
     )
-    private_key: Optional[str] = Field(
+    private_key: str | None = Field(
         None, description="GitHub App Private Key (may be masked in API responses)"
     )
 
@@ -134,82 +141,82 @@ class InstallationSpec(BaseSpec):
     - installation_error_message: Error message (can be updated)
     """
 
-    public: Optional[bool] = Field(
+    public: bool | None = Field(
         None, description="Apply only to public repositories. Default value is false"
     )  # MUTABLE: Can be updated
-    external_id: Optional[str] = Field(
+    external_id: str | None = Field(
         None, description="The external ID of the installation"
     )  # IMMUTABLE: Set at creation
-    external_name: Optional[str] = Field(
+    external_name: str | None = Field(
         None, description="The external name of the installation"
     )  # IMMUTABLE: Read-only
-    user: Optional[str] = Field(
+    user: str | None = Field(
         None, description="The user name of the user that initiated the installation"
     )  # IMMUTABLE: Read-only
-    ingestion_time: Optional[datetime] = Field(
+    ingestion_time: datetime | None = Field(
         None, description="The last time that we ingested the installation data"
     )  # IMMUTABLE: Read-only
-    target_type: Optional[str] = Field(
+    target_type: str | None = Field(
         None, description="The target of the installation (Organization or User)"
     )  # IMMUTABLE: Read-only
-    suspended: Optional[bool] = Field(
+    suspended: bool | None = Field(
         None, description="Indicates if the installation is suspended"
     )  # MUTABLE: Can be updated
-    project_uuids: Optional[List[str]] = Field(
+    project_uuids: list[str] | None = Field(
         None,
         description="The list of projects that are associated with this installation",
     )  # MUTABLE: Can be updated
-    login: Optional[str] = Field(
+    login: str | None = Field(
         None,
         description="The login of the account taken directly from the GitHub response",
     )  # IMMUTABLE: Read-only
-    invalid: Optional[bool] = Field(
+    invalid: bool | None = Field(
         None,
         description="Identifies installations with potentially removed config",
     )  # MUTABLE: Can be updated
-    ingestion_token: Optional[str] = Field(
+    ingestion_token: str | None = Field(
         None,
         description="API token for scanner to use for scanning installation info",
     )  # IMMUTABLE: Read-only
-    enabled_features: Optional[List[EnabledFeatureType]] = Field(
+    enabled_features: list[EnabledFeatureType] | None = Field(
         None, description="Enabled features. The valid values are 'git, github'"
     )  # MUTABLE: Can be updated
-    platform_source: Optional[PlatformSourceType] = Field(
+    platform_source: PlatformSourceType | None = Field(
         None, description="Deprecated: Use platform_type instead"
     )  # IMMUTABLE: Read-only
-    platform_type: Optional[PlatformSourceType] = Field(
+    platform_type: PlatformSourceType | None = Field(
         None,
         description="Platform type: GitHub, GitLab, Azure, or Bitbucket",
     )  # IMMUTABLE: Set at creation
-    github_config: Optional[GitHubConfig] = Field(
+    github_config: GitHubConfig | None = Field(
         None, description="GitHub configuration"
     )  # IMMUTABLE: Set at creation
-    azure_config: Optional[AzureConfig] = Field(
+    azure_config: AzureConfig | None = Field(
         None, description="Azure configuration"
     )  # IMMUTABLE: Set at creation
-    gitlab_config: Optional[GitLabConfig] = Field(
+    gitlab_config: GitLabConfig | None = Field(
         None, description="GitLab configuration"
     )  # IMMUTABLE: Set at creation
-    bitbucket_config: Optional[BitBucketConfig] = Field(
+    bitbucket_config: BitBucketConfig | None = Field(
         None, description="BitBucket configuration"
     )  # IMMUTABLE: Set at creation
-    marked_for_deletion: Optional[bool] = Field(
+    marked_for_deletion: bool | None = Field(
         None, description="Indicates the installation is marked for deletion"
     )  # IMMUTABLE: Read-only
-    include_archived_repos: Optional[bool] = Field(
+    include_archived_repos: bool | None = Field(
         None,
         description="Boolean indicating if archived repos should be included",
     )  # MUTABLE: Can be updated
-    installation_error_message: Optional[str] = Field(
+    installation_error_message: str | None = Field(
         None, description="Message explaining why the installation is invalid"
     )  # MUTABLE: Can be updated
-    scm_app_uuid: Optional[str] = Field(
+    scm_app_uuid: str | None = Field(
         None, description="The UUID of the SCM app being installed"
     )  # IMMUTABLE: Set at creation
 
     @field_validator("enabled_features", mode="before")
     @classmethod
-    def validate_enabled_features(cls, v):
+    def validate_enabled_features(cls, v: Any) -> Any:
         """Handle enabled features validation."""
         if isinstance(v, list):
             validated_features = []
@@ -229,7 +236,7 @@ class InstallationSpec(BaseSpec):
 
     @field_validator("platform_source", mode="before")
     @classmethod
-    def validate_platform_source(cls, v):
+    def validate_platform_source(cls, v: Any) -> Any:
         """Handle unknown platform source values gracefully."""
         if isinstance(v, str):
             try:
@@ -241,7 +248,7 @@ class InstallationSpec(BaseSpec):
 
     @field_validator("platform_type", mode="before")
     @classmethod
-    def validate_platform_type(cls, v):
+    def validate_platform_type(cls, v: Any) -> Any:
         """Handle unknown platform type values gracefully."""
         if isinstance(v, str):
             try:
@@ -253,8 +260,7 @@ class InstallationSpec(BaseSpec):
 
 
 class Installation(BaseResource):
-    """
-    Installation resource model extending BaseResource.
+    """Installation resource model extending BaseResource.
 
     OPERATION SUPPORT:
     ==================
@@ -308,7 +314,7 @@ class Installation(BaseResource):
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to InstallationSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = InstallationSpec(**data["spec"])
@@ -316,7 +322,7 @@ class Installation(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -353,7 +359,9 @@ class Installation(BaseResource):
         return v
 
 
-def _get_installation_ops(client: APIClient) -> BaseResourceOperations:
+def _get_installation_ops(
+    client: APIClient,
+) -> BaseResourceOperations[Installation]:
     """Get BaseResourceOperations instance for Installation."""
     return BaseResourceOperations(client, "installations", Installation)
 
@@ -361,42 +369,57 @@ def _get_installation_ops(client: APIClient) -> BaseResourceOperations:
 def list_installations(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    max_pages: Optional[int] = None,
-    **kwargs,
-) -> List[Installation]:
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> list[Installation]:
     """List installations with advanced filtering and pagination."""
     ops = _get_installation_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
 def get_installation(
     client: APIClient, tenant_meta_namespace: str, installation_uuid: str
-) -> Optional[Installation]:
-    """Get specific installation by UUID."""
+) -> Installation:
+    """Get specific installation by UUID.
+
+    Raises:
+        NotFoundError: If installation doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
+    """
     ops = _get_installation_ops(client)
-    return ops.get(tenant_meta_namespace, installation_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, installation_uuid)
 
 
 def create_installation(
     client: APIClient,
     tenant_meta_namespace: str,
-    payload: "CreateInstallationPayload",
-) -> Optional[Installation]:
-    """Create a new installation."""
+    payload: CreateInstallationPayload,
+) -> Installation:
+    """Create a new installation with pre-validation and typed errors.
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If installation already exists
+        ServerError: If server error occurs
+
+    """
     ops = _get_installation_ops(client)
-    return ops.create(tenant_meta_namespace, payload)  # type: ignore
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_installation(
     client: APIClient,
     tenant_meta_namespace: str,
     installation_uuid: str,
-    payload: "UpdateInstallationPayload",
-    update_mask: Optional[List[str]] = None,
-) -> Optional[Installation]:
-    """
-    Update an existing installation with partial updates.
+    payload: UpdateInstallationPayload,
+    update_mask: str | None = None,
+) -> Installation | None:
+    """Update an existing installation with partial updates.
 
     This function supports updating only specific fields using the update_mask
     parameter, which enables efficient partial updates without overwriting
@@ -456,13 +479,29 @@ def update_installation(
         tenant_meta_namespace: Canonical namespace name
         installation_uuid: UUID of the installation to update
         payload: Installation update payload
-        update_mask: Optional list of fields to update
+        update_mask: Optional comma-separated list of fields to update
+            (e.g., "meta.tags,meta.description"). If provided, only these
+            fields will be updated. If omitted, all non-None fields in
+            payload will be updated.
 
     Returns:
-        Updated Installation object if successful, None otherwise
+        Updated Installation object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If installation doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
     """
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
     ops = _get_installation_ops(client)
-    return ops.update(tenant_meta_namespace, installation_uuid, payload, update_mask)  # type: ignore
+    return ops.update(
+        tenant_meta_namespace, installation_uuid, payload, update_mask_list
+    )
 
 
 def delete_installation(
@@ -470,22 +509,21 @@ def delete_installation(
 ) -> bool:
     """Delete an installation by UUID."""
     ops = _get_installation_ops(client)
-    return ops.delete(tenant_meta_namespace, installation_uuid)  # type: ignore
+    return ops.delete(tenant_meta_namespace, installation_uuid)
 
 
 # Payload models for create and update operations
 class CreateInstallationPayload(BaseModel):
     """Payload for creating an installation."""
 
-    meta: "InstallationMetaCreate" = Field(
+    meta: InstallationMetaCreate = Field(
         ..., description="Installation metadata for creation"
     )
     spec: InstallationSpec = Field(..., description="Installation specification")
 
 
 class UpdateInstallationPayload(BaseModel):
-    """
-    Payload for updating an installation.
+    """Payload for updating an installation.
 
     MUTABLE FIELDS (can be updated via PATCH):
     - meta.description: Installation description
@@ -518,10 +556,10 @@ class UpdateInstallationPayload(BaseModel):
     - processing_status.analytic_time: Last analytics time (system-managed)
     """
 
-    meta: Optional["InstallationMetaUpdate"] = Field(
+    meta: InstallationMetaUpdate | None = Field(
         None, description="Installation metadata for update"
     )
-    spec: Optional[InstallationSpec] = Field(
+    spec: InstallationSpec | None = Field(
         None, description="Installation specification for update"
     )
 
@@ -530,10 +568,10 @@ class InstallationMetaCreate(BaseModel):
     """Installation metadata for creation."""
 
     name: str = Field(..., description="Installation name")
-    description: Optional[str] = Field(None, description="Installation description")
+    description: str | None = Field(None, description="Installation description")
 
 
 class InstallationMetaUpdate(BaseModel):
     """Installation metadata for update."""
 
-    description: Optional[str] = Field(None, description="Installation description")
+    description: str | None = Field(None, description="Installation description")

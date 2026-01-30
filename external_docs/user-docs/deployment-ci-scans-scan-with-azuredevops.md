@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-azuredevops/
 title: Scanning in Azure Pipelines | Endor Labs Docs
-downloaded: 2026-01-16 09:50:23
+downloaded: 2026-01-26 10:08:33
 ---
 
 Scanning in Azure Pipelines | Endor Labs Docs

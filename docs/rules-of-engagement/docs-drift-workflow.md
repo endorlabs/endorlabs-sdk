@@ -38,14 +38,14 @@ Phase 3: Issue Creation & Reporting
 
 ### Command-Line Interface
 
-The unified workflow script (`scripts/unified_docs_workflow.py`) provides flexible options:
+The unified workflow script (`.github/scripts/unified_docs_workflow.py`) provides flexible options:
 
 #### Full Workflow
 
 Run both documentation update and drift detection:
 
 ```bash
-python scripts/unified_docs_workflow.py --all
+python .github/scripts/unified_docs_workflow.py --all
 ```
 
 #### Documentation Only
@@ -53,7 +53,7 @@ python scripts/unified_docs_workflow.py --all
 Update documentation without checking for drift:
 
 ```bash
-python scripts/unified_docs_workflow.py --update-docs-only
+python .github/scripts/unified_docs_workflow.py --update-docs-only
 ```
 
 #### Drift Detection Only
@@ -61,7 +61,7 @@ python scripts/unified_docs_workflow.py --update-docs-only
 Check for schema drift without updating docs:
 
 ```bash
-python scripts/unified_docs_workflow.py --check-drift-only
+python .github/scripts/unified_docs_workflow.py --check-drift-only
 ```
 
 **Note**: Drift detection will be skipped if docs weren't updated (unless `--force` is used).
@@ -71,7 +71,7 @@ python scripts/unified_docs_workflow.py --check-drift-only
 Force operations even if not needed:
 
 ```bash
-python scripts/unified_docs_workflow.py --all --force
+python .github/scripts/unified_docs_workflow.py --all --force
 ```
 
 #### Include User Documentation
@@ -79,7 +79,7 @@ python scripts/unified_docs_workflow.py --all --force
 Download user docs along with OpenAPI spec:
 
 ```bash
-python scripts/unified_docs_workflow.py --update-docs-only \
+python .github/scripts/unified_docs_workflow.py --update-docs-only \
   --download-user-docs \
   --max-pages 100
 ```
@@ -215,9 +215,9 @@ The workflow uses exit codes to indicate status:
 
 The unified workflow script orchestrates existing scripts:
 
-- **`scripts/sync_external_docs.py`**: Provides documentation download functions
-- **`scripts/detect_schema_drift.py`**: Provides drift detection logic
-- **`scripts/create_drift_issues.py`**: Provides GitHub issue creation
+- **`.github/scripts/sync_external_docs.py`**: Provides documentation download functions
+- **`.github/scripts/detect_schema_drift.py`**: Provides drift detection logic
+- **`.github/scripts/create_drift_issues.py`**: Provides GitHub issue creation
 
 **Backward Compatibility**: All individual scripts remain functional for manual use.
 
@@ -229,7 +229,7 @@ The unified workflow script orchestrates existing scripts:
 
 **Solution**: Use `--force` flag to force re-download:
 ```bash
-python scripts/unified_docs_workflow.py --update-docs-only --force
+python .github/scripts/unified_docs_workflow.py --update-docs-only --force
 ```
 
 ### Drift Detection Skipped
@@ -238,7 +238,7 @@ python scripts/unified_docs_workflow.py --update-docs-only --force
 
 **Solution**: Use `--force` flag to force drift detection:
 ```bash
-python scripts/unified_docs_workflow.py --check-drift-only --force
+python .github/scripts/unified_docs_workflow.py --check-drift-only --force
 ```
 
 ### GitHub Issues Not Created
@@ -302,7 +302,7 @@ export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-secret"
 
-python scripts/unified_docs_workflow.py --all
+python .github/scripts/unified_docs_workflow.py --all
 ```
 
 ### CI/CD Integration
@@ -310,7 +310,7 @@ python scripts/unified_docs_workflow.py --all
 In a CI pipeline, you might want to check drift without updating docs:
 
 ```bash
-python scripts/unified_docs_workflow.py --check-drift-only --force
+python .github/scripts/unified_docs_workflow.py --check-drift-only --force
 ```
 
 ### Manual Issue Creation
@@ -321,6 +321,6 @@ If you have a drift report but want to create issues separately:
 export GITHUB_REPOSITORY="owner/repo"
 export GITHUB_TOKEN="your-token"
 
-python scripts/create_drift_issues.py --report schema_drift_report.json
+python .github/scripts/create_drift_issues.py --report schema_drift_report.json
 ```
 

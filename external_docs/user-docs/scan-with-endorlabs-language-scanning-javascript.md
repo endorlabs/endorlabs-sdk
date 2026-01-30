@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/javascript/
 title: JavaScript/TypeScript | Endor Labs Docs
-downloaded: 2026-01-16 09:49:52
+downloaded: 2026-01-26 10:08:02
 ---
 
 JavaScript/TypeScript | Endor Labs Docs

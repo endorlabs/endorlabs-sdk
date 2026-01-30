@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/github-security-campaign/
 title: Best Practices: GitHub Security Campaign | Endor Labs Docs
-downloaded: 2026-01-16 09:50:08
+downloaded: 2026-01-26 10:08:18
 ---
 
 Best Practices: GitHub Security Campaign | Endor Labs Docs
@@ -40,7 +40,7 @@ Use GitHub Security Campaigns to coordinate and manage large-scale vulnerability
 
 **Automatic SARIF upload**
 
-Configure Endor Labs GitHub App (Pro) with a GHAS SARIF exporter to automatically upload findings to GitHub after each scan. See [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/) for setup instructions.
+Configure Endor Labs GitHub App (Pro) with a GHAS SARIF exporter to automatically upload findings to GitHub after each scan. See [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/) for setup instructions.
 
 2. In GitHub, navigate to **Security > Campaigns > New Campaign** to define your campaign parameters. Refer to [security campaign guide](https://docs.github.com/en/enterprise-cloud@latest/code-security/securing-your-organization/fixing-security-alerts-at-scale/creating-managing-security-campaigns) for more information on GitHub’s campaign features and configuration options.
 3. Define the scope of your campaign.

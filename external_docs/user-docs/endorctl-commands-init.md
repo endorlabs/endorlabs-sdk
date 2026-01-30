@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/init/
 title: init | Endor Labs Docs
-downloaded: 2026-01-16 09:47:39
+downloaded: 2026-01-26 10:06:04
 ---
 
 init | Endor Labs Docs

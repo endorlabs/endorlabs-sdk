@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/run-a-sast-scan/
 title: Run a SAST scan | Endor Labs Docs
-downloaded: 2026-01-16 09:48:47
+downloaded: 2026-01-26 10:06:57
 ---
 
 Run a SAST scan | Endor Labs Docs

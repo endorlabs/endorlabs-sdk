@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/swift-private-package-manager/
 title: Private package manager integration for Swift | Endor Labs Docs
-downloaded: 2026-01-16 09:50:59
+downloaded: 2026-01-26 10:09:11
 ---
 
 Private package manager integration for Swift | Endor Labs Docs

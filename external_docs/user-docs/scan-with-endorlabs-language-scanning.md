@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/
 title: Scan for open source risks | Endor Labs Docs
-downloaded: 2026-01-16 09:46:57
+downloaded: 2026-01-26 10:05:21
 ---
 
 Scan for open source risks | Endor Labs Docs

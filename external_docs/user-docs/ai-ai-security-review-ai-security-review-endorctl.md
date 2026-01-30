@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-review-endorctl/
 title: Set up AI security code review with endorctl | Endor Labs Docs
-downloaded: 2026-01-16 09:49:32
+downloaded: 2026-01-26 10:07:41
 ---
 
 Set up AI security code review with endorctl | Endor Labs Docs

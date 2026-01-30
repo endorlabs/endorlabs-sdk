@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/august-2025/
 title: August 2025 | Endor Labs Docs
-downloaded: 2026-01-16 09:50:26
+downloaded: 2026-01-26 10:08:36
 ---
 
 August 2025 | Endor Labs Docs
@@ -60,7 +60,7 @@ For more information see [Export SBOM in Endor Labs](../../managing-sboms/export
 
 The GHAS SARIF exporter now supports pull request scans for GitHub App (Pro). If you have enabled pull request scans in your GitHub App, the GHAS SARIF exporter exports the findings for each pull request. You can view the findings for the pull request in GitHub Advanced Security.
 
-For more information, see [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/).
+For more information, see [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/).
 
 ### Azure OpenAI model detection Enhancement
 

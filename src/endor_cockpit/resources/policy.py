@@ -1,5 +1,4 @@
-"""
-Policy resource module for Endor Labs API.
+"""Policy resource module for Endor Labs API.
 
 This module provides comprehensive policy management capabilities including
 listing, examining, creating, updating, and deleting policies.
@@ -19,8 +18,10 @@ API FEATURES:
 - Namespace propagation control
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,27 +37,25 @@ from ..types import ListParameters
 
 logger = logging.getLogger(__name__)
 
-# Global resource instance
-_policy_ops = None
 
-
-def _get_policy_ops(client: APIClient) -> BaseResourceOperations:
-    """Get or create policy operations instance."""
-    global _policy_ops
-    if _policy_ops is None:
-        _policy_ops = BaseResourceOperations(client, "policies", Policy)
-    return _policy_ops
+def _get_policy_ops(client: APIClient) -> BaseResourceOperations[Policy]:
+    """Get BaseResourceOperations instance for policies."""
+    return BaseResourceOperations(client, "policies", Policy)
 
 
 class PolicyType(FlexibleEnum):
     """Policy type enumeration."""
 
-    SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
-    USER_FINDING = "POLICY_TYPE_USER_FINDING"
+    UNSPECIFIED = "POLICY_TYPE_UNSPECIFIED"
     ADMISSION = "POLICY_TYPE_ADMISSION"
+    EXCEPTION = "POLICY_TYPE_EXCEPTION"
+    FINDING = "POLICY_TYPE_FINDING"
+    FINDING_CFG = "POLICY_TYPE_FINDING_CFG"
     ML_FINDING = "POLICY_TYPE_ML_FINDING"
     NOTIFICATION = "POLICY_TYPE_NOTIFICATION"
-    EXCEPTION = "POLICY_TYPE_EXCEPTION"
+    REMEDIATION = "POLICY_TYPE_REMEDIATION"
+    SYSTEM_FINDING = "POLICY_TYPE_SYSTEM_FINDING"
+    USER_FINDING = "POLICY_TYPE_USER_FINDING"
 
 
 class ExceptionReason(FlexibleEnum):
@@ -64,10 +63,10 @@ class ExceptionReason(FlexibleEnum):
 
     UNSPECIFIED = "EXCEPTION_REASON_UNSPECIFIED"
     FALSE_POSITIVE = "EXCEPTION_REASON_FALSE_POSITIVE"
-    ACCEPTED_RISK = "EXCEPTION_REASON_ACCEPTED_RISK"
-    MITIGATION = "EXCEPTION_REASON_MITIGATION"
-    COMPLIANCE = "EXCEPTION_REASON_COMPLIANCE"
-    BUSINESS_JUSTIFICATION = "EXCEPTION_REASON_BUSINESS_JUSTIFICATION"
+    IN_TRIAGE = "EXCEPTION_REASON_IN_TRIAGE"
+    OTHER = "EXCEPTION_REASON_OTHER"
+    RESOLVED = "EXCEPTION_REASON_RESOLVED"
+    RISK_ACCEPTED = "EXCEPTION_REASON_RISK_ACCEPTED"
 
 
 class PolicyRule(BaseModel):
@@ -83,43 +82,43 @@ class PolicyRule(BaseModel):
 class PolicySpec(BaseSpec):
     """Policy specification extending BaseSpec."""
 
-    policy_type: Optional[PolicyType] = Field(None, description="Policy type")
-    rule: Optional[str] = Field(None, description="Policy rule in text format")
-    project_selector: Optional[List[str]] = Field(
+    policy_type: PolicyType | None = Field(None, description="Policy type")
+    rule: str | None = Field(None, description="Policy rule in text format")
+    project_selector: list[str] | None = Field(
         None, description="Project selector tags"
     )
-    project_exceptions: Optional[List[str]] = Field(
+    project_exceptions: list[str] | None = Field(
         None, description="Project exception tags"
     )
-    resource_kinds: Optional[List[str]] = Field(None, description="Resource kinds")
-    disable: Optional[bool] = Field(False, description="Whether policy is disabled")
-    finding: Optional[Dict[str, Any]] = Field(None, description="Finding configuration")
-    finding_level: Optional[str] = Field(None, description="Finding level")
-    query_statements: Optional[List[str]] = Field(None, description="Query statements")
-    template_uuid: Optional[str] = Field(None, description="Template UUID")
-    template_version: Optional[str] = Field(None, description="Template version")
-    template_parameters: Optional[List[Dict[str, Any]]] = Field(
+    resource_kinds: list[str] | None = Field(None, description="Resource kinds")
+    disable: bool | None = Field(False, description="Whether policy is disabled")
+    finding: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        None, description="Finding configuration"
+    )
+    finding_level: str | None = Field(None, description="Finding level")
+    query_statements: list[str] | None = Field(None, description="Query statements")
+    template_uuid: str | None = Field(None, description="Template UUID")
+    template_version: str | None = Field(None, description="Template version")
+    template_parameters: list[dict[str, Any]] | None = Field(
         None, description="Template parameters"
     )
-    template_values: Optional[Dict[str, Any]] = Field(
-        None, description="Template values"
-    )
-    admission: Optional[Dict[str, Any]] = Field(
+    template_values: dict[str, Any] | None = Field(None, description="Template values")
+    admission: dict[str, Any] | None = Field(
         None, description="Admission configuration"
     )
-    group_by_fields: Optional[List[str]] = Field(None, description="Group by fields")
-    notification: Optional[Dict[str, Any]] = Field(
+    group_by_fields: list[str] | None = Field(None, description="Group by fields")
+    notification: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Notification configuration"
     )
     # exception is now defined in BaseSpec as ExceptionConfig
     # Keeping this for backward compatibility but it will use BaseSpec.exception
-    finding_categories: Optional[List[str]] = Field(
+    finding_categories: list[str] | None = Field(
         None, description="Finding categories for policy filtering"
     )
 
     @field_validator("rule")
     @classmethod
-    def validate_rule(cls, v: Optional[str]) -> Optional[str]:
+    def validate_rule(cls, v: str | None) -> str | None:
         """Validate Rego rule syntax (basic checks)."""
         if v and not v.strip():
             raise ValueError("rule cannot be empty or whitespace")
@@ -129,7 +128,7 @@ class PolicySpec(BaseSpec):
 
     @field_validator("project_selector")
     @classmethod
-    def validate_project_selector(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_project_selector(cls, v: list[str] | None) -> list[str] | None:
         """Validate project selector tags are not empty strings."""
         if v:
             return [tag.strip() for tag in v if tag.strip()]
@@ -137,7 +136,7 @@ class PolicySpec(BaseSpec):
 
     @field_validator("project_exceptions")
     @classmethod
-    def validate_project_exceptions(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_project_exceptions(cls, v: list[str] | None) -> list[str] | None:
         """Validate project exception tags are not empty strings."""
         if v:
             return [tag.strip() for tag in v if tag.strip()]
@@ -152,7 +151,7 @@ class PolicyMeta(BaseMeta):
 
     @field_validator("tags")
     @classmethod
-    def validate_tags(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_tags(cls, v: list[str] | None) -> list[str] | None:
         """Validate policy tags are not empty strings."""
         if v:
             return [tag.strip() for tag in v if tag.strip()]
@@ -175,9 +174,41 @@ class PolicyMeta(BaseMeta):
         return v.strip()
 
 
+class PolicyMetaUpdate(BaseModel):
+    """Metadata for updating a Policy (only mutable fields)."""
+
+    name: str | None = Field(None, description="Updated policy name")
+    description: str | None = Field(None, description="Updated description")
+    tags: list[str] | None = Field(None, description="Updated tags")
+    annotations: dict[str, Any] | None = Field(None, description="Updated annotations")
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, v: list[str] | None) -> list[str] | None:
+        """Validate policy tags are not empty strings."""
+        if v:
+            return [tag.strip() for tag in v if tag.strip()]
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str | None) -> str | None:
+        """Validate policy name is not empty or whitespace if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("name cannot be empty or whitespace")
+        return v.strip() if v else v
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, v: str | None) -> str | None:
+        """Validate policy description is not empty or whitespace if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("description cannot be empty or whitespace")
+        return v.strip() if v else v
+
+
 class Policy(BaseResource):
-    """
-    Policy resource model extending BaseResource.
+    """Policy resource model extending BaseResource.
 
     OPERATION SUPPORT:
     ==================
@@ -217,13 +248,13 @@ class Policy(BaseResource):
     """
 
     # Policy-specific fields (universal fields inherited from BaseResource)
-    spec: Optional[PolicySpec] = Field(None, description="Policy specification")  # type: ignore
+    spec: PolicySpec | None = Field(None, description="Policy specification")  # type: ignore
 
-    model_config = {"extra": "ignore"}
+    model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift in policy responses."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -263,12 +294,11 @@ class CreatePolicyPayload(BaseModel):
 
     meta: PolicyMeta = Field(..., description="Policy metadata")
     spec: PolicySpec = Field(..., description="Policy specification")
-    propagate: Optional[bool] = Field(True, description="Propagate to child namespaces")
+    propagate: bool | None = Field(True, description="Propagate to child namespaces")
 
 
 class UpdatePolicyPayload(BaseModel):
-    """
-    Payload for updating an Endor Labs policy.
+    r"""Payload for updating an Endor Labs policy.
 
     MUTABLE FIELDS (can be updated via PATCH):
     - meta.name: Policy name
@@ -291,7 +321,7 @@ class UpdatePolicyPayload(BaseModel):
 
     Example:
         >>> payload = UpdatePolicyPayload(
-        ...     meta=PolicyMeta(
+        ...     meta=PolicyMetaUpdate(
         ...         name="Updated Policy Name",
         ...         description="Updated description",
         ...         tags=["security", "updated"]
@@ -306,22 +336,22 @@ class UpdatePolicyPayload(BaseModel):
         >>> policy = update_policy(
         ...     client, namespace, uuid, payload, "meta.name,meta.description,spec.rule"
         ... )
+
     """
 
-    meta: Optional[PolicyMeta] = Field(None, description="Updated policy metadata")
-    spec: Optional[PolicySpec] = Field(None, description="Updated policy specification")
-    propagate: Optional[bool] = Field(None, description="Propagate to child namespaces")
+    meta: PolicyMetaUpdate | None = Field(None, description="Updated policy metadata")
+    spec: PolicySpec | None = Field(None, description="Updated policy specification")
+    propagate: bool | None = Field(None, description="Propagate to child namespaces")
 
 
 def list_policies(
     client: APIClient,
     tenant_meta_namespace: str,
-    policy_type: Optional[PolicyType] = None,
-    list_params: Optional[ListParameters] = None,
-    **kwargs,
-) -> List[Policy]:
-    """
-    List all policies in a namespace with filtering support.
+    policy_type: PolicyType | None = None,
+    list_params: ListParameters | None = None,
+    **kwargs: Any,
+) -> list[Policy]:
+    """List all policies in a namespace with filtering support.
 
     Args:
         client: APIClient instance
@@ -332,6 +362,7 @@ def list_policies(
 
     Returns:
         List of Policy objects
+
     """
     ops = _get_policy_ops(client)
 
@@ -357,14 +388,13 @@ def list_policies(
             else type_filter
         )
 
-    return ops.list(tenant_meta_namespace, list_params, **kwargs)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, **kwargs)
 
 
 def get_policy(
     client: APIClient, tenant_meta_namespace: str, policy_uuid: str
-) -> Optional[Policy]:
-    """
-    Get a specific policy by UUID with robust retrieval.
+) -> Policy:
+    """Get a specific policy by UUID with robust retrieval.
 
     Args:
         client: APIClient instance
@@ -372,17 +402,22 @@ def get_policy(
         policy_uuid: Policy UUID
 
     Returns:
-        Policy object or None if not found
+        Policy object
+
+    Raises:
+        NotFoundError: If policy doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
     """
     ops = _get_policy_ops(client)
-    return ops.get(tenant_meta_namespace, policy_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, policy_uuid)
 
 
 def create_policy(
     client: APIClient, tenant_meta_namespace: str, payload: CreatePolicyPayload
-) -> Optional[Policy]:
-    """
-    Create a new policy in a namespace.
+) -> Policy:
+    """Create a new policy in a namespace with pre-validation and typed errors.
 
     Args:
         client: APIClient instance
@@ -390,25 +425,29 @@ def create_policy(
         payload: Policy creation payload
 
     Returns:
-        Created Policy object or None if creation failed
+        Created Policy object
+
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If policy already exists
+        ServerError: If server error occurs
+
     """
-    try:
-        request_data = {
-            "meta": payload.meta.model_dump(),
-            "spec": payload.spec.model_dump(),
-            "propagate": payload.propagate,
-        }
+    # Exclude immutable fields from meta (kind is set by API)
+    # Create transformed payload for BaseResourceOperations
+    meta_dict = payload.meta.model_dump(exclude={"kind"})
+    # Ensure propagate is explicitly set (defaults to True if not provided)
+    propagate_value = payload.propagate if payload.propagate is not None else True
+    transformed_payload = CreatePolicyPayload(
+        meta=PolicyMeta(**meta_dict),
+        spec=payload.spec,
+        propagate=propagate_value,
+    )
 
-        res = client.post(
-            f"v1/namespaces/{tenant_meta_namespace}/policies",
-            json=request_data,
-        )
-        data = res.json()
-        return Policy(**data)
-
-    except Exception as e:
-        logger.error(f"Error creating policy: {e}", exc_info=True)
-        return None
+    ops = _get_policy_ops(client)
+    return ops.create(tenant_meta_namespace, transformed_payload)
 
 
 def update_policy(
@@ -416,10 +455,9 @@ def update_policy(
     tenant_meta_namespace: str,
     policy_uuid: str,
     payload: UpdatePolicyPayload,
-    update_mask: Optional[str] = None,
-) -> Optional[Policy]:
-    """
-    Update an existing policy using partial updates.
+    update_mask: str | None = None,
+) -> Policy | None:
+    r"""Update an existing policy using partial updates.
 
     This function supports updating only specific fields using the update_mask
     parameter, which enables efficient partial updates without overwriting
@@ -471,16 +509,18 @@ def update_policy(
             payload will be updated.
 
     Returns:
-        Updated Policy object or None if update failed
+        Updated Policy object
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
-        pydantic.ValidationError: If response data doesn't match expected schema
+        ValidationError: If payload is invalid
+        NotFoundError: If policy doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> # Update policy name and description
         >>> payload = UpdatePolicyPayload(
-        ...     meta=PolicyMeta(
+        ...     meta=PolicyMetaUpdate(
         ...         name="Updated Policy",
         ...         description="Updated description"
         ...     )
@@ -504,67 +544,67 @@ def update_policy(
         The update_mask parameter is critical for policy updates. Without it,
         the API may not persist changes reliably. Always specify which fields
         you want to update.
+
     """
-    try:
-        # Get the current policy to include required fields
-        # Note: Using list_policies as workaround for get_policy 404 issues
-        policies = list_policies(client, tenant_meta_namespace)
-        current_policy = next((p for p in policies if p.uuid == policy_uuid), None)
-        if not current_policy:
-            logger.error(f"Policy {policy_uuid} not found")
-            return None
+    # Get the current policy to include required fields
+    # Note: Using list_policies as workaround for get_policy 404 issues
+    policies = list_policies(client, tenant_meta_namespace)
+    current_policy = next((p for p in policies if p.uuid == policy_uuid), None)
+    if not current_policy:
+        from ..exceptions import NotFoundError
 
-        # Build request data with correct structure
-        request_data = {
-            "object": {
-                "uuid": policy_uuid,
-                "tenant_meta": current_policy.tenant_meta.model_dump(),
-                "meta": {
-                    "name": current_policy.meta.name,  # Required field
-                    **(
-                        payload.meta.model_dump(exclude_none=True)
-                        if payload.meta
-                        else {}
-                    ),
-                },
-                "spec": {
-                    **current_policy.spec.model_dump(),  # Include all
-                    # existing spec fields
-                    **(
-                        payload.spec.model_dump(exclude_none=True)
-                        if payload.spec
-                        else {}
-                    ),
-                },
-            }
-        }
-
-        if update_mask:
-            request_data["request"] = {"update_mask": update_mask}
-
-        logger.info(f"Updating policy {policy_uuid} with mask: {update_mask}")
-
-        res = client.patch(
-            f"v1/namespaces/{tenant_meta_namespace}/policies",
-            json=request_data,
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
+        raise NotFoundError(
+            message=f"Policy {policy_uuid} not found",
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=policy_uuid,
         )
-        data = res.json()
-        return Policy(**data)
 
-    except Exception as e:
-        logger.error(f"Error updating policy {policy_uuid}: {e}", exc_info=True)
-        return None
+    # Merge current policy with payload updates
+    merged_meta = {
+        "name": current_policy.meta.name,  # Required field
+        **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+    }
+    merged_spec = {
+        **(current_policy.spec.model_dump() if current_policy.spec else {}),
+        **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
+    }
+
+    # Build merged policy object for base class
+    tenant_meta_dict = (
+        current_policy.tenant_meta.model_dump()
+        if current_policy.tenant_meta
+        else {"namespace": tenant_meta_namespace}
+    )
+    merged_policy_dict = {
+        "uuid": policy_uuid,
+        "tenant_meta": tenant_meta_dict,
+        "meta": merged_meta,
+        "spec": merged_spec,
+    }
+    if hasattr(payload, "propagate") and payload.propagate is not None:
+        merged_policy_dict["propagate"] = payload.propagate
+
+    # Create Policy object from merged data
+    merged_policy = Policy(**merged_policy_dict)
+
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
+
+    # Use base class update method
+    ops = _get_policy_ops(client)
+    logger.info(f"Updating policy {policy_uuid} with mask: {update_mask}")
+    return ops.update(
+        tenant_meta_namespace, policy_uuid, merged_policy, update_mask_list
+    )
 
 
 def delete_policy(
     client: APIClient, tenant_meta_namespace: str, policy_uuid: str
 ) -> bool:
-    """
-    Delete a policy.
+    """Delete a policy.
 
     Args:
         client: APIClient instance
@@ -573,6 +613,7 @@ def delete_policy(
 
     Returns:
         True if deletion successful, False otherwise
+
     """
     try:
         res = client.delete(
@@ -588,7 +629,7 @@ def delete_policy(
 # Convenience functions for common filtering patterns
 def list_policies_by_type(
     client: APIClient, tenant_meta_namespace: str, policy_type: PolicyType
-) -> List[Policy]:
+) -> list[Policy]:
     """List policies filtered by type."""
     list_params = ListParameters(
         filter=f"spec.policy_type=={policy_type.value}",
@@ -607,7 +648,7 @@ def list_policies_by_type(
 
 def list_policies_by_namespace(
     client: APIClient, tenant_meta_namespace: str, target_namespace: str
-) -> List[Policy]:
+) -> list[Policy]:
     """List policies filtered by namespace."""
     list_params = ListParameters(
         filter=f"tenant_meta.namespace=={target_namespace}",
@@ -624,31 +665,12 @@ def list_policies_by_namespace(
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
 
-def list_policies_with_mask(
-    client: APIClient, tenant_meta_namespace: str, fields: List[str]
-) -> List[Policy]:
-    """List policies with field masking."""
-    list_params = ListParameters(
-        filter=None,
-        mask=",".join(fields),
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
-    )
-    return list_policies(client, tenant_meta_namespace, list_params=list_params)
-
-
 def list_policies_paginated(
     client: APIClient,
     tenant_meta_namespace: str,
     page_size: int = 10,
-    page_token: Optional[str] = None,
-) -> List[Policy]:
+    page_token: str | None = None,
+) -> list[Policy]:
     """List policies with pagination."""
     list_params = ListParameters(
         filter=None,
@@ -670,7 +692,7 @@ def list_policies_sorted(
     tenant_meta_namespace: str,
     sort_field: str = "meta.create_time",
     desc: bool = True,
-) -> List[Policy]:
+) -> list[Policy]:
     """List policies with sorting."""
     list_params = ListParameters(
         filter=None,

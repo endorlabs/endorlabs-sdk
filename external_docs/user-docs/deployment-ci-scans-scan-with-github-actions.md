@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-github-actions/
 title: Scanning with GitHub Actions | Endor Labs Docs
-downloaded: 2026-01-16 09:48:49
+downloaded: 2026-01-26 10:06:59
 ---
 
 Scanning with GitHub Actions | Endor Labs Docs

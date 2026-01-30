@@ -1,6 +1,6 @@
-"""
-This module provides a resource-oriented interface for managing Endor Labs
-projects. It implements CRUD operations following REST principles and
+"""Resource-oriented interface for managing Endor Labs projects.
+
+Implements CRUD operations following REST principles and
 provides type-safe data models.
 
 API OPERATIONS SUPPORTED:
@@ -16,10 +16,13 @@ and cannot be manually created or deleted. Only metadata updates (tags, descript
 are allowed via PATCH operations.
 """
 
+from __future__ import annotations
+
 import logging
 import os
-from typing import List, Optional
+from typing import Any
 
+import requests
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
@@ -35,20 +38,20 @@ logger.addFilter(RedactingFilter([redaction_pattern]))
 class IndexData(BaseModel):
     """Index data for a project."""
 
-    data: List[str]
+    data: list[str]
     tenant: str
 
 
 class ProjectMeta(BaseMeta):
-    """
-    Metadata for an Endor Labs project extending BaseMeta.
+    """Metadata for an Endor Labs project extending BaseMeta.
 
     Project-specific fields only (universal fields inherited from BaseMeta).
     """
 
     # Project-specific fields (universal fields inherited from BaseMeta)
-    project_index_data: IndexData = Field(
-        ..., description="Index data for the project", alias="index_data"
+    # Optional when list mask omits meta.index_data.
+    project_index_data: IndexData | None = Field(
+        None, description="Index data for the project", alias="index_data"
     )
 
     @field_validator("name")
@@ -61,9 +64,7 @@ class ProjectMeta(BaseMeta):
 
 
 class ProjectMetaCreate(BaseModel):
-    """
-    Metadata for creating an Endor Labs project.
-    """
+    """Metadata for creating an Endor Labs project."""
 
     name: str = Field(
         ..., min_length=1, max_length=255, description="The name of the project"
@@ -77,27 +78,25 @@ class ProjectMetaCreate(BaseModel):
 
 
 class ProjectMetaUpdate(BaseModel):
-    """
-    Metadata for updating an Endor Labs project.
-    """
+    """Metadata for updating an Endor Labs project."""
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, description="Updated description of the project's purpose"
     )
-    repository_url: Optional[str] = Field(
+    repository_url: str | None = Field(
         None, description="Updated repository URL for the project"
     )
-    language: Optional[str] = Field(
+    language: str | None = Field(
         None, description="Updated primary programming language"
     )
-    framework: Optional[str] = Field(
+    framework: str | None = Field(
         None, description="Updated framework used in the project"
     )
-    tags: Optional[List[str]] = Field(None, description="Updated tags for the project")
+    tags: list[str] | None = Field(None, description="Updated tags for the project")
 
     @field_validator("tags")
     @classmethod
-    def validate_tags(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+    def validate_tags(cls, v: list[str] | None) -> list[str] | None:
         """Validate tags are not empty strings."""
         if v:
             return [tag.strip() for tag in v if tag.strip()]
@@ -105,7 +104,7 @@ class ProjectMetaUpdate(BaseModel):
 
     @field_validator("description")
     @classmethod
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
+    def validate_description(cls, v: str | None) -> str | None:
         """Validate description is not just whitespace."""
         if v and not v.strip():
             raise ValueError("description cannot be empty or whitespace")
@@ -113,8 +112,7 @@ class ProjectMetaUpdate(BaseModel):
 
 
 class UpdateProjectPayload(BaseModel):
-    """
-    Payload for updating an Endor Labs project.
+    """Payload for updating an Endor Labs project.
 
     MUTABLE FIELDS (can be updated via PATCH):
     - meta.name: Project name (NOT readOnly in API spec)
@@ -167,6 +165,7 @@ class UpdateProjectPayload(BaseModel):
         >>> project = update_project(
         ...     client, namespace, uuid, payload, "meta.description,meta.tags"
         ... )
+
     """
 
     meta: ProjectMetaUpdate = Field(..., description="Updated metadata for the project")
@@ -175,13 +174,13 @@ class UpdateProjectPayload(BaseModel):
 class GitInfo(BaseModel):
     """Git information for a project."""
 
-    full_name: str
-    git_clone_url: str
-    http_clone_url: str
-    organization: str
-    path: str
-    web_url: str
-    external_installation_id: Optional[str] = Field(
+    full_name: str | None = None
+    git_clone_url: str | None = None
+    http_clone_url: str | None = None
+    organization: str | None = None
+    path: str | None = None
+    web_url: str | None = None
+    external_installation_id: str | None = Field(
         None,
         description=(
             "Endor Labs GitHub app installation ID of this project. "
@@ -189,7 +188,7 @@ class GitInfo(BaseModel):
             "through an installation."
         ),
     )
-    invalid_installation: Optional[bool] = Field(
+    invalid_installation: bool | None = Field(
         None,
         description="Indicates that Endor Labs installation no longer exists "
         "for this project and was potentially deleted. Endor Labs can no longer "
@@ -200,8 +199,11 @@ class GitInfo(BaseModel):
 class ProjectSpec(BaseSpec):
     """Project specification extending BaseSpec."""
 
-    git: GitInfo = Field(..., description="Git information for the project")
-    internal_reference_key: str = Field(..., description="Internal reference key")
+    git: GitInfo | None = Field(None, description="Git information for the project")
+    # Optional when list mask omits spec.internal_reference_key
+    internal_reference_key: str | None = Field(
+        None, description="Internal reference key"
+    )
     platform_source: str = Field(..., description="Platform source identifier")
 
 
@@ -210,7 +212,7 @@ class ProcessingStatus(BaseModel):
 
     disable_automated_scan: bool
     scan_state: str
-    scan_time: Optional[str] = None
+    scan_time: str | None = None
 
 
 class TenantMeta(BaseModel):
@@ -220,8 +222,7 @@ class TenantMeta(BaseModel):
 
 
 class Project(BaseResource):
-    """
-    An Endor Labs project entity extending BaseResource.
+    """An Endor Labs project entity extending BaseResource.
 
     Project-specific fields (universal fields inherited from BaseResource).
 
@@ -267,13 +268,16 @@ class Project(BaseResource):
 
     # Project-specific fields (universal fields inherited from BaseResource)
     spec: ProjectSpec = Field(..., description="Project specification")  # type: ignore
-    project_processing_status: ProcessingStatus = Field(
-        ..., description="Processing status information", alias="processing_status"
+    # Optional when list mask omits processing_status
+    project_processing_status: ProcessingStatus | None = Field(
+        None,
+        description="Processing status information",
+        alias="processing_status",
     )
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to ProjectSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = ProjectSpec(**data["spec"])
@@ -281,7 +285,7 @@ class Project(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Log unknown fields for schema drift detection in spec
@@ -320,12 +324,12 @@ class Project(BaseResource):
 
 
 class CreateProjectPayload(BaseModel):
-    """
-    Payload for creating a new project.
+    """Payload for creating a new project.
 
     Attributes:
         meta: Metadata for the new project
         namespace_uuid: UUID of the parent namespace
+
     """
 
     meta: ProjectMetaCreate = Field(..., description="Metadata for the new project")
@@ -347,7 +351,7 @@ class CreateProjectPayload(BaseModel):
     )
 
 
-def _get_project_ops(client: APIClient) -> BaseResourceOperations:
+def _get_project_ops(client: APIClient) -> BaseResourceOperations[Project]:
     """Get BaseResourceOperations instance for projects."""
     return BaseResourceOperations(client, "projects", Project)
 
@@ -355,11 +359,10 @@ def _get_project_ops(client: APIClient) -> BaseResourceOperations:
 def list_projects(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    max_pages: Optional[int] = None,
-) -> List[Project]:
-    """
-    List all projects in the specified namespace.
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+) -> list[Project]:
+    """List all projects in the specified namespace.
 
     Args:
         client: The APIClient instance to use for the request
@@ -376,17 +379,16 @@ def list_projects(
     Raises:
         requests.exceptions.HTTPError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
+
     """
     ops = _get_project_ops(client)
-    results = ops.list(tenant_meta_namespace, list_params, max_pages)
-    return [Project(**item.model_dump()) for item in results]  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages)
 
 
 def get_project(
     client: APIClient, tenant_meta_namespace: str, project_uuid: str
-) -> Optional[Project]:
-    """
-    Retrieve a specific project by UUID.
+) -> Project:
+    """Retrieve a specific project by UUID.
 
     Args:
         client: The APIClient instance to use for the request
@@ -395,24 +397,24 @@ def get_project(
         project_uuid: The UUID of the project to retrieve
 
     Returns:
-        Optional[Project]: The requested Project object, or None if not found
+        Project: The requested Project object
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors
-        pydantic.ValidationError: If response data doesn't match expected schema
+        NotFoundError: If project doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
     """
     ops = _get_project_ops(client)
-    result = ops.get(tenant_meta_namespace, project_uuid)
-    if result:
-        return Project(**result.model_dump())  # type: ignore
-    return None
+    return ops.get(tenant_meta_namespace, project_uuid)
 
 
 def create_project(
     client: APIClient, tenant_meta_namespace: str, payload: CreateProjectPayload
-) -> Optional[Project]:
-    """
-    Create a new project in the specified namespace.
+) -> Project:
+    """Create a new project in the specified namespace.
+
+    Uses pre-validation and typed errors.
 
     Args:
         client: The APIClient instance to use for the request
@@ -421,23 +423,18 @@ def create_project(
         payload: The CreateProjectPayload containing the new project details
 
     Returns:
-        Optional[Project]: The created Project object, or None if creation fails
+        Project: The created Project object
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors
-        pydantic.ValidationError: If response data doesn't match expected schema
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If project already exists
+        ServerError: If server error occurs
+
     """
-    try:
-        res = client.post(
-            f"v1/namespaces/{tenant_meta_namespace}/projects",
-            json=payload.model_dump(),
-            headers={"Accept": "application/json"},
-        )
-        data = res.json()
-        return Project(**data)
-    except Exception as e:
-        logger.error(f"Error creating project: {e}", exc_info=True)
-        return None
+    ops = _get_project_ops(client)
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_project(
@@ -445,10 +442,9 @@ def update_project(
     tenant_meta_namespace: str,
     project_uuid: str,
     payload: UpdateProjectPayload,
-    update_mask: Optional[str] = None,
-) -> Optional[Project]:
-    """
-    Update an existing project using partial updates.
+    update_mask: str | None = None,
+) -> Project:
+    """Update an existing project using partial updates.
 
     This function supports updating only specific fields using the update_mask
     parameter, which enables efficient partial updates without overwriting
@@ -488,13 +484,13 @@ def update_project(
             payload will be updated.
 
     Returns:
-        Optional[Project]: The updated Project object with current field values,
-            or None if update fails
+        Project: The updated Project object with current field values
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
-        pydantic.ValidationError: If response data doesn't match expected schema
-        ValueError: If attempting to update immutable fields
+        ValidationError: If payload is invalid
+        NotFoundError: If project doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> # Update only tags
@@ -519,58 +515,49 @@ def update_project(
     Note:
         Tags persist correctly when using update_mask. Without update_mask,
         the API may not persist tag changes reliably.
+
     """
-    try:
-        # Get the current project to include required fields
-        current_project = get_project(client, tenant_meta_namespace, project_uuid)
-        if not current_project:
-            logger.error(f"Project {project_uuid} not found")
-            return None
+    # Get the current project to include required fields
+    current_project = get_project(client, tenant_meta_namespace, project_uuid)
 
-        # Build request data with correct structure
-        request_data = {
-            "object": {
-                "uuid": project_uuid,
-                "tenant_meta": current_project.tenant_meta.model_dump(),
-                "meta": {
-                    "name": current_project.meta.name,  # Required field
-                    **(
-                        payload.meta.model_dump(exclude_none=True)
-                        if payload.meta
-                        else {}
-                    ),
-                },
-                "spec": current_project.spec.model_dump(),  # Required field
-            }
-        }
+    # Merge current project with payload updates
+    merged_meta = {
+        "name": current_project.meta.name,  # Required field
+        **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+    }
 
-        # Add update_mask if provided for partial updates
-        if update_mask:
-            request_data["request"] = {"update_mask": update_mask}
+    # Build merged project object for base class
+    tenant_meta_dict = (
+        current_project.tenant_meta.model_dump()
+        if current_project.tenant_meta
+        else {"namespace": tenant_meta_namespace}
+    )
+    merged_project_dict = {
+        "uuid": project_uuid,
+        "tenant_meta": tenant_meta_dict,
+        "meta": merged_meta,
+        "spec": current_project.spec.model_dump(),  # Required field
+        "processing_status": (
+            current_project.project_processing_status.model_dump()
+            if current_project.project_processing_status
+            else None
+        ),
+    }
 
-        logger.info(f"Updating project {project_uuid} with mask: {update_mask}")
+    # Create Project object from merged data
+    merged_project = Project(**merged_project_dict)
 
-        res = client.patch(
-            f"v1/namespaces/{tenant_meta_namespace}/projects",
-            json=request_data,
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-            },
-        )
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
 
-        if res.status_code == 200:
-            data = res.json()
-            return Project(**data)
-        else:
-            logger.error(
-                f"Failed to update project {project_uuid}: "
-                f"{res.status_code} - {res.text}"
-            )
-            return None
-    except Exception as e:
-        logger.error(f"Error updating project {project_uuid}: {e}", exc_info=True)
-        return None
+    # Use base class update method
+    ops = _get_project_ops(client)
+    logger.info(f"Updating project {project_uuid} with mask: {update_mask}")
+    return ops.update(
+        tenant_meta_namespace, project_uuid, merged_project, update_mask_list
+    )
 
 
 def associate_scan_profile_with_project(
@@ -578,9 +565,8 @@ def associate_scan_profile_with_project(
     tenant_meta_namespace: str,
     project_uuid: str,
     scan_profile_uuid: str,
-) -> Optional[Project]:
-    """
-    Associate a scan profile with a project.
+) -> Project:
+    """Associate a scan profile with a project.
 
     This is a convenience function that updates the project's scan_profile_uuid
     field. The scan profile must exist in the same namespace.
@@ -593,32 +579,36 @@ def associate_scan_profile_with_project(
         scan_profile_uuid: The UUID of the scan profile to associate
 
     Returns:
-        Optional[Project]: The updated Project object, or None if update fails
+        Project: The updated Project object
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
-        pydantic.ValidationError: If response data doesn't match expected schema
+        NotFoundError: If project or scan profile doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> project = associate_scan_profile_with_project(
         ...     client, namespace, project_uuid, scan_profile_uuid
         ... )
+
     """
     # Get current project to preserve all fields
     current_project = get_project(client, tenant_meta_namespace, project_uuid)
-    if not current_project:
-        logger.error(f"Project {project_uuid} not found")
-        return None
 
     # Update the spec with the new scan_profile_uuid
     spec_dict = current_project.spec.model_dump()
     spec_dict["scan_profile_uuid"] = scan_profile_uuid
 
     # Build update payload
+    tenant_meta_dict = (
+        current_project.tenant_meta.model_dump()
+        if current_project.tenant_meta
+        else {"namespace": tenant_meta_namespace}
+    )
     request_data = {
         "object": {
             "uuid": project_uuid,
-            "tenant_meta": current_project.tenant_meta.model_dump(),
+            "tenant_meta": tenant_meta_dict,
             "meta": {
                 "name": current_project.meta.name,
             },
@@ -633,22 +623,29 @@ def associate_scan_profile_with_project(
             json=request_data,
             headers={"Accept": "application/json"},
         )
-        if res.status_code == 200:
-            data = res.json()
-            updated_project = Project(**data)
-            logger.info(
-                f"✅ Associated scan profile {scan_profile_uuid} with project "
-                f"{project_uuid}"
-            )
-            return updated_project
-        else:
-            logger.error(
-                f"Failed to associate scan profile: {res.status_code} - {res.text}"
-            )
-            return None
+        res.raise_for_status()  # Will raise HTTPError for non-2xx status codes
+        data = res.json()
+        updated_project = Project(**data)
+        logger.info(
+            f"✅ Associated scan profile {scan_profile_uuid} with project "
+            f"{project_uuid}"
+        )
+        return updated_project
+    except requests.exceptions.HTTPError as e:
+        # Map HTTP errors to typed exceptions
+        raise client.map_http_error_to_exception(
+            e, "update", tenant_meta_namespace, resource_uuid=project_uuid
+        ) from e
     except Exception as e:
-        logger.error(f"Error associating scan profile: {e}", exc_info=True)
-        return None
+        # Unexpected errors
+        from ..exceptions import ServerError
+
+        raise ServerError(
+            message=(f"Unexpected error associating scan profile with project: {e!s}"),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=project_uuid,
+        ) from e
 
 
 def verify_scan_profile_association(
@@ -657,8 +654,7 @@ def verify_scan_profile_association(
     project_uuid: str,
     scan_profile_uuid: str,
 ) -> bool:
-    """
-    Verify that a scan profile is associated with a project.
+    """Verify that a scan profile is associated with a project.
 
     Args:
         client: The APIClient instance to use for the request
@@ -668,10 +664,12 @@ def verify_scan_profile_association(
 
     Returns:
         bool: True if the scan profile is associated, False otherwise
+
     """
-    project = get_project(client, tenant_meta_namespace, project_uuid)
-    if not project:
-        logger.warning(f"Project {project_uuid} not found")
+    try:
+        project = get_project(client, tenant_meta_namespace, project_uuid)
+    except Exception:
+        # Project not found or other error
         return False
 
     current_scan_profile_uuid = getattr(project.spec, "scan_profile_uuid", None)
@@ -695,8 +693,7 @@ def verify_scan_profile_association(
 def delete_project(
     client: APIClient, tenant_meta_namespace: str, project_uuid: str
 ) -> bool:
-    """
-    Delete a project by UUID.
+    """Delete a project by UUID.
 
     Args:
         client: The APIClient instance to use for the request
@@ -709,6 +706,7 @@ def delete_project(
 
     Raises:
         requests.exceptions.HTTPError: For API-level errors
+
     """
     try:
         res = client.delete(

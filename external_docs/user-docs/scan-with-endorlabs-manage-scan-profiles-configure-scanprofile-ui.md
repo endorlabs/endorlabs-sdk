@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/configure-scanprofile-ui/
 title: Configure scan profile through Endor Labs user interface | Endor Labs Docs
-downloaded: 2026-01-16 09:49:48
+downloaded: 2026-01-26 10:07:57
 ---
 
 Configure scan profile through Endor Labs user interface | Endor Labs Docs
@@ -49,7 +49,7 @@ Configure the necessary scan settings to tailor scans for your projects.
 4. Enter any additional environment variables, if required. Only the environment variables starting with `ENDOR_` are passed to the scan, all others are ignored.
 5. Select an exporter to define what scan results to send, in which format, and to which external system.
 
-   For example, you can select the SARIF exporter to export the scan results in the SARIF format. See [Export findings to GitHub Advanced Security](../../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/) for more information.
+   For example, you can select the SARIF exporter to export the scan results in the SARIF format. See [Export findings to GitHub Advanced Security](../../../scan-with-endorlabs/data-exporters/export-to-ghas/) for more information.
 6. Configure Bazel settings, if required.
 
    * Select **Show Internal Targets as Dependencies** to include internal build targets in your dependency analysis while using Bazel as your build system.

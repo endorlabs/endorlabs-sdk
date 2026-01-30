@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/swift-objective-c/
 title: Swift/Objective-C | Endor Labs Docs
-downloaded: 2026-01-16 09:50:52
+downloaded: 2026-01-26 10:09:03
 ---
 
 Swift/Objective-C | Endor Labs Docs

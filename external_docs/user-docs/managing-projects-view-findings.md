@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/view-findings/
 title: Findings | Endor Labs Docs
-downloaded: 2026-01-16 09:47:32
+downloaded: 2026-01-26 10:05:56
 ---
 
 Findings | Endor Labs Docs

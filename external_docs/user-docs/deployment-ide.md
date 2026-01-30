@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ide/
 title: Scan from your IDE | Endor Labs Docs
-downloaded: 2026-01-16 09:48:59
+downloaded: 2026-01-26 10:07:10
 ---
 
 Scan from your IDE | Endor Labs Docs

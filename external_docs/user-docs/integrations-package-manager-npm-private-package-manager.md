@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/npm-private-package-manager/
 title: Private package manager integration for npm | Endor Labs Docs
-downloaded: 2026-01-16 09:50:36
+downloaded: 2026-01-26 10:08:46
 ---
 
 Private package manager integration for npm | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/jira-integration/
 title: Set up Jira integration with Endor Labs | Endor Labs Docs
-downloaded: 2026-01-16 09:50:01
+downloaded: 2026-01-26 10:08:11
 ---
 
 Set up Jira integration with Endor Labs | Endor Labs Docs

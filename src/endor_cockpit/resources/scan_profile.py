@@ -1,5 +1,4 @@
-"""
-ScanProfile resource module for Endor Labs API.
+"""ScanProfile resource module for Endor Labs API.
 
 This module provides CRUD operations for ScanProfile resources following the
 established patterns from the Project and Finding resource implementations.
@@ -17,8 +16,10 @@ API USAGE NOTES:
 - For more information, see the ScanProfileService REST API documentation
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -35,7 +36,9 @@ from ..types import ListParameters
 logger = logging.getLogger(__name__)
 
 
-def _get_scan_profile_ops(client: APIClient) -> BaseResourceOperations:
+def _get_scan_profile_ops(
+    client: APIClient,
+) -> BaseResourceOperations[ScanProfile]:
     """Get BaseResourceOperations instance for scan profiles."""
     return BaseResourceOperations(client, "scan-profiles", ScanProfile)
 
@@ -51,19 +54,17 @@ class AISastAnalysisMode(FlexibleEnum):
 class AutomatedScanParametersBazelConfiguration(BaseModel):
     """Bazel configuration for automated scans."""
 
-    bazel_workspace_path: Optional[str] = Field(
-        None, description="Bazel workspace path"
-    )
-    bazel_include_targets: Optional[List[str]] = Field(
+    bazel_workspace_path: str | None = Field(None, description="Bazel workspace path")
+    bazel_include_targets: list[str] | None = Field(
         None, description="Bazel targets to include"
     )
-    bazel_exclude_targets: Optional[List[str]] = Field(
+    bazel_exclude_targets: list[str] | None = Field(
         None, description="Bazel targets to exclude"
     )
-    bazel_show_internal_targets: Optional[bool] = Field(
+    bazel_show_internal_targets: bool | None = Field(
         None, description="Show internal Bazel targets"
     )
-    bazel_targets_query: Optional[str] = Field(None, description="Bazel targets query")
+    bazel_targets_query: str | None = Field(None, description="Bazel targets query")
 
 
 class AutomatedScanParameters(BaseModel):
@@ -73,55 +74,51 @@ class AutomatedScanParameters(BaseModel):
         extra="allow"
     )  # Allow unknown fields for forward compatibility
 
-    full_pr_scan: Optional[bool] = Field(
-        None, description="Enable full scan during PRs"
-    )
-    full_push_scan: Optional[bool] = Field(
+    full_pr_scan: bool | None = Field(None, description="Enable full scan during PRs")
+    full_push_scan: bool | None = Field(
         None, description="Enable full scan during pushes"
     )
-    included_paths: Optional[List[str]] = Field(
+    included_paths: list[str] | None = Field(
         None, description="Paths to include in scan"
     )
-    excluded_paths: Optional[List[str]] = Field(
+    excluded_paths: list[str] | None = Field(
         None, description="Paths to exclude from scan"
     )
-    languages: Optional[List[str]] = Field(
+    languages: list[str] | None = Field(
         None, description="Languages to scan (empty = defaults)"
     )
-    call_graph_languages: Optional[List[str]] = Field(
+    call_graph_languages: list[str] | None = Field(
         None, description="Languages for call graph calculation"
     )
-    bazel_configuration: Optional[AutomatedScanParametersBazelConfiguration] = Field(
+    bazel_configuration: AutomatedScanParametersBazelConfiguration | None = Field(
         None, description="Bazel build configuration"
     )
-    additional_environment_variables: Optional[List[str]] = Field(
+    additional_environment_variables: list[str] | None = Field(
         None, description="Additional environment variables"
     )
-    enable_pr_comments: Optional[bool] = Field(None, description="Enable PR comments")
-    enable_remediation_action: Optional[bool] = Field(
+    enable_pr_comments: bool | None = Field(None, description="Enable PR comments")
+    enable_remediation_action: bool | None = Field(
         None, description="Enable remediation actions"
     )
-    enable_automated_pr_scans: Optional[bool] = Field(
+    enable_automated_pr_scans: bool | None = Field(
         None, description="Enable automated PR scans"
     )
-    enable_sast_scan: Optional[bool] = Field(None, description="Enable SAST scan")
-    enable_secret_scan: Optional[bool] = Field(None, description="Enable secret scan")
-    enable_full_git_log_secret_scan: Optional[bool] = Field(
+    enable_sast_scan: bool | None = Field(None, description="Enable SAST scan")
+    enable_secret_scan: bool | None = Field(None, description="Enable secret scan")
+    enable_full_git_log_secret_scan: bool | None = Field(
         None, description="Enable full git log secret scan"
     )
-    disable_code_storage: Optional[bool] = Field(
-        None, description="Disable code storage"
-    )
-    disable_code_snippet_storage: Optional[bool] = Field(
+    disable_code_storage: bool | None = Field(None, description="Disable code storage")
+    disable_code_snippet_storage: bool | None = Field(
         None, description="Disable code snippet storage"
     )
-    enable_pr_security_review_scan: Optional[bool] = Field(
+    enable_pr_security_review_scan: bool | None = Field(
         None, description="Enable PR security review scan"
     )
-    enable_pr_incremental_scan: Optional[bool] = Field(
+    enable_pr_incremental_scan: bool | None = Field(
         None, description="Enable PR incremental scan"
     )
-    enable_ai_sast_scan: Optional[bool] = Field(None, description="Enable AI SAST scan")
+    enable_ai_sast_scan: bool | None = Field(None, description="Enable AI SAST scan")
 
 
 class RemediationParametersAutomatedPRParameters(BaseModel):
@@ -138,8 +135,8 @@ class RemediationParameters(BaseModel):
         extra="allow"
     )  # Allow unknown fields for forward compatibility
 
-    automated_pr_parameters: Optional[RemediationParametersAutomatedPRParameters] = (
-        Field(None, description="Automated PR parameters")
+    automated_pr_parameters: RemediationParametersAutomatedPRParameters | None = Field(
+        None, description="Automated PR parameters"
     )
 
 
@@ -150,10 +147,10 @@ class SecurityReviewScannerParameters(BaseModel):
         extra="allow"
     )  # Allow unknown fields for forward compatibility
 
-    user_prompt: Optional[str] = Field(
+    user_prompt: str | None = Field(
         None, description="User prompt for security review scanner"
     )
-    disable_code_summary: Optional[bool] = Field(
+    disable_code_summary: bool | None = Field(
         None, description="Disable code summary in security review"
     )
 
@@ -165,9 +162,7 @@ class ExporterParameters(BaseModel):
         extra="allow"
     )  # Allow unknown fields for forward compatibility
 
-    exporter_uuids: Optional[List[str]] = Field(
-        None, description="List of exporter UUIDs"
-    )
+    exporter_uuids: list[str] | None = Field(None, description="List of exporter UUIDs")
 
 
 class AISastAnalysisParameters(BaseModel):
@@ -177,10 +172,10 @@ class AISastAnalysisParameters(BaseModel):
         extra="allow"
     )  # Allow unknown fields for forward compatibility
 
-    retriage: Optional[bool] = Field(
+    retriage: bool | None = Field(
         None, description="Enable retriage of SAST findings using AI"
     )
-    mode: Optional[AISastAnalysisMode] = Field(
+    mode: AISastAnalysisMode | None = Field(
         None, description="Mode for AI SAST analysis triage"
     )
 
@@ -213,36 +208,35 @@ class ScanProfileSpec(BaseSpec):
     """
 
     # Optional fields (all are optional per OpenAPI spec)
-    toolchain_profile: Optional[Dict[str, Any]] = Field(
+    toolchain_profile: dict[str, Any] | None = Field(
         None,
         description="OS/architecture-specific toolchain configuration. "
         "Structure: os -> arch -> toolchains (e.g., java_tool_chain, "
         "python_tool_chain).",
     )
-    automated_scan_parameters: Optional[AutomatedScanParameters] = Field(
+    automated_scan_parameters: AutomatedScanParameters | None = Field(
         None,
         description="Parameters applied during cloud scans by Endor Labs",
     )
-    remediation_parameters: Optional[RemediationParameters] = Field(
+    remediation_parameters: RemediationParameters | None = Field(
         None, description="Parameters required for remediation actions"
     )
-    is_default: Optional[bool] = Field(
+    is_default: bool | None = Field(
         None, description="Indicates this is the namespace default profile"
     )
-    security_review_scanner_parameters: Optional[SecurityReviewScannerParameters] = (
-        Field(None, description="Parameters for security review scanner")
+    security_review_scanner_parameters: SecurityReviewScannerParameters | None = Field(
+        None, description="Parameters for security review scanner"
     )
-    exporter_parameters: Optional[ExporterParameters] = Field(
+    exporter_parameters: ExporterParameters | None = Field(
         None, description="Parameters for exporter"
     )
-    ai_sast_analysis_parameters: Optional[AISastAnalysisParameters] = Field(
+    ai_sast_analysis_parameters: AISastAnalysisParameters | None = Field(
         None, description="Parameters for AI SAST analysis workflow"
     )
 
 
 class ScanProfile(BaseResource):
-    """
-    An Endor Labs ScanProfile entity extending BaseResource.
+    """An Endor Labs ScanProfile entity extending BaseResource.
 
     ScanProfile-specific fields (universal fields inherited from BaseResource).
 
@@ -272,14 +266,14 @@ class ScanProfile(BaseResource):
 
     # ScanProfile-specific fields (universal fields inherited from BaseResource)
     spec: ScanProfileSpec = Field(..., description="Scan profile specification")  # type: ignore
-    propagate: Optional[bool] = Field(
+    propagate: bool | None = Field(
         None,
         description="Indicates object should be visible in child namespaces",
     )
 
     model_config = ConfigDict(extra="ignore")
 
-    def __init__(self, **data):
+    def __init__(self, **data: Any) -> None:
         # Convert spec to ScanProfileSpec if it's a dict
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = ScanProfileSpec(**data["spec"])
@@ -287,7 +281,7 @@ class ScanProfile(BaseResource):
 
     @field_validator("*", mode="before")
     @classmethod
-    def detect_schema_drift(cls, v, info):
+    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
         if info.field_name == "spec" and isinstance(v, dict):
             # Skip drift detection for typed nested models
@@ -320,31 +314,29 @@ class ScanProfileMetaCreate(BaseModel):
     name: str = Field(
         ..., min_length=1, max_length=255, description="The name of the scan profile"
     )
-    description: Optional[str] = Field(
-        None, description="Description of the scan profile"
-    )
+    description: str | None = Field(None, description="Description of the scan profile")
 
 
 class ScanProfileSpecCreate(BaseModel):
     """Specification for creating a ScanProfile."""
 
-    toolchain_profile: Optional[Dict[str, Any]] = Field(
+    toolchain_profile: dict[str, Any] | None = Field(
         None, description="Toolchain profile configuration"
     )
-    automated_scan_parameters: Optional[AutomatedScanParameters] = Field(
+    automated_scan_parameters: AutomatedScanParameters | None = Field(
         None, description="Automated scan parameters"
     )
-    remediation_parameters: Optional[RemediationParameters] = Field(
+    remediation_parameters: RemediationParameters | None = Field(
         None, description="Remediation parameters"
     )
-    is_default: Optional[bool] = Field(None, description="Set as default profile")
-    security_review_scanner_parameters: Optional[SecurityReviewScannerParameters] = (
-        Field(None, description="Security review scanner parameters")
+    is_default: bool | None = Field(None, description="Set as default profile")
+    security_review_scanner_parameters: SecurityReviewScannerParameters | None = Field(
+        None, description="Security review scanner parameters"
     )
-    exporter_parameters: Optional[ExporterParameters] = Field(
+    exporter_parameters: ExporterParameters | None = Field(
         None, description="Exporter parameters"
     )
-    ai_sast_analysis_parameters: Optional[AISastAnalysisParameters] = Field(
+    ai_sast_analysis_parameters: AISastAnalysisParameters | None = Field(
         None, description="AI SAST analysis parameters"
     )
 
@@ -354,21 +346,19 @@ class CreateScanProfilePayload(BaseModel):
 
     meta: ScanProfileMetaCreate
     spec: ScanProfileSpecCreate
-    propagate: Optional[bool] = Field(
-        None, description="Make visible in child namespaces"
-    )
+    propagate: bool | None = Field(None, description="Make visible in child namespaces")
 
 
 class ScanProfileMetaUpdate(BaseModel):
     """Metadata for updating a ScanProfile."""
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, description="Updated description of the scan profile"
     )
-    tags: Optional[List[str]] = Field(
+    tags: list[str] | None = Field(
         None, description="Updated tags for the scan profile"
     )
-    annotations: Optional[Dict[str, Any]] = Field(
+    annotations: dict[str, Any] | None = Field(
         None, description="Updated annotations for the scan profile"
     )
 
@@ -376,30 +366,29 @@ class ScanProfileMetaUpdate(BaseModel):
 class ScanProfileSpecUpdate(BaseModel):
     """Specification for updating a ScanProfile."""
 
-    toolchain_profile: Optional[Dict[str, Any]] = Field(
+    toolchain_profile: dict[str, Any] | None = Field(
         None, description="Updated toolchain profile configuration"
     )
-    automated_scan_parameters: Optional[AutomatedScanParameters] = Field(
+    automated_scan_parameters: AutomatedScanParameters | None = Field(
         None, description="Updated automated scan parameters"
     )
-    remediation_parameters: Optional[RemediationParameters] = Field(
+    remediation_parameters: RemediationParameters | None = Field(
         None, description="Updated remediation parameters"
     )
-    is_default: Optional[bool] = Field(None, description="Updated default profile flag")
-    security_review_scanner_parameters: Optional[SecurityReviewScannerParameters] = (
-        Field(None, description="Updated security review scanner parameters")
+    is_default: bool | None = Field(None, description="Updated default profile flag")
+    security_review_scanner_parameters: SecurityReviewScannerParameters | None = Field(
+        None, description="Updated security review scanner parameters"
     )
-    exporter_parameters: Optional[ExporterParameters] = Field(
+    exporter_parameters: ExporterParameters | None = Field(
         None, description="Updated exporter parameters"
     )
-    ai_sast_analysis_parameters: Optional[AISastAnalysisParameters] = Field(
+    ai_sast_analysis_parameters: AISastAnalysisParameters | None = Field(
         None, description="Updated AI SAST analysis parameters"
     )
 
 
 class UpdateScanProfilePayload(BaseModel):
-    """
-    Payload for updating an Endor Labs ScanProfile.
+    """Payload for updating an Endor Labs ScanProfile.
 
     MUTABLE FIELDS (can be updated via PATCH):
     - meta.tags: General resource tags
@@ -424,15 +413,16 @@ class UpdateScanProfilePayload(BaseModel):
         >>> scan_profile = update_scan_profile(
         ...     client, namespace, uuid, payload, "spec.is_default"
         ... )
+
     """
 
-    meta: Optional[ScanProfileMetaUpdate] = Field(
+    meta: ScanProfileMetaUpdate | None = Field(
         None, description="Updated scan profile metadata"
     )
-    spec: Optional[ScanProfileSpecUpdate] = Field(
+    spec: ScanProfileSpecUpdate | None = Field(
         None, description="Updated scan profile specification"
     )
-    propagate: Optional[bool] = Field(
+    propagate: bool | None = Field(
         None, description="Updated namespace visibility flag"
     )
 
@@ -440,11 +430,10 @@ class UpdateScanProfilePayload(BaseModel):
 def list_scan_profiles(
     client: APIClient,
     tenant_meta_namespace: str,
-    list_params: Optional[ListParameters] = None,
-    max_pages: Optional[int] = None,
-) -> List[ScanProfile]:
-    """
-    List scan profiles in a namespace.
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+) -> list[ScanProfile]:
+    """List scan profiles in a namespace.
 
     Args:
         client: APIClient instance
@@ -456,16 +445,16 @@ def list_scan_profiles(
 
     Returns:
         List of ScanProfile objects
+
     """
     ops = _get_scan_profile_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages)  # type: ignore
+    return ops.list(tenant_meta_namespace, list_params, max_pages)
 
 
 def get_scan_profile(
     client: APIClient, tenant_meta_namespace: str, scan_profile_uuid: str
-) -> Optional[ScanProfile]:
-    """
-    Get a specific scan profile by UUID.
+) -> ScanProfile:
+    """Get a specific scan profile by UUID.
 
     Args:
         client: APIClient instance
@@ -473,19 +462,24 @@ def get_scan_profile(
         scan_profile_uuid: UUID of the scan profile to retrieve
 
     Returns:
-        ScanProfile object if found, None otherwise
+        ScanProfile object
+
+    Raises:
+        NotFoundError: If scan profile doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
+
     """
     ops = _get_scan_profile_ops(client)
-    return ops.get(tenant_meta_namespace, scan_profile_uuid)  # type: ignore
+    return ops.get(tenant_meta_namespace, scan_profile_uuid)
 
 
 def create_scan_profile(
     client: APIClient,
     tenant_meta_namespace: str,
     payload: CreateScanProfilePayload,
-) -> Optional[ScanProfile]:
-    """
-    Create a new scan profile.
+) -> ScanProfile:
+    """Create a new scan profile with pre-validation and typed errors.
 
     Args:
         client: APIClient instance
@@ -493,19 +487,18 @@ def create_scan_profile(
         payload: ScanProfile creation payload
 
     Returns:
-        Created ScanProfile object if successful, None otherwise
-    """
-    url = f"v1/namespaces/{tenant_meta_namespace}/scan-profiles"
+        Created ScanProfile object
 
-    try:
-        response = client.post(url, json=payload.model_dump())
-        if response:
-            data = response.json()
-            return ScanProfile(**data)
-        return None
-    except Exception as e:
-        logger.error(f"Error creating scan profile: {e}")
-        return None
+    Raises:
+        ValidationError: If payload is invalid
+        NotFoundError: If namespace doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ConflictError: If scan profile already exists
+        ServerError: If server error occurs
+
+    """
+    ops = _get_scan_profile_ops(client)
+    return ops.create(tenant_meta_namespace, payload)
 
 
 def update_scan_profile(
@@ -513,10 +506,9 @@ def update_scan_profile(
     tenant_meta_namespace: str,
     scan_profile_uuid: str,
     payload: UpdateScanProfilePayload,
-    update_mask: Optional[str] = None,
-) -> Optional[ScanProfile]:
-    """
-    Update an existing scan profile using partial updates.
+    update_mask: str | None = None,
+) -> ScanProfile | None:
+    """Update an existing scan profile using partial updates.
 
     This function supports updating only specific fields using the update_mask
     parameter, which enables efficient partial updates without overwriting
@@ -540,11 +532,13 @@ def update_scan_profile(
             payload will be updated.
 
     Returns:
-        Updated ScanProfile object if successful, None otherwise
+        Updated ScanProfile object
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
-        pydantic.ValidationError: If response data doesn't match expected schema
+        ValidationError: If payload is invalid
+        NotFoundError: If scan profile doesn't exist
+        PermissionDeniedError: If user lacks permission
+        ServerError: If server error occurs
 
     Example:
         >>> # Update scan profile to set as default
@@ -554,37 +548,31 @@ def update_scan_profile(
         >>> scan_profile = update_scan_profile(
         ...     client, namespace, uuid, payload, "spec.is_default"
         ... )
+
     """
-    url = f"v1/namespaces/{tenant_meta_namespace}/scan-profiles"
+    # Build ScanProfile object with UUID and payload
+    scan_profile_dict = {
+        "uuid": scan_profile_uuid,
+        **payload.model_dump(exclude_none=True),
+    }
+    scan_profile_obj = ScanProfile(**scan_profile_dict)
 
-    try:
-        # Build update request body
-        update_data = {
-            "object": {
-                "uuid": scan_profile_uuid,
-                **payload.model_dump(exclude_none=True),
-            }
-        }
+    # Convert update_mask from string to List[str] for base class
+    update_mask_list = (
+        [field.strip() for field in update_mask.split(",")] if update_mask else None
+    )
 
-        # Add update mask if provided
-        if update_mask:
-            update_data["request"] = {"update_mask": update_mask}
-
-        response = client.patch(url, json=update_data)
-        if response:
-            data = response.json()
-            return ScanProfile(**data)
-        return None
-    except Exception as e:
-        logger.error(f"Error updating scan profile: {e}")
-        return None
+    # Use base class update method
+    ops = _get_scan_profile_ops(client)
+    return ops.update(
+        tenant_meta_namespace, scan_profile_uuid, scan_profile_obj, update_mask_list
+    )
 
 
 def delete_scan_profile(
     client: APIClient, tenant_meta_namespace: str, scan_profile_uuid: str
 ) -> bool:
-    """
-    Delete a scan profile.
+    """Delete a scan profile.
 
     Args:
         client: APIClient instance
@@ -593,6 +581,7 @@ def delete_scan_profile(
 
     Returns:
         True if deletion was successful, False otherwise
+
     """
     ops = _get_scan_profile_ops(client)
     return ops.delete(tenant_meta_namespace, scan_profile_uuid)
