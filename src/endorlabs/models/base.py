@@ -75,6 +75,15 @@ RESOURCE_NAME_TO_TYPE: dict[str, str] = {
     "package-licenses": "package_license",
     "semgrep-rules": "semgrep_rule",
     "scan-results": "scan_result",
+    "notification-targets": "notification_target",
+    "scan-workflows": "scan_workflow",
+    "scan-workflow-results": "scan_workflow_result",
+    "version-upgrades": "version_upgrade",
+    "codeowners": "code_owners",
+    "invitations": "invitation",
+    "authentication-logs": "authentication_log",
+    "endor-licenses": "endor_license",
+    "policy-templates": "policy_template",
 }
 
 

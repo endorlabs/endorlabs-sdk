@@ -475,6 +475,9 @@ def get_immutable_fields(resource_type: str) -> list[str]:
         "package_license": _v1meta_readonly,
         "semgrep_rule": _v1meta_readonly + _semgrep_rule_spec_readonly,
         "scan_result": _v1meta_readonly,
+        "notification_target": _v1meta_readonly,
+        "code_owners": _v1meta_readonly,
+        "invitation": _v1meta_readonly,
     }
 
     return immutable_fields_map.get(resource_type, [])
