@@ -90,21 +90,22 @@ class TestNamespaces:
                 print(f"Warning: Failed to create namespace {payload.meta.name}: {e}")
                 # Continue with other namespaces
 
-        # List with traverse so created namespaces are in scope
+        # List from tenant root with traverse so created child namespaces are in scope.
+        # Match by UUID (reliable) since list response meta.name may differ from create payload.
         from endorlabs.types import ListParameters
 
         all_namespaces = list_namespaces(
             self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=10, traverse=True),
-            max_pages=5,
+            self.root_namespace,
+            list_params=ListParameters(page_size=20, traverse=True),
+            max_pages=10,
         )
-        mock_names = {p.meta.name for p in mock_namespaces_to_create}
-        found = [ns for ns in all_namespaces if ns.meta.name in mock_names]
+        created_uuids = set(self.created_namespace_uuids)
+        found = [ns for ns in all_namespaces if ns.uuid in created_uuids]
 
-        # Assert that at least one namespace was created successfully
+        # Assert that at least one created namespace appears in the traversed list
         expected_msg = (
-            f"Expected at least 1 namespace, found {len(found)}. "
+            f"Expected at least 1 namespace in list (by UUID), found {len(found)}. "
             f"Created UUIDs: {self.created_namespace_uuids}"
         )
         assert len(found) >= 1, expected_msg

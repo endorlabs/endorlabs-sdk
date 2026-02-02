@@ -32,3 +32,13 @@ uv run python scripts/sync_external_docs.py --all --force
 ```
 
 See also: [docs/rules-of-engagement/docs-drift-workflow.md](../docs/rules-of-engagement/docs-drift-workflow.md).
+
+## export_current_sdk_models.py
+
+One-off script for the OSS model generation experiment (e.g. `G:/temp/endor-oss-model-experiment`). Exports current SDK model field paths to JSON for comparison with generated models.
+
+```bash
+uv run python scripts/export_current_sdk_models.py -o /path/to/current_sdk_models.json
+# Or print to stdout:
+uv run python scripts/export_current_sdk_models.py
+```
