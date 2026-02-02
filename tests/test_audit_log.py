@@ -12,8 +12,6 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-# Import TEST_PAGE_SIZE from conftest in the same directory
-import sys
 from pathlib import Path
 
 from endorlabs.api_client import APIClient
@@ -30,35 +28,26 @@ from datetime import UTC
 
 import conftest
 
-TEST_PAGE_SIZE = conftest.TEST_PAGE_SIZE
-
 
 @pytest.mark.integration
+@pytest.mark.long
 class TestAuditLog:
     """Test cases for AuditLog resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Set up test environment."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
+    def setup(self, api_client, namespace, root_namespace) -> None:
+        """Set up test environment (client and namespace from conftest)."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.tenant_root = root_namespace
+        self.created_audit_log_uuids = []
 
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Extract tenant root namespace for traverse operations
-        # Tenant root is the first part before the first dot
-        self.tenant_root = self.namespace.split(".")[0]
-
-        self.created_audit_log_uuids = []  # Track created logs for cleanup
-
-        # Get test data with pagination limits
         self.audit_logs = audit_log.list_audit_logs(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-            max_pages=2,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
 
     def teardown_method(self) -> None:
@@ -73,28 +62,42 @@ class TestAuditLog:
             self.created_audit_log_uuids.clear()
 
     def test_audit_log_list(self) -> None:
-        """Test GET audit logs operation."""
-        print("\n=== TESTING GET AUDIT LOGS ===")
+        """LIST from tenant root with traverse (registry-based)."""
+        import endorlabs
 
-        # Test list_audit_logs with pagination limits
-        logs_list = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-            max_pages=2,
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(logs_list, list), "Should return a list of logs"
-        print(f"Found {len(logs_list)} audit logs")
+        result = client.audit_log.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
 
-        # Display first few logs
-        for i, log_item in enumerate(logs_list[:5]):  # Show first 5
-            print(f"Audit Log {i + 1}: {log_item.uuid}")
-            if log_item.spec:
-                print(f"  Operation: {log_item.spec.operation}")
-                if log_item.spec.message_kind:
-                    print(f"  Message Kind: {log_item.spec.message_kind}")
-                if log_item.meta.create_time:
-                    print(f"  Create Time: {log_item.meta.create_time}")
+    def test_audit_log_get(self) -> None:
+        """GET first item from LIST (root + traverse) (registry-based)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.audit_log.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.audit_log.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_audit_log_list_archived(self) -> None:
         """Test GET archived audit logs operation."""
@@ -104,8 +107,8 @@ class TestAuditLog:
         archived_logs = audit_log.list_archived_audit_logs(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-            max_pages=2,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         assert isinstance(archived_logs, list), "Should return a list of archived logs"
         print(f"Found {len(archived_logs)} archived audit logs")
@@ -118,32 +121,6 @@ class TestAuditLog:
                     print(f"  Operation: {log_item.spec.operation}")
                     if log_item.meta.create_time:
                         print(f"  Create Time: {log_item.meta.create_time}")
-
-    def test_audit_log_get_by_uuid(self) -> None:
-        """Test GET audit log by UUID operation."""
-        print("\n=== TESTING GET AUDIT LOG BY UUID ===")
-
-        if not self.audit_logs:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        log_item = self.audit_logs[0]
-        retrieved_log = audit_log.get_audit_log(
-            self.client, self.namespace, log_item.uuid
-        )
-
-        # Note: Some logs may not be retrievable by UUID due to API limitations
-        if retrieved_log is not None:
-            assert retrieved_log.uuid == log_item.uuid, (
-                "Retrieved log should match original"
-            )
-            print(f"Successfully retrieved audit log: {retrieved_log.uuid}")
-            if retrieved_log.spec:
-                print(f"Operation: {retrieved_log.spec.operation}")
-        else:
-            print(
-                f"[INFO] Audit log {log_item.uuid} not retrievable by UUID "
-                f"(API limitation)"
-            )
 
     def test_audit_log_filter_by_operation(self) -> None:
         """Test filtering audit logs by operation type."""
@@ -165,7 +142,7 @@ class TestAuditLog:
                     filter=f"spec.operation=='{operation_type.value}'",
                     page_size=conftest.TEST_PAGE_SIZE,
                 ),
-                max_pages=2,
+                max_pages=conftest.TEST_MAX_PAGES,
             )
             print(f"{operation_type.value}: {len(filtered_logs)} logs")
 
@@ -189,7 +166,7 @@ class TestAuditLog:
                 filter=f"spec.message_kind=='{message_kind}'",
                 page_size=conftest.TEST_PAGE_SIZE,
             ),
-            max_pages=2,
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         print(f"Message Kind '{message_kind}': {len(filtered_logs)} logs")
 
@@ -223,7 +200,7 @@ class TestAuditLog:
                 ),
                 page_size=conftest.TEST_PAGE_SIZE,
             ),
-            max_pages=2,
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         print(
             f"Time range ({from_date_str} to {to_date_str}): {len(filtered_logs)} logs"
@@ -251,9 +228,10 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(
-                filter="spec.claims matches '.*api-key.*'", page_size=20
+                filter="spec.claims matches '.*api-key.*'",
+                page_size=conftest.TEST_PAGE_SIZE,
             ),
-            max_pages=2,
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         print(f"Claims containing 'api-key': {len(filtered_logs)} logs")
 
@@ -331,9 +309,10 @@ class TestAuditLog:
             self.client,
             self.namespace,
             list_params=ListParameters(
-                filter="spec.claims matches '.*api-key.*'", page_size=20
+                filter="spec.claims matches '.*api-key.*'",
+                page_size=conftest.TEST_PAGE_SIZE,
             ),
-            max_pages=2,
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         print(f"Found {len(api_key_logs)} logs with potential API key activity")
 
@@ -361,82 +340,27 @@ class TestAuditLog:
             filtered_logs = audit_log.list_audit_logs(
                 self.client,
                 self.namespace,
-                list_params=ListParameters(filter=pattern, page_size=20),
-                max_pages=2,
+                list_params=ListParameters(
+                    filter=pattern, page_size=conftest.TEST_PAGE_SIZE
+                ),
+                max_pages=conftest.TEST_MAX_PAGES,
             )
             print(f"Pattern '{pattern}': {len(filtered_logs)} logs")
 
-    def test_audit_log_pagination(self) -> None:
-        """Test pagination support for audit logs."""
-        print("\n=== TESTING PAGINATION ===")
+    def test_audit_log_update_raises_not_implemented(self) -> None:
+        """When update_fn is None, client.audit_log.update raises NotImplemented."""
+        from unittest.mock import Mock
 
-        # Test pagination with small page size
-        page_size = 10
-        paginated_logs = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=page_size),
-            max_pages=2,
-        )
-        print(f"Paginated logs (page_size={page_size}): {len(paginated_logs)}")
-
-        # Verify pagination works (should get at least some results)
-        assert isinstance(paginated_logs, list), "Should return a list"
-        print(f"Successfully retrieved {len(paginated_logs)} logs with pagination")
-
-    def test_audit_log_traverse(self) -> None:
-        """Test namespace traversal for audit logs with filter.
-
-        Note: AuditLogs traverse without filter can timeout due to large
-        dataset and timeout considerations (default 20s). This test uses
-        a filter to limit the query scope.
-        """
-        print("\n=== TESTING AUDIT LOG TRAVERSE ===")
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        # Use a filter to limit scope and avoid timeout
-        # Filter by CREATE operation to reduce dataset size
-        list_params = ListParameters(
-            filter="spec.operation=='OPERATION_CREATE'",
-            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-            traverse=True,
-        )
-
-        logs = audit_log.list_audit_logs(
-            self.client,
-            self.tenant_root,
-            list_params=list_params,
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-
-        assert isinstance(logs, list), "Should return a list of audit logs"
-        print(f"Found {len(logs)} CREATE audit logs across all namespaces")
-
-        if logs:
-            # Show namespace distribution
-            namespaces = {}
-            for log in logs:
-                ns = log.tenant_meta.namespace if log.tenant_meta else "unknown"
-                namespaces[ns] = namespaces.get(ns, 0) + 1
-
-            print(f"Audit logs found in {len(namespaces)} namespaces:")
-            for ns, count in list(namespaces.items())[:5]:  # Show first 5
-                print(f"  {ns}: {count} logs")
-
-    def test_client_recommended_ux_list_audit_logs(self) -> None:
-        """Recommended UX: Client(tenant=...); client.audit_logs.list()."""
         import endorlabs
+        from endorlabs.api_client import APIClient
 
+        mock = Mock(spec=APIClient)
         client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=mock,
+            tenant=conftest.TEST_NAMESPACE_DEFAULT,
         )
-        logs = client.audit_logs.list(max_pages=1)
-        assert isinstance(logs, list)
+        with pytest.raises(NotImplementedError, match="does not support update"):
+            client.audit_log.update("dummy-uuid", {}, update_mask="meta.description")
 
 
 if __name__ == "__main__":
@@ -457,11 +381,16 @@ if __name__ == "__main__":
     test_instance.namespace = os.getenv(
         "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
     )
+    parts = test_instance.namespace.split(".", 1)
+    test_instance.root_namespace = (
+        parts[0] if len(parts) > 1 else test_instance.namespace
+    )
+    test_instance.tenant_root = test_instance.root_namespace
     test_instance.audit_logs = audit_log.list_audit_logs(
         test_instance.client,
         test_instance.namespace,
-        list_params=ListParameters(page_size=20),
-        max_pages=2,
+        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+        max_pages=conftest.TEST_MAX_PAGES,
     )
 
     try:
@@ -469,8 +398,8 @@ if __name__ == "__main__":
 
         # Run all tests
         test_instance.test_audit_log_list()
+        test_instance.test_audit_log_get()
         test_instance.test_audit_log_list_archived()
-        test_instance.test_audit_log_get_by_uuid()
         test_instance.test_audit_log_filter_by_operation()
         test_instance.test_audit_log_filter_by_message_kind()
         test_instance.test_audit_log_filter_by_time_range()
@@ -478,7 +407,6 @@ if __name__ == "__main__":
         test_instance.test_audit_log_filter_by_remote_address()
         test_instance.test_audit_log_structure_analysis()
         test_instance.test_audit_log_api_key_activity()
-        test_instance.test_audit_log_pagination()
         test_instance.test_audit_log_schema_drift_detection()
         test_instance.test_audit_log_operations_summary()
 
@@ -490,3 +418,5 @@ if __name__ == "__main__":
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        test_instance.client.close()

@@ -5,7 +5,7 @@ Single source for contributor setup and development workflow. Consumer install i
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) (Python package and project manager)
-- Python 3.13+ (e.g. installed via uv)
+- Python 3.11+ (CI and releases are tested on 3.13 only; e.g. install via uv)
 
 ## Setup
 
@@ -98,14 +98,23 @@ uv run pytest -m integration -v
 ```bash
 uv run ruff check .
 uv run ruff format .
-uv run pyright
+uv run pyright --project pyproject.toml
+uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). They also run automatically before commit when the pre-commit hook is installed (see [Pre-commit hook](#pre-commit-hook-recommended) above).
+CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. They also run automatically before commit when the pre-commit hook is installed (see [Pre-commit hook](#pre-commit-hook-recommended) above).
 
 ## Optional: direnv
 
 If you use [direnv](https://direnv.net/), run `direnv allow` in the repo root. [.envrc](.envrc) loads the uv virtual environment and sources `.env` when you enter the directory.
+
+## Consumer API style (SDK UX)
+
+When using or documenting the registry-based client (`client.namespace`, `client.project`, etc.):
+
+- **List:** Use flat kwargs on `.list()` — e.g. `client.project.list(traverse=True)`, `client.project.list(filter="...", mask="meta.name,spec.level", max_pages=1)`. Do **not** combine filter and mask into one parameter; filter = which rows, mask = which fields in the response. See [docs/conventions.md](docs/conventions.md) (List parameters, Update and update_mask) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+- **Update:** Use `update_mask` only on `.update()`; it is separate from list mask.
+- **Spec-driven UX:** Align with spec; centralize sources of truth in modules (see [docs/conventions.md](docs/conventions.md) and [docs/rules-of-engagement/](docs/rules-of-engagement/)).
 
 ## Optional: sync external docs
 

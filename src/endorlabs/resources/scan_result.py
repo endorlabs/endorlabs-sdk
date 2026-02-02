@@ -20,6 +20,7 @@ API USAGE NOTES:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -413,24 +414,30 @@ class ScanResult(BaseResource):
     """
 
     # ScanResult-specific fields (universal fields inherited from BaseResource)
-    spec: ScanResultSpec = Field(..., description="Scan result specification")  # type: ignore
-    scan_result_context: Context = Field(
-        ..., description="Context information for the scan result", alias="context"
+    # spec and context optional when API returns partial body (e.g. after update)
+    spec: ScanResultSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        None, description="Scan result specification"
+    )
+    context: Context | None = Field(
+        None,
+        description="Context information for the scan result",
+        alias="context",
     )
 
     model_config = ConfigDict(extra="ignore")
 
     def __init__(self, **data: Any) -> None:
-        # Convert spec to ScanResultSpec if it's a dict
-        if "spec" in data and isinstance(data["spec"], dict):
-            data["spec"] = ScanResultSpec(**data["spec"])
+        # Convert spec to ScanResultSpec if present (partial response may omit spec)
+        spec_val = data.get("spec")
+        if spec_val is not None and isinstance(spec_val, dict):
+            data["spec"] = ScanResultSpec(**spec_val)
         super().__init__(**data)
 
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
+        if info.field_name == "spec" and v is not None and isinstance(v, dict):
             # Known top-level fields in ScanResultSpec
             # Skip drift detection for nested typed models and dynamic dicts:
             # - environment: Environment model (handles its own validation)
@@ -592,6 +599,18 @@ def list_scan_results(
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
+def list_scan_results_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[ScanResult]:
+    """Iterate over scan results without materializing the full list."""
+    ops = _get_scan_result_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
 def get_scan_result(
     client: APIClient, tenant_meta_namespace: str, scan_result_uuid: str
 ) -> ScanResult:
@@ -650,7 +669,7 @@ def update_scan_result(
     tenant_meta_namespace: str,
     scan_result_uuid: str,
     payload: UpdateScanResultPayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> ScanResult | None:
     """Update an existing scan result using partial updates.
 
@@ -685,16 +704,14 @@ def update_scan_result(
         tenant_meta_namespace: Canonical namespace name
         scan_result_uuid: UUID of the scan result to update
         payload: ScanResult update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.tags,meta.description"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "meta.tags,meta.description". Missing or empty raises ValidationError.
 
     Returns:
         Updated ScanResult object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If scan result doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
@@ -709,6 +726,18 @@ def update_scan_result(
         ... )
 
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Scan result update requires an update_mask "
+                "(e.g. 'meta.tags', 'meta.description')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=scan_result_uuid,
+        )
     # Build ScanResult object with UUID and payload
     scan_result_dict = {
         "uuid": scan_result_uuid,
@@ -717,9 +746,9 @@ def update_scan_result(
     scan_result_obj = ScanResult(**scan_result_dict)
 
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
 
     # Use base class update method
     ops = _get_scan_result_ops(client)

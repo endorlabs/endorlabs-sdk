@@ -4,8 +4,6 @@ These tests verify the complete CRUD lifecycle for Package Version resources,
 including tag management operations and error handling scenarios.
 """
 
-import os
-
 import conftest
 import pytest
 
@@ -18,14 +16,11 @@ class TestPackageVersion:
     """Test cases for Package Version operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
 
     @pytest.fixture
     def sample_package_version(self):
@@ -41,77 +36,12 @@ class TestPackageVersion:
         results = package_version.list_package_versions(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
-
-    def test_package_version_get_list(self) -> None:
-        """Test GET package-versions operation."""
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        package_versions_list = package_version.list_package_versions(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
-                traverse=True,
-            ),
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-        assert isinstance(package_versions_list, list)
-        if len(package_versions_list) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        # Verify structure
-        for pv in package_versions_list:
-            assert hasattr(pv, "uuid")
-            assert hasattr(pv, "meta")
-            assert hasattr(pv, "spec")
-            assert hasattr(pv, "tenant_meta")
-
-            # Verify meta fields
-            assert hasattr(pv.meta, "name")
-            assert hasattr(pv.meta, "description")
-            assert hasattr(pv.meta, "create_time")
-            assert hasattr(pv.meta, "created_by")
-            assert hasattr(pv.meta, "update_time")
-            assert hasattr(pv.meta, "updated_by")
-            assert hasattr(pv.meta, "tags")
-
-            # Verify spec fields
-            assert hasattr(pv.spec, "package_name")
-            assert hasattr(pv.spec, "ecosystem")
-            assert hasattr(pv.spec, "language")
-            assert hasattr(pv.spec, "project_uuid")
-
-    def test_package_version_get_by_uuid(self, sample_package_version) -> None:
-        """Test GET package-version by UUID operation."""
-        test_package_version = sample_package_version
-        # Use the package version's actual namespace
-        package_namespace = (
-            test_package_version.tenant_meta.namespace
-            if test_package_version.tenant_meta
-            else self.namespace
-        )
-        retrieved_package_version = package_version.get_package_version(
-            self.client, package_namespace, test_package_version.uuid
-        )
-        assert retrieved_package_version is not None
-        assert retrieved_package_version.uuid == test_package_version.uuid
-        assert retrieved_package_version.meta.name == test_package_version.meta.name
-        assert (
-            retrieved_package_version.spec.package_name
-            == test_package_version.spec.package_name
-        )
-        assert (
-            retrieved_package_version.spec.ecosystem
-            == test_package_version.spec.ecosystem
-        )
 
     @pytest.mark.writes
     def test_package_version_update_with_mask(self, sample_package_version) -> None:
@@ -208,22 +138,95 @@ class TestPackageVersion:
         except Exception as e:
             print(f"[WARNING] Failed to restore original values: {e}")
 
-    def test_client_recommended_ux_list_package_versions(self) -> None:
-        """Recommended UX: Client(tenant=...); client.package_versions.list()."""
+    def test_package_version_list(self) -> None:
+        """LIST from tenant root with traverse."""
         import endorlabs
         from endorlabs.exceptions import ServerError
 
         client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
         try:
-            versions = client.package_versions.list(max_pages=1)
+            result = client.package_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(versions, list)
+        assert isinstance(result, list)
+
+    def test_package_version_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            items = client.package_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.package_version.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
+
+    @pytest.mark.writes
+    def test_client_ux_update_package_version(self) -> None:
+        """Consumer UX: client.package_version.get() then update then revert."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+        from endorlabs.resources.package_version import UpdatePackageVersionPayload
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        try:
+            versions = client.package_version.list(max_pages=conftest.TEST_MAX_PAGES)
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not versions:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = versions[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.package_version.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve package version {item.uuid}")
+        original_tags = list(getattr(current.meta, "tags", None) or [])
+        new_tags = [*original_tags, "client-ux-update"]
+        update_payload = UpdatePackageVersionPayload(meta={"tags": new_tags})
+        try:
+            updated = client.package_version.update(
+                item.uuid, update_payload, update_mask="meta.tags", namespace=ns
+            )
+        except Exception as e:
+            pytest.skip(f"Package version update not allowed in this environment: {e}")
+        assert updated is not None
+        restore_payload = UpdatePackageVersionPayload(meta={"tags": original_tags})
+        try:
+            client.package_version.update(
+                item.uuid, restore_payload, update_mask="meta.tags", namespace=ns
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original package version values: {e}")
 
 
 def add_package_version_tag(

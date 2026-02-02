@@ -6,7 +6,7 @@ for enhanced type safety and LLM understanding.
 # APIResponse uses key "list" (API contract); Pyright treats it as builtin
 # pyright: reportInvalidTypeForm=false
 
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
@@ -69,6 +69,25 @@ PolicyType = Literal[
     "POLICY_TYPE_ML_FINDING",
     "POLICY_TYPE_NOTIFICATION",
 ]
+
+
+class SupportsResourceUpdate(Protocol):
+    """Protocol for facade that can perform resource update.
+
+    Used by BaseResource.update(facade, **kwargs) so resources do not
+    depend on the concrete Client or ResourceFacade.
+    """
+
+    def update(
+        self,
+        id_or_resource: Any,
+        payload: Any = None,
+        *,
+        update_mask: str,
+        namespace: Any = None,
+    ) -> Any:
+        """Update by ID or resource; payload and update_mask required."""
+        ...
 
 
 # TypedDict Definitions
@@ -177,6 +196,14 @@ class ListParameters(BaseModel):
         None, description="Sort field (e.g., 'meta.create_time')"
     )
     sort_order: str | None = Field("asc", description="Sort order (asc/desc)")
+    sort_by: str | None = Field(
+        None,
+        description="Field path to sort by (e.g., 'meta.create_time').",
+    )
+    desc: bool | None = Field(
+        None,
+        description="Sort descending when True, ascending when False or omitted.",
+    )
     count: bool | None = Field(
         None, description="Count only (return count instead of objects)"
     )

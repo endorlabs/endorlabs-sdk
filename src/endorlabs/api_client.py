@@ -12,13 +12,11 @@ import logging
 import os
 import re
 import time
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime
 from typing import Any, cast
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import httpx
 
 from .exceptions import (
     EndorAPIError,
@@ -117,7 +115,12 @@ class APIClient:
         auth_method: Auth method (e.g. "api-key", "browser"). If None, uses env/default.
         email: Email for auth. Optional.
 
+    The client can be used as a context manager (with APIClient(...) as client:).
+    When not using ``with``, call close() when done to release connections.
+
     """
+
+    client: httpx.Client | None  # Set in __init__; set to None in close().
 
     def __init__(
         self,
@@ -213,22 +216,20 @@ class APIClient:
                 max_retries = int(env_max_retries)
         # else: max_retries was explicitly provided (not default), use it
 
-        # Store retry configuration for error messages
+        # Store retry configuration for error messages and retry loop
         self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+        self.status_forcelist = status_forcelist
 
-        # Initialize session with retries
-        self.session = requests.Session()
-        retry = Retry(
-            total=max_retries,
-            read=max_retries,
-            connect=max_retries,
-            backoff_factor=backoff_factor,
-            status_forcelist=status_forcelist,
-            allowed_methods=None,
+        # Request headers (merged with per-request headers); updated after auth
+        self._request_headers: dict[str, str] = {"Content-Type": "application/json"}
+
+        # Initialize httpx client (no built-in retry; we use _request_with_retry)
+        self.client = httpx.Client(
+            base_url=self.base_url,
+            timeout=60.0,
+            headers=self._request_headers.copy(),
         )
-        adapter = HTTPAdapter(max_retries=retry)
-        self.session.mount("http://", adapter)
-        self.session.mount("https://", adapter)
         self.rate_limit_delay = 0
         self.last_request_time = 0
         self.logger_len = 25
@@ -237,8 +238,24 @@ class APIClient:
         # Use token property to ensure fresh token with expiration tracking
         _ = self.token
         if self._token:
-            self.session.headers.update({"Authorization": f"Bearer {self._token}"})
+            self._request_headers["Authorization"] = f"Bearer {self._token}"
         self.default_headers = self._headers_copy()
+
+    def close(self) -> None:
+        """Close the underlying HTTP client and release connections."""
+        client = self.client
+        if client is not None:
+            client.close()
+            self.client = None
+
+    def __enter__(self) -> "APIClient":
+        """Enter context manager; return self."""
+        return self
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit context manager; close the client. Do not suppress exceptions."""
+        self.close()
+        return None
 
     def _rate_limit(self) -> None:
         """Apply a delay if a rate limit was previously encountered."""
@@ -252,11 +269,8 @@ class APIClient:
             self.rate_limit_delay = 0
 
     def _headers_copy(self) -> dict[str, str]:
-        """Return a mutable copy of session headers with string values."""
-        return {
-            k: v.decode() if isinstance(v, bytes) else str(v)
-            for k, v in self.session.headers.items()
-        }
+        """Return a mutable copy of request headers with string values."""
+        return dict(self._request_headers)
 
     def _normalize_url(self, url: str) -> str:
         """Normalize URL: use as-is if absolute, prepend base_url if relative."""
@@ -289,7 +303,7 @@ class APIClient:
             return text
         return f"{text[:max_length]}... (truncated, {len(text)} chars total)"
 
-    def _parse_error_response(self, response: requests.Response) -> str:
+    def _parse_error_response(self, response: httpx.Response) -> str:
         """Parse error response and return full error details.
 
         Attempts to parse structured error response, falls back to full text.
@@ -298,10 +312,12 @@ class APIClient:
             # Try to parse as JSON first
             error_data = response.json()
             if isinstance(error_data, dict):
-                err = cast("dict[str, Any]", error_data)
+                err: dict[str, Any] = cast("dict[str, Any]", error_data)
                 # Try to extract structured error information
                 error_msg: str = (
-                    err.get("message") or err.get("error") or str(error_data)
+                    err.get("message")
+                    or err.get("error")
+                    or str(cast("Any", error_data))
                 )
                 error_code: int | str = err.get("code") or response.status_code
                 error_details: Any = err.get("details")
@@ -384,7 +400,7 @@ class APIClient:
         return None
 
     def _parse_error_response_succinct(
-        self, response: requests.Response
+        self, response: httpx.Response
     ) -> tuple[int | None, str]:
         """Parse error response and return gRPC code and succinct message.
 
@@ -413,7 +429,7 @@ class APIClient:
                     return (grpc_code, error_msg)
 
                 # Fallback to string representation
-                return (grpc_code, str(error_data))
+                return (grpc_code, str(err))
         except (ValueError, AttributeError):
             pass
 
@@ -520,7 +536,7 @@ class APIClient:
         return (None, "", "")
 
     def parse_error_response_structured(
-        self, response: requests.Response
+        self, response: httpx.Response
     ) -> ErrorResponse | None:
         """Parse error response into structured ErrorResponse format.
 
@@ -532,7 +548,7 @@ class APIClient:
                 err = cast("dict[str, Any]", error_data)
                 return ErrorResponse(
                     error=err.get("error", "Unknown error"),
-                    message=err.get("message", str(error_data)),
+                    message=err.get("message", str(err)),
                     code=err.get("code", response.status_code),
                     details=err.get("details"),
                 )
@@ -543,7 +559,7 @@ class APIClient:
 
     def map_http_error_to_exception(
         self,
-        error: requests.exceptions.HTTPError,
+        error: httpx.HTTPStatusError,
         operation: str,
         namespace: str,
         resource_uuid: str | None = None,
@@ -555,7 +571,7 @@ class APIClient:
         undocumented gRPC codes.
 
         Args:
-            error: HTTPError exception from requests
+            error: HTTPStatusError from httpx (has .response)
             operation: Operation that failed (e.g., 'create', 'update', 'delete')
             namespace: Namespace where the operation was attempted
             resource_uuid: Optional UUID of the resource involved
@@ -615,21 +631,73 @@ class APIClient:
         # Access token property to trigger refresh if needed
         current_token = self.token
         if current_token:
-            # Update session headers with current token
-            self.session.headers.update({"Authorization": f"Bearer {current_token}"})
+            self._request_headers["Authorization"] = f"Bearer {current_token}"
+
+    def _request_with_retry(
+        self,
+        method: str,
+        url: str,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        """Perform request with retry on connection/timeout and retryable status."""
+        assert self.client is not None, "APIClient is closed"
+        last_exc: BaseException | None = None
+        for attempt in range(self.max_retries + 1):
+            try:
+                response = self.client.request(method, url, **kwargs)
+                self.logger.debug(
+                    f"{method} response {response.status_code} - "
+                    f"{self._truncate_for_logging(response.text)}"
+                )
+                return self._handle_response(
+                    response,
+                    method=method,
+                    url=url,
+                    **kwargs,
+                )
+            except httpx.HTTPStatusError as e:
+                last_exc = e
+                retryable = (
+                    e.response.status_code in self.status_forcelist
+                    and attempt < self.max_retries
+                )
+                if retryable:
+                    backoff = self.backoff_factor * (2**attempt)
+                    self.logger.warning(
+                        f"Retryable status {e.response.status_code}, "
+                        f"retrying in {backoff:.1f}s "
+                        f"(attempt {attempt + 1}/{self.max_retries + 1})"
+                    )
+                    time.sleep(backoff)
+                    continue
+                raise
+            except (httpx.ConnectError, httpx.TimeoutException) as e:
+                last_exc = e
+                if attempt < self.max_retries:
+                    backoff = self.backoff_factor * (2**attempt)
+                    self.logger.warning(
+                        f"Network error, retrying in {backoff:.1f}s "
+                        f"(attempt {attempt + 1}/{self.max_retries + 1}): {e}"
+                    )
+                    time.sleep(backoff)
+                    continue
+                raise
+        if last_exc:
+            raise last_exc
+        raise RuntimeError("Retry loop exited without response or exception")
 
     def _handle_response(
         self,
-        response: requests.Response,
+        response: httpx.Response,
         method: str | None = None,
         url: str | None = None,
         **kwargs: Any,
     ) -> Any:
         self.last_request_time = time.time()
         try:
-            response.raise_for_status()
+            _ = response.raise_for_status()
             return response
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             status_code = response.status_code
 
             # Handle rate limiting (429) - retryable with backoff
@@ -659,15 +727,14 @@ class APIClient:
                 # Use authenticate() which will use the appropriate auth method
                 new_token = self.authenticate()
                 if new_token:
-                    self.session.headers.update(
-                        {"Authorization": f"Bearer {new_token}"}
-                    )
+                    self._request_headers["Authorization"] = f"Bearer {new_token}"
                     self.default_headers = self._headers_copy()
                     self.logger.info("Reauthentication completed.")
                     # Retry the original request once
                     if method and url:
                         self.logger.info(f"Retrying {method} request to {url}")
-                        retry_response = self.session.request(
+                        assert self.client is not None, "APIClient is closed"
+                        retry_response = self.client.request(
                             method=method, url=url, **kwargs
                         )
                         return self._handle_response(
@@ -724,10 +791,8 @@ class APIClient:
             )
             raise
 
-        except requests.exceptions.ConnectionError as e:
-            # Network connection errors - retryable
-            # Note: urllib3 handles retries internally. If this exception
-            # reaches here, all retries have been exhausted.
+        except httpx.ConnectError as e:
+            # Network connection errors - retryable (retry loop in _request_with_retry)
             self.logger.error(
                 f"Network connection failed for {method or 'UNKNOWN'} "
                 f"request to {url or 'unknown URL'}: {e}. "
@@ -736,10 +801,8 @@ class APIClient:
             )
             raise
 
-        except requests.exceptions.Timeout as e:
-            # Request timeout errors - retryable
-            # Note: urllib3 handles retries internally. If this exception
-            # reaches here, all retries have been exhausted.
+        except httpx.TimeoutException as e:
+            # Request timeout errors - retryable (retry loop in _request_with_retry)
             self.logger.error(
                 f"Request timeout exceeded for {method or 'UNKNOWN'} "
                 f"request to {url or 'unknown URL'}: {e}. "
@@ -748,10 +811,8 @@ class APIClient:
             )
             raise
 
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             # Other network-related errors - retryable
-            # Note: urllib3 handles retries internally. If this exception
-            # reaches here, all retries have been exhausted.
             self.logger.error(
                 f"Network request failed for {method or 'UNKNOWN'} "
                 f"request to {url or 'unknown URL'}: {e}. "
@@ -767,44 +828,28 @@ class APIClient:
         data: Any | None = None,
         json: Any | None = None,
         **kwargs: Any,
-    ) -> requests.Response:
-        """GET request compatible with requests library signature."""
+    ) -> httpx.Response:
+        """GET request (httpx.Response)."""
         self._rate_limit()
         self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
-        # Merge headers if provided
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
-            # Merge with session headers
             merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
             request_kwargs["headers"] = self._headers_copy()
 
-        # Log with redaction
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
             f"GET request to: {normalized_url} with params: {params}, "
             f"data: {log_data}, json: {log_json}"
         )
-        response = self.session.request(
-            method="GET",
-            url=normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
-        self.logger.debug(
-            f"GET response: {response.status_code} - "
-            f"{self._truncate_for_logging(response.text)}"
-        )
-        return self._handle_response(
-            response,
-            method="GET",
-            url=normalized_url,
+        return self._request_with_retry(
+            "GET",
+            normalized_url,
             params=params,
             data=data,
             json=json,
@@ -818,44 +863,28 @@ class APIClient:
         data: Any | None = None,
         json: Any | None = None,
         **kwargs: Any,
-    ) -> requests.Response:
-        """POST request compatible with requests library signature."""
+    ) -> httpx.Response:
+        """POST request (httpx.Response)."""
         self._rate_limit()
         self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
-        # Merge headers if provided
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
-            # Merge with session headers
             merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
             request_kwargs["headers"] = self._headers_copy()
 
-        # Log with redaction
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
             f"POST request to: {normalized_url} with params: {params}, "
             f"data: {log_data}, json: {log_json}"
         )
-        response = self.session.request(
-            method="POST",
-            url=normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
-        self.logger.debug(
-            f"POST response: {response.status_code} - "
-            f"{self._truncate_for_logging(response.text)}"
-        )
-        return self._handle_response(
-            response,
-            method="POST",
-            url=normalized_url,
+        return self._request_with_retry(
+            "POST",
+            normalized_url,
             params=params,
             data=data,
             json=json,
@@ -869,44 +898,28 @@ class APIClient:
         data: Any | None = None,
         json: Any | None = None,
         **kwargs: Any,
-    ) -> requests.Response:
-        """PATCH request compatible with requests library signature."""
+    ) -> httpx.Response:
+        """PATCH request (httpx.Response)."""
         self._rate_limit()
         self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
-        # Merge headers if provided
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
-            # Merge with session headers
             merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
             request_kwargs["headers"] = self._headers_copy()
 
-        # Log with redaction
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
             f"PATCH request to: {normalized_url} with params: {params}, "
             f"data: {log_data}, json: {log_json}"
         )
-        response = self.session.request(
-            method="PATCH",
-            url=normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
-        self.logger.debug(
-            f"PATCH response: {response.status_code} - "
-            f"{self._truncate_for_logging(response.text)}"
-        )
-        return self._handle_response(
-            response,
-            method="PATCH",
-            url=normalized_url,
+        return self._request_with_retry(
+            "PATCH",
+            normalized_url,
             params=params,
             data=data,
             json=json,
@@ -920,44 +933,28 @@ class APIClient:
         data: Any | None = None,
         json: Any | None = None,
         **kwargs: Any,
-    ) -> requests.Response:
-        """PUT request compatible with requests library signature."""
+    ) -> httpx.Response:
+        """PUT request (httpx.Response)."""
         self._rate_limit()
         self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
-        # Merge headers if provided
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
-            # Merge with session headers
             merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
             request_kwargs["headers"] = self._headers_copy()
 
-        # Log with redaction
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
             f"PUT request to: {normalized_url} with params: {params}, "
             f"data: {log_data}, json: {log_json}"
         )
-        response = self.session.request(
-            method="PUT",
-            url=normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
-        self.logger.debug(
-            f"PUT response: {response.status_code} - "
-            f"{self._truncate_for_logging(response.text)}"
-        )
-        return self._handle_response(
-            response,
-            method="PUT",
-            url=normalized_url,
+        return self._request_with_retry(
+            "PUT",
+            normalized_url,
             params=params,
             data=data,
             json=json,
@@ -971,44 +968,28 @@ class APIClient:
         data: Any | None = None,
         json: Any | None = None,
         **kwargs: Any,
-    ) -> requests.Response:
-        """DELETE request compatible with requests library signature."""
+    ) -> httpx.Response:
+        """DELETE request (httpx.Response)."""
         self._rate_limit()
         self._ensure_authenticated()
         normalized_url = self._normalize_url(url)
-        # Merge headers if provided
         request_kwargs = kwargs.copy()
         if "headers" in request_kwargs:
-            # Merge with session headers
             merged_headers = self._headers_copy()
             merged_headers.update(request_kwargs["headers"])
             request_kwargs["headers"] = merged_headers
         else:
             request_kwargs["headers"] = self._headers_copy()
 
-        # Log with redaction
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
             f"DELETE request to: {normalized_url} with params: {params}, "
             f"data: {log_data}, json: {log_json}"
         )
-        response = self.session.request(
-            method="DELETE",
-            url=normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
-        self.logger.debug(
-            f"DELETE response: {response.status_code} - "
-            f"{self._truncate_for_logging(response.text)}"
-        )
-        return self._handle_response(
-            response,
-            method="DELETE",
-            url=normalized_url,
+        return self._request_with_retry(
+            "DELETE",
+            normalized_url,
             params=params,
             data=data,
             json=json,
@@ -1016,23 +997,33 @@ class APIClient:
         )
 
     def _extract_items_from_response(self, response_data: Any) -> list[Any]:
-        """Extract items from paginated response."""
+        """Extract items from paginated response (API shape is dynamic)."""
+        result: list[Any] = []
         if isinstance(response_data, dict) and "list" in response_data:
-            list_data: Any = response_data["list"]
+            list_data: list[Any] | dict[str, Any] = cast(
+                "list[Any] | dict[str, Any]", response_data["list"]
+            )
             if isinstance(list_data, dict) and "objects" in list_data:
-                return cast("list[Any]", list_data["objects"])
+                raw: Any = list_data["objects"]
+                # API response shape is dynamic; Iterable[Any] yields list[Any]
+                result = (
+                    list(cast("Iterable[Any]", raw)) if isinstance(raw, list) else []
+                )
         elif isinstance(response_data, list):
-            return response_data
-        return []
+            result = cast("list[Any]", response_data)
+        return result
 
     def _extract_next_page_token(self, response_data: Any) -> str | None:
         """Extract next page token from paginated response."""
         if isinstance(response_data, dict) and "list" in response_data:
-            list_data: Any = response_data["list"]
+            list_data: list[Any] | dict[str, Any] = cast(
+                "list[Any] | dict[str, Any]", response_data["list"]
+            )
             if isinstance(list_data, dict) and "response" in list_data:
-                response_meta: Any = list_data["response"]
-                if isinstance(response_meta, dict):
-                    return cast("dict[str, Any]", response_meta).get("next_page_token")
+                response_meta: dict[str, Any] = cast(
+                    "dict[str, Any]", list_data["response"]
+                )
+                return response_meta.get("next_page_token")
         return None
 
     def get_all(
@@ -1165,14 +1156,15 @@ class APIClient:
 
     def _authenticate_api_key(self) -> str | None:
         """Authenticate using API key and secret."""
+        assert self.client is not None, "APIClient is closed"
         try:
             payload = {"key": self.key, "secret": self.secret}
-            response = requests.post(
-                f"{self.base_url}/v1/auth/api-key",
+            response = self.client.post(
+                "v1/auth/api-key",
                 headers={"Content-Type": "application/json"},
                 json=payload,
             )
-            response.raise_for_status()
+            _ = response.raise_for_status()
             data = response.json()
             token = data["token"]
 
@@ -1201,8 +1193,8 @@ class APIClient:
             # Store token
             self._token = token
 
-            # Update session headers
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
+            # Update request headers for subsequent requests
+            self._request_headers["Authorization"] = f"Bearer {token}"
             self.default_headers = self._headers_copy()
             return token
         except Exception as e:
@@ -1245,15 +1237,16 @@ class APIClient:
 
     def _validate_and_store_token(self, token: str) -> None:
         """Validate token and store it."""
+        assert self.client is not None, "APIClient is closed"
         # Validate token by making a test request to get expiration info
         # Some endpoints may return token metadata
         try:
-            test_response = requests.get(
-                f"{self.base_url}/meta/version",
+            test_response = self.client.get(
+                "meta/version",
                 headers={"Authorization": f"Bearer {token}"},
-                timeout=5,
+                timeout=5.0,
             )
-            test_response.raise_for_status()
+            _ = test_response.raise_for_status()
 
             # Try to extract expiration from response if available
             # (Most endpoints don't return this, but we try)
@@ -1286,8 +1279,8 @@ class APIClient:
         # Store token
         self._token = token
 
-        # Update session headers
-        self.session.headers.update({"Authorization": f"Bearer {token}"})
+        # Update request headers for subsequent requests
+        self._request_headers["Authorization"] = f"Bearer {token}"
         self.default_headers = self._headers_copy()
         self.logger.info("Browser authentication successful")
 

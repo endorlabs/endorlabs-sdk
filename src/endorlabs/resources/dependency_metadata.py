@@ -1,17 +1,24 @@
 """DependencyMetadata resource module for Endor Labs API.
 
-This module provides CRUD operations for DependencyMetadata resources following the
-established patterns from the base class implementation.
+This module provides list, get, create, and delete operations for DependencyMetadata
+resources. All operations are hardcoded to use the "oss" namespace so the whole
+platform receives and understands dependency metadata without duplicating data
+across customer tenants.
 
-IMPORTANT: All DependencyMetadata operations are hardcoded to use the "oss" namespace.
-The tenant_meta_namespace parameter in all functions is kept for API compatibility
-but is ignored - all operations always use the "oss" namespace regardless of the
-parameter value passed.
+OPERATIONS:
+- List, get, create, delete: implemented.
+- Update: UNIMPLEMENTED. Dependency metadata in "oss" is platform-managed and
+  ingested by the platform; it is not intended for SDK consumers to update.
+  client.dependency_metadata.update() raises NotImplementedError.
+
+IMPORTANT: The tenant_meta_namespace parameter in all functions is kept for API
+compatibility but is ignored - all operations always use the "oss" namespace.
 """
 
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -264,6 +271,20 @@ def list_dependency_metadata(
     return ops.list(DEPENDENCY_METADATA_NAMESPACE, list_params, max_pages, **kwargs)
 
 
+def list_dependency_metadata_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[DependencyMetadata]:
+    """Iterate over dependency metadata without materializing the full list."""
+    ops = _get_dependency_metadata_ops(client)
+    return ops.list_iter(
+        DEPENDENCY_METADATA_NAMESPACE, list_params, max_pages, **kwargs
+    )
+
+
 def get_dependency_metadata(
     client: APIClient,
     tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
@@ -308,47 +329,28 @@ def create_dependency_metadata(
 
 def update_dependency_metadata(
     client: APIClient,
-    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
+    tenant_meta_namespace: str,
     dependency_metadata_uuid: str,
     payload: UpdateDependencyMetadataPayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> DependencyMetadata | None:
-    """Update an existing dependency metadata with partial updates.
+    """Update is unimplemented for DependencyMetadata.
 
-    Note: This function hardcodes the namespace to "oss" regardless of the
-    tenant_meta_namespace parameter value.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Parameter kept for API compatibility but ignored
-        dependency_metadata_uuid: UUID of the dependency metadata to update
-        payload: DependencyMetadata update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.tags,meta.description"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
-
-    Returns:
-        Updated DependencyMetadata object
+    Dependency metadata lives in the hardcoded "oss" namespace so the whole
+    platform receives and understands it without duplicating data across
+    customer tenants. The platform ingests and manages this data; update is
+    not exposed for SDK consumers. The Client facade does not expose update
+    for this resource (client.dependency_metadata.update raises
+    NotImplementedError).
 
     Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If dependency metadata doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
+        NotImplementedError: Always. Update is not supported for this resource.
 
     """
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
-    ops = _get_dependency_metadata_ops(client)
-    return ops.update(
-        DEPENDENCY_METADATA_NAMESPACE,
-        dependency_metadata_uuid,
-        payload,
-        update_mask_list,
-    )
+    raise NotImplementedError(
+        "DependencyMetadata update is not supported: dependency metadata in "
+        '"oss" is platform-managed and not for SDK consumer updates.'
+    ) from None
 
 
 def delete_dependency_metadata(
@@ -378,7 +380,11 @@ class CreateDependencyMetadataPayload(BaseModel):
 
 
 class UpdateDependencyMetadataPayload(BaseModel):
-    """Payload for updating a dependency metadata."""
+    """Payload for updating a dependency metadata.
+
+    Update is unimplemented for this resource; this model exists for API
+    compatibility. See update_dependency_metadata() and module docstring.
+    """
 
     meta: DependencyMetadataMetaUpdate | None = Field(
         None, description="DependencyMetadata metadata for update"

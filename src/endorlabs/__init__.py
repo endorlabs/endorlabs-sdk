@@ -6,6 +6,7 @@ A Python SDK for the Endor Labs platform.
 from .api_client import APIClient
 from .client_surface import Client
 from .exceptions import (
+    AmbiguousError,
     ConflictError,
     EndorAPIError,
     NotFoundError,
@@ -34,6 +35,7 @@ __version__ = "0.1.0"
 
 __all__ = [
     "APIClient",
+    "AmbiguousError",
     "Client",
     "ConflictError",
     "EndorAPIError",

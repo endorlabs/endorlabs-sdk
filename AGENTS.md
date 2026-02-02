@@ -4,8 +4,9 @@
 
 ## Consuming the SDK
 
+- **Python:** 3.11+ required; CI and releases are tested on 3.13 only.
 - **Install:** `uv add endor-cockpit` or, in this repo, `uv sync`.
-- **Recommended entry:** `endorlabs.Client(tenant="...")`; then `client.namespaces.list(traverse=True)`, `client.projects.get(uuid)`, etc. See [Architecture](#architecture) below.
+- **Recommended entry:** `endorlabs.Client(tenant="...")`; then `client.namespace.list(traverse=True)`, `client.project.get(uuid)`, etc. See [Architecture](#architecture) below.
 - **Alternative:** `APIClient()` and resource modules under `endorlabs.resources` (e.g. `namespace.list_namespaces(client, "tenant.namespace")`). Same behavior; use when you need the transport only or module-level calls.
 - **Errors:** `endorlabs.exceptions`; see [docs/conventions.md](docs/conventions.md) (Errors section).
 
@@ -14,8 +15,8 @@ import endorlabs
 
 # Recommended: resource-oriented client with default namespace
 client = endorlabs.Client(tenant="tenant.namespace")
-namespaces = client.namespaces.list(traverse=True)
-projects = client.projects.list(max_pages=2)
+namespaces = client.namespace.list(traverse=True)
+projects = client.project.list(max_pages=2)
 ```
 
 ```python
@@ -32,7 +33,7 @@ namespaces = namespace.list_namespaces(client, "tenant.namespace")
 The SDK uses a two-layer, registry-driven design so the same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only. No resource concepts; no Pydantic models.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` holds default namespace and exposes resource facades (e.g. `client.namespaces`, `client.projects`). Each facade is a `ResourceFacade[T]` in `facade.py` that resolves namespace, builds `ListParameters` from kwargs, and delegates to existing module-level list/get/create/update/delete functions.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`). Each facade is a `ResourceFacade[T]` in `facade.py` that resolves namespace, builds `ListParameters` from kwargs, and delegates to existing module-level list/get/create/update/delete functions.
 - **Registry:** Which resources exist on `Client` is defined in a single registry in `endorlabs.registry`. `Client` exposes all resources via `client.<resource>.list(...)`, `client.<resource>.get(...)`, etc. Adding a resource = one registry entry; no hand-wiring in `Client`. Resources without update or delete (e.g. api_keys, audit_logs, finding_logs) raise `NotImplementedError` for those operations.
 - **Pydantic models:** Request/response types live in resource modules and `models/`; used by module functions and by `ResourceFacade[T]` only as the type parameter. No HTTP or registry logic in models.
 
@@ -43,6 +44,7 @@ When editing the client surface, facade, or registry, follow [docs/rules-of-enga
 - **Canonical naming:** `tenant.namespace.child` only; no UUIDs in paths.
 - **Env and security:** Credentials via env; run `endorctl scan` before code changes.
 - **Return types:** Functions return typed models: `Resource | None` or `list[Resource]`.
+- **Field aliasing:** Follows a three-tier rule set (syntax collisions, spec case, semantic renames); see [docs/conventions.md](docs/conventions.md) (Models and API parity → Field aliasing).
 
 ## Automation
 
@@ -59,8 +61,9 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 | **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
 | **api-workflow.mdc** | When editing models, resources, or OpenAPI spec |
 | **test-driven-development.mdc** | When editing tests or `src/**/*.py` |
+| **troubleshooting.mdc** | When debugging SDK/integration failures or editing troubleshooting docs |
 
-Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in the docs below.
+Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in the docs below. Troubleshooting workflow: troubleshooting.mdc and [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
 
 ## Project Structure
 
@@ -86,9 +89,10 @@ endorlabs/
 ## Reference — In-Repo
 
 - **Index:** [docs/README.md](docs/README.md) — what lives where.
-- **Conventions:** [docs/conventions.md](docs/conventions.md) — naming, traverse, ListParameters, OpenAPI path, update_mask, errors.
+- **Conventions:** [docs/conventions.md](docs/conventions.md) — naming, traverse, ListParameters, OpenAPI path, models and API parity, update_mask, errors.
+- **Consumer UX (list/update):** filter vs mask, flat kwargs, spec-driven — [docs/conventions.md](docs/conventions.md), [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
 - **Reference:** [docs/reference/README.md](docs/reference/README.md) (public API, resources, namespace); [docs/reference/resources.md](docs/reference/resources.md) (operations per resource); [docs/reference/namespace.md](docs/reference/namespace.md) (list/get/create/update/delete).
-- **Guides:** [docs/guides/README.md](docs/guides/README.md); namespace-traversal, retrieving-scan-results, rego-policies.
+- **Guides:** [docs/guides/README.md](docs/guides/README.md); consumer-ux-list-update, retrieving-scan-results.
 - **Rules of engagement:** [docs/rules-of-engagement/README.md](docs/rules-of-engagement/README.md); api-validation, resource-implementation, troubleshooting, docs-drift-workflow.
 
 ## Essential Commands
@@ -96,11 +100,12 @@ endorlabs/
 ```bash
 uv run ruff check .
 uv run ruff format .
+uv run pyright
 uv run pytest
 endorctl scan
 ```
 
-CI runs these (except optional endorctl).
+CI runs these (except optional endorctl); include pyright.
 
 ## User-Scoped Rules (Optional)
 

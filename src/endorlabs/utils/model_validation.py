@@ -148,7 +148,7 @@ def ensure_required_fields(
     return data
 
 
-def create_minimal_payload[T: BaseModel](model_class: type[T], **kwargs: Any) -> T:
+def create_minimal_payload(model_class: type[T], **kwargs: Any) -> T:
     """Create minimal payload with only provided fields.
 
     Useful for partial updates where you only want to update specific fields.
@@ -284,6 +284,93 @@ def get_mutable_fields(resource_type: str) -> list[str]:
     }
 
     return mutable_fields_map.get(resource_type, [])
+
+
+# Tag field paths that represent "tags" for .tag()/.untag() capability
+TAG_FIELD_PATHS = frozenset({"meta.tags", "spec.finding_tags"})
+
+
+# Kwarg -> filter path for list() identity kwargs (e.g. name -> meta.name)
+LIST_FILTER_KWARG_MAP: dict[str, dict[str, str]] = {
+    "project": {"name": "meta.name"},
+    "repository": {
+        "name": "meta.name",
+        "vcs_url": "spec.vcs_url",
+        "git_url": "spec.vcs_url",
+    },
+    "policy": {"name": "meta.name"},
+    "namespace": {"name": "meta.name"},
+    "scan_profile": {"name": "meta.name"},
+    "scan_result": {"name": "meta.name"},
+    "finding": {"name": "meta.name"},
+}
+
+
+def get_list_filter_map(resource_type: str) -> dict[str, str]:
+    """Return allowed list kwargs and their filter path for this resource type.
+
+    Used by ResourceFacade.list() to build filter from identity kwargs
+    (e.g. name='backend' -> meta.name == 'backend').
+    """
+    if not resource_type:
+        return {}
+    return dict(LIST_FILTER_KWARG_MAP.get(resource_type, {}))
+
+
+def build_filter_from_identity_kwargs(
+    filter_map: dict[str, str],
+    kwargs: dict[str, Any],
+) -> tuple[str | None, dict[str, Any]]:
+    """Build filter from identity kwargs; return merged filter and remaining kwargs.
+
+    For each kwarg in filter_map that is present in kwargs, builds a clause
+    path == 'value' (value quoted). Merges with explicit kwargs.get('filter')
+    if present. Returns (merged_filter, remaining_kwargs) with identity keys
+    removed from kwargs.
+    """
+    clauses: list[str] = []
+    remaining = dict(kwargs)
+    explicit_filter = remaining.pop("filter", None)
+    for kwarg, path in filter_map.items():
+        if kwarg not in remaining:
+            continue
+        value = remaining.pop(kwarg)
+        if value is None:
+            continue
+        # Quote string values for API filter syntax
+        if isinstance(value, str):
+            escaped = value.replace("'", "\\'")
+            clause = f"{path} == '{escaped}'"
+        else:
+            clause = f"{path} == {value!r}"
+        clauses.append(clause)
+    if not clauses:
+        return (explicit_filter, remaining)
+    built = " and ".join(f"({c})" for c in clauses)
+    if explicit_filter and explicit_filter.strip():
+        merged = f"({explicit_filter}) and ({built})"
+    else:
+        merged = built
+    return (merged, remaining)
+
+
+def get_tags_update_paths(resource_type: str) -> list[str]:
+    """Return mutable field paths that represent tags for this resource type.
+
+    Derived from get_mutable_fields: includes meta.tags and/or spec.finding_tags
+    when present. Used to expose .tag()/.untag() only on resources that support tags.
+
+    Args:
+        resource_type: Type of resource (e.g., 'finding', 'project').
+
+    Returns:
+        Tag field paths (e.g. ['meta.tags'], ['meta.tags', 'spec.finding_tags']).
+
+    """
+    if not resource_type:
+        return []
+    mutable = get_mutable_fields(resource_type)
+    return [p for p in TAG_FIELD_PATHS if p in mutable]
 
 
 def get_immutable_fields(resource_type: str) -> list[str]:

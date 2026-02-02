@@ -15,5 +15,5 @@ alwaysApply: true
 
 **Structure**: `src/endorlabs/` — `api_client.py`, `client_surface.py`, `facade.py`, `registry.py`, `resources/`, `models/`. See [AGENTS.md](AGENTS.md), [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md), and `docs/rules-of-engagement/` for patterns and guides.
 
-**Quick**: `import endorlabs`; recommended entry is `endorlabs.Client(tenant="...")` then `client.namespaces.list()`, etc. Alternative: resource modules under `endorlabs.resources`. All list/get/create/update/delete use `BaseResourceOperations`; functions return `Resource | None` or `list[Resource]`.
+**Quick**: `import endorlabs`; recommended entry is `endorlabs.Client(tenant="...")` then `client.namespace.list()`, etc. Alternative: resource modules under `endorlabs.resources`. All list/get/create/update/delete use `BaseResourceOperations`; functions return `Resource | None` or `list[Resource]`. For full command list and rule table, see [AGENTS.md](AGENTS.md).
 

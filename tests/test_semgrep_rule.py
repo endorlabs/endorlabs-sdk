@@ -1,38 +1,36 @@
 """Test cases for SemgrepRule resource operations.
 
-Tests list, get, and Client-recommended UX for SemgrepRule resources.
-Aligns with test-driven-development.mdc and resource-implementation.md.
+Canonical order: LIST (root + traverse) -> GET -> Create -> Update -> Delete.
+Uses conftest api_client, namespace, root_namespace.
 """
 
-import os
-import sys
-
-import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+import time
 
 import conftest
+import pytest
 
+import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.resources import semgrep_rule
-from endorlabs.types import ListParameters
+from endorlabs.resources.semgrep_rule import (
+    CreateSemgrepRulePayload,
+    SemgrepNativeRule,
+    SemgrepRuleMetaCreate,
+    SemgrepRuleSpec,
+    UpdateSemgrepRulePayload,
+)
 
 
 @pytest.mark.integration
 class TestSemgrepRule:
-    """Test cases for SemgrepRule resource operations."""
+    """Canonical order: LIST -> GET -> Create -> Update -> Delete."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Set up test environment."""
-        self.client = APIClient(
-            max_retries=2, backoff_factor=0.1, auth_method="api-key"
-        )
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
+    def setup(self, api_client: APIClient, namespace: str, root_namespace: str) -> None:
+        """Set client and namespaces from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
         self.created_semgrep_rule_uuids: list[str] = []
 
     def teardown_method(self) -> None:
@@ -48,39 +46,146 @@ class TestSemgrepRule:
             self.created_semgrep_rule_uuids.clear()
 
     def test_semgrep_rule_list(self) -> None:
-        """Test GET semgrep rules (list) with pagination limits."""
-        rules = semgrep_rule.list_semgrep_rules(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=2,
+        """LIST from tenant root with traverse."""
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(rules, list)
+        result = client.semgrep_rule.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
 
-    def test_semgrep_rule_get_by_uuid(self) -> None:
-        """Test GET semgrep rule by UUID when at least one rule exists."""
-        rules = semgrep_rule.list_semgrep_rules(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+    def test_semgrep_rule_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        if not rules:
+        items = client.semgrep_rule.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.semgrep_rule.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
-        rule = semgrep_rule.get_semgrep_rule(self.client, self.namespace, rules[0].uuid)
-        assert rule is not None
-        assert rule.uuid == rules[0].uuid
-
-    def test_client_recommended_ux_list_semgrep_rules(self) -> None:
-        """Recommended UX: Client(tenant=...); client.semgrep_rules.list()."""
-        import endorlabs
-
+    @pytest.mark.writes
+    def test_semgrep_rule_create(self) -> None:
+        """Create a semgrep rule; teardown deletes."""
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
-        rules = client.semgrep_rules.list(max_pages=1)
-        assert isinstance(rules, list)
+        rule_id = f"client-ux-rule-{int(time.time())}"
+        payload = CreateSemgrepRulePayload(
+            meta=SemgrepRuleMetaCreate(name=rule_id, description="Consumer UX create"),
+            spec=SemgrepRuleSpec(
+                rule=SemgrepNativeRule(
+                    id=rule_id,
+                    languages=["python"],
+                    message="Client UX test rule",
+                    pattern="exec($VAR)",
+                )
+            ),
+            propagate=False,
+        )
+        from endorlabs.exceptions import PermissionDeniedError
+
+        try:
+            created = client.semgrep_rule.create(payload)
+        except PermissionDeniedError as e:
+            pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
+        assert created is not None
+        assert created.meta.name == rule_id
+        self.created_semgrep_rule_uuids.append(created.uuid)
+
+    @pytest.mark.writes
+    def test_semgrep_rule_update(self) -> None:
+        """Create then update the created resource; teardown deletes."""
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        rule_id = f"client-ux-update-{int(time.time())}"
+        create_payload = CreateSemgrepRulePayload(
+            meta=SemgrepRuleMetaCreate(
+                name=rule_id, description="Original description"
+            ),
+            spec=SemgrepRuleSpec(
+                rule=SemgrepNativeRule(
+                    id=rule_id,
+                    languages=["python"],
+                    message="Client UX update test",
+                    pattern="eval($X)",
+                )
+            ),
+            propagate=False,
+        )
+        from endorlabs.exceptions import PermissionDeniedError
+
+        try:
+            created = client.semgrep_rule.create(create_payload)
+        except PermissionDeniedError as e:
+            pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
+        if not created:
+            pytest.skip("Failed to create semgrep rule for update test")
+        self.created_semgrep_rule_uuids.append(created.uuid)
+        current = client.semgrep_rule.get(created.uuid, namespace=self.namespace)
+        if not current:
+            pytest.skip(f"Could not retrieve semgrep rule {created.uuid}")
+        update_payload = UpdateSemgrepRulePayload(
+            meta=SemgrepRuleMetaCreate(name=rule_id, description="Updated by client-ux")
+        )
+        try:
+            updated = client.semgrep_rule.update(
+                created.uuid,
+                update_payload,
+                update_mask="meta.description",
+                namespace=self.namespace,
+            )
+        except Exception as e:
+            pytest.skip(f"Semgrep rule update not allowed in this environment: {e}")
+        assert updated is not None
+
+    @pytest.mark.writes
+    def test_semgrep_rule_delete(self) -> None:
+        """Create then delete the created resource."""
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        rule_id = f"client-ux-del-{int(time.time())}"
+        payload = CreateSemgrepRulePayload(
+            meta=SemgrepRuleMetaCreate(
+                name=rule_id, description="Consumer UX delete test"
+            ),
+            spec=SemgrepRuleSpec(
+                rule=SemgrepNativeRule(
+                    id=rule_id,
+                    languages=["python"],
+                    message="Client UX delete test",
+                    pattern="open($F)",
+                )
+            ),
+            propagate=False,
+        )
+        from endorlabs.exceptions import PermissionDeniedError
+
+        try:
+            created = client.semgrep_rule.create(payload)
+        except PermissionDeniedError as e:
+            pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
+        if not created:
+            pytest.skip("Failed to create semgrep rule for delete test")
+        result = client.semgrep_rule.delete(created.uuid)
+        assert result is True

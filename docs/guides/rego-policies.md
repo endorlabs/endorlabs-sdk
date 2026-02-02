@@ -1,4 +1,0 @@
-# Rego Policies (SDK)
-
-The SDK exposes policy resources via `endorlabs.resources.policy`: list, get, create, update, delete. Policy content (Rego) is carried in the payload; create/update send the policy definition to the API. For Rego language reference, policy types, resource kinds, and field mappings see official Endor Labs Rego/policy documentation (e.g. docs.endorlabs.com). Runnable patterns: `tests/`, `maneuvers/`.
-

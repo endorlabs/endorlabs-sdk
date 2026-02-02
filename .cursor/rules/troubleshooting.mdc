@@ -1,0 +1,16 @@
+---
+description: Troubleshooting workflow and common SDK/API gotchas for maintainers. Use when debugging SDK/integration failures or editing troubleshooting docs.
+globs: "tests/**/*.py, src/endorlabs/resources/**/*.py, docs/rules-of-engagement/troubleshooting.md"
+alwaysApply: false
+---
+
+# Troubleshooting (Maintainers)
+
+When debugging SDK or integration failures, or editing troubleshooting docs, follow this workflow and check common causes.
+
+Follow [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md): **workflow** (Document → Research → Investigate → Resolve), **path namespace vs body UUID**, **List ServerError** ("Spec not full"), **list skips** (endorctl api list -r &lt;Resource&gt; --traverse; see troubleshooting.md), **list partial/mask**. Use endorctl to validate (e.g. `endorctl api list -r <Resource> --traverse -n <ns>`).
+
+## References
+
+- Full troubleshooting: [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
+- Conventions: [docs/conventions.md](docs/conventions.md).
