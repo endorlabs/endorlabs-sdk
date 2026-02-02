@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Pre-commit hook: run same lint/format/typecheck as CI (ruff check, ruff format --check, pyright).
+# Install: cp githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# See CONTRIBUTORS.md for details.
+
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright --project pyproject.toml

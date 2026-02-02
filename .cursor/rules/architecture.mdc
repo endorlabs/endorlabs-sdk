@@ -1,0 +1,24 @@
+---
+description: Client facade, registry, and resource-oriented API architecture
+globs: "src/endorlabs/client_surface.py", "src/endorlabs/facade.py", "src/endorlabs/registry.py"
+alwaysApply: false
+---
+
+# Architecture — Client, Facade, Registry
+
+When editing the resource-oriented Client surface, the facade, or the registry, follow this layering. See [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md) for full guidance.
+
+## Layers
+
+1. **Transport (APIClient):** `api_client.py`. HTTP, auth, retries only. No resource concepts; no Pydantic models. Do not add tenant or resource accessors here.
+2. **Resource surface (Client):** `client_surface.py`. Holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`). Build facades from the **registry**; do not hand-wire each resource in `Client.__init__`.
+3. **Facade (ResourceFacade[T]):** `facade.py`. Resolves namespace, builds `ListParameters` from convenience kwargs, delegates to module-level list/get/create/update/delete. Expose filter, mask, traverse, page_size as flat kwargs on `.list()`; see [conventions.md](docs/conventions.md) (List parameters, Consumer UX). Accept optional `update_fn`/`delete_fn` for resources that lack them; raise `NotImplementedError` when the operation is not supported.
+4. **Registry:** Single source of truth for which resources exist on `Client`. CRUD resources → `RESOURCE_REGISTRY`; non-CRUD (e.g. scan_logs) → `CUSTOM_FACADE_REGISTRY`. One entry per resource (attr_name, model_class, list_fn, get_fn, create_fn, update_fn?, delete_fn?). Adding a resource = one registry entry.
+
+## Rules
+
+- **No coupling:** APIClient does not import or depend on resources, facade, or registry. Only the Client/facade layer depends on resource modules.
+- **Registry-driven:** New resources are added by appending to the registry (e.g. `RESOURCE_REGISTRY` in `registry.py`), not by adding new lines in `Client.__init__`.
+- **Module functions unchanged:** The facade delegates to existing module-level functions (e.g. `list_namespaces(client, tenant_namespace, list_params, max_pages)`). Do not duplicate logic in the facade.
+- **Types:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.namespace.list()` is typed as `list[Namespace]`; keep full type annotations for Pyright.
+- **Resource-scoped operations:** Facade get/update/delete accept either a UUID string or a resource object; when a resource object is passed, namespace is resolved from the resource (via `resolve_namespace_for_resource`) so operations are anchored to the resource's tenant and avoid context mismatch (404) after traverse. See [conventions.md](docs/conventions.md) (Namespace scoping).

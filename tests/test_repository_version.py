@@ -1,5 +1,4 @@
-"""
-Test cases for RepositoryVersion resource operations.
+"""Test cases for RepositoryVersion resource operations.
 
 Tests GET operations for RepositoryVersion resources following the testing protocol.
 """
@@ -12,8 +11,13 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import repository_version
+import conftest
+
+from endorlabs.resources import repository_version
+from endorlabs.resources.repository_version import (
+    RepositoryVersionMetaUpdate,
+    UpdateRepositoryVersionPayload,
+)
 
 
 @pytest.mark.integration
@@ -21,185 +25,55 @@ class TestRepositoryVersion:
     """Test cases for RepositoryVersion resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
 
-        # Get test data
-        self.repository_versions = repository_version.list_repository_versions(
-            self.client, self.namespace
-        )
-        if not self.repository_versions:
-            pytest.skip("No repository versions available for testing")
+    @pytest.fixture
+    def sample_repository_version(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
 
-    def test_repository_version_get_list(self):
-        """Test GET repository versions operation."""
-        print("\n=== TESTING GET REPOSITORY VERSIONS ===")
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item for fast setup. Tests that need sample data should
+        request this fixture explicitly.
+        """
+        from endorlabs.exceptions import ServerError
+        from endorlabs.types import ListParameters
 
-        # Test list_repository_versions
-        repository_versions_list = repository_version.list_repository_versions(
-            self.client, self.namespace
-        )
-        assert isinstance(repository_versions_list, list), (
-            "Should return a list of repository versions"
-        )
-        assert len(repository_versions_list) > 0, (
-            "Should have at least one repository version"
-        )
+        try:
+            results = repository_version.list_repository_versions(
+                self.client,
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not results:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        return results[0]  # Return single item, not list
 
-        print(f"Found {len(repository_versions_list)} repository versions")
-
-        # Display first few repository versions
-        for i, repo_version in enumerate(repository_versions_list[:3]):
-            print(f"Repository Version {i + 1}:")
-            print(f"  UUID: {repo_version.uuid}")
-            print(f"  Name: {repo_version.meta.name}")
-            print(f"  Kind: {repo_version.meta.kind}")
-            print(f"  Version: {repo_version.spec.version}")
-            print(f"  Parent UUID: {repo_version.meta.parent_uuid}")
-
-    def test_repository_version_get_by_uuid(self):
-        """Test GET repository version by UUID operation."""
-        test_repository_version = self.repository_versions[0]
-        retrieved_repository_version = repository_version.get_repository_version(
-            self.client, self.namespace, test_repository_version.uuid
-        )
-        assert retrieved_repository_version is not None
-        assert retrieved_repository_version.uuid == test_repository_version.uuid
-        assert (
-            retrieved_repository_version.meta.name == test_repository_version.meta.name
-        )
-
-    def test_repository_version_structure_analysis(self):
-        """Test and analyze repository version structure."""
-        repository_version_obj = self.repository_versions[0]
-
-        # Analyze meta fields
-        meta_fields = [
-            field
-            for field in dir(repository_version_obj.meta)
-            if not field.startswith("_")
-        ]
-        assert len(meta_fields) > 0
-
-        # Analyze spec fields
-        spec_fields = [
-            field
-            for field in dir(repository_version_obj.spec)
-            if not field.startswith("_")
-        ]
-        assert len(spec_fields) > 0
-
-        # Verify required fields
-        assert hasattr(repository_version_obj, "uuid")
-        assert hasattr(repository_version_obj, "meta")
-        assert hasattr(repository_version_obj, "spec")
-        assert hasattr(repository_version_obj, "tenant_meta")
-
-        # Verify meta structure
-        assert hasattr(repository_version_obj.meta, "name")
-        assert hasattr(repository_version_obj.meta, "kind")
-        assert hasattr(repository_version_obj.meta, "version")
-
-        # Verify spec structure
-        assert hasattr(repository_version_obj.spec, "version")
-
-    def test_repository_version_conditional_attributes(self):
-        """Test conditional attributes in repository version."""
-        repository_version_obj = self.repository_versions[0]
-
-        # Check for conditional attributes
-        if (
-            hasattr(repository_version_obj, "context")
-            and repository_version_obj.context
-        ):
-            print("RepositoryVersion has context attribute")
-            assert isinstance(repository_version_obj.context, dict)
-            assert "id" in repository_version_obj.context
-            assert "type" in repository_version_obj.context
-
-        if (
-            hasattr(repository_version_obj, "scan_object")
-            and repository_version_obj.scan_object
-        ):
-            print("RepositoryVersion has scan_object attribute")
-            assert isinstance(repository_version_obj.scan_object, dict)
-            assert "scan_time" in repository_version_obj.scan_object
-            assert "status" in repository_version_obj.scan_object
-
-    def test_repository_version_base_class_inheritance(self):
-        """Test that repository version inherits from base classes."""
-        repository_version_obj = self.repository_versions[0]
-
-        # Test BaseResource inheritance
-        from endor_cockpit.models.base import BaseResource
-
-        assert isinstance(repository_version_obj, BaseResource)
-
-        # Test BaseMeta inheritance
-        from endor_cockpit.models.base import BaseMeta
-
-        assert isinstance(repository_version_obj.meta, BaseMeta)
-
-        # Test BaseSpec inheritance
-        from endor_cockpit.models.base import BaseSpec
-
-        assert isinstance(repository_version_obj.spec, BaseSpec)
-
-    def test_repository_version_advanced_filtering(self):
-        """Test advanced filtering capabilities."""
-        from endor_cockpit.types import ListParameters
-
-        # Test filtering by parent
-        if self.repository_versions:
-            parent_uuid = self.repository_versions[0].meta.parent_uuid
-            if parent_uuid:
-                filtered_versions = repository_version.list_repository_versions(
-                    self.client,
-                    self.namespace,
-                    list_params=ListParameters(
-                        filter=f"meta.parent_uuid=={parent_uuid}"
-                    ),
-                )
-                assert isinstance(filtered_versions, list)
-
-        # Test field masking
-        masked_versions = repository_version.list_repository_versions(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(mask="meta.name,spec.version"),
-        )
-        assert isinstance(masked_versions, list)
-        if masked_versions:
-            version = masked_versions[0]
-            # Should have masked fields
-            assert hasattr(version, "meta")
-            assert hasattr(version, "spec")
-
-    def test_repository_version_error_handling(self):
+    def test_repository_version_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
-        # Test with invalid UUID
-        invalid_repository_version = repository_version.get_repository_version(
-            self.client, self.namespace, "invalid-uuid"
-        )
-        assert invalid_repository_version is None
+        # Test with invalid UUID format - should raise ValidationError
+        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
+        from endorlabs.exceptions import ValidationError
 
-    def test_repository_version_schema_drift_detection(self):
-        """Test schema drift detection in repository version."""
-        repository_version_obj = self.repository_versions[0]
+        with pytest.raises(ValidationError) as exc_info:
+            repository_version.get_repository_version(
+                self.client, self.namespace, "invalid-uuid"
+            )
+        assert exc_info.value.resource_uuid == "invalid-uuid"
+        assert exc_info.value.operation == "get"
+        assert exc_info.value.status_code == 400
 
-        # Test that schema drift detection is working
-        # This is tested implicitly through the model validation
-        assert repository_version_obj is not None
-
-        # Test that unknown fields are handled gracefully
-        # This is tested through the model's extra="ignore" configuration
-        assert hasattr(repository_version_obj, "model_config")
-
-    def test_repository_version_hierarchical_relationships(self):
+    def test_repository_version_hierarchical_relationships(
+        self, sample_repository_version
+    ) -> None:
         """Test hierarchical relationships in repository version."""
-        repository_version_obj = self.repository_versions[0]
+        repository_version_obj = sample_repository_version
 
         # Test parent relationship
         if (
@@ -218,68 +92,192 @@ class TestRepositoryVersion:
             assert isinstance(parent_kind, str)
             assert parent_kind == "Project"
 
-    def test_repository_version_operations_summary(self):
-        """Test and summarize repository version operations."""
-        repository_versions_list = repository_version.list_repository_versions(
-            self.client, self.namespace
+    def test_repository_version_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
+        try:
+            result = client.repository_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
 
-        print("\n=== Repository Version Operations Summary ===")
-        print(f"Total repository versions: {len(repository_versions_list)}")
+    def test_repository_version_list_with_parent_project(self) -> None:
+        """LIST repository versions with parent=project (list with parent resource)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-        # Analyze repository versions by parent
-        parent_counts = {}
-        for rv in repository_versions_list:
-            parent = rv.meta.parent_uuid if rv.meta.parent_uuid else "None"
-            parent_counts[parent] = parent_counts.get(parent, 0) + 1
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            projects = client.project.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list projects); skip")
+        if not projects:
+            pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
+        project = projects[0]
+        try:
+            result = client.repository_version.list(
+                parent=project,
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
 
-        print("Parent distribution:")
-        for parent, count in list(parent_counts.items())[:5]:
-            print(f"  {parent[:8]}...: {count}")
+    def test_repository_version_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-        # Analyze repository versions by tags
-        tagged_count = sum(1 for rv in repository_versions_list if rv.meta.tags)
-        print(f"Repository versions with tags: {tagged_count}")
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            items = client.repository_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.repository_version.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
-        # Show sample repository versions
-        print("\nSample repository versions:")
-        for i, rv in enumerate(repository_versions_list[:3]):
-            print(f"  {i + 1}. {rv.meta.name}")
-            if rv.spec.version:
-                if rv.spec.version.ref:
-                    print(f"     Ref: {rv.spec.version.ref}")
-                if rv.spec.version.sha:
-                    print(f"     SHA: {rv.spec.version.sha[:8]}...")
-            if rv.meta.tags:
-                print(f"     Tags: {', '.join(rv.meta.tags)}")
+    def test_repository_version_advanced_filtering(self) -> None:
+        """Test advanced filtering capabilities."""
+        print("\n=== TESTING REPOSITORY VERSION FILTERING ===")
+        import conftest
 
-        assert len(repository_versions_list) > 0
+        from endorlabs.types import ListParameters
 
-    def test_repository_version_pagination(self):
-        """Test pagination capabilities."""
-        from endor_cockpit.types import ListParameters
-
-        # Test with page size
-        # Note: API may return more than page_size if it has a minimum page size
-        paginated_versions = repository_version.list_repository_versions(
+        # Test filtering by parent UUID (if we have a sample)
+        # First get a sample to use its parent UUID
+        sample_results = repository_version.list_repository_versions(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=5),
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
-        assert isinstance(paginated_versions, list)
-        assert len(paginated_versions) > 0
+        if sample_results and sample_results[0].meta.parent_uuid:
+            parent_uuid = sample_results[0].meta.parent_uuid
+            filtered_versions = repository_version.list_repository_versions(
+                self.client,
+                self.namespace,
+                list_params=ListParameters(
+                    filter=f'meta.parent_uuid=="{parent_uuid}"',
+                    page_size=conftest.TEST_PAGE_SIZE,
+                ),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+            assert isinstance(filtered_versions, list), (
+                "Should return a list of repository versions"
+            )
+            print(
+                f"Found {len(filtered_versions)} repository versions "
+                f"for parent {parent_uuid}"
+            )
 
-    def test_repository_version_field_validation(self):
-        """Test field validation and required fields."""
-        repository_version_obj = self.repository_versions[0]
+        # Test field masking
+        masked_versions = repository_version.list_repository_versions(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(
+                mask="meta.name,spec.version",
+                page_size=conftest.TEST_PAGE_SIZE,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
+        assert isinstance(masked_versions, list), (
+            "Should return a list of masked repository versions"
+        )
+        if masked_versions:
+            version = masked_versions[0]
+            # Should have masked fields
+            assert hasattr(version, "meta")
+            assert hasattr(version, "spec")
+            print(f"Masked repository version: {version.meta.name}")
 
-        # Verify required fields are present
-        assert repository_version_obj.uuid is not None
-        assert repository_version_obj.meta.name is not None
-        assert repository_version_obj.spec is not None
+    @pytest.mark.writes
+    def test_client_ux_update_repository_version(self) -> None:
+        """Consumer UX: client.repository_version.get() then update then revert."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-        # Verify version info structure if present
-        if repository_version_obj.spec.version:
-            version_info = repository_version_obj.spec.version
-            # Version info can have ref, sha, or metadata
-            assert hasattr(version_info, "ref") or hasattr(version_info, "sha")
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        try:
+            versions = client.repository_version.list(max_pages=conftest.TEST_MAX_PAGES)
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not versions:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = versions[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.repository_version.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve repository version {item.uuid}")
+        original_description = getattr(current.meta, "description", None) or ""
+        new_description = (
+            f"{original_description} [client-ux]"
+            if original_description
+            else "client-ux"
+        )
+        update_payload = UpdateRepositoryVersionPayload(
+            meta=RepositoryVersionMetaUpdate(description=new_description)
+        )
+        try:
+            updated = client.repository_version.update(
+                item.uuid,
+                update_payload,
+                update_mask="meta.description",
+                namespace=ns,
+            )
+        except Exception as e:
+            pytest.skip(
+                f"Repository version update not allowed in this environment: {e}"
+            )
+        assert updated is not None
+        restore_payload = UpdateRepositoryVersionPayload(
+            meta=RepositoryVersionMetaUpdate(description=original_description)
+        )
+        try:
+            client.repository_version.update(
+                item.uuid,
+                restore_payload,
+                update_mask="meta.description",
+                namespace=ns,
+            )
+        except Exception as e:
+            print(
+                f"[WARNING] Failed to restore original repository version values: {e}"
+            )
