@@ -1,41 +1,42 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-enterprise-app/manage-githubapp-enterprise/
-title: Manage GitHub Enterprise App on Endor Labs | Endor Labs Docs
-downloaded: 2025-12-11 11:32:18
+title: Manage GitHub Enterprise Server App on Endor Labs | Endor Labs Docs
+downloaded: 2026-01-29 22:21:28
 ---
 
-Manage GitHub Enterprise App on Endor Labs | Endor Labs Docs
+Manage GitHub Enterprise Server App on Endor Labs | Endor Labs Docs
 
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/github-app/github-enterprise-app/manage-githubapp-enterprise/_print.html)
 
 
 
-# Manage GitHub Enterprise App on Endor Labs
+# Manage GitHub Enterprise Server App on Endor Labs
 
 Learn how to manage your GitHub App Enterprise integration in Endor Labs.
 
-You can make changes to the GitHub Enterprise App integrations or delete them. You can view the activity logs for the GitHub Enterprise App and rescan your GitHub Enterprise repositories on demand.
+Beta
+
+You can make changes to the GitHub Enterprise Server App integrations or delete them. You can view the activity logs for the GitHub Enterprise Server App and rescan your GitHub Enterprise repositories on demand.
 
 1. Sign in to Endor Labs and select **Manage** > **Integrations** from the left sidebar.
-2. Click **Manage** next to **GitHub Enterprise** under **Source Control Managers**.
+2. Click **Manage** next to **GitHub Enterprise Server** under **Source Control Managers**.
 
-   ![Manage GitHub Enterprise App](../../../../../images/manage-github-enterprise.png)
+   ![Manage GitHub Enterprise Server App](../../../../../images/manage-github-enterprise.png)
 3. Click the three vertical dots next to the integration.
 
    You can choose from the following options:
 
-   * [**Edit Integration**](#edit-github-enterprise-app-integration)
+   * [**Edit Integration**](#edit-github-enterprise-server-app-integration)
    * [**View Sync Logs**](#view-sync-logs)
-   * [**Delete Integration**](#delete-github-enterprise-app-integration)
+   * [**Delete Integration**](#delete-github-enterprise-server-app-integration)
 
-### Edit GitHub Enterprise App integration
+### Edit GitHub Enterprise Server App integration
 
-To edit the GitHub Enterprise App integration:
+To edit the GitHub Enterprise Server App integration:
 
 1. Click the three vertical dots next to the integration, and select **Edit Integration**.
 2. Update your personal access token and choose the scanners.
@@ -47,22 +48,22 @@ To edit the GitHub Enterprise App integration:
      + **Full Scan** for dependency resolution, reachability analysis, and call graph generation for supported languages. This provides full visibility but may take longer to complete.
 4. Click **Save**. The changes are applied from the next scanning cycle.
 
-### Delete GitHub Enterprise App integration
+### Delete GitHub Enterprise Server App integration
 
-To delete a GitHub Enterprise App integration, click the three vertical dots next to the integration, and select **Delete Integration**.
+To delete a GitHub Enterprise Server App integration, click the three vertical dots next to the integration, and select **Delete Integration**.
 
 Deleting the integration also deletes all child namespaces, projects, and references associated with the auto-generated root group namespace, as well as any manually created namespaces and projects under that namespace.
 
-### Manage the Endor Labs GitHub Enterprise App
+### Manage the Endor Labs GitHub Enterprise Server App
 
 You can modify the app configuration or remove the app from your GitHub Enterprise Server instance.
 
 1. Sign in to Endor Labs and select **Manage** > **Integrations** from the left sidebar.
-2. Click **Manage** next to **GitHub Enterprise** under **Source Control Managers**.
+2. Click **Manage** next to **GitHub Enterprise Server** under **Source Control Managers**.
 3. Click **View Created Apps**.
 4. Click the three vertical dots next to the app and select **Edit** to edit the app details or **Delete** to delete the app.
 
-   ![Manage GitHub Enterprise App](../../../../../images/manage-github-enterprise-app.png)
+   ![Manage GitHub Enterprise Server App](../../../../../images/manage-github-enterprise-app.png)
 
 **Note**
 
@@ -76,11 +77,11 @@ The sync logs display details of synchronization attempts, including timestamps,
 
 ### Manually rescan GitHub Enterprise repositories
 
-GitHub Enterprise App scans your repositories every 24 hours. Click **Rescan Org** to manually trigger a scan outside the 24-hour period.
+GitHub Enterprise Server App scans your repositories every 24 hours. Click **Rescan Org** to manually trigger a scan outside the 24-hour period.
 
 ### Add more GitHub Enterprise repositories to scan
 
-Click **Scan More Repositories** to go to **Projects**, where you can add more repositories to scan through the GitHub Enterprise App. See [scan repositories](../#scan-more-repositories) to learn more.
+Click **Scan More Repositories** to go to **Projects**, where you can add more repositories to scan through the GitHub Enterprise Server App. See [scan repositories](../#scan-more-repositories) to learn more.
 
 ## Feedback
 

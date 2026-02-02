@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-local-system/
 title: Quick start with endorctl | Endor Labs Docs
-downloaded: 2025-12-11 11:33:26
+downloaded: 2026-01-29 22:22:11
 ---
 
 Quick start with endorctl | Endor Labs Docs
@@ -9,7 +9,6 @@ Quick start with endorctl | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/getting-started/quickstart/quickstart-local-system/_print.html)
 
@@ -48,41 +47,41 @@ brew install endorctl
 ```
 npm install -g endorctl
 
-### Run the following command to get the npm global bin directory:
+# Run the following command to get the npm global bin directory:
 npm config get prefix
 
-### Open your shell configuration file and insert the path you obtained with the above command:
+# Open your shell configuration file and insert the path you obtained with the above command:
 export PATH="/path/to/npm/global/bin:$PATH"
 
-### Reload your shell configuration and verify endorctl is installed:
+# Reload your shell configuration and verify endorctl is installed:
 endorctl --version
 ```
 
 ```
-### Download the latest CLI for MacOS ARM64
+# Download the latest CLI for MacOS ARM64
 curl https://api.endorlabs.com/download/latest/endorctl_macos_arm64 -o endorctl
 
-### Verify the checksum of the binary
+# Verify the checksum of the binary
 echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_macos_arm64)  endorctl" | shasum -a 256 -c
 
-### Modify the permissions of the binary to ensure it is executable
+# Modify the permissions of the binary to ensure it is executable
 chmod +x ./endorctl
 
-### Create an alias endorctl of the binary to ensure it is available in other directory
+# Create an alias endorctl of the binary to ensure it is available in other directory
 alias endorctl="$PWD/endorctl"
 ```
 
 ```
-### Download the latest CLI for MacOS AMD64
+# Download the latest CLI for MacOS AMD64
 curl https://api.endorlabs.com/download/latest/endorctl_macos_amd64 -o endorctl
 
-### Verify the checksum of the binary
+# Verify the checksum of the binary
 echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_macos_amd64)  endorctl" | shasum -a 256 -c
 
-### Modify the permissions of the binary to ensure it is executable
+# Modify the permissions of the binary to ensure it is executable
 chmod +x ./endorctl
 
-### Create an alias endorctl of the binary to ensure it is available in other directory
+# Create an alias endorctl of the binary to ensure it is available in other directory
 alias endorctl="$PWD/endorctl"
 ```
 
@@ -95,41 +94,41 @@ alias endorctl="$PWD/endorctl"
 ```
 npm install -g endorctl
 
-### Run the following command to get the npm global bin directory:
+# Run the following command to get the npm global bin directory:
 npm config get prefix
 
-### Open your shell configuration file and insert the path you obtained with the above command:
+# Open your shell configuration file and insert the path you obtained with the above command:
 export PATH="/path/to/npm/global/bin:$PATH"
 
-### Reload your shell configuration and verify endorctl is installed:
+# Reload your shell configuration and verify endorctl is installed:
 endorctl --version
 ```
 
 ```
-### Download the latest CLI for Linux amd64
+# Download the latest CLI for Linux amd64
 curl https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
 
-### Verify the checksum of the binary
+# Verify the checksum of the binary
 echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_linux_amd64)  endorctl" | sha256sum -c
 
-### Modify the permissions of the binary to ensure it is executable
+# Modify the permissions of the binary to ensure it is executable
 chmod +x ./endorctl
 
-### Create an alias endorctl of the binary to ensure it is available in other directory
+# Create an alias endorctl of the binary to ensure it is available in other directory
 alias endorctl="$PWD/endorctl"
 ```
 
 ```
-### Download the latest CLI for Linux arm64
+# Download the latest CLI for Linux arm64
 curl https://api.endorlabs.com/download/latest/endorctl_linux_arm64 -o endorctl
 
-### Verify the checksum of the binary
+# Verify the checksum of the binary
 echo "$(curl -s https://api.endorlabs.com/sha/latest/endorctl_linux_arm64)  endorctl" | sha256sum -c
 
-### Modify the permissions of the binary to ensure it is executable
+# Modify the permissions of the binary to ensure it is executable
 chmod +x ./endorctl
 
-### Create an alias endorctl of the binary to ensure it is available in other directory
+# Create an alias endorctl of the binary to ensure it is available in other directory
 alias endorctl="$PWD/endorctl"
 ```
 
@@ -141,26 +140,26 @@ alias endorctl="$PWD/endorctl"
 ```
 npm install -g endorctl
 
-### Run the following command to get the npm global bin directory:
+# Run the following command to get the npm global bin directory:
 npm config get prefix
 
-### Add the path from the above command to the System property 'Path' in your Environment variable settings.
+# Add the path from the above command to the System property 'Path' in your Environment variable settings.
 
-### Open a new Command prompt and verify endorctl is installed:
+# Open a new Command prompt and verify endorctl is installed:
 endorctl --version
 ```
 
 ```
-### Download the latest CLI for Windows
+# Download the latest CLI for Windows
 curl -O https://api.endorlabs.com/download/latest/endorctl_windows_amd64.exe
 
-### Check the expected checksum of the binary file
+# Check the expected checksum of the binary file
 curl https://api.endorlabs.com/sha/latest/endorctl_windows_amd64.exe
 
-### Verify the expected checksum and the actual checksum of the binary match
+# Verify the expected checksum and the actual checksum of the binary match
 certutil -hashfile .\endorctl_windows_amd64.exe SHA256
 
-### Rename the binary file
+# Rename the binary file
 ren endorctl_windows_amd64.exe endorctl.exe
 ```
 
@@ -168,9 +167,13 @@ For more details, see [Install and configure endorctl](../../../endorctl/install
 
 ## Authenticate to Endor Labs
 
-To authenticate your client with Endor Labs, utilize the built-in command `endorctl init` along with an external identity provider. Endor Labs supports multiple identity providers, including Google, GitHub, GitLab, Email link authentication, and Custom Identity Provider through Enterprise SSO. Examples of such enterprise SSO solutions include Google, GitHub, GitLab, or your organization’s specific choice.
+Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process. Endor Labs supports multiple identity providers, including Google, GitHub, GitLab, email link authentication, and a Custom Identity Provider through Enterprise SSO. Examples of enterprise SSO solutions include Google, GitHub, GitLab, or your organization’s specific provider.
+
+![Authenticate to Endor Labs](../../../images/init-auth-mode.png)
 
 For more information, see [Install and configure endorctl](../../../endorctl/install-and-configure/).
+
+You can also specify your supported authentication provider manually:
 
 * Google
 * GitHub
@@ -266,6 +269,7 @@ For more information on supported languages, package managers and build systems 
 | [Python](../../../scan-with-endorlabs/language-scanning/python/) | pip | `requirements.txt` | Python 3.6 and higher versions; pip 10.0.0 and higher versions |
 |  | Poetry | `pyproject.toml`, `poetry.lock` |  |
 |  | PDM | `pyproject.toml`, `pdm.lock` |  |
+|  | UV | `pyproject.toml`, `uv.lock` | Python 3.8 and higher versions |
 |  | PyPI | `setup.py`, `setup.cfg`, `pyproject.toml` |  |
 |  | Bazel | `workspace`, `MODULE.bazel` | Bazel versions `5.x.x`, `6.x.x`, and `7.x.x` |
 | [.NET (C#)](../../../scan-with-endorlabs/language-scanning/dotnet/) | NuGet | `*.csproj`, `package.lock.json`, `projects.assets.json`, `Directory.Build.props`, `Directory.Packages.props`, `*.props` | .NET 5.0 and higher versions; .NET Core 1.0 and higher versions; .NET Framework 4.5 and higher versions. Call graphs are supported for .NET 7.0.1 and higher versions. |
@@ -274,7 +278,7 @@ For more information on supported languages, package managers and build systems 
 | [Ruby](../../../scan-with-endorlabs/language-scanning/ruby/) | Bundler | `Gemfile`, `*.gemspec`, `gemfile.lock` | Ruby 2.6 and higher versions |
 | [Swift/Objective-C](../../../scan-with-endorlabs/language-scanning/swift-objective-c/) | CocoaPods | `Podfile`, `Podfile.lock` | CocoaPods 0.9.0 and higher versions |
 |  | SwiftPM | `Package.swift` | SwiftPM 5.0.0 and higher versions |
-| [PHP](../../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions except 2.9.1. |
+| [PHP](../../../scan-with-endorlabs/language-scanning/php/) | Composer | `composer.json`, `composer.lock` | PHP 5.3.2 and higher versions; Composer 2.2.0 and higher versions |
 
 For more information, see [endorctl commands](../../../endorctl/commands/) and [working with the API](../../../endorctl/commands/api/).
 
@@ -318,7 +322,6 @@ yarn install
 ```
 
 ```
-export ENDOR_PNPM_ENABLED=true
 pnpm install
 ```
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/npm-private-package-manager/
 title: Private package manager integration for npm | Endor Labs Docs
-downloaded: 2025-12-11 11:34:49
+downloaded: 2026-01-29 22:23:20
 ---
 
 Private package manager integration for npm | Endor Labs Docs
@@ -9,7 +9,6 @@ Private package manager integration for npm | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/package-manager/npm-private-package-manager/_print.html)
 
@@ -46,19 +45,21 @@ To set up a package manager integration:
 6. Select either **Basic** or **AWS Code Artifactory** as **Authentication Type**.
 
    See [AWS authentication](../aws-codeartifact/) for more information.
-7. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
 
-**Maven**
+7. Enter the package manager URL in the format `https://registry.example.com`.
+8. Optionally enter the scope of the package manager.
+9. You can also select either **Authentication Token** or **Base64 Authentication** as the **Authentication Method**.
 
-Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
-
-8. Select **Add Package Manager**.
+   * For **Authentication Token**, enter your authentication token.
+   * For **Base64 Authentication**, enter the Base64-encoded username and password.
+10. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
+11. Click **Add Package Manager**.
 
 If you want to delete a package manager integration, click the trash can icon at the far right of the integration.
 
 ### Authenticate to npm private package repositories
 
-To connect to private repositories of npm enter the package manager URL and the package registry credentials such as username and password.
+To connect to private repositories of npm enter the package manager URL and the authentication token.
 
 ![Basic Authentication for package manager integrations](../../../images/packagemanager-npm.png)
 

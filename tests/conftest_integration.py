@@ -1,8 +1,12 @@
-"""
-Configuration for integration tests.
+"""Configuration for integration tests.
 
 This file provides fixtures and configuration for integration tests
 that use the real Endor Labs API.
+
+CI runs all integration tests (including those that perform writes) using admin
+credentials on the isolated root namespace. Tests that create/update/delete are
+marked @pytest.mark.writes for optional selective runs
+(e.g. -m "integration and not writes" for read-only; -m "writes" for write-only).
 """
 
 import os
@@ -10,13 +14,13 @@ import os
 import pytest
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Configure pytest for integration tests."""
     # Add integration test marker
     config.addinivalue_line("markers", "integration: mark test as integration test")
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     """Modify test collection to handle integration tests."""
     for item in items:
         # Mark integration tests
@@ -24,15 +28,17 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.integration)
 
         # Skip integration tests if no credentials
-        if not _has_credentials():
-            if "integration" in item.nodeid:
-                item.add_marker(
-                    pytest.mark.skip(reason="No Endor Labs credentials available")
-                )
+        if not _has_credentials() and "integration" in item.nodeid:
+            item.add_marker(
+                pytest.mark.skip(reason="No Endor Labs credentials available")
+            )
 
 
 def _has_credentials() -> bool:
-    """Check if Endor Labs credentials are available."""
+    """Check if Endor Labs API key credentials are available.
+
+    Tests only support API key authentication, not browser-based auth.
+    """
     required_vars = [
         "ENDOR_API",
         "ENDOR_API_CREDENTIALS_KEY",
@@ -44,7 +50,9 @@ def _has_credentials() -> bool:
 @pytest.fixture(scope="session")
 def integration_config():
     """Integration test configuration."""
-    namespace = os.getenv("ENDOR_NAMESPACE", "")
+    import conftest
+
+    namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
     if not namespace:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     return {
@@ -56,7 +64,7 @@ def integration_config():
 
 
 @pytest.fixture(scope="session")
-def requires_credentials():
+def requires_credentials() -> bool:
     """Fixture that requires valid credentials."""
     if not _has_credentials():
         pytest.skip("Endor Labs credentials not available")
@@ -64,7 +72,7 @@ def requires_credentials():
 
 
 @pytest.fixture(scope="session")
-def requires_endorctl():
+def requires_endorctl() -> bool:
     """Fixture that requires endorctl to be installed."""
     import shutil
 

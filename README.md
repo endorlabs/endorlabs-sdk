@@ -1,6 +1,6 @@
 # 🚀 Endor Cockpit
 
-[![Python CI](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<your-org>/<your-repo>/actions/workflows/ci.yml)
+[![Python CI](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml/badge.svg)](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml)
 
 > **Starfighter Ready**: Navigate the Endor Labs security platform with tactical precision. This cockpit is designed for AI agents, human pilots, and autonomous security operations.
 
@@ -15,8 +15,8 @@ This cockpit is specifically engineered for AI-powered development environments.
 **For AI Agents in IDEs**: This toolkit is designed to be seamlessly integrated into AI-powered development environments. See [AGENTS.md](./AGENTS.md) for comprehensive integration guidance.
 
 ```python
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespace
+from endorlabs.api_client import APIClient
+from endorlabs.resources import namespace
 
 # Initialize client (auto-authenticates via environment variables)
 client = APIClient()
@@ -36,11 +36,13 @@ for ns in namespaces:
 - **🎪 Type-Safe Operations**: Pydantic-powered data structures with field mutability tracking
 - **🏗️ Resource-Oriented Architecture**: Intuitive modules for specific API resources
 - **🚀 Production-Ready**: Robust error handling, authentication, rate limiting, and retry mechanisms
-- **📚 External Documentation Sync**: Automated helpers to pull API specs and user docs
+- **📚 API Spec**: OpenAPI at <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI; folder is gitignored)
 - **🎭 Maneuvers & Protocols**: Pre-built tactical scripts for common security operations
 - **🔍 Schema Drift Detection**: Advanced monitoring for API specification changes
 
 ## 🛠️ **Installation & Setup**
+
+**Python:** Requires Python 3.11 or newer. CI and releases are tested on Python 3.13 only; other 3.11+ versions are supported but not routinely tested.
 
 ### Quick Setup (Recommended)
 
@@ -58,25 +60,28 @@ source .venv/bin/activate  # Linux/Mac
 # Install dependencies
 uv pip install -e .
 
-# Optional: Install dependencies for documentation sync scripts
-uv pip install -e ".[docs]"
+# Optional: Sync external docs (recommended for advanced users — full IDE context)
+uv sync --extra docs
+uv run python scripts/sync_external_docs.py --all
 ```
 
-### External Documentation Sync
+Contributors: see [CONTRIBUTORS.md](CONTRIBUTORS.md) for environment setup and validation.
 
-Pull the latest API specifications and user documentation:
+This creates the gitignored `external_docs/` folder with the OpenAPI spec and user documentation from [docs.endorlabs.com](https://docs.endorlabs.com/). See [scripts/README.md](scripts/README.md).
 
-```bash
-# Download user documentation from Endor Labs
-uv run python scripts/download_user_docs.py \
-  --sitemap-url "https://docs.endorlabs.com/sitemap.xml" \
-  --output-dir "external_docs/user-docs" \
-  --max-pages 100
-
-# The OpenAPI specification is already included in external_docs/openapi-swagger.json
-```
+API spec: <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/` (gitignored) in CI.
 
 ## 🔐 **Environment Configuration**
+
+### Configuration Precedence
+
+The SDK uses environment variables only (no config file loading). Precedence is:
+
+1. **Constructor Parameters** - Explicit values passed to `APIClient()`
+2. **Environment Variables** - System/process environment variables
+3. **Defaults** - Built-in SDK defaults
+
+This follows 12-factor app principles: deployment-specific settings via environment variables.
 
 ### Required Environment Variables
 
@@ -87,42 +92,43 @@ export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-api-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-api-secret"
 export ENDOR_NAMESPACE="your-tenant-namespace"  # Required for operations
+export ENDOR_LOG_LEVEL="INFO"  # Optional: DEBUG, INFO, WARNING, ERROR, CRITICAL
+export ENDOR_MAX_RETRIES="5"  # Optional: Maximum number of retries (default: 5)
 ```
+
+### Configuration Sources
+
+**Environment Variables** (used by the SDK):
+- Highest precedence after constructor parameters
+- Secure for CI/CD and production environments
+- The SDK does not read from `.endorctl/config.yaml`; use environment variables or constructor parameters.
 
 ### Local Development Setup
 
-For local development, you can use the admin setup script:
-
-```bash
-# Initialize environment (creates .env file from template)
-uv run python scripts/admin_setup.py init
-
-# Validate environment configuration
-uv run python scripts/admin_setup.py validate
-
-# Quick health check
-uv run python scripts/admin_setup.py check
-```
+Set `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET` (and optionally `ENDOR_NAMESPACE`) in your environment or a `.env` file. Contributors: see [CONTRIBUTORS.md](CONTRIBUTORS.md) for full setup and validation.
 
 ### Configuration Management
 
-**Local Development**: Use `.env` file or environment variables directly.
+**Local Development**:
+- Set environment variables (e.g. in shell or `.env` with `python-dotenv`)
+- Or pass credentials to `APIClient()` constructor
 
-**CI/CD**: Environment variables are configured in GitHub repository settings:
+**CI/CD**: 
+Environment variables are configured in GitHub repository settings:
 - `ENDOR_API` - Repository variable
 - `ENDOR_NAMESPACE` - Repository variable  
 - `ENDOR_API_CREDENTIALS_KEY` - Repository secret
 - `ENDOR_API_CREDENTIALS_SECRET` - Repository secret
-
-The SDK reads configuration from environment variables only - no hardcoded values or configuration files. This follows 12-factor app principles and ensures security and flexibility across different environments.
+- `ENDOR_LOG_LEVEL` - Optional repository variable (default: INFO)
+- `ENDOR_MAX_RETRIES` - Optional repository variable (default: 5)
 
 ## Quick Start
 
 ### For Human Pilots
 
 ```python
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import namespace
+from endorlabs.api_client import APIClient
+from endorlabs.resources import namespace
 
 # Initialize the client (uses environment variables for auth)
 client = APIClient()
@@ -144,31 +150,37 @@ This cockpit is specifically engineered for AI-powered development environments.
 - **🛡️ Security Protocols**: Built-in security scanning and compliance
 - **📋 Best Practices**: Patterns for reliable agent operations
 - **🎭 Maneuvers**: Pre-built tactical scripts for common operations
-- **📚 External Docs**: Automated sync with API specifications and user documentation
+- **📚 API Spec & Docs**: SDK, docstrings, and Pyright are the primary consumption path; spec at <https://api.endorlabs.com/download/openapiv2.swagger.json>
 
 ## 🛠️ **Development & Operations**
+
+Contributing: see [CONTRIBUTORS.md](CONTRIBUTORS.md) for repo setup, tests, and linting.
 
 ### Testing Arsenal
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
+
+# With env from file (if .env not loaded in shell)
+uv run --env-file .env pytest
 
 # Run with coverage
-pytest --cov=endor_cockpit --cov-report=html
+uv run pytest --cov=endorlabs --cov-report=html
 
 # Run integration tests (requires valid credentials)
-pytest tests/test_integration.py -v
+uv run pytest -m integration -v
 ```
 
 ### Code Quality & Linting
 
 ```bash
 # Linting & Formatting
-ruff check .
+uv run ruff check .
+uv run ruff format .
 
 # Type checking
-mypy src/
+uv run pyright --project pyproject.toml
 ```
 
 ### Security Scanning
@@ -216,7 +228,6 @@ ls maneuvers/
 - **DependencyMetadata** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
 - **LinterResult** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
 - **Metric** - Implementation: ✅ | Documentation: ✅ | Tests: ❌
-- **User** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 - **Installation** - Implementation: ✅ | Documentation: ✅ | Tests: ❌ (API: GET only)
 
 ### Completion Criteria
@@ -236,10 +247,11 @@ ls maneuvers/
 ## 📚 **Documentation & Intelligence**
 
 - **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
+- **[Documentation index](./docs/README.md)** - SDK docs (conventions, reference, guides, rules of engagement)
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
-- **[Rego Policy Guide](./docs/rego_guide.md)** - Complete Rego policy development reference
-- **[SDK Docstrings](./src/endor_cockpit/)** - Inline documentation for all resources
-- **[External Documentation](./external_docs/)** - Endor Labs API and user documentation
+- **Policy (Rego)** - SDK exposes policy via `endorlabs.resources.policy`; Rego in payload; [reference/resources.md](docs/reference/resources.md) and [docs.endorlabs.com](https://docs.endorlabs.com/) for Rego reference
+- **[SDK Docstrings](./src/endorlabs/)** - Inline documentation for all resources
+- **External documentation**: Platform docs at <https://docs.endorlabs.com/> (context via Cursor rules / DeepWiki)
 
 ## 🗂️ **Workspace & Mission Files**
 
@@ -274,8 +286,9 @@ For questions and support:
 - **🐛 Issues**: Create an issue in the repository
 - **🛡️ Security**: Follow the security guidelines in the documentation
 - **🎭 Maneuvers**: Check the `maneuvers/` directory for tactical scripts
-- **📋 Protocols**: Review `protocols/` for operational procedures
+- **📋 Rules of engagement**: Review [docs/rules-of-engagement/](./docs/rules-of-engagement/) for operational procedures
 
 ---
 
 > **May the Force be with you, pilot. The Endor Cockpit is ready for your mission.** 🚀
+

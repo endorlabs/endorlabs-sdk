@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/aws-keyless-auth/
 title: Keyless authentication in AWS | Endor Labs Docs
-downloaded: 2025-12-11 11:31:31
+downloaded: 2026-01-29 22:20:47
 ---
 
 Keyless authentication in AWS | Endor Labs Docs
@@ -9,7 +9,6 @@ Keyless authentication in AWS | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/ci-scans/keyless-authentication/aws-keyless-auth/_print.html)
 

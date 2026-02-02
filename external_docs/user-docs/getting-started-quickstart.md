@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/
 title: Quick start | Endor Labs Docs
-downloaded: 2025-12-11 11:32:23
+downloaded: 2026-01-29 22:21:33
 ---
 
 Quick start | Endor Labs Docs
@@ -9,7 +9,6 @@ Quick start | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Quick start
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/namespaces/
 title: Set up namespaces | Endor Labs Docs
-downloaded: 2025-12-11 11:33:35
+downloaded: 2026-01-29 22:22:20
 ---
 
 Set up namespaces | Endor Labs Docs
@@ -9,7 +9,6 @@ Set up namespaces | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/administration/namespaces/_print.html)
 

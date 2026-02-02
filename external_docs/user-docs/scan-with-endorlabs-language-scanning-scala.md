@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/scala/
 title: Scala | Endor Labs Docs
-downloaded: 2025-12-11 11:35:08
+downloaded: 2026-01-29 22:23:40
 ---
 
 Scala | Endor Labs Docs
@@ -9,7 +9,6 @@ Scala | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/scala/_print.html)
 
@@ -33,14 +32,14 @@ Make sure that your system has a minimum 8-core processor with 32 GB RAM to succ
 
 ## Software prerequisites
 
-* Install JDK versions between 11 and 25.
-  + For JDK 8, see [Scan projects on JDK version 8](#scan-the-projects-on-jdk-version-8).
+* Install JDK versions between 11 and 25.0.1.
+  + For JDK 8, see [Scan projects on JDK version 8](../java/#scan-the-projects-on-jdk-version-8).
 * Make sure your repository includes one or more files with `.scala` or `.sc` extension.
 * Install sbt version 1.4 or higher if your project uses sbt.
   + For sbt versions lower than 1.4, install the [sbt-dependency-graph](https://github.com/sbt/sbt-dependency-graph) plugin, which is included by default in sbt 1.4 and later.
   + Ensure that the `project/build.properties` file specifies the required sbt version.
 * Install Gradle build system version 6.0.0 and higher, if your project uses Gradle.
-  + To support lower versions of Gradle, see [Scan projects on older Gradle versions](#scan-projects-on-gradle-versions-between-47-and-600).
+  + To support lower versions of Gradle, see [Scan projects on older Gradle versions](../java/#scan-projects-on-gradle-versions-between-47-and-600).
 * Your repository must include the appropriate build manifest file:
   + `build.sbt` for sbt projects.
   + `build.gradle` or `build.gradle.kts` for Gradle projects.
@@ -211,7 +210,7 @@ Here are a few error scenarios that you can check for and attempt to resolve the
   + sbt is not installed or present in the path variable. Install sbt 1.4 or higher versions and try again.
   + The sbt version mentioned in the project or the `build.properties` file is lower than 1.4 and the `sbt-dependency-graph` plug-in is not installed. Install the `sbt-dependency-graph` plug-in and try again.
   + Java is not installed or not present in the PATH environment variable. Install Java and try again. See [Java documentation](https://www.oracle.com/java/technologies/downloads/) for more information.
-  + The installed version of Java is lower than the required version. Install JDK versions between 11 and 25 and try again.
+  + The installed version of Java is lower than the required version. Install JDK versions between 11 and 25.0.1 and try again.
   + Java is installed but sbt or Gradle is not installed. In such cases, the dependency resolution may not be complete.
 * **Dependency graph errors**: Scala by default imports `MiniDependencyTreePlugin`, which is a mini version of the `sbt-dependency-graph` plugin and supports only the `dependencyTree` command. To get complete features of the `sbt-dependency-graph` plugin, add `DependencyTreePlugin` to your `project/plugins.sbt` file and run the scan again. See [Scala documentation](https://eed3si9n.com/sbt-1.4.0#:~:text=sbt%2Ddependency%2Dgraph%20is%20in%2Dsourced) for details.
 

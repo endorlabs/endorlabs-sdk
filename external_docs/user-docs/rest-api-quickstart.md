@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/quickstart/
 title: Quickstart | Endor Labs Docs
-downloaded: 2025-12-11 11:31:42
+downloaded: 2026-01-29 22:20:52
 ---
 
 Quickstart | Endor Labs Docs
@@ -9,7 +9,6 @@ Quickstart | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Quickstart
 
@@ -22,7 +21,9 @@ The following is an example request to get the number of findings in your namesp
 * endorctl
 * curl
 
-1. Authenticate with Endor Labs using `endorctl init`. For more information, see [endorctl init](../../endorctl/commands/init).
+1. Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+   You can also specify your supported authentication provider manually.
 
    ```
    endorctl init --auth-mode google
@@ -34,7 +35,9 @@ The following is an example request to get the number of findings in your namesp
    ```
 
 1. Install `curl` if it isn’t already installed on your machine. To check if `curl` is installed, execute `curl --version` on the command line. If the output provides information about the version of `curl`, that means `curl` is installed. If you get a message similar to command not found: curl, you need to download and install curl. For more information, see the [curl project download page](https://curl.se/download.html).
-2. Authenticate with Endor Labs using `endorctl init`. For more information, see [endorctl init](../../endorctl/commands/init).
+2. Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+   You can also specify your supported authentication provider manually.
 
    ```
    endorctl init --auth-mode google

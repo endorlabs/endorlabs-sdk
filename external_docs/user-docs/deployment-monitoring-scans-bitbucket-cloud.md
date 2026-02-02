@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-cloud/
 title: Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
-downloaded: 2025-12-11 11:34:06
+downloaded: 2026-01-29 22:22:49
 ---
 
 Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
@@ -9,7 +9,6 @@ Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/bitbucket-cloud/_print.html)
 
@@ -19,7 +18,7 @@ Deploy Endor Labs Bitbucket App in Bitbucket Cloud | Endor Labs Docs
 
 Learn how to continuously monitor your environment with the Endor Labs Bitbucket App.
 
-Endor Labs provides a Bitbucket App that continuously monitors users’ projects for security and operational risks in Bitbucket Cloud. You can use the Bitbucket App to selectively scan your repositories for SCA, secrets, SAST, and CI/CD tools.
+Endor Labs provides a Bitbucket App that continuously monitors users’ projects for security and operational risks in Bitbucket Cloud. You can use the Bitbucket App to selectively scan your repositories for SCA, secrets, and SAST.
 
 When you use the Endor Labs Bitbucket App, it creates namespaces based on your workspace and projects in Bitbucket Cloud. The namespaces created by the Endor Labs Bitbucket App are not like regular namespaces and are called managed namespaces. You can either configure the URL to Bitbucket Cloud to import all the projects or configure the project key to import a specific project in Endor Labs.
 
@@ -163,7 +162,6 @@ Endor Labs Bitbucket App for Bitbucket Cloud requires a Bitbucket Cloud premium 
 
    * **SCA**: Perform software composition analysis and discover AI models used in your repository.
    * **Secret**: Scan Bitbucket projects for exposed secrets.
-   * **CI/CD**: Scan Bitbucket projects and identify all the CI/CD tools used.
    * **SAST**: Scan Bitbucket projects to generate SAST findings.
 
    The available scan types depend upon your license.

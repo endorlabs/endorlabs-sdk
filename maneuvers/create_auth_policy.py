@@ -11,11 +11,11 @@ Based on the OpenAPI schema and example authorization policy structure.
 Example:
 
 uv run python .workspace/create_auth_policy_maneuver.py \
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --tenant-namespace "tenant.namespace" \
   --name "Read Only Policy for auditors" \
   --description "Authorization policy for sso.tools OIDC users" \
   --clause "*@endor.ai,68fae83022a47bdae812bb42" \
-  --target-namespaces "endor-solutions-tgowan.cockpit" \
+  --target-namespaces "tenant.namespace" \
   --roles "SYSTEM_ROLE_READ_ONLY" \
   --resource-permissions "finding:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;namespace:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;package_version:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;policy:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;project:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE;repository:METHOD_READ,METHOD_CREATE,METHOD_UPDATE,METHOD_DELETE" \
   --dry-run
@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pydantic import BaseModel, Field
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -69,8 +69,7 @@ CLAUSE FORMATS:
 • User Email: 'user@endor.ai', 'tgowan@endor.ai'
 • Domain Wildcard: '*@endor.ai' (all users from domain)
 • Identity Provider UUID: '68fae83022a47bdae812bb42' (all users from this IDP)
-• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key'
-• Group Claims: 'group=developers', 'group=admins'
+• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key' # endorctl:allow
 • Mixed: 'tgowan@endor.ai,68fae83022a47bdae812bb42' (user + IDP)
 
 SECURITY: All clauses must match (AND logic) for policy to apply.""")
@@ -332,20 +331,20 @@ def main():
 Examples:
   # Single user with specific identity provider
   python create_auth_policy_maneuver.py \\
-    --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Auth Policy for User: tgowan@endor.ai" \\
     --description "Authorization policy for specific user" \\
     --clause "tgowan@endor.ai,68fae83022a47bdae812bb42" \\
-    --target-namespaces "endor-solutions-tgowan.cockpit" \\
+    --target-namespaces "tenant.namespace" \\
     --roles "SYSTEM_ROLE_READ_ONLY"
 
   # Domain-wide access for all users from identity provider
   python create_auth_policy_maneuver.py \\
-    --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Domain Access Policy" \\
     --description "Access for all @endor.ai users" \\
     --clause "*@endor.ai,68fae83022a47bdae812bb42" \\
-    --target-namespaces "endor-solutions-tgowan.cockpit" \\
+    --target-namespaces "tenant.namespace" \\
     --roles "SYSTEM_ROLE_READ_ONLY" \\
     --propagate
 
@@ -354,7 +353,7 @@ Examples:
     --tenant-namespace "tenant.namespace" \\
     --name "API Key Access Policy" \\
     --description "Access for API key authentication" \\
-    --clause "endr+abCdefGhIJKL0PQrs,api-key" \\
+    --clause "endr+abCdefGhIJKL0PQrs,api-key" \\ # endorctl:allow
     --target-namespaces "tenant.namespace" \\
     --roles "SYSTEM_ROLE_CODE_SCANNER"
 
@@ -395,14 +394,14 @@ CLAUSE TYPES:
 • User Email: 'user@endor.ai' or 'tgowan@endor.ai'
 • Domain Wildcard: '*@endor.ai' (matches all users from domain)
 • Identity Provider UUID: '68fae83022a47bdae812bb42' (matches all users from this IDP)
-• API Key: 'endr+abCdefGhIJKL0PQrs,api-key'
+• API Key: 'endr+abCdefGhIJKL0PQrs,api-key' # endorctl:allow
 • Group Claims: 'group=developers' or 'group=admins'
 • Mixed Format: 'tgowan@endor.ai,68fae83022a47bdae812bb42' (user + IDP)
 
 EXAMPLES:
 • Single user: 'tgowan@endor.ai'
 • Domain + IDP: '*@endor.ai,68fae83022a47bdae812bb42'
-• API key: 'endr+abCdefGhIJKL0PQrs,api-key'
+• API key: 'endr+abCdefGhIJKL0PQrs,api-key' # endorctl:allow
 • Group + IDP: 'group=developers,68fae83022a47bdae812bb42'
 
 SECURITY NOTE: Clauses work as AND operator - ALL must match for policy to apply."""
@@ -552,3 +551,4 @@ SECURITY NOTE: Clauses work as AND operator - ALL must match for policy to apply
 
 if __name__ == "__main__":
     main()
+

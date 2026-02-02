@@ -1,200 +1,45 @@
 # Resource Implementation Rules of Engagement
 
-> **Tactical Operations**: These rules guide comprehensive resource implementation for the Endor Cockpit SDK.
+Checklists for implementing new Endor Labs resources. Use BaseResourceOperations, one _get_*_ops() per module; return typed models. See [conventions.md](../conventions.md) for naming, spec path, list params, update_mask. Implement per `.cursor/rules/resource-patterns.mdc`.
 
-## Overview
+## Phase 0: API Analysis (MANDATORY)
 
-These rules provide detailed steps for implementing new Endor Labs resources in the SDK, ensuring consistency with documented patterns and real-world usage.
+- [ ] Review OpenAPI spec for the resource (see [conventions.md](../conventions.md); spec at <https://api.endorlabs.com/download/openapiv2.swagger.json>).
+- [ ] Note service name, URL endpoints, HTTP methods.
+- [ ] Use live API responses as canonical structure; run endorctl list/get as needed.
+- [ ] Confirm BaseResource compatibility; list_params (filter, mask, page_size, traverse) and update_mask support.
 
-## Implementation Phases
+## Phase 1: Implementation
 
-### Phase 0: API Analysis (MANDATORY)
+- [ ] Models: Meta, Spec, Resource extending BaseResource; schema drift detection per base.
+- [ ] **Field aliasing:** Reserved/invalid API key → alias (Tier 1). Otherwise 1:1 with spec (Tier 2). **Greenfield:** Prefer Python name = spec key for shared fields (`context`, `processing_status`, `index_data`). If you use a prefixed name with alias for a shared concept, register in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../src/endorlabs/utils/model_consistency.py) (Tier 3). See [conventions.md](../conventions.md) (Models and API parity → Field aliasing, Style heuristic).
+- [ ] Operations: _get_*_ops(client) returning BaseResourceOperations(client, "resource-path", Model).
+- [ ] List: accept list_params, max_pages; pass to ops.list(). Docstring: filter, mask, page_size, traverse.
+- [ ] Get/Create/Update/Delete: pass through to ops; update accepts update_mask (comma-separated string → list). Namespace: update_mask required.
+- [ ] Errors: use endorlabs.exceptions; log full response.text; no truncation.
+- [ ] Add resource to RESOURCE_NAME_TO_TYPE and get_immutable_fields (in model_validation) if update is supported.
+- [ ] Docstrings: Args, Returns, Raises so Pydantic/Pyright and IDE are self-explanatory; if a resource module lacks these, treat as a gap and add them.
 
-**CRITICAL**: This phase must be completed before any implementation begins. Use the OpenAPI specification and live API data as canonical sources.
+## Phase 2: Expose on Client (optional)
 
-#### 0.1 Analyze OpenAPI Specification
-- [ ] **Review OpenAPI Spec**: Check `external_docs/openapi-swagger.json` for the resource
-- [ ] **Example Output**: Use live API responses as the canonical data structure
-- [ ] **Description**: Understand the resource's purpose and characteristics
-- [ ] **Service Name**: Note the related service name (e.g., `FindingService`)
-- [ ] **URL Endpoints**: Review all available endpoints and HTTP methods
-- [ ] **API Patterns**: Note any resource-specific patterns or requirements
+If the resource should be available via the resource-oriented Client (e.g. `client.project.list()`):
 
-#### 0.2 Validate Against Base Class Architecture
-- [ ] **Universal Attributes**: Ensure all universal fields are present in live data
-- [ ] **Conditional Attributes**: Identify which conditional attributes are used
-- [ ] **Base Class Compatibility**: Verify the resource can inherit from BaseResource
-- [ ] **API Pattern Support**: Confirm advanced patterns (filtering, masking, pagination) are supported
+- [ ] Add one entry to the resource registry (e.g. `RESOURCE_REGISTRY` in `registry.py`): attr_name, model_class, list_fn, get_fn, create_fn, update_fn (or None), delete_fn (or None). See [registry.py](../../src/endorlabs/registry.py) and [architecture.md](architecture.md).
+- [ ] Do not hand-wire the resource in `Client.__init__`; the registry drives which facades are attached.
 
-#### 0.3 Create Implementation Matrix
-Document the complete mapping between OpenAPI spec and live data:
-- [ ] **Universal fields**: All universal attributes present and correct
-- [ ] **Conditional fields**: Which conditional attributes are used
-- [ ] **Resource-specific fields**: Fields unique to this resource type
-- [ ] **API operations**: Which CRUD operations are supported
-- [ ] **Advanced patterns**: Which advanced API patterns are supported
+No full code templates here; follow existing resource modules and [resource-patterns.mdc](../../.cursor/rules/resource-patterns.mdc).
 
-## Implementation Patterns
+## Phase 2b: Tests (canonical order)
 
-### 1. Basic Resource Structure
+Each resource test file follows the same order where the registry supports the operation:
 
-#### **Pydantic Models**
-```python
-class {Resource}Meta(BaseModel):
-    """Metadata for {Resource}."""
-    name: str
-    description: Optional[str] = None
-    create_time: Optional[str] = None
-    update_time: Optional[str] = None
-    upsert_time: Optional[str] = None
-    tags: Optional[List[str]] = None
+1. **LIST** — From tenant root (`root_namespace`) with `traverse=True`, limited pages. Assert result is a list.
+2. **GET** — If LIST returned items, GET the first item (pass resource object so namespace is derived; avoids 404 after traverse). If LIST was empty, skip with "No resources in scope (empty; may be filter/auth/scope)".
+3. **Create** — For resources with `create_fn`: create one, capture UUID for teardown.
+4. **Update** — For resources with `update_fn` not None: update the resource created in (3).
+5. **Delete** — For resources with `delete_fn`: delete the resource created in (3) for cleanup.
 
-class {Resource}Spec(BaseModel):
-    """Specification for {Resource}."""
-    # Add fields based on live data analysis
-    # Use Optional for API variations
-    # Use Union types for flexible fields
+**Fixtures:** Use conftest `api_client`, `namespace`, `root_namespace`. For resources with `update_fn is None` (api_keys, audit_logs, finding_logs, dependency_metadata, linter_results), add a test that asserts `client.<attr>.update(...)` raises `NotImplementedError`.
 
-class {Resource}(BaseModel):
-    """An Endor Labs {resource} entity."""
-    meta: {Resource}Meta
-    spec: {Resource}Spec
-    tenant_meta: TenantMeta
-    uuid: str
-    
-    @field_validator('*', mode='before')
-    @classmethod
-    def detect_schema_drift(cls, v, info):
-        """Detect and log schema drift for unknown fields."""
-        # Schema drift detection implementation
-        return v
-```
+**Checklist after changes:** Every registry entry has a test file; List/Get Y for all; Update N tests for api_keys, audit_logs, finding_logs, dependency_metadata, linter_results; `pytest tests/test_openapi_spec.py -v` passes when spec is present.
 
-#### **CRUD Operations**
-```python
-def list_{resource}s(client: APIClient, tenant_meta_namespace: str) -> List[{Resource}]:
-    """List all {resource}s in the specified namespace."""
-    try:
-        headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/{resource}s", headers=headers)
-        data = res.json()
-        objects = data.get("list", {}).get("objects", [])
-        return [{Resource}(**item) for item in objects]
-    except Exception as e:
-        logger.error(f"Error listing {resource}s: {e}", exc_info=True)
-        return []
-
-def get_{resource}(client: APIClient, tenant_meta_namespace: str, {resource}_uuid: str) -> Optional[{Resource}]:
-    """Get a specific {resource} by UUID."""
-    try:
-        headers = client.default_headers
-        res = client.get(f"v1/namespaces/{tenant_meta_namespace}/{resource}s/{resource}_uuid", headers=headers)
-        data = res.json()
-        return {Resource}(**data)
-    except Exception as e:
-        logger.error(f"Error getting {resource} {resource}_uuid}: {e}", exc_info=True)
-        return None
-```
-
-### 2. Advanced Resource Patterns
-
-#### **Schema Drift Detection**
-```python
-class {Resource}(BaseModel):
-    meta: {Resource}Meta
-    spec: {Resource}Spec
-    tenant_meta: TenantMeta
-    uuid: str
-    
-    @field_validator('*', mode='before')
-    @classmethod
-    def detect_schema_drift(cls, v, info):
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name and isinstance(v, dict):
-            model_fields = {
-                'meta': {'create_time', 'update_time', 'name', 'description', ...},
-                'spec': {'project_uuid', 'level', 'method', 'ecosystem', ...},
-                'context': {'id', 'type', 'scan_uuid', 'tags', ...}
-            }
-            
-            if info.field_name in model_fields:
-                SchemaDriftDetector.extract_unknown_fields(
-                    v, model_fields[info.field_name], f"{Resource}.{info.field_name}"
-                )
-        return v
-```
-
-#### **Flexible Enum Implementation**
-```python
-class FlexibleEnum(str, Enum):
-    """Base class for flexible enums that can handle unknown values."""
-    
-    @classmethod
-    def _missing_(cls, value):
-        """Handle unknown enum values gracefully."""
-        logger.warning(f"Unknown {cls.__name__} value: {value}. Adding as dynamic enum.")
-        obj = str.__new__(cls, value)
-        obj._name_ = value
-        obj._value_ = value
-        return obj
-
-class FindingLevel(FlexibleEnum):
-    CRITICAL = "FINDING_LEVEL_CRITICAL"
-    HIGH = "FINDING_LEVEL_HIGH"
-    # Handles unknown values gracefully
-```
-
-#### **Type Flexibility for API Variations**
-```python
-class FindingSpec(BaseModel):
-    finding_categories: Optional[List[str]] = None
-    location_urls: Optional[Union[List[str], dict]] = None  # Can be list or empty object
-    references: Optional[Union[List[dict], dict]] = None    # Can be list or empty object
-```
-
-### 3. PATCH Operations with Update Mask
-
-#### **Update Operations**
-```python
-def update_{resource}(client: APIClient, tenant_meta_namespace: str, {resource}_uuid: str, payload: Update{Resource}Payload, update_mask: Optional[str] = None) -> Optional[{Resource}]:
-    """Update an existing {resource}."""
-    try:
-        headers = client.default_headers
-        headers.update({"Accept": "application/json", "Content-Type": "application/json"})
-        
-        request_data = {
-            "object": {
-                "uuid": {resource}_uuid,
-                "tenant_meta": {"namespace": tenant_meta_namespace},
-                **payload.model_dump(exclude_unset=True)
-            }
-        }
-        if update_mask:
-            request_data["request"] = {"update_mask": update_mask}
-        
-        res = client.patch(f"v1/namespaces/{tenant_meta_namespace}/{resource}s", headers=headers, data=request_data)
-        data = res.json()
-        return {Resource}(**data)
-    except Exception as e:
-        logger.error(f"Error updating {resource} {resource}_uuid}: {e}", exc_info=True)
-        return None
-```
-
-## Success Criteria
-
-- ✅ **POST operation implemented** (Universal - 97.1% coverage)
-- ⚠️ **GET_LIST operation implemented** (Conditional - 82.9% coverage)
-- ⚠️ **GET_BY_UUID operation implemented** (Conditional - 81.4% coverage)
-- ⚠️ **DELETE operation implemented** (Conditional - 77.1% coverage)
-- ❌ **PATCH operations NOT implemented** (Does not exist - 0% coverage, use POST upsert)
-- ✅ **POST upsert pattern for updates** (Correct update approach)
-- ✅ **Operation availability checking** (Conditional implementation)
-- ✅ **Comprehensive tests written**
-- ✅ **Documentation complete**
-- ✅ **Schema drift detection configured**
-- ✅ **Error handling graceful**
-- ✅ **Follows project.py patterns**
-
----
-
-*These rules ensure consistent, high-quality resource implementation across the Endor Cockpit SDK.*

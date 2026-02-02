@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/advanced-use-cases/saved-queries/
 title: Using saved queries | Endor Labs Docs
-downloaded: 2025-12-11 11:32:32
+downloaded: 2026-01-29 22:21:42
 ---
 
 Using saved queries | Endor Labs Docs
@@ -9,7 +9,6 @@ Using saved queries | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/advanced-use-cases/saved-queries/_print.html)
 

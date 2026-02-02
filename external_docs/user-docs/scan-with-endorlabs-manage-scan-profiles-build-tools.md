@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/build-tools/
 title: Configure build tools | Endor Labs Docs
-downloaded: 2025-12-11 11:31:08
+downloaded: 2026-01-29 22:20:24
 ---
 
 Configure build tools | Endor Labs Docs
@@ -9,7 +9,6 @@ Configure build tools | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/manage-scan-profiles/build-tools/_print.html)
 
@@ -21,7 +20,7 @@ Learn about build tools to build repeatable patterns in your scan environment.
 
 Endor Labs uses build tools to scan projects, generate reliable Software Bill of Materials (SBOM), and detect security or operational risks. For languages like Java, Python, and .NET that depend on the build environment, it relies on specific runtime or package manager versions to ensure precise results. When tools are missing, you can define and install them in the CLI, and Endor Labs sets them up in an isolated sandbox during the scan. This feature is supported on Linux and macOS.
 
-You need to [install and initialize](../../../endorctl/install-and-configure/) endorctl, before configuring the build toolchains in a scan profile.
+You need to [install and initialize](../../../endorctl/install-and-configure/) endorctl before configuring the build toolchains in a scan profile.
 
 ## Toolchain priority in GitHub App scans
 
@@ -32,12 +31,12 @@ For performing scans, the GitHub App checks the toolchain specifications in the 
 1. Scan workflow, if present.
 2. Toolchain configuration specified through endorctl API.
 3. Toolchain configuration specified in `scanprofile.yaml` file.
-4. Uses the system defaults.
-5. Enable auto detection and automatically detect the toolchains from your manifest files.
+4. Enable auto detection to automatically detect the toolchains from your manifest files.
+5. Uses the system defaults.
 
 ## Configure build tools for endorctl scans
 
-After [installing and initializing](../../../endorctl/install-and-configure/) the endorctl, run the endorctl scan with the `--install-build-tools` flag to automatically download and install any missing toolchains in an isolated sandbox to properly execute language-specific scans and dependency resolution.
+After [installing and initializing](../../../endorctl/install-and-configure/) endorctl, run the endorctl scan with the `--install-build-tools` flag to automatically download and install any missing toolchains in an isolated sandbox to properly execute language-specific scans and dependency resolution.
 
 1. For the first time, run the endorctl scan to create a project with Endor Labs.
 
@@ -54,8 +53,8 @@ After [installing and initializing](../../../endorctl/install-and-configure/) th
    * [Configure scan workflow through endorctl API](../configure-scan-workflow-through-api/)
    * [Configure toolchain profile through endorctl API](../configure-scanprofile-api/)
    * [Configure toolchain profile in the profile.yaml file](../configure-scanprofile-yaml/)
-   * [Uses the system defaults](#system-default-toolchain-versions)
    * [Automatically detect toolchain profiles](../auto-detect-toolchains/)
+   * [Uses the system defaults](#system-default-toolchain-versions)
 
 ## System default toolchain versions
 
@@ -71,15 +70,15 @@ The following table outlines the toolchain profile support details across differ
 | **Maven** | Supported | Supported | Maven 3.8.8, 3.9.4, 3.9.5, 3.9.6, 3.9.7, 3.9.8, 3.9.9, 3.9.10, 3.9.11 | Maven 3.9.4 | Linux, Darwin |
 | **Gradle** | Supported | Supported | Gradle 6.9.4, 7.6.4, 8.4, 9.0.0 | Gradle 8.4 | Linux, Darwin |
 | **Python** | Supported | Supported | Python 3.8, 3.9, 3.10, 3.11, 3.12, 3.13 | Python 3.10 | Linux, Darwin |
-| **NodeJS** | Supported | Supported | Node.js 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8 | Node.js 20.10.0 | Linux, Darwin |
+| **NodeJS** | Supported | Supported | Node.js 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8, 24.12, 25.4 | Node.js 20.10.0 | Linux, Darwin |
 | **Yarn** | Supported | Supported | Yarn 1.22, 2, 3, 4 | Yarn 1.22.19 | Linux, Darwin |
 | **pnpm** | Supported | Supported | pnpm 6.35, 7.33, 8.15, 9.15, 10.14, 10.15.0, 10.15.1, 10.16.0, 10.16.1 | pnpm 8.10.2 | Linux, Darwin |
-| **Golang** | Supported | Supported | Golang 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19, 1.20, 1.21, 1.22, 1.24 | Golang 1.24.6 | Linux, Darwin |
-| **.NET** | Supported | Supported | .NET 6, 7, 8, 9 | .NET 7.0.401 | Linux, Darwin |
-| **Scala** | Supported | Supported | Scala 1.10.0, 1.11.0 | Scala 1.9.0 | Linux, Darwin |
+| **Golang** | Supported | Supported | Golang 1.12, 1.13, 1.14, 1.15, 1.16, 1.17, 1.18, 1.19, 1.20, 1.21, 1.22, 1.24, 1.25 | Golang 1.24.6 | Linux, Darwin |
+| **.NET** | Supported | Supported | .NET 6, 7, 8, 9, 10 | .NET 7.0.401 | Linux, Darwin |
+| **Scala** | Supported | Supported | Scala 1.10.0, 1.11.0, 1.12.0 | Scala 1.9.0 | Linux, Darwin |
 | **Rust** | Supported | Supported | Rust 1.89.0 | Rust 1.89.0 | Linux, Darwin |
 | **Kotlin** | Supported | Supported |  | Java 17 | Linux, Darwin |
-| **Typescript** | Supported | Supported | 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8 | Node.js 20.10.0 | Linux, Darwin |
+| **Typescript** | Supported | Supported | 16.20, 18.20, 20.19, 22.18, 24.6, 24.7, 24.8, 24.12 | Node.js 20.10.0 | Linux, Darwin |
 | **Android** | Supported | Supported |  | platform-tools | Linux, Darwin |
 | **PHP** | Supported | Supported |  | 8.2 | Linux |
 | **Ruby** | Supported | Supported | Ruby 3.2.9, 3.3.9, 3.4.5 | Ruby 3.2.9 | Linux |
@@ -99,9 +98,9 @@ Automated scan parameters are endorctl parameters and environment variables that
 You can define the following parameters in your scan profile:
 
 * **included\_paths**: Enable to specify a list of paths to include in the scan.
-* **excluded\_paths**: Enable to specify a list of path to exclude from the scan.
+* **excluded\_paths**: Enable to specify a list of paths to exclude from the scan. Excluded paths do not apply to secrets scanning. Secrets detection always scans the full repository. To filter or suppress secret findings, use policies or a `.gitleaksignore` file instead.
 * **languages**: Enable to specify a list of languages to scan. If empty, default values are used.
-* **call\_graph\_languages**: Enable to specify a list of language to use for generating call graphs. If empty, default values are used.
+* **call\_graph\_languages**: Enable to specify a list of languages to use for generating call graphs. If empty, default values are used.
 * **additional\_environment\_variables**: Enable to specify additional environment variables to set during the scan. Only the environment variables starting with `ENDOR_` are passed to the scan, all others are ignored. See [Global flags and environment variables](../../../endorctl/environment-variables/) for a complete list of available environment variables.
 * **enable\_automated\_pr\_scans**: Enables automatic scanning of pull request changes.
 * **enable\_pr\_comments**: Enables adding scan results as comments in pull requests.

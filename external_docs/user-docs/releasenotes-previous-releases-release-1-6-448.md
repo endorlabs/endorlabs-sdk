@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/release-1-6-448/
 title: August 2024 | Endor Labs Docs
-downloaded: 2025-12-11 11:35:37
+downloaded: 2026-01-29 22:24:08
 ---
 
 August 2024 | Endor Labs Docs
@@ -9,7 +9,6 @@ August 2024 | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/releasenotes/previous-releases/release-1-6-448/_print.html)
 

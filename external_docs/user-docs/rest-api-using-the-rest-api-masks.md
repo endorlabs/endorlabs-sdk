@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/masks/
 title: Masks | Endor Labs Docs
-downloaded: 2025-12-11 11:33:55
+downloaded: 2026-01-29 22:22:39
 ---
 
 Masks | Endor Labs Docs
@@ -9,7 +9,6 @@ Masks | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/masks/_print.html)
 
@@ -67,7 +66,7 @@ endorctl api list --resource Finding \
 ```
 curl --get \
   --header "Authorization: Bearer $ENDOR_TOKEN" \
-  --url "https://api.endorlabs.com/v1/namespaces/$ENDOR_NAMESPACE/findings?list_parameters.mask=meta.description,spec.level"
+  --url "https://api.endorlabs.com/v1/namespaces/$ENDOR_NAMESPACE/findings?list_parameters.mask=meta.description,spec.level" \
   | jq '.list.objects[].meta.description'
 ```
 

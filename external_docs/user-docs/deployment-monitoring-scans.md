@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/
 title: Monitoring or supervisory scans | Endor Labs Docs
-downloaded: 2025-12-11 11:30:49
+downloaded: 2026-01-29 22:20:06
 ---
 
 Monitoring or supervisory scans | Endor Labs Docs
@@ -9,7 +9,6 @@ Monitoring or supervisory scans | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/_print.html)
 
@@ -51,6 +50,31 @@ Endor Labs monitoring scans are available for the following source code manageme
 * **Bitbucket Cloud**: You can use the Endor Labs Bitbucket App to scan your Bitbucket Cloud. It provides broad visibility over your Bitbucket Cloud projects. Once installed, the Bitbucket App will automatically clone and scan all projects every 24 hours, providing continuous monitoring for open source vulnerabilities. These repositories are temporarily cloned and retained only during the scan. See [Deploy Endor Labs Bitbucket App for Bitbucket Cloud](../monitoring-scans/bitbucket-cloud/) for more information.
 * **Local monitoring scan**: Perform periodic scans in your local environment. You must provide the necessary computing resources to run the scans. These scans can support any type of Git repository. See [Set up Jenkins pipeline for supervisory scans](../monitoring-scans/jenkins-supervisory-scan/).
 
+You can use the following wizard to get a tailored plan for setting up monitoring scans for your SCM platform.
+
+### SCM Monitoring Scans Setup Wizard
+
+Pick your SCM and scan options. We'll generate a tailored checklist and links.
+
+1 SCM
+2 Environment
+3 Options
+4 Plan
+
+Choose your SCM platform
+
+Where should monitoring scans run?
+
+Select scan options
+
+Your tailored plan
+
+Reset
+Copy plan
+
+Back
+Next
+
 ## Support Matrix for monitoring scans
 
 Endor Labs features available depends upon the type of scan and the SCM.
@@ -60,7 +84,6 @@ The following table lists the scan capabilities available for different types of
 | Feature | GitHub Cloud | GitHub Enterprise Server | Azure DevOps Cloud | GitLab Cloud | GitLab Self-Managed | Bitbucket Data Center | Bitbucket Cloud |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [Reachability Analysis](../../introduction/reachability-analysis/) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| CI/CD Tools | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Secrets Scan](../../secrets-leak-detection/) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [SAST](../../sast-scans-with-endorlabs/) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [RSPM](../../scan-with-endorlabs/scm-configuration-management/) | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |

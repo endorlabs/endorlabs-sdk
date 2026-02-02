@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/september-2025/
 title: September 2025 | Endor Labs Docs
-downloaded: 2025-12-11 11:33:37
+downloaded: 2026-01-29 22:22:48
 ---
 
 September 2025 | Endor Labs Docs
@@ -9,7 +9,6 @@ September 2025 | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/releasenotes/september-2025/_print.html)
 
@@ -34,8 +33,6 @@ The old `endorctl scan --container` commands and their corresponding flags (`--c
 ### Opengrep support for SAST and AI model detection New
 
 Endor Labs now uses [Opengrep](https://www.opengrep.dev/) to scan your code for SAST and AI model findings instead of Semgrep. Opengrep is an open-source, static analysis tool that finds bugs and vulnerabilities in the source code using pattern matching. Endor Labs automatically downloads Opengrep for you when you run a scan that needs it.
-
-You can continue using Semgrep with Endor Labs if you prefer. See [Use Semgrep with Endor Labs](../../administration/use-semgrep-with-endorlabs/) for more information.
 
 ### Customize project scans using scan workflow New
 
@@ -74,7 +71,7 @@ For more information, see [Scan Swift projects](../../scan-with-endorlabs/langua
 
 Endor Labs now supports filtering findings exported to GitHub Advanced Security through action policies. Findings are exported only from projects covered by configured action policies.
 
-For more information, see [Export findings to GitHub Advanced Security](../../deployment/monitoring-scans/github-app/github-app-pro/export-findings-to-ghas/#filter-findings-exported-to-github).
+For more information, see [Export findings to GitHub Advanced Security](../../scan-with-endorlabs/data-exporters/export-to-ghas/#filter-findings-exported-to-github).
 
 ### Top 10 secret rules by severity Enhancement
 

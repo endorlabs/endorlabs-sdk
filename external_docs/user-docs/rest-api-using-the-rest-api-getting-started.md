@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/getting-started/
 title: Getting started | Endor Labs Docs
-downloaded: 2025-12-11 11:31:24
+downloaded: 2026-01-29 22:20:40
 ---
 
 Getting started | Endor Labs Docs
@@ -9,7 +9,6 @@ Getting started | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/getting-started/_print.html)
 
@@ -140,7 +139,9 @@ The following example retrieves all findings for reachable functions. For more e
    Install the Endor Labs CLI on macOS, Windows, or Linux. For more information, see [Install Endor Labs on your local system](../../../getting-started/quickstart).
 2. **Authenticate**
 
-   Authenticate with Endor Labs using `endorctl init`. For more information, see [endorctl init](../../../endorctl/commands/init).
+   Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+   You can also specify your supported authentication provider manually.
 
    `endorctl init --auth-mode google`
 3. **Make a request**
@@ -158,7 +159,9 @@ The following example retrieves all findings for reachable functions. For more e
    2. Install the Endor Labs CLI on macOS, Windows, or Linux. For more information, see [Install Endor Labs on your local system](../../../getting-started/quickstart).
 2. **Authenticate**
 
-   1. Authenticate with Endor Labs using `endorctl init`. For more information, see [endorctl init](../../../endorctl/commands/init).
+   1. Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+      You can also specify your supported authentication provider manually.
 
       `endorctl init --auth-mode google`
    2. Store the Endor Labs access token
@@ -225,7 +228,9 @@ The following example retrieves all findings for reachable functions. For more e
    Install the Endor Labs CLI on macOS, Windows, or Linux. For more information, see [Install Endor Labs on your local system](../../../getting-started/quickstart).
 2. **Authenticate**
 
-   1. Authenticate with Endor Labs using `endorctl init`. For more information, see [endorctl init](../../../endorctl/commands/init).
+   1. Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+      You can also specify your supported authentication provider manually.
 
       `endorctl init --auth-mode google`
    2. Store the Endor Labs access token

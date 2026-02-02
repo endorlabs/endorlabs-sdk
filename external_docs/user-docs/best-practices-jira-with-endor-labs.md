@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/jira-with-endor-labs/
 title: Best Practices: Jira integration with Endor Labs | Endor Labs Docs
-downloaded: 2025-12-11 11:33:44
+downloaded: 2026-01-29 22:22:29
 ---
 
 Best Practices: Jira integration with Endor Labs | Endor Labs Docs
@@ -9,7 +9,6 @@ Best Practices: Jira integration with Endor Labs | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/best-practices/jira-with-endor-labs/_print.html)
 
@@ -33,13 +32,14 @@ A **finding** is a security vulnerability in your source code. When Endor Labs s
 
 Endor Labs automatically creates a Jira ticket to track and address the issue when a finding is identified. The ticket includes the project URL, branch, details about findings such as:
 
-* Finding: A link to the identified vulnerability.
+* Severity: Severity of the finding
+* Location: Exact file, package, dependency, and repository where the vulnerability is identified.
 * Explanation: A brief description of the issue.
 * Summary: Technical details about the vulnerability, versions affected, and packages impacted.
 * Remediation: Recommended actions, such as upgrading to a secure version.
-* Location: Exact file, package, dependency, and repository where the vulnerability is identified.
+* Finding: A link to the identified vulnerability.
 
-![Findings in Jira](../../images/jira-findings-columns.png)
+![Findings in Jira](../../images/Jiraticket.png)
 
 You can assign the ticket to an individual for remediation. Based on the selected issue type and the aggregation type, it can be one of the following:
 
@@ -84,7 +84,7 @@ This approach ensures:
 * Focused issue resolution without overwhelming teams.
 * Granular visibility into security risks for targeted management.
 
-![Dependency Aggregation](../../images/dependency-aggregationn-example.png)
+![Dependency Aggregation](../../images/dependency-aggregation-example.png)
 
 #### Dependency per package version
 
@@ -102,6 +102,20 @@ This approach helps the teams:
 * Maintain stability in machine learning workflows while managing vulnerabilities effectively.
 
 ![Dependency Per Package Version Aggregation](../../images/dependency-per-package-version-example.png)
+
+#### None (Notify for each Finding)
+
+Use this to receive a separate notification for every finding and create an individual Jira ticket for each finding. This approach provides granular tracking, allowing teams to monitor and remediate each issue independently. This aggregation type is supported only for [SAST](../../managing-policies/action-policies/templates/#sast) and [Secrets](../../managing-policies/action-policies/templates/#secrets) action policies.
+
+For example, when the `app-java-demo` project is scanned with a SAST action policy configured, Endor Labs creates a separate Jira **Task** ticket for each finding detected in the project.
+
+This approach helps the teams:
+
+* Track the remediation status of each vulnerability individually.
+* Assign findings to different team members for parallel resolution.
+* Enable clear audit and compliance reporting with one-to-one mapping between findings and tickets.
+
+![No Aggregation](../../images/no-aggregation.png)
 
 **Note**
 
@@ -127,9 +141,9 @@ In the following example, the ticket titled “Findings with no dependencies” 
 
 `endorlabs-scan`: Identifies that the ticket was created as part of an Endor Labs scan.
 
-`endor-severity:medium`: Represents the severity of the detected finding.
+`endor-severity:high`: Represents the severity of the detected finding.
 
-![Example of Jira label ](../../images/jira-labels.png)
+![Example of Jira label ](../../images/project-aggregation.png)
 
 ### Comments
 
@@ -149,7 +163,7 @@ Endor Labs automatically sets the **Components** field using values from your Ji
 * For a [team-managed Jira project](https://support.atlassian.com/jira-software-cloud/docs/what-are-team-managed-and-company-managed-projects/#Team-managed-projects), Endor Labs applies the configured component value to each ticket it creates.
 
   In the following example, `Test DEPR Component` is the assigned components value.
-  ![Team managed project components](../../images/team-mananged-components.png)
+  ![Team managed project components](../../images/team-managed-components.png)
 * For a [company-managed Jira project](https://support.atlassian.com/jira-software-cloud/docs/what-are-team-managed-and-company-managed-projects/#Company-managed-projects), Endor Labs applies all configured component values to each ticket it creates.
 
   In the following example, `Test DEPR Component` and `Test UI Component` are the assigned components values.
@@ -198,6 +212,27 @@ Jira updates the grouping of findings in the board based on changes to the actio
 * When changing from **Project** to **Dependency**, findings are split into separate **Sub-tasks** based on the dependency type.
 * When changing from **Project** to **Dependency per package version**, findings are split into **Sub-tasks** based on the package version.
 * When changing from **Dependency** or **Dependency per package version** to **Project**, all findings are consolidated into a single Jira ticket.
+
+
+
+
+When are Jira tickets automatically resolved?
+
+Jira tickets are resolved automatically when findings are deleted or fixed, or when the policy that created the tickets is deleted. After the next scan, if the findings no longer exist, the tickets are resolved.
+
+
+
+
+Do Jira tickets resolve when action policies change?
+
+No. Changing an action policy after it has created Jira tickets does not resolve existing Jira tickets. Any tickets created under the previous policy will remain open, even if the findings no longer align with the updated policy.
+
+
+
+
+What happens if I create an exception policy after an action policy has created Jira tickets?
+
+Creating an exception policy suppresses the findings, which means they no longer trigger action policies. However, any Jira tickets that were created for those findings remain open.
 
 ## Feedback
 

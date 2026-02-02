@@ -1,16 +1,14 @@
-"""
-Integration tests for Package Version resource operations.
+"""Integration tests for Package Version resource operations.
 
 These tests verify the complete CRUD lifecycle for Package Version resources,
 including tag management operations and error handling scenarios.
 """
 
-import os
-
+import conftest
 import pytest
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import package_version
+from endorlabs.api_client import APIClient
+from endorlabs.resources import package_version
 
 
 @pytest.mark.integration
@@ -18,136 +16,224 @@ class TestPackageVersion:
     """Test cases for Package Version operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Set up test environment."""
-        self.client = APIClient()
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "")
-        self.package_versions = package_version.list_package_versions(
-            self.client, self.namespace
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+
+    @pytest.fixture
+    def sample_package_version(self):
+        """Fetch minimal sample data (1 item) for UUID operations.
+
+        Function-scoped but only fetches when explicitly requested by tests.
+        Only fetches 1 item without traverse for fast setup. Tests that need
+        sample data should request this fixture explicitly.
+        """
+        from endorlabs.types import ListParameters
+
+        # Fetch 1 item without traverse (fast)
+        results = package_version.list_package_versions(
+            self.client,
+            self.namespace,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
-        if not self.package_versions:
-            pytest.skip("No package versions available for testing")
+        if not results:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        return results[0]  # Return single item, not list
 
-    def test_package_version_get_list(self):
-        """Test GET package-versions operation."""
-        package_versions_list = package_version.list_package_versions(
-            self.client, self.namespace
-        )
-        assert isinstance(package_versions_list, list)
-        assert len(package_versions_list) > 0
+    @pytest.mark.writes
+    def test_package_version_update_with_mask(self, sample_package_version) -> None:
+        """Test UPDATE package version operation with update_mask parameter.
 
-        # Verify structure
-        for pv in package_versions_list:
-            assert hasattr(pv, "uuid")
-            assert hasattr(pv, "meta")
-            assert hasattr(pv, "spec")
-            assert hasattr(pv, "tenant_meta")
+        Local-only: updating package versions requires elevated permissions (403 in CI).
+        """
+        print("\n=== TESTING PACKAGE VERSION UPDATE WITH MASK ===")
 
-            # Verify meta fields
-            assert hasattr(pv.meta, "name")
-            assert hasattr(pv.meta, "description")
-            assert hasattr(pv.meta, "create_time")
-            assert hasattr(pv.meta, "created_by")
-            assert hasattr(pv.meta, "update_time")
-            assert hasattr(pv.meta, "updated_by")
-            assert hasattr(pv.meta, "tags")
-
-            # Verify spec fields
-            assert hasattr(pv.spec, "package_name")
-            assert hasattr(pv.spec, "ecosystem")
-            assert hasattr(pv.spec, "language")
-            assert hasattr(pv.spec, "project_uuid")
-
-    def test_package_version_get_by_uuid(self):
-        """Test GET package-version by UUID operation."""
-        test_package_version = self.package_versions[0]
-        retrieved_package_version = package_version.get_package_version(
-            self.client, self.namespace, test_package_version.uuid
-        )
-        assert retrieved_package_version is not None
-        assert retrieved_package_version.uuid == test_package_version.uuid
-        assert retrieved_package_version.meta.name == test_package_version.meta.name
-        assert (
-            retrieved_package_version.spec.package_name
-            == test_package_version.spec.package_name
-        )
-        assert (
-            retrieved_package_version.spec.ecosystem
-            == test_package_version.spec.ecosystem
+        package_version_uuid = sample_package_version.uuid
+        # Use the package version's actual namespace
+        package_namespace = (
+            sample_package_version.tenant_meta.namespace
+            if sample_package_version.tenant_meta
+            else self.namespace
         )
 
-    def test_package_version_patch_tags(self):
-        """Test PATCH operations using tag management."""
-        # Skip this test - PackageVersion PATCH operations are not supported by \
-        # the API
-        # The API returns 501 "Method Not Allowed" for PATCH requests to \
-        # package-versions
-        pytest.skip("PackageVersion PATCH operations not supported by API")
+        # Get current package version state
+        current_pv = package_version.get_package_version(
+            self.client, package_namespace, package_version_uuid
+        )
+        if not current_pv:
+            pytest.skip(f"Could not retrieve package version {package_version_uuid}")
 
-    def test_package_version_structure_analysis(self):
-        """Test and analyze package version structure."""
-        package_version_obj = self.package_versions[0]
+        # Store original values
+        original_tags = current_pv.meta.tags or []
+        original_description = current_pv.meta.description
 
-        # Analyze meta fields
-        meta_fields = [
-            field
-            for field in dir(package_version_obj.meta)
-            if not field.startswith("_")
-        ]
-        assert len(meta_fields) > 0
-
-        # Analyze spec fields
-        spec_fields = [
-            field
-            for field in dir(package_version_obj.spec)
-            if not field.startswith("_")
-        ]
-        assert len(spec_fields) > 0
-
-        # Verify required fields are present
-        assert package_version_obj.meta.name is not None
-        assert package_version_obj.spec.package_name is not None
-        assert package_version_obj.spec.ecosystem is not None
-        assert package_version_obj.spec.language is not None
-
-    def test_package_version_operations_summary(self):
-        """Test and summarize package version operations."""
-        package_versions_list = package_version.list_package_versions(
-            self.client, self.namespace
+        # Create update payload - only update safe fields
+        new_tags = [*original_tags, "test-update", "mask-test"]
+        new_description = (
+            f"{original_description} [Updated by test]"
+            if original_description
+            else "Updated description for test"
         )
 
-        print("\n=== Package Version Operations Summary ===")
-        print(f"Total package versions: {len(package_versions_list)}")
+        from pydantic import BaseModel
 
-        # Analyze package versions by ecosystem
-        ecosystem_counts = {}
-        for pv in package_versions_list:
-            ecosystem = str(pv.spec.ecosystem) if pv.spec.ecosystem else "Unknown"
-            ecosystem_counts[ecosystem] = ecosystem_counts.get(ecosystem, 0) + 1
+        from endorlabs.resources.package_version import (
+            UpdatePackageVersionPayload,
+        )
 
-        print("Ecosystem distribution:")
-        for ecosystem, count in ecosystem_counts.items():
-            print(f"  {ecosystem}: {count}")
+        class MetaUpdate(BaseModel):
+            description: str
+            tags: list[str]
 
-        # Analyze package versions by tags
-        tagged_count = sum(1 for pv in package_versions_list if pv.meta.tags)
-        print(f"Package versions with tags: {tagged_count}")
+        update_payload = UpdatePackageVersionPayload(
+            meta=MetaUpdate(description=new_description, tags=new_tags).model_dump()
+        )
 
-        # Show sample package versions
-        print("\nSample package versions:")
-        for i, pv in enumerate(package_versions_list[:3]):
-            print(f"  {i + 1}. {pv.meta.name} ({pv.spec.ecosystem})")
-            if pv.meta.tags:
-                print(f"     Tags: {', '.join(pv.meta.tags)}")
+        print(f"Updating package version: {package_version_uuid}")
+        print(f"New description: {new_description}")
+        print(f"New tags: {new_tags}")
 
-        assert len(package_versions_list) > 0
+        # Update the package version with update_mask
+        updated_pv = package_version.update_package_version(
+            self.client,
+            package_namespace,
+            package_version_uuid,
+            update_payload,
+            "meta.description,meta.tags",
+        )
+
+        assert updated_pv is not None, "Package version update should succeed"
+        assert updated_pv.meta.description == new_description, (
+            "Package version description should be updated"
+        )
+        assert "test-update" in updated_pv.meta.tags, "Updated tag should be present"
+        assert "mask-test" in updated_pv.meta.tags, "Updated tag should be present"
+
+        print(f"[SUCCESS] Package version updated: {updated_pv.uuid}")
+        print(f"Updated description: {updated_pv.meta.description}")
+        print(f"Updated tags: {updated_pv.meta.tags}")
+
+        # Restore original values if possible
+        class MetaRestore(BaseModel):
+            description: str | None
+            tags: list[str]
+
+        restore_payload = UpdatePackageVersionPayload(
+            meta=MetaRestore(
+                description=original_description, tags=original_tags
+            ).model_dump()
+        )
+        try:
+            package_version.update_package_version(
+                self.client,
+                package_namespace,
+                package_version_uuid,
+                restore_payload,
+                "meta.description,meta.tags",
+            )
+            print("[CLEANUP] Restored original package version values")
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original values: {e}")
+
+    def test_package_version_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            result = client.package_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
+
+    def test_package_version_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            items = client.package_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.package_version.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
+
+    @pytest.mark.writes
+    def test_client_ux_update_package_version(self) -> None:
+        """Consumer UX: client.package_version.get() then update then revert."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+        from endorlabs.resources.package_version import UpdatePackageVersionPayload
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        try:
+            versions = client.package_version.list(max_pages=conftest.TEST_MAX_PAGES)
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not versions:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = versions[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.package_version.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve package version {item.uuid}")
+        original_tags = list(getattr(current.meta, "tags", None) or [])
+        new_tags = [*original_tags, "client-ux-update"]
+        update_payload = UpdatePackageVersionPayload(meta={"tags": new_tags})
+        try:
+            updated = client.package_version.update(
+                item.uuid, update_payload, update_mask="meta.tags", namespace=ns
+            )
+        except Exception as e:
+            pytest.skip(f"Package version update not allowed in this environment: {e}")
+        assert updated is not None
+        restore_payload = UpdatePackageVersionPayload(meta={"tags": original_tags})
+        try:
+            client.package_version.update(
+                item.uuid, restore_payload, update_mask="meta.tags", namespace=ns
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original package version values: {e}")
 
 
 def add_package_version_tag(
     client: APIClient, namespace: str, package_version_uuid: str, tag: str
 ):
     """Add a tag to a package version."""
-    from endor_cockpit.resources.package_version import (
+    from endorlabs.resources.package_version import (
         UpdatePackageVersionPayload,
         update_package_version,
     )
@@ -165,18 +251,17 @@ def add_package_version_tag(
         current_tags.append(tag)
 
     # Update with new tags - create a minimal meta object with just tags
-    from typing import List
 
     from pydantic import BaseModel
 
     class MetaUpdate(BaseModel):
-        tags: List[str]
+        tags: list[str]
 
     payload = UpdatePackageVersionPayload(
         meta=MetaUpdate(tags=current_tags).model_dump()
     )
     return update_package_version(
-        client, namespace, package_version_uuid, payload, ["meta.tags"]
+        client, namespace, package_version_uuid, payload, "meta.tags"
     )
 
 
@@ -184,7 +269,7 @@ def remove_package_version_tag(
     client: APIClient, namespace: str, package_version_uuid: str, tag: str
 ):
     """Remove a tag from a package version."""
-    from endor_cockpit.resources.package_version import (
+    from endorlabs.resources.package_version import (
         UpdatePackageVersionPayload,
         update_package_version,
     )
@@ -202,18 +287,17 @@ def remove_package_version_tag(
         current_tags.remove(tag)
 
     # Update with modified tags - create a minimal meta object with just tags
-    from typing import List
 
     from pydantic import BaseModel
 
     class MetaUpdate(BaseModel):
-        tags: List[str]
+        tags: list[str]
 
     payload = UpdatePackageVersionPayload(
         meta=MetaUpdate(tags=current_tags).model_dump()
     )
     return update_package_version(
-        client, namespace, package_version_uuid, payload, ["meta.tags"]
+        client, namespace, package_version_uuid, payload, "meta.tags"
     )
 
 

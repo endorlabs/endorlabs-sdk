@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/kotlin/
 title: Kotlin | Endor Labs Docs
-downloaded: 2025-12-11 11:31:54
+downloaded: 2026-01-29 22:21:05
 ---
 
 Kotlin | Endor Labs Docs
@@ -9,7 +9,6 @@ Kotlin | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/kotlin/_print.html)
 
@@ -39,12 +38,12 @@ Before you proceed to run a deep scan, ensure that your system meets the followi
 
 ## Software Prerequisites
 
-* Install JDK versions between 11 and 25.
+* Install JDK versions between 11 and 25.0.1.
   + For JDK 8, see [Scan projects on JDK version 8](#scan-the-projects-on-jdk-version-8).
 * Make sure your repository includes one or more files with `.kt` extension.
 * Install Maven version 3.6.1 and higher if your project uses Maven.
 * Install Gradle build system version 6.0.0 and higher, if your project uses Gradle.
-  + To support lower versions of Gradle, see [Scan projects on older Gradle versions](#scan-projects-on-gradle-versions-between-47-and-600).
+  + To support lower versions of Gradle, see [Scan projects on older Gradle versions](../java/#scan-projects-on-gradle-versions-between-47-and-600).
 * Your repository must include the appropriate build manifest file:
   + `pom.xml` for Maven projects.
   + `build.gradle` or `build.gradle.kts` for Gradle projects.
@@ -253,7 +252,7 @@ To access and review detailed results, sign in to the [Endor Labs user interface
 
 ### Scan the projects on JDK version 8
 
-While Endor Labs primarily supports JDK versions between 11-25, you can still scan projects on JDK 8 by following these steps:
+While Endor Labs primarily supports JDK versions between 11-25.0.1, you can still scan projects on JDK 8 by following these steps:
 
 1. Build your Java project on JDK 8.
 2. After successful build, switch your Java home to JDK 11 or higher versions.
@@ -301,7 +300,7 @@ Here are a few error scenarios that you can check for and attempt to resolve the
 * **Host system check failure errors**:
   + Java is not installed or not present in the PATH environment variable. Install Java and try again. See [Java documentation](https://www.oracle.com/java/technologies/downloads/) for more information.
   + For android applications, $ANDROID\_HOME must be specified as an environment variable.
-  + The installed version of Java is lower than the required version. Install JDK versions between 11-25 and try again.
+  + The installed version of Java is lower than the required version. Install JDK versions between 11-25.0.1 and try again.
   + Java is installed but Maven or Gradle is not installed. In such cases, the dependency resolution may not be complete.
 * **Unresolved dependency errors**:
   Maven is not installed properly or the system is unable to build root pom.xml. Run `mvn dependency:tree` in the root of the project and try again. In such cases, the dependency resolution may not be complete.

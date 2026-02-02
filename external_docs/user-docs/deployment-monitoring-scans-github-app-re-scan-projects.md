@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/re-scan-projects/
 title: Rescan projects | Endor Labs Docs
-downloaded: 2025-12-11 11:31:53
+downloaded: 2026-01-29 22:21:04
 ---
 
 Rescan projects | Endor Labs Docs
@@ -9,7 +9,6 @@ Rescan projects | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/github-app/re-scan-projects/_print.html)
 

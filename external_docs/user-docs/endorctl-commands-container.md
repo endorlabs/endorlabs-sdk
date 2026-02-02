@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/container/
 title: container | Endor Labs Docs
-downloaded: 2025-12-11 11:31:10
+downloaded: 2026-01-29 22:20:26
 ---
 
 container | Endor Labs Docs
@@ -9,7 +9,6 @@ container | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/container/_print.html)
 
@@ -35,7 +34,7 @@ Endor Labs supports the following methods of scanning container images:
 
 ### Scan container images in a Git repository
 
-Run the following command to scan a container image built in a specific repository. Specify the project path using the `--path` argument and the container image name using the `--container` argument. This associates the container with the Git repository and branch of the project.
+Run the following command to scan a container image built in a specific repository. Specify the project path using the `--path` argument and the container image name using the `--image` argument. This associates the container with the Git repository and branch of the project.
 
 ```
 endorctl container scan --image=<image_name:tag> --path=users/janedoe/endorlabs/npm/exampleproject
@@ -57,7 +56,7 @@ endorctl container scan --image=<image_name:tag> --path=users/janedoe/endorlabs/
 
 ### Scan container images as a standalone project
 
-Run the following command to scan a container image from a registry. Specify the project name using the `--project-name` argument, and the container image name and tag using the `--container` argument.
+Run the following command to scan a container image from a registry. Specify the project name using the `--project-name` argument, and the container image name and tag using the `--image` argument.
 
 ```
 endorctl container scan --image=<image_name:tag> --project-name=<endor_project_name>
@@ -72,7 +71,7 @@ endorctl container scan --image=<image_name:tag> --project-name=<endor_project_n
 You can tag findings with the corresponding container image name and tag. This lets you filter container-related findings in the user interface or through the API.
 
 ```
-endorctl container scan --project-name=<endor_project_name> --container=<image_name:tag>  -as-ref --finding-tags=<image_name:tag>
+endorctl container scan --project-name=<endor_project_name> --image=<image_name:tag>  -as-ref --finding-tags=<image_name:tag>
 ```
 
 **Important**

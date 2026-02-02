@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/secrets-leak-detection/scan-secrets/
 title: Scan for secrets | Endor Labs Docs
-downloaded: 2025-12-11 11:31:57
+downloaded: 2026-01-29 22:21:07
 ---
 
 Scan for secrets | Endor Labs Docs
@@ -9,7 +9,6 @@ Scan for secrets | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/secrets-leak-detection/scan-secrets/_print.html)
 
@@ -127,10 +126,7 @@ You must [install and initialize endorctl](../../endorctl/install-and-configure/
 
 **Note**
 
-```
-You can't push the `.git/hooks/` folder to the Git repository because it's only recognized locally on your system.
-To include the pre-commit code in the Git repository, save it in a different location, like a `hooks/` directory, and then copy it into `.git/hooks/`. This way, you can easily push the hook code to your Git repository.
-```
+You can’t push the `.git/hooks/` folder to the Git repository because it’s only recognized locally on your system. To include the pre-commit code in the Git repository, save it in a different location, like a `hooks/` directory, and then copy it into `.git/hooks/`. This way, you can easily push the hook code to your Git repository.
 
 4. You can set up this hook on other systems in your organization by creating a script and running it on each system.
 

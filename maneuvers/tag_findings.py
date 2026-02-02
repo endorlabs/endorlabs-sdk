@@ -11,7 +11,7 @@ Based on the OpenAPI schema and finding resource structure.
 Example:
 
 uv run python maneuvers/tag_findings.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "tenant.namespace" \
   --project-uuid "your-project-uuid" \
   --finding-categories "FINDING_CATEGORY_SECRETS" \
   --tag "false-positive" \
@@ -29,74 +29,21 @@ from typing import List, Optional
 # Add the src directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from endor_cockpit.api_client import APIClient
-from endor_cockpit.resources import finding, project
-from endor_cockpit.types import ListParameters
+from endorlabs.api_client import APIClient
+from endorlabs.resources import finding, project
+from endorlabs.types import ListParameters
+
+# Import common utilities
+sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+from common.project_lookup import find_project_by_repository_url
 
 # Configure logging to reduce verbosity
-logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-logging.getLogger('endor_cockpit').setLevel(logging.INFO)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-def find_project_by_repository_url(
-    client: APIClient,
-    namespace: str,
-    repository_url: str
-) -> Optional[str]:
-    """
-    Find project UUID by repository URL.
-    
-    Args:
-        client: Authenticated APIClient instance
-        namespace: Target namespace
-        repository_url: Repository URL to search for
-        
-    Returns:
-        Project UUID or None if not found
-    """
-    try:
-        # Try multiple filter approaches
-        # Handle both github.com and api.github.com formats
-        github_url = repository_url.replace("github.com", "api.github.com")
-        filter_attempts = [
-            f'spec.git.web_url=="{repository_url}"',
-            f'spec.git.web_url=="{repository_url}.git"',
-            f'spec.git.web_url=="{github_url}"',
-            f'spec.git.web_url=="{github_url}.git"',
-            f'meta.name=="{repository_url}"',
-            f'meta.name=="{repository_url}.git"',
-            f'spec.git.full_name=="{repository_url.split("/")[-1]}"',
-        ]
-
-        for filter_expr in filter_attempts:
-            logger.info(f"Trying filter: {filter_expr}")
-            list_params = ListParameters(filter=filter_expr)
-            projects = project.list_projects(client, namespace, list_params)
-
-            if projects:
-                project_obj = projects[0]
-                logger.info(f"Found project: {project_obj.meta.name} (UUID: {project_obj.uuid})")
-                return project_obj.uuid
-
-        # Fallback: search all projects
-        logger.info("No projects found with filters, searching all projects...")
-        all_projects = project.list_projects(client, namespace)
-        
-        for proj in all_projects:
-            if repository_url in str(proj.model_dump()).lower():
-                logger.info(f"Found matching project: {proj.meta.name} (UUID: {proj.uuid})")
-                return proj.uuid
-
-        logger.warning(f"No project found for repository: {repository_url}")
-        return None
-
-    except Exception as e:
-        logger.error(f"Error finding project: {e}")
-        return None
 
 
 def get_findings_by_criteria(
@@ -218,14 +165,14 @@ def main():
 Examples:
   # Tag all secrets findings in a project
   python maneuvers/tag_findings.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --finding-categories "FINDING_CATEGORY_SECRETS" \\
     --tag "false-positive"
 
   # Tag findings in a specific file
   python maneuvers/tag_findings.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --project-uuid "your-project-uuid" \\
     --finding-categories "FINDING_CATEGORY_SECRETS" \\
     --file-path "maneuvers/create_auth_policy.py" \\
@@ -233,7 +180,7 @@ Examples:
 
   # Find project by repository URL and tag findings
   python maneuvers/tag_findings.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "endor-solutions-tgowan" \\
     --repository-url "https://github.com/Endor-Solutions-Architecture/endor-cockpit" \\
     --finding-categories "FINDING_CATEGORY_SECRETS" \\
     --tag "false-positive"
@@ -370,3 +317,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
+

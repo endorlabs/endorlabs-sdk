@@ -16,7 +16,7 @@ Example:
 
 # Create JIRA notification target
 uv run python maneuvers/create_notification_targets.py \
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --tenant-namespace "tenant.namespace" \
   --name "Security JIRA Integration" \
   --description "JIRA integration for security findings" \
   --action-type "jira" \
@@ -30,7 +30,7 @@ uv run python maneuvers/create_notification_targets.py \
 
 # Create GitHub PR Remediation notification target
 uv run python maneuvers/create_notification_targets.py \
-  --tenant-namespace "endor-solutions-tgowan.cockpit" \
+  --tenant-namespace "tenant.namespace" \
   --name "GitHub PR Remediation" \
   --description "GitHub PR comments for security findings" \
   --action-type "github-pr" \
@@ -53,11 +53,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pydantic import BaseModel, Field
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Configure logging to reduce verbosity
-logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-logging.getLogger('endor_cockpit').setLevel(logging.INFO)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -396,7 +396,7 @@ def main():
 Examples:
   # Create JIRA notification target with Basic Authentication
   python create_notification_targets.py \\
-    --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Security JIRA Integration" \\
     --description "JIRA integration for security findings" \\
     --action-type "jira" \\
@@ -424,7 +424,7 @@ Examples:
 
   # Create GitHub PR Remediation notification target
   python create_notification_targets.py \\
-    --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "GitHub PR Remediation" \\
     --description "GitHub PR comments for security findings" \\
     --action-type "github-pr" \\
@@ -432,7 +432,7 @@ Examples:
 
   # Force overwrite existing notification target
   python create_notification_targets.py \\
-    --tenant-namespace "endor-solutions-tgowan.cockpit" \\
+    --tenant-namespace "tenant.namespace" \\
     --name "Updated JIRA Integration" \\
     --description "Updated JIRA integration with force flag" \\
     --action-type "jira" \\
@@ -736,3 +736,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
+

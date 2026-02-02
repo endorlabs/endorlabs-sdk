@@ -1,129 +1,35 @@
 # Troubleshooting Rules of Engagement
 
-> **Tactical Operations**: These rules guide systematic issue resolution and debugging patterns for the Endor Cockpit.
+Workflow below. Resolved-case narratives: [docs.endorlabs.com](https://docs.endorlabs.com/) or search repo issues.
 
-## Overview
+## Platform insight: path namespace vs body UUID
 
-These rules provide a systematic approach to resolving development issues while capturing learnings for future reference.
+For endpoints that take a **resource UUID in the body** and a **namespace in the path** (e.g. create scan-log-request with `scan_result_uuid`), the path namespace must be the **owning** namespace of that resource (the resource’s `tenant_meta.namespace`). Using a **parent** namespace can return 500 even with a valid UUID. This behavior is not always stated in the API spec; document it in SDK docstrings once confirmed.
 
-## Troubleshooting Workflow
+**Avoiding 404 after traverse:** When you act on objects returned from `list(traverse=True)` (or broad filters), pass the **resource object** to `get`, `update`, or `delete` (e.g. `client.project.delete(target)`). The SDK then uses the resource's `tenant_meta.namespace` so the path matches the owning namespace; otherwise using the client default namespace can cause 404 Not Found. See [conventions.md](../conventions.md) (Namespace scoping) and `endorlabs.utils.resolve_namespace_for_resource`.
 
-### 1. Document the Issue
-- [ ] Document task being attempted
-- [ ] Record context (resource types, files, terminal output)
-- [ ] Note attempted approach with specific function calls
-- [ ] Capture error messages and stack traces
+## Workflow
 
-### 2. Research Phase
-- [ ] Search codebase using IDE semantic search for similar issues
-- [ ] Search existing documentation for similar problems
-- [ ] Review API specification for expected behavior
-- [ ] Check external_docs/ for relevant patterns
+1. **Document** — Task, context, approach, errors and stack traces.
+2. **Research** — Search codebase and docs; review API spec (see [conventions.md](../conventions.md)).
+3. **Investigate** — Read SDK code and spec; test with endorctl; validate theories.
+4. **Resolve** — Implement fix; document signatures and learnings.
 
-### 3. Investigation Phase
-- [ ] Read SDK code and API spec
-- [ ] Check error logs and validation output
-- [ ] Test with endorctl to verify API behavior
-- [ ] User knowledge checkpoint (ask if they know something not captured)
+## List ServerError ("Spec is not full" / "not fully defined")
 
-### 4. Validation Phase
-- [ ] Write ephemeral tests to validate theories
-- [ ] Test different approaches systematically
-- [ ] Document unexpected behavior vs expected
-- [ ] Capture error messages and stack traces
+- The backend may return errors such as `FindingSpec` / `InstallationSpec` / `RepositorySpec` / `PackageVersionSpec` "is not full..." or "not fully defined" when listing at a given namespace (e.g. tenant root). The SDK surfaces these as `ServerError`.
+- **Interpretation**: If the API returns 5xx with that message, the SDK is correct to surface it; listing at a child namespace (or different scope) may avoid it. If the API returns 200 but the response body does not match Pydantic models (e.g. partial spec), consider optional/lenient parsing in the SDK only where safe.
 
-### 5. Resolution Phase
-- [ ] Implement working solution
-- [ ] Document exact function signatures that work
-- [ ] Test solution thoroughly
-- [ ] Document learnings in code comments for future reference
+### List mask / partial response leniency
 
-## Critical Debugging Patterns
+- List responses may omit spec-required fields when using a **mask** (`list_params.mask`) or at certain scopes (e.g. tenant root). The OpenAPI spec describes the full resource; list is not guaranteed to return every required field.
+- The SDK accepts these partial responses for list via spec-aligned leniency: **Finding** `context` is optional when the list response omits it; **Project** `spec.platform_source` is optional when the list mask omits it; **BaseMeta** `name` is optional when the list mask omits it. Callers that use these fields should handle `None` (e.g. `finding.context`, `project.spec.platform_source`, `resource.meta.name`).
 
-### 1. PATCH Endpoint Debugging Journey
+## Test skips (short test summary)
 
-#### **Problem**: PATCH operations failing with 501 "Method Not Allowed"
-**Initial Error**: `requests.exceptions.HTTPError: 501 Server Error: Not Implemented`
+When pytest reports skips (403, "No resources in scope", validation errors on update, semgrep "unexpected token null"): run `endorctl api list -r <Resource> --traverse -n <namespace>` (PascalCase for resource, e.g. `Finding`, `Project`) to validate whether the namespace has data; see endorctl docs for options (e.g. `--page-size`, `-o table`). **Warnings:** Run pytest without `--disable-warnings` to see whether the source is pytest, a library, or the SDK.
 
-**Debugging Steps**:
-1. **Wrong URL Pattern**: Initially used `PATCH /v1/namespaces/{namespace}/projects/{uuid}`
-2. **OpenAPI Spec Check**: Found correct pattern in `external_docs/openapi-swagger.json`
-3. **Discovery**: PATCH endpoints expect UUID in request body, not URL path
-4. **Solution**: Changed to `PATCH /v1/namespaces/{namespace}/projects` with UUID in body
+## References
 
-**Key Learning**: Always check OpenAPI spec for actual endpoint patterns, not assumptions.
-
-#### **Problem**: PATCH requiring full object structure
-**Error**: `400 Bad Request - invalid Project.Meta.Name: value is required`
-
-**Debugging Steps**:
-1. **Full Object Required**: API complained about missing required fields
-2. **OpenAPI Spec Re-examination**: Found `v1UpdateRequest` with `update_mask` field
-3. **Discovery**: `update_mask` allows partial updates
-4. **Solution**: Implemented `update_mask` for efficient partial updates
-
-**Key Learning**: API specs contain critical fields like `update_mask` that enable efficient operations.
-
-#### **Problem**: Tags not persisting despite 200 OK response
-**Symptoms**: API returns success but tags don't appear in subsequent GET requests
-
-**Debugging Steps**:
-1. **Response Analysis**: API returned updated tags in response
-2. **Persistence Check**: Re-fetching showed tags missing
-3. **Pydantic Model Investigation**: Found missing `tags` field in `ProjectMeta`
-4. **Root Cause**: Pydantic model didn't include `tags: Optional[List[str]] = None`
-5. **Solution**: Added missing field to model
-
-**Key Learning**: API responses can be correct but Pydantic models must include all fields for proper parsing.
-
-### 2. Test Structure Restructuring Debugging
-
-#### **Problem**: Multiple redundant test files with overlapping functionality
-**Symptoms**: 5+ test files with similar test cases, hard to maintain
-
-**Debugging Steps**:
-1. **Pattern Analysis**: Identified `test_<resource>.py` pattern from existing `test_namespace.py`
-2. **Consolidation Strategy**: Group all operations per resource in single files
-3. **Naming Convention**: Follow `endorctl` pattern with singular resource names
-4. **Implementation**: Created `test_project.py`, `test_finding.py` with comprehensive coverage
-
-**Key Learning**: Follow existing patterns and consolidate related functionality.
-
-#### **Problem**: Test execution failures due to class name mismatches
-**Error**: `NameError: name 'TestResourceGetOperations' is not defined`
-
-**Debugging Steps**:
-1. **Class Renaming**: Changed from `TestResourceGetOperations` to `TestResourceOperations`
-2. **Main Execution Block**: Updated class references in `if __name__ == "__main__"`
-3. **Method Updates**: Updated test method calls to match new class structure
-
-**Key Learning**: Maintain consistency between class names and references throughout test files.
-
-## Common Issue Patterns
-
-### API Endpoint Issues
-- **Wrong URL patterns**: Check OpenAPI spec for actual endpoint structure
-- **Missing required fields**: Validate against OpenAPI specification
-- **Authentication failures**: Verify environment variables and credentials
-
-### Pydantic Model Issues
-- **Missing fields**: Ensure all API response fields are modeled
-- **Type mismatches**: Validate field types against OpenAPI spec
-- **Validation errors**: Check required vs optional field definitions
-
-### Test Structure Issues
-- **Redundant test files**: Consolidate by resource type
-- **Class naming**: Maintain consistency between class names and references
-- **Test organization**: Follow established patterns from existing tests
-
-## Success Criteria
-
-- ✅ Issue resolved with working solution
-- ✅ Solution documented in code comments
-- ✅ Knowledge captured for future reference
-- ✅ Documentation updated if applicable
-- ✅ Patterns documented for team knowledge
-
----
-
-*These rules ensure systematic issue resolution while building institutional knowledge for the Endor Cockpit.*
+- OpenAPI/spec path and list/update patterns: [conventions.md](../conventions.md).
+- For resolved-case narratives (wrong URL pattern, update_mask, tags): see [docs.endorlabs.com](https://docs.endorlabs.com/) or repo issues.

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/mcp/gemini/
 title: Endor Labs MCP server as a Gemini Extension | Endor Labs Docs
-downloaded: 2025-12-11 11:33:16
+downloaded: 2026-01-29 22:22:01
 ---
 
 Endor Labs MCP server as a Gemini Extension | Endor Labs Docs
@@ -9,7 +9,6 @@ Endor Labs MCP server as a Gemini Extension | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/mcp/gemini/_print.html)
 
@@ -49,6 +48,41 @@ Complete the following tasks to integrate Endor Labs MCP Server into Gemini.
 
 * Install the Endor Labs MCP server as a Gemini extension. See [Install the Endor Labs MCP server as a Gemini extension](#install-the-endor-labs-mcp-server-as-a-gemini-extension) for more details. No configuration is required to get started with the Developer Edition.
 * Configure permissions for your developers (optional): If you’re using the Enterprise Edition with a specific namespace, ensure that your developers have `Read-Only` permissions to Endor Labs. See [Endor Lab’s Authorization policies](../../../administration/access-endorlabs/authorization-policies/) for more details.
+
+### Set up Endor Labs MCP server on Windows
+
+On Windows, ensure the following prerequisites are met:
+
+* [Node.js is installed](#install-nodejs)
+* [npm global bin directory is in your PATH](#configure-the-path-environment-variable)
+
+#### Install Node.js
+
+If Node.js is not installed, download and install the **LTS version** from [nodejs.org](https://nodejs.org/). During installation, ensure the option to add Node.js to PATH is selected.
+
+#### Configure the PATH environment variable
+
+After installing Node.js, verify that the npm global bin directory is in your PATH:
+
+1. Run the following command in the command line.
+
+   ```
+   npm config get prefix
+   ```
+
+   This returns the npm global directory path, typically `C:\Users\<YourUsername>\AppData\Roaming\npm`.
+2. Add the npm global directory path to the **Path** variable under **User variables** in your system’s environment variables settings.
+3. Restart for the PATH changes to take effect.
+
+#### Verify the setup
+
+Run the following command in your terminal.
+
+```
+npx --version
+```
+
+If this returns a version number, your Windows setup is complete and the MCP server can use `npx` to run endorctl.
 
 ## Tools in the Endor Labs MCP server
 
@@ -97,7 +131,9 @@ If you already have Endor Labs configured locally (from a previous [endorctl ini
 
 ### Enterprise Edition
 
-If you want to use the Enterprise Edition with your organization’s specific policies, you can use natural language commands to initiate an authentication flow.
+If you want to use the Enterprise Edition with your organization’s specific policies, you can use natural language commands to initiate an authentication flow. Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+You can also specify your supported authentication provider manually.
 
 ```
 gemini> Initialize Endor Labs with Google authentication using the command `endorctl init --auth-mode=google`
@@ -131,7 +167,7 @@ gemini> Generate a security report for this repository
 
 ## Gemini context file
 
-The Endor Labs MCP server provides a context file that you can use to add additional context to the MCP server. The context file,`ENDORLABS_CONTEXT.md` is located in the `~/.gemini/extensions/endorlabs/gemini-extension/` directory.
+The Endor Labs MCP server provides a context file that you can use to add additional context to the MCP server. The context file, `ENDORLABS_CONTEXT.md` is located in the `~/.gemini/extensions/Endor-Labs-Code-Security/` directory.
 
 You can use the context file to add additional context to the MCP server. For example, you can add additional rules and context for your project in the context file.
 

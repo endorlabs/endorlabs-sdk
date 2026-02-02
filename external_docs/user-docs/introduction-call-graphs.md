@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/introduction/call-graphs/
 title: Call graphs | Endor Labs Docs
-downloaded: 2025-12-11 11:31:05
+downloaded: 2026-01-29 22:20:21
 ---
 
 Call graphs | Endor Labs Docs
@@ -9,7 +9,6 @@ Call graphs | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/introduction/call-graphs/_print.html)
 

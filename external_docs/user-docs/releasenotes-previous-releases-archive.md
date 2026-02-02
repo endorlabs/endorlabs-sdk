@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/archive/
 title: Archive releases | Endor Labs Docs
-downloaded: 2025-12-11 11:35:50
+downloaded: 2026-01-29 22:24:20
 ---
 
 Archive releases | Endor Labs Docs
@@ -9,7 +9,6 @@ Archive releases | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/releasenotes/previous-releases/archive/_print.html)
 

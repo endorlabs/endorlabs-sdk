@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/email/
 title: Set up email integration | Endor Labs Docs
-downloaded: 2025-12-11 11:34:54
+downloaded: 2026-01-29 22:23:25
 ---
 
 Set up email integration | Endor Labs Docs
@@ -9,7 +9,6 @@ Set up email integration | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/email/_print.html)
 
@@ -48,6 +47,7 @@ While creating an action policy, configure the following settings:
 * From **SELECT NOTIFICATION TARGETS**, choose the email integration notification that you created.
 * Choose an **Aggregation type** for notifications.
 
+  + Choose **None (Notify for each Finding)** to trigger a separate email for each finding. This is supported only for [SAST](../../managing-policies/action-policies/templates/#sast) and [Secrets](../../managing-policies/action-policies/templates/#secrets) action policies.
   + Choose **Project** to group and send all the findings related to a project in one email.
   + Choose **Dependency** to send individual emails for every dependency.
   + Choose **Dependency per package version** to send emails for every unique combination of dependency and package version.
@@ -219,8 +219,7 @@ See the following specification to understand a few additional functions availab
 var EmailTemplateFuncs = template.FuncMap{
 	"now": func() string {
 		now := time.Now()
-		utc := now.UTC()
-		return utc.Format("01-02-2006 15:04:05")
+		return now.Format("01-02-2006 15:04:05 MST")
 	},
 
 	// findingURL returns the URL for the finding.

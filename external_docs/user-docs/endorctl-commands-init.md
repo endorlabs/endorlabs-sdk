@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/init/
 title: init | Endor Labs Docs
-downloaded: 2025-12-11 11:31:30
+downloaded: 2026-01-29 22:20:45
 ---
 
 init | Endor Labs Docs
@@ -9,7 +9,6 @@ init | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/endorctl/commands/init/_print.html)
 
@@ -31,7 +30,11 @@ Supported authentication providers for `endorctl init` are:
 
 ## Usage
 
-To login with your supported authentication provider:
+Run `endorctl init` and your browser window will open automatically. Select your authentication provider from the available options and complete the authentication process.
+
+![Init authentication through browser](../../../images/init-auth-mode.png)
+
+You can also specify your supported authentication provider manually:
 
 * Google
 * GitHub

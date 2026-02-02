@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/dashboards/endor-patches/
 title: Endor patches | Endor Labs Docs
-downloaded: 2025-12-11 11:32:08
+downloaded: 2026-01-29 22:21:18
 ---
 
 Endor patches | Endor Labs Docs
@@ -9,7 +9,6 @@ Endor patches | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/dashboards/endor-patches/_print.html)
 

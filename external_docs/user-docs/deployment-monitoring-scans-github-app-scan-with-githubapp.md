@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/scan-with-githubapp/
 title: Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
-downloaded: 2025-12-11 11:30:57
+downloaded: 2026-01-29 22:20:14
 ---
 
 Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
@@ -9,7 +9,6 @@ Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/github-app/scan-with-githubapp/_print.html)
 
@@ -19,17 +18,17 @@ Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
 
 Learn how to scan projects using the Endor Labs GitHub App.
 
-With the Endor Labs GitHub App or the Endor Labs GitHub Enterprise App you can enhance the security of your repository through the following types of scans.
+With the Endor Labs GitHub App or the Endor Labs GitHub Enterprise Server App you can enhance the security of your repository through the following types of scans.
 
 **Note**
 
-GitHub App refers to both the Endor Labs GitHub App and the Endor Labs GitHub Enterprise App unless otherwise specified.
+GitHub App refers to both the Endor Labs GitHub App and the Endor Labs GitHub Enterprise Server App unless otherwise specified.
 
 ## Scan complete repository
 
 The Endor Labs App automatically scans your repositories every 24 hours for potential security issues and operational risks, providing up-to-date information about your projects’ security posture.
 
-* You can use the GitHub App to selectively scan your repositories for Software Composition Analysis (SCA), secrets, Repository Security Posture Management (RSPM), or CI/CD tools.
+* You can use the GitHub App to selectively scan your repositories for Software Composition Analysis (SCA), secrets, Repository Security Posture Management (RSPM), or GitHub Actions.
 * While the automated scan happens every 24 hours, you can manually trigger a rescan outside this schedule from the Endor Labs user interface. See [Rescan projects](../re-scan-projects/).
 * After each scan, the GitHub App reports any new findings or changes to release versions of your code. Review the scan results from the [Endor Labs user interface](https://app.endorlabs.com).
 
@@ -37,7 +36,7 @@ The Endor Labs App automatically scans your repositories every 24 hours for pote
 
 After scanning the complete repository, it’s important to address the pull requests submitted by users. Administrators can enable a fully automated scanning process for all pull requests and merges initiated into the main branch.
 
-To automatically scan the PRs, set the pull request preferences during the [GitHub App installation](../../github-app/#install-the-github-app) or edit the [integration preferences](../../github-app/#manage-github-apps-on-endor-labs) afterward. For GitHub Enterprise App, set the preferences during [installation](../github-enterprise-app/#install-the-app-in-your-organization) or edit the [integration preferences](../github-enterprise-app/manage-githubapp-enterprise/) afterward.
+To automatically scan the PRs, set the pull request preferences during the [GitHub App installation](../../github-app/#install-the-github-app) or edit the [integration preferences](../../github-app/#manage-github-apps-on-endor-labs) afterward. For GitHub Enterprise Server App, set the preferences during [installation](../github-enterprise-app/#install-the-app-in-your-organization) or edit the [integration preferences](../github-enterprise-app/manage-githubapp-enterprise/) afterward.
 
 Whenever a PR is created against a repository, the Endor Labs GitHub App performs an incremental scan to detect any changes in resolved dependencies that may introduce new vulnerabilities. These incremental scans are CI runs and are not monitored. You can see the results of the scan on GitHub.
 
@@ -244,28 +243,16 @@ See the following specification to understand the additional functions that are 
 ```
 // FuncMap contains the additional functions that are available to CommentTemplate.
 var FuncMap = template.FuncMap{
-	"now": toTime, // 'now' gives the current time
+	"now": utils.ToTime, // 'now' gives the current time
 
 	// 'enumToString' coverts the enums for finding level, finding category and finding tags to string
-	"enumToString": enumToString,
+	"enumToString": utils.EnumToString,
 
 	// 'getPackageVersionURL' returns the URL for a given PackageVersion
-	"getPackageVersionURL": func(apiURL string, packageVersion *endorpb.PackageVersion) string {
-		result, err := common.GetPackageVersionURL(apiURL, packageVersion)
-		if err != nil {
-			return ""
-		}
-		return result
-	},
+	"getPackageVersionURL": utils.GetPackageVersionURL,
 
 	// 'getFindingURL' returns the URL for a given Finding
-	"getFindingURL": func(apiURL string, finding *endorpb.Finding) string {
-		result, err := common.GetFindingURL(apiURL, finding)
-		if err != nil {
-			return ""
-		}
-		return result
-	},
+	"getFindingURL": utils.GetFindingURL,
 
 	// 'add' returns the sum of two integers
 	"add": func(n int, incr int) int {
@@ -283,56 +270,34 @@ var FuncMap = template.FuncMap{
 	"getOtherFindingsDependencyMarker": func() string { return _findingsWithNoDeps },
 
 	// 'getFindingsCountString' returns a string with number of findings, example - "5 findings"
-	"getFindingsCountString": func(dataMap *endorpb.PackageToDependencies) string {
-		count := 0
-
-		for _, depMap := range dataMap.PackageToDependencies {
-			for _, findingMap := range depMap.DependencyToFindings {
-				count += len(findingMap.Uuids)
-			}
-		}
-
-		findingsStr := "findings"
-		if count == 1 {
-			findingsStr = "finding"
-		}
-
-		return fmt.Sprintf("%d %s", count, findingsStr)
-	},
+	"getFindingsCountString": utils.GetFindingsCountString,
 
 	// 'hasFindingCategory' checks if a finding has a specific category
-	"hasFindingCategory": func(finding *endorpb.Finding, targetCategory string) bool {
-		for _, category := range finding.GetSpec().GetFindingCategories() {
-			if enumToString(category) == targetCategory {
-				return true
-			}
-		}
-		return false
-	},
+	"hasFindingCategory": utils.HasFindingCategory,
 
 	// 'isNotEmptyString' checks if a string is not empty
-	"isNotEmptyString": func(value string) bool {
-		return value != ""
-	},
+	"isNotEmptyString": utils.IsNotEmptyString,
 
 	// 'getCustomLocation' extracts the location from Custom field
 	"getCustomLocation": func(finding *endorpb.Finding) string {
-		return getCustomFieldValue(finding, "location")
+		return utils.GetCustomFieldValue(finding, "location")
 	},
 
 	// 'getCustomCodeSnippet' extracts the code snippet from Custom field
 	"getCustomCodeSnippet": func(finding *endorpb.Finding) string {
-		return getCustomFieldValue(finding, "code_snippet")
+		return utils.GetCustomFieldValue(finding, "code_snippet")
 	},
 
-	"fixBackticks": fixUnclosedBackticks,
+	"fixBackticks": utils.FixUnclosedBackticks,
 
 	// 'getFirstPartyReachableFunctions' extracts first-party functions from reachable paths
-	"getFirstPartyReachableFunctions": getFirstPartyReachableFunctions,
+	"getFirstPartyReachableFunctions": utils.GetFirstPartyReachableFunctions,
 
 	// 'groupFindingsByRemediation' groups findings by their remediation value
 	// Returns a slice of GroupedRemediation where findings with the same remediation are grouped together
-	"groupFindingsByRemediation": groupFindingsByRemediation,
+	"groupFindingsByRemediation": utils.GroupFindingsByRemediation,
+
+	"consolidateRemediations": utils.ConsolidateRemediations,
 }
 ```
 

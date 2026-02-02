@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/pr-remediation/
 title: Remediation Pull Requests in GitHub App | Endor Labs Docs
-downloaded: 2025-12-11 11:33:27
+downloaded: 2026-01-29 22:22:12
 ---
 
 Remediation Pull Requests in GitHub App | Endor Labs Docs
@@ -9,7 +9,6 @@ Remediation Pull Requests in GitHub App | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/upgrades-and-remediation/pr-remediation/_print.html)
 
@@ -21,7 +20,7 @@ Learn how to configure Remediation Pull Request (PR) in a GitHub environment to 
 
 Beta
 
-You can set up Remediation PRs in your GitHub environment if you use the [Endor Labs GitHub App (Pro)](../../deployment/monitoring-scans/github-app/github-app-pro/). When Remediation PRs are set up, Endor Labs creates a PR to update the manifest files with dependency version upgrades, based on a remediation policy, to address vulnerability findings.
+You can set up Remediation PRs in your GitHub environment if you use the [Endor Labs GitHub App (Pro)](../../deployment/monitoring-scans/github-app/github-app-pro/) or the [Endor Labs GitHub Enterprise Server App](../../deployment/monitoring-scans/github-app/github-enterprise-app/). When Remediation PRs are set up, Endor Labs creates a PR to update the manifest files with dependency version upgrades, based on a remediation policy, to address vulnerability findings.
 
 **Warning**
 
@@ -46,7 +45,7 @@ Endor Labs does not further update the PR in the following scenarios, if you:
 
 Complete the following tasks to set up automated PR.
 
-1. [Install or migrate to GitHub App (Pro) and enable SCA scanner.](../../deployment/monitoring-scans/github-app/github-app-pro/)
+1. Install and enable SCA scanner using either [GitHub App (Pro)](../../deployment/monitoring-scans/github-app/github-app-pro/) or [GitHub Enterprise Server App](../../deployment/monitoring-scans/github-app/github-enterprise-app/).
 2. [Create a GitHub PR for remediations notification integration.](#create-a-github-pr-for-remediations-notification-integration)
 3. [Create a remediation policy with the notification integration that you created in the previous step.](../../managing-policies/remediation-policies/)
 
@@ -78,6 +77,7 @@ Currently, Remediation PRs have the following limitations:
 * Maven projects that use `dependencyManagement` tags and rely solely on dependency information in the parent pom file are not supported.
 * Gradle projects with convention files (Groovy files with `.gradle` extension with any name) are not supported.
 * Gradle projects with resource catalogues (version defined in `.toml` files) are not supported.
+* + Gradle projects that use Spring Framework plugins, such as the Spring Boot Gradle plugin, to manage dependency versions are not supported. These plugins handle versioning internally, so dependency versions are not explicitly declared in the Gradle manifest file.
 * Go projects that use the `replace` directive in `go.mod` are not supported. `replace` directives are commonly used for local development, debugging, or patching dependencies.
 * JavaScript projects using npm and Yarn workspaces are not supported.
 * .NET projects using `Directory.Packages.props` (central dependency management) or `packages.config`, are not supported.

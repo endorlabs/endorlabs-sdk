@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-chat/
 title: Endor AI Chat | Endor Labs Docs
-downloaded: 2025-12-11 11:31:13
+downloaded: 2026-01-29 22:20:29
 ---
 
 Endor AI Chat | Endor Labs Docs
@@ -9,7 +9,6 @@ Endor AI Chat | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/ai/ai-chat/_print.html)
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/remediation-policies/
 title: Remediation policies | Endor Labs Docs
-downloaded: 2025-12-11 11:33:57
+downloaded: 2026-01-29 22:22:41
 ---
 
 Remediation policies | Endor Labs Docs
@@ -9,7 +9,6 @@ Remediation policies | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-policies/remediation-policies/_print.html)
 

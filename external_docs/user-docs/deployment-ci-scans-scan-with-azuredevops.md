@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-azuredevops/
 title: Scanning in Azure Pipelines | Endor Labs Docs
-downloaded: 2025-12-11 11:34:34
+downloaded: 2026-01-29 22:23:07
 ---
 
 Scanning in Azure Pipelines | Endor Labs Docs
@@ -9,7 +9,6 @@ Scanning in Azure Pipelines | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/ci-scans/scan-with-azuredevops/_print.html)
 
@@ -43,6 +42,7 @@ You need to enable Advanced Security in your Azure repository to view results in
 2. Navigate to **Repos > Repositories** in the left navigation panel.
 3. Select your repository.
 4. Enable Advanced Security.
+
    ![Enable Advanced Security](../../../images/EnableAdvancedSecurity.png)
 
 ## Integrate Endor Labs with Azure pipelines with the Azure extension
@@ -66,7 +66,7 @@ The Endor Labs Azure extension requires `code read`, `build read`, and `execute`
 9. Enter the service connection name.
    The name you enter here is to be used inside the Azure pipeline.
 10. Optionally, you can enter service management reference and description.
-11. Select **Grant access permission to all pipelines** to provide access to Endor Lab’s service connection to your pipelines.
+11. Select **Grant access permission to all pipelines** to provide access to the Endor Labs service connection to your pipelines.
 
 **Warning**
 
@@ -125,6 +125,7 @@ You can use the following input parameters in the `EndorLabsScan@0` task.
 | `scanContainer` | Scan a specified container image. Set the image with `image` and a project with `projectName`. (Default `false`) |
 | `projectName` | Specify a project name for a container image scan or for a package scan. |
 | `image` | Specify a container image to scan. |
+| `enableDetachedRefName` | Automatically append `--detached-ref-name` flag during scan to associate the commit with the actual branch name as seen in Azure DevOps. Set to `false` to disable this behavior and use the commit SHA instead. (Default `true`) |
 
 ### Example Workflow
 
@@ -194,8 +195,7 @@ You can manage Endor Labs variables centrally by configuring them within your Az
 
 1. Create `azure-pipelines.yml` file in your project, if it doesn’t exist.
 2. In the `azure-pipelines.yml` file, customize the job configuration based on your project’s requirements.
-3. Adjust the image field to use the necessary build tools for constructing your software packages, and align your build steps with those of your project.
-   For example, update the node pool settings based on your operating system.
+3. Adjust the image field to use the necessary build tools for constructing your software packages, and align your build steps with those of your project. For example, update the node pool settings based on your operating system.
 
 * Windows
 * Ubuntu
@@ -277,25 +277,25 @@ pool:
 ```
 - script: |
     .\endorctl.exe scan -n $(NAMESPACE) -s scanresults.sarif
-    env:
-      ENDOR_API_CREDENTIALS_KEY: $(ENDOR_API_CREDENTIALS_KEY)
-      ENDOR_API_CREDENTIALS_SECRET: $(ENDOR_API_CREDENTIALS_SECRET)
+  env:
+    ENDOR_API_CREDENTIALS_KEY: $(ENDOR_API_CREDENTIALS_KEY)
+    ENDOR_API_CREDENTIALS_SECRET: $(ENDOR_API_CREDENTIALS_SECRET)
 ```
 
 ```
 - script: |
-    .\endorctl scan -n $(NAMESPACE) -s scanresults.sarif
-    env:
-      ENDOR_API_CREDENTIALS_KEY: $(ENDOR_API_CREDENTIALS_KEY)
-      ENDOR_API_CREDENTIALS_SECRET: $(ENDOR_API_CREDENTIALS_SECRET)
+    ./endorctl scan -n $(NAMESPACE) -s scanresults.sarif
+  env:
+    ENDOR_API_CREDENTIALS_KEY: $(ENDOR_API_CREDENTIALS_KEY)
+    ENDOR_API_CREDENTIALS_SECRET: $(ENDOR_API_CREDENTIALS_SECRET)
 ```
 
 ```
 - script: |
-    .\endorctl scan -n $(NAMESPACE) -s scanresults.sarif
-    env:
-      ENDOR_API_CREDENTIALS_KEY: $(ENDOR_API_CREDENTIALS_KEY)
-      ENDOR_API_CREDENTIALS_SECRET: $(ENDOR_API_CREDENTIALS_SECRET)
+    ./endorctl scan -n $(NAMESPACE) -s scanresults.sarif
+  env:
+    ENDOR_API_CREDENTIALS_KEY: $(ENDOR_API_CREDENTIALS_KEY)
+    ENDOR_API_CREDENTIALS_SECRET: $(ENDOR_API_CREDENTIALS_SECRET)
 ```
 
 9. Enter the following task in the `azure-pipelines.yml` to publish the scan results.
@@ -459,6 +459,35 @@ Without proper branch configuration, Endor Labs may create multiple branch entri
 ![Project with multiple branch entries](../../../images/branch-fragmentation.png)
 
 Azure Pipelines often check out commits by their SHA instead of the branch name, which creates a detached HEAD state.
+
+### Automatic branch tracking
+
+When you use the Endor Labs Azure extension, branch tracking is automated. The `enableDetachedRefName` parameter is set to `true` by default, which automatically detects the branch name from your Azure pipeline and appends the `--detached-ref-name` flag during scans. This ensures that scans display the actual branch name instead of the commit SHA.
+
+```
+steps:
+  - task: EndorLabsScan@0
+    inputs:
+      namespace: 'demo'
+      sarifFile: 'scanresults.sarif'
+      serviceConnectionEndpoint: 'Endor'
+```
+
+To disable automatic branch tracking and use the commit SHA instead, explicitly set `enableDetachedRefName` to `false`.
+
+```
+steps:
+  - task: EndorLabsScan@0
+    inputs:
+      enableDetachedRefName: false
+      namespace: 'demo'
+      sarifFile: 'scanresults.sarif'
+      serviceConnectionEndpoint: 'Endor'
+```
+
+### Manual branch tracking with endorctl
+
+When you use endorctl, specify the branch name using the `--detached-ref-name` flag.
 
 Use `--detached-ref-name` only to specify the branch name for a commit in detached HEAD state. This associates the commit with the correct branch without setting it as the default branch.
 

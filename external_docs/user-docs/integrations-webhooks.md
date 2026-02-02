@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/webhooks/
 title: Set up integrations using webhooks | Endor Labs Docs
-downloaded: 2025-12-11 11:32:30
+downloaded: 2026-01-29 22:21:40
 ---
 
 Set up integrations using webhooks | Endor Labs Docs
@@ -9,7 +9,6 @@ Set up integrations using webhooks | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/webhooks/_print.html)
 
@@ -46,9 +45,10 @@ You can create action policies to trigger webhook notifications when policy cond
 While creating an action policy, configure the following settings:
 
 * Select **Choose an Action** as **Send Notification**.
-* From **SELECT NOTIFICATION TARGETS**, choose the email integration notification that you created.
+* From **SELECT NOTIFICATION TARGETS**, choose the webhook integration notification that you created.
 * Choose an **Aggregation type** for notifications.
 
+  + Choose **None (Notify for each Finding)** to trigger a separate notification for each finding. This is supported only for [SAST](../../managing-policies/action-policies/templates/#sast) and [Secrets](../../managing-policies/action-policies/templates/#secrets) action policies.
   + Choose **Project** to trigger a single notification for all findings.
   + Choose **Dependency** to trigger a notification for every dependency.
   + Choose **Dependency per package version** to trigger notifications for every unique combination of dependency and package version.
@@ -282,8 +282,7 @@ var FuncMap = func(h *NotificationTemplate) template.FuncMap {
 	return template.FuncMap{
 		"now": func() string {
 			now := time.Now()
-			utc := now.UTC()
-			return utc.Format("01-02-2006 15:04:05")
+			return now.Format("01-02-2006 15:04:05 MST")
 		},
 
 		// csvFileName generates the filename for the CSV attachment for Jira.
@@ -320,10 +319,55 @@ var FuncMap = func(h *NotificationTemplate) template.FuncMap {
 			return GetFindingLocation(finding, h.m, namespace, h.Data)
 		},
 
+		// Sanitize removes trailing newlines from the given string.
 		"Sanitize": func(s string) string {
 			return strings.TrimRight(s, "\n")
 		},
+
+		// countFindingsBySeverity returns the count of findings grouped by severity level.
+		//
+		// Template usage:
+		//   {{- $counts := countFindingsBySeverity .FindingsMap -}}
+		// - Returns a `*SeverityCounts` with fields: `Critical`, `High`, `Medium`, `Low`.
+		"countFindingsBySeverity": func(findingsMap map[string]*endorpb.Finding) *SeverityCounts {
+			counts := CountFindingsBySeverity(findingsMap)
+			return counts
+		},
+
+		// sortedFindingsBySeverity returns findings sorted by severity (Critical -> High -> Medium -> Low).
+		// Template usage:
+		//   {{- range $i, $f := sortedFindingsBySeverity .FindingsMap -}}
+		//     {{ increment $i }}. {{ Sanitize $f.Meta.Description.Value }}
+		//     ({{ getSeverityName $f.Spec.Level }})
+		//   {{- end -}}
+		"sortedFindingsBySeverity": func(findingsMap map[string]*endorpb.Finding) []*endorpb.Finding {
+			sorted := SortFindingsBySeverity(findingsMap)
+			return sorted
+		},
+
+		// getSeverityName returns the user-facing severity name (Critical/High/Medium/Low/Unspecified).
+		// Template usage:
+		//   Severity: {{ getSeverityName .Spec.Level }}
+		"getSeverityName": func(level endorpb.Finding_Spec_FindingLevel) string {
+			name := GetSeverityName(level)
+			return name
+		},
+
+		// getSeverityColor returns the hex color code for a finding severity.
+		// Template usage:
+		//   {color:{{ getSeverityColor .Spec.Level }}}● {{ getSeverityName .Spec.Level }}{color}
+		"getSeverityColor": func(level endorpb.Finding_Spec_FindingLevel) string {
+			color := GetSeverityColor(level)
+			return color
+		},
 	}
+}
+
+type SeverityCounts struct {
+	Critical int
+	High     int
+	Medium   int
+	Low      int
 }
 ```
 

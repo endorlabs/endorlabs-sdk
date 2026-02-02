@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/jenkins-supervisory-scan/
 title: Set up Jenkins pipeline for supervisory scans | Endor Labs Docs
-downloaded: 2025-12-11 11:35:17
+downloaded: 2026-01-29 22:23:48
 ---
 
 Set up Jenkins pipeline for supervisory scans | Endor Labs Docs
@@ -9,7 +9,6 @@ Set up Jenkins pipeline for supervisory scans | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/jenkins-supervisory-scan/_print.html)
 

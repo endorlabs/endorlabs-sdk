@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/gitlab-app/
 title: Deploy Endor Labs GitLab App | Endor Labs Docs
-downloaded: 2025-12-11 11:32:35
+downloaded: 2026-01-29 22:21:45
 ---
 
 Deploy Endor Labs GitLab App | Endor Labs Docs
@@ -9,7 +9,6 @@ Deploy Endor Labs GitLab App | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/gitlab-app/_print.html)
 
@@ -19,7 +18,7 @@ Deploy Endor Labs GitLab App | Endor Labs Docs
 
 Learn how to continuously monitor your environment with the Endor Labs GitLab App.
 
-Endor Labs provides a GitLab App that continuously monitors users’ projects for security and operational risk. You can use the GitLab App to selectively scan your repositories for SCA, secrets, SAST, and CI/CD tools. You can use the GitLab App with a GitLab cloud account or a self-hosted GitLab instance.
+Endor Labs provides a GitLab App that continuously monitors users’ projects for security and operational risk. You can use the GitLab App to selectively scan your repositories for SCA, secrets, and SAST. You can use the GitLab App with a GitLab cloud account or a self-hosted GitLab instance.
 
 When you use Endor Labs GitLab App, Endor Labs creates namespaces based on your organization hierarchy in GitLab.
 
@@ -302,7 +301,6 @@ The personal access token must have at least the `read_api` scope. If you want t
 
    * **SCA**: Perform software composition analysis and discover AI models used in your repository.
    * **Secret**: Scan GitLab projects for exposed secrets.
-   * **CI/CD**: Scan GitLab projects and identify all the CI/CD tools used.
    * **SAST**: Scan GitLab projects to generate SAST findings.
 
    The available scan types depend upon your license.

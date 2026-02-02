@@ -1,31 +1,30 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-enterprise-app/
-title: Deploy Endor Labs GitHub Enterprise App | Endor Labs Docs
-downloaded: 2025-12-11 11:34:13
+title: Deploy Endor Labs GitHub Enterprise Server App | Endor Labs Docs
+downloaded: 2026-01-29 22:22:55
 ---
 
-Deploy Endor Labs GitHub Enterprise App | Endor Labs Docs
+Deploy Endor Labs GitHub Enterprise Server App | Endor Labs Docs
 
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/github-app/github-enterprise-app/_print.html)
 
 
 
-# Deploy Endor Labs GitHub Enterprise App
+# Deploy Endor Labs GitHub Enterprise Server App
 
-Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise App.
+Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise Server App.
 
 Beta
 
-Endor Labs GitHub Enterprise App is specifically designed for **GitHub Enterprise Server (GHES)** - the self-hosted, on-premise version of GitHub. This app allows you to continuously monitor your repositories hosted on your own GitHub Enterprise Server instance for security and operational risks.
+Endor Labs GitHub Enterprise Server App is specifically designed for **GitHub Enterprise Server (GHES)** - the self-hosted, on-premise version of GitHub. This app allows you to continuously monitor your repositories hosted on your own GitHub Enterprise Server instance for security and operational risks.
 
 **Availability**
 
-Currently, the GitHub Enterprise App does not support the Endor Labs cloud scheduler. You need to configure Endor Outpost in your environment to use the GitHub Enterprise App. See [Endor Outpost](../../outpost/) for more information.
+Currently, the GitHub Enterprise Server App does not support the Endor Labs cloud scheduler. You need to configure Endor Outpost in your environment to use the GitHub Enterprise Server App. See [Endor Outpost](../../outpost/) for more information.
 
 **Important**
 
@@ -62,21 +61,23 @@ You can control the default branch detection by setting the `ENDOR_SCAN_TRACK_DE
 
 By default, the environment variable is set to `true`. When set to `true`, the default branch detection is enabled, and the first branch you scan is automatically considered as the default branch.
 
-## Prerequisites for GitHub Enterprise App
+## Prerequisites for GitHub Enterprise Server App
 
-Before installing and scanning projects with Endor Labs GitHub Enterprise App, make sure you have:
+Before installing and scanning projects with Endor Labs GitHub Enterprise Server App, make sure you have:
 
 * **Outpost Setup**: A Kubernetes cluster to deploy the Endor scheduler, with network egress configured from the cluster to Endor Labs. See [Endor Outpost](../../outpost/) for setup instructions.
 * **GitHub Enterprise Server (GHES) instance**: A running GitHub Enterprise Server instance.
-* **Administrative permissions**: Administrative permissions to your organization’s GitHub Enterprise Server to install and authorize the Endor Labs GitHub Enterprise App.
+* **Administrative permissions**: Administrative permissions to your organization’s GitHub Enterprise Server to install and authorize the Endor Labs GitHub Enterprise Server App.
 * **Organization owner permissions**: You must be an owner of the GitHub Enterprise Server organization where you plan to install the app.
-* **Administrative access in Endor Labs**: Administrative access in Endor Labs to create and manage the GitHub Enterprise App.
+* **Administrative access in Endor Labs**: Administrative access in Endor Labs to create and manage the GitHub Enterprise Server App.
 
-## Set up GitHub Enterprise App
+## Set up GitHub Enterprise Server App
 
-Setting up the GitHub Enterprise App involves the following steps:
+Setting up the GitHub Enterprise Server App involves the following steps:
 
 1. [**Set up Outpost**](#set-up-outpost)
+
+   You can skip Outpost setup if you want your projects to be scanned in Endor Labs Cloud and if your network firewall rules allow Endor Labs to access your GitHub Enterprise Server instance directly. See [Firewall rules](../../../../troubleshooting/firewall-rules/) for more information.
 2. [**Create the App in Endor Labs**](#create-application-in-endor-labs)
 3. [**Install the App in your organization**](#install-the-app-in-your-organization)
 4. [**Scan more repositories**](#scan-more-repositories)
@@ -119,14 +120,14 @@ endorctl:
 
 ### Create application in Endor Labs
 
-To define the application in Endor Labs, first set up an app within your GitHub Enterprise Server organization. You can create and register the GitHub Enterprise App only in the root tenant namespace in Endor Labs. You can then install it to any namespace including child namespaces.
+To define the application in Endor Labs, first set up an app within your GitHub Enterprise Server organization. You can create and register the GitHub Enterprise Server App only in the root tenant namespace in Endor Labs. You can then install it to any namespace including child namespaces.
 
 If you have already created a GitHub App for Endor Labs, skip to [register application in Endor Labs](#register-application-in-endor-labs).
 
 1. Sign in to Endor Labs.
 2. Select **Integrations** from the left sidebar.
-3. Click **Create App** next to **GitHub Enterprise** under **Source Control Managers**.
-4. Enter the **Host URL** of your GitHub Enterprise Server instance.
+3. Click **Create App** next to **GitHub Enterprise Server** under **Source Control Managers**.
+4. Enter the **Host URL** of your GitHub Enterprise Server instance in the format `https://github.company.com`.
 5. Enter the **GitHub Organization Name** that will be the owner of this app.
 6. Click **Create** to launch a [GitHub app registration form](#create-an-endor-labs-github-app-in-github-enterprise-server) in a new tab.
 
@@ -191,7 +192,7 @@ You can only create one Endor Labs app per GitHub Enterprise Server instance per
 After creating and registering the app, install it in one or more organizations in your GitHub Enterprise Server instance. Installing the app grants it access to your repositories and enables scanning.
 
 1. Select **Integrations** from the left sidebar.
-2. Click **Manage** next to **GitHub Enterprise** under **Source Control Managers**.
+2. Click **Manage** next to **GitHub Enterprise Server** under **Source Control Managers**.
 3. Click **Install App** next to the app you want to install.
    You will be redirected to GitHub Enterprise Server. If the app is already installed in some organizations, you’ll see a **Configure** option instead.
 4. Select the organization where you want to install the app.
@@ -202,7 +203,7 @@ After creating and registering the app, install it in one or more organizations 
 
 **Note**
 
-If you don’t have permission to install the GitHub Enterprise App, you may need to request approval from your organizational administrator. If you select **Install and Request**, your installation will not be active unless your organizational administrator approves the request.
+If you don’t have permission to install the GitHub Enterprise Server App, you may need to request approval from your organizational administrator. If you select **Install and Request**, your installation will not be active unless your organizational administrator approves the request.
 
 7. Collect the **Installation ID** and the name of the organization from your GitHub Enterprise Server and provide them to Endor Labs.
 
@@ -228,7 +229,7 @@ You need the Installation ID for Endor Labs to identify and communicate with you
    * **SCA**: Perform software composition analysis and discover AI models used in your repository.
    * **RSPM**: Scan the repository for misconfigurations. RSPM scans run every week on Sundays.
    * **Secret**: Scan the repository for exposed secrets.
-   * **CI/CD**: Scan the repository and identify all the CI/CD tools used in the repository.
+   * **GitHub Actions**: Scan the repository and identify all the GitHub Actions workflows used in the repository.
    * **SAST**: Scan your source code for weaknesses and generate SAST findings.
 10. Select **Include Archived Repositories** to scan your archived repositories. By default, the GitHub archived repositories aren’t scanned.
 11. Select **PULL REQUEST SCANS** to set preferences for scanning pull requests submitted by users.
@@ -243,9 +244,7 @@ You need the Installation ID for Endor Labs to identify and communicate with you
 
 **Note**
 
-```
-   You can perform pull request scans only if you have configured a webhook URL and webhook secret when creating your GitHub Enterprise Server app.
-```
+You can perform pull request scans only if you have configured a webhook URL and webhook secret when creating your GitHub Enterprise Server app.
 
 12. Click **Create**.
 
@@ -268,6 +267,10 @@ To add more repositories to scan:
 9. Click **Rescan Org** to view results.
 
 Endor Labs GitHub App Enterprise scans your repositories every 24 hours and reports any new findings or changes to release versions of your code. It can also raise a PR with a fix based on your remediation policy. Ensure that you configure automated PR scans in your environment. See [Automated PR scans](../../../../upgrades-and-remediation/pr-remediation/) for more information.
+
+**Note**
+
+Configure [branch protection rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches) to ensure the Endor Labs Automated Scan check runs before merging your PR.
 
 ## Set up package repositories
 

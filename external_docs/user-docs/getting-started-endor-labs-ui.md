@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/endor-labs-ui/
 title: Endor Labs user interface | Endor Labs Docs
-downloaded: 2025-12-11 11:33:17
+downloaded: 2026-01-29 22:22:02
 ---
 
 Endor Labs user interface | Endor Labs Docs
@@ -9,7 +9,6 @@ Endor Labs user interface | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/getting-started/endor-labs-ui/_print.html)
 
@@ -99,7 +98,7 @@ Select an SBOM to view the list of dependencies, their visibility, source availa
 
 ![SBOM dependencies table](../../images/sbom-dependencies-table.png)
 
-Navigate to **Findings** > **Dependencies** and select a malicious dependency to view its malware metadata and reasoning from the proprietary feed.
+Navigate to **Findings** > **Dependencies** and select a dependency to view its metadata, malware details, and the reasoning behind its malware classification from the proprietary feed.
 
 ![SBOM malware details](../../images/sbom-malware-details.png)
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/previous-releases/april-2025/
 title: April 2025 | Endor Labs Docs
-downloaded: 2025-12-11 11:34:57
+downloaded: 2026-01-29 22:23:28
 ---
 
 April 2025 | Endor Labs Docs
@@ -9,7 +9,6 @@ April 2025 | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/releasenotes/previous-releases/april-2025/_print.html)
 

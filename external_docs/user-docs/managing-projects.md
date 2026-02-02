@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/
 title: Manage projects | Endor Labs Docs
-downloaded: 2025-12-11 11:34:48
+downloaded: 2026-01-29 22:23:19
 ---
 
 Manage projects | Endor Labs Docs
@@ -9,7 +9,6 @@ Manage projects | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-projects/_print.html)
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-model-policies/
 title: AI model policies | Endor Labs Docs
-downloaded: 2025-12-11 11:33:42
+downloaded: 2026-01-29 22:22:26
 ---
 
 AI model policies | Endor Labs Docs
@@ -9,7 +9,6 @@ AI model policies | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/ai/ai-model-policies/_print.html)
 

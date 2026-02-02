@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/auto-detect-toolchains/
 title: Enable auto detection | Endor Labs Docs
-downloaded: 2025-12-11 11:32:06
+downloaded: 2026-01-29 22:21:16
 ---
 
 Enable auto detection | Endor Labs Docs
@@ -9,7 +9,6 @@ Enable auto detection | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/manage-scan-profiles/auto-detect-toolchains/_print.html)
 
@@ -32,6 +31,7 @@ For example, when analyzing Java projects, the Java detector checks config files
 ```
 flowchart TD
   subgraph C["Detectors find versions of detected languages"]
+    topSpacer[" "]:::hidden
     L1["language 1 detector"]
     Lang["..."]
     L2["language n detector"]
@@ -55,15 +55,14 @@ flowchart TD
   class C subgraphStyle
   classDef JavaStyle fill:#D3D3D3;
   class L1,L2,Lang JavaStyle
+  classDef hidden fill:none,stroke:none,color:transparent;
+  class topSpacer hidden
   classDef blueText fill:#3FE1F3,stroke:#000000,color:#000000;
   class I,J,K blueText
 
   %% NEW: Bigger node style and class
   classDef largeNode fill:#00F078,stroke:#000000,color:#000000;
   class A,B,D,E largeNode
-
-  %% Optional: force large box padding via dummy <br> line
-  style C width:520px
 ```
 
 ### Config files scanned for version detection

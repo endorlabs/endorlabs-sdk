@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/sorting/
 title: Sorting | Endor Labs Docs
-downloaded: 2025-12-11 11:34:56
+downloaded: 2026-01-29 22:23:27
 ---
 
 Sorting | Endor Labs Docs
@@ -9,7 +9,6 @@ Sorting | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/sorting/_print.html)
 
@@ -46,7 +45,7 @@ curl --get \
 @namespace = <insert-namespace>
 
 ###
-GET {{baseUrl}}/v1/namespaces/{{namespace}}/findings?list_parameters.sort.path=meta.create_time7list_parameters.sort.order=SORT_ENTRY_ORDER_DESC HTTP/1.1
+GET {{baseUrl}}/v1/namespaces/{{namespace}}/findings?list_parameters.sort.path=meta.create_time&list_parameters.sort.order=SORT_ENTRY_ORDER_DESC HTTP/1.1
 Authorization: Bearer {{token}}
 ```
 

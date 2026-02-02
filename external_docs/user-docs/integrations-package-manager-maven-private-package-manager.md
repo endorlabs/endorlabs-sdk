@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/maven-private-package-manager/
 title: Private package manager integration for Maven | Endor Labs Docs
-downloaded: 2025-12-11 11:33:56
+downloaded: 2026-01-29 22:22:40
 ---
 
 Private package manager integration for Maven | Endor Labs Docs
@@ -9,7 +9,6 @@ Private package manager integration for Maven | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/integrations/package-manager/maven-private-package-manager/_print.html)
 
@@ -46,13 +45,15 @@ To set up a package manager integration:
 6. Select either **Basic** or **AWS Code Artifactory** as **Authentication Type**.
 
    See [AWS authentication](../aws-codeartifact/) for more information.
-7. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
 
-**Maven**
+7. Specify the package manager URL. Some example formats include:
 
-Select **Use this package manager as a plugin repository** to designate this package manager as a plugin repository for Maven.
-
-8. Select **Add Package Manager**.
+   * `https://maven.pkg.github.com/<your org>`
+   * `https://gitlab.example.com/api/v4/projects/<project_id>/packages/maven`
+   * `https://gitlab.example.com/api/v4/groups/<group_id>/packages/maven`
+8. Click **Advanced** and select **Propagate this policy to all child namespaces** to apply the package manager integration to all child namespaces.
+9. Select **Use this package manager as a plugin repository** to designate the package manager as a plugin repository for Maven.
+10. Select **Add Package Manager**.
 
 If you want to delete a package manager integration, click the trash can icon at the far right of the integration.
 
@@ -60,7 +61,7 @@ If you want to delete a package manager integration, click the trash can icon at
 
 To connect to private repositories of Maven enter the package manager URL and the package registry credentials such as username and password.
 
-![Basic Authentication for package manager integrations](../../../images/basicauthentication.png)
+![Maven package manager integrations](../../../images/maven-package-manager.png)
 
 ### Test private package manager connection
 

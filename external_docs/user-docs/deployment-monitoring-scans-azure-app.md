@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/azure-app/
 title: Deploy Endor Labs Azure DevOps App | Endor Labs Docs
-downloaded: 2025-12-11 11:32:05
+downloaded: 2026-01-29 22:21:15
 ---
 
 Deploy Endor Labs Azure DevOps App | Endor Labs Docs
@@ -9,7 +9,6 @@ Deploy Endor Labs Azure DevOps App | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/azure-app/_print.html)
 
@@ -19,7 +18,7 @@ Deploy Endor Labs Azure DevOps App | Endor Labs Docs
 
 Get up and running with Endor Labs Azure DevOps App.
 
-Endor Labs provides an Azure DevOps App that continuously scans Azure repos in your projects for security risks. You can selectively scan your repositories for SCA, secrets, SAST, or CI/CD tools.
+Endor Labs provides an Azure DevOps App that continuously scans Azure repos in your projects for security risks. You can selectively scan your repositories for SCA, secrets, and SAST.
 
 You can choose to configure the Azure DevOps App at the organization level or the project level. When you configure the Azure DevOps App at the organization level, Endor Labs adds all the projects under the organization and scans all the repos in the projects. When you add an Azure DevOps project, Endor Labs scans all repos within that project.
 
@@ -155,7 +154,6 @@ To automatically scan repositories using the Azure DevOps App:
 
    * **SCA**: Perform software composition analysis and discover AI models used in your repository.
    * **Secret**: Scan Azure repos for exposed secrets.
-   * **CI/CD**: Scan Azure repos and identify all the CI/CD tools used.
    * **SAST**: Scan your source code for weakness and generate SAST findings.
 
    The available scan types depend upon your license.

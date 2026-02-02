@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/configure-scanprofile-yaml/
 title: Configure scan profile through scanprofile.yaml | Endor Labs Docs
-downloaded: 2025-12-11 11:34:11
+downloaded: 2026-01-29 22:22:53
 ---
 
 Configure scan profile through scanprofile.yaml | Endor Labs Docs
@@ -9,7 +9,6 @@ Configure scan profile through scanprofile.yaml | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/manage-scan-profiles/configure-scanprofile-yaml/_print.html)
 

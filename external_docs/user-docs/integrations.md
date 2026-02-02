@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/
 title: Integrations | Endor Labs Docs
-downloaded: 2025-12-11 11:35:27
+downloaded: 2026-01-29 22:23:57
 ---
 
 Integrations | Endor Labs Docs
@@ -9,7 +9,6 @@ Integrations | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Integrations
 
@@ -44,3 +43,7 @@ Learn how to integrate your email addresses with Endor Labs and receive finding 
 ##### [Set up Slack integration](/integrations/slack-integration/)
 
 Learn how to integrate Slack with Endor Labs and receive finding notifications
+
+##### [Third-party integrations](/integrations/third-party-integrations/)
+
+Integrate Endor Labs with third-party security and vulnerability management platforms.

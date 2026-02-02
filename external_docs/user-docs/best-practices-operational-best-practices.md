@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/operational-best-practices/
 title: Best Practices: Branches and workflows | Endor Labs Docs
-downloaded: 2025-12-11 11:31:03
+downloaded: 2026-01-29 22:20:19
 ---
 
 Best Practices: Branches and workflows | Endor Labs Docs
@@ -9,7 +9,6 @@ Best Practices: Branches and workflows | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/best-practices/operational-best-practices/_print.html)
 

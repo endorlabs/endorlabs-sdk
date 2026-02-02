@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/dashboards/
 title: Dashboards | Endor Labs Docs
-downloaded: 2025-12-11 11:33:49
+downloaded: 2026-01-29 22:22:33
 ---
 
 Dashboards | Endor Labs Docs
@@ -9,7 +9,6 @@ Dashboards | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 # Dashboards
 

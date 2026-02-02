@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/container-policies/
 title: Container policies | Endor Labs Docs
-downloaded: 2025-12-11 11:33:12
+downloaded: 2026-01-29 22:21:57
 ---
 
 Container policies | Endor Labs Docs
@@ -9,7 +9,6 @@ Container policies | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/managing-policies/finding-policies/container-policies/_print.html)
 

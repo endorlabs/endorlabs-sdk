@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/gitlab-app/gitlab-mr-scan/
 title: GitLab App MR scans | Endor Labs Docs
-downloaded: 2025-12-11 11:31:25
+downloaded: 2026-01-29 22:20:41
 ---
 
 GitLab App MR scans | Endor Labs Docs
@@ -9,7 +9,6 @@ GitLab App MR scans | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/gitlab-app/gitlab-mr-scan/_print.html)
 
@@ -344,29 +343,27 @@ The following specification shows the additional functions that you can use in y
 ```
 // FuncMap contains additional template functions used in GitLab comment templates.
 var FuncMap = template.FuncMap{
-	"now":                              toTime,
-	"enumToString":                     enumToString,
-	"getFindingURL":                    getFindingURL,
-	"getPackageVersionURL":             getPackageVersionURL,
+	"now":                              utils.ToTime,
+	"enumToString":                     utils.EnumToString,
+	"getFindingURL":                    utils.GetFindingURL,
+	"getPackageVersionURL":             utils.GetPackageVersionURL,
 	"getPullRequestURL":                getEndorLabsPullRequestRunURL,
-	"getFindingsCountString":           getFindingsCountString,
+	"getFindingsCountString":           utils.GetFindingsCountString,
 	"hasOtherFindings":                 hasOtherFindings,
 	"getOtherFindingsPackageMarker":    getOtherFindingsPackageMarker,
 	"getOtherFindingsDependencyMarker": getOtherFindingsDependencyMarker,
-	"fixBackticks":                     fixUnclosedBackticks,
-	"getFirstPartyReachableFunctions":  getFirstPartyReachableFunctions,
-	"hasFindingCategory":               hasFindingCategory,
+	"fixBackticks":                     utils.FixUnclosedBackticks,
+	"getFirstPartyReachableFunctions":  utils.GetFirstPartyReachableFunctions,
+	"hasFindingCategory":               utils.HasFindingCategory,
 	// isNotEmptyString checks if a string is not empty
-	"isNotEmptyString": func(value string) bool {
-		return value != ""
-	},
+	"isNotEmptyString": utils.IsNotEmptyString,
 	// getCustomLocation extracts the location from Custom field
 	"getCustomLocation": func(finding *endorpb.Finding) string {
-		return getCustomFieldValue(finding, "location")
+		return utils.GetCustomFieldValue(finding, "location")
 	},
 	// getCustomCodeSnippet extracts the code snippet from Custom field
 	"getCustomCodeSnippet": func(finding *endorpb.Finding) string {
-		return getCustomFieldValue(finding, "code_snippet")
+		return utils.GetCustomFieldValue(finding, "code_snippet")
 	},
 	// add returns the sum of two integers
 	"add": func(n int, incr int) int {

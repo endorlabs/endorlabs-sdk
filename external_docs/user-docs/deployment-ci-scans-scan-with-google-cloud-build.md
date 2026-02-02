@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/scan-with-google-cloud-build/
 title: Scanning with Google Cloud Build | Endor Labs Docs
-downloaded: 2025-12-11 11:35:09
+downloaded: 2026-01-29 22:23:40
 ---
 
 Scanning with Google Cloud Build | Endor Labs Docs
@@ -9,7 +9,6 @@ Scanning with Google Cloud Build | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/ci-scans/scan-with-google-cloud-build/_print.html)
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/bazel/
 title: Bazel | Endor Labs Docs
-downloaded: 2025-12-11 11:35:00
+downloaded: 2026-01-29 22:23:31
 ---
 
 Bazel | Endor Labs Docs
@@ -9,7 +9,6 @@ Bazel | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/scan-with-endorlabs/language-scanning/bazel/_print.html)
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/best-practices/scoping-scans/
 title: Best Practices: Scoping scans | Endor Labs Docs
-downloaded: 2025-12-11 11:33:10
+downloaded: 2026-01-29 22:21:54
 ---
 
 Best Practices: Scoping scans | Endor Labs Docs
@@ -9,7 +9,6 @@ Best Practices: Scoping scans | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/best-practices/scoping-scans/_print.html)
 
@@ -51,17 +50,13 @@ To include or exclude a package based on its directory
 
 ```
 endorctl scan --include-path="directory/path/**"
-```
 
-```
 endorctl scan --include-path="src/java/**"
 ```
 
 ```
 endorctl scan --exclude-path="path/to/your/directory/**"
-```
 
-```
 endorctl scan --exclude-path="src/ruby/**"
 ```
 

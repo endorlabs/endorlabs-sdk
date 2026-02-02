@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/
 title: Deploy Endor Labs GitHub App | Endor Labs Docs
-downloaded: 2025-12-11 11:30:56
+downloaded: 2026-01-29 22:20:13
 ---
 
 Deploy Endor Labs GitHub App | Endor Labs Docs
@@ -9,7 +9,6 @@ Deploy Endor Labs GitHub App | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/deployment/monitoring-scans/github-app/_print.html)
 
@@ -19,13 +18,13 @@ Deploy Endor Labs GitHub App | Endor Labs Docs
 
 Learn how to continuously monitor your environment with the Endor Labs GitHub App.
 
-Endor Labs provides a GitHub App that continuously monitors users’ projects for security and operational risk. You can use the GitHub App to selectively scan your repositories for SCA, secrets, RSPM, or CI/CD tools. GitHub App scans also establish baselines that are subsequently used during CI scans.
+Endor Labs provides a GitHub App that continuously monitors users’ projects for security and operational risk. You can use the GitHub App to selectively scan your repositories for SCA, secrets, RSPM, or GitHub Actions. GitHub App scans also establish baselines that are subsequently used during CI scans.
 
 The Endor Labs GitHub App scans your repositories every 24 hours and reports new findings or changes to your code’s release versions. It also performs RSPM scans weekly on Sundays to manage your repository’s posture. See [Scan with GitHub App](../github-app/scan-with-githubapp/) for more information. You can also manually trigger scans for your repositories. See [Re-scan projects](../github-app/re-scan-projects/) for more information. After you install the GitHub App, you can make further changes to the settings. See [Manage GitHub App](../github-app/manage-github-app/) for more information. You may need to review the technical limitations of the GitHub App so that you can use the GitHub App to its full potential. See [Technical limitations of the Endor Labs GitHub App](../github-app/technical-limitations/) for more information.
 
 If you want to use PR remediations as part of your monitoring scan or need to export your findings to GitHub Advanced Security, you need to use [GitHub App (Pro)](../github-app/github-app-pro/).
 
-If you are using GitHub Enterprise Server, you can use the [GitHub Enterprise App](../github-app/github-enterprise-app/) to continuously monitor your environment.
+If you are using GitHub Enterprise Server, you can use the [GitHub Enterprise Server App](../github-app/github-enterprise-app/) to continuously monitor your environment.
 
 **Warning**
 
@@ -99,13 +98,15 @@ If the button to install says **Install and Request** instead of **Install and A
 
 10. Choose a namespace and click **Next**.
 
-    ![Choose namespace](../../../images/GitHubApp_namespace.png)
+    ![Choose namespace](../../../images/github-app-namespace.png)
+
+    Select **Manage Namespaces** if you need to create a new namespace or if you don’t see the namespace you want to use in the list.
 11. Based on your license, select and enable the scanners.
 
     * **SCA**: Perform software composition analysis and discover AI models used in your repository.
     * **RSPM**: Scan the repository for misconfigurations. RSPM scans run every week on Sundays.
     * **Secret**: Scan the repository for exposed secrets.
-    * **CI/CD**: Scan the repository and identify all the CI/CD tools used in the repository.
+    * **GitHub Actions**: Scan the repository and identify all the GitHub Actions workflows used in the repository.
     * **SAST**: Scan your source code for weakness and generate SAST findings.
 12. Select **Include Archived Repositories** to scan your archived repositories. By default, the GitHub archived repositories aren’t scanned.
 13. Select **PULL REQUEST SCANS** to set preferences for scanning pull requests submitted by users.
@@ -148,9 +149,9 @@ Understand the technical limitations associated with the GitHub App.
 
 Learn how to continuously monitor your environment with the Endor Labs GitHub App.
 
-##### [Deploy Endor Labs GitHub Enterprise App](/deployment/monitoring-scans/github-app/github-enterprise-app/)
+##### [Deploy Endor Labs GitHub Enterprise Server App](/deployment/monitoring-scans/github-app/github-enterprise-app/)
 
-Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise App.
+Learn how to continuously monitor your GitHub Enterprise Server environment with the Endor Labs GitHub Enterprise Server App.
 
 ##### [Scan PRs using the Endor Labs GitHub app](/deployment/monitoring-scans/github-app/github-app-pr-scans/)
 

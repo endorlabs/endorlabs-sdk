@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/rest-api/using-the-rest-api/advanced-use-cases/audit-log/
 title: Using Audit Log API | Endor Labs Docs
-downloaded: 2025-12-11 11:33:36
+downloaded: 2026-01-29 22:22:21
 ---
 
 Using Audit Log API | Endor Labs Docs
@@ -9,7 +9,6 @@ Using Audit Log API | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/rest-api/using-the-rest-api/advanced-use-cases/audit-log/_print.html)
 

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/okta-saml/
 title: Set up Okta for SSO using SAML | Endor Labs Docs
-downloaded: 2025-12-11 11:31:46
+downloaded: 2026-01-29 22:20:56
 ---
 
 Set up Okta for SSO using SAML | Endor Labs Docs
@@ -9,7 +9,6 @@ Set up Okta for SSO using SAML | Endor Labs Docs
 
 
 * Type to search...
-* ---
 
 [Print entire section](/administration/access-endorlabs/authentication-providers/custom-identity-providers/okta-saml/_print.html)
 
