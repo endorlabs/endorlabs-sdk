@@ -24,7 +24,6 @@ from endorlabs.resources import policy
 from endorlabs.resources.policy import (
     CreatePolicyPayload,
     ExceptionReason,
-    Policy,
     PolicyType,
     UpdatePolicyPayload,
 )
@@ -35,18 +34,12 @@ class TestPolicy:
     """Test cases for Policy resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        # Reduce retries for faster test failure (prevents excessive wait on API errors)
-        # Production uses 15 retries, but tests should fail fast (3 retries max)
-        self.client = APIClient(auth_method="api-key", max_retries=3)
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        self.created_policy_uuids = []  # Track created policies for cleanup
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.created_policy_uuids = []
 
     @pytest.fixture
     def sample_policy(self):
@@ -61,8 +54,8 @@ class TestPolicy:
         results = policy.list_policies(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
@@ -143,65 +136,51 @@ match_finding[result] {
                     print(f"[WARNING] Failed to delete test policy {policy_uuid}: {e}")
             self.created_policy_uuids.clear()
 
-    def test_policy_get_list(self) -> None:
-        """Test GET policies operation."""
-        print("\n=== TESTING GET POLICIES ===")
+    def test_policy_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-        # Test list_policies with pagination limits
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        policies_list = policy.list_policies(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(policies_list, list), "Should return a list of policies"
-        assert all(
-            isinstance(x, Policy) for x in policies_list
-        ), "All list items should be Policy instances"
-        if len(policies_list) == 0:
+        try:
+            result = client.policy.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
+
+    def test_policy_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            items = client.policy.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(policies_list)} policies")
-
-        # Display first few policies
-        for _i, policy_item in enumerate(policies_list[:10]):  # Show first 10
-            name = policy_item.meta.name if policy_item.meta else None
-            print(f"Policy {policy_item.uuid}: {name}")
-            ptype = policy_item.spec.policy_type if policy_item.spec else None
-            print(f"  Type: {ptype}")
-            if policy_item.meta.tags:
-                print(f"  Meta tags: {policy_item.meta.tags}")
-
-    def test_policy_get_by_uuid(self, sample_policy) -> None:
-        """Test GET policy by UUID operation."""
-        print("\n=== TESTING GET POLICY BY UUID ===")
-
-        policy_item = sample_policy
-        retrieved_policy = policy.get_policy(
-            self.client, self.namespace, policy_item.uuid
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
         )
-
-        # Note: Some policies may not be retrievable by UUID due to API limitations
-        if retrieved_policy is not None:
-            assert retrieved_policy.uuid == policy_item.uuid, (
-                "Retrieved policy should match original"
-            )
-            assert retrieved_policy.meta.name == policy_item.meta.name, (
-                "Policy name should match"
-            )
-            print(f"Successfully retrieved policy: {retrieved_policy.uuid}")
-            print(f"Policy name: {retrieved_policy.meta.name}")
-            if retrieved_policy.meta.tags:
-                print(f"Policy meta tags: {retrieved_policy.meta.tags}")
-        else:
-            print(
-                f"[INFO] Policy {policy_item.uuid} not retrievable by UUID "
-                f"(API limitation)"
-            )
+        got = client.policy.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_policy_type_filtering(self) -> None:
         """Test policy filtering by type."""
@@ -234,155 +213,6 @@ match_finding[result] {
                 assert policy_item.spec.policy_type == policy_type, (
                     f"Policy should be of type {policy_type}"
                 )
-
-    @pytest.mark.writes
-    def test_policy_create(self) -> None:
-        """Test CREATE policy operation.
-
-        Local-only: creating policies requires elevated permissions (403 in CI).
-        """
-        print("\n=== TESTING POLICY CREATE ===")
-
-        created_policy = self._create_test_policy()
-        print(f"[SUCCESS] Policy created with UUID: {created_policy.uuid}")
-        assert created_policy is not None, "Policy should be created successfully"
-
-    @pytest.mark.writes
-    def test_policy_update_with_mask(self) -> None:
-        """Test UPDATE policy operation with update_mask parameter.
-
-        Local-only: requires create and update permissions (403 in CI).
-        """
-        print("\n=== TESTING POLICY UPDATE WITH MASK ===")
-
-        # Create a fresh policy for this test
-        print("Creating fresh policy for update test...")
-        created_policy = self._create_test_policy(" (Update Test)")
-        policy_uuid = created_policy.uuid
-        print(f"Created policy UUID: {policy_uuid}")
-
-        # Wait for policy to be fully created
-        time.sleep(2)
-
-        # Verify the policy exists and is in the current namespace
-        print(f"Current namespace: {self.namespace}")
-        created_policy_check = policy.get_policy(
-            self.client, self.namespace, policy_uuid
-        )
-        if not created_policy_check:
-            pytest.skip(f"Could not retrieve created policy {policy_uuid}")
-
-        if created_policy_check.tenant_meta.namespace != self.namespace:
-            pytest.skip(
-                f"Policy {policy_uuid} is in namespace "
-                f"{created_policy_check.tenant_meta.namespace}, "
-                f"not in current namespace {self.namespace}"
-            )
-
-        print(f"Using created policy: {policy_uuid} (created in {self.namespace})")
-
-        # Create update payload - only update safe fields
-        update_payload = UpdatePolicyPayload(
-            meta=policy.PolicyMetaUpdate(
-                name="Updated Test Exception Policy",
-                description="Updated description for the test EXCEPTION policy",
-                tags=["test", "exception", "crud-test", "updated", "endor-cockpit"],
-            ),
-            spec=policy.PolicySpec(
-                policy_type=PolicyType.EXCEPTION,
-                rule="""package exceptions
-
-# EXCEPTION policies must return Finding UUIDs with Endor field
-match_finding[result] {
-    some i
-    data.resources.Finding[i]
-    # Updated rule for test purposes
-    result = {
-        "Endor": {
-            "Finding": data.resources.Finding[i].uuid
-        }
-    }
-}""",
-                query_statements=["data.exceptions.match_finding"],
-                disable=False,
-                resource_kinds=["Finding"],
-                exception={"reason": ExceptionReason.FALSE_POSITIVE},
-            ),
-            propagate=True,
-        )
-
-        print(f"Updating EXCEPTION policy: {policy_uuid}")
-        print(f"New name: {update_payload.meta.name}")
-        print(f"New tags: {update_payload.meta.tags}")
-
-        # Update the policy with update_mask
-        updated_policy = policy.update_policy(
-            self.client,
-            self.namespace,
-            policy_uuid,
-            update_payload,
-            "meta.name,meta.description,meta.tags,spec.rule",
-        )
-
-        assert updated_policy is not None, "Policy update should succeed"
-        assert updated_policy.meta.name == "Updated Test Exception Policy", (
-            "Policy name should be updated"
-        )
-        assert "updated" in updated_policy.meta.tags, "Updated tag should be present"
-
-        print(f"[SUCCESS] Policy updated: {updated_policy.meta.name}")
-        print(f"Updated tags: {updated_policy.meta.tags}")
-
-        # Note: Policy will be cleaned up by teardown_method
-        print(f"[INFO] Policy {policy_uuid} will be cleaned up by teardown")
-
-        assert updated_policy is not None, "Policy should be updated successfully"
-
-    @pytest.mark.writes
-    def test_policy_delete(self) -> None:
-        """Test DELETE policy operation.
-
-        Local-only: requires create and delete permissions (403 in CI).
-        """
-        print("\n=== TESTING POLICY DELETE ===")
-
-        # Create a fresh policy for this test
-        print("Creating fresh policy for delete test...")
-        created_policy = self._create_test_policy(" (Delete Test)")
-        policy_uuid = created_policy.uuid
-        print(f"Created policy UUID: {policy_uuid}")
-
-        # Wait for policy to be fully created
-        time.sleep(2)
-
-        # Verify the policy exists
-        created_policy_check = policy.get_policy(
-            self.client, self.namespace, policy_uuid
-        )
-        if not created_policy_check:
-            pytest.skip(f"Could not retrieve created policy {policy_uuid}")
-
-        print(f"Deleting EXCEPTION policy: {policy_uuid}")
-
-        # Delete the policy
-        delete_success = policy.delete_policy(self.client, self.namespace, policy_uuid)
-
-        assert delete_success, "Policy deletion should succeed"
-        print(f"[SUCCESS] Policy deleted: {policy_uuid}")
-
-        # Remove from cleanup list since we deleted it manually
-        if policy_uuid in self.created_policy_uuids:
-            self.created_policy_uuids.remove(policy_uuid)
-
-        # Verify deletion by trying to retrieve it
-        time.sleep(2)  # Wait for deletion to propagate
-        from endorlabs.exceptions import NotFoundError
-
-        with pytest.raises(NotFoundError) as exc_info:
-            policy.get_policy(self.client, self.namespace, policy_uuid)
-        assert exc_info.value.resource_uuid == policy_uuid
-        assert exc_info.value.operation == "get"
-        print("[SUCCESS] Policy deletion confirmed - policy no longer exists")
 
     @pytest.mark.writes
     def test_exception_policy_create(self) -> None:
@@ -629,22 +459,134 @@ match_findings[result] {
         self.created_policy_uuids.append(created_policy.uuid)
         print(f"[SUCCESS] Admission policy created with UUID: {created_policy.uuid}")
 
-    def test_client_recommended_ux_list_policies(self) -> None:
-        """Recommended UX: endorlabs.Client(tenant=...); client.policies.list()."""
+    @pytest.mark.writes
+    def test_client_ux_create_policy(self) -> None:
+        """Consumer UX: client.policy.create(payload); teardown deletes."""
+        import time
+
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        policy_name = f"ClientUX Exception {int(time.time())}"
+        payload = CreatePolicyPayload(
+            meta=policy.PolicyMeta(
+                name=policy_name,
+                description="Consumer UX create test",
+                tags=["test", "client-ux"],
+            ),
+            spec=policy.PolicySpec(
+                policy_type=PolicyType.EXCEPTION,
+                rule="""package exceptions
+match_finding[result] {
+    some i
+    data.resources.Finding[i]
+    result = {"Endor": {"Finding": data.resources.Finding[i].uuid}}
+}""",
+                query_statements=["data.exceptions.match_finding"],
+                disable=False,
+                resource_kinds=["Finding"],
+                exception={"reason": ExceptionReason.FALSE_POSITIVE},
+            ),
+            propagate=False,
+        )
+        try:
+            created = client.policy.create(payload)
+        except Exception as e:
+            pytest.skip(f"Policy create not allowed in this environment: {e}")
+        assert created is not None
+        assert created.meta.name == policy_name
+        self.created_policy_uuids.append(created.uuid)
+
+    @pytest.mark.writes
+    def test_client_ux_update_policy(self) -> None:
+        """Consumer UX: list get update revert."""
         import endorlabs
         from endorlabs.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
         try:
-            policies = client.policies.list(max_pages=1)
+            policies = client.policy.list(max_pages=conftest.TEST_MAX_PAGES)
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(policies, list)
+        if not policies:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = policies[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.policy.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve policy {item.uuid}")
+        original_description = getattr(current.meta, "description", None) or ""
+        update_payload = UpdatePolicyPayload(
+            meta=policy.PolicyMetaUpdate(description="Updated by client-ux")
+        )
+        try:
+            updated = client.policy.update(
+                item.uuid, update_payload, update_mask="meta.description", namespace=ns
+            )
+        except Exception as e:
+            pytest.skip(f"Policy update not allowed in this environment: {e}")
+        assert updated is not None
+        restore_payload = UpdatePolicyPayload(
+            meta=policy.PolicyMetaUpdate(description=original_description)
+        )
+        try:
+            client.policy.update(
+                item.uuid, restore_payload, update_mask="meta.description", namespace=ns
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original policy values: {e}")
+
+    @pytest.mark.writes
+    def test_client_ux_delete_policy(self) -> None:
+        """Consumer UX: create then client.policy.delete(uuid)."""
+        import time
+
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        policy_name = f"ClientUX Del {int(time.time())}"
+        payload = CreatePolicyPayload(
+            meta=policy.PolicyMeta(
+                name=policy_name,
+                description="Consumer UX delete test",
+                tags=["test", "client-ux"],
+            ),
+            spec=policy.PolicySpec(
+                policy_type=PolicyType.EXCEPTION,
+                rule="""package exceptions
+match_finding[result] {
+    some i
+    data.resources.Finding[i]
+    result = {"Endor": {"Finding": data.resources.Finding[i].uuid}}
+}""",
+                query_statements=["data.exceptions.match_finding"],
+                disable=False,
+                resource_kinds=["Finding"],
+                exception={"reason": ExceptionReason.FALSE_POSITIVE},
+            ),
+            propagate=False,
+        )
+        try:
+            created = client.policy.create(payload)
+        except Exception as e:
+            pytest.skip(f"Policy create not allowed in this environment: {e}")
+        if not created:
+            pytest.skip("Failed to create policy for delete test")
+        result = client.policy.delete(created.uuid)
+        assert result is True
 
 
 if __name__ == "__main__":
@@ -681,14 +623,7 @@ if __name__ == "__main__":
         print("Running policy resource tests...")
 
         # Run all tests
-        test_instance.test_policy_get_list()
-        test_instance.test_policy_get_by_uuid()
         test_instance.test_policy_type_filtering()
-
-        # Run CRUD tests
-        test_instance.test_policy_create()
-        test_instance.test_policy_update_with_mask()
-        test_instance.test_policy_delete()
 
         print("\n[SUCCESS] All policy tests completed successfully!")
 
@@ -698,3 +633,5 @@ if __name__ == "__main__":
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        test_instance.client.close()

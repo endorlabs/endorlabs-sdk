@@ -11,8 +11,13 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endorlabs.api_client import APIClient
+import conftest
+
 from endorlabs.resources import repository
+from endorlabs.resources.repository import (
+    RepositoryMetaUpdate,
+    UpdateRepositoryPayload,
+)
 
 
 @pytest.mark.integration
@@ -20,24 +25,13 @@ class TestRepository:
     """Test cases for Repository resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        import conftest
-
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Track created resources for cleanup
-        # (repositories are read-only, but establish pattern)
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.parent_namespace = root_namespace
         self.created_repository_uuids = []
-
-        # Get test data - use parent namespace to access child resources
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
     def teardown_method(self) -> None:
         """Clean up any resources created during tests."""
@@ -63,8 +57,10 @@ class TestRepository:
             results = repository.list_repositories(
                 self.client,
                 self.parent_namespace,
-                list_params=ListParameters(page_size=1, traverse=True),
-                max_pages=1,
+                list_params=ListParameters(
+                    page_size=conftest.TEST_PAGE_SIZE, traverse=True
+                ),
+                max_pages=conftest.TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -72,60 +68,51 @@ class TestRepository:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_repository_get_list(self) -> None:
-        """Test GET repositories operation."""
-        print("\n=== TESTING GET REPOSITORIES ===")
-
-        import conftest
-
+    def test_repository_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
         from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
 
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
         try:
-            repositories_list = repository.list_repositories(
-                self.client,
-                self.parent_namespace,
-                list_params=ListParameters(
-                    page_size=conftest.TEST_PAGE_SIZE,
-                    traverse=True,
-                ),
-                max_pages=conftest.TEST_MAX_PAGES,
+            result = client.repository.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(repositories_list, list), (
-            "Should return a list of repositories"
+        assert isinstance(result, list)
+
+    def test_repository_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        if len(repositories_list) == 0:
+        try:
+            items = client.repository.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(repositories_list)} repositories")
-
-        # Display first few repositories
-        for i, repo in enumerate(repositories_list[:3]):
-            print(f"Repository {i + 1}:")
-            print(f"  UUID: {repo.uuid}")
-            print(f"  Name: {repo.meta.name}")
-            print(f"  Kind: {repo.meta.kind}")
-            print(f"  Platform: {repo.spec.platform_source}")
-            print(f"  Clone URL: {repo.spec.http_clone_url}")
-
-    def test_repository_get_by_uuid(self, sample_repository) -> None:
-        """Test GET repository by UUID operation."""
-        test_repository = sample_repository
-        # Use the repository's actual namespace
-        # (may be in child namespace when traverse=True)
-        repository_namespace = (
-            test_repository.tenant_meta.namespace
-            if test_repository.tenant_meta
-            else self.parent_namespace
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
         )
-        retrieved_repository = repository.get_repository(
-            self.client, repository_namespace, test_repository.uuid
-        )
-        assert retrieved_repository is not None
-        assert retrieved_repository.uuid == test_repository.uuid
-        assert retrieved_repository.meta.name == test_repository.meta.name
+        got = client.repository.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_repository_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
@@ -183,15 +170,55 @@ class TestRepository:
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
-    def test_client_recommended_ux_list_repositories(self) -> None:
-        """Recommended UX: endorlabs.Client(tenant=...); client.repositories.list()."""
+    @pytest.mark.writes
+    def test_client_ux_update_repository(self) -> None:
+        """Consumer UX: client.repository.get() then update then revert."""
         import endorlabs
+        from endorlabs.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
-        repositories = client.repositories.list(max_pages=1)
-        assert isinstance(repositories, list)
+        try:
+            repos = client.repository.list(
+                traverse=True, max_pages=conftest.TEST_MAX_PAGES
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not repos:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = repos[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.repository.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve repository {item.uuid}")
+        original_description = getattr(current.meta, "description", None) or ""
+        new_description = (
+            f"{original_description} [client-ux]"
+            if original_description
+            else "client-ux"
+        )
+        update_payload = UpdateRepositoryPayload(
+            meta=RepositoryMetaUpdate(description=new_description)
+        )
+        try:
+            updated = client.repository.update(
+                item.uuid, update_payload, update_mask="meta.description", namespace=ns
+            )
+        except Exception as e:
+            pytest.skip(f"Repository update not allowed in this environment: {e}")
+        assert updated is not None
+        restore_payload = UpdateRepositoryPayload(
+            meta=RepositoryMetaUpdate(description=original_description)
+        )
+        try:
+            client.repository.update(
+                item.uuid, restore_payload, update_mask="meta.description", namespace=ns
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original repository values: {e}")

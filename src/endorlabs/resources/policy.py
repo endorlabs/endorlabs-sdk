@@ -21,6 +21,7 @@ API FEATURES:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
@@ -378,6 +379,8 @@ def list_policies(
             page_token=None,
             sort_field=None,
             sort_order=None,
+            sort_by=None,
+            desc=None,
             count=None,
             traverse=None,
             from_date=None,
@@ -392,6 +395,41 @@ def list_policies(
         )
 
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
+def list_policies_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[Policy]:
+    """Iterate over policies without materializing the full list."""
+    ops = _get_policy_ops(client)
+    policy_type = kwargs.pop("policy_type", None)
+    if policy_type and list_params is None:
+        list_params = ListParameters(
+            filter=f"spec.policy_type=={policy_type.value}",
+            mask=None,
+            page_size=None,
+            page_token=None,
+            sort_field=None,
+            sort_order=None,
+            sort_by=None,
+            desc=None,
+            count=None,
+            traverse=None,
+            from_date=None,
+            to_date=None,
+        )
+    elif policy_type and list_params:
+        type_filter = f"spec.policy_type=={policy_type.value}"
+        list_params.filter = (
+            f"({list_params.filter}) and ({type_filter})"
+            if list_params.filter
+            else type_filter
+        )
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
 def get_policy(
@@ -458,7 +496,7 @@ def update_policy(
     tenant_meta_namespace: str,
     policy_uuid: str,
     payload: UpdatePolicyPayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> Policy | None:
     r"""Update an existing policy using partial updates.
 
@@ -506,16 +544,14 @@ def update_policy(
         tenant_meta_namespace: Tenant namespace (canonical name)
         policy_uuid: Policy UUID
         payload: Policy update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.name,spec.rule"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "meta.name,spec.rule". Missing or empty raises ValidationError.
 
     Returns:
         Updated Policy object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If policy doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
@@ -543,12 +579,18 @@ def update_policy(
         ... )
         >>> policy = update_policy(client, namespace, uuid, payload, "spec.rule")
 
-    Note:
-        The update_mask parameter is critical for policy updates. Without it,
-        the API may not persist changes reliably. Always specify which fields
-        you want to update.
-
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Policy update requires an update_mask (e.g. 'meta.name', 'spec.rule')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=policy_uuid,
+        )
     # Get the current policy to include required fields
     # Note: Using list_policies as workaround for get_policy 404 issues
     policies = list_policies(client, tenant_meta_namespace)
@@ -592,9 +634,9 @@ def update_policy(
     merged_policy = Policy(**merged_policy_dict)
 
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
 
     # Use base class update method
     ops = _get_policy_ops(client)
@@ -641,6 +683,8 @@ def list_policies_by_type(
         page_token=None,
         sort_field=None,
         sort_order=None,
+        sort_by=None,
+        desc=None,
         count=None,
         traverse=None,
         from_date=None,
@@ -660,6 +704,8 @@ def list_policies_by_namespace(
         page_token=None,
         sort_field=None,
         sort_order=None,
+        sort_by=None,
+        desc=None,
         count=None,
         traverse=None,
         from_date=None,
@@ -682,6 +728,8 @@ def list_policies_paginated(
         page_token=page_token,
         sort_field=None,
         sort_order=None,
+        sort_by=None,
+        desc=None,
         count=None,
         traverse=None,
         from_date=None,
@@ -693,7 +741,7 @@ def list_policies_paginated(
 def list_policies_sorted(
     client: APIClient,
     tenant_meta_namespace: str,
-    sort_field: str = "meta.create_time",
+    sort_by: str = "meta.create_time",
     desc: bool = True,
 ) -> list[Policy]:
     """List policies with sorting."""
@@ -702,8 +750,10 @@ def list_policies_sorted(
         mask=None,
         page_size=None,
         page_token=None,
-        sort_field=sort_field,
-        sort_order="desc" if desc else "asc",
+        sort_field=None,
+        sort_order=None,
+        sort_by=sort_by,
+        desc=desc,
         count=None,
         traverse=None,
         from_date=None,

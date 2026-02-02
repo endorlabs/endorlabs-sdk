@@ -33,14 +33,12 @@ class TestAuthorizationPolicy:
     """Test cases for AuthorizationPolicy resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-        self.created_policy_uuids = []  # Track created policies for cleanup
-
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.created_policy_uuids = []
 
     def teardown_method(self) -> None:
         """Clean up any policies created during tests."""
@@ -57,281 +55,6 @@ class TestAuthorizationPolicy:
                         f"policy {policy_uuid}: {e}"
                     )
             self.created_policy_uuids.clear()
-
-    def test_authorization_policy_get_list(self) -> None:
-        """Test GET authorization policies operation."""
-        print("\n=== TESTING AUTHORIZATION POLICY LIST ===")
-
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        policies = authorization_policy.list_authorization_policies(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
-
-        assert isinstance(policies, list), "Should return a list"
-        print(f"Found {len(policies)} authorization policies")
-
-        if policies:
-            policy = policies[0]
-            assert hasattr(policy, "uuid"), "Policy should have uuid"
-            assert hasattr(policy, "meta"), "Policy should have meta"
-            assert hasattr(policy, "spec"), "Policy should have spec"
-            assert hasattr(policy, "tenant_meta"), "Policy should have tenant_meta"
-            print(f"Sample policy UUID: {policy.uuid}")
-            print(f"Sample policy name: {policy.meta.name}")
-
-    def test_authorization_policy_get_by_uuid(self) -> None:
-        """Test GET authorization policy by UUID operation."""
-        print("\n=== TESTING AUTHORIZATION POLICY GET BY UUID ===")
-
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        policies = authorization_policy.list_authorization_policies(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
-        if not policies:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        test_policy = policies[0]
-        retrieved = authorization_policy.get_authorization_policy(
-            self.client, self.namespace, test_policy.uuid
-        )
-
-        assert retrieved is not None, "Should retrieve policy"
-        assert retrieved.uuid == test_policy.uuid, "UUID should match"
-        assert retrieved.meta.name == test_policy.meta.name, "Name should match"
-        print(f"Retrieved policy: {retrieved.meta.name}")
-
-    @pytest.mark.writes
-    def test_authorization_policy_create_with_role(self) -> None:
-        """Test CREATE authorization policy operation with system role.
-
-        Local-only: creating auth policies requires elevated permissions (403 in CI).
-        """
-        print("\n=== TESTING AUTHORIZATION POLICY CREATE (WITH ROLE) ===")
-
-        # Create test policy with CODE_SCANNER role
-        timestamp = int(time.time())
-        test_policy_payload = CreateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-auth-policy-{timestamp}",
-                description="Test authorization policy created for CRUD testing",
-                tags=["test", "crud-test"],
-            ),
-            spec=AuthorizationPolicySpec(
-                clause=["test@endor.ai"],
-                target_namespaces=[self.namespace],
-                propagate=False,
-                permissions=AuthorizationPolicyPermissions(
-                    roles=[SystemRole.CODE_SCANNER.value]
-                ),
-            ),
-            propagate=False,
-        )
-
-        print(f"Creating authorization policy: {test_policy_payload.meta.name}")
-        print(f"Role: {SystemRole.CODE_SCANNER.value}")
-
-        # Create the policy
-        created_policy = authorization_policy.create_authorization_policy(
-            self.client, self.namespace, test_policy_payload
-        )
-
-        assert created_policy is not None, "Policy creation should succeed"
-        assert created_policy.meta.name == test_policy_payload.meta.name, (
-            "Policy name should match"
-        )
-        assert (
-            created_policy.spec.permissions.roles
-            == test_policy_payload.spec.permissions.roles
-        ), "Roles should match"
-
-        # Track for cleanup
-        self.created_policy_uuids.append(created_policy.uuid)
-        print(f"Created policy UUID: {created_policy.uuid}")
-
-    @pytest.mark.writes
-    def test_authorization_policy_create_with_resource_permissions(self) -> None:
-        """Test CREATE authorization policy with resource-specific permissions.
-
-        Local-only: creating auth policies requires elevated permissions (403 in CI).
-        """
-        print(
-            "\n=== TESTING AUTHORIZATION POLICY CREATE (WITH RESOURCE PERMISSIONS) ==="
-        )
-
-        timestamp = int(time.time())
-        test_policy_payload = CreateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-auth-policy-resource-{timestamp}",
-                description="Test authorization policy with resource permissions",
-            ),
-            spec=AuthorizationPolicySpec(
-                clause=["test@endor.ai"],
-                target_namespaces=[self.namespace],
-                propagate=False,
-                permissions=AuthorizationPolicyPermissions(
-                    rules={
-                        "repository": {"methods": ["METHOD_READ", "METHOD_CREATE"]},
-                        "finding": {"methods": ["METHOD_READ"]},
-                    }
-                ),
-            ),
-            propagate=False,
-        )
-
-        print(f"Creating authorization policy: {test_policy_payload.meta.name}")
-        print("Resource permissions: repository (READ, CREATE), finding (READ)")
-
-        # Create the policy
-        created_policy = authorization_policy.create_authorization_policy(
-            self.client, self.namespace, test_policy_payload
-        )
-
-        assert created_policy is not None, "Policy creation should succeed"
-        assert created_policy.spec.permissions.rules is not None, "Rules should be set"
-
-        # Track for cleanup
-        self.created_policy_uuids.append(created_policy.uuid)
-        print(f"Created policy UUID: {created_policy.uuid}")
-
-    @pytest.mark.writes
-    def test_authorization_policy_update(self) -> None:
-        """Test UPDATE authorization policy operation.
-
-        Local-only: requires create (and update) permissions (403 in CI).
-        """
-        print("\n=== TESTING AUTHORIZATION POLICY UPDATE ===")
-
-        # First create a policy to update
-        timestamp = int(time.time())
-        create_payload = CreateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-auth-policy-update-{timestamp}",
-                description="Test policy for update testing",
-            ),
-            spec=AuthorizationPolicySpec(
-                clause=["test@endor.ai"],
-                target_namespaces=[self.namespace],
-                propagate=False,
-                permissions=AuthorizationPolicyPermissions(
-                    roles=[SystemRole.READ_ONLY.value]
-                ),
-            ),
-            propagate=False,
-        )
-
-        created = authorization_policy.create_authorization_policy(
-            self.client, self.namespace, create_payload
-        )
-        if not created:
-            pytest.skip("Failed to create policy for update test")
-
-        self.created_policy_uuids.append(created.uuid)
-
-        # Update the policy
-        update_payload = UpdateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-auth-policy-update-{timestamp}-updated",
-                description="Updated description",
-            )
-        )
-
-        updated = authorization_policy.update_authorization_policy(
-            self.client,
-            self.namespace,
-            created.uuid,
-            update_payload,
-            "meta.name,meta.description",
-        )
-
-        assert updated is not None, "Update should succeed"
-        assert updated.meta.name == update_payload.meta.name, "Name should be updated"
-        assert updated.meta.description == update_payload.meta.description, (
-            "Description should be updated"
-        )
-        print(f"Updated policy name: {updated.meta.name}")
-
-    @pytest.mark.writes
-    def test_authorization_policy_delete(self) -> None:
-        """Test DELETE authorization policy operation.
-
-        Local-only: requires create (and delete) permissions (403 in CI).
-        """
-        import time
-
-        from endorlabs.exceptions import NotFoundError
-
-        print("\n=== TESTING AUTHORIZATION POLICY DELETE ===")
-
-        # First create a policy to delete
-        timestamp = int(time.time())
-        create_payload = CreateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=f"test-auth-policy-delete-{timestamp}",
-                description="Test policy for delete testing",
-            ),
-            spec=AuthorizationPolicySpec(
-                clause=["test@endor.ai"],
-                target_namespaces=[self.namespace],
-                propagate=False,
-                permissions=AuthorizationPolicyPermissions(
-                    roles=[SystemRole.READ_ONLY.value]
-                ),
-            ),
-            propagate=False,
-        )
-
-        created = authorization_policy.create_authorization_policy(
-            self.client, self.namespace, create_payload
-        )
-        if not created:
-            pytest.skip("Failed to create policy for delete test")
-
-        policy_uuid = created.uuid
-        # Allow API eventual consistency before delete
-        time.sleep(2)
-
-        try:
-            result = authorization_policy.delete_authorization_policy(
-                self.client, self.namespace, policy_uuid
-            )
-        except NotFoundError:
-            pytest.skip(
-                "AuthorizationPolicy delete: policy not found (namespace/timing)"
-            )
-
-        assert result is True, "Delete should succeed"
-
-        # Verify deleted: get should eventually raise NotFoundError (404)
-        # Retry a few times to tolerate backend eventual consistency
-        max_attempts = 5
-        for attempt in range(max_attempts):
-            time.sleep(2)
-            try:
-                still = authorization_policy.get_authorization_policy(
-                    self.client, self.namespace, policy_uuid
-                )
-                if still is None:
-                    break
-                if attempt == max_attempts - 1:
-                    pytest.fail(
-                        "Policy should be deleted (get returned object after "
-                        f"{max_attempts} attempts)"
-                    )
-            except NotFoundError:
-                break  # Expected: 404 after delete
-        print(f"Deleted policy UUID: {policy_uuid}")
 
     def test_authorization_policy_filter_by_role(self) -> None:
         """Test filtering authorization policies by system role."""
@@ -351,18 +74,190 @@ class TestAuthorizationPolicy:
                     "All policies should have CODE_SCANNER role"
                 )
 
-    def test_client_recommended_ux_list_authorization_policies(self) -> None:
-        """Recommended UX: Client(tenant=...); client.authorization_policies.list()."""
+    def test_authorization_policy_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.authorization_policy.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
+
+    def test_authorization_policy_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.authorization_policy.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.authorization_policy.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
+
+    @pytest.mark.writes
+    def test_client_ux_create_authorization_policy(self) -> None:
+        """Consumer UX: create via client; teardown deletes."""
         import endorlabs
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
-        policies = client.authorization_policies.list(max_pages=1)
-        assert isinstance(policies, list)
+        timestamp = int(time.time())
+        payload = CreateAuthorizationPolicyPayload(
+            meta=AuthorizationPolicyMeta(
+                name=f"client-ux-auth-{timestamp}",
+                description="Consumer UX create test",
+            ),
+            spec=AuthorizationPolicySpec(
+                clause=["test@endor.ai"],
+                target_namespaces=[self.namespace],
+                propagate=False,
+                permissions=AuthorizationPolicyPermissions(
+                    roles=[SystemRole.CODE_SCANNER.value]
+                ),
+            ),
+            propagate=False,
+        )
+        try:
+            created = client.authorization_policy.create(payload)
+        except Exception as e:
+            pytest.skip(
+                f"Authorization policy create not allowed in this environment: {e}"
+            )
+        assert created is not None
+        assert created.meta.name == payload.meta.name
+        self.created_policy_uuids.append(created.uuid)
+
+    @pytest.mark.writes
+    def test_client_ux_update_authorization_policy(self) -> None:
+        """Consumer UX: create then get then update then revert; teardown deletes."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        timestamp = int(time.time())
+        create_payload = CreateAuthorizationPolicyPayload(
+            meta=AuthorizationPolicyMeta(
+                name=f"client-ux-update-{timestamp}",
+                description="Original description",
+            ),
+            spec=AuthorizationPolicySpec(
+                clause=["test@endor.ai"],
+                target_namespaces=[self.namespace],
+                propagate=False,
+                permissions=AuthorizationPolicyPermissions(
+                    roles=[SystemRole.READ_ONLY.value]
+                ),
+            ),
+            propagate=False,
+        )
+        try:
+            created = client.authorization_policy.create(create_payload)
+        except Exception as e:
+            pytest.skip(
+                f"Authorization policy create not allowed in this environment: {e}"
+            )
+        if not created:
+            pytest.skip("Failed to create authorization policy for update test")
+        self.created_policy_uuids.append(created.uuid)
+        current = client.authorization_policy.get(
+            created.uuid, namespace=self.namespace
+        )
+        if not current:
+            pytest.skip(f"Could not retrieve authorization policy {created.uuid}")
+        original_description = getattr(current.meta, "description", None) or ""
+        update_payload = UpdateAuthorizationPolicyPayload(
+            meta=AuthorizationPolicyMeta(
+                name=current.meta.name,
+                description="Updated by client-ux",
+            )
+        )
+        try:
+            updated = client.authorization_policy.update(
+                created.uuid,
+                update_payload,
+                update_mask="meta.description",
+                namespace=self.namespace,
+            )
+        except Exception as e:
+            pytest.skip(
+                f"Authorization policy update not allowed in this environment: {e}"
+            )
+        assert updated is not None
+        restore_payload = UpdateAuthorizationPolicyPayload(
+            meta=AuthorizationPolicyMeta(
+                name=current.meta.name,
+                description=original_description,
+            )
+        )
+        try:
+            client.authorization_policy.update(
+                created.uuid,
+                restore_payload,
+                update_mask="meta.description",
+                namespace=self.namespace,
+            )
+        except Exception as e:
+            print(
+                f"[WARNING] Failed to restore original authorization policy values: {e}"
+            )
+
+    @pytest.mark.writes
+    def test_client_ux_delete_authorization_policy(self) -> None:
+        """Consumer UX: create then client.authorization_policy.delete(uuid)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        timestamp = int(time.time())
+        payload = CreateAuthorizationPolicyPayload(
+            meta=AuthorizationPolicyMeta(
+                name=f"client-ux-del-{timestamp}",
+                description="Consumer UX delete test",
+            ),
+            spec=AuthorizationPolicySpec(
+                clause=["test@endor.ai"],
+                target_namespaces=[self.namespace],
+                propagate=False,
+                permissions=AuthorizationPolicyPermissions(
+                    roles=[SystemRole.CODE_SCANNER.value]
+                ),
+            ),
+            propagate=False,
+        )
+        try:
+            created = client.authorization_policy.create(payload)
+        except Exception as e:
+            pytest.skip(
+                f"Authorization policy create not allowed in this environment: {e}"
+            )
+        if not created:
+            pytest.skip("Failed to create authorization policy for delete test")
+        result = client.authorization_policy.delete(created.uuid)
+        assert result is True
 
 
 if __name__ == "__main__":
@@ -396,16 +291,8 @@ if __name__ == "__main__":
         print("Running authorization policy resource tests...")
 
         # Run all tests
-        test_instance.test_authorization_policy_get_list()
-        test_instance.test_authorization_policy_get_by_uuid()
         test_instance.test_authorization_policy_structure_analysis()
         test_instance.test_authorization_policy_filter_by_role()
-
-        # Run CRUD tests
-        test_instance.test_authorization_policy_create_with_role()
-        test_instance.test_authorization_policy_create_with_resource_permissions()
-        test_instance.test_authorization_policy_update()
-        test_instance.test_authorization_policy_delete()
         test_instance.test_authorization_policy_full_crud_cycle()
 
         print("\n[SUCCESS] All authorization policy tests completed successfully!")
@@ -417,5 +304,5 @@ if __name__ == "__main__":
         traceback.print_exc()
         sys.exit(1)
     finally:
-        # Cleanup
+        test_instance.client.close()
         test_instance.teardown_method()

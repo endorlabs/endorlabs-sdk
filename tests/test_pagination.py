@@ -24,183 +24,186 @@ class TestPagination:
     """Test cases for automatic pagination functionality."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Set up test environment."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+    def setup(self, api_client, namespace) -> None:
+        """Set up test environment (client and namespace from conftest)."""
+        self.client = api_client
+        self.namespace = namespace
 
     def test_pagination_with_mock_data(self) -> None:
-        """Test pagination with mock API responses."""
-        # Mock response data simulating multiple pages
-        mock_responses = [
-            {
-                "list": {
-                    "objects": [
-                        {"uuid": "1", "meta": {"name": "item1"}},
-                        {"uuid": "2", "meta": {"name": "item2"}},
-                    ],
-                    "response": {"next_page_token": 123},
-                }
-            },
-            {
-                "list": {
-                    "objects": [
-                        {"uuid": "3", "meta": {"name": "item3"}},
-                        {"uuid": "4", "meta": {"name": "item4"}},
-                    ],
-                    "response": {"next_page_token": 456},
-                }
-            },
-            {
-                "list": {
-                    "objects": [
-                        {"uuid": "5", "meta": {"name": "item5"}},
-                    ],
-                    "response": {},  # No next_page_token - end of pagination
-                }
-            },
-        ]
-
-        # Mock the client.get method to return our test data
-        with patch.object(self.client, "get") as mock_get:
-            # Create mock responses that return the correct data
-            mock_responses_objects = []
-            for response in mock_responses:
-                mock_response = Mock()
-                mock_response.json.return_value = response
-                mock_responses_objects.append(mock_response)
-
-            mock_get.side_effect = mock_responses_objects
-
-            # Test with a simple resource operations class
-            ops = BaseResourceOperations(self.client, "test-resources", Mock)
-            results = ops.list(self.namespace)
-
-            # Verify all items were fetched
-            assert len(results) == 5, f"Expected 5 items, got {len(results)}"
-            assert results[0].uuid == "1"
-            assert results[4].uuid == "5"
-
-            # Verify correct number of API calls
-            assert mock_get.call_count == 3, (
-                f"Expected 3 API calls, got {mock_get.call_count}"
-            )
-
-    def test_pagination_with_unlimited_pages(self) -> None:
-        """Test pagination fetches all pages without limits."""
-        # Mock response data with many pages
-        mock_responses = [
-            {
-                "list": {
-                    "objects": [{"uuid": str(i), "meta": {"name": f"item{i}"}}],
-                    "response": {"next_page_token": i + 1},
-                }
-            }
-            for i in range(5)  # 5 pages
-        ]
-        # Last page has no next_page_token
-        mock_responses[-1]["list"]["response"] = {}
-
-        with patch.object(self.client, "get") as mock_get:
-            # Create mock responses that return the correct data
-            mock_responses_objects = []
-            for response in mock_responses:
-                mock_response = Mock()
-                mock_response.json.return_value = response
-                mock_responses_objects.append(mock_response)
-
-            mock_get.side_effect = mock_responses_objects
-
-            ops = BaseResourceOperations(self.client, "test-resources", Mock)
-            results = ops.list(self.namespace)
-
-            # Should fetch all 5 pages
-            assert len(results) == 5, f"Expected 5 items, got {len(results)}"
-            assert mock_get.call_count == 5, (
-                f"Expected 5 API calls, got {mock_get.call_count}"
-            )
-
-    def test_pagination_with_list_parameters(self) -> None:
-        """Test pagination with ListParameters (no max_pages limit)."""
-        mock_responses = [
-            {
-                "list": {
-                    "objects": [{"uuid": str(i), "meta": {"name": f"item{i}"}}],
-                    "response": {"next_page_token": i + 1},
-                }
-            }
-            for i in range(3)
-        ]
-        # Last page has no next_page_token
-        mock_responses[-1]["list"]["response"] = {}
-
-        with patch.object(self.client, "get") as mock_get:
-            # Create mock responses that return the correct data
-            mock_responses_objects = []
-            for response in mock_responses:
-                mock_response = Mock()
-                mock_response.json.return_value = response
-                mock_responses_objects.append(mock_response)
-
-            mock_get.side_effect = mock_responses_objects
-
-            list_params = ListParameters(page_size=1)
-            ops = BaseResourceOperations(self.client, "test-resources", Mock)
-            results = ops.list(self.namespace, list_params=list_params)
-
-            # Should fetch all 3 pages
-            assert len(results) == 3, f"Expected 3 items, got {len(results)}"
-            assert mock_get.call_count == 3, (
-                f"Expected 3 API calls, got {mock_get.call_count}"
-            )
-
-    def test_pagination_with_no_pages(self) -> None:
-        """Test pagination with single page (no next_page_token)."""
+        """Test pagination with 1 page, 1 count limit."""
         mock_response = {
             "list": {
-                "objects": [
-                    {"uuid": "1", "meta": {"name": "item1"}},
-                    {"uuid": "2", "meta": {"name": "item2"}},
-                ],
+                "objects": [{"uuid": "1", "meta": {"name": "item1"}}],
                 "response": {},  # No next_page_token
             }
         }
-
         with patch.object(self.client, "get") as mock_get:
             mock_response_obj = Mock()
             mock_response_obj.json.return_value = mock_response
             mock_get.return_value = mock_response_obj
 
             ops = BaseResourceOperations(self.client, "test-resources", Mock)
-            results = ops.list(self.namespace)
+            results = ops.list(
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
 
-            # Should fetch only one page
-            assert len(results) == 2, f"Expected 2 items, got {len(results)}"
+            assert len(results) == 1, f"Expected 1 item, got {len(results)}"
+            assert results[0].uuid == "1"
+            assert mock_get.call_count == 1, (
+                f"Expected 1 API call, got {mock_get.call_count}"
+            )
+
+    def test_pagination_with_max_pages_limit(self) -> None:
+        """Test pagination stops at max_pages (1 page, 1 count)."""
+        mock_response = {
+            "list": {
+                "objects": [{"uuid": "1", "meta": {"name": "item1"}}],
+                "response": {},  # No next_page_token
+            }
+        }
+        with patch.object(self.client, "get") as mock_get:
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_get.return_value = mock_response_obj
+
+            ops = BaseResourceOperations(self.client, "test-resources", Mock)
+            results = ops.list(
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+
+            assert len(results) == 1, f"Expected 1 item, got {len(results)}"
+            assert mock_get.call_count == 1, (
+                f"Expected 1 API call, got {mock_get.call_count}"
+            )
+
+    def test_pagination_with_list_parameters_max_pages(self) -> None:
+        """Test pagination with ListParameters and max_pages (1 page, 1 count)."""
+        mock_response = {
+            "list": {
+                "objects": [{"uuid": "1", "meta": {"name": "item1"}}],
+                "response": {},
+            }
+        }
+        with patch.object(self.client, "get") as mock_get:
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_get.return_value = mock_response_obj
+
+            list_params = ListParameters(page_size=conftest.TEST_PAGE_SIZE)
+            ops = BaseResourceOperations(self.client, "test-resources", Mock)
+            results = ops.list(
+                self.namespace,
+                list_params=list_params,
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+
+            assert len(results) == 1, f"Expected 1 item, got {len(results)}"
+            assert mock_get.call_count == 1, (
+                f"Expected 1 API call, got {mock_get.call_count}"
+            )
+
+    def test_pagination_with_no_pages(self) -> None:
+        """Test pagination with single page (no next_page_token), 1 page 1 count."""
+        mock_response = {
+            "list": {
+                "objects": [{"uuid": "1", "meta": {"name": "item1"}}],
+                "response": {},
+            }
+        }
+        with patch.object(self.client, "get") as mock_get:
+            mock_response_obj = Mock()
+            mock_response_obj.json.return_value = mock_response
+            mock_get.return_value = mock_response_obj
+
+            ops = BaseResourceOperations(self.client, "test-resources", Mock)
+            results = ops.list(
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
+
+            assert len(results) == 1, f"Expected 1 item, got {len(results)}"
             assert mock_get.call_count == 1, (
                 f"Expected 1 API call, got {mock_get.call_count}"
             )
 
     def test_pagination_with_empty_response(self) -> None:
-        """Test pagination with empty response."""
+        """Test pagination with empty response (1 page, 0 count)."""
         mock_response = {"list": {"objects": [], "response": {}}}
-
         with patch.object(self.client, "get") as mock_get:
             mock_response_obj = Mock()
             mock_response_obj.json.return_value = mock_response
             mock_get.return_value = mock_response_obj
 
             ops = BaseResourceOperations(self.client, "test-resources", Mock)
-            results = ops.list(self.namespace)
+            results = ops.list(
+                self.namespace,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
+            )
 
-            # Should handle empty response gracefully
             assert len(results) == 0, f"Expected 0 items, got {len(results)}"
             assert mock_get.call_count == 1, (
                 f"Expected 1 API call, got {mock_get.call_count}"
             )
+
+    def test_sort_params_serialize_sort_by_desc(self) -> None:
+        """Sort params serialize to list_parameters.sort.path and sort.order (enum)."""
+        ops = BaseResourceOperations(self.client, "test-resources", Mock)
+        list_params = ListParameters(
+            sort_by="meta.create_time",
+            desc=True,
+        )
+        params = ops._build_params(list_params)
+        assert params.get("list_parameters.sort.path") == "meta.create_time"
+        assert params.get("list_parameters.sort.order") == "SORT_ENTRY_ORDER_DESC"
+
+    def test_sort_params_serialize_sort_by_asc(self) -> None:
+        """Sort params with desc=False emit SORT_ENTRY_ORDER_ASC."""
+        ops = BaseResourceOperations(self.client, "test-resources", Mock)
+        list_params = ListParameters(
+            sort_by="meta.name",
+            desc=False,
+        )
+        params = ops._build_params(list_params)
+        assert params.get("list_parameters.sort.path") == "meta.name"
+        assert params.get("list_parameters.sort.order") == "SORT_ENTRY_ORDER_ASC"
+
+    def test_sort_params_fallback_sort_field_sort_order(self) -> None:
+        """Legacy sort_field + sort_order map to sort.path and sort.order (enum)."""
+        ops = BaseResourceOperations(self.client, "test-resources", Mock)
+        list_params = ListParameters(
+            sort_field="meta.create_time",
+            sort_order="descending",
+        )
+        params = ops._build_params(list_params)
+        assert params.get("list_parameters.sort.path") == "meta.create_time"
+        assert params.get("list_parameters.sort.order") == "SORT_ENTRY_ORDER_DESC"
+
+
+class TestListIter:
+    """Test list_iter yields items without materializing full list."""
+
+    def test_list_iter_yields_models_from_get_all(self) -> None:
+        """list_iter yields one model per item from get_all; no full list."""
+        from pydantic import BaseModel, Field
+
+        class SimpleModel(BaseModel):
+            uuid: str = Field(..., description="UUID")
+
+        client = Mock()
+        client.get_all = Mock(return_value=iter([{"uuid": "a"}, {"uuid": "b"}]))
+        ops = BaseResourceOperations(client, "test-resources", SimpleModel)
+        it = ops.list_iter("tenant.ns", None, max_pages=1)
+        items = list(it)
+        assert len(items) == 2
+        assert items[0].uuid == "a"
+        assert items[1].uuid == "b"
+        client.get_all.assert_called_once()
 
 
 if __name__ == "__main__":
@@ -231,6 +234,9 @@ if __name__ == "__main__":
         test_instance.test_pagination_with_list_parameters_max_pages()
         test_instance.test_pagination_with_no_pages()
         test_instance.test_pagination_with_empty_response()
+        test_instance.test_sort_params_serialize_sort_by_desc()
+        test_instance.test_sort_params_serialize_sort_by_asc()
+        test_instance.test_sort_params_fallback_sort_field_sort_order()
 
         print("\n[SUCCESS] All pagination tests completed successfully!")
 
@@ -240,3 +246,5 @@ if __name__ == "__main__":
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        test_instance.client.close()

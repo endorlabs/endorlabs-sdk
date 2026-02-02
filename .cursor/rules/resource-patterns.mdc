@@ -6,9 +6,9 @@ alwaysApply: false
 
 # Resource Patterns
 
-- Use `BaseResourceOperations(client, "resources", Resource)`; one `_get_*_ops()` per module; return typed models, not dicts.
-- **List**: Accept `list_params: ListParameters | None`, `max_pages: int | None`; pass through to `ops.list()`. Docstring: filter, mask, page_size, traverse.
-- **Update**: Accept `update_mask: str | None` (comma-separated); convert to `list[str]` and pass to `ops.update()`. Exception: `namespace` **requires** `update_mask` (e.g. `meta.description`); namespace uses collection PATCH with UUID in body.
+- Use `BaseResourceOperations(client, "resources", Resource)`; one `_get_*_ops()` per module; return typed models, not dicts. Use shared base classes and conventions; see [docs/conventions.md](docs/conventions.md) and [docs/rules-of-engagement/](docs/rules-of-engagement/). Field names and aliases: see [docs/conventions.md](docs/conventions.md) (Models and API parity) and api-workflow.mdc.
+- **List**: Accept `list_params: ListParameters | None`, `max_pages: int | None`; pass through to `ops.list()`. Docstring: filter, mask, page_size, traverse. **Consumer UX:** Keep filter (rows) and mask (response fields) separate; do not combine. Facade exposes them as flat kwargs; see [docs/conventions.md](docs/conventions.md) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+- **Update**: Accept `update_mask: str | None` (comma-separated); convert to `list[str]` and pass to `ops.update()`. Exception: `namespace` **requires** `update_mask` (e.g. `meta.description`); namespace uses collection PATCH with UUID in body. **update_mask** is separate from list mask (PATCH fields vs response projection).
 - **Errors**: Use `endorlabs.exceptions`; resources may return `None` on 404; log full `response.text`; no truncation.
-- See [AGENTS.md](AGENTS.md) for code samples; deep dives in [docs/reference/namespace.md](docs/reference/namespace.md), [docs/conventions.md](docs/conventions.md), [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md), and [docs/rules-of-engagement/api-validation.md](docs/rules-of-engagement/api-validation.md).
+- See [AGENTS.md](AGENTS.md) for code samples; full references in [docs/README.md](docs/README.md) and [resource-implementation.md](docs/rules-of-engagement/resource-implementation.md).
 

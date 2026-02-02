@@ -9,7 +9,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
    - Do not add tenant or resource accessors here.
 
 2. **Resource surface (Client)** — `client_surface.py`
-   - Holds default namespace and exposes resource facades (e.g. `client.namespaces`, `client.projects`).
+   - Holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`).
    - Build facades from the **registry**; do not hand-wire each resource in `Client.__init__`.
 
 3. **Facade (ResourceFacade[T])** — `facade.py`
@@ -17,7 +17,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
    - Accept optional `update_fn`/`delete_fn` for resources that lack them; raise `NotImplementedError` when the operation is not supported.
 
 4. **Registry** — single source of truth for which resources exist on `Client`
-   - One entry per resource: attr_name, module, model_class, list_fn, get_fn, create_fn, update_fn (optional), delete_fn (optional).
+   - One entry per resource: attr_name, model_class, list_fn, get_fn, create_fn, update_fn (optional), delete_fn (optional).
    - Adding a resource = one registry entry.
 
 ## Rules
@@ -25,7 +25,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
 - **No coupling:** APIClient does not import or depend on resources, facade, or registry. Only the Client/facade layer depends on resource modules.
 - **Registry-driven:** New resources are added by appending to the registry (e.g. `RESOURCE_REGISTRY` in `registry.py`), not by adding new lines in `Client.__init__`.
 - **Module functions unchanged:** The facade delegates to existing module-level functions (e.g. `list_namespaces(client, tenant_namespace, list_params, max_pages)`). Do not duplicate logic in the facade.
-- **Types:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.namespaces.list()` is typed as `list[Namespace]`; keep full type annotations for Pyright.
+- **Types:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.namespace.list()` is typed as `list[Namespace]`; keep full type annotations for Pyright.
 
 ## When to Use
 

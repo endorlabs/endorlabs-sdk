@@ -42,6 +42,8 @@ for ns in namespaces:
 
 ## 🛠️ **Installation & Setup**
 
+**Python:** Requires Python 3.11 or newer. CI and releases are tested on Python 3.13 only; other 3.11+ versions are supported but not routinely tested.
+
 ### Quick Setup (Recommended)
 
 ```bash
@@ -247,7 +249,7 @@ ls maneuvers/
 - **[AI Agent Integration Guide](./AGENTS.md)** - Primary reference for AI agent integration
 - **[Documentation index](./docs/README.md)** - SDK docs (conventions, reference, guides, rules of engagement)
 - **[Rules of Engagement](./docs/rules-of-engagement/)** - Specialized tactical workflows
-- **[Rego (SDK usage)](./docs/guides/rego-policies.md)** - How the SDK is used with policies; link to official Rego docs
+- **Policy (Rego)** - SDK exposes policy via `endorlabs.resources.policy`; Rego in payload; [reference/resources.md](docs/reference/resources.md) and [docs.endorlabs.com](https://docs.endorlabs.com/) for Rego reference
 - **[SDK Docstrings](./src/endorlabs/)** - Inline documentation for all resources
 - **External documentation**: Platform docs at <https://docs.endorlabs.com/> (context via Cursor rules / DeepWiki)
 

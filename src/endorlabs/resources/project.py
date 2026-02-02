@@ -20,9 +20,10 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
-import requests
+import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
@@ -52,7 +53,7 @@ class ProjectMeta(BaseMeta):
 
     # Project-specific fields (universal fields inherited from BaseMeta)
     # Optional when list mask omits meta.index_data.
-    project_index_data: IndexData | None = Field(
+    index_data: IndexData | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Index data for the project", alias="index_data"
     )
 
@@ -272,7 +273,7 @@ class Project(BaseResource):
     # Project-specific fields (universal fields inherited from BaseResource)
     spec: ProjectSpec = Field(..., description="Project specification")  # type: ignore
     # Optional when list mask omits processing_status
-    project_processing_status: ProcessingStatus | None = Field(
+    processing_status: ProcessingStatus | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None,
         description="Processing status information",
         alias="processing_status",
@@ -324,6 +325,15 @@ class Project(BaseResource):
         if not v.strip():
             raise ValueError("uuid cannot be empty")
         return v
+
+    def get_mutable_fields(self) -> list[str]:
+        """Get list of mutable fields for Project (meta and processing_status)."""
+        return [
+            "meta.description",
+            "meta.tags",
+            "processing_status.scan_state",
+            "processing_status.disable_automated_scan",
+        ]
 
 
 class CreateProjectPayload(BaseModel):
@@ -382,12 +392,24 @@ def list_projects(
         List[Project]: A list of Project objects. Empty list if error occurs.
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors
+        httpx.HTTPStatusError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
 
     """
     ops = _get_project_ops(client)
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
+def list_projects_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[Project]:
+    """Iterate over projects without materializing the full list."""
+    ops = _get_project_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
 def get_project(
@@ -446,8 +468,8 @@ def update_project(
     client: APIClient,
     tenant_meta_namespace: str,
     project_uuid: str,
-    payload: UpdateProjectPayload,
-    update_mask: str | None = None,
+    payload: UpdateProjectPayload | Project,
+    update_mask: str,
 ) -> Project:
     """Update an existing project using partial updates.
 
@@ -483,16 +505,14 @@ def update_project(
             (e.g., 'tenant.namespace')
         project_uuid: The UUID of the project to update
         payload: The UpdateProjectPayload containing the updated project details
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.tags,meta.description"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "meta.tags,meta.description". Missing or empty raises ValidationError.
 
     Returns:
         Project: The updated Project object with current field values
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If project doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
@@ -517,18 +537,31 @@ def update_project(
         ...     "meta.description,meta.tags,meta.language"
         ... )
 
-    Note:
-        Tags persist correctly when using update_mask. Without update_mask,
-        the API may not persist tag changes reliably.
-
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Project update requires an update_mask "
+                "(e.g. 'meta.description', 'meta.tags')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=project_uuid,
+        )
     # Get the current project to include required fields
     current_project = get_project(client, tenant_meta_namespace, project_uuid)
 
-    # Merge current project with payload updates
+    # Merge current project with payload (Project or UpdateProjectPayload)
+    payload_meta = getattr(payload, "meta", None)
     merged_meta = {
         "name": current_project.meta.name,  # Required field
-        **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
+        **(
+            payload_meta.model_dump(exclude_none=True)
+            if payload_meta is not None
+            else {}
+        ),
     }
 
     # Build merged project object for base class
@@ -537,31 +570,55 @@ def update_project(
         if current_project.tenant_meta
         else {"namespace": tenant_meta_namespace}
     )
+    update_mask_list_pre = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
+    has_processing_status_mask = any(
+        p.startswith("processing_status.") for p in update_mask_list_pre
+    )
+    if has_processing_status_mask:
+        base_ps = (
+            current_project.processing_status.model_dump()
+            if current_project.processing_status
+            else {}
+        )
+        payload_ps = getattr(payload, "processing_status", None)
+        if payload_ps is not None:
+            base_ps = {**base_ps, **payload_ps.model_dump(exclude_none=True)}
+        merged_ps = (
+            ProcessingStatus(
+                disable_automated_scan=base_ps.get("disable_automated_scan", False),
+                scan_state=base_ps.get("scan_state", ""),
+                scan_time=base_ps.get("scan_time"),
+            ).model_dump()
+            if base_ps
+            else None
+        )
+    else:
+        merged_ps = (
+            current_project.processing_status.model_dump()
+            if current_project.processing_status
+            else None
+        )
     merged_project_dict = {
         "uuid": project_uuid,
         "tenant_meta": tenant_meta_dict,
         "meta": merged_meta,
         "spec": current_project.spec.model_dump(),  # Required field
-        "processing_status": (
-            current_project.project_processing_status.model_dump()
-            if current_project.project_processing_status
-            else None
-        ),
+        "processing_status": merged_ps,
     }
 
     # Create Project object from merged data
     merged_project = Project(**merged_project_dict)
 
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
-
     # Use base class update method
     ops = _get_project_ops(client)
     logger.info(f"Updating project {project_uuid} with mask: {update_mask}")
     return ops.update(
-        tenant_meta_namespace, project_uuid, merged_project, update_mask_list
+        tenant_meta_namespace,
+        project_uuid,
+        merged_project,
+        update_mask_list_pre,
     )
 
 
@@ -628,7 +685,9 @@ def associate_scan_profile_with_project(
             json=request_data,
             headers={"Accept": "application/json"},
         )
-        res.raise_for_status()  # Will raise HTTPError for non-2xx status codes
+        _ = (
+            res.raise_for_status()
+        )  # Will raise HTTPStatusError for non-2xx status codes
         data = res.json()
         updated_project = Project(**data)
         logger.info(
@@ -636,7 +695,7 @@ def associate_scan_profile_with_project(
             f"{project_uuid}"
         )
         return updated_project
-    except requests.exceptions.HTTPError as e:
+    except httpx.HTTPStatusError as e:
         # Map HTTP errors to typed exceptions
         raise client.map_http_error_to_exception(
             e, "update", tenant_meta_namespace, resource_uuid=project_uuid
@@ -710,7 +769,7 @@ def delete_project(
         bool: True if deletion was successful, False otherwise
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors
+        httpx.HTTPStatusError: For API-level errors
 
     """
     try:

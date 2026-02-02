@@ -66,7 +66,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from endorlabs.api_client import APIClient
 
 # Configure logging to reduce verbosity
-logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging

@@ -31,7 +31,7 @@ from endorlabs.types import ListParameters
 from endorlabs.utils.traversal import create_traverse_params
 
 # Configure logging
-logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("endorlabs").setLevel(logging.INFO)
 
 logging.basicConfig(

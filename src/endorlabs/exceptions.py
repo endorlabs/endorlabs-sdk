@@ -67,11 +67,28 @@ class EndorAPIError(Exception):
 class NotFoundError(EndorAPIError):
     """Resource not found (404).
 
-    Raised when attempting to access a resource that doesn't exist.
+    Raised when the resource does not exist to the user — e.g. a different
+    namespace that the credential does not have access to, or the resource
+    no longer exists.
     """
 
     def __init__(self, message: str = "Resource not found", **kwargs: Any) -> None:
         super().__init__(message, status_code=404, **kwargs)
+
+
+class AmbiguousError(EndorAPIError):
+    """Multiple resources match (lookup ambiguity).
+
+    Raised when a lookup by identity (e.g. name) returns more than one
+    resource and a single result was expected.
+    """
+
+    def __init__(
+        self,
+        message: str = "Multiple resources match; narrow the query",
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(message, status_code=400, **kwargs)
 
 
 class ValidationError(EndorAPIError):

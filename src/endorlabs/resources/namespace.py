@@ -16,6 +16,7 @@ Full guide: docs/reference/namespace.md.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -225,12 +226,24 @@ def list_namespaces(
         List[Namespace]: A list of Namespace objects. Empty list if error occurs.
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors
+        httpx.HTTPStatusError: For API-level errors
         pydantic.ValidationError: If response data doesn't match expected schema
 
     """
     ops = _get_namespace_ops(client)
     return ops.list(tenant_namespace, list_params, max_pages, **kwargs)
+
+
+def list_namespaces_iter(
+    client: APIClient,
+    tenant_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[Namespace]:
+    """Iterate over namespaces without materializing the full list."""
+    ops = _get_namespace_ops(client)
+    return ops.list_iter(tenant_namespace, list_params, max_pages, **kwargs)
 
 
 def create_namespace(
@@ -297,7 +310,7 @@ def delete_namespace(
         bool: True if deletion was successful, False otherwise
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors
+        httpx.HTTPStatusError: For API-level errors
 
     """
     ops = _get_namespace_ops(client)

@@ -6,17 +6,29 @@ used across all Endor Labs resource models.
 
 import builtins
 import logging
+import os
 import sys
+from collections.abc import Iterator
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    Self,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
 import contextlib
 
-import requests
+import httpx
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -32,7 +44,7 @@ from ..exceptions import (
 from ..exceptions import (
     ValidationError as EndorValidationError,
 )
-from ..types import ListParameters
+from ..types import ListParameters, SupportsResourceUpdate
 from ..utils import SchemaDriftDetector
 from ..utils.model_validation import get_immutable_fields
 
@@ -216,11 +228,13 @@ class BaseMeta(BaseModel):
     """Base metadata for all resources with universal attributes."""
 
     model_config = ConfigDict(
-        extra="allow"
+        extra="allow", populate_by_name=True
     )  # Allow unknown fields for forward compatibility
 
     # Required universal fields (required per v1Meta; optional when list mask omits it)
-    name: str | None = Field(None, description="Resource name")  # IMMUTABLE: Set at creation
+    name: str | None = Field(
+        None, description="Resource name"
+    )  # IMMUTABLE: Set at creation
     kind: str | None = Field(
         None, description="Resource type identifier"
     )  # IMMUTABLE: Set at creation, but may be None when masked
@@ -371,7 +385,7 @@ class BaseSpec(BaseModel):
     """Base specification for all resources."""
 
     model_config = ConfigDict(
-        extra="allow"
+        extra="allow", populate_by_name=True
     )  # Allow unknown fields for forward compatibility
 
     # Schema drift fields - using typed models for better structure
@@ -488,7 +502,7 @@ class BaseResource(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="allow"
+        extra="allow", populate_by_name=True
     )  # Allow unknown fields for forward compatibility
 
     # Universal fields (nearly universal)
@@ -578,9 +592,90 @@ class BaseResource(BaseModel):
                 )
         return v
 
+    @property
+    def namespace(self) -> str | None:
+        """Canonical namespace for this resource (tenant_meta.namespace or None)."""
+        if self.tenant_meta is None:
+            return None
+        return getattr(self.tenant_meta, "namespace", None)
+
     def get_mutable_fields(self) -> list[str]:
         """Get list of mutable fields for this resource."""
         return ["meta.description", "meta.tags"]
+
+    def _path_to_kwarg(self, path: str) -> str:
+        """Convert update_mask path to Python kwarg name."""
+        if path.startswith("processing_status."):
+            return path.split(".", 1)[1]
+        return path.replace(".", "_")
+
+    def get_update_kwarg_to_path(self) -> dict[str, str]:
+        """Map kwarg names to update_mask paths for generic update."""
+        return {self._path_to_kwarg(p): p for p in self.get_mutable_fields()}
+
+    def _build_update_payload(self, **kwargs: Any) -> Self:
+        """Build a copy of this resource with kwargs applied at their paths."""
+        kwarg_to_path = self.get_update_kwarg_to_path()
+        invalid = [k for k in kwargs if k not in kwarg_to_path]
+        if invalid:
+            raise TypeError(
+                f"Invalid update kwargs for {type(self).__name__}: {invalid}. "
+                f"Allowed: {list(kwarg_to_path)}"
+            )
+        result: Any = self
+        for kwarg, value in kwargs.items():
+            path = kwarg_to_path[kwarg]
+            if "." not in path:
+                result = result.model_copy(update={path: value})
+                continue
+            parent_path, field = path.rsplit(".", 1)
+            parent = getattr(result, parent_path, None)
+            if parent is None and parent_path == "processing_status":
+                field_info = type(result).model_fields.get(parent_path)
+                if field_info:
+                    ann = getattr(field_info, "annotation", None)
+                    if ann is not None and get_origin(ann) is Union:
+                        ann = next(
+                            (a for a in get_args(ann) if a is not type(None)),
+                            ann,
+                        )
+                    if ann is not None:
+                        try:
+                            parent = ann(disable_automated_scan=False, scan_state="")
+                        except Exception:
+                            parent = None
+            if parent is not None:
+                dump = (
+                    parent.model_dump()
+                    if callable(getattr(parent, "model_dump", None))
+                    else {}
+                )
+                merged = {**dump, field: value}
+                new_parent = type(parent)(**merged)
+                result = result.model_copy(update={parent_path: new_parent})
+        return result
+
+    def update(
+        self,
+        facade: SupportsResourceUpdate,
+        **kwargs: Any,
+    ) -> Self:
+        """Update this resource with the given field kwargs; delegate to facade."""
+        if not kwargs:
+            raise TypeError(
+                "Provide at least one field kwarg (e.g. meta_description=...) "
+                "or use facade.update(resource, update_mask=..., payload=...)."
+            )
+        kwarg_to_path = self.get_update_kwarg_to_path()
+        invalid = [k for k in kwargs if k not in kwarg_to_path]
+        if invalid:
+            raise TypeError(
+                f"Invalid update kwargs for {type(self).__name__}: {invalid}. "
+                f"Allowed: {list(kwarg_to_path)}"
+            )
+        payload = self._build_update_payload(**kwargs)
+        update_mask = ",".join(kwarg_to_path[k] for k in kwargs)
+        return facade.update(self, payload=payload, update_mask=update_mask)
 
     def get_immutable_fields(self) -> list[str]:
         """Get list of immutable fields for this resource."""
@@ -617,7 +712,7 @@ class BaseResource(BaseModel):
         exclude_defaults: bool = False,
         exclude_none: bool = False,
         round_trip: bool = False,
-        warnings: bool = True,
+        warnings: bool = False,
         serialize_as_any: bool = False,
     ) -> dict[str, Any]:
         """Dump model to dictionary with JSON mode as default.
@@ -625,6 +720,8 @@ class BaseResource(BaseModel):
         This override defaults to mode="json" to ensure datetime objects
         and other non-JSON-serializable types are properly serialized.
         This is critical for API operations where data must be JSON-serializable.
+        Defaults warnings=False to avoid Pydantic serializer warnings for
+        nested meta/spec/tenant_meta/context; pass warnings=True to see them.
 
         Args:
             mode: Serialization mode ("json" or "python"). Defaults to "json".
@@ -635,7 +732,7 @@ class BaseResource(BaseModel):
             exclude_defaults: Exclude default values
             exclude_none: Exclude None values
             round_trip: Round-trip serialization
-            warnings: Show warnings
+            warnings: Show Pydantic serializer warnings (default False).
             serialize_as_any: Serialize as Any type
 
         Returns:
@@ -656,7 +753,7 @@ class BaseResource(BaseModel):
         )
 
 
-class BaseResourceOperations[T: BaseModel]:
+class BaseResourceOperations(Generic[T]):
     """Base class providing CRUD operations for all resources."""
 
     def __init__(
@@ -707,7 +804,7 @@ class BaseResourceOperations[T: BaseModel]:
         """
         if model is None:
             return {}
-        return model.model_dump(exclude_none=exclude_none, mode="json")
+        return model.model_dump(exclude_none=exclude_none, mode="json", warnings=False)
 
     def _dump_for_api(
         self, model: BaseModel, exclude_none: bool = True
@@ -718,7 +815,15 @@ class BaseResourceOperations[T: BaseModel]:
         warnings=False, avoiding Pydantic serializer warnings for nested
         meta/spec/tenant_meta.
         """
-        return model.model_dump(exclude_none=exclude_none, mode="json", warnings=False)
+        return model.model_dump(
+            exclude_none=exclude_none, mode="json", warnings=False, by_alias=True
+        )
+
+    def dump_for_api(
+        self, model: BaseModel, exclude_none: bool = True
+    ) -> dict[str, Any]:
+        """Public API to serialize a model to dict for request body (e.g. PATCH)."""
+        return self._dump_for_api(model, exclude_none=exclude_none)
 
     def _to_request_body(
         self,
@@ -839,9 +944,9 @@ class BaseResourceOperations[T: BaseModel]:
         return None
 
     def _extract_from_http_error(
-        self, e: requests.exceptions.HTTPError
+        self, e: httpx.HTTPStatusError
     ) -> tuple[int | None, str, str]:
-        """Extract details from HTTPError."""
+        """Extract details from HTTPStatusError."""
         status_code = e.response.status_code
         # Parse error response to get gRPC code and message
         grpc_code, error_message = self.client._parse_error_response_succinct(  # pyright: ignore[reportPrivateUsage]
@@ -886,7 +991,7 @@ class BaseResourceOperations[T: BaseModel]:
             - error_context: Human-readable error context description
 
         """
-        if isinstance(e, requests.exceptions.HTTPError) and hasattr(e, "response"):
+        if isinstance(e, httpx.HTTPStatusError) and hasattr(e, "response"):
             return self._extract_from_http_error(e)
 
         # Unobserved error (non-HTTP exception)
@@ -895,7 +1000,7 @@ class BaseResourceOperations[T: BaseModel]:
     def _log_error_with_response(
         self, e: Exception, operation: str, tenant_meta_namespace: str, **kwargs: Any
     ) -> None:
-        """Log error with full response text for HTTPError exceptions.
+        """Log error with full response text for HTTPStatusError exceptions.
 
         Args:
             e: The exception to log
@@ -909,9 +1014,9 @@ class BaseResourceOperations[T: BaseModel]:
 
         is_validation_error = isinstance(e, ValidationError)
 
-        # Extract full response text for HTTPError exceptions
+        # Extract full response text for HTTPStatusError exceptions
         response_text = ""
-        if isinstance(e, requests.exceptions.HTTPError) and hasattr(e, "response"):
+        if isinstance(e, httpx.HTTPStatusError) and hasattr(e, "response"):
             with contextlib.suppress(Exception):
                 response_text = e.response.text
 
@@ -1034,7 +1139,7 @@ class BaseResourceOperations[T: BaseModel]:
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # Map HTTP errors to typed exceptions
             raise self.client.map_http_error_to_exception(
                 e, "list", tenant_meta_namespace
@@ -1070,6 +1175,28 @@ class BaseResourceOperations[T: BaseModel]:
                 namespace=tenant_meta_namespace,
             ) from e
 
+    def list_iter(
+        self,
+        tenant_meta_namespace: str,
+        list_params: ListParameters | None = None,
+        max_pages: int | None = None,
+        **kwargs: Any,
+    ) -> Iterator[T]:
+        """Yield resources from a paginated list without materializing the full list.
+
+        Same URL and params as list(); yields one model per item from get_all().
+        """
+        kwargs.pop("logging_level", None)  # Session-level only; ignore if passed
+        url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
+        if max_pages is None and (
+            "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST")
+        ):
+            max_pages = 10
+            self.logger.debug(f"Test env: limiting pagination to {max_pages} pages max")
+        params = self._build_params(list_params, **kwargs)
+        for item in self.client.get_all(url, params=params, max_pages=max_pages):
+            yield self.model_class(**item)
+
     def get(self, tenant_meta_namespace: str, resource_uuid: str) -> T:
         """Universal get operation with fallback to list+filter.
 
@@ -1090,7 +1217,7 @@ class BaseResourceOperations[T: BaseModel]:
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # For 404, try fallback method; for other errors, raise immediately
             if e.response.status_code == 404:
                 # 404 is expected when falling back, use debug level
@@ -1121,6 +1248,8 @@ class BaseResourceOperations[T: BaseModel]:
                 page_token=None,
                 sort_field=None,
                 sort_order=None,
+                sort_by=None,
+                desc=None,
                 count=None,
                 traverse=True,  # Enable traversal to search child namespaces
                 from_date=None,
@@ -1144,7 +1273,7 @@ class BaseResourceOperations[T: BaseModel]:
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # Map HTTP errors to typed exceptions
             raise self.client.map_http_error_to_exception(
                 e, "get", tenant_meta_namespace, resource_uuid=resource_uuid
@@ -1165,6 +1294,10 @@ class BaseResourceOperations[T: BaseModel]:
 
     def create(self, tenant_meta_namespace: str, payload: BaseModel) -> T:
         """Universal create operation with pre-validation and typed errors.
+
+        Optional: set ENDOR_CREATE_TIMEOUT (seconds) in the environment to use
+        a request timeout for create calls (e.g. 60 for slow endpoints like
+        scan-log-requests).
 
         Raises:
             EndorValidationError: If payload validation fails
@@ -1191,7 +1324,19 @@ class BaseResourceOperations[T: BaseModel]:
                 f"'{tenant_meta_namespace}' with payload: {payload_dict}"
             )
 
-            res = self.client.post(url, json=payload_dict)
+            # Optional create timeout (e.g. for slow endpoints like scan-log-requests)
+            create_timeout: int | float | None = None
+            env_timeout = os.environ.get("ENDOR_CREATE_TIMEOUT")
+            if env_timeout is not None:
+                try:
+                    create_timeout = int(env_timeout)
+                except ValueError:
+                    create_timeout = None
+            post_kwargs: dict[str, Any] = {}
+            if create_timeout is not None:
+                post_kwargs["timeout"] = create_timeout
+
+            res = self.client.post(url, json=payload_dict, **post_kwargs)
             data = res.json()
 
             # Validate response structure
@@ -1223,7 +1368,7 @@ class BaseResourceOperations[T: BaseModel]:
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # Map HTTP errors to typed exceptions
             raise self.client.map_http_error_to_exception(
                 e, "create", tenant_meta_namespace
@@ -1256,35 +1401,49 @@ class BaseResourceOperations[T: BaseModel]:
         tenant_meta_namespace: str,
         resource_uuid: str,
         payload: BaseModel,
-        update_mask: builtins.list[str] | None = None,
+        update_mask: builtins.list[str],
     ) -> T:
         """Universal update operation with field masking and pre-validation.
 
+        update_mask is required and must contain at least one field path; sparse
+        PATCH is always used so the full object is never sent.
+
         Raises:
-            EndorValidationError: If payload validation fails
+            EndorValidationError: If payload validation fails or update_mask is
+                empty or contains immutable fields
             NotFoundError: If resource doesn't exist
             PermissionDeniedError: If user lacks permission
             ServerError: If server error occurs
 
         """
+        if not update_mask:
+            raise EndorValidationError(
+                message=(
+                    f"{self.resource_name} update requires a non-empty update_mask "
+                    "(e.g. ['meta.description', 'meta.tags'])."
+                ),
+                operation="update",
+                namespace=tenant_meta_namespace,
+                resource_uuid=resource_uuid,
+            )
+
         # Pre-validate payload before API call
         validated_payload = self._validate_payload(
             payload, "update", tenant_meta_namespace
         )
 
-        # Block immutable fields when update_mask is present
-        if update_mask:
-            resource_type = RESOURCE_NAME_TO_TYPE.get(self.resource_name)
-            if resource_type is not None:
-                immutable = get_immutable_fields(resource_type)
-                for path in update_mask:
-                    if path.strip() in immutable:
-                        raise EndorValidationError(
-                            message=f"Cannot update immutable field: {path.strip()}",
-                            operation="update",
-                            namespace=tenant_meta_namespace,
-                            resource_uuid=resource_uuid,
-                        )
+        # Block immutable fields in update_mask
+        resource_type = RESOURCE_NAME_TO_TYPE.get(self.resource_name)
+        if resource_type is not None:
+            immutable = get_immutable_fields(resource_type)
+            for path in update_mask:
+                if path.strip() in immutable:
+                    raise EndorValidationError(
+                        message=f"Cannot update immutable field: {path.strip()}",
+                        operation="update",
+                        namespace=tenant_meta_namespace,
+                        resource_uuid=resource_uuid,
+                    )
 
         try:
             # Use collection endpoint (UUID goes in request body, not URL path)
@@ -1303,12 +1462,11 @@ class BaseResourceOperations[T: BaseModel]:
                     list(extra.keys()),
                 )
 
-            # Build request body with object and optional update_mask
-            request_data = {"object": payload_dict}
-
-            # Add update_mask to request body if provided
-            if update_mask:
-                request_data["request"] = {"update_mask": ",".join(update_mask)}
+            # Build request body with object and required update_mask
+            request_data = {
+                "object": payload_dict,
+                "request": {"update_mask": ",".join(update_mask)},
+            }
 
             # DEBUG: Log update request
             self.logger.debug(
@@ -1329,7 +1487,7 @@ class BaseResourceOperations[T: BaseModel]:
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # Map HTTP errors to typed exceptions
             raise self.client.map_http_error_to_exception(
                 e, "update", tenant_meta_namespace, resource_uuid=resource_uuid
@@ -1402,7 +1560,7 @@ class BaseResourceOperations[T: BaseModel]:
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             # Map HTTP errors to typed exceptions
             raise self.client.map_http_error_to_exception(
                 e, "delete", tenant_meta_namespace, resource_uuid=resource_uuid
@@ -1438,6 +1596,8 @@ class BaseResourceOperations[T: BaseModel]:
                     page_token=None,
                     sort_field=None,
                     sort_order=None,
+                    sort_by=None,
+                    desc=None,
                     count=True,
                     traverse=None,
                     from_date=None,
@@ -1533,11 +1693,31 @@ class BaseResourceOperations[T: BaseModel]:
     def _add_sorting_params(
         self, params: dict[str, Any], list_params: ListParameters
     ) -> None:
-        """Add sorting-related parameters."""
-        if list_params.sort_field:
-            params["list_parameters.sort_field"] = list_params.sort_field
-        if list_params.sort_order:
-            params["list_parameters.sort_order"] = list_params.sort_order
+        """Add sorting-related parameters.
+
+        API expects list_parameters.sort.path and list_parameters.sort.order
+        (enum: SORT_ENTRY_ORDER_ASC, SORT_ENTRY_ORDER_DESC).
+        Prefer sort_by + desc; fall back to sort_field + sort_order with normalization.
+        """
+        path: str | None = None
+        order: str | None = None
+        if list_params.sort_by:
+            path = list_params.sort_by
+            order = (
+                "SORT_ENTRY_ORDER_DESC" if list_params.desc else "SORT_ENTRY_ORDER_ASC"
+            )
+        elif list_params.sort_field:
+            path = list_params.sort_field
+            raw = (list_params.sort_order or "asc").lower()
+            order = (
+                "SORT_ENTRY_ORDER_DESC"
+                if raw in ("desc", "descending")
+                else "SORT_ENTRY_ORDER_ASC"
+            )
+        if path:
+            params["list_parameters.sort.path"] = path
+        if order:
+            params["list_parameters.sort.order"] = order
 
     def _add_boolean_params(
         self, params: dict[str, Any], list_params: ListParameters

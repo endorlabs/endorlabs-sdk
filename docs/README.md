@@ -4,7 +4,7 @@ Index for SDK-only documentation. Platform concepts and user docs: [docs.endorla
 
 ## Conventions
 
-- [conventions.md](conventions.md) — Canonical naming, traverse, ListParameters, OpenAPI path, error handling (single source of truth).
+- [conventions.md](conventions.md) — Canonical naming, traverse, ListParameters, OpenAPI path, error handling (single source of truth). Consumer UX (list/update): filter vs mask vs update_mask, flat kwargs — List parameters and Update and update_mask sections; full guide: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
 
 ## Reference
 
@@ -15,9 +15,8 @@ Index for SDK-only documentation. Platform concepts and user docs: [docs.endorla
 ## Guides
 
 - [guides/README.md](guides/README.md) — List of guides.
+- [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; spec-driven UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
-- [guides/namespace-traversal.md](guides/namespace-traversal.md) — ListParameters(traverse=True) with list_*.
-- [guides/rego-policies.md](guides/rego-policies.md) — How the SDK is used with policies; link to official Rego docs.
 
 ## Rules of Engagement
 
@@ -26,7 +25,8 @@ Index for SDK-only documentation. Platform concepts and user docs: [docs.endorla
 - [rules-of-engagement/api-validation.md](rules-of-engagement/api-validation.md)
 - [rules-of-engagement/troubleshooting.md](rules-of-engagement/troubleshooting.md)
 - [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md)
+- [rules-of-engagement/namespace-traversal.md](rules-of-engagement/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
 
-## Maintenance
+## When to update docs
 
-- [maintenance.md](maintenance.md) — When to update docs; link to docs-drift-workflow and conventions.
+API or endpoint changes → [conventions.md](conventions.md) and [reference/resources.md](reference/resources.md). New resources or operations → reference and RoE checklists. Drift and model consistency → [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Experimental:** `endorlabs.analysis`. **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`.

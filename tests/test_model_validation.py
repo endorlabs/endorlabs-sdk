@@ -11,9 +11,12 @@ import pytest
 from pydantic import BaseModel
 
 from endorlabs.utils.model_validation import (
+    build_filter_from_identity_kwargs,
     create_minimal_payload,
     ensure_required_fields,
     get_immutable_fields,
+    get_list_filter_map,
+    get_tags_update_paths,
     merge_partial_update,
     safe_serialize,
     validate_update_mask,
@@ -86,6 +89,60 @@ class TestGetImmutableFields:
 
     def test_unknown_resource_returns_empty(self) -> None:
         assert get_immutable_fields("unknown_type") == []
+
+
+class TestGetTagsUpdatePaths:
+    """Tests for get_tags_update_paths (tag capability from mutable fields)."""
+
+    def test_project_returns_meta_tags(self) -> None:
+        assert get_tags_update_paths("project") == ["meta.tags"]
+
+    def test_finding_returns_meta_tags_and_spec_finding_tags(self) -> None:
+        paths = get_tags_update_paths("finding")
+        assert set(paths) == {"meta.tags", "spec.finding_tags"}
+
+    def test_unknown_or_empty_returns_empty(self) -> None:
+        assert get_tags_update_paths("api_key") == []
+        assert get_tags_update_paths("") == []
+
+
+class TestGetListFilterMap:
+    """Tests for get_list_filter_map (list identity kwargs)."""
+
+    def test_project_returns_name_map(self) -> None:
+        assert get_list_filter_map("project") == {"name": "meta.name"}
+
+    def test_repository_returns_name_and_vcs_url(self) -> None:
+        m = get_list_filter_map("repository")
+        assert m.get("name") == "meta.name"
+        assert m.get("vcs_url") == "spec.vcs_url"
+        assert m.get("git_url") == "spec.vcs_url"
+
+    def test_unknown_returns_empty(self) -> None:
+        assert get_list_filter_map("") == {}
+        assert get_list_filter_map("unknown") == {}
+
+
+class TestBuildFilterFromIdentityKwargs:
+    """Tests for build_filter_from_identity_kwargs."""
+
+    def test_name_backend_produces_meta_name_clause(self) -> None:
+        filter_map = {"name": "meta.name"}
+        kwargs = {"name": "backend", "max_pages": 1}
+        merged, remaining = build_filter_from_identity_kwargs(filter_map, kwargs)
+        assert "meta.name" in merged
+        assert "backend" in merged
+        assert "name" not in remaining
+        assert remaining.get("max_pages") == 1
+
+    def test_merge_with_explicit_filter(self) -> None:
+        filter_map = {"name": "meta.name"}
+        kwargs = {"filter": "spec.level == 'CRITICAL'", "name": "backend"}
+        merged, remaining = build_filter_from_identity_kwargs(filter_map, kwargs)
+        assert "meta.name" in merged
+        assert "spec.level" in merged
+        assert "name" not in remaining
+        assert "filter" not in remaining
 
 
 class TestValidateUpdateMask:

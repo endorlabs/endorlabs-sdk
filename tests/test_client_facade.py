@@ -1,7 +1,7 @@
 """Tests for the resource-oriented Client facade (TDD).
 
 Verifies delegation, namespace resolution, and convenience kwargs
-for endorlabs.Client and client.namespaces. Aligns with recommended UX
+for endorlabs.Client and client.namespace. Aligns with recommended UX
 (import endorlabs; client = endorlabs.Client(...)) and registry-driven architecture.
 
 Delegation is asserted by injecting a mock into the facade's _list_fn (noqa: SLF001);
@@ -16,6 +16,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
+from endorlabs.exceptions import AmbiguousError, NotFoundError
 from endorlabs.facade import ScanLogsFacade
 
 
@@ -34,10 +35,10 @@ def test_client_requires_namespace_or_tenant_for_list() -> None:
     """When tenant is None and namespace is not passed to list(), raise ValueError."""
     client = endorlabs.Client(api_client=Mock(spec=APIClient), tenant=None)
     # Inject mock for delegation; module-boundary mock would need lazy registry.
-    client.namespaces._list_fn = Mock(return_value=[])
+    client.namespace._list_fn = Mock(return_value=[])
     with pytest.raises(ValueError, match="namespace"):
-        client.namespaces.list()
-    client.namespaces._list_fn.assert_not_called()
+        client.namespace.list()
+    client.namespace._list_fn.assert_not_called()
 
 
 def test_client_namespace_list_uses_default_tenant(
@@ -46,8 +47,8 @@ def test_client_namespace_list_uses_default_tenant(
     """list(traverse=True, max_pages=1) delegates with tenant, traverse, max_pages."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
-    client.namespaces._list_fn = mock_list
-    result = client.namespaces.list(traverse=True, max_pages=1)
+    client.namespace._list_fn = mock_list
+    result = client.namespace.list(traverse=True, max_pages=conftest.TEST_MAX_PAGES)
     assert result == []
     mock_list.assert_called_once()
     args, _ = mock_list.call_args
@@ -55,20 +56,20 @@ def test_client_namespace_list_uses_default_tenant(
     assert args[1] == conftest.TEST_NAMESPACE_DEFAULT
     assert args[2] is not None
     assert args[2].traverse is True
-    assert args[3] == 1
+    assert args[3] == conftest.TEST_MAX_PAGES
 
 
 def test_client_namespace_list_override_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """client.namespaces.list(namespace='bar') uses 'bar' instead of default tenant."""
+    """client.namespace.list(namespace='bar') uses 'bar' instead of default tenant."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
-    client.namespaces._list_fn = mock_list
-    client.namespaces.list(namespace="bar", max_pages=1)
+    client.namespace._list_fn = mock_list
+    client.namespace.list(namespace="bar", max_pages=conftest.TEST_MAX_PAGES)
     args, _ = mock_list.call_args
     assert args[1] == "bar"
-    assert args[3] == 1
+    assert args[3] == conftest.TEST_MAX_PAGES
 
 
 def test_client_creates_apiclient_when_not_passed() -> None:
@@ -76,8 +77,8 @@ def test_client_creates_apiclient_when_not_passed() -> None:
     with patch("endorlabs.client_surface.APIClient") as mock_apiclient_class:
         mock_apiclient_class.return_value = Mock(spec=APIClient)
         client = endorlabs.Client(tenant=conftest.TEST_NAMESPACE_DEFAULT)
-        client.namespaces._list_fn = Mock(return_value=[])
-        _ = client.namespaces.list(max_pages=1)
+        client.namespace._list_fn = Mock(return_value=[])
+        _ = client.namespace.list(max_pages=conftest.TEST_MAX_PAGES)
         mock_apiclient_class.assert_called_once()
     assert mock_apiclient_class.return_value is not None
 
@@ -85,27 +86,31 @@ def test_client_creates_apiclient_when_not_passed() -> None:
 def test_client_namespace_list_convenience_kwargs(
     client_with_mock_transport: Client,
 ) -> None:
-    """list(traverse, page_size=10, max_pages=2) builds ListParams; max_pages passed."""
+    """list(traverse, page_size, max_pages) builds ListParams; max_pages passed."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
-    client.namespaces._list_fn = mock_list
-    client.namespaces.list(traverse=True, page_size=10, max_pages=2)
+    client.namespace._list_fn = mock_list
+    client.namespace.list(
+        traverse=True,
+        page_size=conftest.TEST_PAGE_SIZE,
+        max_pages=conftest.TEST_MAX_PAGES,
+    )
     args, _ = mock_list.call_args
     lp = args[2]
     assert lp is not None
     assert lp.traverse is True
-    assert lp.page_size == 10
-    assert args[3] == 2
+    assert lp.page_size == conftest.TEST_PAGE_SIZE
+    assert args[3] == conftest.TEST_MAX_PAGES
 
 
 def test_client_projects_present_and_delegates(
     client_with_mock_transport: Client,
 ) -> None:
-    """client.projects is present and list(traverse=True, max_pages=1) delegates."""
+    """client.project is present and list(traverse=True, max_pages=1) delegates."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
-    client.projects._list_fn = mock_list
-    result = client.projects.list(traverse=True, max_pages=1)
+    client.project._list_fn = mock_list
+    result = client.project.list(traverse=True, max_pages=conftest.TEST_MAX_PAGES)
     assert result == []
     mock_list.assert_called_once()
     args, _ = mock_list.call_args
@@ -113,16 +118,7 @@ def test_client_projects_present_and_delegates(
     assert args[1] == conftest.TEST_NAMESPACE_DEFAULT
     assert args[2] is not None
     assert args[2].traverse is True
-    assert args[3] == 1
-
-
-def test_client_api_keys_update_raises_not_implemented(
-    client_with_mock_transport: Client,
-) -> None:
-    """client.api_keys.update() raises NotImplementedError (resource has no update)."""
-    client = client_with_mock_transport
-    with pytest.raises(NotImplementedError, match="does not support update"):
-        client.api_keys.update("id", {}, "mask")
+    assert args[3] == conftest.TEST_MAX_PAGES
 
 
 def test_client_exposes_all_registry_resources(
@@ -140,6 +136,8 @@ def test_client_exposes_all_registry_resources(
             f"{entry.attr_name} is not a ResourceFacade"
         )
         assert hasattr(facade, "list")
+        assert hasattr(facade, "list_iter")
+        assert hasattr(facade, "lookup")
         assert hasattr(facade, "get")
 
 
@@ -162,8 +160,8 @@ def test_client_namespace_list_uses_session_logging_only(
     """list() delegates with no logging_level; session logging is set on client."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
-    client.namespaces._list_fn = mock_list
-    client.namespaces.list(max_pages=1)
+    client.namespace._list_fn = mock_list
+    client.namespace.list(max_pages=conftest.TEST_MAX_PAGES)
     mock_list.assert_called_once()
     args, kwargs = mock_list.call_args
     assert len(args) == 4
@@ -189,3 +187,392 @@ def test_client_scan_logs_facade_present_and_delegates(
         assert args[1] == conftest.TEST_NAMESPACE_DEFAULT
         assert args[2] == "scan-result-uuid-123"
         assert kwargs.get("max_entries") == 100
+
+
+def test_get_with_uuid_string_uses_default_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """get(uuid) delegates with client default namespace."""
+    client = client_with_mock_transport
+    client.project._get_fn = Mock(return_value=Mock(uuid="proj-123"))
+    _ = client.project.get("proj-123")
+    args, _ = client.project._get_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == conftest.TEST_NAMESPACE_DEFAULT
+    assert args[2] == "proj-123"
+
+
+def test_get_with_resource_object_uses_resource_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """get(resource) uses resource.tenant_meta.namespace (context anchoring)."""
+    client = client_with_mock_transport
+    resource_ns = "tenant.engineering"
+    resource = Mock(uuid="proj-456", tenant_meta=Mock(namespace=resource_ns))
+    client.project._get_fn = Mock(return_value=resource)
+    _ = client.project.get(resource)
+    args, _ = client.project._get_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == resource_ns
+    assert args[2] == "proj-456"
+
+
+def test_delete_with_uuid_string_uses_default_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """delete(uuid) delegates with client default namespace."""
+    client = client_with_mock_transport
+    client.project._delete_fn = Mock(return_value=True)
+    result = client.project.delete("proj-789")
+    assert result is True
+    args, _ = client.project._delete_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == conftest.TEST_NAMESPACE_DEFAULT
+    assert args[2] == "proj-789"
+
+
+def test_delete_with_resource_object_uses_resource_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """delete(resource) uses resource.tenant_meta.namespace (context anchoring)."""
+    client = client_with_mock_transport
+    resource_ns = "tenant.other-team"
+    resource = Mock(uuid="proj-abc", tenant_meta=Mock(namespace=resource_ns))
+    client.project._delete_fn = Mock(return_value=True)
+    result = client.project.delete(resource)
+    assert result is True
+    args, _ = client.project._delete_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == resource_ns
+    assert args[2] == "proj-abc"
+
+
+def test_update_with_resource_object_and_no_payload_uses_resource_as_payload(
+    client_with_mock_transport: Client,
+) -> None:
+    """update(resource, update_mask=...) uses resource namespace and payload."""
+    client = client_with_mock_transport
+    resource_ns = "tenant.eng"
+    resource = Mock(uuid="proj-def", tenant_meta=Mock(namespace=resource_ns))
+    client.project._update_fn = Mock(return_value=resource)
+    _ = client.project.update(resource, update_mask="meta.description")
+    args, _ = client.project._update_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == resource_ns
+    assert args[2] == "proj-def"
+    assert args[3] is resource
+    assert args[4] == "meta.description"
+
+
+def test_update_with_uuid_requires_payload(
+    client_with_mock_transport: Client,
+) -> None:
+    """update(uuid, payload=None, update_mask=...) raises TypeError."""
+    client = client_with_mock_transport
+    client.project._update_fn = Mock()
+    with pytest.raises(TypeError, match="payload is required"):
+        client.project.update("proj-uuid", update_mask="meta.description")
+    client.project._update_fn.assert_not_called()
+
+
+def test_update_requires_update_mask(
+    client_with_mock_transport: Client,
+) -> None:
+    """update(id_or_resource) with no update_mask and no kwargs raises TypeError."""
+    client = client_with_mock_transport
+    resource = Mock(uuid="proj-xyz", tenant_meta=Mock(namespace="tenant.ns"))
+    client.project._update_fn = Mock()
+    with pytest.raises(TypeError, match=r"update_mask|kwargs"):
+        client.project.update(resource)
+    client.project._update_fn.assert_not_called()
+
+
+def test_update_with_kwargs_derives_mask_and_calls_update(
+    client_with_mock_transport: Client,
+) -> None:
+    """update(resource, meta_description=...) derives update_mask and builds payload."""
+    from endorlabs.models.base import TenantMeta as BaseTenantMeta
+    from endorlabs.resources.project import (
+        Project,
+        ProjectMeta,
+        ProjectSpec,
+    )
+
+    client = client_with_mock_transport
+    resource_ns = "tenant.eng"
+    resource = Project(
+        uuid="proj-kw",
+        meta=ProjectMeta(name="test-project"),
+        spec=ProjectSpec(),
+        tenant_meta=BaseTenantMeta(namespace=resource_ns),
+    )
+    returned = Project(
+        uuid="proj-kw",
+        meta=ProjectMeta(name="test-project", description="new desc"),
+        spec=ProjectSpec(),
+        tenant_meta=BaseTenantMeta(namespace=resource_ns),
+    )
+    client.project._update_fn = Mock(return_value=returned)
+    _ = client.project.update(resource, meta_description="new desc")
+    client.project._update_fn.assert_called_once()
+    args, _ = client.project._update_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == resource_ns
+    assert args[2] == "proj-kw"
+    assert args[3].meta.description == "new desc"
+    assert args[4] == "meta.description"
+
+
+def test_delete_ignore_missing_false_raises_not_found(
+    client_with_mock_transport: Client,
+) -> None:
+    """delete(uuid, ignore_missing=False) raises NotFoundError on 404."""
+    client = client_with_mock_transport
+    client.project._delete_fn = Mock(side_effect=NotFoundError("Resource not found"))
+    with pytest.raises(NotFoundError, match="Resource not found"):
+        client.project.delete("proj-missing")
+    client.project._delete_fn.assert_called_once()
+
+
+def test_delete_ignore_missing_true_returns_false_on_not_found(
+    client_with_mock_transport: Client,
+) -> None:
+    """delete(uuid, ignore_missing=True) catches NotFoundError and returns False."""
+    client = client_with_mock_transport
+    client.project._delete_fn = Mock(side_effect=NotFoundError("Resource not found"))
+    result = client.project.delete("proj-missing", ignore_missing=True)
+    assert result is False
+    client.project._delete_fn.assert_called_once()
+
+
+def test_delete_ignore_missing_true_returns_true_on_success(
+    client_with_mock_transport: Client,
+) -> None:
+    """delete(uuid, ignore_missing=True) returns True when delete succeeds."""
+    client = client_with_mock_transport
+    client.project._delete_fn = Mock(return_value=True)
+    result = client.project.delete("proj-ok", ignore_missing=True)
+    assert result is True
+    client.project._delete_fn.assert_called_once()
+
+
+def test_list_iter_returns_iterator_and_delegates(
+    client_with_mock_transport: Client,
+) -> None:
+    """list_iter(max_pages=1) returns an iterator and delegates to list_iter_fn."""
+    client = client_with_mock_transport
+    client.project._list_iter_fn = Mock(return_value=iter([Mock(uuid="p1")]))
+    it = client.project.list_iter(max_pages=conftest.TEST_MAX_PAGES)
+    items = list(it)
+    assert len(items) == 1
+    assert items[0].uuid == "p1"
+    client.project._list_iter_fn.assert_called_once()
+    args, _ = client.project._list_iter_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == conftest.TEST_NAMESPACE_DEFAULT
+    assert args[3] == conftest.TEST_MAX_PAGES
+
+
+def test_tag_delegates_to_update_with_meta_tags(
+    client_with_mock_transport: Client,
+) -> None:
+    """tag(resource, tags) calls update with update_mask meta.tags."""
+    client = client_with_mock_transport
+    resource_ns = "tenant.eng"
+    meta = Mock(tags=["old"])
+    meta.model_copy = Mock(return_value=Mock(tags=["a", "b"]))
+    resource = Mock(
+        uuid="proj-tag",
+        tenant_meta=Mock(namespace=resource_ns),
+        meta=meta,
+    )
+    resource.model_copy = Mock(return_value=Mock(meta=Mock(tags=["a", "b"])))
+    client.project._update_fn = Mock(return_value=resource)
+    client.project.tag(resource, ["a", "b"])
+    client.project._update_fn.assert_called_once()
+    args, _ = client.project._update_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == resource_ns
+    assert args[2] == "proj-tag"
+    assert args[4] == "meta.tags"
+
+
+def test_untag_delegates_to_update_with_meta_tags(
+    client_with_mock_transport: Client,
+) -> None:
+    """untag(resource, keys) calls update with meta.tags after removing keys."""
+    client = client_with_mock_transport
+    resource_ns = "tenant.eng"
+    meta = Mock(tags=["a", "b", "c"])
+    meta.model_copy = Mock(return_value=Mock(tags=["a", "c"]))
+    resource = Mock(
+        uuid="proj-untag",
+        tenant_meta=Mock(namespace=resource_ns),
+        meta=meta,
+    )
+    resource.model_copy = Mock(return_value=Mock(meta=Mock(tags=["a", "c"])))
+    client.project._update_fn = Mock(return_value=resource)
+    client.project.untag(resource, ["b"])
+    client.project._update_fn.assert_called_once()
+    args, _ = client.project._update_fn.call_args
+    assert args[4] == "meta.tags"
+
+
+def test_tag_raises_when_resource_has_no_tags_support(
+    client_with_mock_transport: Client,
+) -> None:
+    """tag() on a facade without tags support raises NotImplementedError."""
+    client = client_with_mock_transport
+    # api_keys has no update_fn and no tags_paths from registry
+    with pytest.raises(NotImplementedError, match="does not support tag"):
+        client.api_key.tag("some-uuid", ["x"])
+
+
+def test_list_with_identity_kwarg_builds_filter(
+    client_with_mock_transport: Client,
+) -> None:
+    """list(name='backend', max_pages=1) passes filter with meta.name clause."""
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.project._list_fn = mock_list
+    client.project.list(name="backend", max_pages=conftest.TEST_MAX_PAGES)
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter is not None
+    assert "meta.name" in lp.filter
+    assert "backend" in lp.filter
+
+
+def test_list_with_explicit_filter_for_resource_without_filter_map(
+    client_with_mock_transport: Client,
+) -> None:
+    """list(filter='...', max_pages=1) passes filter through when no identity map."""
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.api_key._list_fn = mock_list
+    client.api_key.list(
+        filter="meta.name == 'my-key'",
+        max_pages=conftest.TEST_MAX_PAGES,
+    )
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter == "meta.name == 'my-key'"
+
+
+def test_lookup_returns_single_item(
+    client_with_mock_transport: Client,
+) -> None:
+    """lookup(name='only') returns the single item when list returns one."""
+    client = client_with_mock_transport
+    single = Mock(
+        uuid="proj-1",
+        tenant_meta=Mock(namespace=conftest.TEST_NAMESPACE_DEFAULT),
+    )
+    mock_list = Mock(return_value=[single])
+    client.project._list_fn = mock_list
+    result = client.project.lookup(name="only", max_pages=2)
+    assert result is single
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    assert args[3] == 2
+
+
+def test_lookup_raises_not_found_when_zero(
+    client_with_mock_transport: Client,
+) -> None:
+    """lookup(...) raises NotFoundError when list returns no items."""
+    client = client_with_mock_transport
+    client.project._list_fn = Mock(return_value=[])
+    with pytest.raises(NotFoundError, match="No resource matched"):
+        client.project.lookup(name="missing", max_pages=2)
+
+
+def test_lookup_raises_ambiguous_when_multiple(
+    client_with_mock_transport: Client,
+) -> None:
+    """lookup(...) raises AmbiguousError when list returns more than one."""
+    client = client_with_mock_transport
+    a = Mock(uuid="proj-a", tenant_meta=Mock(namespace=conftest.TEST_NAMESPACE_DEFAULT))
+    b = Mock(uuid="proj-b", tenant_meta=Mock(namespace=conftest.TEST_NAMESPACE_DEFAULT))
+    client.project._list_fn = Mock(return_value=[a, b])
+    with pytest.raises(AmbiguousError, match="Multiple resources"):
+        client.project.lookup(name="dup", max_pages=2)
+
+
+def test_lookup_calls_list_with_identity_kwargs(
+    client_with_mock_transport: Client,
+) -> None:
+    """lookup(name='x') calls list with name and max_pages=2; filter built from name."""
+    client = client_with_mock_transport
+    single = Mock(
+        uuid="p1",
+        tenant_meta=Mock(namespace=conftest.TEST_NAMESPACE_DEFAULT),
+    )
+    mock_list = Mock(return_value=[single])
+    client.project._list_fn = mock_list
+    client.project.lookup(name="backend")
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter is not None
+    assert "meta.name" in lp.filter
+    assert "backend" in lp.filter
+    assert args[3] == 2
+
+
+def test_list_with_parent_uses_parent_namespace_and_filter(
+    client_with_mock_transport: Client,
+) -> None:
+    """list(parent=project) delegates with parent namespace and parent_uuid filter."""
+    client = client_with_mock_transport
+    project_ns = "tenant.engineering"
+    project_uuid = "proj-parent-123"
+    project = Mock(uuid=project_uuid, tenant_meta=Mock(namespace=project_ns))
+    mock_list = Mock(return_value=[])
+    client.scan_result._list_fn = mock_list
+    result = client.scan_result.list(
+        parent=project, traverse=True, max_pages=conftest.TEST_MAX_PAGES
+    )
+    assert result == []
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    assert args[0] is client._client
+    assert args[1] == project_ns
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter is not None
+    assert "meta.parent_uuid" in lp.filter
+    assert project_uuid in lp.filter
+    assert args[3] == conftest.TEST_MAX_PAGES
+
+
+def test_list_with_parent_raises_when_facade_does_not_support_parent(
+    client_with_mock_transport: Client,
+) -> None:
+    """list(parent=...) raises when resource has no parent_kind."""
+    client = client_with_mock_transport
+    some_resource = Mock(uuid="ns-1", tenant_meta=Mock(namespace="tenant.foo"))
+    with pytest.raises(ValueError, match="does not support list\\(parent="):
+        client.namespace.list(parent=some_resource, max_pages=conftest.TEST_MAX_PAGES)
+
+
+def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
+    """Resource .namespace returns tenant_meta.namespace when set, None otherwise."""
+    from endorlabs.models.base import BaseMeta, BaseResource, TenantMeta
+
+    class _ConcreteResource(BaseResource):
+        pass
+
+    ns = "tenant.foo.bar"
+    meta = BaseMeta()
+    tenant_meta = TenantMeta(namespace=ns)
+    resource = _ConcreteResource(uuid="r-1", meta=meta, tenant_meta=tenant_meta)
+    assert resource.namespace == ns
+
+    resource_none_ns = _ConcreteResource(uuid="r-2", meta=meta, tenant_meta=None)
+    assert resource_none_ns.namespace is None

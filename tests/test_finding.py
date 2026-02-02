@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 import conftest
 
-from endorlabs.api_client import APIClient
 from endorlabs.resources import finding
 from endorlabs.resources.finding import (
     Finding,
@@ -23,36 +22,86 @@ from endorlabs.resources.finding import (
 )
 
 
+class TestFindingGreenfieldAlias:
+    """Unit tests: greenfield attribute names (context) and serialization.
+
+    These tests assert .context and model_dump(by_alias=True)["context"] so that
+    after renaming finding_context -> context, they pass without change.
+    """
+
+    def test_finding_context_attribute_and_serialization(self) -> None:
+        """Finding exposes .context and serializes with key 'context'."""
+        payload = {
+            "uuid": "test-uuid",
+            "meta": {"name": "test-finding"},
+            "spec": {},
+            "tenant_meta": {"namespace": "test-ns"},
+            "context": {"id": "c1", "type": "scan"},
+        }
+        finding = Finding(**payload)
+        assert finding.context is not None
+        assert getattr(finding.context, "id", None) == "c1"
+        dumped = finding.model_dump(by_alias=True)
+        assert "context" in dumped
+        assert dumped["context"] is not None
+
+
 @pytest.mark.integration
 class TestFinding:
     """Test cases for Finding resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Extract tenant root namespace for traverse operations
-        # Tenant root is the first part before the first dot
-        self.tenant_root = self.namespace.split(".")[0]
-
-        # Track created resources for cleanup
-        # (findings are read-only, but establish pattern)
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.tenant_root = root_namespace
         self.created_finding_uuids = []
 
     def teardown_method(self) -> None:
         """Clean up any resources created during tests."""
-        # Findings are read-only and cannot be deleted, but we establish the pattern
-        # for consistency and future use if findings become deletable
+        # Findings are read-only; cleanup is a no-op for consistent structure.
         if hasattr(self, "created_finding_uuids"):
-            # Note: Findings cannot be deleted via API, so cleanup is a no-op
-            # This method exists to maintain consistent test structure
             self.created_finding_uuids.clear()
+
+    def test_finding_list(self) -> None:
+        """LIST from tenant root with traverse (registry-based)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.finding.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
+
+    def test_finding_get(self) -> None:
+        """GET first item from LIST (root + traverse) (registry-based)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.finding.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.finding.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     @pytest.fixture
     def sample_finding(self):
@@ -69,86 +118,19 @@ class TestFinding:
             results = finding.list_findings(
                 self.client,
                 self.namespace,
-                list_params=ListParameters(page_size=1),
-                max_pages=1,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
             )
         except NotFoundError:
-            pytest.skip("List returned 404 (filter/auth or scope)")
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
-
-    def test_finding_get_list(self) -> None:
-        """Test GET findings operation."""
-        print("\n=== TESTING GET FINDINGS ===")
-
-        import conftest
-
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
-
-        try:
-            findings_list = finding.list_findings(
-                self.client,
-                self.namespace,
-                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-                max_pages=conftest.TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(findings_list, list), "Should return a list of findings"
-        assert all(
-            isinstance(x, Finding) for x in findings_list
-        ), "All list items should be Finding instances"
-        if len(findings_list) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(findings_list)} findings")
-
-        # Display first few findings
-        for _i, finding_item in enumerate(findings_list[:10]):  # Show first 10
-            print(
-                f"Finding {finding_item.uuid}: "
-                f"{finding_item.meta.name if finding_item.meta else None}"
-            )
-            if finding_item.meta.tags:
-                print(f"  Finding meta tags: {finding_item.meta.tags}")
-            if finding_item.spec.finding_tags:
-                print(f"  Finding spec finding_tags: {finding_item.spec.finding_tags}")
-
-    def test_finding_get_by_uuid(self, sample_finding) -> None:
-        """Test GET finding by UUID operation."""
-        print("\n=== TESTING GET FINDING BY UUID ===")
-
-        finding_item = sample_finding
-        # Use the finding's actual namespace
-        finding_namespace = (
-            finding_item.tenant_meta.namespace
-            if finding_item.tenant_meta
-            else self.namespace
-        )
-        retrieved_finding = finding.get_finding(
-            self.client, finding_namespace, finding_item.uuid
-        )
-
-        assert retrieved_finding is not None, (
-            "Should successfully retrieve finding by UUID"
-        )
-        assert retrieved_finding.uuid == finding_item.uuid, (
-            "Retrieved finding should match original"
-        )
-        assert retrieved_finding.meta.name == finding_item.meta.name, (
-            "Finding name should match"
-        )
-
-        print(f"Successfully retrieved finding: {retrieved_finding.uuid}")
-        print(f"Finding name: {retrieved_finding.meta.name}")
-        if retrieved_finding.meta.tags:
-            print(f"Finding meta tags: {retrieved_finding.meta.tags}")
-        if retrieved_finding.spec.finding_tags:
-            print(f"Finding spec finding_tags: {retrieved_finding.spec.finding_tags}")
 
     def test_finding_list_by_sca(self) -> None:
         """Test filtering findings by SCA category."""
@@ -521,18 +503,61 @@ class TestFinding:
         except Exception as e:
             print(f"[WARNING] Failed to restore original values: {e}")
 
-    def test_client_recommended_ux_list_findings(self) -> None:
-        """Recommended UX: endorlabs.Client(tenant=...); client.findings.list()."""
+    @pytest.mark.writes
+    def test_client_ux_update_finding(self) -> None:
+        """Consumer UX: client.finding.get() then update then revert."""
         import endorlabs
+        from endorlabs.resources.finding import FindingTags
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
-        findings = client.findings.list(max_pages=1)
-        assert isinstance(findings, list)
+        findings = client.finding.list(max_pages=conftest.TEST_MAX_PAGES)
+        if not findings:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = findings[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.finding.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve finding {item.uuid}")
+        original_tags = current.meta.tags or []
+        original_finding_tags = list(current.spec.finding_tags or [])
+        new_tags = [*original_tags, "client-ux-update"]
+        new_finding_tags = list(original_finding_tags)
+        if FindingTags.UNDER_REVIEW.value not in new_finding_tags:
+            new_finding_tags.append(FindingTags.UNDER_REVIEW.value)
+        update_payload = UpdateFindingPayload(
+            meta=FindingMetaUpdate(tags=new_tags),
+            spec=FindingSpec(finding_tags=new_finding_tags),
+        )
+        try:
+            updated = client.finding.update(
+                item.uuid,
+                update_payload,
+                update_mask="meta.tags,spec.finding_tags",
+                namespace=ns,
+            )
+        except Exception as e:
+            pytest.skip(f"Finding update not allowed in this environment: {e}")
+        assert updated is not None
+        restore_payload = UpdateFindingPayload(
+            meta=FindingMetaUpdate(tags=original_tags),
+            spec=FindingSpec(finding_tags=original_finding_tags),
+        )
+        try:
+            client.finding.update(
+                item.uuid,
+                restore_payload,
+                update_mask="meta.tags,spec.finding_tags",
+                namespace=ns,
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original finding values: {e}")
 
 
 if __name__ == "__main__":
@@ -546,38 +571,12 @@ if __name__ == "__main__":
         print("ERROR: ENDOR_NAMESPACE environment variable must be set")
         sys.exit(1)
 
-    # Create test instance and manually set up
-    test_instance = TestFinding()
-
-    # Manual setup
-    import conftest
-
-    from endorlabs.types import ListParameters
-
-    test_instance.client = APIClient(auth_method="api-key")
-    test_instance.namespace = os.getenv(
-        "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
-    )
-    test_instance.findings = finding.list_findings(
-        test_instance.client,
-        test_instance.namespace,
-        list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-        max_pages=conftest.TEST_MAX_PAGES,
-    )
-
     try:
         print("Running finding resource tests...")
-
-        # Run all tests
-        test_instance.test_finding_get_list()
-        test_instance.test_finding_get_by_uuid()
-        test_instance.test_finding_patch_tags()
-        test_instance.test_finding_structure_analysis()
-        test_instance.test_finding_spec_tag_limitation()
-        test_instance.test_finding_operations_summary()
-
+        exit_code = pytest.main([__file__, "-v", "-s"])
+        if exit_code != 0:
+            sys.exit(exit_code)
         print("\n[SUCCESS] All finding tests completed successfully!")
-
     except Exception as e:
         print(f"\n[ERROR] Test failed: {e}")
         import traceback

@@ -5,9 +5,13 @@ Detect Schema Drift from Test Output
 This script runs integration tests and captures schema drift warnings/errors,
 then generates a report that can be used to create GitHub issues.
 
+Model consistency: compares Pydantic model field coverage vs OpenAPI spec
+(model-enumerator uses Pydantic introspection; no tree-sitter).
+
 Usage:
     python .github/scripts/detect_schema_drift.py --run-tests
     python .github/scripts/detect_schema_drift.py --check-existing
+    python .github/scripts/detect_schema_drift.py --model-consistency --output-format json
 """
 
 import argparse
@@ -20,10 +24,12 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+# Repo root and src so endorlabs can be imported when script is run from repo root
+_repo_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(_repo_root))
+sys.path.insert(0, str(_repo_root / "src"))
 
 # Set up logging
 logging.basicConfig(
@@ -359,8 +365,69 @@ def main():
         action="store_true",
         help="Check existing drift report without running tests"
     )
+    parser.add_argument(
+        "--model-consistency",
+        action="store_true",
+        help="Generate model consistency report (SDK Pydantic vs OpenAPI spec)"
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=["text", "json", "txt"],
+        default="json",
+        help="Output format for model consistency report (default: json)"
+    )
+    parser.add_argument(
+        "--spec-path",
+        default=None,
+        help="Path to OpenAPI spec JSON (default: external_docs/openapi-swagger.json)"
+    )
+    parser.add_argument(
+        "--spec-url",
+        default=None,
+        help="URL to OpenAPI spec (used if spec-path file missing)"
+    )
+    parser.add_argument(
+        "--consistency-output",
+        default="model_consistency_report",
+        help="Output file base name for model consistency report (default: model_consistency_report)"
+    )
 
     args = parser.parse_args()
+
+    if args.model_consistency:
+        from endorlabs.utils.model_consistency import run_model_consistency_report
+
+        spec_path = args.spec_path
+        if spec_path is None:
+            spec_path = str(_repo_root / "external_docs" / "openapi-swagger.json")
+        spec_url = args.spec_url
+        if spec_url is None:
+            spec_url = "https://api.endorlabs.com/download/openapiv2.swagger.json"
+        report = run_model_consistency_report(
+            spec_path=spec_path,
+            spec_url=spec_url,
+            output_file=args.consistency_output,
+            output_format=args.output_format,
+            inheritance_aware=True,
+        )
+        print("\n" + "=" * 60)
+        print("MODEL CONSISTENCY REPORT")
+        print("=" * 60)
+        summary = report["summary"]
+        print(f"Missing in SDK: {summary['missing_in_sdk_count']}")
+        print(f"Extra in SDK (resource-specific): {summary['extra_in_sdk_count']}")
+        print(f"Resources compared: {summary['resources_compared']}")
+        if "shared_sdk_paths_count" in summary:
+            print(f"Shared paths (excluded from per-resource extra): {summary['shared_sdk_paths_count']}")
+        print(f"Attribute overlap (2+ defs): {summary.get('overlap_attribute_count', 0)}")
+        print(f"Same meaning: {summary.get('same_meaning_count', 0)}")
+        print(f"Collisions: {summary.get('collisions_count', 0)}")
+        collisions = report.get("attribute_overlap_report", {}).get("collisions", [])
+        if collisions:
+            print("\nCollisions list:")
+            for c in collisions:
+                print(f"  - {c}")
+        return 0
 
     detector = SchemaDriftDetector(output_file=args.output)
 

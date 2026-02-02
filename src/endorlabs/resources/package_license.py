@@ -12,6 +12,7 @@ parameter value passed.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -254,6 +255,18 @@ def list_package_licenses(
     return ops.list(PACKAGE_LICENSE_NAMESPACE, list_params, max_pages, **kwargs)
 
 
+def list_package_licenses_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[PackageLicense]:
+    """Iterate over package licenses without materializing the full list."""
+    ops = _get_package_license_ops(client)
+    return ops.list_iter(PACKAGE_LICENSE_NAMESPACE, list_params, max_pages, **kwargs)
+
+
 def get_package_license(
     client: APIClient,
     tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
@@ -301,7 +314,7 @@ def update_package_license(
     tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
     package_license_uuid: str,
     payload: UpdatePackageLicensePayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> PackageLicense | None:
     """Update an existing package license with partial updates.
 
@@ -313,25 +326,35 @@ def update_package_license(
         tenant_meta_namespace: Parameter kept for API compatibility but ignored
         package_license_uuid: UUID of the package license to update
         payload: PackageLicense update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.tags,meta.description"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "meta.tags,meta.description". Missing or empty raises ValidationError.
 
     Returns:
         Updated PackageLicense object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If package license doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
 
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Package license update requires an update_mask "
+                "(e.g. 'meta.description', 'meta.tags')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=package_license_uuid,
+        )
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
     ops = _get_package_license_ops(client)
     return ops.update(
         PACKAGE_LICENSE_NAMESPACE, package_license_uuid, payload, update_mask_list

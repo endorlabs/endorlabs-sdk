@@ -30,6 +30,7 @@ is 20 seconds. Use --timeout option to override if needed.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
@@ -293,6 +294,18 @@ def list_audit_logs(
     """
     ops = _get_audit_log_ops(client)
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
+def list_audit_logs_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[AuditLog]:
+    """Iterate over audit logs without materializing the full list."""
+    ops = _get_audit_log_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
 def list_archived_audit_logs(

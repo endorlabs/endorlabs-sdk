@@ -21,6 +21,7 @@ API FEATURES:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from pydantic import BaseModel, Field, field_validator
@@ -386,6 +387,18 @@ def list_authorization_policies(
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
+def list_authorization_policies_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[AuthorizationPolicy]:
+    """Iterate over authorization policies without materializing the full list."""
+    ops = _get_authorization_policy_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
 def get_authorization_policy(
     client: APIClient,
     tenant_meta_namespace: str,
@@ -445,7 +458,7 @@ def update_authorization_policy(
     tenant_meta_namespace: str,
     policy_uuid: str,
     payload: UpdateAuthorizationPolicyPayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> AuthorizationPolicy | None:
     """Update an existing authorization policy using partial updates.
 
@@ -473,16 +486,14 @@ def update_authorization_policy(
         tenant_meta_namespace: Tenant namespace (canonical name)
         policy_uuid: Authorization policy UUID
         payload: Authorization policy update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.name,spec.clause"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "meta.name,spec.clause". Missing or empty raises ValidationError.
 
     Returns:
         Updated AuthorizationPolicy object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If authorization policy doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
@@ -515,6 +526,18 @@ def update_authorization_policy(
         ... )
 
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Authorization policy update requires an update_mask "
+                "(e.g. 'meta.name', 'spec.clause')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=policy_uuid,
+        )
     # Get the current policy to include required fields
     current_policy = get_authorization_policy(
         client, tenant_meta_namespace, policy_uuid
@@ -549,9 +572,9 @@ def update_authorization_policy(
     merged_policy = AuthorizationPolicy(**merged_policy_dict)
 
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
 
     # Use base class update method
     ops = _get_authorization_policy_ops(client)
@@ -605,6 +628,8 @@ def list_authorization_policies_by_role(
         page_token=None,
         sort_field=None,
         sort_order=None,
+        sort_by=None,
+        desc=None,
         count=None,
         traverse=None,
         from_date=None,
@@ -628,6 +653,8 @@ def list_authorization_policies_by_namespace(
         page_token=None,
         sort_field=None,
         sort_order=None,
+        sort_by=None,
+        desc=None,
         count=None,
         traverse=None,
         from_date=None,
@@ -652,6 +679,8 @@ def list_authorization_policies_paginated(
         page_token=page_token,
         sort_field=None,
         sort_order=None,
+        sort_by=None,
+        desc=None,
         count=None,
         traverse=None,
         from_date=None,
@@ -665,7 +694,7 @@ def list_authorization_policies_paginated(
 def list_authorization_policies_sorted(
     client: APIClient,
     tenant_meta_namespace: str,
-    sort_field: str = "meta.create_time",
+    sort_by: str = "meta.create_time",
     desc: bool = True,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies with sorting."""
@@ -674,8 +703,10 @@ def list_authorization_policies_sorted(
         mask=None,
         page_size=None,
         page_token=None,
-        sort_field=sort_field,
-        sort_order="desc" if desc else "asc",
+        sort_field=None,
+        sort_order=None,
+        sort_by=sort_by,
+        desc=desc,
         count=None,
         traverse=None,
         from_date=None,

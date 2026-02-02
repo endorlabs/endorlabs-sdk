@@ -1,5 +1,7 @@
 # Namespace Traversal Pattern
 
+Traverse and list parameters are defined in [conventions.md](../conventions.md); this doc adds patterns and examples.
+
 ## Overview
 
 When querying resources across an entire tenant, use the **`traverse`** parameter to automatically query all namespaces in the hierarchy. This is the canonical, efficient approach for tenant-wide operations.

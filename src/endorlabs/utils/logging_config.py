@@ -25,14 +25,14 @@ def setup_logging(module_name: str = "endorlabs") -> logging.Logger:
 
 
 # Loggers used by the SDK and HTTP stack; session level is applied to all of these.
-_CLIENT_SESSION_LOGGER_NAMES = ("endorlabs", "urllib3", "requests")
+_CLIENT_SESSION_LOGGER_NAMES = ("endorlabs", "httpx", "httpcore")
 
 
 def apply_client_session_log_level(level: int) -> None:
     """Set the given numeric level on all loggers used during a client session.
 
     Called by APIClient when logging_level is set at construction so that
-    endorlabs, urllib3, and requests all honor the client's level for the
+    endorlabs, httpx, and httpcore all honor the client's level for the
     lifetime of that client instance.
     """
     for name in _CLIENT_SESSION_LOGGER_NAMES:

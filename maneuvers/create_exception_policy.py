@@ -78,7 +78,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 from common.project_lookup import find_project_by_repository_url
 
 # Configure logging to reduce verbosity
-logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging

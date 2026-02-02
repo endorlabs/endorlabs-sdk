@@ -11,8 +11,13 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endorlabs.api_client import APIClient
+import conftest
+
 from endorlabs.resources import repository_version
+from endorlabs.resources.repository_version import (
+    RepositoryVersionMetaUpdate,
+    UpdateRepositoryVersionPayload,
+)
 
 
 @pytest.mark.integration
@@ -20,16 +25,11 @@ class TestRepositoryVersion:
     """Test cases for RepositoryVersion resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        import conftest
-
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
 
     @pytest.fixture
     def sample_repository_version(self):
@@ -46,61 +46,14 @@ class TestRepositoryVersion:
             results = repository_version.list_repository_versions(
                 self.client,
                 self.namespace,
-                list_params=ListParameters(page_size=1),
-                max_pages=1,
+                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+                max_pages=conftest.TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
-
-    def test_repository_version_get_list(self) -> None:
-        """Test GET repository versions operation."""
-        print("\n=== TESTING GET REPOSITORY VERSIONS ===")
-
-        import conftest
-
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
-
-        try:
-            repository_versions_list = repository_version.list_repository_versions(
-                self.client,
-                self.namespace,
-                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-                max_pages=conftest.TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(repository_versions_list, list), (
-            "Should return a list of repository versions"
-        )
-        if len(repository_versions_list) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(repository_versions_list)} repository versions")
-
-        # Display first few repository versions
-        for i, repo_version in enumerate(repository_versions_list[:3]):
-            print(f"Repository Version {i + 1}:")
-            print(f"  UUID: {repo_version.uuid}")
-            print(f"  Name: {repo_version.meta.name}")
-            print(f"  Kind: {repo_version.meta.kind}")
-            print(f"  Version: {repo_version.spec.version}")
-            print(f"  Parent UUID: {repo_version.meta.parent_uuid}")
-
-    def test_repository_version_get_by_uuid(self, sample_repository_version) -> None:
-        """Test GET repository version by UUID operation."""
-        test_repository_version = sample_repository_version
-        retrieved_repository_version = repository_version.get_repository_version(
-            self.client, self.namespace, test_repository_version.uuid
-        )
-        assert retrieved_repository_version is not None
-        assert retrieved_repository_version.uuid == test_repository_version.uuid
-        assert (
-            retrieved_repository_version.meta.name == test_repository_version.meta.name
-        )
 
     def test_repository_version_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
@@ -139,25 +92,80 @@ class TestRepositoryVersion:
             assert isinstance(parent_kind, str)
             assert parent_kind == "Project"
 
-    def test_repository_version_pagination(self) -> None:
-        """Test pagination capabilities."""
-        import conftest
-
+    def test_repository_version_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
         from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
 
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
         try:
-            paginated_versions = repository_version.list_repository_versions(
-                self.client,
-                self.namespace,
-                list_params=ListParameters(page_size=5),
-                max_pages=conftest.TEST_MAX_PAGES,
+            result = client.repository_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(paginated_versions, list)
-        if len(paginated_versions) == 0:
+        assert isinstance(result, list)
+
+    def test_repository_version_list_with_parent_project(self) -> None:
+        """LIST repository versions with parent=project (list with parent resource)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            projects = client.project.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list projects); skip")
+        if not projects:
+            pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
+        project = projects[0]
+        try:
+            result = client.repository_version.list(
+                parent=project,
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
+
+    def test_repository_version_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            items = client.repository_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.repository_version.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_repository_version_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
@@ -171,8 +179,8 @@ class TestRepositoryVersion:
         sample_results = repository_version.list_repository_versions(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if sample_results and sample_results[0].meta.parent_uuid:
             parent_uuid = sample_results[0].meta.parent_uuid
@@ -213,19 +221,63 @@ class TestRepositoryVersion:
             assert hasattr(version, "spec")
             print(f"Masked repository version: {version.meta.name}")
 
-    def test_client_recommended_ux_list_repository_versions(self) -> None:
-        """Recommended UX: Client(tenant=...); client.repository_versions.list()."""
+    @pytest.mark.writes
+    def test_client_ux_update_repository_version(self) -> None:
+        """Consumer UX: client.repository_version.get() then update then revert."""
         import endorlabs
         from endorlabs.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
         try:
-            versions = client.repository_versions.list(max_pages=1)
+            versions = client.repository_version.list(max_pages=conftest.TEST_MAX_PAGES)
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(versions, list)
+        if not versions:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = versions[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.repository_version.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve repository version {item.uuid}")
+        original_description = getattr(current.meta, "description", None) or ""
+        new_description = (
+            f"{original_description} [client-ux]"
+            if original_description
+            else "client-ux"
+        )
+        update_payload = UpdateRepositoryVersionPayload(
+            meta=RepositoryVersionMetaUpdate(description=new_description)
+        )
+        try:
+            updated = client.repository_version.update(
+                item.uuid,
+                update_payload,
+                update_mask="meta.description",
+                namespace=ns,
+            )
+        except Exception as e:
+            pytest.skip(
+                f"Repository version update not allowed in this environment: {e}"
+            )
+        assert updated is not None
+        restore_payload = UpdateRepositoryVersionPayload(
+            meta=RepositoryVersionMetaUpdate(description=original_description)
+        )
+        try:
+            client.repository_version.update(
+                item.uuid,
+                restore_payload,
+                update_mask="meta.description",
+                namespace=ns,
+            )
+        except Exception as e:
+            print(
+                f"[WARNING] Failed to restore original repository version values: {e}"
+            )

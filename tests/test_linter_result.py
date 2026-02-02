@@ -24,37 +24,36 @@ class TestLinterResult:
     """Test cases for LinterResult resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Get test data - use parent namespace to access child resources
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
 
     @pytest.fixture
     def sample_linter_result(self):
         """Fetch minimal sample data (1 item) for UUID operations.
 
         Function-scoped but only fetches when explicitly requested by tests.
-        Uses traverse=True to search across namespaces, matching test_linter_result_list.
+        Uses tenant root + traverse so resources in instance are captured.
         """
         from endorlabs.exceptions import NotFoundError, ServerError
 
         try:
             results = linter_result.list_linter_results(
                 self.client,
-                self.parent_namespace,
-                list_params=ListParameters(page_size=1, traverse=True),
+                self.root_namespace,
+                list_params=ListParameters(
+                    page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                    traverse=True,
+                ),
                 max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
             )
         except NotFoundError:
-            pytest.skip("List returned 404 (filter/auth or scope)")
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not results:
@@ -62,92 +61,76 @@ class TestLinterResult:
         return results[0]  # Return single item, not list
 
     def test_linter_result_list(self) -> None:
-        """Test LIST linter results operation."""
-        print("\n=== TESTING LIST LINTER RESULTS ===")
+        """LIST from tenant root with traverse (registry-based)."""
+        import endorlabs
 
-        # Test list_linter_results with pagination limits
-        linter_results_list = linter_result.list_linter_results(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
-                traverse=True,
-            ),
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.linter_result.list(
+            traverse=True,
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
-        assert isinstance(linter_results_list, list), (
-            "Should return a list of linter results"
+        assert isinstance(result, list)
+
+    def test_linter_result_get(self) -> None:
+        """GET first item from LIST (root + traverse) (registry-based)."""
+        import endorlabs
+        from endorlabs.exceptions import NotFoundError, ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        if len(linter_results_list) == 0:
+        try:
+            items = client.linter_result.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except NotFoundError:
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(linter_results_list)} linter results")
-
-        # Display first few linter results
-        for _i, linter_result_item in enumerate(linter_results_list[:5]):
-            print(
-                f"LinterResult {linter_result_item.uuid}: "
-                f"{linter_result_item.meta.name if linter_result_item.meta else 'N/A'}"
-            )
-            if linter_result_item.spec:
-                print(f"  Origin: {linter_result_item.spec.origin}")
-                print(f"  Level: {linter_result_item.spec.level}")
-                if linter_result_item.spec.ecosystem:
-                    print(f"  Ecosystem: {linter_result_item.spec.ecosystem}")
-
-    def test_linter_result_get_by_uuid(self, sample_linter_result) -> None:
-        """Test GET linter result by UUID operation."""
-        print("\n=== TESTING GET LINTER RESULT BY UUID ===")
-
-        linter_result_item = sample_linter_result
-        # Use the linter result's actual namespace
-        # (may be in child namespace when traverse=True)
-        linter_result_namespace = (
-            linter_result_item.tenant_meta.namespace
-            if linter_result_item.tenant_meta
-            else self.parent_namespace
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
         )
-        retrieved_linter_result = linter_result.get_linter_result(
-            self.client, linter_result_namespace, linter_result_item.uuid
-        )
-
-        assert retrieved_linter_result is not None, (
-            "Should successfully retrieve linter result by UUID"
-        )
-        assert retrieved_linter_result.uuid == linter_result_item.uuid, (
-            "Retrieved linter result should match original"
-        )
-        if retrieved_linter_result.meta and linter_result_item.meta:
-            assert retrieved_linter_result.meta.name == linter_result_item.meta.name, (
-                "Linter result name should match"
-            )
-
-        print(f"Successfully retrieved linter result: {retrieved_linter_result.uuid}")
-        if retrieved_linter_result.meta:
-            print(f"Linter result name: {retrieved_linter_result.meta.name}")
-        if retrieved_linter_result.spec:
-            print(f"Origin: {retrieved_linter_result.spec.origin}")
-            print(f"Level: {retrieved_linter_result.spec.level}")
+        got = client.linter_result.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_linter_result_filter_by_project(self, sample_linter_result) -> None:
-        """Test filtering linter results by project UUID."""
+        """Test filtering linter results by project UUID in the resource's namespace."""
         print("\n=== TESTING FILTER LINTER RESULTS BY PROJECT ===")
 
-        # Get first linter result to extract project UUID
         first_linter = sample_linter_result
         if not first_linter.spec or not first_linter.spec.project_uuid:
             pytest.skip("Linter result has no project_uuid")
 
         project_uuid = first_linter.spec.project_uuid
+        # Scope filter to same tenant/namespace as resource (tenant coupled to resource)
+        list_namespace = (
+            first_linter.tenant_meta.namespace
+            if first_linter.tenant_meta
+            and getattr(first_linter.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
 
-        # Filter linter results by project
         list_params = ListParameters(
             filter=f'spec.project_uuid=="{project_uuid}"',
         )
 
         filtered_results = linter_result.list_linter_results(
             self.client,
-            self.parent_namespace,
+            list_namespace,
             list_params,
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
@@ -168,40 +151,6 @@ class TestLinterResult:
             f"Found {len(filtered_results)} linter results for project {project_uuid}"
         )
 
-    def test_linter_result_with_traverse(self) -> None:
-        """Test listing linter results with traverse (child namespaces)."""
-        print("\n=== TESTING LIST LINTER RESULTS WITH TRAVERSE ===")
-
-        # List with traverse enabled
-        list_params = ListParameters(
-            traverse=True,
-        )
-
-        linter_results_list = linter_result.list_linter_results(
-            self.client,
-            self.parent_namespace,
-            list_params,
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-
-        assert isinstance(linter_results_list, list), (
-            "Should return a list of linter results"
-        )
-        print(f"Found {len(linter_results_list)} linter results (with traverse)")
-
-    def test_linter_result_pagination(self) -> None:
-        """Test pagination capabilities."""
-        # Test with page size
-        paginated_results = linter_result.list_linter_results(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=5, traverse=True),
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-        assert isinstance(paginated_results, list)
-        if len(paginated_results) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
     def test_linter_result_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
@@ -210,25 +159,24 @@ class TestLinterResult:
 
         with pytest.raises(ValidationError) as exc_info:
             linter_result.get_linter_result(
-                self.client, self.parent_namespace, "invalid-uuid"
+                self.client, self.root_namespace, "invalid-uuid"
             )
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
-    def test_client_recommended_ux_list_linter_results(self) -> None:
-        """Recommended UX: Client(tenant=...); client.linter_results.list()."""
-        import endorlabs
-        from endorlabs.exceptions import ServerError
+    def test_linter_result_update_raises_not_implemented(self) -> None:
+        """If update_fn is None, client.linter_result.update raises NotImplemented."""
+        from unittest.mock import Mock
 
+        import endorlabs
+
+        mock = Mock(spec=APIClient)
         client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=mock,
+            tenant=conftest.TEST_NAMESPACE_DEFAULT,
         )
-        try:
-            results = client.linter_results.list(max_pages=1)
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(results, list)
+        with pytest.raises(NotImplementedError, match="does not support update"):
+            client.linter_result.update(
+                "dummy-uuid", {}, update_mask="meta.description"
+            )

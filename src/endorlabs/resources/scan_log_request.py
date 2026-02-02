@@ -11,6 +11,8 @@ API USAGE NOTES:
 - Create a request with filters to retrieve scan logs
 - Logs are returned in the response's spec.log_messages array
 - Can filter by scan_result_uuid, execution_id, project_uuid, etc.
+- Namespace: the path namespace must be the one that owns the scan result
+  (use the scan result's tenant_meta.namespace; parent namespace will fail).
 - For more information, see the ScanLogRequestService REST API documentation
 """
 
@@ -285,7 +287,8 @@ def create_scan_log_request(
 
     Args:
         client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
+        tenant_meta_namespace: Namespace that owns the scan result in
+            payload.spec.scan_result_uuid (e.g. scan_result.tenant_meta.namespace).
         payload: ScanLogRequest creation payload with filters
 
     Returns:
@@ -334,7 +337,8 @@ def get_scan_result_logs(
 
     Args:
         client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
+        tenant_meta_namespace: Namespace that owns the scan result
+            (e.g. scan_result.tenant_meta.namespace).
         scan_result_uuid: UUID of the scan result to get logs for
         max_entries: Maximum number of log entries to return (default: 100)
         log_levels: Optional list of log levels to filter by

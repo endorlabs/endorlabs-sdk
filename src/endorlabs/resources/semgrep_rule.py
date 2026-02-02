@@ -20,6 +20,7 @@ API FEATURES:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import yaml
@@ -77,7 +78,9 @@ class SemgrepOptions(BaseModel):
     )
     interfile: bool | None = Field(None, description="Enable interfile analysis")
     assume_numbers_are_safe: bool | None = Field(
-        None, description="Assume numbers are safe"
+        None,
+        alias="taint_assume_safe_numbers",
+        description="Assume numbers are safe",
     )
 
 
@@ -458,6 +461,18 @@ def list_semgrep_rules(
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
+def list_semgrep_rules_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[SemgrepRule]:
+    """Iterate over semgrep rules without materializing the full list."""
+    ops = _get_semgrep_rule_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
 def get_semgrep_rule(
     client: APIClient, tenant_meta_namespace: str, rule_uuid: str
 ) -> SemgrepRule:
@@ -479,6 +494,24 @@ def get_semgrep_rule(
     """
     ops = _get_semgrep_rule_ops(client)
     return ops.get(tenant_meta_namespace, rule_uuid)
+
+
+def _rule_to_yaml(rule: SemgrepNativeRule) -> str:
+    """Build minimal Semgrep rule YAML so the API can parse the rule (avoids null)."""
+    entry: dict[str, Any] = {}
+    if rule.id:
+        entry["id"] = rule.id
+    if rule.pattern:
+        entry["pattern"] = rule.pattern
+    if rule.message:
+        entry["message"] = rule.message
+    if rule.languages:
+        entry["languages"] = rule.languages
+    if rule.severity:
+        entry["severity"] = rule.severity
+    if rule.mode:
+        entry["mode"] = rule.mode
+    return yaml.dump({"rules": [entry]}, default_flow_style=False, allow_unicode=True)
 
 
 def create_semgrep_rule(
@@ -523,6 +556,25 @@ def create_semgrep_rule(
                 namespace=tenant_meta_namespace,
             )
 
+    # API expects spec.yaml (rule in original YAML format) to parse; avoid sending null.
+    if payload.spec and payload.spec.rule and not payload.spec.yaml:
+        spec_with_yaml = SemgrepRuleSpec(
+            rule=payload.spec.rule,
+            disabled=payload.spec.disabled,
+            yaml=_rule_to_yaml(payload.spec.rule),
+            notification=None,
+            finding=None,
+            exception=None,
+            defined_by=None,
+            severity_level=None,
+        )
+        payload = CreateSemgrepRulePayload(
+            meta=payload.meta,
+            spec=spec_with_yaml,
+            propagate=payload.propagate,
+            disabled=payload.disabled,
+        )
+
     ops = _get_semgrep_rule_ops(client)
     return ops.create(tenant_meta_namespace, payload)
 
@@ -532,7 +584,7 @@ def update_semgrep_rule(
     tenant_meta_namespace: str,
     rule_uuid: str,
     payload: UpdateSemgrepRulePayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> SemgrepRule | None:
     """Update an existing Semgrep rule.
 
@@ -543,18 +595,31 @@ def update_semgrep_rule(
         tenant_meta_namespace: Tenant namespace (canonical name)
         rule_uuid: Semgrep rule UUID
         payload: Semgrep rule update payload
-        update_mask: Optional comma-separated list of fields to update
+        update_mask: Comma-separated list of fields to update (required). Missing or
+            empty raises ValidationError.
 
     Returns:
         Updated SemgrepRule object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If Semgrep rule doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
 
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Semgrep rule update requires an update_mask "
+                "(e.g. 'meta.description', 'spec.rule_id')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=rule_uuid,
+        )
     # Get current rule to include required fields
     current_rule = get_semgrep_rule(client, tenant_meta_namespace, rule_uuid)
 
@@ -596,15 +661,23 @@ def update_semgrep_rule(
     # Create SemgrepRule object from merged data
     merged_rule = SemgrepRule(**merged_rule_dict)
 
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    # Convert update_mask from string to List[str]
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
 
-    # Use base class update method
+    # Send full object in PATCH body so backend receives spec (avoids 400).
     ops = _get_semgrep_rule_ops(client)
     logger.info(f"Updating semgrep rule {rule_uuid} with mask: {update_mask}")
-    return ops.update(tenant_meta_namespace, rule_uuid, merged_rule, update_mask_list)
+    full_object_dict = ops.dump_for_api(merged_rule)
+    request_data = {
+        "object": full_object_dict,
+        "request": {"update_mask": ",".join(update_mask_list)},
+    }
+    url = f"v1/namespaces/{tenant_meta_namespace}/semgrep-rules"
+    res = client.patch(url, json=request_data)
+    data = res.json()
+    return SemgrepRule(**data)
 
 
 def delete_semgrep_rule(
