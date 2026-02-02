@@ -4,7 +4,8 @@ Provides a generic ResourceFacade[T] that delegates to module-level
 list/get/create/update/delete functions and resolves default namespace.
 Also provides ScanLogsFacade for the request-based scan logs workflow;
 Client attaches it via CUSTOM_FACADE_REGISTRY.
-See docs/reference/resources.md (scan_log_request) and docs/guides/retrieving-scan-results.md.
+See docs/reference/resources.md (scan_log_request) and
+docs/guides/retrieving-scan-results.md.
 """
 
 from __future__ import annotations
@@ -431,7 +432,8 @@ class ScanLogsFacade:
         """Retrieve log messages for a scan result.
 
         Delegates to ScanLogRequest API (POST only); returns spec.log_messages.
-        See docs/reference/resources.md (scan_log_request) and docs/guides/retrieving-scan-results.md.
+        See docs/reference/resources.md (scan_log_request) and
+        docs/guides/retrieving-scan-results.md.
         """
         from .resources.scan_log_request import get_scan_result_logs
 
