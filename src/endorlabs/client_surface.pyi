@@ -7,23 +7,32 @@ from .api_client import APIClient
 from .facade import ResourceFacade, ScanLogsFacade
 from .resources.api_key import APIKey
 from .resources.audit_log import AuditLog
+from .resources.authentication_log import AuthenticationLog
 from .resources.authorization_policy import AuthorizationPolicy
+from .resources.code_owners import CodeOwners
 from .resources.dependency_metadata import DependencyMetadata
+from .resources.endor_license import EndorLicense
 from .resources.finding import Finding
 from .resources.finding_log import FindingLog
 from .resources.installation import Installation
+from .resources.invitation import Invitation
 from .resources.linter_result import LinterResult
 from .resources.metric import Metric
 from .resources.namespace import Namespace
+from .resources.notification_target import NotificationTarget
 from .resources.package_license import PackageLicense
 from .resources.package_version import PackageVersion
 from .resources.policy import Policy
+from .resources.policy_template import PolicyTemplate
 from .resources.project import Project
 from .resources.repository import Repository
 from .resources.repository_version import RepositoryVersion
 from .resources.scan_profile import ScanProfile
 from .resources.scan_result import ScanResult
+from .resources.scan_workflow import ScanWorkflow
+from .resources.scan_workflow_result import ScanWorkflowResult
 from .resources.semgrep_rule import SemgrepRule
+from .resources.version_upgrade import VersionUpgrade
 
 class Client:
     """Client with default namespace and resource facades."""
@@ -47,6 +56,15 @@ class Client:
     api_key: ResourceFacade[APIKey]
     audit_log: ResourceFacade[AuditLog]
     finding_log: ResourceFacade[FindingLog]
+    notification_target: ResourceFacade[NotificationTarget]
+    scan_workflow: ResourceFacade[ScanWorkflow]
+    scan_workflow_result: ResourceFacade[ScanWorkflowResult]
+    version_upgrade: ResourceFacade[VersionUpgrade]
+    code_owners: ResourceFacade[CodeOwners]
+    invitation: ResourceFacade[Invitation]
+    authentication_log: ResourceFacade[AuthenticationLog]
+    endor_license: ResourceFacade[EndorLicense]
+    policy_template: ResourceFacade[PolicyTemplate]
     scan_logs: ScanLogsFacade
 
     def __init__(

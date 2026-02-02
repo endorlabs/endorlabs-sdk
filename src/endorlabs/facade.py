@@ -42,7 +42,7 @@ class ResourceFacade(Generic[T]):
         default_namespace: str | None,
         list_fn: Callable[..., list[T]],
         get_fn: Callable[..., T],
-        create_fn: Callable[..., T],
+        create_fn: Callable[..., T] | None = None,
         update_fn: Callable[..., T] | None = None,
         delete_fn: Callable[..., bool] | None = None,
         list_iter_fn: Callable[..., Iterator[T]] | None = None,
@@ -235,6 +235,10 @@ class ResourceFacade(Generic[T]):
         namespace: str | None = None,
     ) -> T:
         """Create a resource."""
+        if self._create_fn is None:
+            raise NotImplementedError(
+                "This resource does not support create."
+            ) from None
         ns = self._ns(namespace)
         return self._create_fn(self._client, ns, payload)
 
