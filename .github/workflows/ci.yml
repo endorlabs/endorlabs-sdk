@@ -5,9 +5,9 @@ name: CI
 #   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
 #   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "endor-solutions-tgowan")
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
-#   - ENDOR_API_CREDENTIALS_KEY: API credentials key
-#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret
-#   - ENDOR_GITHUB_TOKEN: (Optional) GitHub token for PR comments, falls back to GITHUB_TOKEN
+#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests)
+#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests)
+# Security: This repo is scanned by the Endor Labs app integration (no endorctl scan in CI).
 
 on:
   push:
@@ -82,12 +82,11 @@ jobs:
         run: |
           uv sync --dev
 
-  # Lint job 
+  # Lint job
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, security]
-    if: always() && needs.security.result == 'success'
+    needs: [resolve-dependencies]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -115,146 +114,11 @@ jobs:
         run: |
           uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 
-  # Security scan job
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: resolve-dependencies
-    env:
-      # Use UV for Python dependency resolution (repo uses uv; set in workflow, not GH variables)
-      ENDOR_SCAN_ENABLE_UV_PACKAGE_MANAGER: "true"
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6.0.2
-
-      - name: Setup Python with UV
-        uses: ./.github/actions/setup-python-uv
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
-
-      - name: Validate required secrets for security scan
-        run: |
-          if [ -z "${{ vars.ENDOR_API }}" ]; then
-            echo "❌ ERROR: ENDOR_API variable is not set"
-            echo "Please configure the ENDOR_API variable in repository settings"
-            exit 1
-          fi
-          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
-            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
-            echo "Please configure the ENDOR_NAMESPACE variable in repository settings"
-            exit 1
-          fi
-          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
-            echo "Please configure the ENDOR_API_CREDENTIALS_KEY secret in repository settings"
-            exit 1
-          fi
-          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
-            echo "Please configure the ENDOR_API_CREDENTIALS_SECRET secret in repository settings"
-            exit 1
-          fi
-          echo "✅ All required secrets and variables are present"
-
-
-      - name: Install endorctl
-        run: |
-          # Install endorctl binary using official Endor Labs download
-          curl -O https://api.endorlabs.com/download/latest/endorctl_linux_amd64
-          chmod +x endorctl_linux_amd64
-          sudo mv endorctl_linux_amd64 /usr/local/bin/endorctl
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-
-      - name: Verify endorctl installation
-        run: |
-          endorctl --version
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-
-      - name: Run endorctl host-check with diagnostics
-        run: |
-          echo "Running endorctl host-check with DroidGPT for diagnostics..."
-          if ! endorctl host-check --droid-gpt; then
-            echo "::error::endorctl host-check failed. Please verify:"
-            echo "  1. ENDOR_API_CREDENTIALS_KEY and ENDOR_API_CREDENTIALS_SECRET are correct"
-            echo "  2. The credentials have access to namespace: ${{ vars.ENDOR_NAMESPACE }}"
-            echo "  3. The credentials are not expired"
-            echo "  4. The namespace format is correct (tenant.namespace)"
-            exit 1
-          fi
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-
-      - name: Run comprehensive Endorctl security scan
-        run: |
-          # Note: GitHub token needs organization admin permissions for full GitHub integration
-          # For now, we skip GitHub-specific checks to avoid 403 permission errors
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "Running PR scan with comprehensive security analysis and PR comments..."
-            endorctl scan \
-              --namespace ${{ vars.ENDOR_NAMESPACE }} \
-              --languages=python \
-              --secrets \
-              --dependencies \
-              --sast \
-              --ghactions \
-              --pr \
-              --enable-pr-comments \
-              --scm-pr-id ${{ github.event.number }} \
-              --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
-              --output-type summary \
-              --exit-on-policy-warning || echo "PR comments failed - scan completed successfully"
-          else
-            echo "Running branch scan with comprehensive security analysis..."
-            endorctl scan \
-              --namespace ${{ vars.ENDOR_NAMESPACE }} \
-              --languages=python \
-              --secrets \
-              --dependencies \
-              --sast \
-              --ghactions \
-              --repository-http-clone-url ${{ github.server_url }}/${{ github.repository }} \
-              --output-type summary \
-              --exit-on-policy-warning
-          fi
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-          GITHUB_TOKEN: ${{ secrets.ENDOR_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
-          GITHUB_API_URL: ${{ github.api_url }}
-          ENDOR_LOG_LEVEL: "debug"
-          ENDOR_LOG_VERBOSE: "true"
-
-      - name: Test retrieving-scan-results workflow
-        run: |
-          echo "Testing retrieving-scan-results workflow end-to-end..."
-          echo "This validates the workflow: Repository URL → Project → ScanResult → Findings"
-          echo "Repository URL: ${{ github.server_url }}/${{ github.repository }}.git"
-          uv run pytest tests/test_retrieving_scan_results_workflow.py::TestRetrievingScanResultsWorkflow::test_complete_workflow_end_to_end -v
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-          TEST_REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
-
-
   # Integration tests - slower, requires secrets
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, security]
-    if: always() && needs.security.result == 'success'
+    needs: [resolve-dependencies]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -300,12 +164,11 @@ jobs:
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
 
-  # Coverage job - runs after security and lint pass
+  # Coverage job - runs after lint pass
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, security, lint]
-    if: always() && needs.security.result == 'success' && needs.lint.result == 'success'
+    needs: [resolve-dependencies, lint]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
