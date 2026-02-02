@@ -20,6 +20,7 @@ API USAGE NOTES:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -336,7 +337,7 @@ class FindingLog(BaseResource):
 
     # FindingLog-specific fields (universal fields inherited from BaseResource)
     spec: FindingLogSpec = Field(..., description="Finding log specification")  # type: ignore
-    finding_log_context: Context = Field(
+    context: Context = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         ..., description="Context information for the finding log", alias="context"
     )
 
@@ -500,6 +501,18 @@ def list_finding_logs(
     """
     ops = _get_finding_log_ops(client)
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
+def list_finding_logs_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[FindingLog]:
+    """Iterate over finding logs without materializing the full list."""
+    ops = _get_finding_log_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
 def get_finding_log(

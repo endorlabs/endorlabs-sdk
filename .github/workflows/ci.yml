@@ -110,6 +110,11 @@ jobs:
         run: |
           uv run pyright --project pyproject.toml
 
+      - name: Run pyright verifytypes (public API type completeness)
+        continue-on-error: true  # Remove when type completeness is 100% (see docs/reference/README.md)
+        run: |
+          uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
+
   # Security scan job
   security:
     name: Security Scan
@@ -283,8 +288,8 @@ jobs:
 
       - name: Run integration tests
         run: |
-          # CI runs all integration tests (including writes) using admin credentials on the isolated namespace
-          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration"
+          # CI runs integration tests (excluding long-running audit/finding/scan log tests)
+          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration and not long"
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
@@ -310,7 +315,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }}
+          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not long"
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}

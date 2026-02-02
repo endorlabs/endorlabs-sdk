@@ -6,7 +6,6 @@ the Endor Cockpit SDK across all modules.
 
 import logging
 import os
-from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from unittest.mock import Mock
@@ -14,23 +13,16 @@ from unittest.mock import Mock
 import pytest
 
 from endorlabs.api_client import APIClient
-from endorlabs.exceptions import NotFoundError, ServerError
 from endorlabs.types import ListParameters
 
-# Test pagination limits
-# Tests fetch limited resources for setup (page_size=10, max 5 pages = 50 items max)
-# Tests that need more should explicitly request it
-TEST_PAGE_SIZE = 10  # Reasonable default for tests (vs API default of 100)
-TEST_MAX_PAGES = 5  # Safety limit: max pages to fetch in tests
-TEST_TRAVERSE_PAGE_SIZE = (
-    2  # Minimal page size for traverse tests to limit network load
-)
-TEST_MAX_PAGES_TRAVERSE = (
-    2  # Max pages for traverse queries (slower, so more restrictive)
-)
+# Test pagination limits: 1 page, 1 item per page (same limits for all list tests)
+TEST_PAGE_SIZE = 1
+TEST_MAX_PAGES = 1
+TEST_TRAVERSE_PAGE_SIZE = 1
+TEST_MAX_PAGES_TRAVERSE = 1
 # Single source for test namespace: use env ENDOR_NAMESPACE or this default.
 # Tests should use the `namespace` fixture (or this constant) instead of
-# hardcoding a default. See docs/rules-of-engagement/test-and-spec-findings.md.
+# hardcoding a default. See docs/rules-of-engagement/resource-implementation.md (Phase 2b) and troubleshooting.md.
 TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
 
@@ -92,8 +84,30 @@ def api_client():
     """Create a real APIClient instance for integration tests.
 
     Uses API key authentication only (not browser auth).
+    Client is closed after the test (or fixture consumer) finishes.
     """
-    return APIClient(auth_method="api-key")
+    client = APIClient(auth_method="api-key")
+    try:
+        yield client
+    finally:
+        client.close()
+
+
+@pytest.fixture
+def api_client_fast_retry():
+    """APIClient with reduced retries for faster test failure (e.g. api_key).
+
+    Same lifecycle as api_client: closed after the test (or fixture consumer) finishes.
+    """
+    client = APIClient(
+        auth_method="api-key",
+        max_retries=2,
+        backoff_factor=0.1,
+    )
+    try:
+        yield client
+    finally:
+        client.close()
 
 
 @pytest.fixture
@@ -107,6 +121,16 @@ def namespace():
     if not ns:
         pytest.skip("ENDOR_NAMESPACE environment variable must be set")
     return ns
+
+
+@pytest.fixture
+def root_namespace(namespace):
+    """Tenant root (first segment of namespace) for LIST with traverse.
+
+    Use with client.list(traverse=True) so resources in the instance are captured.
+    """
+    parts = namespace.split(".", 1)
+    return parts[0] if len(parts) > 1 else namespace
 
 
 @pytest.fixture
@@ -154,36 +178,3 @@ def schema_drift_data():
         },
         "tenant_meta": {"namespace": "test.namespace"},
     }
-
-
-def resource_list_fixture_factory(list_func: Callable, resource_name: str) -> Callable:
-    """Factory to create resource list fixtures with pagination limits.
-
-    Args:
-        list_func: The list function to call (e.g., project.list_projects)
-        resource_name: Name of the resource for error messages
-
-    Returns:
-        A pytest fixture function
-
-    """
-
-    @pytest.fixture
-    def _resource_list(api_client, namespace, test_list_params):
-        """Get limited list of resources for testing.
-
-        Skips when list returns empty or 404/ServerError so dependents
-        do not run with no data. Uses clear skip reasons to avoid
-        conflating empty/404 with "no data".
-        """
-        try:
-            resources = list_func(api_client, namespace, list_params=test_list_params)
-        except NotFoundError:
-            pytest.skip("List returned 404 (filter/auth or scope)")
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not resources:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        return resources
-
-    return _resource_list

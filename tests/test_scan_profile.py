@@ -12,8 +12,16 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endorlabs.api_client import APIClient
+import conftest
+
 from endorlabs.resources import scan_profile
+from endorlabs.resources.scan_profile import (
+    CreateScanProfilePayload,
+    ScanProfileMetaCreate,
+    ScanProfileMetaUpdate,
+    ScanProfileSpecCreate,
+    UpdateScanProfilePayload,
+)
 from endorlabs.types import ListParameters
 
 
@@ -22,23 +30,13 @@ class TestScanProfile:
     """Test cases for ScanProfile resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        import conftest
-
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Track created resources for cleanup
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.parent_namespace = root_namespace
         self.created_scan_profile_uuids = []
-
-        # Get test data - use parent namespace to access child resources
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
 
     def teardown_method(self) -> None:
         """Clean up any scan profiles created during tests."""
@@ -55,6 +53,9 @@ class TestScanProfile:
                         f"{scan_profile_uuid}: {e}"
                     )
             self.created_scan_profile_uuids.clear()
+        client = getattr(self, "client", None)
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()
 
     @pytest.fixture
     def sample_scan_profile(self):
@@ -67,106 +68,50 @@ class TestScanProfile:
         results = scan_profile.list_scan_profiles(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def test_scan_profile_list(self) -> None:
-        """Test LIST scan profiles operation."""
-        print("\n=== TESTING LIST SCAN PROFILES ===")
+        """LIST from tenant root with traverse."""
+        import endorlabs
 
-        # Test list_scan_profiles with pagination limits
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        scan_profiles_list = scan_profile.list_scan_profiles(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(scan_profiles_list, list), (
-            "Should return a list of scan profiles"
-        )
-
-        print(f"Found {len(scan_profiles_list)} scan profiles")
-
-        # Display first few scan profiles
-        for _i, profile in enumerate(scan_profiles_list[:5]):  # Show first 5
-            print(
-                f"ScanProfile {profile.uuid}: "
-                f"{profile.meta.name if profile.meta else 'N/A'}"
-            )
-            if profile.spec:
-                if profile.spec.is_default:
-                    print("  Default: Yes")
-                if profile.propagate:
-                    print("  Propagate: Yes")
-
-    def test_scan_profile_get_by_uuid(self, sample_scan_profile) -> None:
-        """Test GET scan profile by UUID operation."""
-        print("\n=== TESTING GET SCAN PROFILE BY UUID ===")
-
-        profile = sample_scan_profile
-        retrieved_profile = scan_profile.get_scan_profile(
-            self.client, self.parent_namespace, profile.uuid
-        )
-
-        assert retrieved_profile is not None, (
-            "Should successfully retrieve scan profile by UUID"
-        )
-        assert retrieved_profile.uuid == profile.uuid, (
-            "Retrieved scan profile should match original"
-        )
-        if retrieved_profile.meta and profile.meta:
-            assert retrieved_profile.meta.name == profile.meta.name, (
-                "Scan profile name should match"
-            )
-
-        print(f"Successfully retrieved scan profile: {retrieved_profile.uuid}")
-        if retrieved_profile.meta:
-            print(f"Scan profile name: {retrieved_profile.meta.name}")
-
-    def test_scan_profile_with_traverse(self) -> None:
-        """Test listing scan profiles with traverse (child namespaces)."""
-        print("\n=== TESTING LIST SCAN PROFILES WITH TRAVERSE ===")
-
-        # List with traverse enabled
-        import conftest
-
-        list_params = ListParameters(
+        result = client.scan_profile.list(
             traverse=True,
-            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-        )
-
-        scan_profiles_list = scan_profile.list_scan_profiles(
-            self.client,
-            self.parent_namespace,
-            list_params,
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
+        assert isinstance(result, list)
 
-        assert isinstance(scan_profiles_list, list), (
-            "Should return a list of scan profiles"
+    def test_scan_profile_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        print(f"Found {len(scan_profiles_list)} scan profiles (with traverse)")
-
-    def test_scan_profile_pagination(self) -> None:
-        """Test pagination capabilities."""
-        # Test with page size
-        import conftest
-
-        paginated_profiles = scan_profile.list_scan_profiles(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=5),
-            max_pages=conftest.TEST_MAX_PAGES,
+        items = client.scan_profile.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
-        assert isinstance(paginated_profiles, list)
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.scan_profile.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_scan_profile_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
@@ -222,15 +167,114 @@ class TestScanProfile:
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
-    def test_client_recommended_ux_list_scan_profiles(self) -> None:
-        """Recommended UX: Client(tenant=...); client.scan_profiles.list()."""
+    @pytest.mark.writes
+    def test_client_ux_create_scan_profile(self) -> None:
+        """Consumer UX: client.scan_profile.create(payload); teardown deletes."""
+        import time
+
         import endorlabs
 
         client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            tenant=self.parent_namespace,
+            api_client=self.client,
         )
-        profiles = client.scan_profiles.list(max_pages=1)
-        assert isinstance(profiles, list)
+        payload = CreateScanProfilePayload(
+            meta=ScanProfileMetaCreate(
+                name=f"client-ux-profile-{int(time.time())}",
+                description="Consumer UX create test",
+            ),
+            spec=ScanProfileSpecCreate(is_default=False),
+            propagate=False,
+        )
+        try:
+            created = client.scan_profile.create(payload)
+        except Exception as e:
+            pytest.skip(f"Scan profile create not allowed in this environment: {e}")
+        assert created is not None
+        assert created.meta.name == payload.meta.name
+        self.created_scan_profile_uuids.append(created.uuid)
+
+    @pytest.mark.writes
+    def test_client_ux_update_scan_profile(self) -> None:
+        """Consumer UX: create then get then update then revert then delete."""
+        import time
+
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.parent_namespace,
+            api_client=self.client,
+        )
+        payload = CreateScanProfilePayload(
+            meta=ScanProfileMetaCreate(
+                name=f"client-ux-update-{int(time.time())}",
+                description="Original description",
+            ),
+            spec=ScanProfileSpecCreate(is_default=False),
+            propagate=False,
+        )
+        try:
+            created = client.scan_profile.create(payload)
+        except Exception as e:
+            pytest.skip(f"Scan profile create not allowed in this environment: {e}")
+        if not created:
+            pytest.skip("Failed to create scan profile for update test")
+        self.created_scan_profile_uuids.append(created.uuid)
+        current = client.scan_profile.get(created.uuid, namespace=self.parent_namespace)
+        if not current:
+            pytest.skip(f"Could not retrieve scan profile {created.uuid}")
+        original_description = getattr(current.meta, "description", None) or ""
+        update_payload = UpdateScanProfilePayload(
+            meta=ScanProfileMetaUpdate(description="Updated by client-ux")
+        )
+        try:
+            updated = client.scan_profile.update(
+                created.uuid,
+                update_payload,
+                update_mask="meta.description",
+                namespace=self.parent_namespace,
+            )
+        except Exception as e:
+            pytest.skip(f"Scan profile update not allowed in this environment: {e}")
+        assert updated is not None
+        restore_payload = UpdateScanProfilePayload(
+            meta=ScanProfileMetaUpdate(description=original_description)
+        )
+        try:
+            client.scan_profile.update(
+                created.uuid,
+                restore_payload,
+                update_mask="meta.description",
+                namespace=self.parent_namespace,
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original scan profile values: {e}")
+
+    @pytest.mark.writes
+    def test_client_ux_delete_scan_profile(self) -> None:
+        """Consumer UX: create then client.scan_profile.delete(uuid)."""
+        import time
+
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.parent_namespace,
+            api_client=self.client,
+        )
+        payload = CreateScanProfilePayload(
+            meta=ScanProfileMetaCreate(
+                name=f"client-ux-del-{int(time.time())}",
+                description="Consumer UX delete test",
+            ),
+            spec=ScanProfileSpecCreate(is_default=False),
+            propagate=False,
+        )
+        try:
+            created = client.scan_profile.create(payload)
+        except Exception as e:
+            pytest.skip(f"Scan profile create not allowed in this environment: {e}")
+        if not created:
+            pytest.skip("Failed to create scan profile for delete test")
+        result = client.scan_profile.delete(created.uuid)
+        assert result is True
+        # Do not append to created_scan_profile_uuids; resource already deleted

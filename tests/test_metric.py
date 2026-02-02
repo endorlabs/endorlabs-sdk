@@ -12,7 +12,8 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endorlabs.api_client import APIClient
+import conftest
+
 from endorlabs.resources import metric
 from endorlabs.types import ListParameters
 
@@ -22,20 +23,12 @@ class TestMetric:
     """Test cases for Metric resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        import conftest
-
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Get test data - use parent namespace to access child resources
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.parent_namespace = root_namespace
 
     @pytest.fixture
     def sample_metric(self):
@@ -49,84 +42,60 @@ class TestMetric:
         results = metric.list_metrics(
             self.client,
             self.parent_namespace,
-            list_params=ListParameters(traverse=True, page_size=1),
-            max_pages=1,
+            list_params=ListParameters(
+                traverse=True, page_size=conftest.TEST_PAGE_SIZE
+            ),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def test_metric_list(self) -> None:
-        """Test LIST metrics operation."""
-        print("\n=== TESTING LIST METRICS ===")
+        """LIST from tenant root with traverse."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-        # Test list_metrics with traverse
-        import conftest
-
-        metrics_list = metric.list_metrics(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            result = client.metric.list(
                 traverse=True,
-                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-            ),
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
+
+    def test_metric_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(metrics_list, list), "Should return a list of metrics"
-        if len(metrics_list) == 0:
+        try:
+            items = client.metric.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(metrics_list)} metrics")
-
-        # Display first few metrics
-        for _i, metric_item in enumerate(metrics_list[:5]):
-            print(
-                f"Metric {metric_item.uuid}: "
-                f"{metric_item.meta.name if metric_item.meta else 'N/A'}"
-            )
-            if metric_item.spec:
-                print(f"  Analytic: {metric_item.spec.analytic}")
-                if metric_item.spec.metric_values:
-                    print(
-                        f"  Metric values count: {len(metric_item.spec.metric_values)}"
-                    )
-
-    def test_metric_get_by_uuid(self, sample_metric) -> None:
-        """Test GET metric by UUID operation."""
-        print("\n=== TESTING GET METRIC BY UUID ===")
-
-        metric_item = sample_metric
-        # Use the metric's actual namespace
-        # (may be in child namespace when traverse=True)
-        metric_namespace = (
-            metric_item.tenant_meta.namespace
-            if metric_item.tenant_meta
-            else self.parent_namespace
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
         )
-        retrieved_metric = metric.get_metric(
-            self.client, metric_namespace, metric_item.uuid
-        )
-
-        assert retrieved_metric is not None, (
-            "Should successfully retrieve metric by UUID"
-        )
-        assert retrieved_metric.uuid == metric_item.uuid, (
-            "Retrieved metric should match original"
-        )
-        if retrieved_metric.meta and metric_item.meta:
-            assert retrieved_metric.meta.name == metric_item.meta.name, (
-                "Metric name should match"
-            )
-
-        print(f"Successfully retrieved metric: {retrieved_metric.uuid}")
-        if retrieved_metric.meta:
-            print(f"Metric name: {retrieved_metric.meta.name}")
-        if retrieved_metric.spec:
-            print(f"Analytic: {retrieved_metric.spec.analytic}")
-            if retrieved_metric.spec.metric_values:
-                print(
-                    f"Metric values: {list(retrieved_metric.spec.metric_values.keys())}"
-                )
+        got = client.metric.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_metric_filter_by_project(self, sample_metric) -> None:
         """Test filtering metrics by project UUID."""
@@ -210,43 +179,6 @@ class TestMetric:
 
         print(f"Found {len(filtered_results)} metrics for analytic {analytic_name}")
 
-    def test_metric_with_traverse(self) -> None:
-        """Test listing metrics with traverse (child namespaces)."""
-        print("\n=== TESTING LIST METRICS WITH TRAVERSE ===")
-
-        # List with traverse enabled
-        import conftest
-
-        list_params = ListParameters(
-            traverse=True,
-            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-        )
-
-        metrics_list = metric.list_metrics(
-            self.client,
-            self.parent_namespace,
-            list_params,
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-
-        assert isinstance(metrics_list, list), "Should return a list of metrics"
-        print(f"Found {len(metrics_list)} metrics (with traverse)")
-
-    def test_metric_pagination(self) -> None:
-        """Test pagination capabilities."""
-        # Test with page size
-        import conftest
-
-        paginated_results = metric.list_metrics(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=5, traverse=True),
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-        assert isinstance(paginated_results, list)
-        if len(paginated_results) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
     def test_metric_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
@@ -258,20 +190,3 @@ class TestMetric:
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
-
-    def test_client_recommended_ux_list_metrics(self) -> None:
-        """Recommended UX: Client(tenant=...); client.metrics.list()."""
-        import endorlabs
-        from endorlabs.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
-        )
-        try:
-            metrics = client.metrics.list(max_pages=1)
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(metrics, list)

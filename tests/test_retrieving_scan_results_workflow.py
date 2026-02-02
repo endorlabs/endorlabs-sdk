@@ -16,7 +16,8 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endorlabs.api_client import APIClient
+import conftest
+
 from endorlabs.resources import finding, project, scan_result
 from endorlabs.types import ListParameters
 
@@ -26,23 +27,16 @@ class TestRetrievingScanResultsWorkflow:
     """End-to-end test for retrieving scan results workflow."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Set up test environment."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan")
-        # Allow repository URL to be overridden via environment variable (for CI)
+    def setup(self, api_client, namespace) -> None:
+        """Set up test environment (client and namespace from conftest)."""
+        self.client = api_client
+        self.namespace = namespace
         self.repo_url = os.getenv(
             "TEST_REPO_URL",
             "https://github.com/Endor-Solutions-Architecture/endor-cockpit.git",
         )
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Extract parent namespace from child namespace if needed
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
+        parts = namespace.split(".")
+        self.parent_namespace = parts[0] if len(parts) > 1 else namespace
 
     def _find_project_by_repo_url(self) -> str:
         """Find project by repository URL."""
@@ -94,12 +88,15 @@ class TestRetrievingScanResultsWorkflow:
         list_params = ListParameters(
             filter=f'meta.parent_uuid=="{project_uuid}"',
             traverse=True,
-            sort_field="meta.create_time",
-            sort_order="descending",
-            page_size=1,
+            sort_by="meta.create_time",
+            desc=True,
+            page_size=conftest.TEST_PAGE_SIZE,
         )
         scan_results = scan_result.list_scan_results(
-            self.client, self.parent_namespace, list_params
+            self.client,
+            self.parent_namespace,
+            list_params,
+            max_pages=conftest.TEST_MAX_PAGES,
         )
 
         if not scan_results or len(scan_results) == 0:

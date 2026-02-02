@@ -26,7 +26,7 @@ from endorlabs.resources import dependency_metadata
 from endorlabs.types import ListParameters
 
 # Configure logging
-logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 logging.getLogger("endorlabs").setLevel(logging.INFO)
 
 logging.basicConfig(

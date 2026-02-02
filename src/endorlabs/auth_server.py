@@ -12,7 +12,7 @@ import contextlib
 import logging
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any
+from typing import Any, cast
 from webbrowser import get as get_browser
 
 from .api_client import (
@@ -76,7 +76,8 @@ class TokenHandler(BaseHTTPRequestHandler):
                     params[k] = v
 
             if "token" in params:
-                _captured_token = params["token"]
+                global _captured_token
+                _captured_token = cast("str", params["token"])
                 logger.info("Token captured successfully")
                 # Return simple HTML page instead of redirect to prevent new tabs
                 self.send_response(200)

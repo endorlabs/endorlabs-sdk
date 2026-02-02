@@ -7,16 +7,19 @@ authors = [
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.13,<3.16"
+requires-python = ">=3.11,<3.16"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
     "pydantic==2.12.5",
     "pyyaml==6.0.3",
-    "requests==2.32.5",
+    "httpx==0.28.1",
 ]
 
 [project.optional-dependencies]
@@ -56,7 +59,7 @@ artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 
 [tool.ruff]
 line-length = 88
-target-version = "py313"  
+target-version = "py311"  
 # Note: exclude patterns should match [tool.pyright] exclude for consistency
 exclude = [
     ".git",
@@ -128,6 +131,7 @@ select = [
 ignore = [
     # UP007 removed: Ruff now forces Optional[str] -> str | None (py313)
     "D107",   # Missing docstring in __init__ (covered by class docstring)
+    "TC003",  # Iterator used in return type; keep at runtime for clarity
     "D203",   # Blank line before class docstring (conflicts with D211)
     "D213",   # Multi-line summary second line (conflicts with D212)
     "ANN401",  # Any acceptable for validators, **kwargs, and API payloads
@@ -171,7 +175,8 @@ addopts = [
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
-    "writes: marks tests that perform create/update/delete (write operations) against the API"
+    "writes: marks tests that perform create/update/delete (write operations) against the API",
+    "long: marks long-running tests (excluded in CI; run locally with pytest -m long)",
 ]
 
 [tool.pyright]
@@ -179,36 +184,50 @@ pythonVersion = "3.13"
 pythonPlatform = "All"
 typeCheckingMode = "standard"
 
+# Developer-facing surface: strict mode (all strict-only rules apply).
+strict = [
+  "src/endorlabs/__init__.py",
+  "src/endorlabs/client_surface.py",
+  "src/endorlabs/facade.py",
+  "src/endorlabs/api_client.py",
+  "src/endorlabs/exceptions.py",
+  "src/endorlabs/types.py",
+]
+
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
     { root = "src/endorlabs/analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
-    { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
+    { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "tests", pythonVersion = "3.13", extraPaths = ["src"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
     { root = "src", pythonVersion = "3.13" },
-    { root = "tests", pythonVersion = "3.13", extraPaths = ["src"] },
 ]
 
-# Note: stubPath, venvPath, and venv are omitted for portability.
-# Pyright/Pylance will auto-discover virtual environments and use default stub paths.
+# Note: stubPath set when Client stub is added (Phase 4). venvPath, venv omitted for portability.
 
 # ============================================================================
 # Import & Visibility Configuration
 # ============================================================================
 reportMissingImports = "error"              # Critical for SDK - catch missing imports
 reportMissingTypeStubs = "warning"          # Warn about untyped dependencies
-reportUnusedImport = "warning"              # Clean up unused imports
+reportUnusedImport = "error"                # Clean up unused imports
 reportDuplicateImport = "error"             # Prevent duplicate imports
-reportPrivateImportUsage = "warning"        # Warn about private API usage
+reportPrivateImportUsage = "error"         # Enforce private API boundary
+reportUnsupportedDunderAll = "error"        # __all__ must be valid and names must exist
+reportImportCycles = "warning"             # Flag cycles (architectural smell)
+reportWildcardImportFromLibrary = "error"  # No from lib import *
 
 # ============================================================================
 # Type Completeness (Critical for SDK Public APIs)
 # ============================================================================
-reportMissingParameterType = "warning"      # All public function params should be typed
-reportMissingTypeArgument = "warning"       # Generic types should have type args
-reportUnknownParameterType = "warning"      # Catch untyped parameters
-reportUnknownArgumentType = "warning"        # Catch untyped arguments
-reportUnknownVariableType = "warning"        # Catch untyped variables
-reportUnknownMemberType = "warning"         # Catch untyped class members
+reportMissingParameterType = "error"        # All public function params must be typed
+reportMissingTypeArgument = "error"         # Generic types must have type args
+reportUnknownParameterType = "error"        # No untyped parameters
+reportUnknownArgumentType = "error"         # No untyped arguments
+reportUnknownVariableType = "error"         # No untyped variables
+reportUnknownMemberType = "error"           # No untyped class members
 reportIncompatibleMethodOverride = "error"  # Catch BaseMeta inheritance issues
 reportIncompatibleVariableOverride = "error" # Catch model_config type issues
 reportInconsistentConstructor = "error"     # Catch constructor inconsistencies
@@ -218,15 +237,19 @@ reportInconsistentConstructor = "error"     # Catch constructor inconsistencies
 # ============================================================================
 reportInvalidTypeVarUse = "error"           # Catch invalid TypeVar usage (T = TypeVar(...))
 reportInvalidStubStatement = "error"        # Catch invalid stub statements
+reportUntypedFunctionDecorator = "warning" # Decorators must preserve type (then error when clean)
+reportUntypedClassDecorator = "warning"
+reportUntypedBaseClass = "warning"
+reportUntypedNamedTuple = "warning"
 
 # ============================================================================
 # Pydantic-Specific Considerations
 # ============================================================================
 # Pydantic models use runtime validation, but we still want type safety
 reportCallInDefaultInitializer = "error"    # Catch issues in Field(default=...)
-reportUnnecessaryIsInstance = "warning"     # Pydantic validators may trigger this
-reportUnnecessaryCast = "warning"           # Pydantic serialization may trigger this
-reportAssignmentType = "warning"            # Catch type mismatches in assignments
+reportUnnecessaryIsInstance = "error"       # Pydantic validators may trigger this
+reportUnnecessaryCast = "error"            # Pydantic serialization may trigger this
+reportAssignmentType = "error"            # Catch type mismatches in assignments
 
 # ============================================================================
 # Type Narrowing (Important for Optional types)
@@ -237,58 +260,57 @@ reportOptionalIterable = "error"            # Catch None iteration
 reportOptionalContextManager = "error"      # Catch None context manager
 reportOptionalOperand = "error"             # Catch None operations
 reportOptionalCall = "error"                # Catch None function calls
-reportAssertAlwaysTrue = "warning"           # Catch always-true assertions
-reportSelfClsParameterName = "warning"       # Enforce self/cls naming
+reportAssertAlwaysTrue = "error"            # Catch always-true assertions
+reportSelfClsParameterName = "error"        # Enforce self/cls naming
 
 # ============================================================================
 # Literal Types & TypedDict
 # ============================================================================
-# Your SDK uses many Literal types and TypedDict - ensure they're correct
 reportOverlappingOverload = "error"          # Catch overload conflicts
-reportUninitializedInstanceVariable = "warning" # Catch uninitialized TypedDict fields
+reportUninitializedInstanceVariable = "error" # Catch uninitialized TypedDict fields
 
 # ============================================================================
 # Code Quality & Best Practices
 # ============================================================================
-reportUnusedClass = "warning"                # Catch duplicate class definitions
-reportUnusedFunction = "warning"             # Catch unused functions
-reportUnusedVariable = "warning"             # Catch unused variables
-reportUnusedCallResult = "warning"           # Catch ignored return values
-reportUnusedExpression = "warning"           # Catch unused expressions
-reportUnnecessaryTypeIgnoreComment = "warning" # Clean up unnecessary type: ignore
-reportMatchNotExhaustive = "warning"         # Catch non-exhaustive match statements
+reportUnusedClass = "error"                  # Catch duplicate class definitions
+reportUnusedFunction = "error"               # Catch unused functions
+reportUnusedVariable = "error"               # Catch unused variables
+reportUnusedCallResult = "error"             # Catch ignored return values
+reportUnusedExpression = "error"             # Catch unused expressions
+reportUnnecessaryTypeIgnoreComment = "error" # Clean up unnecessary type: ignore
+reportMatchNotExhaustive = "error"            # Catch non-exhaustive match statements
 
 # ============================================================================
 # Error Handling & Validation
 # ============================================================================
 reportInvalidStringEscapeSequence = "error" # Catch invalid escape sequences
-reportMissingSuperCall = "warning"          # Catch missing super() calls
+reportMissingSuperCall = "error"             # Catch missing super() calls
 
 # ============================================================================
 # Performance & Optimization
 # ============================================================================
-reportUnnecessaryComparison = "warning"      # Catch unnecessary comparisons
-reportUnnecessaryContains = "warning"       # Catch unnecessary contains checks
+reportUnnecessaryComparison = "error"        # Catch unnecessary comparisons
+reportUnnecessaryContains = "error"         # Catch unnecessary contains checks
 
 # ============================================================================
 # SDK-Specific: Public API Validation
 # ============================================================================
-# Ensure all public APIs (in __init__.py) are properly typed
-reportPrivateUsage = "warning"              # Warn about private API usage
+reportPrivateUsage = "error"                 # Enforce private (leading _) boundary
 reportConstantRedefinition = "error"         # Catch constant redefinitions
-reportDeprecated = "warning"                # Catch deprecated API usage
+reportDeprecated = "error"                   # Catch deprecated API usage
+reportIncompleteStub = "warning"             # For future stubs
+reportImplicitOverride = "warning"          # Require @override on overrides (3.12+)
 
 # ============================================================================
 # Type Narrowing for Union Types
 # ============================================================================
-# Your SDK uses Union types (Optional, etc.) - ensure proper narrowing
 reportImplicitStringConcatenation = "none"  # Allow multi-line strings (for docstrings)
 
 # ============================================================================
 # Include/Exclude Patterns
 # ============================================================================
 # Note: exclude patterns should match [tool.ruff] exclude for consistency
-include = ["src"]
+include = ["src", "tests"]
 exclude = [
     ".git",
     ".venv",

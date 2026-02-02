@@ -18,6 +18,7 @@ be manually created or deleted. Only metadata updates (tags, dismissal status) a
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, cast
 
@@ -734,7 +735,7 @@ class Finding(BaseResource):
     # Finding-specific fields (universal fields inherited from BaseResource)
     spec: FindingSpec = Field(..., description="Finding specification")  # type: ignore
     # Required per v1Finding; optional when list response omits it
-    finding_context: Context | None = Field(
+    context: Context | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Context information for the finding", alias="context"
     )
 
@@ -871,6 +872,18 @@ def list_findings(
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
+def list_findings_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[Finding]:
+    """Iterate over findings without materializing the full list."""
+    ops = _get_finding_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
 def get_finding(
     client: APIClient, tenant_meta_namespace: str, finding_uuid: str
 ) -> Finding:
@@ -924,7 +937,7 @@ def update_finding(
     tenant_meta_namespace: str,
     finding_uuid: str,
     payload: UpdateFindingPayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> Finding | None:
     """Update an existing finding using partial updates.
 
@@ -960,16 +973,15 @@ def update_finding(
         tenant_meta_namespace: Canonical namespace name
         finding_uuid: UUID of the finding to update
         payload: Finding update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "spec.dismiss,spec.finding_tags"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "spec.dismiss,spec.finding_tags". Missing or empty raises ValidationError.
 
     Returns:
         Updated Finding object if successful, None otherwise
 
     Raises:
-        requests.exceptions.HTTPError: For API-level errors (403, 404, etc.)
+        ValidationError: If update_mask is missing/empty
+        httpx.HTTPStatusError: For API-level errors (403, 404, etc.)
         pydantic.ValidationError: If response data doesn't match expected schema
 
     Example:
@@ -987,11 +999,19 @@ def update_finding(
         ...     client, namespace, uuid, payload, "spec.finding_tags"
         ... )
 
-    Note:
-        Tags persist correctly when using update_mask. Without update_mask,
-        the API may not persist tag changes reliably.
-
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Finding update requires an update_mask "
+                "(e.g. 'meta.tags', 'spec.finding_tags')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=finding_uuid,
+        )
     try:
         # Get the current finding to include required fields
         current_finding = get_finding(client, tenant_meta_namespace, finding_uuid)
@@ -1065,9 +1085,9 @@ def update_finding(
         merged_finding = Finding(**merged_finding_dict)
 
         # Convert update_mask from string to List[str] for base class
-        update_mask_list = (
-            [field.strip() for field in update_mask.split(",")] if update_mask else None
-        )
+        update_mask_list = [
+            field.strip() for field in update_mask.split(",") if field.strip()
+        ]
 
         # Use base class update method
         ops = _get_finding_ops(client)

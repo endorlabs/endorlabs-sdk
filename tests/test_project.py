@@ -18,6 +18,7 @@ from endorlabs.api_client import APIClient
 from endorlabs.resources import project, scan_profile
 from endorlabs.resources.project import (
     Project,
+    ProjectMeta,
     ProjectMetaUpdate,
     UpdateProjectPayload,
     associate_scan_profile_with_project,
@@ -31,21 +32,61 @@ from endorlabs.resources.scan_profile import (
 )
 
 
+class TestProjectGreenfieldAlias:
+    """Unit tests: greenfield attribute names (processing_status, index_data).
+
+    These tests assert .processing_status and .meta.index_data and serialization
+    so that after renaming project_processing_status -> processing_status and
+    project_index_data -> index_data, they pass without change.
+    """
+
+    def test_project_processing_status_attribute_and_serialization(self) -> None:
+        """Project exposes .processing_status and serializes as 'processing_status'."""
+        payload = {
+            "uuid": "proj-uuid",
+            "meta": {"name": "proj-meta"},
+            "spec": {},
+            "tenant_meta": {"namespace": "test-ns"},
+            "processing_status": {
+                "disable_automated_scan": False,
+                "scan_state": "idle",
+            },
+        }
+        project = Project(**payload)
+        assert project.processing_status is not None
+        assert getattr(project.processing_status, "scan_state", None) == "idle"
+        dumped = project.model_dump(by_alias=True)
+        assert "processing_status" in dumped
+        assert dumped["processing_status"] is not None
+
+    def test_project_meta_index_data_attribute_and_serialization(self) -> None:
+        """ProjectMeta exposes .index_data and serializes with key 'index_data'."""
+        meta = ProjectMeta(
+            name="proj-meta",
+            index_data={"data": ["d1"], "tenant": "t1"},
+        )
+        assert getattr(meta, "index_data", None) is not None
+        index_data = getattr(meta, "index_data", None)
+        assert index_data is not None
+        if hasattr(index_data, "tenant"):
+            assert index_data.tenant == "t1"
+        else:
+            assert index_data.get("tenant") == "t1"
+        dumped_meta = meta.model_dump(by_alias=True)
+        assert "index_data" in dumped_meta
+        assert dumped_meta["index_data"] is not None
+
+
 @pytest.mark.integration
 class TestProject:
     """Test cases for Project resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Set up test environment."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Track created resources for cleanup
+    def setup(self, api_client, namespace, root_namespace) -> None:
+        """Set up test environment (client and namespace from conftest)."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
         self.created_scan_profile_uuids = []
 
         # Get test data with pagination limits
@@ -60,7 +101,10 @@ class TestProject:
                 max_pages=conftest.TEST_MAX_PAGES,
             )
         except NotFoundError:
-            pytest.skip("List returned 404 (filter/auth or scope)")
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not self.projects:
@@ -82,63 +126,38 @@ class TestProject:
                     )
             self.created_scan_profile_uuids.clear()
 
-    def test_project_get_list(self) -> None:
-        """Test GET projects operation."""
-        print("\n=== TESTING GET PROJECTS ===")
+    def test_project_list(self) -> None:
+        """LIST from tenant root with traverse (registry-based)."""
+        import endorlabs
 
-        import conftest
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.project.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
 
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
+    def test_project_get(self) -> None:
+        """GET first item from LIST (root + traverse) (registry-based)."""
+        import endorlabs
 
-        try:
-            projects_list = project.list_projects(
-                self.client,
-                self.namespace,
-                list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-                max_pages=conftest.TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(projects_list, list), "Should return a list of projects"
-        assert all(
-            isinstance(x, Project) for x in projects_list
-        ), "All list items should be Project instances"
-        if len(projects_list) == 0:
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.project.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(projects_list)} projects")
-
-        # Display project details
-        for proj in projects_list:
-            name = proj.meta.name if proj.meta else None
-            print(f"Project {proj.uuid}: {name}")
-            if proj.meta.tags:
-                print(f"  Project tags: {proj.meta.tags}")
-
-    def test_project_get_by_uuid(self) -> None:
-        """Test GET project by UUID operation."""
-        print("\n=== TESTING GET PROJECT BY UUID ===")
-
-        test_project = self.projects[0]
-        retrieved_project = project.get_project(
-            self.client, self.namespace, test_project.uuid
-        )
-
-        assert retrieved_project is not None, (
-            "Should successfully retrieve project by UUID"
-        )
-        assert retrieved_project.uuid == test_project.uuid, (
-            "Retrieved project should match original"
-        )
-        assert retrieved_project.meta.name == test_project.meta.name, (
-            "Project name should match"
-        )
-
-        print(f"Successfully retrieved project: {retrieved_project.uuid}")
-        print(f"Project name: {retrieved_project.meta.name}")
-        if retrieved_project.meta.tags:
-            print(f"Project tags: {retrieved_project.meta.tags}")
+        item = items[0]
+        got = client.project.get(item)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     @pytest.mark.writes
     def test_associate_scan_profile_with_project(self) -> None:
@@ -367,18 +386,53 @@ class TestProject:
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
-    def test_client_recommended_ux_list_projects(self) -> None:
-        """Recommended UX: endorlabs.Client(tenant=...); client.projects.list()."""
+    @pytest.mark.writes
+    def test_client_ux_update_project(self) -> None:
+        """Consumer UX: client.project.get() then update then revert."""
         import endorlabs
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
-        projects = client.projects.list(max_pages=1)
-        assert isinstance(projects, list)
+        projects = client.project.list(max_pages=conftest.TEST_MAX_PAGES)
+        if not projects:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = projects[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.namespace
+        )
+        current = client.project.get(item.uuid, namespace=ns)
+        if not current:
+            pytest.skip(f"Could not retrieve project {item.uuid}")
+        original_description = current.meta.description
+        original_tags = current.meta.tags or []
+        new_description = (
+            f"{original_description} [client-ux]"
+            if original_description
+            else "client-ux"
+        )
+        new_tags = [*original_tags, "client-ux-update"]
+        try:
+            updated = client.project.update(
+                current,
+                meta_description=new_description,
+                meta_tags=new_tags,
+            )
+        except Exception as e:
+            pytest.skip(f"Project update not allowed in this environment: {e}")
+        assert updated is not None
+        assert updated.meta.description == new_description
+        try:
+            client.project.update(
+                updated,
+                meta_description=original_description,
+                meta_tags=original_tags,
+            )
+        except Exception as e:
+            print(f"[WARNING] Failed to restore original project values: {e}")
 
 
 if __name__ == "__main__":
@@ -411,19 +465,15 @@ if __name__ == "__main__":
 
     try:
         print("Running project resource tests...")
-
-        # Run all tests
-        test_instance.test_project_get_list()
-        test_instance.test_project_get_by_uuid()
-        test_instance.test_project_patch_tags()
-        test_instance.test_project_structure_analysis()
-        test_instance.test_project_operations_summary()
-
+        exit_code = pytest.main([__file__, "-v", "-s"])
+        if exit_code != 0:
+            sys.exit(exit_code)
         print("\n[SUCCESS] All project tests completed successfully!")
-
     except Exception as e:
         print(f"\n[ERROR] Test failed: {e}")
         import traceback
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        test_instance.client.close()

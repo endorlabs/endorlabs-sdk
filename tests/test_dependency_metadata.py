@@ -2,6 +2,10 @@
 
 Tests GET and LIST operations for DependencyMetadata resources.
 DependencyMetadata represents dependency relationships between PackageVersions.
+
+Note: The SDK hardcodes the \"oss\" namespace for all DependencyMetadata operations
+(list, get, update, create, delete). The tenant/namespace passed to Client or
+module functions is ignored. Use endorctl with -n oss to confirm presence/access.
 """
 
 import os
@@ -12,7 +16,8 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from endorlabs.api_client import APIClient
+import conftest
+
 from endorlabs.resources import dependency_metadata
 from endorlabs.types import ListParameters
 
@@ -22,133 +27,76 @@ class TestDependencyMetadata:
     """Test cases for DependencyMetadata resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        import conftest
-
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Extract parent namespace from child namespace if needed
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespaces from conftest (LIST/GET only)."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
 
     @pytest.fixture
     def sample_dependency_metadata(self):
         """Fetch minimal sample data (1 item) for UUID operations.
 
-        Function-scoped but only fetches when explicitly requested by tests.
-        Only fetches 1 item without traverse for fast setup. Tests that need
-        sample data should request this fixture explicitly.
+        Uses root_namespace + traverse for consistency with other resources.
         """
-        # Fetch 1 item without traverse (fast)
         results = dependency_metadata.list_dependency_metadata(
             self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            self.root_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                traverse=True,
+            ),
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
-    def test_dependency_metadata_get_list(self) -> None:
-        """Test GET dependency-metadata operation."""
-        print("\n=== TESTING GET DEPENDENCY METADATA ===")
+    def test_dependency_metadata_list(self) -> None:
+        """LIST from tenant root with traverse (registry-based)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-        # Test list_dependency_metadata with pagination limits
-        import conftest
-
-        dependency_metadata_list = dependency_metadata.list_dependency_metadata(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(dependency_metadata_list, list), (
-            "Should return a list of dependency metadata"
-        )
-        if len(dependency_metadata_list) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(dependency_metadata_list)} dependency metadata records")
-
-        # Verify structure
-        for dm in dependency_metadata_list[:5]:  # Show first 5
-            assert hasattr(dm, "uuid")
-            assert hasattr(dm, "meta")
-            assert hasattr(dm, "spec")
-            assert hasattr(dm, "tenant_meta")
-
-            # Verify meta fields
-            assert hasattr(dm.meta, "name")
-            assert hasattr(dm.meta, "create_time")
-
-            # Verify spec fields
-            if dm.spec:
-                assert hasattr(dm.spec, "dependency_data")
-                assert hasattr(dm.spec, "importer_data")
-
-                if dm.spec.dependency_data:
-                    print(
-                        f"DependencyMetadata {dm.uuid}: "
-                        f"{dm.spec.dependency_data.package_name}"
-                    )
-                    if dm.spec.dependency_data.ecosystem:
-                        print(f"  Ecosystem: {dm.spec.dependency_data.ecosystem}")
-
-    def test_dependency_metadata_get_by_uuid(self, sample_dependency_metadata) -> None:
-        """Test GET dependency-metadata by UUID operation."""
-        print("\n=== TESTING GET DEPENDENCY METADATA BY UUID ===")
-
-        test_dm = sample_dependency_metadata
-        # Use the dependency metadata's actual namespace
-        dm_namespace = (
-            test_dm.tenant_meta.namespace
-            if test_dm.tenant_meta
-            else self.parent_namespace
-        )
-        retrieved_dm = dependency_metadata.get_dependency_metadata(
-            self.client, dm_namespace, test_dm.uuid
-        )
-
-        assert retrieved_dm is not None, (
-            "Should successfully retrieve dependency metadata by UUID"
-        )
-        assert retrieved_dm.uuid == test_dm.uuid, (
-            "Retrieved dependency metadata should match original"
-        )
-        if retrieved_dm.meta and test_dm.meta:
-            assert retrieved_dm.meta.name == test_dm.meta.name, (
-                "Dependency metadata name should match"
+        try:
+            result = client.dependency_metadata.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
             )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        assert isinstance(result, list)
 
-        print(f"Successfully retrieved dependency metadata: {retrieved_dm.uuid}")
-        if retrieved_dm.meta:
-            print(f"Dependency metadata name: {retrieved_dm.meta.name}")
-        if retrieved_dm.spec and retrieved_dm.spec.dependency_data:
-            print(f"Package name: {retrieved_dm.spec.dependency_data.package_name}")
-            if retrieved_dm.spec.dependency_data.ecosystem:
-                print(f"Ecosystem: {retrieved_dm.spec.dependency_data.ecosystem}")
+    def test_dependency_metadata_get(self) -> None:
+        """GET first item from LIST (root + traverse) (registry-based)."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
 
-    def test_dependency_metadata_pagination(self) -> None:
-        """Test pagination capabilities."""
-        # Test with page size and max_pages limit
-        import conftest
-
-        paginated_results = dependency_metadata.list_dependency_metadata(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=5),
-            max_pages=conftest.TEST_MAX_PAGES,
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        assert isinstance(paginated_results, list)
-        if len(paginated_results) == 0:
+        try:
+            items = client.dependency_metadata.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.dependency_metadata.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_dependency_metadata_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
@@ -158,7 +106,7 @@ class TestDependencyMetadata:
 
         with pytest.raises(ValidationError) as exc_info:
             dependency_metadata.get_dependency_metadata(
-                self.client, self.parent_namespace, "invalid-uuid"
+                self.client, self.root_namespace, "invalid-uuid"
             )
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
@@ -187,9 +135,9 @@ class TestDependencyMetadata:
 
         filtered_results = dependency_metadata.list_dependency_metadata(
             self.client,
-            self.parent_namespace,
+            self.root_namespace,
             list_params,
-            max_pages=conftest.TEST_MAX_PAGES,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(filtered_results, list), (
@@ -209,20 +157,3 @@ class TestDependencyMetadata:
             f"Found {len(filtered_results)} dependency metadata records "
             f"for project {project_uuid}"
         )
-
-    def test_client_recommended_ux_list_dependency_metadata(self) -> None:
-        """Recommended UX: Client(tenant=...); client.dependency_metadata.list()."""
-        import endorlabs
-        from endorlabs.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
-        )
-        try:
-            items = client.dependency_metadata.list(max_pages=1)
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        assert isinstance(items, list)

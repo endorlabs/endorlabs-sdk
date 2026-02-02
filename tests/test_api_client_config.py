@@ -12,6 +12,28 @@ from endorlabs.api_client import APIClient
 from endorlabs.utils.logging_config import setup_logging
 
 
+def _make_auth_response_mock(token: str = "test-token") -> Mock:
+    """Return a mock httpx-like response for auth endpoint."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"token": token}
+    mock_response.raise_for_status = Mock()
+    mock_response.status_code = 200
+    mock_response.text = ""
+    mock_response.url = "https://api.endorlabs.com/v1/auth/api-key"
+    mock_response.headers = {}
+    return mock_response
+
+
+def _patch_httpx_client_for_auth(post_return: Mock | None = None) -> Mock:
+    """Patch httpx.Client so APIClient gets a mock; post_return is returned by post."""
+    if post_return is None:
+        post_return = _make_auth_response_mock()
+    mock_http = Mock()
+    mock_http.post.return_value = post_return
+    mock_http.get.return_value = _make_auth_response_mock()
+    return patch("endorlabs.api_client.httpx.Client", return_value=mock_http)
+
+
 class TestEndorMaxRetries:
     """Test ENDOR_MAX_RETRIES environment variable."""
 
@@ -26,19 +48,12 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_endor_max_retries_from_env(self, mock_post) -> None:
+    def test_endor_max_retries_from_env(self) -> None:
         """Test that ENDOR_MAX_RETRIES environment variable is respected."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "test-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
-        client = APIClient()
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
 
         assert client.max_retries == 3
-        # Verify retry adapter is configured with correct value
-        assert client.session.adapters["https://"].max_retries.total == 3
 
     @patch.dict(
         os.environ,
@@ -51,18 +66,12 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_endor_max_retries_custom_value(self, mock_post) -> None:
+    def test_endor_max_retries_custom_value(self) -> None:
         """Test ENDOR_MAX_RETRIES with custom value."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "test-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
-        client = APIClient()
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
 
         assert client.max_retries == 7
-        assert client.session.adapters["https://"].max_retries.total == 7
 
     @patch.dict(
         os.environ,
@@ -74,18 +83,12 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_max_retries_default_when_env_not_set(self, mock_post) -> None:
+    def test_max_retries_default_when_env_not_set(self) -> None:
         """Test default max_retries=5 when ENDOR_MAX_RETRIES not set."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "test-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
-        client = APIClient()
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
 
         assert client.max_retries == 5
-        assert client.session.adapters["https://"].max_retries.total == 5
 
     @patch.dict(
         os.environ,
@@ -98,19 +101,13 @@ class TestEndorMaxRetries:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_parameter_override_takes_precedence(self, mock_post) -> None:
+    def test_parameter_override_takes_precedence(self) -> None:
         """Test that parameter override takes precedence over env var."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "test-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
-        # ENDOR_MAX_RETRIES is set to 3, but we pass 10 explicitly
-        client = APIClient(max_retries=10)
+        with _patch_httpx_client_for_auth():
+            # ENDOR_MAX_RETRIES is set to 3, but we pass 10 explicitly
+            client = APIClient(max_retries=10)
 
         assert client.max_retries == 10
-        assert client.session.adapters["https://"].max_retries.total == 10
 
 
 class TestEndorLogLevel:
@@ -187,19 +184,14 @@ class TestClientSessionLogLevel:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_logging_level_applied_to_session_loggers(self, mock_post) -> None:
+    def test_logging_level_applied_to_session_loggers(self) -> None:
         """APIClient(logging_level='ERROR') sets session loggers to ERROR."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "test-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
         # Save current levels so we don't affect other tests
-        names = ("endorlabs", "urllib3", "requests")
+        names = ("endorlabs", "httpx", "httpcore")
         saved = {n: logging.getLogger(n).level for n in names}
         try:
-            client = APIClient(logging_level="ERROR")
+            with _patch_httpx_client_for_auth():
+                client = APIClient(logging_level="ERROR")
             assert client.logger.level == logging.ERROR
             for name in names:
                 assert logging.getLogger(name).level == logging.ERROR

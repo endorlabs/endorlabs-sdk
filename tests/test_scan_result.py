@@ -16,7 +16,31 @@ import conftest
 
 from endorlabs.api_client import APIClient
 from endorlabs.resources import scan_result
+from endorlabs.resources.scan_result import ScanResult
 from endorlabs.types import ListParameters
+
+
+class TestScanResultGreenfieldAlias:
+    """Unit tests: greenfield attribute names (context) and serialization.
+
+    These tests assert .context and model_dump(by_alias=True)['context'] so that
+    after renaming scan_result_context -> context, they pass without change.
+    """
+
+    def test_scan_result_context_attribute_and_serialization(self) -> None:
+        """ScanResult exposes .context and serializes with key 'context'."""
+        payload = {
+            "uuid": "scan-uuid",
+            "meta": {"name": "scan-meta"},
+            "tenant_meta": {"namespace": "test-ns"},
+            "context": {"id": "c1", "type": "scan"},
+        }
+        scan_result_obj = ScanResult(**payload)
+        assert scan_result_obj.context is not None
+        assert getattr(scan_result_obj.context, "id", None) == "c1"
+        dumped = scan_result_obj.model_dump(by_alias=True)
+        assert "context" in dumped
+        assert dumped["context"] is not None
 
 
 @pytest.mark.integration
@@ -24,35 +48,26 @@ class TestScanResult:
     """Test cases for ScanResult resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        import conftest
-
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Get test data - use parent namespace to access child resources
-        # Extract parent namespace from child namespace if needed
-        parts = self.namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else self.namespace
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
 
     @pytest.fixture
     def sample_scan_result(self):
         """Fetch minimal sample data (1 item) for UUID operations.
 
         Function-scoped but only fetches when explicitly requested by tests.
-        Uses traverse=True to search across namespaces, matching test_scan_result_list.
+        Uses tenant root + traverse so resources in instance are captured.
         """
-        from endorlabs.types import ListParameters
-
         results = scan_result.list_scan_results(
             self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=1, traverse=True),
+            self.root_namespace,
+            list_params=ListParameters(
+                page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
+                traverse=True,
+            ),
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
         if not results:
@@ -60,89 +75,82 @@ class TestScanResult:
         return results[0]  # Return single item, not list
 
     def test_scan_result_list(self) -> None:
-        """Test LIST scan results operation."""
-        print("\n=== TESTING LIST SCAN RESULTS ===")
+        """LIST from tenant root with traverse."""
+        import endorlabs
 
-        # Test list_scan_results with pagination limits
-        import conftest
-
-        scan_results_list = scan_result.list_scan_results(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(
-                page_size=conftest.TEST_PAGE_SIZE,
-                traverse=True,
-            ),
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.scan_result.list(
+            traverse=True,
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
-        assert isinstance(scan_results_list, list), (
-            "Should return a list of scan results"
+        assert isinstance(result, list)
+
+    def test_scan_result_list_with_parent_project(self) -> None:
+        """LIST scan results with parent=project (list with parent resource)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
         )
-        if len(scan_results_list) == 0:
+        projects = client.project.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not projects:
+            pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
+        project = projects[0]
+        result = client.scan_result.list(
+            parent=project,
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
+
+    def test_scan_result_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.scan_result.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(scan_results_list)} scan results")
-
-        # Display first few scan results
-        for _i, scan_result_item in enumerate(scan_results_list[:5]):  # Show first 5
-            print(
-                f"ScanResult {scan_result_item.uuid}: "
-                f"{scan_result_item.meta.name if scan_result_item.meta else 'N/A'}"
-            )
-            if scan_result_item.spec:
-                print(f"  Status: {scan_result_item.spec.status}")
-                print(f"  Type: {scan_result_item.spec.type}")
-                if scan_result_item.spec.start_time:
-                    print(f"  Start: {scan_result_item.spec.start_time}")
-                if scan_result_item.spec.end_time:
-                    print(f"  End: {scan_result_item.spec.end_time}")
-
-    def test_scan_result_get_by_uuid(self, sample_scan_result) -> None:
-        """Test GET scan result by UUID operation."""
-        print("\n=== TESTING GET SCAN RESULT BY UUID ===")
-
-        scan_result_item = sample_scan_result
-        # Use the scan result's actual namespace
-        # (may be in child namespace when traverse=True)
-        scan_result_namespace = (
-            scan_result_item.tenant_meta.namespace
-            if scan_result_item.tenant_meta
-            else self.parent_namespace
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
         )
-        retrieved_scan_result = scan_result.get_scan_result(
-            self.client, scan_result_namespace, scan_result_item.uuid
-        )
-
-        assert retrieved_scan_result is not None, (
-            "Should successfully retrieve scan result by UUID"
-        )
-        assert retrieved_scan_result.uuid == scan_result_item.uuid, (
-            "Retrieved scan result should match original"
-        )
-        if retrieved_scan_result.meta and scan_result_item.meta:
-            assert retrieved_scan_result.meta.name == scan_result_item.meta.name, (
-                "Scan result name should match"
-            )
-
-        print(f"Successfully retrieved scan result: {retrieved_scan_result.uuid}")
-        if retrieved_scan_result.meta:
-            print(f"Scan result name: {retrieved_scan_result.meta.name}")
-        if retrieved_scan_result.spec:
-            print(f"Status: {retrieved_scan_result.spec.status}")
-            print(f"Type: {retrieved_scan_result.spec.type}")
+        got = client.scan_result.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     def test_scan_result_filter_by_project(self, sample_scan_result) -> None:
-        """Test filtering scan results by project UUID."""
+        """Test filtering scan results by project UUID in the resource's namespace."""
         print("\n=== TESTING FILTER SCAN RESULTS BY PROJECT ===")
 
-        # Get first scan result to extract project UUID
         first_scan = sample_scan_result
         if not first_scan.meta or not first_scan.meta.parent_uuid:
             pytest.skip("Scan result has no parent_uuid (project)")
 
         project_uuid = first_scan.meta.parent_uuid
+        # Scope filter to same tenant/namespace as resource (tenant coupled to resource)
+        list_namespace = (
+            first_scan.tenant_meta.namespace
+            if first_scan.tenant_meta
+            and getattr(first_scan.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
 
-        # Filter scan results by project
         import conftest
 
         list_params = ListParameters(
@@ -152,7 +160,7 @@ class TestScanResult:
 
         filtered_results = scan_result.list_scan_results(
             self.client,
-            self.parent_namespace,
+            list_namespace,
             list_params,
             max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
         )
@@ -171,46 +179,6 @@ class TestScanResult:
 
         print(f"Found {len(filtered_results)} scan results for project {project_uuid}")
 
-    def test_scan_result_with_traverse(self) -> None:
-        """Test listing scan results with traverse (child namespaces)."""
-        print("\n=== TESTING LIST SCAN RESULTS WITH TRAVERSE ===")
-
-        # List with traverse enabled
-        import conftest
-
-        list_params = ListParameters(
-            traverse=True,
-            page_size=conftest.TEST_TRAVERSE_PAGE_SIZE,
-        )
-
-        scan_results_list = scan_result.list_scan_results(
-            self.client,
-            self.parent_namespace,
-            list_params,
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-
-        assert isinstance(scan_results_list, list), (
-            "Should return a list of scan results"
-        )
-        print(f"Found {len(scan_results_list)} scan results (with traverse)")
-
-    def test_scan_result_pagination(self) -> None:
-        """Test pagination capabilities."""
-        # Test with page size
-        # Note: API may return more than page_size if it has a minimum page size
-        import conftest
-
-        paginated_results = scan_result.list_scan_results(
-            self.client,
-            self.parent_namespace,
-            list_params=ListParameters(page_size=5, traverse=True),
-            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
-        )
-        assert isinstance(paginated_results, list)
-        if len(paginated_results) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
     def test_scan_result_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
@@ -219,24 +187,11 @@ class TestScanResult:
 
         with pytest.raises(ValidationError) as exc_info:
             scan_result.get_scan_result(
-                self.client, self.parent_namespace, "invalid-uuid"
+                self.client, self.root_namespace, "invalid-uuid"
             )
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
-
-    def test_client_recommended_ux_list_scan_results(self) -> None:
-        """Recommended UX: Client(tenant=...); client.scan_results.list()."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
-        )
-        results = client.scan_results.list(max_pages=1)
-        assert isinstance(results, list)
 
 
 if __name__ == "__main__":
@@ -258,8 +213,8 @@ if __name__ == "__main__":
     test_instance.namespace = os.getenv(
         "ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT
     )
-    parts = test_instance.namespace.split(".")
-    test_instance.parent_namespace = (
+    parts = test_instance.namespace.split(".", 1)
+    test_instance.root_namespace = (
         parts[0] if len(parts) > 1 else test_instance.namespace
     )
 
@@ -267,7 +222,7 @@ if __name__ == "__main__":
 
     test_instance.scan_results = scan_result.list_scan_results(
         test_instance.client,
-        test_instance.parent_namespace,
+        test_instance.root_namespace,
         list_params=ListParameters(
             page_size=conftest.TEST_PAGE_SIZE,
             traverse=True,
@@ -278,14 +233,10 @@ if __name__ == "__main__":
     try:
         print("Running scan result resource tests...")
 
-        # Run all tests
-        test_instance.test_scan_result_list()
-        test_instance.test_scan_result_get_by_uuid()
-        test_instance.test_scan_result_filter_by_project()
-        test_instance.test_scan_result_with_traverse()
-        test_instance.test_scan_result_structure_analysis()
-        test_instance.test_scan_result_operations_summary()
-
+        # Run all tests via pytest (covers list, get, filter_by_project, error_handling)
+        exit_code = pytest.main([__file__, "-v", "-s"])
+        if exit_code != 0:
+            sys.exit(exit_code)
         print("\n[SUCCESS] All scan result tests completed successfully!")
 
     except Exception as e:
@@ -294,3 +245,5 @@ if __name__ == "__main__":
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        test_instance.client.close()

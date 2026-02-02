@@ -16,39 +16,105 @@ import conftest
 
 from endorlabs.api_client import APIClient
 from endorlabs.resources import finding, finding_log
+from endorlabs.resources.finding_log import FindingLog
+
+
+class TestFindingLogGreenfieldAlias:
+    """Unit tests: greenfield attribute names (context) and serialization.
+
+    These tests assert .context and model_dump(by_alias=True)['context'] so that
+    after renaming finding_log_context -> context, they pass without change.
+    """
+
+    def test_finding_log_context_attribute_and_serialization(self) -> None:
+        """FindingLog exposes .context and serializes with key 'context'."""
+        minimal_spec = {
+            "finding_uuid": "f1",
+            "finding_parent_kind": "Finding",
+            "finding_parent_uuid": "p1",
+            "operation": "CREATE",
+            "introduced_at": "2020-01-01T00:00:00Z",
+            "method": "METHOD_UNSPECIFIED",
+            "level": "FINDING_LEVEL_UNSPECIFIED",
+            "finding_tags": [],
+            "finding_categories": [],
+        }
+        payload = {
+            "uuid": "log-uuid",
+            "meta": {"name": "log-meta"},
+            "spec": minimal_spec,
+            "tenant_meta": {"namespace": "test-ns"},
+            "context": {"id": "c1", "type": "scan"},
+        }
+        finding_log_obj = FindingLog(**payload)
+        assert finding_log_obj.context is not None
+        assert getattr(finding_log_obj.context, "id", None) == "c1"
+        dumped = finding_log_obj.model_dump(by_alias=True)
+        assert "context" in dumped
+        assert dumped["context"] is not None
 
 
 @pytest.mark.integration
+@pytest.mark.long
 class TestFindingLog:
     """Test cases for FindingLog resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup_fast(self) -> None:
-        """Fast setup: client and namespace only (runs before each test)."""
-        self.client = APIClient(auth_method="api-key")
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-
-        # Validate namespace is set
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Extract tenant root namespace for traverse operations
-        # Tenant root is the first part before the first dot
-        self.tenant_root = self.namespace.split(".")[0]
-
-        # Track created resources for cleanup
+    def setup_fast(self, api_client, namespace, root_namespace) -> None:
+        """Fast setup: client and namespace from conftest."""
+        self.client = api_client
+        self.namespace = namespace
+        self.root_namespace = root_namespace
+        self.tenant_root = root_namespace
         self.created_finding_log_uuids = []
 
     def teardown_method(self) -> None:
         """Clean up any resources created during tests."""
         if hasattr(self, "created_finding_log_uuids"):
-            # Clean up created finding logs
             for uuid in self.created_finding_log_uuids:
                 try:
                     finding_log.delete_finding_log(self.client, self.namespace, uuid)
                 except Exception as e:
                     print(f"Warning: Failed to delete finding log {uuid}: {e}")
             self.created_finding_log_uuids.clear()
+
+    def test_finding_log_list(self) -> None:
+        """LIST from tenant root with traverse (registry-based)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.finding_log.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
+
+    def test_finding_log_get(self) -> None:
+        """GET first item from LIST (root + traverse) (registry-based)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.finding_log.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.finding_log.get(item.uuid, namespace=ns)
+        assert got is not None
+        assert got.uuid == item.uuid
 
     @pytest.fixture
     def sample_finding_log(self):
@@ -64,8 +130,8 @@ class TestFindingLog:
         results = finding_log.list_finding_logs(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
@@ -80,73 +146,12 @@ class TestFindingLog:
         results = finding.list_findings(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=1),
-            max_pages=1,
+            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
+            max_pages=conftest.TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]
-
-    def test_finding_log_get_list(self) -> None:
-        """Test GET finding logs operation."""
-        print("\n=== TESTING GET FINDING LOGS ===")
-
-        # Test list_finding_logs with pagination limits
-        import conftest
-
-        from endorlabs.types import ListParameters
-
-        finding_logs_list = finding_log.list_finding_logs(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
-        )
-        assert isinstance(finding_logs_list, list), (
-            "Should return a list of finding logs"
-        )
-        if len(finding_logs_list) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        print(f"Found {len(finding_logs_list)} finding logs")
-
-        # Display first few finding logs
-        for _i, log_item in enumerate(finding_logs_list[:10]):  # Show first 10
-            print(f"FindingLog {log_item.uuid}: {log_item.meta.name}")
-            if log_item.spec.operation:
-                print(f"  Operation: {log_item.spec.operation}")
-            if log_item.spec.finding_uuid:
-                print(f"  Finding UUID: {log_item.spec.finding_uuid}")
-
-    def test_finding_log_get_by_uuid(self, sample_finding_log) -> None:
-        """Test GET finding log by UUID operation."""
-        print("\n=== TESTING GET FINDING LOG BY UUID ===")
-
-        log_item = sample_finding_log
-        # Use the finding log's actual namespace
-        log_namespace = (
-            log_item.tenant_meta.namespace if log_item.tenant_meta else self.namespace
-        )
-        retrieved_log = finding_log.get_finding_log(
-            self.client, log_namespace, log_item.uuid
-        )
-
-        assert retrieved_log is not None, (
-            "Should successfully retrieve finding log by UUID"
-        )
-        assert retrieved_log.uuid == log_item.uuid, (
-            "Retrieved finding log should match original"
-        )
-        assert retrieved_log.meta.name == log_item.meta.name, (
-            "Finding log name should match"
-        )
-
-        print(f"Successfully retrieved finding log: {retrieved_log.uuid}")
-        print(f"Finding log name: {retrieved_log.meta.name}")
-        if retrieved_log.spec.operation:
-            print(f"Operation: {retrieved_log.spec.operation}")
-        if retrieved_log.spec.finding_uuid:
-            print(f"Finding UUID: {retrieved_log.spec.finding_uuid}")
 
     def test_finding_log_list_by_operation_create(self) -> None:
         """Test filtering finding logs by CREATE operation."""
@@ -298,18 +303,20 @@ class TestFindingLog:
             for ns, count in list(namespaces.items())[:5]:  # Show first 5
                 print(f"  {ns}: {count} logs")
 
-    def test_client_recommended_ux_list_finding_logs(self) -> None:
-        """Recommended UX: Client(tenant=...); client.finding_logs.list()."""
-        import endorlabs
+    def test_finding_log_update_raises_not_implemented(self) -> None:
+        """When update_fn is None, client.finding_log.update raises NotImplemented."""
+        from unittest.mock import Mock
 
+        import endorlabs
+        from endorlabs.api_client import APIClient
+
+        mock = Mock(spec=APIClient)
         client = endorlabs.Client(
-            tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=mock,
+            tenant=conftest.TEST_NAMESPACE_DEFAULT,
         )
-        logs = client.finding_logs.list(max_pages=1)
-        assert isinstance(logs, list)
+        with pytest.raises(NotImplementedError, match="does not support update"):
+            client.finding_log.update("dummy-uuid", {}, update_mask="meta.description")
 
 
 if __name__ == "__main__":
@@ -345,11 +352,7 @@ if __name__ == "__main__":
 
     try:
         print("Running finding log resource tests...")
-
-        # Run all tests
-        test_instance.test_finding_log_get_list()
-        test_instance.test_finding_log_get_by_uuid(test_instance.finding_logs[0])
-
+        pytest.main([__file__, "-v", "-s"])
         print("\n[SUCCESS] All finding log tests completed successfully!")
 
     except Exception as e:
@@ -358,3 +361,5 @@ if __name__ == "__main__":
 
         traceback.print_exc()
         sys.exit(1)
+    finally:
+        test_instance.client.close()

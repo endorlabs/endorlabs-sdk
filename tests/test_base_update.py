@@ -103,18 +103,16 @@ class TestUpdateImmutableBlock:
         assert "uuid" in exc_info.value.message
         client.patch.assert_not_called()
 
-    def test_update_with_empty_mask_does_not_raise_immutable(self) -> None:
-        """Empty update_mask does not trigger immutable check."""
+    def test_update_with_empty_mask_raises_validation_error(self) -> None:
+        """Empty update_mask raises EndorValidationError (update_mask is required)."""
         client = Mock()
         client.patch = Mock()
-        mock_response = Mock()
-        mock_response.json.return_value = {"uuid": "id-1"}
-        mock_response.raise_for_status = Mock()
-        client.patch.return_value = mock_response
         ops = BaseResourceOperations(client, "findings", MinimalPayload)
         payload = MinimalPayload(uuid="id-1")
-        ops.update("tenant.ns", "id-1", payload, update_mask=[])
-        client.patch.assert_called_once()
+        with pytest.raises(EndorValidationError) as exc_info:
+            ops.update("tenant.ns", "id-1", payload, update_mask=[])
+        assert "update_mask" in exc_info.value.message.lower()
+        client.patch.assert_not_called()
 
     def test_update_with_unmapped_resource_name_does_not_raise_immutable(
         self,
@@ -237,7 +235,7 @@ class TestUpdateUnmodeledWarning:
         client.patch.return_value = mock_response
         ops = BaseResourceOperations(client, "findings", PayloadWithExtra)
         payload = PayloadWithExtra(uuid="id-1", future_field="value")
-        ops.update("tenant.ns", "id-1", payload, update_mask=None)
+        ops.update("tenant.ns", "id-1", payload, update_mask=["meta.tags"])
         client.patch.assert_called_once()
         assert "Unmodeled" in caplog.text or "unmodeled" in caplog.text.lower()
 
@@ -299,8 +297,19 @@ class TestUpdateContractSpec:
             == "meta.tags,spec.finding_tags"
         )
 
-    def test_patch_body_has_object_only_when_update_mask_none(self) -> None:
-        """When update_mask is None, body has object and no request key."""
+    def test_update_with_none_or_empty_mask_raises_validation_error(self) -> None:
+        """update() raises EndorValidationError when update_mask is empty (required)."""
+        client = Mock()
+        client.patch = Mock()
+        ops = BaseResourceOperations(client, "findings", MinimalPayload)
+        payload = MinimalPayload(uuid="id-1")
+        with pytest.raises(EndorValidationError) as exc_info:
+            ops.update("tenant.ns", "id-1", payload, update_mask=[])
+        assert "update_mask" in exc_info.value.message.lower()
+        client.patch.assert_not_called()
+
+    def test_patch_body_always_has_object_and_request_update_mask(self) -> None:
+        """PATCH body has object and request.update_mask (update_mask required)."""
         client = Mock()
         client.patch = Mock()
         mock_response = Mock()
@@ -309,9 +318,13 @@ class TestUpdateContractSpec:
         client.patch.return_value = mock_response
         ops = BaseResourceOperations(client, "findings", MinimalPayload)
         payload = MinimalPayload(uuid="id-1")
-        ops.update("tenant.ns", "id-1", payload, update_mask=None)
+        ops.update("tenant.ns", "id-1", payload, update_mask=["meta.tags"])
         call_args = client.patch.call_args
         json_body = call_args[1]["json"]
         assert UPDATE_BODY_OBJECT_KEY in json_body
         assert json_body[UPDATE_BODY_OBJECT_KEY]["uuid"] == "id-1"
-        assert UPDATE_BODY_REQUEST_KEY not in json_body
+        assert UPDATE_BODY_REQUEST_KEY in json_body
+        assert (
+            json_body[UPDATE_BODY_REQUEST_KEY][UPDATE_BODY_REQUEST_UPDATE_MASK_KEY]
+            == "meta.tags"
+        )

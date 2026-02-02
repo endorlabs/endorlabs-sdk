@@ -7,6 +7,7 @@ established patterns from the base class implementation.
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -153,6 +154,18 @@ def list_metrics(
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
+def list_metrics_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[Metric]:
+    """Iterate over metrics without materializing the full list."""
+    ops = _get_metric_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
 def get_metric(
     client: APIClient, tenant_meta_namespace: str, metric_uuid: str
 ) -> Metric:
@@ -192,7 +205,7 @@ def update_metric(
     tenant_meta_namespace: str,
     metric_uuid: str,
     payload: UpdateMetricPayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> Metric:
     """Update an existing metric with partial updates.
 
@@ -201,25 +214,35 @@ def update_metric(
         tenant_meta_namespace: Canonical namespace name
         metric_uuid: UUID of the metric to update
         payload: Metric update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "meta.tags,meta.description"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "meta.tags,meta.description". Missing or empty raises ValidationError.
 
     Returns:
         Updated Metric object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If metric doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
 
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Metric update requires an update_mask "
+                "(e.g. 'meta.description', 'meta.tags')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=metric_uuid,
+        )
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
     ops = _get_metric_ops(client)
     return ops.update(tenant_meta_namespace, metric_uuid, payload, update_mask_list)
 

@@ -19,6 +19,7 @@ API USAGE NOTES:
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -267,7 +268,10 @@ class ScanProfile(BaseResource):
     """
 
     # ScanProfile-specific fields (universal fields inherited from BaseResource)
-    spec: ScanProfileSpec = Field(..., description="Scan profile specification")  # type: ignore
+    # spec optional on response when API returns partial body (e.g. after update)
+    spec: ScanProfileSpec | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
+        None, description="Scan profile specification"
+    )
     propagate: bool | None = Field(
         None,
         description="Indicates object should be visible in child namespaces",
@@ -276,16 +280,17 @@ class ScanProfile(BaseResource):
     model_config = ConfigDict(extra="ignore")
 
     def __init__(self, **data: Any) -> None:
-        # Convert spec to ScanProfileSpec if it's a dict
-        if "spec" in data and isinstance(data["spec"], dict):
-            data["spec"] = ScanProfileSpec(**data["spec"])
+        # Convert spec to ScanProfileSpec if present (partial response may omit spec)
+        spec_val = data.get("spec")
+        if spec_val is not None and isinstance(spec_val, dict):
+            data["spec"] = ScanProfileSpec(**spec_val)
         super().__init__(**data)
 
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
+        if info.field_name == "spec" and v is not None and isinstance(v, dict):
             # Skip drift detection for typed nested models
             # - they handle their own validation
             # These will be converted to Pydantic models by the field validators
@@ -455,6 +460,18 @@ def list_scan_profiles(
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
 
 
+def list_scan_profiles_iter(
+    client: APIClient,
+    tenant_meta_namespace: str,
+    list_params: ListParameters | None = None,
+    max_pages: int | None = None,
+    **kwargs: Any,
+) -> Iterator[ScanProfile]:
+    """Iterate over scan profiles without materializing the full list."""
+    ops = _get_scan_profile_ops(client)
+    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
+
+
 def get_scan_profile(
     client: APIClient, tenant_meta_namespace: str, scan_profile_uuid: str
 ) -> ScanProfile:
@@ -510,7 +527,7 @@ def update_scan_profile(
     tenant_meta_namespace: str,
     scan_profile_uuid: str,
     payload: UpdateScanProfilePayload,
-    update_mask: str | None = None,
+    update_mask: str,
 ) -> ScanProfile | None:
     """Update an existing scan profile using partial updates.
 
@@ -530,16 +547,14 @@ def update_scan_profile(
         tenant_meta_namespace: Canonical namespace name
         scan_profile_uuid: UUID of the scan profile to update
         payload: ScanProfile update payload
-        update_mask: Optional comma-separated list of fields to update
-            (e.g., "spec.is_default,propagate"). If provided, only these
-            fields will be updated. If omitted, all non-None fields in
-            payload will be updated.
+        update_mask: Comma-separated list of fields to update (required), e.g.
+            "spec.is_default,propagate". Missing or empty raises ValidationError.
 
     Returns:
         Updated ScanProfile object
 
     Raises:
-        ValidationError: If payload is invalid
+        ValidationError: If payload is invalid or update_mask is missing/empty
         NotFoundError: If scan profile doesn't exist
         PermissionDeniedError: If user lacks permission
         ServerError: If server error occurs
@@ -554,6 +569,18 @@ def update_scan_profile(
         ... )
 
     """
+    from ..exceptions import ValidationError as EndorValidationError
+
+    if not (update_mask and update_mask.strip()):
+        raise EndorValidationError(
+            message=(
+                "Scan profile update requires an update_mask "
+                "(e.g. 'spec.is_default', 'propagate')."
+            ),
+            operation="update",
+            namespace=tenant_meta_namespace,
+            resource_uuid=scan_profile_uuid,
+        )
     # Build ScanProfile object with UUID and payload
     scan_profile_dict = {
         "uuid": scan_profile_uuid,
@@ -562,9 +589,9 @@ def update_scan_profile(
     scan_profile_obj = ScanProfile(**scan_profile_dict)
 
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = (
-        [field.strip() for field in update_mask.split(",")] if update_mask else None
-    )
+    update_mask_list = [
+        field.strip() for field in update_mask.split(",") if field.strip()
+    ]
 
     # Use base class update method
     ops = _get_scan_profile_ops(client)

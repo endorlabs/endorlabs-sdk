@@ -13,6 +13,53 @@ import pytest
 from endorlabs.api_client import APIClient
 
 
+def _auth_post_response(
+    token: str = "test-token", expiration_time: str | None = None
+) -> Mock:
+    """Build mock httpx-like response for auth api-key endpoint."""
+    data: dict = {"token": token}
+    if expiration_time is not None:
+        data["expirationTime"] = expiration_time
+        data["expiration_time"] = expiration_time
+    mock = Mock()
+    mock.json.return_value = data
+    mock.raise_for_status = Mock()
+    mock.status_code = 200
+    mock.text = ""
+    mock.url = "https://api.endorlabs.com/v1/auth/api-key"
+    mock.headers = {}
+    return mock
+
+
+def _auth_get_response() -> Mock:
+    """Build mock httpx-like response for meta/version (browser token validation)."""
+    mock = Mock()
+    mock.json.return_value = {"version": "1.0.0"}
+    mock.raise_for_status = Mock()
+    mock.status_code = 200
+    mock.text = ""
+    mock.url = "https://api.endorlabs.com/meta/version"
+    mock.headers = {}
+    return mock
+
+
+def _patch_httpx_client(
+    post_return: Mock | list[Mock] | None = None, get_return: Mock | None = None
+) -> Mock:
+    """Patch httpx.Client; post_return can be single mock or list for side_effect."""
+    if post_return is None:
+        post_return = _auth_post_response()
+    if get_return is None:
+        get_return = _auth_get_response()
+    mock_http = Mock()
+    if isinstance(post_return, list):
+        mock_http.post.side_effect = post_return
+    else:
+        mock_http.post.return_value = post_return
+    mock_http.get.return_value = get_return
+    return patch("endorlabs.api_client.httpx.Client", return_value=mock_http)
+
+
 class TestTokenExpirationTracking:
     """Test token expiration tracking and proactive refresh."""
 
@@ -26,22 +73,16 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_token_expiration_parsing(self, mock_post) -> None:
+    def test_token_expiration_parsing(self) -> None:
         """Test that token expiration is parsed from API response."""
         # Mock response with expiration
         future_time = datetime.now(UTC) + timedelta(hours=1)
         expiration_str = future_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            "token": "test-token",
-            "expirationTime": expiration_str,
-        }
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
+        mock_response = _auth_post_response("test-token", expiration_str)
 
-        client = APIClient()
+        with _patch_httpx_client(post_return=mock_response):
+            client = APIClient()
 
         assert client._token == "test-token"
         assert client._token_expires is not None
@@ -58,21 +99,15 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_token_expiration_alternative_field(self, mock_post) -> None:
+    def test_token_expiration_alternative_field(self) -> None:
         """Test parsing expiration_time field (alternative to expirationTime)."""
         future_time = datetime.now(UTC) + timedelta(hours=1)
         expiration_str = future_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            "token": "test-token",
-            "expiration_time": expiration_str,
-        }
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
+        mock_response = _auth_post_response("test-token", expiration_str)
 
-        client = APIClient()
+        with _patch_httpx_client(post_return=mock_response):
+            client = APIClient()
 
         assert client._token_expires is not None
         assert abs((client._token_expires - future_time).total_seconds()) < 1
@@ -87,43 +122,31 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_token_property_refresh(self, mock_post) -> None:
+    def test_token_property_refresh(self) -> None:
         """Test token property triggers refresh when expired."""
         # First authentication
         future_time = datetime.now(UTC) + timedelta(minutes=10)
         expiration_str = future_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response1 = Mock()
-        mock_response1.json.return_value = {
-            "token": "initial-token",
-            "expirationTime": expiration_str,
-        }
-        mock_response1.raise_for_status = Mock()
+        mock_response1 = _auth_post_response("initial-token", expiration_str)
 
         # Second authentication (refresh)
         new_future_time = datetime.now(UTC) + timedelta(hours=1)
         new_expiration_str = new_future_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response2 = Mock()
-        mock_response2.json.return_value = {
-            "token": "refreshed-token",
-            "expirationTime": new_expiration_str,
-        }
-        mock_response2.raise_for_status = Mock()
+        mock_response2 = _auth_post_response("refreshed-token", new_expiration_str)
 
-        mock_post.side_effect = [mock_response1, mock_response2]
+        with _patch_httpx_client(post_return=[mock_response1, mock_response2]):
+            client = APIClient()
 
-        client = APIClient()
+            # Manually set expiration to past to trigger refresh
+            client._token_expires = datetime.now(UTC) - timedelta(hours=1)
 
-        # Manually set expiration to past to trigger refresh
-        client._token_expires = datetime.now(UTC) - timedelta(hours=1)
+            # Access token property should trigger refresh
+            token = client.token
 
-        # Access token property should trigger refresh
-        token = client.token
-
-        assert token == "refreshed-token"
-        assert mock_post.call_count == 2
+            assert token == "refreshed-token"
+            assert client.client.post.call_count == 2
 
     @patch.dict(
         os.environ,
@@ -135,21 +158,15 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_is_expired_property(self, mock_post) -> None:
+    def test_is_expired_property(self) -> None:
         """Test is_expired property correctly identifies expired tokens."""
         future_time = datetime.now(UTC) + timedelta(hours=1)
         expiration_str = future_time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response = Mock()
-        mock_response.json.return_value = {
-            "token": "test-token",
-            "expirationTime": expiration_str,
-        }
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
+        mock_response = _auth_post_response("test-token", expiration_str)
 
-        client = APIClient()
+        with _patch_httpx_client(post_return=mock_response):
+            client = APIClient()
 
         # Token not expired
         assert client.is_expired is False
@@ -172,40 +189,28 @@ class TestTokenExpirationTracking:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_proactive_refresh_30_minutes(self, mock_post) -> None:
+    def test_proactive_refresh_30_minutes(self) -> None:
         """Test proactive refresh triggers 30 minutes before expiration."""
         # Set expiration to 25 minutes from now (within 30-minute buffer)
         near_future = datetime.now(UTC) + timedelta(minutes=25)
         expiration_str = near_future.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response1 = Mock()
-        mock_response1.json.return_value = {
-            "token": "initial-token",
-            "expirationTime": expiration_str,
-        }
-        mock_response1.raise_for_status = Mock()
+        mock_response1 = _auth_post_response("initial-token", expiration_str)
 
         # Refresh response
         new_future = datetime.now(UTC) + timedelta(hours=1)
         new_expiration_str = new_future.strftime("%Y-%m-%dT%H:%M:%S+00:00")
 
-        mock_response2 = Mock()
-        mock_response2.json.return_value = {
-            "token": "refreshed-token",
-            "expirationTime": new_expiration_str,
-        }
-        mock_response2.raise_for_status = Mock()
+        mock_response2 = _auth_post_response("refreshed-token", new_expiration_str)
 
-        mock_post.side_effect = [mock_response1, mock_response2]
+        with _patch_httpx_client(post_return=[mock_response1, mock_response2]):
+            client = APIClient()
 
-        client = APIClient()
+            # Access token property - should trigger refresh due to 30-minute buffer
+            token = client.token
 
-        # Access token property - should trigger refresh due to 30-minute buffer
-        token = client.token
-
-        assert token == "refreshed-token"
-        assert mock_post.call_count == 2
+            assert token == "refreshed-token"
+            assert client.client.post.call_count == 2
 
 
 @pytest.mark.writes
@@ -214,17 +219,12 @@ class TestBrowserAuthentication:
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
-    @patch("endorlabs.api_client.requests.get")
-    def test_browser_auth_method(self, mock_get, mock_get_token) -> None:
+    def test_browser_auth_method(self, mock_get_token: Mock) -> None:
         """Test browser authentication method."""
         mock_get_token.return_value = "browser-token-123"
 
-        mock_response = Mock()
-        mock_response.json.return_value = {"version": "1.0.0"}
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-
-        client = APIClient(auth_method="browser")
+        with _patch_httpx_client(get_return=_auth_get_response()):
+            client = APIClient(auth_method="browser")
 
         assert client._auth_type == "browser"
         assert client._token == "browser-token-123"
@@ -232,15 +232,10 @@ class TestBrowserAuthentication:
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
-    @patch("endorlabs.api_client.requests.get")
-    def test_browser_auth_with_provided_token(self, mock_get, mock_get_token) -> None:
+    def test_browser_auth_with_provided_token(self, mock_get_token: Mock) -> None:
         """Test browser auth with directly provided token."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"version": "1.0.0"}
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-
-        client = APIClient(token="direct-token-456", auth_method="browser")
+        with _patch_httpx_client(get_return=_auth_get_response()):
+            client = APIClient(token="direct-token-456", auth_method="browser")
 
         assert client._auth_type == "browser"
         assert client._token == "direct-token-456"
@@ -255,15 +250,10 @@ class TestBrowserAuthentication:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.get")
-    def test_browser_auth_from_env(self, mock_get) -> None:
+    def test_browser_auth_from_env(self) -> None:
         """Test browser auth from environment variables."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"version": "1.0.0"}
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-
-        client = APIClient()
+        with _patch_httpx_client(get_return=_auth_get_response()):
+            client = APIClient()
 
         assert client._auth_type == "browser"
         assert client._token == "env-token-789"
@@ -282,19 +272,14 @@ class TestAuthenticationBackwardCompatibility:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_api_key_auth_default(self, mock_post) -> None:
+    def test_api_key_auth_default(self) -> None:
         """Test that API key auth is still the default."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "api-key-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
-        client = APIClient()
+        with _patch_httpx_client(post_return=_auth_post_response("api-key-token")):
+            client = APIClient()
 
         assert client._auth_type == "api-key"
         assert client._token == "api-key-token"
-        mock_post.assert_called_once()
+        client.client.post.assert_called_once()
 
     @patch.dict(
         os.environ,
@@ -306,15 +291,10 @@ class TestAuthenticationBackwardCompatibility:
         },
         clear=True,
     )
-    @patch("endorlabs.api_client.requests.post")
-    def test_explicit_api_key_auth(self, mock_post) -> None:
+    def test_explicit_api_key_auth(self) -> None:
         """Test explicit API key authentication method."""
-        mock_response = Mock()
-        mock_response.json.return_value = {"token": "api-key-token"}
-        mock_response.raise_for_status = Mock()
-        mock_post.return_value = mock_response
-
-        client = APIClient(auth_method="api-key")
+        with _patch_httpx_client(post_return=_auth_post_response("api-key-token")):
+            client = APIClient(auth_method="api-key")
 
         assert client._auth_type == "api-key"
         assert client._token == "api-key-token"

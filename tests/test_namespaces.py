@@ -3,14 +3,13 @@ import sys
 import time
 
 import conftest
+import httpx
 import pytest
-import requests
 
 # Ensure src/ is on sys.path for direct import
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
 )
-from endorlabs.api_client import APIClient
 from endorlabs.exceptions import (
     ValidationError as EndorValidationError,
 )
@@ -32,28 +31,20 @@ class TestNamespaces:
     """Test cases for Namespace resource operations."""
 
     @pytest.fixture(autouse=True)
-    def setup(self) -> None:
-        """Set up test environment."""
-        # Check for required environment variables
+    def setup(self, api_client_fast_retry, namespace, root_namespace) -> None:
+        """Set up test environment (client and namespace from conftest)."""
         required_vars = [
             "ENDOR_API",
             "ENDOR_API_CREDENTIALS_KEY",
             "ENDOR_API_CREDENTIALS_SECRET",
         ]
-
         missing_vars = [var for var in required_vars if not os.getenv(var)]
         if missing_vars:
             pytest.skip(f"Missing required environment variables: {missing_vars}")
 
-        # Setup APIClient
-        self.client = APIClient(
-            max_retries=2, backoff_factor=0.1, auth_method="api-key"
-        )
-        self.namespace = os.getenv("ENDOR_NAMESPACE", conftest.TEST_NAMESPACE_DEFAULT)
-        if not self.namespace:
-            pytest.skip("ENDOR_NAMESPACE environment variable must be set")
-
-        # Track created resources for cleanup
+        self.client = api_client_fast_retry
+        self.namespace = namespace
+        self.root_namespace = root_namespace
         self.created_namespace_uuids = []
 
     def teardown_method(self) -> None:
@@ -99,16 +90,14 @@ class TestNamespaces:
                 print(f"Warning: Failed to create namespace {payload.meta.name}: {e}")
                 # Continue with other namespaces
 
-        # List and check created
-        import conftest
-
+        # List with traverse so created namespaces are in scope
         from endorlabs.types import ListParameters
 
         all_namespaces = list_namespaces(
             self.client,
             self.namespace,
-            list_params=ListParameters(page_size=conftest.TEST_PAGE_SIZE),
-            max_pages=conftest.TEST_MAX_PAGES,
+            list_params=ListParameters(page_size=10, traverse=True),
+            max_pages=5,
         )
         mock_names = {p.meta.name for p in mock_namespaces_to_create}
         found = [ns for ns in all_namespaces if ns.meta.name in mock_names]
@@ -187,7 +176,7 @@ class TestNamespaces:
                     f"{e.message}"
                 )
             raise
-        except requests.exceptions.HTTPError as e:
+        except httpx.HTTPStatusError as e:
             if e.response.status_code == 501:
                 pytest.skip(
                     "Namespace PATCH returns 501 in this environment (not implemented)"
@@ -235,15 +224,89 @@ class TestNamespaces:
             "fieldmask" in (exc_info.value.message or "").lower()
         )
 
-    def test_client_recommended_ux_list_namespaces(self) -> None:
-        """Recommended UX: endorlabs.Client(tenant=...); client.namespaces.list()."""
+    def test_namespace_list(self) -> None:
+        """LIST from tenant root with traverse."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        result = client.namespace.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
+
+    def test_namespace_get(self) -> None:
+        """GET first item from LIST (root + traverse)."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.namespace.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        got = client.namespace.get(item)
+        assert got is not None
+        assert got.uuid == item.uuid
+
+    def test_client_ux_create_namespace(self) -> None:
+        """Consumer UX: client.namespace.create(payload); teardown deletes."""
+        import random
+
         import endorlabs
 
         client = endorlabs.Client(
             tenant=self.namespace,
-            max_retries=2,
-            backoff_factor=0.1,
-            auth_method="api-key",
+            api_client=self.client,
         )
-        namespaces = client.namespaces.list(traverse=True, max_pages=1)
-        assert isinstance(namespaces, list)
+        timestamp = int(time.time())
+        random_id = random.randint(1000, 9999)
+        payload = CreateNamespacePayload(
+            meta=NamespaceMetaCreate(
+                name=f"client-ux-ns-{timestamp}-{random_id}",
+                description="Consumer UX create test",
+            )
+        )
+        try:
+            created = client.namespace.create(payload)
+        except Exception as e:
+            pytest.skip(f"Namespace create not allowed in this environment: {e}")
+        assert created is not None
+        assert created.meta.name == payload.meta.name
+        self.created_namespace_uuids.append(created.uuid)
+
+    def test_client_ux_delete_namespace(self) -> None:
+        """Consumer UX: create namespace then client.namespace.delete(uuid)."""
+        import random
+
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.namespace,
+            api_client=self.client,
+        )
+        timestamp = int(time.time())
+        random_id = random.randint(1000, 9999)
+        payload = CreateNamespacePayload(
+            meta=NamespaceMetaCreate(
+                name=f"client-ux-del-ns-{timestamp}-{random_id}",
+                description="Consumer UX delete test",
+            )
+        )
+        try:
+            created = client.namespace.create(payload)
+        except Exception as e:
+            pytest.skip(f"Namespace create not allowed in this environment: {e}")
+        if not created:
+            pytest.skip("Failed to create namespace for delete test")
+        result = client.namespace.delete(created.uuid)
+        assert result is True
+        # Do not append to created_namespace_uuids; resource already deleted
