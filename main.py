@@ -81,6 +81,7 @@ def main() -> None:
         ),
         timeout=300,
     )
+    # Getting scan results for a project
     scans = client.scan_result.list(
         parent=project, max_pages=1, sort_by="meta.create_time", desc=True
     )
