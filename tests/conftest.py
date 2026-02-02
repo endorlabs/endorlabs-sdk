@@ -22,7 +22,8 @@ TEST_TRAVERSE_PAGE_SIZE = 1
 TEST_MAX_PAGES_TRAVERSE = 1
 # Single source for test namespace: use env ENDOR_NAMESPACE or this default.
 # Tests should use the `namespace` fixture (or this constant) instead of
-# hardcoding a default. See docs/rules-of-engagement/resource-implementation.md (Phase 2b) and troubleshooting.md.
+# hardcoding a default. See docs/rules-of-engagement/resource-implementation.md
+# (Phase 2b) and troubleshooting.md.
 TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
 
