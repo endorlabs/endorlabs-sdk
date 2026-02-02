@@ -1,0 +1,202 @@
+"""Test cases for model validation utilities.
+
+Tests merge_partial_update, get_immutable_fields, validate_update_mask,
+safe_serialize, and related helpers used by models/base.
+"""
+
+from datetime import datetime
+from enum import Enum
+
+import pytest
+from pydantic import BaseModel
+
+from endorlabs.utils.model_validation import (
+    build_filter_from_identity_kwargs,
+    create_minimal_payload,
+    ensure_required_fields,
+    get_immutable_fields,
+    get_list_filter_map,
+    get_tags_update_paths,
+    merge_partial_update,
+    safe_serialize,
+    validate_update_mask,
+)
+
+
+class TestSafeSerialize:
+    """Tests for safe_serialize."""
+
+    def test_datetime(self) -> None:
+        dt = datetime(2025, 1, 15, 12, 0, 0)
+        assert safe_serialize(dt) == "2025-01-15T12:00:00"
+
+    def test_enum(self) -> None:
+        class E(Enum):
+            A = "a"
+            B = "b"
+
+        assert safe_serialize(E.A) == "a"
+
+    def test_dict_recursive(self) -> None:
+        assert safe_serialize({"x": 1, "y": [2, 3]}) == {"x": 1, "y": [2, 3]}
+
+    def test_list_recursive(self) -> None:
+        assert safe_serialize([1, "a", None]) == [1, "a", None]
+
+    def test_passthrough_scalar(self) -> None:
+        assert safe_serialize(42) == 42
+        assert safe_serialize("hello") == "hello"
+        assert safe_serialize(None) is None
+
+
+class TestMergePartialUpdate:
+    """Tests for merge_partial_update."""
+
+    def test_no_mask_updates_non_none(self) -> None:
+        existing = {"a": 1, "b": 2}
+        update = {"a": 10, "b": None}
+        result = merge_partial_update(existing, update)
+        assert result["a"] == 10
+        assert result["b"] == 2
+
+    def test_with_mask_only_specified_fields(self) -> None:
+        existing = {"spec": {"level": "low", "name": "x"}}
+        update = {"spec": {"level": "high", "name": "y"}}
+        result = merge_partial_update(existing, update, update_mask=["spec.level"])
+        assert result["spec"]["level"] == "high"
+        assert result["spec"]["name"] == "x"
+
+    def test_with_mask_nested_creates_path(self) -> None:
+        existing: dict = {}
+        update = {"meta": {"tags": ["a"]}}
+        result = merge_partial_update(existing, update, update_mask=["meta.tags"])
+        assert result.get("meta", {}).get("tags") == ["a"]
+
+
+class TestGetImmutableFields:
+    """Tests for get_immutable_fields."""
+
+    def test_finding_returns_list(self) -> None:
+        fields = get_immutable_fields("finding")
+        assert isinstance(fields, list)
+        assert "uuid" in fields
+        assert "meta.create_time" in fields
+        assert "spec.project_uuid" in fields
+
+    def test_policy_returns_list(self) -> None:
+        fields = get_immutable_fields("policy")
+        assert "spec.policy_type" in fields
+
+    def test_unknown_resource_returns_empty(self) -> None:
+        assert get_immutable_fields("unknown_type") == []
+
+
+class TestGetTagsUpdatePaths:
+    """Tests for get_tags_update_paths (tag capability from mutable fields)."""
+
+    def test_project_returns_meta_tags(self) -> None:
+        assert get_tags_update_paths("project") == ["meta.tags"]
+
+    def test_finding_returns_meta_tags_and_spec_finding_tags(self) -> None:
+        paths = get_tags_update_paths("finding")
+        assert set(paths) == {"meta.tags", "spec.finding_tags"}
+
+    def test_unknown_or_empty_returns_empty(self) -> None:
+        assert get_tags_update_paths("api_key") == []
+        assert get_tags_update_paths("") == []
+
+
+class TestGetListFilterMap:
+    """Tests for get_list_filter_map (list identity kwargs)."""
+
+    def test_project_returns_name_map(self) -> None:
+        assert get_list_filter_map("project") == {"name": "meta.name"}
+
+    def test_repository_returns_name_and_vcs_url(self) -> None:
+        m = get_list_filter_map("repository")
+        assert m.get("name") == "meta.name"
+        assert m.get("vcs_url") == "spec.vcs_url"
+        assert m.get("git_url") == "spec.vcs_url"
+
+    def test_unknown_returns_empty(self) -> None:
+        assert get_list_filter_map("") == {}
+        assert get_list_filter_map("unknown") == {}
+
+
+class TestBuildFilterFromIdentityKwargs:
+    """Tests for build_filter_from_identity_kwargs."""
+
+    def test_name_backend_produces_meta_name_clause(self) -> None:
+        filter_map = {"name": "meta.name"}
+        kwargs = {"name": "backend", "max_pages": 1}
+        merged, remaining = build_filter_from_identity_kwargs(filter_map, kwargs)
+        assert "meta.name" in merged
+        assert "backend" in merged
+        assert "name" not in remaining
+        assert remaining.get("max_pages") == 1
+
+    def test_merge_with_explicit_filter(self) -> None:
+        filter_map = {"name": "meta.name"}
+        kwargs = {"filter": "spec.level == 'CRITICAL'", "name": "backend"}
+        merged, remaining = build_filter_from_identity_kwargs(filter_map, kwargs)
+        assert "meta.name" in merged
+        assert "spec.level" in merged
+        assert "name" not in remaining
+        assert "filter" not in remaining
+
+
+class TestValidateUpdateMask:
+    """Tests for validate_update_mask."""
+
+    def test_empty_mask_returns_true(self) -> None:
+        assert validate_update_mask("", ["meta.tags"]) is True
+
+    def test_valid_single_field(self) -> None:
+        assert validate_update_mask("meta.tags", ["meta.tags", "spec.level"]) is True
+
+    def test_valid_multiple_fields(self) -> None:
+        assert (
+            validate_update_mask(
+                "meta.tags, spec.level",
+                ["meta.tags", "spec.level"],
+            )
+            is True
+        )
+
+    def test_invalid_field_returns_false(self) -> None:
+        assert validate_update_mask("meta.bad", ["meta.tags"], "finding") is False
+
+
+class TestEnsureRequiredFields:
+    """Tests for ensure_required_fields."""
+
+    def test_present_returns_data(self) -> None:
+        data = {"meta": {"name": "x"}}
+        assert ensure_required_fields(data, ["meta.name"]) == data
+
+    def test_missing_raises(self) -> None:
+        data = {"meta": {}}
+        with pytest.raises(ValueError, match="Missing required fields"):
+            ensure_required_fields(data, ["meta.name"], context="create")
+
+
+class TestCreateMinimalPayload:
+    """Tests for create_minimal_payload."""
+
+    def test_creates_instance(self) -> None:
+        class M(BaseModel):
+            a: int
+            b: str = "default"
+
+        inst = create_minimal_payload(M, a=1)
+        assert inst.a == 1
+        assert inst.b == "default"
+
+    def test_filters_none(self) -> None:
+        class M(BaseModel):
+            a: int
+            b: str | None = None
+
+        inst = create_minimal_payload(M, a=1, b=None)
+        assert inst.a == 1
+        assert inst.b is None

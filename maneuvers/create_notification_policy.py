@@ -29,7 +29,7 @@ Example:
 
 # Vulnerability notification policy with Endor Patch
 uv run python maneuvers/create_notification_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "tenant.namespace" \
   --name "Vulnerability Notifications with Endor Patch" \
   --description "Notification policy for reachable dependency vulnerabilities with Endor Patch available" \
   --finding-categories "VULNERABILITY" \
@@ -40,7 +40,7 @@ uv run python maneuvers/create_notification_policy.py \
 
 # SAST notification policy
 uv run python maneuvers/create_notification_policy.py \
-  --namespace "endor-solutions-tgowan.cockpit" \
+  --namespace "tenant.namespace" \
   --name "SAST Notifications" \
   --description "Notification policy for SAST findings" \
   --finding-categories "SAST" \
@@ -63,11 +63,11 @@ from typing import Any, Dict, List, Optional
 # Add the src directory to the path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Configure logging to reduce verbosity
-logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-logging.getLogger('endor_cockpit').setLevel(logging.INFO)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -424,7 +424,7 @@ def main():
 Examples:
   # Vulnerability notification policy with Endor Patch
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "tenant.namespace" \\
     --name "Vulnerability Notifications with Endor Patch" \\
     --description "Notification policy for reachable dependency vulnerabilities with Endor Patch available" \\
     --finding-categories "VULNERABILITY" \\
@@ -434,7 +434,7 @@ Examples:
 
   # SAST notification policy
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "tenant.namespace" \\
     --name "SAST Notifications" \\
     --description "Notification policy for SAST findings" \\
     --finding-categories "SAST" \\
@@ -444,7 +444,7 @@ Examples:
 
   # Multiple finding categories
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "tenant.namespace" \\
     --name "Security Notifications" \\
     --description "Notification policy for security findings" \\
     --finding-categories "VULNERABILITY,SECRETS,SAST" \\
@@ -454,7 +454,7 @@ Examples:
 
   # With system finding tags filter
   python maneuvers/create_notification_policy.py \\
-    --namespace "endor-solutions-tgowan.cockpit" \\
+    --namespace "tenant.namespace" \\
     --name "Reachable Dependency Notifications" \\
     --description "Notification policy for reachable dependencies" \\
     --finding-categories "VULNERABILITY" \\
@@ -643,3 +643,4 @@ Examples:
 
 if __name__ == "__main__":
     main()
+

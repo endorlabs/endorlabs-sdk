@@ -11,7 +11,7 @@ Based on the OpenAPI schema and namespace resource structure.
 Example:
 
 uv run python maneuvers/create_namespace.py \
-  --parent-namespace "endor-solutions-tgowan.cockpit" \
+  --parent-namespace "tenant.namespace" \
   --name "kessel" \
   --description "Kessel namespace for testing" \
   --dry-run
@@ -31,11 +31,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from pydantic import BaseModel, Field
 
-from endor_cockpit.api_client import APIClient
+from endorlabs.api_client import APIClient
 
 # Configure logging to reduce verbosity
-logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
-logging.getLogger('endor_cockpit').setLevel(logging.INFO)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger('endorlabs').setLevel(logging.INFO)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -204,14 +204,14 @@ Examples:
 
 # Create a child namespace
 uv run python maneuvers/create_namespace.py \\
-  --parent-namespace "endor-solutions-tgowan.cockpit" \\
+  --parent-namespace "tenant.namespace" \\
   --name "kessel" \\
   --description "Kessel namespace for testing" \\
   --dry-run
 
 # Create with tags
 uv run python maneuvers/create_namespace.py \\
-  --parent-namespace "endor-solutions-tgowan.cockpit" \\
+  --parent-namespace "tenant.namespace" \\
   --name "production" \\
   --description "Production environment namespace" \\
   --tags "env:production,team:platform" \\
@@ -324,3 +324,4 @@ uv run python maneuvers/create_namespace.py \\
 
 if __name__ == "__main__":
     main()
+

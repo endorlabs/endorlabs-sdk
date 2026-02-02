@@ -8,9 +8,5 @@
 * @tgowan-endor
 
 
-# Solutions Team are responsible for relaying inaccuracies in external docs to 
-# the appropriate internal Endor tech docs team
-/docs/external_docs @solutions
-
 # Security Champions Team are responsible for appropriate implementation of security controls in CI
 .github/workflows @security-champions

@@ -1,0 +1,222 @@
+name: Schema Drift Detection
+
+# GITHUB_TOKEN needs issues: write to create one issue per detected drift
+permissions:
+  contents: read
+  issues: write
+
+on:
+  schedule:
+    # Run hourly to check for endorctl version updates
+    - cron: '0 * * * *'
+    # Also run weekly on Mondays at 3 AM UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  check-version:
+    name: Check Endorctl Version
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.check.outputs.changed }}
+      latest-version: ${{ steps.check.outputs.version }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v7.2.0
+        with:
+          version: "0.9.3"
+
+      - name: Install dependencies
+        run: |
+          uv sync --dev
+
+      - name: Restore cached version
+        id: cache-version
+        uses: actions/cache@v5.0.2
+        with:
+          path: .github/cache/endorctl_version.txt
+          key: endorctl-version-${{ runner.os }}
+          restore-keys: |
+            endorctl-version-${{ runner.os }}
+
+      - name: Check for version update
+        id: check
+        run: |
+          STATE_FILE=".github/cache/endorctl_version.txt"
+          mkdir -p .github/cache
+          
+          # Run version check and capture exit code
+          set +e  # Don't exit on error
+          python .github/scripts/check_endorctl_version.py \
+            --state-file "$STATE_FILE" \
+            --quiet
+          EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          LATEST_VERSION=$(cat "$STATE_FILE" 2>/dev/null || echo "")
+          
+          # Set outputs
+          if [ $EXIT_CODE -eq 1 ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "🔄 Version update detected: $LATEST_VERSION"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "✅ No version update (current: $LATEST_VERSION)"
+          fi
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Save version to cache
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/cache@v5.0.2
+        with:
+          path: .github/cache/endorctl_version.txt
+          key: endorctl-version-${{ runner.os }}-${{ steps.check.outputs.version }}
+          restore-keys: |
+            endorctl-version-${{ runner.os }}
+
+  detect-schema-drift:
+    name: Detect Schema Drift
+    needs: check-version
+    # Only run if version changed OR manually triggered (workflow_dispatch)
+    if: needs.check-version.outputs.version-changed == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: "3.13"
+
+      - name: Validate dependencies
+        run: |
+          echo "Validating required dependencies are installed..."
+          python -c "import pytest; print(f'✅ pytest {pytest.__version__}')" || (echo "❌ pytest not found" && exit 1)
+          python -c "import pydantic; print(f'✅ pydantic {pydantic.__version__}')" || (echo "❌ pydantic not found" && exit 1)
+          echo "✅ All required dependencies are installed"
+
+      - name: Download OpenAPI spec
+        run: |
+          mkdir -p external_docs
+          curl -sSfL -o external_docs/openapi-swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+
+      - name: Run schema drift detection
+        run: |
+          python .github/scripts/detect_schema_drift.py \
+            --run-tests \
+            --test-path tests/ \
+            --output schema_drift_report.json
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+        continue-on-error: true  # Don't fail workflow if drift or tests fail
+
+      - name: Create GitHub issues from drift report
+        if: always()
+        uses: actions/github-script@v8.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const reportPath = path.join(process.env.GITHUB_WORKSPACE || '.', 'schema_drift_report.json');
+            let report;
+            try {
+              report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+            } catch (e) {
+              core.info('No drift report or invalid JSON - skipping issue creation');
+              return;
+            }
+            const newDrifts = (report.drifts || []).filter(d => d.status === 'new');
+            if (newDrifts.length === 0) {
+              core.info('No new drifts to report');
+              return;
+            }
+            const { data: openIssues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'schema-drift',
+              per_page: 100
+            });
+            const existingTitles = new Set(openIssues.map(i => i.title));
+            let created = 0;
+            for (const d of newDrifts) {
+              const title = `Schema Drift: ${d.resource_name || 'Unknown'}.${d.field_path || d.field || 'unknown'}`;
+              if (existingTitles.has(title)) continue;
+              const body = `## Schema Drift Detected
+
+**Resource**: \`${d.resource_name || 'Unknown'}\`
+**Model**: \`${d.model_path || d.model || 'Unknown'}\`
+**Field Path**: \`${d.field_path || 'unknown'}\`
+**Field**: \`${d.field || 'unknown'}\`
+**File to Modify**: \`${d.file_path || 'see OpenAPI spec'}\`
+
+This field was detected in API responses but is not defined in the Pydantic model.
+
+### Action Required
+
+1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` (workflow downloads it to \`external_docs/openapi-swagger.json\`).
+2. Add field to model: \`${d.file_path || 'resource file'}\`
+3. Update drift detection known_fields if applicable
+
+### Detection
+
+Automatically created by the schema drift detection workflow.`;
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['schema-drift', 'automated', 'api-schema']
+              });
+              existingTitles.add(title);
+              created++;
+            }
+            core.info(`Created ${created} issue(s) for new drifts.`);
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: schema-drift-report-${{ needs.check-version.outputs.latest-version || 'manual' }}
+          path: schema_drift_report.json
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f schema_drift_report.json ]; then
+            echo "## Schema Drift Detection Summary" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.check-version.outputs.version-changed }}" == "true" ]; then
+              echo "**Triggered by endorctl version update**: ${{ needs.check-version.outputs.latest-version }}" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+            python -c "
+            import json
+            with open('schema_drift_report.json') as f:
+                report = json.load(f)
+            summary = report.get('summary', {})
+            print(f\"- **New drifts detected**: {summary.get('new_drifts', 0)}\")
+            print(f\"- **Validation errors**: {summary.get('validation_errors', 0)}\")
+            print(f\"- **Test status**: {summary.get('test_status', 'unknown')}\")
+            " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No drift report generated" >> $GITHUB_STEP_SUMMARY
+
