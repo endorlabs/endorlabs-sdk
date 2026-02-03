@@ -270,6 +270,7 @@ class ResourceFacade(_ListableFacade[T]):
         tags_paths: list[str] | None = None,
         resource_name: str = "",
         parent_kind: str | None = None,
+        build_create_payload_fn: Callable[..., Any] | None = None,
     ) -> None:
         super().__init__(
             client,
@@ -284,6 +285,7 @@ class ResourceFacade(_ListableFacade[T]):
         self._create_fn = create_fn
         self._update_fn = update_fn
         self._delete_fn = delete_fn
+        self._build_create_payload_fn = build_create_payload_fn
 
     def _is_resource_like(self, value: Any) -> TypeGuard[T]:
         """Return True if value has uuid and tenant_meta (resource object)."""
@@ -312,14 +314,34 @@ class ResourceFacade(_ListableFacade[T]):
 
     def create(
         self,
-        payload: Any,
+        payload: Any = None,
+        *,
         namespace: str | None = None,
+        **kwargs: Any,
     ) -> T:
-        """Create a resource."""
+        """Create a resource.
+
+        Pass either payload (CreateXPayload) for backward compatibility, or
+        kwargs that are passed to this resource's build_create_payload (when
+        the resource supports decoupled create). Exactly one of payload or
+        kwargs must be provided when the resource has build_create_payload_fn.
+        """
         if self._create_fn is None:
             raise NotImplementedError(
                 "This resource does not support create."
             ) from None
+        if payload is not None and kwargs:
+            raise TypeError("provide either payload= or kwargs for create(), not both.")
+        if payload is None and not kwargs:
+            raise TypeError("create() requires payload= or resource-specific kwargs.")
+        if payload is None and kwargs and self._build_create_payload_fn is not None:
+            # namespace is consumed by _ns(); do not pass to builder
+            create_kwargs = {k: v for k, v in kwargs.items() if k != "namespace"}
+            payload = self._build_create_payload_fn(**create_kwargs)
+        elif payload is None and kwargs and self._build_create_payload_fn is None:
+            raise TypeError(
+                "create() for this resource requires payload=; kwargs not supported."
+            )
         ns = self._ns(namespace)
         return self._create_fn(self._client, ns, payload)
 

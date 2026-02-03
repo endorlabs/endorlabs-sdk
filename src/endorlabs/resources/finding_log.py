@@ -472,6 +472,11 @@ class CreateFindingLogPayload(BaseModel):
     context: Context
 
 
+def build_create_payload(**kwargs: Any) -> CreateFindingLogPayload:
+    """Build CreateFindingLogPayload from kwargs (decoupled facade create)."""
+    return CreateFindingLogPayload(**kwargs)
+
+
 def _get_finding_log_ops(
     client: APIClient,
 ) -> BaseResourceOperations[FindingLog]:

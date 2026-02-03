@@ -380,6 +380,11 @@ class CreateDependencyMetadataPayload(BaseModel):
     )
 
 
+def build_create_payload(**kwargs: Any) -> CreateDependencyMetadataPayload:
+    """Build CreateDependencyMetadataPayload from kwargs (decoupled create)."""
+    return CreateDependencyMetadataPayload(**kwargs)
+
+
 class UpdateDependencyMetadataPayload(BaseModel):
     """Payload for updating a dependency metadata.
 

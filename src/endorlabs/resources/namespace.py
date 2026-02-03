@@ -200,6 +200,16 @@ class CreateNamespacePayload(BaseModel):
     )
 
 
+def build_create_payload(
+    *,
+    name: str,
+    description: str,
+) -> CreateNamespacePayload:
+    """Build CreateNamespacePayload from kwargs (decoupled facade create)."""
+    meta = NamespaceMetaCreate(name=name, description=description)
+    return CreateNamespacePayload(meta=meta)
+
+
 def _get_namespace_ops(client: APIClient) -> BaseResourceOperations[Namespace]:
     """Get BaseResourceOperations instance for namespaces."""
     return BaseResourceOperations(client, "namespaces", Namespace)

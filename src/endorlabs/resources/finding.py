@@ -806,6 +806,11 @@ class CreateFindingPayload(BaseModel):
     context: Context
 
 
+def build_create_payload(**kwargs: Any) -> CreateFindingPayload:
+    """Build CreateFindingPayload from kwargs (decoupled facade create)."""
+    return CreateFindingPayload(**kwargs)
+
+
 class UpdateFindingPayload(BaseModel):
     """Payload for updating an Endor Labs finding.
 

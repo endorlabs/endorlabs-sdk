@@ -283,6 +283,11 @@ class CreateRepositoryVersionPayload(BaseModel):
     )
 
 
+def build_create_payload(**kwargs: Any) -> CreateRepositoryVersionPayload:
+    """Build CreateRepositoryVersionPayload from kwargs (decoupled create)."""
+    return CreateRepositoryVersionPayload(**kwargs)
+
+
 class UpdateRepositoryVersionPayload(BaseModel):
     """Payload for updating a repository version."""
 

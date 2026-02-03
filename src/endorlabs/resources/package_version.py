@@ -595,6 +595,11 @@ class CreatePackageVersionPayload(BaseModel):
     spec: PackageVersionSpec = Field(..., description="PackageVersion specification")
 
 
+def build_create_payload(**kwargs: Any) -> CreatePackageVersionPayload:
+    """Build CreatePackageVersionPayload from kwargs (decoupled create)."""
+    return CreatePackageVersionPayload(**kwargs)
+
+
 class PackageVersionMetaCreate(BaseModel):
     """PackageVersion metadata for creation."""
 
