@@ -366,6 +366,26 @@ class CreateProjectPayload(BaseModel):
     )
 
 
+def build_create_payload(
+    *,
+    name: str,
+    description: str,
+    namespace_uuid: str,
+    repository_url: str = "",
+    language: str = "",
+    framework: str = "",
+) -> CreateProjectPayload:
+    """Build CreateProjectPayload from kwargs (decoupled facade create)."""
+    meta = ProjectMetaCreate(
+        name=name,
+        description=description,
+        repository_url=repository_url,
+        language=language,
+        framework=framework,
+    )
+    return CreateProjectPayload(meta=meta, namespace_uuid=namespace_uuid)
+
+
 def _get_project_ops(client: APIClient) -> BaseResourceOperations[Project]:
     """Get BaseResourceOperations instance for projects."""
     return BaseResourceOperations(client, "projects", Project)

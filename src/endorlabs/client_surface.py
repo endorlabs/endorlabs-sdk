@@ -101,6 +101,9 @@ class Client:
                         tags_paths=tags_paths,
                         resource_name=entry.resource_name,
                         parent_kind=entry.parent_kind,
+                        build_create_payload_fn=getattr(
+                            entry, "build_create_payload_fn", None
+                        ),
                     ),
                 )
             else:
@@ -123,6 +126,9 @@ class Client:
                         tags_paths=tags_paths,
                         resource_name=entry.resource_name,
                         parent_kind=entry.parent_kind,
+                        build_create_payload_fn=getattr(
+                            entry, "build_create_payload_fn", None
+                        ),
                     ),
                 )
             setattr(self, entry.attr_name, facade)

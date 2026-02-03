@@ -301,6 +301,11 @@ class CreatePolicyPayload(BaseModel):
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
 
 
+def build_create_payload(**kwargs: Any) -> CreatePolicyPayload:
+    """Build CreatePolicyPayload from kwargs (decoupled facade create)."""
+    return CreatePolicyPayload(**kwargs)
+
+
 class UpdatePolicyPayload(BaseModel):
     r"""Payload for updating an Endor Labs policy.
 

@@ -600,6 +600,11 @@ class CreateLinterResultPayload(BaseModel):
     spec: LinterResultSpec = Field(..., description="LinterResult specification")
 
 
+def build_create_payload(**kwargs: Any) -> CreateLinterResultPayload:
+    """Build CreateLinterResultPayload from kwargs (decoupled facade create)."""
+    return CreateLinterResultPayload(**kwargs)
+
+
 class UpdateLinterResultPayload(BaseModel):
     """Payload for updating a linter result."""
 

@@ -224,6 +224,11 @@ class CreateAPIKeyPayload(BaseModel):
     propagate: bool | None = Field(False, description="Propagate to child namespaces")
 
 
+def build_create_payload(**kwargs: Any) -> CreateAPIKeyPayload:
+    """Build CreateAPIKeyPayload from kwargs (decoupled facade create)."""
+    return CreateAPIKeyPayload(**kwargs)
+
+
 def list_api_keys(
     client: APIClient,
     tenant_meta_namespace: str,

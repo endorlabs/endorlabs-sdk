@@ -513,6 +513,11 @@ class CreateScanResultPayload(BaseModel):
     context: Context
 
 
+def build_create_payload(**kwargs: Any) -> CreateScanResultPayload:
+    """Build CreateScanResultPayload from kwargs (decoupled facade create)."""
+    return CreateScanResultPayload(**kwargs)
+
+
 class ScanResultMetaUpdate(BaseModel):
     """Metadata for updating a ScanResult."""
 

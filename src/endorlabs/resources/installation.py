@@ -548,6 +548,11 @@ class CreateInstallationPayload(BaseModel):
     spec: InstallationSpec = Field(..., description="Installation specification")
 
 
+def build_create_payload(**kwargs: Any) -> CreateInstallationPayload:
+    """Build CreateInstallationPayload from kwargs (decoupled create)."""
+    return CreateInstallationPayload(**kwargs)
+
+
 class UpdateInstallationPayload(BaseModel):
     """Payload for updating an installation.
 

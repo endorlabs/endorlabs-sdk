@@ -245,6 +245,11 @@ class CreateAuditLogPayload(BaseModel):
     propagate: bool | None = Field(False, description="Propagate to child namespaces")
 
 
+def build_create_payload(**kwargs: Any) -> CreateAuditLogPayload:
+    """Build CreateAuditLogPayload from kwargs (decoupled facade create)."""
+    return CreateAuditLogPayload(**kwargs)
+
+
 def list_audit_logs(
     client: APIClient,
     tenant_meta_namespace: str,
