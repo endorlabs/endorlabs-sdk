@@ -177,6 +177,26 @@ class Namespace(BaseResource):
             raise ValueError("uuid cannot be empty")
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Namespace."""
+        return ["meta.description"]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for Namespace."""
+        return [
+            "uuid",
+            "meta.name",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "tenant_meta.namespace",
+        ]
+
 
 class CreateNamespacePayload(BaseModel):
     """Payload for creating a new namespace.

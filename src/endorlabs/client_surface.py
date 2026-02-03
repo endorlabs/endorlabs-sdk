@@ -14,7 +14,6 @@ from .api_client import APIClient
 if TYPE_CHECKING:
     from collections.abc import Callable
 from .facade import OssResourceFacade, ResourceFacade, SystemResourceFacade
-from .models.base import RESOURCE_NAME_TO_TYPE
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
@@ -83,9 +82,8 @@ class Client:
                 )
             elif entry.scope == "oss":
                 assert entry.get_fn is not None, "oss scope requires get_fn"
-                resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
                 tags_paths = (
-                    get_tags_update_paths(resource_type) if entry.update_fn else []
+                    get_tags_update_paths(entry.model_class) if entry.update_fn else []
                 )
                 facade = cast(
                     "OssResourceFacade[Any]",
@@ -108,9 +106,8 @@ class Client:
                 )
             else:
                 assert entry.get_fn is not None, "tenant scope requires get_fn"
-                resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
                 tags_paths = (
-                    get_tags_update_paths(resource_type) if entry.update_fn else []
+                    get_tags_update_paths(entry.model_class) if entry.update_fn else []
                 )
                 facade = cast(
                     "ResourceFacade[Any]",

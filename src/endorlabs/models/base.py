@@ -46,7 +46,6 @@ from ..exceptions import (
     ValidationError as EndorValidationError,
 )
 from ..types import ListParameters, SupportsResourceUpdate
-from ..utils.model_validation import get_immutable_fields
 from ..utils.schema_drift import SchemaDriftDetector
 
 # Import nested config models for better type safety
@@ -614,9 +613,14 @@ class BaseResource(BaseModel):
             return None
         return getattr(self.tenant_meta, "namespace", None)
 
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for this resource type (class-level)."""
+        return ["meta.description", "meta.tags"]
+
     def get_mutable_fields(self) -> list[str]:
         """Get list of mutable fields for this resource."""
-        return ["meta.description", "meta.tags"]
+        return type(self).get_mutable_fields_cls()
 
     def _path_to_kwarg(self, path: str) -> str:
         """Convert update_mask path to Python kwarg name."""
@@ -692,17 +696,30 @@ class BaseResource(BaseModel):
         update_mask = ",".join(kwarg_to_path[k] for k in kwargs)
         return facade.update(self, payload=payload, update_mask=update_mask)
 
-    def get_immutable_fields(self) -> list[str]:
-        """Get list of immutable fields for this resource."""
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for this resource type (class-level).
+
+        v1Meta readOnly (OpenAPI): create_time, update_time, upsert_time, kind,
+        version, created_by, updated_by, references, index_data.
+        """
         return [
             "uuid",
-            "meta.name",
             "meta.create_time",
             "meta.created_by",
             "meta.update_time",
             "meta.updated_by",
+            "meta.upsert_time",
+            "meta.kind",
+            "meta.version",
+            "meta.references",
+            "meta.index_data",
             "tenant_meta.namespace",
         ]
+
+    def get_immutable_fields(self) -> list[str]:
+        """Get list of immutable fields for this resource."""
+        return type(self).get_immutable_fields_cls()
 
     def validate_update_mask(self, update_mask: str) -> bool:
         """Validate that update_mask only contains mutable fields."""
@@ -1438,18 +1455,17 @@ class BaseResourceOperations(Generic[T]):
             payload, "update", tenant_meta_namespace
         )
 
-        # Block immutable fields in update_mask
-        resource_type = RESOURCE_NAME_TO_TYPE.get(self.resource_name)
-        if resource_type is not None:
-            immutable = get_immutable_fields(resource_type)
-            for path in update_mask:
-                if path.strip() in immutable:
-                    raise EndorValidationError(
-                        message=f"Cannot update immutable field: {path.strip()}",
-                        operation="update",
-                        namespace=tenant_meta_namespace,
-                        resource_uuid=resource_uuid,
-                    )
+        # Block immutable fields in update_mask (model is canonical)
+        get_immutable = getattr(self.model_class, "get_immutable_fields_cls", None)
+        immutable: list[str] = get_immutable() if get_immutable is not None else []
+        for path in update_mask:
+            if path.strip() in immutable:
+                raise EndorValidationError(
+                    message=f"Cannot update immutable field: {path.strip()}",
+                    operation="update",
+                    namespace=tenant_meta_namespace,
+                    resource_uuid=resource_uuid,
+                )
 
         try:
             # Use collection endpoint (UUID goes in request body, not URL path)

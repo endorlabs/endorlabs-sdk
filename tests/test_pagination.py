@@ -204,9 +204,7 @@ class TestListParametersSerialization:
     def test_page_id_pr_uuid_serialize(self) -> None:
         """page_id and pr_uuid serialize to list_parameters.*."""
         ops = BaseResourceOperations(self.client, "test-resources", Mock)
-        params = ops._build_params(
-            ListParameters(page_id="cursor-1", pr_uuid="pr-abc")
-        )
+        params = ops._build_params(ListParameters(page_id="cursor-1", pr_uuid="pr-abc"))
         assert params.get("list_parameters.page_id") == "cursor-1"
         assert params.get("list_parameters.pr_uuid") == "pr-abc"
 

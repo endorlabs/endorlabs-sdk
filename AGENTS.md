@@ -46,6 +46,7 @@ When editing the client surface, facade, or registry, follow [docs/rules-of-enga
 - **Env and security:** Credentials via env; run `endorctl scan` before code changes.
 - **Return types:** Functions return typed models: `Resource | None` or `list[Resource]`.
 - **Field aliasing:** Follows a three-tier rule set (syntax collisions, spec case, semantic renames); see [docs/conventions.md](docs/conventions.md) (Models and API parity → Field aliasing).
+- **Create/update:** High-utility create/update args may be exposed as explicit optional facade kwargs; validation remains in the resource’s builder and model; the model is the single source of truth for mutable and immutable fields.
 
 ## Automation
 

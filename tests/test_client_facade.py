@@ -411,6 +411,85 @@ def test_update_with_kwargs_derives_mask_and_calls_update(
     assert args[4] == "meta.description"
 
 
+def test_create_with_explicit_params_merges_into_kwargs(
+    client_with_mock_transport: Client,
+) -> None:
+    """create(name=..., description=..., namespace_uuid=...) merges into kwargs."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.project._build_create_payload_fn = Mock(return_value=built_payload)
+    client.project._create_fn = Mock(return_value=Mock(uuid="new-proj"))
+    client.project.create(
+        name="my-project",
+        description="A project",
+        namespace_uuid="ns-uuid-123",
+    )
+    client.project._build_create_payload_fn.assert_called_once()
+    call_kwargs = client.project._build_create_payload_fn.call_args[1]
+    assert call_kwargs["name"] == "my-project"
+    assert call_kwargs["description"] == "A project"
+    assert call_kwargs["namespace_uuid"] == "ns-uuid-123"
+    client.project._create_fn.assert_called_once()
+    assert client.project._create_fn.call_args[0][2] is built_payload
+
+
+def test_create_explicit_param_overrides_kwarg(
+    client_with_mock_transport: Client,
+) -> None:
+    """Explicit name= overrides same key in kwargs when not None."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.project._build_create_payload_fn = Mock(return_value=built_payload)
+    client.project._create_fn = Mock(return_value=Mock(uuid="new-proj"))
+    client.project.create(
+        name="explicit-name",
+        description="from-kwargs",
+        namespace_uuid="ns-1",
+    )
+    call_kwargs = client.project._build_create_payload_fn.call_args[1]
+    assert call_kwargs["name"] == "explicit-name"
+    assert call_kwargs["description"] == "from-kwargs"
+    assert call_kwargs["namespace_uuid"] == "ns-1"
+
+
+def test_update_with_explicit_meta_params_merges_into_kwargs(
+    client_with_mock_transport: Client,
+) -> None:
+    """update(resource, meta_description=..., meta_tags=...) merges into kwargs."""
+    from endorlabs.models.base import TenantMeta as BaseTenantMeta
+    from endorlabs.resources.project import (
+        Project,
+        ProjectMeta,
+        ProjectSpec,
+    )
+
+    client = client_with_mock_transport
+    resource_ns = "tenant.eng"
+    resource = Project(
+        uuid="proj-explicit",
+        meta=ProjectMeta(name="test", description="old"),
+        spec=ProjectSpec(),
+        tenant_meta=BaseTenantMeta(namespace=resource_ns),
+    )
+    returned = Project(
+        uuid="proj-explicit",
+        meta=ProjectMeta(name="test", description="new desc", tags=["t1"]),
+        spec=ProjectSpec(),
+        tenant_meta=BaseTenantMeta(namespace=resource_ns),
+    )
+    client.project._update_fn = Mock(return_value=returned)
+    client.project.update(
+        resource,
+        meta_description="new desc",
+        meta_tags=["t1"],
+    )
+    client.project._update_fn.assert_called_once()
+    args, _ = client.project._update_fn.call_args
+    assert args[3].meta.description == "new desc"
+    assert args[3].meta.tags == ["t1"]
+    assert args[4] == "meta.description,meta.tags"
+
+
 def test_delete_ignore_missing_false_raises_not_found(
     client_with_mock_transport: Client,
 ) -> None:
@@ -554,7 +633,7 @@ def test_list_with_explicit_filter_for_resource_without_filter_map(
 def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
     client_with_mock_transport: Client,
 ) -> None:
-    """list(archive=True, page_id=..., pr_uuid=..., list_all=True) passes to ListParameters."""
+    """Pass archive, page_id, pr_uuid, list_all to ListParameters."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.namespace._list_fn = mock_list
@@ -578,7 +657,7 @@ def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
 def test_list_explicit_kwargs_override_list_params(
     client_with_mock_transport: Client,
 ) -> None:
-    """When both list_params and explicit kwargs are passed, explicit kwargs override."""
+    """Explicit kwargs override when both list_params and kwargs passed."""
     from endorlabs.types import ListParameters
 
     client = client_with_mock_transport

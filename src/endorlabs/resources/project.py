@@ -328,13 +328,29 @@ class Project(BaseResource):
         return v
 
     @override
-    def get_mutable_fields(self) -> list[str]:
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
         """Get list of mutable fields for Project (meta and processing_status)."""
         return [
             "meta.description",
             "meta.tags",
             "processing_status.scan_state",
             "processing_status.disable_automated_scan",
+        ]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for Project."""
+        return [
+            "uuid",
+            "meta.name",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "spec.git",
+            "tenant_meta.namespace",
         ]
 
 

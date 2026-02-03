@@ -416,6 +416,9 @@ class ResourceFacade(_ListableFacade[T]):
         self,
         payload: Any = None,
         *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
@@ -423,22 +426,36 @@ class ResourceFacade(_ListableFacade[T]):
 
         Pass either payload (CreateXPayload) for backward compatibility, or
         kwargs that are passed to this resource's build_create_payload (when
-        the resource supports decoupled create). Exactly one of payload or
-        kwargs must be provided when the resource has build_create_payload_fn.
+        the resource supports decoupled create). Optional name, description,
+        and namespace_uuid are convenience params merged into kwargs; the
+        allowed set is defined by the resource's build_create_payload. Exactly
+        one of payload or kwargs (including explicit params) must be provided
+        when the resource has build_create_payload_fn.
         """
         if self._create_fn is None:
             raise NotImplementedError(
                 "This resource does not support create."
             ) from None
-        if payload is not None and kwargs:
+        # Merge explicit optional params into kwargs (explicit wins when not None)
+        explicit = {
+            k: v
+            for k, v in (
+                ("name", name),
+                ("description", description),
+                ("namespace_uuid", namespace_uuid),
+            )
+            if v is not None
+        }
+        merged = {**kwargs, **explicit}
+        if payload is not None and merged:
             raise TypeError("provide either payload= or kwargs for create(), not both.")
-        if payload is None and not kwargs:
+        if payload is None and not merged:
             raise TypeError("create() requires payload= or resource-specific kwargs.")
-        if payload is None and kwargs and self._build_create_payload_fn is not None:
+        if payload is None and merged and self._build_create_payload_fn is not None:
             # namespace is consumed by _ns(); do not pass to builder
-            create_kwargs = {k: v for k, v in kwargs.items() if k != "namespace"}
+            create_kwargs = {k: v for k, v in merged.items() if k != "namespace"}
             payload = self._build_create_payload_fn(**create_kwargs)
-        elif payload is None and kwargs and self._build_create_payload_fn is None:
+        elif payload is None and merged and self._build_create_payload_fn is None:
             raise TypeError(
                 "create() for this resource requires payload=; kwargs not supported."
             )
@@ -451,6 +468,8 @@ class ResourceFacade(_ListableFacade[T]):
         payload: Any | None = None,
         *,
         update_mask: str | None = None,
+        meta_description: str | None = None,
+        meta_tags: list[str] | None = None,
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
@@ -459,25 +478,34 @@ class ResourceFacade(_ListableFacade[T]):
         When update_mask is provided: use it and payload (or resource as payload).
         When update_mask is omitted and kwargs are provided: delegate to
         resource.update(self, **kwargs) so mask is derived from kwargs.
-        When both update_mask and kwargs are missing: raise TypeError.
+        Optional meta_description and meta_tags are convenience params merged
+        into kwargs; the allowed set is defined by the resource's
+        get_mutable_fields(). When both update_mask and kwargs are missing:
+        raise TypeError.
         """
         if self._update_fn is None:
             raise NotImplementedError(
                 "This resource does not support update."
             ) from None
-        if update_mask is None and not kwargs:
+        # Merge explicit optional params into kwargs (explicit wins when not None)
+        merged_kwargs = dict(kwargs)
+        if meta_description is not None:
+            merged_kwargs["meta_description"] = meta_description
+        if meta_tags is not None:
+            merged_kwargs["meta_tags"] = meta_tags
+        if update_mask is None and not merged_kwargs:
             raise TypeError(
                 "provide update_mask (e.g. 'meta.tags') or field kwargs "
                 "(e.g. meta_tags=[...])."
             )
-        if update_mask is None and kwargs:
+        if update_mask is None and merged_kwargs:
             if not self._is_resource_like(id_or_resource):
                 raise TypeError(
                     "when using field kwargs, id_or_resource must be a "
                     "resource instance (not a UUID string)."
                 )
             res = cast("Any", id_or_resource)
-            return res.update(self, **kwargs)
+            return res.update(self, **merged_kwargs)
         if self._is_resource_like(id_or_resource):
             res = cast("Any", id_or_resource)
             uuid = res.uuid

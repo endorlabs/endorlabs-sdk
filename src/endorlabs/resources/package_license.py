@@ -232,6 +232,12 @@ class PackageLicense(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for PackageLicense."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_package_license_ops(
     client: APIClient,
