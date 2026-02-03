@@ -4,7 +4,7 @@ These exceptions provide structured error handling and allow callers to
 distinguish between different types of API errors.
 """
 
-from typing import Any
+from typing import Any, override
 
 from .types import ErrorResponse
 
@@ -50,6 +50,7 @@ class EndorAPIError(Exception):
         """Human-readable error message (aligns with API error body 'message' field)."""
         return self.args[0] if self.args else ""
 
+    @override
     def __str__(self) -> str:
         """Return formatted error message with context."""
         parts = [super().__str__()]

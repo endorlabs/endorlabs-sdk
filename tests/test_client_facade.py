@@ -125,20 +125,87 @@ def test_client_exposes_all_registry_resources(
     client_with_mock_transport: Client,
 ) -> None:
     """Client exposes exactly the resources defined in RESOURCE_REGISTRY."""
-    from endorlabs.facade import ResourceFacade
+    from endorlabs.facade import OssResourceFacade, ResourceFacade, SystemResourceFacade
     from endorlabs.registry import RESOURCE_REGISTRY
 
     client = client_with_mock_transport
     for entry in RESOURCE_REGISTRY:
         assert hasattr(client, entry.attr_name), f"Missing attribute: {entry.attr_name}"
         facade = getattr(client, entry.attr_name)
-        assert isinstance(facade, ResourceFacade), (
-            f"{entry.attr_name} is not a ResourceFacade"
-        )
+        if entry.scope == "system":
+            assert isinstance(facade, SystemResourceFacade), (
+                f"{entry.attr_name} is not a SystemResourceFacade"
+            )
+            assert hasattr(facade, "get")
+        elif entry.scope == "oss":
+            assert isinstance(facade, OssResourceFacade), (
+                f"{entry.attr_name} is not an OssResourceFacade"
+            )
+            assert hasattr(facade, "get")
+        else:
+            assert isinstance(facade, ResourceFacade), (
+                f"{entry.attr_name} is not a ResourceFacade"
+            )
+            assert hasattr(facade, "get") == (entry.get_fn is not None)
         assert hasattr(facade, "list")
         assert hasattr(facade, "list_iter")
         assert hasattr(facade, "lookup")
-        assert hasattr(facade, "get")
+
+
+def test_system_resource_facade_get_with_oss_namespace_delegates(
+    client_with_mock_transport: Client,
+) -> None:
+    """SystemResourceFacade.get(id, namespace='oss') delegates to get_fn with 'oss'."""
+    client = client_with_mock_transport
+    client.authentication_log._get_fn = Mock(return_value=Mock(uuid="log-123"))
+    result = client.authentication_log.get("log-123", namespace="oss")
+    assert result.uuid == "log-123"
+    client.authentication_log._get_fn.assert_called_once()
+    args, _ = client.authentication_log._get_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == "oss"
+    assert args[2] == "log-123"
+
+
+def test_system_resource_facade_get_with_non_oss_namespace_raises(
+    client_with_mock_transport: Client,
+) -> None:
+    """SystemResourceFacade.get(id) or get(id, namespace=tenant) raises."""
+    client = client_with_mock_transport
+    with pytest.raises(NotImplementedError, match="oss namespace"):
+        client.authentication_log.get("log-123")
+    with pytest.raises(NotImplementedError, match="oss namespace"):
+        client.authentication_log.get("log-123", namespace="tenant.foo")
+
+
+def test_oss_resource_facade_get_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """OssResourceFacade.get(id) delegates with namespace 'oss' (no param required)."""
+    client = client_with_mock_transport
+    client.dependency_metadata._get_fn = Mock(
+        return_value=Mock(uuid="dep-456", tenant_meta=Mock(namespace="oss"))
+    )
+    result = client.dependency_metadata.get("dep-456")
+    assert result.uuid == "dep-456"
+    client.dependency_metadata._get_fn.assert_called_once()
+    args, _ = client.dependency_metadata._get_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == "oss"
+    assert args[2] == "dep-456"
+
+
+def test_oss_resource_facade_list_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """OssResourceFacade.list() delegates with namespace 'oss'."""
+    client = client_with_mock_transport
+    client.dependency_metadata._list_fn = Mock(return_value=[])
+    client.dependency_metadata.list(max_pages=conftest.TEST_MAX_PAGES)
+    client.dependency_metadata._list_fn.assert_called_once()
+    args, _ = client.dependency_metadata._list_fn.call_args
+    assert args[0] is client._client
+    assert args[1] == "oss"
 
 
 def test_client_exposes_all_custom_facades(

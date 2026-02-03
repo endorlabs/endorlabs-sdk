@@ -106,13 +106,21 @@ class TestAPIKey:
             tenant=self.namespace,
             api_client=self.client,
         )
+        created = None
         try:
             created = client.api_key.create(payload)
         except Exception as e:
             pytest.skip(f"API key create not allowed in this environment: {e}")
-        assert created is not None
-        assert created.uuid
-        self.created_api_key_uuids.append(created.uuid)
+        try:
+            assert created is not None
+            assert created.uuid
+            self.created_api_key_uuids.append(created.uuid)
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    api_key.delete_api_key(self.client, self.namespace, created.uuid)
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     def test_client_ux_delete_api_key(self) -> None:
         """Consumer UX: create then client.api_key.delete(uuid)."""

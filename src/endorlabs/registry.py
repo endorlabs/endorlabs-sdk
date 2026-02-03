@@ -10,7 +10,7 @@ Single source of truth for which resources are exposed on endorlabs.Client.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -133,18 +133,23 @@ from .resources.version_upgrade import VersionUpgrade
 
 @dataclass
 class ResourceEntry:
-    """One resource exposed on Client; used to build ResourceFacade in __init__."""
+    """One resource exposed on Client; used to build facade in __init__.
+
+    scope: "system" = system-owned, get only when namespace is oss;
+    "oss" = namespace fixed to oss; None = tenant (default).
+    """
 
     attr_name: str
     model_class: type
     list_fn: Callable[..., Any]
-    get_fn: Callable[..., Any]
+    get_fn: Callable[..., Any] | None
     create_fn: Callable[..., Any] | None
     update_fn: Callable[..., Any] | None
     delete_fn: Callable[..., bool] | None
     list_iter_fn: Callable[..., Iterator[Any]] | None = None
     resource_name: str = ""  # API path for capability lookup (e.g. "scan-results")
     parent_kind: str | None = None  # parent_kind for list(parent=) (e.g. project)
+    scope: Literal["system"] | Literal["oss"] | None = None  # system | oss | tenant
 
 
 @dataclass
@@ -262,6 +267,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         package_license_module.delete_package_license,
         package_license_module.list_package_licenses_iter,
         "package-licenses",
+        scope="oss",
     ),
     ResourceEntry(
         "dependency_metadata",
@@ -273,6 +279,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         dependency_metadata_module.delete_dependency_metadata,
         dependency_metadata_module.list_dependency_metadata_iter,
         "dependency-metadata",
+        scope="oss",
     ),
     ResourceEntry(
         "installation",
@@ -450,6 +457,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         None,
         authentication_log_module.list_authentication_logs_iter,
         "authentication-logs",
+        scope="system",
     ),
     ResourceEntry(
         "endor_license",
@@ -461,6 +469,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         None,
         endor_license_module.list_endor_licenses_iter,
         "endor-licenses",
+        scope="system",
     ),
     ResourceEntry(
         "policy_template",
@@ -472,6 +481,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         None,
         policy_template_module.list_policy_templates_iter,
         "policy-templates",
+        scope="system",
     ),
 ]
 

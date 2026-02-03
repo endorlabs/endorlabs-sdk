@@ -255,6 +255,17 @@ class TestProject:
                     print("✅ Cleaned up scan profile association")
                 except Exception as e:
                     print(f"⚠️ Warning: Could not clean up association: {e}")
+            # Delete the test scan profile
+            try:
+                scan_profile.delete_scan_profile(
+                    self.client, self.namespace, scan_profile_uuid
+                )
+                print("✅ Deleted test scan profile")
+            except Exception as e:
+                print(
+                    f"[WARNING] Cleanup failed for scan profile "
+                    f"{scan_profile_uuid}: {e}"
+                )
 
     def test_project_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""

@@ -1,14 +1,18 @@
 """PolicyTemplate resource module for Endor Labs API.
 
-Policy templates can be used to create policies from templates.
-List and get only.
+Policy templates can be used to create policies from templates. This resource
+is system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
+system can perform them). The Client exposes list() only; use
+client.policy_template.list(). Module-level get_policy_template() remains for
+advanced use but will raise PermissionDeniedError (403) for non-system
+callers.
 """
 
 from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import Field, field_validator
 
@@ -77,6 +81,7 @@ class PolicyTemplate(BaseResource):
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
+    @override
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:

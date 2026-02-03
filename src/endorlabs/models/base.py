@@ -21,6 +21,7 @@ from typing import (
     Union,
     get_args,
     get_origin,
+    override,
 )
 
 if TYPE_CHECKING:
@@ -45,8 +46,8 @@ from ..exceptions import (
     ValidationError as EndorValidationError,
 )
 from ..types import ListParameters, SupportsResourceUpdate
-from ..utils import SchemaDriftDetector
 from ..utils.model_validation import get_immutable_fields
+from ..utils.schema_drift import SchemaDriftDetector
 
 # Import nested config models for better type safety
 from .exception_config import ExceptionConfig
@@ -90,6 +91,7 @@ RESOURCE_NAME_TO_TYPE: dict[str, str] = {
 class FlexibleEnum(str, Enum):
     """Base class for flexible enums that can handle unknown values."""
 
+    @override
     @classmethod
     def _missing_(cls, value: str) -> "FlexibleEnum":  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle unknown enum values gracefully."""
@@ -111,6 +113,7 @@ class TenantMeta(BaseModel):
 
     namespace: str = Field(..., description="Canonical namespace name")
 
+    @override
     def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         *,
@@ -166,6 +169,7 @@ class Context(BaseModel):
     id: str = Field(default="default", description="Context identifier")
     type: str = Field(..., description="Context type classification")
 
+    @override
     def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         *,
@@ -288,6 +292,7 @@ class BaseMeta(BaseModel):
         # The 'id' field is a known annotation key used by the API
         return v
 
+    @override
     def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         *,
@@ -432,6 +437,7 @@ class BaseSpec(BaseModel):
             pass
         return v
 
+    @override
     def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         *,
@@ -710,6 +716,7 @@ class BaseResource(BaseModel):
             return value.isoformat()
         return value
 
+    @override
     def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         *,

@@ -101,13 +101,23 @@ class TestSemgrepRule:
         )
         from endorlabs.exceptions import PermissionDeniedError
 
+        created = None
         try:
             created = client.semgrep_rule.create(payload)
         except PermissionDeniedError as e:
             pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
-        assert created is not None
-        assert created.meta.name == rule_id
-        self.created_semgrep_rule_uuids.append(created.uuid)
+        try:
+            assert created is not None
+            assert created.meta.name == rule_id
+            self.created_semgrep_rule_uuids.append(created.uuid)
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    semgrep_rule.delete_semgrep_rule(
+                        self.client, self.namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_semgrep_rule_update(self) -> None:
@@ -133,29 +143,41 @@ class TestSemgrepRule:
         )
         from endorlabs.exceptions import PermissionDeniedError
 
+        created = None
         try:
             created = client.semgrep_rule.create(create_payload)
         except PermissionDeniedError as e:
             pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
-        if not created:
-            pytest.skip("Failed to create semgrep rule for update test")
-        self.created_semgrep_rule_uuids.append(created.uuid)
-        current = client.semgrep_rule.get(created.uuid, namespace=self.namespace)
-        if not current:
-            pytest.skip(f"Could not retrieve semgrep rule {created.uuid}")
-        update_payload = UpdateSemgrepRulePayload(
-            meta=SemgrepRuleMetaCreate(name=rule_id, description="Updated by client-ux")
-        )
         try:
-            updated = client.semgrep_rule.update(
-                created.uuid,
-                update_payload,
-                update_mask="meta.description",
-                namespace=self.namespace,
+            if not created:
+                pytest.skip("Failed to create semgrep rule for update test")
+            self.created_semgrep_rule_uuids.append(created.uuid)
+            current = client.semgrep_rule.get(created.uuid, namespace=self.namespace)
+            if not current:
+                pytest.skip(f"Could not retrieve semgrep rule {created.uuid}")
+            update_payload = UpdateSemgrepRulePayload(
+                meta=SemgrepRuleMetaCreate(
+                    name=rule_id, description="Updated by client-ux"
+                )
             )
-        except Exception as e:
-            pytest.skip(f"Semgrep rule update not allowed in this environment: {e}")
-        assert updated is not None
+            try:
+                updated = client.semgrep_rule.update(
+                    created.uuid,
+                    update_payload,
+                    update_mask="meta.description",
+                    namespace=self.namespace,
+                )
+            except Exception as e:
+                pytest.skip(f"Semgrep rule update not allowed in this environment: {e}")
+            assert updated is not None
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    semgrep_rule.delete_semgrep_rule(
+                        self.client, self.namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_semgrep_rule_delete(self) -> None:
