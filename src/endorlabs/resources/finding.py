@@ -797,6 +797,35 @@ class Finding(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Finding."""
+        return [
+            "meta.tags",
+            "spec.finding_tags",
+            "spec.dismiss",
+            "spec.remediation",
+            "context.tags",
+        ]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for Finding."""
+        return [
+            "uuid",
+            "meta.name",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "spec.level",
+            "spec.project_uuid",
+            "spec.finding_metadata",
+            "tenant_meta.namespace",
+        ]
+
 
 class CreateFindingPayload(BaseModel):
     """Payload for creating a new finding."""

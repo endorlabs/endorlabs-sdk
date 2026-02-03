@@ -292,6 +292,37 @@ class Policy(BaseResource):
 
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Policy."""
+        return [
+            "meta.name",
+            "meta.description",
+            "meta.tags",
+            "spec.rule",
+            "spec.disable",
+            "spec.project_selector",
+            "spec.project_exceptions",
+            "spec.template_values",
+            "propagate",
+        ]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for Policy."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "spec.policy_type",
+            "spec.template_uuid",
+            "tenant_meta.namespace",
+        ]
+
 
 class CreatePolicyPayload(BaseModel):
     """Payload for creating a new policy."""

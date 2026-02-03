@@ -428,6 +428,12 @@ class LinterResult(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for LinterResult."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_linter_result_ops(client: APIClient) -> BaseResourceOperations[LinterResult]:
     """Get BaseResourceOperations instance for LinterResult."""
