@@ -13,6 +13,7 @@ import os
 import re
 import time
 from collections.abc import Iterable, Iterator
+from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -71,6 +72,14 @@ class APIClient:
         token: Bearer token. If None, uses ENDOR_TOKEN env var.
         auth_method: Auth method (e.g. "api-key", "browser"). If None, uses env/default.
         email: Email for auth. Optional.
+        timeout: Request timeout in seconds. Default 60.0. Sent as Request-timeout
+            header so the server can align long-running work. Uses ENDOR_REQUEST_TIMEOUT
+            env var when not provided (only when default 60.0 is used).
+        content_type: Content-Type request header. Default "application/jsoncompact"
+            per API docs (omits null/empty values). Use "application/json" if
+            compact responses cause validation issues.
+        accept_encoding: Accept-Encoding request header. Default "gzip, br, zstd".
+            Pass None or "" to omit (disable compression) for debugging or proxies.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -91,6 +100,9 @@ class APIClient:
         token: str | None = None,
         auth_method: str | None = None,
         email: str | None = None,
+        timeout: float = 60.0,
+        content_type: str = "application/jsoncompact",
+        accept_encoding: str | None = "gzip, br, zstd",
     ) -> None:
         super().__init__()
         # Set up logging
@@ -178,13 +190,29 @@ class APIClient:
         self.backoff_factor = backoff_factor
         self.status_forcelist = status_forcelist
 
+        # Request timeout (s): param > env > default; sync'd to Request-timeout header
+        if timeout == 60.0:
+            env_timeout = os.getenv("ENDOR_REQUEST_TIMEOUT")
+            if env_timeout is not None:
+                with suppress(ValueError):
+                    timeout = float(env_timeout)
+        self.timeout = timeout
+        self.content_type = content_type
+        self.accept_encoding = accept_encoding
+
         # Request headers (merged with per-request headers); updated after auth
-        self._request_headers: dict[str, str] = {"Content-Type": "application/json"}
+        # Request-timeout: seconds so server can align long-running work (API docs)
+        self._request_headers: dict[str, str] = {
+            "Content-Type": self.content_type,
+            "Request-timeout": str(round(self.timeout)),
+        }
+        if self.accept_encoding:
+            self._request_headers["Accept-Encoding"] = self.accept_encoding
 
         # Initialize httpx client (no built-in retry; we use _request_with_retry)
         self.client = httpx.Client(
             base_url=self.base_url,
-            timeout=60.0,
+            timeout=self.timeout,
             headers=self._request_headers.copy(),
         )
         self.rate_limit_delay = 0
