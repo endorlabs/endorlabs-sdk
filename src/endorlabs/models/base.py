@@ -1257,19 +1257,9 @@ class BaseResourceOperations(Generic[T]):
 
         # Method 2: Use list and filter approach (workaround)
         try:
-            list_params = ListParameters(
+            list_params = ListParameters(  # pyright: ignore[reportCallIssue]
                 filter=f"uuid=={resource_uuid}",
-                mask=None,
-                page_size=None,
-                page_token=None,
-                sort_field=None,
-                sort_order=None,
-                sort_by=None,
-                desc=None,
-                count=None,
                 traverse=True,  # Enable traversal to search child namespaces
-                from_date=None,
-                to_date=None,
             )
             resources = self.list(tenant_meta_namespace, list_params)
             if resources:
@@ -1605,20 +1595,7 @@ class BaseResourceOperations(Generic[T]):
                 count_params = list_params
                 count_params.count = True
             else:
-                count_params = ListParameters(
-                    filter=None,
-                    mask=None,
-                    page_size=None,
-                    page_token=None,
-                    sort_field=None,
-                    sort_order=None,
-                    sort_by=None,
-                    desc=None,
-                    count=True,
-                    traverse=None,
-                    from_date=None,
-                    to_date=None,
-                )
+                count_params = ListParameters(count=True)  # pyright: ignore[reportCallIssue]
 
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
@@ -1676,6 +1653,8 @@ class BaseResourceOperations(Generic[T]):
             self._add_sorting_params(params, list_params)
             self._add_boolean_params(params, list_params)
             self._add_date_params(params, list_params)
+            self._add_extra_list_params(params, list_params)
+            self._add_group_params(params, list_params)
 
         # Add any additional kwargs
         params.update(kwargs)
@@ -1705,6 +1684,8 @@ class BaseResourceOperations(Generic[T]):
             params["list_parameters.page_size"] = str(list_params.page_size)
         if list_params.page_token:
             params["list_parameters.page_token"] = list_params.page_token
+        if list_params.page_id:
+            params["list_parameters.page_id"] = list_params.page_id
 
     def _add_sorting_params(
         self, params: dict[str, Any], list_params: ListParameters
@@ -1746,6 +1727,58 @@ class BaseResourceOperations(Generic[T]):
         if list_params.traverse is not None:
             # API uses 'list_parameters.traverse' as the query parameter
             params["list_parameters.traverse"] = str(list_params.traverse).lower()
+        if list_params.archive is not None:
+            params["list_parameters.archive"] = str(list_params.archive).lower()
+        if list_params.list_all is not None:
+            params["list_parameters.list_all"] = str(list_params.list_all).lower()
+
+    def _add_extra_list_params(
+        self, params: dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add extra high-utility list parameters (pr_uuid, etc.)."""
+        if list_params.pr_uuid:
+            params["list_parameters.pr_uuid"] = list_params.pr_uuid
+
+    def _add_group_params(
+        self, params: dict[str, Any], list_params: ListParameters
+    ) -> None:
+        """Add grouping/aggregation list parameters."""
+        if list_params.group_aggregation_paths:
+            params["list_parameters.group_aggregation_paths"] = ",".join(
+                list_params.group_aggregation_paths
+            )
+        if list_params.group_by_time is not None:
+            params["list_parameters.group_by_time"] = str(
+                list_params.group_by_time
+            ).lower()
+        if list_params.group_by_time_field_value:
+            params["list_parameters.group_by_time_field_value"] = (
+                list_params.group_by_time_field_value
+            )
+        if list_params.group_by_time_interval:
+            params["list_parameters.group_by_time_interval"] = (
+                list_params.group_by_time_interval
+            )
+        if list_params.group_by_time_mode:
+            params["list_parameters.group_by_time_mode"] = (
+                list_params.group_by_time_mode
+            )
+        if list_params.group_by_time_operator:
+            params["list_parameters.group_by_time_operator"] = (
+                list_params.group_by_time_operator
+            )
+        if list_params.group_show_aggregation_uuids is not None:
+            params["list_parameters.group_show_aggregation_uuids"] = str(
+                list_params.group_show_aggregation_uuids
+            ).lower()
+        if list_params.group_unique_count_paths:
+            params["list_parameters.group_unique_count_paths"] = ",".join(
+                list_params.group_unique_count_paths
+            )
+        if list_params.group_unique_value_paths:
+            params["list_parameters.group_unique_value_paths"] = ",".join(
+                list_params.group_unique_value_paths
+            )
 
     def _add_date_params(
         self, params: dict[str, Any], list_params: ListParameters

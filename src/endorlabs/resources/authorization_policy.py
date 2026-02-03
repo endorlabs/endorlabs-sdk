@@ -627,19 +627,8 @@ def list_authorization_policies_by_role(
     role: SystemRole,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies filtered by system role."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.permissions.roles=={role.value}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
@@ -652,19 +641,8 @@ def list_authorization_policies_by_namespace(
     target_namespace: str,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies filtered by target namespace."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.target_namespaces=={target_namespace}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
@@ -678,19 +656,9 @@ def list_authorization_policies_paginated(
     page_token: str | None = None,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies with pagination."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         page_size=page_size,
         page_token=page_token,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
@@ -704,19 +672,9 @@ def list_authorization_policies_sorted(
     desc: bool = True,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies with sorting."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         sort_by=sort_by,
         desc=desc,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
