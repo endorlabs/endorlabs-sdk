@@ -315,6 +315,12 @@ class ScanProfile(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for ScanProfile."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 class ScanProfileMetaCreate(BaseModel):
     """Metadata for creating a ScanProfile."""
@@ -355,6 +361,25 @@ class CreateScanProfilePayload(BaseModel):
     meta: ScanProfileMetaCreate
     spec: ScanProfileSpecCreate
     propagate: bool | None = Field(None, description="Make visible in child namespaces")
+
+
+def build_create_payload(
+    *,
+    name: str,
+    description: str | None = None,
+    is_default: bool | None = None,
+    propagate: bool | None = None,
+    **spec_kwargs: Any,
+) -> CreateScanProfilePayload:
+    """Build CreateScanProfilePayload from kwargs (decoupled facade create).
+
+    Required: name.
+    Optional: description, is_default, propagate, and any spec fields
+    (e.g. automated_scan_parameters, toolchain_profile) passed as spec_kwargs.
+    """
+    meta = ScanProfileMetaCreate(name=name, description=description)
+    spec = ScanProfileSpecCreate(is_default=is_default, **spec_kwargs)
+    return CreateScanProfilePayload(meta=meta, spec=spec, propagate=propagate)
 
 
 class ScanProfileMetaUpdate(BaseModel):

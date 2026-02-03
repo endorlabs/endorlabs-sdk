@@ -362,6 +362,36 @@ class Installation(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Installation."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for Installation."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "meta.upsert_time",
+            "meta.kind",
+            "meta.version",
+            "meta.references",
+            "meta.index_data",
+            "tenant_meta.namespace",
+            "spec.external_name",
+            "spec.user",
+            "spec.ingestion_time",
+            "spec.target_type",
+            "spec.ingestion_token",
+            "spec.marked_for_deletion",
+        ]
+
 
 def _get_installation_ops(
     client: APIClient,
@@ -546,6 +576,11 @@ class CreateInstallationPayload(BaseModel):
         ..., description="Installation metadata for creation"
     )
     spec: InstallationSpec = Field(..., description="Installation specification")
+
+
+def build_create_payload(**kwargs: Any) -> CreateInstallationPayload:
+    """Build CreateInstallationPayload from kwargs (decoupled create)."""
+    return CreateInstallationPayload(**kwargs)
 
 
 class UpdateInstallationPayload(BaseModel):

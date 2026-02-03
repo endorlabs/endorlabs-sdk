@@ -232,9 +232,9 @@ class LinterResultSpec(BaseSpec):
     origin: LinterResultOrigin = Field(
         ..., description="The origin of the result"
     )  # IMMUTABLE: Set at creation
-    level: LinterResultLevel = Field(
-        ..., description="The level of the result"
-    )  # IMMUTABLE: Set at creation
+    level: LinterResultLevel | None = Field(
+        None, description="The level of the result"
+    )  # IMMUTABLE: Set at creation; optional when API omits (e.g. jsoncompact)
     extra_key: str = Field(
         ...,
         description="Additional info that may create a unique linter result",
@@ -428,6 +428,12 @@ class LinterResult(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for LinterResult."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_linter_result_ops(client: APIClient) -> BaseResourceOperations[LinterResult]:
     """Get BaseResourceOperations instance for LinterResult."""
@@ -598,6 +604,11 @@ class CreateLinterResultPayload(BaseModel):
         ..., description="LinterResult metadata for creation"
     )
     spec: LinterResultSpec = Field(..., description="LinterResult specification")
+
+
+def build_create_payload(**kwargs: Any) -> CreateLinterResultPayload:
+    """Build CreateLinterResultPayload from kwargs (decoupled facade create)."""
+    return CreateLinterResultPayload(**kwargs)
 
 
 class UpdateLinterResultPayload(BaseModel):

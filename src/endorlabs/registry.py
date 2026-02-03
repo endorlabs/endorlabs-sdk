@@ -137,6 +137,7 @@ class ResourceEntry:
 
     scope: "system" = system-owned, get only when namespace is oss;
     "oss" = namespace fixed to oss; None = tenant (default).
+    build_create_payload_fn: when set, facade.create(**kwargs) builds payload.
     """
 
     attr_name: str
@@ -150,6 +151,7 @@ class ResourceEntry:
     resource_name: str = ""  # API path for capability lookup (e.g. "scan-results")
     parent_kind: str | None = None  # parent_kind for list(parent=) (e.g. project)
     scope: Literal["system"] | Literal["oss"] | None = None  # system | oss | tenant
+    build_create_payload_fn: Callable[..., Any] | None = None  # kwargs -> payload
 
 
 @dataclass
@@ -178,6 +180,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         namespace_module.delete_namespace,
         namespace_module.list_namespaces_iter,
         "namespaces",
+        build_create_payload_fn=namespace_module.build_create_payload,
     ),
     ResourceEntry(
         "project",
@@ -189,6 +192,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         project_module.delete_project,
         project_module.list_projects_iter,
         "projects",
+        build_create_payload_fn=project_module.build_create_payload,
     ),
     ResourceEntry(
         "finding",
@@ -200,6 +204,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         finding_module.delete_finding,
         finding_module.list_findings_iter,
         "findings",
+        build_create_payload_fn=finding_module.build_create_payload,
     ),
     ResourceEntry(
         "repository",
@@ -211,6 +216,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         repository_module.delete_repository,
         repository_module.list_repositories_iter,
         "repositories",
+        build_create_payload_fn=repository_module.build_create_payload,
     ),
     ResourceEntry(
         "repository_version",
@@ -223,6 +229,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         repository_version_module.list_repository_versions_iter,
         "repository-versions",
         parent_kind="project",
+        build_create_payload_fn=repository_version_module.build_create_payload,
     ),
     ResourceEntry(
         "policy",
@@ -234,6 +241,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         policy_module.delete_policy,
         policy_module.list_policies_iter,
         "policies",
+        build_create_payload_fn=policy_module.build_create_payload,
     ),
     ResourceEntry(
         "authorization_policy",
@@ -245,6 +253,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         authorization_policy_module.delete_authorization_policy,
         authorization_policy_module.list_authorization_policies_iter,
         "authorization-policies",
+        build_create_payload_fn=authorization_policy_module.build_create_payload,
     ),
     ResourceEntry(
         "package_version",
@@ -256,6 +265,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         package_version_module.delete_package_version,
         package_version_module.list_package_versions_iter,
         "package-versions",
+        build_create_payload_fn=package_version_module.build_create_payload,
     ),
     ResourceEntry(
         "package_license",
@@ -268,6 +278,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         package_license_module.list_package_licenses_iter,
         "package-licenses",
         scope="oss",
+        build_create_payload_fn=package_license_module.build_create_payload,
     ),
     ResourceEntry(
         "dependency_metadata",
@@ -280,6 +291,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         dependency_metadata_module.list_dependency_metadata_iter,
         "dependency-metadata",
         scope="oss",
+        build_create_payload_fn=dependency_metadata_module.build_create_payload,
     ),
     ResourceEntry(
         "installation",
@@ -291,6 +303,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         installation_module.delete_installation,
         installation_module.list_installations_iter,
         "installations",
+        build_create_payload_fn=installation_module.build_create_payload,
     ),
     ResourceEntry(
         "scan_profile",
@@ -302,6 +315,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         scan_profile_module.delete_scan_profile,
         scan_profile_module.list_scan_profiles_iter,
         "scan-profiles",
+        build_create_payload_fn=scan_profile_module.build_create_payload,
     ),
     ResourceEntry(
         "scan_result",
@@ -314,6 +328,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         scan_result_module.list_scan_results_iter,
         "scan-results",
         parent_kind="project",
+        build_create_payload_fn=scan_result_module.build_create_payload,
     ),
     ResourceEntry(
         "linter_result",
@@ -325,6 +340,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         linter_result_module.delete_linter_result,
         linter_result_module.list_linter_results_iter,
         "linter-results",
+        build_create_payload_fn=linter_result_module.build_create_payload,
     ),
     ResourceEntry(
         "metric",
@@ -336,6 +352,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         metric_module.delete_metric,
         metric_module.list_metrics_iter,
         "metrics",
+        build_create_payload_fn=metric_module.build_create_payload,
     ),
     ResourceEntry(
         "semgrep_rule",
@@ -347,6 +364,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         semgrep_rule_module.delete_semgrep_rule,
         semgrep_rule_module.list_semgrep_rules_iter,
         "semgrep-rules",
+        build_create_payload_fn=semgrep_rule_module.build_create_payload,
     ),
     ResourceEntry(
         "api_key",
@@ -358,6 +376,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         api_key_module.delete_api_key,
         api_key_module.list_api_keys_iter,
         "api-keys",
+        build_create_payload_fn=api_key_module.build_create_payload,
     ),
     ResourceEntry(
         "audit_log",
@@ -369,6 +388,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         audit_log_module.delete_audit_log,
         audit_log_module.list_audit_logs_iter,
         "audit-logs",
+        build_create_payload_fn=audit_log_module.build_create_payload,
     ),
     ResourceEntry(
         "finding_log",
@@ -380,6 +400,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         finding_log_module.delete_finding_log,
         finding_log_module.list_finding_logs_iter,
         "finding-logs",
+        build_create_payload_fn=finding_log_module.build_create_payload,
     ),
     ResourceEntry(
         "notification_target",
@@ -391,6 +412,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         notification_target_module.delete_notification_target,
         notification_target_module.list_notification_targets_iter,
         "notification-targets",
+        build_create_payload_fn=notification_target_module.build_create_payload,
     ),
     ResourceEntry(
         "scan_workflow",
@@ -435,6 +457,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         code_owners_module.delete_code_owners,
         code_owners_module.list_code_owners_iter,
         "codeowners",
+        build_create_payload_fn=code_owners_module.build_create_payload,
     ),
     ResourceEntry(
         "invitation",
@@ -446,6 +469,7 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         invitation_module.delete_invitation,
         invitation_module.list_invitations_iter,
         "invitations",
+        build_create_payload_fn=invitation_module.build_create_payload,
     ),
     ResourceEntry(
         "authentication_log",

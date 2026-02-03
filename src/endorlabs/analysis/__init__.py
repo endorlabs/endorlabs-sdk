@@ -1,14 +1,18 @@
-"""Finding correlation analysis tools.
+"""Deprecated: use endorlabs.experimental.sast_analysis instead.
 
-Experimental: API may change; not covered by the same stability guarantees
-as the rest of the SDK.
-
-This module provides tools for loading findings/rules from API and querying
-them via SQL.
+This package is deprecated. Import from endorlabs.experimental.sast_analysis
+for FindingDataLoader and FindingDatabase.
 """
 
-from .data_loader import FindingDataLoader
-from .database import FindingDatabase
+import warnings
+
+from endorlabs.experimental.sast_analysis import FindingDatabase, FindingDataLoader
+
+warnings.warn(
+    "endorlabs.analysis is deprecated; use endorlabs.experimental.sast_analysis",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 __all__ = [
     "FindingDataLoader",
