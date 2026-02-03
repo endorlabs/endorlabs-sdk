@@ -232,9 +232,9 @@ class LinterResultSpec(BaseSpec):
     origin: LinterResultOrigin = Field(
         ..., description="The origin of the result"
     )  # IMMUTABLE: Set at creation
-    level: LinterResultLevel = Field(
-        ..., description="The level of the result"
-    )  # IMMUTABLE: Set at creation
+    level: LinterResultLevel | None = Field(
+        None, description="The level of the result"
+    )  # IMMUTABLE: Set at creation; optional when API omits (e.g. jsoncompact)
     extra_key: str = Field(
         ...,
         description="Additional info that may create a unique linter result",

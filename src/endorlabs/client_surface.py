@@ -32,18 +32,36 @@ class Client:
     Use ``with endorlabs.Client(tenant="...") as client:`` or call
     ``client.close()`` when done to release connections. When api_client is
     passed, the caller owns it and must close it themselves.
+
+    Transport options (when creating APIClient): timeout, content_type,
+    accept_encoding, max_retries, base_url. Explicit args take precedence over
+    **client_kwargs. Other APIClient options (auth, logging_level, etc.) go via
+    **client_kwargs. Use content_type="application/json" if compact responses
+    cause validation issues.
     """
 
     def __init__(
         self,
         api_client: APIClient | None = None,
         tenant: str | None = None,
+        *,
+        timeout: float = 60.0,
+        content_type: str = "application/jsoncompact",
+        accept_encoding: str | None = "gzip, br, zstd",
+        max_retries: int = 5,
+        base_url: str | None = None,
         **client_kwargs: Any,
     ) -> None:
         super().__init__()
         self._own_client = api_client is None
         if api_client is None:
-            api_client = APIClient(**client_kwargs)
+            api_kwargs: dict[str, Any] = {**client_kwargs}
+            api_kwargs["timeout"] = timeout
+            api_kwargs["content_type"] = content_type
+            api_kwargs["accept_encoding"] = accept_encoding
+            api_kwargs["max_retries"] = max_retries
+            api_kwargs["base_url"] = base_url
+            api_client = APIClient(**api_kwargs)
         self._client: APIClient | None = api_client
         self._default_namespace: str | None = tenant
 
