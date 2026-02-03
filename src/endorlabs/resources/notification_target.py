@@ -120,6 +120,11 @@ class CreateNotificationTargetPayload(BaseModel):
     propagate: bool | None = Field(False, description="Propagate to child namespaces")
 
 
+def build_create_payload(**kwargs: Any) -> CreateNotificationTargetPayload:
+    """Build CreateNotificationTargetPayload from kwargs (decoupled create)."""
+    return CreateNotificationTargetPayload(**kwargs)
+
+
 def list_notification_targets(
     client: APIClient,
     tenant_meta_namespace: str,

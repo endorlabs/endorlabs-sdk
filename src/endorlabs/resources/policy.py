@@ -292,6 +292,37 @@ class Policy(BaseResource):
 
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Policy."""
+        return [
+            "meta.name",
+            "meta.description",
+            "meta.tags",
+            "spec.rule",
+            "spec.disable",
+            "spec.project_selector",
+            "spec.project_exceptions",
+            "spec.template_values",
+            "propagate",
+        ]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for Policy."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "spec.policy_type",
+            "spec.template_uuid",
+            "tenant_meta.namespace",
+        ]
+
 
 class CreatePolicyPayload(BaseModel):
     """Payload for creating a new policy."""
@@ -299,6 +330,11 @@ class CreatePolicyPayload(BaseModel):
     meta: PolicyMeta = Field(..., description="Policy metadata")
     spec: PolicySpec = Field(..., description="Policy specification")
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
+
+
+def build_create_payload(**kwargs: Any) -> CreatePolicyPayload:
+    """Build CreatePolicyPayload from kwargs (decoupled facade create)."""
+    return CreatePolicyPayload(**kwargs)
 
 
 class UpdatePolicyPayload(BaseModel):
@@ -373,19 +409,8 @@ def list_policies(
 
     # Handle legacy policy_type parameter
     if policy_type and list_params is None:
-        list_params = ListParameters(
+        list_params = ListParameters(  # pyright: ignore[reportCallIssue]
             filter=f"spec.policy_type=={policy_type.value}",
-            mask=None,
-            page_size=None,
-            page_token=None,
-            sort_field=None,
-            sort_order=None,
-            sort_by=None,
-            desc=None,
-            count=None,
-            traverse=None,
-            from_date=None,
-            to_date=None,
         )
     elif policy_type and list_params:
         type_filter = f"spec.policy_type=={policy_type.value}"
@@ -409,19 +434,8 @@ def list_policies_iter(
     ops = _get_policy_ops(client)
     policy_type = kwargs.pop("policy_type", None)
     if policy_type and list_params is None:
-        list_params = ListParameters(
+        list_params = ListParameters(  # pyright: ignore[reportCallIssue]
             filter=f"spec.policy_type=={policy_type.value}",
-            mask=None,
-            page_size=None,
-            page_token=None,
-            sort_field=None,
-            sort_order=None,
-            sort_by=None,
-            desc=None,
-            count=None,
-            traverse=None,
-            from_date=None,
-            to_date=None,
         )
     elif policy_type and list_params:
         type_filter = f"spec.policy_type=={policy_type.value}"
@@ -677,19 +691,8 @@ def list_policies_by_type(
     client: APIClient, tenant_meta_namespace: str, policy_type: PolicyType
 ) -> list[Policy]:
     """List policies filtered by type."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.policy_type=={policy_type.value}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
@@ -698,19 +701,8 @@ def list_policies_by_namespace(
     client: APIClient, tenant_meta_namespace: str, target_namespace: str
 ) -> list[Policy]:
     """List policies filtered by namespace."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"tenant_meta.namespace=={target_namespace}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
@@ -722,19 +714,9 @@ def list_policies_paginated(
     page_token: str | None = None,
 ) -> list[Policy]:
     """List policies with pagination."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         page_size=page_size,
         page_token=page_token,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
@@ -746,18 +728,8 @@ def list_policies_sorted(
     desc: bool = True,
 ) -> list[Policy]:
     """List policies with sorting."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         sort_by=sort_by,
         desc=desc,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)

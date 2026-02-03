@@ -1,7 +1,7 @@
 """Test cases for model validation utilities.
 
-Tests merge_partial_update, get_immutable_fields, validate_update_mask,
-safe_serialize, and related helpers used by models/base.
+Tests merge_partial_update, get_tags_update_paths (from model class),
+validate_update_mask, safe_serialize, and related helpers used by models/base.
 """
 
 from datetime import datetime
@@ -10,11 +10,13 @@ from enum import Enum
 import pytest
 from pydantic import BaseModel
 
+from endorlabs.resources.finding import Finding
+from endorlabs.resources.policy import Policy
+from endorlabs.resources.project import Project
 from endorlabs.utils.model_validation import (
     build_filter_from_identity_kwargs,
     create_minimal_payload,
     ensure_required_fields,
-    get_immutable_fields,
     get_list_filter_map,
     get_tags_update_paths,
     merge_partial_update,
@@ -73,37 +75,38 @@ class TestMergePartialUpdate:
         assert result.get("meta", {}).get("tags") == ["a"]
 
 
-class TestGetImmutableFields:
-    """Tests for get_immutable_fields."""
+class TestGetImmutableFieldsCls:
+    """Tests for model get_immutable_fields_cls() (canonical source)."""
 
     def test_finding_returns_list(self) -> None:
-        fields = get_immutable_fields("finding")
+        fields = Finding.get_immutable_fields_cls()
         assert isinstance(fields, list)
         assert "uuid" in fields
         assert "meta.create_time" in fields
         assert "spec.project_uuid" in fields
 
     def test_policy_returns_list(self) -> None:
-        fields = get_immutable_fields("policy")
+        fields = Policy.get_immutable_fields_cls()
         assert "spec.policy_type" in fields
-
-    def test_unknown_resource_returns_empty(self) -> None:
-        assert get_immutable_fields("unknown_type") == []
 
 
 class TestGetTagsUpdatePaths:
-    """Tests for get_tags_update_paths (tag capability from mutable fields)."""
+    """Tests for get_tags_update_paths(model_class) (tag capability from model)."""
 
     def test_project_returns_meta_tags(self) -> None:
-        assert get_tags_update_paths("project") == ["meta.tags"]
+        assert get_tags_update_paths(Project) == ["meta.tags"]
 
     def test_finding_returns_meta_tags_and_spec_finding_tags(self) -> None:
-        paths = get_tags_update_paths("finding")
+        paths = get_tags_update_paths(Finding)
         assert set(paths) == {"meta.tags", "spec.finding_tags"}
 
-    def test_unknown_or_empty_returns_empty(self) -> None:
-        assert get_tags_update_paths("api_key") == []
-        assert get_tags_update_paths("") == []
+    def test_class_without_get_mutable_fields_cls_returns_empty(self) -> None:
+        """Class without get_mutable_fields_cls returns []."""
+
+        class NoMutableFields:
+            pass
+
+        assert get_tags_update_paths(NoMutableFields) == []
 
 
 class TestGetListFilterMap:

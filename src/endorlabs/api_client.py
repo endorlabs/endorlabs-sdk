@@ -66,6 +66,12 @@ class APIClient:
             If None, uses ENDOR_LOG_LEVEL environment variable.
             Valid values: DEBUG, INFO, WARNING, ERROR, CRITICAL.
         base_url: API base URL. If None, uses ENDOR_API env var or default.
+        timeout: Request timeout in seconds. If None, uses ENDOR_REQUEST_TIMEOUT
+            env var or 60.0. Also sent as Request-timeout header.
+        content_type: Content-Type header value. If None, defaults to
+            "application/json".
+        accept_encoding: Accept-Encoding header value. If None or "", the header
+            is omitted. Otherwise the given string is sent.
         key: API credentials key. If None, uses ENDOR_API_CREDENTIALS_KEY env var.
         secret: API credentials secret. If None, uses ENDOR_API_CREDENTIALS_SECRET.
         token: Bearer token. If None, uses ENDOR_TOKEN env var.
@@ -86,6 +92,9 @@ class APIClient:
         status_forcelist: tuple[int, ...] = (429, 500, 502, 503, 504),
         logging_level: str | None = None,
         base_url: str | None = None,
+        timeout: float | None = None,
+        content_type: str | None = None,
+        accept_encoding: str | None = None,
         key: str | None = None,
         secret: str | None = None,
         token: str | None = None,
@@ -178,13 +187,31 @@ class APIClient:
         self.backoff_factor = backoff_factor
         self.status_forcelist = status_forcelist
 
+        # Timeout: parameter > ENDOR_REQUEST_TIMEOUT env > default 60.0
+        if timeout is not None:
+            self.timeout = float(timeout)
+        else:
+            env_timeout = os.getenv("ENDOR_REQUEST_TIMEOUT")
+            self.timeout = float(env_timeout) if env_timeout else 60.0
+
+        # Content-Type: parameter > default "application/json"
+        self.content_type = (
+            content_type if content_type is not None else "application/json"
+        )
+
+        # Accept-Encoding: parameter only; None or "" means omit header
+        self.accept_encoding = accept_encoding
+
         # Request headers (merged with per-request headers); updated after auth
-        self._request_headers: dict[str, str] = {"Content-Type": "application/json"}
+        self._request_headers = {"Content-Type": self.content_type}
+        self._request_headers["Request-timeout"] = str(int(self.timeout))
+        if self.accept_encoding:
+            self._request_headers["Accept-Encoding"] = self.accept_encoding
 
         # Initialize httpx client (no built-in retry; we use _request_with_retry)
         self.client = httpx.Client(
             base_url=self.base_url,
-            timeout=60.0,
+            timeout=self.timeout,
             headers=self._request_headers.copy(),
         )
         self.rate_limit_delay = 0
@@ -983,6 +1010,20 @@ class APIClient:
                 return response_meta.get("next_page_token")
         return None
 
+    def _extract_next_page_id(self, response_data: Any) -> str | None:
+        """Extract next page id from paginated response (list.response.next_page_id)."""
+        if isinstance(response_data, dict) and "list" in response_data:
+            list_data: list[Any] | dict[str, Any] = cast(
+                "list[Any] | dict[str, Any]", response_data["list"]
+            )
+            if isinstance(list_data, dict) and "response" in list_data:
+                response_meta: dict[str, Any] = cast(
+                    "dict[str, Any]", list_data["response"]
+                )
+                raw = response_meta.get("next_page_id")
+                return str(raw) if raw is not None else None
+        return None
+
     def get_all(
         self,
         url: str,
@@ -994,13 +1035,14 @@ class APIClient:
     ) -> Iterator[dict[str, Any]]:
         """Get all items from a paginated endpoint.
 
-        Automatically handles page_token pagination. Yields individual items
-        from paginated responses. Handles Endor Labs
-        pagination format with list.objects and next_page_token.
+        Automatically handles page_token and page_id pagination. Yields
+        individual items from paginated responses. Uses list.response.next_page_id
+        when present (API-supported cursor); otherwise uses next_page_token.
+        Handles Endor Labs pagination format with list.objects and list.response.
 
         Args:
             url: Endpoint URL (relative or absolute)
-            params: Query parameters (will be updated with page_token)
+            params: Query parameters (will be updated with page_token/page_id)
             data: Request body data
             json: Request body JSON
             max_pages: Optional maximum number of pages to fetch.
@@ -1012,7 +1054,8 @@ class APIClient:
 
         """
         normalized_url = self._normalize_url(url)
-        page_token = None
+        page_token: str | None = None
+        page_id: str | None = None
         page_count = 0
 
         # Start with provided params or empty dict
@@ -1027,12 +1070,16 @@ class APIClient:
                 )
                 break
 
-            # Update params with page_token if present
-            if page_token is not None:
+            # Set pagination params: page_id takes precedence when both are used
+            if page_id is not None:
+                request_params["list_parameters.page_id"] = page_id
+                request_params.pop("list_parameters.page_token", None)
+            elif page_token is not None:
                 request_params["list_parameters.page_token"] = str(page_token)
-            elif "list_parameters.page_token" in request_params:
-                # Remove page_token if we're starting fresh
-                del request_params["list_parameters.page_token"]
+                request_params.pop("list_parameters.page_id", None)
+            else:
+                request_params.pop("list_parameters.page_token", None)
+                request_params.pop("list_parameters.page_id", None)
 
             # Make request
             response = self.get(
@@ -1050,11 +1097,16 @@ class APIClient:
 
             page_count += 1
 
-            # Check for next page token
-            page_token = self._extract_next_page_token(response_data)
-
-            # Break if no more pages
-            if not page_token:
+            next_page_id = self._extract_next_page_id(response_data)
+            next_page_token = self._extract_next_page_token(response_data)
+            # Prefer page_id when API returns both (spec supports both)
+            if next_page_id is not None:
+                page_id = next_page_id
+                page_token = None
+            elif next_page_token is not None:
+                page_token = next_page_token
+                page_id = None
+            else:
                 break
 
         self.logger.debug(

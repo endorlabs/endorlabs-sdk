@@ -454,6 +454,33 @@ class PackageVersion(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for PackageVersion."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for PackageVersion."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "meta.upsert_time",
+            "meta.kind",
+            "meta.version",
+            "meta.references",
+            "meta.index_data",
+            "tenant_meta.namespace",
+            "spec.ecosystem",
+            "spec.package_name",
+            "spec.internal_reference_key",
+        ]
+
 
 class UpdatePackageVersionPayload(BaseModel):
     """Payload for updating PackageVersion resources."""
@@ -593,6 +620,11 @@ class CreatePackageVersionPayload(BaseModel):
         ..., description="PackageVersion metadata for creation"
     )
     spec: PackageVersionSpec = Field(..., description="PackageVersion specification")
+
+
+def build_create_payload(**kwargs: Any) -> CreatePackageVersionPayload:
+    """Build CreatePackageVersionPayload from kwargs (decoupled create)."""
+    return CreatePackageVersionPayload(**kwargs)
 
 
 class PackageVersionMetaCreate(BaseModel):

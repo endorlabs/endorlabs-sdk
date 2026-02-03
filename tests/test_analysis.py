@@ -7,7 +7,7 @@ with mocked API to exercise load/save paths without live API.
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from endorlabs.analysis import FindingDatabase, FindingDataLoader
+from endorlabs.experimental.sast_analysis import FindingDatabase, FindingDataLoader
 
 
 class TestFindingDatabase:

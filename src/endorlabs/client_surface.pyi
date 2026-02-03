@@ -76,6 +76,12 @@ class Client:
         self,
         api_client: APIClient | None = ...,
         tenant: str | None = ...,
+        *,
+        timeout: float = ...,
+        content_type: str = ...,
+        accept_encoding: str | None = ...,
+        max_retries: int = ...,
+        base_url: str | None = ...,
         **client_kwargs: Any,
     ) -> None: ...
     def wait_until(

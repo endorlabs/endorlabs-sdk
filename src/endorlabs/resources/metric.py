@@ -137,6 +137,12 @@ class Metric(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Metric."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_metric_ops(client: APIClient) -> BaseResourceOperations[Metric]:
     """Get BaseResourceOperations instance for Metric."""
@@ -278,6 +284,29 @@ class MetricMetaCreate(BaseModel):
 
     name: str = Field(..., description="Metric name")
     description: str | None = Field(None, description="Metric description")
+
+
+def build_create_payload(
+    *,
+    name: str,
+    analytic: str,
+    project_uuid: str,
+    metric_values: dict[str, Any],
+    description: str | None = None,
+    raw: dict[str, Any] | None = None,
+) -> CreateMetricPayload:
+    """Build CreateMetricPayload from kwargs (decoupled facade create)."""
+    meta = MetricMetaCreate(name=name, description=description)
+    spec = MetricSpec(
+        analytic=analytic,
+        project_uuid=project_uuid,
+        metric_values=metric_values,
+        raw=raw,
+        notification=None,
+        finding=None,
+        exception=None,
+    )
+    return CreateMetricPayload(meta=meta, spec=spec)
 
 
 class MetricMetaUpdate(BaseModel):

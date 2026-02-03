@@ -248,6 +248,12 @@ class DependencyMetadata(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for DependencyMetadata."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_dependency_metadata_ops(
     client: APIClient,
@@ -378,6 +384,11 @@ class CreateDependencyMetadataPayload(BaseModel):
     spec: DependencyMetadataSpec = Field(
         ..., description="DependencyMetadata specification"
     )
+
+
+def build_create_payload(**kwargs: Any) -> CreateDependencyMetadataPayload:
+    """Build CreateDependencyMetadataPayload from kwargs (decoupled create)."""
+    return CreateDependencyMetadataPayload(**kwargs)
 
 
 class UpdateDependencyMetadataPayload(BaseModel):

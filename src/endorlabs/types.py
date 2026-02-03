@@ -180,6 +180,8 @@ class SchemaDriftInfo(TypedDict):
 
 
 # Universal List Parameters
+# High-utility params are exposed as explicit facade kwargs; all params map to
+# list_parameters.* on the wire. Names follow API spec in snake_case.
 class ListParameters(BaseModel):
     """Universal list parameters for all Endor Labs resources."""
 
@@ -192,6 +194,9 @@ class ListParameters(BaseModel):
     )
     page_size: int | None = Field(None, description="Results per page")
     page_token: str | None = Field(None, description="Page token for pagination")
+    page_id: str | None = Field(
+        None, description="Page id to start from (alternative pagination)"
+    )
     sort_field: str | None = Field(
         None, description="Sort field (e.g., 'meta.create_time')"
     )
@@ -218,3 +223,54 @@ class ListParameters(BaseModel):
     )
     from_date: str | None = Field(None, description="Created after date (ISO format)")
     to_date: str | None = Field(None, description="Created before date (ISO format)")
+    archive: bool | None = Field(
+        None,
+        description="When True, fetch resources from the archive.",
+    )
+    list_all: bool | None = Field(
+        None,
+        description="List all resources (use with timeout for large result sets).",
+    )
+    pr_uuid: str | None = Field(
+        None,
+        description="Only list resources from this PR scan.",
+    )
+    # Grouping / aggregation (endorctl: group-aggregation-paths, group-by-time, etc.)
+    group_aggregation_paths: list[str] | None = Field(
+        None,
+        description="Fields to group resources by.",
+    )
+    group_by_time: bool | None = Field(
+        None,
+        description="Group resources by time.",
+    )
+    group_by_time_field_value: str | None = Field(
+        None,
+        description="Message field used for time aggregation.",
+    )
+    group_by_time_interval: str | None = Field(
+        None,
+        description=(
+            "Time interval: year, quarter, month, week, day, hour, minute, second."
+        ),
+    )
+    group_by_time_mode: str | None = Field(
+        None,
+        description="Group-by-time output mode: count or sum.",
+    )
+    group_by_time_operator: str | None = Field(
+        None,
+        description="Aggregation operator: min, max, avg, sum.",
+    )
+    group_show_aggregation_uuids: bool | None = Field(
+        None,
+        description="Include resource UUIDs in each group.",
+    )
+    group_unique_count_paths: list[str] | None = Field(
+        None,
+        description="Count unique values for these fields in the group.",
+    )
+    group_unique_value_paths: list[str] | None = Field(
+        None,
+        description="Return unique values for these fields in the group.",
+    )

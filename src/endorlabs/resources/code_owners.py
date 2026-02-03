@@ -97,6 +97,11 @@ class CreateCodeOwnersPayload(BaseModel):
     spec: CodeOwnersSpec = Field(..., description="Code owners specification")
 
 
+def build_create_payload(**kwargs: Any) -> CreateCodeOwnersPayload:
+    """Build CreateCodeOwnersPayload from kwargs (decoupled facade create)."""
+    return CreateCodeOwnersPayload(**kwargs)
+
+
 def list_code_owners(
     client: APIClient,
     tenant_meta_namespace: str,
