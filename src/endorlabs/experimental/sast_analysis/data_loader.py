@@ -9,9 +9,9 @@ import logging
 import types
 from typing import Any, Self
 
-from ..api_client import APIClient
-from ..resources.finding import Finding, FindingCategory
-from ..resources.semgrep_rule import SemgrepRule
+from ...api_client import APIClient
+from ...resources.finding import Finding, FindingCategory
+from ...resources.semgrep_rule import SemgrepRule
 from .database import FindingDatabase
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ class FindingDataLoader:
             List of Finding objects
 
         """
-        from ..resources.finding import list_findings
+        from ...resources.finding import list_findings
 
         logger.info(f"Loading findings from API for namespace: {namespace}")
         findings = []
@@ -87,7 +87,7 @@ class FindingDataLoader:
             List of SemgrepRule objects
 
         """
-        from ..resources.semgrep_rule import list_semgrep_rules
+        from ...resources.semgrep_rule import list_semgrep_rules
 
         logger.info(f"Loading rules from API for namespace: {namespace}")
         rules = []

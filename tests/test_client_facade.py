@@ -83,6 +83,27 @@ def test_client_creates_apiclient_when_not_passed() -> None:
     assert mock_apiclient_class.return_value is not None
 
 
+def test_client_explicit_transport_params_forwarded_to_apiclient() -> None:
+    """Client(timeout=30, content_type=..., etc.) forwards params to APIClient."""
+    with patch("endorlabs.client_surface.APIClient") as mock_apiclient_class:
+        mock_apiclient_class.return_value = Mock(spec=APIClient)
+        endorlabs.Client(
+            tenant=conftest.TEST_NAMESPACE_DEFAULT,
+            timeout=30.0,
+            content_type="application/json",
+            accept_encoding=None,
+            max_retries=2,
+            base_url="https://custom.example.com",
+        )
+        mock_apiclient_class.assert_called_once()
+        call_kwargs = mock_apiclient_class.call_args[1]
+        assert call_kwargs["timeout"] == 30.0
+        assert call_kwargs["content_type"] == "application/json"
+        assert call_kwargs["accept_encoding"] is None
+        assert call_kwargs["max_retries"] == 2
+        assert call_kwargs["base_url"] == "https://custom.example.com"
+
+
 def test_client_namespace_list_convenience_kwargs(
     client_with_mock_transport: Client,
 ) -> None:
