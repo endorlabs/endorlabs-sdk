@@ -386,6 +386,11 @@ class CreatePackageLicensePayload(BaseModel):
     spec: PackageLicenseSpec = Field(..., description="PackageLicense specification")
 
 
+def build_create_payload(**kwargs: Any) -> CreatePackageLicensePayload:
+    """Build CreatePackageLicensePayload from kwargs (decoupled create)."""
+    return CreatePackageLicensePayload(**kwargs)
+
+
 class UpdatePackageLicensePayload(BaseModel):
     """Payload for updating a package license."""
 

@@ -95,6 +95,11 @@ class CreateInvitationPayload(BaseModel):
     spec: InvitationSpec = Field(..., description="Invitation specification")
 
 
+def build_create_payload(**kwargs: Any) -> CreateInvitationPayload:
+    """Build CreateInvitationPayload from kwargs (decoupled facade create)."""
+    return CreateInvitationPayload(**kwargs)
+
+
 def list_invitations(
     client: APIClient,
     tenant_meta_namespace: str,

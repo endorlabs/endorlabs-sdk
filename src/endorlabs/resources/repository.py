@@ -398,6 +398,18 @@ class CreateRepositoryPayload(BaseModel):
     spec: RepositorySpec = Field(..., description="Repository specification")
 
 
+def build_create_payload(
+    *,
+    name: str,
+    description: str | None = None,
+    **spec_kwargs: Any,
+) -> CreateRepositoryPayload:
+    """Build CreateRepositoryPayload from kwargs (decoupled facade create)."""
+    meta = RepositoryMetaCreate(name=name, description=description)
+    spec = RepositorySpec(**spec_kwargs)
+    return CreateRepositoryPayload(meta=meta, spec=spec)
+
+
 class UpdateRepositoryPayload(BaseModel):
     """Payload for updating a repository."""
 

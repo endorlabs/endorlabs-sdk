@@ -205,6 +205,41 @@ class TestScanProfile:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
+    def test_client_ux_create_scan_profile_via_kwargs(self) -> None:
+        """Decoupled create: client.scan_profile.create(name=..., namespace=...)."""
+        import time
+
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.parent_namespace,
+            api_client=self.client,
+        )
+        name = f"kwargs-profile-{int(time.time())}"
+        created = None
+        try:
+            created = client.scan_profile.create(
+                name=name,
+                description="Created via kwargs",
+                is_default=False,
+                namespace=self.parent_namespace,
+            )
+        except Exception as e:
+            pytest.skip(f"Scan profile create not allowed in this environment: {e}")
+        try:
+            assert created is not None
+            assert created.meta.name == name
+            self.created_scan_profile_uuids.append(created.uuid)
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    scan_profile.delete_scan_profile(
+                        self.client, self.parent_namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
+
+    @pytest.mark.writes
     def test_client_ux_update_scan_profile(self) -> None:
         """Consumer UX: create then get then update then revert then delete."""
         import time

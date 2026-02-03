@@ -300,6 +300,11 @@ class CreateSemgrepRulePayload(BaseModel):
     disabled: bool | None = Field(None, description="Whether rule is disabled")
 
 
+def build_create_payload(**kwargs: Any) -> CreateSemgrepRulePayload:
+    """Build CreateSemgrepRulePayload from kwargs (decoupled facade create)."""
+    return CreateSemgrepRulePayload(**kwargs)
+
+
 class UpdateSemgrepRulePayload(BaseModel):
     """Payload for updating a Semgrep rule."""
 

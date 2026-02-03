@@ -42,6 +42,10 @@ client.project.list(filter="spec.level==FINDING_LEVEL_CRITICAL", mask="meta.name
 client.scan_result.list(filter="...", sort_by="meta.create_time", desc=True, page_size=5)
 ```
 
+**For `.create()`:**
+
+- Prefer **kwargs** when the resource supports a builder: `client.<resource>.create(name="...", namespace="...", ...)`. The facade builds the CreateXPayload internally. For power users, `client.<resource>.create(payload=CreateXPayload(...))` remains supported. See [reference/create-update-payloads.md](../reference/create-update-payloads.md).
+
 **For `.update()`:**
 
 - **update_mask** is **required** for all update-capable resources. Pass a comma-separated list of field paths (e.g. `"meta.description,meta.tags"`). Sparse PATCH is always used. Missing or empty mask raises `ValidationError`. Do not merge it with list semantics or with the list **mask**.

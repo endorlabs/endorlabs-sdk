@@ -280,6 +280,29 @@ class MetricMetaCreate(BaseModel):
     description: str | None = Field(None, description="Metric description")
 
 
+def build_create_payload(
+    *,
+    name: str,
+    analytic: str,
+    project_uuid: str,
+    metric_values: dict[str, Any],
+    description: str | None = None,
+    raw: dict[str, Any] | None = None,
+) -> CreateMetricPayload:
+    """Build CreateMetricPayload from kwargs (decoupled facade create)."""
+    meta = MetricMetaCreate(name=name, description=description)
+    spec = MetricSpec(
+        analytic=analytic,
+        project_uuid=project_uuid,
+        metric_values=metric_values,
+        raw=raw,
+        notification=None,
+        finding=None,
+        exception=None,
+    )
+    return CreateMetricPayload(meta=meta, spec=spec)
+
+
 class MetricMetaUpdate(BaseModel):
     """Metric metadata for update."""
 

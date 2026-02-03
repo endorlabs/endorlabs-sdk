@@ -313,6 +313,11 @@ class CreateAuthorizationPolicyPayload(BaseModel):
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
 
 
+def build_create_payload(**kwargs: Any) -> CreateAuthorizationPolicyPayload:
+    """Build CreateAuthorizationPolicyPayload from kwargs (decoupled create)."""
+    return CreateAuthorizationPolicyPayload(**kwargs)
+
+
 class UpdateAuthorizationPolicyPayload(BaseModel):
     """Payload for updating an Endor Labs authorization policy.
 

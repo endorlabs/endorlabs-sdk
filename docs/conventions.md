@@ -67,6 +67,10 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 
 **Consumer UX:** Expose filter and mask as **flat kwargs** on `client.<resource>.list()` (e.g. `client.project.list(filter="...", mask="meta.name,spec.level")`). Do not combine filter and mask into one parameter. Full rationale and spec-driven UX: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
 
+## Create (decoupled)
+
+- **create** accepts either **payload** (CreateXPayload) for backward compatibility or **kwargs** that are passed to the resource’s `build_create_payload` (when the resource has a builder). Use `client.<resource>.create(name="...", namespace="...")` or `client.<resource>.create(payload=CreateXPayload(...))`. Responses stay `Resource` with `.spec`; no flattened view. See [reference/create-update-payloads.md](reference/create-update-payloads.md).
+
 ## Update and update_mask
 
 - **update_mask** = which **fields** to patch (PATCH body); separate from list **mask** (response projection). Do not combine with filter or list mask.
