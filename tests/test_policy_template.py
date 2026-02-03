@@ -40,9 +40,25 @@ class TestPolicyTemplate:
         )
         assert isinstance(result, list)
 
-    def test_policy_template_get(self) -> None:
-        """GET first item from LIST if any (registry-based)."""
+    def test_policy_template_facade_get_raises_for_non_oss_namespace(self) -> None:
+        """SystemResourceFacade get only when namespace is oss; otherwise use list."""
         import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        assert hasattr(client.policy_template, "get")
+        with pytest.raises(NotImplementedError, match="oss namespace"):
+            client.policy_template.get("any-uuid", namespace=self.root_namespace)
+        with pytest.raises(NotImplementedError, match="oss namespace"):
+            client.policy_template.get("any-uuid")
+
+    def test_policy_template_module_get_returns_403(self) -> None:
+        """Module-level get with system namespace returns 403 (assert as success)."""
+        import endorlabs
+        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.resources.policy_template import get_policy_template
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -60,17 +76,18 @@ class TestPolicyTemplate:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.policy_template.get(item.uuid, namespace=ns)
-        assert got is not None
-        assert got.uuid == item.uuid
+        with pytest.raises(PermissionDeniedError) as exc_info:
+            get_policy_template(self.client, ns, item.uuid)
+        assert exc_info.value.status_code == 403
 
-    def test_policy_template_create_raises_not_implemented(self) -> None:
-        """Create is not supported; raises NotImplementedError."""
+    def test_policy_template_facade_has_no_create(self) -> None:
+        """SystemResourceFacade has no create (system-owned)."""
         import endorlabs
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        with pytest.raises(NotImplementedError, match="does not support create"):
+        assert not hasattr(client.policy_template, "create")
+        with pytest.raises(AttributeError, match="create"):
             client.policy_template.create({})

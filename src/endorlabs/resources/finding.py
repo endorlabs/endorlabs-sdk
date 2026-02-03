@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, cast, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -660,6 +660,7 @@ class FindingSpec(BaseSpec):
         None, description="Call graph analysis type"
     )  # IMMUTABLE: Analysis-determined
 
+    @override
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:
@@ -747,6 +748,7 @@ class Finding(BaseResource):
             data["spec"] = FindingSpec(**data["spec"])
         super().__init__(**data)
 
+    @override
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:

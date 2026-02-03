@@ -40,9 +40,25 @@ class TestEndorLicense:
         )
         assert isinstance(result, list)
 
-    def test_endor_license_get(self) -> None:
-        """GET first item from LIST if any (registry-based)."""
+    def test_endor_license_facade_get_raises_for_non_oss_namespace(self) -> None:
+        """SystemResourceFacade get only when namespace is oss; otherwise use list."""
         import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        assert hasattr(client.endor_license, "get")
+        with pytest.raises(NotImplementedError, match="oss namespace"):
+            client.endor_license.get("any-uuid", namespace=self.root_namespace)
+        with pytest.raises(NotImplementedError, match="oss namespace"):
+            client.endor_license.get("any-uuid")
+
+    def test_endor_license_module_get_returns_403(self) -> None:
+        """Module-level get with system namespace returns 403 (assert as success)."""
+        import endorlabs
+        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.resources.endor_license import get_endor_license
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -60,17 +76,18 @@ class TestEndorLicense:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.endor_license.get(item.uuid, namespace=ns)
-        assert got is not None
-        assert got.uuid == item.uuid
+        with pytest.raises(PermissionDeniedError) as exc_info:
+            get_endor_license(self.client, ns, item.uuid)
+        assert exc_info.value.status_code == 403
 
-    def test_endor_license_create_raises_not_implemented(self) -> None:
-        """Create is not supported; raises NotImplementedError."""
+    def test_endor_license_facade_has_no_create(self) -> None:
+        """SystemResourceFacade has no create (system-owned)."""
         import endorlabs
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        with pytest.raises(NotImplementedError, match="does not support create"):
+        assert not hasattr(client.endor_license, "create")
+        with pytest.raises(AttributeError, match="create"):
             client.endor_license.create({})

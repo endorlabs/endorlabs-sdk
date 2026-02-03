@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -191,6 +191,7 @@ class APIKey(BaseResource):
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
+    @override
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:

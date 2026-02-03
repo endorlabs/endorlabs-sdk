@@ -13,7 +13,7 @@ from .api_client import APIClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-from .facade import ResourceFacade
+from .facade import OssResourceFacade, ResourceFacade, SystemResourceFacade
 from .models.base import RESOURCE_NAME_TO_TYPE
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY
 from .utils.model_validation import get_tags_update_paths
@@ -49,24 +49,64 @@ class Client:
 
         assert self._client is not None  # Set in __init__; None only after close()
         for entry in RESOURCE_REGISTRY:
-            resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
-            tags_paths = get_tags_update_paths(resource_type) if entry.update_fn else []
-            facade = cast(
-                "ResourceFacade[Any]",
-                ResourceFacade[entry.model_class](
-                    self._client,
-                    self._default_namespace,
-                    list_fn=entry.list_fn,
-                    get_fn=entry.get_fn,
-                    create_fn=entry.create_fn,
-                    update_fn=entry.update_fn,
-                    delete_fn=entry.delete_fn,
-                    list_iter_fn=entry.list_iter_fn,
-                    tags_paths=tags_paths,
-                    resource_name=entry.resource_name,
-                    parent_kind=entry.parent_kind,
-                ),
-            )
+            if entry.scope == "system":
+                facade = cast(
+                    "SystemResourceFacade[Any]",
+                    SystemResourceFacade[entry.model_class](
+                        self._client,
+                        self._default_namespace,
+                        list_fn=entry.list_fn,
+                        list_iter_fn=entry.list_iter_fn,
+                        get_fn=entry.get_fn,
+                        resource_name=entry.resource_name,
+                        parent_kind=entry.parent_kind,
+                        tags_paths=[],
+                    ),
+                )
+            elif entry.scope == "oss":
+                assert entry.get_fn is not None, "oss scope requires get_fn"
+                resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
+                tags_paths = (
+                    get_tags_update_paths(resource_type) if entry.update_fn else []
+                )
+                facade = cast(
+                    "OssResourceFacade[Any]",
+                    OssResourceFacade[entry.model_class](
+                        self._client,
+                        "oss",
+                        list_fn=entry.list_fn,
+                        get_fn=entry.get_fn,
+                        create_fn=entry.create_fn,
+                        update_fn=entry.update_fn,
+                        delete_fn=entry.delete_fn,
+                        list_iter_fn=entry.list_iter_fn,
+                        tags_paths=tags_paths,
+                        resource_name=entry.resource_name,
+                        parent_kind=entry.parent_kind,
+                    ),
+                )
+            else:
+                assert entry.get_fn is not None, "tenant scope requires get_fn"
+                resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
+                tags_paths = (
+                    get_tags_update_paths(resource_type) if entry.update_fn else []
+                )
+                facade = cast(
+                    "ResourceFacade[Any]",
+                    ResourceFacade[entry.model_class](
+                        self._client,
+                        self._default_namespace,
+                        list_fn=entry.list_fn,
+                        get_fn=entry.get_fn,
+                        create_fn=entry.create_fn,
+                        update_fn=entry.update_fn,
+                        delete_fn=entry.delete_fn,
+                        list_iter_fn=entry.list_iter_fn,
+                        tags_paths=tags_paths,
+                        resource_name=entry.resource_name,
+                        parent_kind=entry.parent_kind,
+                    ),
+                )
             setattr(self, entry.attr_name, facade)
         for entry in CUSTOM_FACADE_REGISTRY:
             setattr(

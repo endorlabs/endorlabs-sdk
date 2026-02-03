@@ -1,13 +1,18 @@
 """AuthenticationLog resource module for Endor Labs API.
 
-Represents authentication events (login, API key, etc.). List and get only.
+Represents authentication events (login, API key, etc.). This resource is
+system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
+system can perform them). The Client exposes list() only; use
+client.authentication_log.list(). Module-level get_authentication_log() remains
+for advanced use but will raise PermissionDeniedError (403) for non-system
+callers.
 """
 
 from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import Field, field_validator
 
@@ -55,9 +60,9 @@ class AuthenticationLogSpec(BaseSpec):
         None,
         description="Source IP address.",
     )
-    status: str | None = Field(
+    status: int | None = Field(
         None,
-        description="HTTP or auth status.",
+        description="Return code of the authentication.",
     )
     uri: str | None = Field(
         None,
@@ -80,6 +85,7 @@ class AuthenticationLog(BaseResource):
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
+    @override
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:

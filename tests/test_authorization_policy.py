@@ -137,15 +137,25 @@ class TestAuthorizationPolicy:
             ),
             propagate=False,
         )
+        created = None
         try:
             created = client.authorization_policy.create(payload)
         except Exception as e:
             pytest.skip(
                 f"Authorization policy create not allowed in this environment: {e}"
             )
-        assert created is not None
-        assert created.meta.name == payload.meta.name
-        self.created_policy_uuids.append(created.uuid)
+        try:
+            assert created is not None
+            assert created.meta.name == payload.meta.name
+            self.created_policy_uuids.append(created.uuid)
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    authorization_policy.delete_authorization_policy(
+                        self.client, self.namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_update_authorization_policy(self) -> None:
@@ -172,56 +182,67 @@ class TestAuthorizationPolicy:
             ),
             propagate=False,
         )
+        created = None
         try:
             created = client.authorization_policy.create(create_payload)
         except Exception as e:
             pytest.skip(
                 f"Authorization policy create not allowed in this environment: {e}"
             )
-        if not created:
-            pytest.skip("Failed to create authorization policy for update test")
-        self.created_policy_uuids.append(created.uuid)
-        current = client.authorization_policy.get(
-            created.uuid, namespace=self.namespace
-        )
-        if not current:
-            pytest.skip(f"Could not retrieve authorization policy {created.uuid}")
-        original_description = getattr(current.meta, "description", None) or ""
-        update_payload = UpdateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=current.meta.name,
-                description="Updated by client-ux",
-            )
-        )
         try:
-            updated = client.authorization_policy.update(
-                created.uuid,
-                update_payload,
-                update_mask="meta.description",
-                namespace=self.namespace,
+            if not created:
+                pytest.skip("Failed to create authorization policy for update test")
+            self.created_policy_uuids.append(created.uuid)
+            current = client.authorization_policy.get(
+                created.uuid, namespace=self.namespace
             )
-        except Exception as e:
-            pytest.skip(
-                f"Authorization policy update not allowed in this environment: {e}"
+            if not current:
+                pytest.skip(f"Could not retrieve authorization policy {created.uuid}")
+            original_description = getattr(current.meta, "description", None) or ""
+            update_payload = UpdateAuthorizationPolicyPayload(
+                meta=AuthorizationPolicyMeta(
+                    name=current.meta.name,
+                    description="Updated by client-ux",
+                )
             )
-        assert updated is not None
-        restore_payload = UpdateAuthorizationPolicyPayload(
-            meta=AuthorizationPolicyMeta(
-                name=current.meta.name,
-                description=original_description,
+            try:
+                updated = client.authorization_policy.update(
+                    created.uuid,
+                    update_payload,
+                    update_mask="meta.description",
+                    namespace=self.namespace,
+                )
+            except Exception as e:
+                pytest.skip(
+                    f"Authorization policy update not allowed in this environment: {e}"
+                )
+            assert updated is not None
+            restore_payload = UpdateAuthorizationPolicyPayload(
+                meta=AuthorizationPolicyMeta(
+                    name=current.meta.name,
+                    description=original_description,
+                )
             )
-        )
-        try:
-            client.authorization_policy.update(
-                created.uuid,
-                restore_payload,
-                update_mask="meta.description",
-                namespace=self.namespace,
-            )
-        except Exception as e:
-            print(
-                f"[WARNING] Failed to restore original authorization policy values: {e}"
-            )
+            try:
+                client.authorization_policy.update(
+                    created.uuid,
+                    restore_payload,
+                    update_mask="meta.description",
+                    namespace=self.namespace,
+                )
+            except Exception as e:
+                print(
+                    "[WARNING] Failed to restore original authorization "
+                    f"policy values: {e}"
+                )
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    authorization_policy.delete_authorization_policy(
+                        self.client, self.namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_delete_authorization_policy(self) -> None:

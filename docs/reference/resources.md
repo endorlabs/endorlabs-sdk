@@ -26,6 +26,11 @@ The table matches the SDK registry; OpenAPI paths are under `/v1/namespaces/{ten
 | package_license | yes | yes | yes | yes (update_mask required) | yes | OSS namespace |
 | scan_log_request | no | no | yes (request-based) | no | no | Request-based only; scan logs = response `spec.log_messages`; no LIST/GET for scan logs. See module. |
 | semgrep_rule | yes | yes | yes | yes (update_mask required) | yes | — |
+| authentication_log | yes | yes (oss only) | no | no | no | System-owned; GET only when namespace is "oss"; use list() for system/tenant. |
+| endor_license | yes | yes (oss only) | no | no | no | System-owned; GET only when namespace is "oss"; use list() for system/tenant. |
+| policy_template | yes | yes (oss only) | no | no | no | System-owned; GET only when namespace is "oss"; use list() for system/tenant. |
+
+System-owned resources (authentication_log, endor_license, policy_template) are typed as `SystemResourceFacade[T]` on the Client; `.get(id, namespace="oss")` is supported; for system/tenant namespace use `client.<resource>.list()`. OSS-scoped resources (dependency_metadata, package_license) are typed as `OssResourceFacade[T]`; namespace is fixed to "oss" (no namespace param required).
 
 Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (workflow downloads to `external_docs/` in CI). Deep-dive: [namespace.md](namespace.md).
 

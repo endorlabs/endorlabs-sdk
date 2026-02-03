@@ -258,32 +258,49 @@ match_finding[result] {
         )
 
         # Create the exception policy
-        created_policy = policy.create_policy(
-            self.client, self.namespace, exception_policy_payload
-        )
+        created_policy = None
+        try:
+            created_policy = policy.create_policy(
+                self.client, self.namespace, exception_policy_payload
+            )
 
-        assert created_policy is not None, "Exception policy creation should succeed"
-        assert created_policy.meta.name == policy_name, "Policy name should match"
-        assert created_policy.spec.policy_type == PolicyType.EXCEPTION, (
-            "Policy type should be EXCEPTION"
-        )
-        assert created_policy.spec.exception is not None, (
-            "Exception config should be present"
-        )
-        # Exception config can be ExceptionConfig object or dict
-        # depending on API response
-        exception_reason = (
-            created_policy.spec.exception.reason
-            if hasattr(created_policy.spec.exception, "reason")
-            else created_policy.spec.exception.get("reason")
-        )
-        assert exception_reason == ExceptionReason.FALSE_POSITIVE, (
-            "Exception reason should be FALSE_POSITIVE"
-        )
+            assert created_policy is not None, (
+                "Exception policy creation should succeed"
+            )
+            assert created_policy.meta.name == policy_name, "Policy name should match"
+            assert created_policy.spec.policy_type == PolicyType.EXCEPTION, (
+                "Policy type should be EXCEPTION"
+            )
+            assert created_policy.spec.exception is not None, (
+                "Exception config should be present"
+            )
+            # Exception config can be ExceptionConfig object or dict
+            # depending on API response
+            exception_reason = (
+                created_policy.spec.exception.reason
+                if hasattr(created_policy.spec.exception, "reason")
+                else created_policy.spec.exception.get("reason")
+            )
+            assert exception_reason == ExceptionReason.FALSE_POSITIVE, (
+                "Exception reason should be FALSE_POSITIVE"
+            )
 
-        # Store for cleanup
-        self.created_policy_uuids.append(created_policy.uuid)
-        print(f"[SUCCESS] Exception policy created with UUID: {created_policy.uuid}")
+            # Store for cleanup
+            self.created_policy_uuids.append(created_policy.uuid)
+            print(
+                f"[SUCCESS] Exception policy created with UUID: {created_policy.uuid}"
+            )
+        finally:
+            if created_policy is not None:
+                try:
+                    policy.delete_policy(
+                        self.client, self.namespace, created_policy.uuid
+                    )
+                except Exception as e:
+                    print(
+                        f"[WARNING] Cleanup failed for policy "
+                        f"{created_policy.uuid}: {e}"
+                    )
 
     @pytest.mark.writes
     def test_notification_policy_create(self) -> None:
@@ -364,25 +381,43 @@ match_findings[result] {
         )
 
         # Create the notification policy
-        created_policy = policy.create_policy(
-            self.client, self.namespace, notification_policy_payload
-        )
+        created_policy = None
+        try:
+            created_policy = policy.create_policy(
+                self.client, self.namespace, notification_policy_payload
+            )
 
-        assert created_policy is not None, "Notification policy creation should succeed"
-        assert created_policy.meta.name == policy_name, "Policy name should match"
-        assert created_policy.spec.policy_type == PolicyType.NOTIFICATION, (
-            "Policy type should be NOTIFICATION"
-        )
-        assert created_policy.spec.notification is not None, (
-            "Notification config should be present"
-        )
-        assert notification_target_uuid in created_policy.spec.notification.get(
-            "notification_target_uuids", []
-        ), "Notification target UUID should be in config"
+            assert created_policy is not None, (
+                "Notification policy creation should succeed"
+            )
+            assert created_policy.meta.name == policy_name, "Policy name should match"
+            assert created_policy.spec.policy_type == PolicyType.NOTIFICATION, (
+                "Policy type should be NOTIFICATION"
+            )
+            assert created_policy.spec.notification is not None, (
+                "Notification config should be present"
+            )
+            assert notification_target_uuid in created_policy.spec.notification.get(
+                "notification_target_uuids", []
+            ), "Notification target UUID should be in config"
 
-        # Store for cleanup
-        self.created_policy_uuids.append(created_policy.uuid)
-        print(f"[SUCCESS] Notification policy created with UUID: {created_policy.uuid}")
+            # Store for cleanup
+            self.created_policy_uuids.append(created_policy.uuid)
+            print(
+                f"[SUCCESS] Notification policy created with UUID: "
+                f"{created_policy.uuid}"
+            )
+        finally:
+            if created_policy is not None:
+                try:
+                    policy.delete_policy(
+                        self.client, self.namespace, created_policy.uuid
+                    )
+                except Exception as e:
+                    print(
+                        f"[WARNING] Cleanup failed for policy "
+                        f"{created_policy.uuid}: {e}"
+                    )
 
     @pytest.mark.writes
     def test_admission_policy_create(self) -> None:
@@ -442,22 +477,39 @@ match_findings[result] {
         )
 
         # Create the admission policy
-        created_policy = policy.create_policy(
-            self.client, self.namespace, admission_policy_payload
-        )
+        created_policy = None
+        try:
+            created_policy = policy.create_policy(
+                self.client, self.namespace, admission_policy_payload
+            )
 
-        assert created_policy is not None, "Admission policy creation should succeed"
-        assert created_policy.meta.name == policy_name, "Policy name should match"
-        assert created_policy.spec.policy_type == PolicyType.ADMISSION, (
-            "Policy type should be ADMISSION"
-        )
-        assert created_policy.spec.admission is not None, (
-            "Admission config should be present"
-        )
+            assert created_policy is not None, (
+                "Admission policy creation should succeed"
+            )
+            assert created_policy.meta.name == policy_name, "Policy name should match"
+            assert created_policy.spec.policy_type == PolicyType.ADMISSION, (
+                "Policy type should be ADMISSION"
+            )
+            assert created_policy.spec.admission is not None, (
+                "Admission config should be present"
+            )
 
-        # Store for cleanup
-        self.created_policy_uuids.append(created_policy.uuid)
-        print(f"[SUCCESS] Admission policy created with UUID: {created_policy.uuid}")
+            # Store for cleanup
+            self.created_policy_uuids.append(created_policy.uuid)
+            print(
+                f"[SUCCESS] Admission policy created with UUID: {created_policy.uuid}"
+            )
+        finally:
+            if created_policy is not None:
+                try:
+                    policy.delete_policy(
+                        self.client, self.namespace, created_policy.uuid
+                    )
+                except Exception as e:
+                    print(
+                        f"[WARNING] Cleanup failed for policy "
+                        f"{created_policy.uuid}: {e}"
+                    )
 
     @pytest.mark.writes
     def test_client_ux_create_policy(self) -> None:
@@ -492,13 +544,21 @@ match_finding[result] {
             ),
             propagate=False,
         )
+        created = None
         try:
             created = client.policy.create(payload)
         except Exception as e:
             pytest.skip(f"Policy create not allowed in this environment: {e}")
-        assert created is not None
-        assert created.meta.name == policy_name
-        self.created_policy_uuids.append(created.uuid)
+        try:
+            assert created is not None
+            assert created.meta.name == policy_name
+            self.created_policy_uuids.append(created.uuid)
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    policy.delete_policy(self.client, self.namespace, created.uuid)
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for policy {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_update_policy(self) -> None:

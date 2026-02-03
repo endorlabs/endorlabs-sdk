@@ -186,13 +186,23 @@ class TestScanProfile:
             spec=ScanProfileSpecCreate(is_default=False),
             propagate=False,
         )
+        created = None
         try:
             created = client.scan_profile.create(payload)
         except Exception as e:
             pytest.skip(f"Scan profile create not allowed in this environment: {e}")
-        assert created is not None
-        assert created.meta.name == payload.meta.name
-        self.created_scan_profile_uuids.append(created.uuid)
+        try:
+            assert created is not None
+            assert created.meta.name == payload.meta.name
+            self.created_scan_profile_uuids.append(created.uuid)
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    scan_profile.delete_scan_profile(
+                        self.client, self.parent_namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_update_scan_profile(self) -> None:
@@ -213,42 +223,54 @@ class TestScanProfile:
             spec=ScanProfileSpecCreate(is_default=False),
             propagate=False,
         )
+        created = None
         try:
             created = client.scan_profile.create(payload)
         except Exception as e:
             pytest.skip(f"Scan profile create not allowed in this environment: {e}")
-        if not created:
-            pytest.skip("Failed to create scan profile for update test")
-        self.created_scan_profile_uuids.append(created.uuid)
-        current = client.scan_profile.get(created.uuid, namespace=self.parent_namespace)
-        if not current:
-            pytest.skip(f"Could not retrieve scan profile {created.uuid}")
-        original_description = getattr(current.meta, "description", None) or ""
-        update_payload = UpdateScanProfilePayload(
-            meta=ScanProfileMetaUpdate(description="Updated by client-ux")
-        )
         try:
-            updated = client.scan_profile.update(
-                created.uuid,
-                update_payload,
-                update_mask="meta.description",
-                namespace=self.parent_namespace,
+            if not created:
+                pytest.skip("Failed to create scan profile for update test")
+            self.created_scan_profile_uuids.append(created.uuid)
+            current = client.scan_profile.get(
+                created.uuid, namespace=self.parent_namespace
             )
-        except Exception as e:
-            pytest.skip(f"Scan profile update not allowed in this environment: {e}")
-        assert updated is not None
-        restore_payload = UpdateScanProfilePayload(
-            meta=ScanProfileMetaUpdate(description=original_description)
-        )
-        try:
-            client.scan_profile.update(
-                created.uuid,
-                restore_payload,
-                update_mask="meta.description",
-                namespace=self.parent_namespace,
+            if not current:
+                pytest.skip(f"Could not retrieve scan profile {created.uuid}")
+            original_description = getattr(current.meta, "description", None) or ""
+            update_payload = UpdateScanProfilePayload(
+                meta=ScanProfileMetaUpdate(description="Updated by client-ux")
             )
-        except Exception as e:
-            print(f"[WARNING] Failed to restore original scan profile values: {e}")
+            try:
+                updated = client.scan_profile.update(
+                    created.uuid,
+                    update_payload,
+                    update_mask="meta.description",
+                    namespace=self.parent_namespace,
+                )
+            except Exception as e:
+                pytest.skip(f"Scan profile update not allowed in this environment: {e}")
+            assert updated is not None
+            restore_payload = UpdateScanProfilePayload(
+                meta=ScanProfileMetaUpdate(description=original_description)
+            )
+            try:
+                client.scan_profile.update(
+                    created.uuid,
+                    restore_payload,
+                    update_mask="meta.description",
+                    namespace=self.parent_namespace,
+                )
+            except Exception as e:
+                print(f"[WARNING] Failed to restore original scan profile values: {e}")
+        finally:
+            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+                try:
+                    scan_profile.delete_scan_profile(
+                        self.client, self.parent_namespace, created.uuid
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_delete_scan_profile(self) -> None:
