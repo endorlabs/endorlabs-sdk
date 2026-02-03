@@ -137,6 +137,12 @@ class Metric(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for Metric."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_metric_ops(client: APIClient) -> BaseResourceOperations[Metric]:
     """Get BaseResourceOperations instance for Metric."""

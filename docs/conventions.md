@@ -72,6 +72,7 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 ## Create (decoupled)
 
 - **create** accepts either **payload** (CreateXPayload) for backward compatibility or **kwargs** that are passed to the resource’s `build_create_payload` (when the resource has a builder). Use `client.<resource>.create(name="...", namespace="...")` or `client.<resource>.create(payload=CreateXPayload(...))`. Responses stay `Resource` with `.spec`; no flattened view. See [reference/create-update-payloads.md](reference/create-update-payloads.md).
+- **High-utility facade params:** The facade may expose a small set of optional kwargs (e.g. `name`, `description`, `namespace_uuid`) merged into the builder path; the **allowed set** is defined only by the resource’s `build_create_payload`. Add an explicit facade param when the field is shared across many resources and commonly used (e.g. by endorctl).
 
 ## Update and update_mask
 
@@ -81,6 +82,7 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 - Immutable fields in `update_mask` are rejected by the SDK before the request.
 
 **Implicit update_mask (field kwargs):** When `update_mask` is omitted, the facade accepts field kwargs (e.g. `meta_description`, `meta_tags`, `scan_state`). The mask is derived from those kwargs and the payload is built by the resource (see `BaseResource.update` and `_build_update_payload`). Use either `client.<resource>.update(resource, meta_description="...", meta_tags=[...])` or `resource.update(client.<resource>, meta_description="...")`. Which fields are allowed is defined by the model’s mutable paths (e.g. `Project.get_mutable_fields()`).
+- **High-utility facade params:** Optional facade params (e.g. `meta_description`, `meta_tags`) are merged into the field-kwargs path; the **allowed set** is defined only by the resource’s `get_mutable_fields()` / `get_update_kwarg_to_path()`.
 
 ## Type overrides and Pyright
 

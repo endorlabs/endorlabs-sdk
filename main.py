@@ -29,6 +29,7 @@ def main() -> None:
     ## Basic Usage Examples
     #########################################################
     """Create a client and list namespaces (demo entrypoint)."""
+    # Replace with your tenant namespace
     client = endorlabs.Client(
         tenant=os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan"),
         logging_level="ERROR",
@@ -41,7 +42,6 @@ def main() -> None:
     my_scan_profiles = client.scan_profile.list(traverse=True)
     for scan_profile in my_scan_profiles:
         print(f"Scan Profile: {scan_profile.meta.name}")
-    exit(0)
 
     # Example: List operations
     namespaces = client.namespace.list(traverse=True)

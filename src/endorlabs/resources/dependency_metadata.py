@@ -248,6 +248,12 @@ class DependencyMetadata(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for DependencyMetadata."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_dependency_metadata_ops(
     client: APIClient,

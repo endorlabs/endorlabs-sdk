@@ -315,6 +315,12 @@ class ScanProfile(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for ScanProfile."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 class ScanProfileMetaCreate(BaseModel):
     """Metadata for creating a ScanProfile."""

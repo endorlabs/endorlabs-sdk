@@ -290,6 +290,32 @@ class SemgrepRule(BaseResource):
         # Implementation for schema drift detection
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for SemgrepRule."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for SemgrepRule."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "meta.upsert_time",
+            "meta.kind",
+            "meta.version",
+            "meta.references",
+            "meta.index_data",
+            "tenant_meta.namespace",
+            "spec.defined_by",
+            "spec.severity_level",
+        ]
+
 
 class CreateSemgrepRulePayload(BaseModel):
     """Payload for creating a new Semgrep rule."""

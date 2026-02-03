@@ -300,6 +300,37 @@ class AuthorizationPolicy(BaseResource):
 
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for AuthorizationPolicy."""
+        return [
+            "meta.name",
+            "meta.description",
+            "meta.tags",
+            "spec",
+            "propagate",
+        ]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for AuthorizationPolicy."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "meta.upsert_time",
+            "meta.kind",
+            "meta.version",
+            "meta.references",
+            "meta.index_data",
+            "tenant_meta.namespace",
+            "spec.is_support_policy",
+        ]
+
 
 class CreateAuthorizationPolicyPayload(BaseModel):
     """Payload for creating a new authorization policy."""
