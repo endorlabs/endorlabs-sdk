@@ -551,6 +551,51 @@ def test_list_with_explicit_filter_for_resource_without_filter_map(
     assert lp.filter == "meta.name == 'my-key'"
 
 
+def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
+    client_with_mock_transport: Client,
+) -> None:
+    """list(archive=True, page_id=..., pr_uuid=..., list_all=True) passes to ListParameters."""
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.namespace._list_fn = mock_list
+    client.namespace.list(
+        archive=True,
+        page_id="p1",
+        pr_uuid="pr-1",
+        list_all=True,
+        max_pages=conftest.TEST_MAX_PAGES,
+    )
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.archive is True
+    assert lp.page_id == "p1"
+    assert lp.pr_uuid == "pr-1"
+    assert lp.list_all is True
+
+
+def test_list_explicit_kwargs_override_list_params(
+    client_with_mock_transport: Client,
+) -> None:
+    """When both list_params and explicit kwargs are passed, explicit kwargs override."""
+    from endorlabs.types import ListParameters
+
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.namespace._list_fn = mock_list
+    client.namespace.list(
+        list_params=ListParameters(filter="from_list_params"),
+        filter="from_explicit",
+        max_pages=conftest.TEST_MAX_PAGES,
+    )
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter == "from_explicit"
+
+
 def test_lookup_returns_single_item(
     client_with_mock_transport: Client,
 ) -> None:

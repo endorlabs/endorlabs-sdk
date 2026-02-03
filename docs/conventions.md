@@ -59,13 +59,15 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 
 - **filter**: `list_params.filter` → `list_parameters.filter` (e.g. `spec.level==FINDING_LEVEL_CRITICAL`). Which **rows** match (query).
 - **mask**: `list_params.mask` → `list_parameters.mask` (e.g. `meta.name,spec.level`) for response field selection. Which **fields** are returned (projection). Do not combine with filter; they are separate concepts.
-- **page_size**, **page_token**: Pagination; only set `page_size` when you need a specific size (API default otherwise).
+- **page_size**, **page_token**, **page_id**: Pagination; only set `page_size` when you need a specific size (API default otherwise). `page_id` is an alternative pagination start (aligns with endorctl `--page-id`).
 - **sort_by**, **desc**: Sorting. `sort_by` is the field path (e.g. `meta.create_time`); `desc=True` for descending, `False` or omit for ascending. The API expects `list_parameters.sort.path` and `list_parameters.sort.order` (enum: `SORT_ENTRY_ORDER_ASC`, `SORT_ENTRY_ORDER_DESC`). Legacy `sort_field` and `sort_order` are still supported and normalized to the same API params.
 - **traverse**: See above.
 - **count**, **from_date**, **to_date**: see `endorlabs.types.ListParameters` (Field descriptions there).
+- **archive**, **list_all**, **pr_uuid**: High-utility params (fetch from archive, list all with timeout, scope to a PR scan). Exposed as typed kwargs on the facade; also available via `list_params=ListParameters(...)`.
+- **Grouping/aggregation**: `group_aggregation_paths`, `group_by_time`, `group_by_time_interval`, `group_unique_count_paths`, etc. Use `list_params=ListParameters(...)` for full control; see `endorlabs.types.ListParameters`.
 - Defined in `endorlabs.types.ListParameters`; see [src/endorlabs/types.py](../src/endorlabs/types.py).
 
-**Consumer UX:** Expose filter and mask as **flat kwargs** on `client.<resource>.list()` (e.g. `client.project.list(filter="...", mask="meta.name,spec.level")`). Do not combine filter and mask into one parameter. Full rationale and spec-driven UX: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
+**Consumer UX:** High-utility params (filter, mask, traverse, page_size, page_token, page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid, list_all) are **flat kwargs** on `client.<resource>.list()`. Pass `list_params=ListParameters(...)` for grouping and other options. Do not combine filter and mask into one parameter. Full rationale and spec-driven UX: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
 
 ## Create (decoupled)
 
