@@ -378,19 +378,8 @@ def list_policies(
 
     # Handle legacy policy_type parameter
     if policy_type and list_params is None:
-        list_params = ListParameters(
+        list_params = ListParameters(  # pyright: ignore[reportCallIssue]
             filter=f"spec.policy_type=={policy_type.value}",
-            mask=None,
-            page_size=None,
-            page_token=None,
-            sort_field=None,
-            sort_order=None,
-            sort_by=None,
-            desc=None,
-            count=None,
-            traverse=None,
-            from_date=None,
-            to_date=None,
         )
     elif policy_type and list_params:
         type_filter = f"spec.policy_type=={policy_type.value}"
@@ -414,19 +403,8 @@ def list_policies_iter(
     ops = _get_policy_ops(client)
     policy_type = kwargs.pop("policy_type", None)
     if policy_type and list_params is None:
-        list_params = ListParameters(
+        list_params = ListParameters(  # pyright: ignore[reportCallIssue]
             filter=f"spec.policy_type=={policy_type.value}",
-            mask=None,
-            page_size=None,
-            page_token=None,
-            sort_field=None,
-            sort_order=None,
-            sort_by=None,
-            desc=None,
-            count=None,
-            traverse=None,
-            from_date=None,
-            to_date=None,
         )
     elif policy_type and list_params:
         type_filter = f"spec.policy_type=={policy_type.value}"
@@ -682,19 +660,8 @@ def list_policies_by_type(
     client: APIClient, tenant_meta_namespace: str, policy_type: PolicyType
 ) -> list[Policy]:
     """List policies filtered by type."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.policy_type=={policy_type.value}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
@@ -703,19 +670,8 @@ def list_policies_by_namespace(
     client: APIClient, tenant_meta_namespace: str, target_namespace: str
 ) -> list[Policy]:
     """List policies filtered by namespace."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"tenant_meta.namespace=={target_namespace}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
@@ -727,19 +683,9 @@ def list_policies_paginated(
     page_token: str | None = None,
 ) -> list[Policy]:
     """List policies with pagination."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         page_size=page_size,
         page_token=page_token,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)
 
@@ -751,18 +697,8 @@ def list_policies_sorted(
     desc: bool = True,
 ) -> list[Policy]:
     """List policies with sorting."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         sort_by=sort_by,
         desc=desc,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_policies(client, tenant_meta_namespace, list_params=list_params)

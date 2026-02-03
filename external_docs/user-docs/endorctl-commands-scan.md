@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/endorctl/commands/scan/
 title: scan | Endor Labs Docs
-downloaded: 2026-01-29 22:20:55
+downloaded: 2026-02-03 00:50:01
 ---
 
 scan | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/vanta/
 title: Set up Vanta integration with Endor Labs | Endor Labs Docs
-downloaded: 2026-01-29 22:23:08
+downloaded: 2026-02-03 00:50:12
 ---
 
 Set up Vanta integration with Endor Labs | Endor Labs Docs

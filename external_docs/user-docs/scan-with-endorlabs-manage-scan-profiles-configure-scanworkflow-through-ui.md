@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/configure-scanworkflow-through-ui/
 title: Configure scan workflow through Endor Labs user interface | Endor Labs Docs
-downloaded: 2026-01-29 22:23:31
+downloaded: 2026-02-03 00:50:14
 ---
 
 Configure scan workflow through Endor Labs user interface | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/viewing-sast-findings/
 title: View SAST Findings | Endor Labs Docs
-downloaded: 2026-01-29 22:22:47
+downloaded: 2026-02-03 00:50:10
 ---
 
 View SAST Findings | Endor Labs Docs

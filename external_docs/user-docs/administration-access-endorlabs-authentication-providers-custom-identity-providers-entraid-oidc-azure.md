@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-oidc-azure/
 title: Set up Entra ID for SSO using OIDC | Endor Labs Docs
-downloaded: 2026-01-29 22:22:45
+downloaded: 2026-02-03 00:50:09
 ---
 
 Set up Entra ID for SSO using OIDC | Endor Labs Docs

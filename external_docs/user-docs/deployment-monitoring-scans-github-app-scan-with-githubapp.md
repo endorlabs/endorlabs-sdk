@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/scan-with-githubapp/
 title: Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs
-downloaded: 2026-01-29 22:20:14
+downloaded: 2026-02-03 00:49:57
 ---
 
 Scan capabilities of the Endor Labs GitHub Apps | Endor Labs Docs

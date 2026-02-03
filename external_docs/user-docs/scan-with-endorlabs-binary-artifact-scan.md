@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/binary-artifact-scan/
 title: Scan artifacts and binaries | Endor Labs Docs
-downloaded: 2026-01-29 22:23:52
+downloaded: 2026-02-03 00:50:16
 ---
 
 Scan artifacts and binaries | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/entraid-saml/
 title: Set up Entra ID for SSO using SAML | Endor Labs Docs
-downloaded: 2026-01-29 22:22:18
+downloaded: 2026-02-03 00:50:07
 ---
 
 Set up Entra ID for SSO using SAML | Endor Labs Docs

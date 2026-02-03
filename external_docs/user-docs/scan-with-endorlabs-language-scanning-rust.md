@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/rust/
 title: Rust | Endor Labs Docs
-downloaded: 2026-01-29 22:24:21
+downloaded: 2026-02-03 00:50:18
 ---
 
 Rust | Endor Labs Docs

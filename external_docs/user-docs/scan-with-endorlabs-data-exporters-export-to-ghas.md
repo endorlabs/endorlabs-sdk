@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/data-exporters/export-to-ghas/
 title: Export findings to GitHub Advanced Security | Endor Labs Docs
-downloaded: 2026-01-29 22:20:36
+downloaded: 2026-02-03 00:49:59
 ---
 
 Export findings to GitHub Advanced Security | Endor Labs Docs

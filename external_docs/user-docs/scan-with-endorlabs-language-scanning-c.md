@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/language-scanning/c/
 title: C/C++ | Endor Labs Docs
-downloaded: 2026-01-29 22:20:20
+downloaded: 2026-02-03 00:49:57
 ---
 
 C/C++ | Endor Labs Docs

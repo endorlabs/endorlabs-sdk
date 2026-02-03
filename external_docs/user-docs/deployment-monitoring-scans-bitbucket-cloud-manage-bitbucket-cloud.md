@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/bitbucket-cloud/manage-bitbucket-cloud/
 title: Manage Bitbucket Cloud App on Endor Labs | Endor Labs Docs
-downloaded: 2026-01-29 22:21:25
+downloaded: 2026-02-03 00:50:03
 ---
 
 Manage Bitbucket Cloud App on Endor Labs | Endor Labs Docs

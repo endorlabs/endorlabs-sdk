@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/ci-scans/keyless-authentication/google-keyless-auth/
 title: Keyless authentication in Google Cloud | Endor Labs Docs
-downloaded: 2026-01-29 22:22:38
+downloaded: 2026-02-03 00:50:09
 ---
 
 Keyless authentication in Google Cloud | Endor Labs Docs

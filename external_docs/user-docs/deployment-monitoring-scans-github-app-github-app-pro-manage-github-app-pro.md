@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-app-pro/manage-github-app-pro/
 title: Manage GitHub App (Pro) on Endor Labs | Endor Labs Docs
-downloaded: 2026-01-29 22:21:27
+downloaded: 2026-02-03 00:50:03
 ---
 
 Manage GitHub App (Pro) on Endor Labs | Endor Labs Docs

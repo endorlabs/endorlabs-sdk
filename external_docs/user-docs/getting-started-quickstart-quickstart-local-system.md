@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/quickstart/quickstart-local-system/
 title: Quick start with endorctl | Endor Labs Docs
-downloaded: 2026-01-29 22:22:11
+downloaded: 2026-02-03 00:50:07
 ---
 
 Quick start with endorctl | Endor Labs Docs

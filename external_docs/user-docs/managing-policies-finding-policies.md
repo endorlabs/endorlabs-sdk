@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/
 title: Finding policies | Endor Labs Docs
-downloaded: 2026-01-29 22:20:37
+downloaded: 2026-02-03 00:49:59
 ---
 
 Finding policies | Endor Labs Docs

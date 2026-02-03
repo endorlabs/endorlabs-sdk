@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/auto-patching/
 title: Automatic patching with Endor Patches | Endor Labs Docs
-downloaded: 2026-01-29 22:21:12
+downloaded: 2026-02-03 00:50:02
 ---
 
 Automatic patching with Endor Patches | Endor Labs Docs
