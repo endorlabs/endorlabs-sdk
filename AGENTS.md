@@ -33,9 +33,9 @@ namespaces = namespace.list_namespaces(client, "tenant.namespace")
 The SDK uses a two-layer, registry-driven design so the same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only. No resource concepts; no Pydantic models.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`). Each facade is a `ResourceFacade[T]` in `facade.py` that resolves namespace, builds `ListParameters` from kwargs, and delegates to existing module-level list/get/create/update/delete functions.
-- **Registry:** Which resources exist on `Client` is defined in a single registry in `endorlabs.registry`. `Client` exposes all resources via `client.<resource>.list(...)`, `client.<resource>.get(...)`, etc. Adding a resource = one registry entry; no hand-wiring in `Client`. Resources without update or delete (e.g. api_keys, audit_logs, finding_logs) raise `NotImplementedError` for those operations.
-- **Pydantic models:** Request/response types live in resource modules and `models/`; used by module functions and by `ResourceFacade[T]` only as the type parameter. No HTTP or registry logic in models.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`). Each facade is a `SystemResourceFacade[T]`, `OssResourceFacade[T]`, or `ResourceFacade[T]` in `facade.py` (chosen by registry `scope`); facades resolve namespace, build `ListParameters` from kwargs, and delegate to existing module-level list/get/create/update/delete functions.
+- **Registry:** Which resources exist on `Client` is defined in a single registry in `endorlabs.registry`. `Client` exposes all resources via `client.<resource>.list(...)`, `client.<resource>.get(...)`, etc. Adding a resource = one registry entry (with optional `scope`: "system", "oss", or None); no hand-wiring in `Client`. Resources without update or delete (e.g. api_keys, audit_logs, finding_logs) raise `NotImplementedError` for those operations.
+- **Pydantic models:** Request/response types live in resource modules and `models/`; used by module functions and by facade types only as the type parameter. No HTTP or registry logic in models.
 
 When editing the client surface, facade, or registry, follow [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md) and `.cursor/rules/architecture.mdc`.
 
@@ -71,7 +71,7 @@ Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in
 endorlabs/
 ├── api_client.py      # Transport only (Layer 1)
 ├── client_surface.py  # Client facade (Layer 2 entry point)
-├── facade.py          # ResourceFacade[T]; delegates to module functions
+├── facade.py          # SystemResourceFacade, OssResourceFacade, ResourceFacade; delegates to module functions
 ├── registry.py        # Registry of resources exposed on Client
 ├── resources/         # Module-level list/get/create/update/delete
 └── models/

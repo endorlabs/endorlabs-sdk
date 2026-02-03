@@ -1,14 +1,18 @@
 """EndorLicense resource module for Endor Labs API.
 
-EndorLicense represents a specific Endor license assigned to a tenant.
-List and get only.
+EndorLicense represents a specific Endor license assigned to a tenant. This
+resource is system-owned: LIST is supported; GET, UPDATE, and DELETE return
+403 (only system can perform them). The Client exposes list() only; use
+client.endor_license.list(). Module-level get_endor_license() remains for
+advanced use but will raise PermissionDeniedError (403) for non-system
+callers.
 """
 
 from __future__ import annotations
 
 import logging
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import Field, field_validator
 
@@ -81,6 +85,7 @@ class EndorLicense(BaseResource):
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
 
+    @override
     @field_validator("*", mode="before")
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:

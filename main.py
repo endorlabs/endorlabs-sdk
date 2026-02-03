@@ -34,12 +34,21 @@ def main() -> None:
         logging_level="ERROR",
         auth_method="api-key",
     )
+    my_api_keys = client.api_key.list(traverse=True)
+    for api_key in my_api_keys:
+        print(f"API Key: {api_key.meta.name}")
+
+    my_scan_profiles = client.scan_profile.list(traverse=True)
+    for scan_profile in my_scan_profiles:
+        print(f"Scan Profile: {scan_profile.meta.name}")
+    exit(0)
+
     # Example: List operations
     namespaces = client.namespace.list(traverse=True)
     for ns in namespaces:
         print(f"Namespaces: {ns.meta.name}")
 
-    projects = client.project.list(traverse=True)
+    projects = client.project.list(traverse=True)  # Paginate by Page ID
     for project in projects:
         print(f"Projects: {project.meta.name}")
 
@@ -72,15 +81,17 @@ def main() -> None:
     )
     # Anything not attached to facade must be passed to the facade.
     # scan_state uses flat kwargs; pass directly; define in facade's update method.
-    client.project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
+    _ = client.project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
     # Wait for scan to complete
-    client.wait_until(
+    _ = client.wait_until(
         lambda: (
             (p := client.project.get(project))
+            and p.processing_status is not None
             and p.processing_status.scan_state == "SCAN_STATE_IDLE"
         ),
         timeout=300,
     )
+
     # Getting scan results for a project
     scans = client.scan_result.list(
         parent=project, max_pages=1, sort_by="meta.create_time", desc=True

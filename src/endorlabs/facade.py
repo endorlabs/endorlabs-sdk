@@ -1,16 +1,18 @@
 """Resource facade for the resource-oriented Client API.
 
-Provides a generic ResourceFacade[T] that delegates to module-level
-list/get/create/update/delete functions and resolves default namespace.
-Also provides ScanLogsFacade for the request-based scan logs workflow;
-Client attaches it via CUSTOM_FACADE_REGISTRY.
+Provides SystemResourceFacade[T] (list, list_iter, lookup; get only when
+namespace is "oss") for system-owned resources, OssResourceFacade[T]
+(namespace fixed to "oss") for oss-scoped resources, and ResourceFacade[T]
+(full CRUD where supported) for tenant resources. Also provides ScanLogsFacade
+for the request-based scan logs workflow; Client attaches it via
+CUSTOM_FACADE_REGISTRY.
 See docs/reference/resources.md (scan_log_request) and
 docs/guides/retrieving-scan-results.md.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeGuard, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeGuard, TypeVar, cast, override
 
 from .exceptions import AmbiguousError, NotFoundError
 from .types import ListParameters
@@ -29,39 +31,27 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class ResourceFacade(Generic[T]):
-    """Facade for a single resource type; delegates to module functions.
-
-    Resolves namespace from argument or client default; builds ListParameters
-    from convenience kwargs when list_params is not provided.
-    """
+class _ListableFacade(Generic[T]):
+    """Base facade: list, list_iter, lookup only. No get/create/update/delete."""
 
     def __init__(
         self,
         client: APIClient,
         default_namespace: str | None,
         list_fn: Callable[..., list[T]],
-        get_fn: Callable[..., T],
-        create_fn: Callable[..., T] | None = None,
-        update_fn: Callable[..., T] | None = None,
-        delete_fn: Callable[..., bool] | None = None,
         list_iter_fn: Callable[..., Iterator[T]] | None = None,
-        tags_paths: list[str] | None = None,
         resource_name: str = "",
         parent_kind: str | None = None,
+        tags_paths: list[str] | None = None,
     ) -> None:
         super().__init__()
         self._client = client
         self._default_namespace = default_namespace
         self._list_fn = list_fn
-        self._get_fn = get_fn
-        self._create_fn = create_fn
-        self._update_fn = update_fn
-        self._delete_fn = delete_fn
         self._list_iter_fn = list_iter_fn
-        self._tags_paths = tags_paths or []
         self._resource_name = resource_name
         self._parent_kind = parent_kind
+        self._tags_paths = tags_paths or []
 
     def _ns(self, namespace: str | None) -> str:
         ns = namespace if namespace is not None else self._default_namespace
@@ -203,6 +193,97 @@ class ResourceFacade(Generic[T]):
             }
         lp = self._list_params(list_params, traverse=traverse, **kwargs)
         return self._list_iter_fn(self._client, ns, lp, max_pages, **kwargs)
+
+
+class SystemResourceFacade(_ListableFacade[T]):
+    """System-owned: list, list_iter, lookup; get only when namespace is "oss".
+
+    For non-oss namespace (e.g. system or tenant), get() raises NotImplementedError;
+    use list() instead. When namespace is "oss", get(id, namespace="oss") delegates.
+    """
+
+    def __init__(
+        self,
+        client: APIClient,
+        default_namespace: str | None,
+        list_fn: Callable[..., list[T]],
+        list_iter_fn: Callable[..., Iterator[T]] | None = None,
+        get_fn: Callable[..., T] | None = None,
+        resource_name: str = "",
+        parent_kind: str | None = None,
+        tags_paths: list[str] | None = None,
+    ) -> None:
+        super().__init__(
+            client,
+            default_namespace,
+            list_fn,
+            list_iter_fn=list_iter_fn,
+            resource_name=resource_name,
+            parent_kind=parent_kind,
+            tags_paths=tags_paths or [],
+        )
+        self._get_fn = get_fn
+
+    def get(self, id_or_resource: str | T, namespace: str | None = None) -> T:
+        """Get by ID or resource; only supported when namespace is "oss"."""
+        if self._get_fn is None:
+            raise NotImplementedError(
+                "This resource does not support get; use list() for system/tenant."
+            ) from None
+        if hasattr(id_or_resource, "uuid") and hasattr(id_or_resource, "tenant_meta"):
+            res = cast("Any", id_or_resource)
+            uuid = res.uuid
+            ns = (
+                self._ns(namespace)
+                if namespace is not None
+                else self._ns(
+                    resolve_namespace_for_resource(res, self._default_namespace)
+                )
+            )
+        else:
+            uuid = id_or_resource
+            ns = self._ns(namespace)
+        if ns != "oss":
+            raise NotImplementedError(
+                "GET only supported for oss namespace; use list() for system/tenant."
+            ) from None
+        return self._get_fn(self._client, "oss", uuid)
+
+
+class ResourceFacade(_ListableFacade[T]):
+    """Facade for resources with get/create/update/delete where supported.
+
+    Resolves namespace from argument or client default; builds ListParameters
+    from convenience kwargs when list_params is not provided.
+    """
+
+    def __init__(
+        self,
+        client: APIClient,
+        default_namespace: str | None,
+        list_fn: Callable[..., list[T]],
+        get_fn: Callable[..., T],
+        create_fn: Callable[..., T] | None = None,
+        update_fn: Callable[..., T] | None = None,
+        delete_fn: Callable[..., bool] | None = None,
+        list_iter_fn: Callable[..., Iterator[T]] | None = None,
+        tags_paths: list[str] | None = None,
+        resource_name: str = "",
+        parent_kind: str | None = None,
+    ) -> None:
+        super().__init__(
+            client,
+            default_namespace,
+            list_fn,
+            list_iter_fn=list_iter_fn,
+            resource_name=resource_name,
+            parent_kind=parent_kind,
+            tags_paths=tags_paths,
+        )
+        self._get_fn = get_fn
+        self._create_fn = create_fn
+        self._update_fn = update_fn
+        self._delete_fn = delete_fn
 
     def _is_resource_like(self, value: Any) -> TypeGuard[T]:
         """Return True if value has uuid and tenant_meta (resource object)."""
@@ -401,6 +482,14 @@ class ResourceFacade(Generic[T]):
             update={"meta": meta.model_copy(update={"tags": new_tags})}
         )
         return self._update_fn(self._client, ns, uuid, payload, "meta.tags")
+
+
+class OssResourceFacade(ResourceFacade[T]):
+    """Oss-scoped: namespace fixed to "oss"; caller does not pass namespace."""
+
+    @override
+    def _ns(self, namespace: str | None) -> str:
+        return "oss"
 
 
 class ScanLogsFacade:

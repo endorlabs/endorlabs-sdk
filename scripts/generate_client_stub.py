@@ -28,7 +28,12 @@ def main() -> None:
         "from typing import Any",
         "",
         "from .api_client import APIClient",
-        "from .facade import ResourceFacade, ScanLogsFacade",
+        "from .facade import (",
+        "    OssResourceFacade,",
+        "    ResourceFacade,",
+        "    ScanLogsFacade,",
+        "    SystemResourceFacade,",
+        ")",
         "",
     ]
 
@@ -57,7 +62,12 @@ def main() -> None:
     for entry in RESOURCE_REGISTRY:
         attr = entry.attr_name
         model_name = entry.model_class.__name__
-        lines.append(f"    {attr}: ResourceFacade[{model_name}]")
+        if entry.scope == "system":
+            lines.append(f"    {attr}: SystemResourceFacade[{model_name}]")
+        elif entry.scope == "oss":
+            lines.append(f"    {attr}: OssResourceFacade[{model_name}]")
+        else:
+            lines.append(f"    {attr}: ResourceFacade[{model_name}]")
     for entry in CUSTOM_FACADE_REGISTRY:
         attr = entry.attr_name
         if attr == "scan_logs":

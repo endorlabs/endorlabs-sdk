@@ -12,10 +12,10 @@ import contextlib
 import logging
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, cast
+from typing import Any, cast, override
 from webbrowser import get as get_browser
 
-from .api_client import (
+from .utils.redaction import (
     RedactingFilter,
     redaction_pattern,
     url_token_redaction_pattern,
@@ -109,6 +109,7 @@ class TokenHandler(BaseHTTPRequestHandler):
         # SSO auth may come back with POST, but we handle it the same as GET
         self.do_GET()
 
+    @override
     def log_message(self, format: str, *args: Any, **_kwargs: Any) -> None:
         """Suppress default HTTP server logs."""
         # Optionally enable in debug mode
