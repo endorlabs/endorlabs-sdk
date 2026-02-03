@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/manage-sast-rules/
 title: SAST Rules | Endor Labs Docs
-downloaded: 2026-01-29 22:20:53
+downloaded: 2026-02-03 00:50:01
 ---
 
 SAST Rules | Endor Labs Docs

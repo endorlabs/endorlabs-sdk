@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/proxy-server-configuration/
 title: Configure proxy server settings | Endor Labs Docs
-downloaded: 2026-01-29 22:22:31
+downloaded: 2026-02-03 00:50:09
 ---
 
 Configure proxy server settings | Endor Labs Docs

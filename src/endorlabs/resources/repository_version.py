@@ -148,6 +148,12 @@ class RepositoryVersion(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for RepositoryVersion."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_repository_version_ops(
     client: APIClient,
@@ -281,6 +287,11 @@ class CreateRepositoryVersionPayload(BaseModel):
     spec: RepositoryVersionSpec = Field(
         ..., description="RepositoryVersion specification"
     )
+
+
+def build_create_payload(**kwargs: Any) -> CreateRepositoryVersionPayload:
+    """Build CreateRepositoryVersionPayload from kwargs (decoupled create)."""
+    return CreateRepositoryVersionPayload(**kwargs)
 
 
 class UpdateRepositoryVersionPayload(BaseModel):

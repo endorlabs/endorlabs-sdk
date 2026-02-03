@@ -110,6 +110,118 @@ class TestEndorMaxRetries:
         assert client.max_retries == 10
 
 
+class TestRequestTimeout:
+    """Test timeout and Request-timeout header (ENDOR_REQUEST_TIMEOUT)."""
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_timeout_param_sets_header(self) -> None:
+        """APIClient(timeout=30) sets client.timeout and Request-timeout: 30."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient(timeout=30.0)
+        assert client.timeout == 30.0
+        assert client._request_headers.get("Request-timeout") == "30"
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_REQUEST_TIMEOUT": "20",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_endor_request_timeout_from_env(self) -> None:
+        """ENDOR_REQUEST_TIMEOUT is used when default timeout is used."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
+        assert client.timeout == 20.0
+        assert client._request_headers.get("Request-timeout") == "20"
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_REQUEST_TIMEOUT": "15",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_timeout_parameter_override_takes_precedence(self) -> None:
+        """timeout=45 overrides ENDOR_REQUEST_TIMEOUT."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient(timeout=45.0)
+        assert client.timeout == 45.0
+        assert client._request_headers.get("Request-timeout") == "45"
+
+
+class TestContentTypeAndAcceptEncoding:
+    """Test content_type and accept_encoding (API header options)."""
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_content_type_application_json_sets_header(self) -> None:
+        """content_type='application/json' sets Content-Type header."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient(content_type="application/json")
+        assert client.content_type == "application/json"
+        assert client._request_headers.get("Content-Type") == "application/json"
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_accept_encoding_none_omits_header(self) -> None:
+        """accept_encoding=None omits Accept-Encoding header."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient(accept_encoding=None)
+        assert client.accept_encoding is None
+        assert "Accept-Encoding" not in client._request_headers
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_accept_encoding_empty_omits_header(self) -> None:
+        """accept_encoding='' omits Accept-Encoding header."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient(accept_encoding="")
+        assert client.accept_encoding == ""
+        assert "Accept-Encoding" not in client._request_headers
+
+
 class TestEndorLogLevel:
     """Test ENDOR_LOG_LEVEL environment variable."""
 

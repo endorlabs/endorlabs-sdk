@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-policies/finding-policies/managing-scm-configuration/
 title: RSPM policies | Endor Labs Docs
-downloaded: 2026-01-29 22:22:13
+downloaded: 2026-02-03 00:50:07
 ---
 
 RSPM policies | Endor Labs Docs

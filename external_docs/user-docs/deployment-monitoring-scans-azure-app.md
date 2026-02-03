@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/azure-app/
 title: Deploy Endor Labs Azure DevOps App | Endor Labs Docs
-downloaded: 2026-01-29 22:21:15
+downloaded: 2026-02-03 00:50:03
 ---
 
 Deploy Endor Labs Azure DevOps App | Endor Labs Docs

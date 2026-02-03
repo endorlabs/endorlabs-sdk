@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-enterprise-app/
 title: Deploy Endor Labs GitHub Enterprise Server App | Endor Labs Docs
-downloaded: 2026-01-29 22:22:55
+downloaded: 2026-02-03 00:50:11
 ---
 
 Deploy Endor Labs GitHub Enterprise Server App | Endor Labs Docs

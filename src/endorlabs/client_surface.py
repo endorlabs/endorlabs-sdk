@@ -14,7 +14,6 @@ from .api_client import APIClient
 if TYPE_CHECKING:
     from collections.abc import Callable
 from .facade import OssResourceFacade, ResourceFacade, SystemResourceFacade
-from .models.base import RESOURCE_NAME_TO_TYPE
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
@@ -32,18 +31,36 @@ class Client:
     Use ``with endorlabs.Client(tenant="...") as client:`` or call
     ``client.close()`` when done to release connections. When api_client is
     passed, the caller owns it and must close it themselves.
+
+    Transport options (when creating APIClient): timeout, content_type,
+    accept_encoding, max_retries, base_url. Explicit args take precedence over
+    **client_kwargs. Other APIClient options (auth, logging_level, etc.) go via
+    **client_kwargs. Use content_type="application/json" if compact responses
+    cause validation issues.
     """
 
     def __init__(
         self,
         api_client: APIClient | None = None,
         tenant: str | None = None,
+        *,
+        timeout: float = 60.0,
+        content_type: str = "application/jsoncompact",
+        accept_encoding: str | None = "gzip, br, zstd",
+        max_retries: int = 5,
+        base_url: str | None = None,
         **client_kwargs: Any,
     ) -> None:
         super().__init__()
         self._own_client = api_client is None
         if api_client is None:
-            api_client = APIClient(**client_kwargs)
+            api_kwargs: dict[str, Any] = {**client_kwargs}
+            api_kwargs["timeout"] = timeout
+            api_kwargs["content_type"] = content_type
+            api_kwargs["accept_encoding"] = accept_encoding
+            api_kwargs["max_retries"] = max_retries
+            api_kwargs["base_url"] = base_url
+            api_client = APIClient(**api_kwargs)
         self._client: APIClient | None = api_client
         self._default_namespace: str | None = tenant
 
@@ -65,9 +82,8 @@ class Client:
                 )
             elif entry.scope == "oss":
                 assert entry.get_fn is not None, "oss scope requires get_fn"
-                resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
                 tags_paths = (
-                    get_tags_update_paths(resource_type) if entry.update_fn else []
+                    get_tags_update_paths(entry.model_class) if entry.update_fn else []
                 )
                 facade = cast(
                     "OssResourceFacade[Any]",
@@ -83,13 +99,15 @@ class Client:
                         tags_paths=tags_paths,
                         resource_name=entry.resource_name,
                         parent_kind=entry.parent_kind,
+                        build_create_payload_fn=getattr(
+                            entry, "build_create_payload_fn", None
+                        ),
                     ),
                 )
             else:
                 assert entry.get_fn is not None, "tenant scope requires get_fn"
-                resource_type = RESOURCE_NAME_TO_TYPE.get(entry.resource_name, "")
                 tags_paths = (
-                    get_tags_update_paths(resource_type) if entry.update_fn else []
+                    get_tags_update_paths(entry.model_class) if entry.update_fn else []
                 )
                 facade = cast(
                     "ResourceFacade[Any]",
@@ -105,6 +123,9 @@ class Client:
                         tags_paths=tags_paths,
                         resource_name=entry.resource_name,
                         parent_kind=entry.parent_kind,
+                        build_create_payload_fn=getattr(
+                            entry, "build_create_payload_fn", None
+                        ),
                     ),
                 )
             setattr(self, entry.attr_name, facade)

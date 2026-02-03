@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/configure-system-settings/
 title: Configure system settings | Endor Labs Docs
-downloaded: 2026-01-29 22:21:56
+downloaded: 2026-02-03 00:50:05
 ---
 
 Configure system settings | Endor Labs Docs

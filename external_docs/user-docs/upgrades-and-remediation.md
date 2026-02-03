@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/
 title: Upgrades and remediation | Endor Labs Docs
-downloaded: 2026-01-29 22:23:37
+downloaded: 2026-02-03 00:50:14
 ---
 
 Upgrades and remediation | Endor Labs Docs

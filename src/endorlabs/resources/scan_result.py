@@ -485,6 +485,12 @@ class ScanResult(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for ScanResult."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 class ScanResultMetaCreate(BaseModel):
     """Metadata for creating a ScanResult."""
@@ -511,6 +517,11 @@ class CreateScanResultPayload(BaseModel):
     meta: ScanResultMetaCreate
     spec: ScanResultSpecCreate
     context: Context
+
+
+def build_create_payload(**kwargs: Any) -> CreateScanResultPayload:
+    """Build CreateScanResultPayload from kwargs (decoupled facade create)."""
+    return CreateScanResultPayload(**kwargs)
 
 
 class ScanResultMetaUpdate(BaseModel):

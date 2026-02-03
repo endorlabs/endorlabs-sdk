@@ -67,11 +67,19 @@ class _ListableFacade(Generic[T]):
         traverse: bool = False,
         **kwargs: Any,
     ) -> ListParameters | None:
+        """Merge list_params with kwargs; explicit kwargs override list_params."""
+        list_param_keys = set(ListParameters.model_fields)
+        merged: dict[str, Any] = {}
         if list_params is not None:
-            return list_params
-        if not kwargs and not traverse:
+            merged = list_params.model_dump(exclude_none=True)
+        if traverse:
+            merged["traverse"] = True
+        for k, v in kwargs.items():
+            if k in list_param_keys:
+                merged[k] = v
+        if not merged:
             return None
-        return ListParameters(traverse=traverse or None, **kwargs)
+        return ListParameters(**merged)
 
     def list(
         self,
@@ -80,16 +88,30 @@ class _ListableFacade(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
         parent: Any = None,
+        filter: str | None = None,
+        mask: str | None = None,
+        page_size: int | None = None,
+        page_token: str | None = None,
+        page_id: str | None = None,
+        sort_by: str | None = None,
+        desc: bool | None = None,
+        count: bool | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        archive: bool | None = None,
+        pr_uuid: str | None = None,
+        list_all: bool | None = None,
         **kwargs: Any,
     ) -> list[T]:
         """List resources; uses default namespace when namespace= not passed.
 
-        Flat kwargs include filter, mask, traverse, page_size, page_token,
-        sort_by, desc, count, from_date, to_date. When the resource supports
-        identity kwargs (e.g. name, git_url), pass them and they are translated
-        to filter clauses (e.g. meta.name == 'backend'). When the resource
-        supports parent= (registry parent_kind set), pass a parent resource to
-        scope the list by namespace and meta.parent_uuid.
+        High-utility kwargs (filter, mask, traverse, page_size, page_token,
+        page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid,
+        list_all) map to list_parameters.*. Pass list_params= for full control
+        (e.g. group_aggregation_paths). When the resource supports identity
+        kwargs (e.g. name, git_url), pass them and they are translated to
+        filter clauses. When the resource supports parent=, pass a parent
+        resource to scope the list by namespace and meta.parent_uuid.
         """
         from .models.base import RESOURCE_NAME_TO_TYPE
 
@@ -102,10 +124,31 @@ class _ListableFacade(Generic[T]):
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
+        # Merge explicit list params into kwargs so they override list_params
+        explicit = {
+            k: v
+            for k, v in (
+                ("filter", filter),
+                ("mask", mask),
+                ("page_size", page_size),
+                ("page_token", page_token),
+                ("page_id", page_id),
+                ("sort_by", sort_by),
+                ("desc", desc),
+                ("count", count),
+                ("from_date", from_date),
+                ("to_date", to_date),
+                ("archive", archive),
+                ("pr_uuid", pr_uuid),
+                ("list_all", list_all),
+            )
+            if v is not None
+        }
+        list_kwargs = {**kwargs, **explicit}
         resource_type = RESOURCE_NAME_TO_TYPE.get(self._resource_name, "")
         filter_map = get_list_filter_map(resource_type)
         merged_filter, remaining_kwargs = build_filter_from_identity_kwargs(
-            filter_map, dict(kwargs)
+            filter_map, list_kwargs
         )
         if merged_filter is not None:
             remaining_kwargs["filter"] = merged_filter
@@ -126,6 +169,19 @@ class _ListableFacade(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int = 2,
         parent: Any = None,
+        filter: str | None = None,
+        mask: str | None = None,
+        page_size: int | None = None,
+        page_token: str | None = None,
+        page_id: str | None = None,
+        sort_by: str | None = None,
+        desc: bool | None = None,
+        count: bool | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        archive: bool | None = None,
+        pr_uuid: str | None = None,
+        list_all: bool | None = None,
         **kwargs: Any,
     ) -> T:
         """Return the single resource matching the given identity kwargs.
@@ -140,6 +196,19 @@ class _ListableFacade(Generic[T]):
             list_params=list_params,
             max_pages=max_pages,
             parent=parent,
+            filter=filter,
+            mask=mask,
+            page_size=page_size,
+            page_token=page_token,
+            page_id=page_id,
+            sort_by=sort_by,
+            desc=desc,
+            count=count,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            list_all=list_all,
             **kwargs,
         )
         if not items:
@@ -161,12 +230,26 @@ class _ListableFacade(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
         parent: Any = None,
+        filter: str | None = None,
+        mask: str | None = None,
+        page_size: int | None = None,
+        page_token: str | None = None,
+        page_id: str | None = None,
+        sort_by: str | None = None,
+        desc: bool | None = None,
+        count: bool | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        archive: bool | None = None,
+        pr_uuid: str | None = None,
+        list_all: bool | None = None,
         **kwargs: Any,
     ) -> Iterator[T]:
         """Iterate over resources without materializing the full list.
 
-        Accepts the same kwargs as list() (filter, mask, sort_by, desc, etc.).
-        When the resource supports parent=, pass a parent resource to scope.
+        Accepts the same kwargs as list() (filter, mask, sort_by, desc,
+        archive, pr_uuid, list_all, etc.). When the resource supports parent=,
+        pass a parent resource to scope.
         """
         if self._list_iter_fn is None:
             raise NotImplementedError(
@@ -181,18 +264,35 @@ class _ListableFacade(Generic[T]):
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
+        explicit = {
+            k: v
+            for k, v in (
+                ("filter", filter),
+                ("mask", mask),
+                ("page_size", page_size),
+                ("page_token", page_token),
+                ("page_id", page_id),
+                ("sort_by", sort_by),
+                ("desc", desc),
+                ("count", count),
+                ("from_date", from_date),
+                ("to_date", to_date),
+                ("archive", archive),
+                ("pr_uuid", pr_uuid),
+                ("list_all", list_all),
+            )
+            if v is not None
+        }
+        list_kwargs = {**kwargs, **explicit}
         if parent is not None:
             parent_uuid = getattr(parent, "uuid", "")
             parent_filter = f'meta.parent_uuid=="{parent_uuid}"'
-            existing = kwargs.get("filter")
-            kwargs = {
-                **kwargs,
-                "filter": f"{existing} AND {parent_filter}"
-                if existing
-                else parent_filter,
-            }
-        lp = self._list_params(list_params, traverse=traverse, **kwargs)
-        return self._list_iter_fn(self._client, ns, lp, max_pages, **kwargs)
+            existing = list_kwargs.get("filter")
+            list_kwargs["filter"] = (
+                f"{existing} AND {parent_filter}" if existing else parent_filter
+            )
+        lp = self._list_params(list_params, traverse=traverse, **list_kwargs)
+        return self._list_iter_fn(self._client, ns, lp, max_pages)
 
 
 class SystemResourceFacade(_ListableFacade[T]):
@@ -270,6 +370,7 @@ class ResourceFacade(_ListableFacade[T]):
         tags_paths: list[str] | None = None,
         resource_name: str = "",
         parent_kind: str | None = None,
+        build_create_payload_fn: Callable[..., Any] | None = None,
     ) -> None:
         super().__init__(
             client,
@@ -284,6 +385,7 @@ class ResourceFacade(_ListableFacade[T]):
         self._create_fn = create_fn
         self._update_fn = update_fn
         self._delete_fn = delete_fn
+        self._build_create_payload_fn = build_create_payload_fn
 
     def _is_resource_like(self, value: Any) -> TypeGuard[T]:
         """Return True if value has uuid and tenant_meta (resource object)."""
@@ -312,14 +414,51 @@ class ResourceFacade(_ListableFacade[T]):
 
     def create(
         self,
-        payload: Any,
+        payload: Any = None,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        namespace_uuid: str | None = None,
         namespace: str | None = None,
+        **kwargs: Any,
     ) -> T:
-        """Create a resource."""
+        """Create a resource.
+
+        Pass either payload (CreateXPayload) for backward compatibility, or
+        kwargs that are passed to this resource's build_create_payload (when
+        the resource supports decoupled create). Optional name, description,
+        and namespace_uuid are convenience params merged into kwargs; the
+        allowed set is defined by the resource's build_create_payload. Exactly
+        one of payload or kwargs (including explicit params) must be provided
+        when the resource has build_create_payload_fn.
+        """
         if self._create_fn is None:
             raise NotImplementedError(
                 "This resource does not support create."
             ) from None
+        # Merge explicit optional params into kwargs (explicit wins when not None)
+        explicit = {
+            k: v
+            for k, v in (
+                ("name", name),
+                ("description", description),
+                ("namespace_uuid", namespace_uuid),
+            )
+            if v is not None
+        }
+        merged = {**kwargs, **explicit}
+        if payload is not None and merged:
+            raise TypeError("provide either payload= or kwargs for create(), not both.")
+        if payload is None and not merged:
+            raise TypeError("create() requires payload= or resource-specific kwargs.")
+        if payload is None and merged and self._build_create_payload_fn is not None:
+            # namespace is consumed by _ns(); do not pass to builder
+            create_kwargs = {k: v for k, v in merged.items() if k != "namespace"}
+            payload = self._build_create_payload_fn(**create_kwargs)
+        elif payload is None and merged and self._build_create_payload_fn is None:
+            raise TypeError(
+                "create() for this resource requires payload=; kwargs not supported."
+            )
         ns = self._ns(namespace)
         return self._create_fn(self._client, ns, payload)
 
@@ -329,6 +468,8 @@ class ResourceFacade(_ListableFacade[T]):
         payload: Any | None = None,
         *,
         update_mask: str | None = None,
+        meta_description: str | None = None,
+        meta_tags: list[str] | None = None,
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
@@ -337,25 +478,34 @@ class ResourceFacade(_ListableFacade[T]):
         When update_mask is provided: use it and payload (or resource as payload).
         When update_mask is omitted and kwargs are provided: delegate to
         resource.update(self, **kwargs) so mask is derived from kwargs.
-        When both update_mask and kwargs are missing: raise TypeError.
+        Optional meta_description and meta_tags are convenience params merged
+        into kwargs; the allowed set is defined by the resource's
+        get_mutable_fields(). When both update_mask and kwargs are missing:
+        raise TypeError.
         """
         if self._update_fn is None:
             raise NotImplementedError(
                 "This resource does not support update."
             ) from None
-        if update_mask is None and not kwargs:
+        # Merge explicit optional params into kwargs (explicit wins when not None)
+        merged_kwargs = dict(kwargs)
+        if meta_description is not None:
+            merged_kwargs["meta_description"] = meta_description
+        if meta_tags is not None:
+            merged_kwargs["meta_tags"] = meta_tags
+        if update_mask is None and not merged_kwargs:
             raise TypeError(
                 "provide update_mask (e.g. 'meta.tags') or field kwargs "
                 "(e.g. meta_tags=[...])."
             )
-        if update_mask is None and kwargs:
+        if update_mask is None and merged_kwargs:
             if not self._is_resource_like(id_or_resource):
                 raise TypeError(
                     "when using field kwargs, id_or_resource must be a "
                     "resource instance (not a UUID string)."
                 )
             res = cast("Any", id_or_resource)
-            return res.update(self, **kwargs)
+            return res.update(self, **merged_kwargs)
         if self._is_resource_like(id_or_resource):
             res = cast("Any", id_or_resource)
             uuid = res.uuid

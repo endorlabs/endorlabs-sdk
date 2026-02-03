@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/
 title: Release notes | Endor Labs Docs
-downloaded: 2026-01-29 22:24:18
+downloaded: 2026-02-03 00:50:18
 ---
 
 Release notes | Endor Labs Docs

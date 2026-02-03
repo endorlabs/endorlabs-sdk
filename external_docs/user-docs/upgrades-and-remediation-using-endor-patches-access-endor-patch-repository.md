@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/access-endor-patch-repository/
 title: Accessing the Endor Patch repository | Endor Labs Docs
-downloaded: 2026-01-29 22:23:15
+downloaded: 2026-02-03 00:50:13
 ---
 
 Accessing the Endor Patch repository | Endor Labs Docs

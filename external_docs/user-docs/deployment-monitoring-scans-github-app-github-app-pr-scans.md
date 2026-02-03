@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/github-app/github-app-pr-scans/
 title: Scan PRs using the Endor Labs GitHub app | Endor Labs Docs
-downloaded: 2026-01-29 22:23:06
+downloaded: 2026-02-03 00:50:12
 ---
 
 Scan PRs using the Endor Labs GitHub app | Endor Labs Docs

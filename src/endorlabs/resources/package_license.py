@@ -232,6 +232,12 @@ class PackageLicense(BaseResource):
                 )
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for PackageLicense."""
+        return ["meta.name", "meta.description", "meta.tags", "spec"]
+
 
 def _get_package_license_ops(
     client: APIClient,
@@ -384,6 +390,11 @@ class CreatePackageLicensePayload(BaseModel):
         ..., description="PackageLicense metadata for creation"
     )
     spec: PackageLicenseSpec = Field(..., description="PackageLicense specification")
+
+
+def build_create_payload(**kwargs: Any) -> CreatePackageLicensePayload:
+    """Build CreatePackageLicensePayload from kwargs (decoupled create)."""
+    return CreatePackageLicensePayload(**kwargs)
 
 
 class UpdatePackageLicensePayload(BaseModel):

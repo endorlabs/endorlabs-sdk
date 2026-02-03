@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/monitoring-scans/gitlab-app/gitlab-mr-scan/
 title: GitLab App MR scans | Endor Labs Docs
-downloaded: 2026-01-29 22:20:41
+downloaded: 2026-02-03 00:49:59
 ---
 
 GitLab App MR scans | Endor Labs Docs

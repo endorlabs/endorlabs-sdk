@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/managing-projects/dependencies/
 title: Dependencies | Endor Labs Docs
-downloaded: 2026-01-29 22:22:00
+downloaded: 2026-02-03 00:50:05
 ---
 
 Dependencies | Endor Labs Docs

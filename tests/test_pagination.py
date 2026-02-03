@@ -185,6 +185,131 @@ class TestPagination:
         assert params.get("list_parameters.sort.order") == "SORT_ENTRY_ORDER_DESC"
 
 
+class TestListParametersSerialization:
+    """Test that new ListParameters fields serialize to list_parameters.*."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, api_client, namespace) -> None:
+        """Set up test environment (client and namespace from conftest)."""
+        self.client = api_client
+        self.namespace = namespace
+
+    def test_archive_list_all_serialize_as_booleans(self) -> None:
+        """archive and list_all serialize to list_parameters.* as true/false."""
+        ops = BaseResourceOperations(self.client, "test-resources", Mock)
+        params = ops._build_params(ListParameters(archive=True, list_all=True))
+        assert params.get("list_parameters.archive") == "true"
+        assert params.get("list_parameters.list_all") == "true"
+
+    def test_page_id_pr_uuid_serialize(self) -> None:
+        """page_id and pr_uuid serialize to list_parameters.*."""
+        ops = BaseResourceOperations(self.client, "test-resources", Mock)
+        params = ops._build_params(ListParameters(page_id="cursor-1", pr_uuid="pr-abc"))
+        assert params.get("list_parameters.page_id") == "cursor-1"
+        assert params.get("list_parameters.pr_uuid") == "pr-abc"
+
+    def test_group_params_serialize(self) -> None:
+        """group_aggregation_paths and group_* serialize to list_parameters.*."""
+        ops = BaseResourceOperations(self.client, "test-resources", Mock)
+        list_params = ListParameters(
+            group_aggregation_paths=["meta.name", "spec.level"],
+            group_by_time=True,
+            group_unique_count_paths=["x"],
+        )
+        params = ops._build_params(list_params)
+        assert params.get("list_parameters.group_aggregation_paths") == (
+            "meta.name,spec.level"
+        )
+        assert params.get("list_parameters.group_by_time") == "true"
+        assert params.get("list_parameters.group_unique_count_paths") == "x"
+
+
+class TestGetAllPageIdPagination:
+    """Test get_all() uses page_id when API returns next_page_id."""
+
+    def test_get_all_uses_page_id_when_response_has_next_page_id(self) -> None:
+        """When response has next_page_id only, next request uses page_id."""
+        client = APIClient(auth_method="api-key")
+        try:
+            page1 = {
+                "list": {
+                    "objects": [{"uuid": "a"}],
+                    "response": {"next_page_id": "cursor-abc"},
+                }
+            }
+            page2 = {
+                "list": {"objects": [{"uuid": "b"}], "response": {}},
+            }
+            with patch.object(client, "get") as mock_get:
+                mock_get.side_effect = [
+                    Mock(json=Mock(return_value=page1)),
+                    Mock(json=Mock(return_value=page2)),
+                ]
+                items = list(client.get_all("/v1/namespaces/ns/items", params={}))
+            assert len(items) == 2
+            assert items[0]["uuid"] == "a"
+            assert items[1]["uuid"] == "b"
+            assert mock_get.call_count == 2
+            second_call_params = mock_get.call_args_list[1].kwargs.get("params", {})
+            assert second_call_params.get("list_parameters.page_id") == "cursor-abc"
+            assert "list_parameters.page_token" not in second_call_params
+        finally:
+            client.close()
+
+    def test_get_all_uses_page_token_when_only_next_page_token(self) -> None:
+        """When only next_page_token present, behavior unchanged (page_token used)."""
+        client = APIClient(auth_method="api-key")
+        try:
+            page1 = {
+                "list": {
+                    "objects": [{"uuid": "a"}],
+                    "response": {"next_page_token": "tok123"},
+                }
+            }
+            page2 = {"list": {"objects": [{"uuid": "b"}], "response": {}}}
+            with patch.object(client, "get") as mock_get:
+                mock_get.side_effect = [
+                    Mock(json=Mock(return_value=page1)),
+                    Mock(json=Mock(return_value=page2)),
+                ]
+                items = list(client.get_all("/v1/namespaces/ns/items", params={}))
+            assert len(items) == 2
+            assert mock_get.call_count == 2
+            second_call_params = mock_get.call_args_list[1].kwargs.get("params", {})
+            assert second_call_params.get("list_parameters.page_token") == "tok123"
+            assert "list_parameters.page_id" not in second_call_params
+        finally:
+            client.close()
+
+    def test_get_all_prefers_page_id_when_both_present(self) -> None:
+        """When both next_page_id and next_page_token present, page_id wins."""
+        client = APIClient(auth_method="api-key")
+        try:
+            page1 = {
+                "list": {
+                    "objects": [{"uuid": "a"}],
+                    "response": {
+                        "next_page_id": "cursor-xyz",
+                        "next_page_token": "tok456",
+                    },
+                }
+            }
+            page2 = {"list": {"objects": [{"uuid": "b"}], "response": {}}}
+            with patch.object(client, "get") as mock_get:
+                mock_get.side_effect = [
+                    Mock(json=Mock(return_value=page1)),
+                    Mock(json=Mock(return_value=page2)),
+                ]
+                items = list(client.get_all("/v1/namespaces/ns/items", params={}))
+            assert len(items) == 2
+            assert mock_get.call_count == 2
+            second_call_params = mock_get.call_args_list[1].kwargs.get("params", {})
+            assert second_call_params.get("list_parameters.page_id") == "cursor-xyz"
+            assert "list_parameters.page_token" not in second_call_params
+        finally:
+            client.close()
+
+
 class TestListIter:
     """Test list_iter yields items without materializing full list."""
 

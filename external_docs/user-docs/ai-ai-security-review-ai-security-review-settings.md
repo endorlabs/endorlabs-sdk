@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/ai/ai-security-review/ai-security-review-settings/
 title: Set up AI security code review with GitHub App | Endor Labs Docs
-downloaded: 2026-01-29 22:21:39
+downloaded: 2026-02-03 00:50:04
 ---
 
 Set up AI security code review with GitHub App | Endor Labs Docs

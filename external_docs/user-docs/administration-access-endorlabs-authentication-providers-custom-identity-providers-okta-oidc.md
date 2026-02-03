@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/administration/access-endorlabs/authentication-providers/custom-identity-providers/okta-oidc/
 title: Set up Okta for SSO using OIDC | Endor Labs Docs
-downloaded: 2026-01-29 22:21:41
+downloaded: 2026-02-03 00:50:05
 ---
 
 Set up Okta for SSO using OIDC | Endor Labs Docs

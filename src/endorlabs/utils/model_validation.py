@@ -231,63 +231,29 @@ def validate_update_mask(
     return True
 
 
-def get_mutable_fields(resource_type: str) -> list[str]:
-    """Get list of mutable fields for a resource type.
-
-    Args:
-        resource_type: Type of resource (e.g., 'finding', 'policy')
-
-    Returns:
-        List of mutable field paths
-
-    """
-    # Define mutable fields for each resource type
-    mutable_fields_map = {
-        "finding": [
-            "meta.tags",
-            "spec.finding_tags",
-            "spec.dismiss",
-            "spec.remediation",
-            "context.tags",
-        ],
-        "policy": [
-            "meta.name",
-            "meta.description",
-            "meta.tags",
-            "spec.rule",
-            "spec.disable",
-            "spec.project_selector",
-            "spec.project_exceptions",
-            "spec.template_values",
-            "propagate",
-        ],
-        "project": ["meta.description", "meta.tags"],
-        "namespace": ["meta.description"],
-        "authorization_policy": [
-            "meta.name",
-            "meta.description",
-            "meta.tags",
-            "spec",
-            "propagate",
-        ],
-        "scan_profile": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "repository": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "repository_version": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "package_version": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "metric": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "linter_result": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "dependency_metadata": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "installation": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "package_license": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "semgrep_rule": ["meta.name", "meta.description", "meta.tags", "spec"],
-        "scan_result": ["meta.name", "meta.description", "meta.tags", "spec"],
-    }
-
-    return mutable_fields_map.get(resource_type, [])
-
-
 # Tag field paths that represent "tags" for .tag()/.untag() capability
 TAG_FIELD_PATHS = frozenset({"meta.tags", "spec.finding_tags"})
+
+
+def get_tags_update_paths(model_class: type) -> list[str]:
+    """Return mutable field paths that represent tags for this resource type.
+
+    Derived from the model's get_mutable_fields_cls(): includes meta.tags
+    and/or spec.finding_tags when present. Used to expose .tag()/.untag()
+    only on resources that support tags.
+
+    Args:
+        model_class: Resource model class (e.g. Project, Finding) with
+            get_mutable_fields_cls() classmethod.
+
+    Returns:
+        Tag field paths (e.g. ['meta.tags'], ['meta.tags', 'spec.finding_tags']).
+
+    """
+    if not hasattr(model_class, "get_mutable_fields_cls"):
+        return []
+    mutable = model_class.get_mutable_fields_cls()
+    return [p for p in TAG_FIELD_PATHS if p in mutable]
 
 
 # Kwarg -> filter path for list() identity kwargs (e.g. name -> meta.name)
@@ -352,132 +318,3 @@ def build_filter_from_identity_kwargs(
     else:
         merged = built
     return (merged, remaining)
-
-
-def get_tags_update_paths(resource_type: str) -> list[str]:
-    """Return mutable field paths that represent tags for this resource type.
-
-    Derived from get_mutable_fields: includes meta.tags and/or spec.finding_tags
-    when present. Used to expose .tag()/.untag() only on resources that support tags.
-
-    Args:
-        resource_type: Type of resource (e.g., 'finding', 'project').
-
-    Returns:
-        Tag field paths (e.g. ['meta.tags'], ['meta.tags', 'spec.finding_tags']).
-
-    """
-    if not resource_type:
-        return []
-    mutable = get_mutable_fields(resource_type)
-    return [p for p in TAG_FIELD_PATHS if p in mutable]
-
-
-def get_immutable_fields(resource_type: str) -> list[str]:
-    """Get list of immutable fields for a resource type.
-
-    Used by BaseResourceOperations.update() to block PATCH of read-only fields.
-    All 16 update-capable resources are in RESOURCE_NAME_TO_TYPE and get this
-    check. The 4 original types (finding, policy, project, namespace) have
-    spec-derived resource-specific immutable fields; the 12 others use v1Meta-
-    derived common set; add resource-specific spec readOnly per-resource from
-    OpenAPI when needed.
-
-    Args:
-        resource_type: Type of resource (e.g., 'finding', 'policy')
-
-    Returns:
-        List of immutable field paths
-
-    """
-    # v1Meta readOnly (OpenAPI): create_time, update_time, upsert_time, kind,
-    # version, created_by, updated_by, references, index_data
-    _v1meta_readonly = [
-        "uuid",
-        "meta.create_time",
-        "meta.created_by",
-        "meta.update_time",
-        "meta.updated_by",
-        "meta.upsert_time",
-        "meta.kind",
-        "meta.version",
-        "meta.references",
-        "meta.index_data",
-        "tenant_meta.namespace",
-    ]
-    # Spec-derived readOnly (OpenAPI Update body object.spec) for 12 resources
-    _authz_spec_readonly = ["spec.is_support_policy"]
-    _installation_spec_readonly = [
-        "spec.external_name",
-        "spec.user",
-        "spec.ingestion_time",
-        "spec.target_type",
-        "spec.ingestion_token",
-        "spec.marked_for_deletion",
-    ]
-    _package_version_spec_readonly = [
-        "spec.ecosystem",
-        "spec.package_name",
-        "spec.internal_reference_key",
-    ]
-    _semgrep_rule_spec_readonly = ["spec.defined_by", "spec.severity_level"]
-    immutable_fields_map = {
-        "finding": [
-            "uuid",
-            "meta.name",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "spec.level",
-            "spec.project_uuid",
-            "spec.finding_metadata",
-            "tenant_meta.namespace",
-        ],
-        "policy": [
-            "uuid",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "spec.policy_type",
-            "spec.template_uuid",
-            "tenant_meta.namespace",
-        ],
-        "project": [
-            "uuid",
-            "meta.name",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "spec.git",
-            "tenant_meta.namespace",
-        ],
-        "namespace": [
-            "uuid",
-            "meta.name",
-            "meta.create_time",
-            "meta.created_by",
-            "meta.update_time",
-            "meta.updated_by",
-            "tenant_meta.namespace",
-        ],
-        "authorization_policy": _v1meta_readonly + _authz_spec_readonly,
-        "scan_profile": _v1meta_readonly,
-        "repository": _v1meta_readonly,
-        "repository_version": _v1meta_readonly,
-        "package_version": _v1meta_readonly + _package_version_spec_readonly,
-        "metric": _v1meta_readonly,
-        "linter_result": _v1meta_readonly,
-        "dependency_metadata": _v1meta_readonly,
-        "installation": _v1meta_readonly + _installation_spec_readonly,
-        "package_license": _v1meta_readonly,
-        "semgrep_rule": _v1meta_readonly + _semgrep_rule_spec_readonly,
-        "scan_result": _v1meta_readonly,
-        "notification_target": _v1meta_readonly,
-        "code_owners": _v1meta_readonly,
-        "invitation": _v1meta_readonly,
-    }
-
-    return immutable_fields_map.get(resource_type, [])

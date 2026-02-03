@@ -12,6 +12,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from endorlabs.exceptions import ValidationError as EndorValidationError
 from endorlabs.models.base import BaseResourceOperations
+from endorlabs.resources.authorization_policy import AuthorizationPolicy
+from endorlabs.resources.finding import Finding
+from endorlabs.resources.installation import Installation
+from endorlabs.resources.metric import Metric
+from endorlabs.resources.package_version import PackageVersion
+from endorlabs.resources.project import Project
+from endorlabs.resources.semgrep_rule import SemgrepRule
 
 
 class MinimalPayload(BaseModel):
@@ -90,7 +97,7 @@ class TestUpdateImmutableBlock:
         """When update_mask contains immutable path, raise EndorValidationError."""
         client = Mock()
         client.patch = Mock()
-        ops = BaseResourceOperations(client, "findings", MinimalPayload)
+        ops = BaseResourceOperations(client, "findings", Finding)
         payload = MinimalPayload(uuid="finding-uuid")
         with pytest.raises(EndorValidationError) as exc_info:
             ops.update(
@@ -139,7 +146,7 @@ class TestUpdateImmutableBlock:
         """When resource is mapped (e.g. metrics), immutable path in mask raises."""
         client = Mock()
         client.patch = Mock()
-        ops = BaseResourceOperations(client, "metrics", MinimalPayload)
+        ops = BaseResourceOperations(client, "metrics", Metric)
         payload = MinimalPayload(uuid="metric-uuid")
         with pytest.raises(EndorValidationError) as exc_info:
             ops.update(
@@ -155,7 +162,9 @@ class TestUpdateImmutableBlock:
         """Authorization policy: spec.is_support_policy is readOnly per OpenAPI."""
         client = Mock()
         client.patch = Mock()
-        ops = BaseResourceOperations(client, "authorization-policies", MinimalPayload)
+        ops = BaseResourceOperations(
+            client, "authorization-policies", AuthorizationPolicy
+        )
         payload = MinimalPayload(uuid="ap-uuid")
         with pytest.raises(EndorValidationError) as exc_info:
             ops.update(
@@ -172,7 +181,7 @@ class TestUpdateImmutableBlock:
         """Installation: spec.external_name is readOnly per OpenAPI."""
         client = Mock()
         client.patch = Mock()
-        ops = BaseResourceOperations(client, "installations", MinimalPayload)
+        ops = BaseResourceOperations(client, "installations", Installation)
         payload = MinimalPayload(uuid="inst-uuid")
         with pytest.raises(EndorValidationError) as exc_info:
             ops.update(
@@ -189,7 +198,7 @@ class TestUpdateImmutableBlock:
         """Package version: spec.ecosystem is readOnly per OpenAPI."""
         client = Mock()
         client.patch = Mock()
-        ops = BaseResourceOperations(client, "package-versions", MinimalPayload)
+        ops = BaseResourceOperations(client, "package-versions", PackageVersion)
         payload = MinimalPayload(uuid="pv-uuid")
         with pytest.raises(EndorValidationError) as exc_info:
             ops.update(
@@ -206,7 +215,7 @@ class TestUpdateImmutableBlock:
         """Semgrep rule: spec.defined_by is readOnly per OpenAPI."""
         client = Mock()
         client.patch = Mock()
-        ops = BaseResourceOperations(client, "semgrep-rules", MinimalPayload)
+        ops = BaseResourceOperations(client, "semgrep-rules", SemgrepRule)
         payload = MinimalPayload(uuid="rule-uuid")
         with pytest.raises(EndorValidationError) as exc_info:
             ops.update(
@@ -328,3 +337,50 @@ class TestUpdateContractSpec:
             json_body[UPDATE_BODY_REQUEST_KEY][UPDATE_BODY_REQUEST_UPDATE_MASK_KEY]
             == "meta.tags"
         )
+
+
+class TestModelClassmethodsCanonical:
+    """Tests for get_mutable_fields_cls/get_immutable_fields_cls and get_tags_update_paths.
+
+    Model is canonical for mutable/immutable fields; get_tags_update_paths
+    derives tag paths from the model class.
+    """  # noqa: E501
+
+    def test_project_get_mutable_fields_cls_includes_processing_status(self) -> None:
+        """Project.get_mutable_fields_cls() includes processing_status paths."""
+        mutable = Project.get_mutable_fields_cls()
+        assert "meta.description" in mutable
+        assert "meta.tags" in mutable
+        assert "processing_status.scan_state" in mutable
+        assert "processing_status.disable_automated_scan" in mutable
+
+    def test_finding_get_mutable_fields_cls_includes_finding_tags(self) -> None:
+        """Finding.get_mutable_fields_cls() includes spec.finding_tags and context.tags."""  # noqa: E501
+        mutable = Finding.get_mutable_fields_cls()
+        assert "meta.tags" in mutable
+        assert "spec.finding_tags" in mutable
+        assert "context.tags" in mutable
+
+    def test_project_get_immutable_fields_cls_includes_spec_git(self) -> None:
+        """Project.get_immutable_fields_cls() includes spec.git."""
+        from endorlabs.resources.project import Project
+
+        immutable = Project.get_immutable_fields_cls()
+        assert "uuid" in immutable
+        assert "meta.name" in immutable
+        assert "spec.git" in immutable
+        assert "tenant_meta.namespace" in immutable
+
+    def test_get_tags_update_paths_from_model_class(self) -> None:
+        """get_tags_update_paths(model_class) returns tag paths from model mutable."""
+        from endorlabs.utils.model_validation import get_tags_update_paths
+
+        # Project has meta.tags but not spec.finding_tags
+        project_tags = get_tags_update_paths(Project)
+        assert "meta.tags" in project_tags
+        assert "spec.finding_tags" not in project_tags
+
+        # Finding has both meta.tags and spec.finding_tags
+        finding_tags = get_tags_update_paths(Finding)
+        assert "meta.tags" in finding_tags
+        assert "spec.finding_tags" in finding_tags

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/integrations/package-manager/rubygems-private-package-manager/
 title: Private package manager integration for RubyGems | Endor Labs Docs
-downloaded: 2026-01-29 22:23:33
+downloaded: 2026-02-03 00:50:14
 ---
 
 Private package manager integration for RubyGems | Endor Labs Docs

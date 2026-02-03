@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/getting-started/licensing/
 title: Endor Labs License Types | Endor Labs Docs
-downloaded: 2026-01-29 22:22:00
+downloaded: 2026-02-03 00:50:05
 ---
 
 Endor Labs License Types | Endor Labs Docs

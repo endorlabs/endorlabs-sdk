@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/trust/
 title: Patch transparency | Endor Labs Docs
-downloaded: 2026-01-29 22:22:09
+downloaded: 2026-02-03 00:50:07
 ---
 
 Patch transparency | Endor Labs Docs

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/manage-sast-rules/add-metadata-sast-rule/
 title: Add metadata to a SAST rule | Endor Labs Docs
-downloaded: 2026-01-29 22:22:51
+downloaded: 2026-02-03 00:50:10
 ---
 
 Add metadata to a SAST rule | Endor Labs Docs

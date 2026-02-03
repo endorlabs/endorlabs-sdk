@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/releasenotes/december-2025/
 title: December 2025 | Endor Labs Docs
-downloaded: 2026-01-29 22:21:02
+downloaded: 2026-02-03 00:50:01
 ---
 
 December 2025 | Endor Labs Docs

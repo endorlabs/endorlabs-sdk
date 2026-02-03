@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/deployment/mcp/vscode/
 title: Endor Labs MCP server in Visual Studio Code | Endor Labs Docs
-downloaded: 2026-01-29 22:21:17
+downloaded: 2026-02-03 00:50:03
 ---
 
 Endor Labs MCP server in Visual Studio Code | Endor Labs Docs

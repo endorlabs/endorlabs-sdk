@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/sast-scans-with-endorlabs/manage-sast-rules/import-sast-rule/
 title: Import SAST rules | Endor Labs Docs
-downloaded: 2026-01-29 22:20:44
+downloaded: 2026-02-03 00:49:59
 ---
 
 Import SAST rules | Endor Labs Docs

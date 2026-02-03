@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/scan-with-endorlabs/manage-scan-profiles/configure-scanprofile-ui/
 title: Configure scan profile through Endor Labs user interface | Endor Labs Docs
-downloaded: 2026-01-29 22:22:32
+downloaded: 2026-02-03 00:50:09
 ---
 
 Configure scan profile through Endor Labs user interface | Endor Labs Docs

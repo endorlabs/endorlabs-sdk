@@ -195,7 +195,7 @@ strict = [
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
-    { root = "src/endorlabs/analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/experimental/sast_analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },

@@ -1,7 +1,7 @@
 ---
 url: https://docs.endorlabs.com/upgrades-and-remediation/using-endor-patches/connecting-to-the-factory/
 title: Connect to the Endor Labs Patch Factory | Endor Labs Docs
-downloaded: 2026-01-29 22:20:25
+downloaded: 2026-02-03 00:49:59
 ---
 
 Connect to the Endor Labs Patch Factory | Endor Labs Docs

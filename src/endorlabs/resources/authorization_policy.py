@@ -300,6 +300,37 @@ class AuthorizationPolicy(BaseResource):
 
         return v
 
+    @override
+    @classmethod
+    def get_mutable_fields_cls(cls) -> list[str]:
+        """Get list of mutable fields for AuthorizationPolicy."""
+        return [
+            "meta.name",
+            "meta.description",
+            "meta.tags",
+            "spec",
+            "propagate",
+        ]
+
+    @override
+    @classmethod
+    def get_immutable_fields_cls(cls) -> list[str]:
+        """Get list of immutable fields for AuthorizationPolicy."""
+        return [
+            "uuid",
+            "meta.create_time",
+            "meta.created_by",
+            "meta.update_time",
+            "meta.updated_by",
+            "meta.upsert_time",
+            "meta.kind",
+            "meta.version",
+            "meta.references",
+            "meta.index_data",
+            "tenant_meta.namespace",
+            "spec.is_support_policy",
+        ]
+
 
 class CreateAuthorizationPolicyPayload(BaseModel):
     """Payload for creating a new authorization policy."""
@@ -311,6 +342,11 @@ class CreateAuthorizationPolicyPayload(BaseModel):
         ..., description="Authorization policy specification"
     )
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
+
+
+def build_create_payload(**kwargs: Any) -> CreateAuthorizationPolicyPayload:
+    """Build CreateAuthorizationPolicyPayload from kwargs (decoupled create)."""
+    return CreateAuthorizationPolicyPayload(**kwargs)
 
 
 class UpdateAuthorizationPolicyPayload(BaseModel):
@@ -622,19 +658,8 @@ def list_authorization_policies_by_role(
     role: SystemRole,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies filtered by system role."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.permissions.roles=={role.value}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
@@ -647,19 +672,8 @@ def list_authorization_policies_by_namespace(
     target_namespace: str,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies filtered by target namespace."""
-    list_params = ListParameters(
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.target_namespaces=={target_namespace}",
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
@@ -673,19 +687,9 @@ def list_authorization_policies_paginated(
     page_token: str | None = None,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies with pagination."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         page_size=page_size,
         page_token=page_token,
-        sort_field=None,
-        sort_order=None,
-        sort_by=None,
-        desc=None,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
@@ -699,19 +703,9 @@ def list_authorization_policies_sorted(
     desc: bool = True,
 ) -> list[AuthorizationPolicy]:
     """List authorization policies with sorting."""
-    list_params = ListParameters(
-        filter=None,
-        mask=None,
-        page_size=None,
-        page_token=None,
-        sort_field=None,
-        sort_order=None,
+    list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         sort_by=sort_by,
         desc=desc,
-        count=None,
-        traverse=None,
-        from_date=None,
-        to_date=None,
     )
     return list_authorization_policies(
         client, tenant_meta_namespace, list_params=list_params
