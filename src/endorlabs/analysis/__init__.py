@@ -6,7 +6,7 @@ for FindingDataLoader and FindingDatabase.
 
 import warnings
 
-from endorlabs.experimental.sast_analysis import FindingDataLoader, FindingDatabase
+from endorlabs.experimental.sast_analysis import FindingDatabase, FindingDataLoader
 
 warnings.warn(
     "endorlabs.analysis is deprecated; use endorlabs.experimental.sast_analysis",
