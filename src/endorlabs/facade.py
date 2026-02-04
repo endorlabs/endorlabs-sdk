@@ -472,7 +472,9 @@ class ResourceFacade(_ListableFacade[T]):
 
         When update_mask is provided: use it and payload (or resource as payload).
         When update_mask is omitted and kwargs are provided: delegate to
-        resource.update(self, **kwargs) so mask is derived from kwargs.
+        resource.update(self, **kwargs) so mask is derived from kwargs. For
+        that path you must pass a resource instance (not a UUID); allowed kwargs
+        are defined by the resource's get_mutable_fields().
         Optional meta_description and meta_tags are convenience params merged
         into kwargs; the allowed set is defined by the resource's
         get_mutable_fields(). When both update_mask and kwargs are missing:

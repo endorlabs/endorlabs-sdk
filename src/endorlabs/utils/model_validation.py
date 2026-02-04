@@ -201,6 +201,23 @@ def safe_model_dump(
         return data
 
 
+def parse_update_mask(update_mask: str) -> list[str]:
+    """Parse comma-separated update_mask string into a list of field paths.
+
+    Splits on comma, strips whitespace, and drops empty entries.
+
+    Args:
+        update_mask: Comma-separated field paths (e.g. "meta.description, meta.tags").
+
+    Returns:
+        List of non-empty trimmed paths.
+
+    """
+    if not update_mask:
+        return []
+    return [p.strip() for p in update_mask.split(",") if p.strip()]
+
+
 def validate_update_mask(
     update_mask: str, allowed_fields: list[str], resource_type: str = "resource"
 ) -> bool:
@@ -218,7 +235,7 @@ def validate_update_mask(
     if not update_mask:
         return True
 
-    fields = [field.strip() for field in update_mask.split(",")]
+    fields = parse_update_mask(update_mask)
     invalid_fields = [field for field in fields if field not in allowed_fields]
 
     if invalid_fields:
@@ -269,6 +286,15 @@ LIST_FILTER_KWARG_MAP: dict[str, dict[str, str]] = {
     "scan_profile": {"name": "meta.name"},
     "scan_result": {"name": "meta.name"},
     "finding": {"name": "meta.name"},
+    "authorization_policy": {"name": "meta.name"},
+    "repository_version": {"name": "meta.name"},
+    "installation": {"name": "meta.name"},
+    "notification_target": {"name": "meta.name"},
+    "metric": {"name": "meta.name"},
+    "semgrep_rule": {"name": "meta.name"},
+    "package_version": {"name": "meta.name"},
+    "invitation": {"name": "meta.name"},
+    "code_owners": {"name": "meta.name"},
 }
 
 

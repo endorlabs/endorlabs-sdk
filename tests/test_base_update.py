@@ -11,7 +11,7 @@ import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
 from endorlabs.exceptions import ValidationError as EndorValidationError
-from endorlabs.models.base import BaseResourceOperations
+from endorlabs.models.base import BaseResource, BaseResourceOperations
 from endorlabs.resources.authorization_policy import AuthorizationPolicy
 from endorlabs.resources.finding import Finding
 from endorlabs.resources.installation import Installation
@@ -345,6 +345,11 @@ class TestModelClassmethodsCanonical:
     Model is canonical for mutable/immutable fields; get_tags_update_paths
     derives tag paths from the model class.
     """  # noqa: E501
+
+    def test_base_resource_get_mutable_fields_cls_returns_default(self) -> None:
+        """BaseResource.get_mutable_fields_cls() returns default mutable list."""
+        mutable = BaseResource.get_mutable_fields_cls()
+        assert mutable == ["meta.description", "meta.tags"]
 
     def test_project_get_mutable_fields_cls_includes_processing_status(self) -> None:
         """Project.get_mutable_fields_cls() includes processing_status paths."""

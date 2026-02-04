@@ -513,6 +513,10 @@ class BaseResource(BaseModel):
     - meta.tags: User-defined tags list
     - meta.annotations: User-defined key-value metadata
     - spec.*: Most spec fields are mutable (resource-specific)
+
+    The default implementation of get_mutable_fields_cls() returns only
+    ["meta.description", "meta.tags"]. Subclasses override with
+    resource-specific mutable paths (e.g. Project adds processing_status.*).
     """
 
     model_config = ConfigDict(
