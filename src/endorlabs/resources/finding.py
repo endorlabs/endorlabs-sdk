@@ -519,7 +519,7 @@ class FindingSpec(BaseSpec):
         None, description="Information about why this finding is considered noteworthy"
     )  # IMMUTABLE: Analysis-determined
     remediation_action: FindingRemediation | None = Field(
-        None, description="Recommended action to resolve the finding"
+        None, description="Suggested action to resolve the finding"
     )  # IMMUTABLE: Analysis-determined
     source_code_version: SourceCodeVersion | None = Field(
         None,

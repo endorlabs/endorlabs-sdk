@@ -31,7 +31,7 @@ Per-resource request shapes for create and update. Used by `build_create_payload
 
 ## Update payloads (UpdateXPayload / Resource)
 
-Update uses `update_mask` + payload (or kwargs via `resource.update(facade, **kwargs)`). The **canonical** allowed create fields are the resource’s `build_create_payload` signature and CreateXPayload; the **canonical** allowed update fields are the model’s `get_mutable_fields_cls()`. The facade’s explicit params (e.g. `name`, `meta_description`) are a convenience subset. Mutable fields are resource-specific; see each resource module and BaseResource.get_mutable_fields() / get_update_kwarg_to_path().
+Update uses `update_mask` + payload (or kwargs via `resource.update(facade, **kwargs)`). The **canonical** allowed create fields are the resource’s `build_create_payload` signature and CreateXPayload; the **canonical** allowed update fields are the model’s `get_mutable_fields_cls()`. The facade’s explicit params (e.g. `name`, `meta_description`) are a subset. Mutable fields are resource-specific; see each resource module and BaseResource.get_mutable_fields() / get_update_kwarg_to_path().
 
 ## Resources with no create/update (skip)
 

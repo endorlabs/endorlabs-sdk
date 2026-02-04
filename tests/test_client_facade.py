@@ -1,7 +1,7 @@
 """Tests for the resource-oriented Client facade (TDD).
 
 Verifies delegation, namespace resolution, and convenience kwargs
-for endorlabs.Client and client.namespace. Aligns with recommended UX
+for endorlabs.Client and client.namespace. Aligns with facade UX
 (import endorlabs; client = endorlabs.Client(...)) and registry-driven architecture.
 
 Delegation is asserted by injecting a mock into the facade's _list_fn (noqa: SLF001);
@@ -633,7 +633,7 @@ def test_list_with_explicit_filter_for_resource_without_filter_map(
 def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
     client_with_mock_transport: Client,
 ) -> None:
-    """Pass archive, page_id, pr_uuid, list_all to ListParameters."""
+    """Pass archive, page_id, pr_uuid to ListParameters; list_all is always True (default)."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.namespace._list_fn = mock_list
@@ -641,7 +641,6 @@ def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
         archive=True,
         page_id="p1",
         pr_uuid="pr-1",
-        list_all=True,
         max_pages=conftest.TEST_MAX_PAGES,
     )
     mock_list.assert_called_once()
@@ -651,7 +650,7 @@ def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
     assert lp.archive is True
     assert lp.page_id == "p1"
     assert lp.pr_uuid == "pr-1"
-    assert lp.list_all is True
+    assert lp.list_all is True  # default for list operations
 
 
 def test_list_explicit_kwargs_override_list_params(
