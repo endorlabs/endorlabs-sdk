@@ -57,6 +57,23 @@ class VersionInfo(BaseModel):
     metadata: dict[str, Any] | None = Field(None, description="Version metadata.")
 
 
+class ScanObject(BaseModel):
+    """Scan object information for a repository version."""
+
+    status: str | None = Field(None, description="Scan status.")
+    scan_time: str | None = Field(None, description="Last scan time.")
+    aisast_status: dict[str, Any] | None = Field(
+        None,
+        description="AI SAST indexing status (e.g. last_full_index_sha).",
+    )
+    endor_ignore_file_hash_map: dict[str, Any] | None = Field(
+        None,
+        description="Map of endor ignore file hashes.",
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+
 class RepositoryVersionSpec(BaseSpec):
     """RepositoryVersion specification extending BaseSpec.
 
@@ -121,7 +138,7 @@ class RepositoryVersion(BaseResource):
     context: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Contextual information", alias="context"
     )
-    scan_object: dict[str, Any] | None = Field(
+    scan_object: ScanObject | dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Scan object information", alias="scan_object"
     )
 
