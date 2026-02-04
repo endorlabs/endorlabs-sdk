@@ -167,6 +167,42 @@ class TestRepositoryVersion:
         assert got is not None
         assert got.uuid == item.uuid
 
+    def test_repository_version_scan_object_has_status_scan_time(self) -> None:
+        """RepositoryVersion scan_object exposes status and scan_time when present."""
+        import endorlabs
+        from endorlabs.exceptions import ServerError
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        try:
+            items = client.repository_version.list(
+                traverse=True,
+                max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        if item.scan_object is not None and not isinstance(item.scan_object, dict):
+            assert hasattr(item.scan_object, "status")
+            assert hasattr(item.scan_object, "scan_time")
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.repository_version.get(item.uuid, namespace=ns)
+        if (
+            got
+            and got.scan_object is not None
+            and not isinstance(got.scan_object, dict)
+        ):
+            assert hasattr(got.scan_object, "status")
+            assert hasattr(got.scan_object, "scan_time")
+
     def test_repository_version_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING REPOSITORY VERSION FILTERING ===")

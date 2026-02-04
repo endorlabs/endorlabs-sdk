@@ -99,6 +99,38 @@ class TestAuditLog:
         assert got is not None
         assert got.uuid == item.uuid
 
+    def test_audit_log_spec_error_has_code_message_details(self) -> None:
+        """AuditLog spec.error exposes code, message, details when present."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.audit_log.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        if item.spec is not None:
+            assert hasattr(item.spec, "error")
+            if item.spec.error is not None:
+                assert hasattr(item.spec.error, "code")
+                assert hasattr(item.spec.error, "message")
+                assert hasattr(item.spec.error, "details")
+        ns = (
+            item.tenant_meta.namespace
+            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        got = client.audit_log.get(item.uuid, namespace=ns)
+        if got and got.spec and got.spec.error is not None:
+            assert hasattr(got.spec.error, "code")
+            assert hasattr(got.spec.error, "message")
+            assert hasattr(got.spec.error, "details")
+
     def test_audit_log_list_archived(self) -> None:
         """Test GET archived audit logs operation."""
         print("\n=== TESTING GET ARCHIVED AUDIT LOGS ===")

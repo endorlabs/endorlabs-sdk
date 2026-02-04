@@ -280,6 +280,27 @@ class TestNamespaces:
         assert got is not None
         assert got.uuid == item.uuid
 
+    def test_namespace_spec_has_full_name_and_managed(self) -> None:
+        """Namespace spec exposes full_name and managed when returned by API."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.namespace.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        assert hasattr(item.spec, "full_name")
+        assert hasattr(item.spec, "managed")
+        got = client.namespace.get(item)
+        assert hasattr(got.spec, "full_name")
+        assert hasattr(got.spec, "managed")
+
     def test_client_ux_create_namespace(self) -> None:
         """Consumer UX: client.namespace.create(payload); teardown deletes."""
         import random

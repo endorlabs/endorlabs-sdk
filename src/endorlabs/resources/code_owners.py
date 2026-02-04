@@ -44,6 +44,16 @@ class CodeOwnerData(BaseModel):
     model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
 
 
+class CodeOwnersVersion(BaseModel):
+    """Version of the CODEOWNERS file (ref, sha, metadata)."""
+
+    ref: str | None = Field(None, description="Resolved ref (e.g. branch or tag).")
+    sha: str | None = Field(None, description="Commit SHA.")
+    metadata: dict[str, Any] | None = Field(None, description="Version metadata.")
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
 class CodeOwnersSpec(BaseSpec):
     """Code owners specification extending BaseSpec."""
 
@@ -54,9 +64,9 @@ class CodeOwnersSpec(BaseSpec):
             "Refreshed from CODEOWNERS file or populated manually."
         ),
     )
-    version: dict[str, Any] | None = Field(
+    version: CodeOwnersVersion | None = Field(
         None,
-        description="Version of the CODEOWNERS file (ref, sha).",
+        description="Version of the CODEOWNERS file (ref, sha, metadata).",
     )
 
 
