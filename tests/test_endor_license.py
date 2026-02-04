@@ -40,6 +40,35 @@ class TestEndorLicense:
         )
         assert isinstance(result, list)
 
+    def test_endor_license_spec_quota_and_license_configurations(self) -> None:
+        """EndorLicense spec exposes quota and license_configurations when returned."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.endor_license.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        if item.spec is not None:
+            assert hasattr(item.spec, "quota")
+            assert hasattr(item.spec, "license_configurations")
+            if item.spec.quota is not None and not isinstance(item.spec.quota, dict):
+                assert hasattr(item.spec.quota, "max_daily_cloud_scans")
+                assert hasattr(item.spec.quota, "max_daily_pr_scans")
+            if item.spec.license_configurations is not None and not isinstance(
+                item.spec.license_configurations, dict
+            ):
+                assert hasattr(
+                    item.spec.license_configurations,
+                    "security_review_configuration",
+                )
+
     def test_endor_license_facade_get_raises_for_non_oss_namespace(self) -> None:
         """SystemResourceFacade get only when namespace is oss; otherwise use list."""
         import endorlabs

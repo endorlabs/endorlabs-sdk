@@ -66,6 +66,17 @@ class AuditLogOperation(FlexibleEnum):
     UPSERT = "OPERATION_UPSERT"
 
 
+class AuditLogError(BaseModel):
+    """Error information when an audit log operation failed (gRPC Status-like)."""
+
+    code: int | None = Field(None, description="Error code.")
+    message: str | None = Field(None, description="Error message.")
+    details: list[Any] | None = Field(
+        None,
+        description="Additional error details (list of objects or strings).",
+    )
+
+
 class AuditLogSpec(BaseSpec):
     """Audit log specification extending BaseSpec."""
 
@@ -95,7 +106,7 @@ class AuditLogSpec(BaseSpec):
             "created or updated (protobuf Any format)"
         ),
     )
-    error: dict[str, Any] | None = Field(
+    error: AuditLogError | None = Field(
         None,
         description=(
             "Error information if the operation failed "

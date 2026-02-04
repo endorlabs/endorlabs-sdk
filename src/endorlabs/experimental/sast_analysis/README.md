@@ -1,8 +1,8 @@
-# Finding Correlation Analysis - Simple API
+# Finding Correlation Analysis - Minimal API
 
 **Experimental:** This feature may change; it is not covered by the same stability guarantees as the rest of the SDK.
 
-Simple tools for loading findings/rules from API and querying via SQL.
+Tools for loading findings/rules from API and querying via SQL.
 
 ## Usage
 

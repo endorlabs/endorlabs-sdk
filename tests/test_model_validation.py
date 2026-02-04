@@ -20,6 +20,7 @@ from endorlabs.utils.model_validation import (
     get_list_filter_map,
     get_tags_update_paths,
     merge_partial_update,
+    parse_update_mask,
     safe_serialize,
     validate_update_mask,
 )
@@ -90,6 +91,25 @@ class TestGetImmutableFieldsCls:
         assert "spec.policy_type" in fields
 
 
+class TestParseUpdateMask:
+    """Tests for parse_update_mask."""
+
+    def test_single_field(self) -> None:
+        assert parse_update_mask("meta.tags") == ["meta.tags"]
+
+    def test_multiple_fields(self) -> None:
+        assert parse_update_mask("meta.description, meta.tags") == [
+            "meta.description",
+            "meta.tags",
+        ]
+
+    def test_empty_and_whitespace_entries_dropped(self) -> None:
+        assert parse_update_mask("a,, b ") == ["a", "b"]
+
+    def test_empty_string_returns_empty_list(self) -> None:
+        assert parse_update_mask("") == []
+
+
 class TestGetTagsUpdatePaths:
     """Tests for get_tags_update_paths(model_class) (tag capability from model)."""
 
@@ -120,6 +140,24 @@ class TestGetListFilterMap:
         assert m.get("name") == "meta.name"
         assert m.get("vcs_url") == "spec.vcs_url"
         assert m.get("git_url") == "spec.vcs_url"
+
+    def test_authorization_policy_has_name_in_map(self) -> None:
+        """authorization_policy supports list(name=...) / lookup(name=...)."""
+        m = get_list_filter_map("authorization_policy")
+        assert "name" in m
+        assert m["name"] == "meta.name"
+
+    def test_list_filter_map_keys_match_resource_name_to_type_values(self) -> None:
+        """Every LIST_FILTER_KWARG_MAP key has a RESOURCE_NAME_TO_TYPE entry."""
+        from endorlabs.models.base import RESOURCE_NAME_TO_TYPE
+        from endorlabs.utils import model_validation
+
+        type_values = set(RESOURCE_NAME_TO_TYPE.values())
+        map_keys = set(model_validation.LIST_FILTER_KWARG_MAP)
+        for key in map_keys:
+            assert key in type_values, (
+                f"LIST_FILTER_KWARG_MAP key {key!r} not in RESOURCE_NAME_TO_TYPE values"
+            )
 
     def test_unknown_returns_empty(self) -> None:
         assert get_list_filter_map("") == {}

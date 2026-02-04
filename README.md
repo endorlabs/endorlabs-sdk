@@ -55,7 +55,7 @@ ENDOR_LOG_LEVEL=INFO
 
 ## Quick start
 
-Recommended entry point is `endorlabs.Client` with a default tenant namespace. Each resource is exposed as a facade: `client.namespace`, `client.project`, `client.finding`, `client.scan_result`, etc., with `.list()`, `.get()`, `.create()`, `.update()`, and `.delete()`.
+Entry point is `endorlabs.Client` with a default tenant namespace. Each resource is exposed as a facade: `client.namespace`, `client.project`, `client.finding`, `client.scan_result`, etc., with `.list()`, `.get()`, `.create()`, `.update()`, and `.delete()`.
 
 ### Basic usage
 
