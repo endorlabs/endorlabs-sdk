@@ -56,8 +56,14 @@ class NamespaceMeta(BaseMeta):
 class NamespaceSpec(BaseSpec):
     """Namespace specification extending BaseSpec."""
 
-    # Namespace-specific fields (universal fields inherited from BaseSpec)
-    pass  # No additional fields needed for namespace spec
+    full_name: str | None = Field(
+        None,
+        description="Fully qualified namespace name (read-only).",
+    )
+    managed: bool | None = Field(
+        None,
+        description="Whether the namespace is managed (read-only).",
+    )
 
 
 class NamespaceMetaCreate(BaseModel):

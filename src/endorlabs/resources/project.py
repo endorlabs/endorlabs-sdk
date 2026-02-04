@@ -210,6 +210,18 @@ class ProjectSpec(BaseSpec):
     )
     # Required per v1ProjectSpec; optional when list mask omits it
     platform_source: str | None = Field(None, description="Platform source identifier")
+    scan_profile_uuid: str | None = Field(
+        None, description="Scan profile UUID (mutable via PATCH)."
+    )
+    toolchain_profile_uuid: str | None = Field(
+        None, description="Toolchain profile UUID (mutable via PATCH)."
+    )
+    ingestion_token: str | None = Field(
+        None, description="Ingestion token (read-only)."
+    )
+    is_archived: bool | None = Field(
+        None, description="Whether the project is archived (read-only)."
+    )
 
 
 class ProcessingStatus(BaseModel):
@@ -311,6 +323,7 @@ class Project(BaseResource):
                 "ingestion_token",
                 "toolchain_profile_uuid",
                 "scan_profile_uuid",
+                "is_archived",
             }
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
