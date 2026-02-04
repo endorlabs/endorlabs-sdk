@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..types import ListParameters
@@ -54,6 +55,23 @@ class VersionInfo(BaseModel):
         description="Resolved ref of source control version: tag, branch, or SHA",
     )
     metadata: dict[str, Any] | None = Field(None, description="Version metadata.")
+
+
+class ScanObject(BaseModel):
+    """Scan object information for a repository version."""
+
+    status: str | None = Field(None, description="Scan status.")
+    scan_time: str | None = Field(None, description="Last scan time.")
+    aisast_status: dict[str, Any] | None = Field(
+        None,
+        description="AI SAST indexing status (e.g. last_full_index_sha).",
+    )
+    endor_ignore_file_hash_map: dict[str, Any] | None = Field(
+        None,
+        description="Map of endor ignore file hashes.",
+    )
+
+    model_config = ConfigDict(extra="allow")
 
 
 class RepositoryVersionSpec(BaseSpec):
@@ -120,7 +138,7 @@ class RepositoryVersion(BaseResource):
     context: dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Contextual information", alias="context"
     )
-    scan_object: dict[str, Any] | None = Field(
+    scan_object: ScanObject | dict[str, Any] | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None, description="Scan object information", alias="scan_object"
     )
 
@@ -260,9 +278,7 @@ def update_repository_version(
             resource_uuid=repository_version_uuid,
         )
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = [
-        field.strip() for field in update_mask.split(",") if field.strip()
-    ]
+    update_mask_list = parse_update_mask(update_mask)
     ops = _get_repository_version_ops(client)
     return ops.update(
         tenant_meta_namespace, repository_version_uuid, payload, update_mask_list

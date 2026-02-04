@@ -1,6 +1,6 @@
 # SDK Conventions
 
-Single source of truth for Endor Cockpit SDK usage. Link here from other docs instead of re-stating. For SDK implementation, **best practices** means the patterns in this document and in [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
+Single source of truth for Endor Cockpit SDK usage. Link here from other docs instead of re-stating. For SDK implementation, **practices** means the patterns in this document and in [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
 
 ## Canonical naming
 
@@ -9,7 +9,7 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## OpenAPI / spec
 
-- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/openapi-swagger.json` (gitignored) in CI. For a single local step that creates `external_docs/` with both spec and user docs (recommended for advanced users / IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
+- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/openapi-swagger.json` (gitignored) in CI. For a single local step that creates `external_docs/` with both spec and user docs (for full IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
 - List endpoints: `v1/namespaces/{tenant_meta.namespace}/{resource_name}` (e.g. `findings`, `projects`).
 - Update (PATCH): Collection URL; UUID and payload in request body; optional `request.update_mask`.
 
@@ -63,16 +63,16 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 - **sort_by**, **desc**: Sorting. `sort_by` is the field path (e.g. `meta.create_time`); `desc=True` for descending, `False` or omit for ascending. The API expects `list_parameters.sort.path` and `list_parameters.sort.order` (enum: `SORT_ENTRY_ORDER_ASC`, `SORT_ENTRY_ORDER_DESC`). Legacy `sort_field` and `sort_order` are still supported and normalized to the same API params.
 - **traverse**: See above.
 - **count**, **from_date**, **to_date**: see `endorlabs.types.ListParameters` (Field descriptions there).
-- **archive**, **list_all**, **pr_uuid**: High-utility params (fetch from archive, list all with timeout, scope to a PR scan). Exposed as typed kwargs on the facade; also available via `list_params=ListParameters(...)`.
+- **archive**, **pr_uuid**: Common params (fetch from archive, scope to a PR scan). Exposed as typed kwargs on the facade; also available via `list_params=ListParameters(...)`. **list_all** is not on the facade; list operations always use full pagination (list_parameters.list_all=true). Use `list_params=ListParameters(list_all=False)` only when you need to cap at one page.
 - **Grouping/aggregation**: `group_aggregation_paths`, `group_by_time`, `group_by_time_interval`, `group_unique_count_paths`, etc. Use `list_params=ListParameters(...)` for full control; see `endorlabs.types.ListParameters`.
 - Defined in `endorlabs.types.ListParameters`; see [src/endorlabs/types.py](../src/endorlabs/types.py).
 
-**Consumer UX:** High-utility params (filter, mask, traverse, page_size, page_token, page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid, list_all) are **flat kwargs** on `client.<resource>.list()`. Pass `list_params=ListParameters(...)` for grouping and other options. Do not combine filter and mask into one parameter. Full rationale and spec-driven UX: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
+**Consumer UX:** Common params (filter, mask, traverse, page_size, page_token, page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid) are **flat kwargs** on `client.<resource>.list()`. List operations use full pagination by default (list_all=true). Pass `list_params=ListParameters(...)` for grouping and other options. Do not combine filter and mask into one parameter. Details and spec-driven UX: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
 
 ## Create (decoupled)
 
 - **create** accepts either **payload** (CreateXPayload) for backward compatibility or **kwargs** that are passed to the resource’s `build_create_payload` (when the resource has a builder). Use `client.<resource>.create(name="...", namespace="...")` or `client.<resource>.create(payload=CreateXPayload(...))`. Responses stay `Resource` with `.spec`; no flattened view. See [reference/create-update-payloads.md](reference/create-update-payloads.md).
-- **High-utility facade params:** The facade may expose a small set of optional kwargs (e.g. `name`, `description`, `namespace_uuid`) merged into the builder path; the **allowed set** is defined only by the resource’s `build_create_payload`. Add an explicit facade param when the field is shared across many resources and commonly used (e.g. by endorctl).
+- **Common facade params:** The facade may expose a small set of optional kwargs (e.g. `name`, `description`, `namespace_uuid`) merged into the builder path; the **allowed set** is defined only by the resource’s `build_create_payload`. Add an explicit facade param when the field is shared across many resources and commonly used (e.g. by endorctl).
 
 ## Update and update_mask
 
@@ -81,8 +81,8 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 - Namespace: `update_mask` is **required** (e.g. `"meta.description"`); API returns 400 without at least one field.
 - Immutable fields in `update_mask` are rejected by the SDK before the request.
 
-**Implicit update_mask (field kwargs):** When `update_mask` is omitted, the facade accepts field kwargs (e.g. `meta_description`, `meta_tags`, `scan_state`). The mask is derived from those kwargs and the payload is built by the resource (see `BaseResource.update` and `_build_update_payload`). Use either `client.<resource>.update(resource, meta_description="...", meta_tags=[...])` or `resource.update(client.<resource>, meta_description="...")`. Which fields are allowed is defined by the model’s mutable paths (e.g. `Project.get_mutable_fields()`).
-- **High-utility facade params:** Optional facade params (e.g. `meta_description`, `meta_tags`) are merged into the field-kwargs path; the **allowed set** is defined only by the resource’s `get_mutable_fields()` / `get_update_kwarg_to_path()`.
+**Implicit update_mask (field kwargs):** When `update_mask` is omitted, the facade accepts field kwargs (e.g. `meta_description`, `meta_tags`, `scan_state`). The mask is derived from those kwargs and the payload is built by the resource (see `BaseResource.update` and `_build_update_payload`). Use either `client.<resource>.update(resource, meta_description="...", meta_tags=[...])` or `resource.update(client.<resource>, meta_description="...")`. You must pass a resource instance (not a UUID string) when using field kwargs. All mutable fields are available via `resource.update(facade, **kwargs)`; the model's `get_mutable_fields()` / `get_update_kwarg_to_path()` define the allowed set. The facade's explicit params (`meta_description`, `meta_tags`) are a convenience subset.
+- **Common facade params:** Optional facade params (e.g. `meta_description`, `meta_tags`) are merged into the field-kwargs path; the **allowed set** is defined only by the resource’s `get_mutable_fields()` / `get_update_kwarg_to_path()`.
 
 ## Type overrides and Pyright
 

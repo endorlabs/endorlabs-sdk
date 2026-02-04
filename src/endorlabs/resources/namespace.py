@@ -24,6 +24,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..exceptions import ValidationError as EndorValidationError
 from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..types import ListParameters
@@ -55,8 +56,14 @@ class NamespaceMeta(BaseMeta):
 class NamespaceSpec(BaseSpec):
     """Namespace specification extending BaseSpec."""
 
-    # Namespace-specific fields (universal fields inherited from BaseSpec)
-    pass  # No additional fields needed for namespace spec
+    full_name: str | None = Field(
+        None,
+        description="Fully qualified namespace name (read-only).",
+    )
+    managed: bool | None = Field(
+        None,
+        description="Whether the namespace is managed (read-only).",
+    )
 
 
 class NamespaceMetaCreate(BaseModel):
@@ -409,7 +416,7 @@ def update_namespace(
             namespace=tenant_meta_namespace,
             resource_uuid=namespace_uuid,
         )
-    update_mask_list = [p.strip() for p in update_mask.split(",") if p.strip()]
+    update_mask_list = parse_update_mask(update_mask)
     ops = _get_namespace_ops(client)
     logger.info(f"Updating namespace {namespace_uuid} with mask: {update_mask}")
     return ops.update(tenant_meta_namespace, namespace_uuid, payload, update_mask_list)

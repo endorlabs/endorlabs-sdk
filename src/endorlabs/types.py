@@ -180,7 +180,7 @@ class SchemaDriftInfo(TypedDict):
 
 
 # Universal List Parameters
-# High-utility params are exposed as explicit facade kwargs; all params map to
+# Common list params are exposed as explicit facade kwargs; all params map to
 # list_parameters.* on the wire. Names follow API spec in snake_case.
 class ListParameters(BaseModel):
     """Universal list parameters for all Endor Labs resources."""
@@ -217,7 +217,7 @@ class ListParameters(BaseModel):
         description=(
             "Traverse all child namespaces recursively. "
             "When True, automatically queries all namespaces in the hierarchy. "
-            "Recommended for tenant-wide queries "
+            "Use for tenant-wide queries "
             "(e.g., all dependencies across all namespaces)."
         ),
     )
@@ -228,7 +228,7 @@ class ListParameters(BaseModel):
         description="When True, fetch resources from the archive.",
     )
     list_all: bool | None = Field(
-        None,
+        True,
         description="List all resources (use with timeout for large result sets).",
     )
     pr_uuid: str | None = Field(

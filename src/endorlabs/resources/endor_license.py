@@ -14,7 +14,7 @@ import logging
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, override
 
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
@@ -35,6 +35,49 @@ def _get_endor_license_ops(
 ) -> BaseResourceOperations[EndorLicense]:
     """Get BaseResourceOperations instance for Endor licenses."""
     return BaseResourceOperations(client, "endor-licenses", EndorLicense)
+
+
+class AiLimit(BaseModel):
+    """AI limit quota (days, max_tokens)."""
+
+    days: int | None = Field(None, description="Days.")
+    max_tokens: int | None = Field(None, description="Max tokens.")
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
+class Quota(BaseModel):
+    """License quota (e.g. max_daily_cloud_scans, ai_limit)."""
+
+    max_daily_cloud_scans: int | None = Field(
+        None, description="Max daily cloud scans."
+    )
+    max_daily_pr_scans: int | None = Field(None, description="Max daily PR scans.")
+    ai_limit: AiLimit | dict[str, Any] | None = Field(
+        None, description="AI limit (days, max_tokens)."
+    )
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
+class SecurityReviewConfiguration(BaseModel):
+    """Security review license configuration."""
+
+    max_pr_reviews_per_month: int | None = Field(
+        None, description="Max PR reviews per month."
+    )
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
+class LicenseConfigurations(BaseModel):
+    """License configurations (e.g. security_review_configuration)."""
+
+    security_review_configuration: SecurityReviewConfiguration | None = Field(
+        None, description="Security review configuration."
+    )
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
 
 
 class EndorLicenseSpec(BaseSpec):
@@ -60,11 +103,11 @@ class EndorLicenseSpec(BaseSpec):
         None,
         description="Whether the tenant is a customer.",
     )
-    license_configurations: dict[str, Any] | None = Field(
+    license_configurations: LicenseConfigurations | dict[str, Any] | None = Field(
         None,
         description="License configurations (e.g. security_review_configuration).",
     )
-    quota: dict[str, Any] | None = Field(
+    quota: Quota | dict[str, Any] | None = Field(
         None,
         description="Quota (e.g. ai_limit, max_daily_cloud_scans).",
     )

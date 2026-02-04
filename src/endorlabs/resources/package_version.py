@@ -33,6 +33,7 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..types import ListParameters
@@ -595,9 +596,7 @@ def update_package_version(
             resource_uuid=package_version_uuid,
         )
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = [
-        field.strip() for field in update_mask.split(",") if field.strip()
-    ]
+    update_mask_list = parse_update_mask(update_mask)
     ops = _get_package_version_ops(client)
     return ops.update(
         tenant_meta_namespace, package_version_uuid, payload, update_mask_list

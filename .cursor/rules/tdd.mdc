@@ -1,0 +1,8 @@
+---
+alwaysApply: true
+---
+
+Use Test-Driven development while avoiding regressions across linters and tests for changes in src. 
+New implementations or modifications to code shall include writing tests by first researching the API spec. https://api.endorlabs.com/download/openapiv2.swagger.json  
+Must maintain architectural consistency with the rest of the implementations.
+Balance DX, maintainability with correctness to API Spec contract.

@@ -18,6 +18,7 @@ from ..models.base import (
     BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -43,6 +44,16 @@ class CodeOwnerData(BaseModel):
     model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
 
 
+class CodeOwnersVersion(BaseModel):
+    """Version of the CODEOWNERS file (ref, sha, metadata)."""
+
+    ref: str | None = Field(None, description="Resolved ref (e.g. branch or tag).")
+    sha: str | None = Field(None, description="Commit SHA.")
+    metadata: dict[str, Any] | None = Field(None, description="Version metadata.")
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
 class CodeOwnersSpec(BaseSpec):
     """Code owners specification extending BaseSpec."""
 
@@ -53,9 +64,9 @@ class CodeOwnersSpec(BaseSpec):
             "Refreshed from CODEOWNERS file or populated manually."
         ),
     )
-    version: dict[str, Any] | None = Field(
+    version: CodeOwnersVersion | None = Field(
         None,
-        description="Version of the CODEOWNERS file (ref, sha).",
+        description="Version of the CODEOWNERS file (ref, sha, metadata).",
     )
 
 
@@ -158,7 +169,7 @@ def update_code_owners(
     if isinstance(payload, dict):
         payload = CodeOwners(**payload)
     mask_list: list[str] = (
-        [p.strip() for p in update_mask.split(",") if p.strip()]
+        parse_update_mask(update_mask)
         if isinstance(update_mask, str)
         else (update_mask or [])
     )
