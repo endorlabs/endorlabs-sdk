@@ -24,6 +24,7 @@ from ..models.base import (
     BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..types import ListParameters
@@ -359,9 +360,7 @@ def update_package_license(
             resource_uuid=package_license_uuid,
         )
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = [
-        field.strip() for field in update_mask.split(",") if field.strip()
-    ]
+    update_mask_list = parse_update_mask(update_mask)
     ops = _get_package_license_ops(client)
     return ops.update(
         PACKAGE_LICENSE_NAMESPACE, package_license_uuid, payload, update_mask_list

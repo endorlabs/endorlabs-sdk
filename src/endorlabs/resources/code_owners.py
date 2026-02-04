@@ -18,6 +18,7 @@ from ..models.base import (
     BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -158,7 +159,7 @@ def update_code_owners(
     if isinstance(payload, dict):
         payload = CodeOwners(**payload)
     mask_list: list[str] = (
-        [p.strip() for p in update_mask.split(",") if p.strip()]
+        parse_update_mask(update_mask)
         if isinstance(update_mask, str)
         else (update_mask or [])
     )

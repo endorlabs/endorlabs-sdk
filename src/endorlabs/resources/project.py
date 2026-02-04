@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..types import ListParameters
@@ -608,9 +609,7 @@ def update_project(
         if current_project.tenant_meta
         else {"namespace": tenant_meta_namespace}
     )
-    update_mask_list_pre = [
-        field.strip() for field in update_mask.split(",") if field.strip()
-    ]
+    update_mask_list_pre = parse_update_mask(update_mask)
     has_processing_status_mask = any(
         p.startswith("processing_status.") for p in update_mask_list_pre
     )

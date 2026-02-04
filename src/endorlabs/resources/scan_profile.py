@@ -31,6 +31,7 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -615,9 +616,7 @@ def update_scan_profile(
     scan_profile_obj = ScanProfile(**scan_profile_dict)
 
     # Convert update_mask from string to List[str] for base class
-    update_mask_list = [
-        field.strip() for field in update_mask.split(",") if field.strip()
-    ]
+    update_mask_list = parse_update_mask(update_mask)
 
     # Use base class update method
     ops = _get_scan_profile_ops(client)
