@@ -1,25 +1,12 @@
-"""Minimal entrypoint for Endor SDK.
+"""Minimal entrypoint for Endor SDK (maximum UX demo).
 
 Run with: uv run main.py
-Environment is loaded from .env when using uv (UV_ENV_FILE) or direnv.
-Credentials: set ENDOR_API_CREDENTIALS_KEY and ENDOR_API_CREDENTIALS_SECRET
-in .env, or pass key= and secret= to APIClient(...).
+Uses tenant and project ID only; no argparse, no pre-knowledge of backend paths
+or filter syntax. Demonstrates: resolve by ID, resource as context, list(parent=),
+.namespace, trigger scan, wait_until idle.
 
-Create an .env file in the root of the repository with the following variables:
-ENDOR_API_CREDENTIALS_KEY=your-api-key
-ENDOR_API_CREDENTIALS_SECRET=your-api-secret
-ENDOR_NAMESPACE=your-tenant-namespace
-ENDOR_LOG_LEVEL=DEBUG
-ENDOR_MAX_RETRIES=5
-ENDOR_TOKEN=your-token
-ENDOR_AUTH_METHOD=api-key
-ENDOR_EMAIL=your-email
-
-Then run script with: uv run --env-file .env main.py
-
+Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET (or .env).
 """
-
-import os
 
 import endorlabs
 
@@ -31,10 +18,22 @@ def main() -> None:
     """Create a client and list namespaces (demo entrypoint)."""
     # Replace with your tenant namespace
     client = endorlabs.Client(
-        tenant=os.getenv("ENDOR_NAMESPACE", "endor-solutions-tgowan"),
+        tenant="endor-solutions-tgowan",
         logging_level="ERROR",
         auth_method="api-key",
     )
+
+    project = client.project.lookup(
+        filter="meta.name == https://github.com/DefectDojo/django-DefectDojo.git"
+    )
+    findings = client.finding.list(
+        filter=f"spec.project_uuid == {project.uuid}", traverse=True
+    )
+    for finding in findings:
+        print(f"Finding: {finding.spec.summary}")
+    print(f"Total findings: {len(findings)}")
+    exit(0)
+
     my_api_keys = client.api_key.list(traverse=True)
     for api_key in my_api_keys:
         print(f"API Key: {api_key.meta.name}")

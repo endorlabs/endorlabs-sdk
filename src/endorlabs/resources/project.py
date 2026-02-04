@@ -28,6 +28,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..types import ListParameters
@@ -209,6 +210,18 @@ class ProjectSpec(BaseSpec):
     )
     # Required per v1ProjectSpec; optional when list mask omits it
     platform_source: str | None = Field(None, description="Platform source identifier")
+    scan_profile_uuid: str | None = Field(
+        None, description="Scan profile UUID (mutable via PATCH)."
+    )
+    toolchain_profile_uuid: str | None = Field(
+        None, description="Toolchain profile UUID (mutable via PATCH)."
+    )
+    ingestion_token: str | None = Field(
+        None, description="Ingestion token (read-only)."
+    )
+    is_archived: bool | None = Field(
+        None, description="Whether the project is archived (read-only)."
+    )
 
 
 class ProcessingStatus(BaseModel):
@@ -310,6 +323,7 @@ class Project(BaseResource):
                 "ingestion_token",
                 "toolchain_profile_uuid",
                 "scan_profile_uuid",
+                "is_archived",
             }
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
@@ -608,9 +622,7 @@ def update_project(
         if current_project.tenant_meta
         else {"namespace": tenant_meta_namespace}
     )
-    update_mask_list_pre = [
-        field.strip() for field in update_mask.split(",") if field.strip()
-    ]
+    update_mask_list_pre = parse_update_mask(update_mask)
     has_processing_status_mask = any(
         p.startswith("processing_status.") for p in update_mask_list_pre
     )

@@ -159,6 +159,33 @@ class TestProject:
         assert got is not None
         assert got.uuid == item.uuid
 
+    def test_project_spec_has_scan_profile_and_archived_attrs(self) -> None:
+        """Project spec has scan_profile_uuid, toolchain_profile_uuid and related."""
+        import endorlabs
+
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.client,
+        )
+        items = client.project.list(
+            traverse=True,
+            max_pages=conftest.TEST_MAX_PAGES_TRAVERSE,
+        )
+        if not items:
+            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+        item = items[0]
+        assert item.spec is not None
+        assert hasattr(item.spec, "scan_profile_uuid")
+        assert hasattr(item.spec, "toolchain_profile_uuid")
+        assert hasattr(item.spec, "ingestion_token")
+        assert hasattr(item.spec, "is_archived")
+        got = client.project.get(item)
+        if got and got.spec:
+            assert hasattr(got.spec, "scan_profile_uuid")
+            assert hasattr(got.spec, "toolchain_profile_uuid")
+            assert hasattr(got.spec, "ingestion_token")
+            assert hasattr(got.spec, "is_archived")
+
     @pytest.mark.writes
     def test_associate_scan_profile_with_project(self) -> None:
         """Test associating a scan profile with a project.

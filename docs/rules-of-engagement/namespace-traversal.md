@@ -158,7 +158,7 @@ The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true
 
 The `include_child_namespaces` parameter has been removed. Use `traverse` instead.
 
-## Best Practices
+## Guidelines
 
 1. **Default to traverse for tenant-wide queries**: If you're querying across namespaces, use `traverse=True`
 

@@ -26,6 +26,7 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -53,17 +54,62 @@ class NotificationTargetActionType(FlexibleEnum):
     GITHUB_PR = "ACTION_TYPE_GITHUB_PR"
 
 
+class NotificationAction(BaseModel):
+    """Action configuration (action_type and type-specific config)."""
+
+    action_type: NotificationTargetActionType | str | None = Field(
+        None,
+        description="Type of action (email, slack, jira, webhook, etc.).",
+    )
+    email_config: dict[str, Any] | None = Field(
+        None, description="Email action config (e.g. receivers_addresses)."
+    )
+    slack_config: dict[str, Any] | None = Field(
+        None, description="Slack action config (e.g. webhook_url)."
+    )
+    jira_config: dict[str, Any] | None = Field(None, description="JIRA action config.")
+    webhook_config: dict[str, Any] | None = Field(
+        None, description="Webhook action config (url, auth_method, etc.)."
+    )
+    github_pr_config: dict[str, Any] | None = Field(
+        None, description="GitHub PR action config."
+    )
+    vanta_config: dict[str, Any] | None = Field(
+        None, description="Vanta action config."
+    )
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
+class CustomTemplate(BaseModel):
+    """Custom template for the notification."""
+
+    template_type: str | None = Field(None, description="Type of template.")
+    email_template: dict[str, Any] | None = Field(
+        None, description="Email template (open_action, resolve_action, etc.)."
+    )
+    slack_template: dict[str, Any] | None = Field(None, description="Slack template.")
+    webhook_template: dict[str, Any] | None = Field(
+        None, description="Webhook template."
+    )
+    prcomments_template: dict[str, Any] | None = Field(
+        None, description="PR comments template."
+    )
+
+    model_config: ClassVar[dict[str, str]] = {"extra": "allow"}  # type: ignore[assignment]
+
+
 class NotificationTargetSpec(BaseSpec):
     """Notification target specification extending BaseSpec."""
 
-    action: dict[str, Any] | None = Field(
+    action: NotificationAction | dict[str, Any] | None = Field(
         None,
         description=(
             "Action configuration: action_type and type-specific config "
             "(jira_config, email_config, slack_config, github_pr_config, etc.)"
         ),
     )
-    custom_template: dict[str, Any] | None = Field(
+    custom_template: CustomTemplate | dict[str, Any] | None = Field(
         None,
         description="Custom template for the notification; default used if not set.",
     )
@@ -181,7 +227,7 @@ def update_notification_target(
     if isinstance(payload, dict):
         payload = NotificationTarget(**payload)
     mask_list: list[str] = (
-        [p.strip() for p in update_mask.split(",") if p.strip()]
+        parse_update_mask(update_mask)
         if isinstance(update_mask, str)
         else (update_mask or [])
     )

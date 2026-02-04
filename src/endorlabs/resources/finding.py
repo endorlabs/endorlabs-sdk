@@ -31,6 +31,7 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -519,7 +520,7 @@ class FindingSpec(BaseSpec):
         None, description="Information about why this finding is considered noteworthy"
     )  # IMMUTABLE: Analysis-determined
     remediation_action: FindingRemediation | None = Field(
-        None, description="Recommended action to resolve the finding"
+        None, description="Suggested action to resolve the finding"
     )  # IMMUTABLE: Analysis-determined
     source_code_version: SourceCodeVersion | None = Field(
         None,
@@ -1121,9 +1122,7 @@ def update_finding(
         merged_finding = Finding(**merged_finding_dict)
 
         # Convert update_mask from string to List[str] for base class
-        update_mask_list = [
-            field.strip() for field in update_mask.split(",") if field.strip()
-        ]
+        update_mask_list = parse_update_mask(update_mask)
 
         # Use base class update method
         ops = _get_finding_ops(client)

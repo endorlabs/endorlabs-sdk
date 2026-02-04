@@ -1,7 +1,7 @@
 """Tests for the resource-oriented Client facade (TDD).
 
 Verifies delegation, namespace resolution, and convenience kwargs
-for endorlabs.Client and client.namespace. Aligns with recommended UX
+for endorlabs.Client and client.namespace. Aligns with facade UX
 (import endorlabs; client = endorlabs.Client(...)) and registry-driven architecture.
 
 Delegation is asserted by injecting a mock into the facade's _list_fn (noqa: SLF001);
@@ -363,6 +363,17 @@ def test_update_with_uuid_requires_payload(
     client.project._update_fn.assert_not_called()
 
 
+def test_update_with_field_kwargs_requires_resource_instance(
+    client_with_mock_transport: Client,
+) -> None:
+    """update(uuid, meta_description=...) raises TypeError; need resource instance."""
+    client = client_with_mock_transport
+    client.project._update_fn = Mock()
+    with pytest.raises(TypeError, match="resource instance"):
+        client.project.update("proj-uuid", meta_description="new desc")
+    client.project._update_fn.assert_not_called()
+
+
 def test_update_requires_update_mask(
     client_with_mock_transport: Client,
 ) -> None:
@@ -633,7 +644,7 @@ def test_list_with_explicit_filter_for_resource_without_filter_map(
 def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
     client_with_mock_transport: Client,
 ) -> None:
-    """Pass archive, page_id, pr_uuid, list_all to ListParameters."""
+    """Pass archive, page_id, pr_uuid to ListParameters; list_all is True (default)."""
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.namespace._list_fn = mock_list
@@ -641,7 +652,6 @@ def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
         archive=True,
         page_id="p1",
         pr_uuid="pr-1",
-        list_all=True,
         max_pages=conftest.TEST_MAX_PAGES,
     )
     mock_list.assert_called_once()
@@ -651,7 +661,7 @@ def test_list_with_high_utility_kwargs_passes_archive_page_id_pr_uuid_list_all(
     assert lp.archive is True
     assert lp.page_id == "p1"
     assert lp.pr_uuid == "pr-1"
-    assert lp.list_all is True
+    assert lp.list_all is True  # default for list operations
 
 
 def test_list_explicit_kwargs_override_list_params(
@@ -735,6 +745,61 @@ def test_lookup_calls_list_with_identity_kwargs(
     assert "meta.name" in lp.filter
     assert "backend" in lp.filter
     assert args[3] == 2
+
+
+def test_list_with_identity_kwargs_builds_filter_when_in_map(
+    client_with_mock_transport: Client,
+) -> None:
+    """policy has name in list filter map; list(name='x') builds filter from name."""
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.policy._list_fn = mock_list
+    client.policy.list(name="my-policy", max_pages=conftest.TEST_MAX_PAGES)
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter is not None
+    assert "meta.name" in lp.filter
+    assert "my-policy" in lp.filter
+
+
+def test_authorization_policy_lookup_builds_filter_from_name(
+    client_with_mock_transport: Client,
+) -> None:
+    """authorization_policy.lookup(name='x') delegates to list with filter from name."""
+    client = client_with_mock_transport
+    single = Mock(
+        uuid="ap-1",
+        tenant_meta=Mock(namespace=conftest.TEST_NAMESPACE_DEFAULT),
+    )
+    mock_list = Mock(return_value=[single])
+    client.authorization_policy._list_fn = mock_list
+    result = client.authorization_policy.lookup(name="only-one", max_pages=2)
+    assert result is single
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    assert lp is not None
+    assert lp.filter is not None
+    assert "meta.name" in lp.filter
+    assert "only-one" in lp.filter
+
+
+def test_list_name_passed_through_when_not_in_identity_map(
+    client_with_mock_transport: Client,
+) -> None:
+    """scan_workflow has no list identity map; name is not converted to filter."""
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.scan_workflow._list_fn = mock_list
+    client.scan_workflow.list(name="some-workflow", max_pages=conftest.TEST_MAX_PAGES)
+    mock_list.assert_called_once()
+    args, _ = mock_list.call_args
+    lp = args[2]
+    # scan_workflow is not in LIST_FILTER_KWARG_MAP, so no filter from identity;
+    # name is not a ListParameters field so lp may be None or have no filter.
+    assert lp is None or "meta.name" not in (lp.filter or "")
 
 
 def test_list_with_parent_uses_parent_namespace_and_filter(

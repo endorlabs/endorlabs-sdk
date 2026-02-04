@@ -60,10 +60,10 @@ Attached as `client.<attr_name>` (e.g. `client.project`). Methods:
 | `list(traverse=..., namespace=..., list_params=..., max_pages=..., **kwargs)` | Full; return `list[T]` | Yes |
 | `lookup(...)` | Full; return `T` | Yes |
 | `list_iter(...)` | Full; return `Iterator[T]` | Yes |
-| `get(id_or_resource: str \| T, namespace=...)` | Full; overloads for str vs T recommended | Yes |
+| `get(id_or_resource: str \| T, namespace=...)` | Full; overloads for str vs T (preferred) | Yes |
 | `create(payload, namespace=...)` | Full | Yes |
-| `update(id_or_resource, payload=..., *, update_mask, namespace=...)` | Full; overloads recommended | Yes |
-| `delete(name_or_resource, namespace=..., *, ignore_missing=...)` | Full; overloads recommended | Yes |
+| `update(id_or_resource, payload=..., *, update_mask, namespace=...)` | Full; overloads (preferred) | Yes |
+| `delete(name_or_resource, namespace=..., *, ignore_missing=...)` | Full; overloads (preferred) | Yes |
 | `tag(id_or_resource, tags, namespace=...)` | Full | Yes |
 | `untag(id_or_resource, keys, namespace=...)` | Full | Yes |
 
@@ -79,11 +79,11 @@ All exception classes and `map_status_code_to_exception` must have full types an
 
 ### Resource modules (in `__all__`)
 
-For each of `dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`: module-level functions used by the facade are part of the developer surface when accessed via `client.<resource>.*`. The same functions are also power-user surface when imported from `endorlabs.resources.<name>` (see below).
+For each of `dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`: module-level functions used by the facade are part of the developer surface when accessed via `client.<resource>.*`. The same functions are also module-level surface when imported from `endorlabs.resources.<name>` (see below).
 
 ---
 
-## 2. Power user surface (advanced / module-level usage)
+## 2. Module-level surface (advanced usage)
 
 **Contract:** Explicit imports such as `from endorlabs.operations import ...`, `from endorlabs.utils import ...`, `from endorlabs.types import ...`, `from endorlabs.resources import <module>`, and direct use of `APIClient`.
 
@@ -135,9 +135,9 @@ For each module, public surface: `list_*`, `get_*`, `create_*`, `update_*`, `del
 
 ## 3. Raw client surface
 
-**Contract:** Use of `APIClient` only (no `Client`, no facades). Same as power user but scoped to [src/endorlabs/api_client.py](../../src/endorlabs/api_client.py): every public method and attribute must have full types and docstrings.
+**Contract:** Use of `APIClient` only (no `Client`, no facades). Same as module-level but scoped to [src/endorlabs/api_client.py](../../src/endorlabs/api_client.py): every public method and attribute must have full types and docstrings.
 
-**Deliverable:** Covered by the Power user section above; raw client = `APIClient` only.
+**Deliverable:** Covered by the Module-level section above; raw client = `APIClient` only.
 
 ---
 
@@ -146,7 +146,7 @@ For each module, public surface: `list_*`, `get_*`, `create_*`, `update_*`, `del
 | Surface | Entry point | Types | Docstrings |
 |---------|-------------|--------|------------|
 | Developer | `import endorlabs`, `endorlabs.__all__`, `Client`, facades | Full | Required |
-| Power user | `endorlabs.api_client`, `endorlabs.types`, `endorlabs.resources.*`, `endorlabs.operations`, `endorlabs.utils`, `endorlabs.models` | Full | Required |
+| Module-level | `endorlabs.api_client`, `endorlabs.types`, `endorlabs.resources.*`, `endorlabs.operations`, `endorlabs.utils`, `endorlabs.models` | Full | Required |
 | Raw client | `APIClient` only | Full | Required |
 
 Internal symbols (not in the above) use a leading `_` and are documented as internal; they are not part of the supported API contract.

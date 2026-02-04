@@ -19,7 +19,7 @@ uv sync
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
 
-### Pre-commit hook (recommended)
+### Pre-commit hook (optional)
 
 Run the same lint/format/typecheck as CI before each commit. Pre-commit is a dev dependency; use it so hooks run automatically for all maintainers.
 
@@ -102,7 +102,7 @@ uv run pyright --project pyproject.toml
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. They also run automatically before commit when the pre-commit hook is installed (see [Pre-commit hook](#pre-commit-hook-recommended) above).
+CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. They also run automatically before commit when the pre-commit hook is installed (see [Pre-commit hook](#pre-commit-hook-optional) above).
 
 ## Optional: direnv
 
