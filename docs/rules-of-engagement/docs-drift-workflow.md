@@ -4,9 +4,9 @@
 
 Local setup: see [CONTRIBUTORS.md](../../CONTRIBUTORS.md).
 
-## Sync external docs (recommended for advanced users)
+## Sync external docs (optional, for full IDE context)
 
-A single workflow creates the gitignored `external_docs/` folder with both the OpenAPI spec and user documentation from [docs.endorlabs.com](https://docs.endorlabs.com/). **Recommended for advanced users** to pull full platform-admin context into the IDE.
+A single workflow creates the gitignored `external_docs/` folder with both the OpenAPI spec and user documentation from [docs.endorlabs.com](https://docs.endorlabs.com/). **Optional, for full IDE context** — pull full platform-admin context into the IDE.
 
 ```bash
 uv sync --extra docs
@@ -39,7 +39,7 @@ The schema drift workflow:
 
 ## Local Use
 
-**Option A — Full context:** Sync spec + user docs into `external_docs/`, then run drift detection (see [Sync external docs](#sync-external-docs-recommended-for-advanced-users) above).
+**Option A — Full context:** Sync spec + user docs into `external_docs/`, then run drift detection (see [Sync external docs](#sync-external-docs-optional-for-full-ide-context) above).
 
 **Option B — Spec only:** Create `external_docs/` and download the spec with the sync script, then run drift detection:
 

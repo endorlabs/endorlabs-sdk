@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Use Test-Driven development while avoiding regressions across linters and tests. New implementations or modifications to code shall include writing tests by first researching the API spec. https://api.endorlabs.com/download/openapiv2.swagger.json  (first check locally if available)  Validate theories by using the CLI endorctl api if that binary is present in host machine.  Must maintain architectural consistency with other implementations.

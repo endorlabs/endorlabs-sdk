@@ -30,7 +30,7 @@ ENDOR_NAMESPACE = os.getenv("ENDOR_NAMESPACE")
 
 
 class APIClient:
-    """Simple API client with retry, rate limiting handling and redacted logging.
+    """Minimal API client with retry, rate limiting handling and redacted logging.
 
     Retry Behavior:
         The client automatically retries requests for network-related errors and
