@@ -100,14 +100,14 @@ class _ListableFacade(Generic[T]):
         to_date: str | None = None,
         archive: bool | None = None,
         pr_uuid: str | None = None,
-        list_all: bool | None = None,
         **kwargs: Any,
     ) -> list[T]:
         """List resources; uses default namespace when namespace= not passed.
 
-        High-utility kwargs (filter, mask, traverse, page_size, page_token,
-        page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid,
-        list_all) map to list_parameters.*. Pass list_params= for full control
+        Common list kwargs (filter, mask, traverse, page_size, page_token,
+        page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid)
+        map to list_parameters.*. list_all is always True (full pagination).
+        Pass list_params= for full control
         (e.g. group_aggregation_paths). When the resource supports identity
         kwargs (e.g. name, git_url), pass them and they are translated to
         filter clauses. When the resource supports parent=, pass a parent
@@ -140,7 +140,6 @@ class _ListableFacade(Generic[T]):
                 ("to_date", to_date),
                 ("archive", archive),
                 ("pr_uuid", pr_uuid),
-                ("list_all", list_all),
             )
             if v is not None
         }
@@ -181,7 +180,6 @@ class _ListableFacade(Generic[T]):
         to_date: str | None = None,
         archive: bool | None = None,
         pr_uuid: str | None = None,
-        list_all: bool | None = None,
         **kwargs: Any,
     ) -> T:
         """Return the single resource matching the given identity kwargs.
@@ -208,7 +206,6 @@ class _ListableFacade(Generic[T]):
             to_date=to_date,
             archive=archive,
             pr_uuid=pr_uuid,
-            list_all=list_all,
             **kwargs,
         )
         if not items:
@@ -242,13 +239,12 @@ class _ListableFacade(Generic[T]):
         to_date: str | None = None,
         archive: bool | None = None,
         pr_uuid: str | None = None,
-        list_all: bool | None = None,
         **kwargs: Any,
     ) -> Iterator[T]:
         """Iterate over resources without materializing the full list.
 
         Accepts the same kwargs as list() (filter, mask, sort_by, desc,
-        archive, pr_uuid, list_all, etc.). When the resource supports parent=,
+        archive, pr_uuid, etc.). When the resource supports parent=,
         pass a parent resource to scope.
         """
         if self._list_iter_fn is None:
@@ -279,7 +275,6 @@ class _ListableFacade(Generic[T]):
                 ("to_date", to_date),
                 ("archive", archive),
                 ("pr_uuid", pr_uuid),
-                ("list_all", list_all),
             )
             if v is not None
         }

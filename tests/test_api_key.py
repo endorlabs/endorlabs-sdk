@@ -1,6 +1,6 @@
 """Test cases for APIKey resource operations.
 
-Tests list, get, create+delete (GC), and Client-recommended UX for APIKey resources.
+Tests list, get, create+delete (GC), and Client (facade) UX for APIKey resources.
 Aligns with test-driven-development.mdc and resource-implementation.md.
 """
 

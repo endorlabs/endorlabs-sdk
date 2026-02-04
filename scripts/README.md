@@ -4,9 +4,9 @@ Contributor setup: [CONTRIBUTORS.md](../CONTRIBUTORS.md).
 
 ## sync_external_docs.py
 
-One workflow creates the gitignored `external_docs/` folder with both the OpenAPI spec and user documentation. **Recommended for advanced users** to pull full platform-admin context into the IDE.
+One workflow creates the gitignored `external_docs/` folder with both the OpenAPI spec and user documentation. **Optional, for full IDE context** — pull full platform-admin context into the IDE.
 
-### Recommended: sync spec + user docs (full IDE context)
+### Option: sync spec + user docs (full IDE context)
 
 ```bash
 uv sync --extra docs

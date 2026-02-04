@@ -29,7 +29,7 @@ Definitions: [conventions.md](../conventions.md) (List parameters, Update and up
   - **mask** — response field mask (comma-separated paths).
   - **traverse**, **page_size**, **page_token**, **sort_by**, **desc**, **count**, **from_date**, **to_date** (all from `ListParameters`).
   - **namespace** — override default namespace.
-  - **list_params** — optional; for power users who want to pass a full `ListParameters` instead of kwargs.
+  - **list_params** — optional; to pass a full `ListParameters` instead of kwargs.
   - **max_pages** — pagination cap.
   - **Identity kwargs** — for resources that support them (e.g. projects, repositories), pass `name`, `vcs_url`/`git_url`; they are translated into a filter (e.g. `meta.name == 'backend'`) and merged with an explicit `filter` if provided. Use `.lookup(name="...")` to get the single matching resource or raise `NotFoundError`/`AmbiguousError`.
 
@@ -44,7 +44,7 @@ client.scan_result.list(filter="...", sort_by="meta.create_time", desc=True, pag
 
 **For `.create()`:**
 
-- Prefer **kwargs** when the resource supports a builder: `client.<resource>.create(name="...", namespace="...", ...)`. The facade builds the CreateXPayload internally. For power users, `client.<resource>.create(payload=CreateXPayload(...))` remains supported. See [reference/create-update-payloads.md](../reference/create-update-payloads.md).
+- Prefer **kwargs** when the resource supports a builder: `client.<resource>.create(name="...", namespace="...", ...)`. The facade builds the CreateXPayload internally. Alternatively, `client.<resource>.create(payload=CreateXPayload(...))` remains supported. See [reference/create-update-payloads.md](../reference/create-update-payloads.md).
 
 **For `.update()`:**
 

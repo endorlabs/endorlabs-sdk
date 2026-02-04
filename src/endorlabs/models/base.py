@@ -1751,7 +1751,7 @@ class BaseResourceOperations(Generic[T]):
     def _add_extra_list_params(
         self, params: dict[str, Any], list_params: ListParameters
     ) -> None:
-        """Add extra high-utility list parameters (pr_uuid, etc.)."""
+        """Add extra common list parameters (pr_uuid, etc.)."""
         if list_params.pr_uuid:
             params["list_parameters.pr_uuid"] = list_params.pr_uuid
 
