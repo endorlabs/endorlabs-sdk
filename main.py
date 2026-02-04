@@ -8,12 +8,11 @@ or filter syntax. Demonstrates: resolve by ID, resource as context, list(parent=
 Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET (or .env).
 """
 
-
 import endorlabs
 
 
 def main() -> None:
- #########################################################
+    #########################################################
     ## Basic Usage Examples
     #########################################################
     """Create a client and list namespaces (demo entrypoint)."""
@@ -24,8 +23,12 @@ def main() -> None:
         auth_method="api-key",
     )
 
-    project = client.project.lookup(filter="meta.name == https://github.com/DefectDojo/django-DefectDojo.git")
-    findings = client.finding.list(filter=f"spec.project_uuid == {project.uuid}", traverse=True)
+    project = client.project.lookup(
+        filter="meta.name == https://github.com/DefectDojo/django-DefectDojo.git"
+    )
+    findings = client.finding.list(
+        filter=f"spec.project_uuid == {project.uuid}", traverse=True
+    )
     for finding in findings:
         print(f"Finding: {finding.spec.summary}")
     print(f"Total findings: {len(findings)}")

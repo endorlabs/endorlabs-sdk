@@ -31,7 +31,7 @@ Definitions: [conventions.md](../conventions.md) (List parameters, Update and up
   - **namespace** — override default namespace.
   - **list_params** — optional; to pass a full `ListParameters` instead of kwargs.
   - **max_pages** — pagination cap.
-  - **Identity kwargs** — for resources that support them (e.g. projects, repositories), pass `name`, `vcs_url`/`git_url`; they are translated into a filter (e.g. `meta.name == 'backend'`) and merged with an explicit `filter` if provided. Use `.lookup(name="...")` to get the single matching resource or raise `NotFoundError`/`AmbiguousError`.
+  - **Identity kwargs** — for resources that support them (e.g. projects, repositories), pass `name`, `vcs_url`/`git_url`; they are translated into a filter (e.g. `meta.name == 'backend'`) and merged with an explicit `filter` if provided. Use `.lookup(name="...")` to get the single matching resource or raise `NotFoundError`/`AmbiguousError`. **List/lookup by identity** is supported only for resources that have an identity filter map (see [reference/create-update-payloads.md](../reference/create-update-payloads.md)); for other resources use `filter=` explicitly.
 
 Recommended style (see `main.py`):
 
