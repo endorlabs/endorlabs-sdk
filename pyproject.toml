@@ -18,12 +18,17 @@ dependencies = [
     "pydantic==2.12.5",
     "pyyaml==6.0.3",
     "httpx==0.28.1",
+    "langchain-google-genai[experimental]>=4.2.0",
 ]
 
 [project.optional-dependencies]
 docs = [
     "beautifulsoup4==4.14.2",
     "markdownify==1.2.0",
+]
+experimental = [
+    "langgraph==1.0.7",
+    "langchain-openai>=0.3.0",
 ]
 
 [build-system]
@@ -153,6 +158,8 @@ known-first-party = ["endorlabs"]
 "src/endorlabs/resources/semgrep_rule.py" = ["ARG003"]
 # Tests: relax annotations, docstyle, private access for assertions, fixture params
 "tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002"]
+# Experimental langgraph_agent: relax for optional deps and experimental APIs
+"src/endorlabs/experimental/langgraph_agent/**" = ["ANN", "D", "ARG001", "PERF401"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -195,6 +202,7 @@ strict = [
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
+    { root = "src/endorlabs/experimental/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none" },
     { root = "src/endorlabs/experimental/sast_analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },

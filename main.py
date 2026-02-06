@@ -10,8 +10,8 @@ Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET (or .env).
 
 import endorlabs
 
-
 def main() -> None:
+
     #########################################################
     ## Basic Usage Examples
     #########################################################
@@ -27,12 +27,13 @@ def main() -> None:
         filter="meta.name == https://github.com/DefectDojo/django-DefectDojo.git"
     )
     findings = client.finding.list(
-        filter=f"spec.project_uuid == {project.uuid}", traverse=True
+        filter=f"spec.project_uuid == {project.uuid}", 
+        traverse=True
     )
     for finding in findings:
         print(f"Finding: {finding.spec.summary}")
     print(f"Total findings: {len(findings)}")
-    exit(0)
+    
 
     my_api_keys = client.api_key.list(traverse=True)
     for api_key in my_api_keys:
@@ -56,16 +57,7 @@ def main() -> None:
         max_pages=1,
     )
 
-    # Get operations
-    project = client.project.get(projects[0].uuid)
-    print(f"Project: {project.meta.name}")
 
-    # Accessing Attributes of a resource
-    if projects:
-        project = projects[0]  # Get the first project
-        print(f"Project: {project.spec.platform_source}")  # Print Attribute
-        print(project)  # Print Object (its a Pydantic model)
-        print(project.model_dump_json(indent=2))  # Print JSON via Pydantic
 
     #########################################################
     ## Advanced Usage Examples
@@ -97,7 +89,5 @@ def main() -> None:
     )
     print(f"Project: {project.meta.name}; scan results: {len(scans)}")
     print(f"Scan: {scans[0].model_dump_json(indent=2)}")
-
-
 if __name__ == "__main__":
     main()
