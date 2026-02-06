@@ -5,9 +5,10 @@ name: CI
 #   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
 #   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "endor-solutions-tgowan")
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
-#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests)
-#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests)
-# Security: This repo is scanned by the Endor Labs app integration (no endorctl scan in CI).
+#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests + AI security review)
+#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests + AI security review)
+# Security: This repo is scanned by the Endor Labs app integration.
+# AI Security Code Review: Runs on PRs via endorctl --security-review (uses GITHUB_TOKEN for PR comments).
 
 on:
   push:
@@ -193,3 +194,53 @@ jobs:
           echo "Coverage report generated successfully"
           echo "Coverage data available in coverage.xml"
           echo "View detailed coverage with: uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
+
+  # AI Security Code Review - runs on pull requests only
+  ai-security-review:
+    name: AI Security Code Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
+            exit 1
+          fi
+          echo "✅ All required secrets are present"
+
+      - name: Install endorctl
+        run: |
+          curl -sSfL https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
+          chmod +x endorctl
+          ./endorctl --version
+
+      - name: Run AI Security Code Review
+        run: |
+          ./endorctl scan \
+            --namespace "${{ vars.ENDOR_NAMESPACE }}" \
+            --pr \
+            --security-review \
+            --scm-pr-id "${{ github.event.pull_request.number }}" \
+            --enable-pr-comments
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

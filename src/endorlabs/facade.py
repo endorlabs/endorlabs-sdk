@@ -102,16 +102,75 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> list[T]:
-        """List resources; uses default namespace when namespace= not passed.
+        """List resources with pagination and filtering.
 
-        Common list kwargs (filter, mask, traverse, page_size, page_token,
-        page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid)
-        map to list_parameters.*. list_all is always True (full pagination).
-        Pass list_params= for full control
-        (e.g. group_aggregation_paths). When the resource supports identity
-        kwargs (e.g. name, git_url), pass them and they are translated to
-        filter clauses. When the resource supports parent=, pass a parent
-        resource to scope the list by namespace and meta.parent_uuid.
+        Retrieves resources from the specified namespace with optional filtering,
+        sorting, and recursive traversal of child namespaces. All list parameters
+        map to ``list_parameters.*`` on the wire. Full pagination is always used
+        (``list_all=True``).
+
+        Args:
+            traverse: When True, recursively queries all child namespaces in the
+                hierarchy. Use for tenant-wide queries across all namespaces.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). Defaults to the client's configured
+                tenant namespace.
+            list_params: Full ListParameters object for advanced options like
+                grouping and aggregation. Explicit kwargs override values in
+                list_params when both are provided.
+            max_pages: Maximum number of pages to fetch. None fetches all
+                available pages.
+            parent: Parent resource object to scope the list by namespace and
+                ``meta.parent_uuid``. Only supported when the resource has a
+                registered ``parent_kind``.
+            filter: Filter expression to select matching resources (e.g.,
+                ``'spec.level==FINDING_LEVEL_CRITICAL'``). See API spec for
+                supported operators and fields per resource.
+            mask: Field mask for response projection (e.g.,
+                ``'meta.name,spec.level'``). Limits which fields are returned
+                in each resource.
+            page_size: Number of results per page. Uses API default if omitted.
+            page_token: Continuation token from a previous response's
+                ``next_page_token`` for resuming pagination.
+            page_id: Alternative pagination start point (aligns with endorctl
+                ``--page-id`` flag).
+            sort_by: Field path to sort results by (e.g., ``'meta.create_time'``).
+            desc: Sort descending when True, ascending when False or omitted.
+            count: When True, return count of matching resources instead of
+                the resources themselves.
+            from_date: Filter to resources created after this date (ISO 8601
+                format, e.g., ``'2024-01-01T00:00:00Z'``).
+            to_date: Filter to resources created before this date (ISO 8601
+                format).
+            archive: When True, fetch resources from the archive instead of
+                active storage.
+            pr_uuid: Scope to resources from a specific PR scan by its UUID.
+            **kwargs: Resource-specific identity kwargs (e.g., ``name``,
+                ``git_url``) that are translated to filter clauses automatically.
+
+        Returns:
+            List of resources matching the query. Empty list if no matches.
+
+        Raises:
+            ValueError: When namespace is required but not provided (and no
+                client default is set), or when ``parent`` is passed but the
+                resource does not support parent scoping.
+
+        Example:
+            List all critical findings across all namespaces::
+
+                findings = client.finding.list(
+                    traverse=True,
+                    filter='spec.level==FINDING_LEVEL_CRITICAL'
+                )
+
+            List projects in a specific namespace with field projection::
+
+                projects = client.project.list(
+                    namespace='tenant.team',
+                    mask='meta.name,spec.git'
+                )
+
         """
         from .models.base import RESOURCE_NAME_TO_TYPE
 
@@ -182,11 +241,75 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Return the single resource matching the given identity kwargs.
+        """Look up a single resource matching the given criteria.
 
-        Calls list() with the same kwargs and max_pages (default 2). Returns
-        the single item if exactly one matches; raises NotFoundError if none,
-        AmbiguousError if more than one.
+        Convenience method that calls ``list()`` with the provided parameters
+        and returns the single matching resource. Use this when you expect
+        exactly one result based on identity kwargs or filter criteria.
+
+        Args:
+            traverse: When True, recursively queries all child namespaces in the
+                hierarchy. Use for tenant-wide queries across all namespaces.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). Defaults to the client's configured
+                tenant namespace.
+            list_params: Full ListParameters object for advanced options like
+                grouping and aggregation. Explicit kwargs override values in
+                list_params when both are provided.
+            max_pages: Maximum number of pages to search through. Defaults to 2
+                to limit search scope for lookups.
+            parent: Parent resource object to scope the lookup by namespace and
+                ``meta.parent_uuid``. Only supported when the resource has a
+                registered ``parent_kind``.
+            filter: Filter expression to select matching resources (e.g.,
+                ``'spec.level==FINDING_LEVEL_CRITICAL'``). See API spec for
+                supported operators and fields per resource.
+            mask: Field mask for response projection (e.g.,
+                ``'meta.name,spec.level'``). Limits which fields are returned.
+            page_size: Number of results per page. Uses API default if omitted.
+            page_token: Continuation token from a previous response's
+                ``next_page_token`` for resuming pagination.
+            page_id: Alternative pagination start point (aligns with endorctl
+                ``--page-id`` flag).
+            sort_by: Field path to sort results by (e.g., ``'meta.create_time'``).
+            desc: Sort descending when True, ascending when False or omitted.
+            count: When True, return count instead of objects (rarely useful
+                for lookup).
+            from_date: Filter to resources created after this date (ISO 8601
+                format, e.g., ``'2024-01-01T00:00:00Z'``).
+            to_date: Filter to resources created before this date (ISO 8601
+                format).
+            archive: When True, fetch resources from the archive instead of
+                active storage.
+            pr_uuid: Scope to resources from a specific PR scan by its UUID.
+            **kwargs: Resource-specific identity kwargs (e.g., ``name``,
+                ``git_url``) that are translated to filter clauses automatically.
+
+        Returns:
+            The single resource matching the query.
+
+        Raises:
+            NotFoundError: When no resource matches the given criteria.
+            AmbiguousError: When multiple resources match; narrow the query
+                with more specific criteria.
+            ValueError: When namespace is required but not provided (and no
+                client default is set).
+
+        Example:
+            Look up a project by name::
+
+                project = client.project.lookup(
+                    namespace='tenant.team',
+                    name='my-project'
+                )
+
+            Look up with traverse when namespace is unknown::
+
+                project = client.project.lookup(
+                    traverse=True,
+                    name='my-project'
+                )
+
         """
         items = self.list(
             traverse=traverse,
@@ -241,11 +364,75 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> Iterator[T]:
-        """Iterate over resources without materializing the full list.
+        """Iterate over resources without materializing the full list in memory.
 
-        Accepts the same kwargs as list() (filter, mask, sort_by, desc,
-        archive, pr_uuid, etc.). When the resource supports parent=,
-        pass a parent resource to scope.
+        Returns an iterator that yields resources one at a time, fetching pages
+        on demand. Use this for memory-efficient processing of large result sets.
+
+        Args:
+            traverse: When True, recursively queries all child namespaces in the
+                hierarchy. Use for tenant-wide queries across all namespaces.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). Defaults to the client's configured
+                tenant namespace.
+            list_params: Full ListParameters object for advanced options like
+                grouping and aggregation. Explicit kwargs override values in
+                list_params when both are provided.
+            max_pages: Maximum number of pages to fetch. None fetches all
+                available pages.
+            parent: Parent resource object to scope the iteration by namespace
+                and ``meta.parent_uuid``. Only supported when the resource has a
+                registered ``parent_kind``.
+            filter: Filter expression to select matching resources (e.g.,
+                ``'spec.level==FINDING_LEVEL_CRITICAL'``). See API spec for
+                supported operators and fields per resource.
+            mask: Field mask for response projection (e.g.,
+                ``'meta.name,spec.level'``). Limits which fields are returned
+                in each resource.
+            page_size: Number of results per page. Uses API default if omitted.
+            page_token: Continuation token from a previous response's
+                ``next_page_token`` for resuming pagination.
+            page_id: Alternative pagination start point (aligns with endorctl
+                ``--page-id`` flag).
+            sort_by: Field path to sort results by (e.g., ``'meta.create_time'``).
+            desc: Sort descending when True, ascending when False or omitted.
+            count: When True, return count instead of objects (rarely useful
+                for iteration).
+            from_date: Filter to resources created after this date (ISO 8601
+                format, e.g., ``'2024-01-01T00:00:00Z'``).
+            to_date: Filter to resources created before this date (ISO 8601
+                format).
+            archive: When True, fetch resources from the archive instead of
+                active storage.
+            pr_uuid: Scope to resources from a specific PR scan by its UUID.
+            **kwargs: Resource-specific identity kwargs (e.g., ``name``,
+                ``git_url``) that are translated to filter clauses automatically.
+
+        Yields:
+            Resources matching the query, one at a time.
+
+        Raises:
+            NotImplementedError: When the resource does not support iteration.
+            ValueError: When namespace is required but not provided (and no
+                client default is set), or when ``parent`` is passed but the
+                resource does not support parent scoping.
+
+        Example:
+            Process all findings without loading them all into memory::
+
+                for finding in client.finding.list_iter(traverse=True):
+                    process(finding)
+
+            Iterate with filtering and early exit::
+
+                for project in client.project.list_iter(
+                    namespace='tenant.team',
+                    filter='meta.tags contains "reviewed"'
+                ):
+                    if should_stop(project):
+                        break
+                    handle(project)
+
         """
         if self._list_iter_fn is None:
             raise NotImplementedError(
@@ -320,7 +507,38 @@ class SystemResourceFacade(_ListableFacade[T]):
         self._get_fn = get_fn
 
     def get(self, id_or_resource: str | T, namespace: str | None = None) -> T:
-        """Get by ID or resource; only supported when namespace is "oss"."""
+        """Get a system-owned resource by ID; only supported for oss namespace.
+
+        Retrieves a single resource by its UUID. For system-owned resources,
+        this is only supported when the namespace is ``"oss"``. For other
+        namespaces (system or tenant), use ``list()`` with a filter instead.
+
+        Args:
+            id_or_resource: Either a UUID string or a resource object. When a
+                resource object is passed, the UUID is extracted from it and
+                the namespace is derived from the resource's ``tenant_meta``.
+            namespace: Target namespace. Must be ``"oss"`` for system-owned
+                resources. When omitted and a resource object is passed, the
+                namespace is derived from the resource.
+
+        Returns:
+            The resource matching the given ID.
+
+        Raises:
+            NotImplementedError: When the resource does not support get, or
+                when the namespace is not ``"oss"``. Use ``list()`` for
+                system/tenant namespaces.
+            ValueError: When namespace is required but not provided.
+
+        Example:
+            Get a package version from the oss namespace::
+
+                pkg = client.package_version.get(
+                    '550e8400-e29b-41d4-a716-446655440000',
+                    namespace='oss'
+                )
+
+        """
         if self._get_fn is None:
             raise NotImplementedError(
                 "This resource does not support get; use list() for system/tenant."
@@ -391,7 +609,42 @@ class ResourceFacade(_ListableFacade[T]):
         )
 
     def get(self, id_or_resource: str | T, namespace: str | None = None) -> T:
-        """Get a resource by ID or resource object (anchors to resource ns)."""
+        """Get a resource by ID or resource object.
+
+        Retrieves a single resource by its UUID. When a resource object is
+        passed, the operation is anchored to that resource's namespace,
+        ensuring the correct context for the API call.
+
+        Args:
+            id_or_resource: Either a UUID string or a resource object. When a
+                resource object is passed, the UUID is extracted from it and
+                the namespace is derived from the resource's ``tenant_meta``
+                (unless explicitly overridden).
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). When omitted and a resource object
+                is passed, the namespace is derived from the resource.
+                Defaults to the client's configured tenant namespace.
+
+        Returns:
+            The resource matching the given ID.
+
+        Raises:
+            ValueError: When namespace is required but not provided (and no
+                client default is set).
+
+        Example:
+            Get a project by UUID::
+
+                project = client.project.get(
+                    '550e8400-e29b-41d4-a716-446655440000',
+                    namespace='tenant.team'
+                )
+
+            Refresh a resource (re-fetch with latest data)::
+
+                updated_project = client.project.get(project)
+
+        """
         if self._is_resource_like(id_or_resource):
             res = cast("Any", id_or_resource)
             uuid = res.uuid
@@ -417,15 +670,61 @@ class ResourceFacade(_ListableFacade[T]):
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Create a resource.
+        """Create a new resource.
 
-        Pass either payload (CreateXPayload) for backward compatibility, or
-        kwargs that are passed to this resource's build_create_payload (when
-        the resource supports decoupled create). Optional name, description,
-        and namespace_uuid are convenience params merged into kwargs; the
-        allowed set is defined by the resource's build_create_payload. Exactly
-        one of payload or kwargs (including explicit params) must be provided
-        when the resource has build_create_payload_fn.
+        Supports two creation patterns: payload-based (explicit ``CreateXPayload``
+        object) or kwargs-based (when the resource has a ``build_create_payload``
+        function). Use kwargs for a simpler API; use payload for full control
+        or backward compatibility.
+
+        Args:
+            payload: A ``CreateXPayload`` object (e.g., ``CreateProjectPayload``,
+                ``CreateNamespacePayload``) containing all required fields for
+                creation. Mutually exclusive with kwargs.
+            name: Resource name (convenience param merged into kwargs). The
+                exact semantics depend on the resource type.
+            description: Resource description (convenience param merged into
+                kwargs). Typically stored in ``meta.description``.
+            namespace_uuid: UUID of the parent namespace (convenience param
+                merged into kwargs). Required for some resource types.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``) where the resource will be created.
+                Defaults to the client's configured tenant namespace.
+            **kwargs: Resource-specific creation kwargs passed to the resource's
+                ``build_create_payload`` function. The allowed set is defined
+                by each resource's builder. Mutually exclusive with payload.
+
+        Returns:
+            The newly created resource with server-assigned fields (e.g., UUID,
+            timestamps) populated.
+
+        Raises:
+            NotImplementedError: When the resource does not support create.
+            TypeError: When both ``payload`` and kwargs are provided, when
+                neither is provided, or when kwargs are provided but the
+                resource does not have a ``build_create_payload`` function.
+            ValueError: When namespace is required but not provided.
+
+        Example:
+            Create a namespace using kwargs (simpler)::
+
+                ns = client.namespace.create(
+                    name='my-namespace',
+                    namespace='tenant'
+                )
+
+            Create a project using payload (full control)::
+
+                from endorlabs.resources.project import CreateProjectPayload
+
+                project = client.project.create(
+                    payload=CreateProjectPayload(
+                        meta=ProjectMetaCreate(name='my-project'),
+                        namespace_uuid='...'
+                    ),
+                    namespace='tenant.team'
+                )
+
         """
         if self._create_fn is None:
             raise NotImplementedError(
@@ -468,17 +767,75 @@ class ResourceFacade(_ListableFacade[T]):
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Update by ID or resource object (anchors to resource namespace).
+        """Update a resource using sparse PATCH semantics.
 
-        When update_mask is provided: use it and payload (or resource as payload).
-        When update_mask is omitted and kwargs are provided: delegate to
-        resource.update(self, **kwargs) so mask is derived from kwargs. For
-        that path you must pass a resource instance (not a UUID); allowed kwargs
-        are defined by the resource's get_mutable_fields().
-        Optional meta_description and meta_tags are convenience params merged
-        into kwargs; the allowed set is defined by the resource's
-        get_mutable_fields(). When both update_mask and kwargs are missing:
-        raise TypeError.
+        Supports two update patterns: mask-based (explicit ``update_mask`` with
+        payload) or kwargs-based (field kwargs that derive the mask automatically).
+        The kwargs pattern is simpler for common updates; the mask pattern gives
+        full control.
+
+        Args:
+            id_or_resource: Either a UUID string or a resource object. When a
+                resource object is passed, the operation is anchored to that
+                resource's namespace and the resource itself can serve as the
+                payload. For kwargs-based updates, this **must** be a resource
+                instance (not a UUID string).
+            payload: The resource object containing updated field values. When
+                omitted and ``id_or_resource`` is a resource object, that
+                resource is used as the payload. Required when ``id_or_resource``
+                is a UUID string.
+            update_mask: Comma-separated field paths to update (e.g.,
+                ``'meta.tags'``, ``'meta.description,spec.scan_state'``). When
+                provided, only these fields are patched. When omitted, the mask
+                is derived from the provided kwargs.
+            meta_description: Updated description (convenience param). Merged
+                into kwargs as ``meta_description``. Triggers update of
+                ``meta.description``.
+            meta_tags: Updated tags list (convenience param). Merged into kwargs
+                as ``meta_tags``. Triggers update of ``meta.tags``.
+            namespace: Target namespace in canonical form. When omitted and a
+                resource object is passed, the namespace is derived from the
+                resource's ``tenant_meta``.
+            **kwargs: Resource-specific mutable field kwargs. The allowed set is
+                defined by the resource's ``get_mutable_fields()``. When provided
+                without ``update_mask``, the mask is derived automatically.
+
+        Returns:
+            The updated resource with server-applied changes.
+
+        Raises:
+            NotImplementedError: When the resource does not support update.
+            TypeError: When neither ``update_mask`` nor kwargs are provided,
+                when kwargs are provided but ``id_or_resource`` is a UUID string
+                (not a resource instance), or when payload is required but
+                not provided.
+            ValueError: When namespace is required but not provided, or when
+                an immutable field is included in the update_mask.
+
+        Example:
+            Update using kwargs (simpler, mask derived automatically)::
+
+                updated = client.project.update(
+                    project,
+                    meta_description='New description',
+                    meta_tags=['reviewed', 'production']
+                )
+
+            Update using explicit mask (full control)::
+
+                project.meta.description = 'Updated description'
+                updated = client.project.update(
+                    project,
+                    update_mask='meta.description'
+                )
+
+            Fluent update via resource method::
+
+                updated = project.update(
+                    client.project,
+                    meta_tags=['new-tag']
+                )
+
         """
         if self._update_fn is None:
             raise NotImplementedError(
@@ -531,10 +888,50 @@ class ResourceFacade(_ListableFacade[T]):
         *,
         ignore_missing: bool = False,
     ) -> bool:
-        """Delete by ID or resource object (anchors to resource namespace).
+        """Delete a resource by ID or resource object.
 
-        When ignore_missing is True, return False instead of raising
-        NotFoundError on 404.
+        Removes the specified resource from the system. When a resource object
+        is passed, the operation is anchored to that resource's namespace,
+        ensuring the correct context for the API call.
+
+        Args:
+            name_or_resource: Either a UUID string or a resource object. When a
+                resource object is passed, the UUID is extracted from it and
+                the namespace is derived from the resource's ``tenant_meta``
+                (unless explicitly overridden).
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). When omitted and a resource object
+                is passed, the namespace is derived from the resource.
+                Defaults to the client's configured tenant namespace.
+            ignore_missing: When True, return False instead of raising
+                ``NotFoundError`` if the resource does not exist (idempotent
+                delete). When False (default), raise ``NotFoundError`` on 404.
+
+        Returns:
+            True if the resource was deleted successfully. False if
+            ``ignore_missing=True`` and the resource was not found.
+
+        Raises:
+            NotImplementedError: When the resource does not support delete.
+            NotFoundError: When the resource is not found and
+                ``ignore_missing=False``.
+            ValueError: When namespace is required but not provided.
+
+        Example:
+            Delete a project by resource object::
+
+                client.project.delete(project)
+
+            Delete by UUID with idempotent behavior::
+
+                deleted = client.project.delete(
+                    '550e8400-e29b-41d4-a716-446655440000',
+                    namespace='tenant.team',
+                    ignore_missing=True
+                )
+                if not deleted:
+                    print('Project was already deleted')
+
         """
         if self._delete_fn is None:
             raise NotImplementedError(
@@ -566,7 +963,45 @@ class ResourceFacade(_ListableFacade[T]):
         tags: list[str],
         namespace: str | None = None,
     ) -> T:
-        """Set meta.tags on a resource (only when this resource supports tags)."""
+        """Set the tags on a resource, replacing any existing tags.
+
+        Updates ``meta.tags`` on the resource to the provided list. This is a
+        convenience method that wraps ``update()`` with ``update_mask='meta.tags'``.
+        Only available for resources that support tagging (have ``meta.tags``
+        in their mutable fields).
+
+        Args:
+            id_or_resource: Either a UUID string or a resource object. When a
+                UUID string is passed, the resource is fetched first to ensure
+                the correct payload structure. When a resource object is passed,
+                the namespace is derived from the resource's ``tenant_meta``.
+            tags: List of tag strings to set on the resource. Replaces any
+                existing tags. Use an empty list to clear all tags.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). When omitted and a resource object
+                is passed, the namespace is derived from the resource.
+
+        Returns:
+            The updated resource with the new tags applied.
+
+        Raises:
+            NotImplementedError: When the resource does not support tagging.
+            ValueError: When namespace is required but not provided, or when
+                the resource has no ``meta`` attribute.
+
+        Example:
+            Set tags on a project::
+
+                updated = client.project.tag(
+                    project,
+                    tags=['reviewed', 'production', 'team-a']
+                )
+
+            Clear all tags::
+
+                updated = client.project.tag(project, tags=[])
+
+        """
         if (
             not self._tags_paths
             or "meta.tags" not in self._tags_paths
@@ -599,7 +1034,44 @@ class ResourceFacade(_ListableFacade[T]):
         keys: list[str],
         namespace: str | None = None,
     ) -> T:
-        """Remove the given tag values from meta.tags (only when supported)."""
+        """Remove specific tags from a resource.
+
+        Removes the specified tag values from ``meta.tags``, preserving any
+        other existing tags. This is a convenience method that fetches the
+        current tags, filters out the specified values, and calls ``update()``
+        with ``update_mask='meta.tags'``.
+
+        Args:
+            id_or_resource: Either a UUID string or a resource object. When a
+                UUID string is passed, the resource is fetched first to get
+                the current tags. When a resource object is passed, the
+                namespace is derived from the resource's ``tenant_meta``.
+            keys: List of tag values to remove. Tags not present in this list
+                are preserved. Values not currently in the resource's tags
+                are silently ignored.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). When omitted and a resource object
+                is passed, the namespace is derived from the resource.
+
+        Returns:
+            The updated resource with the specified tags removed.
+
+        Raises:
+            NotImplementedError: When the resource does not support tagging.
+            ValueError: When namespace is required but not provided, or when
+                the resource has no ``meta`` attribute.
+
+        Example:
+            Remove specific tags from a project::
+
+                # Before: tags=['reviewed', 'production', 'deprecated']
+                updated = client.project.untag(
+                    project,
+                    keys=['deprecated', 'obsolete']  # 'obsolete' ignored
+                )
+                # After: tags=['reviewed', 'production']
+
+        """
         if (
             not self._tags_paths
             or "meta.tags" not in self._tags_paths
@@ -671,9 +1143,64 @@ class ScanLogsFacade:
     ) -> list[ScanLogRequestLogMessage]:
         """Retrieve log messages for a scan result.
 
-        Delegates to ScanLogRequest API (POST only); returns spec.log_messages.
-        See docs/reference/resources.md (scan_log_request) and
-        docs/guides/retrieving-scan-results.md.
+        Fetches log entries from a completed scan using the ScanLogRequest API.
+        Use this to inspect scan execution details, debug failures, or audit
+        scan behavior.
+
+        Args:
+            scan_result_uuid: UUID of the scan result to retrieve logs for.
+                Obtain this from ``client.scan_result.list()`` or
+                ``client.scan_result.get()``.
+            namespace: Target namespace in canonical form (e.g.,
+                ``'tenant.team.project'``). Defaults to the client's configured
+                tenant namespace.
+            max_entries: Maximum number of log entries to return. Defaults to
+                100. Increase for more comprehensive logs or decrease for
+                faster responses.
+            log_levels: Filter to specific log levels. When None, returns all
+                levels. Use ``ScanLogLevel`` enum values (e.g.,
+                ``[ScanLogLevel.ERROR, ScanLogLevel.WARNING]``).
+            start_time: Filter to logs after this timestamp (ISO 8601 format,
+                e.g., ``'2024-01-01T00:00:00Z'``). Useful for narrowing to a
+                specific time window.
+            end_time: Filter to logs before this timestamp (ISO 8601 format).
+                Combine with ``start_time`` to define a time range.
+            newest_first: When True, return logs in reverse chronological order
+                (newest first). When False or None, logs are returned in
+                chronological order.
+
+        Returns:
+            List of log message objects containing timestamp, level, message,
+            and other metadata. Empty list if no logs match the criteria.
+
+        Raises:
+            ValueError: When namespace is required but not provided.
+
+        Example:
+            Get all logs for a scan result::
+
+                logs = client.scan_logs.get_logs(
+                    scan_result_uuid='550e8400-e29b-41d4-a716-446655440000',
+                    namespace='tenant.team'
+                )
+                for log in logs:
+                    print(f'{log.timestamp}: [{log.level}] {log.message}')
+
+            Get only error logs, newest first::
+
+                from endorlabs.resources.scan_log_request import ScanLogLevel
+
+                errors = client.scan_logs.get_logs(
+                    scan_result_uuid='...',
+                    log_levels=[ScanLogLevel.ERROR],
+                    newest_first=True,
+                    max_entries=50
+                )
+
+        See Also:
+            - ``docs/reference/resources.md`` (scan_log_request section)
+            - ``docs/guides/retrieving-scan-results.md``
+
         """
         from .resources.scan_log_request import get_scan_result_logs
 
