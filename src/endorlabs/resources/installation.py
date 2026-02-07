@@ -18,20 +18,12 @@ created, updated, or deleted.
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterator
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..api_client import (
-    JSON_REDACTION_REPLACEMENT,
-    APIClient,
-    RedactingFilter,
-    json_redaction_pattern,
-    redaction_pattern,
-)
 from ..models.base import (
     BaseMeta,
     BaseResource,
@@ -39,18 +31,14 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.logging_config import get_resource_logger
 from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
+    from ..api_client import APIClient
     from ..types import ListParameters
 
-# Set up logger with redaction filter
-logger = logging.getLogger(__name__)
-logger.addFilter(
-    RedactingFilter(
-        [redaction_pattern, (json_redaction_pattern, JSON_REDACTION_REPLACEMENT)]
-    )
-)
+logger = get_resource_logger(__name__)
 
 
 class EnabledFeatureType(FlexibleEnum):

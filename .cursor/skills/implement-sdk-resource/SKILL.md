@@ -51,12 +51,7 @@ Create in `src/endorlabs/resources/{resource_name}.py`:
 - `{Resource}Spec(BaseSpec)` -- resource specification
 - `{Resource}(BaseResource)` -- top-level resource, extending BaseResource
 
-**Field aliasing rules** (from `docs/conventions.md`):
-- **Tier 1 (mandatory)**: Alias only when API key is a reserved word or invalid Python (e.g., `from` -> `from_`)
-- **Tier 2 (case)**: Prefer 1:1 Python name = API key (both are snake_case)
-- **Tier 3 (semantic)**: Avoid renaming for "prettiness"; use `Field(alias=...)` only when the API name is misleading
-
-**Greenfield shared fields**: Use Python name = spec key for `context`, `processing_status`, `index_data`. No prefixed names.
+**Field aliasing rules**: See [docs/conventions.md (Field aliasing)](../../../docs/conventions.md#field-aliasing).
 
 ### Operations
 
@@ -82,21 +77,15 @@ All public functions require: Args, Returns, Raises. Pydantic/Pyright and IDE mu
 Add one entry to the registry in `src/endorlabs/registry.py`:
 
 ```python
-ResourceEntry(
-    attr_name="resource_name",
-    model_class=ResourceModel,
-    list_fn=list_resources,
-    get_fn=get_resource,
-    create_fn=create_resource,
-    update_fn=update_resource,    # or None
-    delete_fn=delete_resource,    # or None
-    scope=None,                   # "system", "oss", or None
+ResourceEntry.from_module(
+    "resource_name", resource_module, ResourceModel, "api-path",
+    scope=None,  # "system", "oss", or None
 )
 ```
 
 Do NOT hand-wire in `Client.__init__`; the registry drives facade attachment.
 
-For the two-layer architecture rules, see [ARCHITECTURE.md](ARCHITECTURE.md).
+For architecture rules, see [docs/rules-of-engagement/architecture.md](../../../docs/rules-of-engagement/architecture.md).
 
 ## Phase 2b: Tests
 

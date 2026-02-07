@@ -17,7 +17,6 @@ be manually created or deleted. Only metadata updates (tags, dismissal status) a
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterator
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, cast, override
@@ -31,13 +30,14 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.logging_config import get_resource_logger
 from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..types import ListParameters
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 class FindingCategory(FlexibleEnum):

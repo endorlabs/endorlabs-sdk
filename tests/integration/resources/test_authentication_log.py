@@ -32,7 +32,7 @@ class TestAuthenticationLog:
         assert isinstance(result, list)
 
     def test_authentication_log_facade_get_raises_for_non_oss_namespace(self) -> None:
-        """SystemResourceFacade get only when namespace is oss; otherwise use list."""
+        """System-scoped get only when namespace is oss; otherwise use list."""
         import endorlabs
 
         client = endorlabs.Client(
@@ -72,7 +72,7 @@ class TestAuthenticationLog:
         assert exc_info.value.status_code == 403
 
     def test_authentication_log_facade_has_no_create(self) -> None:
-        """SystemResourceFacade has no create (system-owned)."""
+        """System-scoped facade has no create (system-owned)."""
         import endorlabs
 
         client = endorlabs.Client(

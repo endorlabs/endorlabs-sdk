@@ -13,7 +13,7 @@ from .api_client import APIClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-from .facade import OssResourceFacade, ResourceFacade, SystemResourceFacade
+from .facade import ResourceFacade
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
@@ -76,54 +76,12 @@ class Client:
 
     # -- Internal factory ---------------------------------------------------
 
-    def _build_facade(
-        self, entry: ResourceEntry
-    ) -> SystemResourceFacade[Any] | OssResourceFacade[Any] | ResourceFacade[Any]:
+    def _build_facade(self, entry: ResourceEntry) -> ResourceFacade[Any]:
         """Build the appropriate facade for *entry* based on its scope."""
         if self._client is None:
             raise RuntimeError("Client is closed.")  # pragma: no cover
 
-        if entry.scope == "system":
-            return cast(
-                "SystemResourceFacade[Any]",
-                SystemResourceFacade[entry.model_class](
-                    self._client,
-                    self._default_namespace,
-                    list_fn=entry.list_fn,
-                    list_iter_fn=entry.list_iter_fn,
-                    get_fn=entry.get_fn,
-                    resource_name=entry.resource_name,
-                    parent_kind=entry.parent_kind,
-                    tags_paths=[],
-                ),
-            )
-
         tags_paths = get_tags_update_paths(entry.model_class) if entry.update_fn else []
-
-        if entry.scope == "oss":
-            if entry.get_fn is None:
-                raise ValueError("oss scope requires get_fn")
-            return cast(
-                "OssResourceFacade[Any]",
-                OssResourceFacade[entry.model_class](
-                    self._client,
-                    "oss",
-                    list_fn=entry.list_fn,
-                    get_fn=entry.get_fn,
-                    create_fn=entry.create_fn,
-                    update_fn=entry.update_fn,
-                    delete_fn=entry.delete_fn,
-                    list_iter_fn=entry.list_iter_fn,
-                    tags_paths=tags_paths,
-                    resource_name=entry.resource_name,
-                    parent_kind=entry.parent_kind,
-                    build_create_payload_fn=entry.build_create_payload_fn,
-                ),
-            )
-
-        # tenant scope (entry.scope is None)
-        if entry.get_fn is None:
-            raise ValueError("tenant scope requires get_fn")
         return cast(
             "ResourceFacade[Any]",
             ResourceFacade[entry.model_class](
@@ -139,6 +97,7 @@ class Client:
                 resource_name=entry.resource_name,
                 parent_kind=entry.parent_kind,
                 build_create_payload_fn=entry.build_create_payload_fn,
+                scope=entry.scope,
             ),
         )
 

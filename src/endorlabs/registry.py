@@ -9,6 +9,7 @@ Single source of truth for which resources are exposed on endorlabs.Client.
 
 from __future__ import annotations
 
+import types
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
@@ -153,6 +154,57 @@ class ResourceEntry:
     scope: Literal["system"] | Literal["oss"] | None = None  # system | oss | tenant
     build_create_payload_fn: Callable[..., Any] | None = None  # kwargs -> payload
 
+    @classmethod
+    def from_module(
+        cls,
+        attr_name: str,
+        module: types.ModuleType,
+        model_class: type,
+        resource_name: str,
+        *,
+        list_name: str = "",
+        op_name: str = "",
+        scope: Literal["system", "oss"] | None = None,
+        parent_kind: str | None = None,
+    ) -> ResourceEntry:
+        """Build a ResourceEntry by convention from a resource module.
+
+        Discovers ``list_<list_name>``, ``get_<op_name>``,
+        ``create_<op_name>``, ``update_<op_name>``, ``delete_<op_name>``,
+        ``list_<list_name>_iter``, and ``build_create_payload`` by name.
+
+        Args:
+            attr_name: Attribute name on ``Client`` (e.g. ``"project"``).
+            module: The resource module to inspect.
+            model_class: Pydantic model class for the resource.
+            resource_name: API resource path (e.g. ``"projects"``).
+            list_name: Override for the plural in ``list_<X>`` / ``list_<X>_iter``.
+                Defaults to ``resource_name`` with hyphens replaced by underscores.
+            op_name: Override for the singular in ``get_<X>`` / ``create_<X>`` etc.
+                Defaults to ``attr_name``.
+            scope: Resource scope (``"system"``, ``"oss"``, or ``None``).
+            parent_kind: Parent resource kind for ``list(parent=)``.
+        """
+        if not list_name:
+            list_name = resource_name.replace("-", "_")
+        if not op_name:
+            op_name = attr_name
+
+        return cls(
+            attr_name=attr_name,
+            model_class=model_class,
+            list_fn=getattr(module, f"list_{list_name}"),
+            get_fn=getattr(module, f"get_{op_name}", None),
+            create_fn=getattr(module, f"create_{op_name}", None),
+            update_fn=getattr(module, f"update_{op_name}", None),
+            delete_fn=getattr(module, f"delete_{op_name}", None),
+            list_iter_fn=getattr(module, f"list_{list_name}_iter", None),
+            resource_name=resource_name,
+            parent_kind=parent_kind,
+            scope=scope,
+            build_create_payload_fn=getattr(module, "build_create_payload", None),
+        )
+
 
 @dataclass
 class CustomFacadeEntry:
@@ -169,341 +221,122 @@ def _scan_logs_facade(client: APIClient, default_namespace: str | None) -> Any:
     return ScanLogsFacade(client, default_namespace)
 
 
+_fm = ResourceEntry.from_module
+
 RESOURCE_REGISTRY: list[ResourceEntry] = [
-    ResourceEntry(
-        "namespace",
-        Namespace,
-        namespace_module.list_namespaces,
-        namespace_module.get_namespace,
-        namespace_module.create_namespace,
-        namespace_module.update_namespace,
-        namespace_module.delete_namespace,
-        namespace_module.list_namespaces_iter,
-        "namespaces",
-        build_create_payload_fn=namespace_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "project",
-        Project,
-        project_module.list_projects,
-        project_module.get_project,
-        project_module.create_project,
-        project_module.update_project,
-        project_module.delete_project,
-        project_module.list_projects_iter,
-        "projects",
-        build_create_payload_fn=project_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "finding",
-        Finding,
-        finding_module.list_findings,
-        finding_module.get_finding,
-        finding_module.create_finding,
-        finding_module.update_finding,
-        finding_module.delete_finding,
-        finding_module.list_findings_iter,
-        "findings",
-        build_create_payload_fn=finding_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "repository",
-        Repository,
-        repository_module.list_repositories,
-        repository_module.get_repository,
-        repository_module.create_repository,
-        repository_module.update_repository,
-        repository_module.delete_repository,
-        repository_module.list_repositories_iter,
-        "repositories",
-        build_create_payload_fn=repository_module.build_create_payload,
-    ),
-    ResourceEntry(
+    # -- Tenant-scoped (full CRUD) ----------------------------------------
+    _fm("namespace", namespace_module, Namespace, "namespaces"),
+    _fm("project", project_module, Project, "projects"),
+    _fm("finding", finding_module, Finding, "findings"),
+    _fm("repository", repository_module, Repository, "repositories"),
+    _fm(
         "repository_version",
+        repository_version_module,
         RepositoryVersion,
-        repository_version_module.list_repository_versions,
-        repository_version_module.get_repository_version,
-        repository_version_module.create_repository_version,
-        repository_version_module.update_repository_version,
-        repository_version_module.delete_repository_version,
-        repository_version_module.list_repository_versions_iter,
         "repository-versions",
         parent_kind="project",
-        build_create_payload_fn=repository_version_module.build_create_payload,
     ),
-    ResourceEntry(
-        "policy",
-        Policy,
-        policy_module.list_policies,
-        policy_module.get_policy,
-        policy_module.create_policy,
-        policy_module.update_policy,
-        policy_module.delete_policy,
-        policy_module.list_policies_iter,
-        "policies",
-        build_create_payload_fn=policy_module.build_create_payload,
-    ),
-    ResourceEntry(
+    _fm("policy", policy_module, Policy, "policies"),
+    _fm(
         "authorization_policy",
+        authorization_policy_module,
         AuthorizationPolicy,
-        authorization_policy_module.list_authorization_policies,
-        authorization_policy_module.get_authorization_policy,
-        authorization_policy_module.create_authorization_policy,
-        authorization_policy_module.update_authorization_policy,
-        authorization_policy_module.delete_authorization_policy,
-        authorization_policy_module.list_authorization_policies_iter,
         "authorization-policies",
-        build_create_payload_fn=authorization_policy_module.build_create_payload,
     ),
-    ResourceEntry(
+    _fm(
         "package_version",
+        package_version_module,
         PackageVersion,
-        package_version_module.list_package_versions,
-        package_version_module.get_package_version,
-        package_version_module.create_package_version,
-        package_version_module.update_package_version,
-        package_version_module.delete_package_version,
-        package_version_module.list_package_versions_iter,
         "package-versions",
-        build_create_payload_fn=package_version_module.build_create_payload,
     ),
-    ResourceEntry(
-        "package_license",
-        PackageLicense,
-        package_license_module.list_package_licenses,
-        package_license_module.get_package_license,
-        package_license_module.create_package_license,
-        package_license_module.update_package_license,
-        package_license_module.delete_package_license,
-        package_license_module.list_package_licenses_iter,
-        "package-licenses",
-        scope="oss",
-        build_create_payload_fn=package_license_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "dependency_metadata",
-        DependencyMetadata,
-        dependency_metadata_module.list_dependency_metadata,
-        dependency_metadata_module.get_dependency_metadata,
-        dependency_metadata_module.create_dependency_metadata,
-        None,  # update unimplemented: platform-managed "oss" data, not for SDK updates
-        dependency_metadata_module.delete_dependency_metadata,
-        dependency_metadata_module.list_dependency_metadata_iter,
-        "dependency-metadata",
-        scope="oss",
-        build_create_payload_fn=dependency_metadata_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "installation",
-        Installation,
-        installation_module.list_installations,
-        installation_module.get_installation,
-        installation_module.create_installation,
-        installation_module.update_installation,
-        installation_module.delete_installation,
-        installation_module.list_installations_iter,
-        "installations",
-        build_create_payload_fn=installation_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "scan_profile",
-        ScanProfile,
-        scan_profile_module.list_scan_profiles,
-        scan_profile_module.get_scan_profile,
-        scan_profile_module.create_scan_profile,
-        scan_profile_module.update_scan_profile,
-        scan_profile_module.delete_scan_profile,
-        scan_profile_module.list_scan_profiles_iter,
-        "scan-profiles",
-        build_create_payload_fn=scan_profile_module.build_create_payload,
-    ),
-    ResourceEntry(
+    _fm("installation", installation_module, Installation, "installations"),
+    _fm("scan_profile", scan_profile_module, ScanProfile, "scan-profiles"),
+    _fm(
         "scan_result",
+        scan_result_module,
         ScanResult,
-        scan_result_module.list_scan_results,
-        scan_result_module.get_scan_result,
-        scan_result_module.create_scan_result,
-        scan_result_module.update_scan_result,
-        scan_result_module.delete_scan_result,
-        scan_result_module.list_scan_results_iter,
         "scan-results",
         parent_kind="project",
-        build_create_payload_fn=scan_result_module.build_create_payload,
     ),
-    ResourceEntry(
+    _fm(
         "linter_result",
+        linter_result_module,
         LinterResult,
-        linter_result_module.list_linter_results,
-        linter_result_module.get_linter_result,
-        linter_result_module.create_linter_result,
-        None,  # update unimplemented: linter results are read-only (scan-generated)
-        linter_result_module.delete_linter_result,
-        linter_result_module.list_linter_results_iter,
         "linter-results",
-        build_create_payload_fn=linter_result_module.build_create_payload,
     ),
-    ResourceEntry(
-        "metric",
-        Metric,
-        metric_module.list_metrics,
-        metric_module.get_metric,
-        metric_module.create_metric,
-        metric_module.update_metric,
-        metric_module.delete_metric,
-        metric_module.list_metrics_iter,
-        "metrics",
-        build_create_payload_fn=metric_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "semgrep_rule",
-        SemgrepRule,
-        semgrep_rule_module.list_semgrep_rules,
-        semgrep_rule_module.get_semgrep_rule,
-        semgrep_rule_module.create_semgrep_rule,
-        semgrep_rule_module.update_semgrep_rule,
-        semgrep_rule_module.delete_semgrep_rule,
-        semgrep_rule_module.list_semgrep_rules_iter,
-        "semgrep-rules",
-        build_create_payload_fn=semgrep_rule_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "api_key",
-        APIKey,
-        api_key_module.list_api_keys,
-        api_key_module.get_api_key,
-        api_key_module.create_api_key,
-        None,
-        api_key_module.delete_api_key,
-        api_key_module.list_api_keys_iter,
-        "api-keys",
-        build_create_payload_fn=api_key_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "audit_log",
-        AuditLog,
-        audit_log_module.list_audit_logs,
-        audit_log_module.get_audit_log,
-        audit_log_module.create_audit_log,
-        None,
-        audit_log_module.delete_audit_log,
-        audit_log_module.list_audit_logs_iter,
-        "audit-logs",
-        build_create_payload_fn=audit_log_module.build_create_payload,
-    ),
-    ResourceEntry(
-        "finding_log",
-        FindingLog,
-        finding_log_module.list_finding_logs,
-        finding_log_module.get_finding_log,
-        finding_log_module.create_finding_log,
-        None,
-        finding_log_module.delete_finding_log,
-        finding_log_module.list_finding_logs_iter,
-        "finding-logs",
-        build_create_payload_fn=finding_log_module.build_create_payload,
-    ),
-    ResourceEntry(
+    _fm("metric", metric_module, Metric, "metrics"),
+    _fm("semgrep_rule", semgrep_rule_module, SemgrepRule, "semgrep-rules"),
+    _fm("api_key", api_key_module, APIKey, "api-keys"),
+    _fm("audit_log", audit_log_module, AuditLog, "audit-logs"),
+    _fm("finding_log", finding_log_module, FindingLog, "finding-logs"),
+    _fm(
         "notification_target",
+        notification_target_module,
         NotificationTarget,
-        notification_target_module.list_notification_targets,
-        notification_target_module.get_notification_target,
-        notification_target_module.create_notification_target,
-        notification_target_module.update_notification_target,
-        notification_target_module.delete_notification_target,
-        notification_target_module.list_notification_targets_iter,
         "notification-targets",
-        build_create_payload_fn=notification_target_module.build_create_payload,
     ),
-    ResourceEntry(
+    _fm(
         "scan_workflow",
+        scan_workflow_module,
         ScanWorkflow,
-        scan_workflow_module.list_scan_workflows,
-        scan_workflow_module.get_scan_workflow,
-        None,
-        None,
-        None,
-        scan_workflow_module.list_scan_workflows_iter,
         "scan-workflows",
     ),
-    ResourceEntry(
+    _fm(
         "scan_workflow_result",
+        scan_workflow_result_module,
         ScanWorkflowResult,
-        scan_workflow_result_module.list_scan_workflow_results,
-        scan_workflow_result_module.get_scan_workflow_result,
-        None,
-        None,
-        None,
-        scan_workflow_result_module.list_scan_workflow_results_iter,
         "scan-workflow-results",
     ),
-    ResourceEntry(
+    _fm(
         "version_upgrade",
+        version_upgrade_module,
         VersionUpgrade,
-        version_upgrade_module.list_version_upgrades,
-        version_upgrade_module.get_version_upgrade,
-        None,
-        None,
-        None,
-        version_upgrade_module.list_version_upgrades_iter,
         "version-upgrades",
     ),
-    ResourceEntry(
+    _fm("invitation", invitation_module, Invitation, "invitations"),
+    # -- Special naming (plural op_name) ----------------------------------
+    _fm(
         "code_owners",
+        code_owners_module,
         CodeOwners,
-        code_owners_module.list_code_owners,
-        code_owners_module.get_code_owners,
-        code_owners_module.create_code_owners,
-        code_owners_module.update_code_owners,
-        code_owners_module.delete_code_owners,
-        code_owners_module.list_code_owners_iter,
         "codeowners",
-        build_create_payload_fn=code_owners_module.build_create_payload,
+        list_name="code_owners",
+        op_name="code_owners",
     ),
-    ResourceEntry(
-        "invitation",
-        Invitation,
-        invitation_module.list_invitations,
-        invitation_module.get_invitation,
-        invitation_module.create_invitation,
-        invitation_module.update_invitation,
-        invitation_module.delete_invitation,
-        invitation_module.list_invitations_iter,
-        "invitations",
-        build_create_payload_fn=invitation_module.build_create_payload,
+    # -- OSS-scoped (namespace fixed to "oss") ----------------------------
+    _fm(
+        "package_license",
+        package_license_module,
+        PackageLicense,
+        "package-licenses",
+        scope="oss",
     ),
-    ResourceEntry(
+    _fm(
+        "dependency_metadata",
+        dependency_metadata_module,
+        DependencyMetadata,
+        "dependency-metadata",
+        scope="oss",
+    ),
+    # -- System-scoped (get only for oss namespace) -----------------------
+    _fm(
         "authentication_log",
+        authentication_log_module,
         AuthenticationLog,
-        authentication_log_module.list_authentication_logs,
-        authentication_log_module.get_authentication_log,
-        None,
-        None,
-        None,
-        authentication_log_module.list_authentication_logs_iter,
         "authentication-logs",
         scope="system",
     ),
-    ResourceEntry(
+    _fm(
         "endor_license",
+        endor_license_module,
         EndorLicense,
-        endor_license_module.list_endor_licenses,
-        endor_license_module.get_endor_license,
-        None,
-        None,
-        None,
-        endor_license_module.list_endor_licenses_iter,
         "endor-licenses",
         scope="system",
     ),
-    ResourceEntry(
+    _fm(
         "policy_template",
+        policy_template_module,
         PolicyTemplate,
-        policy_template_module.list_policy_templates,
-        policy_template_module.get_policy_template,
-        None,
-        None,
-        None,
-        policy_template_module.list_policy_templates_iter,
         "policy-templates",
         scope="system",
     ),
