@@ -18,7 +18,6 @@ are allowed via PATCH operations.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, override
 
@@ -739,8 +738,7 @@ def associate_scan_profile_with_project(
         data = res.json()
         updated_project = Project(**data)
         logger.info(
-            f"✅ Associated scan profile {scan_profile_uuid} with project "
-            f"{project_uuid}"
+            f"Associated scan profile {scan_profile_uuid} with project {project_uuid}"
         )
         return updated_project
     except httpx.HTTPStatusError as e:
@@ -789,12 +787,12 @@ def verify_scan_profile_association(
 
     if is_associated:
         logger.info(
-            f"✅ Verified: Scan profile {scan_profile_uuid} is associated "
+            f"Verified: Scan profile {scan_profile_uuid} is associated "
             f"with project {project_uuid}"
         )
     else:
         logger.warning(
-            f"⚠️ Scan profile mismatch: Project {project_uuid} has "
+            f"Scan profile mismatch: Project {project_uuid} has "
             f"scan_profile_uuid={current_scan_profile_uuid}, expected "
             f"{scan_profile_uuid}"
         )
@@ -828,17 +826,3 @@ def delete_project(
     except Exception as e:
         logger.error(f"Error deleting project {project_uuid}: {e}", exc_info=True)
         return False
-
-
-if __name__ == "__main__":
-    # Example usage
-    client = APIClient()
-    tenant_meta_namespace = os.getenv("ENDOR_NAMESPACE", "")
-
-    # List projects
-    print("Listing projects...")
-    projects = list_projects(client, tenant_meta_namespace)
-    print(f"Found {len(projects)} projects")
-
-    for project in projects[:3]:  # Show first 3
-        print(f"  - {project.meta.name} (UUID: {project.uuid})")

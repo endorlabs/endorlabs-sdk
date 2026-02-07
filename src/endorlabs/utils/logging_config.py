@@ -7,7 +7,13 @@ import os
 
 
 def setup_logging(module_name: str = "endorlabs") -> logging.Logger:
-    """Set up logging from ENDOR_LOG_LEVEL environment variable."""
+    """Set up logging from ENDOR_LOG_LEVEL environment variable.
+
+    Follows the PEP 282 library pattern: sets level on the SDK logger only
+    and adds a NullHandler so log output is silent unless the consumer
+    configures logging.  Never calls ``logging.basicConfig()`` to avoid
+    mutating the consumer's root logger.
+    """
     level_str = os.getenv("ENDOR_LOG_LEVEL", "INFO").upper()
 
     # Convert string to logging level constant
@@ -21,9 +27,12 @@ def setup_logging(module_name: str = "endorlabs") -> logging.Logger:
 
     level = level_map.get(level_str, logging.INFO)
 
-    format_str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(level=level, format=format_str)
-    return logging.getLogger(module_name)
+    logger = logging.getLogger(module_name)
+    logger.setLevel(level)
+    # PEP 282: add NullHandler so library is silent unless consumer configures logging
+    if not logger.handlers:
+        logger.addHandler(logging.NullHandler())
+    return logger
 
 
 # Loggers used by the SDK and HTTP stack; session level is applied to all of these.

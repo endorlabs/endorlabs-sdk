@@ -231,29 +231,19 @@ class TestEndorLogLevel:
         """Test that ENDOR_LOG_LEVEL environment variable is respected."""
         import logging
 
-        # Reset logging to allow basicConfig to work
-        logging.root.handlers = []
-        logging.root.setLevel(logging.NOTSET)
-
         with patch.dict(os.environ, {"ENDOR_LOG_LEVEL": "DEBUG"}, clear=False):
-            setup_logging("test_module")
-            # Check root logger level (basicConfig sets root logger)
-            assert logging.root.level == 10  # DEBUG level
+            logger = setup_logging("test_log_level_debug")
+            assert logger.level == logging.DEBUG
 
     def test_endor_log_level_default_when_not_set(self) -> None:
         """Test default INFO level when ENDOR_LOG_LEVEL not set."""
         import logging
 
-        # Reset logging to allow basicConfig to work
-        logging.root.handlers = []
-        logging.root.setLevel(logging.NOTSET)
-
         # Remove ENDOR_LOG_LEVEL if it exists
         env_backup = os.environ.pop("ENDOR_LOG_LEVEL", None)
         try:
-            setup_logging("test_module")
-            # Check root logger level
-            assert logging.root.level == 20  # INFO level
+            logger = setup_logging("test_log_level_default")
+            assert logger.level == logging.INFO
         finally:
             if env_backup:
                 os.environ["ENDOR_LOG_LEVEL"] = env_backup
@@ -262,27 +252,24 @@ class TestEndorLogLevel:
         """Test ENDOR_LOG_LEVEL with WARNING value."""
         import logging
 
-        # Reset logging to allow basicConfig to work
-        logging.root.handlers = []
-        logging.root.setLevel(logging.NOTSET)
-
         with patch.dict(os.environ, {"ENDOR_LOG_LEVEL": "WARNING"}, clear=False):
-            setup_logging("test_module")
-            # Check root logger level
-            assert logging.root.level == 30  # WARNING level
+            logger = setup_logging("test_log_level_warning")
+            assert logger.level == logging.WARNING
 
     def test_endor_log_level_error(self) -> None:
         """Test ENDOR_LOG_LEVEL with ERROR value."""
         import logging
 
-        # Reset logging to allow basicConfig to work
-        logging.root.handlers = []
-        logging.root.setLevel(logging.NOTSET)
-
         with patch.dict(os.environ, {"ENDOR_LOG_LEVEL": "ERROR"}, clear=False):
-            setup_logging("test_module")
-            # Check root logger level
-            assert logging.root.level == 40  # ERROR level
+            logger = setup_logging("test_log_level_error")
+            assert logger.level == logging.ERROR
+
+    def test_setup_logging_adds_null_handler(self) -> None:
+        """Test that setup_logging adds a NullHandler (PEP 282 pattern)."""
+        import logging
+
+        logger = setup_logging("test_null_handler_check")
+        assert any(isinstance(h, logging.NullHandler) for h in logger.handlers)
 
 
 class TestClientSessionLogLevel:
@@ -321,10 +308,6 @@ class TestLogLevelBackwardCompatibility:
         """Test that LOG_LEVEL environment variable is ignored."""
         import logging
 
-        # Reset logging to allow basicConfig to work
-        logging.root.handlers = []
-        logging.root.setLevel(logging.NOTSET)
-
         # Set LOG_LEVEL but not ENDOR_LOG_LEVEL
         with patch.dict(
             os.environ,
@@ -334,9 +317,9 @@ class TestLogLevelBackwardCompatibility:
             # Remove ENDOR_LOG_LEVEL if it exists
             env_backup = os.environ.pop("ENDOR_LOG_LEVEL", None)
             try:
-                setup_logging("test_module")
+                logger = setup_logging("test_log_level_compat")
                 # Should default to INFO, not DEBUG
-                assert logging.root.level == 20  # INFO level, not DEBUG (10)
+                assert logger.level == logging.INFO
             finally:
                 if env_backup:
                     os.environ["ENDOR_LOG_LEVEL"] = env_backup
@@ -345,18 +328,14 @@ class TestLogLevelBackwardCompatibility:
         """Test that ENDOR_LOG_LEVEL takes precedence if both are set."""
         import logging
 
-        # Reset logging to allow basicConfig to work
-        logging.root.handlers = []
-        logging.root.setLevel(logging.NOTSET)
-
         with patch.dict(
             os.environ,
             {"LOG_LEVEL": "DEBUG", "ENDOR_LOG_LEVEL": "WARNING"},
             clear=False,
         ):
-            setup_logging("test_module")
+            logger = setup_logging("test_log_level_precedence")
             # Should use ENDOR_LOG_LEVEL (WARNING), not LOG_LEVEL (DEBUG)
-            assert logging.root.level == 30  # WARNING level
+            assert logger.level == logging.WARNING
 
 
 class TestRequestDelegation:
