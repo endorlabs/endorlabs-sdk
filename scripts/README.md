@@ -2,36 +2,14 @@
 
 Contributor setup: [CONTRIBUTORS.md](../CONTRIBUTORS.md).
 
-## sync_external_docs.py
+For syncing external documentation (OpenAPI spec, user docs), use the programmatic API:
 
-One workflow creates the gitignored `external_docs/` folder with both the OpenAPI spec and user documentation. **Optional, for full IDE context** — pull full platform-admin context into the IDE.
-
-### Option: sync spec + user docs (full IDE context)
-
-```bash
-uv sync --extra docs
-uv run python scripts/sync_external_docs.py --all
+```python
+import endorlabs
+endorlabs.init()  # downloads to .endorlabs-context/
 ```
 
-This creates:
-
-- `external_docs/openapi-swagger.json` — API spec (public URL; no credentials needed)
-- `external_docs/user-docs/*.md` — User docs from [docs.endorlabs.com](https://docs.endorlabs.com/) (parallel download; worker count from local CPU heuristic)
-
-### Other options
-
-```bash
-# OpenAPI spec only (no docs extra needed)
-uv run python scripts/sync_external_docs.py --download-openapi
-
-# User docs only, limit pages
-uv run python scripts/sync_external_docs.py --download-user-docs --max-pages 50
-
-# Force re-download
-uv run python scripts/sync_external_docs.py --all --force
-```
-
-See also: [docs/rules-of-engagement/docs-drift-workflow.md](../docs/rules-of-engagement/docs-drift-workflow.md).
+See [AGENTS.md](../AGENTS.md#context-bootstrap-for-ai-agents) for details.
 
 ## export_current_sdk_models.py
 
