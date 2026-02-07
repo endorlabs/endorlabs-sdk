@@ -36,12 +36,10 @@ REGISTRY_ATTR_TO_PATH: dict[str, str] = {
 def test_openapi_spec_paths_exist() -> None:
     """Every registry resource path exists in OpenAPI spec and has get (list)."""
     spec_path = (
-        Path(__file__).resolve().parent.parent
-        / "external_docs"
-        / "openapi-swagger.json"
+        Path(__file__).resolve().parent.parent / ".endorlabs-context" / "openapi.json"
     )
     if not spec_path.exists():
-        pytest.skip("OpenAPI spec not present (external_docs/openapi-swagger.json)")
+        pytest.skip("OpenAPI spec not present (.endorlabs-context/openapi.json)")
     with open(spec_path, encoding="utf-8") as f:
         spec = json.load(f)
     paths = spec.get("paths", {})

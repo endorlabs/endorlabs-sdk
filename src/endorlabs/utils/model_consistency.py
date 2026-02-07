@@ -17,7 +17,7 @@ from typing import Any, get_args, get_origin
 logger = logging.getLogger(__name__)
 
 # Default spec location (same as sync script and schema-drift workflow)
-DEFAULT_SPEC_PATH = "external_docs/openapi-swagger.json"
+DEFAULT_SPEC_PATH = ".endorlabs-context/openapi.json"
 DEFAULT_SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
 
 # Shared SDK models (enumerated once for inheritance-aware diff)
