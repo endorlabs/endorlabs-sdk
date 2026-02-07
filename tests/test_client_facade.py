@@ -173,6 +173,53 @@ def test_client_exposes_all_registry_resources(
         assert hasattr(facade, "lookup")
 
 
+class TestBuildFacade:
+    """_build_facade factory produces the correct facade type per scope."""
+
+    def test_system_scope_produces_system_resource_facade(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        from endorlabs.facade import SystemResourceFacade
+        from endorlabs.registry import RESOURCE_REGISTRY
+
+        for entry in RESOURCE_REGISTRY:
+            if entry.scope == "system":
+                facade = getattr(client_with_mock_transport, entry.attr_name)
+                assert isinstance(facade, SystemResourceFacade), entry.attr_name
+                break
+        else:
+            pytest.skip("No system-scoped resource in registry")
+
+    def test_oss_scope_produces_oss_resource_facade(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        from endorlabs.facade import OssResourceFacade
+        from endorlabs.registry import RESOURCE_REGISTRY
+
+        for entry in RESOURCE_REGISTRY:
+            if entry.scope == "oss":
+                facade = getattr(client_with_mock_transport, entry.attr_name)
+                assert isinstance(facade, OssResourceFacade), entry.attr_name
+                break
+        else:
+            pytest.skip("No oss-scoped resource in registry")
+
+    def test_tenant_scope_produces_resource_facade(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        from endorlabs.facade import OssResourceFacade, ResourceFacade
+        from endorlabs.registry import RESOURCE_REGISTRY
+
+        for entry in RESOURCE_REGISTRY:
+            if entry.scope is None:
+                facade = getattr(client_with_mock_transport, entry.attr_name)
+                assert isinstance(facade, ResourceFacade), entry.attr_name
+                assert not isinstance(facade, OssResourceFacade), entry.attr_name
+                break
+        else:
+            pytest.skip("No tenant-scoped resource in registry")
+
+
 def test_system_resource_facade_get_with_oss_namespace_delegates(
     client_with_mock_transport: Client,
 ) -> None:
@@ -606,6 +653,37 @@ def test_tag_raises_when_resource_has_no_tags_support(
         client.api_key.tag("some-uuid", ["x"])
 
 
+def test_untag_raises_when_resource_has_no_tags_support(
+    client_with_mock_transport: Client,
+) -> None:
+    """untag() on a facade without tags support raises NotImplementedError."""
+    client = client_with_mock_transport
+    with pytest.raises(NotImplementedError, match="does not support untag"):
+        client.api_key.untag("some-uuid", ["x"])
+
+
+def test_tag_raises_when_resource_has_no_meta(
+    client_with_mock_transport: Client,
+) -> None:
+    """tag() raises ValueError when the resolved resource has no meta."""
+    client = client_with_mock_transport
+    resource = Mock(uuid="no-meta", tenant_meta=Mock(namespace="t.ns"), meta=None)
+    client.project._update_fn = Mock()
+    with pytest.raises(ValueError, match="no meta"):
+        client.project.tag(resource, ["a"])
+
+
+def test_untag_raises_when_resource_has_no_meta(
+    client_with_mock_transport: Client,
+) -> None:
+    """untag() raises ValueError when the resolved resource has no meta."""
+    client = client_with_mock_transport
+    resource = Mock(uuid="no-meta", tenant_meta=Mock(namespace="t.ns"), meta=None)
+    client.project._update_fn = Mock()
+    with pytest.raises(ValueError, match="no meta"):
+        client.project.untag(resource, ["a"])
+
+
 def test_list_with_identity_kwarg_builds_filter(
     client_with_mock_transport: Client,
 ) -> None:
@@ -836,6 +914,88 @@ def test_list_with_parent_raises_when_facade_does_not_support_parent(
     some_resource = Mock(uuid="ns-1", tenant_meta=Mock(namespace="tenant.foo"))
     with pytest.raises(ValueError, match="does not support list\\(parent="):
         client.namespace.list(parent=some_resource, max_pages=conftest.TEST_MAX_PAGES)
+
+
+class TestBuildListKwargs:
+    """list() and list_iter() use the same internal kwarg-building logic.
+
+    After the _build_list_kwargs extraction, both must produce identical
+    ListParameters for the same inputs.
+    """
+
+    def test_filter_and_mask_pass_through(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        """Explicit filter and mask appear in ListParameters."""
+        client = client_with_mock_transport
+        mock_list = Mock(return_value=[])
+        client.project._list_fn = mock_list
+        client.project.list(
+            filter='spec.git.http_clone_url=="https://x"',
+            mask="meta.name,spec.git",
+            max_pages=conftest.TEST_MAX_PAGES,
+        )
+        lp = mock_list.call_args[0][2]
+        assert lp is not None
+        assert lp.filter == 'spec.git.http_clone_url=="https://x"'
+        assert lp.mask == "meta.name,spec.git"
+
+    def test_parent_scoping_adds_parent_uuid_filter(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        """list(parent=resource) adds meta.parent_uuid filter."""
+        client = client_with_mock_transport
+        parent = Mock(uuid="parent-uuid-1", tenant_meta=Mock(namespace="tenant.team"))
+        mock_list = Mock(return_value=[])
+        client.scan_result._list_fn = mock_list
+        client.scan_result.list(parent=parent, max_pages=conftest.TEST_MAX_PAGES)
+        lp = mock_list.call_args[0][2]
+        assert lp is not None
+        assert "meta.parent_uuid" in lp.filter
+        assert "parent-uuid-1" in lp.filter
+
+    def test_identity_kwargs_translated_to_filter(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        """name= kwarg is translated to meta.name filter on supported resources."""
+        client = client_with_mock_transport
+        mock_list = Mock(return_value=[])
+        client.project._list_fn = mock_list
+        client.project.list(name="my-project", max_pages=conftest.TEST_MAX_PAGES)
+        lp = mock_list.call_args[0][2]
+        assert lp is not None
+        assert "meta.name" in lp.filter
+        assert "my-project" in lp.filter
+
+    def test_list_and_list_iter_produce_identical_params(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        """list() and list_iter() build the same ListParameters for same inputs."""
+        client = client_with_mock_transport
+        list_mock = Mock(return_value=[])
+        iter_mock = Mock(return_value=iter([]))
+
+        client.project._list_fn = list_mock
+        client.project._list_iter_fn = iter_mock
+
+        kwargs = {
+            "filter": 'meta.tags contains "reviewed"',
+            "mask": "meta.name",
+            "page_size": 10,
+            "max_pages": conftest.TEST_MAX_PAGES,
+        }
+        client.project.list(**kwargs)
+        # Consume the iterator so the mock is actually called
+        list(client.project.list_iter(**kwargs))
+
+        lp_list = list_mock.call_args[0][2]
+        lp_iter = iter_mock.call_args[0][2]
+
+        assert lp_list is not None
+        assert lp_iter is not None
+        assert lp_list.filter == lp_iter.filter
+        assert lp_list.mask == lp_iter.mask
+        assert lp_list.page_size == lp_iter.page_size
 
 
 def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
