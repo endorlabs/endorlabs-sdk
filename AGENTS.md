@@ -88,10 +88,12 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 | Rule | When it applies |
 |------|------------------|
 | **endor-cockpit-core.mdc** | Always (project context and critical requirements) |
+| **tdd.mdc** | Always (TDD protocol, quality gate, zero-regression requirement) |
+| **code-review.mdc** | Always (agent self-review checklist before committing) |
+| **security.mdc** | When editing `src/endorlabs/**` (credential handling, network safety, dangerous ops) |
 | **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
 | **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
 | **api-workflow.mdc** | When editing models, resources, or OpenAPI spec |
-| **test-driven-development.mdc** | When editing tests or `src/**/*.py` |
 | **troubleshooting.mdc** | When debugging SDK/integration failures or editing troubleshooting docs |
 
 Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in the docs below. Troubleshooting workflow: troubleshooting.mdc and [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
@@ -145,11 +147,12 @@ Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
 uv run ruff check .
 uv run ruff format .
 uv run pyright
-uv run pytest
+uv run pytest tests/unit/ -m "not slow"
+uv run pytest tests/integration/ -m "not long"
 endorctl scan
 ```
 
-CI runs these (except optional endorctl); include pyright.
+CI runs these (except optional endorctl); include pyright. Unit tests run without credentials; integration tests require `ENDOR_*` env vars.
 
 ## User-Scoped Rules (Optional)
 
