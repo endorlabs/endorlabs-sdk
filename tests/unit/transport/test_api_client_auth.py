@@ -298,3 +298,53 @@ class TestAuthenticationBackwardCompatibility:
 
         assert client._auth_type == "api-key"
         assert client._token == "api-key-token"
+
+
+class TestReauthRetryGuard:
+    """Verify _handle_response does not infinite-loop on repeated 401s."""
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_401_no_infinite_recursion(self) -> None:
+        """A second 401 after reauth must raise, not retry again."""
+        import httpx
+
+        with _patch_httpx_client(post_return=_auth_post_response("init-token")):
+            client = APIClient()
+
+        # Build a mock 401 response
+        def _make_401() -> Mock:
+            resp = Mock(spec=httpx.Response)
+            resp.status_code = 401
+            resp.url = "https://api.endorlabs.com/v1/namespaces/test/projects"
+            resp.headers = {}
+            resp.text = "Unauthorized"
+            resp.raise_for_status.side_effect = httpx.HTTPStatusError(
+                "401 Unauthorized",
+                request=Mock(),
+                response=resp,
+            )
+            return resp
+
+        # authenticate() succeeds but the retry still gets a 401
+        with (
+            patch.object(client, "authenticate", return_value="new-token"),
+            patch.object(client, "client", create=True) as mock_inner_client,
+        ):
+            mock_inner_client.request.return_value = _make_401()
+
+            with pytest.raises(httpx.HTTPStatusError):
+                client._handle_response(
+                    _make_401(), method="GET", url="/v1/namespaces/test/projects"
+                )
+
+            # authenticate should be called exactly once (not repeatedly)
+            client.authenticate.assert_called_once()

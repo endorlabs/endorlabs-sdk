@@ -694,6 +694,8 @@ class APIClient:
         response: httpx.Response,
         method: str | None = None,
         url: str | None = None,
+        *,
+        _reauth_attempted: bool = False,
         **kwargs: Any,
     ) -> Any:
         self.last_request_time = time.time()
@@ -722,6 +724,12 @@ class APIClient:
 
             # Handle authentication failure (401) - single retry after reauth
             if status_code == 401:
+                if _reauth_attempted:
+                    self.logger.error(
+                        "Reauthentication already attempted; raising 401 "
+                        "to prevent infinite retry loop."
+                    )
+                    raise
                 self.logger.warning(
                     f"Authentication failed (401): Invalid or expired credentials. "
                     f"Request to {response.url} was unauthorized."
@@ -741,7 +749,11 @@ class APIClient:
                             method=method, url=url, **kwargs
                         )
                         return self._handle_response(
-                            retry_response, method=method, url=url, **kwargs
+                            retry_response,
+                            method=method,
+                            url=url,
+                            _reauth_attempted=True,
+                            **kwargs,
                         )
                 raise
 
