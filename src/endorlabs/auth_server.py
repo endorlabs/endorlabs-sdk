@@ -79,7 +79,6 @@ class TokenHandler(BaseHTTPRequestHandler):
                     params[k] = v
 
             if "token" in params:
-                global _captured_token
                 _captured_token = cast("str", params["token"])
                 logger.info("Token captured successfully")
                 # Return simple HTML page instead of redirect to prevent new tabs

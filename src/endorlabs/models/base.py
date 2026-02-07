@@ -7,7 +7,6 @@ used across all Endor Labs resource models.
 import builtins
 import logging
 import os
-import sys
 from collections.abc import Iterator
 from datetime import datetime
 from enum import Enum
@@ -936,19 +935,6 @@ class BaseResourceOperations(Generic[T]):
         try:
             url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
 
-            # Check if we're in a test environment and set default max_pages
-            import os
-
-            if max_pages is None and (
-                "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST")
-            ):
-                # Default to 10 pages max in test environment for safety
-                max_pages = 10
-                self.logger.debug(
-                    f"Test environment detected: limiting pagination to "
-                    f"{max_pages} pages max"
-                )
-
             traverse = getattr(list_params, "traverse", None) if list_params else None
             self.logger.info(
                 "Listing %s in namespace %s (traverse=%s, max_pages=%s).",
@@ -1034,11 +1020,6 @@ class BaseResourceOperations(Generic[T]):
         """
         kwargs.pop("logging_level", None)  # Session-level only; ignore if passed
         url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
-        if max_pages is None and (
-            "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST")
-        ):
-            max_pages = 10
-            self.logger.debug(f"Test env: limiting pagination to {max_pages} pages max")
         params = self._build_params(list_params, **kwargs)
         for item in self.client.get_all(url, params=params, max_pages=max_pages):
             yield self.model_class(**item)
