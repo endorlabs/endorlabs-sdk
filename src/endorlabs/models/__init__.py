@@ -10,6 +10,7 @@ from .base import (
     BaseSpec,
     Context,
     IngestedObject,
+    JsonDefaultModel,
     ProcessingStatus,
     TenantMeta,
 )
@@ -22,6 +23,7 @@ __all__ = [
     # Conditional attribute models
     "Context",
     "IngestedObject",
+    "JsonDefaultModel",
     "ProcessingStatus",
     "TenantMeta",
 ]
