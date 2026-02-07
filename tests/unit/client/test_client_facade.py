@@ -150,75 +150,63 @@ def test_client_exposes_all_registry_resources(
     client_with_mock_transport: Client,
 ) -> None:
     """Client exposes exactly the resources defined in RESOURCE_REGISTRY."""
-    from endorlabs.facade import OssResourceFacade, ResourceFacade, SystemResourceFacade
+    from endorlabs.facade import ResourceFacade
     from endorlabs.registry import RESOURCE_REGISTRY
 
     client = client_with_mock_transport
     for entry in RESOURCE_REGISTRY:
         assert hasattr(client, entry.attr_name), f"Missing attribute: {entry.attr_name}"
         facade = getattr(client, entry.attr_name)
-        if entry.scope == "system":
-            assert isinstance(facade, SystemResourceFacade), (
-                f"{entry.attr_name} is not a SystemResourceFacade"
-            )
-            assert hasattr(facade, "get")
-        elif entry.scope == "oss":
-            assert isinstance(facade, OssResourceFacade), (
-                f"{entry.attr_name} is not an OssResourceFacade"
-            )
-            assert hasattr(facade, "get")
-        else:
-            assert isinstance(facade, ResourceFacade), (
-                f"{entry.attr_name} is not a ResourceFacade"
-            )
-            assert hasattr(facade, "get") == (entry.get_fn is not None)
+        assert isinstance(facade, ResourceFacade), (
+            f"{entry.attr_name} is not a ResourceFacade"
+        )
+        assert facade.scope == entry.scope, (
+            f"{entry.attr_name}: scope {facade.scope!r} != {entry.scope!r}"
+        )
         assert hasattr(facade, "list")
         assert hasattr(facade, "list_iter")
         assert hasattr(facade, "lookup")
+        assert hasattr(facade, "get")
 
 
 class TestBuildFacade:
-    """_build_facade factory produces the correct facade type per scope."""
+    """_build_facade factory produces the correct facade scope per registry entry."""
 
-    def test_system_scope_produces_system_resource_facade(
+    def test_system_scope_facade_has_system_scope(
         self, client_with_mock_transport: Client
     ) -> None:
-        from endorlabs.facade import SystemResourceFacade
         from endorlabs.registry import RESOURCE_REGISTRY
 
         for entry in RESOURCE_REGISTRY:
             if entry.scope == "system":
                 facade = getattr(client_with_mock_transport, entry.attr_name)
-                assert isinstance(facade, SystemResourceFacade), entry.attr_name
+                assert facade.scope == "system", entry.attr_name
                 break
         else:
             pytest.skip("No system-scoped resource in registry")
 
-    def test_oss_scope_produces_oss_resource_facade(
+    def test_oss_scope_facade_has_oss_scope(
         self, client_with_mock_transport: Client
     ) -> None:
-        from endorlabs.facade import OssResourceFacade
         from endorlabs.registry import RESOURCE_REGISTRY
 
         for entry in RESOURCE_REGISTRY:
             if entry.scope == "oss":
                 facade = getattr(client_with_mock_transport, entry.attr_name)
-                assert isinstance(facade, OssResourceFacade), entry.attr_name
+                assert facade.scope == "oss", entry.attr_name
                 break
         else:
             pytest.skip("No oss-scoped resource in registry")
 
-    def test_tenant_scope_produces_resource_facade(
+    def test_tenant_scope_facade_has_none_scope(
         self, client_with_mock_transport: Client
     ) -> None:
-        from endorlabs.facade import OssResourceFacade, ResourceFacade
         from endorlabs.registry import RESOURCE_REGISTRY
 
         for entry in RESOURCE_REGISTRY:
             if entry.scope is None:
                 facade = getattr(client_with_mock_transport, entry.attr_name)
-                assert isinstance(facade, ResourceFacade), entry.attr_name
-                assert not isinstance(facade, OssResourceFacade), entry.attr_name
+                assert facade.scope is None, entry.attr_name
                 break
         else:
             pytest.skip("No tenant-scoped resource in registry")
@@ -227,7 +215,7 @@ class TestBuildFacade:
 def test_system_resource_facade_get_with_oss_namespace_delegates(
     client_with_mock_transport: Client,
 ) -> None:
-    """SystemResourceFacade.get(id, namespace='oss') delegates to get_fn with 'oss'."""
+    """System-scoped get(id, namespace='oss') delegates to get_fn with 'oss'."""
     client = client_with_mock_transport
     client.authentication_log._get_fn = Mock(return_value=Mock(uuid="log-123"))
     result = client.authentication_log.get("log-123", namespace="oss")
@@ -242,7 +230,7 @@ def test_system_resource_facade_get_with_oss_namespace_delegates(
 def test_system_resource_facade_get_with_non_oss_namespace_raises(
     client_with_mock_transport: Client,
 ) -> None:
-    """SystemResourceFacade.get(id) or get(id, namespace=tenant) raises."""
+    """System-scoped get(id) or get(id, namespace=tenant) raises."""
     client = client_with_mock_transport
     with pytest.raises(NotImplementedError, match="oss namespace"):
         client.authentication_log.get("log-123")
@@ -253,7 +241,7 @@ def test_system_resource_facade_get_with_non_oss_namespace_raises(
 def test_oss_resource_facade_get_uses_oss_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """OssResourceFacade.get(id) delegates with namespace 'oss' (no param required)."""
+    """OSS-scoped get(id) delegates with namespace 'oss' (no param required)."""
     client = client_with_mock_transport
     client.dependency_metadata._get_fn = Mock(
         return_value=Mock(uuid="dep-456", tenant_meta=Mock(namespace="oss"))
@@ -270,7 +258,7 @@ def test_oss_resource_facade_get_uses_oss_namespace(
 def test_oss_resource_facade_list_uses_oss_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """OssResourceFacade.list() delegates with namespace 'oss'."""
+    """OSS-scoped list() delegates with namespace 'oss'."""
     client = client_with_mock_transport
     client.dependency_metadata._list_fn = Mock(return_value=[])
     client.dependency_metadata.list(max_pages=TEST_MAX_PAGES)

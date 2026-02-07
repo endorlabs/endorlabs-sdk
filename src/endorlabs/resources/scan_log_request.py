@@ -18,7 +18,6 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -30,11 +29,12 @@ from ..models.base import (
     BaseSpec,
     FlexibleEnum,
 )
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 class ScanLogLevel(FlexibleEnum):
