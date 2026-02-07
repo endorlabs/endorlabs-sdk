@@ -9,7 +9,7 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## OpenAPI / spec
 
-- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/openapi-swagger.json` (gitignored) in CI. For a single local step that creates `external_docs/` with both spec and user docs (for full IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
+- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `.endorlabs-context/openapi.json` (gitignored) in CI. For a single local step that creates `.endorlabs-context/` with both spec and user docs (for full IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
 - List endpoints: `v1/namespaces/{tenant_meta.namespace}/{resource_name}` (e.g. `findings`, `projects`).
 - Update (PATCH): Collection URL; UUID and payload in request body; optional `request.update_mask`.
 

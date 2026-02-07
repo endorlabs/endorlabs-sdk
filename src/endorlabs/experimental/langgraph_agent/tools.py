@@ -353,14 +353,14 @@ def _extract_fields(
 _FILTER_EXAMPLES = """
 Filter Expression Syntax (CRITICAL - follow exactly):
     Operators: ==, !=, contains, in, matches, <, <=, >, >=
-    
+
     CORRECT examples:
     - meta.name == "my-project"
     - meta.name contains "api"
     - spec.level == FINDING_LEVEL_CRITICAL
     - (meta.name contains "api") and (spec.level == FINDING_LEVEL_HIGH)
     - spec.project_uuid == "abc123"
-    
+
     WRONG (will cause errors):
     - name="my-project"     (missing meta., wrong operator)
     - meta.name="project"   (wrong operator, use ==)
@@ -651,14 +651,17 @@ def create_tools(client: Client) -> list[BaseTool]:
             JSON with valid filter field paths for the resource and syntax reminder.
 
         Example:
-            get_filter_fields("project") returns fields like meta.name, spec.platform_source
+            get_filter_fields("project") returns fields like
+            meta.name, spec.platform_source
         """
         fields = _RESOURCE_FILTER_FIELDS.get(resource_type, _DEFAULT_FILTER_FIELDS)
         return json.dumps(
             {
                 "resource": resource_type,
                 "filter_fields": fields,
-                "syntax_reminder": 'Use == operator with field path: meta.name == "value"',
+                "syntax_reminder": (
+                    'Use == operator with field path: meta.name == "value"'
+                ),
                 "example": f'{fields[0].split(" ")[0]} == "example-value"',
             },
             indent=2,
