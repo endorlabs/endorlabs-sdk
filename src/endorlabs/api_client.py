@@ -23,7 +23,12 @@ from .exceptions import (
     map_status_code_to_exception,
 )
 from .types import ErrorResponse
-from .utils.redaction import RedactingFilter, redaction_pattern
+from .utils.redaction import (
+    JSON_REDACTION_REPLACEMENT,
+    RedactingFilter,
+    json_redaction_pattern,
+    redaction_pattern,
+)
 
 ENDOR_NAMESPACE = os.getenv("ENDOR_NAMESPACE")
 # TODO: Determine if needed or as an init param or env var
@@ -109,7 +114,14 @@ class APIClient:
         )
 
         self.logger = setup_logging("endorlabs")
-        self.logger.addFilter(RedactingFilter([redaction_pattern]))
+        self.logger.addFilter(
+            RedactingFilter(
+                [
+                    redaction_pattern,
+                    (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
+                ]
+            )
+        )
 
         # Set log level with precedence: parameter > env var > default
         # setup_logging already handles env var (ENDOR_LOG_LEVEL),
@@ -270,9 +282,13 @@ class APIClient:
         if data is None:
             return "None"
         data_str = str(data)
-        # Use the same redaction pattern as the filter
-        pattern = re.compile(redaction_pattern, re.IGNORECASE)
-        data_str = pattern.sub(r"'\1': '***REDACTED***'", data_str)
+        # Apply both single-quote (Python repr) and double-quote (JSON) patterns
+        data_str = re.compile(redaction_pattern, re.IGNORECASE).sub(
+            r"'\1': '***REDACTED***'", data_str
+        )
+        data_str = re.compile(json_redaction_pattern, re.IGNORECASE).sub(
+            JSON_REDACTION_REPLACEMENT, data_str
+        )
         return data_str
 
     def _truncate_for_logging(self, text: str, max_length: int = 500) -> str:

@@ -16,7 +16,9 @@ from typing import Any, cast, override
 from webbrowser import get as get_browser
 
 from .utils.redaction import (
+    JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
+    json_redaction_pattern,
     redaction_pattern,
     url_token_redaction_pattern,
     url_token_redaction_replacement,
@@ -27,6 +29,7 @@ logger.addFilter(
     RedactingFilter(
         [
             redaction_pattern,
+            (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
             (url_token_redaction_pattern, url_token_redaction_replacement),
         ]
     )
