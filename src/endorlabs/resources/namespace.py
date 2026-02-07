@@ -21,7 +21,13 @@ from typing import TYPE_CHECKING, Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..api_client import APIClient, RedactingFilter, redaction_pattern
+from ..api_client import (
+    JSON_REDACTION_REPLACEMENT,
+    APIClient,
+    RedactingFilter,
+    json_redaction_pattern,
+    redaction_pattern,
+)
 from ..exceptions import ValidationError as EndorValidationError
 from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
 from ..utils.model_validation import parse_update_mask
@@ -31,7 +37,11 @@ if TYPE_CHECKING:
 
 # Set up logger with redaction filter
 logger = logging.getLogger(__name__)
-logger.addFilter(RedactingFilter([redaction_pattern]))
+logger.addFilter(
+    RedactingFilter(
+        [redaction_pattern, (json_redaction_pattern, JSON_REDACTION_REPLACEMENT)]
+    )
+)
 
 
 # Pydantic Models for Namespace data with OpenAPI validation
