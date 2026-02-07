@@ -115,11 +115,30 @@ jobs:
         run: |
           uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 
+  # Unit tests - fast, no secrets required
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [resolve-dependencies, lint]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
+
+      - name: Run unit tests
+        run: |
+          uv run pytest tests/unit/ --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow"
+
   # Integration tests - slower, requires secrets
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies]
+    needs: [unit-tests]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -133,31 +152,30 @@ jobs:
       - name: Validate required secrets for integration tests
         run: |
           if [ -z "${{ vars.ENDOR_API }}" ]; then
-            echo "❌ ERROR: ENDOR_API variable is not set"
+            echo "ERROR: ENDOR_API variable is not set"
             echo "Please configure the ENDOR_API variable in repository settings"
             exit 1
           fi
           if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
-            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            echo "ERROR: ENDOR_NAMESPACE variable is not set"
             echo "Please configure the ENDOR_NAMESPACE variable in repository settings"
             exit 1
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
+            echo "ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
             echo "Please configure the ENDOR_API_CREDENTIALS_KEY secret in repository settings"
             exit 1
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
+            echo "ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
             echo "Please configure the ENDOR_API_CREDENTIALS_SECRET secret in repository settings"
             exit 1
           fi
-          echo "✅ All required secrets are present"
+          echo "All required secrets are present"
 
       - name: Run integration tests
         run: |
-          # CI runs integration tests (excluding long-running audit/finding/scan log tests)
-          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration and not long"
+          uv run pytest tests/integration/ --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not long"
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
@@ -165,11 +183,11 @@ jobs:
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
 
-  # Coverage job - runs after lint pass
+  # Coverage job - runs unit tests only (fast, deterministic)
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, lint]
+    needs: [unit-tests]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -180,20 +198,15 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
-      - name: Run tests with coverage
+      - name: Run unit tests with coverage
         run: |
-          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not long"
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow"
 
       - name: Display coverage summary
         run: |
           echo "Coverage report generated successfully"
           echo "Coverage data available in coverage.xml"
-          echo "View detailed coverage with: uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
+          echo "View detailed coverage with: uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
 
   # AI Security Code Review - runs on pull requests only
   ai-security-review:
