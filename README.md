@@ -181,7 +181,7 @@ Contributors: see [CONTRIBUTORS.md](CONTRIBUTORS.md). AI/agent integration: [AGE
 
 ## Scripts and automation
 
-Pre-built scripts under `maneuvers/` (e.g. notification policies, exception policies, tag findings) can be run with `uv run python maneuvers/<script>.py --help`. Optional: sync OpenAPI and user docs into `external_docs/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Pre-built scripts under `maneuvers/` (e.g. notification policies, exception policies, tag findings) can be run with `uv run python maneuvers/<script>.py --help`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

@@ -18,47 +18,37 @@ dependencies = [
     "pydantic==2.12.5",
     "pyyaml==6.0.3",
     "httpx==0.28.1",
-    "langchain-google-genai[experimental]>=4.2.0",
+    "tenacity==9.1.2",
+
 ]
 
 [project.optional-dependencies]
-docs = [
+context = [
     "beautifulsoup4==4.14.2",
     "markdownify==1.2.0",
 ]
 experimental = [
     "langgraph==1.0.7",
-    "langchain-openai>=0.3.0",
+    "langchain-openai==1.1.7",
+    "langchain-google-genai[experimental]==4.2.0"
 ]
 
 [build-system]
-requires = ["hatchling>=1.0"]
+requires = ["hatchling==1.28.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/endorlabs"]
 artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 
-# Endor Labs SDK configuration
-[tool.endorlabs]
-# Configuration precedence (highest to lowest):
-# 1. Constructor parameters (APIClient(logging_level="DEBUG"))
-# 2. Environment variables (ENDOR_LOG_LEVEL, ENDOR_API, ENDOR_MAX_RETRIES, etc.)
-# 3. Config files (~/.endorctl/config.yaml)
-# 4. Defaults (built-in SDK defaults)
-#
-# Environment variables override config files to allow deployment-specific
-# settings while maintaining project defaults for local development.
-#
-# Configuration values:
-# ENDOR_API: Endor Labs API endpoint (default: https://api.endorlabs.com)
-# ENDOR_NAMESPACE: Tenant namespace for operations (required)
-# ENDOR_API_CREDENTIALS_KEY: API authentication key (required)
-# ENDOR_API_CREDENTIALS_SECRET: API authentication secret (required)
-# ENDOR_LOG_LEVEL: Logging level - DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
-# ENDOR_MAX_RETRIES: Maximum number of retries for API requests (default: 5)
-
-
+[dependency-groups]
+dev = [
+    "jsonschema==4.26.0",
+    "pytest==9.0.2",
+    "pytest-cov==7.0.0",
+    "ruff==0.14.14",
+    "pyright==1.1.408",
+]
 
 [tool.ruff]
 line-length = 88
@@ -202,8 +192,9 @@ strict = [
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
-    { root = "src/endorlabs/experimental/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none" },
+    { root = "src/endorlabs/experimental/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none" },
     { root = "src/endorlabs/experimental/sast_analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
@@ -362,12 +353,4 @@ exclude = [
     "Thumbs.db",
     "**/node_modules",  # Pyright-specific
 ]
-[dependency-groups]
-dev = [
-    "jsonschema==4.26.0",
-    "pytest==9.0.2",
-    "pytest-cov==7.0.0",
-    "ruff==0.14.14",
-    "pyright==1.1.408",
-    "pre-commit==4.5.1",
-]
+
