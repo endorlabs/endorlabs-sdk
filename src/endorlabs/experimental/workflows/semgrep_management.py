@@ -285,9 +285,7 @@ def _import_single_rule(
             spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
             propagate=True,
         )
-        created_rule = client.semgrep_rule.create(
-            payload=payload, namespace=namespace, validate=False
-        )
+        created_rule = client.semgrep_rule.create(payload=payload, namespace=namespace)
         logger.info("Created: %s (uuid=%s)", display_id, created_rule.uuid)
         result.created += 1
     except Exception as exc:
