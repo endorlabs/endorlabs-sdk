@@ -1398,7 +1398,11 @@ class BaseResourceOperations(Generic[T]):
     def count(
         self, tenant_meta_namespace: str, list_params: ListParameters | None = None
     ) -> int:
-        """Count resources matching filter criteria."""
+        """Count resources matching filter criteria.
+
+        Raises:
+            EndorAPIError: On API errors (same hierarchy as list()).
+        """
         try:
             # Create count-specific list parameters
             if list_params:
@@ -1423,33 +1427,23 @@ class BaseResourceOperations(Generic[T]):
             else:
                 return 0
 
+        except EndorAPIError:
+            raise
+        except httpx.HTTPStatusError as e:
+            raise self.client.map_http_error_to_exception(
+                e, "count", tenant_meta_namespace
+            ) from e
         except Exception as e:
-            status_code, error_msg, error_context = self._extract_error_details(e)
+            from ..exceptions import ServerError
 
-            # Log error with appropriate message based on status code
-            if status_code == 400:
-                self.logger.error(
-                    f"Failed to count {self.resource_name} in namespace "
-                    f"'{tenant_meta_namespace}': {error_msg}"
-                )
-            elif status_code == 403:
-                self.logger.error(
-                    f"Failed to count {self.resource_name} in namespace "
-                    f"'{tenant_meta_namespace}': Permission denied. {error_msg}"
-                )
-            elif status_code is not None:
-                self.logger.error(
-                    f"Failed to count {self.resource_name} in namespace "
-                    f"'{tenant_meta_namespace}': {error_context}. {error_msg}"
-                )
-            else:
-                self.logger.error(
-                    f"Failed to count {self.resource_name} in namespace "
-                    f"'{tenant_meta_namespace}': {error_msg}. "
-                    f"Check namespace permissions and filter syntax.",
-                    exc_info=True,
-                )
-            return 0
+            raise ServerError(
+                message=(
+                    f"Unexpected error counting {self.resource_name} "
+                    f"in namespace '{tenant_meta_namespace}': {e!s}"
+                ),
+                operation="count",
+                namespace=tenant_meta_namespace,
+            ) from e
 
     def _build_params(
         self, list_params: ListParameters | None, **kwargs: Any
