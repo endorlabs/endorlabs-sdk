@@ -81,6 +81,69 @@ class _ListableFacade(Generic[T]):
             return None
         return ListParameters(**merged)
 
+    def _build_list_kwargs(
+        self,
+        *,
+        parent: Any,
+        filter: str | None,
+        mask: str | None,
+        page_size: int | None,
+        page_token: str | None,
+        page_id: str | None,
+        sort_by: str | None,
+        desc: bool | None,
+        count: bool | None,
+        from_date: str | None,
+        to_date: str | None,
+        archive: bool | None,
+        pr_uuid: str | None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Build merged kwargs dict from explicit params, identity kwargs, and parent.
+
+        Shared by ``list()`` and ``list_iter()`` to guarantee identical
+        filter/mask/parent behaviour.
+        """
+        from .models.base import RESOURCE_NAME_TO_TYPE
+
+        explicit = {
+            k: v
+            for k, v in (
+                ("filter", filter),
+                ("mask", mask),
+                ("page_size", page_size),
+                ("page_token", page_token),
+                ("page_id", page_id),
+                ("sort_by", sort_by),
+                ("desc", desc),
+                ("count", count),
+                ("from_date", from_date),
+                ("to_date", to_date),
+                ("archive", archive),
+                ("pr_uuid", pr_uuid),
+            )
+            if v is not None
+        }
+        list_kwargs = {**kwargs, **explicit}
+
+        resource_type = RESOURCE_NAME_TO_TYPE.get(self._resource_name, "")
+        filter_map = get_list_filter_map(resource_type)
+        merged_filter, remaining_kwargs = build_filter_from_identity_kwargs(
+            filter_map, list_kwargs
+        )
+        if merged_filter is not None:
+            remaining_kwargs["filter"] = merged_filter
+
+        if parent is not None:
+            parent_uuid = getattr(parent, "uuid", "")
+            parent_filter = f'meta.parent_uuid=="{parent_uuid}"'
+            existing = remaining_kwargs.get("filter")
+            remaining_kwargs["filter"] = (
+                f"{existing} AND {parent_filter}" if existing else parent_filter
+            )
+
+        return remaining_kwargs
+
     def list(
         self,
         traverse: bool = False,
@@ -193,8 +256,6 @@ class _ListableFacade(Generic[T]):
                 )
 
         """
-        from .models.base import RESOURCE_NAME_TO_TYPE
-
         # Validate concurrent usage
         if concurrent and not traverse:
             raise ValueError(
@@ -236,40 +297,22 @@ class _ListableFacade(Generic[T]):
             )
 
         # Standard single-query mode
-        # Merge explicit list params into kwargs so they override list_params
-        explicit = {
-            k: v
-            for k, v in (
-                ("filter", filter),
-                ("mask", mask),
-                ("page_size", page_size),
-                ("page_token", page_token),
-                ("page_id", page_id),
-                ("sort_by", sort_by),
-                ("desc", desc),
-                ("count", count),
-                ("from_date", from_date),
-                ("to_date", to_date),
-                ("archive", archive),
-                ("pr_uuid", pr_uuid),
-            )
-            if v is not None
-        }
-        list_kwargs = {**kwargs, **explicit}
-        resource_type = RESOURCE_NAME_TO_TYPE.get(self._resource_name, "")
-        filter_map = get_list_filter_map(resource_type)
-        merged_filter, remaining_kwargs = build_filter_from_identity_kwargs(
-            filter_map, list_kwargs
+        remaining_kwargs = self._build_list_kwargs(
+            parent=parent,
+            filter=filter,
+            mask=mask,
+            page_size=page_size,
+            page_token=page_token,
+            page_id=page_id,
+            sort_by=sort_by,
+            desc=desc,
+            count=count,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            **kwargs,
         )
-        if merged_filter is not None:
-            remaining_kwargs["filter"] = merged_filter
-        if parent is not None:
-            parent_uuid = getattr(parent, "uuid", "")
-            parent_filter = f'meta.parent_uuid=="{parent_uuid}"'
-            existing = remaining_kwargs.get("filter")
-            remaining_kwargs["filter"] = (
-                f"{existing} AND {parent_filter}" if existing else parent_filter
-            )
         lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
         return self._list_fn(self._client, ns, lp, max_pages)
 
@@ -592,33 +635,23 @@ class _ListableFacade(Generic[T]):
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
-        explicit = {
-            k: v
-            for k, v in (
-                ("filter", filter),
-                ("mask", mask),
-                ("page_size", page_size),
-                ("page_token", page_token),
-                ("page_id", page_id),
-                ("sort_by", sort_by),
-                ("desc", desc),
-                ("count", count),
-                ("from_date", from_date),
-                ("to_date", to_date),
-                ("archive", archive),
-                ("pr_uuid", pr_uuid),
-            )
-            if v is not None
-        }
-        list_kwargs = {**kwargs, **explicit}
-        if parent is not None:
-            parent_uuid = getattr(parent, "uuid", "")
-            parent_filter = f'meta.parent_uuid=="{parent_uuid}"'
-            existing = list_kwargs.get("filter")
-            list_kwargs["filter"] = (
-                f"{existing} AND {parent_filter}" if existing else parent_filter
-            )
-        lp = self._list_params(list_params, traverse=traverse, **list_kwargs)
+        remaining_kwargs = self._build_list_kwargs(
+            parent=parent,
+            filter=filter,
+            mask=mask,
+            page_size=page_size,
+            page_token=page_token,
+            page_id=page_id,
+            sort_by=sort_by,
+            desc=desc,
+            count=count,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            **kwargs,
+        )
+        lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
         return self._list_iter_fn(self._client, ns, lp, max_pages)
 
 
@@ -1147,28 +1180,10 @@ class ResourceFacade(_ListableFacade[T]):
                 updated = client.project.tag(project, tags=[])
 
         """
-        if (
-            not self._tags_paths
-            or "meta.tags" not in self._tags_paths
-            or self._update_fn is None
-        ):
-            raise NotImplementedError("This resource does not support tag.") from None
-        resource: T = (
-            id_or_resource
-            if self._is_resource_like(id_or_resource)
-            else self.get(id_or_resource, namespace=namespace)
+        resource, uuid, ns, meta = self._resolve_for_tag(
+            id_or_resource, namespace, operation="tag"
         )
-        uuid: str = getattr(resource, "uuid")  # noqa: B009
-        ns = (
-            self._ns(namespace)
-            if namespace is not None
-            else self._ns(
-                resolve_namespace_for_resource(resource, self._default_namespace)
-            )
-        )
-        meta = getattr(resource, "meta", None)
-        if meta is None:
-            raise ValueError("Resource has no meta; cannot set meta.tags.") from None
+        assert self._update_fn is not None  # guaranteed by _resolve_for_tag
         model_copy = getattr(resource, "model_copy")  # noqa: B009
         payload = model_copy(update={"meta": meta.model_copy(update={"tags": tags})})
         return self._update_fn(self._client, ns, uuid, payload, "meta.tags")
@@ -1217,18 +1232,50 @@ class ResourceFacade(_ListableFacade[T]):
                 # After: tags=['reviewed', 'production']
 
         """
+        resource, uuid, ns, meta = self._resolve_for_tag(
+            id_or_resource, namespace, operation="untag"
+        )
+        assert self._update_fn is not None  # guaranteed by _resolve_for_tag
+        current: list[str] = getattr(meta, "tags", None) or []
+        new_tags: list[str] = [t for t in current if t not in keys]
+        model_copy = getattr(resource, "model_copy")  # noqa: B009
+        payload = model_copy(
+            update={"meta": meta.model_copy(update={"tags": new_tags})}
+        )
+        return self._update_fn(self._client, ns, uuid, payload, "meta.tags")
+
+    # -- Internal helpers for tag / untag ----------------------------------
+
+    def _resolve_for_tag(
+        self,
+        id_or_resource: str | T,
+        namespace: str | None,
+        *,
+        operation: str = "tag",
+    ) -> tuple[T, str, str, Any]:
+        """Resolve resource, uuid, namespace and meta for tag/untag.
+
+        Returns:
+            (resource, uuid, namespace, meta)
+
+        Raises:
+            NotImplementedError: When the resource does not support tagging.
+            ValueError: When the resource has no ``meta``.
+        """
         if (
             not self._tags_paths
             or "meta.tags" not in self._tags_paths
             or self._update_fn is None
         ):
-            raise NotImplementedError("This resource does not support untag.") from None
-        resource = (
+            raise NotImplementedError(
+                f"This resource does not support {operation}."
+            ) from None
+        resource: T = (
             id_or_resource
             if self._is_resource_like(id_or_resource)
             else self.get(id_or_resource, namespace=namespace)
         )
-        uuid = getattr(resource, "uuid")  # noqa: B009
+        uuid: str = getattr(resource, "uuid")  # noqa: B009
         ns = (
             self._ns(namespace)
             if namespace is not None
@@ -1238,14 +1285,10 @@ class ResourceFacade(_ListableFacade[T]):
         )
         meta = getattr(resource, "meta", None)
         if meta is None:
-            raise ValueError("Resource has no meta; cannot untag meta.tags.") from None
-        current: list[str] = getattr(meta, "tags", None) or []
-        new_tags: list[str] = [t for t in current if t not in keys]
-        model_copy = getattr(resource, "model_copy")  # noqa: B009
-        payload = model_copy(
-            update={"meta": meta.model_copy(update={"tags": new_tags})}
-        )
-        return self._update_fn(self._client, ns, uuid, payload, "meta.tags")
+            raise ValueError(
+                f"Resource has no meta; cannot {operation} meta.tags."
+            ) from None
+        return resource, uuid, ns, meta
 
 
 class OssResourceFacade(ResourceFacade[T]):

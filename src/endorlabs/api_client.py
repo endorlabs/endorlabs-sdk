@@ -33,6 +33,12 @@ from .utils.redaction import (
 ENDOR_NAMESPACE = os.getenv("ENDOR_NAMESPACE")
 # TODO: Determine if needed or as an init param or env var
 
+# --- Token lifecycle constants -------------------------------------------
+TOKEN_REFRESH_THRESHOLD_SECONDS: int = 30 * 60  # Proactive refresh 30 min before expiry
+TOKEN_EXPIRY_CHECK_SECONDS: int = 60  # Considered expired if <=60 s remaining
+BROWSER_AUTH_TIMEOUT_SECONDS: int = 20  # OAuth browser flow timeout
+TOKEN_VALIDATION_TIMEOUT_SECONDS: float = 5.0  # Quick health-check after token set
+
 
 class APIClient:
     """Minimal API client with retry, rate limiting handling and redacted logging.
@@ -251,7 +257,7 @@ class APIClient:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context manager; close the client. Do not suppress exceptions."""
         self.close()
-        return None
+        return
 
     def _rate_limit(self) -> None:
         """Apply a delay if a rate limit was previously encountered."""
@@ -821,6 +827,49 @@ class APIClient:
             )
             raise
 
+    # -- Internal helpers for the public HTTP methods -----------------------
+
+    def _prepare_headers(self, extra: dict[str, str] | None = None) -> dict[str, str]:
+        """Return session headers merged with *extra* (caller headers win)."""
+        merged = self._headers_copy()
+        if extra:
+            merged.update(extra)
+        return merged
+
+    def _request(
+        self,
+        method: str,
+        url: str,
+        params: dict[str, Any] | None = None,
+        data: Any | None = None,
+        json: Any | None = None,
+        **kwargs: Any,
+    ) -> httpx.Response:
+        """Shared pipeline: rate-limit, auth, normalize, headers, log, retry."""
+        self._rate_limit()
+        self._ensure_authenticated()
+        normalized_url = self._normalize_url(url)
+
+        request_kwargs = kwargs.copy()
+        request_kwargs["headers"] = self._prepare_headers(request_kwargs.get("headers"))
+
+        log_data = self._redact_log_data(data) if data else None
+        log_json = self._redact_log_data(json) if json else None
+        self.logger.debug(
+            f"{method} request to: {normalized_url} with params: {params}, "
+            f"data: {log_data}, json: {log_json}"
+        )
+        return self._request_with_retry(
+            method,
+            normalized_url,
+            params=params,
+            data=data,
+            json=json,
+            **request_kwargs,
+        )
+
+    # -- Public HTTP verbs (thin wrappers around _request) -----------------
+
     def get(
         self,
         url: str,
@@ -830,31 +879,7 @@ class APIClient:
         **kwargs: Any,
     ) -> httpx.Response:
         """GET request (httpx.Response)."""
-        self._rate_limit()
-        self._ensure_authenticated()
-        normalized_url = self._normalize_url(url)
-        request_kwargs = kwargs.copy()
-        if "headers" in request_kwargs:
-            merged_headers = self._headers_copy()
-            merged_headers.update(request_kwargs["headers"])
-            request_kwargs["headers"] = merged_headers
-        else:
-            request_kwargs["headers"] = self._headers_copy()
-
-        log_data = self._redact_log_data(data) if data else None
-        log_json = self._redact_log_data(json) if json else None
-        self.logger.debug(
-            f"GET request to: {normalized_url} with params: {params}, "
-            f"data: {log_data}, json: {log_json}"
-        )
-        return self._request_with_retry(
-            "GET",
-            normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
+        return self._request("GET", url, params=params, data=data, json=json, **kwargs)
 
     def post(
         self,
@@ -865,31 +890,7 @@ class APIClient:
         **kwargs: Any,
     ) -> httpx.Response:
         """POST request (httpx.Response)."""
-        self._rate_limit()
-        self._ensure_authenticated()
-        normalized_url = self._normalize_url(url)
-        request_kwargs = kwargs.copy()
-        if "headers" in request_kwargs:
-            merged_headers = self._headers_copy()
-            merged_headers.update(request_kwargs["headers"])
-            request_kwargs["headers"] = merged_headers
-        else:
-            request_kwargs["headers"] = self._headers_copy()
-
-        log_data = self._redact_log_data(data) if data else None
-        log_json = self._redact_log_data(json) if json else None
-        self.logger.debug(
-            f"POST request to: {normalized_url} with params: {params}, "
-            f"data: {log_data}, json: {log_json}"
-        )
-        return self._request_with_retry(
-            "POST",
-            normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
+        return self._request("POST", url, params=params, data=data, json=json, **kwargs)
 
     def patch(
         self,
@@ -900,30 +901,8 @@ class APIClient:
         **kwargs: Any,
     ) -> httpx.Response:
         """PATCH request (httpx.Response)."""
-        self._rate_limit()
-        self._ensure_authenticated()
-        normalized_url = self._normalize_url(url)
-        request_kwargs = kwargs.copy()
-        if "headers" in request_kwargs:
-            merged_headers = self._headers_copy()
-            merged_headers.update(request_kwargs["headers"])
-            request_kwargs["headers"] = merged_headers
-        else:
-            request_kwargs["headers"] = self._headers_copy()
-
-        log_data = self._redact_log_data(data) if data else None
-        log_json = self._redact_log_data(json) if json else None
-        self.logger.debug(
-            f"PATCH request to: {normalized_url} with params: {params}, "
-            f"data: {log_data}, json: {log_json}"
-        )
-        return self._request_with_retry(
-            "PATCH",
-            normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
+        return self._request(
+            "PATCH", url, params=params, data=data, json=json, **kwargs
         )
 
     def put(
@@ -935,31 +914,7 @@ class APIClient:
         **kwargs: Any,
     ) -> httpx.Response:
         """PUT request (httpx.Response)."""
-        self._rate_limit()
-        self._ensure_authenticated()
-        normalized_url = self._normalize_url(url)
-        request_kwargs = kwargs.copy()
-        if "headers" in request_kwargs:
-            merged_headers = self._headers_copy()
-            merged_headers.update(request_kwargs["headers"])
-            request_kwargs["headers"] = merged_headers
-        else:
-            request_kwargs["headers"] = self._headers_copy()
-
-        log_data = self._redact_log_data(data) if data else None
-        log_json = self._redact_log_data(json) if json else None
-        self.logger.debug(
-            f"PUT request to: {normalized_url} with params: {params}, "
-            f"data: {log_data}, json: {log_json}"
-        )
-        return self._request_with_retry(
-            "PUT",
-            normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
-        )
+        return self._request("PUT", url, params=params, data=data, json=json, **kwargs)
 
     def delete(
         self,
@@ -970,30 +925,8 @@ class APIClient:
         **kwargs: Any,
     ) -> httpx.Response:
         """DELETE request (httpx.Response)."""
-        self._rate_limit()
-        self._ensure_authenticated()
-        normalized_url = self._normalize_url(url)
-        request_kwargs = kwargs.copy()
-        if "headers" in request_kwargs:
-            merged_headers = self._headers_copy()
-            merged_headers.update(request_kwargs["headers"])
-            request_kwargs["headers"] = merged_headers
-        else:
-            request_kwargs["headers"] = self._headers_copy()
-
-        log_data = self._redact_log_data(data) if data else None
-        log_json = self._redact_log_data(json) if json else None
-        self.logger.debug(
-            f"DELETE request to: {normalized_url} with params: {params}, "
-            f"data: {log_data}, json: {log_json}"
-        )
-        return self._request_with_retry(
-            "DELETE",
-            normalized_url,
-            params=params,
-            data=data,
-            json=json,
-            **request_kwargs,
+        return self._request(
+            "DELETE", url, params=params, data=data, json=json, **kwargs
         )
 
     def _extract_items_from_response(self, response_data: Any) -> list[Any]:
@@ -1146,7 +1079,7 @@ class APIClient:
             # Check if token expires within 30 minutes
             now = datetime.now(UTC)
             time_until_expiry = (self._token_expires - now).total_seconds()
-            if time_until_expiry <= 30 * 60:  # 30 minutes in seconds
+            if time_until_expiry <= TOKEN_REFRESH_THRESHOLD_SECONDS:
                 _ = self.authenticate()
         return self._token
 
@@ -1155,15 +1088,15 @@ class APIClient:
         """Check if the current token is expired or about to expire.
 
         Returns:
-            True if token is expired or expires within 60 seconds, False otherwise.
+            True if token is expired or expires within
+            TOKEN_EXPIRY_CHECK_SECONDS, False otherwise.
 
         """
         if self._token_expires is None:
             return True
-        # Check if token expires within 60 seconds
         now = datetime.now(self._token_expires.tzinfo)
         time_until_expiry = (self._token_expires - now).total_seconds()
-        return time_until_expiry <= 60
+        return time_until_expiry <= TOKEN_EXPIRY_CHECK_SECONDS
 
     def authenticate(self) -> str | None:
         """Authenticate and update session headers with bearer token.
@@ -1253,7 +1186,7 @@ class APIClient:
 
         self.logger.info(f"Starting browser OAuth flow with method: {browser_method}")
         return get_browser_token(
-            timeout=20,
+            timeout=BROWSER_AUTH_TIMEOUT_SECONDS,
             environment=environment,
             browser_name=self._browser_name,
             method=browser_method,
@@ -1269,7 +1202,7 @@ class APIClient:
             test_response = self.client.get(
                 "meta/version",
                 headers={"Authorization": f"Bearer {token}"},
-                timeout=5.0,
+                timeout=TOKEN_VALIDATION_TIMEOUT_SECONDS,
             )
             _ = test_response.raise_for_status()
 

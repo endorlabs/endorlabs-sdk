@@ -8,6 +8,8 @@ import logging
 import os
 from unittest.mock import Mock, patch
 
+import pytest
+
 from endorlabs.api_client import APIClient
 from endorlabs.utils.logging_config import setup_logging
 
@@ -355,3 +357,94 @@ class TestLogLevelBackwardCompatibility:
             setup_logging("test_module")
             # Should use ENDOR_LOG_LEVEL (WARNING), not LOG_LEVEL (DEBUG)
             assert logging.root.level == 30  # WARNING level
+
+
+class TestRequestDelegation:
+    """Each public HTTP method delegates to _request() with the correct method string.
+
+    _request() consolidates rate-limiting, auth, URL normalization, header
+    merging, logging, and retry into one place.  These tests verify the
+    delegation contract by patching _request_with_retry (the lowest internal
+    call site) and asserting the method string, normalized URL, and merged
+    headers arrive correctly.
+    """
+
+    @staticmethod
+    def _make_client() -> APIClient:
+        """Build an APIClient with mocked transport for delegation tests."""
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "ENDOR_API_CREDENTIALS_KEY": "test-key",
+                    "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+                    "ENDOR_TOKEN": "",
+                    "ENDOR_AUTH_METHOD": "",
+                },
+                clear=True,
+            ),
+            _patch_httpx_client_for_auth(),
+        ):
+            return APIClient()
+
+    @pytest.mark.parametrize(
+        "method_name",
+        ["get", "post", "patch", "put", "delete"],
+    )
+    def test_method_delegates_with_correct_method_string(
+        self, method_name: str
+    ) -> None:
+        """get/post/patch/put/delete pass the correct HTTP method string."""
+        client = self._make_client()
+        sentinel = Mock()
+        mock_retry = Mock(return_value=sentinel)
+        with patch.object(client, "_request_with_retry", mock_retry):
+            fn = getattr(client, method_name)
+            result = fn("/v1/namespaces")
+
+        assert result is sentinel
+        # First positional arg is the HTTP method
+        assert mock_retry.call_args[0][0] == method_name.upper()
+
+    def test_get_normalizes_relative_url(self) -> None:
+        """Relative URL is prepended with base_url."""
+        client = self._make_client()
+        mock_retry = Mock(return_value=Mock())
+        with patch.object(client, "_request_with_retry", mock_retry):
+            client.get("/v1/namespaces")
+
+        url = mock_retry.call_args[0][1]
+        assert url.startswith("https://")
+        assert url.endswith("/v1/namespaces")
+
+    def test_post_passes_json_payload(self) -> None:
+        """POST forwards the json kwarg to _request_with_retry."""
+        client = self._make_client()
+        payload = {"meta": {"name": "test"}}
+        mock_retry = Mock(return_value=Mock())
+        with patch.object(client, "_request_with_retry", mock_retry):
+            client.post("/v1/namespaces", json=payload)
+
+        assert mock_retry.call_args.kwargs.get("json") is payload
+
+    def test_custom_headers_are_merged(self) -> None:
+        """Extra headers passed to a method are merged with session headers."""
+        client = self._make_client()
+        custom = {"X-Custom": "value"}
+        mock_retry = Mock(return_value=Mock())
+        with patch.object(client, "_request_with_retry", mock_retry):
+            client.get("/v1/namespaces", headers=custom)
+
+        sent_headers = mock_retry.call_args.kwargs.get("headers", {})
+        assert sent_headers.get("X-Custom") == "value"
+        # Session headers (e.g. Content-Type) are also present
+        assert "Content-Type" in sent_headers
+
+    def test_params_forwarded(self) -> None:
+        """Query params are forwarded to _request_with_retry."""
+        client = self._make_client()
+        mock_retry = Mock(return_value=Mock())
+        with patch.object(client, "_request_with_retry", mock_retry):
+            client.get("/v1/namespaces", params={"traverse": "true"})
+
+        assert mock_retry.call_args.kwargs.get("params") == {"traverse": "true"}

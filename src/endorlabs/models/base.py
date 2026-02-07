@@ -107,115 +107,60 @@ class FlexibleEnum(str, Enum):
         return obj
 
 
-class TenantMeta(BaseModel):
+class JsonDefaultModel(BaseModel):
+    """Pydantic base that defaults ``model_dump(mode='json')``.
+
+    All model hierarchies that serialize for the Endor Labs API should
+    inherit from this instead of ``BaseModel`` directly.  The single
+    override here replaces five identical 30-line copies that used to
+    live in TenantMeta, Context, BaseMeta, BaseSpec and BaseResource.
+    """
+
+    @override
+    def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        *,
+        mode: Literal["json", "python"] = "json",
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        round_trip: bool = False,
+        warnings: bool = True,
+        serialize_as_any: bool = False,
+    ) -> dict[str, Any]:
+        """Dump model with ``mode='json'`` by default.
+
+        Ensures datetime objects and other non-JSON-serializable types
+        are properly converted for API operations.
+        """
+        return super().model_dump(
+            mode=mode,
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            round_trip=round_trip,
+            warnings=warnings,
+            serialize_as_any=serialize_as_any,
+        )
+
+
+class TenantMeta(JsonDefaultModel):
     """Base tenant metadata for all resources."""
 
     namespace: str = Field(..., description="Canonical namespace name")
 
-    @override
-    def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-        *,
-        mode: Literal["json", "python"] = "json",
-        include: set[str] | dict[str, Any] | None = None,
-        exclude: set[str] | dict[str, Any] | None = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
-        warnings: bool = True,
-        serialize_as_any: bool = False,
-    ) -> dict[str, Any]:
-        """Dump model to dictionary with JSON mode as default.
 
-        This override defaults to mode="json" to ensure proper serialization
-        for API operations.
-
-        Args:
-            mode: Serialization mode ("json" or "python"). Defaults to "json".
-            include: Fields to include
-            exclude: Fields to exclude
-            by_alias: Use field aliases
-            exclude_unset: Exclude unset fields
-            exclude_defaults: Exclude default values
-            exclude_none: Exclude None values
-            round_trip: Round-trip serialization
-            warnings: Show warnings
-            serialize_as_any: Serialize as Any type
-
-        Returns:
-            Dictionary representation of the model
-
-        """
-        return super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
-
-
-class Context(BaseModel):
+class Context(JsonDefaultModel):
     """Contextual information for resources with context isolation."""
 
     id: str = Field(default="default", description="Context identifier")
     type: str = Field(..., description="Context type classification")
-
-    @override
-    def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-        *,
-        mode: Literal["json", "python"] = "json",
-        include: set[str] | dict[str, Any] | None = None,
-        exclude: set[str] | dict[str, Any] | None = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
-        warnings: bool = True,
-        serialize_as_any: bool = False,
-    ) -> dict[str, Any]:
-        """Dump model to dictionary with JSON mode as default.
-
-        This override defaults to mode="json" to ensure proper serialization
-        for API operations.
-
-        Args:
-            mode: Serialization mode ("json" or "python"). Defaults to "json".
-            include: Fields to include
-            exclude: Fields to exclude
-            by_alias: Use field aliases
-            exclude_unset: Exclude unset fields
-            exclude_defaults: Exclude default values
-            exclude_none: Exclude None values
-            round_trip: Round-trip serialization
-            warnings: Show warnings
-            serialize_as_any: Serialize as Any type
-
-        Returns:
-            Dictionary representation of the model
-
-        """
-        return super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
 
 
 class ProcessingStatus(BaseModel):
@@ -236,7 +181,7 @@ class IngestedObject(BaseModel):
     raw: dict[str, Any] = Field(..., description="Raw object data")
 
 
-class BaseMeta(BaseModel):
+class BaseMeta(JsonDefaultModel):
     """Base metadata for all resources with universal attributes."""
 
     model_config = ConfigDict(
@@ -291,56 +236,6 @@ class BaseMeta(BaseModel):
         # The 'id' field is a known annotation key used by the API
         return v
 
-    @override
-    def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-        *,
-        mode: Literal["json", "python"] = "json",
-        include: set[str] | dict[str, Any] | None = None,
-        exclude: set[str] | dict[str, Any] | None = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
-        warnings: bool = True,
-        serialize_as_any: bool = False,
-    ) -> dict[str, Any]:
-        """Dump model to dictionary with JSON mode as default.
-
-        This override defaults to mode="json" to ensure datetime objects
-        and other non-JSON-serializable types are properly serialized.
-        This is critical for API operations where data must be JSON-serializable.
-
-        Args:
-            mode: Serialization mode ("json" or "python"). Defaults to "json".
-            include: Fields to include
-            exclude: Fields to exclude
-            by_alias: Use field aliases
-            exclude_unset: Exclude unset fields
-            exclude_defaults: Exclude default values
-            exclude_none: Exclude None values
-            round_trip: Round-trip serialization
-            warnings: Show warnings
-            serialize_as_any: Serialize as Any type
-
-        Returns:
-            Dictionary representation of the model
-
-        """
-        return super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
-
     # Hierarchical fields
     parent_uuid: str | None = Field(
         None, description="Parent resource UUID"
@@ -394,7 +289,7 @@ class BaseMeta(BaseModel):
         return v
 
 
-class BaseSpec(BaseModel):
+class BaseSpec(JsonDefaultModel):
     """Base specification for all resources."""
 
     model_config = ConfigDict(
@@ -436,58 +331,8 @@ class BaseSpec(BaseModel):
             pass
         return v
 
-    @override
-    def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self,
-        *,
-        mode: Literal["json", "python"] = "json",
-        include: set[str] | dict[str, Any] | None = None,
-        exclude: set[str] | dict[str, Any] | None = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
-        warnings: bool = True,
-        serialize_as_any: bool = False,
-    ) -> dict[str, Any]:
-        """Dump model to dictionary with JSON mode as default.
 
-        This override defaults to mode="json" to ensure datetime objects
-        and other non-JSON-serializable types are properly serialized.
-        This is critical for API operations where data must be JSON-serializable.
-
-        Args:
-            mode: Serialization mode ("json" or "python"). Defaults to "json".
-            include: Fields to include
-            exclude: Fields to exclude
-            by_alias: Use field aliases
-            exclude_unset: Exclude unset fields
-            exclude_defaults: Exclude default values
-            exclude_none: Exclude None values
-            round_trip: Round-trip serialization
-            warnings: Show warnings
-            serialize_as_any: Serialize as Any type
-
-        Returns:
-            Dictionary representation of the model
-
-        """
-        return super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
-
-
-class BaseResource(BaseModel):
+class BaseResource(JsonDefaultModel):
     """Base resource model for all Endor Labs resources.
 
     Field Mutability Guide:
@@ -738,56 +583,20 @@ class BaseResource(BaseModel):
         return value
 
     @override
-    def model_dump(  # pyright: ignore[reportIncompatibleMethodOverride]
+    def model_dump(
         self,
         *,
         mode: Literal["json", "python"] = "json",
-        include: set[str] | dict[str, Any] | None = None,
-        exclude: set[str] | dict[str, Any] | None = None,
-        by_alias: bool = False,
-        exclude_unset: bool = False,
-        exclude_defaults: bool = False,
-        exclude_none: bool = False,
-        round_trip: bool = False,
         warnings: bool = False,
-        serialize_as_any: bool = False,
+        **kwargs: Any,
     ) -> dict[str, Any]:
-        """Dump model to dictionary with JSON mode as default.
+        """Like ``JsonDefaultModel.model_dump`` but defaults ``warnings=False``.
 
-        This override defaults to mode="json" to ensure datetime objects
-        and other non-JSON-serializable types are properly serialized.
-        This is critical for API operations where data must be JSON-serializable.
-        Defaults warnings=False to avoid Pydantic serializer warnings for
-        nested meta/spec/tenant_meta/context; pass warnings=True to see them.
-
-        Args:
-            mode: Serialization mode ("json" or "python"). Defaults to "json".
-            include: Fields to include
-            exclude: Fields to exclude
-            by_alias: Use field aliases
-            exclude_unset: Exclude unset fields
-            exclude_defaults: Exclude default values
-            exclude_none: Exclude None values
-            round_trip: Round-trip serialization
-            warnings: Show Pydantic serializer warnings (default False).
-            serialize_as_any: Serialize as Any type
-
-        Returns:
-            Dictionary representation of the model
-
+        Suppresses Pydantic serializer warnings for nested
+        meta/spec/tenant_meta/context models; pass ``warnings=True``
+        to see them.
         """
-        return super().model_dump(
-            mode=mode,
-            include=include,
-            exclude=exclude,
-            by_alias=by_alias,
-            exclude_unset=exclude_unset,
-            exclude_defaults=exclude_defaults,
-            exclude_none=exclude_none,
-            round_trip=round_trip,
-            warnings=warnings,
-            serialize_as_any=serialize_as_any,
-        )
+        return super().model_dump(mode=mode, warnings=warnings, **kwargs)
 
 
 class BaseResourceOperations(Generic[T]):
