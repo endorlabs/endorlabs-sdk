@@ -99,7 +99,7 @@ class APIClient:
 
     def __init__(
         self,
-        max_retries: int = 5,
+        max_retries: int | None = None,
         backoff_factor: float = 0.5,
         status_forcelist: tuple[int, ...] = (429, 500, 502, 503, 504),
         logging_level: str | None = None,
@@ -192,14 +192,10 @@ class APIClient:
         self._token: str | None = None
         self._token_expires: datetime | None = None
 
-        # Get max_retries with precedence: parameter > env var > default
-        # If max_retries is the default (5), check env var; otherwise use provided value
-        if max_retries == 5:
-            # Check if env var is set, otherwise use default 5
-            env_max_retries = os.getenv("ENDOR_MAX_RETRIES")
-            if env_max_retries is not None:
-                max_retries = int(env_max_retries)
-        # else: max_retries was explicitly provided (not default), use it
+        # Get max_retries with precedence: explicit parameter > env var > default (5)
+        if max_retries is None:
+            env_val = os.getenv("ENDOR_MAX_RETRIES")
+            max_retries = int(env_val) if env_val else 5
 
         # Store retry configuration for error messages and retry loop
         self.max_retries = max_retries

@@ -198,9 +198,16 @@ class ListParameters(BaseModel):
         None, description="Page id to start from (alternative pagination)"
     )
     sort_field: str | None = Field(
-        None, description="Sort field (e.g., 'meta.create_time')"
+        None,
+        description=(
+            "Deprecated: use sort_by instead. "
+            "Sort field (e.g., 'meta.create_time')"
+        ),
     )
-    sort_order: str | None = Field("asc", description="Sort order (asc/desc)")
+    sort_order: str | None = Field(
+        "asc",
+        description="Deprecated: use desc instead. Sort order (asc/desc)",
+    )
     sort_by: str | None = Field(
         None,
         description="Field path to sort by (e.g., 'meta.create_time').",

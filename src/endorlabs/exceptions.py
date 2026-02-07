@@ -89,7 +89,7 @@ class AmbiguousError(EndorAPIError):
         message: str = "Multiple resources match; narrow the query",
         **kwargs: Any,
     ) -> None:
-        super().__init__(message, status_code=400, **kwargs)
+        super().__init__(message, status_code=None, **kwargs)
 
 
 class ValidationError(EndorAPIError):
@@ -166,7 +166,7 @@ class NetworkError(EndorAPIError):
         super().__init__(message, status_code=status_code, **kwargs)
 
 
-class NotImplementedError(EndorAPIError):
+class MethodNotSupportedError(EndorAPIError):
     """Method not implemented (501).
 
     Raised when the API endpoint doesn't support the requested operation.
@@ -176,6 +176,10 @@ class NotImplementedError(EndorAPIError):
     def __init__(self, message: str = "Method not implemented", **kwargs: Any) -> None:
         _ = kwargs.pop("status_code", None)
         super().__init__(message, status_code=501, **kwargs)
+
+
+# Backward-compatible alias — deprecated; use MethodNotSupportedError instead.
+NotImplementedError = MethodNotSupportedError
 
 
 def map_status_code_to_exception(
@@ -207,7 +211,7 @@ def map_status_code_to_exception(
     elif status_code == 429:
         return RateLimitError(message or "Rate limit exceeded", **kwargs)
     elif status_code == 501:
-        return NotImplementedError(message or "Method not implemented", **kwargs)
+        return MethodNotSupportedError(message or "Method not implemented", **kwargs)
     elif status_code in (500, 502, 503, 504):
         return ServerError(message or "Server error", status_code=status_code, **kwargs)
     else:
