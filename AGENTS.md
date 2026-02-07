@@ -60,14 +60,14 @@ This is the recommended way for agents to bootstrap Endor Labs context before pe
 
 ## Architecture
 
-The SDK uses a two-layer, registry-driven design so the same pattern applies to all resources.
+Two-layer, registry-driven design. The same pattern applies to all resources.
 
-- **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only. No resource concepts; no Pydantic models.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`). Each facade is a `SystemResourceFacade[T]`, `OssResourceFacade[T]`, or `ResourceFacade[T]` in `facade.py` (chosen by registry `scope`); facades resolve namespace, build `ListParameters` from kwargs, and delegate to existing module-level list/get/create/update/delete functions.
-- **Registry:** Which resources exist on `Client` is defined in a single registry in `endorlabs.registry`. `Client` exposes all resources via `client.<resource>.list(...)`, `client.<resource>.get(...)`, etc. Adding a resource = one registry entry (with optional `scope`: "system", "oss", or None); no hand-wiring in `Client`. Resources without update or delete (e.g. api_keys, audit_logs, finding_logs) raise `NotImplementedError` for those operations.
-- **Pydantic models:** Request/response types live in resource modules and `models/`; used by module functions and by facade types only as the type parameter. No HTTP or registry logic in models.
+- **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes `ResourceFacade[T]` instances built from the registry. The `scope` parameter (`None`, `"system"`, `"oss"`) controls namespace resolution.
+- **Registry:** `endorlabs.registry` — one `ResourceEntry.from_module(...)` call per resource. Adding a resource = one registry entry.
+- **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models.
 
-When editing the client surface, facade, or registry, follow [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md) and `.cursor/rules/architecture.mdc`.
+For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
 
 ## Critical Project Rules
 

@@ -19,7 +19,6 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, override
 
@@ -33,6 +32,7 @@ from ..models.base import (
     Context,
     FlexibleEnum,
 )
+from ..utils.logging_config import get_resource_logger
 from .finding import (
     AnalysisMethod,
     Ecosystem,
@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..types import ListParameters
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 class FindingLogOperation(FlexibleEnum):

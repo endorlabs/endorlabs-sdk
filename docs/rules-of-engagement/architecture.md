@@ -14,10 +14,11 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
 
 3. **Facade (ResourceFacade[T])** — `facade.py`
    - Resolves namespace, builds `ListParameters` from convenience kwargs, delegates to module-level list/get/create/update/delete.
+   - Single `ResourceFacade[T]` class handles all scopes via the `scope` parameter (`None` for tenant, `"system"`, `"oss"`).
    - Accept optional `update_fn`/`delete_fn` for resources that lack them; raise `NotImplementedError` when the operation is not supported.
 
 4. **Registry** — single source of truth for which resources exist on `Client`
-   - One entry per resource: attr_name, model_class, list_fn, get_fn, create_fn, update_fn (optional), delete_fn (optional).
+   - One entry per resource via `ResourceEntry.from_module(attr_name, module, model, api_path, ...)`.
    - Adding a resource = one registry entry.
 
 ## Rules

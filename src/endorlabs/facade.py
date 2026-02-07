@@ -1,18 +1,33 @@
 """Resource facade for the resource-oriented Client API.
 
-Provides SystemResourceFacade[T] (list, list_iter, lookup; get only when
-namespace is "oss") for system-owned resources, OssResourceFacade[T]
-(namespace fixed to "oss") for oss-scoped resources, and ResourceFacade[T]
-(full CRUD where supported) for tenant resources. Also provides ScanLogsFacade
-for the request-based scan logs workflow; Client attaches it via
-CUSTOM_FACADE_REGISTRY.
-See docs/reference/resources.md (scan_log_request) and
-docs/guides/retrieving-scan-results.md.
+Provides ``ResourceFacade[T]`` — a single facade class that handles all
+resource scopes (tenant, system, oss) via the ``scope`` parameter — and
+``ScanLogsFacade`` for the request-based scan logs workflow.
+
+``scope`` controls namespace resolution:
+
+* ``None`` (default) — tenant-scoped; namespace from client default or arg.
+* ``"system"`` — system-owned; ``get()`` restricted to ``namespace="oss"``.
+* ``"oss"`` — OSS-scoped; namespace is always ``"oss"``.
+
+Backward-compatible aliases ``SystemResourceFacade`` and ``OssResourceFacade``
+are provided for external consumers.
+
+See docs/reference/resources.md and docs/guides/retrieving-scan-results.md.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeGuard, TypeVar, cast, override
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    TypeGuard,
+    TypeVar,
+    cast,
+    override,
+)
 
 from .exceptions import AmbiguousError, NotFoundError
 from .types import ListParameters
@@ -32,7 +47,19 @@ T = TypeVar("T")
 
 
 class _ListableFacade(Generic[T]):
-    """Base facade: list, list_iter, lookup only. No get/create/update/delete."""
+    """Base facade: list, list_iter, lookup only. No get/create/update/delete.
+
+    Shared parameter vocabulary (list, lookup, list_iter):
+    traverse, concurrent, max_workers, namespace, list_params, max_pages, parent,
+    filter, mask, page_size, page_token, page_id, sort_by, desc, count,
+    from_date, to_date, archive, pr_uuid, **kwargs (identity → filter).
+    See method docstrings for signatures; semantics: traverse=tenant-wide,
+    concurrent=parallel namespaces when traverse=True, namespace=canonical path,
+    list_params=ListParameters (kwargs override), max_pages=None=all,
+    parent=scope by meta.parent_uuid, filter/mask=API expressions,
+    page_*=pagination, sort_by/desc=ordering, count=return count only,
+    from_date/to_date=ISO 8601, archive=from archive, pr_uuid=PR scan scope.
+    """
 
     def __init__(
         self,
@@ -167,92 +194,49 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> list[T]:
-        """List resources with pagination and filtering.
+        """List resources with full pagination and optional concurrent mode.
 
-        Retrieves resources from the specified namespace with optional filtering,
-        sorting, and recursive traversal of child namespaces. All list parameters
-        map to ``list_parameters.*`` on the wire. Full pagination is always used
-        (``list_all=True``).
+        Uses full pagination (list_all=True). With traverse=True and
+        concurrent=True, queries each namespace in parallel. Parameter details
+        are in the class docstring (traverse, concurrent, max_workers,
+        namespace, list_params, max_pages, parent, filter, mask, page_*, sort_by,
+        desc, count, from_date, to_date, archive, pr_uuid, **kwargs).
 
         Args:
-            traverse: When True, recursively queries all child namespaces in the
-                hierarchy. Use for tenant-wide queries across all namespaces.
-            concurrent: When True (and traverse=True), queries namespaces in
-                parallel using a thread pool. This improves performance for
-                large datasets like FindingLog by first fetching all namespaces,
-                then querying each namespace concurrently without traverse.
-                Best combined with a filter to leverage index support (e.g.,
-                ``filter='meta.create_time >= "2024-01-01T00:00:00Z"'``).
-            max_workers: Maximum number of concurrent threads when
-                ``concurrent=True``. Defaults to 10. Higher values may hit
-                API rate limits.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). Defaults to the client's configured
-                tenant namespace.
-            list_params: Full ListParameters object for advanced options like
-                grouping and aggregation. Explicit kwargs override values in
-                list_params when both are provided.
-            max_pages: Maximum number of pages to fetch. None fetches all
-                available pages.
-            parent: Parent resource object to scope the list by namespace and
-                ``meta.parent_uuid``. Only supported when the resource has a
-                registered ``parent_kind``.
-            filter: Filter expression to select matching resources (e.g.,
-                ``'spec.level==FINDING_LEVEL_CRITICAL'``). See API spec for
-                supported operators and fields per resource.
-            mask: Field mask for response projection (e.g.,
-                ``'meta.name,spec.level'``). Limits which fields are returned
-                in each resource.
-            page_size: Number of results per page. Uses API default if omitted.
-            page_token: Continuation token from a previous response's
-                ``next_page_token`` for resuming pagination.
-            page_id: Alternative pagination start point (aligns with endorctl
-                ``--page-id`` flag).
-            sort_by: Field path to sort results by (e.g., ``'meta.create_time'``).
-            desc: Sort descending when True, ascending when False or omitted.
-            count: When True, return count of matching resources instead of
-                the resources themselves.
-            from_date: Filter to resources created after this date (ISO 8601
-                format, e.g., ``'2024-01-01T00:00:00Z'``).
-            to_date: Filter to resources created before this date (ISO 8601
-                format).
-            archive: When True, fetch resources from the archive instead of
-                active storage.
-            pr_uuid: Scope to resources from a specific PR scan by its UUID.
-            **kwargs: Resource-specific identity kwargs (e.g., ``name``,
-                ``git_url``) that are translated to filter clauses automatically.
+            traverse: See class docstring.
+            concurrent: See class docstring.
+            max_workers: See class docstring.
+            namespace: See class docstring.
+            list_params: See class docstring.
+            max_pages: See class docstring.
+            parent: See class docstring.
+            filter: See class docstring.
+            mask: See class docstring.
+            page_size: See class docstring.
+            page_token: See class docstring.
+            page_id: See class docstring.
+            sort_by: See class docstring.
+            desc: See class docstring.
+            count: See class docstring.
+            from_date: See class docstring.
+            to_date: See class docstring.
+            archive: See class docstring.
+            pr_uuid: See class docstring.
+            **kwargs: See class docstring.
 
         Returns:
-            List of resources matching the query. Empty list if no matches.
+            List of resources; empty if no matches.
 
         Raises:
-            ValueError: When namespace is required but not provided (and no
-                client default is set), when ``parent`` is passed but the
-                resource does not support parent scoping, or when
-                ``concurrent=True`` without ``traverse=True``.
+            ValueError: Missing namespace, unsupported parent, or concurrent
+                without traverse.
 
         Example:
-            List all critical findings across all namespaces::
+            List critical findings tenant-wide::
 
                 findings = client.finding.list(
                     traverse=True,
                     filter='spec.level==FINDING_LEVEL_CRITICAL'
-                )
-
-            List projects in a specific namespace with field projection::
-
-                projects = client.project.list(
-                    namespace='tenant.team',
-                    mask='meta.name,spec.git'
-                )
-
-            Fast concurrent query for large datasets like FindingLog::
-
-                logs = client.finding_log.list(
-                    traverse=True,
-                    concurrent=True,
-                    max_workers=15,
-                    filter='meta.create_time >= "2024-01-01T00:00:00Z"',
                 )
 
         """
@@ -325,25 +309,7 @@ class _ListableFacade(Generic[T]):
         parent: Any,
         **kwargs: Any,
     ) -> list[T]:
-        """Execute list queries concurrently across all child namespaces.
-
-        This method:
-        1. Fetches all namespaces under the given namespace with traverse=True
-        2. Queries each namespace in parallel (without traverse)
-        3. Merges all results into a single list
-
-        Args:
-            namespace: Root namespace to query from.
-            max_workers: Maximum concurrent threads.
-            list_params: List parameters to apply to each namespace query.
-            max_pages: Max pages per namespace query.
-            parent: Parent resource for scoping (passed through).
-            **kwargs: Additional list parameters.
-
-        Returns:
-            Merged list of all results from all namespaces.
-
-        """
+        """Fetch namespaces with traverse, then query each in parallel; merge."""
         from .resources.namespace import list_namespaces
         from .utils.parallel import execute_across_namespaces
 
@@ -414,78 +380,43 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Look up a single resource matching the given criteria.
+        """Return the single resource matching criteria; calls list() under the hood.
 
-        Convenience method that calls ``list()`` with the provided parameters
-        and returns the single matching resource. Use this when you expect
-        exactly one result based on identity kwargs or filter criteria.
+        Parameters match list(); see class docstring. max_pages defaults to 2
+        to limit search scope.
 
         Args:
-            traverse: When True, recursively queries all child namespaces in the
-                hierarchy. Use for tenant-wide queries across all namespaces.
-            concurrent: When True (and traverse=True), queries namespaces in
-                parallel. See ``list()`` for details.
-            max_workers: Maximum concurrent threads when ``concurrent=True``.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). Defaults to the client's configured
-                tenant namespace.
-            list_params: Full ListParameters object for advanced options like
-                grouping and aggregation. Explicit kwargs override values in
-                list_params when both are provided.
-            max_pages: Maximum number of pages to search through. Defaults to 2
-                to limit search scope for lookups.
-            parent: Parent resource object to scope the lookup by namespace and
-                ``meta.parent_uuid``. Only supported when the resource has a
-                registered ``parent_kind``.
-            filter: Filter expression to select matching resources (e.g.,
-                ``'spec.level==FINDING_LEVEL_CRITICAL'``). See API spec for
-                supported operators and fields per resource.
-            mask: Field mask for response projection (e.g.,
-                ``'meta.name,spec.level'``). Limits which fields are returned.
-            page_size: Number of results per page. Uses API default if omitted.
-            page_token: Continuation token from a previous response's
-                ``next_page_token`` for resuming pagination.
-            page_id: Alternative pagination start point (aligns with endorctl
-                ``--page-id`` flag).
-            sort_by: Field path to sort results by (e.g., ``'meta.create_time'``).
-            desc: Sort descending when True, ascending when False or omitted.
-            count: When True, return count instead of objects (rarely useful
-                for lookup).
-            from_date: Filter to resources created after this date (ISO 8601
-                format, e.g., ``'2024-01-01T00:00:00Z'``).
-            to_date: Filter to resources created before this date (ISO 8601
-                format).
-            archive: When True, fetch resources from the archive instead of
-                active storage.
-            pr_uuid: Scope to resources from a specific PR scan by its UUID.
-            **kwargs: Resource-specific identity kwargs (e.g., ``name``,
-                ``git_url``) that are translated to filter clauses automatically.
+            traverse: See class docstring.
+            concurrent: See class docstring.
+            max_workers: See class docstring.
+            namespace: See class docstring.
+            list_params: See class docstring.
+            max_pages: Max pages to search (default 2).
+            parent: See class docstring.
+            filter: See class docstring.
+            mask: See class docstring.
+            page_size: See class docstring.
+            page_token: See class docstring.
+            page_id: See class docstring.
+            sort_by: See class docstring.
+            desc: See class docstring.
+            count: See class docstring.
+            from_date: See class docstring.
+            to_date: See class docstring.
+            archive: See class docstring.
+            pr_uuid: See class docstring.
+            **kwargs: See class docstring.
 
         Returns:
-            The single resource matching the query.
+            The single matching resource.
 
         Raises:
-            NotFoundError: When no resource matches the given criteria.
-            AmbiguousError: When multiple resources match; narrow the query
-                with more specific criteria.
-            ValueError: When namespace is required but not provided (and no
-                client default is set), or when ``concurrent=True`` without
-                ``traverse=True``.
+            NotFoundError: No resource matches.
+            AmbiguousError: Multiple match; narrow criteria.
+            ValueError: Missing namespace or concurrent without traverse.
 
         Example:
-            Look up a project by name::
-
-                project = client.project.lookup(
-                    namespace='tenant.team',
-                    name='my-project'
-                )
-
-            Look up with traverse when namespace is unknown::
-
-                project = client.project.lookup(
-                    traverse=True,
-                    name='my-project'
-                )
+            project = client.project.lookup(namespace='tenant.team', name='my-project')
 
         """
         items = self.list(
@@ -544,77 +475,42 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> Iterator[T]:
-        """Iterate over resources without materializing the full list in memory.
+        """Yield resources one at a time; no concurrent support; memory-efficient.
 
-        Returns an iterator that yields resources one at a time, fetching pages
-        on demand. Use this for memory-efficient processing of large result sets.
+        Parameters match list() (see class docstring). concurrent is not
+        supported; use list(concurrent=True) for parallel namespace queries.
 
         Args:
-            traverse: When True, recursively queries all child namespaces in the
-                hierarchy. Use for tenant-wide queries across all namespaces.
-            concurrent: Not supported for list_iter. Use ``list()`` with
-                ``concurrent=True`` instead if you need concurrent queries.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). Defaults to the client's configured
-                tenant namespace.
-            list_params: Full ListParameters object for advanced options like
-                grouping and aggregation. Explicit kwargs override values in
-                list_params when both are provided.
-            max_pages: Maximum number of pages to fetch. None fetches all
-                available pages.
-            parent: Parent resource object to scope the iteration by namespace
-                and ``meta.parent_uuid``. Only supported when the resource has a
-                registered ``parent_kind``.
-            filter: Filter expression to select matching resources (e.g.,
-                ``'spec.level==FINDING_LEVEL_CRITICAL'``). See API spec for
-                supported operators and fields per resource.
-            mask: Field mask for response projection (e.g.,
-                ``'meta.name,spec.level'``). Limits which fields are returned
-                in each resource.
-            page_size: Number of results per page. Uses API default if omitted.
-            page_token: Continuation token from a previous response's
-                ``next_page_token`` for resuming pagination.
-            page_id: Alternative pagination start point (aligns with endorctl
-                ``--page-id`` flag).
-            sort_by: Field path to sort results by (e.g., ``'meta.create_time'``).
-            desc: Sort descending when True, ascending when False or omitted.
-            count: When True, return count instead of objects (rarely useful
-                for iteration).
-            from_date: Filter to resources created after this date (ISO 8601
-                format, e.g., ``'2024-01-01T00:00:00Z'``).
-            to_date: Filter to resources created before this date (ISO 8601
-                format).
-            archive: When True, fetch resources from the archive instead of
-                active storage.
-            pr_uuid: Scope to resources from a specific PR scan by its UUID.
-            **kwargs: Resource-specific identity kwargs (e.g., ``name``,
-                ``git_url``) that are translated to filter clauses automatically.
+            traverse: See class docstring.
+            concurrent: Not supported; use list() for concurrent.
+            namespace: See class docstring.
+            list_params: See class docstring.
+            max_pages: See class docstring.
+            parent: See class docstring.
+            filter: See class docstring.
+            mask: See class docstring.
+            page_size: See class docstring.
+            page_token: See class docstring.
+            page_id: See class docstring.
+            sort_by: See class docstring.
+            desc: See class docstring.
+            count: See class docstring.
+            from_date: See class docstring.
+            to_date: See class docstring.
+            archive: See class docstring.
+            pr_uuid: See class docstring.
+            **kwargs: See class docstring.
 
         Yields:
-            Resources matching the query, one at a time.
+            Resources one at a time.
 
         Raises:
-            NotImplementedError: When the resource does not support iteration,
-                or when ``concurrent=True`` (use ``list()`` instead).
-            ValueError: When namespace is required but not provided (and no
-                client default is set), or when ``parent`` is passed but the
-                resource does not support parent scoping.
+            NotImplementedError: Resource has no list_iter or concurrent=True.
+            ValueError: Missing namespace or unsupported parent.
 
         Example:
-            Process all findings without loading them all into memory::
-
-                for finding in client.finding.list_iter(traverse=True):
-                    process(finding)
-
-            Iterate with filtering and early exit::
-
-                for project in client.project.list_iter(
-                    namespace='tenant.team',
-                    filter='meta.tags contains "reviewed"'
-                ):
-                    if should_stop(project):
-                        break
-                    handle(project)
+            for finding in client.finding.list_iter(traverse=True):
+                process(finding)
 
         """
         if concurrent:
@@ -655,97 +551,22 @@ class _ListableFacade(Generic[T]):
         return self._list_iter_fn(self._client, ns, lp, max_pages)
 
 
-class SystemResourceFacade(_ListableFacade[T]):
-    """System-owned: list, list_iter, lookup; get only when namespace is "oss".
-
-    For non-oss namespace (e.g. system or tenant), get() raises NotImplementedError;
-    use list() instead. When namespace is "oss", get(id, namespace="oss") delegates.
-    """
-
-    def __init__(
-        self,
-        client: APIClient,
-        default_namespace: str | None,
-        list_fn: Callable[..., list[T]],
-        list_iter_fn: Callable[..., Iterator[T]] | None = None,
-        get_fn: Callable[..., T] | None = None,
-        resource_name: str = "",
-        parent_kind: str | None = None,
-        tags_paths: list[str] | None = None,
-    ) -> None:
-        super().__init__(
-            client,
-            default_namespace,
-            list_fn,
-            list_iter_fn=list_iter_fn,
-            resource_name=resource_name,
-            parent_kind=parent_kind,
-            tags_paths=tags_paths or [],
-        )
-        self._get_fn = get_fn
-
-    def get(self, id_or_resource: str | T, namespace: str | None = None) -> T:
-        """Get a system-owned resource by ID; only supported for oss namespace.
-
-        Retrieves a single resource by its UUID. For system-owned resources,
-        this is only supported when the namespace is ``"oss"``. For other
-        namespaces (system or tenant), use ``list()`` with a filter instead.
-
-        Args:
-            id_or_resource: Either a UUID string or a resource object. When a
-                resource object is passed, the UUID is extracted from it and
-                the namespace is derived from the resource's ``tenant_meta``.
-            namespace: Target namespace. Must be ``"oss"`` for system-owned
-                resources. When omitted and a resource object is passed, the
-                namespace is derived from the resource.
-
-        Returns:
-            The resource matching the given ID.
-
-        Raises:
-            NotImplementedError: When the resource does not support get, or
-                when the namespace is not ``"oss"``. Use ``list()`` for
-                system/tenant namespaces.
-            ValueError: When namespace is required but not provided.
-
-        Example:
-            Get a package version from the oss namespace::
-
-                pkg = client.package_version.get(
-                    '550e8400-e29b-41d4-a716-446655440000',
-                    namespace='oss'
-                )
-
-        """
-        if self._get_fn is None:
-            raise NotImplementedError(
-                "This resource does not support get; use list() for system/tenant."
-            ) from None
-        if hasattr(id_or_resource, "uuid") and hasattr(id_or_resource, "tenant_meta"):
-            res = cast("Any", id_or_resource)
-            uuid = res.uuid
-            ns = (
-                self._ns(namespace)
-                if namespace is not None
-                else self._ns(
-                    resolve_namespace_for_resource(res, self._default_namespace)
-                )
-            )
-        else:
-            uuid = id_or_resource
-            ns = self._ns(namespace)
-        if ns != "oss":
-            raise NotImplementedError(
-                "GET only supported for oss namespace; use list() for system/tenant."
-            ) from None
-        return self._get_fn(self._client, "oss", uuid)
-
-
 class ResourceFacade(_ListableFacade[T]):
     """Facade for resources with get/create/update/delete where supported.
 
-    Resolves namespace from argument or client default; builds ListParameters
-    from convenience kwargs when list_params is not provided.
+    id_or_resource / name_or_resource: Methods accept either a UUID string or a
+    resource object. When a resource object is passed, UUID is taken from it and
+    namespace is derived from the resource's tenant_meta unless overridden by
+    the namespace= argument.
+
+    Namespace resolution: From client default or explicit namespace=; for
+    list/get/create/update/delete, explicit namespace= overrides resource-derived
+    namespace when both could apply.
+
+    Scope (set at facade construction):
+        * ``None`` — tenant-scoped; namespace from client default or argument.
+        * ``"system"`` — system-owned; get() only when namespace="oss".
+        * ``"oss"`` — OSS-scoped; namespace always "oss".
     """
 
     def __init__(
@@ -753,7 +574,7 @@ class ResourceFacade(_ListableFacade[T]):
         client: APIClient,
         default_namespace: str | None,
         list_fn: Callable[..., list[T]],
-        get_fn: Callable[..., T],
+        get_fn: Callable[..., T] | None = None,
         create_fn: Callable[..., T] | None = None,
         update_fn: Callable[..., T] | None = None,
         delete_fn: Callable[..., bool] | None = None,
@@ -762,6 +583,7 @@ class ResourceFacade(_ListableFacade[T]):
         resource_name: str = "",
         parent_kind: str | None = None,
         build_create_payload_fn: Callable[..., Any] | None = None,
+        scope: Literal["system", "oss"] | None = None,
     ) -> None:
         super().__init__(
             client,
@@ -777,6 +599,18 @@ class ResourceFacade(_ListableFacade[T]):
         self._update_fn = update_fn
         self._delete_fn = delete_fn
         self._build_create_payload_fn = build_create_payload_fn
+        self._scope: Literal["system", "oss"] | None = scope
+
+    @property
+    def scope(self) -> Literal["system", "oss"] | None:
+        """The resource scope: ``"system"``, ``"oss"``, or ``None`` (tenant)."""
+        return self._scope
+
+    @override
+    def _ns(self, namespace: str | None) -> str:
+        if self._scope == "oss":
+            return "oss"
+        return super()._ns(namespace)
 
     def _is_resource_like(self, value: Any) -> TypeGuard[T]:
         """Return True if value has uuid and tenant_meta (resource object)."""
@@ -787,42 +621,32 @@ class ResourceFacade(_ListableFacade[T]):
         )
 
     def get(self, id_or_resource: str | T, namespace: str | None = None) -> T:
-        """Get a resource by ID or resource object.
+        """Fetch a single resource by UUID or resource object.
 
-        Retrieves a single resource by its UUID. When a resource object is
-        passed, the operation is anchored to that resource's namespace,
-        ensuring the correct context for the API call.
+        id_or_resource and namespace follow class docstring (resource object
+        supplies namespace when namespace= omitted). System scope: get() only
+        when resolved namespace is "oss".
 
         Args:
-            id_or_resource: Either a UUID string or a resource object. When a
-                resource object is passed, the UUID is extracted from it and
-                the namespace is derived from the resource's ``tenant_meta``
-                (unless explicitly overridden).
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). When omitted and a resource object
-                is passed, the namespace is derived from the resource.
-                Defaults to the client's configured tenant namespace.
+            id_or_resource: UUID or resource object. See class docstring.
+            namespace: Target namespace. See class docstring.
 
         Returns:
-            The resource matching the given ID.
+            The resource.
 
         Raises:
-            ValueError: When namespace is required but not provided (and no
-                client default is set).
+            NotImplementedError: No get support, or system scope and ns != "oss".
+            ValueError: Namespace required but not set.
 
         Example:
-            Get a project by UUID::
-
-                project = client.project.get(
-                    '550e8400-e29b-41d4-a716-446655440000',
-                    namespace='tenant.team'
-                )
-
-            Refresh a resource (re-fetch with latest data)::
-
-                updated_project = client.project.get(project)
+            project = client.project.get('uuid-here', namespace='tenant.team')
+            updated = client.project.get(project)
 
         """
+        if self._get_fn is None:
+            raise NotImplementedError(
+                "This resource does not support get; use list() for system/tenant."
+            ) from None
         if self._is_resource_like(id_or_resource):
             res = cast("Any", id_or_resource)
             uuid = res.uuid
@@ -836,6 +660,10 @@ class ResourceFacade(_ListableFacade[T]):
         else:
             uuid = id_or_resource
             ns = self._ns(namespace)
+        if self._scope == "system" and ns != "oss":
+            raise NotImplementedError(
+                "GET only supported for oss namespace; use list() for system/tenant."
+            ) from None
         return self._get_fn(self._client, ns, uuid)
 
     def create(
@@ -848,60 +676,29 @@ class ResourceFacade(_ListableFacade[T]):
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Create a new resource.
+        """Create a resource via payload= or kwargs (build_create_payload).
 
-        Supports two creation patterns: payload-based (explicit ``CreateXPayload``
-        object) or kwargs-based (when the resource has a ``build_create_payload``
-        function). Use kwargs for a simpler API; use payload for full control
-        or backward compatibility.
+        Either pass a CreateXPayload in payload= or resource-specific kwargs;
+        mutually exclusive. namespace follows class docstring.
 
         Args:
-            payload: A ``CreateXPayload`` object (e.g., ``CreateProjectPayload``,
-                ``CreateNamespacePayload``) containing all required fields for
-                creation. Mutually exclusive with kwargs.
-            name: Resource name (convenience param merged into kwargs). The
-                exact semantics depend on the resource type.
-            description: Resource description (convenience param merged into
-                kwargs). Typically stored in ``meta.description``.
-            namespace_uuid: UUID of the parent namespace (convenience param
-                merged into kwargs). Required for some resource types.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``) where the resource will be created.
-                Defaults to the client's configured tenant namespace.
-            **kwargs: Resource-specific creation kwargs passed to the resource's
-                ``build_create_payload`` function. The allowed set is defined
-                by each resource's builder. Mutually exclusive with payload.
+            payload: CreateXPayload; mutually exclusive with kwargs.
+            name: Convenience; merged into kwargs.
+            description: Convenience; merged into kwargs.
+            namespace_uuid: Convenience; merged into kwargs.
+            namespace: Where to create. See class docstring.
+            **kwargs: Resource-specific; passed to build_create_payload.
 
         Returns:
-            The newly created resource with server-assigned fields (e.g., UUID,
-            timestamps) populated.
+            Created resource with server-assigned fields.
 
         Raises:
-            NotImplementedError: When the resource does not support create.
-            TypeError: When both ``payload`` and kwargs are provided, when
-                neither is provided, or when kwargs are provided but the
-                resource does not have a ``build_create_payload`` function.
-            ValueError: When namespace is required but not provided.
+            NotImplementedError: Resource has no create.
+            TypeError: Both payload and kwargs, or neither, or kwargs without builder.
+            ValueError: Namespace required but not set.
 
         Example:
-            Create a namespace using kwargs (simpler)::
-
-                ns = client.namespace.create(
-                    name='my-namespace',
-                    namespace='tenant'
-                )
-
-            Create a project using payload (full control)::
-
-                from endorlabs.resources.project import CreateProjectPayload
-
-                project = client.project.create(
-                    payload=CreateProjectPayload(
-                        meta=ProjectMetaCreate(name='my-project'),
-                        namespace_uuid='...'
-                    ),
-                    namespace='tenant.team'
-                )
+            ns = client.namespace.create(name='my-namespace', namespace='tenant')
 
         """
         if self._create_fn is None:
@@ -945,74 +742,31 @@ class ResourceFacade(_ListableFacade[T]):
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Update a resource using sparse PATCH semantics.
+        """Update a resource: update_mask + payload, or field kwargs (mask derived).
 
-        Supports two update patterns: mask-based (explicit ``update_mask`` with
-        payload) or kwargs-based (field kwargs that derive the mask automatically).
-        The kwargs pattern is simpler for common updates; the mask pattern gives
-        full control.
+        id_or_resource and namespace follow class docstring. For kwargs-based
+        updates, id_or_resource must be a resource instance; payload can be
+        omitted (resource used as payload).
 
         Args:
-            id_or_resource: Either a UUID string or a resource object. When a
-                resource object is passed, the operation is anchored to that
-                resource's namespace and the resource itself can serve as the
-                payload. For kwargs-based updates, this **must** be a resource
-                instance (not a UUID string).
-            payload: The resource object containing updated field values. When
-                omitted and ``id_or_resource`` is a resource object, that
-                resource is used as the payload. Required when ``id_or_resource``
-                is a UUID string.
-            update_mask: Comma-separated field paths to update (e.g.,
-                ``'meta.tags'``, ``'meta.description,spec.scan_state'``). When
-                provided, only these fields are patched. When omitted, the mask
-                is derived from the provided kwargs.
-            meta_description: Updated description (convenience param). Merged
-                into kwargs as ``meta_description``. Triggers update of
-                ``meta.description``.
-            meta_tags: Updated tags list (convenience param). Merged into kwargs
-                as ``meta_tags``. Triggers update of ``meta.tags``.
-            namespace: Target namespace in canonical form. When omitted and a
-                resource object is passed, the namespace is derived from the
-                resource's ``tenant_meta``.
-            **kwargs: Resource-specific mutable field kwargs. The allowed set is
-                defined by the resource's ``get_mutable_fields()``. When provided
-                without ``update_mask``, the mask is derived automatically.
+            id_or_resource: UUID or resource object. See class docstring.
+            payload: Updated fields; optional when id_or_resource is resource.
+            update_mask: Comma-separated paths (e.g. 'meta.tags').
+            meta_description: Convenience; updates meta.description.
+            meta_tags: Convenience; updates meta.tags.
+            namespace: See class docstring.
+            **kwargs: Mutable field kwargs; mask derived if update_mask omitted.
 
         Returns:
-            The updated resource with server-applied changes.
+            Updated resource.
 
         Raises:
-            NotImplementedError: When the resource does not support update.
-            TypeError: When neither ``update_mask`` nor kwargs are provided,
-                when kwargs are provided but ``id_or_resource`` is a UUID string
-                (not a resource instance), or when payload is required but
-                not provided.
-            ValueError: When namespace is required but not provided, or when
-                an immutable field is included in the update_mask.
+            NotImplementedError: No update support.
+            TypeError: No mask nor kwargs; or kwargs with UUID id_or_resource.
+            ValueError: Missing namespace or immutable in update_mask.
 
         Example:
-            Update using kwargs (simpler, mask derived automatically)::
-
-                updated = client.project.update(
-                    project,
-                    meta_description='New description',
-                    meta_tags=['reviewed', 'production']
-                )
-
-            Update using explicit mask (full control)::
-
-                project.meta.description = 'Updated description'
-                updated = client.project.update(
-                    project,
-                    update_mask='meta.description'
-                )
-
-            Fluent update via resource method::
-
-                updated = project.update(
-                    client.project,
-                    meta_tags=['new-tag']
-                )
+            updated = client.project.update(project, meta_tags=['reviewed'])
 
         """
         if self._update_fn is None:
@@ -1066,49 +820,28 @@ class ResourceFacade(_ListableFacade[T]):
         *,
         ignore_missing: bool = False,
     ) -> bool:
-        """Delete a resource by ID or resource object.
+        """Remove a resource by UUID or resource object.
 
-        Removes the specified resource from the system. When a resource object
-        is passed, the operation is anchored to that resource's namespace,
-        ensuring the correct context for the API call.
+        name_or_resource and namespace follow class docstring.
 
         Args:
-            name_or_resource: Either a UUID string or a resource object. When a
-                resource object is passed, the UUID is extracted from it and
-                the namespace is derived from the resource's ``tenant_meta``
-                (unless explicitly overridden).
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). When omitted and a resource object
-                is passed, the namespace is derived from the resource.
-                Defaults to the client's configured tenant namespace.
-            ignore_missing: When True, return False instead of raising
-                ``NotFoundError`` if the resource does not exist (idempotent
-                delete). When False (default), raise ``NotFoundError`` on 404.
+            name_or_resource: UUID or resource object. See class docstring.
+            namespace: See class docstring.
+            ignore_missing: If True, return False on 404 instead of raising.
 
         Returns:
-            True if the resource was deleted successfully. False if
-            ``ignore_missing=True`` and the resource was not found.
+            True if deleted; False if ignore_missing and not found.
 
         Raises:
-            NotImplementedError: When the resource does not support delete.
-            NotFoundError: When the resource is not found and
-                ``ignore_missing=False``.
-            ValueError: When namespace is required but not provided.
+            NotImplementedError: No delete support.
+            NotFoundError: Not found and not ignore_missing.
+            ValueError: Namespace required but not set.
 
         Example:
-            Delete a project by resource object::
-
-                client.project.delete(project)
-
-            Delete by UUID with idempotent behavior::
-
-                deleted = client.project.delete(
-                    '550e8400-e29b-41d4-a716-446655440000',
-                    namespace='tenant.team',
-                    ignore_missing=True
-                )
-                if not deleted:
-                    print('Project was already deleted')
+            client.project.delete(project)
+            deleted = client.project.delete(
+                'uuid', namespace='tenant.team', ignore_missing=True
+            )
 
         """
         if self._delete_fn is None:
@@ -1141,43 +874,25 @@ class ResourceFacade(_ListableFacade[T]):
         tags: list[str],
         namespace: str | None = None,
     ) -> T:
-        """Set the tags on a resource, replacing any existing tags.
+        """Set meta.tags (replaces existing); wraps update(update_mask='meta.tags').
 
-        Updates ``meta.tags`` on the resource to the provided list. This is a
-        convenience method that wraps ``update()`` with ``update_mask='meta.tags'``.
-        Only available for resources that support tagging (have ``meta.tags``
-        in their mutable fields).
+        id_or_resource and namespace follow class docstring. Only for resources
+        with meta.tags in mutable fields.
 
         Args:
-            id_or_resource: Either a UUID string or a resource object. When a
-                UUID string is passed, the resource is fetched first to ensure
-                the correct payload structure. When a resource object is passed,
-                the namespace is derived from the resource's ``tenant_meta``.
-            tags: List of tag strings to set on the resource. Replaces any
-                existing tags. Use an empty list to clear all tags.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). When omitted and a resource object
-                is passed, the namespace is derived from the resource.
+            id_or_resource: UUID or resource object. See class docstring.
+            tags: Tag list; replaces all. Use [] to clear.
+            namespace: See class docstring.
 
         Returns:
-            The updated resource with the new tags applied.
+            Updated resource.
 
         Raises:
-            NotImplementedError: When the resource does not support tagging.
-            ValueError: When namespace is required but not provided, or when
-                the resource has no ``meta`` attribute.
+            NotImplementedError: No tagging support.
+            ValueError: Missing namespace or no meta.
 
         Example:
-            Set tags on a project::
-
-                updated = client.project.tag(
-                    project,
-                    tags=['reviewed', 'production', 'team-a']
-                )
-
-            Clear all tags::
-
-                updated = client.project.tag(project, tags=[])
+            updated = client.project.tag(project, tags=['reviewed', 'production'])
 
         """
         resource, uuid, ns, meta = self._resolve_for_tag(
@@ -1194,42 +909,25 @@ class ResourceFacade(_ListableFacade[T]):
         keys: list[str],
         namespace: str | None = None,
     ) -> T:
-        """Remove specific tags from a resource.
+        """Remove listed tags from meta.tags; fetch, filter, then update(meta.tags).
 
-        Removes the specified tag values from ``meta.tags``, preserving any
-        other existing tags. This is a convenience method that fetches the
-        current tags, filters out the specified values, and calls ``update()``
-        with ``update_mask='meta.tags'``.
+        id_or_resource and namespace follow class docstring. Keys not present
+        are ignored.
 
         Args:
-            id_or_resource: Either a UUID string or a resource object. When a
-                UUID string is passed, the resource is fetched first to get
-                the current tags. When a resource object is passed, the
-                namespace is derived from the resource's ``tenant_meta``.
-            keys: List of tag values to remove. Tags not present in this list
-                are preserved. Values not currently in the resource's tags
-                are silently ignored.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). When omitted and a resource object
-                is passed, the namespace is derived from the resource.
+            id_or_resource: UUID or resource object. See class docstring.
+            keys: Tag values to remove; others preserved.
+            namespace: See class docstring.
 
         Returns:
-            The updated resource with the specified tags removed.
+            Updated resource.
 
         Raises:
-            NotImplementedError: When the resource does not support tagging.
-            ValueError: When namespace is required but not provided, or when
-                the resource has no ``meta`` attribute.
+            NotImplementedError: No tagging support.
+            ValueError: Missing namespace or no meta.
 
         Example:
-            Remove specific tags from a project::
-
-                # Before: tags=['reviewed', 'production', 'deprecated']
-                updated = client.project.untag(
-                    project,
-                    keys=['deprecated', 'obsolete']  # 'obsolete' ignored
-                )
-                # After: tags=['reviewed', 'production']
+            updated = client.project.untag(project, keys=['deprecated'])
 
         """
         resource, uuid, ns, meta = self._resolve_for_tag(
@@ -1291,12 +989,11 @@ class ResourceFacade(_ListableFacade[T]):
         return resource, uuid, ns, meta
 
 
-class OssResourceFacade(ResourceFacade[T]):
-    """Oss-scoped: namespace fixed to "oss"; caller does not pass namespace."""
+SystemResourceFacade = ResourceFacade
+"""Backward-compat alias. Use ``ResourceFacade(scope="system")`` instead."""
 
-    @override
-    def _ns(self, namespace: str | None) -> str:
-        return "oss"
+OssResourceFacade = ResourceFacade
+"""Backward-compat alias. Use ``ResourceFacade(scope="oss")`` instead."""
 
 
 class ScanLogsFacade:
@@ -1329,65 +1026,27 @@ class ScanLogsFacade:
         end_time: str | None = None,
         newest_first: bool | None = None,
     ) -> list[ScanLogRequestLogMessage]:
-        """Retrieve log messages for a scan result.
-
-        Fetches log entries from a completed scan using the ScanLogRequest API.
-        Use this to inspect scan execution details, debug failures, or audit
-        scan behavior.
+        """Fetch log messages for a scan result (ScanLogRequest API).
 
         Args:
-            scan_result_uuid: UUID of the scan result to retrieve logs for.
-                Obtain this from ``client.scan_result.list()`` or
-                ``client.scan_result.get()``.
-            namespace: Target namespace in canonical form (e.g.,
-                ``'tenant.team.project'``). Defaults to the client's configured
-                tenant namespace.
-            max_entries: Maximum number of log entries to return. Defaults to
-                100. Increase for more comprehensive logs or decrease for
-                faster responses.
-            log_levels: Filter to specific log levels. When None, returns all
-                levels. Use ``ScanLogLevel`` enum values (e.g.,
-                ``[ScanLogLevel.ERROR, ScanLogLevel.WARNING]``).
-            start_time: Filter to logs after this timestamp (ISO 8601 format,
-                e.g., ``'2024-01-01T00:00:00Z'``). Useful for narrowing to a
-                specific time window.
-            end_time: Filter to logs before this timestamp (ISO 8601 format).
-                Combine with ``start_time`` to define a time range.
-            newest_first: When True, return logs in reverse chronological order
-                (newest first). When False or None, logs are returned in
-                chronological order.
+            scan_result_uuid: UUID from client.scan_result.list() or .get().
+            namespace: Target namespace; defaults to client tenant.
+            max_entries: Max log entries (default 100).
+            log_levels: Filter by level (ScanLogLevel); None = all.
+            start_time: Logs after (ISO 8601).
+            end_time: Logs before (ISO 8601).
+            newest_first: True = newest first; False/None = chronological.
 
         Returns:
-            List of log message objects containing timestamp, level, message,
-            and other metadata. Empty list if no logs match the criteria.
+            Log message list; empty if none match.
 
         Raises:
-            ValueError: When namespace is required but not provided.
+            ValueError: Namespace required but not set.
 
         Example:
-            Get all logs for a scan result::
-
-                logs = client.scan_logs.get_logs(
-                    scan_result_uuid='550e8400-e29b-41d4-a716-446655440000',
-                    namespace='tenant.team'
-                )
-                for log in logs:
-                    print(f'{log.timestamp}: [{log.level}] {log.message}')
-
-            Get only error logs, newest first::
-
-                from endorlabs.resources.scan_log_request import ScanLogLevel
-
-                errors = client.scan_logs.get_logs(
-                    scan_result_uuid='...',
-                    log_levels=[ScanLogLevel.ERROR],
-                    newest_first=True,
-                    max_entries=50
-                )
-
-        See Also:
-            - ``docs/reference/resources.md`` (scan_log_request section)
-            - ``docs/guides/retrieving-scan-results.md``
+            logs = client.scan_logs.get_logs(
+                scan_result_uuid='...', namespace='tenant.team'
+            )
 
         """
         from .resources.scan_log_request import get_scan_result_logs
