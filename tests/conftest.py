@@ -51,6 +51,51 @@ def pytest_configure(config) -> None:
                         os.environ[key] = value
 
 
+# ---------------------------------------------------------------------------
+# Test cleanup constants (migrated from maneuvers/common/constants.py)
+# Used only by test cleanup scripts — not by the SDK itself.
+# ---------------------------------------------------------------------------
+
+DEFAULT_TEST_TAGS = [
+    "test",
+    "dummy",
+    "crud-test",
+    "integration-test",
+    "ml-finding",
+]
+
+TEST_API_KEY_NAMES = frozenset({"test-client-ux-api-key", "test-client-ux-api-key-del"})
+TEST_SCAN_PROFILE_PREFIXES = (
+    "client-ux-profile-",
+    "client-ux-update-",
+    "client-ux-del-",
+    "test-profile-",
+)
+TEST_NAMESPACE_PREFIXES = (
+    "mock-namespace-",
+    "client-ux-ns-",
+    "client-ux-del-ns-",
+    "test-update-ns-",
+)
+TEST_SEMGREP_RULE_PREFIXES = (
+    "client-ux-rule-",
+    "client-ux-update-",
+    "client-ux-del-",
+)
+TEST_AUTHORIZATION_POLICY_PREFIXES = (
+    "client-ux-auth-",
+    "client-ux-update-",
+    "client-ux-del-",
+)
+TEST_POLICY_NAME_PREFIXES = (
+    "Test Exception Policy ",
+    "Test Notification Policy ",
+    "Test Admission Policy ",
+    "ClientUX Exception ",
+    "ClientUX Del ",
+)
+
+
 @pytest.fixture(autouse=True)
 def setup_logging() -> None:
     """Setup logging for tests."""
