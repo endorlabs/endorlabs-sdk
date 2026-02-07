@@ -29,6 +29,35 @@ client = APIClient()
 namespaces = namespace.list_namespaces(client, "tenant.namespace")
 ```
 
+## Context Bootstrap (for AI Agents)
+
+If you need full Endor Labs platform context (API spec, user docs) for agentic workflows:
+
+```python
+import endorlabs
+
+# Bootstrap context - downloads to .endorlabs-context/
+status = endorlabs.init()
+
+# Access downloaded files
+print(status.openapi_path)     # .endorlabs-context/openapi.json
+print(status.user_docs_path)   # .endorlabs-context/docs/
+print(status.user_docs_count)  # number of docs downloaded
+```
+
+**Requirements:**
+- Authentication: `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET` env vars (or `ENDOR_TOKEN`)
+- Dependencies: `pip install endor-cockpit[context]`
+
+**Options:**
+- `output_dir`: Where to save files (default: `.endorlabs-context`)
+- `include_openapi`: Download API spec (default: True)
+- `include_user_docs`: Download user docs (default: True)
+- `max_pages`: Limit user doc pages (default: all)
+- `force`: Re-download even if files exist (default: False)
+
+This is the recommended way for agents to bootstrap Endor Labs context before performing platform administration tasks.
+
 ## Architecture
 
 The SDK uses a two-layer, registry-driven design so the same pattern applies to all resources.
@@ -50,7 +79,7 @@ When editing the client surface, facade, or registry, follow [docs/rules-of-enga
 
 ## Automation
 
-Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. The same lint/format/typecheck run locally via the repo's pre-commit hook when installed (see [CONTRIBUTORS.md](CONTRIBUTORS.md)). Pyright enforces types in CI; public API must be fully typed (see pyproject.toml). For the exact command list, see [.github/workflows/ci.yml](.github/workflows/ci.yml).
+Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Run the same commands locally before pushing. Pyright enforces types in CI; public API must be fully typed (see pyproject.toml). For the exact command list, see [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ## Repository-Scoped Rules (`.cursor/rules/`)
 
@@ -85,8 +114,8 @@ endorlabs/
 ## Reference — External
 
 - **User docs:** <https://docs.endorlabs.com/>
-- **API spec:** <https://api.endorlabs.com/download/openapiv2.swagger.json> — use for required/optional fields, types, read-only; schema drift workflow downloads to `external_docs/` in CI.
-- **Advanced users (IDE context):** One workflow creates the gitignored `external_docs/` folder with spec + user docs: `uv sync --extra docs` then `uv run python scripts/sync_external_docs.py --all`. See [CONTRIBUTORS.md](CONTRIBUTORS.md) (optional: sync external docs) and [scripts/README.md](scripts/README.md) for sync options; [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
+- **API spec:** <https://api.endorlabs.com/download/openapiv2.swagger.json> — use for required/optional fields, types, read-only; schema drift workflow downloads to `.endorlabs-context/` in CI.
+- **Advanced users (IDE context):** Create the gitignored `.endorlabs-context/` folder with spec + user docs: `uv sync --extra context` then `import endorlabs; endorlabs.init()`. See [Context Bootstrap](#context-bootstrap-for-ai-agents) above for options.
 
 ## Reference — In-Repo
 
@@ -96,6 +125,19 @@ endorlabs/
 - **Reference:** [docs/reference/README.md](docs/reference/README.md) (public API, resources, namespace); [docs/reference/resources.md](docs/reference/resources.md) (operations per resource); [docs/reference/namespace.md](docs/reference/namespace.md) (list/get/create/update/delete).
 - **Guides:** [docs/guides/README.md](docs/guides/README.md); consumer-ux-list-update, retrieving-scan-results.
 - **Rules of engagement:** [docs/rules-of-engagement/README.md](docs/rules-of-engagement/README.md); api-validation, resource-implementation, troubleshooting, docs-drift-workflow.
+
+## Agent Skills (On-Demand Workflows)
+
+Skills are modular, on-demand workflow packages that agents activate when a task matches. Unlike `.cursor/rules/` (always-on context), skills are read only when triggered. They follow the cross-compatible format supported by both Cursor and Anthropic Agent Skills.
+
+| Skill | When to use |
+|-------|-------------|
+| [custom-sast-rules](.cursor/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
+| [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
+| [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
+| [troubleshoot-sdk](.cursor/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
+
+Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
 
 ## Essential Commands
 

@@ -25,7 +25,7 @@ except ImportError as e:
     _import_error = e
 
     # Define AgentState stub for type checking when deps not installed
-    AgentState = None  # type: ignore[misc, assignment]
+    AgentState = None
     SYSTEM_PROMPT = ""  # type: ignore[misc]
     PLANNER_PROMPT = ""  # type: ignore[misc]
     REFLECTION_PROMPT = ""  # type: ignore[misc]
@@ -47,11 +47,11 @@ except ImportError as e:
 
 
 __all__ = [
-    "AgentState",
-    "create_endor_graph",
-    "create_tools",
-    "SYSTEM_PROMPT",
     "PLANNER_PROMPT",
     "REFLECTION_PROMPT",
     "SYNTHESIS_PROMPT",
+    "SYSTEM_PROMPT",
+    "AgentState",
+    "create_endor_graph",
+    "create_tools",
 ]

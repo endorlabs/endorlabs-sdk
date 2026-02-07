@@ -7,9 +7,9 @@ Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET, GEMINI_API_KEY (or
 
 import os
 
-import endorlabs
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+import endorlabs
 from endorlabs.experimental.langgraph_agent import create_endor_graph
 
 
@@ -44,7 +44,10 @@ def main() -> None:
             "messages": [
                 (
                     "user",
-                    "Compare the last two or more Scan Logs to help me troubleshoot scan errors for the https://github.com/Endor-Solutions-Architecture/endor-cockpit.git project",
+                    "Compare the last two or more Scan Logs to help"
+                    " me troubleshoot scan errors for the"
+                    " https://github.com/Endor-Solutions-Architecture"
+                    "/endor-cockpit.git project",
                 )
             ]
         }

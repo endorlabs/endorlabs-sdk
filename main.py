@@ -10,8 +10,8 @@ Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET (or .env).
 
 import endorlabs
 
-def main() -> None:
 
+def main() -> None:
     #########################################################
     ## Basic Usage Examples
     #########################################################
@@ -27,13 +27,11 @@ def main() -> None:
         filter="meta.name == https://github.com/DefectDojo/django-DefectDojo.git"
     )
     findings = client.finding.list(
-        filter=f"spec.project_uuid == {project.uuid}", 
-        traverse=True
+        filter=f"spec.project_uuid == {project.uuid}", traverse=True
     )
     for finding in findings:
         print(f"Finding: {finding.spec.summary}")
     print(f"Total findings: {len(findings)}")
-    
 
     my_api_keys = client.api_key.list(traverse=True)
     for api_key in my_api_keys:
@@ -56,8 +54,6 @@ def main() -> None:
         filter="meta.name==https://github.com/Endor-Solutions-Architecture/endor-cockpit.git",
         max_pages=1,
     )
-
-
 
     #########################################################
     ## Advanced Usage Examples
@@ -89,5 +85,7 @@ def main() -> None:
     )
     print(f"Project: {project.meta.name}; scan results: {len(scans)}")
     print(f"Scan: {scans[0].model_dump_json(indent=2)}")
+
+
 if __name__ == "__main__":
     main()

@@ -39,7 +39,8 @@ Guidelines:
 - If unsure which fields to filter on, call get_filter_fields(resource_type) first
 - Use traverse=True when the user asks for data "across all namespaces" or "recursively"
 - For comparison tasks, gather all required data before comparing
-- For "last N" or "most recent" requests, list items first, then get details on specific ones
+- For "last N" or "most recent" requests, list items first, \
+then get details on specific ones
 - Always explain your reasoning when synthesizing results
 - If you cannot complete a request, explain what's missing and suggest alternatives
 """
@@ -53,7 +54,8 @@ Available tool categories:
 - list_* tools: Query collections (projects, findings, namespaces, scan_results, etc.)
 - get_* tools: Get details by UUID
 
-Create a numbered plan with specific, actionable steps. Each step should map to a tool call or analysis action.
+Create a numbered plan with specific, actionable steps. \
+Each step should map to a tool call or analysis action.
 
 Output format:
 1. [Step description]
