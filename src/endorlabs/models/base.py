@@ -1508,6 +1508,13 @@ class BaseResourceOperations(Generic[T]):
                 "SORT_ENTRY_ORDER_DESC" if list_params.desc else "SORT_ENTRY_ORDER_ASC"
             )
         elif list_params.sort_field:
+            import warnings
+
+            warnings.warn(
+                "sort_field/sort_order are deprecated; use sort_by/desc instead.",
+                DeprecationWarning,
+                stacklevel=4,
+            )
             path = list_params.sort_field
             raw = (list_params.sort_order or "asc").lower()
             order = (

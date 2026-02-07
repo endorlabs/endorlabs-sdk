@@ -124,10 +124,23 @@ def test_map_status_code_to_exception_429() -> None:
 
 
 def test_map_status_code_to_exception_501() -> None:
-    from endorlabs.exceptions import NotImplementedError
+    from endorlabs.exceptions import MethodNotSupportedError
 
     exc = map_status_code_to_exception(501)
-    assert isinstance(exc, NotImplementedError)
+    assert isinstance(exc, MethodNotSupportedError)
+
+
+def test_not_implemented_error_deprecated_alias() -> None:
+    """The deprecated NotImplementedError alias still works for backward compat."""
+    from endorlabs.exceptions import (
+        MethodNotSupportedError,
+        NotImplementedError,
+    )
+
+    assert NotImplementedError is MethodNotSupportedError
+    exc = NotImplementedError("test")
+    assert isinstance(exc, MethodNotSupportedError)
+    assert exc.status_code == 501
 
 
 @pytest.mark.parametrize("code", [500, 502, 503, 504])
