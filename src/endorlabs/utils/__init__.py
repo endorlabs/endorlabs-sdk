@@ -16,6 +16,7 @@ from .model_consistency import (
     run_model_consistency_report,
 )
 from .namespace import resolve_namespace_for_resource
+from .parallel import execute_across_namespaces
 from .schema_drift import SchemaDriftDetector
 from .traversal import create_namespace_scoped_params, create_traverse_params
 
@@ -29,6 +30,7 @@ __all__ = [
     "enumerate_sdk_models_flat_paths",
     "enumerate_spec_fields_flat",
     "enumerate_spec_top_level_refs",
+    "execute_across_namespaces",
     "load_spec",
     "path_to_flattened",
     "resolve_namespace_for_resource",
