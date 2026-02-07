@@ -475,7 +475,7 @@ def _group_by_resource(by_resource: dict[str, dict[str, Any]]) -> dict[str, Any]
         if sdk_name in SHARED_MODEL_NAMES:
             shared_components[sdk_name] = data
         else:
-            resource_name = sdk_name[:-4] if sdk_name.endswith("Spec") else sdk_name
+            resource_name = sdk_name.removesuffix("Spec")
             if resource_name not in by_resource_name:
                 by_resource_name[resource_name] = {"models": {}}
             by_resource_name[resource_name]["models"][sdk_name] = data
