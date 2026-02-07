@@ -30,8 +30,9 @@ from .utils.redaction import (
     redaction_pattern,
 )
 
-ENDOR_NAMESPACE = os.getenv("ENDOR_NAMESPACE")
-# TODO: Determine if needed or as an init param or env var
+# Pre-compiled redaction patterns for _redact_log_data (avoid re.compile per call)
+_REPR_REDACT_RE: re.Pattern[str] = re.compile(redaction_pattern, re.IGNORECASE)
+_JSON_REDACT_RE: re.Pattern[str] = re.compile(json_redaction_pattern, re.IGNORECASE)
 
 # --- Token lifecycle constants -------------------------------------------
 TOKEN_REFRESH_THRESHOLD_SECONDS: int = 30 * 60  # Proactive refresh 30 min before expiry
@@ -289,12 +290,8 @@ class APIClient:
             return "None"
         data_str = str(data)
         # Apply both single-quote (Python repr) and double-quote (JSON) patterns
-        data_str = re.compile(redaction_pattern, re.IGNORECASE).sub(
-            r"'\1': '***REDACTED***'", data_str
-        )
-        data_str = re.compile(json_redaction_pattern, re.IGNORECASE).sub(
-            JSON_REDACTION_REPLACEMENT, data_str
-        )
+        data_str = _REPR_REDACT_RE.sub(r"'\1': '***REDACTED***'", data_str)
+        data_str = _JSON_REDACT_RE.sub(JSON_REDACTION_REPLACEMENT, data_str)
         return data_str
 
     def _truncate_for_logging(self, text: str, max_length: int = 500) -> str:
