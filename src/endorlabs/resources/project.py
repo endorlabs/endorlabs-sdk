@@ -812,17 +812,13 @@ def delete_project(
         project_uuid: The UUID of the project to delete
 
     Returns:
-        bool: True if deletion was successful, False otherwise
+        bool: True if deletion was successful
 
     Raises:
-        httpx.HTTPStatusError: For API-level errors
+        NotFoundError: If the project does not exist.
+        PermissionDeniedError: If user lacks permission.
+        ServerError: On unexpected server errors.
 
     """
-    try:
-        res = client.delete(
-            f"v1/namespaces/{tenant_meta_namespace}/projects/{project_uuid}"
-        )
-        return res.status_code == 200  # Endor's API returns 200 on successful deletion
-    except Exception as e:
-        logger.error(f"Error deleting project {project_uuid}: {e}", exc_info=True)
-        return False
+    ops = _get_project_ops(client)
+    return ops.delete(tenant_meta_namespace, project_uuid)
