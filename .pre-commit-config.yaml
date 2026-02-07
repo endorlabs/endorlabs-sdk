@@ -1,0 +1,30 @@
+# Pre-commit hooks — last gate before code lands in history.
+# Install: uv run pre-commit install
+# Run manually: uv run pre-commit run --all-files
+repos:
+  # --- Ruff: lint + format (pinned to match dev dep) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # --- Spell checking ---
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: [--skip, "*.json,*.lock,.git,.endorlabs-context"]
+
+  # --- General file hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
