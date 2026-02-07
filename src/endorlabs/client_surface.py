@@ -47,7 +47,7 @@ class Client:
         timeout: float = 60.0,
         content_type: str = "application/jsoncompact",
         accept_encoding: str | None = "gzip, br, zstd",
-        max_retries: int = 5,
+        max_retries: int | None = None,
         base_url: str | None = None,
         **client_kwargs: Any,
     ) -> None:

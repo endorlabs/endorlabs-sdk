@@ -75,7 +75,7 @@ class Client:
         timeout: float = ...,
         content_type: str = ...,
         accept_encoding: str | None = ...,
-        max_retries: int = ...,
+        max_retries: int | None = ...,
         base_url: str | None = ...,
         **client_kwargs: Any,
     ) -> None: ...
