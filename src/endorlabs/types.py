@@ -127,39 +127,6 @@ class ErrorResponse(TypedDict):
     details: dict[str, Any] | None
 
 
-# Generic Types
-ResourceDict = dict[str, Any]
-ResourceList = list[ResourceDict]
-NamespaceStr = str
-UUIDStr = str
-TagList = list[str]
-UpdateMask = str
-
-# Function Signatures
-ResourceOperation = Literal[
-    "list_projects",
-    "get_project",
-    "create_project",
-    "update_project",
-    "delete_project",
-    "list_findings",
-    "get_finding",
-    "create_finding",
-    "update_finding",
-    "delete_finding",
-    "list_policies",
-    "get_policy",
-    "create_policy",
-    "update_policy",
-    "delete_policy",
-    "list_namespaces",
-    "get_namespace",
-    "create_namespace",
-    "update_namespace",
-    "delete_namespace",
-]
-
-
 # Validation Types
 class ValidationResult(TypedDict):
     """Result of validation with errors and warnings."""
@@ -200,8 +167,7 @@ class ListParameters(BaseModel):
     sort_field: str | None = Field(
         None,
         description=(
-            "Deprecated: use sort_by instead. "
-            "Sort field (e.g., 'meta.create_time')"
+            "Deprecated: use sort_by instead. Sort field (e.g., 'meta.create_time')"
         ),
     )
     sort_order: str | None = Field(

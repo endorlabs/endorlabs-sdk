@@ -79,6 +79,14 @@ class Client:
         base_url: str | None = ...,
         **client_kwargs: Any,
     ) -> None: ...
+    def close(self) -> None: ...
+    def __enter__(self) -> Client: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
+    ) -> None: ...
     def wait_until(
         self,
         predicate: Any,
