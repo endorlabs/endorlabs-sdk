@@ -84,6 +84,8 @@ class _ListableFacade(Generic[T]):
     def list(
         self,
         traverse: bool = False,
+        concurrent: bool = False,
+        max_workers: int = 10,
         namespace: str | None = None,
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
@@ -112,6 +114,15 @@ class _ListableFacade(Generic[T]):
         Args:
             traverse: When True, recursively queries all child namespaces in the
                 hierarchy. Use for tenant-wide queries across all namespaces.
+            concurrent: When True (and traverse=True), queries namespaces in
+                parallel using a thread pool. This improves performance for
+                large datasets like FindingLog by first fetching all namespaces,
+                then querying each namespace concurrently without traverse.
+                Best combined with a filter to leverage index support (e.g.,
+                ``filter='meta.create_time >= "2024-01-01T00:00:00Z"'``).
+            max_workers: Maximum number of concurrent threads when
+                ``concurrent=True``. Defaults to 10. Higher values may hit
+                API rate limits.
             namespace: Target namespace in canonical form (e.g.,
                 ``'tenant.team.project'``). Defaults to the client's configured
                 tenant namespace.
@@ -153,8 +164,9 @@ class _ListableFacade(Generic[T]):
 
         Raises:
             ValueError: When namespace is required but not provided (and no
-                client default is set), or when ``parent`` is passed but the
-                resource does not support parent scoping.
+                client default is set), when ``parent`` is passed but the
+                resource does not support parent scoping, or when
+                ``concurrent=True`` without ``traverse=True``.
 
         Example:
             List all critical findings across all namespaces::
@@ -171,8 +183,24 @@ class _ListableFacade(Generic[T]):
                     mask='meta.name,spec.git'
                 )
 
+            Fast concurrent query for large datasets like FindingLog::
+
+                logs = client.finding_log.list(
+                    traverse=True,
+                    concurrent=True,
+                    max_workers=15,
+                    filter='meta.create_time >= "2024-01-01T00:00:00Z"',
+                )
+
         """
         from .models.base import RESOURCE_NAME_TO_TYPE
+
+        # Validate concurrent usage
+        if concurrent and not traverse:
+            raise ValueError(
+                "concurrent=True requires traverse=True. "
+                "Concurrent mode queries each namespace in parallel."
+            )
 
         if parent is not None:
             if self._parent_kind is None:
@@ -183,6 +211,31 @@ class _ListableFacade(Generic[T]):
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
+
+        # Handle concurrent mode: query namespaces in parallel
+        if concurrent and traverse:
+            return self._list_concurrent(
+                namespace=ns,
+                max_workers=max_workers,
+                list_params=list_params,
+                max_pages=max_pages,
+                parent=parent,
+                filter=filter,
+                mask=mask,
+                page_size=page_size,
+                page_token=page_token,
+                page_id=page_id,
+                sort_by=sort_by,
+                desc=desc,
+                count=count,
+                from_date=from_date,
+                to_date=to_date,
+                archive=archive,
+                pr_uuid=pr_uuid,
+                **kwargs,
+            )
+
+        # Standard single-query mode
         # Merge explicit list params into kwargs so they override list_params
         explicit = {
             k: v
@@ -220,9 +273,86 @@ class _ListableFacade(Generic[T]):
         lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
         return self._list_fn(self._client, ns, lp, max_pages)
 
+    def _list_concurrent(
+        self,
+        namespace: str,
+        max_workers: int,
+        list_params: ListParameters | None,
+        max_pages: int | None,
+        parent: Any,
+        **kwargs: Any,
+    ) -> list[T]:
+        """Execute list queries concurrently across all child namespaces.
+
+        This method:
+        1. Fetches all namespaces under the given namespace with traverse=True
+        2. Queries each namespace in parallel (without traverse)
+        3. Merges all results into a single list
+
+        Args:
+            namespace: Root namespace to query from.
+            max_workers: Maximum concurrent threads.
+            list_params: List parameters to apply to each namespace query.
+            max_pages: Max pages per namespace query.
+            parent: Parent resource for scoping (passed through).
+            **kwargs: Additional list parameters.
+
+        Returns:
+            Merged list of all results from all namespaces.
+
+        """
+        from .resources.namespace import list_namespaces
+        from .utils.parallel import execute_across_namespaces
+
+        # Phase 1: Get all namespaces
+        all_namespaces = list_namespaces(
+            self._client,
+            namespace,
+            ListParameters(traverse=True),  # pyright: ignore[reportCallIssue]
+        )
+
+        # Extract namespace names (spec.full_name is the canonical name)
+        namespace_names: list[str] = []
+        for ns_obj in all_namespaces:
+            if ns_obj.spec and ns_obj.spec.full_name:
+                namespace_names.append(ns_obj.spec.full_name)
+            elif ns_obj.tenant_meta and ns_obj.tenant_meta.namespace:
+                # Fallback to tenant_meta.namespace + meta.name
+                parent_ns = ns_obj.tenant_meta.namespace
+                if ns_obj.meta and ns_obj.meta.name:
+                    namespace_names.append(f"{parent_ns}.{ns_obj.meta.name}")
+                else:
+                    namespace_names.append(parent_ns)
+
+        # Also include the root namespace itself
+        if namespace not in namespace_names:
+            namespace_names.insert(0, namespace)
+
+        # Phase 2: Build query function for each namespace
+        def query_namespace(ns: str) -> list[T]:
+            # Query without traverse - each namespace independently
+            return self.list(
+                traverse=False,
+                concurrent=False,
+                namespace=ns,
+                list_params=list_params,
+                max_pages=max_pages,
+                parent=parent,
+                **kwargs,
+            )
+
+        # Phase 3: Execute concurrently and merge
+        return execute_across_namespaces(
+            namespaces=namespace_names,
+            query_fn=query_namespace,
+            max_workers=max_workers,
+        )
+
     def lookup(
         self,
         traverse: bool = False,
+        concurrent: bool = False,
+        max_workers: int = 10,
         namespace: str | None = None,
         list_params: ListParameters | None = None,
         max_pages: int = 2,
@@ -250,6 +380,9 @@ class _ListableFacade(Generic[T]):
         Args:
             traverse: When True, recursively queries all child namespaces in the
                 hierarchy. Use for tenant-wide queries across all namespaces.
+            concurrent: When True (and traverse=True), queries namespaces in
+                parallel. See ``list()`` for details.
+            max_workers: Maximum concurrent threads when ``concurrent=True``.
             namespace: Target namespace in canonical form (e.g.,
                 ``'tenant.team.project'``). Defaults to the client's configured
                 tenant namespace.
@@ -293,7 +426,8 @@ class _ListableFacade(Generic[T]):
             AmbiguousError: When multiple resources match; narrow the query
                 with more specific criteria.
             ValueError: When namespace is required but not provided (and no
-                client default is set).
+                client default is set), or when ``concurrent=True`` without
+                ``traverse=True``.
 
         Example:
             Look up a project by name::
@@ -313,6 +447,8 @@ class _ListableFacade(Generic[T]):
         """
         items = self.list(
             traverse=traverse,
+            concurrent=concurrent,
+            max_workers=max_workers,
             namespace=namespace,
             list_params=list_params,
             max_pages=max_pages,
@@ -346,6 +482,7 @@ class _ListableFacade(Generic[T]):
     def list_iter(
         self,
         traverse: bool = False,
+        concurrent: bool = False,
         namespace: str | None = None,
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
@@ -372,6 +509,8 @@ class _ListableFacade(Generic[T]):
         Args:
             traverse: When True, recursively queries all child namespaces in the
                 hierarchy. Use for tenant-wide queries across all namespaces.
+            concurrent: Not supported for list_iter. Use ``list()`` with
+                ``concurrent=True`` instead if you need concurrent queries.
             namespace: Target namespace in canonical form (e.g.,
                 ``'tenant.team.project'``). Defaults to the client's configured
                 tenant namespace.
@@ -412,7 +551,8 @@ class _ListableFacade(Generic[T]):
             Resources matching the query, one at a time.
 
         Raises:
-            NotImplementedError: When the resource does not support iteration.
+            NotImplementedError: When the resource does not support iteration,
+                or when ``concurrent=True`` (use ``list()`` instead).
             ValueError: When namespace is required but not provided (and no
                 client default is set), or when ``parent`` is passed but the
                 resource does not support parent scoping.
@@ -434,6 +574,11 @@ class _ListableFacade(Generic[T]):
                     handle(project)
 
         """
+        if concurrent:
+            raise NotImplementedError(
+                "concurrent=True is not supported for list_iter. "
+                "Use list(concurrent=True, traverse=True) instead."
+            ) from None
         if self._list_iter_fn is None:
             raise NotImplementedError(
                 "This resource does not support list_iter."
