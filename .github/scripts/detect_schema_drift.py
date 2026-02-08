@@ -368,7 +368,7 @@ def main():
     parser.add_argument(
         "--model-consistency",
         action="store_true",
-        help="Generate model consistency report (SDK Pydantic vs OpenAPI spec)"
+        help="Generate model consistency report (AF Pydantic vs OpenAPI spec)"
     )
     parser.add_argument(
         "--output-format",
@@ -414,11 +414,11 @@ def main():
         print("MODEL CONSISTENCY REPORT")
         print("=" * 60)
         summary = report["summary"]
-        print(f"Missing in SDK: {summary['missing_in_sdk_count']}")
-        print(f"Extra in SDK (resource-specific): {summary['extra_in_sdk_count']}")
+        print(f"Missing in AF: {summary['missing_in_sdk_count']}")
+        print(f"Extra in AF (resource-specific): {summary['extra_in_sdk_count']}")
         print(f"Resources compared: {summary['resources_compared']}")
         if "shared_sdk_paths_count" in summary:
-            print(f"Shared paths (excluded from per-resource extra): {summary['shared_sdk_paths_count']}")
+            print(f"Shared paths (excluded from per-resource extra): {summary['shared_sdk_paths_count']}")  # key from src/
         print(f"Attribute overlap (2+ defs): {summary.get('overlap_attribute_count', 0)}")
         print(f"Same meaning: {summary.get('same_meaning_count', 0)}")
         print(f"Collisions: {summary.get('collisions_count', 0)}")

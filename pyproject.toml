@@ -1,7 +1,7 @@
 [project]
 name = "endor-cockpit"
 version = "0.0.1"
-description = "A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs"
+description = "Endor Agentic Framework (AF) — deploys Cursor/Anthropic skills with APIs to administer, operate, and scan with Endor Labs tooling"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
 ]
@@ -140,21 +140,21 @@ select = [
     "PIE",   # flake8-pie: misc cleanness
 ]
 
-# Ignore rules that conflict with SDK patterns
+# Ignore rules that conflict with AF patterns
 ignore = [
     # UP007 removed: Ruff now forces Optional[str] -> str | None (py313)
     "D107",    # Missing docstring in __init__ (covered by class docstring)
     "TC003",   # Iterator used in return type; keep at runtime for clarity
     "ANN401",  # Any acceptable for validators, **kwargs, and API payloads
-    # --- Security: intentional SDK patterns ---
+    # --- Security: intentional AF patterns ---
     "S101",    # assert used as invariant checks in api_client/client_surface
     "S113",    # httpx timeout false positive (client-level timeout set at init)
-    # --- Import patterns: SDK uses lazy/deferred imports to avoid circular deps ---
+    # --- Import patterns: AF uses lazy/deferred imports to avoid circular deps ---
     "PLC0415", # Non-top-level imports: intentional for circular dependency avoidance
     # --- Class/method stubs ---
     "PIE790",  # Unnecessary pass: kept in abstract/stub classes for explicitness
     # --- Exception handling ---
-    "TRY003",  # Long exception messages are intentional in SDK error reporting
+    "TRY003",  # Long exception messages are intentional in AF error reporting
     "TRY300",  # else-block suggestion: stylistic, not a correctness issue
     "TRY301",  # Abstract raise to inner function: intentional exception patterns
     "TRY400",  # logging.exception vs logging.error: cleanup TODO
@@ -174,10 +174,10 @@ known-first-party = ["endorlabs"]
 convention = "google"  # Resolves D203/D213 conflicts automatically
 
 [tool.ruff.lint.mccabe]
-max-complexity = 12  # Default 10; 12 gives SDK methods some room
+max-complexity = 12  # Default 10; 12 gives AF methods some room
 
 [tool.ruff.lint.pylint]
-max-args = 10       # SDK methods can have many kwargs; 10 is generous
+max-args = 10       # AF methods can have many kwargs; 10 is generous
 max-branches = 12
 max-returns = 6
 max-statements = 50
@@ -292,7 +292,7 @@ executionEnvironments = [
 # ============================================================================
 # Import & Visibility Configuration
 # ============================================================================
-reportMissingImports = "error"              # Critical for SDK - catch missing imports
+reportMissingImports = "error"              # Critical for AF - catch missing imports
 reportMissingTypeStubs = "error"             # All deps have stubs; catch new untyped additions
 reportUnusedImport = "error"                # Clean up unused imports
 reportDuplicateImport = "error"             # Prevent duplicate imports
@@ -302,7 +302,7 @@ reportImportCycles = "warning"             # Flag cycles (architectural smell)
 reportWildcardImportFromLibrary = "error"  # No from lib import *
 
 # ============================================================================
-# Type Completeness (Critical for SDK Public APIs)
+# Type Completeness (Critical for AF Public APIs)
 # ============================================================================
 reportMissingParameterType = "error"        # All public function params must be typed
 reportMissingTypeArgument = "error"         # Generic types must have type args
@@ -375,7 +375,7 @@ reportUnnecessaryComparison = "error"        # Catch unnecessary comparisons
 reportUnnecessaryContains = "error"         # Catch unnecessary contains checks
 
 # ============================================================================
-# SDK-Specific: Public API Validation
+# AF-Specific: Public API Validation
 # ============================================================================
 reportPrivateUsage = "error"                 # Enforce private (leading _) boundary
 reportConstantRedefinition = "error"         # Catch constant redefinitions
