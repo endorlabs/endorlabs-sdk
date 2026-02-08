@@ -1,6 +1,6 @@
 # Consumer UX: Filter vs Field Mask vs Update Mask
 
-Recommendation for SDK consumer UX when working with list and update operations. See also [conventions.md](../conventions.md) (List parameters, Update and update_mask).
+Recommendation for AF consumer UX when working with list and update operations. See also [conventions.md](../conventions.md) (List parameters, Update and update_mask).
 
 ## Do not combine Filter and Field Mask
 

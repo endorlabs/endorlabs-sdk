@@ -1,6 +1,6 @@
-# Endor Cockpit SDK Documentation
+# Endor Cockpit Agentic Framework Documentation
 
-Index for SDK-only documentation. Platform concepts and user docs: [docs.endorlabs.com](https://docs.endorlabs.com/).
+Index for AF-specific documentation. Platform concepts and user docs: [docs.endorlabs.com](https://docs.endorlabs.com/).
 
 ## Conventions
 
@@ -10,7 +10,7 @@ Index for SDK-only documentation. Platform concepts and user docs: [docs.endorla
 
 - [reference/README.md](reference/README.md) — List of reference docs and link to OpenAPI spec.
 - [reference/resources.md](reference/resources.md) — Resource name, operations, limitations, links.
-- [reference/namespace.md](reference/namespace.md) — Namespace in the SDK (list/get/create/update/delete).
+- [reference/namespace.md](reference/namespace.md) — Namespace in the AF (list/get/create/update/delete).
 
 ## Guides
 
@@ -29,4 +29,4 @@ Index for SDK-only documentation. Platform concepts and user docs: [docs.endorla
 
 ## When to update docs
 
-API or endpoint changes → [conventions.md](conventions.md) and [reference/resources.md](reference/resources.md). New resources or operations → reference and RoE checklists. Drift and model consistency → [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Experimental:** `endorlabs.experimental.sast_analysis`. **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`.
+API or endpoint changes → [conventions.md](conventions.md) and [reference/resources.md](reference/resources.md). New resources or operations → reference and RoE checklists. Drift and model consistency → [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Experimental:** `endorlabs.experimental.sast_analysis`. **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.

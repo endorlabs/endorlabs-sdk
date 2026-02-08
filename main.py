@@ -1,4 +1,4 @@
-"""Minimal entrypoint for Endor SDK (maximum UX demo).
+"""Minimal entrypoint for Endor Agentic Framework (maximum UX demo).
 
 Run with: uv run main.py
 Uses tenant and project ID only; no argparse, no pre-knowledge of backend paths
@@ -59,7 +59,7 @@ def main() -> None:
     ## Advanced Usage Examples
     #########################################################
     # Invoking a scan and waiting for it to complete
-    # Find project by name (repo URL). SDK equivalent of:
+    # Find project by name (repo URL). AF equivalent of:
     #   endorctl api list -r Project --traverse --filter "meta.name contains <repo_url>"
     repo_url = "https://github.com/tgowan-endor/BenchmarkJava.git"
     project = client.project.lookup(
