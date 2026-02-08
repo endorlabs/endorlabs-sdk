@@ -1,0 +1,143 @@
+rules:
+  - id: endor-af-redactionfilter-validation
+    languages:
+      - python
+    message: |
+      Problem:
+      The RedactingFilter implementation has degraded -- one or more
+      behavioral invariants required by the security contract are missing
+      or structurally altered.
+
+      The RedactingFilter is the single mechanism that prevents credential
+      material (API keys, bearer tokens, OAuth callback tokens) from
+      appearing in log output.  Its correctness depends on these invariants:
+
+      1. **filter() redacts record.msg** via self._redact() before any
+         handler sees the message.
+      2. **filter() handles dict args** -- %(name)s style formatting args
+         must have their values redacted.
+      3. **filter() handles tuple args** -- positional %s style formatting
+         args must have each element redacted.
+      4. **filter() returns True unconditionally** -- records must never be
+         suppressed; the filter rewrites, it does not drop.
+      5. **_redact() coerces non-strings** -- numeric or object args must
+         be converted to str before regex application, or they will raise.
+      6. **_redact() iterates all compiled patterns** -- every registered
+         pattern must be applied; short-circuiting would leave some
+         credential formats unredacted.
+      7. **__init__() compiles with re.IGNORECASE** -- credential material
+         can appear in any casing; case-sensitive matching creates a bypass.
+
+      Trust chain:
+      This is the validation half of the RedactingFilter trust chain.
+      The paired enforcement rule
+      `endor-af-redactionfilter-enforcement` verifies that the
+      RedactingFilter is attached to every module-level logger.  Both rules
+      must pass for the security contract to hold.
+
+      Solution:
+      Restore the invariant(s) that this finding identified as missing.
+      Review the full RedactingFilter implementation in
+      `src/endorlabs/utils/redaction.py` against the behavioral contract
+      above.
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-532: Insertion of Sensitive Information into Log File"
+      description: >-
+        RedactingFilter behavioral contract violated -- one or more
+        structural invariants required for credential scrubbing are
+        missing or altered in the implementation.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - A09:2021
+        - Logging
+        - OWASP-Top-10
+        - AF-Credential-Leak
+        - Security-Logging-and-Monitoring-Failures
+        - detection:structural-contract
+        - scope:definition-site
+        - trust-chain:redacting-filter-credential-scrubbing
+        - trust-role:validation
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The RedactingFilter is the sole mechanism that scrubs API keys,
+        bearer tokens, and OAuth callback tokens from log records before
+        they reach any handler.  This certification rule validates that
+        the implementation satisfies its behavioral contract by checking
+        structural invariants of the filter(), _redact(), and __init__()
+        methods.  If any invariant is missing, the filter may silently
+        fail to redact credentials, creating a log-leak vector.
+      impact: HIGH
+      owasp:
+        - A09:2021-Security-Logging-and-Monitoring-Failures
+      references:
+        - https://cwe.mitre.org/data/definitions/532.html
+        - https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/
+      remediation: >-
+        Restore the missing structural invariant(s) in RedactingFilter.
+        The filter() method must redact record.msg, handle both dict and
+        tuple args, and return True unconditionally.  The _redact() method
+        must coerce non-strings and iterate all compiled patterns.  The
+        __init__() method must compile all patterns with re.IGNORECASE.
+      security-severity: High
+      trust-chain:
+        id: redacting-filter-credential-scrubbing
+        role: validation
+        paired-rules:
+          - endor-af-redactionfilter-enforcement
+        contract: >-
+          RedactingFilter must be attached to every module-level logger
+          (enforcement) AND its implementation must satisfy the behavioral
+          invariants enumerated in the certification rule (certification).
+      version: v1.0.0
+    pattern-either:
+      - patterns:
+          - pattern-inside: |
+              class RedactingFilter(logging.Filter):
+                  ...
+          - pattern: |
+              def filter(self, $RECORD):
+                  ...
+          - pattern-not-inside: |
+              def filter(self, $RECORD):
+                  ...
+                  $RECORD.msg = self._redact($RECORD.msg)
+                  ...
+                  if isinstance($RECORD.args, dict):
+                      ...
+                  elif isinstance($RECORD.args, tuple):
+                      ...
+                  ...
+                  return True
+      - patterns:
+          - pattern-inside: |
+              class RedactingFilter(logging.Filter):
+                  ...
+          - pattern: |
+              def _redact(self, $MSG):
+                  ...
+          - pattern-not-inside: |
+              def _redact(self, $MSG):
+                  ...
+                  if not isinstance($MSG, str):
+                      $MSG = str($MSG)
+                  ...
+                  for $PAT, $REPL in self._pattern_replacement_pairs:
+                      ...
+                  ...
+      - patterns:
+          - pattern-inside: |
+              class RedactingFilter(logging.Filter):
+                  ...
+          - pattern: re.compile($PATTERN, ...)
+          - pattern-not: re.compile($PATTERN, re.IGNORECASE)
+    severity: ERROR
+    paths:
+      include:
+        - src/endorlabs/utils/redaction.py

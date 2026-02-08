@@ -1,0 +1,86 @@
+rules:
+  - id: endor-af-raise-bare-valueerror
+    languages:
+      - python
+    message: |
+      Problem:
+      A bare `ValueError` or `RuntimeError` is raised in AF library code.
+      The Endor Agentic Framework defines a structured exception hierarchy rooted at
+      `EndorAPIError` (in `endorlabs.exceptions`).  Consumers catching
+      `EndorAPIError` will miss bare `ValueError` / `RuntimeError`, breaking
+      the contract that all AF errors are `EndorAPIError` descendants.
+
+      This is an error-contract violation, not just a style issue.  Consumer
+      code that wraps AF calls in `except EndorAPIError` will get unexpected
+      `ValueError` exceptions leaking through.
+
+      Solution:
+      Use the appropriate structured exception:
+
+      ```python
+      # WRONG -- breaks error contract
+      raise ValueError("name cannot be empty")
+
+      # RIGHT -- consumers can catch EndorAPIError
+      from endorlabs.exceptions import ValidationError
+      raise ValidationError("name cannot be empty")
+
+      # For input validation in Pydantic validators:
+      # ValueError is acceptable ONLY inside @field_validator methods
+      # because Pydantic catches and wraps it.
+      ```
+    metadata:
+      category: correctness
+      confidence: HIGH
+      cwe:
+        - "CWE-755: Improper Handling of Exceptional Conditions"
+      description: >-
+        Bare ValueError or RuntimeError raised in AF code -- consumers
+        catching EndorAPIError will miss these, breaking the closed error
+        contract.  Use EndorValidationError or another EndorAPIError subclass.
+      endor-category: warning
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - Architectural-Standard
+        - Error-Contract
+        - Regression-Guard
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF exception hierarchy (EndorAPIError and subclasses) provides a
+        closed error contract so consumers can handle all AF errors with a
+        single except clause.  Bare ValueError and RuntimeError bypass this
+        contract.  This rule flags existing violations to drive incremental
+        migration and prevents new ones.  Note that ValueError inside Pydantic
+        field_validator methods is acceptable because Pydantic catches and
+        wraps it into ValidationError automatically.
+      impact: MEDIUM
+      references:
+        - https://cwe.mitre.org/data/definitions/755.html
+      remediation: >-
+        Replace raise ValueError(...) with raise EndorValidationError(...)
+        or another EndorAPIError subclass from endorlabs.exceptions.
+        In Pydantic field validators, ValueError is acceptable.
+      security-severity: Medium
+      version: v1.0.0
+    patterns:
+      - pattern-either:
+          - pattern: raise ValueError(...)
+          - pattern: raise RuntimeError(...)
+      # Pydantic @field_validator methods: ValueError is the canonical
+      # way to signal validation failure; Pydantic catches and wraps it.
+      - pattern-not-inside: |
+          @field_validator(...)
+          @classmethod
+          def $FUNC(...):
+              ...
+      - pattern-not-inside: |
+          @field_validator(...)
+          def $FUNC(...):
+              ...
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/
