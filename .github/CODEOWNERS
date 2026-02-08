@@ -10,7 +10,7 @@
 
 # Security Champions Team are responsible for appropriate implementation of security controls
 .github @security-champions
-.rules @security-champions
+.cursor/rules/ @security-champions
 
 # Endor Solutions Architecture team owns the logic in src/
 src @endor-solutions-architecture

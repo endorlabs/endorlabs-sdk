@@ -387,6 +387,10 @@ jobs:
             echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
             exit 1
           fi
+          if [ -z "${{ vars.ENDOR_API }}" ]; then
+            echo "❌ ERROR: ENDOR_API variable is not set"
+            exit 1
+          fi
           echo "✅ All required secrets are present"
 
       - name: Install endorctl
