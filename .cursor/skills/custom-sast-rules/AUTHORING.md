@@ -268,7 +268,7 @@ False positives:        0         (PASS)
 
 ## 9. Worked Example: RedactingFilter Rule
 
-**Threat:** Module-level loggers in the Endor Cockpit SDK may emit API
+**Threat:** Module-level loggers in the Endor Cockpit Agentic Framework may emit API
 keys, bearer tokens, and OAuth callback tokens at DEBUG level if the
 `RedactingFilter` is not attached.
 

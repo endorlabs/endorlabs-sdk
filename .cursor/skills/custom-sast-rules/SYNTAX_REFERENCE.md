@@ -328,7 +328,7 @@ metadata:
   endor-tags:                           # Searchable tags in the platform
     - OWASP-Top-10
     - Logging
-    - SDK-Credential-Leak
+    - AF-Credential-Leak
   endor-targets:                        # What the rule applies to
     - ENDOR_TARGET_REPOSITORY
   endor-rule-origin:                    # Provenance

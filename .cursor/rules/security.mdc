@@ -2,7 +2,7 @@
 globs: src/endorlabs/**
 ---
 
-# Security Rules for SDK Code
+# Security Rules for AF Code
 
 These rules apply to all code under `src/endorlabs/`. They are enforced by Ruff's `S` (bandit) rules at lint time and by agent discipline at authoring time.
 
