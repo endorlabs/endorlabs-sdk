@@ -1,0 +1,82 @@
+rules:
+  - id: endor-af-path-write-unresolved
+    languages:
+      - python
+    message: |
+      Problem:
+      A file write operation (`write_text` or `write_bytes`) is performed on
+      a Path object that was not first resolved with `.resolve()` and checked
+      for containment within an allowed base directory.  Without resolution,
+      a path containing `../` sequences can write files outside the intended
+      directory (path traversal).
+
+      This applies to any Path derived from function parameters, API
+      responses, or user-provided configuration -- anywhere the path is not
+      a hardcoded literal.
+
+      Solution:
+      Resolve the path and verify containment before writing:
+
+      ```python
+      def safe_write(base_dir: Path, target: Path, content: str) -> None:
+          resolved = target.resolve()
+          base_resolved = base_dir.resolve()
+          if not str(resolved).startswith(str(base_resolved)):
+              raise ValueError(
+                  f"Path {resolved} is outside base directory {base_resolved}"
+              )
+          resolved.write_text(content, encoding="utf-8")
+      ```
+    metadata:
+      category: security
+      confidence: MEDIUM
+      cwe:
+        - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
+      description: >-
+        File write on an unresolved Path -- path traversal sequences (../)
+        in the path could write files outside the intended directory.
+        Resolve and check containment first.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - Architectural-Standard
+        - Path-Traversal
+        - Regression-Guard
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF experimental workflows write files to user-specified output
+        directories (e.g. Semgrep rule export).  If the output path is not
+        resolved and checked for containment, an attacker-controlled path
+        component could write files to arbitrary locations.  This rule flags
+        write_text and write_bytes calls that are not preceded by a .resolve()
+        call on the same path variable, enforcing the principle of least
+        authority for filesystem operations.
+      impact: MEDIUM
+      references:
+        - https://cwe.mitre.org/data/definitions/22.html
+        - https://owasp.org/www-community/attacks/Path_Traversal
+      remediation: >-
+        Call .resolve() on the Path before writing, then verify the resolved
+        path starts with the expected base directory.  Use a helper function
+        that encapsulates this check.
+      security-severity: Medium
+      version: v1.0.0
+    patterns:
+      - pattern-either:
+          - pattern: $PATH.write_text(...)
+          - pattern: $PATH.write_bytes(...)
+      - pattern-not-inside: |
+          $PATH = $BASE.resolve()
+          ...
+          $PATH.write_text(...)
+      - pattern-not-inside: |
+          $PATH = $BASE.resolve()
+          ...
+          $PATH.write_bytes(...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

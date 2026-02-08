@@ -1,0 +1,75 @@
+rules:
+  - id: endor-af-httpx-tls-verification-disabled
+    languages:
+      - python
+    message: |
+      Problem:
+      TLS certificate verification was explicitly disabled with
+      `verify=False` on an httpx client or request call.  This allows
+      man-in-the-middle attacks: an attacker on the network path can
+      intercept API key/secret payloads and bearer tokens in transit.
+
+      The Endor Agentic Framework standard (security.mdc, Network Safety) requires:
+      "Never disable TLS verification (verify=False) in production code."
+
+      Solution:
+      Remove `verify=False`.  If you need to trust a custom CA, pass the
+      CA bundle path instead:
+
+      ```python
+      # Trust a custom CA (acceptable)
+      client = httpx.Client(verify="/path/to/ca-bundle.crt")
+
+      # NEVER do this in production
+      # client = httpx.Client(verify=False)
+      ```
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-295: Improper Certificate Validation"
+      description: >-
+        TLS verification disabled on httpx client or request -- API
+        credentials and bearer tokens may be intercepted in transit.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - A02:2021
+        - Cryptographic-Failures
+        - Network-Safety
+        - OWASP-Top-10
+        - Regression-Guard
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF authenticates via API key/secret and bearer tokens over
+        HTTPS.  Disabling TLS verification allows an attacker to intercept
+        these credentials via man-in-the-middle.  This rule is a regression
+        guard -- no existing code disables verification.
+      impact: HIGH
+      owasp:
+        - A02:2021-Cryptographic-Failures
+      references:
+        - https://cwe.mitre.org/data/definitions/295.html
+        - https://owasp.org/Top10/A02_2021-Cryptographic_Failures/
+      remediation: >-
+        Remove verify=False from all httpx client and request calls.
+        If custom CA trust is needed, pass the CA bundle file path to
+        the verify parameter instead of False.
+      security-severity: High
+      version: v1.0.0
+    pattern-either:
+      - pattern: httpx.Client(..., verify=False, ...)
+      - pattern: httpx.AsyncClient(..., verify=False, ...)
+      - pattern: $CLIENT.get(..., verify=False, ...)
+      - pattern: $CLIENT.post(..., verify=False, ...)
+      - pattern: $CLIENT.put(..., verify=False, ...)
+      - pattern: $CLIENT.patch(..., verify=False, ...)
+      - pattern: $CLIENT.delete(..., verify=False, ...)
+      - pattern: $CLIENT.request(..., verify=False, ...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

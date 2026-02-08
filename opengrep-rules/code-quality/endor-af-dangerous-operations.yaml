@@ -1,0 +1,101 @@
+rules:
+  - id: endor-af-dangerous-operations
+    languages:
+      - python
+    message: |
+      Problem:
+      A dangerous operation was detected that is banned by the Endor Agentic Framework
+      AF coding standards (security.mdc, Dangerous Operations):
+
+      - `eval()` / `exec()` -- arbitrary code execution (CWE-94)
+      - `pickle.loads()` -- deserialization of untrusted data (CWE-502)
+      - `yaml.unsafe_load()` / `yaml.load()` without SafeLoader (CWE-502)
+      - `subprocess` with `shell=True` -- shell injection (CWE-78)
+
+      These functions are categorically banned in AF library code under
+      `src/endorlabs/`.  They introduce injection, code execution, and
+      deserialization vulnerabilities that are difficult to mitigate.
+
+      Solution:
+      Use safe alternatives:
+
+      ```python
+      # Instead of eval/exec:
+      #   Use ast.literal_eval() for safe literal parsing, or
+      #   restructure to avoid dynamic code execution entirely.
+
+      # Instead of pickle.loads():
+      #   Use json.loads() or pydantic model parsing.
+
+      # Instead of yaml.unsafe_load() / yaml.load():
+      yaml.safe_load(data)
+      # or: yaml.load(data, Loader=yaml.SafeLoader)
+
+      # Instead of subprocess with shell=True:
+      subprocess.run(["cmd", "arg1", "arg2"])  # explicit args, no shell
+      ```
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-94: Improper Control of Generation of Code"
+        - "CWE-502: Deserialization of Untrusted Data"
+        - "CWE-78: Improper Neutralization of Special Elements used in an OS Command"
+      description: >-
+        Dangerous operation detected -- eval, exec, pickle, unsafe YAML
+        loading, or subprocess with shell=True.  These are categorically
+        banned in AF library code.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - A03:2021
+        - Architectural-Standard
+        - Code-Injection
+        - Deserialization
+        - Injection
+        - OWASP-Top-10
+        - Regression-Guard
+        - Shell-Injection
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF security standards categorically ban eval, exec, pickle,
+        unsafe YAML loading, and subprocess with shell=True in library
+        code.  Ruff bandit rules (S) partially overlap but this rule
+        ensures findings appear in the Endor Labs platform alongside other
+        SAST results.  This is a regression guard -- no existing code
+        uses these operations.
+      impact: HIGH
+      owasp:
+        - A03:2021-Injection
+      references:
+        - https://cwe.mitre.org/data/definitions/94.html
+        - https://cwe.mitre.org/data/definitions/502.html
+        - https://cwe.mitre.org/data/definitions/78.html
+        - https://docs.python.org/3/library/ast.html#ast.literal_eval
+      remediation: >-
+        Replace dangerous operations with safe alternatives.  Use
+        ast.literal_eval instead of eval, json.loads instead of pickle,
+        yaml.safe_load instead of yaml.load, and subprocess.run with
+        explicit argument lists instead of shell=True.
+      security-severity: High
+      version: v1.0.0
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: exec(...)
+          - pattern: pickle.loads(...)
+          - pattern: yaml.unsafe_load(...)
+          - pattern: yaml.load(...)
+          - pattern: subprocess.run(..., shell=True, ...)
+          - pattern: subprocess.call(..., shell=True, ...)
+          - pattern: subprocess.Popen(..., shell=True, ...)
+      - pattern-not: yaml.load(..., Loader=yaml.SafeLoader, ...)
+      - pattern-not: yaml.load(..., Loader=SafeLoader, ...)
+      - pattern-not: yaml.load(..., Loader=yaml.FullLoader, ...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

@@ -1,0 +1,74 @@
+rules:
+  - id: endor-af-httpx-client-missing-timeout
+    languages:
+      - python
+    message: |
+      Problem:
+      An `httpx.Client` or `httpx.AsyncClient` was instantiated without an
+      explicit `timeout=` parameter.  Without a timeout, HTTP requests can
+      block indefinitely -- hanging CI pipelines, agentic workflows, and
+      interactive sessions.
+
+      The Endor Agentic Framework standard (security.mdc, Network Safety) requires:
+      "All HTTP requests MUST have an explicit or inherited timeout."
+
+      The `APIClient` sets a client-level timeout at init; any standalone
+      `httpx` usage outside that class must pass `timeout=` explicitly.
+
+      Solution:
+      Always pass an explicit `timeout` when constructing an httpx client:
+
+      ```python
+      # Synchronous
+      client = httpx.Client(timeout=30.0)
+
+      # Asynchronous
+      async with httpx.AsyncClient(timeout=10) as client:
+          ...
+      ```
+    metadata:
+      category: correctness
+      confidence: HIGH
+      cwe:
+        - "CWE-400: Uncontrolled Resource Consumption"
+      description: >-
+        httpx client created without explicit timeout -- requests may block
+        indefinitely, hanging CI pipelines and agentic workflows.
+      endor-category: warning
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - Architectural-Standard
+        - Network-Safety
+        - Reliability
+        - Regression-Guard
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF requires every httpx client to have an explicit timeout to
+        prevent indefinite blocking.  The APIClient class sets its own
+        timeout at init, but standalone httpx.Client or httpx.AsyncClient
+        instances created elsewhere (e.g. context bootstrap, utilities)
+        must also include the timeout parameter.  This rule is a regression
+        guard -- all existing instances are compliant.
+      impact: MEDIUM
+      references:
+        - https://cwe.mitre.org/data/definitions/400.html
+        - https://www.python-httpx.org/advanced/timeouts/
+      remediation: >-
+        Pass timeout= explicitly when constructing httpx.Client or
+        httpx.AsyncClient.  Use the ENDOR_REQUEST_TIMEOUT env var or a
+        sensible default (e.g. 30.0 seconds).
+      security-severity: Medium
+      version: v1.0.0
+    patterns:
+      - pattern-either:
+          - pattern: httpx.Client(...)
+          - pattern: httpx.AsyncClient(...)
+      - pattern-not: httpx.Client(..., timeout=..., ...)
+      - pattern-not: httpx.AsyncClient(..., timeout=..., ...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/
