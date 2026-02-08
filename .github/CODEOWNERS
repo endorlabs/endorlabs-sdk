@@ -8,5 +8,12 @@
 * @tgowan-endor
 
 
-# Security Champions Team are responsible for appropriate implementation of security controls in CI
-.github/workflows @security-champions
+# Security Champions Team are responsible for appropriate implementation of security controls
+.github @security-champions
+.rules @security-champions
+
+# Endor Solutions Architecture team owns the logic in src/
+src @endor-solutions-architecture
+
+# Endor Technical Documentation owns documentation
+docs @tech-docs
