@@ -56,7 +56,7 @@ Thumbs.db
 # Logs
 *.log
 
-# Context bootstrap (downloaded by SDK or scripts)
+# Context bootstrap (downloaded by AF or scripts)
 # Note: explicitly included in .cursorignore for AI indexing
 .endorlabs-context/
 .tmp/
