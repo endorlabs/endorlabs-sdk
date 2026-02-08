@@ -21,7 +21,7 @@ Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies
 
 ## Environment
 
-The SDK uses environment variables only (no config file loading). Set these for local development:
+The AF uses environment variables only (no config file loading). Set these for local development:
 
 - **Required:** `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
 - **Optional:** `ENDOR_NAMESPACE` (tenant namespace for operations), `ENDOR_LOG_LEVEL`, `ENDOR_MAX_RETRIES`
@@ -36,7 +36,7 @@ ENDOR_NAMESPACE="your-tenant-namespace"
 ENDOR_LOG_LEVEL="INFO"
 ```
 
-Get API credentials from the Endor Labs platform or configure [endorctl](https://docs.endorlabs.com/endorctl/install-and-configure/). For token-based auth (e.g. browser flow), set `ENDOR_TOKEN` instead of key/secret; the SDK supports both.
+Get API credentials from the Endor Labs platform or configure [endorctl](https://docs.endorlabs.com/endorctl/install-and-configure/). For token-based auth (e.g. browser flow), set `ENDOR_TOKEN` instead of key/secret; the AF supports both.
 
 ## Validate
 
@@ -87,7 +87,7 @@ CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright
 
 If you use [direnv](https://direnv.net/), run `direnv allow` in the repo root. [.envrc](.envrc) loads the uv virtual environment and sources `.env` when you enter the directory.
 
-## Consumer API style (SDK UX)
+## Consumer API style (AF UX)
 
 When using or documenting the registry-based client (`client.namespace`, `client.project`, etc.):
 
