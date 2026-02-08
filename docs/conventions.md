@@ -1,6 +1,6 @@
-# SDK Conventions
+# AF Conventions
 
-Single source of truth for Endor Cockpit SDK usage. Link here from other docs instead of re-stating. For SDK implementation, **practices** means the patterns in this document and in [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
+Single source of truth for Endor Cockpit Agentic Framework usage. Link here from other docs instead of re-stating. For AF implementation, **practices** means the patterns in this document and in [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
 
 ## Canonical naming
 
@@ -15,8 +15,8 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## Models and API parity
 
-- **Nested models:** Use typed Pydantic models for nested maps/arrays; "extra in SDK" for those paths in consistency reports is expected; do not remove typing to match spec flattening.
-- **Consistency check:** Model consistency uses Python field names; the spec enumerator follows `properties` and top-level `$ref` only (not `additionalProperties`/`items`). Nested SDK paths therefore appear as "extra" by design.
+- **Nested models:** Use typed Pydantic models for nested maps/arrays; "extra in AF" for those paths in consistency reports is expected; do not remove typing to match spec flattening.
+- **Consistency check:** Model consistency uses Python field names; the spec enumerator follows `properties` and top-level `$ref` only (not `additionalProperties`/`items`). Nested AF paths therefore appear as "extra" by design.
 - **Spec-driven UX:** Expose spec-defined attributes and types with sources of truth in resource modules and models; see [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
 - **Field aliasing:** See [Field aliasing](#field-aliasing) below.
 
@@ -28,7 +28,7 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 - **Tier 2 (case):** API is snake_case per spec; prefer 1:1 Python name = API key. No global camelCase→snake_case unless the spec uses camelCase.
 - **Tier 3 (semantic):** Avoid renaming for "prettiness." Alias only when the API name is misleading, excessively long, or ambiguous; document the reason. **Greenfield shared fields:** Use Python name = spec key for `context`, `processing_status`, `index_data`; no prefixed names. If you use a prefixed Python name with `Field(alias="...")` for a shared concept, register it in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../src/endorlabs/utils/model_consistency.py).
 - **Python names in code:** Use Python field names in code; API/spec names only via `Field(alias=...)`. Tooling (e.g. model consistency) uses Python names.
-- **Option/config names:** SDK may use clearer names than spec (e.g. `assume_numbers_are_safe`); use `Field(alias=...)` when the API expects the spec key.
+- **Option/config names:** AF may use clearer names than spec (e.g. `assume_numbers_are_safe`); use `Field(alias=...)` when the API expects the spec key.
 - **UX:** Base models use `populate_by_name=True` and `extra="allow"`; resource models often use `extra="ignore"`. Serialization uses `by_alias=True` so outgoing JSON matches the API.
 
 ## Traverse
@@ -39,10 +39,10 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## Namespace scoping (resource-scoped operations)
 
-When you have a resource (e.g. from `list(traverse=True)`), pass the **resource object** to `get`, `update`, or `delete` so the SDK anchors the operation to the resource's namespace and avoids 404 (context mismatch). Example: `client.project.delete(target)` instead of `client.project.delete(target.uuid, namespace=target.tenant_meta.namespace)`.
+When you have a resource (e.g. from `list(traverse=True)`), pass the **resource object** to `get`, `update`, or `delete` so the AF anchors the operation to the resource's namespace and avoids 404 (context mismatch). Example: `client.project.delete(target)` instead of `client.project.delete(target.uuid, namespace=target.tenant_meta.namespace)`.
 
 - **get / update / delete:** Accept either a UUID string or a resource object. When a resource object is passed, namespace is derived from `resource.tenant_meta.namespace`.
-- **List/filter scoped to a resource:** For list or filter that are "in scope of this resource" (e.g. filter by project UUID), use the resource's namespace: `resolve_namespace_for_resource(resource, client_default)` or `resource.tenant_meta.namespace`. For child resources (e.g. scan_results, repository_versions), use `list(parent=resource)` so the SDK derives namespace and `meta.parent_uuid` filter from the parent; only resources with a registry `parent_kind` support `parent=`.
+- **List/filter scoped to a resource:** For list or filter that are "in scope of this resource" (e.g. filter by project UUID), use the resource's namespace: `resolve_namespace_for_resource(resource, client_default)` or `resource.tenant_meta.namespace`. For child resources (e.g. scan_results, repository_versions), use `list(parent=resource)` so the AF derives namespace and `meta.parent_uuid` filter from the parent; only resources with a registry `parent_kind` support `parent=`.
 - **Resource namespace:** Use `resource.namespace` (canonical namespace for the resource, or `None` when `tenant_meta` is absent) instead of `resource.tenant_meta.namespace` when you need the scope string.
 - **Discovery (no resource yet):** Use tenant root + `traverse=True`.
 
@@ -72,7 +72,7 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 - **update_mask** = which **fields** to patch (PATCH body); separate from list **mask** (response projection). Do not combine with filter or list mask.
 - Most resources: `update_*` **requires** `update_mask: str` (comma-separated paths). Sparse PATCH is always used; the base layer builds a sparse request body and sends `request.update_mask`. Missing or empty mask raises `ValidationError`.
 - Namespace: `update_mask` is **required** (e.g. `"meta.description"`); API returns 400 without at least one field.
-- Immutable fields in `update_mask` are rejected by the SDK before the request.
+- Immutable fields in `update_mask` are rejected by the AF before the request.
 
 **Implicit update_mask (field kwargs):** When `update_mask` is omitted, the facade accepts field kwargs (e.g. `meta_description`, `meta_tags`, `scan_state`). The mask is derived from those kwargs and the payload is built by the resource (see `BaseResource.update` and `_build_update_payload`). Use either `client.<resource>.update(resource, meta_description="...", meta_tags=[...])` or `resource.update(client.<resource>, meta_description="...")`. You must pass a resource instance (not a UUID string) when using field kwargs. All mutable fields are available via `resource.update(facade, **kwargs)`; the model's `get_mutable_fields()` / `get_update_kwarg_to_path()` define the allowed set. The facade's explicit params (`meta_description`, `meta_tags`) are a convenience subset.
 - **Common facade params:** Optional facade params (e.g. `meta_description`, `meta_tags`) are merged into the field-kwargs path; the **allowed set** is defined only by the resource’s `get_mutable_fields()` / `get_update_kwarg_to_path()`.

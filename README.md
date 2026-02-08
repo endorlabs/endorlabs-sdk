@@ -2,7 +2,7 @@
 
 [![Python CI](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml/badge.svg)](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml)
 
-Python SDK for the Endor Labs security platform. It provides a type-safe, resource-oriented client for the Endor Labs REST API: list, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and others) with consistent patterns for filtering, pagination, and namespace traversal.
+Endor Agentic Framework (AF) for the Endor Labs security platform. A Python package that deploys Cursor/Anthropic skills with the APIs to use them — providing a type-safe, resource-oriented client for the Endor Labs REST API: list, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and others) with consistent patterns for filtering, pagination, and namespace traversal.
 
 - **Python:** 3.13
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
@@ -31,7 +31,7 @@ uv sync
 
 ## Configuration
 
-The SDK uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.
+The AF uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.
 
 | Variable | Purpose |
 |----------|---------|
