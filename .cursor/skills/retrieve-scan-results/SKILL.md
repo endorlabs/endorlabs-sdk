@@ -2,7 +2,7 @@
 name: retrieve-scan-results
 description: >-
   Query projects, scan results, and findings from the Endor Labs platform
-  using the SDK. Use when the user wants to retrieve scan results, list
+  using the AF. Use when the user wants to retrieve scan results, list
   findings, look up a project by repository URL, or build reports from
   scan data. Covers namespace traversal for tenant-wide queries.
 ---
@@ -10,7 +10,7 @@ description: >-
 # Retrieving Scan Results and Findings
 
 Workflow for navigating the Project -> ScanResult -> Finding hierarchy in the
-Endor Labs SDK.
+Endor Labs Agentic Framework.
 
 ## Concepts
 
