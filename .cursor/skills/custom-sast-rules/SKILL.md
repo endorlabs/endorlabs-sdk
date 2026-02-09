@@ -82,23 +82,43 @@ Verify: compiles without errors, flags expected files, zero false positives.
 
 ## Phase 4: Import to Platform
 
+Use the SAST Rule Manager script (`scripts/sast_rule_manager.py`) for all platform operations. It validates every rule against the API-accepted schema before import and handles orphaned findings on delete.
+
 ```bash
-# Single rule
-uv run python maneuvers/import_semgrep_rule.py \
-    --file path/to/rule.yaml --namespace tenant.namespace
+# Import all rules (validates each rule dict before calling the API)
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    import --rules-dir opengrep-rules/ --namespace tenant.ns --force
 
-# All rules in a directory
-uv run python maneuvers/import_semgrep_rule.py \
-    --dir path/to/rules/ --namespace tenant.namespace
+# Full sync (delete old + orphan cleanup + import + configure enable/disable)
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    sync --rules-dir opengrep-rules/ --enabled-dir opengrep-rules/trust-chain/ \
+    --name-filter "endor-af" --namespace tenant.ns --force
 
-# Dry run (parse only)
-uv run python maneuvers/import_semgrep_rule.py --file rule.yaml --dry-run
+# Validate only (dry run -- parses, validates, logs planned actions)
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
 
-# Force update existing rule
-uv run python maneuvers/import_semgrep_rule.py --file rule.yaml --force
+# Delete rules matching a name filter and clean up orphaned findings
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    delete --name-filter "endor-af" --namespace tenant.ns
+
+# Configure enable/disable states by directory
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    configure --rules-dir opengrep-rules/ \
+    --enabled-dir opengrep-rules/trust-chain/ --namespace tenant.ns
 ```
 
-For AF types, API constraints, and export workflow, see [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
+### Subcommands
+
+| Command | Purpose |
+|---------|---------|
+| `import` | Import rules from a directory; validates each rule first |
+| `delete` | Delete rules by name filter; returns names for orphan cleanup |
+| `orphans` | Clean stale findings referencing deleted rules |
+| `configure` | Enable rules from one dir, disable all others |
+| `sync` | Full lifecycle: delete -> orphans -> import -> configure |
+
+For AF types, API constraints, validation guardrails, and export workflow, see [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
 
 ## Phase 5: Verify
 
@@ -115,5 +135,5 @@ Compare finding count and affected files against local OpenGrep/Semgrep results.
 | Threat model | Manual / checklist | Threat spec per finding |
 | Author | Text editor + reference rules | Rule YAML file |
 | Validate | `opengrep scan` / `semgrep scan` | Finding count + file list |
-| Import | `maneuvers/import_semgrep_rule.py` | Rule created in namespace |
+| Import | `scripts/sast_rule_manager.py` | Rule created in namespace |
 | Verify | `endorctl scan --sast` | Platform findings match local |
