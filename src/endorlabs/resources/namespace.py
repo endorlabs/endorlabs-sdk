@@ -20,13 +20,13 @@ from typing import TYPE_CHECKING, Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..api_client import APIClient
 from ..exceptions import ValidationError as EndorValidationError
 from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
 from ..utils.logging_config import get_resource_logger
 from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
+    from ..api_client import APIClient
     from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
