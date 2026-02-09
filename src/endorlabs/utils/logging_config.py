@@ -57,6 +57,8 @@ def get_resource_logger(name: str) -> logging.Logger:
         RedactingFilter,
         json_redaction_pattern,
         redaction_pattern,
+        url_token_redaction_pattern,
+        url_token_redaction_replacement,
     )
 
     logger = logging.getLogger(name)
@@ -67,6 +69,7 @@ def get_resource_logger(name: str) -> logging.Logger:
                 [
                     redaction_pattern,
                     (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
+                    (url_token_redaction_pattern, url_token_redaction_replacement),
                 ]
             )
         )

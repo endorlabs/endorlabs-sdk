@@ -28,6 +28,8 @@ from .utils.redaction import (
     RedactingFilter,
     json_redaction_pattern,
     redaction_pattern,
+    url_token_redaction_pattern,
+    url_token_redaction_replacement,
 )
 
 # Pre-compiled redaction patterns for _redact_log_data (avoid re.compile per call)
@@ -126,6 +128,7 @@ class APIClient:
                 [
                     redaction_pattern,
                     (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
+                    (url_token_redaction_pattern, url_token_redaction_replacement),
                 ]
             )
         )
