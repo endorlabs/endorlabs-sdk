@@ -71,8 +71,19 @@ class SemgrepFixRegex(BaseModel):
     replacement: str | None = Field(None, description="Replacement string")
 
 
+class SemgrepPaths(BaseModel):
+    """Semgrep rule path inclusion/exclusion (v1SemgrepPaths)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    include: list[str] | None = Field(None, description="Path inclusion patterns")
+    exclude: list[str] | None = Field(None, description="Path exclusion patterns")
+
+
 class SemgrepOptions(BaseModel):
-    """Semgrep rule options."""
+    """Semgrep rule options (v1SemgrepOptions)."""
+
+    model_config = ConfigDict(extra="allow")
 
     symbolic_propagation: bool | None = Field(
         None, description="Enable symbolic propagation"
@@ -83,10 +94,33 @@ class SemgrepOptions(BaseModel):
         alias="taint_assume_safe_numbers",
         description="Assume numbers are safe",
     )
+    taint_unify_mvars: bool | None = Field(
+        None, description="Enable unification of metavariables in taint analysis"
+    )
+    generic_ellipsis_max_span: int | None = Field(
+        None, description="Maximum span for generic ellipsis patterns"
+    )
+    taint_assume_safe_booleans: bool | None = Field(
+        None, description="Assume boolean values are safe in taint analysis"
+    )
+    taint_assume_safe_functions: bool | None = Field(
+        None, description="Assume function calls are safe in taint analysis"
+    )
+    constant_propagation: bool | None = Field(
+        None, description="Enable constant propagation analysis"
+    )
+    implicit_deep_exprstmt: bool | None = Field(
+        None, description="Enable implicit deep expression statement analysis"
+    )
+    generic_engine: str | None = Field(
+        None, description="Generic engine to use for analysis"
+    )
 
 
 class SemgrepRulePatternType(BaseModel):
-    """Semgrep rule pattern type (recursive structure)."""
+    """Semgrep rule pattern type (v1SemgrepRulePatternType, recursive structure)."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     pattern: str | None = Field(None, description="Pattern string")
     pattern_not: str | None = Field(None, description="Pattern not")
@@ -100,13 +134,47 @@ class SemgrepRulePatternType(BaseModel):
     )
     pattern_not_regex: str | None = Field(None, description="Pattern not regex")
     pattern_regex: str | None = Field(None, description="Pattern regex")
-
-    model_config = ConfigDict(populate_by_name=True)
+    pattern_inside: str | None = Field(None, description="Pattern inside")
+    pattern_not_inside: str | None = Field(None, description="Pattern not inside")
+    metavariable_pattern: SemgrepMetavariablePattern | None = Field(
+        None, description="Metavariable pattern"
+    )
+    metavariable_analysis: dict[str, Any] | None = Field(
+        None, description="Metavariable analysis"
+    )
+    metavariable_comparison: dict[str, Any] | None = Field(
+        None, description="Metavariable comparison"
+    )
+    metavariable_type: dict[str, Any] | None = Field(
+        None, description="Metavariable type"
+    )
+    pattern_either_new: list[SemgrepRulePatternType] | None = Field(
+        None, description="Pattern either (new-style)"
+    )
+    focus_metavariable: list[str] | None = Field(
+        None, description="Focus metavariables"
+    )
+    exact: bool | None = Field(None, description="Exact match")
+    by_side_effect: bool | None = Field(None, description="By side effect")
+    label: str | None = Field(None, description="Pattern label")
+    requires: str | None = Field(None, description="Label requirement expression")
+    not_conflicting: bool | None = Field(None, description="Not conflicting flag")
+    management: dict[str, Any] | None = Field(None, description="Management config")
+    pattern_inside_either: list[SemgrepRulePatternType] | None = Field(
+        None, description="Pattern inside either list"
+    )
 
 
 class SemgrepRuleMeta(BaseModel):
-    """Semgrep rule metadata."""
+    """Semgrep rule metadata (v1SemgrepRuleMeta).
 
+    All fields are optional. ``extra="allow"`` ensures forward
+    compatibility when the API adds new metadata fields.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    # --- Fields present in the original SDK model ---
     license: str | None = Field(None, description="Rule license")
     likelihood: str | None = Field(None, description="Likelihood level")
     confidence: str | None = Field(None, description="Confidence level")
@@ -125,9 +193,55 @@ class SemgrepRuleMeta(BaseModel):
         None, description="Endor target types"
     )
 
+    # --- Fields added from v1SemgrepRuleMeta API spec ---
+    endor_category: str | None = Field(
+        None, description="Rule purpose (vulnerability, malware-detection, etc.)"
+    )
+    endor_tags: list[str] | None = Field(
+        None, description="Generic tags controlling later processing of rule results"
+    )
+    endor_attack_examples: list[str] | None = Field(
+        None, description="References to attack descriptions"
+    )
+    endor_rule_origin: dict[str, Any] | None = Field(
+        None, description="Rule origin metadata (license, URL)"
+    )
+    version: str | None = Field(None, description="Semantic version of the rule")
+    security_severity: str | None = Field(None, description="Security severity score")
+    short_description: str | None = Field(None, description="Short rule description")
+    explanation: str | None = Field(None, description="Extended explanation")
+    remediation: str | None = Field(None, description="Remediation guidance")
+    author: str | None = Field(None, description="Rule author")
+    vulnerability: str | None = Field(None, description="Vulnerability identifier")
+    severity: str | None = Field(None, description="Severity string")
+    help: str | None = Field(None, description="Help text")
+    precision: str | None = Field(None, description="Rule precision")
+    tags: list[str] | None = Field(None, description="Generic tags")
+    functional_categories: list[str] | None = Field(
+        None, description="Functional categories"
+    )
+    vulnerability_class: list[str] | None = Field(
+        None, description="Vulnerability class"
+    )
+    deprecated: bool | None = Field(None, description="Whether rule is deprecated")
+    display_name: str | None = Field(None, description="Display name")
+    cwe2023_top25: bool | None = Field(None, description="CWE 2023 Top 25 flag")
+    cwe2020_top25: bool | None = Field(None, description="CWE 2020 Top 25 flag")
+    interfile: bool | None = Field(None, description="Interfile analysis flag")
+    masvs: list[str] | None = Field(
+        None, description="Mobile Application Security Verification Standard"
+    )
+    resources: list[str] | None = Field(None, description="Resource references")
+    rule_origin_note: str | None = Field(None, description="Rule origin note")
+    source_url_open: str | None = Field(None, description="Open source URL")
+    bandit_code: str | None = Field(None, description="Bandit code reference")
+    owaspapi: str | None = Field(None, description="OWASP API category")
+
 
 class SemgrepNativeRule(BaseModel):
-    """Semgrep native rule structure (Semgrep-compatible format)."""
+    """Semgrep native rule (v1SemgrepNativeRule, Semgrep-compatible)."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     id: str | None = Field(None, description="Rule ID")
     pattern: str | None = Field(None, description="Pattern string")
@@ -368,15 +482,40 @@ def _validate_rule_structure(rule: Any, errors: list[str]) -> None:
         errors.append("rule.message is required and cannot be empty")
 
 
+_PATTERN_KEYS = frozenset(
+    {
+        "pattern",
+        "patterns",
+        "pattern_either",
+        "pattern_sources",
+        "pattern_sinks",
+        "pattern_regex",
+    }
+)
+
+
 def _validate_patterns(rule: Any, errors: list[str]) -> None:
-    """Validate pattern types."""
+    """Validate pattern types.
+
+    Checks both explicit model fields and ``model_extra`` so that
+    compound-pattern rules whose pattern keys landed in extra still pass.
+    """
     has_patterns = (
         rule.pattern is not None
         or (rule.patterns and len(rule.patterns) > 0)
         or (rule.pattern_either and len(rule.pattern_either) > 0)
         or (rule.pattern_sources and len(rule.pattern_sources) > 0)
         or (rule.pattern_sinks and len(rule.pattern_sinks) > 0)
+        or rule.pattern_regex is not None
     )
+
+    # Also check model_extra for pattern keys (extra="allow" may store them there)
+    if not has_patterns and hasattr(rule, "model_extra") and rule.model_extra:
+        for key in _PATTERN_KEYS:
+            val = rule.model_extra.get(key)
+            if val is not None:
+                has_patterns = True
+                break
 
     if not has_patterns:
         errors.append(
@@ -732,5 +871,4 @@ def delete_semgrep_rule(
 # Forward references
 SemgrepMetavariableRegex = dict[str, Any]  # Placeholder - define properly if needed
 SemgrepMetavariablePattern = dict[str, Any]  # Placeholder - define properly if needed
-SemgrepPaths = dict[str, Any]  # Placeholder - define properly if needed
 EndorTarget = str  # Placeholder - define properly if needed
