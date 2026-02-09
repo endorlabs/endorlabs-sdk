@@ -112,7 +112,7 @@ jobs:
       - name: Download OpenAPI spec
         run: |
           mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapi.json https://api.endorlabs.com/download/openapiv2.swagger.json
+          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
 
       - name: Run schema drift detection
         run: |
@@ -171,7 +171,7 @@ This field was detected in API responses but is not defined in the Pydantic mode
 
 ### Action Required
 
-1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` (workflow downloads it to \`.endorlabs-context/openapi.json\`).
+1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` (workflow downloads it to \`.endorlabs-context/openapiv2.swagger.json\`).
 2. Add field to model: \`${d.file_path || 'resource file'}\`
 3. Update drift detection known_fields if applicable
 

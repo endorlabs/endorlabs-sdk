@@ -78,7 +78,7 @@ def init(
         >>> import endorlabs
         >>> status = endorlabs.init()
         >>> print(status.openapi_path)
-        .endorlabs-context/openapi.json
+        .endorlabs-context/openapiv2.swagger.json
 
     """
     from .context import _sync

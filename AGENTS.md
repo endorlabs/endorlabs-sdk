@@ -40,7 +40,7 @@ import endorlabs
 status = endorlabs.init()
 
 # Access downloaded files
-print(status.openapi_path)     # .endorlabs-context/openapi.json
+print(status.openapi_path)     # .endorlabs-context/openapiv2.swagger.json
 print(status.user_docs_path)   # .endorlabs-context/docs/
 print(status.user_docs_count)  # number of docs downloaded
 ```

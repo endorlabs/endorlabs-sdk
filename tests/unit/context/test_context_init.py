@@ -23,7 +23,7 @@ class TestInitStatus:
 
     def test_init_status_creation(self, tmp_path: Path) -> None:
         """Test InitStatus can be created with all fields."""
-        openapi_path = tmp_path / "openapi.json"
+        openapi_path = tmp_path / "openapiv2.swagger.json"
         docs_path = tmp_path / "docs"
         now = datetime.now(UTC)
 
@@ -42,7 +42,7 @@ class TestInitStatus:
     def test_init_status_repr(self, tmp_path: Path) -> None:
         """Test InitStatus repr includes key fields."""
         status = InitStatus(
-            openapi_path=tmp_path / "openapi.json",
+            openapi_path=tmp_path / "openapiv2.swagger.json",
             user_docs_path=tmp_path / "docs",
             user_docs_count=5,
             downloaded_at=datetime.now(UTC),
@@ -74,7 +74,7 @@ class TestSyncOpenapi:
         from endorlabs.context._sync import sync_openapi
 
         mock_client = self._mock_api_client({"openapi": "3.0.0"})
-        output_path = tmp_path / "openapi.json"
+        output_path = tmp_path / "openapiv2.swagger.json"
 
         result = sync_openapi(
             output_path=output_path,
@@ -99,7 +99,7 @@ class TestSyncOpenapi:
         """Test sync_openapi skips download if file exists and force=False."""
         from endorlabs.context._sync import sync_openapi
 
-        output_path = tmp_path / "openapi.json"
+        output_path = tmp_path / "openapiv2.swagger.json"
         output_path.write_text('{"existing": true}')
 
         mock_client = self._mock_api_client()
@@ -124,7 +124,7 @@ class TestSyncOpenapi:
         from endorlabs.context._sync import sync_openapi
 
         mock_client = self._mock_api_client()
-        output_path = tmp_path / "nested" / "dir" / "openapi.json"
+        output_path = tmp_path / "nested" / "dir" / "openapiv2.swagger.json"
 
         result = sync_openapi(
             output_path=output_path,
@@ -147,7 +147,7 @@ class TestSyncOpenapi:
         """Test sync_openapi creates APIClient if none provided."""
         from endorlabs.context._sync import sync_openapi
 
-        output_path = tmp_path / "openapi.json"
+        output_path = tmp_path / "openapiv2.swagger.json"
 
         # Mock the APIClient class at import time
         with patch("endorlabs.api_client.APIClient") as mock_cls:
@@ -191,7 +191,7 @@ class TestInit:
         )
 
         assert isinstance(status, InitStatus)
-        assert status.openapi_path == output_dir / "openapi.json"
+        assert status.openapi_path == output_dir / "openapiv2.swagger.json"
         assert status.user_docs_path is None
         assert status.user_docs_count == 0
         assert status.downloaded_at is not None
@@ -220,7 +220,7 @@ class TestInit:
 
         output_dir = tmp_path / ".endor-context"
         output_dir.mkdir(parents=True)
-        openapi_file = output_dir / "openapi.json"
+        openapi_file = output_dir / "openapiv2.swagger.json"
         openapi_file.write_text('{"old": true}')
 
         mock_client = self._mock_api_client({"new": True})
@@ -244,7 +244,7 @@ class TestInit:
 
         output_dir = tmp_path / ".endor-context"
         output_dir.mkdir(parents=True)
-        openapi_file = output_dir / "openapi.json"
+        openapi_file = output_dir / "openapiv2.swagger.json"
         openapi_file.write_text('{"old": true}')
 
         mock_client = self._mock_api_client({"new": True})
