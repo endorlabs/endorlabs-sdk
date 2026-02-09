@@ -63,6 +63,14 @@ rules:
         - scope:definition-site
         - trust-chain:redacting-filter-credential-scrubbing
         - trust-role:validation
+        - trust-chain.id:redacting-filter-credential-scrubbing
+        - trust-chain.role:validation
+        - trust-chain.paired-rules:endor-af-redactionfilter-enforcement
+        - >-
+          trust-chain.contract:RedactingFilter must be attached to every
+          module-level logger (enforcement) AND its implementation must
+          satisfy the behavioral invariants enumerated in the certification
+          rule (certification).
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
@@ -86,15 +94,6 @@ rules:
         must coerce non-strings and iterate all compiled patterns.  The
         __init__() method must compile all patterns with re.IGNORECASE.
       security-severity: High
-      trust-chain:
-        id: redacting-filter-credential-scrubbing
-        role: validation
-        paired-rules:
-          - endor-af-redactionfilter-enforcement
-        contract: >-
-          RedactingFilter must be attached to every module-level logger
-          (enforcement) AND its implementation must satisfy the behavioral
-          invariants enumerated in the certification rule (certification).
       version: v1.0.0
     pattern-either:
       - patterns:
