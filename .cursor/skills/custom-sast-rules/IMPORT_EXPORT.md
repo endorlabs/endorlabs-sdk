@@ -59,7 +59,7 @@ See [AUTHORING.md](AUTHORING.md) for the full validation loop.
 ## Import Workflow
 
 ```
-Author YAML --> Validate with opengrep/semgrep --> Import with maneuver --> Verify with endorctl
+Author YAML --> Validate with opengrep/semgrep --> Import with sast_rule_manager --> Verify with endorctl
 ```
 
 ### Step 1: Author and validate
@@ -71,27 +71,21 @@ expectations.
 ### Step 2: Import
 
 ```bash
-# Import a single rule file
-uv run python maneuvers/import_semgrep_rule.py \
-    --file .endorlabs-context/semgrep-rules/my-rule.yaml \
-    --namespace tenant.namespace
+# Import all rules in a directory (validates each rule first)
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    import --rules-dir opengrep-rules/ --namespace tenant.ns
 
-# Import all rules in a directory
-uv run python maneuvers/import_semgrep_rule.py \
-    --dir .endorlabs-context/semgrep-rules/ \
-    --namespace tenant.namespace
+# Force update existing rules
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    import --rules-dir opengrep-rules/ --namespace tenant.ns --force
 
-# Dry run (parse and validate without calling the API)
-uv run python maneuvers/import_semgrep_rule.py \
-    --file my-rule.yaml --dry-run
-
-# Force update (overwrite existing rule with same name)
-uv run python maneuvers/import_semgrep_rule.py \
-    --file my-rule.yaml --force
+# Dry run (parse, validate, and log planned actions without calling the API)
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
 
 # Verbose logging
-uv run python maneuvers/import_semgrep_rule.py \
-    --file my-rule.yaml --verbose
+uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+    import --rules-dir opengrep-rules/ --namespace tenant.ns --verbose
 ```
 
 ### Step 3: Verify
@@ -108,18 +102,87 @@ OpenGrep/Semgrep results.
 
 ---
 
-## Import Maneuver CLI Reference
+## SAST Rule Manager CLI Reference
+
+The script is at `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`.
+
+### Common flags (all subcommands)
 
 | Flag | Description |
 |------|-------------|
-| `--file PATH` | Import a single YAML rule file |
-| `--dir PATH` | Import all `.yaml`/`.yml` files in a directory |
-| `--namespace NS` | Target namespace (overrides `ENDOR_NAMESPACE`) |
-| `--dry-run` | Parse and validate without calling the API |
-| `--force` | Update existing rules (matched by `meta.name`) |
+| `--namespace NS` | Target namespace (required, no default) |
+| `--dry-run` | Log planned actions without calling the API |
 | `--verbose` | Enable DEBUG-level logging |
 
-Either `--file` or `--dir` is required (not both).
+### `import` -- Import rules from a directory
+
+```bash
+sast_rule_manager.py import --rules-dir PATH [--force] [--dry-run]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--rules-dir PATH` | Directory containing rule YAML files (recursive) |
+| `--force` | Update existing rules (matched by `meta.name`) |
+
+Each rule dict is validated through `validate_rule_dict()` before
+import. Unknown metadata keys cause the rule to be rejected (not
+silently stripped).
+
+### `delete` -- Delete rules by name filter
+
+```bash
+sast_rule_manager.py delete --name-filter SUBSTRING [--dry-run]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--name-filter SUBSTRING` | Substring to match against `meta.name` |
+
+Returns the list of deleted rule names, which can be passed to
+`orphans` for cleanup.
+
+### `orphans` -- Clean orphaned findings
+
+```bash
+sast_rule_manager.py orphans --deleted-names NAME [NAME ...] [--dry-run]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--deleted-names NAME [...]` | Rule names whose findings should be cleaned up |
+
+Fetches all SAST findings and client-side matches on
+`meta.description` / `spec.extra_key` (API filters are unreliable for
+this).
+
+### `configure` -- Enable/disable rules by directory
+
+```bash
+sast_rule_manager.py configure --rules-dir PATH --enabled-dir PATH [--dry-run]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--rules-dir PATH` | Directory containing all rule YAML files |
+| `--enabled-dir PATH` | Directory whose rules should be enabled; all others disabled |
+
+### `sync` -- Full lifecycle
+
+```bash
+sast_rule_manager.py sync --rules-dir PATH --enabled-dir PATH \
+    [--name-filter SUBSTRING] [--force] [--dry-run]
+```
+
+Chains: `delete` -> `orphans` -> `import` -> `configure`. If
+`--name-filter` is omitted, the delete step is skipped.
+
+| Flag | Description |
+|------|-------------|
+| `--rules-dir PATH` | Directory containing all rule YAML files |
+| `--enabled-dir PATH` | Directory whose rules should be enabled |
+| `--name-filter SUBSTRING` | Substring for delete step (optional) |
+| `--force` | Update existing rules during import step |
 
 ---
 
@@ -155,9 +218,81 @@ uv run python maneuvers/export_semgrep_rule.py \
 
 ---
 
+## Validation Guardrail: `validate_rule_dict()`
+
+The SAST Rule Manager validates every rule dict before import. This is
+the gate an agent must pass; unknown metadata fields are **errors**, not
+silently stripped.
+
+### Allowed metadata keys
+
+Only these keys are accepted under `metadata:` in rule YAML. The list
+matches `v1SemgrepRuleMeta` from the Endor Labs API spec.
+
+| Key | Example value |
+|-----|---------------|
+| `asvs` | ASVS reference |
+| `author` | Rule author name |
+| `bandit-code` | `B608` |
+| `category` | `security` |
+| `confidence` | `HIGH` |
+| `cwe` | `CWE-532` |
+| `cwe2020-top25` | `true` |
+| `cwe2021-top25` | `true` |
+| `cwe2022-top25` | `true` |
+| `cwe2023-top25` | `true` |
+| `deprecated` | `true` |
+| `description` | Short rule description (max 1024 UTF-8 bytes) |
+| `display-name` | Human-readable rule name |
+| `endor-attack-examples` | `[https://example.com/attack]` |
+| `endor-category` | `code-quality` |
+| `endor-rule-origin` | `endor-cockpit` |
+| `endor-tags` | `[credential-protection, trust-chain.id:my-chain]` |
+| `endor-targets` | `[src/endorlabs/]` |
+| `explanation` | Extended explanation for findings |
+| `functional-categories` | `[crypto::search]` |
+| `help` | Help text for rule |
+| `impact` | Impact description |
+| `interfile` | `true` |
+| `license` | `MIT` |
+| `likelihood` | `HIGH` |
+| `masvs` | `[MASVS-CRYPTO-1]` |
+| `owasp` | `A02:2021` |
+| `owaspapi` | `API1:2023` |
+| `precision` | `VERY_HIGH` |
+| `references` | List of reference URLs |
+| `remediation` | How to fix the finding |
+| `resources` | List of resource references |
+| `rule-origin-note` | Origin note |
+| `security-severity` | `7.5` |
+| `severity` | `ERROR` |
+| `short-description` | Brief description (also accepted as `shortDescription`) |
+| `shortDescription` | Brief description (camelCase variant) |
+| `source-rule-url` | URL to source rule |
+| `source-url-open` | Open source URL |
+| `subcategory` | `[vuln, audit]` |
+| `tags` | `[cwe-89, owasp-top10]` |
+| `technology` | `[python, flask]` |
+| `version` | `1` |
+| `vulnerability` | Vulnerability identifier |
+| `vulnerability-class` | `[SQL-Injection]` |
+
+Any other key under `metadata` will cause `validate_rule_dict()` to
+fail with an explicit error listing the unknown key(s).
+
+### Checks performed
+
+1. Required top-level keys: `id`, `languages`, `severity`, `message`
+2. At least one pattern key: `pattern`, `patterns`, `pattern-either`, `pattern-regex`, `pattern-sources`
+3. `severity` must be one of `WARNING`, `ERROR`, `INFO`
+4. All `metadata` keys must be in the allowed set above
+5. `metadata.description` must not exceed 1024 UTF-8 bytes
+
+---
+
 ## AF Types Involved
 
-The import maneuver uses these types from `endorlabs.resources.semgrep_rule`:
+The SAST Rule Manager uses these types from `endorlabs.resources.semgrep_rule`:
 
 | Type | Purpose |
 |------|---------|
@@ -178,9 +313,11 @@ The API stores the rule in two forms:
   like `id`, `languages`, `message`, `severity`, `pattern`, `mode`.
   Used for client-side validation and display.
 
-The `spec.rule` Pydantic model does NOT fully represent all Semgrep
-pattern operators (e.g., `pattern-not-inside`, `patterns` as a list).
-The full rule lives in `spec.yaml`.
+The `spec.rule` Pydantic model (`SemgrepNativeRule`) now covers
+the most common Semgrep pattern operators (including
+`pattern-not-inside`, `pattern-inside`, compound `patterns`, etc.)
+and uses `extra="allow"` for forward compatibility. The authoritative
+rule definition still lives in `spec.yaml`.
 
 ---
 
@@ -256,7 +393,7 @@ This is acceptable -- the API uses `spec.yaml` as the source of truth.
 
 ## Idempotency and Updates
 
-The import maneuver checks for existing rules by matching `meta.name`.
+The `import` subcommand checks for existing rules by matching `meta.name`.
 
 | Scenario | Behavior |
 |----------|----------|
@@ -298,10 +435,13 @@ After importing, verify end-to-end:
 |-------|-------|-----|
 | "Namespace is required" | `ENDOR_NAMESPACE` not set | Load `.env` or pass `--namespace` |
 | "spec.rule is required" | `CreateSemgrepRulePayload.spec.rule` is `None` | Build a minimal `SemgrepNativeRule` (see above) |
-| "Meta.Description: value length must be at most 1024 bytes" | `meta.description` too long | Truncate to 1020 chars + "..." |
-| "Semgrep rule validation failed" | Client-side Pydantic validation rejects pattern operators | Pass `validate=False` to `create_semgrep_rule()` |
-| Rule imported but no findings in scan | Rule `paths.include` does not match scanned files, or rule is disabled | Check rule YAML scope; verify rule is enabled in the namespace |
+| "Meta.Description: value length must be at most 1024 bytes" | `meta.description` too long | Truncate to 1020 chars + "..." (handled automatically by the script) |
+| "Semgrep rule validation failed" | Client-side Pydantic validation rejects pattern operators | The script uses `validate=False` by default |
+| "Unknown metadata key(s)" from `validate_rule_dict` | Rule YAML contains fields not in `ALLOWED_METADATA_KEYS` | Remove or relocate the unknown field (e.g., move into `endor-tags`) |
+| Rule imported but no findings in scan | Rule `paths.include` does not match scanned files, or rule is disabled | Check rule YAML scope; use `configure` to enable |
 | "already exists" / duplicate | Rule with same `meta.name` exists | Use `--force` to update, or choose a different name |
+| Orphaned findings after rule deletion | Findings persist after their rule is deleted | Run `orphans` or `sync` (includes orphan cleanup automatically) |
+| "Unable to parse rule specification: unknown field" | API rejects metadata key not in its schema | Check `ALLOWED_METADATA_KEYS`; move custom data into `endor-tags` |
 
 ---
 
