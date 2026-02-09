@@ -62,7 +62,7 @@ def init(
 
 
 def sync_openapi(
-    output_path: str | Path = ".endorlabs-context/openapi.json",
+    output_path: str | Path = ".endorlabs-context/openapiv2.swagger.json",
     force: bool = False,
     client: APIClient | None = None,
 ) -> Path:

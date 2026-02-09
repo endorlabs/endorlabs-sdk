@@ -113,7 +113,7 @@ class TestRunModelConsistencyReportAttributeOverlap:
         from pathlib import Path
 
         # Run with default (loads from path or URL); skip if spec unavailable
-        spec_path = Path(".endorlabs-context/openapi.json")
+        spec_path = Path(".endorlabs-context/openapiv2.swagger.json")
         if not spec_path.exists():
             pytest.skip("OpenAPI spec not present (run sync or use --spec-url)")
         report = run_model_consistency_report(

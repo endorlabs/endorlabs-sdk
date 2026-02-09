@@ -56,7 +56,7 @@ OPENAPI_PATH = "/download/openapiv2.swagger.json"
 
 # Default output paths (single source of truth for context downloads)
 DEFAULT_CONTEXT_DIR = ".endorlabs-context"
-DEFAULT_OPENAPI_FILENAME = "openapi.json"
+DEFAULT_OPENAPI_FILENAME = "openapiv2.swagger.json"
 DEFAULT_USER_DOCS_DIRNAME = "docs"
 
 
@@ -367,7 +367,7 @@ def init(
         >>> import endorlabs
         >>> status = endorlabs.init()
         >>> print(status.openapi_path)
-        .endorlabs-context/openapi.json
+        .endorlabs-context/openapiv2.swagger.json
 
     """
     from endorlabs.api_client import APIClient as APIClientClass
@@ -385,7 +385,7 @@ def init(
     # Download OpenAPI spec (validates auth)
     if include_openapi:
         openapi_path = sync_openapi(
-            output_path=output_path / "openapi.json",
+            output_path=output_path / DEFAULT_OPENAPI_FILENAME,
             force=force,
             client=api_client,
         )

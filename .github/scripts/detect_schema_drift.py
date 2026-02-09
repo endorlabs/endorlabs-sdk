@@ -379,7 +379,7 @@ def main():
     parser.add_argument(
         "--spec-path",
         default=None,
-        help="Path to OpenAPI spec JSON (default: .endorlabs-context/openapi.json)"
+        help="Path to OpenAPI spec JSON (default: .endorlabs-context/openapiv2.swagger.json)"
     )
     parser.add_argument(
         "--spec-url",
@@ -399,7 +399,7 @@ def main():
 
         spec_path = args.spec_path
         if spec_path is None:
-            spec_path = str(_repo_root / ".endorlabs-context" / "openapi.json")
+            spec_path = str(_repo_root / ".endorlabs-context" / "openapiv2.swagger.json")
         spec_url = args.spec_url
         if spec_url is None:
             spec_url = "https://api.endorlabs.com/download/openapiv2.swagger.json"
