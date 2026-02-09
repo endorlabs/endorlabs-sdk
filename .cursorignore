@@ -1,15 +1,14 @@
-# Force inclusion of gitignored context directories for AI
-# Pattern: ignore directory, then un-ignore contents
+# Override .gitignore — let Cursor AI see these gitignored directories.
+# .gitignore keeps them out of version control; ! negations here let Cursor index them.
 
-# .endorlabs-context (API spec + user docs)
-.endorlabs-context/** */
-!.endorlabs-context/openapi.json
-!.endorlabs-context/docs/* *.md
+# API spec + user docs (context bootstrap)
+!.endorlabs-context/
+!.endorlabs-context/**
 
-# .tmp (research files, responses)
-.tmp/*
+# Research files, responses
+!.tmp/
 !.tmp/**
 
-# .generated (if it exists)
-.generated/*
+# Generated files
+!.generated/
 !.generated/**
