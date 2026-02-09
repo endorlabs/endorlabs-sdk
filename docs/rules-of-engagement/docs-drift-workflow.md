@@ -19,7 +19,7 @@ endorlabs.init()  # downloads to .endorlabs-context/
 
 This creates:
 
-- `.endorlabs-context/openapi.json` — API spec
+- `.endorlabs-context/openapiv2.swagger.json` — API spec
 - `.endorlabs-context/docs/*.md` — User docs (sitemap-based, parallel download)
 
 Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
@@ -28,7 +28,7 @@ Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_page
 
 The schema drift workflow:
 
-1. **Download OpenAPI spec** — CI downloads the spec to `.endorlabs-context/openapi.json` (gitignored) in the runner for reference.
+1. **Download OpenAPI spec** — CI downloads the spec to `.endorlabs-context/openapiv2.swagger.json` (gitignored) in the runner for reference.
 2. **Run drift detection** — Runs integration tests and parses schema drift warnings via `.github/scripts/detect_schema_drift.py`.
 3. **Create issues** — GitHub Action creates one issue per new drift (inline script; no separate script).
 
@@ -49,7 +49,7 @@ The schema drift workflow:
 
 ```python
 from endorlabs.context import sync_openapi
-sync_openapi()  # downloads to .endorlabs-context/openapi.json
+sync_openapi()  # downloads to .endorlabs-context/openapiv2.swagger.json
 ```
 
 Then run drift detection:
@@ -69,7 +69,7 @@ Check an existing report without re-running tests:
 python .github/scripts/detect_schema_drift.py --check-existing
 ```
 
-**Model consistency (static):** Diff AF Pydantic field paths vs OpenAPI definitions (no test run). Run: `uv run python .github/scripts/detect_schema_drift.py --model-consistency --output-format json`. Writes `model_consistency_report.json` (uses `.endorlabs-context/openapi.json` if present, else fetches spec).
+**Model consistency (static):** Diff AF Pydantic field paths vs OpenAPI definitions (no test run). Run: `uv run python .github/scripts/detect_schema_drift.py --model-consistency --output-format json`. Writes `model_consistency_report.json` (uses `.endorlabs-context/openapiv2.swagger.json` if present, else fetches spec).
 
 ## Scripts
 

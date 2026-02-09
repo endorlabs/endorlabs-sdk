@@ -4,7 +4,7 @@ Pre-implementation validation for new Endor Labs resources. Complete
 before writing any AF code.
 
 Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json>
-(schema drift workflow downloads to `.endorlabs-context/openapi.json` in CI).
+(schema drift workflow downloads to `.endorlabs-context/openapiv2.swagger.json` in CI).
 
 ---
 
