@@ -92,6 +92,9 @@ def _format_plan(plan: list[str] | None) -> str:
 def create_endor_graph(
     client: Client,
     llm: BaseChatModel,
+    *,
+    extra_tools: list[Any] | None = None,
+    system_prompt: str | None = None,
 ) -> CompiledStateGraph:
     """Create a LangGraph workflow with Endor Labs tools.
 
@@ -105,6 +108,11 @@ def create_endor_graph(
     Args:
         client: An authenticated Endor Labs Client instance.
         llm: A LangChain chat model (e.g., ChatOpenAI, ChatAnthropic).
+        extra_tools: Additional LangChain tools to merge with the
+            registry-generated tools.  Passed to both the LLM and the
+            ``ToolNode``.
+        system_prompt: Override the default system prompt injected into
+            the agent's context on every turn.
 
     Returns:
         A compiled LangGraph StateGraph ready for invocation.
@@ -123,8 +131,13 @@ def create_endor_graph(
         ... })
         >>> print(result["messages"][-1].content)
     """
-    # Create tools bound to the client
+    # Create tools bound to the client, merge extras
     tools = create_tools(client)
+    if extra_tools:
+        tools = tools + list(extra_tools)
+
+    # Resolve system prompt
+    base_system_prompt = system_prompt or SYSTEM_PROMPT
 
     # Bind tools to the LLM
     llm_with_tools = llm.bind_tools(tools)
@@ -166,7 +179,7 @@ def create_endor_graph(
         collected_data = state.get("collected_data", {})
 
         # Build context message with plan and progress
-        context_parts = [SYSTEM_PROMPT]
+        context_parts = [base_system_prompt]
         if plan:
             context_parts.append(f"\nCurrent plan:\n{_format_plan(plan)}")
             if current_step < len(plan):
