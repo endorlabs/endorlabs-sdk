@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Threat model analysis via LLM sub-agent.
 
 Spawns a single LLM call per project to produce a structured threat model

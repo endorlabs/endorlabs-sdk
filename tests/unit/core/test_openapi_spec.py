@@ -33,18 +33,17 @@ REGISTRY_ATTR_TO_PATH: dict[str, str] = {
 }
 
 
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_SPEC_PATH = _REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
+
+
 def test_openapi_spec_paths_exist() -> None:
     """Every registry resource path exists in OpenAPI spec and has get (list)."""
-    spec_path = (
-        Path(__file__).resolve().parent.parent
-        / ".endorlabs-context"
-        / "openapiv2.swagger.json"
-    )
-    if not spec_path.exists():
+    if not _SPEC_PATH.exists():
         pytest.skip(
-            "OpenAPI spec not present (.endorlabs-context/openapiv2.swagger.json)"
+            f"OpenAPI spec not present ({_SPEC_PATH})"
         )
-    with open(spec_path, encoding="utf-8") as f:
+    with open(_SPEC_PATH, encoding="utf-8") as f:
         spec = json.load(f)
     paths = spec.get("paths", {})
     prefix = "/v1/namespaces/{tenant_meta.namespace}/"
