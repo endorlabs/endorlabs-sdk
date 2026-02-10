@@ -2,11 +2,24 @@
 
 Tests enumerate_spec_top_level_refs, compute_attribute_overlap_report,
 and integration in run_model_consistency_report (attribute overlap section).
+
+The module under test lives in .github/scripts/ (CI/analysis tooling, not
+shipped in the library).  sys.path is adjusted so ``import model_consistency``
+resolves to that file.
 """
+
+import sys
+from pathlib import Path
 
 import pytest
 
-from endorlabs.utils.model_consistency import (
+# model_consistency.py lives in .github/scripts/ (not in the installed package)
+_repo_root = Path(__file__).resolve().parent.parent.parent.parent
+_scripts_dir = str(_repo_root / ".github" / "scripts")
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
+
+from model_consistency import (
     compute_attribute_overlap_report,
     enumerate_sdk_models_flat_paths,
     enumerate_spec_top_level_refs,
