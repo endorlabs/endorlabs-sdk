@@ -30,6 +30,7 @@ from typing import (
 )
 
 from .exceptions import AmbiguousError, NotFoundError
+from .filter import F, FilterExpression
 from .types import ListParameters
 from .utils.model_validation import (
     build_filter_from_identity_kwargs,
@@ -112,7 +113,7 @@ class _ListableFacade(Generic[T]):
         self,
         *,
         parent: Any,
-        filter: str | None,
+        filter: str | FilterExpression | None,
         mask: str | None,
         page_size: int | None,
         page_token: str | None,
@@ -132,6 +133,10 @@ class _ListableFacade(Generic[T]):
         filter/mask/parent behaviour.
         """
         from .models.base import RESOURCE_NAME_TO_TYPE
+
+        # Normalize FilterExpression to str early
+        if isinstance(filter, FilterExpression):
+            filter = str(filter)
 
         explicit = {
             k: v
@@ -163,10 +168,10 @@ class _ListableFacade(Generic[T]):
 
         if parent is not None:
             parent_uuid = getattr(parent, "uuid", "")
-            parent_filter = f'meta.parent_uuid=="{parent_uuid}"'
+            parent_clause = str(F("meta.parent_uuid") == parent_uuid)
             existing = remaining_kwargs.get("filter")
             remaining_kwargs["filter"] = (
-                f"{existing} AND {parent_filter}" if existing else parent_filter
+                f"{existing} AND {parent_clause}" if existing else parent_clause
             )
 
         return remaining_kwargs
@@ -180,7 +185,7 @@ class _ListableFacade(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
         parent: Any = None,
-        filter: str | None = None,
+        filter: str | FilterExpression | None = None,
         mask: str | None = None,
         page_size: int | None = None,
         page_token: str | None = None,
@@ -366,7 +371,7 @@ class _ListableFacade(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int = 2,
         parent: Any = None,
-        filter: str | None = None,
+        filter: str | FilterExpression | None = None,
         mask: str | None = None,
         page_size: int | None = None,
         page_token: str | None = None,
@@ -461,7 +466,7 @@ class _ListableFacade(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
         parent: Any = None,
-        filter: str | None = None,
+        filter: str | FilterExpression | None = None,
         mask: str | None = None,
         page_size: int | None = None,
         page_token: str | None = None,

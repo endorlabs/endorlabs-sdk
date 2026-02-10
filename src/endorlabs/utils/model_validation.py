@@ -316,11 +316,13 @@ def build_filter_from_identity_kwargs(
     """Build filter from identity kwargs; return merged filter and remaining kwargs.
 
     For each kwarg in filter_map that is present in kwargs, builds a clause
-    path == 'value' (value quoted). Merges with explicit kwargs.get('filter')
-    if present. Returns (merged_filter, remaining_kwargs) with identity keys
-    removed from kwargs.
+    ``path == value`` using the ``F()`` filter builder for safe escaping.
+    Merges with explicit ``kwargs.get('filter')`` if present. Returns
+    ``(merged_filter, remaining_kwargs)`` with identity keys removed.
     """
-    clauses: list[str] = []
+    from ..filter import F, FilterExpression
+
+    clauses: list[FilterExpression] = []
     remaining = dict(kwargs)
     explicit_filter = remaining.pop("filter", None)
     for kwarg, path in filter_map.items():
@@ -329,17 +331,12 @@ def build_filter_from_identity_kwargs(
         value = remaining.pop(kwarg)
         if value is None:
             continue
-        # Quote string values for API filter syntax
-        if isinstance(value, str):
-            escaped = value.replace("'", "\\'")
-            clause = f"{path} == '{escaped}'"
-        else:
-            clause = f"{path} == {value!r}"
-        clauses.append(clause)
+        clauses.append(F(path) == value)
     if not clauses:
         return (explicit_filter, remaining)
+    # Join clauses with AND: "(clause1) and (clause2) and ..."
     built = " and ".join(f"({c})" for c in clauses)
-    if explicit_filter and explicit_filter.strip():
+    if explicit_filter and str(explicit_filter).strip():
         merged = f"({explicit_filter}) and ({built})"
     else:
         merged = built

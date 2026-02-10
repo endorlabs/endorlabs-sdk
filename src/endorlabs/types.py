@@ -6,9 +6,9 @@ for enhanced type safety and LLM understanding.
 # APIResponse uses key "list" (API contract); Pyright treats it as builtin
 # pyright: reportInvalidTypeForm=false
 
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
 # Resource Types
@@ -154,8 +154,27 @@ class ListParameters(BaseModel):
 
     filter: str | None = Field(
         None,
-        description="Filter expression (e.g., 'spec.level==FINDING_LEVEL_CRITICAL')",
+        description=(
+            "Filter expression — accepts a raw string "
+            "(e.g., 'spec.level==FINDING_LEVEL_CRITICAL') "
+            "or a FilterExpression built with F()."
+        ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_filter_expression(cls, values: Any) -> Any:
+        """Normalize FilterExpression to str so the wire format is always a string."""
+        from .filter import FilterExpression
+
+        if not isinstance(values, dict):
+            return values
+        typed_values = cast("dict[str, Any]", values)
+        filt = typed_values.get("filter")
+        if isinstance(filt, FilterExpression):
+            typed_values["filter"] = str(filt)
+        return typed_values
+
     mask: str | None = Field(
         None, description="Field mask (e.g., 'meta.name,spec.level')"
     )
