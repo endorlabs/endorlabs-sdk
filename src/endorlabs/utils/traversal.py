@@ -1,9 +1,18 @@
 """Namespace traversal utilities for tenant-wide queries.
 
-This module provides canonical patterns and helpers for efficiently
-querying resources across all namespaces using the traverse parameter.
+.. deprecated::
+    ``create_traverse_params`` and ``create_namespace_scoped_params`` are
+    thin wrappers around ``ListParameters``. Prefer passing ``traverse=True``
+    (or ``False``) and ``filter=`` directly to the facade's ``.list()`` method::
+
+        client.project.list(traverse=True, filter="...")
+
+This module is retained for backwards compatibility.
 """
 
+from __future__ import annotations
+
+import warnings
 from typing import Any
 
 from ..types import ListParameters
@@ -16,8 +25,8 @@ def create_traverse_params(
 ) -> ListParameters:
     """Create ListParameters with traverse enabled for tenant-wide queries.
 
-    This is the canonical way to query resources across all namespaces
-    in a single efficient API call.
+    .. deprecated::
+        Use ``client.<resource>.list(traverse=True, filter=...)`` instead.
 
     Args:
         filter_expr: Optional filter expression (e.g., "spec.project_uuid==<uuid>")
@@ -28,29 +37,15 @@ def create_traverse_params(
     Returns:
         ListParameters with traverse=True
 
-    Example:
-        ```python
-        from endorlabs.utils.traversal import create_traverse_params
-        from endorlabs.resources import dependency_metadata
-
-        # Query all dependencies across tenant (uses API default page size)
-        params = create_traverse_params()
-        deps = dependency_metadata.list_dependency_metadata(
-            client, tenant_namespace, params
-        )
-
-        # Query private dependencies only
-        params = create_traverse_params(
-            filter_expr="spec.dependency_data.public==false"
-        )
-        private_deps = dependency_metadata.list_dependency_metadata(
-            client, tenant_namespace, params
-        )
-        ```
-
     """
+    warnings.warn(
+        "create_traverse_params() is deprecated. "
+        "Use client.<resource>.list(traverse=True, filter=...) instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Don't set page_size unless explicitly provided (let API use default)
-    params_dict = {
+    params_dict: dict[str, Any] = {
         "traverse": True,
         "filter": filter_expr,
         **kwargs,
@@ -68,8 +63,9 @@ def create_namespace_scoped_params(
 ) -> ListParameters:
     """Create ListParameters for namespace-scoped queries (no traversal).
 
-    Use this when you only need resources from a specific namespace,
-    not across the entire tenant hierarchy.
+    .. deprecated::
+        Use ``client.<resource>.list(filter=...)`` instead (traverse
+        defaults to ``False``).
 
     Args:
         filter_expr: Optional filter expression
@@ -80,21 +76,16 @@ def create_namespace_scoped_params(
     Returns:
         ListParameters with traverse=False (default)
 
-    Example:
-        ```python
-        from endorlabs.utils.traversal import create_namespace_scoped_params
-        from endorlabs.resources import package_version
-
-        # Query packages in specific namespace only (uses API default page size)
-        params = create_namespace_scoped_params()
-        packages = package_version.list_package_versions(
-            client, "tenant.namespace", params
-        )
-        ```
-
     """
+    warnings.warn(
+        "create_namespace_scoped_params() is deprecated. "
+        "Use client.<resource>.list(filter=...) instead "
+        "(traverse defaults to False).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     # Don't set page_size unless explicitly provided (let API use default)
-    params_dict = {
+    params_dict: dict[str, Any] = {
         "traverse": False,
         "filter": filter_expr,
         **kwargs,
