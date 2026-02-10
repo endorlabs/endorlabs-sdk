@@ -73,22 +73,9 @@ rules:
         url: https://github.com/endorlabs/endor-af
       endor-tags:
         - A09:2021
-        - Logging
-        - OWASP-Top-10
         - AF-Credential-Leak
-        - Security-Logging-and-Monitoring-Failures
-        - detection:absence
-        - scope:use-site
-        - trust-chain:redacting-filter-credential-scrubbing
-        - trust-role:enforcement
         - trust-chain.id:redacting-filter-credential-scrubbing
         - trust-chain.role:enforcement
-        - trust-chain.paired-rules:endor-af-redactionfilter-validation
-        - >-
-          trust-chain.contract:RedactingFilter must be attached to every
-          module-level logger (enforcement) AND its implementation must
-          satisfy the behavioral invariants enumerated in the validation
-          rule (certification).
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-

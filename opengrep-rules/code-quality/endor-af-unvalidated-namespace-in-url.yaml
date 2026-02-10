@@ -47,8 +47,6 @@ rules:
         license: Apache-2.0
         url: https://github.com/endorlabs/endor-af
       endor-tags:
-        - Architectural-Standard
-        - Injection
         - URL-Path-Injection
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
