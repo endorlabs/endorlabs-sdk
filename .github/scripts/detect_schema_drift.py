@@ -26,15 +26,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Repo root and src so endorlabs can be imported when script is run from repo root
+# Repo root, src, and this script's directory so endorlabs and sibling
+# scripts (model_consistency) can be imported when run from repo root.
 _repo_root = Path(__file__).resolve().parent.parent.parent
+_scripts_dir = str(Path(__file__).resolve().parent)
 sys.path.insert(0, str(_repo_root))
 sys.path.insert(0, str(_repo_root / "src"))
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
 
 # Set up logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -48,7 +51,7 @@ class SchemaDriftDetector:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "drifts": [],
             "validation_errors": [],
-            "summary": {}
+            "summary": {},
         }
         self.known_drifts = self._load_known_drifts()
 
@@ -59,8 +62,7 @@ class SchemaDriftDetector:
                 with open(self.output_file) as f:
                     data = json.load(f)
                     return {
-                        drift["field_path"]: drift
-                        for drift in data.get("drifts", [])
+                        drift["field_path"]: drift for drift in data.get("drifts", [])
                     }
             except Exception as e:
                 logger.warning(f"Could not load existing drift report: {e}")
@@ -75,11 +77,14 @@ class SchemaDriftDetector:
         # Run pytest with verbose output to capture warnings
         # Remove -q flag to show progress, use -v for verbose output
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             test_path,
             "-v",  # Verbose output
             "--tb=short",  # Short traceback format
-            "-W", "default::UserWarning",  # Capture warnings
+            "-W",
+            "default::UserWarning",  # Capture warnings
             "--durations=10",  # Show 10 slowest tests
             "-ra",  # Show extra test summary info
         ]
@@ -100,7 +105,7 @@ class SchemaDriftDetector:
                 text=True,
                 env=env,
                 bufsize=1,  # Line buffered
-                universal_newlines=True
+                universal_newlines=True,
             )
 
             # Collect output while streaming
@@ -137,7 +142,7 @@ class SchemaDriftDetector:
                     continue
 
                 # Print immediately so user sees progress
-                print(line, end='', flush=True)
+                print(line, end="", flush=True)
                 output_lines.append(line)
 
             # Wait for process to complete
@@ -151,7 +156,7 @@ class SchemaDriftDetector:
             )
 
             # Combine all output
-            full_output = ''.join(output_lines)
+            full_output = "".join(output_lines)
 
             # Parse output for schema drift warnings
             logger.info("Parsing test output for schema drift warnings...")
@@ -165,7 +170,7 @@ class SchemaDriftDetector:
                 "drifts": drifts,
                 "validation_errors": validation_errors,
                 "test_exit_code": exit_code,
-                "test_output": full_output
+                "test_output": full_output,
             }
 
         except subprocess.TimeoutExpired:
@@ -242,12 +247,11 @@ class SchemaDriftDetector:
                         "nested_depth": nested_depth,
                         "first_seen": datetime.now(timezone.utc).isoformat(),
                         "status": "new",
-                        "issue_number": None
+                        "issue_number": None,
                     }
                     drifts.append(drift)
                     logger.info(
-                        f"New drift detected: {field_path} "
-                        f"(Resource: {resource_name})"
+                        f"New drift detected: {field_path} (Resource: {resource_name})"
                     )
 
         return drifts
@@ -299,7 +303,7 @@ class SchemaDriftDetector:
                 "model": model_name,
                 "field_path": field_path,
                 "error": error_msg,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             errors.append(error)
             logger.warning(f"Validation error: {model_name}.{field_path}")
@@ -308,22 +312,22 @@ class SchemaDriftDetector:
 
     def generate_report(self, test_results: Dict) -> Dict:
         """Generate comprehensive drift report."""
-        self.drift_report.update({
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "drifts": test_results.get("drifts", []),
-            "validation_errors": test_results.get("validation_errors", []),
-            "summary": {
-                "new_drifts": len(test_results.get("drifts", [])),
-                "validation_errors": len(
-                    test_results.get("validation_errors", [])
-                ),
-                "test_status": (
-                    "passed"
-                    if test_results.get("test_exit_code") == 0
-                    else "failed"
-                ),
+        self.drift_report.update(
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "drifts": test_results.get("drifts", []),
+                "validation_errors": test_results.get("validation_errors", []),
+                "summary": {
+                    "new_drifts": len(test_results.get("drifts", [])),
+                    "validation_errors": len(test_results.get("validation_errors", [])),
+                    "test_status": (
+                        "passed"
+                        if test_results.get("test_exit_code") == 0
+                        else "failed"
+                    ),
+                },
             }
-        })
+        )
 
         # Save report
         with open(self.output_file, "w") as f:
@@ -335,7 +339,8 @@ class SchemaDriftDetector:
     def get_new_drifts(self) -> List[Dict]:
         """Get drifts that haven't been tracked yet."""
         return [
-            drift for drift in self.drift_report.get("drifts", [])
+            drift
+            for drift in self.drift_report.get("drifts", [])
             if drift.get("status") == "new"
         ]
 
@@ -346,60 +351,58 @@ def main():
         description="Detect schema drift from test execution"
     )
     parser.add_argument(
-        "--run-tests",
-        action="store_true",
-        help="Run tests to detect drift"
+        "--run-tests", action="store_true", help="Run tests to detect drift"
     )
     parser.add_argument(
-        "--test-path",
-        default="tests/",
-        help="Path to test directory (default: tests/)"
+        "--test-path", default="tests/", help="Path to test directory (default: tests/)"
     )
     parser.add_argument(
         "--output",
         default="schema_drift_report.json",
-        help="Output file for drift report (default: schema_drift_report.json)"
+        help="Output file for drift report (default: schema_drift_report.json)",
     )
     parser.add_argument(
         "--check-existing",
         action="store_true",
-        help="Check existing drift report without running tests"
+        help="Check existing drift report without running tests",
     )
     parser.add_argument(
         "--model-consistency",
         action="store_true",
-        help="Generate model consistency report (AF Pydantic vs OpenAPI spec)"
+        help="Generate model consistency report (AF Pydantic vs OpenAPI spec)",
     )
     parser.add_argument(
         "--output-format",
         choices=["text", "json", "txt"],
         default="json",
-        help="Output format for model consistency report (default: json)"
+        help="Output format for model consistency report (default: json)",
     )
     parser.add_argument(
         "--spec-path",
         default=None,
-        help="Path to OpenAPI spec JSON (default: .endorlabs-context/openapiv2.swagger.json)"
+        help="Path to OpenAPI spec JSON (default: .endorlabs-context/openapiv2.swagger.json)",
     )
     parser.add_argument(
         "--spec-url",
         default=None,
-        help="URL to OpenAPI spec (used if spec-path file missing)"
+        help="URL to OpenAPI spec (used if spec-path file missing)",
     )
     parser.add_argument(
         "--consistency-output",
         default="model_consistency_report",
-        help="Output file base name for model consistency report (default: model_consistency_report)"
+        help="Output file base name for model consistency report (default: model_consistency_report)",
     )
 
     args = parser.parse_args()
 
     if args.model_consistency:
-        from endorlabs.utils.model_consistency import run_model_consistency_report
+        from model_consistency import run_model_consistency_report
 
         spec_path = args.spec_path
         if spec_path is None:
-            spec_path = str(_repo_root / ".endorlabs-context" / "openapiv2.swagger.json")
+            spec_path = str(
+                _repo_root / ".endorlabs-context" / "openapiv2.swagger.json"
+            )
         spec_url = args.spec_url
         if spec_url is None:
             spec_url = "https://api.endorlabs.com/download/openapiv2.swagger.json"
@@ -418,8 +421,12 @@ def main():
         print(f"Extra in AF (resource-specific): {summary['extra_in_sdk_count']}")
         print(f"Resources compared: {summary['resources_compared']}")
         if "shared_sdk_paths_count" in summary:
-            print(f"Shared paths (excluded from per-resource extra): {summary['shared_sdk_paths_count']}")  # key from src/
-        print(f"Attribute overlap (2+ defs): {summary.get('overlap_attribute_count', 0)}")
+            print(
+                f"Shared paths (excluded from per-resource extra): {summary['shared_sdk_paths_count']}"
+            )  # key from src/
+        print(
+            f"Attribute overlap (2+ defs): {summary.get('overlap_attribute_count', 0)}"
+        )
         print(f"Same meaning: {summary.get('same_meaning_count', 0)}")
         print(f"Collisions: {summary.get('collisions_count', 0)}")
         collisions = report.get("attribute_overlap_report", {}).get("collisions", [])
@@ -436,20 +443,20 @@ def main():
         report = detector.generate_report(test_results)
 
         # Print summary
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("SCHEMA DRIFT DETECTION SUMMARY")
-        print("="*60)
+        print("=" * 60)
         print(f"New drifts detected: {report['summary']['new_drifts']}")
         print(f"Validation errors: {report['summary']['validation_errors']}")
         print(f"Test status: {report['summary']['test_status']}")
         print(f"\nReport saved to: {args.output}")
 
-        if report['summary']['new_drifts'] > 0:
+        if report["summary"]["new_drifts"] > 0:
             print("\nNew drifts:")
-            for drift in report['drifts']:
+            for drift in report["drifts"]:
                 print(f"  - {drift['field_path']}")
 
-        return 0 if report['summary']['new_drifts'] == 0 else 1
+        return 0 if report["summary"]["new_drifts"] == 0 else 1
 
     elif args.check_existing:
         if detector.output_file.exists():
@@ -473,4 +480,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
