@@ -39,10 +39,7 @@ rules:
         license: Apache-2.0
         url: https://github.com/endorlabs/endor-af
       endor-tags:
-        - Architectural-Standard
         - Network-Safety
-        - Reliability
-        - Regression-Guard
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-

@@ -43,9 +43,6 @@ rules:
         url: https://github.com/endorlabs/endor-af
       endor-tags:
         - A05:2021
-        - Injection
-        - OWASP-Top-10
-        - Security-Misconfiguration
         - XML-External-Entity
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
