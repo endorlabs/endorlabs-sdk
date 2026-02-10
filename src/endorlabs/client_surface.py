@@ -119,6 +119,38 @@ class Client:
         self.close()
         return
 
+    def whoami(self) -> str | None:
+        """Resolve the current user identity via AuthorizationPolicy.
+
+        When authenticated with an API key, queries AuthorizationPolicy
+        resources whose ``spec.clause`` contains the key value. Returns the
+        ``meta.name`` of the first matching policy, which typically holds the
+        human-readable identity bound to the key.
+
+        Returns:
+            The ``meta.name`` of the matching AuthorizationPolicy, or ``None``
+            if no match is found or if using browser authentication.
+        """
+        if self._client is None:
+            raise RuntimeError("Client is closed.")
+        auth_type: str = self._client._auth_type  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+        if auth_type != "api-key" or not self._client.key:
+            return None
+
+        policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
+            traverse=True,
+            filter=f'spec.clause contains "{self._client.key}"',
+            page_size=1,
+            max_pages=1,
+        )
+        if policies:
+            policy = cast("Any", policies[0])
+            meta = getattr(policy, "meta", None)
+            if meta is not None:
+                raw_name = getattr(meta, "name", None)
+                return str(raw_name) if raw_name else None
+        return None
+
     def wait_until(
         self,
         predicate: Callable[[], bool],
