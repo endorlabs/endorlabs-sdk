@@ -23,6 +23,7 @@ from .exceptions import (
     ValidationError,
     map_status_code_to_exception,
 )
+from .filter import F, FilterExpression
 from .resources import (
     dependency_metadata,
     finding,
@@ -99,6 +100,8 @@ __all__ = [
     "Client",
     "ConflictError",
     "EndorAPIError",
+    "F",
+    "FilterExpression",
     "MethodNotSupportedError",
     "NotFoundError",
     "PermissionDeniedError",
