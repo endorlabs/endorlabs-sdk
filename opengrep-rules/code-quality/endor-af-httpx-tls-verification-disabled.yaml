@@ -37,10 +37,7 @@ rules:
         url: https://github.com/endorlabs/endor-af
       endor-tags:
         - A02:2021
-        - Cryptographic-Failures
         - Network-Safety
-        - OWASP-Top-10
-        - Regression-Guard
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-

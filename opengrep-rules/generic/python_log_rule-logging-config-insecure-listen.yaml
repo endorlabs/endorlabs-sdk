@@ -29,8 +29,6 @@ rules:
             - A03:2021
             - A05:2025
             - Injection
-            - OWASP-Top-10
-            - SANS-Top-25
         endor-targets:
             - ENDOR_TARGET_REPOSITORY
         explanation: The application was found calling the `logging.config.listen` function, which provides the ability to listen for external configuration files over a socket server. This listen socket parses part of the configuration and calls `eval` on the supplied configuration file. A local user, or an adversary who is able to exploit a Server Side Request Forgery (SSRF) attack to communicate over localhost, would be able to execute arbitrary code by passing in a logging config that contains python code.

@@ -51,12 +51,8 @@ rules:
         url: https://github.com/endorlabs/endor-af
       endor-tags:
         - A03:2021
-        - Architectural-Standard
         - Code-Injection
         - Deserialization
-        - Injection
-        - OWASP-Top-10
-        - Regression-Guard
         - Shell-Injection
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
