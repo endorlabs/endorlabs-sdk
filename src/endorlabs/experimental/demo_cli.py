@@ -24,10 +24,12 @@ from __future__ import annotations
 
 import logging
 import os
+import queue
 import shutil
 import sys
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -279,76 +281,91 @@ class BackgroundContextLoader:
 
     def _load_all(self) -> None:
         projects = list(self.catalog.project_index.values())
-        for proj in projects:
-            name = proj.meta.name if proj.meta else proj.uuid
-            short = name.split("/")[-1].replace(".git", "")
-            proj_slug = slugify(name)
-
-            # Session context (findings, policies, versions)
-            self._emit(f"  Pulling context for {short}...")
-            try:
-                session = create_session(self.client, proj, self.session_dir)
-                self._emit(f"  {short}: {session.message.split(': ', 1)[-1]}")
-            except Exception as exc:
-                self._emit(f"  {short}: session failed — {exc}")
-                continue
-
-            # Dependencies + call graphs
-            dep_out = str(self.session_dir / proj_slug / "dependencies")
-            try:
-                api_client = self.client._client  # noqa: SLF001
-                pns = (
-                    proj.tenant_meta.namespace
-                    if proj.tenant_meta and proj.tenant_meta.namespace
-                    else ""
-                )
-                dep_result = process_project(
-                    self.client,
-                    api_client,
-                    pns,
-                    proj,
-                    dep_out,
-                    pv_limit=5,
-                    dep_metadata_max_pages=10,
-                )
-                sp = Path(dep_out) / "dependency-callgraph-summary.md"
-                sp.parent.mkdir(parents=True, exist_ok=True)
-                sp.write_text(dep_result.report, encoding="utf-8")
-                self._emit(f"  Dependencies and call graphs loaded for {short}")
-            except Exception as exc:
-                self._emit(f"  {short}: deps failed — {exc}")
-
-            # Collect combined summary
-            combined = self._collect_summaries(proj_slug)
-            with self._lock:
-                self._context_cache[name] = combined
-
-            # Threat model sub-agent (if LLM available)
-            if self.llm and combined:
-                self._emit(f"  Generating threat model for {short}...")
+        max_workers = min(4, len(projects) or 1)
+        with ThreadPoolExecutor(
+            max_workers=max_workers, thread_name_prefix="ctx"
+        ) as pool:
+            futures = {pool.submit(self._load_one, proj): proj for proj in projects}
+            for future in as_completed(futures):
+                # Surface exceptions via _emit (already handled inside
+                # _load_one), but guard against unexpected blow-ups.
                 try:
-                    from endorlabs.experimental.workflows.threat_analysis import (
-                        analyze_project_threat_model,
-                    )
-
-                    tm = analyze_project_threat_model(self.llm, name, combined)
-                    if tm.ok:
-                        tm_path = self.session_dir / proj_slug / "threat-model.md"
-                        tm_path.parent.mkdir(parents=True, exist_ok=True)
-                        tm_path.write_text(tm.report, encoding="utf-8")
-                        self._emit(
-                            f"  Threat model complete for {short}"
-                            f" ({tm.risk_count} risks identified)"
-                        )
-                        # Append to cached context
-                        with self._lock:
-                            self._context_cache[name] += "\n\n---\n\n" + tm.report
-                    else:
-                        self._emit(f"  {short}: threat model — {tm.message}")
+                    future.result()
                 except Exception as exc:
-                    self._emit(f"  {short}: threat model failed — {exc}")
+                    proj = futures[future]
+                    name = proj.meta.name if proj.meta else proj.uuid
+                    self._emit(f"  {name}: unexpected error — {exc}")
 
         self._emit("  [bold green]Ready AF[/bold green]")
+
+    def _load_one(self, proj: Any) -> None:
+        """Load context for a single project (runs in a worker thread)."""
+        name = proj.meta.name if proj.meta else proj.uuid
+        short = name.split("/")[-1].replace(".git", "")
+        proj_slug = slugify(name)
+
+        # Session context (findings, policies, versions)
+        self._emit(f"  Pulling context for {short}...")
+        try:
+            session = create_session(self.client, proj, self.session_dir)
+            self._emit(f"  {short}: {session.message.split(': ', 1)[-1]}")
+        except Exception as exc:
+            self._emit(f"  {short}: session failed — {exc}")
+            return
+
+        # Dependencies + call graphs
+        dep_out = str(self.session_dir / proj_slug / "dependencies")
+        try:
+            api_client = self.client._client  # noqa: SLF001
+            pns = (
+                proj.tenant_meta.namespace
+                if proj.tenant_meta and proj.tenant_meta.namespace
+                else ""
+            )
+            dep_result = process_project(
+                self.client,
+                api_client,
+                pns,
+                proj,
+                dep_out,
+                pv_limit=5,
+                dep_metadata_max_pages=10,
+            )
+            sp = Path(dep_out) / "dependency-callgraph-summary.md"
+            sp.parent.mkdir(parents=True, exist_ok=True)
+            sp.write_text(dep_result.report, encoding="utf-8")
+            self._emit(f"  Dependencies and call graphs loaded for {short}")
+        except Exception as exc:
+            self._emit(f"  {short}: deps failed — {exc}")
+
+        # Collect combined summary
+        combined = self._collect_summaries(proj_slug)
+        with self._lock:
+            self._context_cache[name] = combined
+
+        # Threat model sub-agent (if LLM available)
+        if self.llm and combined:
+            self._emit(f"  Generating threat model for {short}...")
+            try:
+                from endorlabs.experimental.workflows.threat_analysis import (
+                    analyze_project_threat_model,
+                )
+
+                tm = analyze_project_threat_model(self.llm, name, combined)
+                if tm.ok:
+                    tm_path = self.session_dir / proj_slug / "threat-model.md"
+                    tm_path.parent.mkdir(parents=True, exist_ok=True)
+                    tm_path.write_text(tm.report, encoding="utf-8")
+                    self._emit(
+                        f"  Threat model complete for {short}"
+                        f" ({tm.risk_count} risks identified)"
+                    )
+                    with self._lock:
+                        self._context_cache[name] += "\n\n---\n\n" + tm.report
+                else:
+                    self._emit(f"  {short}: threat model — {tm.message}")
+            except Exception as exc:
+                self._emit(f"  {short}: threat model failed — {exc}")
 
     def _collect_summaries(self, proj_slug: str) -> str:
         """Read written summary files and concatenate them."""
@@ -546,24 +563,58 @@ def _chat_loop(
 
     messages: list[Any] = []
 
+    # ---- threaded input reader --------------------------------
+    # ``input()`` blocks, so we read it in a background thread and
+    # poll for both new user input *and* background status messages
+    # on the main thread.
+
+    input_q: queue.Queue[str | None] = queue.Queue()
+
+    def _read_input(prompt: str) -> None:
+        """Read one line from stdin and put it on the queue."""
+        try:
+            line = input(prompt)
+            input_q.put(line.strip())
+        except (EOFError, KeyboardInterrupt):
+            input_q.put(None)  # sentinel: user wants to quit
+
+    def _drain_status() -> None:
+        """Print any pending background status messages."""
+        for msg in loader.drain_messages():
+            # Overwrite the "You: " prompt before printing status,
+            # then re-issue the prompt on the next iteration.
+            _log(msg)
+
     # If there's a first message from CLI args, inject it
     pending_input = first_message
 
     while True:
-        # Drain background status messages
-        for msg in loader.drain_messages():
-            _log(msg)
+        _drain_status()
 
         if pending_input is not None:
-            user_input = pending_input
+            user_input: str | None = pending_input
             pending_input = None
             _log(f"You: {user_input}", style="bold")
         else:
-            try:
-                user_input = input("You: ").strip()
-            except (EOFError, KeyboardInterrupt):
-                print("\nGoodbye!")
-                break
+            # Start the input reader thread so we can keep draining
+            # status messages while waiting for user input.
+            input_thread = threading.Thread(
+                target=_read_input, args=("You: ",), daemon=True
+            )
+            input_thread.start()
+
+            # Poll: drain messages every 250 ms until the user submits
+            user_input = None
+            while True:
+                try:
+                    user_input = input_q.get(timeout=0.25)
+                    break
+                except queue.Empty:
+                    _drain_status()
+
+        if user_input is None:
+            print("\nGoodbye!")
+            break
 
         if not user_input:
             continue
