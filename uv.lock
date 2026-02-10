@@ -246,8 +246,10 @@ experimental = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "beautifulsoup4" },
     { name = "codespell" },
     { name = "jsonschema" },
+    { name = "markdownify" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -272,8 +274,10 @@ provides-extras = ["context", "experimental"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "beautifulsoup4", specifier = "==4.14.2" },
     { name = "codespell", specifier = "==2.4.1" },
     { name = "jsonschema", specifier = "==4.26.0" },
+    { name = "markdownify", specifier = "==1.2.0" },
     { name = "pre-commit", specifier = "==4.5.1" },
     { name = "pyright", specifier = "==1.1.408" },
     { name = "pytest", specifier = "==9.0.2" },
