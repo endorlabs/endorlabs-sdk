@@ -1,15 +1,15 @@
-# ruff: noqa: T201, S105
-"""Interactive Endor Labs Explorer CLI demo.
+# ruff: noqa: T201, S105, C901
+"""Endor Labs Agentic Framework Demo — agent-first CLI.
 
-Provides an interactive entrypoint that authenticates, resolves the
-current user, dynamically searches for repositories, pulls per-project
-context (findings, policies, dependencies, call graphs), and launches
-a LangGraph chat agent pre-loaded with that context.
+Zero-prompt startup: auto-authenticates from environment, loads tenant
+catalog eagerly, pulls per-project context in the background, spawns
+appsec sub-agents for threat modelling, and presents an always-available
+input prompt while status updates stream above a divider.
 
 Run with::
 
     uv run endor-demo
-    uv run python -m endorlabs.experimental.demo_cli
+    uv run endor-demo "what is my riskiest project?"
 
 Env:
     ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET — API key auth
@@ -24,7 +24,10 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import sys
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -41,360 +44,50 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CONTEXT_DIR = ".endorlabs-context"
 
-
 # ---------------------------------------------------------------------------
-# Phase 1: Authentication
+# Rich console (lazy import — optional dependency)
 # ---------------------------------------------------------------------------
 
+_console: Any = None
 
-def _get_tenant() -> str:
-    """Resolve tenant namespace from env or interactive prompt."""
-    ns = os.getenv("ENDOR_NAMESPACE", "").strip()
-    if ns:
-        return ns
+
+def _get_console() -> Any:
+    """Return a shared ``rich.console.Console``, or ``None``."""
+    global _console  # noqa: PLW0603
+    if _console is not None:
+        return _console
     try:
-        ns = input("  Tenant namespace: ").strip()
-    except (EOFError, KeyboardInterrupt):
-        print()
-        sys.exit(0)
-    if not ns:
-        print("  Error: namespace is required.")
-        sys.exit(1)
-    return ns
+        from rich.console import Console
 
-
-def authenticate() -> endorlabs.Client:
-    """Interactive authentication: detect env vars or fall back to browser.
-
-    Returns:
-        Authenticated :class:`endorlabs.Client` with logging set to ERROR.
-    """
-    key = os.getenv("ENDOR_API_CREDENTIALS_KEY")
-    secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET")
-    token = os.getenv("ENDOR_TOKEN")
-
-    if key and secret:
-        print("  Found API key credentials in environment.")
-        try:
-            use_env = input("  Use these credentials? [Y/n]: ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            sys.exit(0)
-        if use_env != "n":
-            tenant = _get_tenant()
-            return endorlabs.Client(
-                tenant=tenant,
-                logging_level="ERROR",
-                auth_method="api-key",
-            )
-
-    if token and token != "browser":
-        print("  Found bearer token in environment.")
-        try:
-            use_token = input("  Use this token? [Y/n]: ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            print()
-            sys.exit(0)
-        if use_token != "n":
-            tenant = _get_tenant()
-            return endorlabs.Client(tenant=tenant, logging_level="ERROR")
-
-    # Fall back to browser auth
-    print("  No credentials found. Opening browser for authentication...")
-    tenant = _get_tenant()
-    return endorlabs.Client(
-        tenant=tenant,
-        logging_level="ERROR",
-        auth_method="browser",
-    )
-
-
-# ---------------------------------------------------------------------------
-# Phase 2: whoami
-# ---------------------------------------------------------------------------
-
-
-def resolve_user(client: endorlabs.Client) -> str:
-    """Resolve the current user identity.
-
-    Returns:
-        User identity string, or ``"anonymous"`` if resolution fails.
-    """
-    try:
-        user = client.whoami()
-    except Exception:
-        user = None
-    if user:
-        print(f"  Authenticated as: {user}")
-    else:
-        print("  Could not resolve user identity.")
-        user = "anonymous"
-    return user
-
-
-# ---------------------------------------------------------------------------
-# Phase 3: Interactive repo search
-# ---------------------------------------------------------------------------
-
-
-def search_repo(client: endorlabs.Client) -> Any:
-    """Interactive project search with fuzzy matching.
-
-    Returns:
-        Selected project resource object.
-    """
-    while True:
-        try:
-            query = input(
-                "\nSearch for a project (e.g. 'juice-shop', 'endor-cockpit'): "
-            ).strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nGoodbye!")
-            sys.exit(0)
-
-        if not query:
-            continue
-
-        print(f"  Searching for '{query}' ...")
-        try:
-            projects = client.project.list(
-                filter=f'meta.name matches "{query}"',
-                traverse=True,
-                max_pages=1,
-                page_size=20,
-            )
-        except Exception as exc:
-            print(f"  Search failed: {exc}")
-            continue
-
-        if not projects:
-            print(f"  No projects found matching '{query}'. Try again.")
-            continue
-
-        # De-duplicate by meta.name (traverse may return same
-        # repo in sibling namespaces)
-        seen: dict[str, Any] = {}
-        for p in projects:
-            name = p.meta.name if p.meta else p.uuid
-            if name not in seen:
-                seen[name] = p
-        projects = list(seen.values())
-
-        print(f"\n  Found {len(projects)} project(s):")
-        for i, p in enumerate(projects, 1):
-            name = p.meta.name if p.meta else p.uuid
-            ns = p.tenant_meta.namespace if p.tenant_meta else ""
-            print(f"  {i}. {name}  ({ns})")
-
-        try:
-            choice = input("\n  Select a project [1]: ").strip() or "1"
-        except (EOFError, KeyboardInterrupt):
-            print("\nGoodbye!")
-            sys.exit(0)
-
-        try:
-            idx = int(choice) - 1
-            if 0 <= idx < len(projects):
-                selected = projects[idx]
-                name = selected.meta.name if selected.meta else selected.uuid
-                print(f"  Selected: {name}")
-                return selected
-            else:
-                print("  Invalid selection. Try again.")
-        except ValueError:
-            print("  Invalid input. Enter a number.")
-
-
-# ---------------------------------------------------------------------------
-# Phase 4: Context loading
-# ---------------------------------------------------------------------------
-
-
-def load_context(
-    client: endorlabs.Client,
-    project: Any,
-    session_dir: Path,
-) -> str:
-    """Pull all context for the project and return summary text for the LLM.
-
-    Args:
-        client: Authenticated client.
-        project: Selected project resource.
-        session_dir: Session output directory.
-
-    Returns:
-        Combined summary Markdown text for injection into the LLM prompt.
-    """
-    project_name = project.meta.name if project.meta else project.uuid
-
-    # Pull findings, policies, versions
-    print("  Loading findings, policies, and versions ...")
-    session = create_session(client, project, session_dir)
-    print(f"    {session.message}")
-
-    # Pull dependencies and call graphs
-    print("  Loading dependencies and call graphs ...")
-    proj_slug = slugify(project_name)
-    dep_out_dir = str(session_dir / proj_slug / "dependencies")
-
-    try:
-        api_client = client._client  # type: ignore[attr-defined]  # noqa: SLF001
-        project_ns = (
-            project.tenant_meta.namespace
-            if project.tenant_meta and project.tenant_meta.namespace
-            else client._default_namespace or ""  # noqa: SLF001
-        )
-        dep_result = process_project(
-            client,
-            api_client,
-            project_ns,
-            project,
-            dep_out_dir,
-            pv_limit=5,
-            dep_metadata_max_pages=10,
-        )
-        # Write the summary file
-        summary_path = Path(dep_out_dir) / "dependency-callgraph-summary.md"
-        summary_path.parent.mkdir(parents=True, exist_ok=True)
-        summary_path.write_text(dep_result.report, encoding="utf-8")
-        print(f"    Dependencies: {dep_result.dep_metadata_count} metadata rows")
-    except Exception as exc:
-        logger.warning("Failed to load dependencies: %s", exc)
-        print(f"    Warning: dependency loading failed: {exc}")
-        dep_result = None
-
-    # Collect summaries for LLM context
-    context_parts: list[str] = []
-    proj_dir = session_dir / proj_slug
-
-    for rel_path in [
-        "project-summary.md",
-        "findings/findings-summary.md",
-        "policies/policies-summary.md",
-        "repository-versions/versions-summary.md",
-        "dependencies/dependency-callgraph-summary.md",
-    ]:
-        full_path = proj_dir / rel_path
-        if full_path.exists():
-            text = full_path.read_text(encoding="utf-8")
-            # Truncate very large files for context window
-            if len(text) > 50_000:
-                text = text[:50_000] + "\n\n... (truncated)"
-            context_parts.append(text)
-
-    combined = "\n\n---\n\n".join(context_parts)
-    print(f"  Context loaded: {len(combined):,} chars")
-    return combined
-
-
-# ---------------------------------------------------------------------------
-# Phase 5: Chat loop
-# ---------------------------------------------------------------------------
-
-
-def chat_loop(
-    client: endorlabs.Client,
-    project: Any,
-    context_text: str,
-) -> None:
-    """Interactive CLI chat with the LangGraph agent.
-
-    Args:
-        client: Authenticated client (for live API tools).
-        project: Selected project resource.
-        context_text: Pre-loaded summary context for the system prompt.
-    """
-    try:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-
-        from endorlabs.experimental.langgraph_agent import create_endor_graph
+        _console = Console(highlight=False)
     except ImportError:
-        print(
-            "\n  LangGraph dependencies not installed."
-            "\n  Install with: pip install endor-cockpit[experimental]"
-            "\n  Exiting."
-        )
-        return
+        pass
+    return _console
 
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key:
-        print(
-            "\n  GEMINI_API_KEY not set. The agent requires a Gemini API key."
-            "\n  Exiting."
-        )
-        return
 
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        api_key=gemini_key,
-    )
-    graph = create_endor_graph(client, llm)
-
-    project_name = project.meta.name if project.meta else project.uuid
-    short_name = project_name.split("/")[-1].replace(".git", "")
-
-    sep = "=" * 60
-    print(f"\n{sep}")
-    print(f"  Endor Labs Explorer \u2014 {short_name}")
-    print("  Type 'quit' to exit, 'summary' for a quick overview")
-    print(f"{sep}\n")
-
-    messages: list[Any] = []
-    if context_text:
-        messages.append(
-            (
-                "system",
-                f"You have access to pre-loaded analysis data for "
-                f"{project_name}. Use this to answer questions about "
-                f"dependencies, call graphs, findings, policies, and security.\n\n"
-                f"{context_text}",
-            )
-        )
-
-    while True:
-        try:
-            user_input = input("You: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print("\nGoodbye!")
-            break
-
-        if not user_input:
-            continue
-
-        if user_input.lower() in ("quit", "exit", "q"):
-            print("Goodbye!")
-            break
-
-        if user_input.lower() == "summary":
-            user_input = (
-                "Summarize this project: its dependency tree, call graph "
-                "patterns, security findings by category, and active policies. "
-                "Highlight any notable risks or patterns."
-            )
-
-        messages.append(("user", user_input))
-
-        try:
-            result = graph.invoke({"messages": messages})
-            response = result["messages"][-1].content
-            print(f"\nAssistant: {response}\n")
-            messages = result["messages"]
-        except Exception as exc:
-            print(f"\n  Agent error: {exc}\n")
+def _log(msg: str, *, style: str = "") -> None:
+    """Print a styled message via Rich, falling back to plain ``print``."""
+    con = _get_console()
+    if con and style:
+        con.print(msg, style=style)
+    elif con:
+        con.print(msg)
+    else:
+        print(msg)
 
 
 # ---------------------------------------------------------------------------
-# Main entry point
+# .env loader (no third-party dependency)
 # ---------------------------------------------------------------------------
 
 
 def _load_dotenv() -> None:
-    """Load ``.env`` from the current directory if present (no dependency)."""
+    """Load ``.env`` from the working directory if present."""
     env_file = Path(".env")
     if not env_file.exists():
         return
-    with open(env_file, encoding="utf-8") as f:
-        for raw_line in f:
+    with open(env_file, encoding="utf-8") as fh:
+        for raw_line in fh:
             stripped = raw_line.strip()
             if not stripped or stripped.startswith("#"):
                 continue
@@ -410,8 +103,505 @@ def _load_dotenv() -> None:
                 os.environ[k] = v
 
 
+# ---------------------------------------------------------------------------
+# Banner
+# ---------------------------------------------------------------------------
+
+
+def _print_banner(tenant: str, user: str) -> None:
+    """Print a terminal-width-aware ASCII banner."""
+    con = _get_console()
+    if con:
+        try:
+            from rich.panel import Panel
+            from rich.text import Text
+
+            body = Text()
+            body.append("Endor Labs Agentic Framework Demo\n", style="bold")
+            body.append(f"Tenant: {tenant}\n", style="dim")
+            body.append(f"User:   {user}", style="dim")
+            con.print(Panel(body, expand=False, border_style="cyan"))
+            return
+        except ImportError:
+            pass
+
+    # Fallback: plain ASCII
+    width = min(shutil.get_terminal_size().columns, 60)
+    border = "=" * width
+    print(f"\n{border}")
+    print("  Endor Labs Agentic Framework Demo")
+    print(f"  Tenant: {tenant}")
+    print(f"  User:   {user}")
+    print(f"{border}\n")
+
+
+# ---------------------------------------------------------------------------
+# Auto-auth (zero prompts)
+# ---------------------------------------------------------------------------
+
+
+def _auto_authenticate() -> endorlabs.Client:
+    """Authenticate without any interactive prompts.
+
+    Priority: API key > bearer token > browser (silent open).
+    """
+    key = os.getenv("ENDOR_API_CREDENTIALS_KEY")
+    secret = os.getenv("ENDOR_API_CREDENTIALS_SECRET")
+    token = os.getenv("ENDOR_TOKEN")
+    tenant = os.getenv("ENDOR_NAMESPACE", "")
+
+    if not tenant:
+        _log(
+            "  ENDOR_NAMESPACE not set — cannot auto-authenticate.",
+            style="bold red",
+        )
+        sys.exit(1)
+
+    if key and secret:
+        return endorlabs.Client(
+            tenant=tenant, logging_level="ERROR", auth_method="api-key"
+        )
+
+    if token and token != "browser":
+        return endorlabs.Client(tenant=tenant, logging_level="ERROR")
+
+    # Silent browser auth
+    return endorlabs.Client(tenant=tenant, logging_level="ERROR", auth_method="browser")
+
+
+# ---------------------------------------------------------------------------
+# Tenant catalog
+# ---------------------------------------------------------------------------
+
+
+class TenantCatalog:
+    """Eagerly-loaded tenant-wide index of projects and namespaces."""
+
+    def __init__(self) -> None:
+        self.projects: list[Any] = []
+        self.namespaces: list[Any] = []
+        self.project_index: dict[str, Any] = {}
+
+    def load(self, client: endorlabs.Client) -> None:
+        """Pull all projects and namespaces (traverse)."""
+        self.projects = client.project.list(traverse=True, max_pages=50, page_size=100)
+        self.namespaces = client.namespace.list(traverse=True)
+
+        # De-dup index by meta.name
+        for p in self.projects:
+            name = p.meta.name if p.meta else p.uuid
+            if name not in self.project_index:
+                self.project_index[name] = p
+
+    @property
+    def summary(self) -> str:
+        """Human-readable one-line tenant summary."""
+        ns_count = len(self.namespaces)
+        proj_count = len(self.project_index)
+        return f"{proj_count} projects across {ns_count} namespaces"
+
+    def fuzzy_match(self, query: str) -> list[Any]:
+        """Return projects whose name contains *query* (case-insensitive)."""
+        q = query.lower()
+        return [p for name, p in self.project_index.items() if q in name.lower()]
+
+
+# ---------------------------------------------------------------------------
+# Background context loader
+# ---------------------------------------------------------------------------
+
+
+class BackgroundContextLoader:
+    """Loads per-project context in a background thread.
+
+    Status messages are collected in a thread-safe list and drained
+    by the main loop for display.
+    """
+
+    def __init__(
+        self,
+        client: endorlabs.Client,
+        catalog: TenantCatalog,
+        session_dir: Path,
+        llm: Any | None = None,
+    ) -> None:
+        self.client = client
+        self.catalog = catalog
+        self.session_dir = session_dir
+        self.llm = llm
+
+        self._status_messages: list[str] = []
+        self._lock = threading.Lock()
+        self._context_cache: dict[str, str] = {}
+        self._done = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    # -- status helpers --
+
+    def _emit(self, msg: str) -> None:
+        with self._lock:
+            self._status_messages.append(msg)
+
+    def drain_messages(self) -> list[str]:
+        """Return and clear pending status messages (thread-safe)."""
+        with self._lock:
+            msgs = list(self._status_messages)
+            self._status_messages.clear()
+        return msgs
+
+    @property
+    def is_done(self) -> bool:
+        """Return ``True`` when background loading has finished."""
+        return self._done.is_set()
+
+    def get_context(self, project_name: str) -> str | None:
+        """Return cached context for a project, or ``None``."""
+        with self._lock:
+            return self._context_cache.get(project_name)
+
+    # -- loading logic --
+
+    def start(self) -> None:
+        """Start background loading in a daemon thread."""
+        self._thread = threading.Thread(
+            target=self._run, daemon=True, name="context-loader"
+        )
+        self._thread.start()
+
+    def _run(self) -> None:
+        try:
+            self._load_all()
+        except Exception as exc:
+            self._emit(f"  [red]Background loading error: {exc}[/red]")
+            logger.exception("Background context loading failed")
+        finally:
+            self._done.set()
+
+    def _load_all(self) -> None:
+        projects = list(self.catalog.project_index.values())
+        for proj in projects:
+            name = proj.meta.name if proj.meta else proj.uuid
+            short = name.split("/")[-1].replace(".git", "")
+            proj_slug = slugify(name)
+
+            # Session context (findings, policies, versions)
+            self._emit(f"  Pulling context for {short}...")
+            try:
+                session = create_session(self.client, proj, self.session_dir)
+                self._emit(f"  {short}: {session.message.split(': ', 1)[-1]}")
+            except Exception as exc:
+                self._emit(f"  {short}: session failed — {exc}")
+                continue
+
+            # Dependencies + call graphs
+            dep_out = str(self.session_dir / proj_slug / "dependencies")
+            try:
+                api_client = self.client._client  # noqa: SLF001
+                pns = (
+                    proj.tenant_meta.namespace
+                    if proj.tenant_meta and proj.tenant_meta.namespace
+                    else ""
+                )
+                dep_result = process_project(
+                    self.client,
+                    api_client,
+                    pns,
+                    proj,
+                    dep_out,
+                    pv_limit=5,
+                    dep_metadata_max_pages=10,
+                )
+                sp = Path(dep_out) / "dependency-callgraph-summary.md"
+                sp.parent.mkdir(parents=True, exist_ok=True)
+                sp.write_text(dep_result.report, encoding="utf-8")
+                self._emit(f"  Dependencies and call graphs loaded for {short}")
+            except Exception as exc:
+                self._emit(f"  {short}: deps failed — {exc}")
+
+            # Collect combined summary
+            combined = self._collect_summaries(proj_slug)
+            with self._lock:
+                self._context_cache[name] = combined
+
+            # Threat model sub-agent (if LLM available)
+            if self.llm and combined:
+                self._emit(f"  Generating threat model for {short}...")
+                try:
+                    from endorlabs.experimental.workflows.threat_analysis import (
+                        analyze_project_threat_model,
+                    )
+
+                    tm = analyze_project_threat_model(self.llm, name, combined)
+                    if tm.ok:
+                        tm_path = self.session_dir / proj_slug / "threat-model.md"
+                        tm_path.parent.mkdir(parents=True, exist_ok=True)
+                        tm_path.write_text(tm.report, encoding="utf-8")
+                        self._emit(
+                            f"  Threat model complete for {short}"
+                            f" ({tm.risk_count} risks identified)"
+                        )
+                        # Append to cached context
+                        with self._lock:
+                            self._context_cache[name] += "\n\n---\n\n" + tm.report
+                    else:
+                        self._emit(f"  {short}: threat model — {tm.message}")
+                except Exception as exc:
+                    self._emit(f"  {short}: threat model failed — {exc}")
+
+        self._emit("  [bold green]Ready AF[/bold green]")
+
+    def _collect_summaries(self, proj_slug: str) -> str:
+        """Read written summary files and concatenate them."""
+        proj_dir = self.session_dir / proj_slug
+        parts: list[str] = []
+        for rel in [
+            "project-summary.md",
+            "findings/findings-summary.md",
+            "policies/policies-summary.md",
+            "repository-versions/versions-summary.md",
+            "dependencies/dependency-callgraph-summary.md",
+        ]:
+            fp = proj_dir / rel
+            if fp.exists():
+                text = fp.read_text(encoding="utf-8")
+                if len(text) > 50_000:
+                    text = text[:50_000] + "\n\n... (truncated)"
+                parts.append(text)
+        return "\n\n---\n\n".join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Dynamic LangGraph tools
+# ---------------------------------------------------------------------------
+
+
+def _make_load_project_context_tool(
+    loader: BackgroundContextLoader,
+    catalog: TenantCatalog,
+) -> Any:
+    """Create a ``load_project_context`` tool for the agent."""
+    from langchain_core.tools import StructuredTool
+
+    def load_project_context(project_name: str) -> str:
+        """Load detailed security context for a project.
+
+        Searches the tenant catalog for a matching project and returns
+        the pre-loaded context including findings, policies, dependencies,
+        call graphs, and threat model.
+
+        Args:
+            project_name: Full or partial project name to search for.
+
+        Returns:
+            Combined Markdown summary, or an error message.
+        """
+        # Try exact match first
+        ctx = loader.get_context(project_name)
+        if ctx:
+            return ctx
+
+        # Fuzzy match
+        matches = catalog.fuzzy_match(project_name)
+        if not matches:
+            return (
+                f"No project matching '{project_name}' found. "
+                f"Available: {', '.join(list(catalog.project_index)[:10])}"
+            )
+        name = matches[0].meta.name if matches[0].meta else matches[0].uuid
+        ctx = loader.get_context(name)
+        if ctx:
+            return ctx
+
+        return f"Context for '{name}' is still loading. Try again in a moment."
+
+    return StructuredTool.from_function(
+        func=load_project_context,
+        name="load_project_context",
+        description=(
+            "Load detailed security context for a project including "
+            "findings, policies, dependencies, call graphs, and "
+            "threat model. Use for deep-dive analysis."
+        ),
+    )
+
+
+def _make_compare_projects_tool(
+    loader: BackgroundContextLoader,
+    catalog: TenantCatalog,
+) -> Any:
+    """Create a ``compare_projects`` tool for the agent."""
+    from langchain_core.tools import StructuredTool
+
+    def compare_projects(project_names: str) -> str:
+        """Compare security posture across multiple projects.
+
+        Args:
+            project_names: Comma-separated list of project names
+                (full or partial).
+
+        Returns:
+            Combined context for all matched projects, or an error.
+        """
+        names = [n.strip() for n in project_names.split(",") if n.strip()]
+        parts: list[str] = []
+        for name in names:
+            matches = catalog.fuzzy_match(name)
+            if not matches:
+                parts.append(f"## {name}\n\nNot found.")
+                continue
+            pname = matches[0].meta.name if matches[0].meta else matches[0].uuid
+            ctx = loader.get_context(pname)
+            short = pname.split("/")[-1].replace(".git", "")
+            if ctx:
+                parts.append(f"## {short}\n\n{ctx}")
+            else:
+                parts.append(f"## {short}\n\nContext still loading.")
+        return "\n\n---\n\n".join(parts) if parts else "No projects matched."
+
+    return StructuredTool.from_function(
+        func=compare_projects,
+        name="compare_projects",
+        description=(
+            "Compare security posture across multiple projects. "
+            "Pass a comma-separated list of project names."
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Chat loop
+# ---------------------------------------------------------------------------
+
+
+def _chat_loop(
+    client: endorlabs.Client,
+    catalog: TenantCatalog,
+    loader: BackgroundContextLoader,
+    *,
+    first_message: str | None = None,
+) -> None:
+    """Agent-first chat loop with Rich status updates above input."""
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+
+        from endorlabs.experimental.langgraph_agent import (
+            create_endor_graph,
+        )
+    except ImportError:
+        _log(
+            "\n  LangGraph dependencies not installed."
+            "\n  Install with: pip install endor-cockpit[experimental]"
+            "\n  Exiting.",
+            style="bold red",
+        )
+        return
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        _log(
+            "\n  GEMINI_API_KEY not set. The agent requires a Gemini key.\n  Exiting.",
+            style="bold red",
+        )
+        return
+
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        api_key=gemini_key,
+    )
+
+    extra_tools = [
+        _make_load_project_context_tool(loader, catalog),
+        _make_compare_projects_tool(loader, catalog),
+    ]
+
+    # Build system prompt with tenant catalog
+    catalog_lines = [f"- {name}" for name in list(catalog.project_index)[:50]]
+    system_prompt = (
+        "You are the Endor Labs security assistant. You have access to "
+        "a tenant with the following projects:\n"
+        + "\n".join(catalog_lines)
+        + "\n\nUse load_project_context to get detailed analysis for any "
+        "project. Use compare_projects for cross-project comparison.\n"
+        "When asked about security posture, risks, or recommendations, "
+        "load context first, then reason over it."
+    )
+
+    graph = create_endor_graph(
+        client,
+        llm,
+        extra_tools=extra_tools,
+        system_prompt=system_prompt,
+    )
+
+    con = _get_console()
+    if con:
+        from rich.rule import Rule
+
+        con.print(Rule(style="dim"))
+    else:
+        print("-" * 40)
+
+    _log("  Type 'quit' to exit.", style="dim")
+    print()
+
+    messages: list[Any] = []
+
+    # If there's a first message from CLI args, inject it
+    pending_input = first_message
+
+    while True:
+        # Drain background status messages
+        for msg in loader.drain_messages():
+            _log(msg)
+
+        if pending_input is not None:
+            user_input = pending_input
+            pending_input = None
+            _log(f"You: {user_input}", style="bold")
+        else:
+            try:
+                user_input = input("You: ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print("\nGoodbye!")
+                break
+
+        if not user_input:
+            continue
+
+        if user_input.lower() in ("quit", "exit", "q"):
+            print("Goodbye!")
+            break
+
+        if user_input.lower() == "summary":
+            user_input = (
+                "Give me a security posture overview: for each project, "
+                "load its context and summarize the dependency tree, "
+                "call graph patterns, security findings by category, "
+                "active policies, and highlight notable risks."
+            )
+
+        messages.append(("user", user_input))
+
+        try:
+            if con:
+                with con.status("Thinking...", spinner="dots"):
+                    result = graph.invoke({"messages": messages})
+            else:
+                result = graph.invoke({"messages": messages})
+            response = result["messages"][-1].content
+            _log(f"\nAssistant: {response}\n")
+            messages = result["messages"]
+        except Exception as exc:
+            _log(f"\n  Agent error: {exc}\n", style="bold red")
+
+
+# ---------------------------------------------------------------------------
+# Main entry point
+# ---------------------------------------------------------------------------
+
+
 def main() -> None:
-    """Interactive Endor Labs Explorer demo entry point."""
+    """Endor Labs Agentic Framework Demo entry point."""
     _load_dotenv()
 
     logging.basicConfig(
@@ -420,27 +610,57 @@ def main() -> None:
         datefmt="%H:%M:%S",
     )
 
-    print()
-    print("  Endor Labs Interactive Explorer")
-    print("  " + "=" * 36)
-    print()
+    # ---- Auto-auth (zero prompts) ----
+    _log("\n  Authenticating...", style="dim")
+    client = _auto_authenticate()
 
-    # Phase 1: Auth
-    client = authenticate()
+    import contextlib
 
-    # Phase 2: whoami
-    user = resolve_user(client)
-    session_dir = Path(DEFAULT_CONTEXT_DIR) / f"session-{slugify(user)}"
+    user_identity = "anonymous"
+    with contextlib.suppress(Exception):
+        user_identity = client.whoami() or "anonymous"
+    tenant = os.getenv("ENDOR_NAMESPACE", "unknown")
 
-    # Phase 3: Repo search
-    project = search_repo(client)
+    _print_banner(tenant, user_identity)
 
-    # Phase 4: Auto-load context
-    print("\nLoading project context ...")
-    context_text = load_context(client, project, session_dir)
+    # ---- Eager tenant catalog ----
+    _log("  Retrieving context...", style="dim")
+    catalog = TenantCatalog()
+    try:
+        catalog.load(client)
+    except Exception as exc:
+        _log(f"  Failed to load catalog: {exc}", style="bold red")
+        sys.exit(1)
+    _log(f"  [{len(catalog.project_index)}] Projects pulled", style="green")
 
-    # Phase 5: Chat
-    chat_loop(client, project, context_text)
+    # ---- Session directory ----
+    session_dir = Path(DEFAULT_CONTEXT_DIR) / f"session-{slugify(user_identity)}"
+
+    # ---- Resolve LLM for sub-agents (optional) ----
+    llm: Any = None
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if gemini_key:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+
+            llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=gemini_key)
+        except ImportError:
+            pass
+
+    # ---- Start background loading ----
+    loader = BackgroundContextLoader(client, catalog, session_dir, llm=llm)
+    loader.start()
+
+    # Give background a head-start, drain initial messages
+    time.sleep(0.5)
+    for msg in loader.drain_messages():
+        _log(msg)
+
+    # ---- Check for CLI argument (one-shot mode) ----
+    first_message = " ".join(sys.argv[1:]).strip() or None
+
+    # ---- Chat loop ----
+    _chat_loop(client, catalog, loader, first_message=first_message)
 
     client.close()
 
