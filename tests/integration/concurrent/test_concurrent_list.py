@@ -6,7 +6,7 @@ Unit tests for the concurrent facade live in tests/unit/client/test_concurrent_l
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE
 
 
 @pytest.mark.integration
@@ -30,7 +30,7 @@ class TestConcurrentListIntegration:
             concurrent=True,
             traverse=True,
             max_workers=5,
-            max_pages=TEST_MAX_PAGES,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
 
@@ -44,7 +44,7 @@ class TestConcurrentListIntegration:
             concurrent=True,
             traverse=True,
             max_workers=5,
-            max_pages=TEST_MAX_PAGES,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
 

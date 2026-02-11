@@ -11,6 +11,7 @@ import shutil
 
 import pytest
 
+import endorlabs
 from endorlabs.api_client import APIClient
 from tests.conftest import TEST_NAMESPACE_DEFAULT
 
@@ -101,6 +102,22 @@ def root_namespace(namespace):
     """
     parts = namespace.split(".", 1)
     return parts[0] if len(parts) > 1 else namespace
+
+
+@pytest.fixture
+def endor_client(api_client, namespace):
+    """Client facade scoped to the test namespace.
+
+    Wraps the APIClient with the high-level Client surface so integration tests
+    can call ``client.resource.list()`` etc.
+    """
+    return endorlabs.Client(tenant=namespace, api_client=api_client)
+
+
+@pytest.fixture
+def endor_root_client(api_client, root_namespace):
+    """Client facade scoped to the tenant root for traverse operations."""
+    return endorlabs.Client(tenant=root_namespace, api_client=api_client)
 
 
 # ---------------------------------------------------------------------------

@@ -43,7 +43,7 @@ class TestWhoAmI:
         mock_policy = Mock()
         mock_policy.meta.name = "tgowan@endor.ai"
 
-        client_with_api_key.authorization_policy._list_fn = Mock(
+        client_with_api_key.authorization_policy._ops.list = Mock(
             return_value=[mock_policy],
         )
 
@@ -55,7 +55,7 @@ class TestWhoAmI:
         client_with_api_key: Client,
     ) -> None:
         """whoami returns None when no AuthorizationPolicy matches."""
-        client_with_api_key.authorization_policy._list_fn = Mock(
+        client_with_api_key.authorization_policy._ops.list = Mock(
             return_value=[],
         )
 
@@ -82,7 +82,7 @@ class TestWhoAmI:
         mock_policy = Mock()
         mock_policy.meta = None
 
-        client_with_api_key.authorization_policy._list_fn = Mock(
+        client_with_api_key.authorization_policy._ops.list = Mock(
             return_value=[mock_policy],
         )
 
@@ -111,12 +111,14 @@ class TestWhoAmI:
     ) -> None:
         """whoami passes filter with spec.clause contains the API key."""
         mock_list = Mock(return_value=[])
-        client_with_api_key.authorization_policy._list_fn = mock_list
+        client_with_api_key.authorization_policy._ops.list = mock_list
 
         client_with_api_key.whoami()
 
         mock_list.assert_called_once()
-        _args, _kwargs = mock_list.call_args
-        # The list_fn is called with (client, namespace, list_params, ...)
-        # Check that filter contains the key
-        assert "endr+TestKey123" in str(mock_list.call_args)
+        args, _kwargs = mock_list.call_args
+        # _ops.list is called with (namespace, list_params, max_pages)
+        # Check that list_params.filter contains the key
+        list_params = args[1]
+        assert list_params is not None
+        assert "endr+TestKey123" in (list_params.filter or "")

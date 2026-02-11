@@ -6,7 +6,7 @@ configuration including toolchains and scan parameters.
 
 import pytest
 
-from endorlabs.resources import scan_profile
+import endorlabs
 from endorlabs.resources.scan_profile import (
     CreateScanProfilePayload,
     ScanProfileMetaCreate,
@@ -29,6 +29,10 @@ class TestScanProfile:
         self.namespace = namespace
         self.root_namespace = root_namespace
         self.parent_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_scan_profile_uuids = []
 
     def teardown_method(self) -> None:
@@ -36,9 +40,7 @@ class TestScanProfile:
         if hasattr(self, "created_scan_profile_uuids"):
             for scan_profile_uuid in self.created_scan_profile_uuids:
                 try:
-                    scan_profile.delete_scan_profile(
-                        self.client, self.parent_namespace, scan_profile_uuid
-                    )
+                    self.endor_root_client.scan_profile.delete(scan_profile_uuid)
                     print(f"[CLEANUP] Deleted test scan profile: {scan_profile_uuid}")
                 except Exception as e:
                     print(
@@ -58,9 +60,7 @@ class TestScanProfile:
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
         """
-        results = scan_profile.list_scan_profiles(
-            self.client,
-            self.parent_namespace,
+        results = self.endor_root_client.scan_profile.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -110,9 +110,7 @@ class TestScanProfile:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING SCAN PROFILE FILTERING ===")
         # Test filtering by is_default
-        default_profiles = scan_profile.list_scan_profiles(
-            self.client,
-            self.parent_namespace,
+        default_profiles = self.endor_root_client.scan_profile.list(
             list_params=ListParameters(
                 filter="spec.is_default==true",
                 page_size=TEST_PAGE_SIZE,
@@ -125,9 +123,7 @@ class TestScanProfile:
         print(f"Found {len(default_profiles)} default scan profiles")
 
         # Test field masking
-        masked_profiles = scan_profile.list_scan_profiles(
-            self.client,
-            self.parent_namespace,
+        masked_profiles = self.endor_root_client.scan_profile.list(
             list_params=ListParameters(
                 mask="meta.name,spec.is_default",
                 page_size=TEST_PAGE_SIZE,
@@ -151,9 +147,7 @@ class TestScanProfile:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            scan_profile.get_scan_profile(
-                self.client, self.parent_namespace, "invalid-uuid"
-            )
+            self.endor_root_client.scan_profile.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
@@ -189,9 +183,7 @@ class TestScanProfile:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    scan_profile.delete_scan_profile(
-                        self.client, self.parent_namespace, created.uuid
-                    )
+                    self.endor_root_client.scan_profile.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -224,9 +216,7 @@ class TestScanProfile:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    scan_profile.delete_scan_profile(
-                        self.client, self.parent_namespace, created.uuid
-                    )
+                    self.endor_root_client.scan_profile.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -292,9 +282,7 @@ class TestScanProfile:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    scan_profile.delete_scan_profile(
-                        self.client, self.parent_namespace, created.uuid
-                    )
+                    self.endor_root_client.scan_profile.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 

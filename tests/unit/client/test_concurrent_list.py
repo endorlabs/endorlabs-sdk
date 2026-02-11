@@ -8,8 +8,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-import endorlabs
-from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.models.base import TenantMeta
 from endorlabs.resources.namespace import Namespace, NamespaceMeta, NamespaceSpec
@@ -87,17 +85,6 @@ class TestExecuteAcrossNamespaces:
 # ============================================================================
 
 
-@pytest.fixture
-def client_with_mock_transport() -> Client:
-    """Client with mock APIClient and canonical test namespace."""
-    mock = Mock(spec=APIClient)
-    client = endorlabs.Client(
-        api_client=mock,
-        tenant=TEST_NAMESPACE_DEFAULT,
-    )
-    return client
-
-
 class TestFacadeConcurrentList:
     """Unit tests for concurrent list behavior in _ListableFacade."""
 
@@ -106,7 +93,7 @@ class TestFacadeConcurrentList:
     ) -> None:
         """list(concurrent=True, traverse=False) raises ValueError."""
         client = client_with_mock_transport
-        client.project._list_fn = Mock(return_value=[])
+        client.project._ops.list = Mock(return_value=[])
         with pytest.raises(ValueError, match="concurrent=True requires traverse=True"):
             client.project.list(
                 concurrent=True,
@@ -117,7 +104,9 @@ class TestFacadeConcurrentList:
     def test_concurrent_with_traverse_calls_namespace_list_first(
         self, client_with_mock_transport: Client
     ) -> None:
-        """list(concurrent=True, traverse=True) first fetches all namespaces."""
+        """Concurrent list fetches namespaces via ops."""
+        from endorlabs.operations import BaseResourceOperations
+
         client = client_with_mock_transport
 
         mock_ns1 = Namespace(
@@ -133,17 +122,26 @@ class TestFacadeConcurrentList:
             tenant_meta=TenantMeta(namespace="tenant"),
         )
 
+        mock_ns_ops_list = Mock(return_value=[mock_ns1, mock_ns2])
+
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = mock_ns_ops_list
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
         with (
             patch(
-                "endorlabs.resources.namespace.list_namespaces",
-                return_value=[mock_ns1, mock_ns2],
-            ) as mock_list_ns,
+                "endorlabs.facade.BaseResourceOperations",
+                side_effect=make_ops,
+            ),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=[],
             ) as mock_execute,
         ):
-            client.project._list_fn = Mock(return_value=[])
+            client.project._ops.list = Mock(return_value=[])
             client.project.list(
                 concurrent=True,
                 traverse=True,
@@ -151,10 +149,10 @@ class TestFacadeConcurrentList:
                 max_pages=TEST_MAX_PAGES,
             )
 
-            mock_list_ns.assert_called_once()
-            call_args = mock_list_ns.call_args
-            assert call_args[0][1] == "tenant"
-            assert call_args[0][2].traverse is True
+            mock_ns_ops_list.assert_called_once()
+            call_args = mock_ns_ops_list.call_args
+            assert call_args[0][0] == "tenant"
+            assert call_args[0][1].traverse is True
 
             mock_execute.assert_called_once()
 
@@ -162,6 +160,8 @@ class TestFacadeConcurrentList:
         self, client_with_mock_transport: Client
     ) -> None:
         """Concurrent mode queries each namespace without traverse flag."""
+        from endorlabs.operations import BaseResourceOperations
+
         client = client_with_mock_transport
 
         mock_ns1 = Namespace(
@@ -177,17 +177,21 @@ class TestFacadeConcurrentList:
             query_fn_calls.extend({"namespace": ns} for ns in namespaces)
             return []
 
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = Mock(return_value=[mock_ns1])
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
         with (
-            patch(
-                "endorlabs.resources.namespace.list_namespaces",
-                return_value=[mock_ns1],
-            ),
+            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 side_effect=capture_query_fn,
             ),
         ):
-            client.project._list_fn = Mock(return_value=[])
+            client.project._ops.list = Mock(return_value=[])
             client.project.list(
                 concurrent=True,
                 traverse=True,
@@ -199,6 +203,8 @@ class TestFacadeConcurrentList:
         self, client_with_mock_transport: Client
     ) -> None:
         """Concurrent mode returns merged results from all namespaces."""
+        from endorlabs.operations import BaseResourceOperations
+
         client = client_with_mock_transport
 
         mock_ns1 = Namespace(
@@ -220,17 +226,21 @@ class TestFacadeConcurrentList:
             Mock(uuid="proj-3"),
         ]
 
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = Mock(return_value=[mock_ns1, mock_ns2])
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
         with (
-            patch(
-                "endorlabs.resources.namespace.list_namespaces",
-                return_value=[mock_ns1, mock_ns2],
-            ),
+            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=merged_results,
             ),
         ):
-            client.project._list_fn = Mock(return_value=[])
+            client.project._ops.list = Mock(return_value=[])
             result = client.project.list(
                 concurrent=True,
                 traverse=True,
@@ -245,19 +255,25 @@ class TestFacadeConcurrentList:
         self, client_with_mock_transport: Client
     ) -> None:
         """max_workers parameter is passed to execute_across_namespaces."""
+        from endorlabs.operations import BaseResourceOperations
+
         client = client_with_mock_transport
 
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = Mock(return_value=[])
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
         with (
-            patch(
-                "endorlabs.resources.namespace.list_namespaces",
-                return_value=[],
-            ),
+            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=[],
             ) as mock_execute,
         ):
-            client.project._list_fn = Mock(return_value=[])
+            client.project._ops.list = Mock(return_value=[])
             client.project.list(
                 concurrent=True,
                 traverse=True,
@@ -274,6 +290,8 @@ class TestFacadeConcurrentList:
         self, client_with_mock_transport: Client
     ) -> None:
         """Filter is passed through to each namespace query."""
+        from endorlabs.operations import BaseResourceOperations
+
         client = client_with_mock_transport
 
         mock_ns1 = Namespace(
@@ -290,17 +308,21 @@ class TestFacadeConcurrentList:
             captured_query_fn = query_fn
             return []
 
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = Mock(return_value=[mock_ns1])
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
         with (
-            patch(
-                "endorlabs.resources.namespace.list_namespaces",
-                return_value=[mock_ns1],
-            ),
+            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 side_effect=capture_execute,
             ),
         ):
-            client.project._list_fn = Mock(return_value=[])
+            client.project._ops.list = Mock(return_value=[])
             client.project.list(
                 concurrent=True,
                 traverse=True,
@@ -320,7 +342,7 @@ class TestFacadeListIterConcurrent:
     ) -> None:
         """list_iter(concurrent=True) raises NotImplementedError."""
         client = client_with_mock_transport
-        client.project._list_iter_fn = Mock(return_value=iter([]))
+        client.project._ops.list_iter = Mock(return_value=iter([]))
         with pytest.raises(
             NotImplementedError, match="concurrent=True is not supported for list_iter"
         ):
@@ -337,7 +359,7 @@ class TestFacadeListIterConcurrent:
     ) -> None:
         """list_iter(concurrent=False) works normally."""
         client = client_with_mock_transport
-        client.project._list_iter_fn = Mock(return_value=iter([Mock(uuid="p1")]))
+        client.project._ops.list_iter = Mock(return_value=iter([Mock(uuid="p1")]))
         result = list(
             client.project.list_iter(
                 concurrent=False,
@@ -355,6 +377,8 @@ class TestFacadeLookupConcurrent:
         self, client_with_mock_transport: Client
     ) -> None:
         """lookup(concurrent=True, traverse=True) passes concurrent to list()."""
+        from endorlabs.operations import BaseResourceOperations
+
         client = client_with_mock_transport
 
         mock_item = Mock(
@@ -369,17 +393,21 @@ class TestFacadeLookupConcurrent:
             tenant_meta=TenantMeta(namespace="tenant"),
         )
 
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = Mock(return_value=[mock_ns1])
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
         with (
-            patch(
-                "endorlabs.resources.namespace.list_namespaces",
-                return_value=[mock_ns1],
-            ),
+            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=[mock_item],
             ),
         ):
-            client.project._list_fn = Mock(return_value=[mock_item])
+            client.project._ops.list = Mock(return_value=[mock_item])
             result = client.project.lookup(
                 concurrent=True,
                 traverse=True,
@@ -394,7 +422,7 @@ class TestFacadeLookupConcurrent:
     ) -> None:
         """lookup(concurrent=True, traverse=False) raises ValueError via list()."""
         client = client_with_mock_transport
-        client.project._list_fn = Mock(return_value=[])
+        client.project._ops.list = Mock(return_value=[])
         with pytest.raises(ValueError, match="concurrent=True requires traverse=True"):
             client.project.lookup(
                 concurrent=True,

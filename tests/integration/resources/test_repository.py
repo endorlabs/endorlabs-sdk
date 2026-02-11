@@ -5,12 +5,12 @@ Tests GET operations for Repository resources following the testing protocol.
 
 import pytest
 
-from endorlabs.resources import repository
+import endorlabs
 from endorlabs.resources.repository import (
     RepositoryMetaUpdate,
     UpdateRepositoryPayload,
 )
-from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -24,6 +24,10 @@ class TestRepository:
         self.namespace = namespace
         self.root_namespace = root_namespace
         self.parent_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_repository_uuids = []
 
     def teardown_method(self) -> None:
@@ -47,11 +51,11 @@ class TestRepository:
         from endorlabs.types import ListParameters
 
         try:
-            results = repository.list_repositories(
-                self.client,
-                self.parent_namespace,
-                list_params=ListParameters(page_size=TEST_PAGE_SIZE, traverse=True),
-                max_pages=TEST_MAX_PAGES,
+            results = self.endor_root_client.repository.list(
+                list_params=ListParameters(
+                    page_size=TEST_TRAVERSE_PAGE_SIZE, traverse=True
+                ),
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -111,29 +115,25 @@ class TestRepository:
         from endorlabs.types import ListParameters
 
         # Test filtering by platform source
-        github_repos = repository.list_repositories(
-            self.client,
-            self.parent_namespace,
+        github_repos = self.endor_root_client.repository.list(
             list_params=ListParameters(
                 filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
-                page_size=TEST_PAGE_SIZE,
+                page_size=TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
             ),
-            max_pages=TEST_MAX_PAGES,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(github_repos, list), "Should return a list of repositories"
         print(f"Found {len(github_repos)} GitHub repositories")
 
         # Test field masking
-        masked_repos = repository.list_repositories(
-            self.client,
-            self.parent_namespace,
+        masked_repos = self.endor_root_client.repository.list(
             list_params=ListParameters(
                 mask="meta.name,spec.platform_source",
-                page_size=TEST_PAGE_SIZE,
+                page_size=TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
             ),
-            max_pages=TEST_MAX_PAGES,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(masked_repos, list), (
             "Should return a list of masked repositories"
@@ -152,9 +152,7 @@ class TestRepository:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            repository.get_repository(
-                self.client, self.parent_namespace, "invalid-uuid"
-            )
+            self.endor_root_client.repository.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
@@ -170,7 +168,9 @@ class TestRepository:
             api_client=self.client,
         )
         try:
-            repos = client.repository.list(traverse=True, max_pages=TEST_MAX_PAGES)
+            repos = client.repository.list(
+                traverse=True, max_pages=TEST_MAX_PAGES_TRAVERSE
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not repos:

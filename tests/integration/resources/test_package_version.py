@@ -6,8 +6,7 @@ including tag management operations and error handling scenarios.
 
 import pytest
 
-from endorlabs.api_client import APIClient
-from endorlabs.resources import package_version
+import endorlabs
 from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
 
 
@@ -21,6 +20,10 @@ class TestPackageVersion:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
 
     @pytest.fixture
     def sample_package_version(self):
@@ -33,9 +36,7 @@ class TestPackageVersion:
         from endorlabs.types import ListParameters
 
         # Fetch 1 item without traverse (fast)
-        results = package_version.list_package_versions(
-            self.client,
-            self.namespace,
+        results = self.endor_client.package_version.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -60,9 +61,8 @@ class TestPackageVersion:
         )
 
         # Get current package version state
-        current_pv = package_version.get_package_version(
-            self.client, package_namespace, package_version_uuid
-        )
+        pv_client = endorlabs.Client(tenant=package_namespace, api_client=self.client)
+        current_pv = pv_client.package_version.get(package_version_uuid)
         if not current_pv:
             pytest.skip(f"Could not retrieve package version {package_version_uuid}")
 
@@ -97,12 +97,10 @@ class TestPackageVersion:
         print(f"New tags: {new_tags}")
 
         # Update the package version with update_mask
-        updated_pv = package_version.update_package_version(
-            self.client,
-            package_namespace,
+        updated_pv = pv_client.package_version.update(
             package_version_uuid,
             update_payload,
-            "meta.description,meta.tags",
+            update_mask="meta.description,meta.tags",
         )
 
         assert updated_pv is not None, "Package version update should succeed"
@@ -127,12 +125,10 @@ class TestPackageVersion:
             ).model_dump()
         )
         try:
-            package_version.update_package_version(
-                self.client,
-                package_namespace,
+            pv_client.package_version.update(
                 package_version_uuid,
                 restore_payload,
-                "meta.description,meta.tags",
+                update_mask="meta.description,meta.tags",
             )
             print("[CLEANUP] Restored original package version values")
         except Exception as e:
@@ -230,18 +226,15 @@ class TestPackageVersion:
 
 
 def add_package_version_tag(
-    client: APIClient, namespace: str, package_version_uuid: str, tag: str
+    client: endorlabs.Client, package_version_uuid: str, tag: str
 ):
     """Add a tag to a package version."""
-    from endorlabs.resources.package_version import (
-        UpdatePackageVersionPayload,
-        update_package_version,
-    )
+    from pydantic import BaseModel
+
+    from endorlabs.resources.package_version import UpdatePackageVersionPayload
 
     # Get current package version
-    current_pv = package_version.get_package_version(
-        client, namespace, package_version_uuid
-    )
+    current_pv = client.package_version.get(package_version_uuid)
     if not current_pv:
         return None
 
@@ -251,33 +244,27 @@ def add_package_version_tag(
         current_tags.append(tag)
 
     # Update with new tags - create a minimal meta object with just tags
-
-    from pydantic import BaseModel
-
     class MetaUpdate(BaseModel):
         tags: list[str]
 
     payload = UpdatePackageVersionPayload(
         meta=MetaUpdate(tags=current_tags).model_dump()
     )
-    return update_package_version(
-        client, namespace, package_version_uuid, payload, "meta.tags"
+    return client.package_version.update(
+        package_version_uuid, payload, update_mask="meta.tags"
     )
 
 
 def remove_package_version_tag(
-    client: APIClient, namespace: str, package_version_uuid: str, tag: str
+    client: endorlabs.Client, package_version_uuid: str, tag: str
 ):
     """Remove a tag from a package version."""
-    from endorlabs.resources.package_version import (
-        UpdatePackageVersionPayload,
-        update_package_version,
-    )
+    from pydantic import BaseModel
+
+    from endorlabs.resources.package_version import UpdatePackageVersionPayload
 
     # Get current package version
-    current_pv = package_version.get_package_version(
-        client, namespace, package_version_uuid
-    )
+    current_pv = client.package_version.get(package_version_uuid)
     if not current_pv:
         return None
 
@@ -287,23 +274,18 @@ def remove_package_version_tag(
         current_tags.remove(tag)
 
     # Update with modified tags - create a minimal meta object with just tags
-
-    from pydantic import BaseModel
-
     class MetaUpdate(BaseModel):
         tags: list[str]
 
     payload = UpdatePackageVersionPayload(
         meta=MetaUpdate(tags=current_tags).model_dump()
     )
-    return update_package_version(
-        client, namespace, package_version_uuid, payload, "meta.tags"
+    return client.package_version.update(
+        package_version_uuid, payload, update_mask="meta.tags"
     )
 
 
-def list_package_version_tags(
-    client: APIClient, namespace: str, package_version_uuid: str
-):
+def list_package_version_tags(client: endorlabs.Client, package_version_uuid: str):
     """List tags for a package version."""
-    pv = package_version.get_package_version(client, namespace, package_version_uuid)
+    pv = client.package_version.get(package_version_uuid)
     return pv.meta.tags if pv and pv.meta.tags else []

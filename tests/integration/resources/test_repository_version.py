@@ -5,7 +5,7 @@ Tests GET operations for RepositoryVersion resources following the testing proto
 
 import pytest
 
-from endorlabs.resources import repository_version
+import endorlabs
 from endorlabs.resources.repository_version import (
     RepositoryVersionMetaUpdate,
     UpdateRepositoryVersionPayload,
@@ -23,6 +23,10 @@ class TestRepositoryVersion:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
 
     @pytest.fixture
     def sample_repository_version(self):
@@ -36,9 +40,7 @@ class TestRepositoryVersion:
         from endorlabs.types import ListParameters
 
         try:
-            results = repository_version.list_repository_versions(
-                self.client,
-                self.namespace,
+            results = self.endor_client.repository_version.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -55,9 +57,7 @@ class TestRepositoryVersion:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            repository_version.get_repository_version(
-                self.client, self.namespace, "invalid-uuid"
-            )
+            self.endor_client.repository_version.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
@@ -203,17 +203,13 @@ class TestRepositoryVersion:
 
         # Test filtering by parent UUID (if we have a sample)
         # First get a sample to use its parent UUID
-        sample_results = repository_version.list_repository_versions(
-            self.client,
-            self.namespace,
+        sample_results = self.endor_client.repository_version.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
         if sample_results and sample_results[0].meta.parent_uuid:
             parent_uuid = sample_results[0].meta.parent_uuid
-            filtered_versions = repository_version.list_repository_versions(
-                self.client,
-                self.namespace,
+            filtered_versions = self.endor_client.repository_version.list(
                 list_params=ListParameters(
                     filter=f'meta.parent_uuid=="{parent_uuid}"',
                     page_size=TEST_PAGE_SIZE,
@@ -229,9 +225,7 @@ class TestRepositoryVersion:
             )
 
         # Test field masking
-        masked_versions = repository_version.list_repository_versions(
-            self.client,
-            self.namespace,
+        masked_versions = self.endor_client.repository_version.list(
             list_params=ListParameters(
                 mask="meta.name,spec.version",
                 page_size=TEST_PAGE_SIZE,

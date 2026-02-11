@@ -10,6 +10,7 @@ module functions is ignored. Use endorctl with -n oss to confirm presence/access
 
 import pytest
 
+import endorlabs
 from endorlabs.resources import dependency_metadata
 from endorlabs.types import ListParameters
 from tests.conftest import (
@@ -29,6 +30,10 @@ class TestDependencyMetadata:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
 
     @pytest.fixture
     def sample_dependency_metadata(self):
@@ -102,9 +107,7 @@ class TestDependencyMetadata:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            dependency_metadata.get_dependency_metadata(
-                self.client, self.root_namespace, "invalid-uuid"
-            )
+            self.endor_root_client.dependency_metadata.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
