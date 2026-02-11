@@ -1,9 +1,9 @@
-"""Unit tests for experimental.workflows.semgrep_management."""
+"""Unit tests for endorlabs.workflows.semgrep_management."""
 
 from pathlib import Path
 from unittest.mock import Mock
 
-from endorlabs.experimental.workflows.semgrep_management import (
+from endorlabs.workflows.semgrep_management import (
     ImportResult,
     _parse_yaml_file,
     _rule_display_id,

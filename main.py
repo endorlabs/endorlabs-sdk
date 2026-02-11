@@ -22,7 +22,12 @@ def main() -> None:
         logging_level="ERROR",
         auth_method="api-key",
     )
+    for namespace in client.namespace.list(traverse=True):
+        print(f"Namespace: {namespace.meta.name}")
+        projects = client.project.list(namespace=namespace.meta.name)
+        print(f"Project count: {len(projects)}")
 
+    exit(0)
     project = client.project.lookup(
         filter="meta.name == https://github.com/DefectDojo/django-DefectDojo.git"
     )

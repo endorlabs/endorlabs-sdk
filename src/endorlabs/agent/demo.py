@@ -1,6 +1,6 @@
 """Demo entrypoint for the LangGraph Endor Labs agent.
 
-Run with: uv run python -m endorlabs.experimental.langgraph_agent.demo
+Run with: uv run python -m endorlabs.agent.langgraph_agent.demo
 
 Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET, GEMINI_API_KEY (or .env).
 """
@@ -10,7 +10,7 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 import endorlabs
-from endorlabs.experimental.langgraph_agent import create_endor_graph
+from endorlabs.agent.langgraph_agent import create_endor_graph
 
 
 def main() -> None:

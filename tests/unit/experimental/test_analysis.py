@@ -7,7 +7,7 @@ with mocked API to exercise load/save paths without live API.
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from endorlabs.experimental.sast_analysis import FindingDatabase, FindingDataLoader
+from endorlabs.sast_analysis import FindingDatabase, FindingDataLoader
 
 
 class TestFindingDatabase:
@@ -82,7 +82,7 @@ class TestFindingDataLoader:
         loader = FindingDataLoader(str(db_path))
         client = MagicMock()
         with patch(
-            "endorlabs.resources.finding.list_findings",
+            "endorlabs.operations.BaseResourceOperations.list",
             return_value=[],
         ):
             findings = loader.load_findings_from_api(client, "tenant.ns")
@@ -94,7 +94,7 @@ class TestFindingDataLoader:
         loader = FindingDataLoader(str(db_path))
         client = MagicMock()
         with patch(
-            "endorlabs.resources.semgrep_rule.list_semgrep_rules",
+            "endorlabs.operations.BaseResourceOperations.list",
             return_value=[],
         ):
             rules = loader.load_rules_from_api(client, "tenant.ns")

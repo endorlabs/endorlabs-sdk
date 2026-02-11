@@ -1,8 +1,8 @@
-"""Unit tests for experimental.workflows.diagnostics."""
+"""Unit tests for endorlabs.workflows.diagnostics."""
 
 from unittest.mock import Mock
 
-from endorlabs.experimental.workflows.diagnostics import (
+from endorlabs.workflows.diagnostics import (
     DependencyReport,
     ScanLogComparison,
     VisibilityReport,

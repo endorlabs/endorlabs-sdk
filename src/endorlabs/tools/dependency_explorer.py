@@ -1,4 +1,3 @@
-# ruff: noqa: C901, SLF001, S108
 """Dependency tree and call graph explorer for Endor Labs projects.
 
 Fetches PackageVersion BOMs, DependencyMetadata, and call graph data from
