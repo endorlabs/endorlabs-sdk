@@ -1,8 +1,8 @@
-"""Unit tests for experimental.workflows.finding_triage."""
+"""Unit tests for endorlabs.workflows.finding_triage."""
 
 from unittest.mock import Mock
 
-from endorlabs.experimental.workflows.finding_triage import (
+from endorlabs.workflows.finding_triage import (
     ExceptionPolicyResult,
     TaggingResult,
     build_exception_rego_rule,

@@ -1,4 +1,4 @@
-"""Shared utilities and result types for experimental workflows.
+"""Shared utilities and result types for workflows.
 
 Provides project lookup by repository URL and base result types
 used across all workflow modules.

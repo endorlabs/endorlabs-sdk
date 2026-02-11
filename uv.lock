@@ -233,15 +233,15 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-context = [
-    { name = "beautifulsoup4" },
-    { name = "markdownify" },
-]
-experimental = [
+agent = [
     { name = "langchain-google-genai" },
     { name = "langchain-openai" },
     { name = "langgraph" },
     { name = "rich" },
+]
+context = [
+    { name = "beautifulsoup4" },
+    { name = "markdownify" },
 ]
 
 [package.dev-dependencies]
@@ -261,16 +261,16 @@ dev = [
 requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'context'", specifier = "==4.14.2" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "langchain-google-genai", extras = ["experimental"], marker = "extra == 'experimental'", specifier = "==4.2.0" },
-    { name = "langchain-openai", marker = "extra == 'experimental'", specifier = "==1.1.7" },
-    { name = "langgraph", marker = "extra == 'experimental'", specifier = "==1.0.7" },
+    { name = "langchain-google-genai", extras = ["experimental"], marker = "extra == 'agent'", specifier = "==4.2.0" },
+    { name = "langchain-openai", marker = "extra == 'agent'", specifier = "==1.1.7" },
+    { name = "langgraph", marker = "extra == 'agent'", specifier = "==1.0.7" },
     { name = "markdownify", marker = "extra == 'context'", specifier = "==1.2.0" },
     { name = "pydantic", specifier = "==2.12.5" },
     { name = "pyyaml", specifier = "==6.0.3" },
-    { name = "rich", marker = "extra == 'experimental'", specifier = ">=13.0" },
+    { name = "rich", marker = "extra == 'agent'", specifier = ">=13.0" },
     { name = "tenacity", specifier = "==9.1.2" },
 ]
-provides-extras = ["context", "experimental"]
+provides-extras = ["context", "agent"]
 
 [package.metadata.requires-dev]
 dev = [

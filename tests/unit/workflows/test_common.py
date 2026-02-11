@@ -1,8 +1,8 @@
-"""Unit tests for experimental.workflows.common."""
+"""Unit tests for endorlabs.workflows.common."""
 
 from unittest.mock import Mock
 
-from endorlabs.experimental.workflows.common import (
+from endorlabs.workflows.common import (
     WorkflowResult,
     _build_url_variants,
     find_project_by_repository_url,

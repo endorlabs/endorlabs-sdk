@@ -6,16 +6,16 @@ A LangGraph-based agent that enables natural language interaction with the Endor
 
 ## Installation
 
-Install with the experimental dependencies:
+Install with the agent dependencies:
 
 ```bash
-pip install endor-cockpit[experimental]
+pip install endor-cockpit[agent]
 ```
 
 Or with uv:
 
 ```bash
-uv add endor-cockpit --extra experimental
+uv add endor-cockpit --extra agent
 ```
 
 ## Quick Start
@@ -23,7 +23,7 @@ uv add endor-cockpit --extra experimental
 ```python
 from langchain_openai import ChatOpenAI
 from endorlabs import Client
-from endorlabs.experimental.langgraph_agent import create_endor_graph
+from endorlabs.agent.langgraph_agent import create_endor_graph
 
 # Initialize the Endor Labs client
 client = Client(tenant="my.namespace")
@@ -259,7 +259,7 @@ If you need more control, you can use the tools without the full agent:
 
 ```python
 from endorlabs import Client
-from endorlabs.experimental.langgraph_agent import create_tools
+from endorlabs.agent.langgraph_agent import create_tools
 
 client = Client(tenant="my.namespace")
 tools = create_tools(client)

@@ -1,4 +1,3 @@
-# ruff: noqa: T201, S105, C901
 """Endor Labs Agentic Framework Demo — agent-first CLI.
 
 Zero-prompt startup: auto-authenticates from environment, loads tenant
@@ -34,11 +33,11 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.experimental.dependency_explorer import (
+from endorlabs.tools.dependency_explorer import (
     process_project,
     slugify,
 )
-from endorlabs.experimental.workflows.session_context import (
+from endorlabs.workflows.session_context import (
     create_session,
 )
 
@@ -55,7 +54,7 @@ _console: Any = None
 
 def _get_console() -> Any:
     """Return a shared ``rich.console.Console``, or ``None``."""
-    global _console  # noqa: PLW0603
+    global _console
     if _console is not None:
         return _console
     try:
@@ -347,7 +346,7 @@ class BackgroundContextLoader:
         if self.llm and combined:
             self._emit(f"  Generating threat model for {short}...")
             try:
-                from endorlabs.experimental.workflows.threat_analysis import (
+                from endorlabs.workflows.threat_analysis import (
                     analyze_project_threat_model,
                 )
 
@@ -501,7 +500,7 @@ def _chat_loop(
     try:
         from langchain_google_genai import ChatGoogleGenerativeAI
 
-        from endorlabs.experimental.langgraph_agent import (
+        from endorlabs.agent.langgraph_agent import (
             create_endor_graph,
         )
     except ImportError:
