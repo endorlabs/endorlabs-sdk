@@ -220,8 +220,10 @@ class ListParameters(BaseModel):
         description="When True, fetch resources from the archive.",
     )
     list_all: bool | None = Field(
-        True,
-        description="List all resources (use with timeout for large result sets).",
+        None,
+        description="When True, hints the server to prepare a full cursor. "
+        "Defaults to None (server default); client-side pagination via "
+        "max_pages handles multi-page fetching independently.",
     )
     pr_uuid: str | None = Field(
         None,

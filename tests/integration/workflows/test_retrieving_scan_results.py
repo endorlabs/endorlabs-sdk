@@ -12,14 +12,9 @@ import os
 
 import pytest
 
-from endorlabs.resources import finding, project, scan_result
+import endorlabs
 from endorlabs.types import ListParameters
-from tests.conftest import (
-    TEST_MAX_PAGES,
-    TEST_MAX_PAGES_TRAVERSE,
-    TEST_PAGE_SIZE,
-    TEST_TRAVERSE_PAGE_SIZE,
-)
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -29,14 +24,12 @@ class TestRetrievingScanResultsWorkflow:
     @pytest.fixture(autouse=True)
     def setup(self, api_client, namespace) -> None:
         """Set up test environment (client and namespace from conftest)."""
-        self.client = api_client
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
         self.namespace = namespace
         self.repo_url = os.getenv(
             "TEST_REPO_URL",
             "https://github.com/Endor-Solutions-Architecture/endor-cockpit.git",
         )
-        parts = namespace.split(".")
-        self.parent_namespace = parts[0] if len(parts) > 1 else namespace
 
     def _find_project_by_repo_url(self) -> str:
         """Find project by repository URL."""
@@ -46,10 +39,8 @@ class TestRetrievingScanResultsWorkflow:
             traverse=True,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        projects = project.list_projects(
-            self.client,
-            self.parent_namespace,
-            list_params,
+        projects = self.endor_client.project.list(
+            list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
 
@@ -60,10 +51,8 @@ class TestRetrievingScanResultsWorkflow:
                 traverse=True,
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
             )
-            all_projects = project.list_projects(
-                self.client,
-                self.parent_namespace,
-                list_params,
+            all_projects = self.endor_client.project.list(
+                list_params=list_params,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
             for proj in all_projects:
@@ -88,13 +77,11 @@ class TestRetrievingScanResultsWorkflow:
             traverse=True,
             sort_by="meta.create_time",
             desc=True,
-            page_size=TEST_PAGE_SIZE,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        scan_results = scan_result.list_scan_results(
-            self.client,
-            self.parent_namespace,
-            list_params,
-            max_pages=TEST_MAX_PAGES,
+        scan_results = self.endor_client.scan_result.list(
+            list_params=list_params,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
 
         if not scan_results or len(scan_results) == 0:
@@ -122,9 +109,11 @@ class TestRetrievingScanResultsWorkflow:
         list_params = ListParameters(
             filter=f'spec.project_uuid=="{project_uuid}"',
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        findings = finding.list_findings(
-            self.client, self.parent_namespace, list_params
+        findings = self.endor_client.finding.list(
+            list_params=list_params,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         print(f"Found {len(findings)} Findings directly by Project UUID")
         return findings
@@ -142,10 +131,8 @@ class TestRetrievingScanResultsWorkflow:
             traverse=True,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        findings = finding.list_findings(
-            self.client,
-            self.parent_namespace,
-            list_params,
+        findings = self.endor_client.finding.list(
+            list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         print(f"  Found {len(findings)} Findings via spec.project_uuid filter")

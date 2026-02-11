@@ -8,7 +8,7 @@ Greenfield alias unit tests live in tests/unit/models/test_greenfield_aliases.py
 
 import pytest
 
-from endorlabs.resources import project, scan_profile
+import endorlabs
 from endorlabs.resources.project import (
     ProjectMetaUpdate,
     UpdateProjectPayload,
@@ -34,6 +34,10 @@ class TestProject:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_scan_profile_uuids = []
 
         # Get test data with pagination limits
@@ -41,9 +45,7 @@ class TestProject:
         from endorlabs.types import ListParameters
 
         try:
-            self.projects = project.list_projects(
-                self.client,
-                self.namespace,
+            self.projects = self.endor_client.project.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -62,9 +64,7 @@ class TestProject:
         if hasattr(self, "created_scan_profile_uuids"):
             for scan_profile_uuid in self.created_scan_profile_uuids:
                 try:
-                    scan_profile.delete_scan_profile(
-                        self.client, self.namespace, scan_profile_uuid
-                    )
+                    self.endor_client.scan_profile.delete(scan_profile_uuid)
                     print(f"[CLEANUP] Deleted test scan profile: {scan_profile_uuid}")
                 except Exception as e:
                     print(
@@ -162,9 +162,7 @@ class TestProject:
             propagate=False,
         )
 
-        created_profile = scan_profile.create_scan_profile(
-            self.client, self.namespace, payload
-        )
+        created_profile = self.endor_client.scan_profile.create(payload)
         if not created_profile:
             pytest.skip("Failed to create test scan profile")
 
@@ -205,9 +203,7 @@ class TestProject:
         finally:
             # Clean up: Remove scan profile association
             print("Cleaning up: Removing scan profile association...")
-            current_project = project.get_project(
-                self.client, self.namespace, project_uuid
-            )
+            current_project = self.endor_client.project.get(project_uuid)
             if current_project:
                 spec_dict = current_project.spec.model_dump()
                 spec_dict["scan_profile_uuid"] = None
@@ -231,9 +227,7 @@ class TestProject:
                     print(f"⚠️ Warning: Could not clean up association: {e}")
             # Delete the test scan profile
             try:
-                scan_profile.delete_scan_profile(
-                    self.client, self.namespace, scan_profile_uuid
-                )
+                self.endor_client.scan_profile.delete(scan_profile_uuid)
                 print("✅ Deleted test scan profile")
             except Exception as e:
                 print(
@@ -246,9 +240,7 @@ class TestProject:
         # Test filtering by platform
         from endorlabs.types import ListParameters
 
-        github_projects = project.list_projects(
-            self.client,
-            self.namespace,
+        github_projects = self.endor_client.project.list(
             list_params=ListParameters(
                 filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
                 page_size=TEST_PAGE_SIZE,
@@ -258,9 +250,7 @@ class TestProject:
         assert isinstance(github_projects, list)
 
         # Test field masking
-        masked_projects = project.list_projects(
-            self.client,
-            self.namespace,
+        masked_projects = self.endor_client.project.list(
             list_params=ListParameters(
                 mask="meta.name,spec.platform_source",
                 page_size=TEST_PAGE_SIZE,
@@ -289,7 +279,7 @@ class TestProject:
         project_uuid = test_project.uuid
 
         # Get current project state
-        current_project = project.get_project(self.client, self.namespace, project_uuid)
+        current_project = self.endor_client.project.get(project_uuid)
         if not current_project:
             pytest.skip(f"Could not retrieve project {project_uuid}")
 
@@ -317,12 +307,10 @@ class TestProject:
         print(f"New tags: {new_tags}")
 
         # Update the project with update_mask
-        updated_project = project.update_project(
-            self.client,
-            self.namespace,
+        updated_project = self.endor_client.project.update(
             project_uuid,
             update_payload,
-            "meta.description,meta.tags",
+            update_mask="meta.description,meta.tags",
         )
 
         assert updated_project is not None, "Project update should succeed"
@@ -346,12 +334,10 @@ class TestProject:
             )
         )
         try:
-            project.update_project(
-                self.client,
-                self.namespace,
+            self.endor_client.project.update(
                 project_uuid,
                 restore_payload,
-                "meta.description,meta.tags",
+                update_mask="meta.description,meta.tags",
             )
             print("[CLEANUP] Restored original project values")
         except Exception as e:
@@ -364,7 +350,7 @@ class TestProject:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            project.get_project(self.client, self.namespace, "invalid-uuid")
+            self.endor_client.project.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

@@ -40,9 +40,7 @@ _SPEC_PATH = _REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
 def test_openapi_spec_paths_exist() -> None:
     """Every registry resource path exists in OpenAPI spec and has get (list)."""
     if not _SPEC_PATH.exists():
-        pytest.skip(
-            f"OpenAPI spec not present ({_SPEC_PATH})"
-        )
+        pytest.skip(f"OpenAPI spec not present ({_SPEC_PATH})")
     with open(_SPEC_PATH, encoding="utf-8") as f:
         spec = json.load(f)
     paths = spec.get("paths", {})

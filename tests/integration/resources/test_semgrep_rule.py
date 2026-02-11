@@ -10,7 +10,6 @@ import pytest
 
 import endorlabs
 from endorlabs.api_client import APIClient
-from endorlabs.resources import semgrep_rule
 from endorlabs.resources.semgrep_rule import (
     CreateSemgrepRulePayload,
     SemgrepNativeRule,
@@ -31,6 +30,10 @@ class TestSemgrepRule:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_semgrep_rule_uuids: list[str] = []
 
     def teardown_method(self) -> None:
@@ -38,9 +41,7 @@ class TestSemgrepRule:
         if hasattr(self, "created_semgrep_rule_uuids"):
             for rule_uuid in self.created_semgrep_rule_uuids:
                 try:
-                    semgrep_rule.delete_semgrep_rule(
-                        self.client, self.namespace, rule_uuid
-                    )
+                    self.endor_client.semgrep_rule.delete(rule_uuid)
                 except Exception as e:
                     print(f"[WARNING] Failed to delete semgrep rule {rule_uuid}: {e}")
             self.created_semgrep_rule_uuids.clear()
@@ -113,9 +114,7 @@ class TestSemgrepRule:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    semgrep_rule.delete_semgrep_rule(
-                        self.client, self.namespace, created.uuid
-                    )
+                    self.endor_client.semgrep_rule.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -155,27 +154,29 @@ class TestSemgrepRule:
             current = client.semgrep_rule.get(created.uuid, namespace=self.namespace)
             if not current:
                 pytest.skip(f"Could not retrieve semgrep rule {created.uuid}")
+            # The semgrep rule API always validates spec during update,
+            # even when only meta fields are in the update_mask.  Include
+            # the existing spec so the backend can validate it.
             update_payload = UpdateSemgrepRulePayload(
                 meta=SemgrepRuleMetaCreate(
                     name=rule_id, description="Updated by client-ux"
-                )
+                ),
+                spec=current.spec,
             )
             try:
                 updated = client.semgrep_rule.update(
                     created.uuid,
                     update_payload,
-                    update_mask="meta.description",
+                    update_mask="meta.description,spec",
                     namespace=self.namespace,
                 )
-            except Exception as e:
+            except PermissionDeniedError as e:
                 pytest.skip(f"Semgrep rule update not allowed in this environment: {e}")
             assert updated is not None
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    semgrep_rule.delete_semgrep_rule(
-                        self.client, self.namespace, created.uuid
-                    )
+                    self.endor_client.semgrep_rule.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 

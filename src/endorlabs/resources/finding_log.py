@@ -43,11 +43,15 @@ logger = get_resource_logger(__name__)
 
 
 class FindingLogOperation(FlexibleEnum):
-    """Finding log operation enumeration."""
+    """Finding log operation enumeration.
+
+    Values per OpenAPI spec ``v1FindingLogSpecOperation``.
+    """
 
     UNSPECIFIED = "OPERATION_UNSPECIFIED"
-    READ = "OPERATION_READ"
+    CREATE = "OPERATION_CREATE"
     UPDATE = "OPERATION_UPDATE"
+    DELETE = "OPERATION_DELETE"
 
 
 class DismissParams(BaseModel):

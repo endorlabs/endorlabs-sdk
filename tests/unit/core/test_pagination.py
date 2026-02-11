@@ -14,7 +14,7 @@ from unittest.mock import Mock, patch
 from pydantic import BaseModel, Field
 
 from endorlabs.api_client import APIClient
-from endorlabs.models.base import BaseResourceOperations
+from endorlabs.operations import BaseResourceOperations
 from endorlabs.types import ListParameters
 from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 

@@ -8,8 +8,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
+import endorlabs
 from endorlabs.api_client import APIClient
-from endorlabs.resources import api_key
 from endorlabs.resources.api_key import (
     APIKeyMeta,
     APIKeyPermissions,
@@ -32,6 +32,12 @@ class TestAPIKey:
         self.client = api_client_fast_retry
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(
+            tenant=namespace, api_client=api_client_fast_retry
+        )
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client_fast_retry
+        )
         self.created_api_key_uuids: list[str] = []
 
     def teardown_method(self) -> None:
@@ -39,7 +45,7 @@ class TestAPIKey:
         if hasattr(self, "created_api_key_uuids"):
             for key_uuid in self.created_api_key_uuids:
                 try:
-                    api_key.delete_api_key(self.client, self.namespace, key_uuid)
+                    self.endor_client.api_key.delete(key_uuid)
                 except Exception as e:
                     print(f"[WARNING] Failed to delete API key {key_uuid}: {e}")
             self.created_api_key_uuids.clear()
@@ -116,7 +122,7 @@ class TestAPIKey:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    api_key.delete_api_key(self.client, self.namespace, created.uuid)
+                    self.endor_client.api_key.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
