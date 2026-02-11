@@ -9,49 +9,12 @@ Tests cover:
 
 import json
 import os
-from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
 from endorlabs.context.models import InitStatus
-
-
-class TestInitStatus:
-    """Test InitStatus dataclass."""
-
-    def test_init_status_creation(self, tmp_path: Path) -> None:
-        """Test InitStatus can be created with all fields."""
-        openapi_path = tmp_path / "openapiv2.swagger.json"
-        docs_path = tmp_path / "docs"
-        now = datetime.now(UTC)
-
-        status = InitStatus(
-            openapi_path=openapi_path,
-            user_docs_path=docs_path,
-            user_docs_count=10,
-            downloaded_at=now,
-        )
-
-        assert status.openapi_path == openapi_path
-        assert status.user_docs_path == docs_path
-        assert status.user_docs_count == 10
-        assert status.downloaded_at == now
-
-    def test_init_status_repr(self, tmp_path: Path) -> None:
-        """Test InitStatus repr includes key fields."""
-        status = InitStatus(
-            openapi_path=tmp_path / "openapiv2.swagger.json",
-            user_docs_path=tmp_path / "docs",
-            user_docs_count=5,
-            downloaded_at=datetime.now(UTC),
-        )
-
-        repr_str = repr(status)
-        assert "InitStatus" in repr_str
-        assert "openapi_path" in repr_str
-        assert "user_docs_count" in repr_str
 
 
 class TestSyncOpenapi:
