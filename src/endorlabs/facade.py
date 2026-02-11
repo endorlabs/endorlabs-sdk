@@ -31,17 +31,15 @@ from typing import (
 
 from .exceptions import AmbiguousError, NotFoundError
 from .filter import F, FilterExpression
+from .operations import BaseResourceOperations
 from .types import ListParameters
-from .utils.model_validation import (
-    build_filter_from_identity_kwargs,
-    get_list_filter_map,
-)
 from .utils.namespace import resolve_namespace_for_resource
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
 
     from .api_client import APIClient
+    from .registry import ResourceEntry
     from .resources.scan_log_request import ScanLogLevel, ScanLogRequestLogMessage
 
 T = TypeVar("T")
@@ -66,20 +64,20 @@ class _ListableFacade(Generic[T]):
         self,
         client: APIClient,
         default_namespace: str | None,
-        list_fn: Callable[..., list[T]],
-        list_iter_fn: Callable[..., Iterator[T]] | None = None,
-        resource_name: str = "",
-        parent_kind: str | None = None,
+        entry: ResourceEntry,
+        *,
         tags_paths: list[str] | None = None,
     ) -> None:
         super().__init__()
         self._client = client
         self._default_namespace = default_namespace
-        self._list_fn = list_fn
-        self._list_iter_fn = list_iter_fn
-        self._resource_name = resource_name
-        self._parent_kind = parent_kind
+        self._resource_name = entry.resource_name
+        self._parent_kind = entry.parent_kind
         self._tags_paths = tags_paths or []
+        self._filter_kwarg_map: dict[str, str] = dict(entry.filter_kwarg_map)
+        self._ops: BaseResourceOperations[Any] = BaseResourceOperations(
+            client, entry.resource_name, entry.model_class
+        )
 
     def _ns(self, namespace: str | None) -> str:
         ns = namespace if namespace is not None else self._default_namespace
@@ -132,7 +130,7 @@ class _ListableFacade(Generic[T]):
         Shared by ``list()`` and ``list_iter()`` to guarantee identical
         filter/mask/parent behaviour.
         """
-        from .models.base import RESOURCE_NAME_TO_TYPE
+        from .utils.model_validation import build_filter_from_identity_kwargs
 
         # Normalize FilterExpression to str early
         if isinstance(filter, FilterExpression):
@@ -158,10 +156,8 @@ class _ListableFacade(Generic[T]):
         }
         list_kwargs = {**kwargs, **explicit}
 
-        resource_type = RESOURCE_NAME_TO_TYPE.get(self._resource_name, "")
-        filter_map = get_list_filter_map(resource_type)
         merged_filter, remaining_kwargs = build_filter_from_identity_kwargs(
-            filter_map, list_kwargs
+            self._filter_kwarg_map, list_kwargs
         )
         if merged_filter is not None:
             remaining_kwargs["filter"] = merged_filter
@@ -303,7 +299,7 @@ class _ListableFacade(Generic[T]):
             **kwargs,
         )
         lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
-        return self._list_fn(self._client, ns, lp, max_pages)
+        return self._ops.list(ns, lp, max_pages)
 
     def _list_concurrent(
         self,
@@ -315,12 +311,14 @@ class _ListableFacade(Generic[T]):
         **kwargs: Any,
     ) -> list[T]:
         """Fetch namespaces with traverse, then query each in parallel; merge."""
-        from .resources.namespace import list_namespaces
+        from .resources.namespace import Namespace as NamespaceModel
         from .utils.parallel import execute_across_namespaces
 
-        # Phase 1: Get all namespaces
-        all_namespaces = list_namespaces(
-            self._client,
+        # Phase 1: Get all namespaces via ops (no module-level function needed)
+        ns_ops: BaseResourceOperations[Any] = BaseResourceOperations(
+            self._client, "namespaces", NamespaceModel
+        )
+        all_namespaces = ns_ops.list(
             namespace,
             ListParameters(traverse=True),  # pyright: ignore[reportCallIssue]
         )
@@ -510,7 +508,7 @@ class _ListableFacade(Generic[T]):
             Resources one at a time.
 
         Raises:
-            NotImplementedError: Resource has no list_iter or concurrent=True.
+            NotImplementedError: concurrent=True requested.
             ValueError: Missing namespace or unsupported parent.
 
         Example:
@@ -522,10 +520,6 @@ class _ListableFacade(Generic[T]):
             raise NotImplementedError(
                 "concurrent=True is not supported for list_iter. "
                 "Use list(concurrent=True, traverse=True) instead."
-            ) from None
-        if self._list_iter_fn is None:
-            raise NotImplementedError(
-                "This resource does not support list_iter."
             ) from None
         if parent is not None:
             if self._parent_kind is None:
@@ -553,7 +547,7 @@ class _ListableFacade(Generic[T]):
             **kwargs,
         )
         lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
-        return self._list_iter_fn(self._client, ns, lp, max_pages)
+        return self._ops.list_iter(ns, lp, max_pages)
 
 
 class ResourceFacade(_ListableFacade[T]):
@@ -578,33 +572,16 @@ class ResourceFacade(_ListableFacade[T]):
         self,
         client: APIClient,
         default_namespace: str | None,
-        list_fn: Callable[..., list[T]],
-        get_fn: Callable[..., T] | None = None,
-        create_fn: Callable[..., T] | None = None,
-        update_fn: Callable[..., T] | None = None,
-        delete_fn: Callable[..., bool] | None = None,
-        list_iter_fn: Callable[..., Iterator[T]] | None = None,
+        entry: ResourceEntry,
+        *,
         tags_paths: list[str] | None = None,
-        resource_name: str = "",
-        parent_kind: str | None = None,
-        build_create_payload_fn: Callable[..., Any] | None = None,
-        scope: Literal["system", "oss"] | None = None,
     ) -> None:
-        super().__init__(
-            client,
-            default_namespace,
-            list_fn,
-            list_iter_fn=list_iter_fn,
-            resource_name=resource_name,
-            parent_kind=parent_kind,
-            tags_paths=tags_paths,
+        super().__init__(client, default_namespace, entry, tags_paths=tags_paths)
+        self._supported_ops = entry.supported_ops
+        self._build_create_payload_fn: Callable[..., Any] | None = (
+            entry.build_create_payload_fn
         )
-        self._get_fn = get_fn
-        self._create_fn = create_fn
-        self._update_fn = update_fn
-        self._delete_fn = delete_fn
-        self._build_create_payload_fn = build_create_payload_fn
-        self._scope: Literal["system", "oss"] | None = scope
+        self._scope: Literal["system", "oss"] | None = entry.scope
 
     @property
     def scope(self) -> Literal["system", "oss"] | None:
@@ -648,7 +625,7 @@ class ResourceFacade(_ListableFacade[T]):
             updated = client.project.get(project)
 
         """
-        if self._get_fn is None:
+        if "get" not in self._supported_ops:
             raise NotImplementedError(
                 "This resource does not support get; use list() for system/tenant."
             ) from None
@@ -669,7 +646,7 @@ class ResourceFacade(_ListableFacade[T]):
             raise NotImplementedError(
                 "GET only supported for oss namespace; use list() for system/tenant."
             ) from None
-        return self._get_fn(self._client, ns, uuid)
+        return self._ops.get(ns, cast("str", uuid))
 
     def create(
         self,
@@ -706,7 +683,7 @@ class ResourceFacade(_ListableFacade[T]):
             ns = client.namespace.create(name='my-namespace', namespace='tenant')
 
         """
-        if self._create_fn is None:
+        if "create" not in self._supported_ops:
             raise NotImplementedError(
                 "This resource does not support create."
             ) from None
@@ -734,7 +711,7 @@ class ResourceFacade(_ListableFacade[T]):
                 "create() for this resource requires payload=; kwargs not supported."
             )
         ns = self._ns(namespace)
-        return self._create_fn(self._client, ns, payload)
+        return self._ops.create(ns, payload)
 
     def update(
         self,
@@ -774,7 +751,7 @@ class ResourceFacade(_ListableFacade[T]):
             updated = client.project.update(project, meta_tags=['reviewed'])
 
         """
-        if self._update_fn is None:
+        if "update" not in self._supported_ops:
             raise NotImplementedError(
                 "This resource does not support update."
             ) from None
@@ -816,7 +793,14 @@ class ResourceFacade(_ListableFacade[T]):
                 raise TypeError(
                     "payload is required when id_or_resource is a UUID string."
                 )
-        return self._update_fn(self._client, ns, uuid, payload, update_mask)
+        # Convert comma-separated mask string to list (strip empty segments)
+        mask_list: list[str] = (
+            [p.strip() for p in update_mask.split(",") if p.strip()]
+            if isinstance(update_mask, str)
+            else (update_mask or [])
+        )
+        assert payload is not None  # guaranteed by TypeError guard above
+        return self._ops.update(ns, cast("str", uuid), payload, mask_list)
 
     def delete(
         self,
@@ -849,7 +833,7 @@ class ResourceFacade(_ListableFacade[T]):
             )
 
         """
-        if self._delete_fn is None:
+        if "delete" not in self._supported_ops:
             raise NotImplementedError(
                 "This resource does not support delete."
             ) from None
@@ -867,7 +851,7 @@ class ResourceFacade(_ListableFacade[T]):
             uuid = name_or_resource
             ns = self._ns(namespace)
         try:
-            return self._delete_fn(self._client, ns, uuid)
+            return self._ops.delete(ns, cast("str", uuid))
         except NotFoundError:
             if ignore_missing:
                 return False
@@ -903,10 +887,9 @@ class ResourceFacade(_ListableFacade[T]):
         resource, uuid, ns, meta = self._resolve_for_tag(
             id_or_resource, namespace, operation="tag"
         )
-        assert self._update_fn is not None  # guaranteed by _resolve_for_tag
         model_copy = getattr(resource, "model_copy")  # noqa: B009
         payload = model_copy(update={"meta": meta.model_copy(update={"tags": tags})})
-        return self._update_fn(self._client, ns, uuid, payload, "meta.tags")
+        return self._ops.update(ns, uuid, payload, ["meta.tags"])
 
     def untag(
         self,
@@ -938,14 +921,13 @@ class ResourceFacade(_ListableFacade[T]):
         resource, uuid, ns, meta = self._resolve_for_tag(
             id_or_resource, namespace, operation="untag"
         )
-        assert self._update_fn is not None  # guaranteed by _resolve_for_tag
         current: list[str] = getattr(meta, "tags", None) or []
         new_tags: list[str] = [t for t in current if t not in keys]
         model_copy = getattr(resource, "model_copy")  # noqa: B009
         payload = model_copy(
             update={"meta": meta.model_copy(update={"tags": new_tags})}
         )
-        return self._update_fn(self._client, ns, uuid, payload, "meta.tags")
+        return self._ops.update(ns, uuid, payload, ["meta.tags"])
 
     # -- Internal helpers for tag / untag ----------------------------------
 
@@ -968,7 +950,7 @@ class ResourceFacade(_ListableFacade[T]):
         if (
             not self._tags_paths
             or "meta.tags" not in self._tags_paths
-            or self._update_fn is None
+            or "update" not in self._supported_ops
         ):
             raise NotImplementedError(
                 f"This resource does not support {operation}."

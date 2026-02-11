@@ -6,31 +6,18 @@ API may omit list.objects when empty (treat as []).
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
 from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
 logger = get_resource_logger(__name__)
-
-
-def _get_scan_workflow_ops(
-    client: APIClient,
-) -> BaseResourceOperations[ScanWorkflow]:
-    """Get BaseResourceOperations instance for scan workflows."""
-    return BaseResourceOperations(client, "scan-workflows", ScanWorkflow)
 
 
 class ScanWorkflowSpec(BaseSpec):
@@ -79,37 +66,3 @@ class ScanWorkflow(BaseResource):
                     unknown,
                 )
         return v
-
-
-def list_scan_workflows(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[ScanWorkflow]:
-    """List scan workflows in the namespace. Missing list.objects treated as []."""
-    ops = _get_scan_workflow_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_scan_workflows_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[ScanWorkflow]:
-    """Iterate over scan workflows without materializing the full list."""
-    ops = _get_scan_workflow_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_scan_workflow(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    scan_workflow_uuid: str,
-) -> ScanWorkflow:
-    """Get a scan workflow by UUID."""
-    ops = _get_scan_workflow_ops(client)
-    return ops.get(tenant_meta_namespace, scan_workflow_uuid)

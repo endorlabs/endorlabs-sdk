@@ -37,24 +37,17 @@ the raw scan output and execution context that's lost in Finding.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
-
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
 
@@ -432,165 +425,6 @@ class LinterResult(BaseResource):
     def get_mutable_fields_cls(cls) -> list[str]:
         """Get list of mutable fields for LinterResult."""
         return ["meta.name", "meta.description", "meta.tags", "spec"]
-
-
-def _get_linter_result_ops(client: APIClient) -> BaseResourceOperations[LinterResult]:
-    """Get BaseResourceOperations instance for LinterResult."""
-    return BaseResourceOperations(client, "linter-results", LinterResult)
-
-
-def list_linter_results(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[LinterResult]:
-    """List linter results with advanced filtering and pagination.
-
-    **Debugging Use Cases:**
-
-    - Query scan results that didn't become findings
-    - Analyze scan execution context (Git ref, version, ecosystem)
-    - Access full SARIF output for code flow analysis
-    - Investigate deduplication logic via fingerprints
-    - Trace severity transformations from rule → scan → finding
-
-    **Note**: Most users should query Findings instead. Use LinterResult
-    when you need the raw scan output or execution context for debugging.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        list_params: Optional list parameters for filtering, pagination, etc.
-        max_pages: Optional cap on number of pages to fetch.
-        **kwargs: Additional query parameters
-
-    Returns:
-        List of LinterResult objects
-
-    """
-    ops = _get_linter_result_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_linter_results_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[LinterResult]:
-    """Iterate over linter results without materializing the full list."""
-    ops = _get_linter_result_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_linter_result(
-    client: APIClient, tenant_meta_namespace: str, linter_result_uuid: str
-) -> LinterResult:
-    """Get specific linter result by UUID.
-
-    **Debugging Use Cases:**
-
-    - Access full SARIF output with code flows and locations
-    - View scan execution context (Git ref, version, ecosystem)
-    - Inspect code fingerprints and correctness analysis
-    - Understand why a scan result did or didn't become a finding
-
-    **Note**: Most users should query Findings instead. Use LinterResult
-    when you need the raw scan output for debugging.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        linter_result_uuid: UUID of the linter result
-
-    Returns:
-        LinterResult object
-
-    Raises:
-        NotFoundError: If linter result doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_linter_result_ops(client)
-    return ops.get(tenant_meta_namespace, linter_result_uuid)
-
-
-def create_linter_result(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateLinterResultPayload,
-) -> LinterResult:
-    """Create a new linter result with pre-validation and typed errors.
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If linter result already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_linter_result_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_linter_result(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    linter_result_uuid: str,
-    payload: UpdateLinterResultPayload,
-    update_mask: str,
-) -> LinterResult | None:
-    """Update an existing linter result with partial updates.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        linter_result_uuid: UUID of the linter result to update
-        payload: LinterResult update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated LinterResult object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If linter result doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Linter result update requires an update_mask "
-                "(e.g. 'meta.description', 'meta.tags')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=linter_result_uuid,
-        )
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-    ops = _get_linter_result_ops(client)
-    return ops.update(
-        tenant_meta_namespace, linter_result_uuid, payload, update_mask_list
-    )
-
-
-def delete_linter_result(
-    client: APIClient, tenant_meta_namespace: str, linter_result_uuid: str
-) -> bool:
-    """Delete a linter result by UUID."""
-    ops = _get_linter_result_ops(client)
-    return ops.delete(tenant_meta_namespace, linter_result_uuid)
 
 
 # Payload models for create and update operations

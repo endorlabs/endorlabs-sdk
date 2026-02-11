@@ -25,10 +25,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
+from ..operations import BaseResourceOperations
 from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
