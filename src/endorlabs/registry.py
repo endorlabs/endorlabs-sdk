@@ -110,6 +110,9 @@ from .resources.repository_version import (
 from .resources.repository_version import (
     build_create_payload as repository_version_build_create,
 )
+from .resources.scan_log_request import (
+    ScanLogRequest,
+)
 from .resources.scan_profile import (
     ScanProfile,
 )
@@ -261,6 +264,12 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         build_create_payload_fn=scan_result_build_create,
         filter_kwarg_map=_NAME_FILTER,
         parent_kind="project",
+    ),
+    ResourceEntry(
+        attr_name="scan_log_request",
+        resource_name="scan-log-requests",
+        model_class=ScanLogRequest,
+        supported_ops=frozenset({"create"}),
     ),
     ResourceEntry(
         attr_name="linter_result",
