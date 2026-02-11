@@ -1,4 +1,4 @@
-"""Log redaction utilities for Endor Cockpit SDK.
+"""Log redaction utilities for Endor Labs SDK.
 
 Provides :class:`RedactingFilter` and pre-compiled patterns for scrubbing
 sensitive credential material from log records before they reach any handler.

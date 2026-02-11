@@ -301,7 +301,7 @@ def create_notification_policy(
         "name": name,
         "namespace": namespace,
         "description": description or f"Notification policy: {name}",
-        "tags": ["notification", "endor-cockpit"],
+        "tags": ["notification", "endorlabs-sdk"],
         "policy_type": "POLICY_TYPE_NOTIFICATION",
         "notification": notification_config,
         "resource_kinds": ["Finding"],

@@ -1,7 +1,7 @@
 # API Validation Checklist
 
 Pre-implementation validation for new Endor Labs resources. Complete
-before writing any AF code.
+before writing any SDK code.
 
 Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json>
 (schema drift workflow downloads to `.endorlabs-context/openapiv2.swagger.json` in CI).

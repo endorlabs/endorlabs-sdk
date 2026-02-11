@@ -1,4 +1,4 @@
-"""Test cases for Endor Cockpit SDK exception classes.
+"""Test cases for Endor Labs SDK exception classes.
 
 Tests construction, __str__ formatting, and map_status_code_to_exception
 for stable public API behavior.

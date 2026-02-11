@@ -1,6 +1,6 @@
-# Resources (AF API Surface)
+# Resources (SDK API Surface)
 
-The table matches the AF registry; OpenAPI paths are under `/v1/namespaces/{tenant_meta.namespace}/<segment>` (source of truth: [registry.py](../../src/endorlabs/registry.py) and the spec). The AF exposes all operations; see `endorlabs.resources.<name>` and docstrings for signatures, return types, and raised exceptions.
+The table matches the SDK registry; OpenAPI paths are under `/v1/namespaces/{tenant_meta.namespace}/<segment>` (source of truth: [registry.py](../../src/endorlabs/registry.py) and the spec). The SDK exposes all operations; see `endorlabs.resources.<name>` and docstrings for signatures, return types, and raised exceptions.
 
 **Update:** For resources with Update = yes, `update_mask` is **required** (comma-separated field paths). Sparse PATCH is always used.
 

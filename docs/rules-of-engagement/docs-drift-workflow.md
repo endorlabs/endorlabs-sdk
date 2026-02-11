@@ -69,7 +69,7 @@ Check an existing report without re-running tests:
 python .github/scripts/detect_schema_drift.py --check-existing
 ```
 
-**Model consistency (static):** Diff AF Pydantic field paths vs OpenAPI definitions (no test run). Run: `uv run python .github/scripts/detect_schema_drift.py --model-consistency --output-format json`. Writes `model_consistency_report.json` (uses `.endorlabs-context/openapiv2.swagger.json` if present, else fetches spec).
+**Model consistency (static):** Diff SDK Pydantic field paths vs OpenAPI definitions (no test run). Run: `uv run python .github/scripts/detect_schema_drift.py --model-consistency --output-format json`. Writes `model_consistency_report.json` (uses `.endorlabs-context/openapiv2.swagger.json` if present, else fetches spec).
 
 ## Scripts
 

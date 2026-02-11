@@ -359,7 +359,7 @@ def _build_exception_tags(
     cwe_list: list[str] | None,
 ) -> list[str]:
     """Build policy tags for an exception policy."""
-    tags = ["exception", "endor-cockpit"]
+    tags = ["exception", "endorlabs-sdk"]
     if tag:
         tags.append(tag)
     if finding_tag:

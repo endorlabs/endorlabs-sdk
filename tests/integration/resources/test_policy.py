@@ -85,7 +85,7 @@ class TestPolicy:
                     "A test EXCEPTION policy created for CRUD operations testing "
                     "(using maneuver format to avoid API 500 errors)"
                 ),
-                tags=["test", "exception", "crud-test", "endor-cockpit"],
+                tags=["test", "exception", "crud-test", "endorlabs-sdk"],
             ),
             spec=policy.PolicySpec(
                 policy_type=PolicyType.EXCEPTION,

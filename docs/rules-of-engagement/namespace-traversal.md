@@ -119,7 +119,7 @@ class ListParameters(BaseModel):
 
 ### API Mapping
 
-The AF maps `traverse=True` to the API parameter `list_parameters.traverse=true`.
+The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true`.
 
 ### Migration from include_child_namespaces
 
