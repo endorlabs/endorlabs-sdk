@@ -36,7 +36,10 @@ POLICY_DESCRIPTION = (
     f"Keyless authentication for GitHub Actions from the {GITHUB_ORG} org. "
     "Grants CODE_SCANNER role via GitHub OIDC identity provider."
 )
-OIDC_CLAUSE = f"user={GITHUB_ORG}"
+# Clause items: the user claim AND the built-in GitHub Action OIDC identity
+# provider identifier. All clause items use AND logic; both must match.
+OIDC_CLAIM = f"user={GITHUB_ORG}"
+OIDC_IDP = "github-action"
 ROLE = SystemRole.CODE_SCANNER
 
 
@@ -47,12 +50,16 @@ def main() -> None:
         print("ERROR: ENDOR_NAMESPACE environment variable is required.")
         sys.exit(1)
 
-    # Use the root (tenant) namespace for the policy so it covers all children
+    # Use the root (tenant) namespace for the policy so it covers all children.
+    # target_namespaces includes both root and the CI namespace (if different)
+    # to ensure the OIDC identity has access to the namespace endorctl targets.
     tenant_root = namespace.split(".")[0]
+    target_ns = sorted({tenant_root, namespace})
 
     print(f"Namespace (tenant root): {tenant_root}")
+    print(f"Target namespaces:       {target_ns}")
     print(f"GitHub org:              {GITHUB_ORG}")
-    print(f"Clause:                  {OIDC_CLAUSE}")
+    print(f"Clause:                  [{OIDC_CLAIM}, {OIDC_IDP}]")
     print(f"Role:                    {ROLE.value}")
     print()
 
@@ -68,11 +75,12 @@ def main() -> None:
     )
     if existing:
         policy = existing[0]
-        print(f"Policy already exists — skipping creation.")
+        print("Policy already exists — skipping creation.")
         print(f"  UUID:       {policy.uuid}")
         print(f"  Name:       {policy.meta.name}")
         if policy.spec:
             print(f"  Clause:     {policy.spec.clause}")
+            print(f"  Targets:    {policy.spec.target_namespaces}")
             print(f"  Propagate:  {policy.spec.propagate}")
         return
 
@@ -83,8 +91,8 @@ def main() -> None:
             description=POLICY_DESCRIPTION,
         ),
         spec=AuthorizationPolicySpec(
-            clause=[OIDC_CLAUSE],
-            target_namespaces=[tenant_root],
+            clause=[OIDC_CLAIM, OIDC_IDP],
+            target_namespaces=target_ns,
             propagate=True,
             permissions=AuthorizationPolicyPermissions(
                 roles=[ROLE.value],
