@@ -9,9 +9,9 @@ import logging
 import types
 from typing import Any, Self
 
-from ...api_client import APIClient
-from ...resources.finding import Finding, FindingCategory
-from ...resources.semgrep_rule import SemgrepRule
+from ..api_client import APIClient
+from ..resources.finding import Finding, FindingCategory
+from ..resources.semgrep_rule import SemgrepRule
 from .database import FindingDatabase
 
 logger = logging.getLogger(__name__)
@@ -48,14 +48,16 @@ class FindingDataLoader:
             List of Finding objects
 
         """
-        from ...resources.finding import list_findings
+        from ..operations import BaseResourceOperations
+        from ..resources.finding import Finding
 
         logger.info(f"Loading findings from API for namespace: {namespace}")
         findings = []
 
         try:
             # Filter for SAST findings
-            all_findings = list_findings(client, namespace)
+            ops = BaseResourceOperations(client, "findings", Finding)
+            all_findings = ops.list(namespace)
             for finding in all_findings:
                 # Check if it's a SAST finding
                 if (
@@ -87,13 +89,15 @@ class FindingDataLoader:
             List of SemgrepRule objects
 
         """
-        from ...resources.semgrep_rule import list_semgrep_rules
+        from ..operations import BaseResourceOperations
+        from ..resources.semgrep_rule import SemgrepRule
 
         logger.info(f"Loading rules from API for namespace: {namespace}")
-        rules = []
+        rules: list[SemgrepRule] = []
 
         try:
-            rules = list_semgrep_rules(client, namespace)
+            ops = BaseResourceOperations(client, "semgrep-rules", SemgrepRule)
+            rules = ops.list(namespace)
             logger.info(f"Loaded {len(rules)} rules from API")
         except Exception as e:
             logger.error(f"Error loading rules from API: {e}", exc_info=True)
@@ -237,7 +241,7 @@ class FindingDataLoader:
                 return "java"
             elif file_path.endswith(".py"):
                 return "python"
-            elif file_path.endswith(".js") or file_path.endswith(".ts"):
+            elif file_path.endswith((".js", ".ts")):
                 return "javascript"
             elif file_path.endswith(".go"):
                 return "go"

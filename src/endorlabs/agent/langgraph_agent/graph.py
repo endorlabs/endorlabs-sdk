@@ -120,7 +120,7 @@ def create_endor_graph(
     Example:
         >>> from langchain_openai import ChatOpenAI
         >>> from endorlabs import Client
-        >>> from endorlabs.experimental.langgraph_agent import create_endor_graph
+        >>> from endorlabs.agent.langgraph_agent import create_endor_graph
         >>>
         >>> client = Client(tenant="my.namespace")
         >>> llm = ChatOpenAI(model="gpt-4o")

@@ -11,7 +11,7 @@ Tools for loading findings/rules from API and querying via SQL.
 Demonstrates loading findings and Opengrep/Semgrep rules from the Endor API and persisting to SQLite.
 
 ```python
-from endorlabs.experimental.sast_analysis import FindingDataLoader
+from endorlabs.sast_analysis import FindingDataLoader
 from endorlabs.api_client import APIClient
 
 client = APIClient()
@@ -29,7 +29,7 @@ loader.save_rules_to_db(rules)
 Demonstrates querying persisted findings and rules by rule ID and label.
 
 ```python
-from endorlabs.experimental.sast_analysis import FindingDatabase
+from endorlabs.sast_analysis import FindingDatabase
 
 with FindingDatabase(".tmp/findings_correlation.db") as db:
     results = db.execute_query(

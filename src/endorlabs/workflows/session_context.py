@@ -500,7 +500,7 @@ def write_session_artifacts(
                 versions-summary.md
                 versions.json
     """
-    from endorlabs.experimental.dependency_explorer import slugify
+    from endorlabs.tools.dependency_explorer import slugify
 
     session_dir = Path(session_dir)
     project_name = project.meta.name if project.meta else project.uuid

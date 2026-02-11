@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from endorlabs.experimental.workflows.threat_analysis import (
+from endorlabs.workflows.threat_analysis import (
     ThreatModelResult,
     _count_metrics,
     analyze_project_threat_model,
