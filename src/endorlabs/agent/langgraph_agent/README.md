@@ -9,13 +9,13 @@ A LangGraph-based agent that enables natural language interaction with the Endor
 Install with the agent dependencies:
 
 ```bash
-pip install endor-cockpit[agent]
+pip install endorlabs-sdk[agent]
 ```
 
 Or with uv:
 
 ```bash
-uv add endor-cockpit --extra agent
+uv add endorlabs-sdk --extra agent
 ```
 
 ## Quick Start

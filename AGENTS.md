@@ -1,11 +1,11 @@
-# Endor Cockpit: AI Agent Integration Guide
+# Endor Labs SDK: AI Agent Integration Guide
 
-> **Endor Cockpit**: Navigate the Endor Labs platform with tactical precision. This guide is the index for AI agents; behavior is defined by `.cursor/rules` and the linked docs.
+> **Endor Labs SDK**: Navigate the Endor Labs platform with tactical precision. This guide is the index for AI agents; behavior is defined by `.cursor/rules` and the linked docs.
 
-## Consuming the AF
+## Consuming the SDK
 
 - **Python:** 3.11+ required; CI and releases are tested on 3.13 only.
-- **Install:** `uv add endor-cockpit` or, in this repo, `uv sync`.
+- **Install:** `uv add endorlabs-sdk` or, in this repo, `uv sync`.
 - **Entry point:** `endorlabs.Client(tenant="...")`; then `client.namespace.list(traverse=True)`, `client.project.get(uuid)`, etc. **Create:** use `client.<resource>.create(name="...", namespace="...", ...)` (kwargs) or `create(payload=CreateXPayload(...))` (payload-based create). See [Architecture](#architecture) below.
 - **Client options:** You can pass `timeout`, `content_type`, `accept_encoding`, `max_retries`, `base_url` to `Client(...)` to control transport; other APIClient options go via `**client_kwargs`. Use `content_type="application/json"` if compact responses cause validation issues.
 - **Advanced / transport-only:** `APIClient()` from `endorlabs.api_client` is available for custom HTTP usage, but all resource operations should go through `Client`.
@@ -38,7 +38,7 @@ print(status.user_docs_count)  # number of docs downloaded
 
 **Requirements:**
 - Authentication: `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET` env vars (or `ENDOR_TOKEN`)
-- Dependencies: `pip install endor-cockpit[context]`
+- Dependencies: `pip install endorlabs-sdk[context]`
 
 **Options:**
 - `output_dir`: Where to save files (default: `.endorlabs-context`)
@@ -78,14 +78,14 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 
 | Rule | When it applies |
 |------|------------------|
-| **endor-cockpit-core.mdc** | Always (project context and critical requirements) |
+| **endorlabs-sdk-core.mdc** | Always (project context and critical requirements) |
 | **tdd.mdc** | Always (TDD protocol, quality gate, zero-regression requirement) |
 | **code-review.mdc** | Always (agent self-review checklist before committing) |
 | **security.mdc** | When editing `src/endorlabs/**` (credential handling, network safety, dangerous ops) |
 | **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
 | **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
 | **api-workflow.mdc** | When editing models, resources, or OpenAPI spec |
-| **troubleshooting.mdc** | When debugging AF/integration failures or editing troubleshooting docs |
+| **troubleshooting.mdc** | When debugging SDK/integration failures or editing troubleshooting docs |
 
 Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in the docs below. Troubleshooting workflow: troubleshooting.mdc and [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
 
@@ -128,9 +128,9 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | Skill | When to use |
 |-------|-------------|
 | [custom-sast-rules](.cursor/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
-| [implement-af-resource](.cursor/skills/implement-af-resource/) | Adding a new resource to the AF (models, operations, registry, tests) |
+| [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
 | [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
-| [troubleshoot-af](.cursor/skills/troubleshoot-af/) | Debugging 404s, 500s, namespace mismatches, test failures |
+| [troubleshoot-sdk](.cursor/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
 
 Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
 

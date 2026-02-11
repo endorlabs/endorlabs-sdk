@@ -1,4 +1,4 @@
-"""Type definitions for Endor Cockpit SDK.
+"""Type definitions for Endor Labs SDK.
 
 This module provides common type definitions used across the SDK
 for enhanced type safety and LLM understanding.

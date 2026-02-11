@@ -1,15 +1,15 @@
 ---
-name: implement-af-resource
+name: implement-sdk-resource
 description: >-
-  Implement a new Endor Labs resource in the AF: API analysis, Pydantic
+  Implement a new Endor Labs resource in the SDK: API analysis, Pydantic
   models, CRUD operations, registry entry, and tests. Use when adding a new
   resource type, implementing list/get/create/update/delete for a resource,
   or extending the Client surface with a new facade.
 ---
 
-# Implement a New AF Resource
+# Implement a New SDK Resource
 
-Phased workflow for adding a new Endor Labs resource to the AF. Every resource
+Phased workflow for adding a new Endor Labs resource to the SDK. Every resource
 follows the same two-layer, registry-driven pattern.
 
 ## Phase 0: API Analysis (mandatory)

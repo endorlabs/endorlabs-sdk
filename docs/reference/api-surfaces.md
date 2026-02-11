@@ -1,12 +1,12 @@
 # API Surfaces
 
-This document defines the three supported API surfaces for the Endor Cockpit Agentic Framework. Every symbol in each surface **must** have full type annotations (parameters, returns, attributes) and docstrings. No assumptions; explicit contracts only.
+This document defines the three supported API surfaces for the Endor Labs SDK. Every symbol in each surface **must** have full type annotations (parameters, returns, attributes) and docstrings. No assumptions; explicit contracts only.
 
 See [resources.md](resources.md) for per-resource operations and [namespace.md](namespace.md) for namespace scoping.
 
 ---
 
-## 1. Developer surface (primary AF users)
+## 1. Developer surface (primary SDK users)
 
 **Contract:** Everything reachable via `import endorlabs` and `from endorlabs import X` — i.e. the names in [src/endorlabs/__init__.py](../../src/endorlabs/__init__.py) `__all__` — plus attributes and methods on those objects.
 
@@ -41,7 +41,7 @@ See [resources.md](resources.md) for per-resource operations and [namespace.md](
 | `repository` | Module | N/A | Module docstring |
 | `repository_version` | Module | N/A | Module docstring |
 
-Note: `__version__` is public but not in `__all__`; consider adding it if part of the stable AF surface.
+Note: `__version__` is public but not in `__all__`; consider adding it if part of the stable SDK surface.
 
 ### Client
 

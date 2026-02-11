@@ -8,8 +8,8 @@ Endor Labs API using natural language queries. The agent uses a
 Plan-Execute-Reflect pattern for multi-step reasoning with tools that
 wrap SDK operations.
 
-Requires the 'experimental' optional dependencies:
-    pip install endor-cockpit[experimental]
+Requires the 'agent' optional dependencies:
+    pip install endorlabs-sdk[agent]
 """
 
 try:
@@ -35,14 +35,14 @@ except ImportError as e:
         """Raise ImportError with installation instructions."""
         raise ImportError(
             "LangGraph dependencies not installed. "
-            "Install with: pip install endor-cockpit[experimental]"
+            "Install with: pip install endorlabs-sdk[agent]"
         ) from _import_error
 
     def create_tools(*args, **kwargs):  # type: ignore[misc]
         """Raise ImportError with installation instructions."""
         raise ImportError(
             "LangGraph dependencies not installed. "
-            "Install with: pip install endor-cockpit[experimental]"
+            "Install with: pip install endorlabs-sdk[agent]"
         ) from _import_error
 
 

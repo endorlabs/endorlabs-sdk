@@ -5,7 +5,7 @@ This test validates the complete workflow described in docs/retrieving-scan-resu
 2. Get most recent ScanResult for Project
 3. Get Findings from ScanResult
 
-Tests against: https://github.com/Endor-Solutions-Architecture/endor-cockpit.git
+Tests against: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
 """
 
 import os
@@ -28,7 +28,7 @@ class TestRetrievingScanResultsWorkflow:
         self.namespace = namespace
         self.repo_url = os.getenv(
             "TEST_REPO_URL",
-            "https://github.com/Endor-Solutions-Architecture/endor-cockpit.git",
+            "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
         )
 
     def _find_project_by_repo_url(self) -> str:

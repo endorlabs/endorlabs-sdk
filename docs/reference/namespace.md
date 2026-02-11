@@ -1,6 +1,6 @@
-# Namespace (AF)
+# Namespace (SDK)
 
-Namespace in the AF: list, get, create, update, delete. Parameters use canonical name and UUID. Full platform concepts (hierarchy, tenant isolation): [docs.endorlabs.com](https://docs.endorlabs.com/).
+Namespace in the SDK: list, get, create, update, delete. Parameters use canonical name and UUID. Full platform concepts (hierarchy, tenant isolation): [docs.endorlabs.com](https://docs.endorlabs.com/).
 
 ## Operations
 

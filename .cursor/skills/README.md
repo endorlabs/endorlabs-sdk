@@ -1,6 +1,6 @@
 # Agent Skills
 
-Modular, on-demand workflow packages for AI agents working with the Endor Cockpit Agentic Framework. Each skill is a directory containing a `SKILL.md` (condensed workflow) and optional reference files (loaded only when needed).
+Modular, on-demand workflow packages for AI agents working with the Endor Labs SDK. Each skill is a directory containing a `SKILL.md` (condensed workflow) and optional reference files (loaded only when needed).
 
 These skills follow the cross-compatible format supported by both [Cursor](https://docs.cursor.com) and [Anthropic Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview).
 
@@ -9,9 +9,9 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
 | [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | `docs/guides/` (SAST series) |
-| [implement-af-resource](implement-af-resource/) | Adding a new Endor Labs resource to the AF | `docs/rules-of-engagement/` |
+| [implement-sdk-resource](implement-sdk-resource/) | Adding a new Endor Labs resource to the SDK | `docs/rules-of-engagement/` |
 | [retrieve-scan-results](retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/rules-of-engagement/` |
-| [troubleshoot-af](troubleshoot-af/) | Debugging AF errors, 404s, 500s, or test failures | `docs/rules-of-engagement/` |
+| [troubleshoot-sdk](troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/rules-of-engagement/` |
 
 ## How Loading Works
 

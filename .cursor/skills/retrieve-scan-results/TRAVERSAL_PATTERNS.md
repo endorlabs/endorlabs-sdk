@@ -1,6 +1,6 @@
 # Namespace Traversal Patterns
 
-Traverse and list parameters for tenant-wide queries in the Endor Labs Agentic Framework.
+Traverse and list parameters for tenant-wide queries in the Endor Labs SDK.
 
 ---
 
@@ -164,7 +164,7 @@ recent_scans = client.scan_result.list(
 ## Namespace Scoping After Traverse
 
 When you act on objects returned from `list(traverse=True)`, pass the
-**resource object** to `get`, `update`, or `delete`. The AF uses
+**resource object** to `get`, `update`, or `delete`. The SDK uses
 `resource.tenant_meta.namespace` to set the correct path:
 
 ```python
@@ -180,7 +180,7 @@ returns `resource.tenant_meta.namespace` when present, else `fallback`.
 
 ## API Mapping
 
-The AF maps `traverse=True` to the API parameter `list_parameters.traverse=true`.
+The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true`.
 
 ## References
 

@@ -1,4 +1,4 @@
-"""Pytest configuration and shared constants for Endor Cockpit tests.
+"""Pytest configuration and shared constants for Endor Labs SDK tests.
 
 Root conftest: environment loading, logging setup, and constants shared
 across both unit and integration test suites.

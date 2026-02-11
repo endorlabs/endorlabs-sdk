@@ -1,6 +1,6 @@
 # Rules of Engagement
 
-For contributors and AI agents: process and checklists for implementing and validating AF resources. See [docs/README.md](../README.md) for the full docs index. Resource implementation and troubleshooting are also available as Agent Skills: [.cursor/skills/implement-af-resource/](../../.cursor/skills/implement-af-resource/), [.cursor/skills/troubleshoot-af/](../../.cursor/skills/troubleshoot-af/).
+For contributors and AI agents: process and checklists for implementing and validating SDK resources. See [docs/README.md](../README.md) for the full docs index. Resource implementation and troubleshooting are also available as Agent Skills: [.cursor/skills/implement-sdk-resource/](../../.cursor/skills/implement-sdk-resource/), [.cursor/skills/troubleshoot-sdk/](../../.cursor/skills/troubleshoot-sdk/).
 
 - [architecture.md](architecture.md) — Two-layer, registry-driven design; client surface, facade, registry; when adding resources to the Client.
 - [resource-implementation.md](resource-implementation.md) — Checklists for adding a new resource; see [conventions.md](../conventions.md).

@@ -1,37 +1,37 @@
-# Endor Cockpit
+# Endor Labs SDK
 
-[![Python CI](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml/badge.svg)](https://github.com/endor-solutions-architecture/endor-cockpit/actions/workflows/ci.yml)
+[![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci.yml)
 
-Endor Agentic Framework (AF) for the Endor Labs security platform. A Python package that deploys Cursor/Anthropic skills with the APIs to use them — providing a type-safe, resource-oriented client for the Endor Labs REST API: list, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and others) with consistent patterns for filtering, pagination, and namespace traversal.
+Endor Labs SDK for the Endor Labs security platform. A Python package that deploys Cursor/Anthropic skills with the APIs to use them — providing a type-safe, resource-oriented client for the Endor Labs REST API: list, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and others) with consistent patterns for filtering, pagination, and namespace traversal.
 
-- **Python:** 3.13
+- **Python:** 3.12+
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
 - **Platform docs:** [docs.endorlabs.com](https://docs.endorlabs.com/)
 
 ## Installation
 
 ```bash
-pip install endor-cockpit
+pip install endorlabs-sdk
 ```
 
 Or with [uv](https://github.com/astral-sh/uv):
 
 ```bash
-uv add endor-cockpit
+uv add endorlabs-sdk
 ```
 
 From the repository (editable):
 
 ```bash
-git clone https://github.com/endor-solutions-architecture/endor-cockpit.git
-cd endor-cockpit
+git clone https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
+cd endorlabs-sdk
 uv sync
 # or: pip install -e .
 ```
 
 ## Configuration
 
-The AF uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.
+The SDK uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.
 
 | Variable | Purpose |
 |----------|---------|
@@ -81,7 +81,7 @@ for p in projects:
 
 # Filter and limit pages
 projects = client.project.list(
-    filter="meta.name==https://github.com/Endor-Solutions-Architecture/endor-cockpit.git",
+    filter="meta.name==https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
     max_pages=1,
 )
 

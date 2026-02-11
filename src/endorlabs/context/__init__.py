@@ -5,7 +5,7 @@ This module provides functionality to download Endor Labs context
 
 Requires authentication via APIClient and optional dependencies::
 
-    pip install endor-cockpit[context]
+    pip install endorlabs-sdk[context]
 
 Example::
 

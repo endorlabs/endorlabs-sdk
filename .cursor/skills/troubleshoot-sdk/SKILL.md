@@ -1,30 +1,30 @@
 ---
-name: troubleshoot-af
+name: troubleshoot-sdk
 description: >-
-  Debug Endor Labs AF errors, API failures, and test issues. Use when
+  Debug Endor Labs SDK errors, API failures, and test issues. Use when
   encountering 404 Not Found after traverse, 500 Server Error on list,
   "Spec is not full" errors, update_mask validation failures, namespace
   mismatches, or unexpected test skips. Covers platform-specific gotchas
   and resolution patterns.
 ---
 
-# Troubleshoot AF Issues
+# Troubleshoot SDK Issues
 
-Systematic workflow for diagnosing and resolving Endor Labs Agentic Framework and API
+Systematic workflow for diagnosing and resolving Endor Labs SDK and API
 integration failures.
 
 ## Workflow
 
 1. **Document** -- capture the task, context, approach, and full error (including stack trace and `response.text`).
 2. **Research** -- search codebase, docs, and API spec. Spec URL: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
-3. **Investigate** -- read AF code and spec; test with `endorctl`; validate theories with live API calls.
+3. **Investigate** -- read SDK code and spec; test with `endorctl`; validate theories with live API calls.
 4. **Resolve** -- implement fix; document signatures and learnings.
 
 ## Common Issues and Solutions
 
 ### 404 Not Found after `list(traverse=True)`
 
-**Cause:** When you list with traverse and then call `get`/`update`/`delete` using just the UUID, the AF uses the client's default namespace. If the resource lives in a child namespace, the path won't match.
+**Cause:** When you list with traverse and then call `get`/`update`/`delete` using just the UUID, the SDK uses the client's default namespace. If the resource lives in a child namespace, the path won't match.
 
 **Fix:** Pass the **resource object** instead of just a UUID:
 
@@ -36,14 +36,14 @@ client.project.delete(target)
 client.project.delete(target.uuid)
 ```
 
-The AF extracts the namespace from `resource.tenant_meta.namespace`.
+The SDK extracts the namespace from `resource.tenant_meta.namespace`.
 
 ### 500 Server Error: "Spec is not full" / "not fully defined"
 
 **Cause:** The backend may return 500 with messages like `FindingSpec is not full` when listing at certain namespaces (e.g., tenant root).
 
 **Resolution:**
-- If the API returns 5xx, the AF is correct to surface it as `ServerError`
+- If the API returns 5xx, the SDK is correct to surface it as `ServerError`
 - Try listing at a child namespace instead
 - Use `mask` to request only the fields you need
 
@@ -77,7 +77,7 @@ ns.update(client.namespace, meta_description="new description")
 
 **Cause:** List responses may omit spec-required fields when using `mask` or at certain scopes. The OpenAPI spec describes the full resource, but list is not guaranteed to return every field.
 
-**Leniency:** The AF handles this for known cases:
+**Leniency:** The SDK handles this for known cases:
 - `Finding.context` -- optional when list response omits it
 - `Project.spec.platform_source` -- optional when list mask omits it
 - `BaseMeta.name` -- optional when list mask omits it
@@ -88,7 +88,7 @@ ns.update(client.namespace, meta_description="new description")
 
 Resources `authentication_log`, `endor_license`, and `policy_template` are system-owned. LIST is allowed, but GET/UPDATE/DELETE return 403.
 
-The AF Client exposes `list()` only for these. Calling `get`/`update`/`delete` raises `NotImplementedError`.
+The SDK Client exposes `list()` only for these. Calling `get`/`update`/`delete` raises `NotImplementedError`.
 
 ## Test Debugging
 

@@ -39,8 +39,8 @@ dotenv
 ### Dependencies
 
 ```bash
-uv sync            # Installs the AF and all dependencies
-pip install pyyaml # If not already available (included in AF extras)
+uv sync            # Installs the SDK and all dependencies
+pip install pyyaml # If not already available (included in SDK extras)
 ```
 
 ### Validated rule YAML
@@ -246,7 +246,7 @@ matches `v1SemgrepRuleMeta` from the Endor Labs API spec.
 | `display-name` | Human-readable rule name |
 | `endor-attack-examples` | `[https://example.com/attack]` |
 | `endor-category` | `code-quality` |
-| `endor-rule-origin` | `endor-cockpit` |
+| `endor-rule-origin` | `endorlabs-sdk` |
 | `endor-tags` | `[credential-protection, trust-chain.id:my-chain]` |
 | `endor-targets` | `[src/endorlabs/]` |
 | `explanation` | Extended explanation for findings |
@@ -290,7 +290,7 @@ fail with an explicit error listing the unknown key(s).
 
 ---
 
-## AF Types Involved
+## SDK Types Involved
 
 The SAST Rule Manager uses these types from `endorlabs.resources.semgrep_rule`:
 
@@ -353,7 +353,7 @@ elif isinstance(parsed, dict) and "rules" in parsed:
 
 ### Client-side validation may reject valid rules
 
-The AF's Pydantic model for `SemgrepNativeRule` does not represent
+The SDK's Pydantic model for `SemgrepNativeRule` does not represent
 all Semgrep pattern operators. A rule using `patterns` with
 `pattern-not-inside` will fail client-side validation even though the
 API accepts it fine.

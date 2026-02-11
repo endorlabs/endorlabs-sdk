@@ -1,4 +1,4 @@
-"""Polling utilities for the Endor Cockpit SDK.
+"""Polling utilities for the Endor Labs SDK.
 
 Provides wait_until for blocking until a predicate becomes true with
 jittered exponential backoff and configurable timeout.
