@@ -32,8 +32,8 @@ class TestPagination:
         client.get_all = Mock(return_value=iter(items))
         return client
 
-    def test_pagination_with_mock_data(self) -> None:
-        """Test pagination with 1 page, 1 count limit."""
+    def test_pagination_single_item(self) -> None:
+        """Pagination with 1 item returns 1 model; get_all called once."""
         items = [{"uuid": "1", "meta": {"name": "item1"}}]
         client = self._make_client_with_items(items)
 
@@ -46,52 +46,6 @@ class TestPagination:
 
         assert len(results) == 1, f"Expected 1 item, got {len(results)}"
         assert results[0].uuid == "1"
-        client.get_all.assert_called_once()
-
-    def test_pagination_with_max_pages_limit(self) -> None:
-        """Test pagination stops at max_pages (1 page, 1 count)."""
-        items = [{"uuid": "1", "meta": {"name": "item1"}}]
-        client = self._make_client_with_items(items)
-
-        ops = BaseResourceOperations(client, "test-resources", Mock)
-        results = ops.list(
-            "test.namespace",
-            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-            max_pages=TEST_MAX_PAGES,
-        )
-
-        assert len(results) == 1, f"Expected 1 item, got {len(results)}"
-        client.get_all.assert_called_once()
-
-    def test_pagination_with_list_parameters_max_pages(self) -> None:
-        """Test pagination with ListParameters and max_pages (1 page, 1 count)."""
-        items = [{"uuid": "1", "meta": {"name": "item1"}}]
-        client = self._make_client_with_items(items)
-
-        list_params = ListParameters(page_size=TEST_PAGE_SIZE)
-        ops = BaseResourceOperations(client, "test-resources", Mock)
-        results = ops.list(
-            "test.namespace",
-            list_params=list_params,
-            max_pages=TEST_MAX_PAGES,
-        )
-
-        assert len(results) == 1, f"Expected 1 item, got {len(results)}"
-        client.get_all.assert_called_once()
-
-    def test_pagination_with_no_pages(self) -> None:
-        """Test pagination with single page (no next_page_token), 1 page 1 count."""
-        items = [{"uuid": "1", "meta": {"name": "item1"}}]
-        client = self._make_client_with_items(items)
-
-        ops = BaseResourceOperations(client, "test-resources", Mock)
-        results = ops.list(
-            "test.namespace",
-            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-            max_pages=TEST_MAX_PAGES,
-        )
-
-        assert len(results) == 1, f"Expected 1 item, got {len(results)}"
         client.get_all.assert_called_once()
 
     def test_pagination_with_empty_response(self) -> None:
