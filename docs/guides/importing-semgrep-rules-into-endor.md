@@ -39,8 +39,8 @@ dotenv
 ### Dependencies
 
 ```bash
-uv sync            # Installs the AF and all dependencies
-pip install pyyaml # If not already available (included in AF extras)
+uv sync            # Installs the SDK and all dependencies
+pip install pyyaml # If not already available (included in SDK extras)
 ```
 
 ### Validated rule YAML
@@ -154,7 +154,7 @@ uv run python maneuvers/export_semgrep_rule.py \
 
 ---
 
-## AF Types Involved
+## SDK Types Involved
 
 The import maneuver uses these types from `endorlabs.resources.semgrep_rule`:
 
@@ -215,7 +215,7 @@ elif isinstance(parsed, dict) and "rules" in parsed:
 
 ### Client-side validation may reject valid rules
 
-The AF's Pydantic model for `SemgrepNativeRule` does not represent
+The SDK's Pydantic model for `SemgrepNativeRule` does not represent
 all Semgrep pattern operators.  A rule using `patterns` with
 `pattern-not-inside` will fail client-side validation even though the
 API accepts it fine.
@@ -309,5 +309,5 @@ After importing, verify end-to-end:
 - [Authoring OpenGrep Rules](authoring-opengrep-rules.md)
 - [OpenGrep Rule Syntax Reference](opengrep-rule-syntax-reference.md)
 - [Threat Modeling for SAST Rules](threat-modeling-for-sast-rules.md)
-- [docs/reference/resources.md](../reference/resources.md) -- AF resource operations
-- [docs/conventions.md](../conventions.md) -- AF naming and API conventions
+- [docs/reference/resources.md](../reference/resources.md) -- SDK resource operations
+- [docs/conventions.md](../conventions.md) -- SDK naming and API conventions

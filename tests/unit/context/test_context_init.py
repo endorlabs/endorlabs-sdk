@@ -298,7 +298,7 @@ class TestContextDepsCheck:
                 "_import_docs_deps",
                 side_effect=ImportError(
                     "Context dependencies not installed. "
-                    "Install with: pip install endor-cockpit[context]"
+                    "Install with: pip install endorlabs-sdk[context]"
                 ),
             ),
             pytest.raises(ImportError, match="Context dependencies not installed"),

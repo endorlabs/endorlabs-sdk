@@ -46,7 +46,7 @@ def _import_docs_deps() -> tuple[Any, Callable[..., str]]:
     except ImportError as e:
         raise ImportError(
             "Context dependencies not installed. "
-            "Install with: pip install endor-cockpit[context]"
+            "Install with: pip install endorlabs-sdk[context]"
         ) from e
 
 
@@ -252,7 +252,7 @@ def sync_user_docs(
     """Download user documentation pages and convert to markdown.
 
     This is the synchronous wrapper for user docs download.
-    Requires: pip install endor-cockpit[context]
+    Requires: pip install endorlabs-sdk[context]
 
     Args:
         output_dir: Directory to save markdown files.

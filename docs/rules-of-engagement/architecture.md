@@ -1,6 +1,6 @@
 # Architecture Rules of Engagement
 
-Two-layer, registry-driven design for the Endor Agentic Framework. Use this when editing the client surface, facade, or registry, or when adding resources to the Client. See [AGENTS.md](../../AGENTS.md) (Architecture) and [.cursor/rules/architecture.mdc](../../.cursor/rules/architecture.mdc) for the short reference.
+Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing the client surface, facade, or registry, or when adding resources to the Client. See [AGENTS.md](../../AGENTS.md) (Architecture) and [.cursor/rules/architecture.mdc](../../.cursor/rules/architecture.mdc) for the short reference.
 
 ## Layers
 

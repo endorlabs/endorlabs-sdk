@@ -1,4 +1,4 @@
-"""Custom exception classes for Endor Cockpit SDK.
+"""Custom exception classes for Endor Labs SDK.
 
 These exceptions provide structured error handling and allow callers to
 distinguish between different types of API errors.

@@ -24,9 +24,9 @@ Identify what custom rules the codebase needs before writing any YAML.
 
    Focus SAST rules on TRANSIT and EXIT (accidental exposure).
 
-3. **CWE checklist** -- for Agentic Frameworks/libraries, prioritize: CWE-798 (hardcoded creds), CWE-532 (log leaks), CWE-209 (error exposure), CWE-311 (missing encryption), CWE-319 (cleartext transmission), CWE-94 (code injection).
+3. **CWE checklist** -- for SDKs/libraries, prioritize: CWE-798 (hardcoded creds), CWE-532 (log leaks), CWE-209 (error exposure), CWE-311 (missing encryption), CWE-319 (cleartext transmission), CWE-94 (code injection).
 
-4. **Presence vs absence** -- most rules detect the *presence* of something dangerous. The highest-impact AF rules detect the *absence* of something safe (e.g., logger without redaction filter). Absence rules use `pattern` + `pattern-not-inside`.
+4. **Presence vs absence** -- most rules detect the *presence* of something dangerous. The highest-impact SDK rules detect the *absence* of something safe (e.g., logger without redaction filter). Absence rules use `pattern` + `pattern-not-inside`.
 
 5. **Capture as spec** before writing YAML:
 
@@ -118,7 +118,7 @@ uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
 | `configure` | Enable rules from one dir, disable all others |
 | `sync` | Full lifecycle: delete -> orphans -> import -> configure |
 
-For AF types, API constraints, validation guardrails, and export workflow, see [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
+For SDK types, API constraints, validation guardrails, and export workflow, see [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
 
 ## Phase 5: Verify
 

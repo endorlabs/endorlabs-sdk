@@ -1,4 +1,4 @@
-"""Endor Labs Agentic Framework Demo — agent-first CLI.
+"""Endor Labs SDK Demo — agent-first CLI.
 
 Zero-prompt startup: auto-authenticates from environment, loads tenant
 catalog eagerly, pulls per-project context in the background, spawns
@@ -118,7 +118,7 @@ def _print_banner(tenant: str, user: str) -> None:
             from rich.text import Text
 
             body = Text()
-            body.append("Endor Labs Agentic Framework Demo\n", style="bold")
+            body.append("Endor Labs SDK Demo\n", style="bold")
             body.append(f"Tenant: {tenant}\n", style="dim")
             body.append(f"User:   {user}", style="dim")
             con.print(Panel(body, expand=False, border_style="cyan"))
@@ -130,7 +130,7 @@ def _print_banner(tenant: str, user: str) -> None:
     width = min(shutil.get_terminal_size().columns, 60)
     border = "=" * width
     print(f"\n{border}")
-    print("  Endor Labs Agentic Framework Demo")
+    print("  Endor Labs SDK Demo")
     print(f"  Tenant: {tenant}")
     print(f"  User:   {user}")
     print(f"{border}\n")
@@ -295,7 +295,7 @@ class BackgroundContextLoader:
                     name = proj.meta.name if proj.meta else proj.uuid
                     self._emit(f"  {name}: unexpected error — {exc}")
 
-        self._emit("  [bold green]Ready AF[/bold green]")
+        self._emit("  [bold green]Ready[/bold green]")
 
     def _load_one(self, proj: Any) -> None:
         """Load context for a single project (runs in a worker thread)."""
@@ -506,7 +506,7 @@ def _chat_loop(
     except ImportError:
         _log(
             "\n  LangGraph dependencies not installed."
-            "\n  Install with: pip install endor-cockpit[experimental]"
+            "\n  Install with: pip install endorlabs-sdk[agent]"
             "\n  Exiting.",
             style="bold red",
         )
@@ -651,7 +651,7 @@ def _chat_loop(
 
 
 def main() -> None:
-    """Endor Labs Agentic Framework Demo entry point."""
+    """Endor Labs SDK Demo entry point."""
     _load_dotenv()
 
     logging.basicConfig(

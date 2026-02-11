@@ -47,7 +47,7 @@ def main() -> None:
                     "Compare the last two or more Scan Logs to help"
                     " me troubleshoot scan errors for the"
                     " https://github.com/Endor-Solutions-Architecture"
-                    "/endor-cockpit.git project",
+                    "/endorlabs-sdk.git project",
                 )
             ]
         }

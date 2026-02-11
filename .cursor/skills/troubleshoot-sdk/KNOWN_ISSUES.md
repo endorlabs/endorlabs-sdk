@@ -1,6 +1,6 @@
 # Known Issues and Test Cleanup
 
-Expanded reference for recurring AF issues, test skip analysis, and resource
+Expanded reference for recurring SDK issues, test skip analysis, and resource
 cleanup after test runs.
 
 ---
@@ -14,13 +14,13 @@ path** (e.g., create scan-log-request with `scan_result_uuid`), the path
 namespace must be the **owning** namespace of that resource (the resource's
 `tenant_meta.namespace`). Using a **parent** namespace can return 500 even with
 a valid UUID. This behavior is not always stated in the API spec; document it in
-AF docstrings once confirmed.
+SDK docstrings once confirmed.
 
 ### Avoiding 404 after traverse
 
 When you act on objects returned from `list(traverse=True)` (or broad filters),
 pass the **resource object** to `get`, `update`, or `delete` (e.g.,
-`client.project.delete(target)`). The AF then uses the resource's
+`client.project.delete(target)`). The SDK then uses the resource's
 `tenant_meta.namespace` so the path matches the owning namespace; otherwise
 using the client default namespace can cause 404 Not Found.
 
@@ -33,12 +33,12 @@ See `docs/conventions.md` (Namespace scoping) and
 
 - The backend may return errors such as `FindingSpec` / `InstallationSpec` /
   `RepositorySpec` / `PackageVersionSpec` "is not full..." or "not fully
-  defined" when listing at a given namespace (e.g., tenant root). The AF
+  defined" when listing at a given namespace (e.g., tenant root). The SDK
   surfaces these as `ServerError`.
-- **Interpretation**: If the API returns 5xx with that message, the AF is
+- **Interpretation**: If the API returns 5xx with that message, the SDK is
   correct to surface it; listing at a child namespace (or different scope) may
   avoid it. If the API returns 200 but the response body does not match Pydantic
-  models (e.g., partial spec), consider optional/lenient parsing in the AF only
+  models (e.g., partial spec), consider optional/lenient parsing in the SDK only
   where safe.
 
 ### List mask / partial response leniency
@@ -47,7 +47,7 @@ See `docs/conventions.md` (Namespace scoping) and
   (`list_params.mask`) or at certain scopes (e.g., tenant root). The OpenAPI
   spec describes the full resource; list is not guaranteed to return every
   required field.
-- The AF accepts these partial responses for list via spec-aligned leniency:
+- The SDK accepts these partial responses for list via spec-aligned leniency:
   - **Finding** `context` is optional when the list response omits it
   - **Project** `spec.platform_source` is optional when the list mask omits it
   - **BaseMeta** `name` is optional when the list mask omits it
@@ -59,7 +59,7 @@ See `docs/conventions.md` (Namespace scoping) and
 
 `authentication_log`, `endor_license`, and `policy_template` live in the system
 namespace. LIST is allowed, but GET, UPDATE, and DELETE return 403 (only system
-can perform them). The AF Client exposes `list()` only for these resources;
+can perform them). The SDK Client exposes `list()` only for these resources;
 calling `get`/`update`/`delete` on the facade raises `NotImplementedError`.
 
 ---
@@ -74,7 +74,7 @@ update, semgrep "unexpected token null"):
    has data.
 2. See endorctl docs for options (e.g., `--page-size`, `-o table`).
 3. Run pytest **without** `--disable-warnings` to see whether the source is
-   pytest, a library, or the AF.
+   pytest, a library, or the SDK.
 
 ---
 

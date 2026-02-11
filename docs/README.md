@@ -1,6 +1,6 @@
-# Endor Cockpit Agentic Framework Documentation
+# Endor Labs SDK Documentation
 
-Index for AF-specific documentation. Platform concepts and user docs: [docs.endorlabs.com](https://docs.endorlabs.com/).
+Index for SDK-specific documentation. Platform concepts and user docs: [docs.endorlabs.com](https://docs.endorlabs.com/).
 
 ## Conventions
 
@@ -10,7 +10,7 @@ Index for AF-specific documentation. Platform concepts and user docs: [docs.endo
 
 - [reference/README.md](reference/README.md) — List of reference docs and link to OpenAPI spec.
 - [reference/resources.md](reference/resources.md) — Resource name, operations, limitations, links.
-- [reference/namespace.md](reference/namespace.md) — Namespace in the AF (list/get/create/update/delete).
+- [reference/namespace.md](reference/namespace.md) — Namespace in the SDK (list/get/create/update/delete).
 
 ## Guides
 

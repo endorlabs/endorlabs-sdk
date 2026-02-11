@@ -13,16 +13,16 @@ Before writing any rule, answer these questions about the repository:
 |----------|---------------|
 | What **credential types** does the code handle? | Determines which CWEs apply (log leak, hardcoded creds, missing encryption). |
 | What **trust boundaries** exist? | Raw HTTP clients, subprocess calls, and third-party libraries each create surfaces where safety layers can be bypassed. |
-| Who **consumes** this code? | An Agentic Framework used by many teams amplifies any vulnerability; a one-off script does not. |
+| Who **consumes** this code? | An SDK used by many teams amplifies any vulnerability; a one-off script does not. |
 | What **log/debug frameworks** are active? | Frameworks like `httpx`, `httpcore`, and stdlib `logging` emit headers and bodies at DEBUG level. If the code handles secrets, these are leak vectors. |
 | What **safety measures** already exist? | You cannot write an absence-detection rule unless you know what the "safe" pattern looks like. |
 
-### Worked example: Endor Cockpit Agentic Framework
+### Worked example: Endor Labs SDK
 
-The AF handles three credential types:
+The SDK handles three credential types:
 
 1. **API key + secret** -- sent as JSON in an auth POST through raw
-   `httpx.Client` (bypassing the AF's own `APIClient.post`).
+   `httpx.Client` (bypassing the SDK's own `APIClient.post`).
 2. **Bearer token** -- returned from auth and attached as an
    `Authorization` header on every request.
 3. **OAuth callback token** -- carried as a `?token=...` query parameter
@@ -55,12 +55,12 @@ reliable.
 
 ---
 
-## 3. CWE Top 25 Checklist for Agentic Frameworks
+## 3. CWE Top 25 Checklist for SDKs and Client Libraries
 
-Not every CWE applies to every repository. For an Agentic Framework or client library,
+Not every CWE applies to every repository. For an SDK or client library,
 prioritize these:
 
-| CWE | Name | AF relevance | Detection pattern |
+| CWE | Name | SDK relevance | Detection pattern |
 |-----|------|---------------|-------------------|
 | CWE-798 | Use of Hard-coded Credentials | API keys, tokens in source | Presence: literal strings matching credential patterns |
 | CWE-532 | Insertion of Sensitive Info into Log File | Logging secrets at DEBUG level | **Absence**: logger without redaction filter |
@@ -76,7 +76,7 @@ prioritize these:
 
 Most SAST rules detect the **presence** of something dangerous
 (`eval(...)`, `logging.config.listen(...)`). But some of the most
-impactful AF vulnerabilities are about the **absence** of something
+impactful SDK vulnerabilities are about the **absence** of something
 safe.
 
 Ask: *"What safety measure SHOULD be here but might be missing?"*
