@@ -11,7 +11,7 @@ import contextlib
 import logging
 import os
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -46,18 +46,16 @@ class BaseResourceOperations(Generic[T]):
         if "list" in data and "objects" in data["list"]:
             return data["list"]["objects"]
         elif isinstance(data, list):
-            return data
+            return cast("list[Any]", data)
         return []
 
     def _extract_page_token(self, data: Any) -> str | None:
         """Extract next page token from paginated response."""
-        if isinstance(data, dict) and "list" in data:
-            list_data = data["list"]
-            if isinstance(list_data, dict) and "response" in list_data:
-                response_data = list_data["response"]
-                if isinstance(response_data, dict):
-                    return response_data.get("next_page_token")
-        return None
+        try:
+            token = data["list"]["response"]["next_page_token"]
+            return token if isinstance(token, str) else None
+        except (KeyError, TypeError, IndexError):
+            return None
 
     def _safe_model_dump(
         self, model: BaseModel | None, exclude_none: bool = True
@@ -199,7 +197,7 @@ class BaseResourceOperations(Generic[T]):
             grpc_http_code,
             error_context,
             user_message,
-        ) = self.client._get_grpc_error_context(grpc_code)  # pyright: ignore[reportPrivateUsage]
+        ) = self.client._get_grpc_error_context(grpc_code)  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
 
         # If gRPC code is documented, use its context
         if grpc_http_code is not None:
@@ -222,7 +220,7 @@ class BaseResourceOperations(Generic[T]):
         """Extract details from HTTPStatusError."""
         status_code = e.response.status_code
         # Parse error response to get gRPC code and message
-        grpc_code, error_message = self.client._parse_error_response_succinct(  # pyright: ignore[reportPrivateUsage]
+        grpc_code, error_message = self.client._parse_error_response_succinct(  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
             e.response
         )
 
@@ -598,6 +596,9 @@ class BaseResourceOperations(Generic[T]):
                     response_text=str(data),
                 )
 
+            # Re-widen after isinstance narrowing (dict[str, Unknown] -> dict[str, Any])
+            data = cast("dict[str, Any]", data)
+
             if "uuid" not in data:
                 self.logger.warning(
                     f"Response missing UUID for {self.resource_name}: {data}"
@@ -707,7 +708,7 @@ class BaseResourceOperations(Generic[T]):
                 )
 
             # Build request body with object and required update_mask
-            request_data = {
+            request_data: dict[str, Any] = {
                 "object": payload_dict,
                 "request": {"update_mask": ",".join(update_mask)},
             }
@@ -877,7 +878,7 @@ class BaseResourceOperations(Generic[T]):
         self, list_params: ListParameters | None, **kwargs: Any
     ) -> dict[str, Any]:
         """Build query parameters from list_params and kwargs."""
-        params = {}
+        params: dict[str, Any] = {}
 
         if list_params:
             self._add_basic_params(params, list_params)
