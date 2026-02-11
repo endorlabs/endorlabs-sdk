@@ -18,25 +18,18 @@ created, updated, or deleted.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
-
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
 
@@ -390,179 +383,6 @@ class Installation(BaseResource):
             "spec.ingestion_token",
             "spec.marked_for_deletion",
         ]
-
-
-def _get_installation_ops(
-    client: APIClient,
-) -> BaseResourceOperations[Installation]:
-    """Get BaseResourceOperations instance for Installation."""
-    return BaseResourceOperations(client, "installations", Installation)
-
-
-def list_installations(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[Installation]:
-    """List installations with advanced filtering and pagination."""
-    ops = _get_installation_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_installations_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[Installation]:
-    """Iterate over installations without materializing the full list."""
-    ops = _get_installation_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_installation(
-    client: APIClient, tenant_meta_namespace: str, installation_uuid: str
-) -> Installation:
-    """Get specific installation by UUID.
-
-    Raises:
-        NotFoundError: If installation doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_installation_ops(client)
-    return ops.get(tenant_meta_namespace, installation_uuid)
-
-
-def create_installation(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateInstallationPayload,
-) -> Installation:
-    """Create a new installation with pre-validation and typed errors.
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If installation already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_installation_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_installation(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    installation_uuid: str,
-    payload: UpdateInstallationPayload,
-    update_mask: str,
-) -> Installation | None:
-    """Update an existing installation with partial updates.
-
-    This function supports updating only specific fields using the update_mask
-    parameter, which enables efficient partial updates without overwriting
-    unchanged fields.
-
-    MUTABLE FIELDS:
-    - meta.description: Installation description
-    - spec.public: Public flag
-    - spec.suspended: Suspended flag
-    - spec.project_uuids: Project UUIDs list
-    - spec.invalid: Invalid flag
-    - spec.enabled_features: Enabled features list
-    - spec.include_archived_repos: Include archived repos flag
-    - spec.installation_error_message: Error message
-    - processing_status.scan_state: Scan state
-      (e.g., SCAN_STATE_IDLE, SCAN_STATE_INGESTING)
-    - processing_status.disable_automated_scan: Disable automated scanning flag
-
-    FIELD MUTABILITY (per OpenAPI spec):
-    =====================================
-    IMMUTABLE FIELDS (readOnly: true in API spec):
-    - uuid: Unique identifier (readOnly: true in UpdateInstallation request body)
-    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
-      (readOnly: true in v1Meta)
-    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
-    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
-    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
-    - spec.external_name: External name (readOnly: true in v1InstallationSpec)
-    - spec.user: User name (readOnly: true in v1InstallationSpec)
-    - spec.ingestion_time: Ingestion time (readOnly: true in v1InstallationSpec)
-    - spec.target_type: Target type (readOnly: true in v1InstallationSpec)
-    - spec.login: Login (readOnly: true in v1InstallationSpec)
-    - spec.ingestion_token: Ingestion token (readOnly: true in v1InstallationSpec)
-    - spec.marked_for_deletion: Marked for deletion
-      (readOnly: true in v1InstallationSpec)
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (NOT readOnly in API spec):
-    - meta.name, meta.description, meta.tags: Metadata
-    - spec.public: Public flag
-    - spec.external_id: External ID
-    - spec.suspended: Suspended flag
-    - spec.project_uuids: Project UUIDs list
-    - spec.invalid: Invalid flag
-    - spec.enabled_features: Enabled features list
-    - spec.platform_source: Platform source (deprecated but mutable)
-    - spec.platform_type: Platform type
-    - spec.github_config, spec.azure_config, spec.gitlab_config,
-      spec.bitbucket_config: Platform configs
-    - spec.include_archived_repos: Include archived repos flag
-    - spec.installation_error_message: Error message
-    - processing_status.*: All processing status fields
-    - propagate: Whether to propagate to child namespaces
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        installation_uuid: UUID of the installation to update
-        payload: Installation update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.description,spec.suspended". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated Installation object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If installation doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Installation update requires an update_mask "
-                "(e.g. 'meta.description', 'spec.suspended')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=installation_uuid,
-        )
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-    ops = _get_installation_ops(client)
-    return ops.update(
-        tenant_meta_namespace, installation_uuid, payload, update_mask_list
-    )
-
-
-def delete_installation(
-    client: APIClient, tenant_meta_namespace: str, installation_uuid: str
-) -> bool:
-    """Delete an installation by UUID."""
-    ops = _get_installation_ops(client)
-    return ops.delete(tenant_meta_namespace, installation_uuid)
 
 
 # Payload models for create and update operations

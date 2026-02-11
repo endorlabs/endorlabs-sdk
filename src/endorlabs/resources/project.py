@@ -18,19 +18,17 @@ are allowed via PATCH operations.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, override
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..models.base import BaseMeta, BaseResource, BaseSpec
+from ..operations import BaseResourceOperations
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
 
@@ -413,262 +411,6 @@ def build_create_payload(
     return CreateProjectPayload(meta=meta, namespace_uuid=namespace_uuid)
 
 
-def _get_project_ops(client: APIClient) -> BaseResourceOperations[Project]:
-    """Get BaseResourceOperations instance for projects."""
-    return BaseResourceOperations(client, "projects", Project)
-
-
-def list_projects(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[Project]:
-    """List all projects in the specified namespace.
-
-    Args:
-        client: The APIClient instance to use for the request
-        tenant_meta_namespace: The canonical namespace name
-            (e.g., 'tenant.namespace')
-        list_params: Optional list parameters for filtering, pagination, etc.
-        max_pages: Optional maximum number of pages to fetch.
-            If None and in test environment, defaults to 10 pages max.
-            If None in production, fetches all pages.
-        **kwargs: Passed through to list implementation (e.g. filter, page_size).
-
-    Returns:
-        List[Project]: A list of Project objects. Empty list if error occurs.
-
-    Raises:
-        httpx.HTTPStatusError: For API-level errors
-        pydantic.ValidationError: If response data doesn't match expected schema
-
-    """
-    ops = _get_project_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_projects_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[Project]:
-    """Iterate over projects without materializing the full list."""
-    ops = _get_project_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_project(
-    client: APIClient, tenant_meta_namespace: str, project_uuid: str
-) -> Project:
-    """Retrieve a specific project by UUID.
-
-    Args:
-        client: The APIClient instance to use for the request
-        tenant_meta_namespace: The canonical namespace name
-            (e.g., 'tenant.namespace')
-        project_uuid: The UUID of the project to retrieve
-
-    Returns:
-        Project: The requested Project object
-
-    Raises:
-        NotFoundError: If project doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_project_ops(client)
-    return ops.get(tenant_meta_namespace, project_uuid)
-
-
-def create_project(
-    client: APIClient, tenant_meta_namespace: str, payload: CreateProjectPayload
-) -> Project:
-    """Create a new project in the specified namespace.
-
-    Uses pre-validation and typed errors.
-
-    Args:
-        client: The APIClient instance to use for the request
-        tenant_meta_namespace: The canonical namespace name
-            (e.g., 'tenant.namespace')
-        payload: The CreateProjectPayload containing the new project details
-
-    Returns:
-        Project: The created Project object
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If project already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_project_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_project(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    project_uuid: str,
-    payload: UpdateProjectPayload | Project,
-    update_mask: str,
-) -> Project:
-    """Update an existing project using partial updates.
-
-    This function supports updating only specific fields using the update_mask
-    parameter, which enables efficient partial updates without overwriting
-    unchanged fields.
-
-    FIELD MUTABILITY (per OpenAPI spec):
-    =====================================
-    IMMUTABLE FIELDS (readOnly: true in API spec):
-    - uuid: Unique identifier
-    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
-    - meta.kind, meta.version: Resource metadata
-    - meta.created_by, meta.updated_by: Audit fields
-    - meta.references, meta.index_data: System-managed fields
-    - spec.internal_reference_key: Internal reference key
-    - spec.ingestion_token: Ingestion token
-    - spec.git.git_clone_url, spec.git.organization, spec.git.path,
-      spec.git.full_name, spec.git.web_url: Git metadata
-
-    MUTABLE FIELDS (NOT readOnly in API spec):
-    - meta.name, meta.description, meta.tags: Metadata
-    - meta.parent_uuid, meta.parent_kind, meta.annotations: Additional metadata
-    - spec.platform_source: Platform source
-    - spec.git.http_clone_url, spec.git.external_installation_id,
-      spec.git.invalid_installation: Git configuration
-    - spec.toolchain_profile_uuid, spec.scan_profile_uuid: Profile references
-    - processing_status.*: All processing status fields
-
-    Args:
-        client: The APIClient instance to use for the request
-        tenant_meta_namespace: The fully qualified namespace name
-            (e.g., 'tenant.namespace')
-        project_uuid: The UUID of the project to update
-        payload: The UpdateProjectPayload containing the updated project details
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Project: The updated Project object with current field values
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If project doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    Example:
-        >>> # Update only tags
-        >>> payload = UpdateProjectPayload(
-        ...     meta=ProjectMetaUpdate(tags=["production"])
-        ... )
-        >>> project = update_project(client, namespace, uuid, payload, "meta.tags")
-
-        >>> # Update multiple fields
-        >>> payload = UpdateProjectPayload(
-        ...     meta=ProjectMetaUpdate(
-        ...         description="Backend API service",
-        ...         tags=["production", "backend"],
-        ...         language="python"
-        ...     )
-        ... )
-        >>> project = update_project(
-        ...     client, namespace, uuid, payload,
-        ...     "meta.description,meta.tags,meta.language"
-        ... )
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Project update requires an update_mask "
-                "(e.g. 'meta.description', 'meta.tags')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=project_uuid,
-        )
-    # Get the current project to include required fields
-    current_project = get_project(client, tenant_meta_namespace, project_uuid)
-
-    # Merge current project with payload (Project or UpdateProjectPayload)
-    payload_meta = getattr(payload, "meta", None)
-    merged_meta = {
-        "name": current_project.meta.name,  # Required field
-        **(
-            payload_meta.model_dump(exclude_none=True)
-            if payload_meta is not None
-            else {}
-        ),
-    }
-
-    # Build merged project object for base class
-    tenant_meta_dict = (
-        current_project.tenant_meta.model_dump()
-        if current_project.tenant_meta
-        else {"namespace": tenant_meta_namespace}
-    )
-    update_mask_list_pre = parse_update_mask(update_mask)
-    has_processing_status_mask = any(
-        p.startswith("processing_status.") for p in update_mask_list_pre
-    )
-    if has_processing_status_mask:
-        base_ps = (
-            current_project.processing_status.model_dump()
-            if current_project.processing_status
-            else {}
-        )
-        payload_ps = getattr(payload, "processing_status", None)
-        if payload_ps is not None:
-            base_ps = {**base_ps, **payload_ps.model_dump(exclude_none=True)}
-        merged_ps = (
-            ProcessingStatus(
-                disable_automated_scan=base_ps.get("disable_automated_scan", False),
-                scan_state=base_ps.get("scan_state", ""),
-                scan_time=base_ps.get("scan_time"),
-            ).model_dump()
-            if base_ps
-            else None
-        )
-    else:
-        merged_ps = (
-            current_project.processing_status.model_dump()
-            if current_project.processing_status
-            else None
-        )
-    merged_project_dict = {
-        "uuid": project_uuid,
-        "tenant_meta": tenant_meta_dict,
-        "meta": merged_meta,
-        "spec": current_project.spec.model_dump(),  # Required field
-        "processing_status": merged_ps,
-    }
-
-    # Create Project object from merged data
-    merged_project = Project(**merged_project_dict)
-
-    # Use base class update method
-    ops = _get_project_ops(client)
-    logger.info(f"Updating project {project_uuid} with mask: {update_mask}")
-    return ops.update(
-        tenant_meta_namespace,
-        project_uuid,
-        merged_project,
-        update_mask_list_pre,
-    )
-
-
 def associate_scan_profile_with_project(
     client: APIClient,
     tenant_meta_namespace: str,
@@ -701,8 +443,8 @@ def associate_scan_profile_with_project(
         ... )
 
     """
-    # Get current project to preserve all fields
-    current_project = get_project(client, tenant_meta_namespace, project_uuid)
+    ops = BaseResourceOperations(client, "projects", Project)
+    current_project = ops.get(tenant_meta_namespace, project_uuid)
 
     # Update the spec with the new scan_profile_uuid
     spec_dict = current_project.spec.model_dump()
@@ -777,7 +519,8 @@ def verify_scan_profile_association(
 
     """
     try:
-        project = get_project(client, tenant_meta_namespace, project_uuid)
+        ops = BaseResourceOperations(client, "projects", Project)
+        project = ops.get(tenant_meta_namespace, project_uuid)
     except Exception:
         # Project not found or other error
         return False
@@ -798,27 +541,3 @@ def verify_scan_profile_association(
         )
 
     return is_associated
-
-
-def delete_project(
-    client: APIClient, tenant_meta_namespace: str, project_uuid: str
-) -> bool:
-    """Delete a project by UUID.
-
-    Args:
-        client: The APIClient instance to use for the request
-        tenant_meta_namespace: The canonical namespace name
-            (e.g., 'tenant.namespace')
-        project_uuid: The UUID of the project to delete
-
-    Returns:
-        bool: True if deletion was successful
-
-    Raises:
-        NotFoundError: If the project does not exist.
-        PermissionDeniedError: If user lacks permission.
-        ServerError: On unexpected server errors.
-
-    """
-    ops = _get_project_ops(client)
-    return ops.delete(tenant_meta_namespace, project_uuid)

@@ -17,19 +17,13 @@ integrations and cannot be manually created, updated, or deleted through the API
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..models.base import BaseMeta, BaseResource, BaseSpec
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
-
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
 
@@ -169,126 +163,6 @@ class RepositoryVersion(BaseResource):
     def get_mutable_fields_cls(cls) -> list[str]:
         """Get list of mutable fields for RepositoryVersion."""
         return ["meta.name", "meta.description", "meta.tags", "spec"]
-
-
-def _get_repository_version_ops(
-    client: APIClient,
-) -> BaseResourceOperations[RepositoryVersion]:
-    """Get BaseResourceOperations instance for RepositoryVersion."""
-    return BaseResourceOperations(client, "repository-versions", RepositoryVersion)
-
-
-def list_repository_versions(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[RepositoryVersion]:
-    """List repository versions with advanced filtering and pagination."""
-    ops = _get_repository_version_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_repository_versions_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[RepositoryVersion]:
-    """Iterate over repository versions without materializing the full list."""
-    ops = _get_repository_version_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_version_uuid: str
-) -> RepositoryVersion:
-    """Get specific repository version by UUID.
-
-    Raises:
-        NotFoundError: If repository version doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_repository_version_ops(client)
-    return ops.get(tenant_meta_namespace, repository_version_uuid)
-
-
-def create_repository_version(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateRepositoryVersionPayload,
-) -> RepositoryVersion:
-    """Create a new repository version with pre-validation and typed errors.
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If repository version already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_repository_version_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_repository_version(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    repository_version_uuid: str,
-    payload: UpdateRepositoryVersionPayload,
-    update_mask: str,
-) -> RepositoryVersion | None:
-    """Update an existing repository version with partial updates.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        repository_version_uuid: UUID of the repository version to update
-        payload: RepositoryVersion update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated RepositoryVersion object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If repository version doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Repository version update requires an update_mask "
-                "(e.g. 'meta.description', 'meta.tags')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=repository_version_uuid,
-        )
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-    ops = _get_repository_version_ops(client)
-    return ops.update(
-        tenant_meta_namespace, repository_version_uuid, payload, update_mask_list
-    )
-
-
-def delete_repository_version(
-    client: APIClient, tenant_meta_namespace: str, repository_version_uuid: str
-) -> bool:
-    """Delete a repository version by UUID."""
-    ops = _get_repository_version_ops(client)
-    return ops.delete(tenant_meta_namespace, repository_version_uuid)
 
 
 # Payload models for create and update operations

@@ -6,33 +6,19 @@ List, get, create, update, delete.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
-
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
-
-
-def _get_invitation_ops(
-    client: APIClient,
-) -> BaseResourceOperations[Invitation]:
-    """Get BaseResourceOperations instance for invitations."""
-    return BaseResourceOperations(client, "invitations", Invitation)
 
 
 class InvitationState(FlexibleEnum):
@@ -99,81 +85,3 @@ class CreateInvitationPayload(BaseModel):
 def build_create_payload(**kwargs: Any) -> CreateInvitationPayload:
     """Build CreateInvitationPayload from kwargs (decoupled facade create)."""
     return CreateInvitationPayload(**kwargs)
-
-
-def list_invitations(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[Invitation]:
-    """List invitations in the namespace."""
-    ops = _get_invitation_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_invitations_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[Invitation]:
-    """Iterate over invitations without materializing the full list."""
-    ops = _get_invitation_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_invitation(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    invitation_uuid: str,
-) -> Invitation:
-    """Get an invitation by UUID."""
-    ops = _get_invitation_ops(client)
-    return ops.get(tenant_meta_namespace, invitation_uuid)
-
-
-def create_invitation(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateInvitationPayload,
-) -> Invitation:
-    """Create an invitation."""
-    ops = _get_invitation_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_invitation(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    invitation_uuid: str,
-    payload: Invitation | dict[str, Any],
-    update_mask: str | list[str] | None = None,
-) -> Invitation:
-    """Update an invitation."""
-    ops = _get_invitation_ops(client)
-    if isinstance(payload, dict):
-        payload = Invitation(**payload)
-    mask_list: list[str] = (
-        parse_update_mask(update_mask)
-        if isinstance(update_mask, str)
-        else (update_mask or [])
-    )
-    return ops.update(
-        tenant_meta_namespace,
-        invitation_uuid,
-        payload,
-        mask_list,
-    )
-
-
-def delete_invitation(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    invitation_uuid: str,
-) -> bool:
-    """Delete an invitation by UUID."""
-    ops = _get_invitation_ops(client)
-    return ops.delete(tenant_meta_namespace, invitation_uuid)

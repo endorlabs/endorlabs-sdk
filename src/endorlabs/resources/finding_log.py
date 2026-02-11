@@ -19,15 +19,13 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     Context,
     FlexibleEnum,
@@ -40,10 +38,6 @@ from .finding import (
     FindingLevel,
     FindingTags,
 )
-
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
 
@@ -475,120 +469,3 @@ class CreateFindingLogPayload(BaseModel):
 def build_create_payload(**kwargs: Any) -> CreateFindingLogPayload:
     """Build CreateFindingLogPayload from kwargs (decoupled facade create)."""
     return CreateFindingLogPayload(**kwargs)
-
-
-def _get_finding_log_ops(
-    client: APIClient,
-) -> BaseResourceOperations[FindingLog]:
-    """Get BaseResourceOperations instance for finding logs."""
-    return BaseResourceOperations(client, "finding-logs", FindingLog)
-
-
-def list_finding_logs(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[FindingLog]:
-    """List finding logs in a namespace.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name (e.g., 'tenant.namespace')
-        list_params: Optional list parameters for filtering, pagination, etc.
-        max_pages: Optional maximum number of pages to fetch.
-            If None and in test environment, defaults to 10 pages max.
-            If None in production, fetches all pages.
-        **kwargs: Passed through to list implementation (e.g. filter, page_size).
-
-    Returns:
-        List of FindingLog objects
-
-    """
-    ops = _get_finding_log_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_finding_logs_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[FindingLog]:
-    """Iterate over finding logs without materializing the full list."""
-    ops = _get_finding_log_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_finding_log(
-    client: APIClient, tenant_meta_namespace: str, finding_log_uuid: str
-) -> FindingLog:
-    """Get a specific finding log by UUID.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        finding_log_uuid: UUID of the finding log to retrieve
-
-    Returns:
-        FindingLog object
-
-    Raises:
-        NotFoundError: If finding log doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_finding_log_ops(client)
-    return ops.get(tenant_meta_namespace, finding_log_uuid)
-
-
-def create_finding_log(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateFindingLogPayload,
-) -> FindingLog:
-    """Create a new finding log with pre-validation and typed errors.
-
-    Note: FindingLogs are typically generated automatically when findings are
-    modified. This function is provided for completeness but is rarely used
-    by end users.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        payload: FindingLog creation payload
-
-    Returns:
-        Created FindingLog object
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If finding log already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_finding_log_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def delete_finding_log(
-    client: APIClient, tenant_meta_namespace: str, finding_log_uuid: str
-) -> bool:
-    """Delete a finding log.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        finding_log_uuid: UUID of the finding log to delete
-
-    Returns:
-        True if deletion was successful, False otherwise
-
-    """
-    ops = _get_finding_log_ops(client)
-    return ops.delete(tenant_meta_namespace, finding_log_uuid)

@@ -20,7 +20,6 @@ API FEATURES:
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
@@ -28,23 +27,17 @@ from pydantic import BaseModel, Field, field_validator
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
+from ..operations import BaseResourceOperations
 from ..types import ListParameters
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
 logger = get_resource_logger(__name__)
-
-
-def _get_policy_ops(client: APIClient) -> BaseResourceOperations[Policy]:
-    """Get BaseResourceOperations instance for policies."""
-    return BaseResourceOperations(client, "policies", Policy)
 
 
 class PolicyType(FlexibleEnum):
@@ -385,306 +378,6 @@ class UpdatePolicyPayload(BaseModel):
     propagate: bool | None = Field(None, description="Propagate to child namespaces")
 
 
-def list_policies(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[Policy]:
-    """List all policies in a namespace with filtering support.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        list_params: Optional list parameters for filtering, masking, pagination
-        max_pages: Optional maximum number of pages to fetch
-        **kwargs: Additional query parameters (e.g. policy_type for legacy filter)
-
-    Returns:
-        List of Policy objects
-
-    """
-    ops = _get_policy_ops(client)
-    policy_type = kwargs.pop("policy_type", None)
-
-    # Handle legacy policy_type parameter
-    if policy_type and list_params is None:
-        list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-            filter=f"spec.policy_type=={policy_type.value}",
-        )
-    elif policy_type and list_params:
-        type_filter = f"spec.policy_type=={policy_type.value}"
-        list_params.filter = (
-            f"({list_params.filter}) and ({type_filter})"
-            if list_params.filter
-            else type_filter
-        )
-
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_policies_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[Policy]:
-    """Iterate over policies without materializing the full list."""
-    ops = _get_policy_ops(client)
-    policy_type = kwargs.pop("policy_type", None)
-    if policy_type and list_params is None:
-        list_params = ListParameters(  # pyright: ignore[reportCallIssue]
-            filter=f"spec.policy_type=={policy_type.value}",
-        )
-    elif policy_type and list_params:
-        type_filter = f"spec.policy_type=={policy_type.value}"
-        list_params.filter = (
-            f"({list_params.filter}) and ({type_filter})"
-            if list_params.filter
-            else type_filter
-        )
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_policy(
-    client: APIClient, tenant_meta_namespace: str, policy_uuid: str
-) -> Policy:
-    """Get a specific policy by UUID with robust retrieval.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_uuid: Policy UUID
-
-    Returns:
-        Policy object
-
-    Raises:
-        NotFoundError: If policy doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_policy_ops(client)
-    return ops.get(tenant_meta_namespace, policy_uuid)
-
-
-def create_policy(
-    client: APIClient, tenant_meta_namespace: str, payload: CreatePolicyPayload
-) -> Policy:
-    """Create a new policy in a namespace with pre-validation and typed errors.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        payload: Policy creation payload
-
-    Returns:
-        Created Policy object
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If policy already exists
-        ServerError: If server error occurs
-
-    """
-    # Exclude immutable fields from meta (kind is set by API)
-    # Create transformed payload for BaseResourceOperations
-    meta_dict = payload.meta.model_dump(exclude={"kind"})
-    # Ensure propagate is explicitly set (defaults to True if not provided)
-    propagate_value = payload.propagate if payload.propagate is not None else True
-    transformed_payload = CreatePolicyPayload(
-        meta=PolicyMeta(**meta_dict),
-        spec=payload.spec,
-        propagate=propagate_value,
-    )
-
-    ops = _get_policy_ops(client)
-    return ops.create(tenant_meta_namespace, transformed_payload)
-
-
-def update_policy(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    policy_uuid: str,
-    payload: UpdatePolicyPayload,
-    update_mask: str,
-) -> Policy | None:
-    r"""Update an existing policy using partial updates.
-
-    This function supports updating only specific fields using the update_mask
-    parameter, which enables efficient partial updates without overwriting
-    unchanged fields.
-
-    IMPORTANT: Only policies created in the current namespace can be updated.
-    Policies inherited from parent namespaces are immutable and will return
-    404 errors when attempting to update.
-
-    MUTABLE FIELDS (for policies created in current namespace):
-    - meta.name: Policy name
-    - meta.description: Policy description
-    - meta.tags: Policy tags
-    - spec.rule: OPA/Rego rule definition
-    - spec.disable: Enable/disable flag
-    - spec.project_selector: Projects to apply policy to
-    - spec.project_exceptions: Projects to exclude from policy
-    - spec.template_values: Template configuration values
-    - propagate: Whether to propagate to child namespaces
-
-    FIELD MUTABILITY (per OpenAPI spec):
-    =====================================
-    IMMUTABLE FIELDS (readOnly: true in API spec):
-    - uuid: Unique identifier (readOnly: true in UpdatePolicy request body)
-    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
-      (readOnly: true in v1Meta)
-    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
-    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
-    - meta.references, meta.index_data: System-managed fields (readOnly: true in v1Meta)
-    - tenant_meta.namespace: Namespace assignment
-
-    MUTABLE FIELDS (NOT readOnly in API spec):
-    - meta.name, meta.description, meta.tags: Metadata
-    - spec.*: All PolicySpec fields (no readOnly fields in v1PolicySpec,
-      including policy_type and template_uuid)
-    - propagate: Whether to propagate to child namespaces
-
-    Note: Inherited policies from parent namespaces cannot be updated
-    (business logic constraint).
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_uuid: Policy UUID
-        payload: Policy update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.name,spec.rule". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated Policy object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If policy doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    Example:
-        >>> # Update policy name and description
-        >>> payload = UpdatePolicyPayload(
-        ...     meta=PolicyMetaUpdate(
-        ...         name="Updated Policy",
-        ...         description="Updated description"
-        ...     )
-        ... )
-        >>> policy = update_policy(
-        ...     client, namespace, uuid, payload, "meta.name,meta.description"
-        ... )
-
-        >>> # Update Rego rule
-        >>> payload = UpdatePolicyPayload(
-        ...     spec=PolicySpec(
-        ...         policy_type=PolicyType.ML_FINDING,
-        ...         rule="package updated\n...",
-        ...         resource_kinds=[],
-        ...         disable=False
-        ...     )
-        ... )
-        >>> policy = update_policy(client, namespace, uuid, payload, "spec.rule")
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Policy update requires an update_mask (e.g. 'meta.name', 'spec.rule')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=policy_uuid,
-        )
-    # Get the current policy to include required fields
-    # Note: Using list_policies as workaround for get_policy 404 issues
-    policies = list_policies(client, tenant_meta_namespace)
-    current_policy = next((p for p in policies if p.uuid == policy_uuid), None)
-    if not current_policy:
-        from ..exceptions import NotFoundError
-
-        raise NotFoundError(
-            message=f"Policy {policy_uuid} not found",
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=policy_uuid,
-        )
-
-    # Merge current policy with payload updates
-    merged_meta = {
-        "name": current_policy.meta.name,  # Required field
-        **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
-    }
-    merged_spec = {
-        **(current_policy.spec.model_dump() if current_policy.spec else {}),
-        **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
-    }
-
-    # Build merged policy object for base class
-    tenant_meta_dict = (
-        current_policy.tenant_meta.model_dump()
-        if current_policy.tenant_meta
-        else {"namespace": tenant_meta_namespace}
-    )
-    merged_policy_dict = {
-        "uuid": policy_uuid,
-        "tenant_meta": tenant_meta_dict,
-        "meta": merged_meta,
-        "spec": merged_spec,
-    }
-    if hasattr(payload, "propagate") and payload.propagate is not None:
-        merged_policy_dict["propagate"] = payload.propagate
-
-    # Create Policy object from merged data
-    merged_policy = Policy(**merged_policy_dict)
-
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-
-    # Use base class update method
-    ops = _get_policy_ops(client)
-    logger.info(f"Updating policy {policy_uuid} with mask: {update_mask}")
-    return ops.update(
-        tenant_meta_namespace, policy_uuid, merged_policy, update_mask_list
-    )
-
-
-def delete_policy(
-    client: APIClient, tenant_meta_namespace: str, policy_uuid: str
-) -> bool:
-    """Delete a policy.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_uuid: Policy UUID
-
-    Returns:
-        True if deletion successful, False otherwise
-
-    """
-    try:
-        res = client.delete(
-            f"v1/namespaces/{tenant_meta_namespace}/policies/{policy_uuid}"
-        )
-        return res.status_code == 200
-
-    except Exception as e:
-        logger.error(f"Error deleting policy {policy_uuid}: {e}", exc_info=True)
-        return False
-
-
 # Convenience functions for common filtering patterns
 def list_policies_by_type(
     client: APIClient, tenant_meta_namespace: str, policy_type: PolicyType
@@ -693,7 +386,8 @@ def list_policies_by_type(
     list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.policy_type=={policy_type.value}",
     )
-    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return ops.list(tenant_meta_namespace, list_params)
 
 
 def list_policies_by_namespace(
@@ -703,7 +397,8 @@ def list_policies_by_namespace(
     list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"tenant_meta.namespace=={target_namespace}",
     )
-    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return ops.list(tenant_meta_namespace, list_params)
 
 
 def list_policies_paginated(
@@ -717,7 +412,8 @@ def list_policies_paginated(
         page_size=page_size,
         page_token=page_token,
     )
-    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return ops.list(tenant_meta_namespace, list_params)
 
 
 def list_policies_sorted(
@@ -731,4 +427,5 @@ def list_policies_sorted(
         sort_by=sort_by,
         desc=desc,
     )
-    return list_policies(client, tenant_meta_namespace, list_params=list_params)
+    ops = BaseResourceOperations(client, "policies", Policy)
+    return ops.list(tenant_meta_namespace, list_params)
