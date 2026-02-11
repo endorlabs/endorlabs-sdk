@@ -4,6 +4,7 @@ import time
 import httpx
 import pytest
 
+import endorlabs
 from endorlabs.exceptions import (
     ValidationError as EndorValidationError,
 )
@@ -12,11 +13,6 @@ from endorlabs.resources.namespace import (
     NamespaceMetaCreate,
     NamespaceMetaUpdate,
     UpdateNamespacePayload,
-    create_namespace,
-    delete_namespace,
-    get_namespace,
-    list_namespaces,
-    update_namespace,
 )
 from tests.conftest import TEST_MAX_PAGES_TRAVERSE
 
@@ -37,17 +33,23 @@ class TestNamespaces:
         if missing_vars:
             pytest.skip(f"Missing required environment variables: {missing_vars}")
 
-        self.client = api_client_fast_retry
+        self.api_client = api_client_fast_retry
         self.namespace = namespace
         self.root_namespace = root_namespace
-        self.created_namespace_uuids = []
+        self.created_namespace_uuids: list[str] = []
+        self.client = endorlabs.Client(
+            tenant=namespace, api_client=api_client_fast_retry
+        )
+        self.root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client_fast_retry
+        )
 
     def teardown_method(self) -> None:
         """Clean up any namespaces created during tests."""
         if hasattr(self, "created_namespace_uuids"):
             for namespace_uuid in self.created_namespace_uuids:
                 try:
-                    delete_namespace(self.client, self.namespace, namespace_uuid)
+                    self.client.namespace.delete(namespace_uuid)
                     print(f"[CLEANUP] Deleted test namespace: {namespace_uuid}")
                 except Exception as e:
                     print(
@@ -58,11 +60,7 @@ class TestNamespaces:
 
     def test_namespaces_main_flow(self) -> None:
         """Test namespace creation, listing, and cleanup."""
-        # Create mock namespaces
-        # Use timestamp and random ID to ensure unique names
         import random
-
-        from endorlabs.types import ListParameters
 
         timestamp = int(time.time())
         random_id = random.randint(1000, 9999)
@@ -82,7 +80,7 @@ class TestNamespaces:
         try:
             for payload in mock_namespaces_to_create:
                 try:
-                    ns = create_namespace(self.client, self.namespace, payload)
+                    ns = self.client.namespace.create(payload)
                     if ns:
                         created_in_this_test.append(ns.uuid)
                         self.created_namespace_uuids.append(ns.uuid)
@@ -90,21 +88,16 @@ class TestNamespaces:
                     print(
                         f"Warning: Failed to create namespace {payload.meta.name}: {e}"
                     )
-                    # Continue with other namespaces
 
             # List from tenant root with traverse so created child namespaces
             # are in scope.
-            # Match by UUID; list response meta.name may differ from create payload.
-            all_namespaces = list_namespaces(
-                self.client,
-                self.root_namespace,
-                list_params=ListParameters(page_size=20, traverse=True),
+            all_namespaces = self.root_client.namespace.list(
+                traverse=True,
                 max_pages=10,
             )
             created_uuids = set(created_in_this_test)
             found = [ns for ns in all_namespaces if ns.uuid in created_uuids]
 
-            # Assert that at least one created namespace appears in the traversed list
             expected_msg = (
                 f"Expected at least 1 namespace in list (by UUID), found {len(found)}. "
                 f"Created UUIDs: {created_in_this_test}"
@@ -113,15 +106,13 @@ class TestNamespaces:
         finally:
             for uid in created_in_this_test:
                 try:
-                    delete_namespace(self.client, self.namespace, uid)
+                    self.client.namespace.delete(uid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for namespace {uid}: {e}")
 
     def test_namespace_update(self) -> None:
         """Test UPDATE namespace via collection PATCH with update_mask."""
         print("\n=== TESTING NAMESPACE UPDATE ===")
-
-        # Create a test namespace first
         import random
 
         timestamp = int(time.time())
@@ -135,9 +126,7 @@ class TestNamespaces:
             )
         )
 
-        created_namespace = create_namespace(
-            self.client, self.namespace, create_payload
-        )
+        created_namespace = self.client.namespace.create(create_payload)
         if not created_namespace:
             pytest.skip("Failed to create namespace for update test")
 
@@ -145,20 +134,14 @@ class TestNamespaces:
         self.created_namespace_uuids.append(namespace_uuid)
 
         try:
-            # Wait for namespace to be fully created
             time.sleep(2)
 
-            # Get current namespace state
-            current_namespace = get_namespace(
-                self.client, self.namespace, namespace_uuid
-            )
+            current_namespace = self.client.namespace.get(namespace_uuid)
             if not current_namespace:
                 pytest.skip(f"Could not retrieve namespace {namespace_uuid}")
 
-            # Store original values
             original_description = current_namespace.meta.description
 
-            # Create update payload and update with required update_mask
             new_description = "Updated description for test namespace"
             update_payload = UpdateNamespacePayload(
                 meta=NamespaceMetaUpdate(description=new_description)
@@ -170,15 +153,12 @@ class TestNamespaces:
             )
 
             try:
-                updated_namespace = update_namespace(
-                    self.client,
-                    self.namespace,
+                updated_namespace = self.client.namespace.update(
                     namespace_uuid,
                     update_payload,
                     update_mask="meta.description",
                 )
             except EndorValidationError as e:
-                # Backend may return 400 "at least one fieldmask" if contract differs
                 if (
                     "fieldmask" in (e.message or "").lower()
                     or "field mask" in (e.message or "").lower()
@@ -203,14 +183,11 @@ class TestNamespaces:
 
             print(f"[SUCCESS] Namespace updated: {updated_namespace.uuid}")
 
-            # Restore original description if possible
             restore_payload = UpdateNamespacePayload(
                 meta=NamespaceMetaUpdate(description=original_description)
             )
             try:
-                update_namespace(
-                    self.client,
-                    self.namespace,
+                self.client.namespace.update(
                     namespace_uuid,
                     restore_payload,
                     update_mask="meta.description",
@@ -220,37 +197,26 @@ class TestNamespaces:
                 print(f"[WARNING] Failed to restore original values: {e}")
         finally:
             try:
-                delete_namespace(self.client, self.namespace, namespace_uuid)
+                self.client.namespace.delete(namespace_uuid)
             except Exception as e:
                 print(f"[WARNING] Cleanup failed for namespace {namespace_uuid}: {e}")
 
     def test_namespace_update_requires_mask(self) -> None:
-        """update_namespace raises ValidationError when update_mask is missing/empty."""
+        """Facade update raises ValidationError when update_mask is empty."""
         payload = UpdateNamespacePayload(
             meta=NamespaceMetaUpdate(description="irrelevant")
         )
         with pytest.raises(EndorValidationError) as exc_info:
-            update_namespace(
-                self.client,
-                self.namespace,
+            self.client.namespace.update(
                 "any-uuid",
                 payload,
                 update_mask="",
             )
         assert "update_mask" in (exc_info.value.message or "").lower()
-        assert "field mask" in (exc_info.value.message or "").lower() or (
-            "fieldmask" in (exc_info.value.message or "").lower()
-        )
 
     def test_namespace_list(self) -> None:
         """LIST from tenant root with traverse."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.namespace.list(
+        result = self.root_client.namespace.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -258,32 +224,20 @@ class TestNamespaces:
 
     def test_namespace_get(self) -> None:
         """GET first item from LIST (root + traverse)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.namespace.list(
+        items = self.root_client.namespace.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        got = client.namespace.get(item)
+        got = self.root_client.namespace.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
     def test_namespace_spec_has_full_name_and_managed(self) -> None:
         """Namespace spec exposes full_name and managed when returned by API."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.namespace.list(
+        items = self.root_client.namespace.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -292,7 +246,7 @@ class TestNamespaces:
         item = items[0]
         assert hasattr(item.spec, "full_name")
         assert hasattr(item.spec, "managed")
-        got = client.namespace.get(item)
+        got = self.root_client.namespace.get(item)
         assert hasattr(got.spec, "full_name")
         assert hasattr(got.spec, "managed")
 
@@ -300,12 +254,6 @@ class TestNamespaces:
         """Consumer UX: client.namespace.create(payload); teardown deletes."""
         import random
 
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            api_client=self.client,
-        )
         timestamp = int(time.time())
         random_id = random.randint(1000, 9999)
         payload = CreateNamespacePayload(
@@ -316,7 +264,7 @@ class TestNamespaces:
         )
         created = None
         try:
-            created = client.namespace.create(payload)
+            created = self.client.namespace.create(payload)
         except Exception as e:
             pytest.skip(f"Namespace create not allowed in this environment: {e}")
         try:
@@ -326,7 +274,7 @@ class TestNamespaces:
         finally:
             if created is not None:  # type: ignore[redundant-expr]
                 try:
-                    delete_namespace(self.client, self.namespace, created.uuid)
+                    self.client.namespace.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for namespace {created.uuid}: {e}")
 
@@ -334,12 +282,6 @@ class TestNamespaces:
         """Consumer UX: create namespace then client.namespace.delete(uuid)."""
         import random
 
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            api_client=self.client,
-        )
         timestamp = int(time.time())
         random_id = random.randint(1000, 9999)
         payload = CreateNamespacePayload(
@@ -349,11 +291,10 @@ class TestNamespaces:
             )
         )
         try:
-            created = client.namespace.create(payload)
+            created = self.client.namespace.create(payload)
         except Exception as e:
             pytest.skip(f"Namespace create not allowed in this environment: {e}")
         if not created:
             pytest.skip("Failed to create namespace for delete test")
-        result = client.namespace.delete(created.uuid)
+        result = self.client.namespace.delete(created.uuid)
         assert result is True
-        # Do not append to created_namespace_uuids; resource already deleted

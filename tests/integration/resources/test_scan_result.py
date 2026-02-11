@@ -8,7 +8,7 @@ Greenfield alias unit tests live in tests/unit/models/test_greenfield_aliases.py
 
 import pytest
 
-from endorlabs.resources import scan_result
+import endorlabs
 from endorlabs.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES_TRAVERSE,
@@ -27,6 +27,10 @@ class TestScanResult:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
 
     @pytest.fixture
     def sample_scan_result(self):
@@ -35,9 +39,7 @@ class TestScanResult:
         Function-scoped but only fetches when explicitly requested by tests.
         Uses tenant root + traverse so resources in instance are captured.
         """
-        results = scan_result.list_scan_results(
-            self.client,
-            self.root_namespace,
+        results = self.endor_root_client.scan_result.list(
             list_params=ListParameters(
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
@@ -129,10 +131,9 @@ class TestScanResult:
             page_size=TEST_PAGE_SIZE,
         )
 
-        filtered_results = scan_result.list_scan_results(
-            self.client,
-            list_namespace,
-            list_params,
+        list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
+        filtered_results = list_client.scan_result.list(
+            list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
 
@@ -157,9 +158,7 @@ class TestScanResult:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            scan_result.get_scan_result(
-                self.client, self.root_namespace, "invalid-uuid"
-            )
+            self.endor_root_client.scan_result.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

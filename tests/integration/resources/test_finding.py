@@ -7,7 +7,7 @@ Greenfield alias unit tests live in tests/unit/models/test_greenfield_aliases.py
 
 import pytest
 
-from endorlabs.resources import finding
+import endorlabs
 from endorlabs.resources.finding import (
     FindingMetaUpdate,
     FindingSpec,
@@ -27,6 +27,10 @@ class TestFinding:
         self.namespace = namespace
         self.root_namespace = root_namespace
         self.tenant_root = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_finding_uuids = []
 
     def teardown_method(self) -> None:
@@ -85,9 +89,7 @@ class TestFinding:
         from endorlabs.types import ListParameters
 
         try:
-            results = finding.list_findings(
-                self.client,
-                self.namespace,
+            results = self.endor_client.finding.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -127,9 +129,7 @@ class TestFinding:
             traverse=True,
         )
 
-        findings = finding.list_findings(
-            self.client,
-            self.tenant_root,
+        findings = self.endor_root_client.finding.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -157,7 +157,7 @@ class TestFinding:
         finding_uuid = sample_finding.uuid
 
         # Get current finding state
-        current_finding = finding.get_finding(self.client, self.namespace, finding_uuid)
+        current_finding = self.endor_client.finding.get(finding_uuid)
         if not current_finding:
             pytest.skip(f"Could not retrieve finding {finding_uuid}")
 
@@ -194,12 +194,10 @@ class TestFinding:
         print(f"New finding_tags: {new_finding_tags}")
 
         # Update the finding with update_mask (exclude spec.dismiss - API manages it)
-        updated_finding = finding.update_finding(
-            self.client,
-            self.namespace,
+        updated_finding = self.endor_client.finding.update(
             finding_uuid,
             update_payload,
-            "meta.tags,spec.finding_tags",
+            update_mask="meta.tags,spec.finding_tags",
         )
 
         assert updated_finding is not None, "Finding update should succeed"
@@ -233,12 +231,10 @@ class TestFinding:
             ),
         )
         try:
-            finding.update_finding(
-                self.client,
-                self.namespace,
+            self.endor_client.finding.update(
                 finding_uuid,
                 restore_payload,
-                "meta.tags,spec.finding_tags",
+                update_mask="meta.tags,spec.finding_tags",
             )
             print("[CLEANUP] Restored original finding values")
         except Exception as e:

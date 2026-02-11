@@ -6,9 +6,9 @@ Installations are read-only resources managed by platform integrations.
 
 import pytest
 
-from endorlabs.resources import installation
+import endorlabs
 from endorlabs.types import ListParameters
-from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -22,6 +22,10 @@ class TestInstallation:
         self.namespace = namespace
         self.root_namespace = root_namespace
         self.tenant_root = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
 
     @pytest.fixture
     def sample_installation(self):
@@ -34,11 +38,11 @@ class TestInstallation:
         from endorlabs.exceptions import ServerError
 
         try:
-            results = installation.list_installations(
-                self.client,
-                self.tenant_root,
-                list_params=ListParameters(traverse=True, page_size=TEST_PAGE_SIZE),
-                max_pages=TEST_MAX_PAGES,
+            results = self.endor_root_client.installation.list(
+                list_params=ListParameters(
+                    traverse=True, page_size=TEST_TRAVERSE_PAGE_SIZE
+                ),
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -106,10 +110,12 @@ class TestInstallation:
         list_params = ListParameters(
             filter=f'spec.platform_type=="{platform_type_value}"',
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
 
-        filtered_results = installation.list_installations(
-            self.client, self.tenant_root, list_params
+        filtered_results = self.endor_root_client.installation.list(
+            list_params=list_params,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
 
         assert isinstance(filtered_results, list), (
@@ -142,7 +148,7 @@ class TestInstallation:
         from endorlabs.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            installation.get_installation(self.client, self.tenant_root, "invalid-uuid")
+            self.endor_root_client.installation.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

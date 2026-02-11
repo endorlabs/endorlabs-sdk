@@ -9,6 +9,7 @@ import time
 
 import pytest
 
+import endorlabs
 from endorlabs.resources import authorization_policy
 from endorlabs.resources.authorization_policy import (
     AuthorizationPolicyMeta,
@@ -33,6 +34,10 @@ class TestAuthorizationPolicy:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_policy_uuids = []
 
     def teardown_method(self) -> None:
@@ -40,9 +45,7 @@ class TestAuthorizationPolicy:
         if hasattr(self, "created_policy_uuids"):
             for policy_uuid in self.created_policy_uuids:
                 try:
-                    authorization_policy.delete_authorization_policy(
-                        self.client, self.namespace, policy_uuid
-                    )
+                    self.endor_client.authorization_policy.delete(policy_uuid)
                     print(f"[CLEANUP] Deleted test authorization policy: {policy_uuid}")
                 except Exception as e:
                     print(
@@ -146,9 +149,7 @@ class TestAuthorizationPolicy:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    authorization_policy.delete_authorization_policy(
-                        self.client, self.namespace, created.uuid
-                    )
+                    self.endor_client.authorization_policy.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -233,9 +234,7 @@ class TestAuthorizationPolicy:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    authorization_policy.delete_authorization_policy(
-                        self.client, self.namespace, created.uuid
-                    )
+                    self.endor_client.authorization_policy.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 

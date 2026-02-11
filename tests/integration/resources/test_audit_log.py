@@ -8,8 +8,8 @@ from datetime import UTC
 
 import pytest
 
+import endorlabs
 from endorlabs.api_client import APIClient
-from endorlabs.resources import audit_log
 from endorlabs.resources.audit_log import AuditLogOperation
 from endorlabs.types import ListParameters
 from tests.conftest import (
@@ -34,10 +34,12 @@ class TestAuditLog:
         self.root_namespace = root_namespace
         self.tenant_root = root_namespace
         self.created_audit_log_uuids = []
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
 
-        self.audit_logs = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
+        self.audit_logs = self.endor_client.audit_log.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -47,7 +49,7 @@ class TestAuditLog:
         if hasattr(self, "created_audit_log_uuids"):
             for log_uuid in self.created_audit_log_uuids:
                 try:
-                    audit_log.delete_audit_log(self.client, self.namespace, log_uuid)
+                    self.endor_client.audit_log.delete(log_uuid)
                     print(f"[CLEANUP] Deleted test audit log: {log_uuid}")
                 except Exception as e:
                     print(f"[WARNING] Failed to delete test audit log {log_uuid}: {e}")
@@ -124,27 +126,29 @@ class TestAuditLog:
             assert hasattr(got.spec.error, "details")
 
     def test_audit_log_list_archived(self) -> None:
-        """Test GET archived audit logs operation."""
-        print("\n=== TESTING GET ARCHIVED AUDIT LOGS ===")
+        """Test listing archived audit logs via archive=True.
 
-        # Test list_archived_audit_logs with pagination limits
-        archived_logs = audit_log.list_archived_audit_logs(
-            self.client,
-            self.namespace,
-            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+        Archived logs are 30+ days old and retained for up to 3 years.
+        Active and archived logs must be queried separately.
+        """
+        print("\n=== TESTING LIST ARCHIVED AUDIT LOGS ===")
+
+        archived = self.endor_client.audit_log.list(
+            archive=True,
+            page_size=TEST_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES,
         )
-        assert isinstance(archived_logs, list), "Should return a list of archived logs"
-        print(f"Found {len(archived_logs)} archived audit logs")
+        assert isinstance(archived, list), "Should return a list"
 
-        # Display first few archived logs if any
-        if archived_logs:
-            for i, log_item in enumerate(archived_logs[:5]):  # Show first 5
-                print(f"Archived Log {i + 1}: {log_item.uuid}")
-                if log_item.spec:
-                    print(f"  Operation: {log_item.spec.operation}")
-                    if log_item.meta.create_time:
-                        print(f"  Create Time: {log_item.meta.create_time}")
+        if not archived:
+            pytest.skip("No archived audit logs in this tenant (< 30 days old)")
+
+        print(f"Found {len(archived)} archived audit logs")
+
+        # Verify returned logs have expected structure
+        for log in archived:
+            assert log.uuid, "Archived log should have a UUID"
+            assert log.meta, "Archived log should have metadata"
 
     def test_audit_log_filter_by_operation(self) -> None:
         """Test filtering audit logs by operation type."""
@@ -159,9 +163,7 @@ class TestAuditLog:
         ]
 
         for operation_type in operation_types:
-            filtered_logs = audit_log.list_audit_logs(
-                self.client,
-                self.namespace,
+            filtered_logs = self.endor_client.audit_log.list(
                 list_params=ListParameters(
                     filter=f"spec.operation=='{operation_type.value}'",
                     page_size=TEST_PAGE_SIZE,
@@ -183,9 +185,7 @@ class TestAuditLog:
 
         # Test filtering by a common message kind (Policy)
         message_kind = "internal.endor.ai.endor.v1.Policy"
-        filtered_logs = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
+        filtered_logs = self.endor_client.audit_log.list(
             list_params=ListParameters(
                 filter=f"spec.message_kind=='{message_kind}'",
                 page_size=TEST_PAGE_SIZE,
@@ -214,9 +214,7 @@ class TestAuditLog:
         to_date_str = to_date.strftime("%Y-%m-%dT%H:%M:%SZ")
         from_date_str = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        filtered_logs = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
+        filtered_logs = self.endor_client.audit_log.list(
             list_params=ListParameters(
                 filter=(
                     f"meta.create_time>=date({from_date_str}) "
@@ -248,9 +246,7 @@ class TestAuditLog:
 
         # Test filtering by claims (API key identification)
         # Note: This is a regex match, so we search for patterns
-        filtered_logs = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
+        filtered_logs = self.endor_client.audit_log.list(
             list_params=ListParameters(
                 filter="spec.claims matches '.*api-key.*'",
                 page_size=TEST_PAGE_SIZE,
@@ -281,9 +277,7 @@ class TestAuditLog:
             traverse=True,
         )
 
-        logs_with_remote = audit_log.list_audit_logs(
-            self.client,
-            self.tenant_root,
+        logs_with_remote = self.endor_root_client.audit_log.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -306,9 +300,7 @@ class TestAuditLog:
             traverse=True,
         )
 
-        filtered_logs = audit_log.list_audit_logs(
-            self.client,
-            self.tenant_root,
+        filtered_logs = self.endor_root_client.audit_log.list(
             list_params=filter_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -327,9 +319,7 @@ class TestAuditLog:
 
         # Filter for logs that might contain API key claims
         # API keys typically have claims like 'api-key' or specific patterns
-        api_key_logs = audit_log.list_audit_logs(
-            self.client,
-            self.namespace,
+        api_key_logs = self.endor_client.audit_log.list(
             list_params=ListParameters(
                 filter="spec.claims matches '.*api-key.*'",
                 page_size=TEST_PAGE_SIZE,
@@ -359,9 +349,7 @@ class TestAuditLog:
         ]
 
         for pattern in alternative_patterns:
-            filtered_logs = audit_log.list_audit_logs(
-                self.client,
-                self.namespace,
+            filtered_logs = self.endor_client.audit_log.list(
                 list_params=ListParameters(filter=pattern, page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )

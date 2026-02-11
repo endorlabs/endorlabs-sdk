@@ -12,6 +12,7 @@ import time
 
 import pytest
 
+import endorlabs
 from endorlabs.resources import policy
 from endorlabs.resources.policy import (
     CreatePolicyPayload,
@@ -36,6 +37,10 @@ class TestPolicy:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+        self.endor_root_client = endorlabs.Client(
+            tenant=root_namespace, api_client=api_client
+        )
         self.created_policy_uuids = []
 
     @pytest.fixture
@@ -48,9 +53,7 @@ class TestPolicy:
         """
         from endorlabs.types import ListParameters
 
-        results = policy.list_policies(
-            self.client,
-            self.namespace,
+        results = self.endor_client.policy.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -108,9 +111,7 @@ match_finding[result] {
         )
 
         # Create the policy
-        created_policy = policy.create_policy(
-            self.client, self.namespace, dummy_policy_payload
-        )
+        created_policy = self.endor_client.policy.create(dummy_policy_payload)
 
         assert created_policy is not None, "Policy creation should succeed"
         assert created_policy.meta.name == policy_name, "Policy name should match"
@@ -127,7 +128,7 @@ match_finding[result] {
         if hasattr(self, "created_policy_uuids"):
             for policy_uuid in self.created_policy_uuids:
                 try:
-                    policy.delete_policy(self.client, self.namespace, policy_uuid)
+                    self.endor_client.policy.delete(policy_uuid)
                     print(f"[CLEANUP] Deleted test policy: {policy_uuid}")
                 except Exception as e:
                     print(f"[WARNING] Failed to delete test policy {policy_uuid}: {e}")
@@ -193,9 +194,7 @@ match_finding[result] {
         from endorlabs.types import ListParameters
 
         for policy_type in policy_types:
-            filtered_policies = policy.list_policies(
-                self.client,
-                self.namespace,
+            filtered_policies = self.endor_client.policy.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
                 policy_type=policy_type,
@@ -254,9 +253,7 @@ match_finding[result] {
         # Create the exception policy
         created_policy = None
         try:
-            created_policy = policy.create_policy(
-                self.client, self.namespace, exception_policy_payload
-            )
+            created_policy = self.endor_client.policy.create(exception_policy_payload)
 
             assert created_policy is not None, (
                 "Exception policy creation should succeed"
@@ -287,9 +284,7 @@ match_finding[result] {
         finally:
             if created_policy is not None:
                 try:
-                    policy.delete_policy(
-                        self.client, self.namespace, created_policy.uuid
-                    )
+                    self.endor_client.policy.delete(created_policy.uuid)
                 except Exception as e:
                     print(
                         f"[WARNING] Cleanup failed for policy "
@@ -377,8 +372,8 @@ match_findings[result] {
         # Create the notification policy
         created_policy = None
         try:
-            created_policy = policy.create_policy(
-                self.client, self.namespace, notification_policy_payload
+            created_policy = self.endor_client.policy.create(
+                notification_policy_payload
             )
 
             assert created_policy is not None, (
@@ -404,9 +399,7 @@ match_findings[result] {
         finally:
             if created_policy is not None:
                 try:
-                    policy.delete_policy(
-                        self.client, self.namespace, created_policy.uuid
-                    )
+                    self.endor_client.policy.delete(created_policy.uuid)
                 except Exception as e:
                     print(
                         f"[WARNING] Cleanup failed for policy "
@@ -473,9 +466,7 @@ match_findings[result] {
         # Create the admission policy
         created_policy = None
         try:
-            created_policy = policy.create_policy(
-                self.client, self.namespace, admission_policy_payload
-            )
+            created_policy = self.endor_client.policy.create(admission_policy_payload)
 
             assert created_policy is not None, (
                 "Admission policy creation should succeed"
@@ -496,9 +487,7 @@ match_findings[result] {
         finally:
             if created_policy is not None:
                 try:
-                    policy.delete_policy(
-                        self.client, self.namespace, created_policy.uuid
-                    )
+                    self.endor_client.policy.delete(created_policy.uuid)
                 except Exception as e:
                     print(
                         f"[WARNING] Cleanup failed for policy "
@@ -550,7 +539,7 @@ match_finding[result] {
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    policy.delete_policy(self.client, self.namespace, created.uuid)
+                    self.endor_client.policy.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for policy {created.uuid}: {e}")
 
