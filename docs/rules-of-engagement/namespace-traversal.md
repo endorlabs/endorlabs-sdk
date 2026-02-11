@@ -38,7 +38,7 @@ all_deps = client.dependency_metadata.list(traverse=True)
 # Query all private dependencies across all namespaces
 private_deps = client.dependency_metadata.list(
     traverse=True,
-    filter_expr="spec.dependency_data.public==false",
+    filter="spec.dependency_data.public==false",
 )
 ```
 
@@ -121,10 +121,6 @@ class ListParameters(BaseModel):
 
 The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true`.
 
-### Migration from include_child_namespaces
-
-The `include_child_namespaces` parameter has been removed. Use `traverse` instead.
-
 ## Guidelines
 
 1. **Default to traverse for tenant-wide queries**: If you're querying across namespaces, use `traverse=True`
@@ -168,7 +164,7 @@ def get_private_dependencies(client):
     """Get all private dependencies across tenant."""
     return client.dependency_metadata.list(
         traverse=True,
-        filter_expr="spec.dependency_data.public==false",
+        filter="spec.dependency_data.public==false",
     )
 ```
 

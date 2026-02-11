@@ -47,9 +47,10 @@ Note: `__version__` is public but not in `__all__`; consider adding it if part o
 
 | Member | Types | Docstrings |
 |--------|--------|------------|
-| `Client.__init__(api_client=..., tenant=..., **client_kwargs)` | Full param/return | Yes |
-| `Client.wait_until(predicate, timeout=..., poll_interval_max=...)` | Full | Yes |
-| `Client.<attr>` (e.g. `.projects`, `.namespaces`, `.findings`) | Typed via stub (see Phase 4) | N/A (facade class docstring) |
+| `Client.__init__(api_client=..., tenant=..., *, timeout=60.0, content_type="application/jsoncompact", accept_encoding="gzip, br, zstd", max_retries=..., base_url=..., **client_kwargs)` | Full param/return | Yes |
+| `Client.whoami()` | Full; return `str \| None` | Yes |
+| `Client.wait_until(predicate, timeout=60, poll_interval_max=10)` | Full; return `bool` | Yes |
+| `Client.<attr>` (e.g. `.project`, `.namespace`, `.finding`) | Typed via stub (see Phase 4) | N/A (facade class docstring) |
 
 ### ResourceFacade (per resource)
 
