@@ -1,18 +1,18 @@
 rules:
-  - id: endor-af-dangerous-operations
+  - id: endor-sdk-dangerous-operations
     languages:
       - python
     message: |
       Problem:
-      A dangerous operation was detected that is banned by the Endor Agentic Framework
-      AF coding standards (security.mdc, Dangerous Operations):
+      A dangerous operation was detected that is banned by the Endor Labs SDK
+      coding standards (security.mdc, Dangerous Operations):
 
       - `eval()` / `exec()` -- arbitrary code execution (CWE-94)
       - `pickle.loads()` -- deserialization of untrusted data (CWE-502)
       - `yaml.unsafe_load()` / `yaml.load()` without SafeLoader (CWE-502)
       - `subprocess` with `shell=True` -- shell injection (CWE-78)
 
-      These functions are categorically banned in AF library code under
+      These functions are categorically banned in SDK library code under
       `src/endorlabs/`.  They introduce injection, code execution, and
       deserialization vulnerabilities that are difficult to mitigate.
 
@@ -44,11 +44,11 @@ rules:
       description: >-
         Dangerous operation detected -- eval, exec, pickle, unsafe YAML
         loading, or subprocess with shell=True.  These are categorically
-        banned in AF library code.
+        banned in SDK library code.
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - A03:2021
         - Code-Injection
@@ -57,7 +57,7 @@ rules:
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF security standards categorically ban eval, exec, pickle,
+        The SDK security standards categorically ban eval, exec, pickle,
         unsafe YAML loading, and subprocess with shell=True in library
         code.  Ruff bandit rules (S) partially overlap but this rule
         ensures findings appear in the Endor Labs platform alongside other

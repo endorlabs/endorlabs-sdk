@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-filter-string-injection
+  - id: endor-sdk-filter-string-injection
     languages:
       - python
     message: |
@@ -10,7 +10,7 @@ rules:
       interpolated value contains unescaped quotes or filter operators, it can
       alter the query semantics.
 
-      The Endor Agentic Framework provides the `F()` filter builder in
+      The Endor Labs SDK provides the `F()` filter builder in
       `endorlabs.filter` which properly escapes values and produces safe,
       composable filter expressions.  All filter construction MUST go through
       the builder or use an equivalent escaping strategy.
@@ -46,14 +46,14 @@ rules:
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - A03:2021
         - Injection
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF list operations accept a filter string that is passed directly
+        The SDK list operations accept a filter string that is passed directly
         to the Endor Labs API as a query parameter.  When filter values are
         interpolated via f-strings without escaping, a value containing double
         quotes or filter operators can alter query semantics.  The F() filter

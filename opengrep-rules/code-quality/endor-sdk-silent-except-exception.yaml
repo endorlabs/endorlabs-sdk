@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-silent-except-exception
+  - id: endor-sdk-silent-except-exception
     languages:
       - python
     message: |
@@ -45,13 +45,13 @@ rules:
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - Error-Handling
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF uses except Exception in ~30 locations.  Most bind the
+        The SDK uses except Exception in ~30 locations.  Most bind the
         exception (as e) and log or re-raise it, which is acceptable.
         However, unbound except Exception: handlers provide no access to
         the exception object at all, making silent swallowing inevitable.

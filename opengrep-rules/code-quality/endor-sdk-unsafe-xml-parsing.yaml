@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-unsafe-xml-parsing
+  - id: endor-sdk-unsafe-xml-parsing
     languages:
       - python
     message: |
@@ -40,14 +40,14 @@ rules:
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - A05:2021
         - XML-External-Entity
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF downloads and parses sitemap XML from external sources
+        The SDK downloads and parses sitemap XML from external sources
         using stdlib xml.etree.ElementTree.  This parser does not protect
         against XXE or entity expansion by default.  The defusedxml
         library is a drop-in replacement that disables dangerous features.

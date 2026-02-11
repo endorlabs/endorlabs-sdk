@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-unvalidated-namespace-in-url
+  - id: endor-sdk-unvalidated-namespace-in-url
     languages:
       - python
     message: |
@@ -45,13 +45,13 @@ rules:
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - URL-Path-Injection
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF constructs API URLs by interpolating namespace strings into
+        The SDK constructs API URLs by interpolating namespace strings into
         f-strings like f"v1/namespaces/{ns}/{resource}".  The namespace
         originates from user input (Client constructor) or API responses
         (tenant_meta.namespace on traversed resources).  Without format
