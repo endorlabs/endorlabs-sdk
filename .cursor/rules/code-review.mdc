@@ -1,0 +1,31 @@
+---
+alwaysApply: true
+---
+
+# Agent Self-Review Checklist
+
+Before committing any change, verify the following. This applies to both human and AI-authored code.
+
+## Pre-Commit Checks
+1. No `print()` or `breakpoint()` left in library code (`src/`). Use `self.logger` instead.
+2. No commented-out code blocks. Delete dead code; git has history.
+3. No `TODO` or `FIXME` without a linked issue or rationale in the comment.
+4. All new public functions and classes have Google-style docstrings.
+5. All new functions have type annotations on parameters and return types.
+
+## Quality Gate (must pass before commit)
+```
+uv run ruff check .
+uv run ruff format --check .
+uv run pyright
+uv run pytest -x -m "not long"
+```
+
+## Commit Hygiene
+- Use conventional commit prefixes: `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, `chore:`, `ci:`.
+- Keep commits atomic — one logical change per commit.
+- Commit message should explain *why*, not just *what*.
+
+## Distribution of Knowledge
+- Important and validated findings shall be distributed appropriately using first principles into skills, rules, docs, and docstrings.
+- If a pattern is reusable, capture it in the relevant `.cursor/rules/` or `.cursor/skills/` file.

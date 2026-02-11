@@ -1,0 +1,14 @@
+# Override .gitignore — let Cursor AI see these gitignored directories.
+# .gitignore keeps them out of version control; ! negations here let Cursor index them.
+
+# API spec + user docs (context bootstrap)
+!.endorlabs-context/
+!.endorlabs-context/**
+
+# Research files, responses
+!.tmp/
+!.tmp/**
+
+# Generated files
+!.generated/
+!.generated/**

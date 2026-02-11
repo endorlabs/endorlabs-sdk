@@ -1,0 +1,73 @@
+rules:
+  - id: endor-af-mkdir-parents-unchecked
+    languages:
+      - python
+    message: |
+      Problem:
+      `mkdir(parents=True)` is called on a Path that was not first resolved
+      with `.resolve()` and checked for containment.  When `parents=True`,
+      Python creates all intermediate directories -- if the path contains
+      `../` sequences from attacker-controlled input, this can create
+      arbitrary directory trees outside the intended location.
+
+      Combined with `exist_ok=True` (common pattern), this silently succeeds
+      even if the directories already exist, making exploitation invisible.
+
+      Solution:
+      Resolve the path and verify containment before creating directories:
+
+      ```python
+      resolved = output_dir.resolve()
+      base_resolved = expected_base.resolve()
+      if not str(resolved).startswith(str(base_resolved)):
+          raise ValueError(f"Path {resolved} outside allowed base {base_resolved}")
+      resolved.mkdir(parents=True, exist_ok=True)
+      ```
+    metadata:
+      category: security
+      confidence: MEDIUM
+      cwe:
+        - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
+      description: >-
+        mkdir(parents=True) on an unresolved Path -- path traversal sequences
+        could create arbitrary directory trees outside the intended location.
+      endor-category: warning
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - Path-Traversal
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF experimental workflows create output directories from
+        user-provided paths using mkdir(parents=True, exist_ok=True).
+        Without resolving the path first and checking it is contained
+        within an allowed base directory, an attacker-controlled path
+        component could create directories at arbitrary filesystem
+        locations.  This is a corollary to the path-write-unresolved
+        rule -- directory creation is the precursor to file writes.
+      impact: LOW
+      references:
+        - https://cwe.mitre.org/data/definitions/22.html
+      remediation: >-
+        Call .resolve() on the Path and verify it starts with the expected
+        base directory before calling mkdir(parents=True).
+      security-severity: Low
+      version: v1.0.0
+    patterns:
+      - pattern-either:
+          - pattern: $PATH.mkdir(parents=True, ...)
+          - pattern: $PATH.parent.mkdir(parents=True, ...)
+      - pattern-not-inside: |
+          $PATH = $BASE.resolve()
+          ...
+          $PATH.mkdir(parents=True, ...)
+      - pattern-not-inside: |
+          $PATH = $BASE.resolve()
+          ...
+          $PATH.parent.mkdir(parents=True, ...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

@@ -17,27 +17,25 @@ compatibility but is ignored - all operations always use the "oss" namespace.
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
+    from ..api_client import APIClient
     from ..types import ListParameters
 
-# Set up logger with redaction filter
-logger = logging.getLogger(__name__)
-logger.addFilter(RedactingFilter([redaction_pattern]))
+logger = get_resource_logger(__name__)
 
 # Hardcoded namespace for DependencyMetadata operations
 # All DependencyMetadata operations use the "oss" namespace regardless of

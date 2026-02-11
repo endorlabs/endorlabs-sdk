@@ -18,30 +18,18 @@ API FEATURES:
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-# Global resource instance
-def _get_api_key_ops(client: APIClient) -> BaseResourceOperations[APIKey]:
-    """Get BaseResourceOperations instance for API keys."""
-    return BaseResourceOperations(client, "api-keys", APIKey)
+logger = get_resource_logger(__name__)
 
 
 class PermissionsMethods(BaseModel):
@@ -227,148 +215,3 @@ class CreateAPIKeyPayload(BaseModel):
 def build_create_payload(**kwargs: Any) -> CreateAPIKeyPayload:
     """Build CreateAPIKeyPayload from kwargs (decoupled facade create)."""
     return CreateAPIKeyPayload(**kwargs)
-
-
-def list_api_keys(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[APIKey]:
-    """List API keys in the specified namespace.
-
-    Args:
-        client: Authenticated APIClient instance
-        tenant_meta_namespace: Target tenant namespace (canonical name)
-        list_params: Optional list parameters for filtering/pagination
-        max_pages: Optional maximum number of pages to fetch
-        **kwargs: Additional query parameters
-
-    Returns:
-        List of APIKey resources
-
-    Example:
-        >>> from endorlabs.api_client import APIClient
-        >>> client = APIClient()
-        >>> api_keys = list_api_keys(client, "tenant.namespace")
-        >>> for key in api_keys:
-        ...     print(f"{key.meta.name}: {key.uuid}")
-
-    """
-    ops = _get_api_key_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_api_keys_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[APIKey]:
-    """Iterate over API keys without materializing the full list."""
-    ops = _get_api_key_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_api_key(
-    client: APIClient, tenant_meta_namespace: str, api_key_uuid: str
-) -> APIKey:
-    """Get an API key by UUID.
-
-    Args:
-        client: Authenticated APIClient instance
-        tenant_meta_namespace: Target tenant namespace (canonical name)
-        api_key_uuid: UUID of the API key
-
-    Returns:
-        APIKey resource
-
-    Raises:
-        NotFoundError: If API key doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    Example:
-        >>> from endorlabs.api_client import APIClient
-        >>> client = APIClient()
-        >>> api_key = get_api_key(client, "tenant.namespace", "uuid-here")
-        >>> print(f"Key: {api_key.meta.name}")
-
-    """
-    ops = _get_api_key_ops(client)
-    return ops.get(tenant_meta_namespace, api_key_uuid)
-
-
-def create_api_key(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateAPIKeyPayload,
-) -> APIKey:
-    """Create a new API key with pre-validation and typed errors.
-
-    Args:
-        client: Authenticated APIClient instance
-        tenant_meta_namespace: Target tenant namespace (canonical name)
-        payload: API key creation payload
-
-    Returns:
-        Created APIKey resource with key and secret in spec
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If API key already exists
-        ServerError: If server error occurs
-
-    Example:
-        >>> from endorlabs.api_client import APIClient
-        >>> from datetime import datetime, timedelta
-        >>> from endorlabs.resources.api_key import (
-        ...     CreateAPIKeyPayload, APIKeyMeta, APIKeySpec, APIKeyPermissions
-        ... )
-        >>> client = APIClient()
-        >>> expiration = (datetime.utcnow() + timedelta(days=1)).isoformat() + "Z"
-        >>> payload = CreateAPIKeyPayload(
-        ...     meta=APIKeyMeta(name="My API Key", description="Test key"),
-        ...     spec=APIKeySpec(
-        ...         permissions=APIKeyPermissions(
-        ...             roles=["SYSTEM_ROLE_READ_ONLY"]
-        ...         ),
-        ...         expiration_time=expiration
-        ...     )
-        ... )
-        >>> api_key = create_api_key(client, "tenant.namespace", payload)
-        >>> print(f"Key: {api_key.spec.key}")
-        >>> print(f"Secret: {api_key.spec.secret}")
-
-    """
-    ops = _get_api_key_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def delete_api_key(
-    client: APIClient, tenant_meta_namespace: str, api_key_uuid: str
-) -> bool:
-    """Delete an API key by UUID.
-
-    Args:
-        client: Authenticated APIClient instance
-        tenant_meta_namespace: Target tenant namespace (canonical name)
-        api_key_uuid: UUID of the API key to delete
-
-    Returns:
-        True if deletion succeeded, False otherwise
-
-    Example:
-        >>> from endorlabs.api_client import APIClient
-        >>> client = APIClient()
-        >>> success = delete_api_key(client, "tenant.namespace", "uuid-here")
-        >>> if success:
-        ...     print("API key deleted successfully")
-
-    """
-    ops = _get_api_key_ops(client)
-    return ops.delete(tenant_meta_namespace, api_key_uuid)

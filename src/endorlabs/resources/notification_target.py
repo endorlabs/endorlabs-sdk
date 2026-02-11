@@ -13,33 +13,19 @@ API OPERATIONS SUPPORTED:
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-def _get_notification_target_ops(
-    client: APIClient,
-) -> BaseResourceOperations[NotificationTarget]:
-    """Get BaseResourceOperations instance for notification targets."""
-    return BaseResourceOperations(client, "notification-targets", NotificationTarget)
+logger = get_resource_logger(__name__)
 
 
 class NotificationTargetActionType(FlexibleEnum):
@@ -169,81 +155,3 @@ class CreateNotificationTargetPayload(BaseModel):
 def build_create_payload(**kwargs: Any) -> CreateNotificationTargetPayload:
     """Build CreateNotificationTargetPayload from kwargs (decoupled create)."""
     return CreateNotificationTargetPayload(**kwargs)
-
-
-def list_notification_targets(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[NotificationTarget]:
-    """List notification targets in the namespace."""
-    ops = _get_notification_target_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_notification_targets_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[NotificationTarget]:
-    """Iterate over notification targets without materializing the full list."""
-    ops = _get_notification_target_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_notification_target(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    notification_target_uuid: str,
-) -> NotificationTarget:
-    """Get a notification target by UUID."""
-    ops = _get_notification_target_ops(client)
-    return ops.get(tenant_meta_namespace, notification_target_uuid)
-
-
-def create_notification_target(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateNotificationTargetPayload,
-) -> NotificationTarget:
-    """Create a notification target."""
-    ops = _get_notification_target_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_notification_target(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    notification_target_uuid: str,
-    payload: NotificationTarget | dict[str, Any],
-    update_mask: str | list[str] | None = None,
-) -> NotificationTarget:
-    """Update a notification target."""
-    ops = _get_notification_target_ops(client)
-    if isinstance(payload, dict):
-        payload = NotificationTarget(**payload)
-    mask_list: list[str] = (
-        parse_update_mask(update_mask)
-        if isinstance(update_mask, str)
-        else (update_mask or [])
-    )
-    return ops.update(
-        tenant_meta_namespace,
-        notification_target_uuid,
-        payload,
-        mask_list,
-    )
-
-
-def delete_notification_target(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    notification_target_uuid: str,
-) -> bool:
-    """Delete a notification target by UUID."""
-    ops = _get_notification_target_ops(client)
-    return ops.delete(tenant_meta_namespace, notification_target_uuid)

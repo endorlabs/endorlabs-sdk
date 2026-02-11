@@ -1,0 +1,77 @@
+rules:
+  - id: endor-af-unsafe-xml-parsing
+    languages:
+      - python
+    message: |
+      Problem:
+      The stdlib `xml.etree.ElementTree` parser was used to parse XML data.
+      This parser is vulnerable to XML External Entity (XXE) injection and
+      entity expansion attacks (billion-laughs DoS) when processing input
+      from external sources.
+
+      Even when the XML source is a known domain (e.g. `docs.endorlabs.com`),
+      a DNS poisoning or man-in-the-middle attack could inject malicious XML
+      containing entity expansion or external entity references.
+
+      Solution:
+      Use `defusedxml` which disables external entities and limits entity
+      expansion by default:
+
+      ```python
+      # Instead of:
+      # import xml.etree.ElementTree as ET
+      # root = ET.fromstring(response.content)
+
+      # Use:
+      import defusedxml.ElementTree as ET
+      root = ET.fromstring(response.content)
+      ```
+
+      Install with: `pip install defusedxml`
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-611: Improper Restriction of XML External Entity Reference"
+      description: >-
+        Unsafe XML parsing with stdlib ElementTree -- vulnerable to XXE
+        injection and entity expansion (billion-laughs) attacks on
+        external input.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - A05:2021
+        - XML-External-Entity
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF downloads and parses sitemap XML from external sources
+        using stdlib xml.etree.ElementTree.  This parser does not protect
+        against XXE or entity expansion by default.  The defusedxml
+        library is a drop-in replacement that disables dangerous features.
+      impact: MEDIUM
+      owasp:
+        - A05:2021-Security-Misconfiguration
+      references:
+        - https://cwe.mitre.org/data/definitions/611.html
+        - https://pypi.org/project/defusedxml/
+        - https://docs.python.org/3/library/xml.html#xml-vulnerabilities
+      remediation: >-
+        Replace xml.etree.ElementTree with defusedxml.ElementTree.
+        The defusedxml API is compatible with stdlib ElementTree but
+        disables external entities and limits entity expansion.
+      security-severity: Medium
+      version: v1.0.0
+    pattern-either:
+      - pattern: xml.etree.ElementTree.fromstring(...)
+      - pattern: xml.etree.ElementTree.parse(...)
+      - pattern: ET.fromstring(...)
+      - pattern: ET.parse(...)
+      - pattern: ElementTree.fromstring(...)
+      - pattern: ElementTree.parse(...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

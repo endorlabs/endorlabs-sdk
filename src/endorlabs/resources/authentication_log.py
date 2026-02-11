@@ -3,38 +3,23 @@
 Represents authentication events (login, API key, etc.). This resource is
 system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
 system can perform them). The Client exposes list() only; use
-client.authentication_log.list(). Module-level get_authentication_log() remains
-for advanced use but will raise PermissionDeniedError (403) for non-system
-callers.
+client.authentication_log.list().
 """
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-def _get_authentication_log_ops(
-    client: APIClient,
-) -> BaseResourceOperations[AuthenticationLog]:
-    """Get BaseResourceOperations instance for authentication logs."""
-    return BaseResourceOperations(client, "authentication-logs", AuthenticationLog)
+logger = get_resource_logger(__name__)
 
 
 class AuthenticationLogSpec(BaseSpec):
@@ -107,37 +92,3 @@ class AuthenticationLog(BaseResource):
                     unknown,
                 )
         return v
-
-
-def list_authentication_logs(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[AuthenticationLog]:
-    """List authentication logs in the namespace."""
-    ops = _get_authentication_log_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_authentication_logs_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[AuthenticationLog]:
-    """Iterate over authentication logs without materializing the full list."""
-    ops = _get_authentication_log_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_authentication_log(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    authentication_log_uuid: str,
-) -> AuthenticationLog:
-    """Get an authentication log by UUID."""
-    ops = _get_authentication_log_ops(client)
-    return ops.get(tenant_meta_namespace, authentication_log_uuid)

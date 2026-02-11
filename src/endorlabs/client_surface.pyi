@@ -4,12 +4,7 @@
 from typing import Any
 
 from .api_client import APIClient
-from .facade import (
-    OssResourceFacade,
-    ResourceFacade,
-    ScanLogsFacade,
-    SystemResourceFacade,
-)
+from .facade import ResourceFacade, ScanLogsFacade
 from .resources.api_key import APIKey
 from .resources.audit_log import AuditLog
 from .resources.authentication_log import AuthenticationLog
@@ -50,8 +45,8 @@ class Client:
     policy: ResourceFacade[Policy]
     authorization_policy: ResourceFacade[AuthorizationPolicy]
     package_version: ResourceFacade[PackageVersion]
-    package_license: OssResourceFacade[PackageLicense]
-    dependency_metadata: OssResourceFacade[DependencyMetadata]
+    package_license: ResourceFacade[PackageLicense]
+    dependency_metadata: ResourceFacade[DependencyMetadata]
     installation: ResourceFacade[Installation]
     scan_profile: ResourceFacade[ScanProfile]
     scan_result: ResourceFacade[ScanResult]
@@ -67,9 +62,9 @@ class Client:
     version_upgrade: ResourceFacade[VersionUpgrade]
     code_owners: ResourceFacade[CodeOwners]
     invitation: ResourceFacade[Invitation]
-    authentication_log: SystemResourceFacade[AuthenticationLog]
-    endor_license: SystemResourceFacade[EndorLicense]
-    policy_template: SystemResourceFacade[PolicyTemplate]
+    authentication_log: ResourceFacade[AuthenticationLog]
+    endor_license: ResourceFacade[EndorLicense]
+    policy_template: ResourceFacade[PolicyTemplate]
     scan_logs: ScanLogsFacade
 
     def __init__(
@@ -80,9 +75,17 @@ class Client:
         timeout: float = ...,
         content_type: str = ...,
         accept_encoding: str | None = ...,
-        max_retries: int = ...,
+        max_retries: int | None = ...,
         base_url: str | None = ...,
         **client_kwargs: Any,
+    ) -> None: ...
+    def close(self) -> None: ...
+    def __enter__(self) -> Client: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: Any,
     ) -> None: ...
     def wait_until(
         self,

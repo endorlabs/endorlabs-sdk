@@ -18,33 +18,19 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-def _get_scan_profile_ops(
-    client: APIClient,
-) -> BaseResourceOperations[ScanProfile]:
-    """Get BaseResourceOperations instance for scan profiles."""
-    return BaseResourceOperations(client, "scan-profiles", ScanProfile)
+logger = get_resource_logger(__name__)
 
 
 class AISastAnalysisMode(FlexibleEnum):
@@ -459,185 +445,3 @@ class UpdateScanProfilePayload(BaseModel):
     propagate: bool | None = Field(
         None, description="Updated namespace visibility flag"
     )
-
-
-def list_scan_profiles(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[ScanProfile]:
-    """List scan profiles in a namespace.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name (e.g., 'tenant.namespace')
-        list_params: Optional list parameters for filtering, pagination, etc.
-        max_pages: Optional maximum number of pages to fetch.
-            If None and in test environment, defaults to 10 pages max.
-            If None in production, fetches all pages.
-        **kwargs: Passed through to list implementation (e.g. filter, page_size).
-
-    Returns:
-        List of ScanProfile objects
-
-    """
-    ops = _get_scan_profile_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_scan_profiles_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[ScanProfile]:
-    """Iterate over scan profiles without materializing the full list."""
-    ops = _get_scan_profile_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_scan_profile(
-    client: APIClient, tenant_meta_namespace: str, scan_profile_uuid: str
-) -> ScanProfile:
-    """Get a specific scan profile by UUID.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        scan_profile_uuid: UUID of the scan profile to retrieve
-
-    Returns:
-        ScanProfile object
-
-    Raises:
-        NotFoundError: If scan profile doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_scan_profile_ops(client)
-    return ops.get(tenant_meta_namespace, scan_profile_uuid)
-
-
-def create_scan_profile(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateScanProfilePayload,
-) -> ScanProfile:
-    """Create a new scan profile with pre-validation and typed errors.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        payload: ScanProfile creation payload
-
-    Returns:
-        Created ScanProfile object
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If scan profile already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_scan_profile_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_scan_profile(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    scan_profile_uuid: str,
-    payload: UpdateScanProfilePayload,
-    update_mask: str,
-) -> ScanProfile | None:
-    """Update an existing scan profile using partial updates.
-
-    This function supports updating only specific fields using the update_mask
-    parameter, which enables efficient partial updates without overwriting
-    unchanged fields.
-
-    MUTABLE FIELDS:
-    - meta.tags: General resource tags
-    - meta.description: Resource description
-    - meta.annotations: Resource annotations
-    - spec.*: All spec fields are mutable
-    - propagate: Namespace visibility flag
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        scan_profile_uuid: UUID of the scan profile to update
-        payload: ScanProfile update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "spec.is_default,propagate". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated ScanProfile object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If scan profile doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    Example:
-        >>> # Update scan profile to set as default
-        >>> payload = UpdateScanProfilePayload(
-        ...     spec=ScanProfileSpecUpdate(is_default=True)
-        ... )
-        >>> scan_profile = update_scan_profile(
-        ...     client, namespace, uuid, payload, "spec.is_default"
-        ... )
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Scan profile update requires an update_mask "
-                "(e.g. 'spec.is_default', 'propagate')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=scan_profile_uuid,
-        )
-    # Build ScanProfile object with UUID and payload
-    scan_profile_dict = {
-        "uuid": scan_profile_uuid,
-        **payload.model_dump(exclude_none=True),
-    }
-    scan_profile_obj = ScanProfile(**scan_profile_dict)
-
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-
-    # Use base class update method
-    ops = _get_scan_profile_ops(client)
-    return ops.update(
-        tenant_meta_namespace, scan_profile_uuid, scan_profile_obj, update_mask_list
-    )
-
-
-def delete_scan_profile(
-    client: APIClient, tenant_meta_namespace: str, scan_profile_uuid: str
-) -> bool:
-    """Delete a scan profile.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        scan_profile_uuid: UUID of the scan profile to delete
-
-    Returns:
-        True if deletion was successful, False otherwise
-
-    """
-    ops = _get_scan_profile_ops(client)
-    return ops.delete(tenant_meta_namespace, scan_profile_uuid)

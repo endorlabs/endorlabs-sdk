@@ -18,29 +18,20 @@ PATCH operations on package versions.
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..types import ListParameters
-
-# Set up logger with redaction filter
-logger = logging.getLogger(__name__)
-logger.addFilter(RedactingFilter([redaction_pattern]))
+logger = get_resource_logger(__name__)
 
 
 class Ecosystem(FlexibleEnum):
@@ -489,126 +480,6 @@ class UpdatePackageVersionPayload(BaseModel):
     meta: dict[str, Any] | None = None
     spec: PackageVersionSpec | None = None
     update_mask: list[str] | None = None
-
-
-def _get_package_version_ops(
-    client: APIClient,
-) -> BaseResourceOperations[PackageVersion]:
-    """Get BaseResourceOperations instance for PackageVersion."""
-    return BaseResourceOperations(client, "package-versions", PackageVersion)
-
-
-def list_package_versions(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[PackageVersion]:
-    """List package versions with advanced filtering and pagination."""
-    ops = _get_package_version_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_package_versions_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[PackageVersion]:
-    """Iterate over package versions without materializing the full list."""
-    ops = _get_package_version_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_package_version(
-    client: APIClient, tenant_meta_namespace: str, package_version_uuid: str
-) -> PackageVersion:
-    """Get specific package version by UUID.
-
-    Raises:
-        NotFoundError: If package version doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_package_version_ops(client)
-    return ops.get(tenant_meta_namespace, package_version_uuid)
-
-
-def create_package_version(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreatePackageVersionPayload,
-) -> PackageVersion:
-    """Create a new package version with pre-validation and typed errors.
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If package version already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_package_version_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_package_version(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    package_version_uuid: str,
-    payload: UpdatePackageVersionPayload,
-    update_mask: str,
-) -> PackageVersion | None:
-    """Update package version using base class operations.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        package_version_uuid: UUID of the package version to update
-        payload: PackageVersion update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated PackageVersion object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If package version doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Package version update requires an update_mask "
-                "(e.g. 'meta.description', 'meta.tags')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=package_version_uuid,
-        )
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-    ops = _get_package_version_ops(client)
-    return ops.update(
-        tenant_meta_namespace, package_version_uuid, payload, update_mask_list
-    )
-
-
-def delete_package_version(
-    client: APIClient, tenant_meta_namespace: str, package_version_uuid: str
-) -> bool:
-    """Delete a package version by UUID."""
-    ops = _get_package_version_ops(client)
-    return ops.delete(tenant_meta_namespace, package_version_uuid)
 
 
 # Payload models for create and update operations

@@ -19,35 +19,27 @@ API FEATURES:
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-# Global resource instance
-def _get_semgrep_rule_ops(
-    client: APIClient,
-) -> BaseResourceOperations[SemgrepRule]:
-    """Get BaseResourceOperations instance for semgrep rules."""
-    return BaseResourceOperations(client, "semgrep-rules", SemgrepRule)
+logger = get_resource_logger(__name__)
 
 
 class SeverityLevel(FlexibleEnum):
@@ -71,8 +63,19 @@ class SemgrepFixRegex(BaseModel):
     replacement: str | None = Field(None, description="Replacement string")
 
 
+class SemgrepPaths(BaseModel):
+    """Semgrep rule path inclusion/exclusion (v1SemgrepPaths)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    include: list[str] | None = Field(None, description="Path inclusion patterns")
+    exclude: list[str] | None = Field(None, description="Path exclusion patterns")
+
+
 class SemgrepOptions(BaseModel):
-    """Semgrep rule options."""
+    """Semgrep rule options (v1SemgrepOptions)."""
+
+    model_config = ConfigDict(extra="allow")
 
     symbolic_propagation: bool | None = Field(
         None, description="Enable symbolic propagation"
@@ -83,10 +86,33 @@ class SemgrepOptions(BaseModel):
         alias="taint_assume_safe_numbers",
         description="Assume numbers are safe",
     )
+    taint_unify_mvars: bool | None = Field(
+        None, description="Enable unification of metavariables in taint analysis"
+    )
+    generic_ellipsis_max_span: int | None = Field(
+        None, description="Maximum span for generic ellipsis patterns"
+    )
+    taint_assume_safe_booleans: bool | None = Field(
+        None, description="Assume boolean values are safe in taint analysis"
+    )
+    taint_assume_safe_functions: bool | None = Field(
+        None, description="Assume function calls are safe in taint analysis"
+    )
+    constant_propagation: bool | None = Field(
+        None, description="Enable constant propagation analysis"
+    )
+    implicit_deep_exprstmt: bool | None = Field(
+        None, description="Enable implicit deep expression statement analysis"
+    )
+    generic_engine: str | None = Field(
+        None, description="Generic engine to use for analysis"
+    )
 
 
 class SemgrepRulePatternType(BaseModel):
-    """Semgrep rule pattern type (recursive structure)."""
+    """Semgrep rule pattern type (v1SemgrepRulePatternType, recursive structure)."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     pattern: str | None = Field(None, description="Pattern string")
     pattern_not: str | None = Field(None, description="Pattern not")
@@ -100,13 +126,47 @@ class SemgrepRulePatternType(BaseModel):
     )
     pattern_not_regex: str | None = Field(None, description="Pattern not regex")
     pattern_regex: str | None = Field(None, description="Pattern regex")
-
-    model_config = ConfigDict(populate_by_name=True)
+    pattern_inside: str | None = Field(None, description="Pattern inside")
+    pattern_not_inside: str | None = Field(None, description="Pattern not inside")
+    metavariable_pattern: SemgrepMetavariablePattern | None = Field(
+        None, description="Metavariable pattern"
+    )
+    metavariable_analysis: dict[str, Any] | None = Field(
+        None, description="Metavariable analysis"
+    )
+    metavariable_comparison: dict[str, Any] | None = Field(
+        None, description="Metavariable comparison"
+    )
+    metavariable_type: dict[str, Any] | None = Field(
+        None, description="Metavariable type"
+    )
+    pattern_either_new: list[SemgrepRulePatternType] | None = Field(
+        None, description="Pattern either (new-style)"
+    )
+    focus_metavariable: list[str] | None = Field(
+        None, description="Focus metavariables"
+    )
+    exact: bool | None = Field(None, description="Exact match")
+    by_side_effect: bool | None = Field(None, description="By side effect")
+    label: str | None = Field(None, description="Pattern label")
+    requires: str | None = Field(None, description="Label requirement expression")
+    not_conflicting: bool | None = Field(None, description="Not conflicting flag")
+    management: dict[str, Any] | None = Field(None, description="Management config")
+    pattern_inside_either: list[SemgrepRulePatternType] | None = Field(
+        None, description="Pattern inside either list"
+    )
 
 
 class SemgrepRuleMeta(BaseModel):
-    """Semgrep rule metadata."""
+    """Semgrep rule metadata (v1SemgrepRuleMeta).
 
+    All fields are optional. ``extra="allow"`` ensures forward
+    compatibility when the API adds new metadata fields.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    # --- Fields present in the original SDK model ---
     license: str | None = Field(None, description="Rule license")
     likelihood: str | None = Field(None, description="Likelihood level")
     confidence: str | None = Field(None, description="Confidence level")
@@ -125,9 +185,55 @@ class SemgrepRuleMeta(BaseModel):
         None, description="Endor target types"
     )
 
+    # --- Fields added from v1SemgrepRuleMeta API spec ---
+    endor_category: str | None = Field(
+        None, description="Rule purpose (vulnerability, malware-detection, etc.)"
+    )
+    endor_tags: list[str] | None = Field(
+        None, description="Generic tags controlling later processing of rule results"
+    )
+    endor_attack_examples: list[str] | None = Field(
+        None, description="References to attack descriptions"
+    )
+    endor_rule_origin: dict[str, Any] | None = Field(
+        None, description="Rule origin metadata (license, URL)"
+    )
+    version: str | None = Field(None, description="Semantic version of the rule")
+    security_severity: str | None = Field(None, description="Security severity score")
+    short_description: str | None = Field(None, description="Short rule description")
+    explanation: str | None = Field(None, description="Extended explanation")
+    remediation: str | None = Field(None, description="Remediation guidance")
+    author: str | None = Field(None, description="Rule author")
+    vulnerability: str | None = Field(None, description="Vulnerability identifier")
+    severity: str | None = Field(None, description="Severity string")
+    help: str | None = Field(None, description="Help text")
+    precision: str | None = Field(None, description="Rule precision")
+    tags: list[str] | None = Field(None, description="Generic tags")
+    functional_categories: list[str] | None = Field(
+        None, description="Functional categories"
+    )
+    vulnerability_class: list[str] | None = Field(
+        None, description="Vulnerability class"
+    )
+    deprecated: bool | None = Field(None, description="Whether rule is deprecated")
+    display_name: str | None = Field(None, description="Display name")
+    cwe2023_top25: bool | None = Field(None, description="CWE 2023 Top 25 flag")
+    cwe2020_top25: bool | None = Field(None, description="CWE 2020 Top 25 flag")
+    interfile: bool | None = Field(None, description="Interfile analysis flag")
+    masvs: list[str] | None = Field(
+        None, description="Mobile Application Security Verification Standard"
+    )
+    resources: list[str] | None = Field(None, description="Resource references")
+    rule_origin_note: str | None = Field(None, description="Rule origin note")
+    source_url_open: str | None = Field(None, description="Open source URL")
+    bandit_code: str | None = Field(None, description="Bandit code reference")
+    owaspapi: str | None = Field(None, description="OWASP API category")
+
 
 class SemgrepNativeRule(BaseModel):
-    """Semgrep native rule structure (Semgrep-compatible format)."""
+    """Semgrep native rule (v1SemgrepNativeRule, Semgrep-compatible)."""
+
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
 
     id: str | None = Field(None, description="Rule ID")
     pattern: str | None = Field(None, description="Pattern string")
@@ -318,13 +424,49 @@ class SemgrepRule(BaseResource):
         ]
 
 
+def _rule_to_yaml(rule: SemgrepNativeRule) -> str:
+    """Build minimal Semgrep rule YAML so the API can parse the rule.
+
+    The Endor Labs API expects ``spec.yaml`` when creating rules. This
+    helper converts a ``SemgrepNativeRule`` object to a clean YAML
+    string, omitting ``None`` fields that would cause unmarshal errors.
+    """
+    entry: dict[str, Any] = {}
+    if rule.id:
+        entry["id"] = rule.id
+    if rule.pattern:
+        entry["pattern"] = rule.pattern
+    if rule.message:
+        entry["message"] = rule.message
+    if rule.languages:
+        entry["languages"] = rule.languages
+    if rule.severity:
+        entry["severity"] = rule.severity
+    if rule.mode:
+        entry["mode"] = rule.mode
+    return yaml.dump({"rules": [entry]}, default_flow_style=False, allow_unicode=True)
+
+
 class CreateSemgrepRulePayload(BaseModel):
-    """Payload for creating a new Semgrep rule."""
+    """Payload for creating a new Semgrep rule.
+
+    When ``spec.rule`` is provided but ``spec.yaml`` is not, the YAML
+    representation is auto-generated so the API can parse the rule.
+    """
 
     meta: SemgrepRuleMetaCreate = Field(..., description="Semgrep rule metadata")
     spec: SemgrepRuleSpec = Field(..., description="Semgrep rule specification")
     propagate: bool | None = Field(True, description="Propagate to child namespaces")
     disabled: bool | None = Field(None, description="Whether rule is disabled")
+
+    @model_validator(mode="after")
+    def _auto_generate_yaml(self) -> CreateSemgrepRulePayload:
+        """Generate spec.yaml from spec.rule when not provided."""
+        if self.spec and self.spec.rule and not self.spec.yaml:
+            self.spec = self.spec.model_copy(
+                update={"yaml": _rule_to_yaml(self.spec.rule)}
+            )
+        return self
 
 
 def build_create_payload(**kwargs: Any) -> CreateSemgrepRulePayload:
@@ -368,15 +510,40 @@ def _validate_rule_structure(rule: Any, errors: list[str]) -> None:
         errors.append("rule.message is required and cannot be empty")
 
 
+_PATTERN_KEYS = frozenset(
+    {
+        "pattern",
+        "patterns",
+        "pattern_either",
+        "pattern_sources",
+        "pattern_sinks",
+        "pattern_regex",
+    }
+)
+
+
 def _validate_patterns(rule: Any, errors: list[str]) -> None:
-    """Validate pattern types."""
+    """Validate pattern types.
+
+    Checks both explicit model fields and ``model_extra`` so that
+    compound-pattern rules whose pattern keys landed in extra still pass.
+    """
     has_patterns = (
         rule.pattern is not None
         or (rule.patterns and len(rule.patterns) > 0)
         or (rule.pattern_either and len(rule.pattern_either) > 0)
         or (rule.pattern_sources and len(rule.pattern_sources) > 0)
         or (rule.pattern_sinks and len(rule.pattern_sinks) > 0)
+        or rule.pattern_regex is not None
     )
+
+    # Also check model_extra for pattern keys (extra="allow" may store them there)
+    if not has_patterns and hasattr(rule, "model_extra") and rule.model_extra:
+        for key in _PATTERN_KEYS:
+            val = rule.model_extra.get(key)
+            if val is not None:
+                has_patterns = True
+                break
 
     if not has_patterns:
         errors.append(
@@ -470,267 +637,7 @@ def validate_semgrep_rule(
     return (len(errors) == 0, errors)
 
 
-def list_semgrep_rules(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[SemgrepRule]:
-    """List all Semgrep rules in a namespace.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        list_params: Optional list parameters for filtering, masking, pagination
-        max_pages: Optional maximum number of pages to fetch
-        **kwargs: Additional query parameters
-
-    Returns:
-        List of SemgrepRule objects
-
-    """
-    ops = _get_semgrep_rule_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_semgrep_rules_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[SemgrepRule]:
-    """Iterate over semgrep rules without materializing the full list."""
-    ops = _get_semgrep_rule_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_semgrep_rule(
-    client: APIClient, tenant_meta_namespace: str, rule_uuid: str
-) -> SemgrepRule:
-    """Get a specific Semgrep rule by UUID.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        rule_uuid: Semgrep rule UUID
-
-    Returns:
-        SemgrepRule object
-
-    Raises:
-        NotFoundError: If Semgrep rule doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_semgrep_rule_ops(client)
-    return ops.get(tenant_meta_namespace, rule_uuid)
-
-
-def _rule_to_yaml(rule: SemgrepNativeRule) -> str:
-    """Build minimal Semgrep rule YAML so the API can parse the rule (avoids null)."""
-    entry: dict[str, Any] = {}
-    if rule.id:
-        entry["id"] = rule.id
-    if rule.pattern:
-        entry["pattern"] = rule.pattern
-    if rule.message:
-        entry["message"] = rule.message
-    if rule.languages:
-        entry["languages"] = rule.languages
-    if rule.severity:
-        entry["severity"] = rule.severity
-    if rule.mode:
-        entry["mode"] = rule.mode
-    return yaml.dump({"rules": [entry]}, default_flow_style=False, allow_unicode=True)
-
-
-def create_semgrep_rule(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateSemgrepRulePayload,
-    validate: bool = True,
-) -> SemgrepRule:
-    """Create a new Semgrep rule in a namespace with pre-validation and typed errors.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        payload: Semgrep rule creation payload
-        validate: Whether to validate the payload before creation (default: True)
-
-    Returns:
-        Created SemgrepRule object
-
-    Raises:
-        ValidationError: If payload is invalid
-        ValueError: If validation fails and validate=True
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If Semgrep rule already exists
-        ServerError: If server error occurs
-
-    """
-    # Validate payload before creation
-    if validate:
-        is_valid, errors = validate_semgrep_rule(payload)
-        if not is_valid:
-            error_msg = "Semgrep rule validation failed:\n" + "\n".join(
-                f"  - {error}" for error in errors
-            )
-            logger.error(error_msg)
-            from ..exceptions import ValidationError
-
-            raise ValidationError(
-                message=error_msg,
-                operation="create",
-                namespace=tenant_meta_namespace,
-            )
-
-    # API expects spec.yaml (rule in original YAML format) to parse; avoid sending null.
-    if payload.spec and payload.spec.rule and not payload.spec.yaml:
-        spec_with_yaml = SemgrepRuleSpec(
-            rule=payload.spec.rule,
-            disabled=payload.spec.disabled,
-            yaml=_rule_to_yaml(payload.spec.rule),
-            notification=None,
-            finding=None,
-            exception=None,
-            defined_by=None,
-            severity_level=None,
-        )
-        payload = CreateSemgrepRulePayload(
-            meta=payload.meta,
-            spec=spec_with_yaml,
-            propagate=payload.propagate,
-            disabled=payload.disabled,
-        )
-
-    ops = _get_semgrep_rule_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_semgrep_rule(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    rule_uuid: str,
-    payload: UpdateSemgrepRulePayload,
-    update_mask: str,
-) -> SemgrepRule | None:
-    """Update an existing Semgrep rule.
-
-    Uses the plural endpoint pattern (like policies and findings) with object wrapper.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        rule_uuid: Semgrep rule UUID
-        payload: Semgrep rule update payload
-        update_mask: Comma-separated list of fields to update (required). Missing or
-            empty raises ValidationError.
-
-    Returns:
-        Updated SemgrepRule object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If Semgrep rule doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Semgrep rule update requires an update_mask "
-                "(e.g. 'meta.description', 'spec.rule_id')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=rule_uuid,
-        )
-    # Get current rule to include required fields
-    current_rule = get_semgrep_rule(client, tenant_meta_namespace, rule_uuid)
-
-    # Merge current rule with payload updates
-    merged_meta = (
-        {
-            **(current_rule.meta.model_dump() if current_rule.meta else {}),
-            **payload.meta.model_dump(exclude_none=True),
-        }
-        if payload.meta
-        else (current_rule.meta.model_dump() if current_rule.meta else {})
-    )
-
-    merged_spec = {}
-    if payload.spec:
-        merged_spec = (
-            current_rule.spec.model_dump(exclude_none=True) if current_rule.spec else {}
-        )
-        merged_spec.update(payload.spec.model_dump(exclude_none=True))
-    elif current_rule.spec:
-        merged_spec = current_rule.spec.model_dump()
-
-    # Build merged semgrep rule object for base class
-    merged_rule_dict = {
-        "uuid": rule_uuid,
-        "tenant_meta": current_rule.tenant_meta.model_dump()
-        if current_rule.tenant_meta
-        else {"namespace": tenant_meta_namespace},
-    }
-    if merged_meta:
-        merged_rule_dict["meta"] = merged_meta
-    if merged_spec:
-        merged_rule_dict["spec"] = merged_spec
-    if payload.disabled is not None:
-        merged_rule_dict["disabled"] = payload.disabled
-    if payload.propagate is not None:
-        merged_rule_dict["propagate"] = payload.propagate
-
-    # Create SemgrepRule object from merged data
-    merged_rule = SemgrepRule(**merged_rule_dict)
-
-    # Convert update_mask from string to List[str]
-    update_mask_list = parse_update_mask(update_mask)
-
-    # Send full object in PATCH body so backend receives spec (avoids 400).
-    ops = _get_semgrep_rule_ops(client)
-    logger.info(f"Updating semgrep rule {rule_uuid} with mask: {update_mask}")
-    full_object_dict = ops.dump_for_api(merged_rule)
-    request_data = {
-        "object": full_object_dict,
-        "request": {"update_mask": ",".join(update_mask_list)},
-    }
-    url = f"v1/namespaces/{tenant_meta_namespace}/semgrep-rules"
-    res = client.patch(url, json=request_data)
-    data = res.json()
-    return SemgrepRule(**data)
-
-
-def delete_semgrep_rule(
-    client: APIClient, tenant_meta_namespace: str, rule_uuid: str
-) -> bool:
-    """Delete a Semgrep rule.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        rule_uuid: Semgrep rule UUID
-
-    Returns:
-        True if deletion succeeded, False otherwise
-
-    """
-    ops = _get_semgrep_rule_ops(client)
-    return ops.delete(tenant_meta_namespace, rule_uuid)
-
-
 # Forward references
 SemgrepMetavariableRegex = dict[str, Any]  # Placeholder - define properly if needed
 SemgrepMetavariablePattern = dict[str, Any]  # Placeholder - define properly if needed
-SemgrepPaths = dict[str, Any]  # Placeholder - define properly if needed
 EndorTarget = str  # Placeholder - define properly if needed

@@ -6,7 +6,6 @@ dependency package. List and get only.
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, override
 
@@ -15,15 +14,16 @@ from pydantic import Field, field_validator
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
     from ..types import ListParameters
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 def _get_version_upgrade_ops(

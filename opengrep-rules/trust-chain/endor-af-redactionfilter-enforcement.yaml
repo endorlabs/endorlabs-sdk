@@ -1,0 +1,110 @@
+rules:
+  - id: endor-af-redactionfilter-enforcement
+    languages:
+      - python
+    message: |
+      Problem:
+      A module-level logger was created with `logging.getLogger(...)` but no
+      `RedactingFilter` was attached via `.addFilter(RedactingFilter(...))`.
+
+      The Endor Agentic Framework is a security-sensitive client library that handles
+      three classes of credential material during normal operation:
+
+      1. **API key + secret** -- sent as `{"key": "...", "secret": "..."}` in
+         the authentication POST to `v1/auth/api-key`.  This request goes
+         through the raw `httpx.Client`, so httpx's own DEBUG logger may emit
+         the full payload in JSON (double-quote) format.
+      2. **Bearer token** -- returned from the auth endpoint and attached as
+         an `Authorization` header on every subsequent request.  Debug-level
+         request logging serialises headers as a Python dict repr (single-
+         quote format).
+      3. **OAuth callback token** -- the `auth_server` module logs
+         `self.path` on error paths (e.g. "Token not found in redirect:
+         /?token=eyJ..."), exposing the bearer token as a query parameter.
+
+      Without the RedactingFilter, any of these secrets may appear verbatim in
+      DEBUG-level log output and be captured by log handlers, aggregation
+      pipelines, or crash reporters -- violating the principle of least
+      privilege for credential material in an AF context.
+
+      Solution:
+      Import and attach the RedactingFilter to every module-level logger:
+
+      ```python
+      from endorlabs.utils.redaction import (
+          JSON_REDACTION_REPLACEMENT,
+          RedactingFilter,
+          json_redaction_pattern,
+          redaction_pattern,
+          url_token_redaction_pattern,
+          url_token_redaction_replacement,
+      )
+
+      logger = logging.getLogger(__name__)
+      logger.addFilter(
+          RedactingFilter(
+              [
+                  redaction_pattern,
+                  (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
+                  (url_token_redaction_pattern, url_token_redaction_replacement),
+              ]
+          )
+      )
+      ```
+
+      Trust chain:
+      This is the enforcement half of the RedactingFilter trust chain.
+      The paired validation rule
+      `endor-af-redactionfilter-validation` validates that
+      the RedactingFilter implementation itself has not degraded.  Both
+      rules must pass for the security contract to hold.
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-532: Insertion of Sensitive Information into Log File"
+      description: >-
+        Logger created without RedactingFilter in security-sensitive AF --
+        API keys, bearer tokens, or OAuth callback tokens may leak to log
+        output when DEBUG-level logging is active.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - A09:2021
+        - AF-Credential-Leak
+        - trust-chain.id:redacting-filter-credential-scrubbing
+        - trust-chain.role:enforcement
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The Endor Agentic Framework authenticates via API key/secret and bearer
+        tokens.  httpx and httpcore DEBUG loggers emit request bodies and
+        headers verbatim.  The RedactingFilter rewrites log records to scrub
+        sensitive values before they reach any handler.  A logger without the
+        filter is a credential-leak vector when consumers enable DEBUG
+        logging for troubleshooting.
+      impact: HIGH
+      owasp:
+        - A09:2021-Security-Logging-and-Monitoring-Failures
+      references:
+        - https://cwe.mitre.org/data/definitions/532.html
+        - https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/
+      remediation: >-
+        Attach RedactingFilter to all module-level loggers in the AF.
+        Import the filter and patterns from endorlabs.utils.redaction and
+        call logger.addFilter(RedactingFilter([...])) immediately after
+        logger creation.
+      security-severity: High
+      version: v1.2.0
+    patterns:
+      - pattern: $LOGGER = logging.getLogger(...)
+      - pattern-not-inside: |
+          $LOGGER = logging.getLogger(...)
+          ...
+          $LOGGER.addFilter(RedactingFilter([..., (url_token_redaction_pattern, $REPL), ...]))
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

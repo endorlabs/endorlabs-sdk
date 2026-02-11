@@ -1,0 +1,88 @@
+rules:
+  - id: endor-af-filter-string-injection
+    languages:
+      - python
+    message: |
+      Problem:
+      A filter string is constructed via f-string interpolation with a value
+      that may originate from user input (e.g. parsed YAML, API responses).
+      This is the query-language equivalent of SQL injection -- if the
+      interpolated value contains unescaped quotes or filter operators, it can
+      alter the query semantics.
+
+      The Endor Agentic Framework provides the `F()` filter builder in
+      `endorlabs.filter` which properly escapes values and produces safe,
+      composable filter expressions.  All filter construction MUST go through
+      the builder or use an equivalent escaping strategy.
+
+      Solution:
+      Replace raw f-string filters with the F() builder:
+
+      ```python
+      # UNSAFE -- raw interpolation
+      client.semgrep_rule.list(filter=f'meta.name=="{name}"')
+
+      # SAFE -- F() builder escapes values automatically
+      from endorlabs import F
+      client.semgrep_rule.list(filter=F("meta.name") == name)
+
+      # SAFE -- composition with & (AND) and | (OR)
+      client.finding.list(
+          filter=(
+              (F("spec.level") == "FINDING_LEVEL_CRITICAL")
+              & F("spec.finding_tags").contains("FINDING_TAGS_REACHABLE_FUNCTION")
+          )
+      )
+      ```
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-943: Improper Neutralization of Special Elements in Data Query Logic"
+      description: >-
+        Filter string built via f-string interpolation -- user-controlled
+        values may break out of the filter clause if they contain unescaped
+        quotes or operators.  Use F() from endorlabs.filter instead.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - A03:2021
+        - Injection
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF list operations accept a filter string that is passed directly
+        to the Endor Labs API as a query parameter.  When filter values are
+        interpolated via f-strings without escaping, a value containing double
+        quotes or filter operators can alter query semantics.  The F() filter
+        builder (endorlabs.filter) escapes values automatically and produces
+        composable FilterExpression objects.  This rule enforces that all
+        filter construction uses F() rather than raw f-string interpolation,
+        following the same principle as parameterized SQL.
+      impact: MEDIUM
+      owasp:
+        - A03:2021-Injection
+      references:
+        - https://cwe.mitre.org/data/definitions/943.html
+        - https://owasp.org/Top10/A03_2021-Injection/
+      remediation: >-
+        Replace f-string filter construction with the F() filter builder
+        from endorlabs.filter (e.g. F("meta.name") == name), or manually
+        escape values before interpolation.
+      security-severity: Medium
+      version: v1.0.0
+    patterns:
+      - pattern: $FUNC(..., filter=f"...", ...)
+      # Safe: unquoted enum/internal values -- no injection vector because
+      # unquoted tokens cannot break the filter grammar.
+      - pattern-not: $FUNC(..., filter=f"uuid=={$UUID}", ...)
+      - pattern-not: $FUNC(..., filter=f"spec.policy_type=={$ENUM}", ...)
+      - pattern-not: $FUNC(..., filter=f"tenant_meta.namespace=={$NS}", ...)
+      - pattern-not: $FUNC(..., filter=f"spec.permissions.roles=={$ROLE}", ...)
+      - pattern-not: $FUNC(..., filter=f"spec.target_namespaces=={$NS}", ...)
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

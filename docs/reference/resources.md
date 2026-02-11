@@ -32,5 +32,5 @@ The table matches the SDK registry; OpenAPI paths are under `/v1/namespaces/{ten
 
 System-owned resources (authentication_log, endor_license, policy_template) are typed as `SystemResourceFacade[T]` on the Client; `.get(id, namespace="oss")` is supported; for system/tenant namespace use `client.<resource>.list()`. OSS-scoped resources (dependency_metadata, package_license) are typed as `OssResourceFacade[T]`; namespace is fixed to "oss" (no namespace param required).
 
-Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (workflow downloads to `external_docs/` in CI). Deep-dive: [namespace.md](namespace.md).
+Spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (workflow downloads to `.endorlabs-context/` in CI). Deep-dive: [namespace.md](namespace.md).
 
