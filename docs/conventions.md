@@ -1,6 +1,6 @@
 # SDK Conventions
 
-Single source of truth for Endor Cockpit SDK usage. Link here from other docs instead of re-stating. For SDK implementation, **practices** means the patterns in this document and in [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
+Single source of truth for Endor Labs SDK usage. Link here from other docs instead of re-stating. For SDK implementation, **practices** means the patterns in this document and in [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
 
 ## Canonical naming
 
@@ -9,34 +9,27 @@ Single source of truth for Endor Cockpit SDK usage. Link here from other docs in
 
 ## OpenAPI / spec
 
-- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `external_docs/openapi-swagger.json` (gitignored) in CI. For a single local step that creates `external_docs/` with both spec and user docs (for full IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
+- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `.endorlabs-context/openapiv2.swagger.json` (gitignored) in CI. For a single local step that creates `.endorlabs-context/` with both spec and user docs (for full IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
 - List endpoints: `v1/namespaces/{tenant_meta.namespace}/{resource_name}` (e.g. `findings`, `projects`).
 - Update (PATCH): Collection URL; UUID and payload in request body; optional `request.update_mask`.
 
 ## Models and API parity
 
-- **Reserved words:** Use a Python-safe name (e.g. `from_`) and `Field(alias="from")`; never use reserved words as field names.
-- **Python names in code:** Use Python field names in code; API/spec names only via `Field(alias=...)`. Tooling (e.g. model consistency) uses Python names.
 - **Nested models:** Use typed Pydantic models for nested maps/arrays; "extra in SDK" for those paths in consistency reports is expected; do not remove typing to match spec flattening.
-- **Shared fields (greenfield):** Prefer Python name = spec key for shared concepts (`context`, `processing_status`, `index_data`). Use the same attribute name in all resources; no prefixed names and no registration in `model_consistency.SDK_FIELD_ALIAS_TO_SHARED` for these.
-- **Option/config names:** SDK may use clearer names than spec (e.g. `assume_numbers_are_safe`); use `Field(alias=...)` when the API expects the spec key.
 - **Consistency check:** Model consistency uses Python field names; the spec enumerator follows `properties` and top-level `$ref` only (not `additionalProperties`/`items`). Nested SDK paths therefore appear as "extra" by design.
 - **Spec-driven UX:** Expose spec-defined attributes and types with sources of truth in resource modules and models; see [rules-of-engagement](rules-of-engagement/) (resource-implementation, architecture).
+- **Field aliasing:** See [Field aliasing](#field-aliasing) below.
 
-**Field aliasing:**
-
-- **Tier 1 (mandatory):** Alias only when the API key is a reserved word or invalid in Python (e.g. `from` → `from_`). Style: trailing underscore.
-- **Tier 2 (case):** API is snake_case per spec; do not add a global camelCase→snake_case generator unless the API/spec uses camelCase. Prefer 1:1 Python names with API keys.
-- **Tier 3 (semantic renames):** Avoid renaming for "prettiness." Alias only when the API name is misleading, excessively long, or ambiguous in context; document the reason. **Greenfield:** Use Python name = spec key for shared fields (`context`, `processing_status`, `index_data`); no prefixed names. If you do use a prefixed Python name with `alias="..."` for a shared concept, register it in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../src/endorlabs/utils/model_consistency.py).
-- **UX:** Base models use `populate_by_name=True` so both the Python attribute and the API key can be used when constructing/validating. Request serialization uses `by_alias=True` so outgoing JSON matches the API.
-
-**Style heuristic (aliasing):**
+<a id="field-aliasing"></a>
+## Field aliasing
 
 - **Default:** Python attribute name = API key (1:1) when the API key is a valid, non-reserved Python identifier.
-- **Syntax (Tier 1):** API key is reserved (`from`, `class`, `global`) or invalid in Python (e.g. hyphen) — use safe Python name (trailing underscore or hyphen→underscore) and `Field(alias="api_key")`.
-- **Case (Tier 2):** API is snake_case per spec; prefer 1:1. No global camelCase→snake_case unless the spec uses camelCase.
-- **Semantic / subclass (Tier 3):** Prefer Python name = API key for shared fields (`context`, `processing_status`, `index_data`). If you use a prefixed Python name with `Field(alias="...")` for a shared concept, register it in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../src/endorlabs/utils/model_consistency.py). Do not rename for brevity or preference when the API key is already clear and valid.
-- **Config:** Base models use `populate_by_name=True` and `extra="allow"`; resource models often use `extra="ignore"`. Serialization uses `by_alias=True` so outgoing JSON matches the API.
+- **Tier 1 (mandatory):** Alias only when the API key is a reserved word (`from`, `class`, `global`) or invalid in Python (e.g. hyphen). Use a safe Python name (trailing underscore or hyphen→underscore) and `Field(alias="api_key")`.
+- **Tier 2 (case):** API is snake_case per spec; prefer 1:1 Python name = API key. No global camelCase→snake_case unless the spec uses camelCase.
+- **Tier 3 (semantic):** Avoid renaming for "prettiness." Alias only when the API name is misleading, excessively long, or ambiguous; document the reason. **Greenfield shared fields:** Use Python name = spec key for `context`, `processing_status`, `index_data`; no prefixed names. If you use a prefixed Python name with `Field(alias="...")` for a shared concept, register it in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../src/endorlabs/utils/model_consistency.py).
+- **Python names in code:** Use Python field names in code; API/spec names only via `Field(alias=...)`. Tooling (e.g. model consistency) uses Python names.
+- **Option/config names:** SDK may use clearer names than spec (e.g. `assume_numbers_are_safe`); use `Field(alias=...)` when the API expects the spec key.
+- **UX:** Base models use `populate_by_name=True` and `extra="allow"`; resource models often use `extra="ignore"`. Serialization uses `by_alias=True` so outgoing JSON matches the API.
 
 ## Traverse
 

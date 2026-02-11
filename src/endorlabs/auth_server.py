@@ -16,7 +16,9 @@ from typing import Any, cast, override
 from webbrowser import get as get_browser
 
 from .utils.redaction import (
+    JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
+    json_redaction_pattern,
     redaction_pattern,
     url_token_redaction_pattern,
     url_token_redaction_replacement,
@@ -27,6 +29,7 @@ logger.addFilter(
     RedactingFilter(
         [
             redaction_pattern,
+            (json_redaction_pattern, JSON_REDACTION_REPLACEMENT),
             (url_token_redaction_pattern, url_token_redaction_replacement),
         ]
     )
@@ -76,7 +79,6 @@ class TokenHandler(BaseHTTPRequestHandler):
                     params[k] = v
 
             if "token" in params:
-                global _captured_token
                 _captured_token = cast("str", params["token"])
                 logger.info("Token captured successfully")
                 # Return simple HTML page instead of redirect to prevent new tabs
@@ -84,10 +86,14 @@ class TokenHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "text/html")
                 self.end_headers()
                 with contextlib.suppress(Exception):
+                    redirect_url = f"https://app.{DEFAULT_ENV}"
                     _ = self.wfile.write(
-                        b"<html><head><title>Authentication Successful</title></head>"
+                        b"<html><head><title>Authentication Successful</title>"
+                        b"<meta http-equiv='refresh' content='1;url="
+                        + redirect_url.encode()
+                        + b"'></head>"
                         b"<body><h1>Authentication successful!</h1>"
-                        b"<p>You can close this window.</p></body></html>"
+                        b"<p>Redirecting to Endor Labs...</p></body></html>"
                     )
             else:
                 logger.warning(f"Token not found in redirect: {self.path}")

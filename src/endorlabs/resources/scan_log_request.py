@@ -18,7 +18,6 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING, Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -26,15 +25,16 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 class ScanLogLevel(FlexibleEnum):
@@ -268,59 +268,6 @@ class CreateScanLogRequestPayload(BaseModel):
     spec: ScanLogRequestSpecCreate
 
 
-def _get_scan_log_request_ops(
-    client: APIClient,
-) -> BaseResourceOperations[ScanLogRequest]:
-    """Get BaseResourceOperations instance for scan log requests."""
-    return BaseResourceOperations(client, "scan-log-requests", ScanLogRequest)
-
-
-def create_scan_log_request(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateScanLogRequestPayload,
-) -> ScanLogRequest:
-    """Create a scan log request to retrieve scan logs.
-
-    Uses pre-validation and typed errors. This is a request-based API
-    that returns logs in the response's
-    spec.log_messages array.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Namespace that owns the scan result in
-            payload.spec.scan_result_uuid (e.g. scan_result.tenant_meta.namespace).
-        payload: ScanLogRequest creation payload with filters
-
-    Returns:
-        ScanLogRequest object with logs in spec.log_messages
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If scan log request already exists
-        ServerError: If server error occurs
-
-    Example:
-        >>> # Get logs for a specific scan result
-        >>> payload = CreateScanLogRequestPayload(
-        ...     spec=ScanLogRequestSpecCreate(
-        ...         max_entries=100,
-        ...         scan_result_uuid="scan-result-uuid",
-        ...         log_levels=[ScanLogLevel.ERROR, ScanLogLevel.WARNING]
-        ...     )
-        ... )
-        >>> request = create_scan_log_request(client, namespace, payload)
-        >>> if request.spec.log_messages:
-        ...     for msg in request.spec.log_messages:
-        ...         print(f"{msg.timestamp} [{msg.level}]: {msg.json_payload}")
-
-    """
-    ops = _get_scan_log_request_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
 def get_scan_result_logs(
     client: APIClient,
     tenant_meta_namespace: str,
@@ -382,7 +329,8 @@ def get_scan_result_logs(
         ),
     )
 
-    request = create_scan_log_request(client, tenant_meta_namespace, payload)
+    ops = BaseResourceOperations(client, "scan-log-requests", ScanLogRequest)
+    request = ops.create(tenant_meta_namespace, payload)
     if request.spec and request.spec.log_messages:
         return request.spec.log_messages
     return []

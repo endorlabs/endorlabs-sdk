@@ -1,26 +1,29 @@
-# Pre-commit runs lint/format/typecheck on commit. Pre-commit is a dev dependency.
-# After clone: uv sync && uv run pre-commit install
-# Hooks run automatically on git commit. See CONTRIBUTORS.md for details.
-
-minimum_pre_commit_version: "4.5.1"
-default_install_hook_types: [pre-commit]
-fail_fast: false
-
+# Pre-commit hooks — last gate before code lands in history.
+# Install: uv run pre-commit install
+# Run manually: uv run pre-commit run --all-files
 repos:
-  - repo: local
+  # --- Ruff: lint + format (pinned to match dev dep) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
     hooks:
-      - id: ruff-check
-        name: ruff check
-        entry: uv run ruff check .
-        language: system
-        types: [python]
+      - id: ruff
       - id: ruff-format
-        name: ruff format
-        entry: uv run ruff format --check .
-        language: system
-        types: [python]
-      - id: pyright
-        name: pyright
-        entry: uv run pyright --project pyproject.toml
-        language: system
-        types: [python]
+
+  # --- Spell checking ---
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: [--skip, "*.json,*.lock,.git,.endorlabs-context"]
+
+  # --- General file hygiene ---
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

@@ -5,23 +5,47 @@ name: CI
 #   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
 #   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "endor-solutions-tgowan")
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
-#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests)
-#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests)
-# Security: This repo is scanned by the Endor Labs app integration (no endorctl scan in CI).
+#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests + AI security review)
+#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests + AI security review)
+# Security: This repo is scanned by the Endor Labs app integration.
+# AI Security Code Review: Runs on PRs via endorctl --security-review (uses GITHUB_TOKEN for PR comments).
+#
+# Noop strategy (first principles — a job runs only when its inputs change):
+#   Layer 1: paths-ignore skips the entire workflow for universal noops (docs, IDE config, etc.).
+#   Layer 2: detect-changes categorises changed paths; downstream jobs check their category.
+#   Layer 3: ci-success gate job is the single required status check for branch protection.
 
 on:
   push:
     branches: [ main, dev ]
     paths-ignore:
       - '**.md'
-      - 'docs/**'
+      - '.cursor/**'
+      - '.github/CODEOWNERS'
+      - '.github/copilot-instructions.md'
+      - '.github/scripts/**'
       - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'main.py'
+      - 'maneuvers/**'
+      - 'scripts/**'
   pull_request:
     branches: [ main, dev ]
     paths-ignore:
       - '**.md'
-      - 'docs/**'
+      - '.cursor/**'
+      - '.github/CODEOWNERS'
+      - '.github/copilot-instructions.md'
+      - '.github/scripts/**'
       - '.gitignore'
+      - '.pre-commit-config.yaml'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'main.py'
+      - 'maneuvers/**'
+      - 'scripts/**'
   workflow_dispatch:  # Allow manual triggering for testing
 
 concurrency:
@@ -43,7 +67,93 @@ env:
   ASTRAL_SETUP_UV_VERSION: "v7.2.0"
 
 jobs:
-  # Dependency resolution job - runs once and caches dependencies
+  # ---------------------------------------------------------------------------
+  # Change detection — categorise which paths changed so downstream jobs can
+  # skip when their inputs are unaffected.  Uses only git + grep (no external
+  # actions).  Runs in parallel with resolve-dependencies.
+  # ---------------------------------------------------------------------------
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.changes.outputs.src }}
+      unit-tests: ${{ steps.changes.outputs.unit-tests }}
+      integration-tests: ${{ steps.changes.outputs.integration-tests }}
+      config: ${{ steps.changes.outputs.config }}
+      ci: ${{ steps.changes.outputs.ci }}
+      python: ${{ steps.changes.outputs.python }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0  # full history for accurate diff
+
+      - name: Detect changed paths
+        id: changes
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          # --- resolve base commit ------------------------------------------------
+          BASE=""
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            BASE="$PR_BASE_SHA"
+          elif [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            BASE="$PUSH_BEFORE_SHA"
+            # initial branch push has all-zero sha
+            if [[ "$BASE" =~ ^0+$ ]]; then
+              BASE=""
+            fi
+          fi
+          # workflow_dispatch: BASE stays empty → fail open (all true)
+
+          # --- collect changed files ----------------------------------------------
+          CHANGED=""
+          if [ -n "$BASE" ]; then
+            CHANGED=$(git diff --name-only "$BASE" HEAD 2>/dev/null || true)
+          fi
+
+          # --- fail open: if we cannot determine changes, run everything ----------
+          if [ -z "$CHANGED" ]; then
+            for cat in src unit-tests integration-tests config ci python; do
+              echo "${cat}=true" >> "$GITHUB_OUTPUT"
+            done
+            echo "::notice::Could not determine changed files; assuming all categories changed"
+            exit 0
+          fi
+
+          # --- helper: set output to true/false based on grep pattern -------------
+          check_paths() {
+            local name="$1"
+            local pattern="$2"
+            if echo "$CHANGED" | grep -qE "$pattern"; then
+              echo "${name}=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "${name}=false" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          check_paths "src"               '^src/'
+          check_paths "unit-tests"        '^tests/(unit/|conftest\.py$|__init__\.py$)'
+          check_paths "integration-tests" '^tests/(integration/|conftest\.py$|__init__\.py$)'
+          check_paths "config"            '^(pyproject\.toml|uv\.lock)$'
+          check_paths "ci"                '^\.github/(workflows/ci\.yml$|actions/)'
+          check_paths "python"            '\.py$'
+
+          # --- log summary --------------------------------------------------------
+          echo "::group::Change detection summary"
+          echo "Changed files:"
+          echo "$CHANGED"
+          echo ""
+          grep '=' "$GITHUB_OUTPUT" || true
+          echo "::endgroup::"
+
+  # ---------------------------------------------------------------------------
+  # Dependency resolution — runs once and caches dependencies.
+  # Runs in parallel with detect-changes.
+  # ---------------------------------------------------------------------------
   resolve-dependencies:
     name: Resolve Dependencies
     runs-on: ubuntu-latest
@@ -82,11 +192,17 @@ jobs:
         run: |
           uv sync --dev
 
-  # Lint job
+  # ---------------------------------------------------------------------------
+  # Lint — runs when any Python file, config, or CI definition changed.
+  # ---------------------------------------------------------------------------
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies]
+    needs: [resolve-dependencies, detect-changes]
+    if: >-
+      needs.detect-changes.outputs.python == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -114,11 +230,56 @@ jobs:
         run: |
           uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 
-  # Integration tests - slower, requires secrets
+  # ---------------------------------------------------------------------------
+  # Unit tests — fast, no secrets required.
+  # Runs when src/, unit test files, config, or CI definition changed.
+  # Note: lint conditions are a superset of unit-test conditions, so lint
+  # is never skipped when this job needs to run — no always() required.
+  # ---------------------------------------------------------------------------
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [resolve-dependencies, lint, detect-changes]
+    if: >-
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.unit-tests == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
+
+      - name: Run unit tests
+        run: |
+          uv run pytest tests/unit/ --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow"
+
+  # ---------------------------------------------------------------------------
+  # Integration tests — slower, requires secrets.
+  # Uses always() because unit-tests may be correctly skipped (e.g. only
+  # integration test files changed) while this job still needs to run.
+  # ---------------------------------------------------------------------------
   test-integration:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies]
+    needs: [resolve-dependencies, unit-tests, detect-changes]
+    if: >-
+      always() &&
+      !cancelled() &&
+      needs.resolve-dependencies.result == 'success' &&
+      needs.detect-changes.result == 'success' &&
+      needs.unit-tests.result != 'failure' &&
+      (
+        needs.detect-changes.outputs.src == 'true' ||
+        needs.detect-changes.outputs.integration-tests == 'true' ||
+        needs.detect-changes.outputs.config == 'true' ||
+        needs.detect-changes.outputs.ci == 'true'
+      )
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -132,43 +293,49 @@ jobs:
       - name: Validate required secrets for integration tests
         run: |
           if [ -z "${{ vars.ENDOR_API }}" ]; then
-            echo "❌ ERROR: ENDOR_API variable is not set"
+            echo "ERROR: ENDOR_API variable is not set"
             echo "Please configure the ENDOR_API variable in repository settings"
             exit 1
           fi
           if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
-            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            echo "ERROR: ENDOR_NAMESPACE variable is not set"
             echo "Please configure the ENDOR_NAMESPACE variable in repository settings"
             exit 1
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
+            echo "ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
             echo "Please configure the ENDOR_API_CREDENTIALS_KEY secret in repository settings"
             exit 1
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
+            echo "ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
             echo "Please configure the ENDOR_API_CREDENTIALS_SECRET secret in repository settings"
             exit 1
           fi
-          echo "✅ All required secrets are present"
+          echo "All required secrets are present"
 
       - name: Run integration tests
         run: |
-          # CI runs integration tests (excluding long-running audit/finding/scan log tests)
-          uv run pytest --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "integration and not long"
+          uv run pytest tests/integration/ --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not long"
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
-
-  # Coverage job - runs after lint pass
+  # ---------------------------------------------------------------------------
+  # Coverage — runs unit tests only (fast, deterministic).
+  # Conditions mirror unit-tests; if unit-tests runs, coverage runs too.
+  # ---------------------------------------------------------------------------
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, lint]
+    needs: [resolve-dependencies, unit-tests, detect-changes]
+    if: >-
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.unit-tests == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -179,17 +346,100 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
-      - name: Run tests with coverage
+      - name: Run unit tests with coverage
         run: |
-          uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not long"
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow"
 
       - name: Display coverage summary
         run: |
           echo "Coverage report generated successfully"
           echo "Coverage data available in coverage.xml"
-          echo "View detailed coverage with: uv run pytest --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
+          echo "View detailed coverage with: uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
+
+  # ---------------------------------------------------------------------------
+  # AI Security Code Review — runs on pull requests only (independent of other
+  # jobs; not gated by detect-changes since endorctl diffs the PR itself).
+  # ---------------------------------------------------------------------------
+  ai-security-review:
+    name: AI Security Code Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
+            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
+            exit 1
+          fi
+          if [ -z "${{ vars.ENDOR_API }}" ]; then
+            echo "❌ ERROR: ENDOR_API variable is not set"
+            exit 1
+          fi
+          echo "✅ All required secrets are present"
+
+      - name: Install endorctl
+        run: |
+          curl -sSfL https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
+          chmod +x endorctl
+          ./endorctl --version
+
+      - name: Run AI Security Code Review
+        run: |
+          ./endorctl scan \
+            --namespace "${{ vars.ENDOR_NAMESPACE }}" \
+            --pr \
+            --security-review \
+            --scm-pr-id "${{ github.event.pull_request.number }}" \
+            --enable-pr-comments
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ---------------------------------------------------------------------------
+  # CI gate — single required status check for branch protection.
+  # Passes when every conditional job either succeeded or was correctly skipped.
+  # ---------------------------------------------------------------------------
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [lint, unit-tests, test-integration, coverage]
+    steps:
+      - name: Verify no failures
+        run: |
+          results=(
+            "${{ needs.lint.result }}"
+            "${{ needs.unit-tests.result }}"
+            "${{ needs.test-integration.result }}"
+            "${{ needs.coverage.result }}"
+          )
+          failed=0
+          for result in "${results[@]}"; do
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              echo "::error::Job result: $result"
+              failed=1
+            fi
+          done
+          if [ "$failed" -eq 1 ]; then
+            echo "One or more required jobs failed or were cancelled"
+            exit 1
+          fi
+          echo "All jobs passed or were correctly skipped"

@@ -20,8 +20,6 @@ API FEATURES:
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
@@ -29,25 +27,17 @@ from pydantic import BaseModel, Field, field_validator
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     FlexibleEnum,
 )
+from ..operations import BaseResourceOperations
 from ..types import ListParameters
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
-logger = logging.getLogger(__name__)
-
-
-# Global resource instance
-def _get_authorization_policy_ops(
-    client: APIClient,
-) -> BaseResourceOperations[AuthorizationPolicy]:
-    """Get BaseResourceOperations instance for authorization policies."""
-    return BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+logger = get_resource_logger(__name__)
 
 
 class SystemRole(FlexibleEnum):
@@ -401,255 +391,6 @@ class UpdateAuthorizationPolicyPayload(BaseModel):
     propagate: bool | None = Field(None, description="Propagate to child namespaces")
 
 
-def list_authorization_policies(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[AuthorizationPolicy]:
-    """List all authorization policies in a namespace with filtering support.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        list_params: Optional list parameters for filtering, masking, pagination
-        max_pages: Optional maximum number of pages to fetch
-        **kwargs: Passed through to list implementation (e.g. filter, page_size)
-
-    Returns:
-        List of AuthorizationPolicy objects
-
-    """
-    ops = _get_authorization_policy_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_authorization_policies_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[AuthorizationPolicy]:
-    """Iterate over authorization policies without materializing the full list."""
-    ops = _get_authorization_policy_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_authorization_policy(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    policy_uuid: str,
-) -> AuthorizationPolicy:
-    """Get a specific authorization policy by UUID.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_uuid: Authorization policy UUID
-
-    Returns:
-        AuthorizationPolicy object
-
-    Raises:
-        NotFoundError: If authorization policy doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_authorization_policy_ops(client)
-    return ops.get(tenant_meta_namespace, policy_uuid)
-
-
-def create_authorization_policy(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateAuthorizationPolicyPayload,
-) -> AuthorizationPolicy:
-    """Create a new authorization policy in a namespace.
-
-    Uses pre-validation and typed errors.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        payload: Authorization policy creation payload
-
-    Returns:
-        Created AuthorizationPolicy object
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If authorization policy already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_authorization_policy_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_authorization_policy(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    policy_uuid: str,
-    payload: UpdateAuthorizationPolicyPayload,
-    update_mask: str,
-) -> AuthorizationPolicy | None:
-    """Update an existing authorization policy using partial updates.
-
-    This function supports updating only specific fields using the update_mask
-    parameter, which enables efficient partial updates without overwriting
-    unchanged fields.
-
-    IMPORTANT: Only authorization policies created in the current namespace can
-    be updated. Policies inherited from parent namespaces are immutable and
-    will return 404 errors when attempting to update.
-
-    MUTABLE FIELDS (for policies created in current namespace):
-    - meta.name: Policy name
-    - meta.description: Policy description
-    - meta.tags: Policy tags
-    - spec.clause: Authorization clauses
-    - spec.target_namespaces: Target namespaces
-    - spec.propagate: Propagation flag
-    - spec.permissions: Permissions configuration
-    - spec.expiration_time: Expiration time
-    - propagate: Whether to propagate to child namespaces
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_uuid: Authorization policy UUID
-        payload: Authorization policy update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.name,spec.clause". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated AuthorizationPolicy object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If authorization policy doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    Example:
-        >>> # Update policy name and description
-        >>> payload = UpdateAuthorizationPolicyPayload(
-        ...     meta=AuthorizationPolicyMeta(
-        ...         name="Updated Policy",
-        ...         description="Updated description"
-        ...     )
-        ... )
-        >>> policy = update_authorization_policy(
-        ...     client, namespace, uuid, payload, "meta.name,meta.description"
-        ... )
-
-        >>> # Update permissions
-        >>> payload = UpdateAuthorizationPolicyPayload(
-        ...     spec=AuthorizationPolicySpec(
-        ...         clause=["user@endor.ai"],
-        ...         target_namespaces=["namespace"],
-        ...         propagate=False,
-        ...         permissions=AuthorizationPolicyPermissions(
-        ...             roles=["SYSTEM_ROLE_ADMIN"]
-        ...         )
-        ...     )
-        ... )
-        >>> policy = update_authorization_policy(
-        ...     client, namespace, uuid, payload, "spec.permissions"
-        ... )
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Authorization policy update requires an update_mask "
-                "(e.g. 'meta.name', 'spec.clause')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=policy_uuid,
-        )
-    # Get the current policy to include required fields
-    current_policy = get_authorization_policy(
-        client, tenant_meta_namespace, policy_uuid
-    )
-
-    # Merge current policy with payload updates
-    merged_meta = {
-        "name": current_policy.meta.name,  # Required field
-        **(payload.meta.model_dump(exclude_none=True) if payload.meta else {}),
-    }
-    merged_spec = {
-        **(current_policy.spec.model_dump() if current_policy.spec else {}),
-        **(payload.spec.model_dump(exclude_none=True) if payload.spec else {}),
-    }
-
-    # Build merged authorization policy object for base class
-    tenant_meta_dict = (
-        current_policy.tenant_meta.model_dump()
-        if current_policy.tenant_meta
-        else {"namespace": tenant_meta_namespace}
-    )
-    merged_policy_dict = {
-        "uuid": policy_uuid,
-        "tenant_meta": tenant_meta_dict,
-        "meta": merged_meta,
-        "spec": merged_spec,
-    }
-    if hasattr(payload, "propagate") and payload.propagate is not None:
-        merged_policy_dict["propagate"] = payload.propagate
-
-    # Create AuthorizationPolicy object from merged data
-    merged_policy = AuthorizationPolicy(**merged_policy_dict)
-
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-
-    # Use base class update method
-    ops = _get_authorization_policy_ops(client)
-    logger.info(f"Updating authorization policy {policy_uuid} with mask: {update_mask}")
-    return ops.update(
-        tenant_meta_namespace, policy_uuid, merged_policy, update_mask_list
-    )
-
-
-def delete_authorization_policy(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    policy_uuid: str,
-) -> bool:
-    """Delete an authorization policy.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Tenant namespace (canonical name)
-        policy_uuid: Authorization policy UUID
-
-    Returns:
-        True if deletion successful, False otherwise
-
-    """
-    try:
-        res = client.delete(
-            f"v1/namespaces/{tenant_meta_namespace}/authorization-policies/{policy_uuid}"
-        )
-        return res.status_code == 200
-
-    except Exception as e:
-        logger.error(
-            f"Error deleting authorization policy {policy_uuid}: {e}",
-            exc_info=True,
-        )
-        return False
-
-
 # Convenience functions for common filtering patterns
 def list_authorization_policies_by_role(
     client: APIClient,
@@ -660,9 +401,8 @@ def list_authorization_policies_by_role(
     list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.permissions.roles=={role.value}",
     )
-    return list_authorization_policies(
-        client, tenant_meta_namespace, list_params=list_params
-    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    return ops.list(tenant_meta_namespace, list_params)
 
 
 def list_authorization_policies_by_namespace(
@@ -674,9 +414,8 @@ def list_authorization_policies_by_namespace(
     list_params = ListParameters(  # pyright: ignore[reportCallIssue]
         filter=f"spec.target_namespaces=={target_namespace}",
     )
-    return list_authorization_policies(
-        client, tenant_meta_namespace, list_params=list_params
-    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    return ops.list(tenant_meta_namespace, list_params)
 
 
 def list_authorization_policies_paginated(
@@ -690,9 +429,8 @@ def list_authorization_policies_paginated(
         page_size=page_size,
         page_token=page_token,
     )
-    return list_authorization_policies(
-        client, tenant_meta_namespace, list_params=list_params
-    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    return ops.list(tenant_meta_namespace, list_params)
 
 
 def list_authorization_policies_sorted(
@@ -706,6 +444,5 @@ def list_authorization_policies_sorted(
         sort_by=sort_by,
         desc=desc,
     )
-    return list_authorization_policies(
-        client, tenant_meta_namespace, list_params=list_params
-    )
+    ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
+    return ops.list(tenant_meta_namespace, list_params)

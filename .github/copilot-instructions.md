@@ -1,6 +1,6 @@
-# Endor Cockpit – Repository instructions for GitHub Copilot
+# Endor Labs SDK – Repository instructions for GitHub Copilot
 
-**Project**: Production Python SDK for Endor Labs. API-first platform for security governance.
+**Project**: Endor Labs SDK for Endor Labs. API-first platform for security governance.
 
 ---
 
@@ -16,7 +16,7 @@
 
 ## Reference – API spec and user docs
 
-- **API spec (OpenAPI)**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `external_docs/` in CI; folder is gitignored)
+- **API spec (OpenAPI)**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `.endorlabs-context/` in CI; folder is gitignored)
 - **User documentation**: <https://docs.endorlabs.com/> — sitemap <https://docs.endorlabs.com/sitemap.xml>
 - **In-repo docs**: `docs/README.md` (index), `docs/conventions.md` (naming, traverse, ListParameters), `docs/reference/namespace.md`, `docs/rules-of-engagement/api-validation.md`, `docs/rules-of-engagement/resource-implementation.md`, `docs/rules-of-engagement/docs-drift-workflow.md`
 
