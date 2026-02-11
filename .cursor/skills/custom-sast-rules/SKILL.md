@@ -92,7 +92,7 @@ uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
 # Full sync (delete old + orphan cleanup + import + configure enable/disable)
 uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
     sync --rules-dir opengrep-rules/ --enabled-dir opengrep-rules/trust-chain/ \
-    --name-filter "endor-af" --namespace tenant.ns --force
+    --name-filter "endor-sdk" --namespace tenant.ns --force
 
 # Validate only (dry run -- parses, validates, logs planned actions)
 uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
@@ -100,7 +100,7 @@ uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
 
 # Delete rules matching a name filter and clean up orphaned findings
 uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
-    delete --name-filter "endor-af" --namespace tenant.ns
+    delete --name-filter "endor-sdk" --namespace tenant.ns
 
 # Configure enable/disable states by directory
 uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \

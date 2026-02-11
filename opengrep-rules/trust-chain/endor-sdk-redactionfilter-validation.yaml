@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-redactionfilter-validation
+  - id: endor-sdk-redactionfilter-validation
     languages:
       - python
     message: |
@@ -31,7 +31,7 @@ rules:
       Trust chain:
       This is the validation half of the RedactingFilter trust chain.
       The paired enforcement rule
-      `endor-af-redactionfilter-enforcement` verifies that the
+      `endor-sdk-redactionfilter-enforcement` verifies that the
       RedactingFilter is attached to every module-level logger.  Both rules
       must pass for the security contract to hold.
 
@@ -52,10 +52,10 @@ rules:
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - A09:2021
-        - AF-Credential-Leak
+        - SDK-Credential-Leak
         - trust-chain.id:redacting-filter-credential-scrubbing
         - trust-chain.role:validation
       endor-targets:

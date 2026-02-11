@@ -4,6 +4,10 @@
 # API spec + user docs (context bootstrap)
 !.endorlabs-context/
 !.endorlabs-context/**
+!.endorlabs-context/docs/
+!.endorlabs-context/docs/**
+!.endorlabs-context/openapiv2.swagger.json
+!.endorlabs-context/session-*
 
 # Research files, responses
 !.tmp/

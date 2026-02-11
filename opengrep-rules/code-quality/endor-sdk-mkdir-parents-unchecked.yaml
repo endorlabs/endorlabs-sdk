@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-mkdir-parents-unchecked
+  - id: endor-sdk-mkdir-parents-unchecked
     languages:
       - python
     message: |
@@ -34,13 +34,13 @@ rules:
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - Path-Traversal
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF experimental workflows create output directories from
+        The SDK experimental workflows create output directories from
         user-provided paths using mkdir(parents=True, exist_ok=True).
         Without resolving the path first and checking it is contained
         within an allowed base directory, an attacker-controlled path
