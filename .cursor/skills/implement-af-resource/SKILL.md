@@ -55,9 +55,8 @@ Create in `src/endorlabs/resources/{resource_name}.py`:
 
 ### Operations
 
-- Implement `_get_{resource}_ops(client)` returning `BaseResourceOperations(client, "resource-path", Model)`
-- Functions: `list_{resources}`, `get_{resource}`, `create_{resource}`, `update_{resource}`, `delete_{resource}`
-- `list` accepts `list_params: ListParameters`, `max_pages: int | None`
+CRUD operations are handled by `BaseResourceOperations` via the `Client` facade — no module-level CRUD wrapper functions needed. The resource module only needs to define Pydantic models and any resource-specific convenience functions (e.g. `associate_scan_profile_with_project`).
+
 - `update` requires `update_mask: str` (comma-separated paths); sparse PATCH always
 - Use `endorlabs.exceptions`; log full `response.text` on errors
 
@@ -77,8 +76,11 @@ All public functions require: Args, Returns, Raises. Pydantic/Pyright and IDE mu
 Add one entry to the registry in `src/endorlabs/registry.py`:
 
 ```python
-ResourceEntry.from_module(
-    "resource_name", resource_module, ResourceModel, "api-path",
+ResourceEntry(
+    attr_name="resource_name",
+    resource_name="api-path",
+    model_class=ResourceModel,
+    supported_ops=frozenset({"list", "get", "create", "update", "delete"}),
     scope=None,  # "system", "oss", or None
 )
 ```
@@ -93,9 +95,9 @@ Each resource test file follows canonical order:
 
 1. **LIST** -- from root namespace with `traverse=True`. Assert result is a list.
 2. **GET** -- GET the first item from LIST (pass resource object for namespace). Skip if LIST empty.
-3. **Create** -- for resources with `create_fn`. Capture UUID for teardown.
-4. **Update** -- for resources with `update_fn`. Update resource from step 3.
-5. **Delete** -- for resources with `delete_fn`. Delete resource from step 3.
+3. **Create** -- for resources where `"create" in entry.supported_ops`. Capture UUID for teardown.
+4. **Update** -- for resources where `"update" in entry.supported_ops`. Update resource from step 3.
+5. **Delete** -- for resources where `"delete" in entry.supported_ops`. Delete resource from step 3.
 
 **Fixtures**: Use conftest `api_client`, `namespace`, `root_namespace`.
 

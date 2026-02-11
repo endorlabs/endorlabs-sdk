@@ -8,7 +8,7 @@
 - **Install:** `uv add endor-cockpit` or, in this repo, `uv sync`.
 - **Entry point:** `endorlabs.Client(tenant="...")`; then `client.namespace.list(traverse=True)`, `client.project.get(uuid)`, etc. **Create:** use `client.<resource>.create(name="...", namespace="...", ...)` (kwargs) or `create(payload=CreateXPayload(...))` (payload-based create). See [Architecture](#architecture) below.
 - **Client options:** You can pass `timeout`, `content_type`, `accept_encoding`, `max_retries`, `base_url` to `Client(...)` to control transport; other APIClient options go via `**client_kwargs`. Use `content_type="application/json"` if compact responses cause validation issues.
-- **Alternative:** `APIClient()` and resource modules under `endorlabs.resources` (e.g. `namespace.list_namespaces(client, "tenant.namespace")`). Same behavior; use when you need the transport only or module-level calls.
+- **Advanced / transport-only:** `APIClient()` from `endorlabs.api_client` is available for custom HTTP usage, but all resource operations should go through `Client`.
 - **Errors:** `endorlabs.exceptions`; see [docs/conventions.md](docs/conventions.md) (Errors section).
 
 ```python
@@ -18,15 +18,6 @@ import endorlabs
 client = endorlabs.Client(tenant="tenant.namespace")
 namespaces = client.namespace.list(traverse=True)
 projects = client.project.list(max_pages=2)
-```
-
-```python
-# Alternative: transport + module-level functions
-from endorlabs.api_client import APIClient
-from endorlabs.resources import namespace
-
-client = APIClient()
-namespaces = namespace.list_namespaces(client, "tenant.namespace")
 ```
 
 ## Context Bootstrap (for AI Agents)
@@ -64,7 +55,7 @@ Two-layer, registry-driven design. The same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
 - **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes `ResourceFacade[T]` instances built from the registry. The `scope` parameter (`None`, `"system"`, `"oss"`) controls namespace resolution.
-- **Registry:** `endorlabs.registry` — one `ResourceEntry.from_module(...)` call per resource. Adding a resource = one registry entry.
+- **Registry:** `endorlabs.registry` — one `ResourceEntry(attr_name=..., resource_name=..., model_class=..., supported_ops=..., ...)` per resource. Adding a resource = one registry entry.
 - **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models.
 
 For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
@@ -104,14 +95,16 @@ Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in
 endorlabs/
 ├── api_client.py      # Transport only (Layer 1)
 ├── client_surface.py  # Client facade (Layer 2 entry point)
-├── facade.py          # SystemResourceFacade, OssResourceFacade, ResourceFacade; delegates to module functions
+├── facade.py          # SystemResourceFacade, OssResourceFacade, ResourceFacade; delegates to BaseResourceOperations
 ├── registry.py        # Registry of resources exposed on Client
-├── resources/         # Module-level list/get/create/update/delete
+├── resources/         # Pydantic models, convenience functions, and resource-specific logic
 └── models/
 ```
 
-- **Experimental:** `endorlabs.experimental.sast_analysis` — may change without same stability guarantees. `endorlabs.analysis` is deprecated; use the new path.
-- **Internal:** utils (model_validation, schema_drift, traversal), operations.
+- **SAST analysis:** `endorlabs.sast_analysis` — finding correlation and SQL-backed analysis tools.
+- **Agent:** `endorlabs.agent` — LangGraph-based agent and demo CLI (requires `[agent]` extras).
+- **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
+- **Internal:** utils (model_validation, schema_drift), operations.
 
 ## Reference — External
 

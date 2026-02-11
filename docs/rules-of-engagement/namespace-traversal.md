@@ -24,30 +24,21 @@ The `traverse` parameter in `ListParameters` automatically queries all child nam
 ### Basic Usage
 
 ```python
-from endorlabs.resources import dependency_metadata
-from endorlabs.types import ListParameters
+import endorlabs
+
+client = endorlabs.Client(tenant="endor-solutions-tgowan")
 
 # Query all DependencyMetadata across all namespaces
-# Uses API default page size (typically 100) - no page_size override
-list_params = ListParameters(traverse=True)
-all_deps = dependency_metadata.list_dependency_metadata(
-    client, tenant_namespace, list_params
-)
+all_deps = client.dependency_metadata.list(traverse=True)
 ```
 
 ### With Filtering
 
 ```python
-from endorlabs.resources import dependency_metadata
-from endorlabs.types import ListParameters
-
 # Query all private dependencies across all namespaces
-list_params = ListParameters(
+private_deps = client.dependency_metadata.list(
     traverse=True,
-    filter="spec.dependency_data.public==false"
-)
-private_deps = dependency_metadata.list_dependency_metadata(
-    client, tenant_namespace, list_params
+    filter_expr="spec.dependency_data.public==false",
 )
 ```
 
@@ -56,40 +47,19 @@ private_deps = dependency_metadata.list_dependency_metadata(
 #### DependencyMetadata (Recommended Pattern)
 
 ```python
-from endorlabs.resources import dependency_metadata
-from endorlabs.types import ListParameters
-
-# Get all dependencies across tenant
-list_params = ListParameters(traverse=True)
-deps = dependency_metadata.list_dependency_metadata(
-    client, "endor-solutions-tgowan", list_params
-)
+deps = client.dependency_metadata.list(traverse=True)
 ```
 
 #### PackageVersion
 
 ```python
-from endorlabs.resources import package_version
-from endorlabs.types import ListParameters
-
-# Get all package versions across tenant
-list_params = ListParameters(traverse=True)
-packages = package_version.list_package_versions(
-    client, "endor-solutions-tgowan", list_params
-)
+packages = client.package_version.list(traverse=True)
 ```
 
 #### Finding
 
 ```python
-from endorlabs.resources import finding
-from endorlabs.types import ListParameters
-
-# Get all findings across tenant
-list_params = ListParameters(traverse=True)
-findings = finding.list_findings(
-    client, "endor-solutions-tgowan", list_params
-)
+findings = client.finding.list(traverse=True)
 ```
 
 ## When to Use Traverse
@@ -115,10 +85,10 @@ findings = finding.list_findings(
 
 ```python
 # ❌ SLOW: Multiple API calls
-namespaces = collect_all_namespaces(client, tenant_namespace)
+namespaces = client.namespace.list(traverse=True)
 all_deps = []
 for ns in namespaces:
-    deps = dependency_metadata.list_dependency_metadata(client, ns)
+    deps = client.dependency_metadata.list(namespace=ns.meta.name)
     all_deps.extend(deps)
 # Result: N API calls (one per namespace)
 ```
@@ -127,10 +97,7 @@ for ns in namespaces:
 
 ```python
 # ✅ FAST: Single API call
-list_params = ListParameters(traverse=True)
-all_deps = dependency_metadata.list_dependency_metadata(
-    client, tenant_namespace, list_params
-)
+all_deps = client.dependency_metadata.list(traverse=True)
 # Result: 1 API call (handles all namespaces automatically)
 ```
 
@@ -169,24 +136,18 @@ The `include_child_namespaces` parameter has been removed. Use `traverse` instea
 
 3. **Document traversal intent**: When writing functions that use traverse, document why:
    ```python
-   def get_all_dependencies(client, tenant_namespace):
+   def get_all_dependencies(client):
        """Get all dependencies across all namespaces in tenant.
        
        Uses traverse=True for efficient tenant-wide query.
        """
-       list_params = ListParameters(traverse=True)
-       return dependency_metadata.list_dependency_metadata(
-           client, tenant_namespace, list_params
-       )
+       return client.dependency_metadata.list(traverse=True)
    ```
 
 4. **Use MAX_PAGES for control**: Don't override page_size unless necessary. Use max_pages parameter to limit results:
    ```python
    # Uses API default page size, limits to 10 pages max
-   list_params = ListParameters(traverse=True)
-   deps = dependency_metadata.list_dependency_metadata(
-       client, tenant_namespace, list_params, max_pages=10
-   )
+   deps = client.dependency_metadata.list(traverse=True, max_pages=10)
    ```
    
    **Important**: Small page sizes (e.g., page_size=1) cause performance issues. Only override if you have a specific need.
@@ -196,40 +157,35 @@ The `include_child_namespaces` parameter has been removed. Use `traverse` instea
 ### Pattern 1: Tenant-Wide Resource Query
 
 ```python
-def get_all_resources(client, tenant_namespace, resource_type):
-    """Get all resources of a type across tenant."""
-    list_params = ListParameters(traverse=True)
-    # Use appropriate resource module
-    return resource_module.list_resources(client, tenant_namespace, list_params)
+# Get all resources of a type across the tenant
+projects = client.project.list(traverse=True)
 ```
 
 ### Pattern 2: Filtered Tenant-Wide Query
 
 ```python
-def get_private_dependencies(client, tenant_namespace):
+def get_private_dependencies(client):
     """Get all private dependencies across tenant."""
-    list_params = ListParameters(
+    return client.dependency_metadata.list(
         traverse=True,
-        filter="spec.dependency_data.public==false"
-    )
-    return dependency_metadata.list_dependency_metadata(
-        client, tenant_namespace, list_params
+        filter_expr="spec.dependency_data.public==false",
     )
 ```
 
 ### Pattern 3: Tenant-Wide Count
 
 ```python
-def count_all_findings(client, tenant_namespace):
+from endorlabs.types import ListParameters
+
+def count_all_findings(client):
     """Count all findings across tenant."""
     list_params = ListParameters(traverse=True, count=True)
-    # Implementation depends on resource module
-    return finding.list_findings(client, tenant_namespace, list_params)
+    return client.finding.list(list_params=list_params)
 ```
 
 ## Related Documentation
 
 - [ListParameters API Reference](../../src/endorlabs/types.py)
-- [BaseResourceOperations Implementation](../../src/endorlabs/models/base.py)
+- [BaseResourceOperations Implementation](../../src/endorlabs/operations/__init__.py)
 - DependencyMetadata: `endorlabs.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.
 
