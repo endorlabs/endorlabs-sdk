@@ -4,10 +4,12 @@
 
 ## Consuming the SDK
 
-- **Python:** 3.11+ required; CI and releases are tested on 3.13 only.
+- **Python:** 3.12+ required; CI and releases are tested on 3.13 only.
 - **Install:** `uv add endorlabs-sdk` or, in this repo, `uv sync`.
 - **Entry point:** `endorlabs.Client(tenant="...")`; then `client.namespace.list(traverse=True)`, `client.project.get(uuid)`, etc. **Create:** use `client.<resource>.create(name="...", namespace="...", ...)` (kwargs) or `create(payload=CreateXPayload(...))` (payload-based create). See [Architecture](#architecture) below.
-- **Client options:** You can pass `timeout`, `content_type`, `accept_encoding`, `max_retries`, `base_url` to `Client(...)` to control transport; other APIClient options go via `**client_kwargs`. Use `content_type="application/json"` if compact responses cause validation issues.
+- **Convenience methods:** `client.whoami()` returns the authenticated tenant namespace (or `None`). `client.wait_until(predicate, timeout=60)` polls until a condition is true. `client.<resource>.lookup(filter=..., **kwargs)` returns exactly one result or raises `AmbiguousError`. `client.<resource>.list_iter(...)` is an iterator version of `list()`. `client.<resource>.tag(resource, tags)` / `.untag(resource, keys)` manage `meta.tags`. `client.<resource>.delete(..., ignore_missing=True)` suppresses 404 on delete.
+- **Parallel traversal:** `client.<resource>.list(traverse=True, concurrent=True, max_workers=10)` queries namespaces in parallel. `list(parent=resource)` scopes to a parent's namespace and `meta.parent_uuid` (only for resources with a registry `parent_kind`).
+- **Client options:** You can pass `timeout`, `content_type`, `accept_encoding`, `max_retries`, `base_url` to `Client(...)` to control transport; other APIClient options go via `**client_kwargs`. Default `content_type` is `"application/jsoncompact"`; use `content_type="application/json"` if compact responses cause validation issues. When both `list_params=` and flat kwargs (e.g. `filter=`, `mask=`) are passed to `.list()`, flat kwargs win.
 - **Advanced / transport-only:** `APIClient()` from `endorlabs.api_client` is available for custom HTTP usage, but all resource operations should go through `Client`.
 - **Errors:** `endorlabs.exceptions`; see [docs/conventions.md](docs/conventions.md) (Errors section).
 
@@ -54,7 +56,7 @@ This is the recommended way for agents to bootstrap Endor Labs context before pe
 Two-layer, registry-driven design. The same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes `ResourceFacade[T]` instances built from the registry. The `scope` parameter (`None`, `"system"`, `"oss"`) controls namespace resolution.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes `ResourceFacade[T]` instances built from the registry. The `scope` property (`None`, `"system"`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
 - **Registry:** `endorlabs.registry` — one `ResourceEntry(attr_name=..., resource_name=..., model_class=..., supported_ops=..., ...)` per resource. Adding a resource = one registry entry.
 - **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models.
 
@@ -67,6 +69,7 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 - **Return types:** Functions return typed models: `Resource | None` or `list[Resource]`.
 - **Field aliasing:** Follows a three-tier rule set (syntax collisions, spec case, semantic renames); see [docs/conventions.md](docs/conventions.md) (Models and API parity → Field aliasing).
 - **Create/update:** Common create/update args may be exposed as explicit optional facade kwargs; validation remains in the resource’s builder and model; the model is the single source of truth for mutable and immutable fields.
+- **F() operator semantics:** Import: `from endorlabs import F`. `F().matches(pattern)` is for **string** substring/regex matching on scalar fields (e.g. `F("meta.name").matches("endor-sdk")`). `F().contains(value)` is for **array** membership checks on list fields (e.g. `F("spec.finding_tags").contains("FINDING_TAGS_REACHABLE_FUNCTION")`). Using `contains` on a scalar string field will silently return zero results. The `filter=` parameter on `.list()` accepts `str | FilterExpression | None`.
 
 ## Automation
 
@@ -78,16 +81,13 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 
 | Rule | When it applies |
 |------|------------------|
-| **endorlabs-sdk-core.mdc** | Always (project context and critical requirements) |
 | **tdd.mdc** | Always (TDD protocol, quality gate, zero-regression requirement) |
 | **code-review.mdc** | Always (agent self-review checklist before committing) |
 | **security.mdc** | When editing `src/endorlabs/**` (credential handling, network safety, dangerous ops) |
 | **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
 | **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
-| **api-workflow.mdc** | When editing models, resources, or OpenAPI spec |
-| **troubleshooting.mdc** | When debugging SDK/integration failures or editing troubleshooting docs |
 
-Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in the docs below. Troubleshooting workflow: troubleshooting.mdc and [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
+Details (patterns, LIST/UPDATE, errors) live in those rules and in the docs below. For API workflow guidance, use the **implement-sdk-resource** skill. For troubleshooting, use the **troubleshoot-sdk** skill or see [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
 
 ## Project Structure
 
@@ -95,7 +95,7 @@ Details (patterns, LIST/UPDATE, errors, API workflow) live in those rules and in
 endorlabs/
 ├── api_client.py      # Transport only (Layer 1)
 ├── client_surface.py  # Client facade (Layer 2 entry point)
-├── facade.py          # SystemResourceFacade, OssResourceFacade, ResourceFacade; delegates to BaseResourceOperations
+├── facade.py          # ResourceFacade (with backward-compat aliases SystemResourceFacade, OssResourceFacade); delegates to BaseResourceOperations
 ├── registry.py        # Registry of resources exposed on Client
 ├── resources/         # Pydantic models, convenience functions, and resource-specific logic
 └── models/

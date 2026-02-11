@@ -5,7 +5,7 @@ Single source for contributor setup and development workflow. Consumer install i
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) (Python package and project manager)
-- Python 3.11+ (CI and releases are tested on 3.13 only; e.g. install via uv)
+- Python 3.12+ (CI and releases are tested on 3.13 only; e.g. install via uv)
 
 ## Setup
 

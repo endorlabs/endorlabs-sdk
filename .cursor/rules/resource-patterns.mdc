@@ -1,0 +1,15 @@
+---
+description: Resource module patterns
+globs: src/endorlabs/resources/**/*.py
+---
+
+# Resource Module Patterns
+
+When editing resource modules, enforce:
+
+1. **Models only:** Resource modules contain Pydantic models (Meta, Spec, Resource, payloads) and convenience functions. No module-level CRUD wrappers — CRUD is handled by `BaseResourceOperations` via the facade.
+2. **Field aliasing tiers:** Tier 1 (mandatory) — alias reserved words and invalid identifiers. Tier 2 — 1:1 with spec (snake_case). Tier 3 — avoid renaming for prettiness; alias only when API name is misleading; document reason.
+3. **Mutable fields:** Override `get_mutable_fields_cls()` and `get_immutable_fields_cls()` on the model when the resource has more than the base defaults. The facade's explicit kwargs are a convenience subset.
+4. **Create payloads:** Implement `build_create_payload` on the resource module when the resource supports create. The builder defines which kwargs are accepted.
+
+Full rules: [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md).
