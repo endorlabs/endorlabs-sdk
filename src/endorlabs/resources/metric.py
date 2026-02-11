@@ -6,18 +6,12 @@ established patterns from the base class implementation.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import BaseMeta, BaseResource, BaseResourceOperations, BaseSpec
+from ..models.base import BaseMeta, BaseResource, BaseSpec
 from ..utils.logging_config import get_resource_logger
-from ..utils.model_validation import parse_update_mask
-
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
 
 logger = get_resource_logger(__name__)
 
@@ -141,122 +135,6 @@ class Metric(BaseResource):
     def get_mutable_fields_cls(cls) -> list[str]:
         """Get list of mutable fields for Metric."""
         return ["meta.name", "meta.description", "meta.tags", "spec"]
-
-
-def _get_metric_ops(client: APIClient) -> BaseResourceOperations[Metric]:
-    """Get BaseResourceOperations instance for Metric."""
-    return BaseResourceOperations(client, "metrics", Metric)
-
-
-def list_metrics(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[Metric]:
-    """List metrics with advanced filtering and pagination."""
-    ops = _get_metric_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_metrics_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[Metric]:
-    """Iterate over metrics without materializing the full list."""
-    ops = _get_metric_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_metric(
-    client: APIClient, tenant_meta_namespace: str, metric_uuid: str
-) -> Metric:
-    """Get specific metric by UUID.
-
-    Raises:
-        NotFoundError: If metric doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_metric_ops(client)
-    return ops.get(tenant_meta_namespace, metric_uuid)
-
-
-def create_metric(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateMetricPayload,
-) -> Metric:
-    """Create a new metric with pre-validation and typed errors.
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If metric already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_metric_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_metric(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    metric_uuid: str,
-    payload: UpdateMetricPayload,
-    update_mask: str,
-) -> Metric:
-    """Update an existing metric with partial updates.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        metric_uuid: UUID of the metric to update
-        payload: Metric update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated Metric object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If metric doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Metric update requires an update_mask "
-                "(e.g. 'meta.description', 'meta.tags')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=metric_uuid,
-        )
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-    ops = _get_metric_ops(client)
-    return ops.update(tenant_meta_namespace, metric_uuid, payload, update_mask_list)
-
-
-def delete_metric(
-    client: APIClient, tenant_meta_namespace: str, metric_uuid: str
-) -> bool:
-    """Delete a metric by UUID."""
-    ops = _get_metric_ops(client)
-    return ops.delete(tenant_meta_namespace, metric_uuid)
 
 
 # Payload models for create and update operations

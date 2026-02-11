@@ -1,7 +1,7 @@
 """Resource-oriented Client facade for the Endor Labs SDK.
 
 Provides endorlabs.Client(api_client=..., tenant=...) with .namespaces, etc.,
-delegating to existing module-level list/get/create/update/delete functions.
+building ResourceFacade instances from declarative registry entries.
 All facades are built from the registries in endorlabs.registry.
 """
 
@@ -81,23 +81,18 @@ class Client:
         if self._client is None:
             raise RuntimeError("Client is closed.")  # pragma: no cover
 
-        tags_paths = get_tags_update_paths(entry.model_class) if entry.update_fn else []
+        tags_paths = (
+            get_tags_update_paths(entry.model_class)
+            if "update" in entry.supported_ops
+            else []
+        )
         return cast(
             "ResourceFacade[Any]",
             ResourceFacade[entry.model_class](
                 self._client,
                 self._default_namespace,
-                list_fn=entry.list_fn,
-                get_fn=entry.get_fn,
-                create_fn=entry.create_fn,
-                update_fn=entry.update_fn,
-                delete_fn=entry.delete_fn,
-                list_iter_fn=entry.list_iter_fn,
+                entry,
                 tags_paths=tags_paths,
-                resource_name=entry.resource_name,
-                parent_kind=entry.parent_kind,
-                build_create_payload_fn=entry.build_create_payload_fn,
-                scope=entry.scope,
             ),
         )
 
