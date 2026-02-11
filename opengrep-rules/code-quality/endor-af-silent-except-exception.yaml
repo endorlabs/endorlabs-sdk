@@ -1,0 +1,86 @@
+rules:
+  - id: endor-af-silent-except-exception
+    languages:
+      - python
+    message: |
+      Problem:
+      A bare `except Exception:` handler (without binding to a variable) was
+      detected.  This unconditionally swallows all exceptions -- including
+      programming bugs like `AttributeError`, `TypeError`, and `KeyError` --
+      making them invisible to callers and debuggers.
+
+      Even `except Exception as e:` handlers that neither re-raise nor log
+      at warning+ level are problematic, but the unbound form `except
+      Exception:` is the most dangerous because it provides no access to the
+      exception for any handling at all.
+
+      Solution:
+      Either catch a specific exception type, re-raise after handling, or
+      log at warning+ level:
+
+      ```python
+      # Option 1: Catch specific exception
+      except yaml.YAMLError as e:
+          logger.warning("Failed to parse: %s", e)
+
+      # Option 2: Re-raise after cleanup
+      except Exception as e:
+          logger.error("Unexpected error: %s", e)
+          raise
+
+      # Option 3: Log and set fallback (at warning+ level)
+      except Exception as e:
+          logger.warning("Falling back to default: %s", e)
+          result = default_value
+      ```
+    metadata:
+      category: correctness
+      confidence: HIGH
+      cwe:
+        - "CWE-755: Improper Handling of Exceptional Conditions"
+      description: >-
+        Bare except Exception: handler without variable binding silently
+        swallows all exceptions including programming bugs.  Bind the
+        exception, re-raise, or log at warning+ level.
+      endor-category: warning
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/endorlabs/endor-af
+      endor-tags:
+        - Error-Handling
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The AF uses except Exception in ~30 locations.  Most bind the
+        exception (as e) and log or re-raise it, which is acceptable.
+        However, unbound except Exception: handlers provide no access to
+        the exception object at all, making silent swallowing inevitable.
+        This rule targets the unbound form specifically, which is the
+        highest-confidence indicator of a silently swallowed error.
+        Ruff TRY rules cover exception structure but do not distinguish
+        bound vs unbound except Exception handlers.
+      impact: MEDIUM
+      references:
+        - https://cwe.mitre.org/data/definitions/755.html
+      remediation: >-
+        Bind the exception with as e, then either re-raise, log at
+        warning or error level, or replace with a more specific exception
+        type.
+      security-severity: Medium
+      version: v1.0.0
+    patterns:
+      - pattern: |
+          try:
+              ...
+          except Exception:
+              ...
+      - pattern-not: |
+          try:
+              ...
+          except Exception:
+              ...
+              raise
+    severity: WARNING
+    paths:
+      include:
+        - src/endorlabs/

@@ -1,0 +1,47 @@
+rules:
+    - id: python_log_rule-logging-config-insecure-listen
+      languages:
+        - python
+      message: |
+        Problem:
+        The application was found calling the `logging.config.listen` function, which provides the ability to listen for
+        external configuration files over a socket server. This listen socket parses part of the configuration and calls
+        `eval` on the supplied configuration file. A local user, or an adversary who is able to exploit a Server Side Request
+        Forgery (SSRF) attack to communicate over localhost, would be able to execute arbitrary code by passing in a logging
+        config that contains python code.
+
+        Solution:
+        To remediate the issue, remove the call to `logging.config.listen` method.
+
+        For more information on the listen functionality see:
+        - https://docs.python.org/3/library/logging.config.html#logging.config.listen
+      metadata:
+        category: security
+        confidence: HIGH
+        cwe:
+            - 'CWE-94: Improper Control of Generation of Code (''Code Injection'')'
+        description: Improper control of generation of code while using logging.config
+        endor-category: vulnerability
+        endor-rule-origin:
+            license: MIT
+            url: https://gitlab.com/gitlab-org/security-products/sast-rules/blob/343b1fe46c3ad5be9e35700f6f5bd2b1eaeba4ee/python/log/rule-logging-config-insecure-listen.yml
+        endor-tags:
+            - A03:2021
+            - A05:2025
+            - Injection
+        endor-targets:
+            - ENDOR_TARGET_REPOSITORY
+        explanation: The application was found calling the `logging.config.listen` function, which provides the ability to listen for external configuration files over a socket server. This listen socket parses part of the configuration and calls `eval` on the supplied configuration file. A local user, or an adversary who is able to exploit a Server Side Request Forgery (SSRF) attack to communicate over localhost, would be able to execute arbitrary code by passing in a logging config that contains python code.
+        impact: HIGH
+        owasp:
+            - A1:2017-Injection
+            - A03:2021-Injection
+        references:
+            - https://cwe.mitre.org/data/definitions/94.html
+        remediation: To remediate the issue, remove the call to `logging.config.listen` method.
+        security-severity: High
+        shortDescription: Improper control of generation of code while using in logging.config
+        version: v1.0.0
+      patterns:
+        - pattern: logging.config.listen(...)
+      severity: WARNING

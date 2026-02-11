@@ -6,31 +6,18 @@ API may omit list.objects when empty (treat as []).
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-def _get_scan_workflow_result_ops(
-    client: APIClient,
-) -> BaseResourceOperations[ScanWorkflowResult]:
-    """Get BaseResourceOperations instance for scan workflow results."""
-    return BaseResourceOperations(client, "scan-workflow-results", ScanWorkflowResult)
+logger = get_resource_logger(__name__)
 
 
 class ScanWorkflowResultSpec(BaseSpec):
@@ -72,37 +59,3 @@ class ScanWorkflowResult(BaseResource):
                     unknown,
                 )
         return v
-
-
-def list_scan_workflow_results(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[ScanWorkflowResult]:
-    """List scan workflow results. Missing list.objects treated as []."""
-    ops = _get_scan_workflow_result_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_scan_workflow_results_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[ScanWorkflowResult]:
-    """Iterate over scan workflow results without materializing the full list."""
-    ops = _get_scan_workflow_result_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_scan_workflow_result(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    scan_workflow_result_uuid: str,
-) -> ScanWorkflowResult:
-    """Get a scan workflow result by UUID."""
-    ops = _get_scan_workflow_result_ops(client)
-    return ops.get(tenant_meta_namespace, scan_workflow_result_uuid)

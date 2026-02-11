@@ -53,7 +53,7 @@ Tests that **create then delete** as the behavior under test (e.g. test_client_u
 
 **Resources with CREATE but no delete API:** scan_log_request is request-based (create returns logs in response); it has no delete, so no try/finally delete is needed. See [resources.md](../reference/resources.md).
 
-**Verifying with endorctl:** To check for leftover test resources in a namespace (e.g. after interrupted runs), use the same namespace as tests (`ENDOR_NAMESPACE` or default `endor-solutions-tgowan.tgowan-endor`):
+**Verifying with endorctl:** To check for leftover test resources in a namespace (e.g. after interrupted runs), use the same namespace as tests (`ENDOR_NAMESPACE` or default `endor-solutions-tgowan`):
 
 - `endorctl api list -r APIKey -n <namespace> --traverse` — API keys (filter by name pattern in output if needed).
 - `endorctl api list -r ScanProfile -n <root> --traverse` — scan profiles (tests create at root).

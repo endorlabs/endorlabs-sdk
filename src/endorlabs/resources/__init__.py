@@ -1,4 +1,4 @@
-"""Endor Cockpit resources module.
+"""Endor Labs SDK resources module.
 
 This module provides CRUD operations for all Endor Labs API resources.
 """

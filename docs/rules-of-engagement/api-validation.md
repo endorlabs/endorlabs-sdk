@@ -1,6 +1,6 @@
 # API Validation Rules of Engagement
 
-Pre-implementation validation. Spec: see [conventions.md](../conventions.md) (OpenAPI URL; workflow downloads to `external_docs/` in CI).
+Pre-implementation validation. Spec: see [conventions.md](../conventions.md) (OpenAPI URL; workflow downloads to `.endorlabs-context/` in CI).
 
 ## Phase 1: OpenAPI
 

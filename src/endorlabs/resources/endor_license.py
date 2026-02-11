@@ -3,38 +3,23 @@
 EndorLicense represents a specific Endor license assigned to a tenant. This
 resource is system-owned: LIST is supported; GET, UPDATE, and DELETE return
 403 (only system can perform them). The Client exposes list() only; use
-client.endor_license.list(). Module-level get_endor_license() remains for
-advanced use but will raise PermissionDeniedError (403) for non-system
-callers.
+client.endor_license.list().
 """
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-def _get_endor_license_ops(
-    client: APIClient,
-) -> BaseResourceOperations[EndorLicense]:
-    """Get BaseResourceOperations instance for Endor licenses."""
-    return BaseResourceOperations(client, "endor-licenses", EndorLicense)
+logger = get_resource_logger(__name__)
 
 
 class AiLimit(BaseModel):
@@ -150,37 +135,3 @@ class EndorLicense(BaseResource):
                     unknown,
                 )
         return v
-
-
-def list_endor_licenses(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[EndorLicense]:
-    """List Endor licenses in the namespace."""
-    ops = _get_endor_license_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_endor_licenses_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[EndorLicense]:
-    """Iterate over Endor licenses without materializing the full list."""
-    ops = _get_endor_license_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_endor_license(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    endor_license_uuid: str,
-) -> EndorLicense:
-    """Get an Endor license by UUID."""
-    ops = _get_endor_license_ops(client)
-    return ops.get(tenant_meta_namespace, endor_license_uuid)

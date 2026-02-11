@@ -1,4 +1,4 @@
-"""Type definitions for Endor Cockpit SDK.
+"""Type definitions for Endor Labs SDK.
 
 This module provides common type definitions used across the SDK
 for enhanced type safety and LLM understanding.
@@ -6,9 +6,9 @@ for enhanced type safety and LLM understanding.
 # APIResponse uses key "list" (API contract); Pyright treats it as builtin
 # pyright: reportInvalidTypeForm=false
 
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
 # Resource Types
@@ -127,39 +127,6 @@ class ErrorResponse(TypedDict):
     details: dict[str, Any] | None
 
 
-# Generic Types
-ResourceDict = dict[str, Any]
-ResourceList = list[ResourceDict]
-NamespaceStr = str
-UUIDStr = str
-TagList = list[str]
-UpdateMask = str
-
-# Function Signatures
-ResourceOperation = Literal[
-    "list_projects",
-    "get_project",
-    "create_project",
-    "update_project",
-    "delete_project",
-    "list_findings",
-    "get_finding",
-    "create_finding",
-    "update_finding",
-    "delete_finding",
-    "list_policies",
-    "get_policy",
-    "create_policy",
-    "update_policy",
-    "delete_policy",
-    "list_namespaces",
-    "get_namespace",
-    "create_namespace",
-    "update_namespace",
-    "delete_namespace",
-]
-
-
 # Validation Types
 class ValidationResult(TypedDict):
     """Result of validation with errors and warnings."""
@@ -187,8 +154,27 @@ class ListParameters(BaseModel):
 
     filter: str | None = Field(
         None,
-        description="Filter expression (e.g., 'spec.level==FINDING_LEVEL_CRITICAL')",
+        description=(
+            "Filter expression — accepts a raw string "
+            "(e.g., 'spec.level==FINDING_LEVEL_CRITICAL') "
+            "or a FilterExpression built with F()."
+        ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_filter_expression(cls, values: Any) -> Any:
+        """Normalize FilterExpression to str so the wire format is always a string."""
+        from .filter import FilterExpression
+
+        if not isinstance(values, dict):
+            return values
+        typed_values = cast("dict[str, Any]", values)
+        filt = typed_values.get("filter")
+        if isinstance(filt, FilterExpression):
+            typed_values["filter"] = str(filt)
+        return typed_values
+
     mask: str | None = Field(
         None, description="Field mask (e.g., 'meta.name,spec.level')"
     )
@@ -198,9 +184,15 @@ class ListParameters(BaseModel):
         None, description="Page id to start from (alternative pagination)"
     )
     sort_field: str | None = Field(
-        None, description="Sort field (e.g., 'meta.create_time')"
+        None,
+        description=(
+            "Deprecated: use sort_by instead. Sort field (e.g., 'meta.create_time')"
+        ),
     )
-    sort_order: str | None = Field("asc", description="Sort order (asc/desc)")
+    sort_order: str | None = Field(
+        "asc",
+        description="Deprecated: use desc instead. Sort order (asc/desc)",
+    )
     sort_by: str | None = Field(
         None,
         description="Field path to sort by (e.g., 'meta.create_time').",
@@ -228,8 +220,10 @@ class ListParameters(BaseModel):
         description="When True, fetch resources from the archive.",
     )
     list_all: bool | None = Field(
-        True,
-        description="List all resources (use with timeout for large result sets).",
+        None,
+        description="When True, hints the server to prepare a full cursor. "
+        "Defaults to None (server default); client-side pagination via "
+        "max_pages handles multi-page fetching independently.",
     )
     pr_uuid: str | None = Field(
         None,

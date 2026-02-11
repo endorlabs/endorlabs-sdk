@@ -1,4 +1,4 @@
-# Contributing to Endor Cockpit
+# Contributing to the Endor Labs SDK
 
 Single source for contributor setup and development workflow. Consumer install is documented in [README.md](README.md); this file is for people working on the repo.
 
@@ -12,33 +12,12 @@ Single source for contributor setup and development workflow. Consumer install i
 From the repo root:
 
 ```bash
-git clone https://github.com/endor-solutions-architecture/endor-cockpit.git
-cd endor-cockpit
+git clone https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
+cd endorlabs-sdk
 uv sync
 ```
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
-
-### Pre-commit hook (optional)
-
-Run the same lint/format/typecheck as CI before each commit. Pre-commit is a dev dependency; use it so hooks run automatically for all maintainers.
-
-From the repo root after `uv sync`:
-
-```bash
-uv run pre-commit install
-```
-
-That installs the git hook so every `git commit` runs ruff check, ruff format (check), and pyright. Skipping with `--no-verify` should be rare (e.g. WIP commits) and not for normal upstream contributions.
-
-Alternative (no pre-commit framework): copy the native hook so it runs the same commands:
-
-```bash
-cp githooks/pre-commit .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
-```
-
-The repo uses [.pre-commit-config.yaml](.pre-commit-config.yaml) with `minimum_pre_commit_version` and `default_install_hook_types` so a single `pre-commit install` is enough.
 
 ## Environment
 
@@ -102,7 +81,7 @@ uv run pyright --project pyproject.toml
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. They also run automatically before commit when the pre-commit hook is installed (see [Pre-commit hook](#pre-commit-hook-optional) above).
+CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`.
 
 ## Optional: direnv
 
@@ -118,12 +97,16 @@ When using or documenting the registry-based client (`client.namespace`, `client
 
 ## Optional: sync external docs
 
-For full IDE context (OpenAPI spec + user docs from docs.endorlabs.com), create the gitignored `external_docs/` folder:
+For full IDE context (OpenAPI spec + user docs from docs.endorlabs.com), create the gitignored `.endorlabs-context/` folder:
 
 ```bash
-uv sync --extra docs
-uv run python scripts/sync_external_docs.py --all
+uv sync --extra context
 ```
 
-See [scripts/README.md](scripts/README.md) for options (spec-only, `--max-pages`, `--force`). For CI and schema drift workflow, see [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
+```python
+import endorlabs
+endorlabs.init()  # downloads to .endorlabs-context/
+```
+
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](AGENTS.md#context-bootstrap-for-ai-agents) for details.
 

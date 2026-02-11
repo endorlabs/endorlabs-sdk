@@ -19,34 +19,20 @@ API USAGE NOTES:
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
     Context,
     FlexibleEnum,
 )
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..api_client import APIClient
-    from ..types import ListParameters
-
-logger = logging.getLogger(__name__)
-
-
-def _get_scan_result_ops(
-    client: APIClient,
-) -> BaseResourceOperations[ScanResult]:
-    """Get BaseResourceOperations instance for scan results."""
-    return BaseResourceOperations(client, "scan-results", ScanResult)
+logger = get_resource_logger(__name__)
 
 
 class ScanResultSpecStatus(FlexibleEnum):
@@ -584,203 +570,3 @@ class UpdateScanResultPayload(BaseModel):
         None, description="Updated scan result specification"
     )
     context: Context | None = Field(None, description="Updated scan result context")
-
-
-def list_scan_results(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[ScanResult]:
-    """List scan results in a namespace.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name (e.g., 'tenant.namespace')
-        list_params: Optional list parameters for filtering, pagination, etc.
-        max_pages: Optional maximum number of pages to fetch.
-            If None and in test environment, defaults to 10 pages max.
-            If None in production, fetches all pages.
-        **kwargs: Passed through to list implementation (e.g. filter, page_size).
-
-    Returns:
-        List of ScanResult objects
-
-    """
-    ops = _get_scan_result_ops(client)
-    return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def list_scan_results_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[ScanResult]:
-    """Iterate over scan results without materializing the full list."""
-    ops = _get_scan_result_ops(client)
-    return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)
-
-
-def get_scan_result(
-    client: APIClient, tenant_meta_namespace: str, scan_result_uuid: str
-) -> ScanResult:
-    """Get a specific scan result by UUID.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        scan_result_uuid: UUID of the scan result to retrieve
-
-    Returns:
-        ScanResult object
-
-    Raises:
-        NotFoundError: If scan result doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_scan_result_ops(client)
-    return ops.get(tenant_meta_namespace, scan_result_uuid)
-
-
-def create_scan_result(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    payload: CreateScanResultPayload,
-) -> ScanResult:
-    """Create a new scan result with pre-validation and typed errors.
-
-    Note: ScanResults are typically generated automatically by endorctl scans.
-    This function is provided for completeness but is rarely used by end users.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        payload: ScanResult creation payload
-
-    Returns:
-        Created ScanResult object
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If scan result already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_scan_result_ops(client)
-    return ops.create(tenant_meta_namespace, payload)
-
-
-def update_scan_result(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    scan_result_uuid: str,
-    payload: UpdateScanResultPayload,
-    update_mask: str,
-) -> ScanResult | None:
-    """Update an existing scan result using partial updates.
-
-    This function supports updating only specific fields using the update_mask
-    parameter, which enables efficient partial updates without overwriting
-    unchanged fields.
-
-    MUTABLE FIELDS:
-    - meta.tags: General resource tags
-    - meta.description: Resource description
-    - meta.annotations: Resource annotations
-
-    FIELD MUTABILITY (per OpenAPI spec):
-    =====================================
-    IMMUTABLE FIELDS (readOnly: true in API spec):
-    - uuid: Unique identifier (readOnly: true in UpdateScanResult request body)
-    - meta.create_time, meta.update_time, meta.upsert_time: Timestamps
-      (readOnly: true in v1Meta)
-    - meta.kind, meta.version: Resource metadata (readOnly: true in v1Meta)
-    - meta.created_by, meta.updated_by: Audit fields (readOnly: true in v1Meta)
-    - meta.references, meta.index_data: System-managed fields
-      (readOnly: true in v1Meta)
-    - tenant_meta.namespace: Namespace assignment
-    - spec.*: All spec fields are system-generated and immutable
-
-    MUTABLE FIELDS (NOT readOnly in API spec):
-    - meta.name, meta.description, meta.tags: Metadata
-    - meta.annotations: Resource annotations
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        scan_result_uuid: UUID of the scan result to update
-        payload: ScanResult update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated ScanResult object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If scan result doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    Example:
-        >>> # Update scan result tags
-        >>> payload = UpdateScanResultPayload(
-        ...     meta=ScanResultMetaUpdate(tags=["reviewed", "test-scan"])
-        ... )
-        >>> scan_result = update_scan_result(
-        ...     client, namespace, uuid, payload, "meta.tags"
-        ... )
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Scan result update requires an update_mask "
-                "(e.g. 'meta.tags', 'meta.description')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=scan_result_uuid,
-        )
-    # Build ScanResult object with UUID and payload
-    scan_result_dict = {
-        "uuid": scan_result_uuid,
-        **payload.model_dump(exclude_none=True),
-    }
-    scan_result_obj = ScanResult(**scan_result_dict)
-
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-
-    # Use base class update method
-    ops = _get_scan_result_ops(client)
-    return ops.update(
-        tenant_meta_namespace, scan_result_uuid, scan_result_obj, update_mask_list
-    )
-
-
-def delete_scan_result(
-    client: APIClient, tenant_meta_namespace: str, scan_result_uuid: str
-) -> bool:
-    """Delete a scan result.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Canonical namespace name
-        scan_result_uuid: UUID of the scan result to delete
-
-    Returns:
-        True if deletion was successful, False otherwise
-
-    """
-    ops = _get_scan_result_ops(client)
-    return ops.delete(tenant_meta_namespace, scan_result_uuid)

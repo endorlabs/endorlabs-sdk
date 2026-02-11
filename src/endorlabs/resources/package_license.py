@@ -11,32 +11,18 @@ parameter value passed.
 
 from __future__ import annotations
 
-import logging
-from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, override
+from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..api_client import APIClient, RedactingFilter, redaction_pattern
 from ..models.base import (
     BaseMeta,
     BaseResource,
-    BaseResourceOperations,
     BaseSpec,
 )
-from ..utils.model_validation import parse_update_mask
+from ..utils.logging_config import get_resource_logger
 
-if TYPE_CHECKING:
-    from ..types import ListParameters
-
-# Set up logger with redaction filter
-logger = logging.getLogger(__name__)
-logger.addFilter(RedactingFilter([redaction_pattern]))
-
-# Hardcoded namespace for PackageLicense operations
-# All PackageLicense operations use the "oss" namespace regardless of
-# the tenant_meta_namespace parameter passed to functions
-PACKAGE_LICENSE_NAMESPACE = "oss"
+logger = get_resource_logger(__name__)
 
 
 class PackageLicenseInfoLicenseInfoMapping(BaseModel):
@@ -238,147 +224,6 @@ class PackageLicense(BaseResource):
     def get_mutable_fields_cls(cls) -> list[str]:
         """Get list of mutable fields for PackageLicense."""
         return ["meta.name", "meta.description", "meta.tags", "spec"]
-
-
-def _get_package_license_ops(
-    client: APIClient,
-) -> BaseResourceOperations[PackageLicense]:
-    """Get BaseResourceOperations instance for PackageLicense."""
-    return BaseResourceOperations(client, "package-licenses", PackageLicense)
-
-
-def list_package_licenses(
-    client: APIClient,
-    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> list[PackageLicense]:
-    """List package licenses with advanced filtering and pagination.
-
-    Note: This function hardcodes the namespace to "oss" regardless of the
-    tenant_meta_namespace parameter value.
-    """
-    ops = _get_package_license_ops(client)
-    return ops.list(PACKAGE_LICENSE_NAMESPACE, list_params, max_pages, **kwargs)
-
-
-def list_package_licenses_iter(
-    client: APIClient,
-    tenant_meta_namespace: str,
-    list_params: ListParameters | None = None,
-    max_pages: int | None = None,
-    **kwargs: Any,
-) -> Iterator[PackageLicense]:
-    """Iterate over package licenses without materializing the full list."""
-    ops = _get_package_license_ops(client)
-    return ops.list_iter(PACKAGE_LICENSE_NAMESPACE, list_params, max_pages, **kwargs)
-
-
-def get_package_license(
-    client: APIClient,
-    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
-    package_license_uuid: str,
-) -> PackageLicense:
-    """Get specific package license by UUID.
-
-    Note: This function hardcodes the namespace to "oss" regardless of the
-    tenant_meta_namespace parameter value.
-
-    Raises:
-        NotFoundError: If package license doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    ops = _get_package_license_ops(client)
-    return ops.get(PACKAGE_LICENSE_NAMESPACE, package_license_uuid)
-
-
-def create_package_license(
-    client: APIClient,
-    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
-    payload: CreatePackageLicensePayload,
-) -> PackageLicense:
-    """Create a new package license with pre-validation and typed errors.
-
-    Note: This function hardcodes the namespace to "oss" regardless of the
-    tenant_meta_namespace parameter value.
-
-    Raises:
-        ValidationError: If payload is invalid
-        NotFoundError: If namespace doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ConflictError: If package license already exists
-        ServerError: If server error occurs
-
-    """
-    ops = _get_package_license_ops(client)
-    return ops.create(PACKAGE_LICENSE_NAMESPACE, payload)
-
-
-def update_package_license(
-    client: APIClient,
-    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
-    package_license_uuid: str,
-    payload: UpdatePackageLicensePayload,
-    update_mask: str,
-) -> PackageLicense | None:
-    """Update an existing package license with partial updates.
-
-    Note: This function hardcodes the namespace to "oss" regardless of the
-    tenant_meta_namespace parameter value.
-
-    Args:
-        client: APIClient instance
-        tenant_meta_namespace: Parameter kept for API compatibility but ignored
-        package_license_uuid: UUID of the package license to update
-        payload: PackageLicense update payload
-        update_mask: Comma-separated list of fields to update (required), e.g.
-            "meta.tags,meta.description". Missing or empty raises ValidationError.
-
-    Returns:
-        Updated PackageLicense object
-
-    Raises:
-        ValidationError: If payload is invalid or update_mask is missing/empty
-        NotFoundError: If package license doesn't exist
-        PermissionDeniedError: If user lacks permission
-        ServerError: If server error occurs
-
-    """
-    from ..exceptions import ValidationError as EndorValidationError
-
-    if not (update_mask and update_mask.strip()):
-        raise EndorValidationError(
-            message=(
-                "Package license update requires an update_mask "
-                "(e.g. 'meta.description', 'meta.tags')."
-            ),
-            operation="update",
-            namespace=tenant_meta_namespace,
-            resource_uuid=package_license_uuid,
-        )
-    # Convert update_mask from string to List[str] for base class
-    update_mask_list = parse_update_mask(update_mask)
-    ops = _get_package_license_ops(client)
-    return ops.update(
-        PACKAGE_LICENSE_NAMESPACE, package_license_uuid, payload, update_mask_list
-    )
-
-
-def delete_package_license(
-    client: APIClient,
-    tenant_meta_namespace: str,  # Parameter kept for API compatibility but ignored
-    package_license_uuid: str,
-) -> bool:
-    """Delete a package license by UUID.
-
-    Note: This function hardcodes the namespace to "oss" regardless of the
-    tenant_meta_namespace parameter value.
-    """
-    ops = _get_package_license_ops(client)
-    return ops.delete(PACKAGE_LICENSE_NAMESPACE, package_license_uuid)
 
 
 # Payload models for create and update operations

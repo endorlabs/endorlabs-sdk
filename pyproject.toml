@@ -1,15 +1,16 @@
 [project]
-name = "endor-cockpit"
-version = "0.0.1"
-description = "A foundational workspace to administer, operate and scan with Endor Labs tooling through REST APIs"
+name = "endorlabs-sdk"
+dynamic = ["version"]
+description = "Endor Labs SDK — deploys Cursor/Anthropic skills with APIs to administer, operate, and scan with Endor Labs tooling"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
 ]
 license = { file = "LICENSE" }
 readme = "README.md"
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -18,46 +19,62 @@ dependencies = [
     "pydantic==2.12.5",
     "pyyaml==6.0.3",
     "httpx==0.28.1",
+    "tenacity==9.1.2",
+
 ]
 
 [project.optional-dependencies]
-docs = [
+context = [
     "beautifulsoup4==4.14.2",
     "markdownify==1.2.0",
 ]
+agent = [
+    "langgraph==1.0.7",
+    "langchain-openai==1.1.7",
+    "langchain-google-genai[experimental]==4.2.0",
+    "rich>=13.0",
+]
+
+[project.scripts]
+endor-demo = "endorlabs.agent.demo_cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"
+Repository = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"
+Documentation = "https://docs.endorlabs.com/"
+Issues = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/issues"
 
 [build-system]
-requires = ["hatchling>=1.0"]
+requires = ["hatchling==1.28.0", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/endorlabs/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/endorlabs"]
 artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 
-# Endor Labs SDK configuration
-[tool.endorlabs]
-# Configuration precedence (highest to lowest):
-# 1. Constructor parameters (APIClient(logging_level="DEBUG"))
-# 2. Environment variables (ENDOR_LOG_LEVEL, ENDOR_API, ENDOR_MAX_RETRIES, etc.)
-# 3. Config files (~/.endorctl/config.yaml)
-# 4. Defaults (built-in SDK defaults)
-#
-# Environment variables override config files to allow deployment-specific
-# settings while maintaining project defaults for local development.
-#
-# Configuration values:
-# ENDOR_API: Endor Labs API endpoint (default: https://api.endorlabs.com)
-# ENDOR_NAMESPACE: Tenant namespace for operations (required)
-# ENDOR_API_CREDENTIALS_KEY: API authentication key (required)
-# ENDOR_API_CREDENTIALS_SECRET: API authentication secret (required)
-# ENDOR_LOG_LEVEL: Logging level - DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO)
-# ENDOR_MAX_RETRIES: Maximum number of retries for API requests (default: 5)
-
-
+[dependency-groups]
+dev = [
+    "jsonschema==4.26.0",
+    "pytest==9.0.2",
+    "pytest-cov==7.0.0",
+    "ruff==0.14.14",
+    "pyright==1.1.408",
+    "pre-commit==4.5.1",
+    "codespell==2.4.1",
+    # Context deps needed for unit tests (mirrors [project.optional-dependencies.context])
+    "beautifulsoup4==4.14.2",
+    "markdownify==1.2.0",
+]
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"  
+target-version = "py313"
 # Note: exclude patterns should match [tool.pyright] exclude for consistency
 exclude = [
     ".git",
@@ -105,6 +122,7 @@ exclude = [
 [tool.ruff.lint]
 # Enable comprehensive linting
 select = [
+    # --- Core Python quality ---
     "E",     # pycodestyle errors
     "W",     # pycodestyle warnings
     "F",     # pyflakes (includes F811 for duplicate definitions)
@@ -113,46 +131,119 @@ select = [
     "UP",    # pyupgrade
     "B",     # flake8-bugbear
     "C90",   # mccabe complexity
-    "C901",  # too-complex
     "RUF",   # Ruff-specific rules
     "ANN",   # flake8-annotations
     "D",     # pydocstyle
     "PERF",  # perflint
+    "SIM",   # flake8-simplify: Simplifies code (better readability for open source)
+    # --- Access & argument hygiene ---
     "SLF",   # flake8-self: Prevents accessing private members (_api_key) from outside
     "TCH",   # flake8-type-checking: Moves circular imports to TYPE_CHECKING blocks
     "ARG",   # flake8-unused-arguments: Finds unused arguments (critical for API signatures)
     "PT",    # flake8-pytest-style: Enforces standard testing patterns
-    "SIM",   # flake8-simplify: Simplifies code (better readability for open source)
+    # --- Security & agent guardrails (2026) ---
+    "S",     # flake8-bandit: security (hardcoded secrets, exec, eval, unsafe deser)
+    "T20",   # flake8-print: no print() in library code
+    "ERA",   # eradicate: detect commented-out code
+    "TRY",   # tryceratops: exception handling structure
+    "RET",   # flake8-return: clean return patterns
+    "RSE",   # flake8-raise: raise patterns
+    "A",     # flake8-builtins: no builtin shadowing
+    "DTZ",   # flake8-datetimez: timezone-aware datetime
+    # --- Pylint subset (conventions, errors, warnings — not refactoring) ---
+    "PLC",   # pylint conventions
+    "PLE",   # pylint errors
+    "PLW",   # pylint warnings
+    # --- Modern Python idioms ---
+    "FURB",  # refurb: modern Python idioms
+    "FLY",   # flynt: prefer f-strings
+    "PIE",   # flake8-pie: misc cleanness
 ]
 
 # Ignore rules that conflict with SDK patterns
 ignore = [
     # UP007 removed: Ruff now forces Optional[str] -> str | None (py313)
-    "D107",   # Missing docstring in __init__ (covered by class docstring)
-    "TC003",  # Iterator used in return type; keep at runtime for clarity
-    "D203",   # Blank line before class docstring (conflicts with D211)
-    "D213",   # Multi-line summary second line (conflicts with D212)
+    "D107",    # Missing docstring in __init__ (covered by class docstring)
+    "TC003",   # Iterator used in return type; keep at runtime for clarity
     "ANN401",  # Any acceptable for validators, **kwargs, and API payloads
-    "C901",   # Allow complex _handle_response (error mapping logic)
+    # --- Security: intentional SDK patterns ---
+    "S101",    # assert used as invariant checks in api_client/client_surface
+    "S113",    # httpx timeout false positive (client-level timeout set at init)
+    # --- Import patterns: SDK uses lazy/deferred imports to avoid circular deps ---
+    "PLC0415", # Non-top-level imports: intentional for circular dependency avoidance
+    # --- Class/method stubs ---
+    "PIE790",  # Unnecessary pass: kept in abstract/stub classes for explicitness
+    # --- Exception handling ---
+    "TRY003",  # Long exception messages are intentional in SDK error reporting
+    "TRY300",  # else-block suggestion: stylistic, not a correctness issue
+    "TRY301",  # Abstract raise to inner function: intentional exception patterns
+    "TRY400",  # logging.exception vs logging.error: cleanup TODO
+    # --- Return patterns ---
+    "RET504",  # Assignment-before-return kept for readability and debugging
+    "RET505",  # Unnecessary else after return: kept for readability
+    # --- PEP 695 type parameter syntax: defer migration ---
+    "UP046",   # Generic[T] → class Foo[T]: significant refactor, do separately
+    "UP047",   # Generic function type params: same as UP046
 ]
 
 [tool.ruff.lint.isort]
 # Forces strict separation of standard lib, 3rd party, and local imports
 known-first-party = ["endorlabs"]
 
-# Per-file ignores for known issues (temporary - remove after fixing)
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # Resolves D203/D213 conflicts automatically
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12  # Default 10; 12 gives SDK methods some room
+
+[tool.ruff.lint.pylint]
+max-args = 10       # SDK methods can have many kwargs; 10 is generous
+max-branches = 12
+max-returns = 6
+max-statements = 50
+
+[tool.ruff.lint.flake8-builtins]
+builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
+
+# Per-file ignores — grouped by reason
 [tool.ruff.lint.per-file-ignores]
-# TODO: Remove these after fixing the inconsistencies:
-"src/endorlabs/resources/project.py" = ["F811"]  # TenantMeta duplicate
-"src/endorlabs/resources/finding.py" = ["F811"]  # TenantMeta duplicate
-# Internal/API compatibility: private helpers and unused params kept for API surface
+# --- CLI / entry point: print is expected ---
+"main.py" = ["T20", "D", "ANN", "S"]
+# --- Transport layer ---
+"src/endorlabs/api_client.py" = ["C901", "S105"]  # complex _handle_response; "browser" sentinel comparison
+# --- Client surface ---
+"src/endorlabs/client_surface.py" = []
+# --- Auth: global token capture is intentional ---
+"src/endorlabs/auth_server.py" = ["PLW0603"]
+# --- Context: lazy module loading + XML sitemap parsing ---
+"src/endorlabs/context/__init__.py" = ["PLW0603"]
+"src/endorlabs/context/_sync.py" = ["S314"]
+# --- Exceptions: NotImplementedError intentionally shadows builtin ---
+"src/endorlabs/exceptions.py" = ["A001"]
+# --- Print calls in facade/namespace/project: cleanup TODO — migrate to logging ---
+"src/endorlabs/facade.py" = ["T20"]
+"src/endorlabs/resources/namespace.py" = ["T20"]
+"src/endorlabs/resources/project.py" = ["F811", "T20"]  # TenantMeta duplicate; print cleanup TODO
+# --- Internal/API compatibility: private helpers and unused params ---
 "src/endorlabs/models/base.py" = ["SLF001"]
+"src/endorlabs/operations/__init__.py" = ["SLF001"]
 "src/endorlabs/resources/audit_log.py" = ["SLF001"]
 "src/endorlabs/resources/dependency_metadata.py" = ["ARG001"]
+"src/endorlabs/resources/finding.py" = ["F811", "S105"]  # TenantMeta duplicate; INVALID_SECRET/VALID_SECRET enum
 "src/endorlabs/resources/package_license.py" = ["ARG001"]
+"src/endorlabs/resources/scan_result.py" = ["ERA001"]  # Field type docs in comments, not dead code
 "src/endorlabs/resources/semgrep_rule.py" = ["ARG003"]
-# Tests: relax annotations, docstyle, private access for assertions, fixture params
-"tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002"]
+# --- Utils: intentional patterns ---
+".github/scripts/model_consistency.py" = ["S310"]  # URL open for spec download
+"src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
+"src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
+# --- Tests: broadly relaxed ---
+"tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW"]
+# --- Agent: broadly relaxed (langgraph types, demo CLI) ---
+"src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "T20", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
+"src/endorlabs/sast_analysis/**" = ["PIE810"]  # endswith tuple: cleanup TODO
+# --- Tools: dependency explorer ---
+"src/endorlabs/tools/**" = ["C901", "SLF001", "S108"]
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -160,7 +251,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests/unit", "tests/integration"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -176,6 +267,19 @@ markers = [
     "writes: marks tests that perform create/update/delete (write operations) against the API",
     "long: marks long-running tests (excluded in CI; run locally with pytest -m long)",
 ]
+
+[tool.coverage.report]
+fail_under = 70
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
+
+[tool.codespell]
+skip = ".git,.venv,*.lock,*.json,.endorlabs-context"
+ignore-words-list = "endor,endorlabs"
 
 [tool.pyright]
 pythonVersion = "3.13"
@@ -195,11 +299,17 @@ strict = [
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
-    { root = "src/endorlabs/experimental/sast_analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/agent/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportMissingTypeStubs = "none", reportUnusedCallResult = "none" },
+    { root = "src/endorlabs/agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportPossiblyUnboundVariable = "none", reportUnnecessaryTypeIgnoreComment = "none", reportMissingImports = "none", reportAttributeAccessIssue = "none", reportConstantRedefinition = "none", reportMissingSuperCall = "none" },
+    { root = "src/endorlabs/sast_analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
-    { root = "tests", pythonVersion = "3.13", extraPaths = ["src"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
+    { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
     { root = "src", pythonVersion = "3.13" },
 ]
 
@@ -209,7 +319,7 @@ executionEnvironments = [
 # Import & Visibility Configuration
 # ============================================================================
 reportMissingImports = "error"              # Critical for SDK - catch missing imports
-reportMissingTypeStubs = "warning"          # Warn about untyped dependencies
+reportMissingTypeStubs = "error"             # All deps have stubs; catch new untyped additions
 reportUnusedImport = "error"                # Clean up unused imports
 reportDuplicateImport = "error"             # Prevent duplicate imports
 reportPrivateImportUsage = "error"         # Enforce private API boundary
@@ -297,7 +407,7 @@ reportPrivateUsage = "error"                 # Enforce private (leading _) bound
 reportConstantRedefinition = "error"         # Catch constant redefinitions
 reportDeprecated = "error"                   # Catch deprecated API usage
 reportIncompleteStub = "warning"             # For future stubs
-reportImplicitOverride = "warning"          # Require @override on overrides (3.12+)
+reportImplicitOverride = "error"             # Require @override on overrides (3.12+; 3.13 enforced)
 
 # ============================================================================
 # Type Narrowing for Union Types
@@ -354,12 +464,4 @@ exclude = [
     "Thumbs.db",
     "**/node_modules",  # Pyright-specific
 ]
-[dependency-groups]
-dev = [
-    "jsonschema==4.26.0",
-    "pytest==9.0.2",
-    "pytest-cov==7.0.0",
-    "ruff==0.14.14",
-    "pyright==1.1.408",
-    "pre-commit==4.5.1",
-]
+

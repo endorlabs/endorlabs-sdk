@@ -1,6 +1,6 @@
 # API Surfaces
 
-This document defines the three supported API surfaces for the Endor Cockpit SDK. Every symbol in each surface **must** have full type annotations (parameters, returns, attributes) and docstrings. No assumptions; explicit contracts only.
+This document defines the three supported API surfaces for the Endor Labs SDK. Every symbol in each surface **must** have full type annotations (parameters, returns, attributes) and docstrings. No assumptions; explicit contracts only.
 
 See [resources.md](resources.md) for per-resource operations and [namespace.md](namespace.md) for namespace scoping.
 
@@ -41,7 +41,7 @@ See [resources.md](resources.md) for per-resource operations and [namespace.md](
 | `repository` | Module | N/A | Module docstring |
 | `repository_version` | Module | N/A | Module docstring |
 
-Note: `__version__` is public but not in `__all__`; consider adding it if part of the stable surface.
+Note: `__version__` is public but not in `__all__`; consider adding it if part of the stable SDK surface.
 
 ### Client
 
@@ -79,7 +79,7 @@ All exception classes and `map_status_code_to_exception` must have full types an
 
 ### Resource modules (in `__all__`)
 
-For each of `dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`: module-level functions used by the facade are part of the developer surface when accessed via `client.<resource>.*`. The same functions are also module-level surface when imported from `endorlabs.resources.<name>` (see below).
+For each of `dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`: Pydantic models, payload/response types, and resource-specific convenience functions are accessible via `endorlabs.resources.<name>`. CRUD operations are performed exclusively through the `Client` facade (`client.<resource>.list()`, `.get()`, etc.).
 
 ---
 
@@ -111,19 +111,19 @@ All public types: `ListParameters`, `ErrorResponse`, `ResourceMeta`, `TenantMeta
 
 Modules: `api_key`, `audit_log`, `authorization_policy`, `dependency_metadata`, `finding`, `finding_log`, `installation`, `linter_result`, `metric`, `namespace`, `package_license`, `package_version`, `policy`, `project`, `repository`, `repository_version`, `scan_log_request`, `scan_profile`, `scan_result`, `semgrep_rule`.
 
-For each module, public surface: `list_*`, `get_*`, `create_*`, `update_*`, `delete_*`, `list_*_iter` (where implemented), and payload/response Pydantic models used by those functions. Full types and docstrings required.
+For each module, public surface: Pydantic models (payload/response types) and resource-specific convenience functions (e.g. `associate_scan_profile_with_project`). CRUD operations (`list`, `get`, `create`, `update`, `delete`) are handled by `BaseResourceOperations` via the `Client` facade — not as module-level functions. Full types and docstrings required.
 
 ### endorlabs.operations
 
 **Location:** [src/endorlabs/operations/__init__.py](../../src/endorlabs/operations/__init__.py)
 
-**Symbols in `__all__`:** `create_finding`, `create_namespace`, `create_policy`, `create_project`, `delete_finding`, `delete_namespace`, `delete_policy`, `delete_project`, `get_finding`, `get_namespace`, `get_policy`, `get_project`, `list_findings`, `list_namespaces`, `list_policies`, `list_projects`, `update_finding`, `update_namespace`, `update_policy`, `update_project`. Docstrings live in the source resource modules; types must be full.
+**Symbols in `__all__`:** `BaseResourceOperations` — generic CRUD engine that powers the `Client` facade. Accepts resource name, model class, and an `APIClient` instance. Provides `list()`, `get()`, `create()`, `update()`, `delete()` methods. Full types and docstrings required.
 
 ### endorlabs.utils
 
 **Location:** [src/endorlabs/utils/__init__.py](../../src/endorlabs/utils/__init__.py)
 
-**Symbols in `__all__`:** `SchemaDriftDetector`, `compute_attribute_overlap_report`, `compute_model_consistency_diff`, `create_namespace_scoped_params`, `create_traverse_params`, `enumerate_sdk_models_flat_paths`, `enumerate_spec_fields_flat`, `enumerate_spec_top_level_refs`, `load_spec`, `resolve_namespace_for_resource`, `run_model_consistency_report`. Full types and docstrings required.
+**Symbols in `__all__`:** `SchemaDriftDetector`, `compute_attribute_overlap_report`, `compute_model_consistency_diff`, `enumerate_sdk_models_flat_paths`, `enumerate_spec_fields_flat`, `enumerate_spec_top_level_refs`, `load_spec`, `resolve_namespace_for_resource`, `run_model_consistency_report`. Full types and docstrings required.
 
 ### endorlabs.models
 

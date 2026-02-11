@@ -1,5 +1,5 @@
 name: 'Setup Python with UV'
-description: 'Setup Python and UV with dependency caching for Endor Cockpit'
+description: 'Setup Python and UV with dependency caching for Endor Labs SDK'
 inputs:
   python-version:
     description: 'Python version to use'
