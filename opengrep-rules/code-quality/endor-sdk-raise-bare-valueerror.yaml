@@ -1,11 +1,11 @@
 rules:
-  - id: endor-af-raise-bare-valueerror
+  - id: endor-sdk-raise-bare-valueerror
     languages:
       - python
     message: |
       Problem:
-      A bare `ValueError` or `RuntimeError` is raised in AF library code.
-      The Endor Agentic Framework defines a structured exception hierarchy rooted at
+      A bare `ValueError` or `RuntimeError` is raised in SDK library code.
+      The Endor Labs SDK defines a structured exception hierarchy rooted at
       `EndorAPIError` (in `endorlabs.exceptions`).  Consumers catching
       `EndorAPIError` will miss bare `ValueError` / `RuntimeError`, breaking
       the contract that all AF errors are `EndorAPIError` descendants.
@@ -41,13 +41,13 @@ rules:
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - Error-Contract
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF exception hierarchy (EndorAPIError and subclasses) provides a
+        The SDK exception hierarchy (EndorAPIError and subclasses) provides a
         closed error contract so consumers can handle all AF errors with a
         single except clause.  Bare ValueError and RuntimeError bypass this
         contract.  This rule flags existing violations to drive incremental

@@ -13,7 +13,7 @@ Usage examples:
 
     # Delete rules matching a name filter
     uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \\
-        delete --name-filter "endor-af" --namespace tenant.ns
+        delete --name-filter "endor-sdk" --namespace tenant.ns
 
     # Clean orphaned findings from deleted rules
     uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \\
@@ -28,7 +28,7 @@ Usage examples:
     uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \\
         sync --rules-dir opengrep-rules/ \\
         --enabled-dir opengrep-rules/trust-chain/ \\
-        --name-filter "endor-af" --namespace tenant.ns --force
+        --name-filter "endor-sdk" --namespace tenant.ns --force
 """
 
 from __future__ import annotations
@@ -698,7 +698,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_delete.add_argument(
         "--name-filter",
         required=True,
-        help='Substring to match against meta.name (e.g. "endor-af").',
+        help='Substring to match against meta.name (e.g. "endor-sdk").',
     )
 
     # --- orphans ---
@@ -751,7 +751,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument(
         "--name-filter",
         default=None,
-        help='Substring for delete step (e.g. "endor-af"). If omitted, delete is skipped.',
+        help='Substring for delete step (e.g. "endor-sdk"). If omitted, delete is skipped.',
     )
     p_sync.add_argument(
         "--force",

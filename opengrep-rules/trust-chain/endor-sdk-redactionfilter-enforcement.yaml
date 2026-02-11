@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-redactionfilter-enforcement
+  - id: endor-sdk-redactionfilter-enforcement
     languages:
       - python
     message: |
@@ -7,7 +7,7 @@ rules:
       A module-level logger was created with `logging.getLogger(...)` but no
       `RedactingFilter` was attached via `.addFilter(RedactingFilter(...))`.
 
-      The Endor Agentic Framework is a security-sensitive client library that handles
+      The Endor Labs SDK is a security-sensitive client library that handles
       three classes of credential material during normal operation:
 
       1. **API key + secret** -- sent as `{"key": "...", "secret": "..."}` in
@@ -25,7 +25,7 @@ rules:
       Without the RedactingFilter, any of these secrets may appear verbatim in
       DEBUG-level log output and be captured by log handlers, aggregation
       pipelines, or crash reporters -- violating the principle of least
-      privilege for credential material in an AF context.
+      privilege for credential material in an SDK context.
 
       Solution:
       Import and attach the RedactingFilter to every module-level logger:
@@ -55,7 +55,7 @@ rules:
       Trust chain:
       This is the enforcement half of the RedactingFilter trust chain.
       The paired validation rule
-      `endor-af-redactionfilter-validation` validates that
+      `endor-sdk-redactionfilter-validation` validates that
       the RedactingFilter implementation itself has not degraded.  Both
       rules must pass for the security contract to hold.
     metadata:
@@ -64,22 +64,22 @@ rules:
       cwe:
         - "CWE-532: Insertion of Sensitive Information into Log File"
       description: >-
-        Logger created without RedactingFilter in security-sensitive AF --
+        Logger created without RedactingFilter in security-sensitive SDK --
         API keys, bearer tokens, or OAuth callback tokens may leak to log
         output when DEBUG-level logging is active.
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - A09:2021
-        - AF-Credential-Leak
+        - SDK-Credential-Leak
         - trust-chain.id:redacting-filter-credential-scrubbing
         - trust-chain.role:enforcement
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The Endor Agentic Framework authenticates via API key/secret and bearer
+        The Endor Labs SDK authenticates via API key/secret and bearer
         tokens.  httpx and httpcore DEBUG loggers emit request bodies and
         headers verbatim.  The RedactingFilter rewrites log records to scrub
         sensitive values before they reach any handler.  A logger without the
@@ -92,7 +92,7 @@ rules:
         - https://cwe.mitre.org/data/definitions/532.html
         - https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/
       remediation: >-
-        Attach RedactingFilter to all module-level loggers in the AF.
+        Attach RedactingFilter to all module-level loggers in the SDK.
         Import the filter and patterns from endorlabs.utils.redaction and
         call logger.addFilter(RedactingFilter([...])) immediately after
         logger creation.

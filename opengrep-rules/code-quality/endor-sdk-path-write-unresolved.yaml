@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-path-write-unresolved
+  - id: endor-sdk-path-write-unresolved
     languages:
       - python
     message: |
@@ -39,13 +39,13 @@ rules:
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - Path-Traversal
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF experimental workflows write files to user-specified output
+        The SDK experimental workflows write files to user-specified output
         directories (e.g. Semgrep rule export).  If the output path is not
         resolved and checked for containment, an attacker-controlled path
         component could write files to arbitrary locations.  This rule flags

@@ -1,5 +1,5 @@
 rules:
-  - id: endor-af-httpx-client-missing-timeout
+  - id: endor-sdk-httpx-client-missing-timeout
     languages:
       - python
     message: |
@@ -9,7 +9,7 @@ rules:
       block indefinitely -- hanging CI pipelines, agentic workflows, and
       interactive sessions.
 
-      The Endor Agentic Framework standard (security.mdc, Network Safety) requires:
+      The Endor Labs SDK standard (security.mdc, Network Safety) requires:
       "All HTTP requests MUST have an explicit or inherited timeout."
 
       The `APIClient` sets a client-level timeout at init; any standalone
@@ -37,13 +37,13 @@ rules:
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/endorlabs/endor-af
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
       endor-tags:
         - Network-Safety
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
-        The AF requires every httpx client to have an explicit timeout to
+        The SDK requires every httpx client to have an explicit timeout to
         prevent indefinite blocking.  The APIClient class sets its own
         timeout at init, but standalone httpx.Client or httpx.AsyncClient
         instances created elsewhere (e.g. context bootstrap, utilities)
