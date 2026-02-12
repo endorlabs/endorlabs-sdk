@@ -143,6 +143,18 @@ LANGUAGE_OR_RUNTIME = {
     8: "RUBY",
 }
 
+# Fallback: infer language from package ecosystem prefix when the protobuf
+# language field is unset (platform sometimes omits it).
+_ECOSYSTEM_LANGUAGE: dict[str, str] = {
+    "pypi://": "PYTHON",
+    "npm://": "JAVASCRIPT",
+    "go://": "GO",
+    "maven://": "JVM",
+    "crates://": "RUST",
+    "nuget://": "DOTNET",
+    "rubygems://": "RUBY",
+}
+
 CALLGRAPH_VERSION = {
     0: "UNSPECIFIED",
     1: "V1",
@@ -433,6 +445,12 @@ def decode_callgraph(envelope: dict[str, Any]) -> CallGraphInfo:
     proto_ts = _decode_timestamp(ts_raw) if isinstance(ts_raw, bytes) else None
     lang_val = _get_field(raw, 6, 0)
     language = LANGUAGE_OR_RUNTIME.get(lang_val, f"UNKNOWN({lang_val})")
+
+    if language == "UNSPECIFIED" and package_name:
+        for prefix, lang in _ECOSYSTEM_LANGUAGE.items():
+            if package_name.startswith(prefix):
+                language = lang
+                break
     ver_val = _get_field(raw, 7, 0)
     version = CALLGRAPH_VERSION.get(ver_val, f"UNKNOWN({ver_val})")
 

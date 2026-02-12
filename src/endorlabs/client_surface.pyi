@@ -4,7 +4,12 @@
 from typing import Any
 
 from .api_client import APIClient
-from .facade import ResourceFacade, ScanLogsFacade
+from .facade import (
+    OssResourceFacade,
+    ResourceFacade,
+    ScanLogsFacade,
+    SystemResourceFacade,
+)
 from .resources.api_key import APIKey
 from .resources.audit_log import AuditLog
 from .resources.authentication_log import AuthenticationLog
@@ -27,6 +32,7 @@ from .resources.policy_template import PolicyTemplate
 from .resources.project import Project
 from .resources.repository import Repository
 from .resources.repository_version import RepositoryVersion
+from .resources.scan_log_request import ScanLogRequest
 from .resources.scan_profile import ScanProfile
 from .resources.scan_result import ScanResult
 from .resources.scan_workflow import ScanWorkflow
@@ -45,11 +51,10 @@ class Client:
     policy: ResourceFacade[Policy]
     authorization_policy: ResourceFacade[AuthorizationPolicy]
     package_version: ResourceFacade[PackageVersion]
-    package_license: ResourceFacade[PackageLicense]
-    dependency_metadata: ResourceFacade[DependencyMetadata]
     installation: ResourceFacade[Installation]
     scan_profile: ResourceFacade[ScanProfile]
     scan_result: ResourceFacade[ScanResult]
+    scan_log_request: ResourceFacade[ScanLogRequest]
     linter_result: ResourceFacade[LinterResult]
     metric: ResourceFacade[Metric]
     semgrep_rule: ResourceFacade[SemgrepRule]
@@ -60,12 +65,16 @@ class Client:
     scan_workflow: ResourceFacade[ScanWorkflow]
     scan_workflow_result: ResourceFacade[ScanWorkflowResult]
     version_upgrade: ResourceFacade[VersionUpgrade]
-    code_owners: ResourceFacade[CodeOwners]
     invitation: ResourceFacade[Invitation]
-    authentication_log: ResourceFacade[AuthenticationLog]
-    endor_license: ResourceFacade[EndorLicense]
-    policy_template: ResourceFacade[PolicyTemplate]
+    code_owners: ResourceFacade[CodeOwners]
+    package_license: OssResourceFacade[PackageLicense]
+    dependency_metadata: OssResourceFacade[DependencyMetadata]
+    authentication_log: SystemResourceFacade[AuthenticationLog]
+    endor_license: SystemResourceFacade[EndorLicense]
+    policy_template: SystemResourceFacade[PolicyTemplate]
     scan_logs: ScanLogsFacade
+
+    _client: APIClient | None
 
     def __init__(
         self,
@@ -75,7 +84,7 @@ class Client:
         timeout: float = ...,
         content_type: str = ...,
         accept_encoding: str | None = ...,
-        max_retries: int | None = ...,
+        max_retries: int = ...,
         base_url: str | None = ...,
         **client_kwargs: Any,
     ) -> None: ...
