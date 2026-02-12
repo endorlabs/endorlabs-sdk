@@ -404,10 +404,10 @@ jobs:
             --pr \
             --security-review \
             --scm-pr-id "${{ github.event.pull_request.number }}" \
-            --github-token "$GITHUB_TOKEN" \
+            --scm-token "$GITHUB_TOKEN" \
             --enable-pr-comments \
             --log-level debug \
-            --log-verbose
+            --verbose
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
