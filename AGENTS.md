@@ -143,7 +143,7 @@ Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
 uv run ruff check .
 uv run ruff format .
 uv run pyright
-uv run pytest tests/unit/ -m "not slow"
+uv run pytest tests/unit/ -m "not slow and not long"
 uv run pytest tests/integration/ -m "not long"
 endorctl scan
 ```
