@@ -2,7 +2,7 @@
 
 **For SDK usage:** Start with [AGENTS.md](../../AGENTS.md) (install, APIClient, resource usage). This section is reference and boundaries.
 
-SDK reference documentation. OpenAPI spec: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `.endorlabs-context/` in CI).
+SDK reference documentation. OpenAPI spec (local): `.endorlabs-context/openapiv2.swagger.json`; online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
 
 ## Public API
 

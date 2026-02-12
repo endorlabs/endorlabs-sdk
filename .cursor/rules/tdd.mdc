@@ -7,7 +7,7 @@ alwaysApply: true
 Use Test-Driven Development while avoiding regressions across linters and tests for changes in `src/`.
 
 ## TDD Cycle
-1. **Research first** — Read the API spec and/or other relevant documentation for the resource or endpoint being modified. Important and validated findings shall be distributed appropriately using first principles into skills, rules, docs, and docstrings.
+1. **Research first** — Read the local API spec (`.endorlabs-context/openapiv2.swagger.json`) and user docs (`.endorlabs-context/docs/`) for the resource or endpoint being modified. Follow `local-context.mdc` for the research protocol. Important and validated findings shall be distributed appropriately using first principles into skills, rules, docs, and docstrings.
 2. **Write or update tests first** — Tests must exist before implementation. Mark with appropriate markers (`@pytest.mark.integration`, `@pytest.mark.writes`, `@pytest.mark.slow`, `@pytest.mark.long`).
 3. **Implement** — Make the minimum change to pass the tests.
 4. **Refactor** — Clean up while keeping tests green.

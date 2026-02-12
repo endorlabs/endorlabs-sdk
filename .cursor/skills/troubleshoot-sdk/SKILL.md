@@ -16,7 +16,7 @@ integration failures.
 ## Workflow
 
 1. **Document** -- capture the task, context, approach, and full error (including stack trace and `response.text`).
-2. **Research** -- search codebase, docs, and API spec. Spec URL: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
+2. **Research** -- search codebase, docs, and API spec. Local spec: `.endorlabs-context/openapiv2.swagger.json`; local user docs: `.endorlabs-context/docs/`. Online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
 3. **Investigate** -- read SDK code and spec; test with `endorctl`; validate theories with live API calls.
 4. **Resolve** -- implement fix; document signatures and learnings.
 
