@@ -1,4 +1,4 @@
-"""Log redaction utilities for Endor Labs SDK.
+r"""Log redaction utilities for Endor Labs SDK.
 
 Provides :class:`RedactingFilter` and pre-compiled patterns for scrubbing
 sensitive credential material from log records before they reach any handler.
@@ -16,6 +16,14 @@ The SDK handles two credential types:
    request logging serialises headers as a Python dict repr
    (single-quote format).  The OAuth callback URL in ``auth_server``
    carries the token as a ``?token=…`` query parameter.
+
+Serialization formats
+~~~~~~~~~~~~~~~~~~~~~
+Python's ``repr()`` normally quotes both keys and values with single quotes,
+but switches the **value** to double quotes when the value itself contains a
+single quote (e.g. ``'token': "O'Reilly"``).  Patterns 1 and 2 therefore
+use a quote-agnostic character class ``['\"]`` on the value side so that
+all four key/value quoting combinations are covered.
 
 The patterns below cover the repr formats that each credential can appear in.
 
@@ -37,22 +45,34 @@ API-key auth payload, and the ``token`` field in auth responses.
 """
 
 # ---------------------------------------------------------------------------
-# Pattern 1 - Python dict repr  (single-quote key-value pairs)
+# Pattern 1 - Python dict repr  (single-quote keys, any-quote values)
 # ---------------------------------------------------------------------------
-redaction_pattern: str = r"'(" + "|".join(REDACTED_KEYS) + r")':\s*'.*?'"
-"""Matches ``'key': 'some-value'`` as produced by ``str(dict)`` / ``repr()``.
+redaction_pattern: str = r"'(" + "|".join(REDACTED_KEYS) + r")':\s*['\"].*?['\"]"
+"""Matches single-quoted keys with any-quoted values (e.g. ``'key': 'val'``
+or ``'key': "val'ue"``).
+
+The value side uses ``['\"]`` because Python's ``repr()`` switches the
+value delimiter to double quotes when the value contains a single quote
+(e.g. ``'token': "O'Reilly"``).
 
 Risk: ``APIClient`` debug-logs request headers as Python dicts.  The
 ``Authorization`` header and any auth-response dicts serialised via ``str()``
-use this single-quote format.  Without redaction the bearer token or API
+use this single-quote key format.  Without redaction the bearer token or API
 secret would appear verbatim in DEBUG output.
 """
 
 # ---------------------------------------------------------------------------
-# Pattern 2 - JSON repr  (double-quote key-value pairs)
+# Pattern 2 - JSON repr  (double-quote keys, any-quote values)
 # ---------------------------------------------------------------------------
-json_redaction_pattern: str = r'"(' + "|".join(REDACTED_KEYS) + r')"\s*:\s*".*?"'
-"""Matches ``"key": "some-value"`` as produced by ``json.dumps()`` and httpx.
+json_redaction_pattern: str = (
+    r'"(' + "|".join(REDACTED_KEYS) + r')"\s*:\s*[\'"].*?[\'"]'
+)
+"""Matches double-quoted keys with any-quoted values (e.g. ``"key": "val"``
+or ``"key": 'val'``).
+
+The value side uses ``['\"]`` for symmetry with :data:`redaction_pattern`,
+covering the (unlikely but possible) case where a double-quoted key is
+paired with a single-quoted value in a serialised representation.
 
 Risk: The API-key authentication payload (``{"key": "…", "secret": "…"}``)
 is POSTed via the raw ``httpx.Client``, bypassing ``APIClient.post`` and its
