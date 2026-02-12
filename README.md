@@ -2,7 +2,7 @@
 
 [![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci.yml)
 
-Endor Labs SDK for the Endor Labs security platform. A Python package that deploys Cursor/Anthropic skills with the APIs to use them — providing a type-safe, resource-oriented client for the Endor Labs REST API: list, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and others) with consistent patterns for filtering, pagination, and namespace traversal.
+Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and 24 more) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
 - **Python:** 3.12+
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
@@ -65,8 +65,8 @@ import endorlabs
 
 client = endorlabs.Client(
     tenant=os.getenv("ENDOR_NAMESPACE", "your-tenant.namespace"),
-    logging_level="ERROR",
-    auth_method="api-key",
+    logging_level="ERROR",   # passed to APIClient via **client_kwargs
+    auth_method="api-key",   # passed to APIClient via **client_kwargs
 )
 
 # List namespaces (tenant-wide with traverse=True)
@@ -145,11 +145,28 @@ Same behavior; use when you need only the HTTP client or module-level calls.
 
 ## API surface
 
-- **Resources:** All registry resources are exposed on `Client`: `namespace`, `project`, `repository`, `repository_version`, `finding`, `scan_result`, `scan_profile`, `policy`, `authorization_policy`, `installation`, `package_version`, `package_license`, `dependency_metadata`, `metric`, `linter_result`, `api_key`, `audit_log`, `finding_log`, `semgrep_rule`. Some resources have no update or delete (e.g. `api_key`, `audit_log`, `finding_log`); those raise `NotImplementedError` for those operations.
+### Resources
+
+All 29 registry resources are exposed as typed facades on `Client`:
+
+`api_key`, `audit_log`, `authentication_log`, `authorization_policy`, `code_owners`, `dependency_metadata`, `endor_license`, `finding`, `finding_log`, `installation`, `invitation`, `linter_result`, `metric`, `namespace`, `notification_target`, `package_license`, `package_version`, `policy`, `policy_template`, `project`, `repository`, `repository_version`, `scan_log_request`, `scan_profile`, `scan_result`, `scan_workflow`, `scan_workflow_result`, `semgrep_rule`, `version_upgrade`
+
+Plus `scan_logs` (custom facade for retrieving scan log messages).
+
+Each facade exposes only the operations that resource supports. Hover over any facade or method in your IDE to see its docstring, parameters, and concrete return types.
+
+### Operations
+
 - **List:** `client.<resource>.list(traverse=..., filter=..., mask=..., sort_by=..., desc=..., max_pages=..., page_size=..., parent=...)`. Use `traverse=True` for tenant-wide listing; use `parent=resource` for child resources (e.g. `scan_result.list(parent=project)`).
-- **Get / Create / Update / Delete:** `client.<resource>.get(id_or_resource)`, `.create(payload)`, `.update(resource, update_mask=... or field kwargs)`, `.delete(id_or_resource)`. For update, either pass `update_mask` (comma-separated field paths) or use the facade's accepted field kwargs (e.g. `scan_state` on project).
-- **Lookup:** `client.project.lookup(traverse=..., filter=...)` returns a single project or raises.
-- **Polling:** `client.wait_until(predicate, timeout=..., interval=...)` for readiness loops.
+- **List (parallel):** `client.<resource>.list(traverse=True, concurrent=True, max_workers=10)` queries each namespace in parallel.
+- **List (streaming):** `client.<resource>.list_iter(...)` yields resources one at a time for memory-efficient pagination.
+- **Get / Create / Update / Delete:** `client.<resource>.get(id_or_resource)`, `.create(payload=... or **kwargs)`, `.update(resource, update_mask=... or field kwargs)`, `.delete(id_or_resource, ignore_missing=True)`.
+- **Lookup:** `client.<resource>.lookup(...)` returns exactly one result or raises `NotFoundError` / `AmbiguousError`.
+- **Tag / Untag:** `client.<resource>.tag(resource, tags=["reviewed"])`, `.untag(resource, keys=["deprecated"])` manage `meta.tags` on resources that support it.
+- **Identity kwargs:** `client.project.lookup(name="my-project")` — identity kwargs are mapped to filter clauses automatically (e.g. `name` → `meta.name`). Hover over a facade to see its available identity kwargs.
+- **Filtering:** Use raw strings (`filter="meta.name==foo"`) or the `F()` builder: `from endorlabs import F; client.finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")`.
+- **Polling:** `client.wait_until(predicate, timeout=..., poll_interval_max=...)` for readiness loops.
+- **Identity:** `client.whoami()` returns the authenticated identity name, or `None`.
 
 Details: [docs/reference/resources.md](docs/reference/resources.md), [docs/conventions.md](docs/conventions.md).
 

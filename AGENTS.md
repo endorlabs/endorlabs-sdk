@@ -56,7 +56,7 @@ This is the recommended way for agents to bootstrap Endor Labs context before pe
 Two-layer, registry-driven design. The same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes `ResourceFacade[T]` instances built from the registry. The `scope` property (`None`, `"system"`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceFacade[T]` instances; for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"system"`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
 - **Registry:** `endorlabs.registry` — one `ResourceEntry(attr_name=..., resource_name=..., model_class=..., supported_ops=..., ...)` per resource. Adding a resource = one registry entry.
 - **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models.
 
@@ -94,13 +94,16 @@ Details (patterns, LIST/UPDATE, errors) live in those rules and in the docs belo
 
 ```
 endorlabs/
-├── api_client.py      # Transport only (Layer 1)
-├── client_surface.py  # Client facade (Layer 2 entry point)
-├── facade.py          # ResourceFacade (with backward-compat aliases SystemResourceFacade, OssResourceFacade); delegates to BaseResourceOperations
-├── registry.py        # Registry of resources exposed on Client
-├── resources/         # Pydantic models, convenience functions, and resource-specific logic
+├── api_client.py        # Transport only (Layer 1)
+├── client_surface.py    # Client facade (Layer 2 entry point)
+├── client_surface.pyi   # Generated stub: per-resource typed facades for IDE DX
+├── facade.py            # ResourceFacade, _ListableFacade, ScanLogsFacade
+├── registry.py          # Registry of resources exposed on Client
+├── resources/           # Pydantic models, convenience functions, and resource-specific logic
 └── models/
 ```
+
+> **Stub regeneration:** `uv run python scripts/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
 
 - **Agent:** `endorlabs.agent` — LangGraph-based agent and demo CLI (requires `[agent]` extras).
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
