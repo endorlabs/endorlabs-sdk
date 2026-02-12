@@ -197,33 +197,37 @@ class _ListableFacade(Generic[T]):
     ) -> list[T]:
         """List resources with full pagination and optional concurrent mode.
 
-        Uses full pagination (list_all=True). With traverse=True and
-        concurrent=True, queries each namespace in parallel. Parameter details
-        are in the class docstring (traverse, concurrent, max_workers,
-        namespace, list_params, max_pages, parent, filter, mask, page_*, sort_by,
-        desc, count, from_date, to_date, archive, pr_uuid, **kwargs).
+        Uses full pagination (list_all=True). With ``traverse=True`` and
+        ``concurrent=True``, queries each namespace in parallel.
 
         Args:
-            traverse: See class docstring.
-            concurrent: See class docstring.
-            max_workers: See class docstring.
-            namespace: See class docstring.
-            list_params: See class docstring.
-            max_pages: See class docstring.
-            parent: See class docstring.
-            filter: See class docstring.
-            mask: See class docstring.
-            page_size: See class docstring.
-            page_token: See class docstring.
-            page_id: See class docstring.
-            sort_by: See class docstring.
-            desc: See class docstring.
-            count: See class docstring.
-            from_date: See class docstring.
-            to_date: See class docstring.
-            archive: See class docstring.
-            pr_uuid: See class docstring.
-            **kwargs: See class docstring.
+            traverse: Search child namespaces recursively (tenant-wide query).
+            concurrent: Query each namespace in parallel (requires
+                ``traverse=True``).
+            max_workers: Thread pool size for concurrent mode (default 10).
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant.
+            list_params: ``ListParameters`` object; flat kwargs override its
+                values when both are provided.
+            max_pages: Maximum pages to fetch; ``None`` fetches all.
+            parent: Scope results to a parent resource's namespace and
+                ``meta.parent_uuid``.
+            filter: API filter expression (``str`` or ``FilterExpression``
+                via ``F()``).
+            mask: Comma-separated field mask limiting returned fields.
+            page_size: Results per page; ``None`` uses the API default.
+            page_token: Pagination cursor from a previous response.
+            page_id: Pagination cursor (alternative to ``page_token``).
+            sort_by: Field path to sort results by.
+            desc: Reverse sort order when ``True``.
+            count: Return count only (no resource bodies).
+            from_date: ISO 8601 lower-bound date filter.
+            to_date: ISO 8601 upper-bound date filter.
+            archive: Query archived resources when ``True``.
+            pr_uuid: Scope to a specific PR scan.
+            **kwargs: Identity kwargs mapped to filter clauses via
+                ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
+                ``meta.name=="foo"``).
 
         Returns:
             List of resources; empty if no matches.
@@ -383,32 +387,41 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Return the single resource matching criteria; calls list() under the hood.
+        """Return the single resource matching criteria.
 
-        Parameters match list(); see class docstring. max_pages defaults to 2
-        to limit search scope.
+        Calls ``list()`` under the hood.
+
+        Convenience wrapper that fetches up to ``max_pages`` (default 2) pages
+        and expects exactly one result.
 
         Args:
-            traverse: See class docstring.
-            concurrent: See class docstring.
-            max_workers: See class docstring.
-            namespace: See class docstring.
-            list_params: See class docstring.
-            max_pages: Max pages to search (default 2).
-            parent: See class docstring.
-            filter: See class docstring.
-            mask: See class docstring.
-            page_size: See class docstring.
-            page_token: See class docstring.
-            page_id: See class docstring.
-            sort_by: See class docstring.
-            desc: See class docstring.
-            count: See class docstring.
-            from_date: See class docstring.
-            to_date: See class docstring.
-            archive: See class docstring.
-            pr_uuid: See class docstring.
-            **kwargs: See class docstring.
+            traverse: Search child namespaces recursively (tenant-wide query).
+            concurrent: Query each namespace in parallel (requires
+                ``traverse=True``).
+            max_workers: Thread pool size for concurrent mode (default 10).
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant.
+            list_params: ``ListParameters`` object; flat kwargs override its
+                values when both are provided.
+            max_pages: Maximum pages to search (default 2).
+            parent: Scope results to a parent resource's namespace and
+                ``meta.parent_uuid``.
+            filter: API filter expression (``str`` or ``FilterExpression``
+                via ``F()``).
+            mask: Comma-separated field mask limiting returned fields.
+            page_size: Results per page; ``None`` uses the API default.
+            page_token: Pagination cursor from a previous response.
+            page_id: Pagination cursor (alternative to ``page_token``).
+            sort_by: Field path to sort results by.
+            desc: Reverse sort order when ``True``.
+            count: Return count only (no resource bodies).
+            from_date: ISO 8601 lower-bound date filter.
+            to_date: ISO 8601 upper-bound date filter.
+            archive: Query archived resources when ``True``.
+            pr_uuid: Scope to a specific PR scan.
+            **kwargs: Identity kwargs mapped to filter clauses via
+                ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
+                ``meta.name=="foo"``).
 
         Returns:
             The single matching resource.
@@ -478,31 +491,38 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         **kwargs: Any,
     ) -> Iterator[T]:
-        """Yield resources one at a time; no concurrent support; memory-efficient.
+        """Yield resources one at a time; memory-efficient lazy pagination.
 
-        Parameters match list() (see class docstring). concurrent is not
-        supported; use list(concurrent=True) for parallel namespace queries.
+        Same parameters as ``list()`` except ``concurrent`` is not supported;
+        use ``list(concurrent=True)`` for parallel namespace queries.
 
         Args:
-            traverse: See class docstring.
-            concurrent: Not supported; use list() for concurrent.
-            namespace: See class docstring.
-            list_params: See class docstring.
-            max_pages: See class docstring.
-            parent: See class docstring.
-            filter: See class docstring.
-            mask: See class docstring.
-            page_size: See class docstring.
-            page_token: See class docstring.
-            page_id: See class docstring.
-            sort_by: See class docstring.
-            desc: See class docstring.
-            count: See class docstring.
-            from_date: See class docstring.
-            to_date: See class docstring.
-            archive: See class docstring.
-            pr_uuid: See class docstring.
-            **kwargs: See class docstring.
+            traverse: Search child namespaces recursively (tenant-wide query).
+            concurrent: Not supported; raises ``NotImplementedError``. Use
+                ``list(concurrent=True)`` instead.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant.
+            list_params: ``ListParameters`` object; flat kwargs override its
+                values when both are provided.
+            max_pages: Maximum pages to fetch; ``None`` fetches all.
+            parent: Scope results to a parent resource's namespace and
+                ``meta.parent_uuid``.
+            filter: API filter expression (``str`` or ``FilterExpression``
+                via ``F()``).
+            mask: Comma-separated field mask limiting returned fields.
+            page_size: Results per page; ``None`` uses the API default.
+            page_token: Pagination cursor from a previous response.
+            page_id: Pagination cursor (alternative to ``page_token``).
+            sort_by: Field path to sort results by.
+            desc: Reverse sort order when ``True``.
+            count: Return count only (no resource bodies).
+            from_date: ISO 8601 lower-bound date filter.
+            to_date: ISO 8601 upper-bound date filter.
+            archive: Query archived resources when ``True``.
+            pr_uuid: Scope to a specific PR scan.
+            **kwargs: Identity kwargs mapped to filter clauses via
+                ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
+                ``meta.name=="foo"``).
 
         Yields:
             Resources one at a time.
@@ -605,19 +625,22 @@ class ResourceFacade(_ListableFacade[T]):
     def get(self, id_or_resource: str | T, namespace: str | None = None) -> T:
         """Fetch a single resource by UUID or resource object.
 
-        id_or_resource and namespace follow class docstring (resource object
-        supplies namespace when namespace= omitted). System scope: get() only
-        when resolved namespace is "oss".
+        When ``id_or_resource`` is a resource object, the UUID is extracted
+        from it and the namespace is derived from the resource's
+        ``tenant_meta`` unless overridden by ``namespace=``.
 
         Args:
-            id_or_resource: UUID or resource object. See class docstring.
-            namespace: Target namespace. See class docstring.
+            id_or_resource: UUID string, or a resource object whose
+                ``uuid`` and ``tenant_meta`` are used for resolution.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant or the resource's namespace.
 
         Returns:
             The resource.
 
         Raises:
-            NotImplementedError: No get support, or system scope and ns != "oss".
+            NotImplementedError: No get support, or system scope and
+                namespace is not ``"oss"``.
             ValueError: Namespace required but not set.
 
         Example:
@@ -658,18 +681,22 @@ class ResourceFacade(_ListableFacade[T]):
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Create a resource via payload= or kwargs (build_create_payload).
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``).
 
-        Either pass a CreateXPayload in payload= or resource-specific kwargs;
-        mutually exclusive. namespace follows class docstring.
+        Either pass a ``CreateXPayload`` in ``payload=`` or resource-specific
+        kwargs; the two forms are mutually exclusive.
 
         Args:
-            payload: CreateXPayload; mutually exclusive with kwargs.
-            name: Convenience; merged into kwargs.
-            description: Convenience; merged into kwargs.
-            namespace_uuid: Convenience; merged into kwargs.
-            namespace: Where to create. See class docstring.
-            **kwargs: Resource-specific; passed to build_create_payload.
+            payload: A ``CreateXPayload`` model instance; mutually exclusive
+                with keyword arguments.
+            name: Convenience kwarg; merged into builder kwargs.
+            description: Convenience kwarg; merged into builder kwargs.
+            namespace_uuid: Convenience kwarg; merged into builder kwargs.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``)
+                where the resource will be created; defaults to the client
+                tenant.
+            **kwargs: Resource-specific keyword arguments passed to the
+                resource's ``build_create_payload`` function.
 
         Returns:
             Created resource with server-assigned fields.
@@ -724,20 +751,25 @@ class ResourceFacade(_ListableFacade[T]):
         namespace: str | None = None,
         **kwargs: Any,
     ) -> T:
-        """Update a resource: update_mask + payload, or field kwargs (mask derived).
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask derived).
 
-        id_or_resource and namespace follow class docstring. For kwargs-based
-        updates, id_or_resource must be a resource instance; payload can be
-        omitted (resource used as payload).
+        When using field kwargs (e.g. ``meta_tags=[...]``), ``id_or_resource``
+        must be a resource instance; the resource is used as the payload and
+        the mask is derived automatically.
 
         Args:
-            id_or_resource: UUID or resource object. See class docstring.
-            payload: Updated fields; optional when id_or_resource is resource.
-            update_mask: Comma-separated paths (e.g. 'meta.tags').
-            meta_description: Convenience; updates meta.description.
-            meta_tags: Convenience; updates meta.tags.
-            namespace: See class docstring.
-            **kwargs: Mutable field kwargs; mask derived if update_mask omitted.
+            id_or_resource: UUID string, or a resource object whose
+                ``uuid`` and ``tenant_meta`` are used for resolution.
+            payload: Updated fields; optional when ``id_or_resource`` is a
+                resource instance (the resource itself is used as payload).
+            update_mask: Comma-separated field paths to update
+                (e.g. ``"meta.tags"``).
+            meta_description: Convenience kwarg; updates ``meta.description``.
+            meta_tags: Convenience kwarg; updates ``meta.tags``.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant or the resource's namespace.
+            **kwargs: Mutable field kwargs; ``update_mask`` is derived
+                automatically if omitted.
 
         Returns:
             Updated resource.
@@ -811,19 +843,24 @@ class ResourceFacade(_ListableFacade[T]):
     ) -> bool:
         """Remove a resource by UUID or resource object.
 
-        name_or_resource and namespace follow class docstring.
+        When ``name_or_resource`` is a resource object, the UUID is extracted
+        from it and the namespace is derived from the resource's
+        ``tenant_meta`` unless overridden by ``namespace=``.
 
         Args:
-            name_or_resource: UUID or resource object. See class docstring.
-            namespace: See class docstring.
-            ignore_missing: If True, return False on 404 instead of raising.
+            name_or_resource: UUID string, or a resource object whose
+                ``uuid`` and ``tenant_meta`` are used for resolution.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant or the resource's namespace.
+            ignore_missing: If ``True``, return ``False`` on 404 instead of
+                raising ``NotFoundError``.
 
         Returns:
-            True if deleted; False if ignore_missing and not found.
+            ``True`` if deleted; ``False`` if ``ignore_missing`` and not found.
 
         Raises:
             NotImplementedError: No delete support.
-            NotFoundError: Not found and not ignore_missing.
+            NotFoundError: Not found and not ``ignore_missing``.
             ValueError: Namespace required but not set.
 
         Example:
@@ -863,15 +900,19 @@ class ResourceFacade(_ListableFacade[T]):
         tags: list[str],
         namespace: str | None = None,
     ) -> T:
-        """Set meta.tags (replaces existing); wraps update(update_mask='meta.tags').
+        """Set ``meta.tags`` (replaces existing tags).
 
-        id_or_resource and namespace follow class docstring. Only for resources
-        with meta.tags in mutable fields.
+        Wraps ``update(update_mask='meta.tags')``.
+
+        Only available for resources whose ``meta.tags`` is a mutable field.
 
         Args:
-            id_or_resource: UUID or resource object. See class docstring.
-            tags: Tag list; replaces all. Use [] to clear.
-            namespace: See class docstring.
+            id_or_resource: UUID string, or a resource object whose
+                ``uuid`` and ``tenant_meta`` are used for resolution.
+            tags: Tag list that replaces all existing tags. Use ``[]`` to
+                clear.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant or the resource's namespace.
 
         Returns:
             Updated resource.
@@ -897,15 +938,17 @@ class ResourceFacade(_ListableFacade[T]):
         keys: list[str],
         namespace: str | None = None,
     ) -> T:
-        """Remove listed tags from meta.tags; fetch, filter, then update(meta.tags).
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update.
 
-        id_or_resource and namespace follow class docstring. Keys not present
-        are ignored.
+        Tags in ``keys`` that are not present on the resource are silently
+        ignored.
 
         Args:
-            id_or_resource: UUID or resource object. See class docstring.
-            keys: Tag values to remove; others preserved.
-            namespace: See class docstring.
+            id_or_resource: UUID string, or a resource object whose
+                ``uuid`` and ``tenant_meta`` are used for resolution.
+            keys: Tag values to remove; all other tags are preserved.
+            namespace: Canonical namespace path (e.g. ``"tenant.child"``);
+                defaults to the client tenant or the resource's namespace.
 
         Returns:
             Updated resource.
