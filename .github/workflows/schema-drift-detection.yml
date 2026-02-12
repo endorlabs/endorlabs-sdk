@@ -56,7 +56,7 @@ jobs:
           
           # Run version check and capture exit code
           set +e  # Don't exit on error
-          python .github/scripts/check_endorctl_version.py \
+          uv run python .github/scripts/check_endorctl_version.py \
             --state-file "$STATE_FILE" \
             --quiet
           EXIT_CODE=$?
@@ -105,8 +105,8 @@ jobs:
       - name: Validate dependencies
         run: |
           echo "Validating required dependencies are installed..."
-          python -c "import pytest; print(f'✅ pytest {pytest.__version__}')" || (echo "❌ pytest not found" && exit 1)
-          python -c "import pydantic; print(f'✅ pydantic {pydantic.__version__}')" || (echo "❌ pydantic not found" && exit 1)
+          uv run python -c "import pytest; print(f'✅ pytest {pytest.__version__}')" || (echo "❌ pytest not found" && exit 1)
+          uv run python -c "import pydantic; print(f'✅ pydantic {pydantic.__version__}')" || (echo "❌ pydantic not found" && exit 1)
           echo "✅ All required dependencies are installed"
 
       - name: Download OpenAPI spec
@@ -116,7 +116,7 @@ jobs:
 
       - name: Run schema drift detection
         run: |
-          python .github/scripts/detect_schema_drift.py \
+          uv run python .github/scripts/detect_schema_drift.py \
             --run-tests \
             --test-path tests/ \
             --output schema_drift_report.json
@@ -208,7 +208,7 @@ Automatically created by the schema drift detection workflow.`;
               echo "**Triggered by endorctl version update**: ${{ needs.check-version.outputs.latest-version }}" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
             fi
-            python -c "
+            uv run python -c "
             import json
             with open('schema_drift_report.json') as f:
                 report = json.load(f)
@@ -219,4 +219,4 @@ Automatically created by the schema drift detection workflow.`;
             " >> $GITHUB_STEP_SUMMARY
           else
             echo "No drift report generated" >> $GITHUB_STEP_SUMMARY
-
+          fi

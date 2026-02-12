@@ -349,6 +349,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "tenacity" },
+    { name = "zstandard" },
 ]
 
 [package.optional-dependencies]
@@ -388,6 +389,7 @@ requires-dist = [
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "rich", marker = "extra == 'agent'", specifier = ">=13.0" },
     { name = "tenacity", specifier = "==9.1.2" },
+    { name = "zstandard", specifier = "==0.25.0" },
 ]
 provides-extras = ["agent", "context"]
 
