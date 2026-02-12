@@ -21,4 +21,4 @@ Namespace in the SDK: list, get, create, update, delete. Parameters use canonica
 - Omitting `update_mask` on update — namespace requires at least one field (e.g. `"meta.description"`).
 - Cross-tenant operations — ensure all operations use the same tenant namespace.
 
-Runnable patterns: `tests/`, `maneuvers/`.
+Runnable patterns: `tests/`.
