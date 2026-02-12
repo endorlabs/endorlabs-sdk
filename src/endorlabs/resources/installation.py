@@ -221,7 +221,8 @@ class InstallationSpec(BaseSpec):
                         validated_features.append(EnabledFeatureType(feature))
                     except ValueError:
                         logger.warning(
-                            f"Unknown EnabledFeatureType value: {feature}. Using as-is."
+                            "Unknown EnabledFeatureType value: %s. Using as-is.",
+                            feature,
                         )
                         validated_features.append(feature)
                 else:
@@ -237,7 +238,7 @@ class InstallationSpec(BaseSpec):
             try:
                 return PlatformSourceType(v)
             except ValueError:
-                logger.warning(f"Unknown PlatformSourceType value: {v}. Using as-is.")
+                logger.warning("Unknown PlatformSourceType value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -249,7 +250,7 @@ class InstallationSpec(BaseSpec):
             try:
                 return PlatformSourceType(v)
             except ValueError:
-                logger.warning(f"Unknown PlatformSourceType value: {v}. Using as-is.")
+                logger.warning("Unknown PlatformSourceType value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -349,8 +350,9 @@ class Installation(BaseResource):
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
-                    f"Schema drift detected in {info.field_name}: "
-                    f"unknown fields {unknown_fields}"
+                    "Schema drift detected in %s: unknown fields %s",
+                    info.field_name,
+                    unknown_fields,
                 )
         return v
 

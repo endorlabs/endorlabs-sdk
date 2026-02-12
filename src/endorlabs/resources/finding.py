@@ -407,7 +407,7 @@ class FindingSpec(BaseSpec):
             try:
                 return FindingLevel(v)
             except ValueError:
-                logger.warning(f"Unknown FindingLevel value: {v}. Using as-is.")
+                logger.warning("Unknown FindingLevel value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -419,7 +419,7 @@ class FindingSpec(BaseSpec):
             try:
                 return AnalysisMethod(v)
             except ValueError:
-                logger.warning(f"Unknown AnalysisMethod value: {v}. Using as-is.")
+                logger.warning("Unknown AnalysisMethod value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -431,7 +431,7 @@ class FindingSpec(BaseSpec):
             try:
                 return Ecosystem(v)
             except ValueError:
-                logger.warning(f"Unknown Ecosystem value: {v}. Using as-is.")
+                logger.warning("Unknown Ecosystem value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -459,7 +459,7 @@ class FindingSpec(BaseSpec):
             try:
                 return FindingRemediation(v)
             except ValueError:
-                logger.warning(f"Unknown FindingRemediation value: {v}. Using as-is.")
+                logger.warning("Unknown FindingRemediation value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -475,7 +475,8 @@ class FindingSpec(BaseSpec):
                         validated_categories.append(FindingCategory(category))
                     except ValueError:
                         logger.warning(
-                            f"Unknown FindingCategory value: {category}. Using as-is."
+                            "Unknown FindingCategory value: %s. Using as-is.",
+                            category,
                         )
                         validated_categories.append(category)
                 else:
@@ -492,7 +493,8 @@ class FindingSpec(BaseSpec):
                 return CallGraphAnalysisType(v)
             except ValueError:
                 logger.warning(
-                    f"Unknown CallGraphAnalysisType value: {v}. Using as-is."
+                    "Unknown CallGraphAnalysisType value: %s. Using as-is.",
+                    v,
                 )
                 return v
         return v
@@ -786,8 +788,9 @@ class Finding(BaseResource):
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
-                    f"Schema drift detected in {info.field_name}: "
-                    f"unknown fields {unknown_fields}"
+                    "Schema drift detected in %s: unknown fields %s",
+                    info.field_name,
+                    unknown_fields,
                 )
         return v
 

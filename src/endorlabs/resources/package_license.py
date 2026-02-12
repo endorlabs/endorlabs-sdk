@@ -214,8 +214,9 @@ class PackageLicense(BaseResource):
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
-                    f"Schema drift detected in {info.field_name}: "
-                    f"unknown fields {unknown_fields}"
+                    "Schema drift detected in %s: unknown fields %s",
+                    info.field_name,
+                    unknown_fields,
                 )
         return v
 
