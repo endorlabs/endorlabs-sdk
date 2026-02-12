@@ -102,7 +102,6 @@ endorlabs/
 └── models/
 ```
 
-- **SAST analysis:** `endorlabs.sast_analysis` — finding correlation and SQL-backed analysis tools.
 - **Agent:** `endorlabs.agent` — LangGraph-based agent and demo CLI (requires `[agent]` extras).
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
 - **Internal:** utils (model_validation, schema_drift), operations.

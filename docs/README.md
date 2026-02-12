@@ -29,4 +29,4 @@ Index for SDK-specific documentation. Platform concepts and user docs: [docs.end
 
 ## When to update docs
 
-API or endpoint changes → [conventions.md](conventions.md) and [reference/resources.md](reference/resources.md). New resources or operations → reference and RoE checklists. Drift and model consistency → [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Experimental:** `endorlabs.experimental.sast_analysis`. **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.
+API or endpoint changes → [conventions.md](conventions.md) and [reference/resources.md](reference/resources.md). New resources or operations → reference and RoE checklists. Drift and model consistency → [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.
