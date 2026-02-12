@@ -99,7 +99,7 @@ def create_child_namespace(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create namespace: {exc}"
+        result.message = f"Unable to create namespace: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 
@@ -159,7 +159,7 @@ def create_github_installation(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create installation: {exc}"
+        result.message = f"Unable to create installation: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 
@@ -220,7 +220,7 @@ def create_scan_profile_with_defaults(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create scan profile: {exc}"
+        result.message = f"Unable to create scan profile: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 
@@ -274,7 +274,7 @@ def create_authorization_policy(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create authorization policy: {exc}"
+        result.message = f"Unable to create authorization policy: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 

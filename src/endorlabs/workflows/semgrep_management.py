@@ -266,7 +266,7 @@ def _import_single_rule(
             logger.info("Updated: %s (uuid=%s)", display_id, existing.uuid)
             result.updated += 1
         except Exception as exc:
-            logger.error("Failed to update '%s': %s", display_id, exc)
+            logger.error("Unable to update '%s': %s", display_id, exc)
             result.failed += 1
             result.errors.append(f"update {display_id}: {exc}")
         return
@@ -289,7 +289,7 @@ def _import_single_rule(
         logger.info("Created: %s (uuid=%s)", display_id, created_rule.uuid)
         result.created += 1
     except Exception as exc:
-        logger.error("Failed to create '%s': %s", display_id, exc)
+        logger.error("Unable to create '%s': %s", display_id, exc)
         result.failed += 1
         result.errors.append(f"create {display_id}: {exc}")
 
@@ -323,7 +323,7 @@ def import_rules_from_yaml(
         try:
             rule_dicts = _parse_yaml_file(yaml_path)
         except Exception as exc:
-            logger.error("Failed to parse %s: %s", yaml_path, exc)
+            logger.error("Unable to parse %s: %s", yaml_path, exc)
             result.failed += 1
             result.errors.append(f"{yaml_path}: {exc}")
             continue
@@ -556,9 +556,9 @@ def calibrate_rules(
         except Exception as exc:
             exc_str = str(exc)
             if "501" in exc_str or "Method Not Allowed" in exc_str:
-                logger.warning("Cannot update read-only rule %s", rule.uuid)
+                logger.warning("Cannot update read-only rule '%s'", rule.uuid)
             else:
-                logger.error("Error updating rule %s: %s", rule.uuid, exc)
+                logger.error("Unable to update rule '%s': %s", rule.uuid, exc)
             result.failed += 1
             result.errors.append(f"{rule.uuid}: {exc}")
 

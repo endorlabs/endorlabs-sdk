@@ -165,10 +165,14 @@ def analyze_project_threat_model(
             str(response.content) if hasattr(response, "content") else str(response)
         )
     except Exception as exc:
-        logger.error("Threat model analysis failed for %s: %s", project_name, exc)
+        logger.error(
+            "Unable to complete threat model analysis for '%s': %s",
+            project_name,
+            exc,
+        )
         return ThreatModelResult(
             status="error",
-            message=f"Threat model failed: {exc}",
+            message=f"Unable to complete threat model: {exc}",
             errors=[str(exc)],
             project_name=project_name,
         )
