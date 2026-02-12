@@ -154,7 +154,7 @@ class TestGetAllPageIdPagination:
 
     def test_get_all_uses_page_id_when_response_has_next_page_id(self) -> None:
         """When response has next_page_id only, next request uses page_id."""
-        client = APIClient(auth_method="api-key")
+        client = APIClient(auth_method="api-key", key="fake", secret="fake")
         try:
             page1 = {
                 "list": {
@@ -183,7 +183,7 @@ class TestGetAllPageIdPagination:
 
     def test_get_all_uses_page_token_when_only_next_page_token(self) -> None:
         """When only next_page_token present, behavior unchanged (page_token used)."""
-        client = APIClient(auth_method="api-key")
+        client = APIClient(auth_method="api-key", key="fake", secret="fake")
         try:
             page1 = {
                 "list": {
@@ -208,7 +208,7 @@ class TestGetAllPageIdPagination:
 
     def test_get_all_prefers_page_id_when_both_present(self) -> None:
         """When both next_page_id and next_page_token present, page_id wins."""
-        client = APIClient(auth_method="api-key")
+        client = APIClient(auth_method="api-key", key="fake", secret="fake")
         try:
             page1 = {
                 "list": {

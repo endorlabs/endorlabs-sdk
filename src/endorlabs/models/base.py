@@ -577,3 +577,36 @@ class BaseResource(JsonDefaultModel):
         to see them.
         """
         return super().model_dump(mode=mode, warnings=warnings, **kwargs)
+
+    @override
+    def model_dump_json(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        *,
+        indent: int | None = None,
+        include: set[str] | dict[str, Any] | None = None,
+        exclude: set[str] | dict[str, Any] | None = None,
+        by_alias: bool = False,
+        exclude_unset: bool = False,
+        exclude_defaults: bool = False,
+        exclude_none: bool = False,
+        round_trip: bool = False,
+        warnings: bool = False,
+        serialize_as_any: bool = False,
+    ) -> str:
+        """Like ``BaseModel.model_dump_json`` but defaults ``warnings=False``.
+
+        Suppresses Pydantic serializer warnings caused by the wildcard
+        ``@field_serializer("*")`` encountering nested model instances.
+        """
+        return super().model_dump_json(
+            indent=indent,
+            include=include,
+            exclude=exclude,
+            by_alias=by_alias,
+            exclude_unset=exclude_unset,
+            exclude_defaults=exclude_defaults,
+            exclude_none=exclude_none,
+            round_trip=round_trip,
+            warnings=warnings,
+            serialize_as_any=serialize_as_any,
+        )

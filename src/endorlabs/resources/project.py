@@ -279,7 +279,7 @@ class Project(BaseResource):
     """
 
     # Project-specific fields (universal fields inherited from BaseResource)
-    spec: ProjectSpec = Field(..., description="Project specification")  # type: ignore
+    spec: ProjectSpec | None = Field(None, description="Project specification")  # type: ignore
     # Optional when list mask omits processing_status
     processing_status: ProcessingStatus | None = Field(  # pyright: ignore[reportIncompatibleVariableOverride]
         None,
@@ -447,7 +447,7 @@ def associate_scan_profile_with_project(
     current_project = ops.get(tenant_meta_namespace, project_uuid)
 
     # Update the spec with the new scan_profile_uuid
-    spec_dict = current_project.spec.model_dump()
+    spec_dict = current_project.spec.model_dump() if current_project.spec else {}
     spec_dict["scan_profile_uuid"] = scan_profile_uuid
 
     # Build update payload
