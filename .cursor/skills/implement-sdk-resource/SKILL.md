@@ -17,8 +17,8 @@ follows the same two-layer, registry-driven pattern.
 Before writing any code, understand the API contract.
 
 1. **Find the resource in the OpenAPI spec**:
-   - Spec URL: <https://api.endorlabs.com/download/openapiv2.swagger.json>
-   - Local copy (if available): `.endorlabs-context/openapiv2.swagger.json`
+   - Local (preferred): `.endorlabs-context/openapiv2.swagger.json`
+   - Online (fallback): <https://api.endorlabs.com/download/openapiv2.swagger.json>
    - Grep for `{Resource}Service` and endpoint paths
 
 2. **Extract schema**: `v1{Resource}`, `v1{Resource}Spec`

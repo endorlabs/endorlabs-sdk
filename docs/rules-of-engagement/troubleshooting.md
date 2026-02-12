@@ -1,6 +1,6 @@
 # Troubleshooting Rules of Engagement
 
-Workflow below. Resolved-case narratives: [docs.endorlabs.com](https://docs.endorlabs.com/) or search repo issues.
+Workflow below. Resolved-case narratives: `.endorlabs-context/docs/` (local) or [docs.endorlabs.com](https://docs.endorlabs.com/) (online fallback); also search repo issues.
 
 ## Platform insight: path namespace vs body UUID
 

@@ -83,6 +83,7 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 |------|------------------|
 | **tdd.mdc** | Always (TDD protocol, quality gate, zero-regression requirement) |
 | **code-review.mdc** | Always (agent self-review checklist before committing) |
+| **local-context.mdc** | Always (local-first research: check `.endorlabs-context/` docs and API spec before going online) |
 | **security.mdc** | When editing `src/endorlabs/**` (credential handling, network safety, dangerous ops) |
 | **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
 | **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
@@ -108,9 +109,11 @@ endorlabs/
 
 ## Reference — External
 
-- **User docs:** <https://docs.endorlabs.com/>
-- **API spec:** <https://api.endorlabs.com/download/openapiv2.swagger.json> — use for required/optional fields, types, read-only; schema drift workflow downloads to `.endorlabs-context/` in CI.
-- **Advanced users (IDE context):** Create the gitignored `.endorlabs-context/` folder with spec + user docs: `uv sync --extra context` then `import endorlabs; endorlabs.init()`. See [Context Bootstrap](#context-bootstrap-for-ai-agents) above for options.
+- **User docs (local):** `.endorlabs-context/docs/` — pre-downloaded mirror of docs.endorlabs.com, refreshed by `endorlabs.init()`. **Search here first** using Glob + Read. See `local-context.mdc` for the research protocol.
+- **User docs (online):** <https://docs.endorlabs.com/> — fallback only when local docs do not cover the topic.
+- **API spec (local):** `.endorlabs-context/openapiv2.swagger.json` — use for required/optional fields, types, enums, read-only markers. **Grep this file** to confirm field formats before implementing.
+- **API spec (online):** <https://api.endorlabs.com/download/openapiv2.swagger.json> — fallback for freshness checks.
+- **Bootstrap:** Create the gitignored `.endorlabs-context/` folder: `uv sync --extra context` then `import endorlabs; endorlabs.init()`. See [Context Bootstrap](#context-bootstrap-for-ai-agents) for options.
 
 ## Reference — In-Repo
 
