@@ -1,6 +1,6 @@
 """Endor Labs SDK -- Feature Walkthrough.
 
-Run with: uv run main.py
+Run with: uv run main.py [--scan]
 
 A progressive, runnable demo of the SDK's major features. Each section is an
 independent function so you can read, run, or copy the parts you need.
@@ -15,16 +15,19 @@ Sections:
   6. Pydantic Serialization    -- model_dump / model_dump_json
   7. Error Handling            -- NotFoundError, AmbiguousError
   8. Field Masking             -- Reduce response payload
-  9. Scan Trigger & Polling    -- Mutation + wait_until (opt-in)
+  9. Scan Trigger & Log Stream -- ScanLogRequest API; live tailing (--scan)
  10. Workflow: Finding Triage  -- Higher-level composable workflow (dry-run)
+ 11. Call Graph Exploration     -- Decode & render call graph from protobuf
 
 Env: ENDOR_API_CREDENTIALS_KEY, ENDOR_API_CREDENTIALS_SECRET (or ENDOR_TOKEN).
 """
 
 from __future__ import annotations
 
+import argparse
+
 import endorlabs
-from endorlabs import Client, F, NotFoundError
+from endorlabs import Client, F, NotFoundError, ValidationError
 
 # ---------------------------------------------------------------------------
 # Configuration -- change these to match your environment
@@ -32,8 +35,12 @@ from endorlabs import Client, F, NotFoundError
 TENANT = "endor-solutions-tgowan"
 REPO_URL = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git"
 
-# Opt-in flags for mutating operations (off by default)
-DEMO_TRIGGER_SCAN = False
+# Target for Section 9 (Scan & Log Streaming) -- short scan duration project
+SCAN_PROJECT_NS = "endor-solutions-tgowan.tgowan-endor"
+SCAN_PROJECT_UUID = "69458a5eb0e3885f66676057"
+
+# Target for Section 11 (Call Graph) -- project with call graph data
+CALLGRAPH_PROJECT_UUID = "698cfb4f26aee2696691c78e"
 
 
 # ===================================================================
@@ -56,6 +63,16 @@ def demo_setup() -> Client:
     identity = client.whoami()  # type: ignore[attr-defined]  # dynamic facade
     print(f"  Authenticated as: {identity}")
     print(f"  Default tenant:   {TENANT}")
+
+    # Fetch the auth policy for detailed identity info (permissions, expiration)
+    if identity:
+        policy = client.authorization_policy.lookup(name=identity, traverse=True)
+        if policy.spec:
+            roles = policy.spec.permissions.roles if policy.spec.permissions else []
+            print(f"  Roles:            {roles}")
+            expiration = policy.spec.expiration_time or "never"
+            print(f"  Expires:          {expiration}")
+
     return client
 
 
@@ -72,7 +89,8 @@ def demo_discovery(client: Client) -> None:
     namespaces = client.namespace.list(traverse=True)
     print(f"  Namespaces found: {len(namespaces)}")
     for ns in namespaces[:5]:
-        print(f"    - {ns.meta.name}")
+        full = ns.spec.full_name if ns.spec else ns.meta.name
+        print(f"    - {full}")
     if len(namespaces) > 5:
         print(f"    ... and {len(namespaces) - 5} more")
 
@@ -193,6 +211,12 @@ def demo_cross_resource(client: Client) -> None:
     if scans:
         latest = scans[0]
         print(f"    Latest scan UUID: {latest.uuid}")
+        ns = latest.tenant_meta.namespace if latest.tenant_meta else TENANT
+        scan_url = (
+            f"https://app.endorlabs.com/t/{ns}"
+            f"/projects/{project.uuid}/scans/{latest.uuid}"
+        )
+        print(f"    Scan URL: {scan_url}")
 
 
 # ===================================================================
@@ -272,7 +296,13 @@ def demo_error_handling(client: Client) -> None:
             traverse=True,
         )
     except NotFoundError as exc:
-        print(f"  Caught NotFoundError with raw filter: {exc}")
+        print(f"  Caught NotFoundError (expected, raw filter): {exc}")
+
+    # Malformed regex triggers protobuf field validation on the server (400)
+    try:
+        _ = client.project.list(filter='meta.name matches "["')
+    except ValidationError as exc:
+        print(f"  Caught ValidationError (expected): {exc}")
 
 
 # ===================================================================
@@ -295,43 +325,211 @@ def demo_field_masking(client: Client) -> None:
 
 
 # ===================================================================
-# Section 9: Scan Trigger & Polling (opt-in)
+# Section 9: Scan Trigger & Log Streaming  (helpers + demo)
 # ===================================================================
-def demo_scan_trigger(client: Client) -> None:
-    """Trigger a full rescan and poll until it completes.
 
-    This section is gated behind DEMO_TRIGGER_SCAN because it mutates
-    state on the platform.  Set DEMO_TRIGGER_SCAN = True to enable.
+# Type alias used by the log-streaming helpers below.
+_SeenLogs = set[tuple[str | None, str]]
 
-    wait_until() uses jittered exponential backoff internally.
-    """
-    if not DEMO_TRIGGER_SCAN:
-        print("  Skipped (set DEMO_TRIGGER_SCAN = True to enable).")
+
+def _print_log_lines(lines: list[str], head: int = 10, tail: int = 5) -> None:
+    """Print log lines with head/tail truncation for readability."""
+    if len(lines) <= head + tail:
+        for line in lines:
+            print(line)
         return
+    for line in lines[:head]:
+        print(line)
+    print(f"  ... ({len(lines) - head - tail} messages omitted)")
+    for line in lines[-tail:]:
+        print(line)
 
-    project = client.project.lookup(name=REPO_URL, traverse=True)
-    print(f"  Triggering rescan for: {project.meta.name}")
 
-    # Request a full rescan via flat kwargs on update()
-    _ = client.project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
+def _fetch_scan_log_batch(
+    log_client: Client,
+    scan_uuid: str,
+    start_time: str | None,
+    seen: _SeenLogs,
+) -> tuple[int, str | None, list[str]]:
+    """POST a ScanLogRequest and collect new log lines.
 
-    # Poll until the scan returns to idle
-    done = client.wait_until(
-        lambda: (
-            (p := client.project.get(project))
-            and p.processing_status is not None
-            and p.processing_status.scan_state == "SCAN_STATE_IDLE"
-        ),
-        timeout=300,
+    Returns:
+        (new_message_count, updated_start_time, formatted_lines) — the
+        caller should feed the returned start_time back on the next call
+        so the window advances.  Formatted lines are ready to print.
+    """
+    from endorlabs.resources.scan_log_request import (
+        CreateScanLogRequestPayload,
+        ScanLogRequestMetaCreate,
+        ScanLogRequestSpecCreate,
     )
-    print(f"  Scan completed: {done}")
 
-    # Fetch the latest scan result
-    scans = client.scan_result.list(
+    payload = CreateScanLogRequestPayload(
+        meta=ScanLogRequestMetaCreate(name=f"stream-{scan_uuid[:8]}"),
+        spec=ScanLogRequestSpecCreate(
+            max_entries=500,
+            scan_result_uuid=scan_uuid,
+            start_time=start_time,
+            newest_first=False,
+            end_time=None,
+            log_levels=None,
+            execution_id=None,
+            project_uuid=None,
+            installation_uuid=None,
+            scan_request_uuid=None,
+            onprem_scheduler_uuid=None,
+            admin_filter=None,
+        ),
+    )
+    result = log_client.scan_log_request.create(payload)
+
+    new_count = 0
+    lines: list[str] = []
+    messages = result.spec.log_messages if result.spec else None
+    for msg in messages or []:
+        key = (msg.timestamp, str(msg.json_payload))
+        if key in seen:
+            continue
+        seen.add(key)
+        new_count += 1
+
+        level = (msg.level.value if msg.level else "?").replace("LOG_LEVEL_", "")
+        ts = msg.timestamp[:19] if msg.timestamp else ""
+        text = ""
+        if msg.json_payload:
+            text = msg.json_payload.get("message", str(msg.json_payload))
+        if len(text) > 120:
+            text = text[:117] + "..."
+        lines.append(f"  {ts} [{level:>8s}] {text}")
+
+        # Advance watermark so the next poll skips old entries
+        if msg.timestamp and (start_time is None or msg.timestamp > start_time):
+            start_time = msg.timestamp
+
+    return new_count, start_time, lines
+
+
+def _poll_scan_logs(
+    ns_client: Client,
+    log_client: Client,
+    scan_uuid: str,
+    start_time: str | None,
+) -> int:
+    """Poll for new logs every 5 s until the scan finishes.
+
+    Returns:
+        Total number of unique log messages printed.
+    """
+    import contextlib
+    import time
+
+    seen: _SeenLogs = set()
+    all_lines: list[str] = []
+
+    while True:
+        try:
+            new, start_time, batch_lines = _fetch_scan_log_batch(
+                log_client, scan_uuid, start_time, seen
+            )
+            all_lines.extend(batch_lines)
+            if new:
+                print(f"  ... +{new} new ({len(seen)} total)")
+        except Exception as exc:
+            print(f"  (log poll error: {exc})")
+
+        # Check whether the scan has finished
+        current = ns_client.scan_result.get(scan_uuid)
+        current_status = current.spec.status if current and current.spec else None
+        if current_status and current_status != "STATUS_RUNNING":
+            with contextlib.suppress(Exception):
+                _, _, final_lines = _fetch_scan_log_batch(
+                    log_client, scan_uuid, start_time, seen
+                )
+                all_lines.extend(final_lines)
+            print(f"\n  --- Scan finished: {current_status} ---")
+            break
+
+        time.sleep(5)
+
+    _print_log_lines(all_lines)
+    return len(seen)
+
+
+def demo_scan_and_stream(client: Client, *, trigger_scan: bool = False) -> None:
+    """Trigger a scan and stream logs in real-time, like the Endor Labs UI.
+
+    Demonstrates:
+    - The ScanLogRequest API for retrieving scan logs
+    - Polling with advancing time windows for live log tailing
+    - Scan trigger via project update (opt-in with ``--scan``)
+
+    Without ``--scan``: displays logs from the most recent scan result.
+    With ``--scan``: triggers a new scan and streams logs as they arrive.
+    """
+    import time
+    from datetime import datetime, timedelta
+
+    # Scope a client to the target project's namespace, sharing transport
+    ns_client = endorlabs.Client(
+        api_client=client._client,  # noqa: SLF001
+        tenant=SCAN_PROJECT_NS,
+    )
+
+    project = ns_client.project.get(SCAN_PROJECT_UUID)
+    print(f"  Project:   {project.meta.name}")
+    print(f"  Namespace: {SCAN_PROJECT_NS}")
+
+    if trigger_scan:
+        print("  Triggering rescan...")
+        _ = ns_client.project.update(
+            project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN"
+        )
+        time.sleep(3)  # brief pause for the platform to create the scan result
+
+    # Find the latest scan result
+    scans = ns_client.scan_result.list(
         parent=project, sort_by="meta.create_time", desc=True, max_pages=1
     )
-    if scans:
-        print(f"  Latest scan: {scans[0].uuid}")
+    if not scans:
+        print("  No scan results found for this project.")
+        return
+
+    scan = scans[0]
+    scan_uuid = scan.uuid
+    scan_ns = scan.tenant_meta.namespace if scan.tenant_meta else SCAN_PROJECT_NS
+    status = scan.spec.status if scan.spec else "UNKNOWN"
+    is_live = status == "STATUS_RUNNING"
+    print(f"  ScanResult: {scan_uuid}")
+    print(f"  Status:    {status}")
+
+    # Initial time window: scan start minus 1h (API-recommended buffer).
+    start_time: str | None = None
+    if scan.spec and scan.spec.start_time:
+        start_dt = datetime.fromisoformat(scan.spec.start_time)
+        start_time = (start_dt - timedelta(hours=1)).isoformat()
+
+    # ScanLogRequest API requires the scan result's own namespace
+    log_client = endorlabs.Client(
+        api_client=client._client,  # noqa: SLF001
+        tenant=scan_ns,
+    )
+
+    mode = "live" if is_live else "recent"
+    print(f"\n  --- Scan Logs ({mode}) ---")
+
+    if is_live:
+        total = _poll_scan_logs(ns_client, log_client, scan_uuid, start_time)
+        print(f"  Total messages streamed: {total}")
+    else:
+        # One-shot: display logs from the most recent completed scan
+        seen: _SeenLogs = set()
+        lines: list[str] = []
+        try:
+            _, _, lines = _fetch_scan_log_batch(log_client, scan_uuid, start_time, seen)
+        except Exception as exc:
+            print(f"  Log fetch error: {exc}")
+        _print_log_lines(lines)
+        print(f"  Total messages: {len(seen)}")
 
 
 # ===================================================================
@@ -364,10 +562,117 @@ def demo_workflow_triage(client: Client) -> None:
 
 
 # ===================================================================
+# Section 11: Call Graph Exploration
+# ===================================================================
+def demo_call_graph(client: Client) -> None:
+    """Retrieve, decode, and display a truncated call graph.
+
+    Demonstrates the ``dependency_explorer`` module which can:
+
+    - Fetch raw call graph data from ``/v1/namespaces/{ns}/call-graph-data``
+    - Decode zstd-compressed protobuf (no compiled proto dependency)
+    - Render an ASCII call tree showing caller-to-callee relationships
+
+    Requires the ``zstandard`` package for protobuf decompression.
+    """
+    from endorlabs.tools.dependency_explorer import (
+        _build_call_tree,  # pyright: ignore[reportPrivateUsage]
+        decode_callgraph,
+        retrieve_call_graph_full,
+    )
+
+    # Find the project (traverse to search child namespaces)
+    projects = client.project.list(
+        filter=F("uuid") == CALLGRAPH_PROJECT_UUID,
+        traverse=True,
+        max_pages=1,
+        page_size=1,
+    )
+    if not projects:
+        print("  Project not found.")
+        return
+
+    project = projects[0]
+    namespace = project.tenant_meta.namespace if project.tenant_meta else TENANT
+    print(f"  Project:   {project.meta.name}")
+    print(f"  Namespace: {namespace}")
+
+    # Get a PackageVersion that has call graph data
+    pvs = client.package_version.list(
+        namespace=namespace,
+        filter=(
+            f'spec.project_uuid=="{CALLGRAPH_PROJECT_UUID}"'
+            " AND spec.call_graph_available==true"
+        ),
+        max_pages=1,
+        page_size=1,
+    )
+    if not pvs:
+        print("  No PackageVersions with call graph found.")
+        return
+
+    pv = pvs[0]
+    print(f"  Package:   {pv.meta.name}")
+
+    # Retrieve the raw call graph via the low-level API
+    api_client = client._client  # noqa: SLF001
+    if api_client is None:
+        print("  Client is closed.")
+        return
+    cg_data = retrieve_call_graph_full(api_client, namespace, pv.uuid)
+    if not cg_data or "zstd_bytes" not in cg_data:
+        print("  No decodable call graph data returned.")
+        return
+
+    # Decode the zstd-compressed protobuf into structured data
+    info = decode_callgraph(cg_data)
+    total_fp = sum(len(t.methods) for t in info.internal_types)
+    total_tp = sum(len(t.methods) for t in info.external_types)
+
+    print(f"  Language:   {info.language}")
+    print(
+        f"  Modules:    {len(info.internal_types)} internal, "
+        f"{len(info.external_types)} external"
+    )
+    print(f"  Functions:  {total_fp} first-party, {total_tp} third-party stubs")
+    print(f"  Call edges: {len(info.call_edges)}")
+
+    # Show a truncated ASCII call tree
+    tree = _build_call_tree(info)
+    tree_lines = tree.splitlines()
+    max_lines = 25
+    print(f"\n  Call Tree ({len(tree_lines)} lines, showing first {max_lines}):")
+    for line in tree_lines[:max_lines]:
+        print(f"    {line}")
+    if len(tree_lines) > max_lines:
+        print(f"    ... and {len(tree_lines) - max_lines} more lines")
+
+
+# ===================================================================
 # Main -- run all sections in sequence
 # ===================================================================
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for the demo walkthrough."""
+    parser = argparse.ArgumentParser(
+        description="Endor Labs SDK -- Feature Walkthrough",
+    )
+    parser.add_argument(
+        "--scan",
+        action="store_true",
+        default=False,
+        help=(
+            "Trigger a new scan and stream logs live (Section 9). "
+            "Without this flag, Section 9 still runs but shows logs "
+            "from the most recent completed scan."
+        ),
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
     """Run the SDK feature walkthrough."""
+    args = parse_args()
+
     sections: list[tuple[str, str]] = [
         ("0", "Setup & Identity"),
         ("1", "Discovery -- Namespaces & Projects"),
@@ -378,8 +683,9 @@ def main() -> None:
         ("6", "Pydantic Model Serialization"),
         ("7", "Error Handling"),
         ("8", "Field Masking"),
-        ("9", "Scan Trigger & Polling"),
+        ("9", "Scan Trigger & Log Streaming"),
         ("10", "Workflow: Finding Triage"),
+        ("11", "Call Graph Exploration"),
     ]
 
     # Section 0 returns the client; the rest consume it
@@ -398,8 +704,13 @@ def main() -> None:
         ("6", "Pydantic Model Serialization", demo_serialization),
         ("7", "Error Handling", demo_error_handling),
         ("8", "Field Masking", demo_field_masking),
-        ("9", "Scan Trigger & Polling", demo_scan_trigger),
+        (
+            "9",
+            "Scan Trigger & Log Streaming",
+            lambda c: demo_scan_and_stream(c, trigger_scan=args.scan),
+        ),
         ("10", "Workflow: Finding Triage", demo_workflow_triage),
+        ("11", "Call Graph Exploration", demo_call_graph),
     ]
 
     try:
