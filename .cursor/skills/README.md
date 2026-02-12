@@ -8,7 +8,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
-| [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | `docs/guides/` (SAST series) |
+| [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
 | [implement-sdk-resource](implement-sdk-resource/) | Adding a new Endor Labs resource to the SDK | `docs/rules-of-engagement/` |
 | [retrieve-scan-results](retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/rules-of-engagement/` |
 | [troubleshoot-sdk](troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/rules-of-engagement/` |
