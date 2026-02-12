@@ -27,6 +27,13 @@ rules:
          credential formats unredacted.
       7. **__init__() compiles with re.IGNORECASE** -- credential material
          can appear in any casing; case-sensitive matching creates a bypass.
+      8. **Patterns are quote-agnostic on the value side** -- both
+         `redaction_pattern` and `json_redaction_pattern` must use `['\"]`
+         character classes for value delimiters, not fixed single or double
+         quotes, because Python's `repr()` switches value quoting when the
+         value contains the default delimiter character (e.g.
+         `'token': "O'Reilly"`).  This invariant is enforced by unit tests
+         rather than SAST pattern matching.
 
       Trust chain:
       This is the validation half of the RedactingFilter trust chain.
@@ -80,8 +87,11 @@ rules:
         tuple args, and return True unconditionally.  The _redact() method
         must coerce non-strings and iterate all compiled patterns.  The
         __init__() method must compile all patterns with re.IGNORECASE.
+        The module-level redaction patterns must use quote-agnostic
+        character classes on the value side to handle cross-quoting from
+        Python repr().
       security-severity: High
-      version: v1.0.0
+      version: v1.1.0
     pattern-either:
       - patterns:
           - pattern-inside: |
