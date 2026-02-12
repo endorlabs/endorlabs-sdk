@@ -54,19 +54,32 @@ sync_openapi()  # downloads to .endorlabs-context/openapiv2.swagger.json
 
 Then run drift detection:
 
+**Linux / macOS (bash):**
+
 ```bash
 export ENDOR_API="https://api.endorlabs.com"
 export ENDOR_API_CREDENTIALS_KEY="your-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-secret"
 export ENDOR_NAMESPACE="your-namespace"
 
-python .github/scripts/detect_schema_drift.py --run-tests --test-path tests/ --output schema_drift_report.json
+uv run python .github/scripts/detect_schema_drift.py --run-tests --test-path tests/ --output schema_drift_report.json
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$env:ENDOR_API = "https://api.endorlabs.com"
+$env:ENDOR_API_CREDENTIALS_KEY = "your-key"
+$env:ENDOR_API_CREDENTIALS_SECRET = "your-secret"
+$env:ENDOR_NAMESPACE = "your-namespace"
+
+uv run python .github/scripts/detect_schema_drift.py --run-tests --test-path tests/ --output schema_drift_report.json
 ```
 
 Check an existing report without re-running tests:
 
 ```bash
-python .github/scripts/detect_schema_drift.py --check-existing
+uv run python .github/scripts/detect_schema_drift.py --check-existing
 ```
 
 **Model consistency (static):** Diff SDK Pydantic field paths vs OpenAPI definitions (no test run). Run: `uv run python .github/scripts/detect_schema_drift.py --model-consistency --output-format json`. Writes `model_consistency_report.json` (uses `.endorlabs-context/openapiv2.swagger.json` if present, else fetches spec).

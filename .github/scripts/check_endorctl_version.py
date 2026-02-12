@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-import requests
+import httpx
 
 
 def get_latest_version() -> Optional[str]:
@@ -38,7 +38,7 @@ def get_latest_version() -> Optional[str]:
     """
     try:
         # Public endpoint - no authentication required
-        response = requests.get(
+        response = httpx.get(
             "https://api.endorlabs.com/meta/version",
             timeout=5,  # Fast timeout for cron job
         )
