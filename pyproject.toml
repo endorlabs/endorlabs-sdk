@@ -240,7 +240,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW"]
 # --- Agent: broadly relaxed (langgraph types, demo CLI) ---
 "src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "T20", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
-"src/endorlabs/sast_analysis/**" = ["PIE810"]  # endswith tuple: cleanup TODO
 # --- Tools: dependency explorer ---
 "src/endorlabs/tools/**" = ["C901", "SLF001", "S108"]
 [tool.ruff.format]
@@ -269,6 +268,9 @@ markers = [
 
 [tool.coverage.report]
 fail_under = 70
+omit = [
+    "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
+]
 exclude_lines = [
     "pragma: no cover",
     "if TYPE_CHECKING:",
@@ -300,7 +302,6 @@ strict = [
 executionEnvironments = [
     { root = "src/endorlabs/agent/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportMissingTypeStubs = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportPossiblyUnboundVariable = "none", reportUnnecessaryTypeIgnoreComment = "none", reportMissingImports = "none", reportAttributeAccessIssue = "none", reportConstantRedefinition = "none", reportMissingSuperCall = "none" },
-    { root = "src/endorlabs/sast_analysis", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
