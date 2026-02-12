@@ -9,7 +9,7 @@ Single source of truth for Endor Labs SDK usage. Link here from other docs inste
 
 ## OpenAPI / spec
 
-- The spec is not in the repo; use <https://api.endorlabs.com/download/openapiv2.swagger.json>. The schema drift workflow downloads it to `.endorlabs-context/openapiv2.swagger.json` (gitignored) in CI. For a single local step that creates `.endorlabs-context/` with both spec and user docs (for full IDE context), see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
+- Local (preferred): `.endorlabs-context/openapiv2.swagger.json` — created by `endorlabs.init()` or the schema drift workflow. Online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>. For a single local step that creates `.endorlabs-context/` with both spec and user docs, see [CONTRIBUTORS.md](../CONTRIBUTORS.md) and [scripts/README.md](../scripts/README.md).
 - List endpoints: `v1/namespaces/{tenant_meta.namespace}/{resource_name}` (e.g. `findings`, `projects`).
 - Update (PATCH): Collection URL; UUID and payload in request body; optional `request.update_mask`.
 
