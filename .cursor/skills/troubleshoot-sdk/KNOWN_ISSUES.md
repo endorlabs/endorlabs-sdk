@@ -143,13 +143,8 @@ Scripts delete **only** resources matching strict test name/pattern criteria:
 - **Other resources** (ApiKey, ScanProfile, Namespace, SemgrepRule,
   AuthorizationPolicy): Only **name prefix or exact name** is used (no tag).
 
-Scripts:
-- `maneuvers/cleanup_test_policies.py` (policies only)
-- `maneuvers/cleanup_test_resources.py` (ApiKey, ScanProfile, Namespace,
-  SemgrepRule, AuthorizationPolicy, and optionally Policy)
-
-**Recommendation:** Run with `--dry-run` first; then run without `--dry-run`
-and type `DELETE` only after reviewing the list.
+Use the endorctl commands above to list matching resources, then delete
+individually via `endorctl api delete`.
 
 ---
 

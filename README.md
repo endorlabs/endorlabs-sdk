@@ -8,6 +8,14 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
 - **Platform docs:** [docs.endorlabs.com](https://docs.endorlabs.com/)
 
+## Start here
+
+| You want to... | Go to |
+|----------------|-------|
+| **Use the SDK** in your project | Keep reading (Installation → Quick start) |
+| **Contribute** to this repo | [CONTRIBUTORS.md](CONTRIBUTORS.md) |
+| **Work with an AI agent** (Cursor, Claude, etc.) | [AGENTS.md](AGENTS.md) |
+
 ## Installation
 
 ```bash
@@ -28,6 +36,8 @@ cd endorlabs-sdk
 uv sync
 # or: pip install -e .
 ```
+
+Verify: `uv run python -c "import endorlabs; print(endorlabs.__version__)"`
 
 ## Configuration
 
@@ -170,6 +180,16 @@ Each facade exposes only the operations that resource supports. Hover over any f
 
 Details: [docs/reference/resources.md](docs/reference/resources.md), [docs/conventions.md](docs/conventions.md).
 
+## How it works
+
+Two layers, one registry:
+
+- **Transport** (`api_client.py`): HTTP, auth, retries. Nothing else.
+- **Resource facades** (`client_surface.py`): Typed wrappers built automatically from a registry. `client.project`, `client.finding`, etc. are all the same `ResourceFacade` pattern.
+- **Adding a resource** = one registry entry + a Pydantic model. No hand-written HTTP.
+
+Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
+
 ## Errors
 
 Raised exceptions live in `endorlabs.exceptions`: `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/conventions.md](docs/conventions.md) (Errors section).
@@ -177,28 +197,18 @@ Raised exceptions live in `endorlabs.exceptions`: `EndorAPIError` (base), `Unaut
 ## Development
 
 ```bash
-# Tests
-uv run pytest
-
-# With env from file
-uv run --env-file .env pytest
-
-# Integration tests (require valid credentials)
-uv run pytest -m integration -v
-
-# Lint and format
-uv run ruff check .
-uv run ruff format .
-
-# Type check
-uv run pyright
+uv run pytest                            # all tests
+uv run pytest -m integration -v          # integration only (needs credentials)
+uv run --env-file .env pytest            # if using .env file
+uv run ruff check . && uv run ruff format --check .  # lint
+uv run pyright                           # type check
 ```
 
-Contributors: see [CONTRIBUTORS.md](CONTRIBUTORS.md). AI/agent integration: [AGENTS.md](AGENTS.md). Doc index: [docs/README.md](docs/README.md).
+Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.md). Doc index: [docs/README.md](docs/README.md).
 
 ## Scripts and automation
 
-Pre-built scripts under `maneuvers/` (e.g. notification policies, exception policies, tag findings) can be run with `uv run python maneuvers/<script>.py --help`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Utility scripts live in `scripts/` (stub generation, debug helpers). For SAST rule management (import, export, delete, configure), see `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

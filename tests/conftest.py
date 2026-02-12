@@ -52,7 +52,7 @@ def pytest_configure(config) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Test cleanup constants (migrated from maneuvers/common/constants.py)
+# Test cleanup constants
 # Used only by test cleanup scripts — not by the SDK itself.
 # ---------------------------------------------------------------------------
 
