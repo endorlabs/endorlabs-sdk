@@ -11,6 +11,8 @@ Index for SDK-specific documentation. Platform concepts and user docs: [docs.end
 - [reference/README.md](reference/README.md) — List of reference docs and link to OpenAPI spec.
 - [reference/resources.md](reference/resources.md) — Resource name, operations, limitations, links.
 - [reference/namespace.md](reference/namespace.md) — Namespace in the SDK (list/get/create/update/delete).
+- [reference/api-surfaces.md](reference/api-surfaces.md) — API surface contracts (Developer, Module-level, Raw client).
+- [reference/create-update-payloads.md](reference/create-update-payloads.md) — Per-resource create/update payload shapes.
 
 ## Guides
 
@@ -26,6 +28,10 @@ Index for SDK-specific documentation. Platform concepts and user docs: [docs.end
 - [rules-of-engagement/troubleshooting.md](rules-of-engagement/troubleshooting.md)
 - [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md)
 - [rules-of-engagement/namespace-traversal.md](rules-of-engagement/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
+
+## Findings / Research
+
+- [findings/integration-test-pagination-research.md](findings/integration-test-pagination-research.md) — Research on test pagination configuration and conftest constants.
 
 ## When to update docs
 
