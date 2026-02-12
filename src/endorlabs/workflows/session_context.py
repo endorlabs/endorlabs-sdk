@@ -157,7 +157,7 @@ def pull_findings_context(
 
         findings = client.finding.list(**list_kwargs)
     except Exception as exc:
-        logger.warning("Failed to fetch findings: %s", exc)
+        logger.warning("Unable to fetch findings: %s", exc)
         return ctx
 
     ctx.total = len(findings)
@@ -253,7 +253,7 @@ def pull_policies_context(
 
         policies = client.policy.list(**list_kwargs)
     except Exception as exc:
-        logger.warning("Failed to fetch policies: %s", exc)
+        logger.warning("Unable to fetch policies: %s", exc)
         return ctx
 
     ctx.total = len(policies)
@@ -310,7 +310,7 @@ def pull_repository_versions_context(
 
         versions = client.repository_version.list(**list_kwargs)
     except Exception as exc:
-        logger.warning("Failed to fetch repository versions: %s", exc)
+        logger.warning("Unable to fetch repository versions: %s", exc)
         return ctx
 
     ctx.total = len(versions)
@@ -579,32 +579,33 @@ def create_session(
     errors: list[str] = []
 
     # Pull findings
-    logger.info("Pulling findings context ...")
+    project_name = project.meta.name if project.meta else project.uuid
+    logger.info("Pulling findings for project '%s' ...", project_name)
     findings = pull_findings_context(client, project)
     result.findings = findings
     if findings.total == 0:
-        logger.info("  No findings found for project %s", project.uuid)
+        logger.info("  No findings found for project '%s'", project.uuid)
 
     # Pull policies
-    logger.info("Pulling policies context ...")
+    logger.info("Pulling policies for project '%s' ...", project_name)
     policies = pull_policies_context(client, project)
     result.policies = policies
     if policies.total == 0:
-        logger.info("  No policies found in namespace %s", policies.namespace)
+        logger.info("  No policies found in namespace '%s'", policies.namespace)
 
     # Pull repository versions
-    logger.info("Pulling repository versions context ...")
+    logger.info("Pulling repository versions for project '%s' ...", project_name)
     versions = pull_repository_versions_context(client, project)
     result.versions = versions
     if versions.total == 0:
-        logger.info("  No repository versions found for project %s", project.uuid)
+        logger.info("  No repository versions found for project '%s'", project.uuid)
 
     # Write artifacts
     try:
         write_session_artifacts(session_dir, project, findings, policies, versions)
     except Exception as exc:
-        errors.append(f"Failed to write session artifacts: {exc}")
-        logger.error("Failed to write session artifacts: %s", exc)
+        errors.append(f"Unable to write session artifacts: {exc}")
+        logger.error("Unable to write session artifacts: %s", exc)
 
     result.errors = errors
     result.status = "error" if errors else "success"

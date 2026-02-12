@@ -156,7 +156,7 @@ downloaded: {time.strftime("%Y-%m-%d %H:%M:%S")}
         return True
 
     except Exception as e:
-        logger.warning("Failed to download %s: %s", full_url, e)
+        logger.warning("Unable to download %s: %s", full_url, e)
         return False
 
 
@@ -172,7 +172,7 @@ async def _download_one(
             success = await _download_single_page(client, full_url, output_file)
             return 1 if success else 0
         except Exception as e:
-            logger.warning("Failed to process %s: %s", full_url, e)
+            logger.warning("Unable to process %s: %s", full_url, e)
             return 0
 
 
