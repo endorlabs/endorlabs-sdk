@@ -20,7 +20,7 @@ dependencies = [
     "pyyaml==6.0.3",
     "httpx==0.28.1",
     "tenacity==9.1.2",
-
+    "zstandard==0.25.0",
 ]
 
 [project.optional-dependencies]
@@ -34,7 +34,6 @@ agent = [
     "langchain-google-genai[experimental]==4.2.0",
     "rich>=13.0",
 ]
-
 [project.scripts]
 endor-demo = "endorlabs.agent.demo_cli:main"
 
