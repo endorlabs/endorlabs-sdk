@@ -19,6 +19,7 @@ uv run ruff format --check .
 uv run pyright
 uv run pytest tests/unit/ -x -m "not slow and not long"
 uv run pytest tests/integration/ -x -m "not long"
+uv run python scripts/generate_client_stub.py  
 ```
 
 ## Requirements
