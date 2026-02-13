@@ -209,10 +209,10 @@ class TestTagFindingsByCriteria:
             "proj-1",
             ["FINDING_CATEGORY_SECRETS"],
             "fp",
-            file_path="maneuvers/",
+            file_path="src/utils/",
         )
         call_kwargs = client.finding.list.call_args.kwargs
-        assert "maneuvers/" in call_kwargs["filter"]
+        assert "src/utils/" in call_kwargs["filter"]
 
 
 # ---------------------------------------------------------------------------

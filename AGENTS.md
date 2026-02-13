@@ -1,17 +1,10 @@
 # Endor Labs SDK: AI Agent Integration Guide
 
-> **Endor Labs SDK**: Navigate the Endor Labs platform with tactical precision. This guide is the index for AI agents; behavior is defined by `.cursor/rules` and the linked docs.
+> This file is auto-loaded as workspace context for AI agents. It covers architecture, rules, skills, and reference links. For consumer usage see [README.md](README.md). For contributor setup see [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## Consuming the SDK
 
-- **Python:** 3.12+ required; CI and releases are tested on 3.13 only.
-- **Install:** `uv add endorlabs-sdk` or, in this repo, `uv sync`.
-- **Entry point:** `endorlabs.Client(tenant="...")`; then `client.namespace.list(traverse=True)`, `client.project.get(uuid)`, etc. **Create:** use `client.<resource>.create(name="...", namespace="...", ...)` (kwargs) or `create(payload=CreateXPayload(...))` (payload-based create). See [Architecture](#architecture) below.
-- **Convenience methods:** `client.whoami()` returns the authenticated tenant namespace (or `None`). `client.wait_until(predicate, timeout=60)` polls until a condition is true. `client.<resource>.lookup(filter=..., **kwargs)` returns exactly one result or raises `AmbiguousError`. `client.<resource>.list_iter(...)` is an iterator version of `list()`. `client.<resource>.tag(resource, tags)` / `.untag(resource, keys)` manage `meta.tags`. `client.<resource>.delete(..., ignore_missing=True)` suppresses 404 on delete.
-- **Parallel traversal:** `client.<resource>.list(traverse=True, concurrent=True, max_workers=10)` queries namespaces in parallel. `list(parent=resource)` scopes to a parent's namespace and `meta.parent_uuid` (only for resources with a registry `parent_kind`).
-- **Client options:** You can pass `timeout`, `content_type`, `accept_encoding`, `max_retries`, `base_url` to `Client(...)` to control transport; other APIClient options go via `**client_kwargs`. Default `content_type` is `"application/jsoncompact"`; use `content_type="application/json"` if compact responses cause validation issues. When both `list_params=` and flat kwargs (e.g. `filter=`, `mask=`) are passed to `.list()`, flat kwargs win.
-- **Advanced / transport-only:** `APIClient()` from `endorlabs.api_client` is available for custom HTTP usage, but all resource operations should go through `Client`.
-- **Errors:** `endorlabs.exceptions`; see [docs/conventions.md](docs/conventions.md) (Errors section).
+See [README.md](README.md) for installation, configuration, and quick start. Entry point: `endorlabs.Client(tenant="...")`. Key patterns: `client.<resource>.list()`, `.get()`, `.create()`, `.update()`, `.delete()`.
 
 ```python
 import endorlabs
@@ -143,7 +136,7 @@ Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
 
 ```bash
 uv run ruff check .
-uv run ruff format .
+uv run ruff format --check .
 uv run pyright
 uv run pytest tests/unit/ -m "not slow and not long"
 uv run pytest tests/integration/ -m "not long"
@@ -151,10 +144,6 @@ endorctl scan
 ```
 
 CI runs these (except optional endorctl); include pyright. Unit tests run without credentials; integration tests require `ENDOR_*` env vars.
-
-## User-Scoped Rules (Optional)
-
-For preferences that apply across all your projects (TDD, OS-agnostic scripts, consistency), see [.cursor/USER_RULES_SUGGESTION.md](.cursor/USER_RULES_SUGGESTION.md). Copy from there into **Cursor Settings → General → Rules for AI** if you want them globally.
 
 ---
 

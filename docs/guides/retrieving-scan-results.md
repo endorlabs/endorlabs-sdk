@@ -16,5 +16,5 @@ Use **traverse** when namespace is unknown or you need to search across namespac
 
 Resources: `endorlabs.resources.finding`, `.scan_result`, `.project`; [conventions.md](../conventions.md) (traverse, mask); [reference/resources.md](../reference/resources.md).
 
-Runnable patterns: `tests/`, `maneuvers/`; full platform workflows: [docs.endorlabs.com](https://docs.endorlabs.com/).
+Runnable patterns: `tests/`; full platform workflows: [docs.endorlabs.com](https://docs.endorlabs.com/).
 

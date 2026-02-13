@@ -114,7 +114,7 @@ def validate_enum_value(enum_class: type, value: Any) -> Any:
     try:
         return enum_class(value)
     except (ValueError, TypeError):
-        logger.warning(f"Unknown {enum_class.__name__} value: {value}. Using as-is.")
+        logger.warning("Unknown %s value: %s. Using as-is.", enum_class.__name__, value)
         return value
 
 
@@ -167,7 +167,7 @@ def create_minimal_payload(model_class: type[T], **kwargs: Any) -> T:
     try:
         return model_class(**filtered_kwargs)
     except ValidationError as e:
-        logger.error(f"Failed to create {model_class.__name__} payload: {e}")
+        logger.error("Unable to create %s payload: %s", model_class.__name__, e)
         raise
 
 
@@ -192,7 +192,7 @@ def safe_model_dump(
             mode="json",  # Use JSON mode for proper serialization
         )
     except Exception as e:
-        logger.warning(f"Model dump failed, using safe serialization: {e}")
+        logger.warning("Model dump unsuccessful, using safe serialization: %s", e)
         # Fallback to manual serialization
         data = {}
         for field_name, field_value in model.__dict__.items():
@@ -240,8 +240,10 @@ def validate_update_mask(
 
     if invalid_fields:
         logger.error(
-            f"Invalid update_mask for {resource_type}: {invalid_fields}. "
-            f"Allowed fields: {allowed_fields}"
+            "Invalid update_mask for %s: %s. Allowed fields: %s",
+            resource_type,
+            invalid_fields,
+            allowed_fields,
         )
         return False
 

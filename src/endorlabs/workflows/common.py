@@ -124,5 +124,5 @@ def find_project_by_repository_url(
             )
             return proj.uuid
 
-    logger.warning("No project found for repository: %s", repository_url)
+    logger.warning("No project found for repository: '%s'", repository_url)
     return None

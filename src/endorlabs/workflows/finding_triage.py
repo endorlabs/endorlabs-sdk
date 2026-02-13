@@ -301,7 +301,7 @@ def tag_findings_by_criteria(
             )
             result.tagged += 1
         except Exception as exc:
-            logger.error("Failed to tag finding %s: %s", finding_obj.uuid, exc)
+            logger.error("Unable to tag finding '%s': %s", finding_obj.uuid, exc)
             result.failed += 1
             result.errors.append(f"{finding_obj.uuid}: {exc}")
 
@@ -482,7 +482,7 @@ def create_exception_policy(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create exception policy: {exc}"
+        result.message = f"Unable to create exception policy: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 

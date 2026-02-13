@@ -237,7 +237,7 @@ def create_notification_target(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create notification target: {exc}"
+        result.message = f"Unable to create notification target: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 
@@ -323,7 +323,7 @@ def create_notification_policy(
         logger.info(result.message)
     except Exception as exc:
         result.status = "error"
-        result.message = f"Failed to create notification policy: {exc}"
+        result.message = f"Unable to create notification policy: {exc}"
         result.errors.append(str(exc))
         logger.error(result.message)
 

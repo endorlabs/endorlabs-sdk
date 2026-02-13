@@ -1,3 +1,4 @@
+# pyright: reportImportCycles=false
 """Resource facade for the resource-oriented Client API.
 
 Provides ``ResourceFacade[T]`` — a single facade class that handles all
