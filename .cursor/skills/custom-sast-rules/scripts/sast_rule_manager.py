@@ -42,14 +42,12 @@ from typing import Any
 import yaml
 
 import endorlabs
-from endorlabs.api_client import APIClient
 from endorlabs.resources.semgrep_rule import (
     CreateSemgrepRulePayload,
     SemgrepNativeRule,
     SemgrepRuleMetaCreate,
     SemgrepRuleSpec,
     UpdateSemgrepRulePayload,
-    create_semgrep_rule,
 )
 
 logger = logging.getLogger(__name__)
@@ -265,7 +263,6 @@ def _rule_display_name(rule: object) -> str:
 
 def cmd_import(
     client: endorlabs.Client,
-    api_client: APIClient,
     namespace: str,
     rules_dir: Path,
     *,
@@ -275,8 +272,8 @@ def cmd_import(
     """Import all rule YAML files from *rules_dir*.
 
     Each rule dict is validated through ``validate_rule_dict()`` before
-    import.  Uses ``create_semgrep_rule(..., validate=False)`` to bypass
-    client-side Pydantic validation for compound-pattern rules.
+    import.  Uses ``client.semgrep_rule.create(payload=...)`` for creating
+    new rules on the platform.
     """
     logger.info("=== import: importing rules from %s ===", rules_dir)
 
@@ -373,11 +370,9 @@ def cmd_import(
                     spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
                     propagate=True,
                 )
-                result = create_semgrep_rule(
-                    api_client,
-                    namespace,
-                    create_payload,
-                    validate=False,
+                result = client.semgrep_rule.create(
+                    payload=create_payload,
+                    namespace=namespace,
                 )
                 logger.info("Created: %s (uuid=%s)", rid, result.uuid)
                 created += 1
@@ -571,9 +566,15 @@ def cmd_configure(
             continue
 
         try:
+            # Include existing spec.yaml so the API can re-validate the
+            # spec object without hitting a null-parse error on PATCH.
+            existing_yaml = rule.spec.yaml if rule.spec else None
             upd = UpdateSemgrepRulePayload(
                 disabled=not want_enabled,
-                spec=SemgrepRuleSpec(disabled=not want_enabled),
+                spec=SemgrepRuleSpec(
+                    disabled=not want_enabled,
+                    yaml=existing_yaml,
+                ),
             )
             client.semgrep_rule.update(
                 rule,
@@ -592,7 +593,6 @@ def cmd_configure(
 
 def cmd_sync(
     client: endorlabs.Client,
-    api_client: APIClient,
     namespace: str,
     rules_dir: Path,
     enabled_dir: Path,
@@ -627,7 +627,6 @@ def cmd_sync(
     # Step 3: Import
     cmd_import(
         client,
-        api_client,
         namespace,
         rules_dir,
         force=force,
@@ -779,16 +778,14 @@ def main() -> None:
     if args.dry_run:
         logger.info("*** DRY RUN MODE — no changes will be made ***")
 
-    # Initialize SDK clients (credentials from env vars)
+    # Initialize SDK client (credentials from env vars)
     log_level = "DEBUG" if args.verbose else "WARNING"
-    api_client = APIClient(logging_level=log_level, auth_method="api-key")
-    client = endorlabs.Client(api_client=api_client, tenant=args.namespace)
+    client = endorlabs.Client(tenant=args.namespace, logging_level=log_level)
 
     # Dispatch
     if args.command == "import":
         cmd_import(
             client,
-            api_client,
             args.namespace,
             args.rules_dir,
             force=args.force,
@@ -822,7 +819,6 @@ def main() -> None:
     elif args.command == "sync":
         cmd_sync(
             client,
-            api_client,
             args.namespace,
             args.rules_dir,
             args.enabled_dir,

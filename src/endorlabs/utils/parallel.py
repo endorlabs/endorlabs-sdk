@@ -81,7 +81,7 @@ def execute_across_namespaces(
             except Exception as e:
                 # Log error but continue with other namespaces
                 logger.warning(
-                    "Failed to query namespace %s: %s",
+                    "Unable to query namespace '%s': %s",
                     ns,
                     e,
                 )

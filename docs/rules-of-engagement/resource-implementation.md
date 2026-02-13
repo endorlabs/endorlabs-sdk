@@ -12,7 +12,7 @@ Checklists for implementing new Endor Labs resources. CRUD operations are handle
 ## Phase 1: Implementation
 
 - [ ] Models: Meta, Spec, Resource extending BaseResource; schema drift detection per base.
-- [ ] **Field aliasing:** Reserved/invalid API key → alias (Tier 1). Otherwise 1:1 with spec (Tier 2). **Greenfield:** Prefer Python name = spec key for shared fields (`context`, `processing_status`, `index_data`). If you use a prefixed name with alias for a shared concept, register in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../src/endorlabs/utils/model_consistency.py) (Tier 3). See [conventions.md](../conventions.md) (Models and API parity → Field aliasing, Style heuristic).
+- [ ] **Field aliasing:** Reserved/invalid API key → alias (Tier 1). Otherwise 1:1 with spec (Tier 2). **Greenfield:** Prefer Python name = spec key for shared fields (`context`, `processing_status`, `index_data`). If you use a prefixed name with alias for a shared concept, register in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../../.github/scripts/model_consistency.py) (Tier 3). See [conventions.md](../conventions.md) (Models and API parity → Field aliasing, Style heuristic).
 - [ ] CRUD: Handled by `BaseResourceOperations` via the facade — no module-level CRUD wrappers needed. The facade delegates `list`, `get`, `create`, `update`, `delete` to `BaseResourceOperations` using registry metadata.
 - [ ] Update: `update_mask` is a comma-separated string at the facade level, converted to a list internally. Namespace: update_mask required.
 - [ ] Errors: use endorlabs.exceptions; log full response.text; no truncation.

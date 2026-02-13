@@ -179,7 +179,7 @@ def compare_scan_logs(
                 for msg in logs
             ]
         except Exception as exc:
-            logger.warning("Failed to fetch logs for %s: %s", sr.uuid, exc)
+            logger.warning("Unable to fetch logs for '%s': %s", sr.uuid, exc)
             entry.log_messages = [{"error": str(exc)}]
 
         result.entries.append(entry)

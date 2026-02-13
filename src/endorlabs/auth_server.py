@@ -66,7 +66,7 @@ class TokenHandler(BaseHTTPRequestHandler):
 
             # Parse query parameters (matches ewok-util approach)
             if "?" not in self.path:
-                logger.warning(f"No query parameters in redirect: {self.path}")
+                logger.warning("No query parameters in redirect: %s", self.path)
                 self.send_response(404)
                 self.end_headers()
                 return
@@ -96,7 +96,7 @@ class TokenHandler(BaseHTTPRequestHandler):
                         b"<p>Redirecting to Endor Labs...</p></body></html>"
                     )
             else:
-                logger.warning(f"Token not found in redirect: {self.path}")
+                logger.warning("Token not found in redirect: %s", self.path)
                 # Redirect to success page only if token not found
                 self.send_response(302)
                 self.send_header(
@@ -105,7 +105,7 @@ class TokenHandler(BaseHTTPRequestHandler):
                 self.end_headers()
             self.close_connection = True
         except Exception as e:
-            logger.error(f"Error handling OAuth callback: {e}")
+            logger.error("Error handling OAuth callback: %s", e)
             self.send_response(500)
             self.end_headers()
             self.close_connection = True
@@ -120,7 +120,7 @@ class TokenHandler(BaseHTTPRequestHandler):
         """Suppress default HTTP server logs."""
         # Optionally enable in debug mode
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"HTTP Server: {format % args}")
+            logger.debug("HTTP Server: %s", format % args)
 
 
 def get_token(
@@ -204,12 +204,13 @@ def get_token(
 
         # Open browser (only once)
         browser = get_browser(browser_name)
-        logger.info(f"Opening browser for {method} authentication...")
+        logger.info("Opening browser for %s authentication...", method)
         _ = browser.open_new_tab(auth_url)
 
         # Wait for callback (blocks until request received or timeout)
         logger.info(
-            f"Waiting for OAuth callback on localhost:30000 (timeout: {timeout}s)..."
+            "Waiting for OAuth callback on localhost:30000 (timeout: %ss)...",
+            timeout,
         )
 
         # Handle request - this will block until ONE request is received
@@ -234,8 +235,8 @@ def get_token(
                 "Please close any other applications using this port."
             )
         else:
-            logger.error(f"Failed to start OAuth server: {e}")
+            logger.error("Unable to start OAuth server: %s", e)
         return None
     except Exception as e:
-        logger.error(f"Browser authentication failed: {e}")
+        logger.error("Unable to complete browser authentication: %s", e)
         return None

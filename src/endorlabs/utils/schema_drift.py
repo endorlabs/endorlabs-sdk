@@ -69,8 +69,10 @@ class SchemaDriftDetector:
             # Log detailed field information for debugging
             for field, value in unknown_fields.items():
                 logger.debug(
-                    f"Unknown field '{field}': {type(value).__name__} = "
-                    f"{repr(value)[:100]}"
+                    "Unknown field '%s': %s = %s",
+                    field,
+                    type(value).__name__,
+                    repr(value)[:100],
                 )
 
     @staticmethod

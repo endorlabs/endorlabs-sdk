@@ -265,7 +265,8 @@ class APIClient:
             wait_time = self.rate_limit_delay - (time.time() - self.last_request_time)
             if wait_time > 0:
                 self.logger.warning(
-                    f"Rate limit encountered. Waiting for {wait_time:.2f} seconds."
+                    "Rate limit encountered. Waiting for %.2f seconds.",
+                    wait_time,
                 )
                 time.sleep(wait_time)
             self.rate_limit_delay = 0
@@ -648,8 +649,10 @@ class APIClient:
             try:
                 response = self.client.request(method, url, **kwargs)
                 self.logger.debug(
-                    f"{method} response {response.status_code} - "
-                    f"{self._truncate_for_logging(response.text)}"
+                    "%s response %s - %s",
+                    method,
+                    response.status_code,
+                    self._truncate_for_logging(response.text),
                 )
                 return self._handle_response(
                     response,
@@ -666,9 +669,11 @@ class APIClient:
                 if retryable:
                     backoff = self.backoff_factor * (2**attempt)
                     self.logger.warning(
-                        f"Retryable status {e.response.status_code}, "
-                        f"retrying in {backoff:.1f}s "
-                        f"(attempt {attempt + 1}/{self.max_retries + 1})"
+                        "Retryable status %s, retrying in %.1fs (attempt %s/%s)",
+                        e.response.status_code,
+                        backoff,
+                        attempt + 1,
+                        self.max_retries + 1,
                     )
                     time.sleep(backoff)
                     continue
@@ -678,8 +683,11 @@ class APIClient:
                 if attempt < self.max_retries:
                     backoff = self.backoff_factor * (2**attempt)
                     self.logger.warning(
-                        f"Network error, retrying in {backoff:.1f}s "
-                        f"(attempt {attempt + 1}/{self.max_retries + 1}): {e}"
+                        "Network error, retrying in %.1fs (attempt %s/%s): %s",
+                        backoff,
+                        attempt + 1,
+                        self.max_retries + 1,
+                        e,
                     )
                     time.sleep(backoff)
                     continue
@@ -707,10 +715,11 @@ class APIClient:
             # Handle rate limiting (429) - retryable with backoff
             if status_code == 429:
                 retry_info = response.headers.get("Retry-After", "no retry info")
-                self.logger.warning(
-                    f"Rate limit encountered (429): {retry_info}. "
-                    f"Request to {response.url} was throttled. "
-                    f"Will retry with exponential backoff."
+                self.logger.warning("Rate limited (429), retrying with backoff.")
+                self.logger.debug(
+                    "Rate limit detail: Retry-After=%s, url=%s",
+                    retry_info,
+                    response.url,
                 )
                 retry_after = response.headers.get("Retry-After")
                 if retry_after and retry_after.isdigit():
@@ -725,13 +734,16 @@ class APIClient:
             if status_code == 401:
                 if _reauth_attempted:
                     self.logger.error(
-                        "Reauthentication already attempted; raising 401 "
-                        "to prevent infinite retry loop."
+                        "Unable to reauthenticate. "
+                        "Verify credentials are valid and not expired."
                     )
                     raise
                 self.logger.warning(
-                    f"Authentication failed (401): Invalid or expired credentials. "
-                    f"Request to {response.url} was unauthorized."
+                    "Unable to authenticate (401). Verify credentials are valid."
+                )
+                self.logger.debug(
+                    "Authentication detail: url=%s",
+                    response.url,
                 )
                 self.logger.info("Attempting to reauthenticate...")
                 # Use authenticate() which will use the appropriate auth method
@@ -742,7 +754,7 @@ class APIClient:
                     self.logger.info("Reauthentication completed.")
                     # Retry the original request once
                     if method and url:
-                        self.logger.info(f"Retrying {method} request to {url}")
+                        self.logger.info("Retrying %s request to %s", method, url)
                         assert self.client is not None, "APIClient is closed"
                         retry_response = self.client.request(
                             method=method, url=url, **kwargs
@@ -761,10 +773,13 @@ class APIClient:
             if status_code == 501:
                 error_details = self._parse_error_response(response)
                 self.logger.error(
-                    f"Method not implemented (501) on {method or 'UNKNOWN'} "
-                    f"request to {response.url}. "
-                    f"This operation is not supported by the API. "
-                    f"Error: {error_details}"
+                    "Operation not supported (501) for %s.",
+                    response.url,
+                )
+                self.logger.debug(
+                    "501 detail: method=%s, error=%s",
+                    method or "UNKNOWN",
+                    error_details,
                 )
                 raise
 
@@ -772,10 +787,14 @@ class APIClient:
             if status_code >= 500:
                 error_details = self._parse_error_response(response)
                 self.logger.warning(
-                    f"Server error {status_code} on {method or 'UNKNOWN'} "
-                    f"request to {response.url}. "
-                    f"Will retry with exponential backoff. "
-                    f"Error: {error_details}"
+                    "Server error %s, retrying with backoff.",
+                    status_code,
+                )
+                self.logger.debug(
+                    "Server error detail: method=%s, url=%s, error=%s",
+                    method or "UNKNOWN",
+                    response.url,
+                    error_details,
                 )
                 raise
 
@@ -789,49 +808,69 @@ class APIClient:
                     409: "Conflict",
                 }.get(status_code, f"Client error {status_code}")
                 self.logger.error(
-                    f"{error_type} ({status_code}) on {method or 'UNKNOWN'} "
-                    f"request to {response.url}. "
-                    f"This error will not be retried. "
-                    f"Response: {error_details}"
+                    "%s (%s) for %s.",
+                    error_type,
+                    status_code,
+                    response.url,
+                )
+                self.logger.debug(
+                    "Client error detail: method=%s, response=%s",
+                    method or "UNKNOWN",
+                    error_details,
                 )
                 raise
 
             # Other HTTP errors
             error_details = self._parse_error_response(response)
             self.logger.debug(
-                f"API error {status_code} on {method or 'UNKNOWN'} "
-                f"request to {response.url}: {e}. "
-                f"Response: {error_details}"
+                "API error %s on %s request to %s: %s. Response: %s",
+                status_code,
+                method or "UNKNOWN",
+                response.url,
+                e,
+                error_details,
             )
             raise
 
         except httpx.ConnectError as e:
             # Network connection errors - retryable (retry loop in _request_with_retry)
             self.logger.error(
-                f"Network connection failed for {method or 'UNKNOWN'} "
-                f"request to {url or 'unknown URL'}: {e}. "
-                f"All {self.max_retries} retry attempts exhausted. "
-                f"Check network connectivity and API endpoint availability."
+                "Unable to connect to %s after %s retries.",
+                url or "unknown URL",
+                self.max_retries,
+            )
+            self.logger.debug(
+                "Connect error detail: method=%s, error=%s",
+                method or "UNKNOWN",
+                e,
             )
             raise
 
         except httpx.TimeoutException as e:
             # Request timeout errors - retryable (retry loop in _request_with_retry)
             self.logger.error(
-                f"Request timeout exceeded for {method or 'UNKNOWN'} "
-                f"request to {url or 'unknown URL'}: {e}. "
-                f"All {self.max_retries} retry attempts exhausted. "
-                f"Request took too long to complete."
+                "Request to %s timed out after %s retries.",
+                url or "unknown URL",
+                self.max_retries,
+            )
+            self.logger.debug(
+                "Timeout detail: method=%s, error=%s",
+                method or "UNKNOWN",
+                e,
             )
             raise
 
         except httpx.RequestError as e:
             # Other network-related errors - retryable
             self.logger.error(
-                f"Network request failed for {method or 'UNKNOWN'} "
-                f"request to {url or 'unknown URL'}: {e}. "
-                f"All {self.max_retries} retry attempts exhausted. "
-                f"Check network connectivity and API endpoint availability."
+                "Unable to complete request to %s after %s retries.",
+                url or "unknown URL",
+                self.max_retries,
+            )
+            self.logger.debug(
+                "Request error detail: method=%s, error=%s",
+                method or "UNKNOWN",
+                e,
             )
             raise
 
@@ -864,8 +903,12 @@ class APIClient:
         log_data = self._redact_log_data(data) if data else None
         log_json = self._redact_log_data(json) if json else None
         self.logger.debug(
-            f"{method} request to: {normalized_url} with params: {params}, "
-            f"data: {log_data}, json: {log_json}"
+            "%s request to: %s with params: %s, data: %s, json: %s",
+            method,
+            normalized_url,
+            params,
+            log_data,
+            log_json,
         )
         return self._request_with_retry(
             method,
@@ -1022,8 +1065,9 @@ class APIClient:
             # Check max_pages limit before fetching page
             if max_pages is not None and page_count >= max_pages:
                 self.logger.warning(
-                    f"Reached max_pages limit ({max_pages}). "
-                    f"Stopping pagination after {page_count} pages."
+                    "Reached max_pages limit (%s). Stopping pagination after %s pages.",
+                    max_pages,
+                    page_count,
                 )
                 break
 
@@ -1150,7 +1194,9 @@ class APIClient:
                 except Exception as e:
                     # If parsing fails, log but don't error out
                     self.logger.debug(
-                        f"Could not parse expiration time '{expires}': {e}"
+                        "Could not parse expiration time '%s': %s",
+                        expires,
+                        e,
                     )
                     self._token_expires = None
             else:
@@ -1164,7 +1210,7 @@ class APIClient:
             self.default_headers = self._headers_copy()
             return token
         except Exception as e:
-            self.logger.error(f"Unable to authenticate with API key: {e}")
+            self.logger.error("Unable to authenticate with API key: %s", e)
             self._token = None
             self._token_expires = None
             return None
@@ -1192,7 +1238,7 @@ class APIClient:
         """Get token from browser OAuth flow."""
         from endorlabs.auth_server import get_token as get_browser_token
 
-        self.logger.info(f"Starting browser OAuth flow with method: {browser_method}")
+        self.logger.info("Starting browser OAuth flow with method: %s", browser_method)
         return get_browser_token(
             timeout=BROWSER_AUTH_TIMEOUT_SECONDS,
             environment=environment,
@@ -1238,7 +1284,7 @@ class APIClient:
             except Exception:
                 self._token_expires = None
         except Exception as e:
-            self.logger.debug(f"Token validation request failed: {e}")
+            self.logger.debug("Token validation request unsuccessful: %s", e)
             # Token might still be valid, continue
             self._token_expires = None
 
@@ -1278,7 +1324,10 @@ class APIClient:
                     token = self._get_browser_token(browser_method, environment)
 
             if not token:
-                self.logger.error("Browser authentication failed or was cancelled")
+                self.logger.error(
+                    "Unable to authenticate with browser "
+                    "or authentication was cancelled"
+                )
                 self._token = None
                 self._token_expires = None
                 return None
@@ -1294,7 +1343,7 @@ class APIClient:
             self._token_expires = None
             return None
         except Exception as e:
-            self.logger.error(f"Unable to authenticate with browser: {e}")
+            self.logger.error("Unable to authenticate with browser: %s", e)
             self._token = None
             self._token_expires = None
             return None

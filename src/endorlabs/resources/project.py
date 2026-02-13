@@ -323,8 +323,9 @@ class Project(BaseResource):
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
-                    f"Schema drift detected in {info.field_name}: "
-                    f"unknown fields {unknown_fields}"
+                    "Schema drift detected in %s: unknown fields %s",
+                    info.field_name,
+                    unknown_fields,
                 )
         return v
 
@@ -480,7 +481,9 @@ def associate_scan_profile_with_project(
         data = res.json()
         updated_project = Project(**data)
         logger.info(
-            f"Associated scan profile {scan_profile_uuid} with project {project_uuid}"
+            "Associated scan profile '%s' with project '%s'",
+            scan_profile_uuid,
+            project_uuid,
         )
         return updated_project
     except httpx.HTTPStatusError as e:
@@ -530,14 +533,17 @@ def verify_scan_profile_association(
 
     if is_associated:
         logger.info(
-            f"Verified: Scan profile {scan_profile_uuid} is associated "
-            f"with project {project_uuid}"
+            "Verified: Scan profile '%s' is associated with project '%s'",
+            scan_profile_uuid,
+            project_uuid,
         )
     else:
         logger.warning(
-            f"Scan profile mismatch: Project {project_uuid} has "
-            f"scan_profile_uuid={current_scan_profile_uuid}, expected "
-            f"{scan_profile_uuid}"
+            "Scan profile mismatch: Project '%s' has "
+            "scan_profile_uuid='%s', expected '%s'",
+            project_uuid,
+            current_scan_profile_uuid,
+            scan_profile_uuid,
         )
 
     return is_associated
