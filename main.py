@@ -1,6 +1,6 @@
 """Endor Labs SDK -- Feature Walkthrough.
 
-Run with: uv run main.py [--scan]
+Run with: uv run main.py [--scan] [--context]
 
 A progressive, runnable demo of the SDK's major features. Each section is an
 independent function so you can read, run, or copy the parts you need.
@@ -666,12 +666,31 @@ def parse_args() -> argparse.Namespace:
             "from the most recent completed scan."
         ),
     )
+    parser.add_argument(
+        "--context",
+        action="store_true",
+        default=False,
+        help=(
+            "Bootstrap local context by downloading the OpenAPI spec and "
+            "user docs into .endorlabs-context/. Uses force=True to "
+            "re-download even if files already exist."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     """Run the SDK feature walkthrough."""
     args = parse_args()
+
+    if args.context:
+        print("\n" + "=" * 60)
+        print(" Context Bootstrap")
+        print("=" * 60)
+        status = endorlabs.init(force=True)
+        print(f"  OpenAPI spec: {status.openapi_path}")
+        print(f"  User docs:    {status.user_docs_path} ({status.user_docs_count} pages)")
+        print("  Context sync complete.")
 
     sections: list[tuple[str, str]] = [
         ("0", "Setup & Identity"),
