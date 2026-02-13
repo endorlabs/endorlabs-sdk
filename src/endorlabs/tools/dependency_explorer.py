@@ -1051,7 +1051,7 @@ def retrieve_call_graph_full(
         )
         return resp_full.json()
     except Exception as exc:
-        logger.warning("  Failed to GET full call graph %s: %s", cg_uuid, exc)
+        logger.warning("  Unable to GET full call graph %s: %s", cg_uuid, exc)
         return objects[0]
 
 
@@ -1112,7 +1112,7 @@ def render_call_graph_summary_md(cg_json_path: str | Path) -> str | None:
     try:
         info = decode_callgraph(envelope)
     except Exception as exc:
-        logger.warning("Failed to decode call graph: %s", exc)
+        logger.warning("Unable to decode call graph: %s", exc)
         return None
 
     total_fp = sum(len(t.methods) for t in info.internal_types)
@@ -1166,7 +1166,7 @@ def generate_call_graph_analysis_md(cg_json_path: str | Path) -> str | None:
         info = decode_callgraph(envelope)
         md = render_callgraph_analysis(info)
     except Exception as exc:
-        logger.warning("Failed to generate call graph analysis: %s", exc)
+        logger.warning("Unable to generate call graph analysis: %s", exc)
         return None
     out_path = cg_json_path.with_name(cg_json_path.stem + "_analysis.md")
     out_path.write_text(md, encoding="utf-8")

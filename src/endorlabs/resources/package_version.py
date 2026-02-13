@@ -291,7 +291,7 @@ class PackageVersionSpec(BaseSpec):
             try:
                 return Ecosystem(v)
             except ValueError:
-                logger.warning(f"Unknown Ecosystem value: {v}. Using as-is.")
+                logger.warning("Unknown Ecosystem value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -303,7 +303,7 @@ class PackageVersionSpec(BaseSpec):
             try:
                 return Language(v)
             except ValueError:
-                logger.warning(f"Unknown Language value: {v}. Using as-is.")
+                logger.warning("Unknown Language value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -441,8 +441,9 @@ class PackageVersion(BaseResource):
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
-                    f"Schema drift detected in {info.field_name}: "
-                    f"unknown fields {unknown_fields}"
+                    "Schema drift detected in %s: unknown fields %s",
+                    info.field_name,
+                    unknown_fields,
                 )
         return v
 

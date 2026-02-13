@@ -307,7 +307,7 @@ class LinterResultSpec(BaseSpec):
             try:
                 return LinterResultOrigin(v)
             except ValueError:
-                logger.warning(f"Unknown LinterResultOrigin value: {v}. Using as-is.")
+                logger.warning("Unknown LinterResultOrigin value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -319,7 +319,7 @@ class LinterResultSpec(BaseSpec):
             try:
                 return LinterResultLevel(v)
             except ValueError:
-                logger.warning(f"Unknown LinterResultLevel value: {v}. Using as-is.")
+                logger.warning("Unknown LinterResultLevel value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -331,7 +331,7 @@ class LinterResultSpec(BaseSpec):
             try:
                 return Ecosystem(v)
             except ValueError:
-                logger.warning(f"Unknown Ecosystem value: {v}. Using as-is.")
+                logger.warning("Unknown Ecosystem value: %s. Using as-is.", v)
                 return v
         return v
 
@@ -344,7 +344,8 @@ class LinterResultSpec(BaseSpec):
                 return DistributionFormatType(v)
             except ValueError:
                 logger.warning(
-                    f"Unknown DistributionFormatType value: {v}. Using as-is."
+                    "Unknown DistributionFormatType value: %s. Using as-is.",
+                    v,
                 )
                 return v
         return v
@@ -415,8 +416,9 @@ class LinterResult(BaseResource):
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:
                 logger.warning(
-                    f"Schema drift detected in {info.field_name}: "
-                    f"unknown fields {unknown_fields}"
+                    "Schema drift detected in %s: unknown fields %s",
+                    info.field_name,
+                    unknown_fields,
                 )
         return v
 

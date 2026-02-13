@@ -186,35 +186,26 @@ Chains: `delete` -> `orphans` -> `import` -> `configure`. If
 
 ---
 
-## Export Maneuver CLI Reference
+## Exporting Rules
 
-```bash
-# Export a rule by UUID
-uv run python maneuvers/export_semgrep_rule.py \
-    --uuid <rule-uuid> --namespace tenant.namespace
+To export rules from the platform, use the SDK to list and retrieve them:
 
-# Export a rule by name
-uv run python maneuvers/export_semgrep_rule.py \
-    --name my-rule-id --namespace tenant.namespace
+```python
+import endorlabs
 
-# Export all custom rules
-uv run python maneuvers/export_semgrep_rule.py \
-    --all --namespace tenant.namespace
+client = endorlabs.Client(tenant="tenant.namespace")
 
-# List rules matching a filter (dry run)
-uv run python maneuvers/export_semgrep_rule.py \
-    --filter "meta.name contains my-rule" --dry-run
+# List all custom rules
+rules = client.semgrep_rule.list()
+
+# Get a specific rule by UUID
+rule = client.semgrep_rule.get(uuid="<rule-uuid>")
+
+# Access the rule spec for YAML content
+print(rule.spec)
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--uuid UUID` | Export a specific rule by UUID |
-| `--name NAME` | Export a specific rule by `meta.name` |
-| `--filter EXPR` | List rules matching an Endor filter expression |
-| `--all` | Export all custom rules in the namespace |
-| `--namespace NS` | Target namespace (overrides `ENDOR_NAMESPACE`) |
-| `--dry-run` | List matching rules without downloading YAML |
-| `--output-dir DIR` | Directory to write exported YAML files |
+For bulk export, iterate over the list results and write each rule's spec to a YAML file.
 
 ---
 

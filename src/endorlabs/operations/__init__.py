@@ -307,34 +307,58 @@ class BaseResourceOperations(Generic[T]):
         # Log error with appropriate message based on status code
         if status_code == 400:
             self.logger.error(
-                f"Failed to {operation} {self.resource_name}{resource_id} in namespace "
-                f"'{tenant_meta_namespace}': {full_error_msg}"
+                "Unable to %s %s%s in namespace '%s': %s",
+                operation,
+                self.resource_name,
+                resource_id,
+                tenant_meta_namespace,
+                full_error_msg,
             )
         elif status_code == 403:
             self.logger.error(
-                f"Failed to {operation} {self.resource_name}{resource_id} in namespace "
-                f"'{tenant_meta_namespace}': Permission denied. {full_error_msg}"
+                "Unable to %s %s%s in namespace '%s': Permission denied. %s",
+                operation,
+                self.resource_name,
+                resource_id,
+                tenant_meta_namespace,
+                full_error_msg,
             )
         elif status_code == 404:
             self.logger.error(
-                f"Failed to {operation} {self.resource_name}{resource_id} in namespace "
-                f"'{tenant_meta_namespace}': Resource not found."
+                "Unable to %s %s%s in namespace '%s': Resource not found.",
+                operation,
+                self.resource_name,
+                resource_id,
+                tenant_meta_namespace,
             )
         elif status_code == 409:
             self.logger.error(
-                f"Failed to {operation} {self.resource_name}{resource_id} in namespace "
-                f"'{tenant_meta_namespace}': Conflict. {full_error_msg}"
+                "Unable to %s %s%s in namespace '%s': Conflict. %s",
+                operation,
+                self.resource_name,
+                resource_id,
+                tenant_meta_namespace,
+                full_error_msg,
             )
         elif status_code is not None:
             self.logger.error(
-                f"Failed to {operation} {self.resource_name}{resource_id} in namespace "
-                f"'{tenant_meta_namespace}': {error_context}. {full_error_msg}"
+                "Unable to %s %s%s in namespace '%s': %s. %s",
+                operation,
+                self.resource_name,
+                resource_id,
+                tenant_meta_namespace,
+                error_context,
+                full_error_msg,
             )
         else:
             self.logger.error(
-                f"Failed to {operation} {self.resource_name}{resource_id} in namespace "
-                f"'{tenant_meta_namespace}': {full_error_msg}. "
-                f"Check payload validity and API connectivity.",
+                "Unable to %s %s%s in namespace '%s': %s. "
+                "Verify the request and API connectivity.",
+                operation,
+                self.resource_name,
+                resource_id,
+                tenant_meta_namespace,
+                full_error_msg,
                 exc_info=is_validation_error,
             )
 
@@ -390,8 +414,10 @@ class BaseResourceOperations(Generic[T]):
                 self.resource_name,
             )
             self.logger.debug(
-                f"Fetched {len(all_items)} {self.resource_name} items "
-                f"from namespace '{tenant_meta_namespace}'"
+                "Fetched %s %s items from namespace '%s'",
+                len(all_items),
+                self.resource_name,
+                tenant_meta_namespace,
             )
 
             return [self.model_class(**item) for item in all_items]
@@ -477,9 +503,11 @@ class BaseResourceOperations(Generic[T]):
             if e.response.status_code == 404:
                 # 404 is expected when falling back, use debug level
                 self.logger.debug(
-                    f"Direct {self.resource_name} access failed for UUID "
-                    f"'{resource_uuid}' in namespace '{tenant_meta_namespace}'. "
-                    f"Falling back to list+filter approach."
+                    "Direct %s access returned an error for UUID "
+                    "'%s' in namespace '%s'. Falling back to list+filter approach.",
+                    self.resource_name,
+                    resource_uuid,
+                    tenant_meta_namespace,
                 )
             else:
                 # Other HTTP errors - raise immediately
@@ -489,9 +517,12 @@ class BaseResourceOperations(Generic[T]):
         except Exception as e:
             # For non-HTTP errors, try fallback
             self.logger.debug(
-                f"Direct {self.resource_name} access failed for UUID "
-                f"'{resource_uuid}' in namespace '{tenant_meta_namespace}': "
-                f"{e!s}. Falling back to list+filter approach."
+                "Direct %s access returned an error for UUID "
+                "'%s' in namespace '%s': %s. Falling back to list+filter approach.",
+                self.resource_name,
+                resource_uuid,
+                tenant_meta_namespace,
+                e,
             )
 
         # Method 2: Use list and filter approach (workaround)
@@ -565,8 +596,10 @@ class BaseResourceOperations(Generic[T]):
 
             # DEBUG: Log request payload
             self.logger.debug(
-                f"Creating {self.resource_name} in namespace "
-                f"'{tenant_meta_namespace}' with payload: {payload_dict}"
+                "Creating %s in namespace '%s' with payload: %s",
+                self.resource_name,
+                tenant_meta_namespace,
+                payload_dict,
             )
 
             # Optional create timeout (e.g. for slow endpoints like scan-log-requests)
@@ -600,13 +633,16 @@ class BaseResourceOperations(Generic[T]):
 
             if "uuid" not in data:
                 self.logger.warning(
-                    f"Response missing UUID for {self.resource_name}: {data}"
+                    "Response missing UUID for %s: %s",
+                    self.resource_name,
+                    data,
                 )
 
             # DEBUG: Log successful response
             self.logger.debug(
-                f"Successfully created {self.resource_name}: "
-                f"{data.get('uuid', 'unknown')}"
+                "Successfully created %s: %s",
+                self.resource_name,
+                data.get("uuid", "unknown"),
             )
 
             return self.model_class(**data)
@@ -714,8 +750,11 @@ class BaseResourceOperations(Generic[T]):
 
             # DEBUG: Log update request
             self.logger.debug(
-                f"Updating {self.resource_name} UUID '{resource_uuid}' in namespace "
-                f"'{tenant_meta_namespace}' with update_mask: {update_mask}"
+                "Updating %s UUID '%s' in namespace '%s' with update_mask: %s",
+                self.resource_name,
+                resource_uuid,
+                tenant_meta_namespace,
+                update_mask,
             )
 
             res = self.client.patch(url, json=request_data)
@@ -723,7 +762,9 @@ class BaseResourceOperations(Generic[T]):
 
             # DEBUG: Log successful update
             self.logger.debug(
-                f"Successfully updated {self.resource_name} UUID '{resource_uuid}'"
+                "Successfully updated %s UUID '%s'",
+                self.resource_name,
+                resource_uuid,
             )
 
             return self.model_class(**data)

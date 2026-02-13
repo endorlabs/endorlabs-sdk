@@ -29,7 +29,6 @@ on:
       - 'docs/**'
       - 'LICENSE'
       - 'main.py'
-      - 'maneuvers/**'
       - 'scripts/**'
   pull_request:
     branches: [ main, dev ]
@@ -44,7 +43,6 @@ on:
       - 'docs/**'
       - 'LICENSE'
       - 'main.py'
-      - 'maneuvers/**'
       - 'scripts/**'
   workflow_dispatch:  # Allow manual triggering for testing
 
@@ -406,7 +404,10 @@ jobs:
             --pr \
             --security-review \
             --scm-pr-id "${{ github.event.pull_request.number }}" \
-            --enable-pr-comments
+            --scm-token "$GITHUB_TOKEN" \
+            --enable-pr-comments \
+            --log-level debug \
+            --verbose
         env:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}

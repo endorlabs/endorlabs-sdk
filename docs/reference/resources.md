@@ -26,6 +26,12 @@ The table matches the SDK registry; OpenAPI paths are under `/v1/namespaces/{ten
 | package_license | yes | yes | yes | yes (update_mask required) | yes | OSS namespace |
 | scan_log_request | no | no | yes (request-based) | no | no | Request-based only; scan logs = response `spec.log_messages`; no LIST/GET for scan logs. See module. |
 | semgrep_rule | yes | yes | yes | yes (update_mask required) | yes | — |
+| code_owners | yes | yes | yes | yes (update_mask required) | yes | — |
+| invitation | yes | yes | yes | yes (update_mask required) | yes | — |
+| notification_target | yes | yes | yes | yes (update_mask required) | yes | — |
+| scan_workflow | yes | yes | no | no | yes | Platform-managed |
+| scan_workflow_result | yes | yes | no | no | yes | Platform-managed |
+| version_upgrade | yes | yes | no | no | yes | Platform-managed |
 | authentication_log | yes | yes (oss only) | no | no | no | System-owned; GET only when namespace is "oss"; use list() for system/tenant. |
 | endor_license | yes | yes (oss only) | no | no | no | System-owned; GET only when namespace is "oss"; use list() for system/tenant. |
 | policy_template | yes | yes (oss only) | no | no | no | System-owned; GET only when namespace is "oss"; use list() for system/tenant. |
