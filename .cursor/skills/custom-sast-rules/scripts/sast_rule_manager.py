@@ -518,6 +518,28 @@ def cmd_orphans(
 # ---------------------------------------------------------------------------
 
 
+def _build_rule_yaml_map(rules_dir: Path) -> dict[str, str]:
+    """Build a mapping of rule_id -> wrapped YAML from local files.
+
+    The Endor Labs API re-validates ``spec.yaml`` on every update,
+    even when only ``disabled`` is in the update_mask.  The list
+    response does *not* return the yaml, so we must supply it from
+    the local files.
+    """
+    id_to_yaml: dict[str, str] = {}
+    for yaml_path in _collect_yaml_files(rules_dir):
+        try:
+            raw = yaml_path.read_text(encoding="utf-8")
+            rule_dicts = _parse_yaml_rules(yaml_path)
+        except Exception:
+            continue
+        for rd in rule_dicts:
+            rid = str(rd.get("id", ""))
+            if rid:
+                id_to_yaml[rid] = _wrap_yaml(rd, raw)
+    return id_to_yaml
+
+
 def cmd_configure(
     client: endorlabs.Client,
     namespace: str,
@@ -535,6 +557,10 @@ def cmd_configure(
 
     all_ids = _extract_rule_ids_from_dir(rules_dir)
     enabled_ids = _extract_rule_ids_from_dir(enabled_dir)
+
+    # Build rule_id -> yaml mapping from local files so we can satisfy
+    # the API's spec.yaml re-validation requirement on PATCH.
+    id_to_yaml = _build_rule_yaml_map(rules_dir)
 
     logger.info(
         "Enabled set (%d): %s", len(enabled_ids), ", ".join(sorted(enabled_ids)) or "(none)"
@@ -566,20 +592,26 @@ def cmd_configure(
             continue
 
         try:
-            # Include existing spec.yaml so the API can re-validate the
-            # spec object without hitting a null-parse error on PATCH.
-            existing_yaml = rule.spec.yaml if rule.spec else None
+            # The API re-validates spec.yaml on every PATCH, even when
+            # only 'disabled' is in the update_mask.  We must include
+            # the yaml from local files to avoid a 400 null-parse error.
+            rule_yaml = id_to_yaml.get(rule_id)
+            if not rule_yaml:
+                logger.warning(
+                    "No local YAML found for '%s'; skipping configure.", rule_id
+                )
+                continue
             upd = UpdateSemgrepRulePayload(
                 disabled=not want_enabled,
                 spec=SemgrepRuleSpec(
                     disabled=not want_enabled,
-                    yaml=existing_yaml,
+                    yaml=rule_yaml,
                 ),
             )
             client.semgrep_rule.update(
                 rule,
                 payload=upd,
-                update_mask="disabled,spec.disabled",
+                update_mask="disabled,spec.disabled,spec.yaml",
             )
             logger.info("%sd: %s", action.capitalize(), display)
         except Exception as exc:
