@@ -1,0 +1,95 @@
+rules:
+  - id: endor-sdk-xml-safe-parsing-validation
+    languages:
+      - python
+    message: |
+      Problem:
+      A file that parses XML from external sources imports the unsafe
+      stdlib `xml.etree.ElementTree` module instead of `defusedxml`.
+
+      The stdlib parser does not protect against XML External Entity (XXE)
+      injection or entity expansion (billion-laughs) attacks.  Files that
+      parse external XML MUST use `defusedxml.ElementTree` as a drop-in
+      replacement.
+
+      This rule fires when:
+      1. A file imports `xml.etree.ElementTree` AND
+      2. The file does NOT import `defusedxml.ElementTree`
+
+      This catches the case where a developer adds or reverts an import
+      to the unsafe parser, even if the enforcement rule would catch the
+      actual call site.
+
+      Trust chain:
+      This is the validation half of the XML safe parsing trust chain.
+      The paired enforcement rule
+      `endor-sdk-xml-safe-parsing-enforcement` flags every call to
+      stdlib ElementTree parsing functions.  Both rules must pass for
+      the security contract to hold.
+
+      Solution:
+      Replace the stdlib import with defusedxml:
+
+      ```python
+      # Instead of:
+      # import xml.etree.ElementTree as ET
+
+      # Use:
+      import defusedxml.ElementTree as ET
+      ```
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-611: Improper Restriction of XML External Entity Reference"
+      description: >-
+        File imports stdlib xml.etree.ElementTree without importing
+        defusedxml -- XML parsing in this file is vulnerable to XXE
+        and entity expansion attacks.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
+      endor-tags:
+        - A05:2021
+        - XML-External-Entity
+        - trust-chain.id:xml-safe-parsing
+        - trust-chain.role:validation
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The defusedxml library is the sole mechanism that prevents XXE
+        and entity expansion attacks when parsing external XML.  This
+        certification rule validates that files parsing external XML
+        import defusedxml instead of the unsafe stdlib parser.  If
+        the stdlib import is present without defusedxml, the file is
+        vulnerable regardless of which parsing function is called.
+      impact: MEDIUM
+      owasp:
+        - A05:2021-Security-Misconfiguration
+      references:
+        - https://cwe.mitre.org/data/definitions/611.html
+        - https://pypi.org/project/defusedxml/
+        - https://docs.python.org/3/library/xml.html#xml-vulnerabilities
+        - https://owasp.org/Top10/A05_2021-Security_Misconfiguration/
+      remediation: >-
+        Replace import xml.etree.ElementTree with
+        import defusedxml.ElementTree.  The defusedxml API is
+        compatible with stdlib ElementTree but disables external
+        entities and limits entity expansion.
+      security-severity: Medium
+      version: v1.0.0
+    patterns:
+      - pattern: import xml.etree.ElementTree as $ALIAS
+      - pattern-not-inside: |
+          import defusedxml.ElementTree as $ALIAS2
+          ...
+          import xml.etree.ElementTree as $ALIAS
+      - pattern-not-inside: |
+          import xml.etree.ElementTree as $ALIAS
+          ...
+          import defusedxml.ElementTree as $ALIAS2
+    severity: ERROR
+    paths:
+      include:
+        - src/endorlabs/

@@ -1,5 +1,5 @@
 rules:
-  - id: endor-sdk-unsafe-xml-parsing
+  - id: endor-sdk-xml-safe-parsing-enforcement
     languages:
       - python
     message: |
@@ -28,6 +28,13 @@ rules:
       ```
 
       Install with: `pip install defusedxml`
+
+      Trust chain:
+      This is the enforcement half of the XML safe parsing trust chain.
+      The paired validation rule
+      `endor-sdk-xml-safe-parsing-validation` validates that the
+      defusedxml integration has not degraded.  Both rules must pass
+      for the security contract to hold.
     metadata:
       category: security
       confidence: HIGH
@@ -44,6 +51,8 @@ rules:
       endor-tags:
         - A05:2021
         - XML-External-Entity
+        - trust-chain.id:xml-safe-parsing
+        - trust-chain.role:enforcement
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
@@ -58,12 +67,13 @@ rules:
         - https://cwe.mitre.org/data/definitions/611.html
         - https://pypi.org/project/defusedxml/
         - https://docs.python.org/3/library/xml.html#xml-vulnerabilities
+        - https://owasp.org/Top10/A05_2021-Security_Misconfiguration/
       remediation: >-
         Replace xml.etree.ElementTree with defusedxml.ElementTree.
         The defusedxml API is compatible with stdlib ElementTree but
         disables external entities and limits entity expansion.
       security-severity: Medium
-      version: v1.0.0
+      version: v1.1.0
     pattern-either:
       - pattern: xml.etree.ElementTree.fromstring(...)
       - pattern: xml.etree.ElementTree.parse(...)
