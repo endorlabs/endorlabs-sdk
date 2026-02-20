@@ -92,12 +92,12 @@ rules:
         - https://cwe.mitre.org/data/definitions/532.html
         - https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/
       remediation: >-
-        Attach RedactingFilter to all module-level loggers in the SDK.
-        Import the filter and patterns from endorlabs.utils.redaction and
-        call logger.addFilter(RedactingFilter([...])) immediately after
-        logger creation.
+        Replace logging.getLogger(__name__) with get_resource_logger(__name__)
+        from endorlabs.utils.logging_config. The helper attaches the
+        RedactingFilter with all required patterns automatically. Do not
+        manually construct RedactingFilter -- use the centralized helper.
       security-severity: High
-      version: v1.2.0
+      version: v1.3.0
     patterns:
       - pattern: $LOGGER = logging.getLogger(...)
       - pattern-not-inside: |

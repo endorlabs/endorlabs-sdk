@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -23,9 +22,11 @@ import httpx
 if TYPE_CHECKING:
     from endorlabs.api_client import APIClient
 
+from endorlabs.utils.logging_config import get_resource_logger
+
 from .models import InitStatus
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 def _import_docs_deps() -> tuple[Any, Callable[..., str]]:

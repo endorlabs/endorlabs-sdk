@@ -6,7 +6,6 @@ used across all Endor Labs resource models.
 CRUD operations live in ``endorlabs.operations.BaseResourceOperations``.
 """
 
-import logging
 from datetime import datetime
 from enum import Enum
 from typing import (
@@ -28,6 +27,7 @@ from pydantic import (
 )
 
 from ..types import SupportsResourceUpdate
+from ..utils.logging_config import get_resource_logger
 from ..utils.schema_drift import SchemaDriftDetector
 
 # Import nested config models for better type safety
@@ -35,7 +35,7 @@ from .exception_config import ExceptionConfig
 from .finding_config import FindingConfig
 from .notification_config import NotificationConfig
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 # Map API resource name (plural) to resource type for immutable-field lookup
 RESOURCE_NAME_TO_TYPE: dict[str, str] = {

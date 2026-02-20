@@ -8,7 +8,6 @@ separate from HTTP/transport logic.
 
 import builtins
 import contextlib
-import logging
 import os
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
@@ -19,6 +18,7 @@ from pydantic import BaseModel, ValidationError
 from ..exceptions import EndorAPIError
 from ..exceptions import ValidationError as EndorValidationError
 from ..types import ListParameters
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -39,7 +39,7 @@ class BaseResourceOperations(Generic[T]):
         self.client = client
         self.resource_name = resource_name
         self.model_class = model_class
-        self.logger = logging.getLogger(f"{__name__}.{resource_name}")
+        self.logger = get_resource_logger(f"{__name__}.{resource_name}")
 
     def _extract_items_from_page(self, data: Any) -> list[Any]:
         """Extract items from a paginated response page."""
