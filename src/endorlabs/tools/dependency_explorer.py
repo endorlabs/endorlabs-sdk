@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import base64
 import json
-import logging
 import os
 import re
 import textwrap
@@ -31,7 +30,9 @@ if TYPE_CHECKING:
     from endorlabs import Client
     from endorlabs.api_client import APIClient
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional: zstandard for call graph decoding

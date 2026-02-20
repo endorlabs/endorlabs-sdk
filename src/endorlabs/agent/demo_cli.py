@@ -21,7 +21,6 @@ as the rest of the SDK.
 
 from __future__ import annotations
 
-import logging
 import os
 import queue
 import shutil
@@ -37,11 +36,12 @@ from endorlabs.tools.dependency_explorer import (
     process_project,
     slugify,
 )
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.session_context import (
     create_session,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 DEFAULT_CONTEXT_DIR = ".endorlabs-context"
 

@@ -6,12 +6,13 @@ across multiple namespaces, improving performance for large datasets.
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TypeVar
 
-logger = logging.getLogger(__name__)
+from .logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 T = TypeVar("T")
 

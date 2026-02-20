@@ -20,8 +20,9 @@ rules:
          args must have each element redacted.
       4. **filter() returns True unconditionally** -- records must never be
          suppressed; the filter rewrites, it does not drop.
-      5. **_redact() coerces non-strings** -- numeric or object args must
-         be converted to str before regex application, or they will raise.
+      5. **_redact() preserves non-strings** -- numeric or object args must
+         be returned unchanged so that %d/%f log formatting continues to
+         work.  Only string values are pattern-matched and redacted.
       6. **_redact() iterates all compiled patterns** -- every registered
          pattern must be applied; short-circuiting would leave some
          credential formats unredacted.
@@ -85,13 +86,14 @@ rules:
         Restore the missing structural invariant(s) in RedactingFilter.
         The filter() method must redact record.msg, handle both dict and
         tuple args, and return True unconditionally.  The _redact() method
-        must coerce non-strings and iterate all compiled patterns.  The
+        must return non-strings unchanged (to preserve %d/%f formatting)
+        and iterate all compiled patterns on string values.  The
         __init__() method must compile all patterns with re.IGNORECASE.
         The module-level redaction patterns must use quote-agnostic
         character classes on the value side to handle cross-quoting from
         Python repr().
       security-severity: High
-      version: v1.1.0
+      version: v1.2.0
     pattern-either:
       - patterns:
           - pattern-inside: |
@@ -122,7 +124,7 @@ rules:
               def _redact(self, $MSG):
                   ...
                   if not isinstance($MSG, str):
-                      $MSG = str($MSG)
+                      return $MSG
                   ...
                   for $PAT, $REPL in self._pattern_replacement_pairs:
                       ...
