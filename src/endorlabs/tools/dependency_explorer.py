@@ -965,8 +965,10 @@ def retrieve_dep_metadata_full(
     Tries the project's namespace first, then falls back to ``"oss"``.
     Returns ``(rows, source_namespace)``.
     """
+    from endorlabs.operations import validate_namespace
+
     for ns in [project_namespace, "oss"]:
-        url = f"v1/namespaces/{ns}/dependency-metadata"
+        url = f"v1/namespaces/{validate_namespace(ns)}/dependency-metadata"
         params = {
             "list_parameters.filter": (
                 f'spec.importer_data.project_uuid=="{project_uuid}"'
@@ -1029,7 +1031,10 @@ def retrieve_call_graph_full(
 
     Uses ``x-callgraph-encoding=any`` header to request JSON encoding.
     """
-    url = f"v1/namespaces/{namespace}/call-graph-data"
+    from endorlabs.operations import validate_namespace
+
+    ns = validate_namespace(namespace)
+    url = f"v1/namespaces/{ns}/call-graph-data"
     params = {
         "list_parameters.filter": f'meta.parent_uuid=="{pv_uuid}"',
         "list_parameters.page_size": "1",
@@ -1044,7 +1049,7 @@ def retrieve_call_graph_full(
     if not cg_uuid:
         return objects[0]
 
-    get_url = f"v1/namespaces/{namespace}/call-graph-data/{cg_uuid}"
+    get_url = f"v1/namespaces/{ns}/call-graph-data/{cg_uuid}"
     try:
         resp_full = api_client.get(
             get_url,
