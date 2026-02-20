@@ -11,13 +11,14 @@ as the rest of the SDK.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from typing import Any
 
 from .common import WorkflowResult
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Prompt template

@@ -12,7 +12,6 @@ as the rest of the SDK.
 from __future__ import annotations
 
 import json
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from io import StringIO
@@ -24,7 +23,9 @@ from .common import WorkflowResult
 if TYPE_CHECKING:
     from endorlabs import Client
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 # Finding categories used for the "by scan type" summary
 _FINDING_CATEGORIES = [

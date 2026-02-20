@@ -6,11 +6,12 @@ Pydantic models. This is common during API evolution and helps maintain
 backward compatibility.
 """
 
-import logging
 from typing import Any
 
 # Set up logger for schema drift detection
-logger = logging.getLogger(__name__)
+from .logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 
 class SchemaDriftDetector:
