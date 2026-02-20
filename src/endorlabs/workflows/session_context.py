@@ -502,6 +502,7 @@ def write_session_artifacts(
                 versions.json
     """
     from endorlabs.tools.dependency_explorer import slugify
+    from endorlabs.utils.path_safety import safe_write_text
 
     session_dir = Path(session_dir)
     project_name = project.meta.name if project.meta else project.uuid
@@ -509,44 +510,46 @@ def write_session_artifacts(
     proj_dir = session_dir / slug
 
     # -- project-summary.md --
-    proj_dir.mkdir(parents=True, exist_ok=True)
     summary = render_project_summary(project, findings, policies, versions)
-    (proj_dir / "project-summary.md").write_text(summary, encoding="utf-8")
+    safe_write_text(session_dir, proj_dir / "project-summary.md", summary)
 
     # -- findings/ --
     findings_dir = proj_dir / "findings"
-    findings_dir.mkdir(parents=True, exist_ok=True)
-    (findings_dir / "findings-summary.md").write_text(
+    safe_write_text(
+        session_dir,
+        findings_dir / "findings-summary.md",
         render_findings_summary(findings),
-        encoding="utf-8",
     )
-    (findings_dir / "findings.json").write_text(
+    safe_write_text(
+        session_dir,
+        findings_dir / "findings.json",
         json.dumps(findings.raw_findings, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
     )
 
     # -- policies/ --
     policies_dir = proj_dir / "policies"
-    policies_dir.mkdir(parents=True, exist_ok=True)
-    (policies_dir / "policies-summary.md").write_text(
+    safe_write_text(
+        session_dir,
+        policies_dir / "policies-summary.md",
         render_policies_summary(policies),
-        encoding="utf-8",
     )
-    (policies_dir / "policies.json").write_text(
+    safe_write_text(
+        session_dir,
+        policies_dir / "policies.json",
         json.dumps(policies.policies, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
     )
 
     # -- repository-versions/ --
     versions_dir = proj_dir / "repository-versions"
-    versions_dir.mkdir(parents=True, exist_ok=True)
-    (versions_dir / "versions-summary.md").write_text(
+    safe_write_text(
+        session_dir,
+        versions_dir / "versions-summary.md",
         render_versions_summary(versions),
-        encoding="utf-8",
     )
-    (versions_dir / "versions.json").write_text(
+    safe_write_text(
+        session_dir,
+        versions_dir / "versions.json",
         json.dumps(versions.versions, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
     )
 
     logger.info("Session artifacts written to %s", proj_dir)
