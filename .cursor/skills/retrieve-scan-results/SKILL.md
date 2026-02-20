@@ -118,6 +118,50 @@ client.project.delete(target.uuid, namespace="tenant-root")
 
 For full traversal patterns, performance comparison, and filtering examples, see [TRAVERSAL_PATTERNS.md](TRAVERSAL_PATTERNS.md).
 
+## Per-Branch Finding Deduplication
+
+Findings are generated **per RepositoryVersion** (branch). A project with 2 scanned branches (e.g. `main` and `feature-x`) produces **2x finding objects** for the same code-level issue — one per branch scan.
+
+**Key fields for distinguishing branches:**
+
+| Field | Purpose |
+|-------|---------|
+| `spec.source_code_version.ref` | Branch name the finding came from (e.g. `refs/heads/main`) |
+| `context.scan_uuid` | UUID of the specific scan run |
+
+**Deduplication strategies:**
+
+```python
+# Strategy 1: Filter to a single branch
+main_findings = client.finding.list(
+    filter=(
+        (F("spec.project_uuid") == project.uuid)
+        & F("spec.source_code_version.ref").matches("refs/heads/main")
+    ),
+    namespace=project.namespace,
+)
+
+# Strategy 2: Group by explanation text to identify unique issues
+from collections import defaultdict
+by_explanation = defaultdict(list)
+for f in findings:
+    key = (
+        getattr(f.spec, "explanation", "") or "",
+        getattr(f.spec, "remediation", "") or "",
+    )
+    by_explanation[key].append(f)
+# Each group represents one unique code issue (may have N branch variants)
+
+# Strategy 3: Use RepositoryVersion to understand branch coverage
+repo_versions = client.repository_version.list(
+    filter=f'spec.project_uuid=="{project.uuid}"',
+    namespace=project.namespace,
+)
+# Each RepositoryVersion = one scanned branch
+```
+
+**When reviewing findings programmatically**, always account for branch multiplicity to avoid double-counting severity totals or issue counts.
+
 ## Quick Reference
 
 | Operation | Example |
