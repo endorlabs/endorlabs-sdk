@@ -121,9 +121,11 @@ def compare_scan_logs(
     result = ScanLogComparison(num_scans_requested=num_scans)
 
     # Fetch recent scan results
+    from endorlabs.filter import F
+
     scan_results = client.scan_result.list(
         namespace=namespace,
-        filter=f'meta.parent_uuid=="{project_uuid}"',
+        filter=F("meta.parent_uuid") == project_uuid,
         sort_by="meta.create_time",
         desc=True,
         page_size=num_scans,
