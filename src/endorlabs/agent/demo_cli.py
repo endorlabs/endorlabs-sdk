@@ -21,6 +21,7 @@ as the rest of the SDK.
 
 from __future__ import annotations
 
+import logging
 import os
 import queue
 import shutil

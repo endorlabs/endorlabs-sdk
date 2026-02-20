@@ -14,9 +14,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from .common import WorkflowResult
-
 from endorlabs.utils.logging_config import get_resource_logger
+
+from .common import WorkflowResult
 
 logger = get_resource_logger(__name__)
 
