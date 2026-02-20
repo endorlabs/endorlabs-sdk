@@ -1,0 +1,129 @@
+rules:
+  - id: endor-sdk-filter-parameterization-validation
+    languages:
+      - python
+    message: |
+      Problem:
+      The F() filter builder implementation has degraded -- one or more
+      behavioral invariants required by the security contract are missing
+      or structurally altered.
+
+      The filter builder is the mechanism that prevents query injection
+      when constructing API filter expressions.  Its correctness depends
+      on these invariants:
+
+      1. **_format_value() escapes backslashes** before double-quotes --
+         `value.replace("\\", "\\\\")` must come before
+         `.replace('"', '\\"')` to prevent escape-sequence confusion.
+      2. **_format_value() escapes double-quotes** in string values --
+         `value.replace('"', '\\"')` must be applied so a value
+         containing `"` cannot break out of the quoted clause.
+      3. **_format_value() wraps strings in double quotes** -- the
+         result must be `f'"{escaped}"'` so the value is delimited.
+      4. **_ENUM_RE restricts unquoted output** -- only UPPER_CASE_WORDS
+         matching `^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$` may be emitted
+         unquoted; all other strings must go through escaping.
+      5. **matches() escapes its pattern argument** with the same
+         backslash-then-quote strategy as _format_value().
+
+      Trust chain:
+      This is the validation half of the filter parameterization trust
+      chain.  The paired enforcement rule
+      `endor-sdk-filter-parameterization-enforcement` verifies that
+      F() is used instead of raw f-string filter construction.  Both
+      rules must pass for the security contract to hold.
+
+      Solution:
+      Restore the invariant(s) that this finding identified as missing.
+      Review the _format_value() and matches() implementations in
+      src/endorlabs/filter.py against the behavioral contract above.
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-943: Improper Neutralization of Special Elements in Data Query Logic"
+      description: >-
+        Filter builder behavioral contract violated -- one or more
+        structural invariants required for query-injection prevention
+        are missing or altered in the F() builder implementation.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
+      endor-tags:
+        - A03:2021
+        - Injection
+        - trust-chain.id:filter-parameterization
+        - trust-chain.role:validation
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The F() filter builder (endorlabs.filter) is the sole mechanism
+        that escapes user-controlled values before they are interpolated
+        into API filter expressions.  This certification rule validates
+        that the implementation satisfies its behavioral contract by
+        checking structural invariants of _format_value() and matches().
+        If any invariant is missing, user-controlled values may break
+        out of the filter clause and alter query semantics.
+      impact: MEDIUM
+      owasp:
+        - A03:2021-Injection
+      references:
+        - https://cwe.mitre.org/data/definitions/943.html
+        - https://owasp.org/Top10/A03_2021-Injection/
+      remediation: >-
+        Restore the missing structural invariant(s) in the filter
+        builder.  _format_value() must escape backslashes then
+        double-quotes and wrap in double quotes.  matches() must
+        apply the same escaping.  _ENUM_RE must restrict unquoted
+        output to UPPER_CASE_WORDS only.
+      security-severity: Medium
+      version: v1.0.0
+    pattern-either:
+      # Invariant 1+2: _format_value must escape backslash then double-quote
+      - patterns:
+          - pattern: |
+              def _format_value($VALUE):
+                  ...
+          - pattern-not-inside: |
+              def _format_value($VALUE):
+                  ...
+                  $ESCAPED = $VALUE.replace("\\", "\\\\").replace('"', '\\"')
+                  ...
+      # Invariant 3: _format_value must wrap escaped strings in double quotes
+      - patterns:
+          - pattern: |
+              def _format_value($VALUE):
+                  ...
+          - pattern-not-inside: |
+              def _format_value($VALUE):
+                  ...
+                  return f'"{$ESCAPED}"'
+      # Invariant 4: _ENUM_RE must exist as a compiled pattern
+      - patterns:
+          - pattern: |
+              def _format_value($VALUE):
+                  ...
+          - pattern-not-inside: |
+              def _format_value($VALUE):
+                  ...
+                  if _ENUM_RE.match($VALUE):
+                      return $VALUE
+                  ...
+      # Invariant 5: matches() must escape its pattern argument
+      - patterns:
+          - pattern-inside: |
+              class FieldRef:
+                  ...
+          - pattern: |
+              def matches(self, $PATTERN):
+                  ...
+          - pattern-not-inside: |
+              def matches(self, $PATTERN):
+                  ...
+                  $ESCAPED = $PATTERN.replace("\\", "\\\\").replace('"', '\\"')
+                  ...
+    severity: ERROR
+    paths:
+      include:
+        - src/endorlabs/filter.py
