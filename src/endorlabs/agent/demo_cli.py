@@ -37,6 +37,7 @@ from endorlabs.tools.dependency_explorer import (
     slugify,
 )
 from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.session_context import (
     create_session,
 )
@@ -331,8 +332,7 @@ class BackgroundContextLoader:
                 dep_metadata_max_pages=10,
             )
             sp = Path(dep_out) / "dependency-callgraph-summary.md"
-            sp.parent.mkdir(parents=True, exist_ok=True)
-            sp.write_text(dep_result.report, encoding="utf-8")
+            safe_write_text(self.session_dir, sp, dep_result.report)
             self._emit(f"  Dependencies and call graphs loaded for {short}")
         except Exception as exc:
             self._emit(f"  {short}: deps failed — {exc}")
@@ -353,8 +353,7 @@ class BackgroundContextLoader:
                 tm = analyze_project_threat_model(self.llm, name, combined)
                 if tm.ok:
                     tm_path = self.session_dir / proj_slug / "threat-model.md"
-                    tm_path.parent.mkdir(parents=True, exist_ok=True)
-                    tm_path.write_text(tm.report, encoding="utf-8")
+                    safe_write_text(self.session_dir, tm_path, tm.report)
                     self._emit(
                         f"  Threat model complete for {short}"
                         f" ({tm.risk_count} risks identified)"

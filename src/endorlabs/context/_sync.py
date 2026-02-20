@@ -126,8 +126,11 @@ async def _download_single_page(
     client: httpx.AsyncClient,
     full_url: str,
     output_file: Path,
+    base_dir: Path,
 ) -> bool:
     """Download and convert single page to markdown."""
+    from endorlabs.utils.path_safety import safe_write_text
+
     beautiful_soup_cls, md = _import_docs_deps()
     try:
         response = await client.get(full_url)
@@ -153,7 +156,7 @@ downloaded: {time.strftime("%Y-%m-%d %H:%M:%S")}
 
 {markdown_content}
 """
-        _ = output_file.write_text(metadata, encoding="utf-8")
+        safe_write_text(base_dir, output_file, metadata)
         return True
 
     except Exception as e:
@@ -166,11 +169,14 @@ async def _download_one(
     semaphore: asyncio.Semaphore,
     full_url: str,
     output_file: Path,
+    base_dir: Path,
 ) -> int:
     """Download a single page with semaphore; returns 1 on success, 0 on failure."""
     async with semaphore:
         try:
-            success = await _download_single_page(client, full_url, output_file)
+            success = await _download_single_page(
+                client, full_url, output_file, base_dir
+            )
             return 1 if success else 0
         except Exception as e:
             logger.warning("Unable to process %s: %s", full_url, e)
@@ -233,7 +239,7 @@ async def _download_user_docs_async(
     limits = httpx.Limits(max_connections=concurrency, max_keepalive_connections=20)
     async with httpx.AsyncClient(timeout=timeout, limits=limits) as client:
         tasks = [
-            _download_one(client, semaphore, full_url, output_file)
+            _download_one(client, semaphore, full_url, output_file, output_dir)
             for full_url, output_file in work_list
         ]
         results = await asyncio.gather(*tasks)

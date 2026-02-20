@@ -448,9 +448,10 @@ def export_rules_to_yaml(
             result.exported += 1
             continue
 
+        from endorlabs.utils.path_safety import safe_write_text
+
         dest = output_dir / filename
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(yaml_content, encoding="utf-8")
+        safe_write_text(output_dir, dest, yaml_content)
         result.exported += 1
         result.paths.append(str(dest))
         logger.info("Exported: %s (%d bytes)", dest, len(yaml_content))
