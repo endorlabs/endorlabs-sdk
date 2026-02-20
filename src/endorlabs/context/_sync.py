@@ -10,13 +10,13 @@ import asyncio
 import json
 import re
 import time
-import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
+import defusedxml.ElementTree as ET  # noqa: N817
 import httpx
 
 if TYPE_CHECKING:
