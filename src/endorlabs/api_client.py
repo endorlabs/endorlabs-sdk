@@ -14,7 +14,7 @@ import re
 import time
 from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import httpx
 
@@ -696,6 +696,116 @@ class APIClient:
             raise last_exc
         raise RuntimeError("Retry loop exited without response or exception")
 
+    def _handle_rate_limited(self, response: httpx.Response) -> None:
+        """Handle HTTP 429 responses by setting rate-limit delay."""
+        retry_info = response.headers.get("Retry-After", "no retry info")
+        self.logger.warning("Rate limited (429), retrying with backoff.")
+        self.logger.debug(
+            "Rate limit detail: Retry-After=%s, url=%s",
+            retry_info,
+            response.url,
+        )
+        retry_after = response.headers.get("Retry-After")
+        if retry_after and retry_after.isdigit():
+            self.rate_limit_delay = int(retry_after) + 1
+        else:
+            self.rate_limit_delay = (
+                self.rate_limit_delay if self.rate_limit_delay > 0 else 5
+            )
+
+    def _handle_unauthorized(
+        self,
+        response: httpx.Response,
+        *,
+        method: str | None,
+        url: str | None,
+        _reauth_attempted: bool,
+        **kwargs: Any,
+    ) -> httpx.Response | None:
+        """Handle HTTP 401 responses with single reauth retry."""
+        if _reauth_attempted:
+            self.logger.error(
+                "Unable to reauthenticate. "
+                "Verify credentials are valid and not expired."
+            )
+            return None
+        self.logger.warning(
+            "Unable to authenticate (401). Verify credentials are valid."
+        )
+        self.logger.debug("Authentication detail: url=%s", response.url)
+        self.logger.info("Attempting to reauthenticate...")
+        new_token = self.authenticate()
+        if new_token:
+            self._request_headers["Authorization"] = f"Bearer {new_token}"
+            self.default_headers = self._headers_copy()
+            self.logger.info("Reauthentication completed.")
+            if method and url:
+                self.logger.info("Retrying %s request to %s", method, url)
+                assert self.client is not None, "APIClient is closed"
+                retry_response = self.client.request(method=method, url=url, **kwargs)
+                return self._handle_response(
+                    retry_response,
+                    method=method,
+                    url=url,
+                    _reauth_attempted=True,
+                    **kwargs,
+                )
+        return None
+
+    def _handle_not_implemented(
+        self,
+        response: httpx.Response,
+        *,
+        method: str | None,
+    ) -> None:
+        """Log HTTP 501 details."""
+        error_details = self._parse_error_response(response)
+        self.logger.error("Operation not supported (501) for %s.", response.url)
+        self.logger.debug(
+            "501 detail: method=%s, error=%s",
+            method or "UNKNOWN",
+            error_details,
+        )
+
+    def _handle_server_error(
+        self,
+        response: httpx.Response,
+        *,
+        status_code: int,
+        method: str | None,
+    ) -> None:
+        """Log retryable server-side errors."""
+        error_details = self._parse_error_response(response)
+        self.logger.warning("Server error %s, retrying with backoff.", status_code)
+        self.logger.debug(
+            "Server error detail: method=%s, url=%s, error=%s",
+            method or "UNKNOWN",
+            response.url,
+            error_details,
+        )
+
+    def _handle_client_error(
+        self,
+        response: httpx.Response,
+        *,
+        status_code: int,
+        method: str | None,
+    ) -> None:
+        """Log non-retryable client-side errors."""
+        error_details = self._parse_error_response(response)
+        error_type = {
+            400: "Validation error",
+            403: "Permission denied",
+            404: "Resource not found",
+            409: "Conflict",
+        }.get(status_code, f"Client error {status_code}")
+        self.logger.error("%s (%s) for %s.", error_type, status_code, response.url)
+        self.logger.debug(
+            "Client error detail: method=%s, response=%s",
+            method or "UNKNOWN",
+            error_details,
+        )
+
     def _handle_response(
         self,
         response: httpx.Response,
@@ -714,109 +824,43 @@ class APIClient:
 
             # Handle rate limiting (429) - retryable with backoff
             if status_code == 429:
-                retry_info = response.headers.get("Retry-After", "no retry info")
-                self.logger.warning("Rate limited (429), retrying with backoff.")
-                self.logger.debug(
-                    "Rate limit detail: Retry-After=%s, url=%s",
-                    retry_info,
-                    response.url,
-                )
-                retry_after = response.headers.get("Retry-After")
-                if retry_after and retry_after.isdigit():
-                    self.rate_limit_delay = int(retry_after) + 1
-                else:
-                    self.rate_limit_delay = (
-                        self.rate_limit_delay if self.rate_limit_delay > 0 else 5
-                    )
+                self._handle_rate_limited(response)
                 raise
 
             # Handle authentication failure (401) - single retry after reauth
             if status_code == 401:
-                if _reauth_attempted:
-                    self.logger.error(
-                        "Unable to reauthenticate. "
-                        "Verify credentials are valid and not expired."
-                    )
-                    raise
-                self.logger.warning(
-                    "Unable to authenticate (401). Verify credentials are valid."
+                retried = self._handle_unauthorized(
+                    response,
+                    method=method,
+                    url=url,
+                    _reauth_attempted=_reauth_attempted,
+                    **kwargs,
                 )
-                self.logger.debug(
-                    "Authentication detail: url=%s",
-                    response.url,
-                )
-                self.logger.info("Attempting to reauthenticate...")
-                # Use authenticate() which will use the appropriate auth method
-                new_token = self.authenticate()
-                if new_token:
-                    self._request_headers["Authorization"] = f"Bearer {new_token}"
-                    self.default_headers = self._headers_copy()
-                    self.logger.info("Reauthentication completed.")
-                    # Retry the original request once
-                    if method and url:
-                        self.logger.info("Retrying %s request to %s", method, url)
-                        assert self.client is not None, "APIClient is closed"
-                        retry_response = self.client.request(
-                            method=method, url=url, **kwargs
-                        )
-                        return self._handle_response(
-                            retry_response,
-                            method=method,
-                            url=url,
-                            _reauth_attempted=True,
-                            **kwargs,
-                        )
+                if retried is not None:
+                    return retried
                 raise
 
             # Handle 501 Not Implemented - non-retryable client error
             # (method/operation not supported, not a transient server error)
             if status_code == 501:
-                error_details = self._parse_error_response(response)
-                self.logger.error(
-                    "Operation not supported (501) for %s.",
-                    response.url,
-                )
-                self.logger.debug(
-                    "501 detail: method=%s, error=%s",
-                    method or "UNKNOWN",
-                    error_details,
-                )
+                self._handle_not_implemented(response, method=method)
                 raise
 
             # Handle server errors (5xx) - retryable
             if status_code >= 500:
-                error_details = self._parse_error_response(response)
-                self.logger.warning(
-                    "Server error %s, retrying with backoff.",
-                    status_code,
-                )
-                self.logger.debug(
-                    "Server error detail: method=%s, url=%s, error=%s",
-                    method or "UNKNOWN",
-                    response.url,
-                    error_details,
+                self._handle_server_error(
+                    response,
+                    status_code=status_code,
+                    method=method,
                 )
                 raise
 
             # Handle client errors (400, 403, 404, 409) - not retried, graceful exit
             if status_code in (400, 403, 404, 409):
-                error_details = self._parse_error_response(response)
-                error_type = {
-                    400: "Validation error",
-                    403: "Permission denied",
-                    404: "Resource not found",
-                    409: "Conflict",
-                }.get(status_code, f"Client error {status_code}")
-                self.logger.error(
-                    "%s (%s) for %s.",
-                    error_type,
-                    status_code,
-                    response.url,
-                )
-                self.logger.debug(
-                    "Client error detail: method=%s, response=%s",
-                    method or "UNKNOWN",
-                    error_details,
+                self._handle_client_error(
+                    response,
+                    status_code=status_code,
+                    method=method,
                 )
                 raise
 
@@ -1163,6 +1207,35 @@ class APIClient:
             return self._authenticate_browser()
         else:
             return self._authenticate_api_key()
+
+    @property
+    def auth_type(self) -> Literal["api-key", "browser"]:
+        """Return the active authentication mode."""
+        return cast("Literal['api-key', 'browser']", self._auth_type)
+
+    @property
+    def is_api_key_auth(self) -> bool:
+        """True when API key authentication is active."""
+        return self._auth_type == "api-key"
+
+    def get_user_info(self) -> dict[str, object] | None:
+        """Fetch canonical authenticated user info from ``/v1/auth``.
+
+        Returns:
+            Parsed response payload on success, otherwise ``None``.
+
+        """
+        try:
+            response = self.get(
+                "v1/auth",
+                headers={"Accept": "application/json"},
+            )
+            data = response.json()
+            if isinstance(data, dict):
+                return cast("dict[str, object]", data)
+        except Exception as e:
+            self.logger.debug("Unable to fetch user info from v1/auth: %s", e)
+        return None
 
     def _authenticate_api_key(self) -> str | None:
         """Authenticate using API key and secret."""

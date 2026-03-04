@@ -116,21 +116,38 @@ class Client:
         return
 
     def whoami(self) -> str | None:
-        """Resolve the current user identity via AuthorizationPolicy.
+        """Resolve the current user identity.
 
-        When authenticated with an API key, queries AuthorizationPolicy
-        resources whose ``spec.clause`` contains the key value. Returns the
-        ``meta.name`` of the first matching policy, which typically holds the
-        human-readable identity bound to the key.
+        This method first queries the canonical ``/v1/auth`` user-info endpoint.
+        If identity fields are unavailable and API-key auth is active, it falls
+        back to the historical AuthorizationPolicy lookup heuristic.
 
         Returns:
-            The ``meta.name`` of the matching AuthorizationPolicy, or ``None``
-            if no match is found or if using browser authentication.
+            Resolved identity string (email/username/name), or ``None`` if not found.
         """
         if self._client is None:
             raise RuntimeError("Client is closed.")
-        auth_type: str = self._client._auth_type  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        if auth_type != "api-key" or not self._client.key:
+
+        user_info = self._client.get_user_info()
+        if isinstance(user_info, dict):
+            user = user_info.get("user")
+            if isinstance(user, dict):
+                user_dict = cast("dict[str, object]", user)
+                spec = user_dict.get("spec")
+                if isinstance(spec, dict):
+                    spec_dict = cast("dict[str, object]", spec)
+                    for key in ("email", "user_name"):
+                        value = spec_dict.get(key)
+                        if isinstance(value, str) and value:
+                            return value
+                meta = user_dict.get("meta")
+                if isinstance(meta, dict):
+                    meta_dict = cast("dict[str, object]", meta)
+                    name = meta_dict.get("name")
+                    if isinstance(name, str) and name:
+                        return name
+
+        if not self._client.is_api_key_auth or not self._client.key:
             return None
 
         policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
