@@ -93,7 +93,7 @@ class TestNamespaces:
             # are in scope.
             all_namespaces = self.root_client.namespace.list(
                 traverse=True,
-                max_pages=10,
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
             created_uuids = set(created_in_this_test)
             found = [ns for ns in all_namespaces if ns.uuid in created_uuids]
