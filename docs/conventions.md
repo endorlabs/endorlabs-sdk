@@ -62,6 +62,14 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 
 **Consumer UX:** Common params (filter, mask, traverse, page_size, page_token, page_id, sort_by, desc, count, from_date, to_date, archive, pr_uuid) are **flat kwargs** on `client.<resource>.list()`. List operations use full pagination by default (list_all=true). Pass `list_params=ListParameters(...)` for grouping and other options. Do not combine filter and mask into one parameter. Details and spec-driven UX: [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md).
 
+### Integration test pagination conventions
+
+- All integration `.list(...)` calls must set `max_pages` explicitly.
+- For `traverse=True`: use `TEST_TRAVERSE_PAGE_SIZE` with `TEST_MAX_PAGES_TRAVERSE`.
+- For non-traverse: use `TEST_PAGE_SIZE` with `TEST_MAX_PAGES`.
+- Avoid numeric `max_pages` literals in integration tests; use shared constants from `tests/conftest.py`.
+- Guardrail test: `tests/unit/test_integration_pagination_guard.py`.
+
 ## Create (decoupled)
 
 - **create** accepts either **payload** (CreateXPayload) for backward compatibility or **kwargs** that are passed to the resource’s `build_create_payload` (when the resource has a builder). Use `client.<resource>.create(name="...", namespace="...")` or `client.<resource>.create(payload=CreateXPayload(...))`. Responses stay `Resource` with `.spec`; no flattened view. See [reference/create-update-payloads.md](reference/create-update-payloads.md).
@@ -82,6 +90,15 @@ Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)` ret
 - **Variable override (reportIncompatibleVariableOverride):** Resource and model subclasses override base class attributes with a more specific type (e.g. `spec: FindingSpec` on a subclass of `BaseResource`). Pyright flags these because the base declares a broader type. The overrides are intentional and required for API parity; minimal `# pyright: ignore[reportIncompatibleVariableOverride]` with a reference to this section is acceptable.
 - **Method override (reportIncompatibleMethodOverride):** Overrides such as `model_dump` (Pydantic) or `_missing_` (Enum) that intentionally widen or match a base signature are documented here; minimal ignore with reference is acceptable.
 - **Private usage (reportPrivateUsage):** Cross-module use of `_`-prefixed helpers (e.g. `operations._build_params`) is intentional internal coupling between resource and operations layers. Document and keep minimal ignore with reference to this section.
+
+### Strictness boundary and ratchet
+
+- Public SDK surfaces are strict by default in pyright (`client_surface`, `facade`, `api_client`, exported types/exceptions).
+- Internal roots may start with relaxed unknown-type diagnostics, but must follow a staged ratchet:
+  1. `reportUnknown* = "none"` (temporary baseline)
+  2. `reportUnknown* = "warning"` (triage/fix pass)
+  3. `reportUnknown* = "error"` (enforced)
+- Apply ratchet by root (e.g., operations -> resources -> models) to reduce regression risk.
 
 ## Errors
 
