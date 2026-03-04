@@ -323,6 +323,12 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
     },
 }
 
+_TOOL_METADATA_MAPS: dict[str, dict[str, Any]] = {
+    "_RESOURCE_DESCRIPTIONS": _RESOURCE_DESCRIPTIONS,
+    "_RESOURCE_FILTER_FIELDS": _RESOURCE_FILTER_FIELDS,
+    "_RESOURCE_FIELD_OVERRIDES": _RESOURCE_FIELD_OVERRIDES,
+}
+
 
 def _get_list_fields(attr_name: str) -> list[tuple[str, Callable[[Any], Any]]]:
     """Get list fields for a resource, using overrides or common fields."""
@@ -347,6 +353,27 @@ def _extract_fields(
         except (AttributeError, TypeError):
             result[key] = None
     return result
+
+
+def _validate_registry_alignment(custom_list_resources: set[str]) -> None:
+    """Ensure tool metadata and custom overrides stay registry-aligned."""
+    registry_names = {entry.attr_name for entry in RESOURCE_REGISTRY}
+
+    for map_name, metadata_map in _TOOL_METADATA_MAPS.items():
+        unknown = sorted(set(metadata_map) - registry_names)
+        if unknown:
+            raise ValueError(
+                f"{map_name} includes unknown resources not in RESOURCE_REGISTRY: "
+                f"{', '.join(unknown)}"
+            )
+
+    unknown_custom = sorted(custom_list_resources - registry_names)
+    if unknown_custom:
+        raise ValueError(
+            "custom_list_resources includes unknown resources not in "
+            "RESOURCE_REGISTRY: "
+            f"{', '.join(unknown_custom)}"
+        )
 
 
 # Filter syntax examples for docstrings
@@ -559,6 +586,7 @@ def create_tools(client: Client) -> list[BaseTool]:
 
     # Resources with custom list implementations (finding has severity filter)
     custom_list_resources = {"finding"}
+    _validate_registry_alignment(custom_list_resources)
 
     # Generate tools from SDK registry (single source of truth)
     for entry in RESOURCE_REGISTRY:
@@ -566,11 +594,11 @@ def create_tools(client: Client) -> list[BaseTool]:
         attr_name = entry.attr_name
 
         # Skip custom_list resources for list tool (they have manual implementations)
-        if attr_name not in custom_list_resources:
+        if "list" in entry.supported_ops and attr_name not in custom_list_resources:
             tools.append(_make_list_tool(client, attr_name, config))
 
-        # Always generate get tool (all resources support get)
-        tools.append(_make_get_tool(client, attr_name, config))
+        if "get" in entry.supported_ops:
+            tools.append(_make_get_tool(client, attr_name, config))
 
     # Custom implementation: list_findings with severity filter and traverse support
     list_fields = _get_list_fields("finding")
