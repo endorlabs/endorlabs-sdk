@@ -689,7 +689,10 @@ def main() -> None:
         print("=" * 60)
         status = endorlabs.init(force=True)
         print(f"  OpenAPI spec: {status.openapi_path}")
-        print(f"  User docs:    {status.user_docs_path} ({status.user_docs_count} pages)")
+        print(
+            f"  User docs:    {status.user_docs_path} "
+            f"({status.user_docs_count} pages)"
+        )
         print("  Context sync complete.")
 
     sections: list[tuple[str, str]] = [
