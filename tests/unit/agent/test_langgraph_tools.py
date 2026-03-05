@@ -84,3 +84,49 @@ class TestLanggraphTools:
         tool_names = {t.name for t in tools}
         assert "list_findings" in tool_names
         assert "get_finding" in tool_names
+
+    def test_list_findings_defaults_to_traverse_without_namespace(
+        self, tool_module: object
+    ) -> None:
+        """When namespace is omitted, findings list should traverse by default."""
+        calls: list[dict[str, object]] = []
+
+        def _finding_list(**kwargs):
+            calls.append(kwargs)
+            return []
+
+        client = _build_fake_client(tool_module)
+        client.finding = SimpleNamespace(
+            list=_finding_list,
+            get=lambda _uuid, **_kwargs: None,
+        )
+        tools = tool_module.create_tools(client)
+        list_findings = next(t for t in tools if t.name == "list_findings")
+
+        list_findings.func()
+
+        assert calls
+        assert calls[0].get("traverse") is True
+
+    def test_list_findings_respects_explicit_non_traverse_with_namespace(
+        self, tool_module: object
+    ) -> None:
+        """Explicit traverse=False with namespace should stay local scope."""
+        calls: list[dict[str, object]] = []
+
+        def _finding_list(**kwargs):
+            calls.append(kwargs)
+            return []
+
+        client = _build_fake_client(tool_module)
+        client.finding = SimpleNamespace(
+            list=_finding_list,
+            get=lambda _uuid, **_kwargs: None,
+        )
+        tools = tool_module.create_tools(client)
+        list_findings = next(t for t in tools if t.name == "list_findings")
+
+        list_findings.func(namespace="tenant.team", traverse=False)
+
+        assert calls
+        assert "traverse" not in calls[0]

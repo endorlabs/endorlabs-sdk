@@ -7,6 +7,7 @@ Requires authentication via APIClient - no public URL fallback.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import re
 import time
@@ -59,6 +60,7 @@ OPENAPI_PATH = "/download/openapiv2.swagger.json"
 DEFAULT_CONTEXT_DIR = ".endorlabs-context"
 DEFAULT_OPENAPI_FILENAME = "openapiv2.swagger.json"
 DEFAULT_USER_DOCS_DIRNAME = "docs"
+DOCS_HASH_MANIFEST_FILENAME = "_content-hashes.md"
 
 
 def _default_concurrency() -> int:
@@ -86,6 +88,60 @@ def _generate_filename(full_url: str) -> str:
     if clean_parts:
         return f"{'-'.join(clean_parts)}.md"
     return "index.md"
+
+
+def _compute_content_hash(content: str) -> str:
+    """Return SHA-256 hash for normalized content."""
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def _extract_markdown_body(markdown_file: Path) -> str | None:
+    """Extract body content from markdown file with optional frontmatter."""
+    try:
+        text = markdown_file.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    if not text.startswith("---"):
+        return text
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        return text
+    return parts[2].lstrip("\r\n")
+
+
+def _load_hash_manifest(manifest_path: Path) -> dict[str, str]:
+    """Load markdown hash manifest into ``{relative_path: sha256}``."""
+    if not manifest_path.exists():
+        return {}
+    mapping: dict[str, str] = {}
+    for line in manifest_path.read_text(encoding="utf-8").splitlines():
+        match = re.match(r"^\|\s*`([^`]+)`\s*\|\s*`([0-9a-f]{64})`\s*\|\s*.*\|\s*$", line)
+        if match:
+            rel_path, hash_value = match.groups()
+            mapping[rel_path] = hash_value
+    return mapping
+
+
+def _write_hash_manifest(
+    manifest_path: Path,
+    *,
+    hashes_by_file: dict[str, str],
+    urls_by_file: dict[str, str],
+) -> None:
+    """Write markdown hash manifest for synced docs."""
+    lines = [
+        "# Docs Content Hash Manifest",
+        "",
+        f"Generated: {datetime.now(UTC).isoformat()}",
+        "",
+        "| File | SHA256 | URL |",
+        "| --- | --- | --- |",
+    ]
+    for rel_path in sorted(hashes_by_file):
+        hash_value = hashes_by_file[rel_path]
+        url = urls_by_file.get(rel_path, "")
+        lines.append(f"| `{rel_path}` | `{hash_value}` | {url} |")
+    _ = manifest_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 async def _download_sitemap(timeout: int = 10) -> list[str]:
@@ -127,7 +183,9 @@ async def _download_single_page(
     full_url: str,
     output_file: Path,
     base_dir: Path,
-) -> bool:
+    previous_hash: str | None,
+    force: bool,
+) -> tuple[int, str | None]:
     """Download and convert single page to markdown."""
     from endorlabs.utils.path_safety import safe_write_text
 
@@ -145,6 +203,16 @@ async def _download_single_page(
 
         # Convert to markdown
         markdown_content = md(str(soup), heading_style="ATX")
+        content_hash = _compute_content_hash(markdown_content)
+
+        if not force:
+            existing_hash = previous_hash
+            if existing_hash is None and output_file.exists():
+                existing_body = _extract_markdown_body(output_file)
+                if existing_body is not None:
+                    existing_hash = _compute_content_hash(existing_body)
+            if existing_hash == content_hash:
+                return (0, content_hash)
 
         # Add metadata header
         title = soup.title.string if soup.title else "Untitled"
@@ -157,11 +225,11 @@ downloaded: {time.strftime("%Y-%m-%d %H:%M:%S")}
 {markdown_content}
 """
         safe_write_text(base_dir, output_file, metadata)
-        return True
+        return (1, content_hash)
 
     except Exception as e:
         logger.warning("Unable to download %s: %s", full_url, e)
-        return False
+        return (0, None)
 
 
 async def _download_one(
@@ -170,17 +238,25 @@ async def _download_one(
     full_url: str,
     output_file: Path,
     base_dir: Path,
-) -> int:
-    """Download a single page with semaphore; returns 1 on success, 0 on failure."""
+    previous_hash: str | None,
+    force: bool,
+) -> tuple[str, int, str | None, str]:
+    """Download one page and return sync stats tuple."""
     async with semaphore:
         try:
-            success = await _download_single_page(
-                client, full_url, output_file, base_dir
+            changed_count, content_hash = await _download_single_page(
+                client,
+                full_url,
+                output_file,
+                base_dir,
+                previous_hash,
+                force,
             )
-            return 1 if success else 0
+            rel_path = output_file.name
+            return (rel_path, changed_count, content_hash, full_url)
         except Exception as e:
             logger.warning("Unable to process %s: %s", full_url, e)
-            return 0
+            return (output_file.name, 0, None, full_url)
 
 
 async def _download_user_docs_async(
@@ -214,17 +290,15 @@ async def _download_user_docs_async(
         return 0
 
     urls = sitemap_urls[:max_pages] if max_pages else sitemap_urls
-    work_list: list[tuple[str, Path]] = []
+    work_list: list[tuple[str, Path, str | None]] = []
+    manifest_path = output_dir / DOCS_HASH_MANIFEST_FILENAME
+    existing_hashes = _load_hash_manifest(manifest_path)
 
     for url in urls:
         full_url = _normalize_url(url)
         output_file = output_dir / _generate_filename(full_url)
-        if force or not output_file.exists():
-            work_list.append((full_url, output_file))
-
-    if not work_list:
-        logger.info("No new pages to download (all exist and not force=True)")
-        return 0
+        previous_hash = existing_hashes.get(output_file.name)
+        work_list.append((full_url, output_file, previous_hash))
 
     concurrency = max_concurrent or _default_concurrency()
     semaphore = asyncio.Semaphore(concurrency)
@@ -239,14 +313,35 @@ async def _download_user_docs_async(
     limits = httpx.Limits(max_connections=concurrency, max_keepalive_connections=20)
     async with httpx.AsyncClient(timeout=timeout, limits=limits) as client:
         tasks = [
-            _download_one(client, semaphore, full_url, output_file, output_dir)
-            for full_url, output_file in work_list
+            _download_one(
+                client,
+                semaphore,
+                full_url,
+                output_file,
+                output_dir,
+                previous_hash,
+                force,
+            )
+            for full_url, output_file, previous_hash in work_list
         ]
         results = await asyncio.gather(*tasks)
 
-    downloaded_count = sum(results)
-    logger.info("Successfully downloaded %d pages", downloaded_count)
-    return downloaded_count
+    changed_count = 0
+    updated_hashes = dict(existing_hashes)
+    urls_by_file: dict[str, str] = {}
+    for rel_path, changed, content_hash, full_url in results:
+        urls_by_file[rel_path] = full_url
+        if content_hash is not None:
+            updated_hashes[rel_path] = content_hash
+        changed_count += changed
+
+    _write_hash_manifest(
+        manifest_path,
+        hashes_by_file=updated_hashes,
+        urls_by_file=urls_by_file,
+    )
+    logger.info("Docs sync complete: %d changed, %d unchanged", changed_count, len(results) - changed_count)
+    return changed_count
 
 
 def sync_user_docs(
