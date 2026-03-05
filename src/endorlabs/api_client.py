@@ -194,6 +194,9 @@ class APIClient:
         # Initialize token expiration tracking
         self._token: str | None = None
         self._token_expires: datetime | None = None
+        # Browser auth session flag: once a browser token is validated,
+        # avoid proactive reauth on token property reads.
+        self._browser_session_validated = False
 
         # Get max_retries with precedence: explicit parameter > env var > default (5)
         if max_retries is None:
@@ -1168,6 +1171,13 @@ class APIClient:
             Current bearer token string, or None if authentication fails.
 
         """
+        # Browser auth is session-like: once validated, keep token until a 401
+        # path triggers explicit reauthentication.
+        if self._auth_type == "browser":
+            if self._token is None or not self._browser_session_validated:
+                _ = self.authenticate()
+            return self._token
+
         # If no token or token expires within 30 minutes, re-authenticate
         if self._token is None or self._token_expires is None:
             _ = self.authenticate()
@@ -1288,9 +1298,15 @@ class APIClient:
             self._token_expires = None
             return None
 
-    def _determine_browser_method(self) -> str | None:
+    def _determine_browser_method(
+        self, *, allow_direct_token_fallback: bool = False
+    ) -> str | None:
         """Determine browser OAuth method."""
-        if self._provided_token and self._provided_token != "browser":
+        if (
+            self._provided_token
+            and self._provided_token != "browser"
+            and not allow_direct_token_fallback
+        ):
             return None  # Direct token provided, no browser method needed
         browser_method = self.auth_method
         if browser_method == "browser":
@@ -1320,8 +1336,14 @@ class APIClient:
             email=self._email,
         )
 
-    def _validate_and_store_token(self, token: str) -> None:
-        """Validate token and store it."""
+    def _validate_and_store_token(self, token: str) -> bool:
+        """Validate token and store it.
+
+        Returns:
+            ``True`` when token validation succeeds and token is stored,
+            otherwise ``False``.
+
+        """
         assert self.client is not None, "APIClient is closed"
         # Validate token by making a test request to get expiration info
         # Some endpoints may return token metadata
@@ -1358,16 +1380,19 @@ class APIClient:
                 self._token_expires = None
         except Exception as e:
             self.logger.debug("Token validation request unsuccessful: %s", e)
-            # Token might still be valid, continue
+            self._token = None
             self._token_expires = None
+            self._browser_session_validated = False
+            return False
 
-        # Store token
+        # Store token after successful validation
         self._token = token
-
         # Update request headers for subsequent requests
         self._request_headers["Authorization"] = f"Bearer {token}"
         self.default_headers = self._headers_copy()
+        self._browser_session_validated = self._auth_type == "browser"
         self.logger.info("Browser authentication successful")
+        return True
 
     def _authenticate_browser(self) -> str | None:
         """Authenticate using browser-based OAuth flow.
@@ -1382,30 +1407,41 @@ class APIClient:
 
         """
         try:
-            # Determine auth method for browser OAuth
-            if self._provided_token and self._provided_token != "browser":
-                # Direct token provided, validate it
-                token = self._provided_token
-                self.logger.info("Using provided token for authentication")
-            else:
-                # Trigger browser OAuth flow
-                browser_method = self._determine_browser_method()
-                if browser_method is None:
-                    token = None
-                else:
-                    environment = self._extract_environment()
-                    token = self._get_browser_token(browser_method, environment)
+            token: str | None = None
+            fallback_attempted = False
+            has_direct_token = bool(
+                self._provided_token and self._provided_token != "browser"
+            )
 
-            if not token:
+            # First, try provided token if present (constructor/env).
+            if has_direct_token:
+                provided_token = cast("str", self._provided_token)
+                self.logger.info("Validating provided token for browser auth")
+                if self._validate_and_store_token(provided_token):
+                    return provided_token
+                self.logger.info("Provided token invalid; attempting browser fallback")
+                fallback_attempted = True
+
+            # Fallback (or primary path when no token provided): browser OAuth flow.
+            browser_method = self._determine_browser_method(
+                allow_direct_token_fallback=fallback_attempted
+            )
+            if browser_method is not None and (
+                not has_direct_token or fallback_attempted
+            ):
+                environment = self._extract_environment()
+                token = self._get_browser_token(browser_method, environment)
+
+            if not token or not self._validate_and_store_token(token):
                 self.logger.error(
                     "Unable to authenticate with browser "
                     "or authentication was cancelled"
                 )
                 self._token = None
                 self._token_expires = None
+                self._browser_session_validated = False
                 return None
 
-            self._validate_and_store_token(token)
             return token
         except ImportError:
             self.logger.error(
@@ -1414,9 +1450,11 @@ class APIClient:
             )
             self._token = None
             self._token_expires = None
+            self._browser_session_validated = False
             return None
         except Exception as e:
             self.logger.error("Unable to authenticate with browser: %s", e)
             self._token = None
             self._token_expires = None
+            self._browser_session_validated = False
             return None

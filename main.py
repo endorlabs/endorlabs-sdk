@@ -66,12 +66,15 @@ def demo_setup() -> Client:
 
     # Fetch the auth policy for detailed identity info (permissions, expiration)
     if identity:
-        policy = client.authorization_policy.lookup(name=identity, traverse=True)
-        if policy.spec:
-            roles = policy.spec.permissions.roles if policy.spec.permissions else []
-            print(f"  Roles:            {roles}")
-            expiration = policy.spec.expiration_time or "never"
-            print(f"  Expires:          {expiration}")
+        try:
+            policy = client.authorization_policy.lookup(name=identity, traverse=True)
+            if policy.spec:
+                roles = policy.spec.permissions.roles if policy.spec.permissions else []
+                print(f"  Roles:            {roles}")
+                expiration = policy.spec.expiration_time or "never"
+                print(f"  Expires:          {expiration}")
+        except Exception as e:
+            print(f"  Policy details:   unavailable ({type(e).__name__})")
 
     return client
 
@@ -690,8 +693,7 @@ def main() -> None:
         status = endorlabs.init(force=True)
         print(f"  OpenAPI spec: {status.openapi_path}")
         print(
-            f"  User docs:    {status.user_docs_path} "
-            f"({status.user_docs_count} pages)"
+            f"  User docs:    {status.user_docs_path} ({status.user_docs_count} pages)"
         )
         print("  Context sync complete.")
 

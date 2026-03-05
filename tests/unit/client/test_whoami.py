@@ -164,3 +164,14 @@ class TestWhoAmI:
         )
 
         assert client_with_api_key.whoami() == "fallback@endor.ai"
+
+    def test_whoami_returns_none_when_policy_lookup_fails(
+        self,
+        client_with_api_key: Client,
+    ) -> None:
+        """whoami does not raise when fallback AuthorizationPolicy lookup fails."""
+        client_with_api_key._client.get_user_info.return_value = {}
+        client_with_api_key.authorization_policy._ops.list = Mock(
+            side_effect=RuntimeError("401 Unauthorized")
+        )
+        assert client_with_api_key.whoami() is None
