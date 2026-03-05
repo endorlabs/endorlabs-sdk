@@ -42,6 +42,21 @@ TOKEN_EXPIRY_CHECK_SECONDS: int = 60  # Considered expired if <=60 s remaining
 BROWSER_AUTH_TIMEOUT_SECONDS: int = 20  # OAuth browser flow timeout
 TOKEN_VALIDATION_TIMEOUT_SECONDS: float = 5.0  # Quick health-check after token set
 
+AUTH_METHOD_ALIASES: dict[str, str] = {
+    "browser": "browser-auth",
+    "admin": "browser-auth",
+}
+SUPPORTED_AUTH_METHODS: tuple[str, ...] = (
+    "api-key",
+    "browser-auth",
+    "sso",
+    "google",
+    "github",
+    "gitlab",
+    "email",
+    "azureadv2",
+)
+
 
 class APIClient:
     """Minimal API client with retry, rate limiting handling and redacted logging.
@@ -89,8 +104,10 @@ class APIClient:
         key: API credentials key. If None, uses ENDOR_API_CREDENTIALS_KEY env var.
         secret: API credentials secret. If None, uses ENDOR_API_CREDENTIALS_SECRET.
         token: Bearer token. If None, uses ENDOR_TOKEN env var.
-        auth_method: Auth method (e.g. "api-key", "browser"). If None, uses env/default.
-        email: Email for auth. Optional.
+        auth_method: Auth method (e.g. "api-key", "browser-auth", "sso",
+            "google", "github", "gitlab", "email"). If None, uses env/default.
+        email: Email for auth. Required for ``auth_method="email"``.
+        auth_tenant: SSO tenant. Required for ``auth_method="sso"``.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -114,6 +131,7 @@ class APIClient:
         token: str | None = None,
         auth_method: str | None = None,
         email: str | None = None,
+        auth_tenant: str | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -149,22 +167,26 @@ class APIClient:
             base_url or os.getenv("ENDOR_API") or "https://api.endorlabs.com"
         )
 
-        # Determine authentication method
-        # Precedence: parameter > env var > default (api-key)
-        self.auth_method = auth_method or os.getenv("ENDOR_AUTH_METHOD") or "api-key"
-
         # Get token if provided directly
         self._provided_token = token or os.getenv("ENDOR_TOKEN")
+        self._email = email or os.getenv("ENDOR_AUTH_EMAIL")
+        self._auth_tenant = (
+            auth_tenant
+            or os.getenv("ENDOR_AUTH_TENANT")
+            or os.getenv("ENDOR_INIT_AUTH_TENANT")
+        )
+
+        # Determine authentication method
+        # Precedence: parameter > env var > default (api-key)
+        raw_auth_method = auth_method or os.getenv("ENDOR_AUTH_METHOD") or "api-key"
+        normalized_auth_method = self._normalize_auth_method(raw_auth_method)
+        if self._provided_token == "browser" and normalized_auth_method == "api-key":
+            normalized_auth_method = "browser-auth"
+        self.auth_method = normalized_auth_method
+        self._validate_auth_method()
 
         # For browser auth, check if token is "browser" to trigger OAuth flow
-        if self._provided_token == "browser" or self.auth_method in [
-            "browser",
-            "admin",
-            "google",
-            "github",
-            "gitlab",
-            "email",
-        ]:
+        if self._provided_token == "browser" or self.auth_method != "api-key":
             # Browser-based authentication
             self.key = None
             self.secret = None
@@ -189,7 +211,6 @@ class APIClient:
 
         # Store browser auth parameters
         self._browser_name = os.getenv("ENDOR_BROWSER")
-        self._email = email
 
         # Initialize token expiration tracking
         self._token: str | None = None
@@ -1308,10 +1329,7 @@ class APIClient:
             and not allow_direct_token_fallback
         ):
             return None  # Direct token provided, no browser method needed
-        browser_method = self.auth_method
-        if browser_method == "browser":
-            browser_method = "admin"  # Default to admin SSO
-        return browser_method
+        return self.auth_method
 
     def _extract_environment(self) -> str:
         """Extract environment from base_url."""
@@ -1334,7 +1352,42 @@ class APIClient:
             browser_name=self._browser_name,
             method=browser_method,
             email=self._email,
+            auth_tenant=self._auth_tenant,
         )
+
+    @staticmethod
+    def _normalize_auth_method(auth_method: str) -> str:
+        """Normalize auth mode aliases into canonical values."""
+        cleaned = auth_method.strip().lower()
+        return AUTH_METHOD_ALIASES.get(cleaned, cleaned)
+
+    def _validate_auth_method(self) -> None:
+        """Validate auth mode and required mode-specific arguments."""
+        if self.auth_method not in SUPPORTED_AUTH_METHODS:
+            allowed = ", ".join(SUPPORTED_AUTH_METHODS)
+            raise ValueError(
+                f"Unsupported auth_method '{self.auth_method}'. "
+                f"Supported modes: {allowed}"
+            )
+
+        if self.auth_method == "email" and not self._email:
+            raise ValueError(
+                "auth_method='email' requires email=... "
+                "(or ENDOR_AUTH_EMAIL environment variable)."
+            )
+
+        if self.auth_method == "sso" and not self._auth_tenant:
+            raise ValueError(
+                "auth_method='sso' requires auth_tenant=... "
+                "(or ENDOR_AUTH_TENANT / ENDOR_INIT_AUTH_TENANT)."
+            )
+
+        if self.auth_method == "azureadv2":
+            raise ValueError(
+                "auth_method='azureadv2' is recognized for parity but is not "
+                "implemented in SDK browser OAuth routing yet. "
+                "Use 'sso', 'browser-auth', 'google', 'github', 'gitlab', or 'email'."
+            )
 
     def _validate_and_store_token(self, token: str) -> bool:
         """Validate token and store it.

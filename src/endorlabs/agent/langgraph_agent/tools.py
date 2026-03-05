@@ -609,7 +609,7 @@ def create_tools(client: Client) -> list[BaseTool]:
         max_pages: int = 10,
         filter_expr: str | None = None,
         severity: str | None = None,
-        traverse: bool = False,
+        traverse: bool | None = None,
     ) -> str:
         """List security findings in the namespace.
 
@@ -619,7 +619,8 @@ def create_tools(client: Client) -> list[BaseTool]:
             max_pages: Maximum pages to fetch for pagination (default 10).
             filter_expr: Optional filter expression (e.g., "spec.project_uuid==abc123").
             severity: Filter by severity level (CRITICAL, HIGH, MEDIUM, LOW).
-            traverse: If True, include results from child namespaces recursively.
+            traverse: If True, include child namespaces recursively. If omitted,
+                defaults to True only when namespace is not provided.
 
         Returns:
             JSON array of findings with uuid, description, severity, and category.
@@ -637,9 +638,9 @@ def create_tools(client: Client) -> list[BaseTool]:
         if namespace:
             kwargs["namespace"] = namespace
 
-        # Always pass traverse to SDK
-        if traverse:
-            kwargs["traverse"] = traverse
+        effective_traverse = traverse if traverse is not None else namespace is None
+        if effective_traverse:
+            kwargs["traverse"] = True
 
         filters = []
         if filter_expr:
