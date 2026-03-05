@@ -9,8 +9,7 @@ wizard flow by default and keeps agent chat mode behind `--agent`.
 
 from __future__ import annotations
 
-from endorlabs.agent.demo_cli import main
-
+from endorlabs._demo.demo_cli import main
 
 if __name__ == "__main__":
     main()

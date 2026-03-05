@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from endorlabs.agent.demo_cli import (
+from endorlabs._demo.demo_cli import (
     TenantCatalog,
     _normalize_wizard_auth_method,
     _parse_args,
     _parse_project_target_choice,
     _prompt_yes_no,
+    _resolve_logging_level,
     _resolve_project_by_uuid,
     _select_auto_project_candidate,
     _summarize_findings,
@@ -74,18 +75,36 @@ def test_catalog_fuzzy_match_returns_all_duplicate_repo_projects() -> None:
     assert match_uuids == {"uuid-a", "uuid-b"}
 
 
-def test_parse_args_defaults_to_wizard_mode() -> None:
-    """CLI defaults to wizard mode unless --agent is requested."""
+def test_parse_args_defaults_to_non_verbose_mode() -> None:
+    """CLI defaults to non-verbose mode."""
     parsed = _parse_args([])
-    assert parsed.agent is False
-    assert parsed.message == []
+    assert parsed.verbose is False
 
 
-def test_parse_args_accepts_agent_mode_and_message() -> None:
-    """Agent mode accepts trailing message tokens."""
-    parsed = _parse_args(["--agent", "what", "is", "my", "risk"])
-    assert parsed.agent is True
-    assert parsed.message == ["what", "is", "my", "risk"]
+def test_parse_args_accepts_verbose_flag() -> None:
+    """CLI accepts --verbose to enable debug output."""
+    parsed = _parse_args(["--verbose"])
+    assert parsed.verbose is True
+
+
+def test_resolve_logging_level_prefers_cli_verbose_over_env(
+    monkeypatch: object,
+) -> None:
+    """CLI verbosity should override ENDOR_LOG_LEVEL."""
+    monkeypatch.setenv("ENDOR_LOG_LEVEL", "INFO")
+    assert _resolve_logging_level(verbose=True) == "DEBUG"
+
+
+def test_resolve_logging_level_uses_env_when_not_verbose(monkeypatch: object) -> None:
+    """When not verbose, ENDOR_LOG_LEVEL should be honored."""
+    monkeypatch.setenv("ENDOR_LOG_LEVEL", "warning")
+    assert _resolve_logging_level(verbose=False) == "WARNING"
+
+
+def test_resolve_logging_level_defaults_to_error(monkeypatch: object) -> None:
+    """Default logging level remains ERROR for non-verbose execution."""
+    monkeypatch.delenv("ENDOR_LOG_LEVEL", raising=False)
+    assert _resolve_logging_level(verbose=False) == "ERROR"
 
 
 def test_parse_project_target_choice_enter_yes_no_uuid_and_invalid() -> None:

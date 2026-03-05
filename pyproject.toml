@@ -36,7 +36,8 @@ agent = [
     "rich>=13.0",
 ]
 [project.scripts]
-endor-demo = "endorlabs.agent.demo_cli:main"
+endor-demo = "endorlabs._demo.demo_cli:main"
+endor-context = "endorlabs.context.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"
@@ -240,6 +241,11 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/agent/demo.py" = ["T20"]
 "src/endorlabs/agent/demo_cli.py" = ["T20"]
 "src/endorlabs/agent/langgraph_agent/demo.py" = ["T20"]
+# --- Internal demo CLI: readability-focused walkthrough module ---
+"src/endorlabs/_demo/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
+"src/endorlabs/_demo/demo_cli.py" = ["T20"]
+# --- Context CLI: command-line printing is intentional ---
+"src/endorlabs/context/cli.py" = ["T20"]
 # --- Tools: dependency explorer ---
 "src/endorlabs/tools/**" = ["C901", "SLF001", "S108"]
 [tool.ruff.format]
