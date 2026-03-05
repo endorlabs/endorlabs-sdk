@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from endorlabs.agent.demo_cli import (
     TenantCatalog,
+    _normalize_wizard_auth_method,
     _parse_args,
     _parse_project_target_choice,
     _prompt_yes_no,
@@ -176,3 +177,15 @@ def test_summarize_findings_returns_category_and_tag_counts() -> None:
     assert category_counts["FINDING_CATEGORY_SCA"] == 1
     assert tag_counts["reviewed"] == 2
     assert tag_counts["reachable"] == 1
+
+
+def test_normalize_wizard_auth_method_supports_browser_alias() -> None:
+    """Wizard auth parser should map browser alias to browser-auth."""
+    normalized = _normalize_wizard_auth_method("browser", default="api-key")
+    assert normalized == "browser-auth"
+
+
+def test_normalize_wizard_auth_method_falls_back_on_invalid() -> None:
+    """Unsupported wizard auth input should fall back to the default."""
+    normalized = _normalize_wizard_auth_method("invalid-mode", default="api-key")
+    assert normalized == "api-key"
