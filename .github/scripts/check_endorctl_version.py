@@ -22,6 +22,7 @@ Example cron job (check every 6 hours):
 """
 
 import argparse
+import time
 import sys
 from pathlib import Path
 from typing import Optional
@@ -29,35 +30,37 @@ from typing import Optional
 import httpx
 
 
-def get_latest_version() -> Optional[str]:
+def get_latest_version(*, attempts: int = 3, backoff_seconds: float = 1.0) -> Optional[str]:
     """
     Query the public Endor Labs API for the latest endorctl version.
 
     Returns:
         Version string (e.g., "v1.6.322") or None if query fails
     """
-    try:
-        # Public endpoint - no authentication required
-        response = httpx.get(
-            "https://api.endorlabs.com/meta/version",
-            timeout=5,  # Fast timeout for cron job
-        )
-        response.raise_for_status()
+    for attempt in range(1, attempts + 1):
+        try:
+            # Public endpoint - no authentication required
+            response = httpx.get(
+                "https://api.endorlabs.com/meta/version",
+                timeout=5,  # Fast timeout for cron job
+            )
+            response.raise_for_status()
 
-        data = response.json()
+            data = response.json()
 
-        # Try both field names (documentation shows both)
-        version = data.get("ClientVersion") or data.get("Version")
+            # Try both field names (documentation shows both)
+            version = data.get("ClientVersion") or data.get("Version")
 
-        if version:
-            # Remove 'v' prefix if present for consistent comparison
-            return version.lstrip("v")
+            if version:
+                # Remove 'v' prefix if present for consistent comparison
+                return version.lstrip("v")
 
-        return None
-
-    except Exception as e:
-        print(f"Error querying version API: {e}", file=sys.stderr)
-        return None
+            return None
+        except Exception as e:
+            if attempt == attempts:
+                print(f"Error querying version API after {attempts} attempts: {e}", file=sys.stderr)
+                return None
+            time.sleep(backoff_seconds * attempt)
 
 
 def load_stored_version(state_file: Path) -> Optional[str]:
@@ -159,12 +162,28 @@ Examples:
         action="store_true",
         help="Suppress output (only exit code indicates result)"
     )
+    parser.add_argument(
+        "--attempts",
+        type=int,
+        default=3,
+        help="Number of retries for version API calls (default: 3)",
+    )
+    parser.add_argument(
+        "--backoff-seconds",
+        type=float,
+        default=1.0,
+        help="Linear backoff base between retries (default: 1.0)",
+    )
     return parser
 
 
-def _handle_version_retrieval(quiet: bool) -> Optional[str]:
+def _handle_version_retrieval(
+    quiet: bool, *, attempts: int = 3, backoff_seconds: float = 1.0
+) -> Optional[str]:
     """Handle API version retrieval and error cases."""
-    latest_version = get_latest_version()
+    latest_version = get_latest_version(
+        attempts=attempts, backoff_seconds=backoff_seconds
+    )
     if not latest_version:
         if not quiet:
             print("Error: Could not retrieve latest version", file=sys.stderr)
@@ -219,7 +238,11 @@ def main():
     args = parser.parse_args()
 
     # Get latest version from API
-    latest_version = _handle_version_retrieval(args.quiet)
+    latest_version = _handle_version_retrieval(
+        args.quiet,
+        attempts=max(args.attempts, 1),
+        backoff_seconds=max(args.backoff_seconds, 0.0),
+    )
 
     # If no state file, just print latest version and exit
     if not args.state_file:
