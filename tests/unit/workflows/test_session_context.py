@@ -15,6 +15,7 @@ from endorlabs.workflows.session_context import (
     PoliciesContext,
     SessionResult,
     VersionsContext,
+    build_project_session_key,
     create_session,
     pull_findings_context,
     pull_policies_context,
@@ -161,6 +162,7 @@ class TestPullFindingsContext:
         ctx = pull_findings_context(client, project)
 
         assert ctx.total == 0
+        assert ctx.fetch_error == "API error"
 
 
 class TestPullPoliciesContext:
@@ -197,6 +199,10 @@ class TestPullVersionsContext:
 
         assert ctx.total == 1
         assert ctx.versions[0]["ref"] == "refs/heads/main"
+        client.repository_version.list.assert_called_once()
+        kwargs = client.repository_version.list.call_args.kwargs
+        assert kwargs["parent"] == project
+        assert kwargs["max_pages"] == 2
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +218,17 @@ class TestRenderFindingsSummary:
         ctx = FindingsContext(project_name="test-repo", total=0)
         md = render_findings_summary(ctx)
         assert "No findings found" in md
+
+    def test_renders_fetch_error_warning(self) -> None:
+        """Includes warning when findings query failed."""
+        ctx = FindingsContext(
+            project_name="test-repo",
+            total=0,
+            fetch_error="backend timeout",
+        )
+        md = render_findings_summary(ctx)
+        assert "could not be retrieved" in md
+        assert "backend timeout" in md
 
     def test_renders_table(self) -> None:
         """Renders a table with category rows."""
@@ -297,7 +314,7 @@ class TestWriteSessionArtifacts:
         write_session_artifacts(tmp_path, project, findings, policies, versions)
 
         # Check directory structure
-        slug_dir = tmp_path / "org_test-repo"
+        slug_dir = tmp_path / build_project_session_key(project)
         assert (slug_dir / "project-summary.md").exists()
         assert (slug_dir / "findings" / "findings-summary.md").exists()
         assert (slug_dir / "findings" / "findings.json").exists()
@@ -319,7 +336,7 @@ class TestWriteSessionArtifacts:
 
         write_session_artifacts(tmp_path, project, findings, policies, versions)
 
-        slug_dir = tmp_path / "org_repo"
+        slug_dir = tmp_path / build_project_session_key(project)
         data = json.loads((slug_dir / "findings" / "findings.json").read_text())
         assert len(data) == 1
         assert data[0]["uuid"] == "f1"
@@ -338,9 +355,28 @@ class TestWriteSessionArtifacts:
             versions,
             deterministic=True,
         )
-        slug_dir = tmp_path / "org_repo"
+        slug_dir = tmp_path / build_project_session_key(project)
         summary = (slug_dir / "project-summary.md").read_text()
         assert "Generated at 1970-01-01T00:00:00Z" in summary
+
+    def test_same_repo_name_different_uuid_creates_distinct_dirs(
+        self, tmp_path: Path
+    ) -> None:
+        project_one = _make_mock_project(
+            uuid="proj-1", name="https://github.com/org/repo.git"
+        )
+        project_two = _make_mock_project(
+            uuid="proj-2", name="https://github.com/org/repo.git"
+        )
+        findings = FindingsContext(project_name="repo", total=0, raw_findings=[])
+        policies = PoliciesContext(total=0, policies=[])
+        versions = VersionsContext(total=0, versions=[])
+
+        write_session_artifacts(tmp_path, project_one, findings, policies, versions)
+        write_session_artifacts(tmp_path, project_two, findings, policies, versions)
+
+        assert (tmp_path / build_project_session_key(project_one)).exists()
+        assert (tmp_path / build_project_session_key(project_two)).exists()
 
 
 # ---------------------------------------------------------------------------
@@ -364,3 +400,18 @@ class TestCreateSession:
         assert isinstance(result, SessionResult)
         assert result.status == "success"
         assert result.findings.total == 0
+
+    def test_sets_error_status_when_findings_fetch_fails(self, tmp_path: Path) -> None:
+        """Session result surfaces data retrieval errors."""
+        client = Mock()
+        client.finding.list.side_effect = Exception("boom")
+        client.policy.list.return_value = []
+        client.repository_version.list.return_value = []
+        project = _make_mock_project()
+
+        result = create_session(client, project, tmp_path)
+
+        assert result.status == "error"
+        assert result.errors
+        assert "Unable to fetch findings: boom" in result.errors[0]
+        assert "retrieval/write errors" in result.message
