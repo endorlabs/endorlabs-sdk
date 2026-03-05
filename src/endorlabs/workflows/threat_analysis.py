@@ -11,7 +11,8 @@ as the rest of the SDK.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from typing import Any
 
 from endorlabs.utils.logging_config import get_resource_logger
@@ -79,6 +80,14 @@ class ThreatModelResult(WorkflowResult):
     risk_count: int = 0
 
 
+@dataclass
+class ThreatModelVerificationResult(WorkflowResult):
+    """Result for deterministic threat-model claim verification."""
+
+    claims_checked: int = 0
+    unverifiable_claims: list[str] = field(default_factory=list)
+
+
 # ---------------------------------------------------------------------------
 # Core analysis function
 # ---------------------------------------------------------------------------
@@ -135,6 +144,8 @@ def analyze_project_threat_model(
     llm: Any,
     project_name: str,
     context_markdown: str,
+    *,
+    strict_verify: bool = False,
 ) -> ThreatModelResult:
     """Run the appsec sub-agent to produce a threat model.
 
@@ -146,6 +157,8 @@ def analyze_project_threat_model(
         project_name: Human-readable project name / URL.
         context_markdown: Combined Markdown context from session_context
             and dependency_explorer.
+        strict_verify: When True, fail the workflow if CVE/GHSA claims
+            in the generated report are not present in the supplied context.
 
     Returns:
         :class:`ThreatModelResult` containing the Markdown report.
@@ -192,10 +205,61 @@ def analyze_project_threat_model(
             if stripped.startswith("##") and "risk assessment" not in stripped.lower():
                 in_risk_section = False
 
-    return ThreatModelResult(
+    result = ThreatModelResult(
         status="success",
         message=f"Threat model for {project_name}: {risk_count} risks identified",
         project_name=project_name,
         report=report,
         risk_count=risk_count,
+    )
+    verification = verify_threat_model_claims(
+        report=report,
+        context_markdown=context_markdown,
+        strict=strict_verify,
+    )
+    if strict_verify and not verification.ok:
+        return ThreatModelResult(
+            status="error",
+            message=(
+                "Unverifiable threat model claims: "
+                + ", ".join(verification.unverifiable_claims[:10])
+            ),
+            errors=verification.unverifiable_claims,
+            project_name=project_name,
+            report=report,
+            risk_count=risk_count,
+        )
+    return result
+
+
+def verify_threat_model_claims(
+    *, report: str, context_markdown: str, strict: bool = False
+) -> ThreatModelVerificationResult:
+    """Verify that CVE/GHSA identifiers in report exist in context."""
+    cve_claims = set(re.findall(r"\bCVE-\d{4}-\d{4,7}\b", report, flags=re.IGNORECASE))
+    ghsa_claims = set(
+        re.findall(r"\bGHSA-[A-Za-z0-9-]{4,}\b", report, flags=re.IGNORECASE)
+    )
+    claims = sorted(cve_claims | ghsa_claims)
+    if not claims:
+        return ThreatModelVerificationResult(
+            status="success",
+            message="No verifiable CVE/GHSA claims found in report.",
+            claims_checked=0,
+            unverifiable_claims=[],
+        )
+
+    context_lower = context_markdown.lower()
+    unverifiable = [claim for claim in claims if claim.lower() not in context_lower]
+    status = "error" if (strict and unverifiable) else "success"
+    message = (
+        "All threat-model claims are verifiable."
+        if not unverifiable
+        else f"{len(unverifiable)} unverifiable claim(s) found."
+    )
+    return ThreatModelVerificationResult(
+        status=status,
+        message=message,
+        claims_checked=len(claims),
+        unverifiable_claims=unverifiable,
     )

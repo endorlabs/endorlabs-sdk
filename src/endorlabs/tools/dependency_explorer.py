@@ -1237,6 +1237,8 @@ def process_project(
     out_dir: str,
     pv_limit: int = 5,
     dep_metadata_max_pages: int = 10,
+    *,
+    deterministic: bool = False,
 ) -> ProjectResult:
     """Retrieve full dependency tree and call graph data for one project.
 
@@ -1248,6 +1250,8 @@ def process_project(
         out_dir: Output directory for this project's artifacts.
         pv_limit: Maximum PackageVersions to process.
         dep_metadata_max_pages: Max pages for DependencyMetadata pagination.
+        deterministic: When True, sort package versions and dependency rows
+            so output artifacts are stable across runs.
 
     Returns:
         :class:`ProjectResult` with paths to all written artifacts.
@@ -1280,6 +1284,8 @@ def process_project(
         page_size=pv_limit,
     )
     pvs = pvs[:pv_limit]
+    if deterministic:
+        pvs = sorted(pvs, key=lambda pv: str(pv.meta.name if pv.meta else pv.uuid))
     single_pv = len(pvs) == 1
 
     # 2. Per-PV: BOM + Call Graph
@@ -1335,6 +1341,23 @@ def process_project(
         project.uuid,
         max_pages=dep_metadata_max_pages,
     )
+    if deterministic:
+        dep_rows = sorted(
+            dep_rows,
+            key=lambda row: (
+                str(row.get("tenant_meta", {}).get("namespace", "")),
+                str(
+                    row.get("spec", {})
+                    .get("dependency_data", {})
+                    .get("package_name", "")
+                ),
+                str(
+                    row.get("spec", {})
+                    .get("dependency_data", {})
+                    .get("resolved_version", "")
+                ),
+            ),
+        )
     result.dep_metadata_count = len(dep_rows)
     result.dep_metadata_namespace = dep_ns
     out_base = Path(out_dir)
