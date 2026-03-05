@@ -180,13 +180,48 @@ def _auto_authenticate() -> endorlabs.Client:
     return endorlabs.Client(tenant=tenant, logging_level="ERROR", auth_method="browser")
 
 
-def _build_client(tenant: str, auth_method: str) -> endorlabs.Client:
+def _build_client(
+    tenant: str,
+    auth_method: str,
+    *,
+    email: str | None = None,
+    auth_tenant: str | None = None,
+) -> endorlabs.Client:
     """Create an authenticated SDK client for the wizard flow."""
     return endorlabs.Client(
         tenant=tenant,
         logging_level="ERROR",
         auth_method=auth_method,
+        email=email,
+        auth_tenant=auth_tenant,
     )
+
+
+def _normalize_wizard_auth_method(raw: str, *, default: str) -> str:
+    """Normalize wizard auth input to the SDK's canonical auth methods."""
+    cleaned = raw.strip().lower()
+    value = cleaned or default
+    aliases = {
+        "browser": "browser-auth",
+        "admin": "browser-auth",
+    }
+    normalized = aliases.get(value, value)
+    supported = {
+        "api-key",
+        "browser-auth",
+        "sso",
+        "google",
+        "github",
+        "gitlab",
+        "email",
+    }
+    if normalized in supported:
+        return normalized
+    _log(
+        f"  Unsupported auth mode '{value}'. Falling back to '{default}'.",
+        style="yellow",
+    )
+    return default
 
 
 def _prompt_input(prompt: str, *, default: str | None = None) -> str:
@@ -1301,15 +1336,42 @@ def _run_wizard_mode() -> None:
         style="dim",
     )
 
-    auth_default = "api-key" if (
-        os.getenv("ENDOR_API_CREDENTIALS_KEY") and os.getenv("ENDOR_API_CREDENTIALS_SECRET")
-    ) else "browser"
+    auth_default = _normalize_wizard_auth_method(
+        os.getenv("ENDOR_AUTH_METHOD", ""),
+        default=(
+            "api-key"
+            if (
+                os.getenv("ENDOR_API_CREDENTIALS_KEY")
+                and os.getenv("ENDOR_API_CREDENTIALS_SECRET")
+            )
+            else "browser-auth"
+        ),
+    )
     auth_choice = _prompt_input(
-        "Authentication [api-key/browser] "
-        "(api-key uses ENDOR_API_CREDENTIALS_KEY + ENDOR_API_CREDENTIALS_SECRET): ",
+        "Authentication method "
+        "[api-key/browser-auth/sso/google/github/gitlab/email] "
+        "(alias: browser -> browser-auth): ",
         default=auth_default,
-    ).lower()
-    auth_method = "browser" if auth_choice.startswith("b") else "api-key"
+    )
+    auth_method = _normalize_wizard_auth_method(auth_choice, default=auth_default)
+    auth_email: str | None = None
+    auth_tenant: str | None = None
+    if auth_method == "email":
+        auth_email = _prompt_input(
+            "Auth email (ENDOR_AUTH_EMAIL): ",
+            default=os.getenv("ENDOR_AUTH_EMAIL", ""),
+        )
+        if not auth_email:
+            _log("  Email auth requires an email address.", style="bold red")
+            return
+    if auth_method == "sso":
+        auth_tenant = _prompt_input(
+            "SSO auth tenant (ENDOR_AUTH_TENANT or ENDOR_INIT_AUTH_TENANT): ",
+            default=os.getenv("ENDOR_AUTH_TENANT", os.getenv("ENDOR_INIT_AUTH_TENANT", "")),
+        )
+        if not auth_tenant:
+            _log("  SSO auth requires an auth tenant.", style="bold red")
+            return
 
     namespace_default = os.getenv("ENDOR_NAMESPACE", "")
     namespace = _prompt_input(
@@ -1320,7 +1382,12 @@ def _run_wizard_mode() -> None:
         _log("  Namespace is required to continue.", style="bold red")
         return
 
-    client = _build_client(namespace, auth_method)
+    client = _build_client(
+        namespace,
+        auth_method,
+        email=auth_email,
+        auth_tenant=auth_tenant,
+    )
     user_identity = "anonymous"
     with contextlib.suppress(Exception):
         user_identity = client.whoami() or "anonymous"
