@@ -115,6 +115,47 @@ class Client:
         self.close()
         return
 
+    def _identity_from_user_info(self, user_info: dict[str, object]) -> str | None:
+        """Extract an identity string from ``/v1/auth`` response payload."""
+        user = user_info.get("user")
+        if not isinstance(user, dict):
+            return None
+        user_dict = cast("dict[str, object]", user)
+        spec = user_dict.get("spec")
+        if isinstance(spec, dict):
+            spec_dict = cast("dict[str, object]", spec)
+            for key in ("email", "user_name"):
+                value = spec_dict.get(key)
+                if isinstance(value, str) and value:
+                    return value
+        meta = user_dict.get("meta")
+        if isinstance(meta, dict):
+            meta_dict = cast("dict[str, object]", meta)
+            name = meta_dict.get("name")
+            if isinstance(name, str) and name:
+                return name
+        return None
+
+    def _whoami_from_auth_policy_fallback(self, api_key: str) -> str | None:
+        """Best-effort compatibility fallback via AuthorizationPolicy."""
+        try:
+            policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
+                traverse=True,
+                filter=F("spec.clause").contains(api_key),
+                page_size=1,
+                max_pages=1,
+            )
+        except Exception:
+            return None
+        if not policies:
+            return None
+        policy = cast("Any", policies[0])
+        meta = getattr(policy, "meta", None)
+        if meta is None:
+            return None
+        raw_name = getattr(meta, "name", None)
+        return str(raw_name) if raw_name else None
+
     def whoami(self) -> str | None:
         """Resolve the current user identity.
 
@@ -130,39 +171,14 @@ class Client:
 
         user_info = self._client.get_user_info()
         if isinstance(user_info, dict):
-            user = user_info.get("user")
-            if isinstance(user, dict):
-                user_dict = cast("dict[str, object]", user)
-                spec = user_dict.get("spec")
-                if isinstance(spec, dict):
-                    spec_dict = cast("dict[str, object]", spec)
-                    for key in ("email", "user_name"):
-                        value = spec_dict.get(key)
-                        if isinstance(value, str) and value:
-                            return value
-                meta = user_dict.get("meta")
-                if isinstance(meta, dict):
-                    meta_dict = cast("dict[str, object]", meta)
-                    name = meta_dict.get("name")
-                    if isinstance(name, str) and name:
-                        return name
+            identity = self._identity_from_user_info(user_info)
+            if identity:
+                return identity
 
         if not self._client.is_api_key_auth or not self._client.key:
             return None
 
-        policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
-            traverse=True,
-            filter=F("spec.clause").contains(self._client.key),
-            page_size=1,
-            max_pages=1,
-        )
-        if policies:
-            policy = cast("Any", policies[0])
-            meta = getattr(policy, "meta", None)
-            if meta is not None:
-                raw_name = getattr(meta, "name", None)
-                return str(raw_name) if raw_name else None
-        return None
+        return self._whoami_from_auth_policy_fallback(self._client.key)
 
     def wait_until(
         self,
