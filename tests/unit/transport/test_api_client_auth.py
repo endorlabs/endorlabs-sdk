@@ -44,7 +44,8 @@ def _auth_get_response() -> Mock:
 
 
 def _patch_httpx_client(
-    post_return: Mock | list[Mock] | None = None, get_return: Mock | None = None
+    post_return: Mock | list[Mock] | None = None,
+    get_return: Mock | list[Mock] | None = None,
 ) -> Mock:
     """Patch httpx.Client; post_return can be single mock or list for side_effect."""
     if post_return is None:
@@ -56,7 +57,10 @@ def _patch_httpx_client(
         mock_http.post.side_effect = post_return
     else:
         mock_http.post.return_value = post_return
-    mock_http.get.return_value = get_return
+    if isinstance(get_return, list):
+        mock_http.get.side_effect = get_return
+    else:
+        mock_http.get.return_value = get_return
     return patch("endorlabs.api_client.httpx.Client", return_value=mock_http)
 
 
@@ -242,6 +246,41 @@ class TestBrowserAuthentication:
         # Should not call get_token if token is provided
         mock_get_token.assert_not_called()
 
+    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch("endorlabs.auth_server.get_token")
+    def test_browser_auth_with_invalid_provided_token_falls_back(
+        self, mock_get_token: Mock
+    ) -> None:
+        """Invalid provided token should trigger one browser fallback attempt."""
+        invalid_response = _auth_get_response()
+        invalid_response.raise_for_status.side_effect = Exception("401 unauthorized")
+        valid_response = _auth_get_response()
+        mock_get_token.return_value = "browser-token-123"
+
+        with _patch_httpx_client(get_return=[invalid_response, valid_response]):
+            client = APIClient(token="invalid-token", auth_method="browser")
+
+        assert client._auth_type == "browser"
+        assert client._token == "browser-token-123"
+        mock_get_token.assert_called_once()
+
+    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch("endorlabs.auth_server.get_token")
+    def test_browser_auth_with_invalid_provided_token_and_no_fallback_token(
+        self, mock_get_token: Mock
+    ) -> None:
+        """Invalid provided token with failed fallback should return no token."""
+        invalid_response = _auth_get_response()
+        invalid_response.raise_for_status.side_effect = Exception("401 unauthorized")
+        mock_get_token.return_value = None
+
+        with _patch_httpx_client(get_return=invalid_response):
+            client = APIClient(token="invalid-token", auth_method="browser")
+
+        assert client._auth_type == "browser"
+        assert client._token is None
+        mock_get_token.assert_called_once()
+
     @patch.dict(
         os.environ,
         {
@@ -257,6 +296,69 @@ class TestBrowserAuthentication:
 
         assert client._auth_type == "browser"
         assert client._token == "env-token-789"
+
+    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch("endorlabs.auth_server.get_token")
+    def test_browser_token_reads_do_not_reopen_browser_session(
+        self, mock_get_token: Mock
+    ) -> None:
+        """Once browser token is validated, repeated reads should not reauth."""
+        mock_get_token.return_value = "browser-token-123"
+        with _patch_httpx_client(get_return=_auth_get_response()):
+            client = APIClient(auth_method="browser")
+            # Session-like UX: repeated token reads should not trigger browser auth.
+            first = client.token
+            second = client.token
+
+        assert first == "browser-token-123"
+        assert second == "browser-token-123"
+        mock_get_token.assert_called_once()
+
+    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch("endorlabs.auth_server.get_token")
+    def test_browser_401_triggers_single_browser_reauth_and_recovers(
+        self, mock_get_token: Mock
+    ) -> None:
+        """401 should trigger one browser fallback reauth for browser auth mode."""
+        initial_valid = _auth_get_response()
+        invalid_direct = _auth_get_response()
+        invalid_direct.raise_for_status.side_effect = Exception("401 unauthorized")
+        fallback_valid = _auth_get_response()
+        mock_get_token.return_value = "browser-token-reauth"
+
+        with _patch_httpx_client(
+            get_return=[initial_valid, invalid_direct, fallback_valid]
+        ):
+            client = APIClient(token="direct-token", auth_method="browser")
+            assert client.client is not None
+            client.client.request.return_value = Mock(
+                status_code=200,
+                raise_for_status=Mock(),
+                text='{"ok":true}',
+                url="https://api.endorlabs.com/v1/projects",
+                headers={},
+            )
+
+            unauthorized = Mock()
+            unauthorized.status_code = 401
+            unauthorized.url = "https://api.endorlabs.com/v1/projects"
+            unauthorized.headers = {}
+            unauthorized.text = "Unauthorized"
+            import httpx
+
+            unauthorized.raise_for_status.side_effect = httpx.HTTPStatusError(
+                "401 Unauthorized",
+                request=Mock(),
+                response=unauthorized,
+            )
+
+            result = client._handle_response(
+                unauthorized, method="GET", url="/v1/projects"
+            )
+
+        assert result.status_code == 200
+        assert client._token == "browser-token-reauth"
+        mock_get_token.assert_called_once()
 
 
 class TestAuthenticationBackwardCompatibility:
