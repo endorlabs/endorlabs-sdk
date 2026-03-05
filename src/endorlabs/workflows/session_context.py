@@ -473,6 +473,23 @@ def render_project_summary(
     return buf.getvalue()
 
 
+def _apply_generated_timestamp(markdown: str, generated_at: str) -> str:
+    """Replace summary footer timestamps with a deterministic value."""
+    marker = "*Generated at "
+    if marker not in markdown:
+        return markdown
+    before, _, after = markdown.rpartition(marker)
+    _, _, suffix = after.partition("*\n")
+    return f"{before}{marker}{generated_at}*\n{suffix}"
+
+
+def _sort_findings_raw(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return findings in stable order for deterministic artifacts."""
+    return sorted(
+        findings, key=lambda d: (str(d.get("uuid", "")), str(d.get("level", "")))
+    )
+
+
 # ---------------------------------------------------------------------------
 # Artifact writer
 # ---------------------------------------------------------------------------
@@ -484,6 +501,8 @@ def write_session_artifacts(
     findings: FindingsContext,
     policies: PoliciesContext,
     versions: VersionsContext,
+    *,
+    deterministic: bool = False,
 ) -> None:
     """Write all session artifacts to the progressive-disclosure directory.
 
@@ -511,27 +530,48 @@ def write_session_artifacts(
 
     # -- project-summary.md --
     summary = render_project_summary(project, findings, policies, versions)
+    if deterministic:
+        summary = _apply_generated_timestamp(summary, "1970-01-01T00:00:00Z")
     safe_write_text(session_dir, proj_dir / "project-summary.md", summary)
 
     # -- findings/ --
     findings_dir = proj_dir / "findings"
+    findings_summary = render_findings_summary(findings)
+    if deterministic:
+        findings_summary = _apply_generated_timestamp(
+            findings_summary, "1970-01-01T00:00:00Z"
+        )
     safe_write_text(
         session_dir,
         findings_dir / "findings-summary.md",
-        render_findings_summary(findings),
+        findings_summary,
     )
     safe_write_text(
         session_dir,
         findings_dir / "findings.json",
-        json.dumps(findings.raw_findings, indent=2, default=str, ensure_ascii=False),
+        json.dumps(
+            (
+                _sort_findings_raw(findings.raw_findings)
+                if deterministic
+                else findings.raw_findings
+            ),
+            indent=2,
+            default=str,
+            ensure_ascii=False,
+        ),
     )
 
     # -- policies/ --
     policies_dir = proj_dir / "policies"
+    policies_summary = render_policies_summary(policies)
+    if deterministic:
+        policies_summary = _apply_generated_timestamp(
+            policies_summary, "1970-01-01T00:00:00Z"
+        )
     safe_write_text(
         session_dir,
         policies_dir / "policies-summary.md",
-        render_policies_summary(policies),
+        policies_summary,
     )
     safe_write_text(
         session_dir,
@@ -541,10 +581,15 @@ def write_session_artifacts(
 
     # -- repository-versions/ --
     versions_dir = proj_dir / "repository-versions"
+    versions_summary = render_versions_summary(versions)
+    if deterministic:
+        versions_summary = _apply_generated_timestamp(
+            versions_summary, "1970-01-01T00:00:00Z"
+        )
     safe_write_text(
         session_dir,
         versions_dir / "versions-summary.md",
-        render_versions_summary(versions),
+        versions_summary,
     )
     safe_write_text(
         session_dir,
@@ -564,6 +609,8 @@ def create_session(
     client: Client,
     project: Any,
     session_dir: str | Path,
+    *,
+    deterministic: bool = False,
 ) -> SessionResult:
     """Pull all context for a project and write session artifacts.
 
@@ -575,6 +622,8 @@ def create_session(
         client: Authenticated Endor Labs Client.
         project: Project resource object.
         session_dir: Root directory for the session output.
+        deterministic: When True, emit stable timestamps and sorted JSON
+            payloads suitable for replay/diffing.
 
     Returns:
         :class:`SessionResult` with overall status and sub-contexts.
@@ -606,7 +655,14 @@ def create_session(
 
     # Write artifacts
     try:
-        write_session_artifacts(session_dir, project, findings, policies, versions)
+        write_session_artifacts(
+            session_dir,
+            project,
+            findings,
+            policies,
+            versions,
+            deterministic=deterministic,
+        )
     except Exception as exc:
         errors.append(f"Unable to write session artifacts: {exc}")
         logger.error("Unable to write session artifacts: %s", exc)

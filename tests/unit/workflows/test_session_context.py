@@ -324,6 +324,24 @@ class TestWriteSessionArtifacts:
         assert len(data) == 1
         assert data[0]["uuid"] == "f1"
 
+    def test_deterministic_mode_uses_stable_timestamp(self, tmp_path: Path) -> None:
+        project = _make_mock_project(name="https://github.com/org/repo.git")
+        findings = FindingsContext(project_name="repo", total=0, raw_findings=[])
+        policies = PoliciesContext(total=0, policies=[])
+        versions = VersionsContext(total=0, versions=[])
+
+        write_session_artifacts(
+            tmp_path,
+            project,
+            findings,
+            policies,
+            versions,
+            deterministic=True,
+        )
+        slug_dir = tmp_path / "org_repo"
+        summary = (slug_dir / "project-summary.md").read_text()
+        assert "Generated at 1970-01-01T00:00:00Z" in summary
+
 
 # ---------------------------------------------------------------------------
 # Orchestrator tests
