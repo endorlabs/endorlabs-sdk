@@ -1264,7 +1264,7 @@ class APIClient:
             data = response.json()
             if isinstance(data, dict):
                 return cast("dict[str, object]", data)
-        except Exception as e:
+        except (httpx.HTTPError, ValueError, TypeError) as e:
             self.logger.debug("Unable to fetch user info from v1/auth: %s", e)
         return None
 
@@ -1279,8 +1279,14 @@ class APIClient:
                 json=payload,
             )
             _ = response.raise_for_status()
-            data = response.json()
-            token = data["token"]
+            data_raw = response.json()
+            if not isinstance(data_raw, dict):
+                raise TypeError("Invalid auth response: expected JSON object")
+            data = cast("dict[str, Any]", data_raw)
+            token_raw = data.get("token")
+            if not isinstance(token_raw, str) or not token_raw:
+                raise ValueError("Invalid auth response: missing token")
+            token = token_raw
 
             # Parse expiration time from response
             expires = None
@@ -1295,7 +1301,7 @@ class APIClient:
                     # Replace 'Z' with '+00:00' for ISO format compatibility
                     utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
                     self._token_expires = datetime.fromisoformat(utc_datetime_str)
-                except Exception as e:
+                except (TypeError, ValueError) as e:
                     # If parsing fails, log but don't error out
                     self.logger.debug(
                         "Could not parse expiration time '%s': %s",
@@ -1313,7 +1319,10 @@ class APIClient:
             self._request_headers["Authorization"] = f"Bearer {token}"
             self.default_headers = self._headers_copy()
             return token
-        except Exception as e:
+        except ValueError:
+            # Surface malformed auth responses as explicit startup errors.
+            raise
+        except httpx.HTTPError as e:
             self.logger.error("Unable to authenticate with API key: %s", e)
             self._token = None
             self._token_expires = None
@@ -1412,26 +1421,34 @@ class APIClient:
             # (Most endpoints don't return this, but we try)
             try:
                 data = test_response.json()
-                if "expirationTime" in data:
-                    expires = data["expirationTime"]
-                elif "expiration_time" in data:
-                    expires = data["expiration_time"]
-                else:
+                expires: str | None = None
+                if not isinstance(data, dict):
                     expires = None
+                else:
+                    data_dict = cast("dict[str, Any]", data)
+                    raw_expiration = data_dict.get("expirationTime") or data_dict.get(
+                        "expiration_time"
+                    )
+                    if isinstance(raw_expiration, str):
+                        expires = raw_expiration
 
                 if expires is not None:
                     try:
-                        utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
+                        utc_datetime_str = re.sub(
+                            r"\s*Z$",
+                            "+00:00",
+                            expires,
+                        )
                         self._token_expires = datetime.fromisoformat(utc_datetime_str)
-                    except Exception:
+                    except (TypeError, ValueError):
                         self._token_expires = None
                 else:
                     # For browser tokens, we don't know expiration
                     # Set to None (will be treated as expired when checked)
                     self._token_expires = None
-            except Exception:
+            except (TypeError, ValueError):
                 self._token_expires = None
-        except Exception as e:
+        except httpx.HTTPError as e:
             self.logger.debug("Token validation request unsuccessful: %s", e)
             self._token = None
             self._token_expires = None
@@ -1505,7 +1522,7 @@ class APIClient:
             self._token_expires = None
             self._browser_session_validated = False
             return None
-        except Exception as e:
+        except (httpx.HTTPError, OSError, RuntimeError, ValueError) as e:
             self.logger.error("Unable to authenticate with browser: %s", e)
             self._token = None
             self._token_expires = None

@@ -51,7 +51,7 @@ Two-layer, registry-driven design. The same pattern applies to all resources.
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
 - **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceFacade[T]` instances; for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"system"`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
 - **Registry:** `endorlabs.registry` — one `ResourceEntry(attr_name=..., resource_name=..., model_class=..., supported_ops=..., ...)` per resource. Adding a resource = one registry entry.
-- **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models.
+- **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
 
 For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
 
