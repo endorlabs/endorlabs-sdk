@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import base64
 import json
-import logging
 import os
 import re
 import textwrap
@@ -31,7 +30,9 @@ if TYPE_CHECKING:
     from endorlabs import Client
     from endorlabs.api_client import APIClient
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Optional: zstandard for call graph decoding
@@ -763,14 +764,22 @@ def slugify(name: str, max_len: int = 80) -> str:
     return s[:max_len] if s else "unknown"
 
 
-def write_json(path: str | Path, data: Any) -> None:
-    """Write *data* as formatted JSON, creating parent directories."""
+def write_json(path: str | Path, data: Any, *, base_dir: Path | None = None) -> None:
+    """Write *data* as formatted JSON, creating parent directories.
+
+    When *base_dir* is provided the target path is resolved and checked
+    for containment so that ``../`` sequences cannot escape the intended
+    output directory.
+    """
+    from endorlabs.utils.path_safety import safe_write_text
+
     path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(data, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    content = json.dumps(data, indent=2, default=str, ensure_ascii=False)
+    if base_dir is not None:
+        safe_write_text(base_dir, path, content)
+    else:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
     logger.info("  Wrote %s", path)
 
 
@@ -964,8 +973,10 @@ def retrieve_dep_metadata_full(
     Tries the project's namespace first, then falls back to ``"oss"``.
     Returns ``(rows, source_namespace)``.
     """
+    from endorlabs.operations import validate_namespace
+
     for ns in [project_namespace, "oss"]:
-        url = f"v1/namespaces/{ns}/dependency-metadata"
+        url = f"v1/namespaces/{validate_namespace(ns)}/dependency-metadata"
         params = {
             "list_parameters.filter": (
                 f'spec.importer_data.project_uuid=="{project_uuid}"'
@@ -1028,7 +1039,10 @@ def retrieve_call_graph_full(
 
     Uses ``x-callgraph-encoding=any`` header to request JSON encoding.
     """
-    url = f"v1/namespaces/{namespace}/call-graph-data"
+    from endorlabs.operations import validate_namespace
+
+    ns = validate_namespace(namespace)
+    url = f"v1/namespaces/{ns}/call-graph-data"
     params = {
         "list_parameters.filter": f'meta.parent_uuid=="{pv_uuid}"',
         "list_parameters.page_size": "1",
@@ -1043,7 +1057,7 @@ def retrieve_call_graph_full(
     if not cg_uuid:
         return objects[0]
 
-    get_url = f"v1/namespaces/{namespace}/call-graph-data/{cg_uuid}"
+    get_url = f"v1/namespaces/{ns}/call-graph-data/{cg_uuid}"
     try:
         resp_full = api_client.get(
             get_url,
@@ -1168,8 +1182,10 @@ def generate_call_graph_analysis_md(cg_json_path: str | Path) -> str | None:
     except Exception as exc:
         logger.warning("Unable to generate call graph analysis: %s", exc)
         return None
+    from endorlabs.utils.path_safety import safe_write_text
+
     out_path = cg_json_path.with_name(cg_json_path.stem + "_analysis.md")
-    out_path.write_text(md, encoding="utf-8")
+    safe_write_text(cg_json_path.parent, out_path, md)
     logger.info("  Wrote %s", out_path)
     return str(out_path)
 
@@ -1221,6 +1237,8 @@ def process_project(
     out_dir: str,
     pv_limit: int = 5,
     dep_metadata_max_pages: int = 10,
+    *,
+    deterministic: bool = False,
 ) -> ProjectResult:
     """Retrieve full dependency tree and call graph data for one project.
 
@@ -1232,6 +1250,8 @@ def process_project(
         out_dir: Output directory for this project's artifacts.
         pv_limit: Maximum PackageVersions to process.
         dep_metadata_max_pages: Max pages for DependencyMetadata pagination.
+        deterministic: When True, sort package versions and dependency rows
+            so output artifacts are stable across runs.
 
     Returns:
         :class:`ProjectResult` with paths to all written artifacts.
@@ -1255,13 +1275,17 @@ def process_project(
 
     # 1. PackageVersions
     logger.info("  Fetching PackageVersions ...")
+    from endorlabs.filter import F
+
     pvs = client.package_version.list(  # type: ignore[attr-defined]
         namespace=project_ns,
-        filter=f'spec.project_uuid=="{project.uuid}"',
+        filter=F("spec.project_uuid") == project.uuid,
         max_pages=1,
         page_size=pv_limit,
     )
     pvs = pvs[:pv_limit]
+    if deterministic:
+        pvs = sorted(pvs, key=lambda pv: str(pv.meta.name if pv.meta else pv.uuid))
     single_pv = len(pvs) == 1
 
     # 2. Per-PV: BOM + Call Graph
@@ -1282,7 +1306,7 @@ def process_project(
         if bom_data:
             bom_filename = "bom.json" if single_pv else f"bom_{pv_slug}.json"
             bom_path = os.path.join(out_dir, bom_filename)
-            write_json(bom_path, bom_data)
+            write_json(bom_path, bom_data, base_dir=Path(out_dir))
             pvr.bom_file = bom_path
             graph = bom_data.get("dependency_graph", {}) or {}
             pvr.graph_nodes = len(graph)
@@ -1300,7 +1324,7 @@ def process_project(
                 "call_graph.json" if single_pv else f"call_graph_{pv_slug}.json"
             )
             cg_path = os.path.join(out_dir, cg_filename)
-            write_json(cg_path, cg_data)
+            write_json(cg_path, cg_data, base_dir=Path(out_dir))
             pvr.cg_file = cg_path
             pvr.cg_summary = summarize_call_graph(cg_data)
             analysis_path = generate_call_graph_analysis_md(cg_path)
@@ -1317,13 +1341,39 @@ def process_project(
         project.uuid,
         max_pages=dep_metadata_max_pages,
     )
+    if deterministic:
+        dep_rows = sorted(
+            dep_rows,
+            key=lambda row: (
+                str(row.get("tenant_meta", {}).get("namespace", "")),
+                str(
+                    row.get("spec", {})
+                    .get("dependency_data", {})
+                    .get("package_name", "")
+                ),
+                str(
+                    row.get("spec", {})
+                    .get("dependency_data", {})
+                    .get("resolved_version", "")
+                ),
+            ),
+        )
     result.dep_metadata_count = len(dep_rows)
     result.dep_metadata_namespace = dep_ns
+    out_base = Path(out_dir)
     if dep_rows:
-        write_json(os.path.join(out_dir, "dep_metadata.json"), dep_rows)
+        write_json(
+            os.path.join(out_dir, "dep_metadata.json"),
+            dep_rows,
+            base_dir=out_base,
+        )
         result.dep_metadata_stats = summarize_dep_metadata(dep_rows)
         slim = render_slim_dependencies(dep_rows)
-        write_json(os.path.join(out_dir, "dependencies.json"), slim)
+        write_json(
+            os.path.join(out_dir, "dependencies.json"),
+            slim,
+            base_dir=out_base,
+        )
 
     # 4. Build summary
     result.report = build_dependency_callgraph_summary(result)

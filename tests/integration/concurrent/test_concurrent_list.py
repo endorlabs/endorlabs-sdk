@@ -74,7 +74,7 @@ class TestConcurrentListPerformance:
         _ = client.project.list(
             traverse=True,
             concurrent=False,
-            max_pages=2,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         sequential_time = time.time() - start
 
@@ -83,7 +83,7 @@ class TestConcurrentListPerformance:
             traverse=True,
             concurrent=True,
             max_workers=10,
-            max_pages=2,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         concurrent_time = time.time() - start
 

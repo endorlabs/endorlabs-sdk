@@ -62,4 +62,5 @@ SDK conventions, architecture rules, guides, and reference docs. Already covered
 When implementing SDK code that interacts with the API:
 - **Always** grep the swagger spec for the resource schema before assuming field names or types
 - **Always** check the local user docs for the feature's documented behavior before implementing
+- **Always** use `uv run --env-file .env` to pass credentials to the Client/APIClient
 - **Never** guess at API field formats — confirm against `openapiv2.swagger.json`

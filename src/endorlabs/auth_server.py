@@ -43,6 +43,8 @@ DEFAULT_ENV = "endorlabs.com"
 
 # Authentication method URLs
 AUTH_METHODS = {
+    "browser-auth": "https://api.{environment}/v1/auth/sso?tenant=endor-admin",
+    "sso": "https://api.{environment}/v1/auth/sso?tenant={tenant}",
     "admin": "https://api.{environment}/v1/auth/sso?tenant=endor-admin",
     "google": "https://api.{environment}/v1/auth/google",
     "github": "https://api.{environment}/v1/auth/github",
@@ -129,6 +131,7 @@ def get_token(
     browser_name: str | None = None,
     method: str = "admin",
     email: str | None = None,
+    auth_tenant: str | None = None,
 ) -> str | None:
     """Get bearer token via browser OAuth flow.
 
@@ -142,8 +145,10 @@ def get_token(
         timeout: Server timeout in seconds (default: 20)
         environment: API environment domain (default: "endorlabs.com")
         browser_name: Browser name for webbrowser.get() (optional)
-        method: Auth method - 'admin', 'google', 'github', 'gitlab', or 'email'
+        method: Auth method - 'browser-auth', 'sso', 'google', 'github',
+            'gitlab', or 'email'. Legacy aliases: 'browser', 'admin'.
         email: Email address for email-based authentication (required if method='email')
+        auth_tenant: Tenant name required if method='sso'.
 
     Returns:
         Bearer token string or None if authentication failed or timed out
@@ -176,21 +181,31 @@ def get_token(
             "and ENDOR_API_CREDENTIALS_SECRET environment variables."
         )
 
-    if method not in AUTH_METHODS:
+    normalized_method = {"browser": "browser-auth", "admin": "browser-auth"}.get(
+        method, method
+    )
+
+    if normalized_method not in AUTH_METHODS:
         raise ValueError(
-            f"Unsupported auth method: {method}. "
+            f"Unsupported auth method: {normalized_method}. "
             f"Supported methods: {', '.join(AUTH_METHODS.keys())}"
         )
 
-    if method == "email" and not email:
+    if normalized_method == "email" and not email:
         raise ValueError("Email address required for email-based authentication")
 
+    if normalized_method == "sso" and not auth_tenant:
+        raise ValueError("Tenant is required for sso authentication")
+
     # Build OAuth URL
-    auth_url_template = AUTH_METHODS[method]
-    auth_url = auth_url_template.format(environment=environment)
+    auth_url_template = AUTH_METHODS[normalized_method]
+    auth_url = auth_url_template.format(
+        environment=environment,
+        tenant=auth_tenant or "endor-admin",
+    )
 
     # Add email parameter for email auth
-    if method == "email":
+    if normalized_method == "email":
         auth_url = f"{auth_url}?email={email}"
 
     # Add redirect parameter
@@ -204,7 +219,7 @@ def get_token(
 
         # Open browser (only once)
         browser = get_browser(browser_name)
-        logger.info("Opening browser for %s authentication...", method)
+        logger.info("Opening browser for %s authentication...", normalized_method)
         _ = browser.open_new_tab(auth_url)
 
         # Wait for callback (blocks until request received or timeout)

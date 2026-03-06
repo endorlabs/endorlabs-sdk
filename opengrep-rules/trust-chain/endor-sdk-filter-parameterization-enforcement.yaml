@@ -1,5 +1,5 @@
 rules:
-  - id: endor-sdk-filter-string-injection
+  - id: endor-sdk-filter-parameterization-enforcement
     languages:
       - python
     message: |
@@ -16,14 +16,16 @@ rules:
       the builder or use an equivalent escaping strategy.
 
       Solution:
-      Replace raw f-string filters with the F() builder:
+      Replace raw f-string filters with the `F()` builder from
+      `endorlabs.filter` (also re-exported as `endorlabs.F`):
 
       ```python
+      from endorlabs import F
+
       # UNSAFE -- raw interpolation
       client.semgrep_rule.list(filter=f'meta.name=="{name}"')
 
       # SAFE -- F() builder escapes values automatically
-      from endorlabs import F
       client.semgrep_rule.list(filter=F("meta.name") == name)
 
       # SAFE -- composition with & (AND) and | (OR)
@@ -34,6 +36,17 @@ rules:
           )
       )
       ```
+
+      The builder lives in `src/endorlabs/filter.py`. Do NOT manually
+      escape filter values or write your own quoting logic -- the `F()`
+      builder handles backslash-then-quote escaping and enum detection.
+
+      Trust chain:
+      This is the enforcement half of the filter parameterization trust
+      chain.  The paired validation rule
+      `endor-sdk-filter-parameterization-validation` validates that the
+      F() builder's escaping logic has not degraded.  Both rules must
+      pass for the security contract to hold.
     metadata:
       category: security
       confidence: HIGH
@@ -50,6 +63,8 @@ rules:
       endor-tags:
         - A03:2021
         - Injection
+        - trust-chain.id:filter-parameterization
+        - trust-chain.role:enforcement
       endor-targets:
         - ENDOR_TARGET_REPOSITORY
       explanation: >-
@@ -72,7 +87,7 @@ rules:
         from endorlabs.filter (e.g. F("meta.name") == name), or manually
         escape values before interpolation.
       security-severity: Medium
-      version: v1.0.0
+      version: v1.2.0
     patterns:
       - pattern: $FUNC(..., filter=f"...", ...)
       # Safe: unquoted enum/internal values -- no injection vector because

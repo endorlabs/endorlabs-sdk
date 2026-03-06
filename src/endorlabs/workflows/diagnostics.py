@@ -6,9 +6,9 @@ scan logs across runs, and auditing dependency visibility.
 
 from __future__ import annotations
 
-import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from .common import WorkflowResult
@@ -16,7 +16,9 @@ from .common import WorkflowResult
 if TYPE_CHECKING:
     from endorlabs import Client
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +86,33 @@ class VisibilityReport(WorkflowResult):
     stats: VisibilityStats = field(default_factory=VisibilityStats)
 
 
+@dataclass
+class SelfValidationScorecard:
+    """Deterministic, customer-facing posture scorecard for one repository."""
+
+    generated_at: str = ""
+    repository: str = ""
+    namespace: str = ""
+    risk: dict[str, Any] = field(default_factory=dict)
+    reliability: dict[str, Any] = field(default_factory=dict)
+    dependencies: dict[str, Any] = field(default_factory=dict)
+    policies: dict[str, Any] = field(default_factory=dict)
+    hygiene: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable scorecard object."""
+        return {
+            "generated_at": self.generated_at,
+            "repository": self.repository,
+            "namespace": self.namespace,
+            "risk": self.risk,
+            "reliability": self.reliability,
+            "dependencies": self.dependencies,
+            "policies": self.policies,
+            "hygiene": self.hygiene,
+        }
+
+
 # ---------------------------------------------------------------------------
 # Compare scan logs
 # ---------------------------------------------------------------------------
@@ -120,9 +149,11 @@ def compare_scan_logs(
     result = ScanLogComparison(num_scans_requested=num_scans)
 
     # Fetch recent scan results
+    from endorlabs.filter import F
+
     scan_results = client.scan_result.list(
         namespace=namespace,
-        filter=f'meta.parent_uuid=="{project_uuid}"',
+        filter=F("meta.parent_uuid") == project_uuid,
         sort_by="meta.create_time",
         desc=True,
         page_size=num_scans,
@@ -335,4 +366,68 @@ def check_dependency_visibility(
             f"Visibility: {stats.public} public, {stats.private} private, "
             f"{stats.unknown} unknown (total={stats.total})."
         ),
+    )
+
+
+def build_self_validation_scorecard(
+    *,
+    repository: str,
+    namespace: str,
+    findings_total: int,
+    findings_critical: int,
+    findings_high: int,
+    policies_total: int,
+    dependency_report: DependencyReport,
+    visibility_report: VisibilityReport,
+    scan_comparison: ScanLogComparison,
+    orphaned_findings_total: int = 0,
+    generated_at: str | None = None,
+) -> SelfValidationScorecard:
+    """Build a normalized scorecard from existing workflow outputs."""
+    runs = len(scan_comparison.entries)
+    failures = sum(
+        1
+        for entry in scan_comparison.entries
+        if (entry.exit_code is not None and entry.exit_code != 0)
+        or "FAIL" in entry.status.upper()
+    )
+    failure_rate = (failures / runs) if runs else 0.0
+
+    dep_stats = dependency_report.stats
+    vis_stats = visibility_report.stats
+    generated = generated_at or datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    return SelfValidationScorecard(
+        generated_at=generated,
+        repository=repository,
+        namespace=namespace,
+        risk={
+            "findings_total": findings_total,
+            "findings_critical": findings_critical,
+            "findings_high": findings_high,
+            "critical_plus_high_ratio": (
+                ((findings_critical + findings_high) / findings_total)
+                if findings_total
+                else 0.0
+            ),
+        },
+        reliability={
+            "scans_compared": runs,
+            "scan_failures": failures,
+            "scan_failure_rate": failure_rate,
+        },
+        dependencies={
+            "total": dep_stats.total,
+            "unique_packages": dep_stats.unique_packages,
+            "unique_importers": dep_stats.unique_importers,
+            "by_namespace": dict(sorted(dep_stats.by_namespace.items())),
+            "by_ecosystem": dict(sorted(dep_stats.by_ecosystem.items())),
+            "visibility": {
+                "public": vis_stats.public,
+                "private": vis_stats.private,
+                "unknown": vis_stats.unknown,
+            },
+        },
+        policies={"total": policies_total},
+        hygiene={"orphaned_findings_total": orphaned_findings_total},
     )

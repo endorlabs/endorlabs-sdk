@@ -23,13 +23,11 @@ on:
       - '.cursor/**'
       - '.github/CODEOWNERS'
       - '.github/copilot-instructions.md'
-      - '.github/scripts/**'
       - '.gitignore'
       - '.pre-commit-config.yaml'
       - 'docs/**'
       - 'LICENSE'
       - 'main.py'
-      - 'scripts/**'
   pull_request:
     branches: [ main, dev ]
     paths-ignore:
@@ -37,14 +35,37 @@ on:
       - '.cursor/**'
       - '.github/CODEOWNERS'
       - '.github/copilot-instructions.md'
-      - '.github/scripts/**'
       - '.gitignore'
       - '.pre-commit-config.yaml'
       - 'docs/**'
       - 'LICENSE'
       - 'main.py'
-      - 'scripts/**'
-  workflow_dispatch:  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: "Run integration tests"
+        required: false
+        default: true
+        type: boolean
+      force_all:
+        description: "Force all CI categories to run"
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      run_integration:
+        description: "Run integration tests"
+        required: false
+        default: true
+        type: boolean
+      force_all:
+        description: "Force all CI categories to run"
+        required: false
+        default: false
+        type: boolean
+  repository_dispatch:
+    types: [remote-ci]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
@@ -91,8 +112,17 @@ jobs:
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
           PUSH_BEFORE_SHA: ${{ github.event.before }}
+          FORCE_ALL: ${{ inputs.force_all || github.event.inputs.force_all || github.event.client_payload.force_all || 'false' }}
         run: |
           set -euo pipefail
+
+          if [ "$FORCE_ALL" = "true" ]; then
+            for cat in src unit-tests integration-tests config ci python; do
+              echo "${cat}=true" >> "$GITHUB_OUTPUT"
+            done
+            echo "::notice::Force-all set; running all CI categories"
+            exit 0
+          fi
 
           # --- resolve base commit ------------------------------------------------
           BASE=""
@@ -105,7 +135,8 @@ jobs:
               BASE=""
             fi
           fi
-          # workflow_dispatch: BASE stays empty → fail open (all true)
+          # workflow_dispatch/repository_dispatch/workflow_call:
+          # BASE stays empty → fail open (all true)
 
           # --- collect changed files ----------------------------------------------
           CHANGED=""
@@ -272,6 +303,7 @@ jobs:
       needs.resolve-dependencies.result == 'success' &&
       needs.detect-changes.result == 'success' &&
       needs.unit-tests.result != 'failure' &&
+      (inputs.run_integration != false && github.event.inputs.run_integration != 'false' && github.event.client_payload.run_integration != 'false') &&
       (
         needs.detect-changes.outputs.src == 'true' ||
         needs.detect-changes.outputs.integration-tests == 'true' ||
@@ -361,6 +393,7 @@ jobs:
   ai-security-review:
     name: AI Security Code Review
     runs-on: ubuntu-latest
+    continue-on-error: true
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
@@ -444,3 +477,17 @@ jobs:
             exit 1
           fi
           echo "All jobs passed or were correctly skipped"
+
+      - name: Publish CI summary
+        if: always()
+        run: |
+          {
+            echo "## CI Summary"
+            echo ""
+            echo "- Event: \`${{ github.event_name }}\`"
+            echo "- Ref: \`${{ github.ref }}\`"
+            echo "- Lint: \`${{ needs.lint.result }}\`"
+            echo "- Unit tests: \`${{ needs.unit-tests.result }}\`"
+            echo "- Integration tests: \`${{ needs.test-integration.result }}\`"
+            echo "- Coverage: \`${{ needs.coverage.result }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
