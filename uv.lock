@@ -385,6 +385,7 @@ dev = [
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "rich" },
     { name = "ruff" },
 ]
 
@@ -416,6 +417,7 @@ dev = [
     { name = "pyright", specifier = "==1.1.408" },
     { name = "pytest", specifier = "==9.0.2" },
     { name = "pytest-cov", specifier = "==7.0.0" },
+    { name = "rich", specifier = ">=13.0" },
     { name = "ruff", specifier = "==0.14.14" },
 ]
 
