@@ -267,7 +267,9 @@ class TestBrowserAuthentication:
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
         assert mock_get_token.call_args.kwargs["method"] == "sso"
-        assert mock_get_token.call_args.kwargs["auth_tenant"] == "endor-solutions-tgowan"
+        assert (
+            mock_get_token.call_args.kwargs["auth_tenant"] == "endor-solutions-tgowan"
+        )
 
     @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
@@ -427,9 +429,11 @@ class TestAuthenticationBackwardCompatibility:
     )
     def test_invalid_auth_method_fails_fast(self) -> None:
         """Unknown auth modes should raise clear startup validation errors."""
-        with pytest.raises(ValueError, match="Unsupported auth_method"):
-            with _patch_httpx_client(get_return=_auth_get_response()):
-                _ = APIClient(auth_method="bad-mode")
+        with (
+            pytest.raises(ValueError, match="Unsupported auth_method"),
+            _patch_httpx_client(get_return=_auth_get_response()),
+        ):
+            _ = APIClient(auth_method="bad-mode")
 
     @patch.dict(
         os.environ,
@@ -441,9 +445,11 @@ class TestAuthenticationBackwardCompatibility:
     )
     def test_email_mode_requires_email(self) -> None:
         """Email auth mode should require email input."""
-        with pytest.raises(ValueError, match="requires email"):
-            with _patch_httpx_client(get_return=_auth_get_response()):
-                _ = APIClient(auth_method="email")
+        with (
+            pytest.raises(ValueError, match="requires email"),
+            _patch_httpx_client(get_return=_auth_get_response()),
+        ):
+            _ = APIClient(auth_method="email")
 
     @patch.dict(
         os.environ,
@@ -455,9 +461,11 @@ class TestAuthenticationBackwardCompatibility:
     )
     def test_sso_mode_requires_auth_tenant(self) -> None:
         """SSO mode should require explicit auth_tenant."""
-        with pytest.raises(ValueError, match="requires auth_tenant"):
-            with _patch_httpx_client(get_return=_auth_get_response()):
-                _ = APIClient(auth_method="sso")
+        with (
+            pytest.raises(ValueError, match="requires auth_tenant"),
+            _patch_httpx_client(get_return=_auth_get_response()),
+        ):
+            _ = APIClient(auth_method="sso")
 
     @patch.dict(
         os.environ,
@@ -469,9 +477,11 @@ class TestAuthenticationBackwardCompatibility:
     )
     def test_azureadv2_mode_fails_fast_until_supported(self) -> None:
         """azureadv2 is recognized but intentionally not yet implemented."""
-        with pytest.raises(ValueError, match="not implemented"):
-            with _patch_httpx_client(get_return=_auth_get_response()):
-                _ = APIClient(auth_method="azureadv2")
+        with (
+            pytest.raises(ValueError, match="not implemented"),
+            _patch_httpx_client(get_return=_auth_get_response()),
+        ):
+            _ = APIClient(auth_method="azureadv2")
 
     @patch.dict(
         os.environ,

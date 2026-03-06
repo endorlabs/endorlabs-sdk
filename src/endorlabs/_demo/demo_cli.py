@@ -752,8 +752,7 @@ def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
     pvs = client.package_version.list(
         namespace=namespace,
         filter=(
-            f'spec.project_uuid=="{project.uuid}"'
-            " AND spec.call_graph_available==true"
+            f'spec.project_uuid=="{project.uuid}" AND spec.call_graph_available==true'
         ),
         max_pages=1,
         page_size=1,
