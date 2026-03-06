@@ -78,10 +78,12 @@ uv run pytest -m integration -v
 uv run ruff check .
 uv run ruff format .
 uv run pyright --project pyproject.toml
+uv run python scripts/generate_client_stub.py
+git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`.
+CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
 
 ## Optional: direnv
 

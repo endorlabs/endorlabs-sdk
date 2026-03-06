@@ -13,6 +13,7 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 | You want to... | Go to |
 |----------------|-------|
 | **Use the SDK** in your project | Keep reading (Installation → Quick start) |
+| **Try the interactive SDK demo** | [Demo CLI](#demo-cli) |
 | **Contribute** to this repo | [CONTRIBUTORS.md](CONTRIBUTORS.md) |
 | **Work with an AI agent** (Cursor, Claude, etc.) | [AGENTS.md](AGENTS.md) |
 
@@ -86,6 +87,41 @@ uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_m
 
 For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` as shown above
 instead of shell-specific `eval` export workflows.
+
+## Demo CLI
+
+The SDK includes an interactive demo wizard that walks through common API patterns and
+practical workflows in a real tenant context.
+
+Run the demo:
+
+```bash
+uv run endor-demo
+uv run endor-demo --verbose
+```
+
+Compatibility entrypoint:
+
+```bash
+uv run main.py
+```
+
+Demo prerequisites:
+
+- `ENDOR_NAMESPACE` must be set (or entered in the wizard)
+- Auth supports: `api-key`, `browser-auth`, `sso`, `google`, `github`, `gitlab`, `email`
+- Credentials/tokens use the same environment variables documented in [Configuration](#configuration)
+
+What the wizard demonstrates:
+
+- Namespace and project discovery (`list`, `lookup`, `traverse`)
+- Filter composition with `F()`
+- Streaming iteration with `list_iter`
+- Cross-resource querying and summaries
+- Optional scan log retrieval
+- Optional call graph retrieval and preview
+
+The demo is intended as a guided learning surface; production automation should call SDK APIs directly.
 
 ## Quick start
 
@@ -232,7 +268,7 @@ Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.
 
 ## Scripts and automation
 
-Utility scripts live in `scripts/` (stub generation, debug helpers). For SAST rule management (import, export, delete, configure), see `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Utility scripts live in `scripts/` (stub generation, debug helpers). For SAST rule management (import, export, delete, configure), see `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`. The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

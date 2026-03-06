@@ -633,11 +633,6 @@ def _stream_scan_logs_for_project(
         project.uuid,
         _project_name(project),
     )
-    ns_client = endorlabs.Client(
-        api_client=client._client,  # noqa: SLF001
-        tenant=namespace,
-        logging_level=getattr(client._client, "logging_level", "ERROR"),  # noqa: SLF001
-    )
     if trigger_scan:
         _log("  Triggering full rescan...", style="dim")
         logger.debug(
@@ -646,9 +641,10 @@ def _stream_scan_logs_for_project(
             project.uuid,
         )
         try:
-            _ = ns_client.project.update(
+            _ = client.project.update(
                 project,
                 scan_state="SCAN_STATE_REQUEST_FULL_RESCAN",
+                namespace=namespace,
             )
             time.sleep(3)
         except PermissionDeniedError as exc:
@@ -662,7 +658,7 @@ def _stream_scan_logs_for_project(
             logger.debug("scan_trigger failed: %s", exc, exc_info=True)
             _log(f"  Scan trigger failed: {exc}", style="yellow")
 
-    scans = ns_client.scan_result.list(
+    scans = client.scan_result.list(
         parent=project,
         sort_by="meta.create_time",
         desc=True,
@@ -682,11 +678,6 @@ def _stream_scan_logs_for_project(
         start_dt = datetime.fromisoformat(scan.spec.start_time)
         start_time = (start_dt - timedelta(hours=1)).isoformat()
 
-    log_client = endorlabs.Client(
-        api_client=client._client,  # noqa: SLF001
-        tenant=namespace,
-        logging_level=getattr(client._client, "logging_level", "ERROR"),  # noqa: SLF001
-    )
     seen: set[tuple[str | None, str]] = set()
     try:
         from endorlabs.resources.scan_log_request import (
@@ -712,7 +703,7 @@ def _stream_scan_logs_for_project(
                 admin_filter=None,
             ),
         )
-        result = log_client.scan_log_request.create(payload)
+        result = client.scan_log_request.create(payload, namespace=namespace)
         lines: list[str] = []
         messages = result.spec.log_messages if result.spec else None
         for msg in messages or []:
@@ -739,9 +730,9 @@ def _stream_scan_logs_for_project(
 def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
     """Retrieve and print a concise call-graph summary for a project."""
     from endorlabs.tools.dependency_explorer import (
-        _build_call_tree,  # pyright: ignore[reportPrivateUsage]
+        build_call_tree,
         decode_callgraph,
-        retrieve_call_graph_full,
+        retrieve_call_graph_for_client,
     )
 
     namespace = _project_namespace(project)
@@ -762,12 +753,11 @@ def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
         return
 
     pv = pvs[0]
-    api_client = client._client  # noqa: SLF001
-    if api_client is None:
+    try:
+        cg_data = retrieve_call_graph_for_client(client, namespace, pv.uuid)
+    except RuntimeError:
         _log("  Client is closed; cannot retrieve call graph.", style="yellow")
         return
-
-    cg_data = retrieve_call_graph_full(api_client, namespace, pv.uuid)
     if not cg_data or "zstd_bytes" not in cg_data:
         _log("  No decodable call graph data returned.", style="yellow")
         return
@@ -781,7 +771,7 @@ def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
         style="green",
     )
     _log(f"  Call edges: {len(info.call_edges)}", style="green")
-    tree = _build_call_tree(info)
+    tree = build_call_tree(info)
     lines = tree.splitlines()
     _log("  Call tree preview:")
     for line in lines[:10]:

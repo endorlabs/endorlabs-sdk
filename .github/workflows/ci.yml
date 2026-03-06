@@ -254,6 +254,15 @@ jobs:
         run: |
           uv run pyright --project pyproject.toml
 
+      - name: Verify generated client stub is up to date
+        run: |
+          uv run python scripts/generate_client_stub.py
+          if ! git diff --exit-code -- src/endorlabs/client_surface.pyi; then
+            echo "::error::client_surface.pyi is out of date. Run: uv run python scripts/generate_client_stub.py"
+            git --no-pager diff -- src/endorlabs/client_surface.pyi
+            exit 1
+          fi
+
       - name: Run pyright verifytypes (public API type completeness)
         continue-on-error: true  # Remove when type completeness is 100% (see docs/reference/README.md)
         run: |
