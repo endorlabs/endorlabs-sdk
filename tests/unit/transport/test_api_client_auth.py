@@ -8,6 +8,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
+import httpx
 import pytest
 
 from endorlabs.api_client import APIClient
@@ -290,7 +291,11 @@ class TestBrowserAuthentication:
     ) -> None:
         """Invalid provided token should trigger one browser fallback attempt."""
         invalid_response = _auth_get_response()
-        invalid_response.raise_for_status.side_effect = Exception("401 unauthorized")
+        invalid_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "401 unauthorized",
+            request=Mock(),
+            response=Mock(status_code=401),
+        )
         valid_response = _auth_get_response()
         mock_get_token.return_value = "browser-token-123"
 
@@ -308,7 +313,11 @@ class TestBrowserAuthentication:
     ) -> None:
         """Invalid provided token with failed fallback should return no token."""
         invalid_response = _auth_get_response()
-        invalid_response.raise_for_status.side_effect = Exception("401 unauthorized")
+        invalid_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "401 unauthorized",
+            request=Mock(),
+            response=Mock(status_code=401),
+        )
         mock_get_token.return_value = None
 
         with _patch_httpx_client(get_return=invalid_response):
@@ -359,7 +368,11 @@ class TestBrowserAuthentication:
         """401 should trigger one browser fallback reauth for browser auth mode."""
         initial_valid = _auth_get_response()
         invalid_direct = _auth_get_response()
-        invalid_direct.raise_for_status.side_effect = Exception("401 unauthorized")
+        invalid_direct.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "401 unauthorized",
+            request=Mock(),
+            response=Mock(status_code=401),
+        )
         fallback_valid = _auth_get_response()
         mock_get_token.return_value = "browser-token-reauth"
 
@@ -381,7 +394,6 @@ class TestBrowserAuthentication:
             unauthorized.url = "https://api.endorlabs.com/v1/projects"
             unauthorized.headers = {}
             unauthorized.text = "Unauthorized"
-            import httpx
 
             unauthorized.raise_for_status.side_effect = httpx.HTTPStatusError(
                 "401 Unauthorized",
@@ -500,6 +512,28 @@ class TestAuthenticationBackwardCompatibility:
 
         assert client._auth_type == "api-key"
         assert client._token == "api-key-token"
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+        },
+        clear=True,
+    )
+    def test_api_key_auth_missing_token_field_fails_fast(self) -> None:
+        """Malformed auth responses should fail with explicit startup error."""
+        malformed = Mock()
+        malformed.raise_for_status = Mock()
+        malformed.json.return_value = {"unexpected": "value"}
+
+        with (
+            _patch_httpx_client(post_return=malformed),
+            pytest.raises(ValueError, match="Invalid auth response: missing token"),
+        ):
+            _ = APIClient(auth_method="api-key")
 
 
 class TestReauthRetryGuard:
