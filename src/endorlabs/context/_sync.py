@@ -115,7 +115,10 @@ def _load_hash_manifest(manifest_path: Path) -> dict[str, str]:
         return {}
     mapping: dict[str, str] = {}
     for line in manifest_path.read_text(encoding="utf-8").splitlines():
-        match = re.match(r"^\|\s*`([^`]+)`\s*\|\s*`([0-9a-f]{64})`\s*\|\s*.*\|\s*$", line)
+        match = re.match(
+            r"^\|\s*`([^`]+)`\s*\|\s*`([0-9a-f]{64})`\s*\|\s*.*\|\s*$",
+            line,
+        )
         if match:
             rel_path, hash_value = match.groups()
             mapping[rel_path] = hash_value
@@ -340,7 +343,11 @@ async def _download_user_docs_async(
         hashes_by_file=updated_hashes,
         urls_by_file=urls_by_file,
     )
-    logger.info("Docs sync complete: %d changed, %d unchanged", changed_count, len(results) - changed_count)
+    logger.info(
+        "Docs sync complete: %d changed, %d unchanged",
+        changed_count,
+        len(results) - changed_count,
+    )
     return changed_count
 
 
