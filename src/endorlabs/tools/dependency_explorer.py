@@ -578,6 +578,11 @@ def _build_call_tree(info: CallGraphInfo) -> str:
     return "\n".join(lines) if lines else "(no call tree could be reconstructed)"
 
 
+def build_call_tree(info: CallGraphInfo) -> str:
+    """Public helper that renders a call tree from decoded call graph info."""
+    return _build_call_tree(info)
+
+
 def _infer_profile(info: CallGraphInfo) -> str:
     """Attempt to infer what the application does from the call graph."""
     lines: list[str] = []
@@ -1067,6 +1072,18 @@ def retrieve_call_graph_full(
     except Exception as exc:
         logger.warning("  Unable to GET full call graph %s: %s", cg_uuid, exc)
         return objects[0]
+
+
+def retrieve_call_graph_for_client(
+    client: Client,
+    namespace: str,
+    pv_uuid: str,
+) -> dict[str, Any]:
+    """Retrieve call graph data using a high-level ``Client`` instance."""
+    api_client = getattr(client, "_client", None)
+    if api_client is None:
+        raise RuntimeError("Client is closed; cannot retrieve call graph data.")
+    return retrieve_call_graph_full(api_client, namespace, pv_uuid)
 
 
 def summarize_call_graph(cg_data: dict[str, Any]) -> dict[str, Any]:
