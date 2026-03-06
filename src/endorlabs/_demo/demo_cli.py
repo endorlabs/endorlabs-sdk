@@ -47,6 +47,8 @@ def _get_console() -> Any:
 
         _console = Console(highlight=False)
     except ImportError:
+        # Rich is optional; if it's unavailable, fall back to plain stdout.
+        logger.debug("rich.console.Console not available; using plain stdout")
         pass
     return _console
 
