@@ -14,7 +14,7 @@ import re
 import time
 from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 import httpx
 
@@ -41,6 +41,21 @@ TOKEN_REFRESH_THRESHOLD_SECONDS: int = 30 * 60  # Proactive refresh 30 min befor
 TOKEN_EXPIRY_CHECK_SECONDS: int = 60  # Considered expired if <=60 s remaining
 BROWSER_AUTH_TIMEOUT_SECONDS: int = 20  # OAuth browser flow timeout
 TOKEN_VALIDATION_TIMEOUT_SECONDS: float = 5.0  # Quick health-check after token set
+
+AUTH_METHOD_ALIASES: dict[str, str] = {
+    "browser": "browser-auth",
+    "admin": "browser-auth",
+}
+SUPPORTED_AUTH_METHODS: tuple[str, ...] = (
+    "api-key",
+    "browser-auth",
+    "sso",
+    "google",
+    "github",
+    "gitlab",
+    "email",
+    "azureadv2",
+)
 
 
 class APIClient:
@@ -89,8 +104,10 @@ class APIClient:
         key: API credentials key. If None, uses ENDOR_API_CREDENTIALS_KEY env var.
         secret: API credentials secret. If None, uses ENDOR_API_CREDENTIALS_SECRET.
         token: Bearer token. If None, uses ENDOR_TOKEN env var.
-        auth_method: Auth method (e.g. "api-key", "browser"). If None, uses env/default.
-        email: Email for auth. Optional.
+        auth_method: Auth method (e.g. "api-key", "browser-auth", "sso",
+            "google", "github", "gitlab", "email"). If None, uses env/default.
+        email: Email for auth. Required for ``auth_method="email"``.
+        auth_tenant: SSO tenant. Required for ``auth_method="sso"``.
 
     The client can be used as a context manager (with APIClient(...) as client:).
     When not using ``with``, call close() when done to release connections.
@@ -114,6 +131,7 @@ class APIClient:
         token: str | None = None,
         auth_method: str | None = None,
         email: str | None = None,
+        auth_tenant: str | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -149,22 +167,26 @@ class APIClient:
             base_url or os.getenv("ENDOR_API") or "https://api.endorlabs.com"
         )
 
-        # Determine authentication method
-        # Precedence: parameter > env var > default (api-key)
-        self.auth_method = auth_method or os.getenv("ENDOR_AUTH_METHOD") or "api-key"
-
         # Get token if provided directly
         self._provided_token = token or os.getenv("ENDOR_TOKEN")
+        self._email = email or os.getenv("ENDOR_AUTH_EMAIL")
+        self._auth_tenant = (
+            auth_tenant
+            or os.getenv("ENDOR_AUTH_TENANT")
+            or os.getenv("ENDOR_INIT_AUTH_TENANT")
+        )
+
+        # Determine authentication method
+        # Precedence: parameter > env var > default (api-key)
+        raw_auth_method = auth_method or os.getenv("ENDOR_AUTH_METHOD") or "api-key"
+        normalized_auth_method = self._normalize_auth_method(raw_auth_method)
+        if self._provided_token == "browser" and normalized_auth_method == "api-key":
+            normalized_auth_method = "browser-auth"
+        self.auth_method = normalized_auth_method
+        self._validate_auth_method()
 
         # For browser auth, check if token is "browser" to trigger OAuth flow
-        if self._provided_token == "browser" or self.auth_method in [
-            "browser",
-            "admin",
-            "google",
-            "github",
-            "gitlab",
-            "email",
-        ]:
+        if self._provided_token == "browser" or self.auth_method != "api-key":
             # Browser-based authentication
             self.key = None
             self.secret = None
@@ -189,11 +211,13 @@ class APIClient:
 
         # Store browser auth parameters
         self._browser_name = os.getenv("ENDOR_BROWSER")
-        self._email = email
 
         # Initialize token expiration tracking
         self._token: str | None = None
         self._token_expires: datetime | None = None
+        # Browser auth session flag: once a browser token is validated,
+        # avoid proactive reauth on token property reads.
+        self._browser_session_validated = False
 
         # Get max_retries with precedence: explicit parameter > env var > default (5)
         if max_retries is None:
@@ -696,6 +720,116 @@ class APIClient:
             raise last_exc
         raise RuntimeError("Retry loop exited without response or exception")
 
+    def _handle_rate_limited(self, response: httpx.Response) -> None:
+        """Handle HTTP 429 responses by setting rate-limit delay."""
+        retry_info = response.headers.get("Retry-After", "no retry info")
+        self.logger.warning("Rate limited (429), retrying with backoff.")
+        self.logger.debug(
+            "Rate limit detail: Retry-After=%s, url=%s",
+            retry_info,
+            response.url,
+        )
+        retry_after = response.headers.get("Retry-After")
+        if retry_after and retry_after.isdigit():
+            self.rate_limit_delay = int(retry_after) + 1
+        else:
+            self.rate_limit_delay = (
+                self.rate_limit_delay if self.rate_limit_delay > 0 else 5
+            )
+
+    def _handle_unauthorized(
+        self,
+        response: httpx.Response,
+        *,
+        method: str | None,
+        url: str | None,
+        _reauth_attempted: bool,
+        **kwargs: Any,
+    ) -> httpx.Response | None:
+        """Handle HTTP 401 responses with single reauth retry."""
+        if _reauth_attempted:
+            self.logger.error(
+                "Unable to reauthenticate. "
+                "Verify credentials are valid and not expired."
+            )
+            return None
+        self.logger.warning(
+            "Unable to authenticate (401). Verify credentials are valid."
+        )
+        self.logger.debug("Authentication detail: url=%s", response.url)
+        self.logger.info("Attempting to reauthenticate...")
+        new_token = self.authenticate()
+        if new_token:
+            self._request_headers["Authorization"] = f"Bearer {new_token}"
+            self.default_headers = self._headers_copy()
+            self.logger.info("Reauthentication completed.")
+            if method and url:
+                self.logger.info("Retrying %s request to %s", method, url)
+                assert self.client is not None, "APIClient is closed"
+                retry_response = self.client.request(method=method, url=url, **kwargs)
+                return self._handle_response(
+                    retry_response,
+                    method=method,
+                    url=url,
+                    _reauth_attempted=True,
+                    **kwargs,
+                )
+        return None
+
+    def _handle_not_implemented(
+        self,
+        response: httpx.Response,
+        *,
+        method: str | None,
+    ) -> None:
+        """Log HTTP 501 details."""
+        error_details = self._parse_error_response(response)
+        self.logger.error("Operation not supported (501) for %s.", response.url)
+        self.logger.debug(
+            "501 detail: method=%s, error=%s",
+            method or "UNKNOWN",
+            error_details,
+        )
+
+    def _handle_server_error(
+        self,
+        response: httpx.Response,
+        *,
+        status_code: int,
+        method: str | None,
+    ) -> None:
+        """Log retryable server-side errors."""
+        error_details = self._parse_error_response(response)
+        self.logger.warning("Server error %s, retrying with backoff.", status_code)
+        self.logger.debug(
+            "Server error detail: method=%s, url=%s, error=%s",
+            method or "UNKNOWN",
+            response.url,
+            error_details,
+        )
+
+    def _handle_client_error(
+        self,
+        response: httpx.Response,
+        *,
+        status_code: int,
+        method: str | None,
+    ) -> None:
+        """Log non-retryable client-side errors."""
+        error_details = self._parse_error_response(response)
+        error_type = {
+            400: "Validation error",
+            403: "Permission denied",
+            404: "Resource not found",
+            409: "Conflict",
+        }.get(status_code, f"Client error {status_code}")
+        self.logger.error("%s (%s) for %s.", error_type, status_code, response.url)
+        self.logger.debug(
+            "Client error detail: method=%s, response=%s",
+            method or "UNKNOWN",
+            error_details,
+        )
+
     def _handle_response(
         self,
         response: httpx.Response,
@@ -714,109 +848,43 @@ class APIClient:
 
             # Handle rate limiting (429) - retryable with backoff
             if status_code == 429:
-                retry_info = response.headers.get("Retry-After", "no retry info")
-                self.logger.warning("Rate limited (429), retrying with backoff.")
-                self.logger.debug(
-                    "Rate limit detail: Retry-After=%s, url=%s",
-                    retry_info,
-                    response.url,
-                )
-                retry_after = response.headers.get("Retry-After")
-                if retry_after and retry_after.isdigit():
-                    self.rate_limit_delay = int(retry_after) + 1
-                else:
-                    self.rate_limit_delay = (
-                        self.rate_limit_delay if self.rate_limit_delay > 0 else 5
-                    )
+                self._handle_rate_limited(response)
                 raise
 
             # Handle authentication failure (401) - single retry after reauth
             if status_code == 401:
-                if _reauth_attempted:
-                    self.logger.error(
-                        "Unable to reauthenticate. "
-                        "Verify credentials are valid and not expired."
-                    )
-                    raise
-                self.logger.warning(
-                    "Unable to authenticate (401). Verify credentials are valid."
+                retried = self._handle_unauthorized(
+                    response,
+                    method=method,
+                    url=url,
+                    _reauth_attempted=_reauth_attempted,
+                    **kwargs,
                 )
-                self.logger.debug(
-                    "Authentication detail: url=%s",
-                    response.url,
-                )
-                self.logger.info("Attempting to reauthenticate...")
-                # Use authenticate() which will use the appropriate auth method
-                new_token = self.authenticate()
-                if new_token:
-                    self._request_headers["Authorization"] = f"Bearer {new_token}"
-                    self.default_headers = self._headers_copy()
-                    self.logger.info("Reauthentication completed.")
-                    # Retry the original request once
-                    if method and url:
-                        self.logger.info("Retrying %s request to %s", method, url)
-                        assert self.client is not None, "APIClient is closed"
-                        retry_response = self.client.request(
-                            method=method, url=url, **kwargs
-                        )
-                        return self._handle_response(
-                            retry_response,
-                            method=method,
-                            url=url,
-                            _reauth_attempted=True,
-                            **kwargs,
-                        )
+                if retried is not None:
+                    return retried
                 raise
 
             # Handle 501 Not Implemented - non-retryable client error
             # (method/operation not supported, not a transient server error)
             if status_code == 501:
-                error_details = self._parse_error_response(response)
-                self.logger.error(
-                    "Operation not supported (501) for %s.",
-                    response.url,
-                )
-                self.logger.debug(
-                    "501 detail: method=%s, error=%s",
-                    method or "UNKNOWN",
-                    error_details,
-                )
+                self._handle_not_implemented(response, method=method)
                 raise
 
             # Handle server errors (5xx) - retryable
             if status_code >= 500:
-                error_details = self._parse_error_response(response)
-                self.logger.warning(
-                    "Server error %s, retrying with backoff.",
-                    status_code,
-                )
-                self.logger.debug(
-                    "Server error detail: method=%s, url=%s, error=%s",
-                    method or "UNKNOWN",
-                    response.url,
-                    error_details,
+                self._handle_server_error(
+                    response,
+                    status_code=status_code,
+                    method=method,
                 )
                 raise
 
             # Handle client errors (400, 403, 404, 409) - not retried, graceful exit
             if status_code in (400, 403, 404, 409):
-                error_details = self._parse_error_response(response)
-                error_type = {
-                    400: "Validation error",
-                    403: "Permission denied",
-                    404: "Resource not found",
-                    409: "Conflict",
-                }.get(status_code, f"Client error {status_code}")
-                self.logger.error(
-                    "%s (%s) for %s.",
-                    error_type,
-                    status_code,
-                    response.url,
-                )
-                self.logger.debug(
-                    "Client error detail: method=%s, response=%s",
-                    method or "UNKNOWN",
-                    error_details,
+                self._handle_client_error(
+                    response,
+                    status_code=status_code,
+                    method=method,
                 )
                 raise
 
@@ -1124,6 +1192,13 @@ class APIClient:
             Current bearer token string, or None if authentication fails.
 
         """
+        # Browser auth is session-like: once validated, keep token until a 401
+        # path triggers explicit reauthentication.
+        if self._auth_type == "browser":
+            if self._token is None or not self._browser_session_validated:
+                _ = self.authenticate()
+            return self._token
+
         # If no token or token expires within 30 minutes, re-authenticate
         if self._token is None or self._token_expires is None:
             _ = self.authenticate()
@@ -1163,6 +1238,35 @@ class APIClient:
             return self._authenticate_browser()
         else:
             return self._authenticate_api_key()
+
+    @property
+    def auth_type(self) -> Literal["api-key", "browser"]:
+        """Return the active authentication mode."""
+        return cast("Literal['api-key', 'browser']", self._auth_type)
+
+    @property
+    def is_api_key_auth(self) -> bool:
+        """True when API key authentication is active."""
+        return self._auth_type == "api-key"
+
+    def get_user_info(self) -> dict[str, object] | None:
+        """Fetch canonical authenticated user info from ``/v1/auth``.
+
+        Returns:
+            Parsed response payload on success, otherwise ``None``.
+
+        """
+        try:
+            response = self.get(
+                "v1/auth",
+                headers={"Accept": "application/json"},
+            )
+            data = response.json()
+            if isinstance(data, dict):
+                return cast("dict[str, object]", data)
+        except Exception as e:
+            self.logger.debug("Unable to fetch user info from v1/auth: %s", e)
+        return None
 
     def _authenticate_api_key(self) -> str | None:
         """Authenticate using API key and secret."""
@@ -1215,14 +1319,17 @@ class APIClient:
             self._token_expires = None
             return None
 
-    def _determine_browser_method(self) -> str | None:
+    def _determine_browser_method(
+        self, *, allow_direct_token_fallback: bool = False
+    ) -> str | None:
         """Determine browser OAuth method."""
-        if self._provided_token and self._provided_token != "browser":
+        if (
+            self._provided_token
+            and self._provided_token != "browser"
+            and not allow_direct_token_fallback
+        ):
             return None  # Direct token provided, no browser method needed
-        browser_method = self.auth_method
-        if browser_method == "browser":
-            browser_method = "admin"  # Default to admin SSO
-        return browser_method
+        return self.auth_method
 
     def _extract_environment(self) -> str:
         """Extract environment from base_url."""
@@ -1245,10 +1352,51 @@ class APIClient:
             browser_name=self._browser_name,
             method=browser_method,
             email=self._email,
+            auth_tenant=self._auth_tenant,
         )
 
-    def _validate_and_store_token(self, token: str) -> None:
-        """Validate token and store it."""
+    @staticmethod
+    def _normalize_auth_method(auth_method: str) -> str:
+        """Normalize auth mode aliases into canonical values."""
+        cleaned = auth_method.strip().lower()
+        return AUTH_METHOD_ALIASES.get(cleaned, cleaned)
+
+    def _validate_auth_method(self) -> None:
+        """Validate auth mode and required mode-specific arguments."""
+        if self.auth_method not in SUPPORTED_AUTH_METHODS:
+            allowed = ", ".join(SUPPORTED_AUTH_METHODS)
+            raise ValueError(
+                f"Unsupported auth_method '{self.auth_method}'. "
+                f"Supported modes: {allowed}"
+            )
+
+        if self.auth_method == "email" and not self._email:
+            raise ValueError(
+                "auth_method='email' requires email=... "
+                "(or ENDOR_AUTH_EMAIL environment variable)."
+            )
+
+        if self.auth_method == "sso" and not self._auth_tenant:
+            raise ValueError(
+                "auth_method='sso' requires auth_tenant=... "
+                "(or ENDOR_AUTH_TENANT / ENDOR_INIT_AUTH_TENANT)."
+            )
+
+        if self.auth_method == "azureadv2":
+            raise ValueError(
+                "auth_method='azureadv2' is recognized for parity but is not "
+                "implemented in SDK browser OAuth routing yet. "
+                "Use 'sso', 'browser-auth', 'google', 'github', 'gitlab', or 'email'."
+            )
+
+    def _validate_and_store_token(self, token: str) -> bool:
+        """Validate token and store it.
+
+        Returns:
+            ``True`` when token validation succeeds and token is stored,
+            otherwise ``False``.
+
+        """
         assert self.client is not None, "APIClient is closed"
         # Validate token by making a test request to get expiration info
         # Some endpoints may return token metadata
@@ -1285,16 +1433,19 @@ class APIClient:
                 self._token_expires = None
         except Exception as e:
             self.logger.debug("Token validation request unsuccessful: %s", e)
-            # Token might still be valid, continue
+            self._token = None
             self._token_expires = None
+            self._browser_session_validated = False
+            return False
 
-        # Store token
+        # Store token after successful validation
         self._token = token
-
         # Update request headers for subsequent requests
         self._request_headers["Authorization"] = f"Bearer {token}"
         self.default_headers = self._headers_copy()
+        self._browser_session_validated = self._auth_type == "browser"
         self.logger.info("Browser authentication successful")
+        return True
 
     def _authenticate_browser(self) -> str | None:
         """Authenticate using browser-based OAuth flow.
@@ -1309,30 +1460,41 @@ class APIClient:
 
         """
         try:
-            # Determine auth method for browser OAuth
-            if self._provided_token and self._provided_token != "browser":
-                # Direct token provided, validate it
-                token = self._provided_token
-                self.logger.info("Using provided token for authentication")
-            else:
-                # Trigger browser OAuth flow
-                browser_method = self._determine_browser_method()
-                if browser_method is None:
-                    token = None
-                else:
-                    environment = self._extract_environment()
-                    token = self._get_browser_token(browser_method, environment)
+            token: str | None = None
+            fallback_attempted = False
+            has_direct_token = bool(
+                self._provided_token and self._provided_token != "browser"
+            )
 
-            if not token:
+            # First, try provided token if present (constructor/env).
+            if has_direct_token:
+                provided_token = cast("str", self._provided_token)
+                self.logger.info("Validating provided token for browser auth")
+                if self._validate_and_store_token(provided_token):
+                    return provided_token
+                self.logger.info("Provided token invalid; attempting browser fallback")
+                fallback_attempted = True
+
+            # Fallback (or primary path when no token provided): browser OAuth flow.
+            browser_method = self._determine_browser_method(
+                allow_direct_token_fallback=fallback_attempted
+            )
+            if browser_method is not None and (
+                not has_direct_token or fallback_attempted
+            ):
+                environment = self._extract_environment()
+                token = self._get_browser_token(browser_method, environment)
+
+            if not token or not self._validate_and_store_token(token):
                 self.logger.error(
                     "Unable to authenticate with browser "
                     "or authentication was cancelled"
                 )
                 self._token = None
                 self._token_expires = None
+                self._browser_session_validated = False
                 return None
 
-            self._validate_and_store_token(token)
             return token
         except ImportError:
             self.logger.error(
@@ -1341,9 +1503,11 @@ class APIClient:
             )
             self._token = None
             self._token_expires = None
+            self._browser_session_validated = False
             return None
         except Exception as e:
             self.logger.error("Unable to authenticate with browser: %s", e)
             self._token = None
             self._token_expires = None
+            self._browser_session_validated = False
             return None

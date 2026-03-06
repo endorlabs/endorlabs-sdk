@@ -48,6 +48,8 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 | `ENDOR_API` | API base URL (default: `https://api.endorlabs.com`) |
 | `ENDOR_API_CREDENTIALS_KEY` | API key |
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret |
+| `ENDOR_TOKEN` | Bearer token (direct token auth or browser auth trigger with value `browser`) |
+| `ENDOR_AUTH_METHOD` | Auth mode: `api-key` (default) or browser modes (`browser`, `admin`, `google`, `github`, `gitlab`, `email`) |
 | `ENDOR_NAMESPACE` | Default tenant namespace (e.g. `tenant.namespace`) |
 | `ENDOR_LOG_LEVEL` | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
 | `ENDOR_MAX_RETRIES` | Optional: retry count (default: 5) |
@@ -62,6 +64,28 @@ ENDOR_API_CREDENTIALS_SECRET=your-api-secret
 ENDOR_NAMESPACE=your-tenant.namespace
 ENDOR_LOG_LEVEL=INFO
 ```
+
+### Programmatic browser auth (`ewok token`-style)
+
+If you want behavior similar to `ewok token`, use browser auth mode with `APIClient`.
+The SDK validates a provided token first, and if it is invalid (or missing), it falls
+back to interactive browser authentication.
+After a browser token is validated, it is treated as a session token: repeated
+`client.token` reads do not reopen the browser. Browser reauthentication is
+triggered by real `401 Unauthorized` responses.
+
+```bash
+uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser'); print(c.token)"
+```
+
+You can also provide a candidate token and let the SDK validate/fallback automatically:
+
+```bash
+uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser', token='your-token'); print(c.token)"
+```
+
+For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` as shown above
+instead of shell-specific `eval` export workflows.
 
 ## Quick start
 

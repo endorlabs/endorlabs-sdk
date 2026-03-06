@@ -4,13 +4,14 @@ This module provides utilities for safe serialization, partial updates,
 and enum validation to handle API evolution gracefully.
 """
 
-import logging
 from datetime import datetime
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
-logger = logging.getLogger(__name__)
+from .logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 

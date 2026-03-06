@@ -52,7 +52,7 @@ class TestScanLogRequest:
         """
         scan_results = self.endor_parent_client.scan_result.list(
             list_params=ListParameters(
-                page_size=TEST_PAGE_SIZE,
+                page_size=TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
                 sort_by="meta.create_time",
                 desc=True,

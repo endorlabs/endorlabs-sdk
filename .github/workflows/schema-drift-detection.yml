@@ -11,7 +11,27 @@ on:
     - cron: '0 * * * *'
     # Also run weekly on Mondays at 3 AM UTC
     - cron: '0 3 * * 1'
-  workflow_dispatch:  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Run drift detection even without endorctl version change"
+        required: false
+        default: true
+        type: boolean
+  workflow_call:
+    inputs:
+      force_run:
+        description: "Run drift detection even without endorctl version change"
+        required: false
+        default: false
+        type: boolean
+        # Keep false by default for reusable call sites.
+  repository_dispatch:
+    types: [schema-drift-check]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   check-version:
@@ -20,6 +40,7 @@ jobs:
     outputs:
       version-changed: ${{ steps.check.outputs.changed }}
       latest-version: ${{ steps.check.outputs.version }}
+      check-status: ${{ steps.check.outputs.status }}
     
     steps:
       - name: Checkout code
@@ -67,10 +88,17 @@ jobs:
           # Set outputs
           if [ $EXIT_CODE -eq 1 ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "status=ok" >> $GITHUB_OUTPUT
             echo "🔄 Version update detected: $LATEST_VERSION"
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "status=ok" >> $GITHUB_OUTPUT
+            echo "✅ No version update (current: $LATEST_VERSION)"
           else
             echo "changed=false" >> $GITHUB_OUTPUT
-            echo "✅ No version update (current: $LATEST_VERSION)"
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "❌ Version check failed (exit=$EXIT_CODE)"
+            exit 1
           fi
           echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
 
@@ -87,7 +115,15 @@ jobs:
     name: Detect Schema Drift
     needs: check-version
     # Only run if version changed OR manually triggered (workflow_dispatch)
-    if: needs.check-version.outputs.version-changed == 'true' || github.event_name == 'workflow_dispatch'
+    if: >-
+      needs.check-version.result == 'success' &&
+      (
+        needs.check-version.outputs.version-changed == 'true' ||
+        inputs.force_run == true ||
+        github.event.inputs.force_run == 'true' ||
+        github.event_name == 'repository_dispatch' ||
+        github.event_name == 'workflow_dispatch'
+      )
     runs-on: ubuntu-latest
     
     steps:
@@ -125,7 +161,6 @@ jobs:
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-        continue-on-error: true  # Don't fail workflow if drift or tests fail
 
       - name: Create GitHub issues from drift report
         if: always()

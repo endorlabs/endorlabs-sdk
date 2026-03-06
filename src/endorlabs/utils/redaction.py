@@ -168,14 +168,15 @@ class RedactingFilter(logging.Filter):
             record.args = tuple(self._redact(a) for a in record.args)
         return True
 
-    def _redact(self, message: str | object) -> str:
+    def _redact(self, message: str | object) -> str | object:
         """Apply all compiled patterns to *message*.
 
-        Non-string values are coerced to ``str`` first so that numeric or
-        object args do not raise.
+        Non-string values (ints, floats, etc.) are returned unchanged so that
+        ``%d`` / ``%f`` formatting in the logging framework continues to work.
+        Only string values are pattern-matched and redacted.
         """
         if not isinstance(message, str):
-            message = str(message)
+            return message
         for pattern, replacement in self._pattern_replacement_pairs:
             message = pattern.sub(replacement, message)
         return message

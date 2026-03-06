@@ -8,8 +8,8 @@ separate from HTTP/transport logic.
 
 import builtins
 import contextlib
-import logging
 import os
+import re
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
@@ -19,11 +19,33 @@ from pydantic import BaseModel, ValidationError
 from ..exceptions import EndorAPIError
 from ..exceptions import ValidationError as EndorValidationError
 from ..types import ListParameters
+from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
 T = TypeVar("T", bound=BaseModel)
+
+_NAMESPACE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
+
+
+def validate_namespace(ns: str) -> str:
+    """Validate that *ns* matches the canonical namespace format.
+
+    Namespace strings are interpolated into URL paths; a value containing
+    ``/`` or ``..`` could alter the request target.  This check ensures
+    only safe characters (alphanumeric, dots, hyphens, underscores) are
+    present.
+
+    Returns:
+        The validated namespace string, unchanged.
+
+    Raises:
+        EndorValidationError: If *ns* does not match the allowed pattern.
+    """
+    if not _NAMESPACE_RE.match(ns):
+        raise EndorValidationError(f"Invalid namespace format: {ns!r}")
+    return ns
 
 
 class BaseResourceOperations(Generic[T]):
@@ -39,7 +61,7 @@ class BaseResourceOperations(Generic[T]):
         self.client = client
         self.resource_name = resource_name
         self.model_class = model_class
-        self.logger = logging.getLogger(f"{__name__}.{resource_name}")
+        self.logger = get_resource_logger(f"{__name__}.{resource_name}")
 
     def _extract_items_from_page(self, data: Any) -> list[Any]:
         """Extract items from a paginated response page."""
@@ -385,7 +407,8 @@ class BaseResourceOperations(Generic[T]):
         """
         kwargs.pop("logging_level", None)  # Session-level only; ignore if passed
         try:
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
+            ns = validate_namespace(tenant_meta_namespace)
+            url = f"v1/namespaces/{ns}/{self.resource_name}"
 
             traverse = getattr(list_params, "traverse", None) if list_params else None
             self.logger.info(
@@ -473,7 +496,8 @@ class BaseResourceOperations(Generic[T]):
         Same URL and params as list(); yields one model per item from get_all().
         """
         kwargs.pop("logging_level", None)  # Session-level only; ignore if passed
-        url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
+        ns = validate_namespace(tenant_meta_namespace)
+        url = f"v1/namespaces/{ns}/{self.resource_name}"
         params = self._build_params(list_params, **kwargs)
         for item in self.client.get_all(url, params=params, max_pages=max_pages):
             yield self.model_class(**item)
@@ -487,11 +511,11 @@ class BaseResourceOperations(Generic[T]):
             ServerError: If server error occurs
 
         """
+        ns = validate_namespace(tenant_meta_namespace)
         try:
             # Method 1: Try direct UUID access first (fastest if it works)
             res = self.client.get(
-                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
-                f"{resource_uuid}"
+                f"v1/namespaces/{ns}/{self.resource_name}/{resource_uuid}"
             )
             data = res.json()
             return self.model_class(**data)
@@ -588,8 +612,9 @@ class BaseResourceOperations(Generic[T]):
             payload, "create", tenant_meta_namespace
         )
 
+        ns = validate_namespace(tenant_meta_namespace)
         try:
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
+            url = f"v1/namespaces/{ns}/{self.resource_name}"
 
             # Convert payload to dict
             payload_dict = self._dump_for_api(validated_payload)
@@ -725,9 +750,10 @@ class BaseResourceOperations(Generic[T]):
                     resource_uuid=resource_uuid,
                 )
 
+        ns = validate_namespace(tenant_meta_namespace)
         try:
             # Use collection endpoint (UUID goes in request body, not URL path)
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
+            url = f"v1/namespaces/{ns}/{self.resource_name}"
 
             # Convert payload to dict (single path: _to_request_body)
             payload_dict = self._to_request_body(
@@ -817,11 +843,9 @@ class BaseResourceOperations(Generic[T]):
             ServerError: If server error occurs
 
         """
+        ns = validate_namespace(tenant_meta_namespace)
         try:
-            url = (
-                f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}/"
-                f"{resource_uuid}"
-            )
+            url = f"v1/namespaces/{ns}/{self.resource_name}/{resource_uuid}"
 
             res = self.client.delete(url)
 
@@ -872,6 +896,7 @@ class BaseResourceOperations(Generic[T]):
         Raises:
             EndorAPIError: On API errors (same hierarchy as list()).
         """
+        ns = validate_namespace(tenant_meta_namespace)
         try:
             # Create count-specific list parameters
             if list_params:
@@ -880,7 +905,7 @@ class BaseResourceOperations(Generic[T]):
             else:
                 count_params = ListParameters(count=True)  # pyright: ignore[reportCallIssue]
 
-            url = f"v1/namespaces/{tenant_meta_namespace}/{self.resource_name}"
+            url = f"v1/namespaces/{ns}/{self.resource_name}"
 
             # Build query parameters
             params = self._build_params(count_params)

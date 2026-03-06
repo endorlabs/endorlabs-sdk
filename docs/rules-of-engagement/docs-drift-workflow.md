@@ -36,10 +36,22 @@ The schema drift workflow:
 
 **File**: `.github/workflows/schema-drift-detection.yml`
 
-- **Schedule**: Hourly (endorctl version check); weekly Mondays 3 AM UTC; also `workflow_dispatch`.
+- **Schedule**: Hourly (endorctl version check); weekly Mondays 3 AM UTC.
+- **Remote/manual triggers**: `workflow_dispatch`, `workflow_call`, and `repository_dispatch` (`schema-drift-check`).
 - **Jobs**:
   1. **check-version**: Runs `.github/scripts/check_endorctl_version.py`; outputs whether version changed.
-  2. **detect-schema-drift**: Runs when version changed or manually triggered. Downloads OpenAPI spec (curl), runs `detect_schema_drift.py --run-tests --test-path tests/ --output schema_drift_report.json`, then creates issues from the report via `actions/github-script`.
+  2. **detect-schema-drift**: Runs when version changed or forced by dispatch input. Downloads OpenAPI spec (curl), runs `detect_schema_drift.py --run-tests --test-path tests/ --output schema_drift_report.json`, then creates issues from the report via `actions/github-script`.
+
+### Failure semantics
+
+- Version-check script errors are treated as workflow failures (fail-closed).
+- Schema drift/test execution errors are no longer silently skipped.
+- Concurrency is enabled to avoid overlapping scheduled runs.
+
+### Triage and rollback
+
+- If drift pipeline breaks due to upstream instability, trigger a manual run and inspect uploaded report artifacts first.
+- For temporary mitigation, force a manual run with reduced scope via `workflow_dispatch` while preserving issue creation and run summary output.
 
 ## Local Use
 

@@ -14,6 +14,7 @@ from .api_client import APIClient
 if TYPE_CHECKING:
     from collections.abc import Callable
 from .facade import ResourceFacade
+from .filter import F
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
@@ -114,37 +115,70 @@ class Client:
         self.close()
         return
 
-    def whoami(self) -> str | None:
-        """Resolve the current user identity via AuthorizationPolicy.
+    def _identity_from_user_info(self, user_info: dict[str, object]) -> str | None:
+        """Extract an identity string from ``/v1/auth`` response payload."""
+        user = user_info.get("user")
+        if not isinstance(user, dict):
+            return None
+        user_dict = cast("dict[str, object]", user)
+        spec = user_dict.get("spec")
+        if isinstance(spec, dict):
+            spec_dict = cast("dict[str, object]", spec)
+            for key in ("email", "user_name"):
+                value = spec_dict.get(key)
+                if isinstance(value, str) and value:
+                    return value
+        meta = user_dict.get("meta")
+        if isinstance(meta, dict):
+            meta_dict = cast("dict[str, object]", meta)
+            name = meta_dict.get("name")
+            if isinstance(name, str) and name:
+                return name
+        return None
 
-        When authenticated with an API key, queries AuthorizationPolicy
-        resources whose ``spec.clause`` contains the key value. Returns the
-        ``meta.name`` of the first matching policy, which typically holds the
-        human-readable identity bound to the key.
+    def _whoami_from_auth_policy_fallback(self, api_key: str) -> str | None:
+        """Best-effort compatibility fallback via AuthorizationPolicy."""
+        try:
+            policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
+                traverse=True,
+                filter=F("spec.clause").contains(api_key),
+                page_size=1,
+                max_pages=1,
+            )
+        except Exception:
+            return None
+        if not policies:
+            return None
+        policy = cast("Any", policies[0])
+        meta = getattr(policy, "meta", None)
+        if meta is None:
+            return None
+        raw_name = getattr(meta, "name", None)
+        return str(raw_name) if raw_name else None
+
+    def whoami(self) -> str | None:
+        """Resolve the current user identity.
+
+        This method first queries the canonical ``/v1/auth`` user-info endpoint.
+        If identity fields are unavailable and API-key auth is active, it falls
+        back to the historical AuthorizationPolicy lookup heuristic.
 
         Returns:
-            The ``meta.name`` of the matching AuthorizationPolicy, or ``None``
-            if no match is found or if using browser authentication.
+            Resolved identity string (email/username/name), or ``None`` if not found.
         """
         if self._client is None:
             raise RuntimeError("Client is closed.")
-        auth_type: str = self._client._auth_type  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        if auth_type != "api-key" or not self._client.key:
+
+        user_info = self._client.get_user_info()
+        if isinstance(user_info, dict):
+            identity = self._identity_from_user_info(user_info)
+            if identity:
+                return identity
+
+        if not self._client.is_api_key_auth or not self._client.key:
             return None
 
-        policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
-            traverse=True,
-            filter=f'spec.clause contains "{self._client.key}"',
-            page_size=1,
-            max_pages=1,
-        )
-        if policies:
-            policy = cast("Any", policies[0])
-            meta = getattr(policy, "meta", None)
-            if meta is not None:
-                raw_name = getattr(meta, "name", None)
-                return str(raw_name) if raw_name else None
-        return None
+        return self._whoami_from_auth_policy_fallback(self._client.key)
 
     def wait_until(
         self,

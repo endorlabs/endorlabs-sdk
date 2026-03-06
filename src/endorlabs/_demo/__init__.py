@@ -1,0 +1,1 @@
+"""Internal demo module namespace."""

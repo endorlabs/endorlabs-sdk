@@ -116,6 +116,33 @@ class TestGetToken:
     @pytest.mark.writes
     @patch("endorlabs.auth_server.HTTPServer")
     @patch("endorlabs.auth_server.get_browser")
+    def test_get_token_browser_alias_maps_to_browser_auth(
+        self, mock_get_browser, mock_server_class
+    ) -> None:
+        """Legacy browser alias should still work via browser-auth mapping."""
+        auth_server_mod._captured_token = None
+        mock_browser = Mock()
+        mock_browser.open_new_tab = Mock()
+        mock_get_browser.return_value = mock_browser
+
+        mock_server = Mock()
+        mock_server.timeout = 20
+        mock_server.server_close = Mock()
+
+        def handle_request_side_effect() -> None:
+            auth_server_mod._captured_token = "alias-token"
+
+        mock_server.handle_request = Mock(side_effect=handle_request_side_effect)
+        mock_server_class.return_value = mock_server
+
+        token = get_token(timeout=20, environment="endorlabs.com", method="browser")
+        assert token == "alias-token"
+        mock_browser.open_new_tab.assert_called_once()
+
+    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
+    @pytest.mark.writes
+    @patch("endorlabs.auth_server.HTTPServer")
+    @patch("endorlabs.auth_server.get_browser")
     def test_get_token_success(self, mock_get_browser, mock_server_class) -> None:
         """Test successful token retrieval via browser OAuth."""
         auth_server_mod._captured_token = None
@@ -217,7 +244,15 @@ class TestGetToken:
 
     def test_auth_methods_defined(self) -> None:
         """Test that all expected auth methods are defined."""
-        expected_methods = ["admin", "google", "github", "gitlab", "email"]
+        expected_methods = [
+            "browser-auth",
+            "sso",
+            "admin",
+            "google",
+            "github",
+            "gitlab",
+            "email",
+        ]
         for method in expected_methods:
             assert method in AUTH_METHODS, f"Auth method '{method}' not defined"
 
@@ -247,4 +282,11 @@ class TestGetToken:
         with pytest.raises(
             ValueError, match="Browser authentication cannot be used in CI"
         ):
-            get_token(method="browser")
+            get_token(method="browser-auth")
+
+    @pytest.mark.long
+    @pytest.mark.writes
+    def test_get_token_sso_requires_tenant(self) -> None:
+        """SSO mode should require auth_tenant."""
+        with pytest.raises(ValueError, match="Tenant is required for sso"):
+            get_token(method="sso")

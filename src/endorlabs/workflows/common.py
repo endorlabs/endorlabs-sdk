@@ -6,14 +6,15 @@ used across all workflow modules.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from endorlabs import Client
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 
 # ---------------------------------------------------------------------------

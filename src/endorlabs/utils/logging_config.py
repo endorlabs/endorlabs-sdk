@@ -27,7 +27,7 @@ def setup_logging(module_name: str = "endorlabs") -> logging.Logger:
 
     level = level_map.get(level_str, logging.INFO)
 
-    logger = logging.getLogger(module_name)
+    logger = get_resource_logger(module_name)
     logger.setLevel(level)
     # PEP 282: add NullHandler so library is silent unless consumer configures logging
     if not logger.handlers:

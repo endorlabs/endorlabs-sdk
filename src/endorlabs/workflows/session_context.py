@@ -12,7 +12,6 @@ as the rest of the SDK.
 from __future__ import annotations
 
 import json
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from io import StringIO
@@ -24,7 +23,9 @@ from .common import WorkflowResult
 if TYPE_CHECKING:
     from endorlabs import Client
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 # Finding categories used for the "by scan type" summary
 _FINDING_CATEGORIES = [
@@ -76,6 +77,7 @@ class FindingsContext:
     by_category: dict[str, dict[str, int]] = field(default_factory=dict)
     top_findings: list[dict[str, Any]] = field(default_factory=list)
     raw_findings: list[dict[str, Any]] = field(default_factory=list)
+    fetch_error: str | None = None
 
 
 @dataclass
@@ -85,6 +87,7 @@ class PoliciesContext:
     namespace: str = ""
     total: int = 0
     policies: list[dict[str, Any]] = field(default_factory=list)
+    fetch_error: str | None = None
 
 
 @dataclass
@@ -94,6 +97,7 @@ class VersionsContext:
     project_uuid: str = ""
     total: int = 0
     versions: list[dict[str, Any]] = field(default_factory=list)
+    fetch_error: str | None = None
 
 
 @dataclass
@@ -158,6 +162,7 @@ def pull_findings_context(
         findings = client.finding.list(**list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch findings: %s", exc)
+        ctx.fetch_error = str(exc)
         return ctx
 
     ctx.total = len(findings)
@@ -254,6 +259,7 @@ def pull_policies_context(
         policies = client.policy.list(**list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch policies: %s", exc)
+        ctx.fetch_error = str(exc)
         return ctx
 
     ctx.total = len(policies)
@@ -289,28 +295,18 @@ def pull_repository_versions_context(
     Returns:
         :class:`VersionsContext` with version data.
     """
-    project_uuid = project.uuid
-    project_ns = (
-        project.tenant_meta.namespace
-        if project.tenant_meta and project.tenant_meta.namespace
-        else None
-    )
-    ctx = VersionsContext(project_uuid=project_uuid)
+    ctx = VersionsContext(project_uuid=project.uuid)
 
     try:
         list_kwargs: dict[str, Any] = {
-            "filter": (
-                f'meta.parent_uuid=="{project_uuid}" and meta.parent_kind=="Project"'
-            ),
+            "parent": project,
             "max_pages": max_pages,
             "page_size": 100,
         }
-        if project_ns:
-            list_kwargs["namespace"] = project_ns
-
         versions = client.repository_version.list(**list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch repository versions: %s", exc)
+        ctx.fetch_error = str(exc)
         return ctx
 
     ctx.total = len(versions)
@@ -330,6 +326,17 @@ def pull_repository_versions_context(
     return ctx
 
 
+def build_project_session_key(project: Any) -> str:
+    """Build a collision-safe session key for project artifact directories."""
+    from endorlabs.tools.dependency_explorer import slugify
+
+    project_name = project.meta.name if project.meta else project.uuid
+    project_uuid = str(getattr(project, "uuid", "")).strip()
+    if project_uuid:
+        return f"{slugify(project_name)}__{project_uuid}"
+    return slugify(project_name)
+
+
 # ---------------------------------------------------------------------------
 # Markdown renderers
 # ---------------------------------------------------------------------------
@@ -339,6 +346,11 @@ def render_findings_summary(ctx: FindingsContext) -> str:
     """Render ``findings-summary.md`` content."""
     buf = StringIO()
     buf.write(f"# Findings Summary \u2014 {ctx.project_name}\n\n")
+    if ctx.fetch_error:
+        buf.write(
+            "Warning: findings could not be retrieved due to an API/query error. "
+            f"Error: `{ctx.fetch_error}`\n\n"
+        )
 
     if ctx.total == 0:
         buf.write("No findings found for this project.\n")
@@ -378,6 +390,11 @@ def render_policies_summary(ctx: PoliciesContext) -> str:
     """Render ``policies-summary.md`` content."""
     buf = StringIO()
     buf.write(f"# Policies Summary \u2014 {ctx.namespace}\n\n")
+    if ctx.fetch_error:
+        buf.write(
+            "Warning: policies could not be retrieved due to an API/query error. "
+            f"Error: `{ctx.fetch_error}`\n\n"
+        )
 
     if ctx.total == 0:
         buf.write("No policies found in this namespace.\n")
@@ -404,6 +421,11 @@ def render_versions_summary(ctx: VersionsContext) -> str:
     """Render ``versions-summary.md`` content."""
     buf = StringIO()
     buf.write("# Repository Versions\n\n")
+    if ctx.fetch_error:
+        buf.write(
+            "Warning: repository versions could not be retrieved due to an API/query "
+            f"error. Error: `{ctx.fetch_error}`\n\n"
+        )
 
     if ctx.total == 0:
         buf.write("No repository versions found for this project.\n")
@@ -453,6 +475,15 @@ def render_project_summary(
     buf.write(f"- **Findings**: {findings.total}\n")
     buf.write(f"- **Policies**: {policies.total}\n")
     buf.write(f"- **Repository Versions**: {versions.total}\n\n")
+    if findings.fetch_error or policies.fetch_error or versions.fetch_error:
+        buf.write("### Data Retrieval Warnings\n\n")
+        if findings.fetch_error:
+            buf.write(f"- Findings query failed: `{findings.fetch_error}`\n")
+        if policies.fetch_error:
+            buf.write(f"- Policies query failed: `{policies.fetch_error}`\n")
+        if versions.fetch_error:
+            buf.write(f"- Repository versions query failed: `{versions.fetch_error}`\n")
+        buf.write("\n")
 
     # Findings breakdown
     if findings.total > 0:
@@ -472,6 +503,23 @@ def render_project_summary(
     return buf.getvalue()
 
 
+def _apply_generated_timestamp(markdown: str, generated_at: str) -> str:
+    """Replace summary footer timestamps with a deterministic value."""
+    marker = "*Generated at "
+    if marker not in markdown:
+        return markdown
+    before, _, after = markdown.rpartition(marker)
+    _, _, suffix = after.partition("*\n")
+    return f"{before}{marker}{generated_at}*\n{suffix}"
+
+
+def _sort_findings_raw(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return findings in stable order for deterministic artifacts."""
+    return sorted(
+        findings, key=lambda d: (str(d.get("uuid", "")), str(d.get("level", "")))
+    )
+
+
 # ---------------------------------------------------------------------------
 # Artifact writer
 # ---------------------------------------------------------------------------
@@ -483,6 +531,8 @@ def write_session_artifacts(
     findings: FindingsContext,
     policies: PoliciesContext,
     versions: VersionsContext,
+    *,
+    deterministic: bool = False,
 ) -> None:
     """Write all session artifacts to the progressive-disclosure directory.
 
@@ -500,52 +550,78 @@ def write_session_artifacts(
                 versions-summary.md
                 versions.json
     """
-    from endorlabs.tools.dependency_explorer import slugify
+    from endorlabs.utils.path_safety import safe_write_text
 
     session_dir = Path(session_dir)
-    project_name = project.meta.name if project.meta else project.uuid
-    slug = slugify(project_name)
-    proj_dir = session_dir / slug
+    proj_dir = session_dir / build_project_session_key(project)
 
     # -- project-summary.md --
-    proj_dir.mkdir(parents=True, exist_ok=True)
     summary = render_project_summary(project, findings, policies, versions)
-    (proj_dir / "project-summary.md").write_text(summary, encoding="utf-8")
+    if deterministic:
+        summary = _apply_generated_timestamp(summary, "1970-01-01T00:00:00Z")
+    safe_write_text(session_dir, proj_dir / "project-summary.md", summary)
 
     # -- findings/ --
     findings_dir = proj_dir / "findings"
-    findings_dir.mkdir(parents=True, exist_ok=True)
-    (findings_dir / "findings-summary.md").write_text(
-        render_findings_summary(findings),
-        encoding="utf-8",
+    findings_summary = render_findings_summary(findings)
+    if deterministic:
+        findings_summary = _apply_generated_timestamp(
+            findings_summary, "1970-01-01T00:00:00Z"
+        )
+    safe_write_text(
+        session_dir,
+        findings_dir / "findings-summary.md",
+        findings_summary,
     )
-    (findings_dir / "findings.json").write_text(
-        json.dumps(findings.raw_findings, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
+    safe_write_text(
+        session_dir,
+        findings_dir / "findings.json",
+        json.dumps(
+            (
+                _sort_findings_raw(findings.raw_findings)
+                if deterministic
+                else findings.raw_findings
+            ),
+            indent=2,
+            default=str,
+            ensure_ascii=False,
+        ),
     )
 
     # -- policies/ --
     policies_dir = proj_dir / "policies"
-    policies_dir.mkdir(parents=True, exist_ok=True)
-    (policies_dir / "policies-summary.md").write_text(
-        render_policies_summary(policies),
-        encoding="utf-8",
+    policies_summary = render_policies_summary(policies)
+    if deterministic:
+        policies_summary = _apply_generated_timestamp(
+            policies_summary, "1970-01-01T00:00:00Z"
+        )
+    safe_write_text(
+        session_dir,
+        policies_dir / "policies-summary.md",
+        policies_summary,
     )
-    (policies_dir / "policies.json").write_text(
+    safe_write_text(
+        session_dir,
+        policies_dir / "policies.json",
         json.dumps(policies.policies, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
     )
 
     # -- repository-versions/ --
     versions_dir = proj_dir / "repository-versions"
-    versions_dir.mkdir(parents=True, exist_ok=True)
-    (versions_dir / "versions-summary.md").write_text(
-        render_versions_summary(versions),
-        encoding="utf-8",
+    versions_summary = render_versions_summary(versions)
+    if deterministic:
+        versions_summary = _apply_generated_timestamp(
+            versions_summary, "1970-01-01T00:00:00Z"
+        )
+    safe_write_text(
+        session_dir,
+        versions_dir / "versions-summary.md",
+        versions_summary,
     )
-    (versions_dir / "versions.json").write_text(
+    safe_write_text(
+        session_dir,
+        versions_dir / "versions.json",
         json.dumps(versions.versions, indent=2, default=str, ensure_ascii=False),
-        encoding="utf-8",
     )
 
     logger.info("Session artifacts written to %s", proj_dir)
@@ -560,6 +636,8 @@ def create_session(
     client: Client,
     project: Any,
     session_dir: str | Path,
+    *,
+    deterministic: bool = False,
 ) -> SessionResult:
     """Pull all context for a project and write session artifacts.
 
@@ -571,6 +649,8 @@ def create_session(
         client: Authenticated Endor Labs Client.
         project: Project resource object.
         session_dir: Root directory for the session output.
+        deterministic: When True, emit stable timestamps and sorted JSON
+            payloads suitable for replay/diffing.
 
     Returns:
         :class:`SessionResult` with overall status and sub-contexts.
@@ -583,6 +663,8 @@ def create_session(
     logger.info("Pulling findings for project '%s' ...", project_name)
     findings = pull_findings_context(client, project)
     result.findings = findings
+    if findings.fetch_error:
+        errors.append(f"Unable to fetch findings: {findings.fetch_error}")
     if findings.total == 0:
         logger.info("  No findings found for project '%s'", project.uuid)
 
@@ -590,6 +672,8 @@ def create_session(
     logger.info("Pulling policies for project '%s' ...", project_name)
     policies = pull_policies_context(client, project)
     result.policies = policies
+    if policies.fetch_error:
+        errors.append(f"Unable to fetch policies: {policies.fetch_error}")
     if policies.total == 0:
         logger.info("  No policies found in namespace '%s'", policies.namespace)
 
@@ -597,21 +681,35 @@ def create_session(
     logger.info("Pulling repository versions for project '%s' ...", project_name)
     versions = pull_repository_versions_context(client, project)
     result.versions = versions
+    if versions.fetch_error:
+        errors.append(f"Unable to fetch repository versions: {versions.fetch_error}")
     if versions.total == 0:
         logger.info("  No repository versions found for project '%s'", project.uuid)
 
     # Write artifacts
     try:
-        write_session_artifacts(session_dir, project, findings, policies, versions)
+        write_session_artifacts(
+            session_dir,
+            project,
+            findings,
+            policies,
+            versions,
+            deterministic=deterministic,
+        )
     except Exception as exc:
         errors.append(f"Unable to write session artifacts: {exc}")
         logger.error("Unable to write session artifacts: %s", exc)
 
     result.errors = errors
     result.status = "error" if errors else "success"
-    result.message = (
+    base_message = (
         f"Session context for {project.meta.name if project.meta else project.uuid}: "
         f"{findings.total} findings, {policies.total} policies, "
         f"{versions.total} repository versions"
+    )
+    result.message = (
+        f"{base_message} ({len(errors)} retrieval/write errors)"
+        if errors
+        else base_message
     )
     return result
