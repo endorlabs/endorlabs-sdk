@@ -469,9 +469,12 @@ def associate_scan_profile_with_project(
         "request": {"update_mask": "spec.scan_profile_uuid"},
     }
 
+    from endorlabs.operations import validate_namespace
+
+    ns = validate_namespace(tenant_meta_namespace)
     try:
         res = client.patch(
-            f"v1/namespaces/{tenant_meta_namespace}/projects",
+            f"v1/namespaces/{ns}/projects",
             json=request_data,
             headers={"Accept": "application/json"},
         )

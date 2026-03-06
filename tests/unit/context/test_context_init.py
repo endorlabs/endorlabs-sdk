@@ -300,3 +300,41 @@ class TestContextModule:
         from endorlabs.context import InitStatus
 
         assert InitStatus is not None
+
+
+class TestDocsHashManifest:
+    """Test docs content-hash manifest helpers."""
+
+    def test_write_and_load_hash_manifest_round_trip(self, tmp_path: Path) -> None:
+        """Manifest should preserve file -> hash entries."""
+        from endorlabs.context._sync import _load_hash_manifest, _write_hash_manifest
+
+        manifest = tmp_path / "_content-hashes.md"
+        hashes = {
+            "index.md": "a" * 64,
+            "scan-sast.md": "b" * 64,
+        }
+        urls = {
+            "index.md": "https://docs.endorlabs.com/",
+            "scan-sast.md": "https://docs.endorlabs.com/scan/sast/",
+        }
+        _write_hash_manifest(
+            manifest,
+            hashes_by_file=hashes,
+            urls_by_file=urls,
+        )
+
+        loaded = _load_hash_manifest(manifest)
+        assert loaded == hashes
+
+    def test_extract_markdown_body_removes_frontmatter(self, tmp_path: Path) -> None:
+        """Body extraction should remove YAML frontmatter wrapper."""
+        from endorlabs.context._sync import _extract_markdown_body
+
+        md_file = tmp_path / "sample.md"
+        md_file.write_text(
+            "---\nurl: https://docs.endorlabs.com/\n---\n\n# Heading\nBody\n",
+            encoding="utf-8",
+        )
+        body = _extract_markdown_body(md_file)
+        assert body == "# Heading\nBody\n"

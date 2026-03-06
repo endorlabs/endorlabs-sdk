@@ -1,0 +1,125 @@
+rules:
+  - id: endor-sdk-path-containment-validation
+    languages:
+      - python
+    message: |
+      Problem:
+      The path containment implementation has degraded -- one or more
+      behavioral invariants required by the security contract are missing
+      or structurally altered.
+
+      The `safe_write_text()` / `safe_write_bytes()` helpers in
+      `src/endorlabs/utils/path_safety.py` are the mechanism that prevents
+      path traversal when writing files.  Their correctness depends on:
+
+      1. **safe_write_text() calls .resolve()** on the target path to
+         canonicalize it and eliminate `../` sequences.
+      2. **safe_write_text() resolves the base directory** too, so both
+         paths are in the same canonical form for comparison.
+      3. **safe_write_text() checks containment** via
+         `resolved.is_relative_to(base_resolved)` -- the resolved target
+         must be within the base directory.
+      4. **safe_write_text() raises on violation** -- paths outside the
+         base directory must be rejected, not silently written.
+
+      Trust chain:
+      This is the validation half of the path containment trust chain.
+      The paired enforcement rule
+      `endor-sdk-path-containment-enforcement` verifies that
+      safe_write_text() is used at every file write site.  Both rules
+      must pass for the security contract to hold.
+
+      Solution:
+      Restore the invariant(s) that this finding identified as missing.
+      Review the safe_write_text() implementation in
+      `src/endorlabs/utils/path_safety.py` against the contract above.
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
+      description: >-
+        Path containment behavioral contract violated -- one or more
+        structural invariants required for safe file writing are
+        missing or altered in safe_write_text() / safe_write_bytes().
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
+      endor-tags:
+        - A01:2021
+        - Path-Traversal
+        - trust-chain.id:path-containment-check
+        - trust-chain.role:validation
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The safe_write_text() and safe_write_bytes() helpers in
+        endorlabs.utils.path_safety are the sole mechanism that prevents
+        path traversal attacks when writing files to user-specified
+        directories.  This certification rule validates that the
+        implementation satisfies its behavioral contract by checking
+        structural invariants.  If any invariant is missing, the
+        function may silently write files outside the intended directory.
+      impact: MEDIUM
+      owasp:
+        - A01:2021-Broken-Access-Control
+      references:
+        - https://cwe.mitre.org/data/definitions/22.html
+        - https://owasp.org/www-community/attacks/Path_Traversal
+        - https://owasp.org/Top10/A01_2021-Broken_Access_Control/
+      remediation: >-
+        Restore the missing structural invariant(s) in safe_write_text()
+        / safe_write_bytes() in endorlabs.utils.path_safety. The function
+        must call .resolve() on both the target and base directory, check
+        containment via is_relative_to(), and raise on violation before
+        writing.
+      security-severity: Medium
+      version: v1.1.0
+    pattern-either:
+      # Invariant 1: safe_write_text must call .resolve() on target
+      - patterns:
+          - pattern: |
+              def safe_write_text($BASE, $TARGET, ...):
+                  ...
+          - pattern-not-inside: |
+              def safe_write_text($BASE, $TARGET, ...):
+                  ...
+                  $RESOLVED = $TARGET.resolve()
+                  ...
+      # Invariant 2: safe_write_text must check containment
+      - patterns:
+          - pattern: |
+              def safe_write_text($BASE, $TARGET, ...):
+                  ...
+          - pattern-not-inside: |
+              def safe_write_text($BASE, $TARGET, ...):
+                  ...
+                  if not $RESOLVED.is_relative_to($BASE_RESOLVED):
+                      ...
+                  ...
+      # Invariant 3: safe_write_bytes must call .resolve() on target
+      - patterns:
+          - pattern: |
+              def safe_write_bytes($BASE, $TARGET, ...):
+                  ...
+          - pattern-not-inside: |
+              def safe_write_bytes($BASE, $TARGET, ...):
+                  ...
+                  $RESOLVED = $TARGET.resolve()
+                  ...
+      # Invariant 4: safe_write_bytes must check containment
+      - patterns:
+          - pattern: |
+              def safe_write_bytes($BASE, $TARGET, ...):
+                  ...
+          - pattern-not-inside: |
+              def safe_write_bytes($BASE, $TARGET, ...):
+                  ...
+                  if not $RESOLVED.is_relative_to($BASE_RESOLVED):
+                      ...
+                  ...
+    severity: ERROR
+    paths:
+      include:
+        - src/endorlabs/utils/path_safety.py

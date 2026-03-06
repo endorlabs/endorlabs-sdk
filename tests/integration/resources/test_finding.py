@@ -13,7 +13,12 @@ from endorlabs.resources.finding import (
     FindingSpec,
     UpdateFindingPayload,
 )
-from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
+from tests.conftest import (
+    TEST_MAX_PAGES,
+    TEST_MAX_PAGES_TRAVERSE,
+    TEST_PAGE_SIZE,
+    TEST_TRAVERSE_PAGE_SIZE,
+)
 
 
 @pytest.mark.integration
@@ -125,7 +130,7 @@ class TestFinding:
 
         list_params = ListParameters(
             filter=f"spec.finding_categories contains [{category}]",
-            page_size=TEST_PAGE_SIZE,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             traverse=True,
         )
 

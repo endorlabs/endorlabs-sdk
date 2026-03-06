@@ -8,6 +8,7 @@ from endorlabs.workflows.threat_analysis import (
     ThreatModelResult,
     _count_metrics,
     analyze_project_threat_model,
+    verify_threat_model_claims,
 )
 
 # ---------------------------------------------------------------------------
@@ -118,6 +119,20 @@ class TestAnalyzeProjectThreatModel:
         prompt_text = llm.invoke.call_args[0][0]
         assert "42 security findings" in prompt_text
 
+    def test_strict_verification_fails_on_unverifiable_claims(self) -> None:
+        llm = MagicMock()
+        llm.invoke.return_value = MagicMock(
+            content="## Risk Assessment\n1. CVE-2029-99999 in package foo"
+        )
+        result = analyze_project_threat_model(
+            llm,
+            "p",
+            "## Findings\n- CVE-2024-1234 only",
+            strict_verify=True,
+        )
+        assert result.status == "error"
+        assert "Unverifiable threat model claims" in result.message
+
 
 class TestThreatModelResult:
     """Tests for the result dataclass."""
@@ -135,3 +150,25 @@ class TestThreatModelResult:
         assert r.project_name == ""
         assert r.report == ""
         assert r.risk_count == 0
+
+
+class TestVerifyThreatModelClaims:
+    """Tests for deterministic threat-model claim verification."""
+
+    def test_verification_success_when_claims_present_in_context(self) -> None:
+        verification = verify_threat_model_claims(
+            report="Risk includes CVE-2024-1234 and GHSA-abcd-efgh",
+            context_markdown="Observed CVE-2024-1234 and GHSA-abcd-efgh in findings",
+            strict=True,
+        )
+        assert verification.ok is True
+        assert verification.unverifiable_claims == []
+
+    def test_verification_collects_unverifiable_claims(self) -> None:
+        verification = verify_threat_model_claims(
+            report="Risk includes CVE-2030-1111 and GHSA-qqqq-wwww",
+            context_markdown="Observed only CVE-2030-1111",
+            strict=True,
+        )
+        assert verification.ok is False
+        assert "GHSA-qqqq-wwww" in verification.unverifiable_claims

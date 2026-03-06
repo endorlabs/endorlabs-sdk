@@ -1,0 +1,102 @@
+rules:
+  - id: endor-sdk-namespace-validation-validation
+    languages:
+      - python
+    message: |
+      Problem:
+      The namespace validation implementation has degraded -- one or more
+      behavioral invariants required by the security contract are missing
+      or structurally altered.
+
+      The namespace validation function is the mechanism that prevents
+      path-separator injection in API URL construction.  Its correctness
+      depends on these invariants:
+
+      1. **validate_namespace() uses a compiled regex** that restricts
+         characters to `[a-zA-Z0-9._-]` -- no path separators, no
+         percent-encoding, no whitespace.
+      2. **validate_namespace() raises on mismatch** -- invalid
+         namespaces must be rejected, not silently accepted.
+      3. **validate_namespace() returns the validated string** -- callers
+         must receive the same string back (no mutation) so that the
+         validated value is used in URL construction.
+
+      Trust chain:
+      This is the validation half of the namespace format validation
+      trust chain.  The paired enforcement rule
+      `endor-sdk-namespace-validation-enforcement` verifies that
+      validate_namespace() is called before every URL construction site.
+      Both rules must pass for the security contract to hold.
+
+      Solution:
+      Restore the invariant(s) that this finding identified as missing.
+      Review the validate_namespace() implementation against the
+      behavioral contract above.
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-74: Improper Neutralization of Special Elements in Output"
+      description: >-
+        Namespace validation behavioral contract violated -- one or more
+        structural invariants required for URL-safe namespace checking
+        are missing or altered in the implementation.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
+      endor-tags:
+        - A03:2021
+        - URL-Path-Injection
+        - trust-chain.id:namespace-format-validation
+        - trust-chain.role:validation
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        The validate_namespace() function is the sole mechanism that
+        prevents path-separator injection when constructing API URLs.
+        This certification rule validates that the implementation
+        satisfies its behavioral contract by checking structural
+        invariants of the function.  If any invariant is missing, the
+        function may silently accept malicious namespace values,
+        enabling URL path traversal.
+      impact: MEDIUM
+      owasp:
+        - A03:2021-Injection
+      references:
+        - https://cwe.mitre.org/data/definitions/74.html
+        - https://owasp.org/Top10/A03_2021-Injection/
+      remediation: >-
+        Restore the missing structural invariant(s) in
+        validate_namespace().  The function must compile a regex that
+        restricts to [a-zA-Z0-9._-]+, raise on mismatch, and return
+        the validated namespace string unchanged.
+      security-severity: Medium
+      version: v1.0.0
+    pattern-either:
+      # Invariant 1: validate_namespace must use a regex match
+      - patterns:
+          - pattern: |
+              def validate_namespace($NS):
+                  ...
+          - pattern-not-inside: |
+              def validate_namespace($NS):
+                  ...
+                  if not $RE.match($NS):
+                      ...
+                  ...
+                  return $NS
+      # Invariant 2: the namespace regex must reject path separators
+      # (checks that the pattern is anchored and restrictive)
+      - patterns:
+          - pattern: $RE = re.compile($PATTERN)
+          - metavariable-pattern:
+              metavariable: $PATTERN
+              patterns:
+                - pattern-not: $X
+          - pattern-not: $RE = re.compile("...")
+    severity: ERROR
+    paths:
+      include:
+        - src/endorlabs/utils/
+        - src/endorlabs/operations/

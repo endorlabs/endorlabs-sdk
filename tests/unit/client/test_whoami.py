@@ -18,8 +18,10 @@ from tests.conftest import TEST_NAMESPACE_DEFAULT
 def mock_api_client() -> Mock:
     """Create a mock APIClient with api-key auth attributes."""
     mock = Mock(spec=APIClient)
-    mock._auth_type = "api-key"
+    mock.auth_type = "api-key"
+    mock.is_api_key_auth = True
     mock.key = "endr+TestKey123"
+    mock.get_user_info.return_value = None
     return mock
 
 
@@ -65,8 +67,10 @@ class TestWhoAmI:
     def test_whoami_returns_none_for_browser_auth(self) -> None:
         """whoami returns None when auth type is browser (no key)."""
         mock = Mock(spec=APIClient)
-        mock._auth_type = "browser"
+        mock.auth_type = "browser"
+        mock.is_api_key_auth = False
         mock.key = None
+        mock.get_user_info.return_value = None
         client = endorlabs.Client(
             api_client=mock,
             tenant=TEST_NAMESPACE_DEFAULT,
@@ -92,8 +96,10 @@ class TestWhoAmI:
     def test_whoami_raises_on_closed_client(self) -> None:
         """whoami raises RuntimeError on a closed client."""
         mock = Mock(spec=APIClient)
-        mock._auth_type = "api-key"
+        mock.auth_type = "api-key"
+        mock.is_api_key_auth = True
         mock.key = "endr+TestKey"
+        mock.get_user_info.return_value = None
         client = endorlabs.Client(
             api_client=mock,
             tenant=TEST_NAMESPACE_DEFAULT,
@@ -122,3 +128,50 @@ class TestWhoAmI:
         list_params = args[1]
         assert list_params is not None
         assert "endr+TestKey123" in (list_params.filter or "")
+        assert list_params.page_size == 1
+        assert args[2] == 1
+
+    def test_whoami_returns_none_when_api_key_missing(
+        self,
+        mock_api_client: Mock,
+    ) -> None:
+        """whoami returns None when auth is api-key but key is missing."""
+        mock_api_client.key = None
+        client = endorlabs.Client(
+            api_client=mock_api_client,
+            tenant=TEST_NAMESPACE_DEFAULT,
+        )
+        assert client.whoami() is None
+
+    def test_whoami_prefers_v1_auth_email(self, client_with_api_key: Client) -> None:
+        """whoami returns canonical email from /v1/auth when available."""
+        client_with_api_key._client.get_user_info.return_value = {
+            "user": {"spec": {"email": "sdk-user@endor.ai"}}
+        }
+        result = client_with_api_key.whoami()
+        assert result == "sdk-user@endor.ai"
+
+    def test_whoami_falls_back_to_policy_lookup(
+        self,
+        client_with_api_key: Client,
+    ) -> None:
+        """whoami falls back to AuthorizationPolicy lookup when v1/auth is empty."""
+        client_with_api_key._client.get_user_info.return_value = {}
+        mock_policy = Mock()
+        mock_policy.meta.name = "fallback@endor.ai"
+        client_with_api_key.authorization_policy._ops.list = Mock(
+            return_value=[mock_policy]
+        )
+
+        assert client_with_api_key.whoami() == "fallback@endor.ai"
+
+    def test_whoami_returns_none_when_policy_lookup_fails(
+        self,
+        client_with_api_key: Client,
+    ) -> None:
+        """whoami does not raise when fallback AuthorizationPolicy lookup fails."""
+        client_with_api_key._client.get_user_info.return_value = {}
+        client_with_api_key.authorization_policy._ops.list = Mock(
+            side_effect=RuntimeError("401 Unauthorized")
+        )
+        assert client_with_api_key.whoami() is None

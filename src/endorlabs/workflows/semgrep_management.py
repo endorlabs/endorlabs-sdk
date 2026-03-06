@@ -7,7 +7,6 @@ and classifying rules by type.
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -20,7 +19,9 @@ if TYPE_CHECKING:
     from endorlabs import Client
     from endorlabs.resources.semgrep_rule import SemgrepRule
 
-logger = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+logger = get_resource_logger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -238,9 +239,11 @@ def _import_single_rule(
     display_id = _rule_display_id(rule_dict)
     rule_name = str(rule_dict.get("id", ""))
 
+    from endorlabs.filter import F
+
     existing_rules = client.semgrep_rule.list(
         namespace=namespace,
-        filter=f'meta.name=="{rule_name}"',
+        filter=F("meta.name") == rule_name,
         max_pages=1,
     )
     existing = existing_rules[0] if existing_rules else None
@@ -390,14 +393,16 @@ def export_rules_to_yaml(
         rule = client.semgrep_rule.get(uuid, namespace=namespace)
         rules = [rule]
     elif name:
+        from endorlabs.filter import F
+
         rules = client.semgrep_rule.list(
             namespace=namespace,
-            filter=f'meta.name=="{name}"',
+            filter=F("meta.name") == name,
         )
         if not rules:
             rules = client.semgrep_rule.list(
                 namespace=namespace,
-                filter=f'meta.name contains "{name}"',
+                filter=F("meta.name").matches(name),
             )
     elif filter_expr:
         rules = client.semgrep_rule.list(namespace=namespace, filter=filter_expr)
@@ -447,9 +452,10 @@ def export_rules_to_yaml(
             result.exported += 1
             continue
 
+        from endorlabs.utils.path_safety import safe_write_text
+
         dest = output_dir / filename
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(yaml_content, encoding="utf-8")
+        safe_write_text(output_dir, dest, yaml_content)
         result.exported += 1
         result.paths.append(str(dest))
         logger.info("Exported: %s (%d bytes)", dest, len(yaml_content))
