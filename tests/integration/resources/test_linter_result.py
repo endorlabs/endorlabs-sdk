@@ -8,7 +8,7 @@ import pytest
 
 import endorlabs
 from endorlabs.api_client import APIClient
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES_TRAVERSE,
     TEST_NAMESPACE_DEFAULT,
@@ -38,7 +38,7 @@ class TestLinterResult:
         Function-scoped but only fetches when explicitly requested by tests.
         Uses tenant root + traverse so resources in instance are captured.
         """
-        from endorlabs.exceptions import NotFoundError, ServerError
+        from endorlabs.core.exceptions import NotFoundError, ServerError
 
         try:
             results = self.endor_root_client.linter_result.list(
@@ -76,7 +76,7 @@ class TestLinterResult:
     def test_linter_result_get(self) -> None:
         """GET first item from LIST (root + traverse) (registry-based)."""
         import endorlabs
-        from endorlabs.exceptions import NotFoundError, ServerError
+        from endorlabs.core.exceptions import NotFoundError, ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -152,7 +152,7 @@ class TestLinterResult:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.exceptions import ValidationError
+        from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             self.endor_root_client.linter_result.get("invalid-uuid")

@@ -10,7 +10,7 @@ from unittest.mock import Mock
 import pytest
 from pydantic import BaseModel, ConfigDict, Field
 
-from endorlabs.exceptions import ValidationError as EndorValidationError
+from endorlabs.core.exceptions import ValidationError as EndorValidationError
 from endorlabs.models.base import BaseResource
 from endorlabs.operations import BaseResourceOperations
 from endorlabs.resources.authorization_policy import AuthorizationPolicy

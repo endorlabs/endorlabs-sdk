@@ -5,8 +5,9 @@ from collections.abc import Iterator
 from typing import Any
 
 from .api_client import APIClient
+from .core.filter import FilterExpression
+from .core.types import ListParameters
 from .facade import ScanLogsFacade
-from .filter import FilterExpression
 from .resources.api_key import APIKey
 from .resources.audit_log import AuditLog
 from .resources.authentication_log import AuthenticationLog
@@ -36,7 +37,6 @@ from .resources.scan_workflow import ScanWorkflow
 from .resources.scan_workflow_result import ScanWorkflowResult
 from .resources.semgrep_rule import SemgrepRule
 from .resources.version_upgrade import VersionUpgrade
-from .types import ListParameters
 
 class _NamespaceFacade:
     """Isolate and organize resources in a parent-child hierarchy.

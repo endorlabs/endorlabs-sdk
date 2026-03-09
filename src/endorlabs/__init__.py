@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from .api_client import APIClient
 from .client_surface import Client
-from .exceptions import (
+from .core.exceptions import (
     AmbiguousError,
     ConflictError,
     EndorAPIError,
@@ -23,7 +23,7 @@ from .exceptions import (
     ValidationError,
     map_status_code_to_exception,
 )
-from .filter import F, FilterExpression
+from .core.filter import F, FilterExpression
 from .resources import (
     dependency_metadata,
     finding,

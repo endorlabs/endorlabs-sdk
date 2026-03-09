@@ -9,7 +9,7 @@ Greenfield alias unit tests live in tests/unit/models/test_greenfield_aliases.py
 import pytest
 
 import endorlabs
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
@@ -155,7 +155,7 @@ class TestScanResult:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.exceptions import ValidationError
+        from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             self.endor_root_client.scan_result.get("invalid-uuid")

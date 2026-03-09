@@ -11,9 +11,6 @@ resource scopes (tenant, system, oss) via the ``scope`` parameter — and
 * ``"system"`` — system-owned; ``get()`` restricted to ``namespace="oss"``.
 * ``"oss"`` — OSS-scoped; namespace is always ``"oss"``.
 
-Backward-compatible aliases ``SystemResourceFacade`` and ``OssResourceFacade``
-are provided for external consumers.
-
 See docs/reference/resources.md and docs/guides/retrieving-scan-results.md.
 """
 
@@ -30,10 +27,10 @@ from typing import (
     override,
 )
 
-from .exceptions import AmbiguousError, NotFoundError
-from .filter import F, FilterExpression
+from .core.exceptions import AmbiguousError, NotFoundError
+from .core.filter import F, FilterExpression
+from .core.types import ListParameters
 from .operations import BaseResourceOperations
-from .types import ListParameters
 from .utils.namespace import resolve_namespace_for_resource
 
 if TYPE_CHECKING:
@@ -1018,13 +1015,6 @@ class ResourceFacade(_ListableFacade[T]):
                 f"Resource has no meta; cannot {operation} meta.tags."
             ) from None
         return resource, uuid, ns, meta
-
-
-SystemResourceFacade = ResourceFacade
-"""Backward-compat alias. Use ``ResourceFacade(scope="system")`` instead."""
-
-OssResourceFacade = ResourceFacade
-"""Backward-compat alias. Use ``ResourceFacade(scope="oss")`` instead."""
 
 
 class ScanLogsFacade:

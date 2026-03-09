@@ -1,6 +1,8 @@
 # Create/Update payload reference (decoupled facade)
 
-Per-resource request shapes for create and update. Used by `build_create_payload` (and optional `build_update_payload`) when the facade accepts kwargs; payload types remain the internal contract for the API layer.
+Per-resource request shapes for create and update. Used by `build_create_payload` (and optional update builders) when the facade accepts kwargs; payload types remain the internal contract for the API layer.
+
+This page documents payload contracts only. For operation availability (list/get/create/update/delete), see [resources.md](resources.md).
 
 ## Facade create kwargs
 
@@ -19,7 +21,7 @@ The facade exposes `name`, `description`, and `namespace_uuid` as convenience pa
 | authorization_policy | authorization_policy | CreateAuthorizationPolicyPayload | |
 | package_version | package_version | CreatePackageVersionPayload | |
 | package_license | package_license | CreatePackageLicensePayload | OSS; namespace ignored |
-| dependency_metadata | dependency_metadata | CreateDependencyMetadataPayload | OSS; no update; namespace ignored |
+| dependency_metadata | dependency_metadata | CreateDependencyMetadataPayload | OSS; namespace ignored |
 | installation | installation | CreateInstallationPayload | |
 | scan_profile | scan_profile | meta.name (ScanProfileMetaCreate), spec (ScanProfileSpecCreate) | propagate |
 | scan_result | scan_result | CreateScanResultPayload | parent_kind=project |
@@ -35,19 +37,13 @@ The facade exposes `name`, `description`, and `namespace_uuid` as convenience pa
 
 ## Update payloads (UpdateXPayload / Resource)
 
-Update uses `update_mask` + payload (or kwargs via `resource.update(facade, **kwargs)`). The **canonical** allowed create fields are the resource’s `build_create_payload` signature and CreateXPayload; the **canonical** allowed update fields are the model’s `get_mutable_fields_cls()`. The facade’s explicit params (e.g. `name`, `meta_description`) are a subset. Mutable fields are resource-specific; see each resource module and BaseResource.get_mutable_fields() / get_update_kwarg_to_path().
+Update uses `update_mask` + payload, or resource-instance field kwargs that auto-derive the mask. The **canonical** allowed create fields are the resource's `build_create_payload` signature and CreateXPayload; the **canonical** allowed update fields are the model's `get_mutable_fields_cls()`. The facade's explicit params (for example `name`, `meta_description`) are a convenience subset. Mutable fields are resource-specific; see each resource module and `BaseResource.get_mutable_fields()` / `get_update_kwarg_to_path()`.
 
 ## List identity (list/lookup by name)
 
 **List/lookup by identity** (e.g. `list(name="...")`, `lookup(name="...")`) is supported only for resources that have an identity filter map. Currently: project, repository, policy, namespace, scan_profile, scan_result, finding, authorization_policy, repository_version, installation, notification_target, metric, semgrep_rule, package_version, invitation, code_owners. For other resources use `filter=` explicitly (e.g. `filter='meta.name=="my-name"'`).
 
-## Resources with no create/update (skip)
-
-- scan_workflow, scan_workflow_result, version_upgrade (list/get only)
-- authentication_log, endor_license, policy_template (system; list/get only)
-
 ## Special cases
 
 - **namespace:** create under parent namespace; the parent is the `namespace=` argument to `create()`, not a builder kwarg. Builder takes `name` and `description` only.
 - **dependency_metadata / package_license:** OSS; namespace param ignored in create.
-- **linter_result:** update uses UpdateLinterResultPayload; update_mask required.

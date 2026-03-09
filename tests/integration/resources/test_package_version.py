@@ -33,7 +33,7 @@ class TestPackageVersion:
         Only fetches 1 item without traverse for fast setup. Tests that need
         sample data should request this fixture explicitly.
         """
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         # Fetch 1 item without traverse (fast)
         results = self.endor_client.package_version.list(
@@ -137,7 +137,7 @@ class TestPackageVersion:
     def test_package_version_list(self) -> None:
         """LIST from tenant root with traverse."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -155,7 +155,7 @@ class TestPackageVersion:
     def test_package_version_get(self) -> None:
         """GET first item from LIST (root + traverse)."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -184,7 +184,7 @@ class TestPackageVersion:
     def test_client_ux_update_package_version(self) -> None:
         """Consumer UX: client.package_version.get() then update then revert."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
         from endorlabs.resources.package_version import UpdatePackageVersionPayload
 
         client = endorlabs.Client(

@@ -26,7 +26,7 @@ from pydantic import (
     field_validator,
 )
 
-from ..types import SupportsResourceUpdate
+from ..core.types import SupportsResourceUpdate
 from ..utils.logging_config import get_resource_logger
 from ..utils.schema_drift import SchemaDriftDetector
 

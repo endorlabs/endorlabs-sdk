@@ -18,11 +18,11 @@ from typing import Any, Literal, cast
 
 import httpx
 
-from .exceptions import (
+from .core.exceptions import (
     EndorAPIError,
     map_status_code_to_exception,
 )
-from .types import ErrorResponse
+from .core.types import ErrorResponse
 from .utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     RedactingFilter,

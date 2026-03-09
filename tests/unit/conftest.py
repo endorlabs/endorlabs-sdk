@@ -11,7 +11,7 @@ from unittest.mock import Mock
 import pytest
 
 from endorlabs.api_client import APIClient
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 from tests.conftest import TEST_PAGE_SIZE
 
 

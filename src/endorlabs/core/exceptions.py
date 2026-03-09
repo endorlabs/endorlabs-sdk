@@ -178,10 +178,6 @@ class MethodNotSupportedError(EndorAPIError):
         super().__init__(message, status_code=501, **kwargs)
 
 
-# Backward-compatible alias — deprecated; use MethodNotSupportedError instead.
-NotImplementedError = MethodNotSupportedError
-
-
 def map_status_code_to_exception(
     status_code: int,
     message: str | None = None,

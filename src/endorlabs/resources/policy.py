@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, override
 
 from pydantic import BaseModel, Field, field_validator
 
+from ..core.types import ListParameters
 from ..models.base import (
     BaseMeta,
     BaseResource,
@@ -31,7 +32,6 @@ from ..models.base import (
     FlexibleEnum,
 )
 from ..operations import BaseResourceOperations
-from ..types import ListParameters
 from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:

@@ -51,7 +51,7 @@ class TestPolicy:
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
         """
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         results = self.endor_client.policy.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
@@ -137,7 +137,7 @@ match_finding[result] {
     def test_policy_list(self) -> None:
         """LIST from tenant root with traverse."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -155,7 +155,7 @@ match_finding[result] {
     def test_policy_get(self) -> None:
         """GET first item from LIST (root + traverse)."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -191,7 +191,7 @@ match_finding[result] {
             PolicyType.ADMISSION,
             PolicyType.NOTIFICATION,
         ]
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         for policy_type in policy_types:
             filtered_policies = self.endor_client.policy.list(
@@ -547,7 +547,7 @@ match_finding[result] {
     def test_client_ux_update_policy(self) -> None:
         """Consumer UX: list get update revert."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.namespace,

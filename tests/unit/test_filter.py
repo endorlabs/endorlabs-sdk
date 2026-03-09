@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from endorlabs.filter import Clause, CompositeFilter, F, FilterExpression
+from endorlabs.core.filter import Clause, CompositeFilter, F, FilterExpression
 
 # ---------------------------------------------------------------------------
 # Equality / Comparison operators

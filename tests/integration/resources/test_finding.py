@@ -90,8 +90,8 @@ class TestFinding:
         Only fetches 1 item without traverse for fast setup. Tests that need
         sample data should request this fixture explicitly.
         """
-        from endorlabs.exceptions import NotFoundError, ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import NotFoundError, ServerError
+        from endorlabs.core.types import ListParameters
 
         try:
             results = self.endor_client.finding.list(
@@ -123,7 +123,7 @@ class TestFinding:
     )
     def test_finding_list_by_category(self, category: str) -> None:
         """Test filtering findings by category."""
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         # Extract short label from enum name for assertions (e.g. "SCA", "SAST")
         short_label = category.replace("FINDING_CATEGORY_", "")

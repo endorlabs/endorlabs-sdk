@@ -41,8 +41,8 @@ class TestProject:
         self.created_scan_profile_uuids = []
 
         # Get test data with pagination limits
-        from endorlabs.exceptions import NotFoundError, ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import NotFoundError, ServerError
+        from endorlabs.core.types import ListParameters
 
         try:
             self.projects = self.endor_client.project.list(
@@ -238,7 +238,7 @@ class TestProject:
     def test_project_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
         # Test filtering by platform
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         github_projects = self.endor_client.project.list(
             list_params=ListParameters(
@@ -347,7 +347,7 @@ class TestProject:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.exceptions import ValidationError
+        from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             self.endor_client.project.get("invalid-uuid")
