@@ -1,6 +1,6 @@
 # Consumer UX: Filter vs Field Mask vs Update Mask
 
-Recommendation for SDK consumer UX when working with list and update operations. See also [conventions.md](../conventions.md) (List parameters, Update and update_mask).
+Recommendation for SDK consumer UX when working with list and update operations. See also [contracts.md](../contracts.md) (List parameters, Update and update_mask).
 
 ## Do not combine Filter and Field Mask
 
@@ -20,7 +20,7 @@ Combining filter and list mask would blur "what to return" with "which subset of
 
 ## What to expose as arguments (ideal UX)
 
-Definitions: [conventions.md](../conventions.md) (List parameters, Update and update_mask). The ideal UX exposes the set of attributes and types defined by the spec; see [conventions.md](../conventions.md) and [rules-of-engagement](../rules-of-engagement/) (resource-implementation, architecture). The registry-based entrypoint (`client.namespace`, `client.project`, etc.) should expose **flat kwargs** so consumers do not have to construct `ListParameters` by hand.
+Definitions: [contracts.md](../contracts.md) (List parameters, Update and update_mask). The ideal UX exposes the set of attributes and types defined by the spec while documenting SDK-only convenience behavior. The registry-based entrypoint (`client.namespace`, `client.project`, etc.) exposes **flat kwargs** so consumers do not have to construct `ListParameters` by hand.
 
 **For `.list()`:**
 
@@ -33,11 +33,11 @@ Definitions: [conventions.md](../conventions.md) (List parameters, Update and up
   - **max_pages** — pagination cap.
   - **Identity kwargs** — for resources that support them (e.g. projects, repositories), pass `name`, `vcs_url`/`git_url`; they are translated into a filter (e.g. `meta.name == 'backend'`) and merged with an explicit `filter` if provided. Use `.lookup(name="...")` to get the single matching resource or raise `NotFoundError`/`AmbiguousError`. **List/lookup by identity** is supported only for resources that have an identity filter map (see [reference/create-update-payloads.md](../reference/create-update-payloads.md)); for other resources use `filter=` explicitly.
 
-Recommended style (see `main.py`):
+Recommended style:
 
 ```python
 client.project.list(traverse=True)
-client.project.list(filter="meta.name==https://github.com/org/repo.git", max_pages=1)
+client.project.list(filter='meta.name=="https://github.com/org/repo.git"', max_pages=1)
 client.project.list(filter="spec.level==FINDING_LEVEL_CRITICAL", mask="meta.name,spec.level")
 client.scan_result.list(filter="...", sort_by="meta.create_time", desc=True, page_size=5)
 ```
@@ -48,12 +48,13 @@ client.scan_result.list(filter="...", sort_by="meta.create_time", desc=True, pag
 
 **For `.update()`:**
 
-- **update_mask** is **required** for all update-capable resources. Pass a comma-separated list of field paths (e.g. `"meta.description,meta.tags"`). Sparse PATCH is always used. Missing or empty mask raises `ValidationError`. Do not merge it with list semantics or with the list **mask**.
+- **UUID + payload update path:** `update_mask` is required. Pass a comma-separated list of field paths (for example `"meta.description,meta.tags"`). Sparse PATCH is always used. Missing or empty mask raises a validation error.
+- **Resource-instance field-kwargs path:** when you pass a resource object and mutable field kwargs, the SDK derives `update_mask` automatically.
 
 ## Summary
 
 - **Do not combine** filter and field mask; keep **filter** (rows) and **mask** (list response fields) as two distinct kwargs on `.list()`.
 - **Expose both** as flat kwargs on the facade (already supported), along with other list parameters and **namespace** / **max_pages**.
-- **update_mask** stays only on `.update()`, is **required**, and is a different concept from list **mask**.
-- **Spec as source of truth:** See [conventions.md](../conventions.md) (List parameters, Update and update_mask) and [rules-of-engagement](../rules-of-engagement/) (resource-implementation, architecture).
-- **filter** = which rows, **mask** = which fields in list responses, **update_mask** = which fields to patch on update (defined in conventions).
+- **update_mask** stays only on `.update()`, and is a different concept from list **mask**.
+- **Contract source:** See [contracts.md](../contracts.md) (List parameters, Update and update_mask).
+- **filter** = which rows, **mask** = which fields in list responses, **update_mask** = which fields to patch on update.

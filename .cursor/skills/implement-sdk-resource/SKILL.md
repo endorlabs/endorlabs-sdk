@@ -51,7 +51,7 @@ Create in `src/endorlabs/resources/{resource_name}.py`:
 - `{Resource}Spec(BaseSpec)` -- resource specification
 - `{Resource}(BaseResource)` -- top-level resource, extending BaseResource
 
-**Field aliasing rules**: See [docs/conventions.md (Field aliasing)](../../../docs/conventions.md#field-aliasing).
+**Field aliasing rules**: See [docs/contracts.md (Field aliasing)](../../../docs/contracts.md#field-aliasing).
 
 ### Operations
 
@@ -103,7 +103,7 @@ Each resource test file follows canonical order:
 
 **Cleanup**: Every CREATE test must use try/finally so cleanup runs on pass, failure, or exception.
 
-**No-update resources**: For `api_keys`, `audit_logs`, `finding_logs`, `dependency_metadata`, `linter_results` -- add test asserting `.update()` raises `NotImplementedError`.
+**No-update resources**: For `api_keys`, `audit_logs`, `finding_logs`, `linter_results` -- add test asserting `.update()` raises `NotImplementedError`.
 
 ## Checklist
 

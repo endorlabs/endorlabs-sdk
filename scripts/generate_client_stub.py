@@ -299,8 +299,8 @@ def main() -> None:  # noqa: D103
     relative_imports: dict[str, list[str]] = {
         ".api_client": ["APIClient"],
         ".facade": ["ScanLogsFacade"],
-        ".filter": ["FilterExpression"],
-        ".types": ["ListParameters"],
+        ".core.filter": ["FilterExpression"],
+        ".core.types": ["ListParameters"],
     }
     for entry in RESOURCE_REGISTRY:
         mod = entry.model_class.__module__

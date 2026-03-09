@@ -13,8 +13,8 @@ from .api_client import APIClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+from .core.filter import F
 from .facade import ResourceFacade
-from .filter import F
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until

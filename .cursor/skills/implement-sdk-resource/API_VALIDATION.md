@@ -74,6 +74,6 @@ Document all fields unique to this resource in `spec.*`.
 ## References
 
 - OpenAPI spec: <https://api.endorlabs.com/download/openapiv2.swagger.json>
-- Conventions: `docs/conventions.md` (naming, spec path, list params, update_mask)
+- Contracts: `docs/contracts.md` (naming, spec path, list params, update_mask)
 - Resource operations table: `docs/reference/resources.md`
 - Create/update payloads: `docs/reference/create-update-payloads.md`

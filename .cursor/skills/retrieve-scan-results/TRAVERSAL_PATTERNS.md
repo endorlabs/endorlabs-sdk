@@ -34,7 +34,7 @@ all_deps = client.dependency_metadata.list(traverse=True)
 
 # Module-level (advanced)
 from endorlabs.resources import dependency_metadata
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 
 list_params = ListParameters(traverse=True)
 all_deps = dependency_metadata.list_dependency_metadata(
@@ -184,5 +184,5 @@ The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true
 
 ## References
 
-- `src/endorlabs/types.py` -- `ListParameters` definition
-- `docs/conventions.md` -- List parameters, traverse, namespace scoping
+- `src/endorlabs/core/types.py` -- `ListParameters` definition
+- `docs/contracts.md` -- List parameters, traverse, namespace scoping

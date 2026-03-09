@@ -65,7 +65,7 @@ class TestEndorLicense:
 
     def test_endor_license_module_get_returns_403(self) -> None:
         """Facade get with non-oss namespace raises NotImplementedError or 403."""
-        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.core.exceptions import PermissionDeniedError
 
         items = self.endor_root_client.endor_license.list(
             traverse=True,

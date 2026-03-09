@@ -323,7 +323,7 @@ def build_filter_from_identity_kwargs(
     Merges with explicit ``kwargs.get('filter')`` if present. Returns
     ``(merged_filter, remaining_kwargs)`` with identity keys removed.
     """
-    from ..filter import F, FilterExpression
+    from ..core.filter import F, FilterExpression
 
     clauses: list[FilterExpression] = []
     remaining = dict(kwargs)

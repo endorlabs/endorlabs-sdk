@@ -1,6 +1,6 @@
 # API Validation Rules of Engagement
 
-Pre-implementation validation. Spec: see [conventions.md](../conventions.md) (OpenAPI URL; workflow downloads to `.endorlabs-context/` in CI).
+Pre-implementation validation. Spec path and SDK behavior agreements: see [contracts.md](../contracts.md).
 
 ## Phase 1: OpenAPI
 
@@ -18,4 +18,4 @@ Pre-implementation validation. Spec: see [conventions.md](../conventions.md) (Op
 - [ ] Map universal fields, conditional fields, resource-specific fields.
 - [ ] Confirm which CRUD operations and list params (filter, mask, traverse) the API supports.
 
-Use conventions.md for spec path and list/update patterns.
+Use [contracts.md](../contracts.md) for spec path and list/update patterns.

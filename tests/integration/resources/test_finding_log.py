@@ -93,8 +93,8 @@ class TestFindingLog:
         Uses indexed spec.operation filter for fast retrieval — unfiltered
         finding-log list can timeout on large namespaces.
         """
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import ServerError
+        from endorlabs.core.types import ListParameters
 
         try:
             results = self.endor_client.finding_log.list(
@@ -113,8 +113,8 @@ class TestFindingLog:
     def test_finding_log_list_by_operation_create(self) -> None:
         """Test filtering finding logs by CREATE operation."""
         print("\n=== TESTING FILTER FINDING LOGS BY OPERATION CREATE ===")
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import ServerError
+        from endorlabs.core.types import ListParameters
 
         list_params = ListParameters(
             filter="spec.operation==OPERATION_CREATE",
@@ -149,8 +149,8 @@ class TestFindingLog:
     def test_finding_log_list_by_operation_update(self) -> None:
         """Test filtering finding logs by UPDATE operation."""
         print("\n=== TESTING FILTER FINDING LOGS BY OPERATION UPDATE ===")
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import ServerError
+        from endorlabs.core.types import ListParameters
 
         list_params = ListParameters(
             filter="spec.operation==OPERATION_UPDATE",
@@ -226,8 +226,8 @@ class TestFindingLog:
         dataset. This test uses a filter to limit the query scope.
         """
         print("\n=== TESTING FINDING LOG TRAVERSE ===")
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import ServerError
+        from endorlabs.core.types import ListParameters
 
         # Use a filter to limit scope and avoid timeout
         # Filter by CREATE operation to reduce dataset size

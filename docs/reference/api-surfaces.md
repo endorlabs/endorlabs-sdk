@@ -29,6 +29,9 @@ See [resources.md](resources.md) for per-resource operations and [namespace.md](
 | `UnauthorizedError` | Exception | Full | Yes |
 | `ValidationError` | Exception | Full | Yes |
 | `map_status_code_to_exception` | Function | Full | Yes |
+| `F` | Function/class helper | Full | Yes |
+| `FilterExpression` | Type/helper | Full | Yes |
+| `init` | Function | Full | Yes |
 | `dependency_metadata` | Module | N/A | Module docstring |
 | `finding` | Module | N/A | Module docstring |
 | `installation` | Module | N/A | Module docstring |
@@ -80,13 +83,13 @@ All exception classes and `map_status_code_to_exception` must have full types an
 
 ### Resource modules (in `__all__`)
 
-For each of `dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`: Pydantic models, payload/response types, and resource-specific convenience functions are accessible via `endorlabs.resources.<name>`. CRUD operations are performed exclusively through the `Client` facade (`client.<resource>.list()`, `.get()`, etc.).
+For each top-level exported resource module (`dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`): Pydantic models, payload/response types, and resource-specific convenience functions are accessible via `endorlabs.resources.<name>`. CRUD operations are performed through the `Client` facade (`client.<resource>.list()`, `.get()`, etc.).
 
 ---
 
 ## 2. Module-level surface (advanced usage)
 
-**Contract:** Explicit imports such as `from endorlabs.operations import ...`, `from endorlabs.utils import ...`, `from endorlabs.types import ...`, `from endorlabs.resources import <module>`, and direct use of `APIClient`.
+**Contract:** Explicit imports such as `from endorlabs.operations import ...`, `from endorlabs.utils import ...`, `from endorlabs.core.types import ...`, `from endorlabs.resources import <module>`, and direct use of `APIClient`.
 
 **Types:** Full.  
 **Docstrings:** Yes (class/function/module).
@@ -100,9 +103,9 @@ For each of `dependency_metadata`, `finding`, `installation`, `linter_result`, `
 | `APIClient` class | Full | Yes |
 | All public methods and attributes | Full | Yes |
 
-### endorlabs.types
+### endorlabs.core.types
 
-**Location:** [src/endorlabs/types.py](../../src/endorlabs/types.py)
+**Location:** [src/endorlabs/core/types.py](../../src/endorlabs/core/types.py)
 
 All public types: `ListParameters`, `ErrorResponse`, `ResourceMeta`, `TenantMeta`, `APIResponse`, `ValidationResult`, `SchemaDriftInfo`, and Literal aliases (`ResourceType`, `OperationType`, `StatusType`, `SeverityType`, `PlatformType`, `EcosystemType`, `FindingCategoryType`, `PolicyType`), plus `ResourceDict`, `ResourceList`, `NamespaceStr`, `UUIDStr`, `TagList`, `UpdateMask`, `ResourceOperation`. Each must have full types and docstrings (class or alias description).
 
@@ -110,7 +113,7 @@ All public types: `ListParameters`, `ErrorResponse`, `ResourceMeta`, `TenantMeta
 
 **Location:** [src/endorlabs/resources/](../../src/endorlabs/resources/)
 
-Modules: `api_key`, `audit_log`, `authorization_policy`, `dependency_metadata`, `finding`, `finding_log`, `installation`, `linter_result`, `metric`, `namespace`, `package_license`, `package_version`, `policy`, `project`, `repository`, `repository_version`, `scan_log_request`, `scan_profile`, `scan_result`, `semgrep_rule`.
+Modules: `api_key`, `audit_log`, `authentication_log`, `authorization_policy`, `code_owners`, `dependency_metadata`, `endor_license`, `finding`, `finding_log`, `installation`, `invitation`, `linter_result`, `metric`, `namespace`, `notification_target`, `package_license`, `package_version`, `policy`, `policy_template`, `project`, `repository`, `repository_version`, `scan_log_request`, `scan_profile`, `scan_result`, `scan_workflow`, `scan_workflow_result`, `semgrep_rule`, `version_upgrade`.
 
 For each module, public surface: Pydantic models (payload/response types) and resource-specific convenience functions (e.g. `associate_scan_profile_with_project`). CRUD operations (`list`, `get`, `create`, `update`, `delete`) are handled by `BaseResourceOperations` via the `Client` facade — not as module-level functions. Full types and docstrings required.
 
@@ -147,7 +150,7 @@ For each module, public surface: Pydantic models (payload/response types) and re
 | Surface | Entry point | Types | Docstrings |
 |---------|-------------|--------|------------|
 | Developer | `import endorlabs`, `endorlabs.__all__`, `Client`, facades | Full | Required |
-| Module-level | `endorlabs.api_client`, `endorlabs.types`, `endorlabs.resources.*`, `endorlabs.operations`, `endorlabs.utils`, `endorlabs.models` | Full | Required |
+| Module-level | `endorlabs.api_client`, `endorlabs.core.types`, `endorlabs.resources.*`, `endorlabs.operations`, `endorlabs.utils`, `endorlabs.models` | Full | Required |
 | Raw client | `APIClient` only | Full | Required |
 
 Internal symbols (not in the above) use a leading `_` and are documented as internal; they are not part of the supported API contract.

@@ -1,10 +1,10 @@
 # Resource Implementation Rules of Engagement
 
-Checklists for implementing new Endor Labs resources. CRUD operations are handled by `BaseResourceOperations` via the `Client` facade; resource modules contain Pydantic models and convenience functions only. See [conventions.md](../conventions.md) for naming, spec path, list params, update_mask. Implement per `.cursor/rules/resource-patterns.mdc`.
+Checklists for implementing new Endor Labs resources. CRUD operations are handled by `BaseResourceOperations` via the `Client` facade; resource modules contain Pydantic models and convenience functions only. See [contracts.md](../contracts.md) for naming, spec path, list params, and update behavior. Implement per `.cursor/rules/resource-patterns.mdc`.
 
 ## Phase 0: API Analysis (MANDATORY)
 
-- [ ] Review OpenAPI spec for the resource (local: `.endorlabs-context/openapiv2.swagger.json`; see [conventions.md](../conventions.md)).
+- [ ] Review OpenAPI spec for the resource (local: `.endorlabs-context/openapiv2.swagger.json`; see [contracts.md](../contracts.md)).
 - [ ] Note service name, URL endpoints, HTTP methods.
 - [ ] Use live API responses as canonical structure; run endorctl list/get as needed.
 - [ ] Confirm BaseResource compatibility; list_params (filter, mask, page_size, traverse) and update_mask support.
@@ -12,9 +12,9 @@ Checklists for implementing new Endor Labs resources. CRUD operations are handle
 ## Phase 1: Implementation
 
 - [ ] Models: Meta, Spec, Resource extending BaseResource; schema drift detection per base.
-- [ ] **Field aliasing:** Reserved/invalid API key → alias (Tier 1). Otherwise 1:1 with spec (Tier 2). **Greenfield:** Prefer Python name = spec key for shared fields (`context`, `processing_status`, `index_data`). If you use a prefixed name with alias for a shared concept, register in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../../.github/scripts/model_consistency.py) (Tier 3). See [conventions.md](../conventions.md) (Models and API parity → Field aliasing, Style heuristic).
+- [ ] **Field aliasing:** Reserved/invalid API key -> alias (Tier 1). Otherwise 1:1 with spec (Tier 2). **Greenfield:** Prefer Python name = spec key for shared fields (`context`, `processing_status`, `index_data`). If you use a prefixed name with alias for a shared concept, register in [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../../.github/scripts/model_consistency.py) (Tier 3). See [contracts.md](../contracts.md) (Models and API parity -> Field aliasing).
 - [ ] CRUD: Handled by `BaseResourceOperations` via the facade — no module-level CRUD wrappers needed. The facade delegates `list`, `get`, `create`, `update`, `delete` to `BaseResourceOperations` using registry metadata.
-- [ ] Update: `update_mask` is a comma-separated string at the facade level, converted to a list internally. Namespace: update_mask required.
+- [ ] Update: `update_mask` is a comma-separated string at the facade level, converted to a list internally. For UUID+payload updates, `update_mask` is required. Resource-instance field-kwargs updates may auto-derive the mask.
 - [ ] Errors: use endorlabs.exceptions; log full response.text; no truncation.
 - [ ] **Create/update fields:** The allowed create fields are defined in the resource’s `build_create_payload`; the allowed update fields are defined by the model’s `get_mutable_fields_cls()` and `get_immutable_fields_cls()` (see BaseResource). When adding a resource, override these classmethods on the model if the resource has more than the base default. The facade may expose a subset as explicit optional kwargs.
 - [ ] Docstrings: Args, Returns, Raises so Pydantic/Pyright and IDE are self-explanatory; if a resource module lacks these, treat as a gap and add them.
@@ -38,7 +38,7 @@ Each resource test file follows the same order where the registry supports the o
 4. **Update** — For resources with `update_fn` not None: update the resource created in (3).
 5. **Delete** — For resources with `delete_fn`: delete the resource created in (3) for cleanup.
 
-**Fixtures:** Use conftest `api_client`, `namespace`, `root_namespace`. For resources where `"update" not in entry.supported_ops` (api_keys, audit_logs, finding_logs, dependency_metadata, linter_results), add a test that asserts `client.<attr>.update(...)` raises `NotImplementedError`.
+**Fixtures:** Use conftest `api_client`, `namespace`, `root_namespace`. For resources where `"update" not in entry.supported_ops` (api_keys, audit_logs, finding_logs, linter_results), add a test that asserts `client.<attr>.update(...)` raises `NotImplementedError`.
 
-**Checklist after changes:** Every registry entry has a test file; List/Get Y for all; Update N tests for api_keys, audit_logs, finding_logs, dependency_metadata, linter_results; `pytest tests/test_openapi_spec.py -v` passes when spec is present.
+**Checklist after changes:** Every registry entry has a test file; List/Get Y for all; Update N tests for api_keys, audit_logs, finding_logs, linter_results; `pytest tests/test_openapi_spec.py -v` passes when spec is present.
 

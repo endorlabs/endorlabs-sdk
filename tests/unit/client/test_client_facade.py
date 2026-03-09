@@ -15,7 +15,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
-from endorlabs.exceptions import AmbiguousError, NotFoundError
+from endorlabs.core.exceptions import AmbiguousError, NotFoundError
 from endorlabs.facade import ScanLogsFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
@@ -697,7 +697,7 @@ def test_list_explicit_kwargs_override_list_params(
     client_with_mock_transport: Client,
 ) -> None:
     """Explicit kwargs override when both list_params and kwargs passed."""
-    from endorlabs.types import ListParameters
+    from endorlabs.core.types import ListParameters
 
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
