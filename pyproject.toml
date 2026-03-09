@@ -208,8 +208,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 
 # Per-file ignores — grouped by reason
 [tool.ruff.lint.per-file-ignores]
-# --- CLI / entry point: print is expected ---
-"main.py" = ["T20", "D", "ANN", "S"]
 # --- Transport layer ---
 "src/endorlabs/api_client.py" = ["C901", "S105"]  # complex _handle_response; "browser" sentinel comparison
 # --- Client surface ---
@@ -218,8 +216,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/auth_server.py" = ["PLW0603"]
 # --- Context: lazy module loading ---
 "src/endorlabs/context/__init__.py" = ["PLW0603"]
-# --- Exceptions: NotImplementedError intentionally shadows builtin ---
-"src/endorlabs/exceptions.py" = ["A001"]
 # --- Resource model quirks ---
 "src/endorlabs/resources/project.py" = ["F811"]  # TenantMeta duplicate
 # --- Internal/API compatibility: private helpers and unused params ---
@@ -237,11 +233,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
 "tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW"]
-# --- Agent: broadly relaxed (langgraph types, demo CLI) ---
+# --- Agent: broadly relaxed (langgraph types) ---
 "src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
-"src/endorlabs/agent/demo.py" = ["T20"]
-"src/endorlabs/agent/demo_cli.py" = ["T20"]
-"src/endorlabs/agent/langgraph_agent/demo.py" = ["T20"]
 # --- Internal demo CLI: readability-focused walkthrough module ---
 "src/endorlabs/_demo/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
 "src/endorlabs/_demo/demo_cli.py" = ["T20"]
@@ -300,13 +293,15 @@ strict = [
   "src/endorlabs/client_surface.py",
   "src/endorlabs/facade.py",
   "src/endorlabs/api_client.py",
-  "src/endorlabs/exceptions.py",
-  "src/endorlabs/types.py",
+  "src/endorlabs/core/exceptions.py",
+  "src/endorlabs/core/filter.py",
+  "src/endorlabs/core/types.py",
 ]
 
 # More specific roots first (first match wins). Internal modules use relaxed
 # unknown-type rules so we focus on public API type quality.
 executionEnvironments = [
+    { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     { root = "src/endorlabs/agent/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportMissingTypeStubs = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportPossiblyUnboundVariable = "none", reportUnnecessaryTypeIgnoreComment = "none", reportMissingImports = "none", reportAttributeAccessIssue = "none", reportConstantRedefinition = "none", reportMissingSuperCall = "none" },
     { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },

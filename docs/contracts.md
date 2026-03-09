@@ -1,0 +1,84 @@
+# SDK Contracts
+
+Normative behavior agreements for the Endor Labs SDK.
+This document is the in-repo source of truth for shared SDK semantics.
+
+- **Contracts (`MUST`/`SHALL`)** live here.
+- **Design rationale** belongs in `docs/design.md`.
+- **Inventories and tables** belong in `docs/reference/`.
+
+## Canonical naming
+
+- Use `tenant.namespace.child` only; never UUIDs in namespace paths.
+- Example: `tenant_meta_namespace="endor-solutions-tgowan"` or `"tenant.bu.team"`.
+
+## OpenAPI / spec
+
+- Local (preferred): `.endorlabs-context/openapiv2.swagger.json`.
+- List endpoints use `v1/namespaces/{tenant_meta.namespace}/{resource_name}`.
+- Update (PATCH) uses collection URL; UUID and payload are in request body.
+
+## Models and API parity
+
+- **Nested models:** Use typed Pydantic models for nested maps/arrays.
+- **Consistency check:** Model consistency compares Python field names, not aliases.
+- **Spec-driven UX:** Expose spec-defined attributes/types where practical and document SDK-only convenience behavior explicitly.
+
+<a id="field-aliasing"></a>
+## Field aliasing
+
+- **Default:** Python attribute name = API key when valid and non-reserved.
+- **Tier 1 (mandatory):** Alias reserved/invalid identifiers via `Field(alias="...")`.
+- **Tier 2 (case):** Keep 1:1 naming unless spec key is not Python-safe.
+- **Tier 3 (semantic):** Avoid cosmetic renames; document any semantic alias.
+- **Python names in code:** Use Python field names in code; alias only for wire format.
+
+## Traverse
+
+- Use `ListParameters(traverse=True)` for tenant-wide list operations.
+- SDK maps this to `list_parameters.traverse=true`.
+
+## Namespace scoping (resource-scoped operations)
+
+When you have a resource instance (for example from `list(traverse=True)`), pass the resource object to `get`, `update`, or `delete` so namespace is resolved from the resource and cross-namespace 404s are avoided.
+
+- **get / update / delete:** Accept UUID string or resource object.
+- **List/filter scoped to a resource:** Use resource namespace or `list(parent=resource)` where supported.
+- **Discovery:** Use root namespace + `traverse=True`.
+
+## List parameters
+
+- **filter**: Which rows match.
+- **mask**: Which fields are returned in list responses.
+- **page_size**, **page_token**, **page_id**: Pagination controls.
+- **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.
+- **count**, **from_date**, **to_date**: Supported by `ListParameters`.
+- **PR-scope naming:** OpenAPI commonly uses `ci_run_uuid`; SDK currently exposes `pr_uuid` as a convenience parameter in facade/list types.
+- **archive**, **list_all**: SDK-exposed convenience parameters. Treat these as SDK behavior contracts, not guaranteed cross-endpoint OpenAPI fields.
+
+**Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<resource>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls.
+
+## Create (decoupled)
+
+- `create()` accepts either:
+  - `payload=CreateXPayload(...)`, or
+  - resource kwargs resolved via `build_create_payload`.
+- Facade convenience kwargs are a subset; resource builders remain canonical for allowed kwargs.
+
+## Update and update_mask
+
+- **Contract:** `update_mask` and list `mask` are separate concepts.
+- **UUID + payload path:** `update_mask` is required when updating by UUID (`client.<resource>.update(uuid, payload=..., update_mask="...")`).
+- **Resource-instance kwargs path:** `update_mask` is optional only when passing a resource object with field kwargs (`client.<resource>.update(resource, meta_description="...")`); SDK auto-derives `update_mask`.
+- **Namespace:** Namespace updates require explicit `update_mask` + payload path and only mutable fields are allowed.
+- Immutable fields in `update_mask` are rejected by the SDK before request dispatch.
+
+## Type overrides and Pyright
+
+- Intentional subtype overrides may require narrow `pyright: ignore` with local rationale.
+- Internal `_` helper coupling can use minimal private-usage ignores when documented.
+
+## Errors
+
+- Use `endorlabs.exceptions`; resources may return `None` on 404 where documented.
+- Preserve full server error context in SDK error handling.

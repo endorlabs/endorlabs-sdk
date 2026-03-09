@@ -8,6 +8,7 @@ returns logs in the response.
 import pytest
 
 import endorlabs
+from endorlabs.core.types import ListParameters
 from endorlabs.resources import scan_log_request
 from endorlabs.resources.scan_log_request import (
     CreateScanLogRequestPayload,
@@ -15,7 +16,6 @@ from endorlabs.resources.scan_log_request import (
     ScanLogRequestMetaCreate,
     ScanLogRequestSpecCreate,
 )
-from endorlabs.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_MAX_PAGES_TRAVERSE,
@@ -164,7 +164,7 @@ class TestScanLogRequest:
 
         # Test with invalid scan result UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.exceptions import ValidationError
+        from endorlabs.core.exceptions import ValidationError
 
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-invalid-uuid-request"),

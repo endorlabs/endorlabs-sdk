@@ -1,6 +1,6 @@
 # Namespace Traversal Pattern
 
-Traverse and list parameters are defined in [conventions.md](../conventions.md); this doc adds patterns and examples.
+Traverse and list parameters are defined in [contracts.md](../contracts.md); this doc adds patterns and examples.
 
 ## Overview
 
@@ -171,7 +171,7 @@ def get_private_dependencies(client):
 ### Pattern 3: Tenant-Wide Count
 
 ```python
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 
 def count_all_findings(client):
     """Count all findings across tenant."""
@@ -181,7 +181,7 @@ def count_all_findings(client):
 
 ## Related Documentation
 
-- [ListParameters API Reference](../../src/endorlabs/types.py)
+- [ListParameters API Reference](../../src/endorlabs/core/types.py)
 - [BaseResourceOperations Implementation](../../src/endorlabs/operations/__init__.py)
 - DependencyMetadata: `endorlabs.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.
 

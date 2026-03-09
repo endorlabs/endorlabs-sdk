@@ -13,7 +13,7 @@ import sys
 from typing import Any
 
 import endorlabs
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 
 
 def _prompt_yes_no(prompt: str) -> bool:

@@ -48,7 +48,7 @@ class TestAuthenticationLog:
 
     def test_authentication_log_module_get_returns_403(self) -> None:
         """Facade get with non-oss namespace raises NotImplementedError."""
-        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.core.exceptions import PermissionDeniedError
 
         items = self.endor_root_client.authentication_log.list(
             traverse=True,

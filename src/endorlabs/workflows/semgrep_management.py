@@ -239,7 +239,7 @@ def _import_single_rule(
     display_id = _rule_display_id(rule_dict)
     rule_name = str(rule_dict.get("id", ""))
 
-    from endorlabs.filter import F
+    from endorlabs import F
 
     existing_rules = client.semgrep_rule.list(
         namespace=namespace,
@@ -393,7 +393,7 @@ def export_rules_to_yaml(
         rule = client.semgrep_rule.get(uuid, namespace=namespace)
         rules = [rule]
     elif name:
-        from endorlabs.filter import F
+        from endorlabs import F
 
         rules = client.semgrep_rule.list(
             namespace=namespace,

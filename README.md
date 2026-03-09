@@ -100,12 +100,6 @@ uv run endor-demo
 uv run endor-demo --verbose
 ```
 
-Compatibility entrypoint:
-
-```bash
-uv run main.py
-```
-
 Demo prerequisites:
 
 - `ENDOR_NAMESPACE` must be set (or entered in the wizard)
@@ -238,7 +232,7 @@ Each facade exposes only the operations that resource supports. Hover over any f
 - **Polling:** `client.wait_until(predicate, timeout=..., poll_interval_max=...)` for readiness loops.
 - **Identity:** `client.whoami()` returns the authenticated identity name, or `None`.
 
-Details: [docs/reference/resources.md](docs/reference/resources.md), [docs/conventions.md](docs/conventions.md).
+Details: [docs/reference/resources.md](docs/reference/resources.md), [docs/contracts.md](docs/contracts.md).
 
 ## How it works
 
@@ -252,7 +246,7 @@ Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
 
 ## Errors
 
-Raised exceptions live in `endorlabs.exceptions`: `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/conventions.md](docs/conventions.md) (Errors section).
+Raised exceptions live in `endorlabs.exceptions`: `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/contracts.md](docs/contracts.md) (Errors section).
 
 ## Development
 

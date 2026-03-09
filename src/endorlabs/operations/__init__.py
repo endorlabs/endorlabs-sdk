@@ -10,14 +10,14 @@ import builtins
 import os
 import re
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel, ValidationError
 
-from ..exceptions import EndorAPIError
-from ..exceptions import ValidationError as EndorValidationError
-from ..types import ListParameters
+from ..core.exceptions import EndorAPIError
+from ..core.exceptions import ValidationError as EndorValidationError
+from ..core.types import ListParameters
 from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
@@ -245,7 +245,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except ValidationError as e:
             # Pydantic validation error on response
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             error_details = "\n".join(
                 f"  {err['loc']}: {err['msg']} (type: {err['type']})"
@@ -263,7 +263,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -349,7 +349,7 @@ class BaseResourceOperations(Generic[T]):
             if resources:
                 return resources[0]
             # No resources found - raise NotFoundError
-            from ..exceptions import NotFoundError
+            from ..core.exceptions import NotFoundError
 
             raise NotFoundError(
                 message=(
@@ -370,7 +370,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -434,7 +434,7 @@ class BaseResourceOperations(Generic[T]):
 
             # Validate response structure
             if not isinstance(data, dict):
-                from ..exceptions import ServerError
+                from ..core.exceptions import ServerError
 
                 raise ServerError(
                     message=(
@@ -446,21 +446,23 @@ class BaseResourceOperations(Generic[T]):
                     response_text=str(data),
                 )
 
-            if "uuid" not in data:
+            data_obj = cast("dict[str, Any]", data)
+
+            if "uuid" not in data_obj:
                 self.logger.warning(
                     "Response missing UUID for %s: %s",
                     self.resource_name,
-                    data,
+                    data_obj,
                 )
 
             # DEBUG: Log successful response
             self.logger.debug(
                 "Successfully created %s: %s",
                 self.resource_name,
-                data.get("uuid", "unknown"),
+                data_obj.get("uuid", "unknown"),
             )
 
-            return self.model_class(**data)
+            return self.model_class(**data_obj)
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
@@ -471,7 +473,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except ValidationError as e:
             # Pydantic validation error on response
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -484,7 +486,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=f"Unexpected error creating {self.resource_name}: {e!s}",
@@ -559,7 +561,7 @@ class BaseResourceOperations(Generic[T]):
                 )
 
             # Build request body with object and required update_mask
-            request_data = {
+            request_data: dict[str, Any] = {
                 "object": payload_dict,
                 "request": {"update_mask": ",".join(update_mask)},
             }
@@ -595,7 +597,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except ValidationError as e:
             # Pydantic validation error on response
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -609,7 +611,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -643,7 +645,7 @@ class BaseResourceOperations(Generic[T]):
             if res.status_code in [200, 204]:
                 return True
             # Unexpected status code - raise error
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -666,7 +668,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -718,7 +720,7 @@ class BaseResourceOperations(Generic[T]):
                 e, "count", tenant_meta_namespace
             ) from e
         except Exception as e:
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -733,7 +735,7 @@ class BaseResourceOperations(Generic[T]):
         self, list_params: ListParameters | None, **kwargs: Any
     ) -> dict[str, Any]:
         """Build query parameters from list_params and kwargs."""
-        params = {}
+        params: dict[str, Any] = {}
 
         if list_params:
             self._add_basic_params(params, list_params)

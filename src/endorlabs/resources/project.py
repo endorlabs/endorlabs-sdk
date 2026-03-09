@@ -496,7 +496,7 @@ def associate_scan_profile_with_project(
         ) from e
     except Exception as e:
         # Unexpected errors
-        from ..exceptions import ServerError
+        from ..core.exceptions import ServerError
 
         raise ServerError(
             message=(f"Unexpected error associating scan profile with project: {e!s}"),
