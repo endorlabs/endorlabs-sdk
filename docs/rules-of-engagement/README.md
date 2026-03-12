@@ -8,3 +8,6 @@ For contributors and AI agents: process and checklists for implementing and vali
 - [troubleshooting.md](troubleshooting.md) — Workflow only; detailed stories: local docs snapshots or repo issues.
 - [docs-drift-workflow.md](docs-drift-workflow.md) — Unified docs sync and schema drift detection.
 - [namespace-traversal.md](namespace-traversal.md) — Traverse and list parameters; patterns and examples.
+- [spec-first-prototype-branch.md](spec-first-prototype-branch.md) — Prototype baseline and preserved components.
+- [spec-first-stainless-feasibility.md](spec-first-stainless-feasibility.md) — Stainless-first feasibility and fallback strategy.
+- [spec-first-rd-approval-bundle.md](spec-first-rd-approval-bundle.md) — Decision log, risks, and go/no-go criteria.

@@ -251,6 +251,39 @@ def test_oss_resource_facade_list_uses_oss_namespace(
     assert args[0] == "oss"
 
 
+def test_vulnerability_facade_list_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """OSS-scoped vulnerability list() delegates with namespace 'oss'."""
+    client = client_with_mock_transport
+    client.vulnerability._ops.list = Mock(return_value=[])
+    client.vulnerability.list(max_pages=TEST_MAX_PAGES)
+    client.vulnerability._ops.list.assert_called_once()
+    args, _ = client.vulnerability._ops.list.call_args
+    assert args[0] == "oss"
+
+
+def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Create-only query_vulnerability uses builder and OSS namespace."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.query_vulnerability._build_create_payload_fn = Mock(
+        return_value=built_payload
+    )
+    client.query_vulnerability._ops.create = Mock(return_value=Mock(uuid="qv-1"))
+    client.query_vulnerability.create(
+        name="query-vuln",
+        package_version_name="pkg:maven/a/b@1.0.0",
+    )
+    client.query_vulnerability._build_create_payload_fn.assert_called_once()
+    client.query_vulnerability._ops.create.assert_called_once()
+    args, _ = client.query_vulnerability._ops.create.call_args
+    assert args[0] == "oss"
+    assert args[1] is built_payload
+
+
 def test_client_exposes_all_custom_facades(
     client_with_mock_transport: Client,
 ) -> None:
