@@ -20,6 +20,7 @@ from .resources.finding_log import FindingLog
 from .resources.installation import Installation
 from .resources.invitation import Invitation
 from .resources.linter_result import LinterResult
+from .resources.malware import Malware
 from .resources.metric import Metric
 from .resources.namespace import Namespace
 from .resources.notification_target import NotificationTarget
@@ -28,6 +29,8 @@ from .resources.package_version import PackageVersion
 from .resources.policy import Policy
 from .resources.policy_template import PolicyTemplate
 from .resources.project import Project
+from .resources.query_malware import QueryMalware
+from .resources.query_vulnerability import QueryVulnerability
 from .resources.repository import Repository
 from .resources.repository_version import RepositoryVersion
 from .resources.scan_log_request import ScanLogRequest
@@ -37,6 +40,7 @@ from .resources.scan_workflow import ScanWorkflow
 from .resources.scan_workflow_result import ScanWorkflowResult
 from .resources.semgrep_rule import SemgrepRule
 from .resources.version_upgrade import VersionUpgrade
+from .resources.vulnerability import Vulnerability
 
 class _NamespaceFacade:
     """Isolate and organize resources in a parent-child hierarchy.
@@ -3407,6 +3411,228 @@ class _DependencyMetadataFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
+class _VulnerabilityFacade:
+    """Open-source vulnerability records.
+
+    Identity kwargs: name (-> meta.name).
+    OSS-scoped (namespace fixed to 'oss').
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Vulnerability]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Vulnerability:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Vulnerability]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Vulnerability,
+        namespace: str | None = ...,
+    ) -> Vulnerability:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _MalwareFacade:
+    """Open-source malware records.
+
+    Identity kwargs: name (-> meta.name).
+    OSS-scoped (namespace fixed to 'oss').
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Malware]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Malware:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Malware]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Malware,
+        namespace: str | None = ...,
+    ) -> Malware:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _QueryVulnerabilityFacade:
+    """Advanced vulnerability query endpoint.
+
+    OSS-scoped (namespace fixed to 'oss').
+    """
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> QueryVulnerability:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+class _QueryMalwareFacade:
+    """Advanced malware query endpoint.
+
+    OSS-scoped (namespace fixed to 'oss').
+    """
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> QueryMalware:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
 class _AuthenticationLogFacade:
     """Authentication event log.
 
@@ -3686,11 +3912,11 @@ class Client:
     Resources:
     api_key, audit_log, authentication_log, authorization_policy, code_owners,
     dependency_metadata, endor_license, finding, finding_log, installation,
-    invitation, linter_result, metric, namespace, notification_target,
+    invitation, linter_result, malware, metric, namespace, notification_target,
     package_license, package_version, policy, policy_template, project,
-    repository, repository_version, scan_log_request, scan_profile,
-    scan_result, scan_workflow, scan_workflow_result, semgrep_rule,
-    version_upgrade
+    query_malware, query_vulnerability, repository, repository_version,
+    scan_log_request, scan_profile, scan_result, scan_workflow,
+    scan_workflow_result, semgrep_rule, version_upgrade, vulnerability
     Custom: scan_logs
     """
 
@@ -3746,6 +3972,14 @@ class Client:
     """License information for a package."""
     dependency_metadata: _DependencyMetadataFacade
     """Dependency relationship between packages."""
+    vulnerability: _VulnerabilityFacade
+    """Open-source vulnerability records."""
+    malware: _MalwareFacade
+    """Open-source malware records."""
+    query_vulnerability: _QueryVulnerabilityFacade
+    """Advanced vulnerability query endpoint."""
+    query_malware: _QueryMalwareFacade
+    """Advanced malware query endpoint."""
     authentication_log: _AuthenticationLogFacade
     """Authentication event log."""
     endor_license: _EndorLicenseFacade

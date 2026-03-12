@@ -1,156 +1,141 @@
-# API Surfaces
+# API Surfaces (generated)
 
-This document defines the three supported API surfaces for the Endor Labs SDK. Every symbol in each surface **must** have full type annotations (parameters, returns, attributes) and docstrings. No assumptions; explicit contracts only.
+Auto-generated inventories for stable/public surfaces.
 
-See [resources.md](resources.md) for per-resource operations and [namespace.md](namespace.md) for namespace scoping.
+## Top-level exports (`endorlabs.__all__`)
 
----
+- `APIClient`
+- `AmbiguousError`
+- `Client`
+- `ConflictError`
+- `EndorAPIError`
+- `F`
+- `FilterExpression`
+- `MethodNotSupportedError`
+- `NotFoundError`
+- `PermissionDeniedError`
+- `RateLimitError`
+- `ServerError`
+- `UnauthorizedError`
+- `ValidationError`
+- `dependency_metadata`
+- `finding`
+- `init`
+- `installation`
+- `linter_result`
+- `malware`
+- `map_status_code_to_exception`
+- `metric`
+- `namespace`
+- `package_version`
+- `policy`
+- `project`
+- `query_malware`
+- `query_vulnerability`
+- `repository`
+- `repository_version`
+- `vulnerability`
 
-## 1. Developer surface (primary SDK users)
+## Resource modules (`endorlabs.resources.__all__`)
 
-**Contract:** Everything reachable via `import endorlabs` and `from endorlabs import X` — i.e. the names in [src/endorlabs/__init__.py](../../src/endorlabs/__init__.py) `__all__` — plus attributes and methods on those objects.
+- `api_key`
+- `audit_log`
+- `authentication_log`
+- `authorization_policy`
+- `code_owners`
+- `dependency_metadata`
+- `endor_license`
+- `finding`
+- `finding_log`
+- `installation`
+- `invitation`
+- `linter_result`
+- `malware`
+- `metric`
+- `namespace`
+- `notification_target`
+- `package_license`
+- `package_version`
+- `policy`
+- `policy_template`
+- `project`
+- `query_malware`
+- `query_vulnerability`
+- `repository`
+- `repository_version`
+- `scan_log_request`
+- `scan_profile`
+- `scan_result`
+- `scan_workflow`
+- `scan_workflow_result`
+- `semgrep_rule`
+- `version_upgrade`
+- `vulnerability`
 
-**Types:** Full (all parameters and return types annotated).  
-**Docstrings:** Required (module, class, method/function).
+## Facade method signatures
 
-### Top-level exports (`endorlabs.__all__`)
+### Compact facade view
 
-| Symbol | Kind | Types | Docstrings |
-|--------|------|--------|------------|
-| `APIClient` | Class | Full | Yes |
-| `Client` | Class | Full | Yes |
-| `AmbiguousError` | Exception | Full | Yes |
-| `ConflictError` | Exception | Full | Yes |
-| `EndorAPIError` | Exception | Full | Yes |
-| `NotFoundError` | Exception | Full | Yes |
-| `PermissionDeniedError` | Exception | Full | Yes |
-| `RateLimitError` | Exception | Full | Yes |
-| `ServerError` | Exception | Full | Yes |
-| `UnauthorizedError` | Exception | Full | Yes |
-| `ValidationError` | Exception | Full | Yes |
-| `map_status_code_to_exception` | Function | Full | Yes |
-| `F` | Function/class helper | Full | Yes |
-| `FilterExpression` | Type/helper | Full | Yes |
-| `init` | Function | Full | Yes |
-| `dependency_metadata` | Module | N/A | Module docstring |
-| `finding` | Module | N/A | Module docstring |
-| `installation` | Module | N/A | Module docstring |
-| `linter_result` | Module | N/A | Module docstring |
-| `metric` | Module | N/A | Module docstring |
-| `namespace` | Module | N/A | Module docstring |
-| `package_version` | Module | N/A | Module docstring |
-| `policy` | Module | N/A | Module docstring |
-| `project` | Module | N/A | Module docstring |
-| `repository` | Module | N/A | Module docstring |
-| `repository_version` | Module | N/A | Module docstring |
+| Method | Primary purpose | Key parameters |
+|--------|------------------|----------------|
+| `list` | List resources with paging/filtering | `traverse`, `namespace`, `list_params`, `filter`, `mask`, `max_pages` |
+| `lookup` | Return exactly one matching resource | `filter`, identity kwargs via `filter_kwarg_map`, `max_pages` |
+| `list_iter` | Streaming iteration over list results | same as `list`, iterator output |
+| `get` | Fetch one resource by id or resource object | `id_or_resource`, `namespace` |
+| `create` | Create resource from payload or builder kwargs | `payload`, `name`, `description`, `namespace_uuid`, `namespace`, `**kwargs` |
+| `update` | Patch resource with `update_mask` or field kwargs | `id_or_resource`, `payload`, `update_mask`, `meta_description`, `meta_tags` |
+| `delete` | Delete resource by id or object | `name_or_resource`, `namespace`, `ignore_missing` |
+| `tag` / `untag` | Tag management on resources supporting tags | `id_or_resource`, `tags`/`keys`, `namespace` |
 
-Note: `__version__` is public but not in `__all__`; consider adding it if part of the stable SDK surface.
+### `_ListableFacade` methods
 
-### Client
+- `list(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, **kwargs: 'Any') -> 'list[T]'`
+- `lookup(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int' = 2, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, **kwargs: 'Any') -> 'T'`
+- `list_iter(self, traverse: 'bool' = False, concurrent: 'bool' = False, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, **kwargs: 'Any') -> 'Iterator[T]'`
 
-| Member | Types | Docstrings |
-|--------|--------|------------|
-| `Client.__init__(api_client=..., tenant=..., *, timeout=60.0, content_type="application/jsoncompact", accept_encoding="gzip, br, zstd", max_retries=..., base_url=..., **client_kwargs)` | Full param/return | Yes |
-| `Client.whoami()` | Full; return `str \| None` | Yes |
-| `Client.wait_until(predicate, timeout=60, poll_interval_max=10)` | Full; return `bool` | Yes |
-| `Client.<attr>` (e.g. `.project`, `.namespace`, `.finding`) | Typed via stub (see Phase 4) | N/A (facade class docstring) |
+### `ResourceFacade` methods
 
-### ResourceFacade (per resource)
+- `get(self, id_or_resource: 'str | T', namespace: 'str | None' = None) -> 'T'`
+- `create(self, payload: 'Any' = None, *, name: 'str | None' = None, description: 'str | None' = None, namespace_uuid: 'str | None' = None, namespace: 'str | None' = None, **kwargs: 'Any') -> 'T'`
+- `update(self, id_or_resource: 'str | T', payload: 'Any | None' = None, *, update_mask: 'str | None' = None, meta_description: 'str | None' = None, meta_tags: 'list[str] | None' = None, namespace: 'str | None' = None, **kwargs: 'Any') -> 'T'`
+- `delete(self, name_or_resource: 'str | T', namespace: 'str | None' = None, *, ignore_missing: 'bool' = False) -> 'bool'`
+- `tag(self, id_or_resource: 'str | T', tags: 'list[str]', namespace: 'str | None' = None) -> 'T'`
+- `untag(self, id_or_resource: 'str | T', keys: 'list[str]', namespace: 'str | None' = None) -> 'T'`
 
-Attached as `client.<attr_name>` (e.g. `client.project`). Methods:
+## Client resources (registry-driven)
 
-| Method | Types | Docstrings |
-|--------|--------|------------|
-| `list(traverse=..., namespace=..., list_params=..., max_pages=..., **kwargs)` | Full; return `list[T]` | Yes |
-| `lookup(...)` | Full; return `T` | Yes |
-| `list_iter(...)` | Full; return `Iterator[T]` | Yes |
-| `get(id_or_resource: str \| T, namespace=...)` | Full; overloads for str vs T (preferred) | Yes |
-| `create(payload, namespace=...)` | Full | Yes |
-| `update(id_or_resource, payload=..., *, update_mask, namespace=...)` | Full; overloads (preferred) | Yes |
-| `delete(name_or_resource, namespace=..., *, ignore_missing=...)` | Full; overloads (preferred) | Yes |
-| `tag(id_or_resource, tags, namespace=...)` | Full | Yes |
-| `untag(id_or_resource, keys, namespace=...)` | Full | Yes |
-
-### ScanLogsFacade
-
-| Member | Types | Docstrings |
-|--------|--------|------------|
-| `get_logs(scan_result_uuid, namespace=..., max_entries=..., log_levels=..., start_time=..., end_time=..., newest_first=...)` | Full | Yes |
-
-### Exceptions (in `__all__`)
-
-All exception classes and `map_status_code_to_exception` must have full types and docstrings (see [src/endorlabs/exceptions.py](../../src/endorlabs/exceptions.py)).
-
-### Resource modules (in `__all__`)
-
-For each top-level exported resource module (`dependency_metadata`, `finding`, `installation`, `linter_result`, `metric`, `namespace`, `package_version`, `policy`, `project`, `repository`, `repository_version`): Pydantic models, payload/response types, and resource-specific convenience functions are accessible via `endorlabs.resources.<name>`. CRUD operations are performed through the `Client` facade (`client.<resource>.list()`, `.get()`, etc.).
-
----
-
-## 2. Module-level surface (advanced usage)
-
-**Contract:** Explicit imports such as `from endorlabs.operations import ...`, `from endorlabs.utils import ...`, `from endorlabs.core.types import ...`, `from endorlabs.resources import <module>`, and direct use of `APIClient`.
-
-**Types:** Full.  
-**Docstrings:** Yes (class/function/module).
-
-### APIClient
-
-**Location:** [src/endorlabs/api_client.py](../../src/endorlabs/api_client.py)
-
-| Surface | Types | Docstrings |
-|---------|--------|------------|
-| `APIClient` class | Full | Yes |
-| All public methods and attributes | Full | Yes |
-
-### endorlabs.core.types
-
-**Location:** [src/endorlabs/core/types.py](../../src/endorlabs/core/types.py)
-
-All public types: `ListParameters`, `ErrorResponse`, `ResourceMeta`, `TenantMeta`, `APIResponse`, `ValidationResult`, `SchemaDriftInfo`, and Literal aliases (`ResourceType`, `OperationType`, `StatusType`, `SeverityType`, `PlatformType`, `EcosystemType`, `FindingCategoryType`, `PolicyType`), plus `ResourceDict`, `ResourceList`, `NamespaceStr`, `UUIDStr`, `TagList`, `UpdateMask`, `ResourceOperation`. Each must have full types and docstrings (class or alias description).
-
-### endorlabs.resources (each module in `resources/__all__`)
-
-**Location:** [src/endorlabs/resources/](../../src/endorlabs/resources/)
-
-Modules: `api_key`, `audit_log`, `authentication_log`, `authorization_policy`, `code_owners`, `dependency_metadata`, `endor_license`, `finding`, `finding_log`, `installation`, `invitation`, `linter_result`, `metric`, `namespace`, `notification_target`, `package_license`, `package_version`, `policy`, `policy_template`, `project`, `repository`, `repository_version`, `scan_log_request`, `scan_profile`, `scan_result`, `scan_workflow`, `scan_workflow_result`, `semgrep_rule`, `version_upgrade`.
-
-For each module, public surface: Pydantic models (payload/response types) and resource-specific convenience functions (e.g. `associate_scan_profile_with_project`). CRUD operations (`list`, `get`, `create`, `update`, `delete`) are handled by `BaseResourceOperations` via the `Client` facade — not as module-level functions. Full types and docstrings required.
-
-### endorlabs.operations
-
-**Location:** [src/endorlabs/operations/__init__.py](../../src/endorlabs/operations/__init__.py)
-
-**Symbols in `__all__`:** `BaseResourceOperations` — generic CRUD engine that powers the `Client` facade. Accepts resource name, model class, and an `APIClient` instance. Provides `list()`, `get()`, `create()`, `update()`, `delete()` methods. Full types and docstrings required.
-
-### endorlabs.utils
-
-**Location:** [src/endorlabs/utils/__init__.py](../../src/endorlabs/utils/__init__.py)
-
-**Symbols in `__all__`:** `SchemaDriftDetector`, `compute_attribute_overlap_report`, `compute_model_consistency_diff`, `enumerate_sdk_models_flat_paths`, `enumerate_spec_fields_flat`, `enumerate_spec_top_level_refs`, `load_spec`, `resolve_namespace_for_resource`, `run_model_consistency_report`. Full types and docstrings required.
-
-### endorlabs.models
-
-**Location:** [src/endorlabs/models/__init__.py](../../src/endorlabs/models/__init__.py)
-
-**Symbols in `__all__`:** `BaseMeta`, `BaseResource`, `BaseSpec`, `Context`, `IngestedObject`, `ProcessingStatus`, `TenantMeta`. Full types and docstrings required.
-
----
-
-## 3. Raw client surface
-
-**Contract:** Use of `APIClient` only (no `Client`, no facades). Same as module-level but scoped to [src/endorlabs/api_client.py](../../src/endorlabs/api_client.py): every public method and attribute must have full types and docstrings.
-
-**Deliverable:** Covered by the Module-level section above; raw client = `APIClient` only.
-
----
-
-## Summary
-
-| Surface | Entry point | Types | Docstrings |
-|---------|-------------|--------|------------|
-| Developer | `import endorlabs`, `endorlabs.__all__`, `Client`, facades | Full | Required |
-| Module-level | `endorlabs.api_client`, `endorlabs.core.types`, `endorlabs.resources.*`, `endorlabs.operations`, `endorlabs.utils`, `endorlabs.models` | Full | Required |
-| Raw client | `APIClient` only | Full | Required |
-
-Internal symbols (not in the above) use a leading `_` and are documented as internal; they are not part of the supported API contract.
+| Attr | Resource path | Scope | Parent kind | Supported ops |
+|------|---------------|-------|-------------|---------------|
+| api_key | api-keys | tenant | — | list, get, create, delete |
+| audit_log | audit-logs | tenant | — | list, get, create, delete |
+| authentication_log | authentication-logs | system | — | list, get |
+| authorization_policy | authorization-policies | tenant | — | list, get, create, update, delete |
+| code_owners | codeowners | tenant | — | list, get, create, update, delete |
+| dependency_metadata | dependency-metadata | oss | — | list, get, create, update, delete |
+| endor_license | endor-licenses | system | — | list, get |
+| finding | findings | tenant | — | list, get, create, update, delete |
+| finding_log | finding-logs | tenant | — | list, get, create, delete |
+| installation | installations | tenant | — | list, get, create, update, delete |
+| invitation | invitations | tenant | — | list, get, create, update, delete |
+| linter_result | linter-results | tenant | — | list, get, create, delete |
+| malware | malware | oss | — | list, get |
+| metric | metrics | tenant | — | list, get, create, update, delete |
+| namespace | namespaces | tenant | — | list, get, create, update, delete |
+| notification_target | notification-targets | tenant | — | list, get, create, update, delete |
+| package_license | package-licenses | oss | — | list, get, create, update, delete |
+| package_version | package-versions | tenant | — | list, get, create, update, delete |
+| policy | policies | tenant | — | list, get, create, update, delete |
+| policy_template | policy-templates | system | — | list, get |
+| project | projects | tenant | — | list, get, create, update, delete |
+| query_malware | queries/malware | oss | — | create |
+| query_vulnerability | queries/vulnerabilities | oss | — | create |
+| repository | repositories | tenant | — | list, get, create, update, delete |
+| repository_version | repository-versions | tenant | project | list, get, create, update, delete |
+| scan_log_request | scan-log-requests | tenant | — | create |
+| scan_profile | scan-profiles | tenant | — | list, get, create, update, delete |
+| scan_result | scan-results | tenant | project | list, get, create, update, delete |
+| scan_workflow | scan-workflows | tenant | — | list, get, delete |
+| scan_workflow_result | scan-workflow-results | tenant | — | list, get, delete |
+| semgrep_rule | semgrep-rules | tenant | — | list, get, create, update, delete |
+| version_upgrade | version-upgrades | tenant | — | list, get, delete |
+| vulnerability | vulnerabilities | oss | — | list, get |

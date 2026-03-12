@@ -30,6 +30,9 @@ Index for SDK-specific documentation.
 - [rules-of-engagement/troubleshooting.md](rules-of-engagement/troubleshooting.md)
 - [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md)
 - [rules-of-engagement/namespace-traversal.md](rules-of-engagement/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
+- [rules-of-engagement/spec-first-prototype-branch.md](rules-of-engagement/spec-first-prototype-branch.md)
+- [rules-of-engagement/spec-first-stainless-feasibility.md](rules-of-engagement/spec-first-stainless-feasibility.md)
+- [rules-of-engagement/spec-first-rd-approval-bundle.md](rules-of-engagement/spec-first-rd-approval-bundle.md)
 
 ## Findings / Research
 
@@ -38,3 +41,12 @@ Index for SDK-specific documentation.
 ## When to update docs
 
 API or endpoint behavior changes -> [contracts.md](contracts.md) and [reference/resources.md](reference/resources.md). New resources or operations -> reference and RoE checklists. Drift and model consistency -> [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.
+
+## Generated reference docs
+
+The files in `docs/reference/` are generated from SDK and spec sources of truth:
+
+- `uv run python scripts/generate_client_stub.py`
+- `uv run python scripts/generate_reference_docs.py`
+
+CI validates both generated surfaces and fails if they are out of date.

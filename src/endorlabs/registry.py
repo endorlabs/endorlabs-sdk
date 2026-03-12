@@ -67,6 +67,7 @@ from .resources.linter_result import (
 from .resources.linter_result import (
     build_create_payload as linter_result_build_create,
 )
+from .resources.malware import Malware
 from .resources.metric import Metric
 from .resources.metric import build_create_payload as metric_build_create
 from .resources.namespace import (
@@ -98,6 +99,12 @@ from .resources.policy import build_create_payload as policy_build_create
 from .resources.policy_template import PolicyTemplate
 from .resources.project import Project
 from .resources.project import build_create_payload as project_build_create
+from .resources.query_malware import QueryMalware
+from .resources.query_malware import build_create_payload as query_malware_build_create
+from .resources.query_vulnerability import QueryVulnerability
+from .resources.query_vulnerability import (
+    build_create_payload as query_vulnerability_build_create,
+)
 from .resources.repository import (
     Repository,
 )
@@ -134,6 +141,7 @@ from .resources.semgrep_rule import (
     build_create_payload as semgrep_rule_build_create,
 )
 from .resources.version_upgrade import VersionUpgrade
+from .resources.vulnerability import Vulnerability
 
 
 @dataclass
@@ -365,6 +373,40 @@ RESOURCE_REGISTRY: list[ResourceEntry] = [
         resource_name="dependency-metadata",
         model_class=DependencyMetadata,
         build_create_payload_fn=dependency_metadata_build_create,
+        scope="oss",
+    ),
+    ResourceEntry(
+        attr_name="vulnerability",
+        resource_name="vulnerabilities",
+        model_class=Vulnerability,
+        build_create_payload_fn=None,
+        supported_ops=frozenset({"list", "get"}),
+        filter_kwarg_map=_NAME_FILTER,
+        scope="oss",
+    ),
+    ResourceEntry(
+        attr_name="malware",
+        resource_name="malware",
+        model_class=Malware,
+        build_create_payload_fn=None,
+        supported_ops=frozenset({"list", "get"}),
+        filter_kwarg_map=_NAME_FILTER,
+        scope="oss",
+    ),
+    ResourceEntry(
+        attr_name="query_vulnerability",
+        resource_name="queries/vulnerabilities",
+        model_class=QueryVulnerability,
+        build_create_payload_fn=query_vulnerability_build_create,
+        supported_ops=frozenset({"create"}),
+        scope="oss",
+    ),
+    ResourceEntry(
+        attr_name="query_malware",
+        resource_name="queries/malware",
+        model_class=QueryMalware,
+        build_create_payload_fn=query_malware_build_create,
+        supported_ops=frozenset({"create"}),
         scope="oss",
     ),
     # -- System-scoped (get only for oss namespace) -----------------------

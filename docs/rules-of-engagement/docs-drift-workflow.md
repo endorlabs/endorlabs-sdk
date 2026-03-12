@@ -32,6 +32,17 @@ The schema drift workflow:
 2. **Run drift detection** — Runs integration tests and parses schema drift warnings via `.github/scripts/detect_schema_drift.py`.
 3. **Create issues** — GitHub Action creates one issue per new drift (inline script; no separate script).
 
+## Release alignment guardrail
+
+Release builds must validate generated SDK surfaces from the current OpenAPI
+snapshot before packaging artifacts:
+
+- `scripts/generate_client_stub.py` must produce no diff
+- `scripts/generate_reference_docs.py` must produce no diff
+
+This keeps release artifacts aligned with the same spec-driven surfaces checked
+in CI.
+
 ## GitHub Actions
 
 **File**: `.github/workflows/schema-drift-detection.yml`
