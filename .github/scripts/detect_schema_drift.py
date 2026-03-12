@@ -15,6 +15,7 @@ Usage:
 """
 
 import argparse
+import ast
 import json
 import logging
 import os
@@ -53,6 +54,7 @@ class SchemaDriftDetector:
             "validation_errors": [],
             "summary": {},
         }
+        self.resource_file_map = self._build_resource_file_map()
         self.known_drifts = self._load_known_drifts()
 
     def _load_known_drifts(self) -> Dict:
@@ -61,12 +63,91 @@ class SchemaDriftDetector:
             try:
                 with open(self.output_file) as f:
                     data = json.load(f)
-                    return {
-                        drift["field_path"]: drift for drift in data.get("drifts", [])
-                    }
+                    known: dict[str, dict[str, Any]] = {}
+                    for drift in data.get("drifts", []):
+                        if not isinstance(drift, dict):
+                            continue
+                        drift_key = self._drift_key_for_drift(drift)
+                        if drift_key:
+                            known[drift_key] = drift
+                    return known
             except Exception as e:
                 logger.warning(f"Could not load existing drift report: {e}")
         return {}
+
+    def _build_resource_file_map(self) -> dict[str, str]:
+        """Build resource-name -> source-path map from registry metadata."""
+        file_map = {
+            "BaseResource": "src/endorlabs/models/base.py",
+            "BaseSpec": "src/endorlabs/models/base.py",
+            "BaseMeta": "src/endorlabs/models/base.py",
+        }
+        try:
+            from endorlabs.registry import RESOURCE_REGISTRY
+        except Exception as exc:
+            logger.debug("Could not import RESOURCE_REGISTRY for file mapping: %s", exc)
+            return file_map
+
+        for entry in RESOURCE_REGISTRY:
+            model_class = getattr(entry, "model_class", None)
+            if model_class is None:
+                continue
+            model_name = getattr(model_class, "__name__", "")
+            module_name = getattr(model_class, "__module__", "")
+            if not model_name or not module_name.startswith("endorlabs."):
+                continue
+            rel_path = f"src/{module_name.replace('.', '/')}.py"
+            file_map[model_name] = rel_path
+            # Common fallback names used in drift parsing.
+            file_map[model_name.removesuffix("Spec")] = rel_path
+        return file_map
+
+    def _parse_field_names(self, fields_blob: str) -> list[str]:
+        """Parse unknown field list from canonical or legacy logger formats."""
+        text = fields_blob.strip()
+        if not text:
+            return []
+
+        # Legacy validators may log sets/dicts directly:
+        # "{'foo', 'bar'}" or "{'foo': 1}".
+        if text.startswith("{") and text.endswith("}"):
+            try:
+                parsed = ast.literal_eval(text)
+                if isinstance(parsed, dict):
+                    return sorted(str(k) for k in parsed.keys())
+                if isinstance(parsed, (set, list, tuple)):
+                    return sorted(str(v) for v in parsed)
+            except Exception:
+                logger.debug("Failed to parse legacy field blob: %s", text)
+
+        # Canonical format: "foo, bar"
+        return [field.strip() for field in text.split(",") if field.strip()]
+
+    def _infer_resource_name(self, resource_name: str | None, model_path: str) -> str:
+        """Infer resource name from model path when logger context omits it."""
+        if resource_name:
+            return resource_name
+        model_name = model_path.split(".", 1)[0]
+        if model_name.endswith("Spec"):
+            return model_name[:-4]
+        return model_name
+
+    def _drift_key(self, resource_name: str, model_path: str, field_name: str) -> str:
+        """Build stable unique key for drift dedupe and state tracking."""
+        return f"{resource_name}|{model_path}|{field_name}"
+
+    def _drift_key_for_drift(self, drift: dict[str, Any]) -> str:
+        """Get drift key from report entry, falling back for older reports."""
+        key = drift.get("drift_key")
+        if isinstance(key, str) and key:
+            return key
+        resource_name = str(drift.get("resource_name") or "")
+        model_path = str(drift.get("model_path") or drift.get("model") or "")
+        field_name = str(drift.get("field") or "")
+        if resource_name and model_path and field_name:
+            return self._drift_key(resource_name, model_path, field_name)
+        legacy_field_path = drift.get("field_path")
+        return str(legacy_field_path) if legacy_field_path else ""
 
     def run_tests(self, test_path: str = "tests/") -> Dict:
         """Run integration tests and capture schema drift."""
@@ -183,76 +264,73 @@ class SchemaDriftDetector:
     def _parse_drift_warnings(self, output: str) -> List[Dict]:
         """Parse schema drift warnings from test output."""
         drifts = []
-
-        # Pattern for schema drift warnings with resource context
-        # Matches: "API Schema Drift Detected in {Resource}.{Model}.{Field}:
-        # Unknown fields found: {fields}"
-        # or: "API Schema Drift Detected in {Model}.{Field}:
-        # Unknown fields found: {fields}" (legacy)
-        pattern = re.compile(
-            r"API Schema Drift Detected in (?:([^.]+)\.)?([^:]+): "
-            r"Unknown fields found: ([^.]+)"
+        # Canonical utility format (supports wrapped/newline output).
+        canonical_pattern = re.compile(
+            r"API Schema Drift Detected in (?:([^.]+)\.)?([^:]+):\s*"
+            r"Unknown fields found: (.+?)"
+            r"(?:\.\s*Context:|\.\s*This may indicate API evolution|\n|$)",
+            re.MULTILINE | re.DOTALL,
         )
+        # Legacy ad-hoc format still used in some resource validators.
+        legacy_pattern = re.compile(
+            r"Schema drift detected in ([^:]+): unknown fields (.+)$"
+        )
+        seen_keys: set[str] = set()
 
-        for match in pattern.finditer(output):
-            resource_name = match.group(1).strip() if match.group(1) else None
-            model_path = match.group(2).strip()
-            fields_str = match.group(3).strip()
-            fields = [f.strip() for f in fields_str.split(",")]
+        def add_drifts(
+            resource_name: str | None,
+            model_path: str,
+            fields_blob: str,
+        ) -> None:
+            fields = self._parse_field_names(fields_blob)
+            if not fields:
+                return
 
-            # Extract model name and field name from model_path
-            # Format: "ResourceSpec.field" or "Resource.field" or "Model.field"
-            model_parts = model_path.split(".")
-            if len(model_parts) >= 2:
-                model_name = ".".join(model_parts[:-1])
-                base_field = model_parts[-1]
-            else:
-                model_name = model_path
-                base_field = None
-
-            # Infer resource name from model name if not provided
-            if not resource_name:
-                # Try to extract from model name (e.g., "FindingSpec" -> "Finding")
-                if model_name.endswith("Spec"):
-                    resource_name = model_name[:-4]
-                elif "." in model_name:
-                    # Handle nested paths like "FindingSpec.actions"
-                    parts = model_name.split(".")
-                    resource_name = parts[0].replace("Spec", "")
-                else:
-                    resource_name = model_name
-
-            # Determine file path based on resource name
-            file_path = self._get_resource_file_path(resource_name)
-
-            # Calculate nested depth (count of dots in model_path)
+            resolved_resource_name = self._infer_resource_name(resource_name, model_path)
+            file_path = self._get_resource_file_path(resolved_resource_name)
             nested_depth = model_path.count(".")
+            model_parts = model_path.split(".")
+            model_name = ".".join(model_parts[:-1]) if len(model_parts) >= 2 else model_path
 
             for field in fields:
-                # Build full field path
-                if base_field:
-                    field_path = f"{model_path}.{field}"
-                else:
-                    field_path = f"{model_name}.{field}"
+                drift_key = self._drift_key(resolved_resource_name, model_path, field)
+                if drift_key in seen_keys:
+                    continue
+                seen_keys.add(drift_key)
+                field_path = f"{model_path}.{field}"
+                if drift_key in self.known_drifts:
+                    continue
+                drift = {
+                    "drift_key": drift_key,
+                    "field_path": field_path,
+                    "resource_name": resolved_resource_name,
+                    "model_path": model_path,
+                    "model": model_name,
+                    "field": field,
+                    "file_path": file_path,
+                    "nested_depth": nested_depth,
+                    "first_seen": datetime.now(timezone.utc).isoformat(),
+                    "status": "new",
+                    "issue_number": None,
+                }
+                drifts.append(drift)
+                logger.info(
+                    "New drift detected: %s (Resource: %s)",
+                    field_path,
+                    resolved_resource_name,
+                )
 
-                # Check if this is a new drift
-                if field_path not in self.known_drifts:
-                    drift = {
-                        "field_path": field_path,
-                        "resource_name": resource_name,
-                        "model_path": model_path,
-                        "model": model_name,
-                        "field": field,
-                        "file_path": file_path,
-                        "nested_depth": nested_depth,
-                        "first_seen": datetime.now(timezone.utc).isoformat(),
-                        "status": "new",
-                        "issue_number": None,
-                    }
-                    drifts.append(drift)
-                    logger.info(
-                        f"New drift detected: {field_path} (Resource: {resource_name})"
-                    )
+        for match in canonical_pattern.finditer(output):
+            resource_name = match.group(1).strip() if match.group(1) else None
+            model_path = match.group(2).strip()
+            fields_blob = match.group(3).strip()
+            add_drifts(resource_name, model_path, fields_blob)
+
+        for line in output.splitlines():
+            legacy = legacy_pattern.search(line)
+            if not legacy:
+                continue
+            add_drifts(None, legacy.group(1).strip(), legacy.group(2).strip())
 
         return drifts
 
@@ -260,27 +338,9 @@ class SchemaDriftDetector:
         """Map resource name to source file path."""
         if not resource_name:
             return "src/endorlabs/models/base.py"
-
-        # Map resource names to their file paths
-        resource_file_map = {
-            "Finding": "src/endorlabs/resources/finding.py",
-            "Policy": "src/endorlabs/resources/policy.py",
-            "Project": "src/endorlabs/resources/project.py",
-            "Namespace": "src/endorlabs/resources/namespace.py",
-            "Repository": "src/endorlabs/resources/repository.py",
-            "RepositoryVersion": "src/endorlabs/resources/repository_version.py",
-            "PackageVersion": "src/endorlabs/resources/package_version.py",
-            "DependencyMetadata": "src/endorlabs/resources/dependency_metadata.py",
-            "ScanResult": "src/endorlabs/resources/scan_result.py",
-            "LinterResult": "src/endorlabs/resources/linter_result.py",
-            "Metric": "src/endorlabs/resources/metric.py",
-            "User": "src/endorlabs/resources/user.py",
-            "Installation": "src/endorlabs/resources/installation.py",
-            "BaseResource": "src/endorlabs/models/base.py",
-            "BaseSpec": "src/endorlabs/models/base.py",
-        }
-
-        return resource_file_map.get(resource_name, "src/endorlabs/models/base.py")
+        return self.resource_file_map.get(
+            resource_name, "src/endorlabs/models/base.py"
+        )
 
     def _parse_validation_errors(self, output: str) -> List[Dict]:
         """Parse Pydantic validation errors from test output."""
@@ -312,6 +372,11 @@ class SchemaDriftDetector:
 
     def generate_report(self, test_results: Dict) -> Dict:
         """Generate comprehensive drift report."""
+        endorctl_version = os.getenv("ENDORCTL_VERSION")
+        openapi_sha256 = os.getenv("OPENAPI_SHA256")
+        openapi_source_url = os.getenv(
+            "OPENAPI_SOURCE_URL", "https://api.endorlabs.com/download/openapiv2.swagger.json"
+        )
         self.drift_report.update(
             {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -325,6 +390,9 @@ class SchemaDriftDetector:
                         if test_results.get("test_exit_code") == 0
                         else "failed"
                     ),
+                    "endorctl_version": endorctl_version,
+                    "openapi_sha256": openapi_sha256,
+                    "openapi_source_url": openapi_source_url,
                 },
             }
         )

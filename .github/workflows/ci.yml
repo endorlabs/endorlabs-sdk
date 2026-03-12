@@ -261,6 +261,15 @@ jobs:
             exit 1
           fi
 
+      - name: Verify generated reference docs are up to date
+        run: |
+          uv run python scripts/generate_reference_docs.py
+          if ! git diff --exit-code -- docs/reference/resources.md docs/reference/create-update-payloads.md docs/reference/api-surfaces.md; then
+            echo "::error::Reference docs are out of date. Run: uv run python scripts/generate_reference_docs.py"
+            git --no-pager diff -- docs/reference/resources.md docs/reference/create-update-payloads.md docs/reference/api-surfaces.md
+            exit 1
+          fi
+
       - name: Run pyright verifytypes (public API type completeness)
         continue-on-error: true  # Remove when type completeness is 100% (see docs/reference/README.md)
         run: |
