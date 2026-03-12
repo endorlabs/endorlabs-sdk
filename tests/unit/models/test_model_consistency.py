@@ -21,9 +21,13 @@ if _scripts_dir not in sys.path:
 
 from model_consistency import (
     compute_attribute_overlap_report,
+    compute_flatten_collision_report,
+    compute_model_consistency_diff,
     enumerate_sdk_models_flat_paths,
     enumerate_spec_top_level_refs,
     get_shared_sdk_paths,
+    load_spec,
+    path_to_flattened,
     run_model_consistency_report,
 )
 
@@ -146,6 +150,61 @@ class TestRunModelConsistencyReportAttributeOverlap:
             p = Path("model_consistency_report_test_out" + suf)
             if p.exists():
                 p.unlink()
+
+
+class TestModelConsistencyUtilities:
+    """Additional utility coverage for model consistency helpers."""
+
+    def test_path_to_flattened_processing_status(self) -> None:
+        assert path_to_flattened("processing_status.scan_state") == "scan_state"
+        assert path_to_flattened("meta.description") == "meta_description"
+
+    def test_compute_flatten_collision_report_detects_collision(self) -> None:
+        spec = {
+            "definitions": {
+                "v1ProcessingStatus": {
+                    "type": "object",
+                    "properties": {"scan_state": {"type": "string"}},
+                },
+                "v1Collision": {
+                    "type": "object",
+                    "properties": {
+                        "processing_status": {
+                            "$ref": "#/definitions/v1ProcessingStatus"
+                        },
+                        "scan_state": {"type": "string"},
+                    },
+                },
+            }
+        }
+        report = compute_flatten_collision_report(spec, {"v1Collision"})
+        assert report["summary"]["total_collisions"] >= 1
+        collisions = report["by_definition"]["v1Collision"]["collisions"]
+        assert any(c["flattened_name"] == "scan_state" for c in collisions)
+
+    def test_load_spec_prefers_local_path(self, tmp_path: Path) -> None:
+        path = tmp_path / "openapi.json"
+        path.write_text(
+            '{"definitions":{"v1Local":{"type":"object"}}}', encoding="utf-8"
+        )
+        loaded = load_spec(path=path, url=None)
+        assert "v1Local" in loaded["definitions"]
+
+    def test_compute_model_consistency_diff_inheritance_aware_excludes_shared(
+        self,
+    ) -> None:
+        sdk_models = {
+            "BaseResource": ["uuid", "meta", "context"],
+            "BaseSpec": ["notification"],
+            "Project": ["uuid", "meta", "context", "spec.notification", "spec.custom"],
+        }
+        spec_fields = {"v1Project": ["uuid", "meta", "context", "spec"]}
+        diff = compute_model_consistency_diff(
+            sdk_models, spec_fields, inheritance_aware=True
+        )
+        project_extra = diff["by_resource"]["Project"]["extra_in_sdk"]
+        assert "spec.custom" in project_extra
+        assert "uuid" not in project_extra
 
 
 class TestGreenfieldSdkPaths:
