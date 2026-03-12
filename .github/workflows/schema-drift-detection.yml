@@ -35,11 +35,14 @@ concurrency:
 
 jobs:
   check-version:
-    name: Check Endorctl Version
+    name: Check Endorctl Version and OpenAPI Hash
     runs-on: ubuntu-latest
     outputs:
-      version-changed: ${{ steps.check.outputs.changed }}
+      changed: ${{ steps.check.outputs.changed }}
+      version-changed: ${{ steps.check.outputs.version-changed }}
+      spec-changed: ${{ steps.check.outputs.spec-changed }}
       latest-version: ${{ steps.check.outputs.version }}
+      openapi-sha256: ${{ steps.check.outputs.openapi-sha256 }}
       check-status: ${{ steps.check.outputs.status }}
     
     steps:
@@ -60,65 +63,111 @@ jobs:
         run: |
           uv sync --dev
 
-      - name: Restore cached version
+      - name: Restore cached drift state
         id: cache-version
         uses: actions/cache@v5.0.2
         with:
-          path: .github/cache/endorctl_version.txt
-          key: endorctl-version-${{ runner.os }}
+          path: .github/cache/schema_drift_state.json
+          key: schema-drift-state-${{ runner.os }}
           restore-keys: |
-            endorctl-version-${{ runner.os }}
+            schema-drift-state-${{ runner.os }}
 
-      - name: Check for version update
+      - name: Check for version/hash update
         id: check
         run: |
-          STATE_FILE=".github/cache/endorctl_version.txt"
+          STATE_FILE=".github/cache/schema_drift_state.json"
+          VERSION_FILE=".github/cache/endorctl_version.txt"
+          SPEC_FILE=".github/cache/openapiv2.swagger.json"
           mkdir -p .github/cache
-          
-          # Run version check and capture exit code
-          set +e  # Don't exit on error
+
+          # Get latest endorctl version (fail-closed on script error)
+          set +e
           uv run python .github/scripts/check_endorctl_version.py \
-            --state-file "$STATE_FILE" \
+            --state-file "$VERSION_FILE" \
             --quiet
-          EXIT_CODE=$?
-          set -e  # Re-enable exit on error
-          
-          LATEST_VERSION=$(cat "$STATE_FILE" 2>/dev/null || echo "")
-          
-          # Set outputs
-          if [ $EXIT_CODE -eq 1 ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "status=ok" >> $GITHUB_OUTPUT
-            echo "🔄 Version update detected: $LATEST_VERSION"
-          elif [ $EXIT_CODE -eq 0 ]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "status=ok" >> $GITHUB_OUTPUT
-            echo "✅ No version update (current: $LATEST_VERSION)"
-          else
+          VERSION_EXIT_CODE=$?
+          set -e
+          if [ $VERSION_EXIT_CODE -ne 0 ] && [ $VERSION_EXIT_CODE -ne 1 ]; then
             echo "changed=false" >> $GITHUB_OUTPUT
             echo "status=error" >> $GITHUB_OUTPUT
-            echo "❌ Version check failed (exit=$EXIT_CODE)"
+            echo "❌ Version check failed (exit=$VERSION_EXIT_CODE)"
             exit 1
           fi
-          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Save version to cache
+          LATEST_VERSION=$(cat "$VERSION_FILE" 2>/dev/null || echo "")
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "❌ Could not determine latest endorctl version"
+            exit 1
+          fi
+
+          # Download OpenAPI and compute hash
+          curl -sSfL -o "$SPEC_FILE" https://api.endorlabs.com/download/openapiv2.swagger.json
+          OPENAPI_SHA256=$(sha256sum "$SPEC_FILE" | awk '{print $1}')
+          if [ -z "$OPENAPI_SHA256" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "❌ Could not compute OpenAPI hash"
+            exit 1
+          fi
+
+          PREV_VERSION=""
+          PREV_HASH=""
+          if [ -f "$STATE_FILE" ]; then
+            PREV_VERSION=$(python -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('endorctl_version',''))" 2>/dev/null || echo "")
+            PREV_HASH=$(python -c "import json; d=json.load(open('$STATE_FILE')); print(d.get('openapi_sha256',''))" 2>/dev/null || echo "")
+          fi
+
+          VERSION_CHANGED=false
+          SPEC_CHANGED=false
+          if [ "$PREV_VERSION" != "$LATEST_VERSION" ]; then VERSION_CHANGED=true; fi
+          if [ "$PREV_HASH" != "$OPENAPI_SHA256" ]; then SPEC_CHANGED=true; fi
+
+          if [ "$VERSION_CHANGED" = "true" ] || [ "$SPEC_CHANGED" = "true" ]; then
+            CHANGED=true
+          else
+            CHANGED=false
+          fi
+
+          python -c "import json,datetime; json.dump({'endorctl_version':'$LATEST_VERSION','openapi_sha256':'$OPENAPI_SHA256','updated_at':datetime.datetime.utcnow().replace(microsecond=0).isoformat()+'Z'}, open('$STATE_FILE','w'))"
+
+          echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          echo "version-changed=$VERSION_CHANGED" >> $GITHUB_OUTPUT
+          echo "spec-changed=$SPEC_CHANGED" >> $GITHUB_OUTPUT
+          echo "status=ok" >> $GITHUB_OUTPUT
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "openapi-sha256=$OPENAPI_SHA256" >> $GITHUB_OUTPUT
+
+          if [ "$VERSION_CHANGED" = "true" ]; then
+            echo "🔄 endorctl version update detected: ${PREV_VERSION:-<none>} -> $LATEST_VERSION"
+          else
+            echo "✅ endorctl version unchanged: $LATEST_VERSION"
+          fi
+          if [ "$SPEC_CHANGED" = "true" ]; then
+            echo "🔄 OpenAPI hash update detected: ${PREV_HASH:-<none>} -> $OPENAPI_SHA256"
+          else
+            echo "✅ OpenAPI hash unchanged: $OPENAPI_SHA256"
+          fi
+
+      - name: Save drift state to cache
         if: steps.check.outputs.changed == 'true'
         uses: actions/cache@v5.0.2
         with:
-          path: .github/cache/endorctl_version.txt
-          key: endorctl-version-${{ runner.os }}-${{ steps.check.outputs.version }}
+          path: .github/cache/schema_drift_state.json
+          key: schema-drift-state-${{ runner.os }}-${{ steps.check.outputs.version }}-${{ steps.check.outputs.openapi-sha256 }}
           restore-keys: |
-            endorctl-version-${{ runner.os }}
+            schema-drift-state-${{ runner.os }}
 
   detect-schema-drift:
     name: Detect Schema Drift
     needs: check-version
-    # Only run if version changed OR manually triggered (workflow_dispatch)
+    # Run when endorctl version changed, OpenAPI hash changed, or manual trigger.
     if: >-
       needs.check-version.result == 'success' &&
       (
         needs.check-version.outputs.version-changed == 'true' ||
+        needs.check-version.outputs.spec-changed == 'true' ||
         inputs.force_run == true ||
         github.event.inputs.force_run == 'true' ||
         github.event_name == 'repository_dispatch' ||
@@ -161,6 +210,17 @@ jobs:
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDORCTL_VERSION: ${{ needs.check-version.outputs.latest-version }}
+          OPENAPI_SHA256: ${{ needs.check-version.outputs.openapi-sha256 }}
+          OPENAPI_SOURCE_URL: https://api.endorlabs.com/download/openapiv2.swagger.json
+
+      - name: Run model consistency report
+        if: always()
+        run: |
+          uv run python .github/scripts/detect_schema_drift.py \
+            --model-consistency \
+            --output-format json \
+            --consistency-output model_consistency_report
 
       - name: Create GitHub issues from drift report
         if: always()
@@ -194,25 +254,27 @@ jobs:
             for (const d of newDrifts) {
               const title = `Schema Drift: ${d.resource_name || 'Unknown'}.${d.field_path || d.field || 'unknown'}`;
               if (existingTitles.has(title)) continue;
-              const body = `## Schema Drift Detected
-
-**Resource**: \`${d.resource_name || 'Unknown'}\`
-**Model**: \`${d.model_path || d.model || 'Unknown'}\`
-**Field Path**: \`${d.field_path || 'unknown'}\`
-**Field**: \`${d.field || 'unknown'}\`
-**File to Modify**: \`${d.file_path || 'see OpenAPI spec'}\`
-
-This field was detected in API responses but is not defined in the Pydantic model.
-
-### Action Required
-
-1. Review OpenAPI spec: \`https://api.endorlabs.com/download/openapiv2.swagger.json\` (workflow downloads it to \`.endorlabs-context/openapiv2.swagger.json\`).
-2. Add field to model: \`${d.file_path || 'resource file'}\`
-3. Update drift detection known_fields if applicable
-
-### Detection
-
-Automatically created by the schema drift detection workflow.`;
+              const body = [
+                "## Schema Drift Detected",
+                "",
+                `**Resource**: \`${d.resource_name || 'Unknown'}\``,
+                `**Model**: \`${d.model_path || d.model || 'Unknown'}\``,
+                `**Field Path**: \`${d.field_path || 'unknown'}\``,
+                `**Field**: \`${d.field || 'unknown'}\``,
+                `**File to Modify**: \`${d.file_path || 'see OpenAPI spec'}\``,
+                "",
+                "This field was detected in API responses but is not defined in the Pydantic model.",
+                "",
+                "### Action Required",
+                "",
+                "1. Review OpenAPI spec: `https://api.endorlabs.com/download/openapiv2.swagger.json` (workflow downloads it to `.endorlabs-context/openapiv2.swagger.json`).",
+                `2. Add field to model: \`${d.file_path || 'resource file'}\``,
+                "3. Update drift detection known_fields if applicable",
+                "",
+                "### Detection",
+                "",
+                "Automatically created by the schema drift detection workflow.",
+              ].join('\\n');
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -229,8 +291,16 @@ Automatically created by the schema drift detection workflow.`;
         if: always()
         uses: actions/upload-artifact@v6.0.0
         with:
-          name: schema-drift-report-${{ needs.check-version.outputs.latest-version || 'manual' }}
+          name: schema-drift-report-${{ needs.check-version.outputs.latest-version || 'manual' }}-${{ needs.check-version.outputs.openapi-sha256 || 'nohash' }}
           path: schema_drift_report.json
+          retention-days: 30
+
+      - name: Upload model consistency report
+        if: always()
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: model-consistency-report-${{ needs.check-version.outputs.latest-version || 'manual' }}-${{ needs.check-version.outputs.openapi-sha256 || 'nohash' }}
+          path: model_consistency_report.json
           retention-days: 30
 
       - name: Summary
@@ -243,6 +313,10 @@ Automatically created by the schema drift detection workflow.`;
               echo "**Triggered by endorctl version update**: ${{ needs.check-version.outputs.latest-version }}" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
             fi
+            if [ "${{ needs.check-version.outputs.spec-changed }}" == "true" ]; then
+              echo "**Triggered by OpenAPI hash update**: ${{ needs.check-version.outputs.openapi-sha256 }}" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
             uv run python -c "
             import json
             with open('schema_drift_report.json') as f:
@@ -251,6 +325,8 @@ Automatically created by the schema drift detection workflow.`;
             print(f\"- **New drifts detected**: {summary.get('new_drifts', 0)}\")
             print(f\"- **Validation errors**: {summary.get('validation_errors', 0)}\")
             print(f\"- **Test status**: {summary.get('test_status', 'unknown')}\")
+            print(f\"- **endorctl version**: {summary.get('endorctl_version', 'unknown')}\")
+            print(f\"- **OpenAPI SHA256**: {summary.get('openapi_sha256', 'unknown')}\")
             " >> $GITHUB_STEP_SUMMARY
           else
             echo "No drift report generated" >> $GITHUB_STEP_SUMMARY
