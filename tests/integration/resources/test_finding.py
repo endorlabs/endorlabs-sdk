@@ -2,7 +2,8 @@
 
 Tests GET and PATCH operations for Finding resources, including tag management.
 
-Greenfield alias unit tests live in tests/unit/models/test_greenfield_aliases.py.
+Greenfield alias unit tests live in
+tests/unit/platform/models/test_greenfield_aliases.py.
 """
 
 import pytest

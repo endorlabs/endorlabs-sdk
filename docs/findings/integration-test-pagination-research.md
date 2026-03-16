@@ -66,7 +66,7 @@ Status note: this document captures a point-in-time audit. Enforced conventions 
 |------|-----------|-----------|---------------------------|-------------------------|--------|
 | **test_retrieving_scan_results.py** | ✓ | ✓ | All four | Mixed | **Issue:** `_get_most_recent_scan_result` uses `traverse=True` with `page_size=TEST_PAGE_SIZE` and `max_pages=TEST_MAX_PAGES` — should use `TEST_TRAVERSE_PAGE_SIZE` and `TEST_MAX_PAGES_TRAVERSE`. **Issue (timeout risk):** `_get_findings_directly` calls `finding.list(list_params=list_params)` **with no `max_pages`** — can iterate all pages on large tenants. Rest of workflow uses TRAVERSE constants correctly. |
 
-### `tests/integration/concurrent/`
+### `tests/integration/client/`
 
 | File | page_size | max_pages | Uses conftest constants? | traverse use _TRAVERSE? | Notes |
 |------|-----------|-----------|---------------------------|-------------------------|--------|

@@ -1,0 +1,5 @@
+{
+  "_comment": "Custom mapping aliases. Keep deterministic and source-controlled.",
+  "class_aliases": {},
+  "field_aliases": {}
+}
