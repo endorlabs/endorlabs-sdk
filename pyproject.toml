@@ -73,6 +73,7 @@ dev = [
     "beautifulsoup4==4.14.2",
     "defusedxml==0.7.1",
     "markdownify==1.2.0",
+    "datamodel-code-generator==0.55.0",
 ]
 
 [tool.ruff]
@@ -95,6 +96,10 @@ exclude = [
     ".ruff_cache",
     "workspace",
     "workspace/**",
+    "src/endorlabs/generated",
+    "src/endorlabs/generated/**",
+    "src/endorlabs/generated/models",
+    "src/endorlabs/generated/models/**",
     "scripts",
     "scripts/**",
     ".github/scripts",
@@ -310,9 +315,10 @@ executionEnvironments = [
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/generated/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportMissingTypeArgument = "none", reportAttributeAccessIssue = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportUnnecessaryTypeIgnoreComment = "none" },
     # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
     { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
-    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
+    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", "scripts", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
     { root = "src", pythonVersion = "3.13" },
 ]
 
@@ -440,6 +446,10 @@ exclude = [
     "**/.ruff_cache",
     "workspace",
     "workspace/**",
+    "src/endorlabs/generated",
+    "src/endorlabs/generated/**",
+    "src/endorlabs/generated/models",
+    "src/endorlabs/generated/models/**",
     "scripts",
     "scripts/**",
     ".github/scripts",

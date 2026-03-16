@@ -15,11 +15,11 @@ Implemented in prototype:
   - `client.query_malware` (`create`)
 - Updated generated SDK surfaces:
   - `src/endorlabs/client_surface.pyi`
-  - `docs/reference/resources.md`
-  - `docs/reference/create-update-payloads.md`
-  - `docs/reference/api-surfaces.md`
+  - `docs/generated-reference/resources.md`
+  - `docs/generated-reference/create-update-payloads.md`
+  - `docs/generated-reference/api-surfaces.md`
 - Strengthened release alignment:
-  - `.github/workflows/release.yml` now verifies generated stubs/docs are
+  - `.github/workflows/release-validation-and-publish.yml` now verifies generated stubs/docs are
     up to date before packaging.
 
 Preserved (explicitly unchanged by design):

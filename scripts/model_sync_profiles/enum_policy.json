@@ -1,0 +1,6 @@
+{
+  "_comment": "Enum handling policy for custom mapping approach.",
+  "strategy": "enum",
+  "fallback": "string",
+  "allow_unknown_values": true
+}

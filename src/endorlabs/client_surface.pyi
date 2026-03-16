@@ -42,10 +42,10 @@ from .resources.semgrep_rule import SemgrepRule
 from .resources.version_upgrade import VersionUpgrade
 from .resources.vulnerability import Vulnerability
 
-class _NamespaceFacade:
-    """Isolate and organize resources in a parent-child hierarchy.
+class _APIKeyFacade:
+    """API Key resource model extending BaseResource.
 
-    Identity kwargs: name (-> meta.name).
+    Create mode: both.
     """
 
     def list(
@@ -70,7 +70,7 @@ class _NamespaceFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Namespace]:
+    ) -> list[APIKey]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -96,7 +96,7 @@ class _NamespaceFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Namespace:
+    ) -> APIKey:
         """Return the single resource matching criteria."""
         ...
 
@@ -121,15 +121,15 @@ class _NamespaceFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Namespace]:
+    ) -> Iterator[APIKey]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
     def get(
         self,
-        id_or_resource: str | Namespace,
+        id_or_resource: str | APIKey,
         namespace: str | None = ...,
-    ) -> Namespace:
+    ) -> APIKey:
         """Fetch a single resource by UUID or resource object."""
         ...
 
@@ -142,27 +142,13 @@ class _NamespaceFacade:
         namespace_uuid: str | None = ...,
         namespace: str | None = ...,
         **kwargs: Any,
-    ) -> Namespace:
+    ) -> APIKey:
         """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | Namespace,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Namespace:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
         ...
 
     def delete(
         self,
-        name_or_resource: str | Namespace,
+        name_or_resource: str | APIKey,
         namespace: str | None = ...,
         *,
         ignore_missing: bool = ...,
@@ -170,10 +156,10 @@ class _NamespaceFacade:
         """Remove a resource by UUID or resource object."""
         ...
 
-class _ProjectFacade:
-    """Logical root for a repository and its scan results.
+class _AuditLogFacade:
+    """Audit Log resource model extending BaseResource.
 
-    Identity kwargs: name (-> meta.name).
+    Create mode: both.
     """
 
     def list(
@@ -198,7 +184,7 @@ class _ProjectFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Project]:
+    ) -> list[AuditLog]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -224,7 +210,7 @@ class _ProjectFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Project:
+    ) -> AuditLog:
         """Return the single resource matching criteria."""
         ...
 
@@ -249,15 +235,15 @@ class _ProjectFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Project]:
+    ) -> Iterator[AuditLog]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
     def get(
         self,
-        id_or_resource: str | Project,
+        id_or_resource: str | AuditLog,
         namespace: str | None = ...,
-    ) -> Project:
+    ) -> AuditLog:
         """Fetch a single resource by UUID or resource object."""
         ...
 
@@ -270,13 +256,220 @@ class _ProjectFacade:
         namespace_uuid: str | None = ...,
         namespace: str | None = ...,
         **kwargs: Any,
-    ) -> Project:
+    ) -> AuditLog:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | AuditLog,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+class _AuthenticationLogFacade:
+    """Authentication Log resource model. List and get only.
+
+    System-scoped.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[AuthenticationLog]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> AuthenticationLog:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[AuthenticationLog]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | AuthenticationLog,
+        namespace: str | None = ...,
+    ) -> AuthenticationLog:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _AuthorizationPolicyFacade:
+    """Authorization Policy resource model extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[AuthorizationPolicy]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> AuthorizationPolicy:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[AuthorizationPolicy]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | AuthorizationPolicy,
+        namespace: str | None = ...,
+    ) -> AuthorizationPolicy:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> AuthorizationPolicy:
         """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
         ...
 
     def update(
         self,
-        id_or_resource: str | Project,
+        id_or_resource: str | AuthorizationPolicy,
         payload: Any | None = ...,
         *,
         update_mask: str | None = ...,
@@ -284,13 +477,13 @@ class _ProjectFacade:
         meta_tags: list[str] | None = ...,
         namespace: str | None = ...,
         **kwargs: Any,
-    ) -> Project:
+    ) -> AuthorizationPolicy:
         """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
         ...
 
     def delete(
         self,
-        name_or_resource: str | Project,
+        name_or_resource: str | AuthorizationPolicy,
         namespace: str | None = ...,
         *,
         ignore_missing: bool = ...,
@@ -300,26 +493,415 @@ class _ProjectFacade:
 
     def tag(
         self,
-        id_or_resource: str | Project,
+        id_or_resource: str | AuthorizationPolicy,
         tags: list[str],
         namespace: str | None = ...,
-    ) -> Project:
+    ) -> AuthorizationPolicy:
         """Set ``meta.tags`` (replaces existing tags)."""
         ...
 
     def untag(
         self,
-        id_or_resource: str | Project,
+        id_or_resource: str | AuthorizationPolicy,
         keys: list[str],
         namespace: str | None = ...,
-    ) -> Project:
+    ) -> AuthorizationPolicy:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
-class _FindingFacade:
-    """Security or compliance finding from a scan.
+class _CodeOwnersFacade:
+    """Code Owners resource model. List, get, create, update, delete.
 
     Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[CodeOwners]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> CodeOwners:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[CodeOwners]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | CodeOwners,
+        namespace: str | None = ...,
+    ) -> CodeOwners:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> CodeOwners:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | CodeOwners,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> CodeOwners:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | CodeOwners,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | CodeOwners,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> CodeOwners:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | CodeOwners,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> CodeOwners:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _DependencyMetadataFacade:
+    """DependencyMetadata resource model extending BaseResource.
+
+    OSS-scoped (namespace fixed to 'oss').
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[DependencyMetadata]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> DependencyMetadata:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[DependencyMetadata]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | DependencyMetadata,
+        namespace: str | None = ...,
+    ) -> DependencyMetadata:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> DependencyMetadata:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | DependencyMetadata,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> DependencyMetadata:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | DependencyMetadata,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | DependencyMetadata,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> DependencyMetadata:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | DependencyMetadata,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> DependencyMetadata:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _EndorLicenseFacade:
+    """Endor License resource model. List and get only.
+
+    System-scoped.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[EndorLicense]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> EndorLicense:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[EndorLicense]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | EndorLicense,
+        namespace: str | None = ...,
+    ) -> EndorLicense:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _FindingFacade:
+    """An Endor Labs finding entity extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
     """
 
     def list(
@@ -462,13 +1044,1780 @@ class _FindingFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
+class _FindingLogFacade:
+    """An Endor Labs FindingLog entity extending BaseResource.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[FindingLog]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> FindingLog:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[FindingLog]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | FindingLog,
+        namespace: str | None = ...,
+    ) -> FindingLog:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> FindingLog:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | FindingLog,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+class _InstallationFacade:
+    """Installation resource model extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Installation]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Installation:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Installation]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Installation,
+        namespace: str | None = ...,
+    ) -> Installation:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Installation:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | Installation,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Installation:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | Installation,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | Installation,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> Installation:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | Installation,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> Installation:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _InvitationFacade:
+    """Invitation resource model. List, get, create, update, delete.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Invitation]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Invitation:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Invitation]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Invitation,
+        namespace: str | None = ...,
+    ) -> Invitation:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Invitation:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | Invitation,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Invitation:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | Invitation,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | Invitation,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> Invitation:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | Invitation,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> Invitation:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _LinterResultFacade:
+    """LinterResult resource model extending BaseResource.
+
+    Create mode: both.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[LinterResult]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> LinterResult:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[LinterResult]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | LinterResult,
+        namespace: str | None = ...,
+    ) -> LinterResult:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> LinterResult:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | LinterResult,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+class _MalwareFacade:
+    """Malware resource model.
+
+    Identity kwargs: name (-> meta.name).
+    OSS-scoped (namespace fixed to 'oss').
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Malware]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Malware:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Malware]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Malware,
+        namespace: str | None = ...,
+    ) -> Malware:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _MetricFacade:
+    """Metric resource model extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Metric]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Metric:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Metric]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Metric,
+        namespace: str | None = ...,
+    ) -> Metric:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Metric:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | Metric,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Metric:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | Metric,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | Metric,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> Metric:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | Metric,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> Metric:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _NamespaceFacade:
+    """An Endor Labs namespace entity extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Namespace]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Namespace:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Namespace]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Namespace,
+        namespace: str | None = ...,
+    ) -> Namespace:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Namespace:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | Namespace,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Namespace:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | Namespace,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+class _NotificationTargetFacade:
+    """Notification Target resource model.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[NotificationTarget]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> NotificationTarget:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[NotificationTarget]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | NotificationTarget,
+        namespace: str | None = ...,
+    ) -> NotificationTarget:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> NotificationTarget:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | NotificationTarget,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> NotificationTarget:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | NotificationTarget,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | NotificationTarget,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> NotificationTarget:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | NotificationTarget,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> NotificationTarget:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _PackageLicenseFacade:
+    """PackageLicense resource model extending BaseResource.
+
+    OSS-scoped (namespace fixed to 'oss').
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[PackageLicense]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> PackageLicense:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[PackageLicense]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | PackageLicense,
+        namespace: str | None = ...,
+    ) -> PackageLicense:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PackageLicense:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | PackageLicense,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PackageLicense:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | PackageLicense,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | PackageLicense,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> PackageLicense:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | PackageLicense,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> PackageLicense:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _PackageVersionFacade:
+    """PackageVersion resource model extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[PackageVersion]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> PackageVersion:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[PackageVersion]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | PackageVersion,
+        namespace: str | None = ...,
+    ) -> PackageVersion:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PackageVersion:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | PackageVersion,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PackageVersion:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | PackageVersion,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | PackageVersion,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> PackageVersion:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | PackageVersion,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> PackageVersion:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _PolicyFacade:
+    """Policy resource model extending BaseResource.
+
+    Identity kwargs: name (-> meta.name), policy_type (-> spec.policy_type).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Policy]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Policy:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Policy]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Policy,
+        namespace: str | None = ...,
+    ) -> Policy:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Policy:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | Policy,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Policy:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | Policy,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | Policy,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> Policy:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | Policy,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> Policy:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _PolicyTemplateFacade:
+    """Policy Template resource model. List and get only.
+
+    System-scoped.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[PolicyTemplate]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> PolicyTemplate:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[PolicyTemplate]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | PolicyTemplate,
+        namespace: str | None = ...,
+    ) -> PolicyTemplate:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _ProjectFacade:
+    """An Endor Labs project entity extending BaseResource.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[Project]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Project:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[Project]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | Project,
+        namespace: str | None = ...,
+    ) -> Project:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Project:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | Project,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> Project:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | Project,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | Project,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> Project:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | Project,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> Project:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
+class _QueryMalwareFacade:
+    """QueryMalware resource model returned by query endpoint.
+
+    OSS-scoped (namespace fixed to 'oss').
+    Create mode: both.
+    """
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> QueryMalware:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+class _QueryVulnerabilityFacade:
+    """QueryVulnerability resource model returned by query endpoint.
+
+    OSS-scoped (namespace fixed to 'oss').
+    Create mode: both.
+    """
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> QueryVulnerability:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
 class _RepositoryFacade:
-    """Source control repository metadata.
+    """Repository resource model extending BaseResource.
 
     Identity kwargs:
+      git_url (-> spec.vcs_url)
       name (-> meta.name)
       vcs_url (-> spec.vcs_url)
-      git_url (-> spec.vcs_url)
+    Create mode: both.
+    Update mode: update_mask required.
     """
 
     def list(
@@ -612,10 +2961,12 @@ class _RepositoryFacade:
         ...
 
 class _RepositoryVersionFacade:
-    """Versioned snapshot of a repository.
+    """RepositoryVersion resource model extending BaseResource.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
+    Create mode: both.
+    Update mode: update_mask required.
     """
 
     def list(
@@ -758,96 +3109,12 @@ class _RepositoryVersionFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
-class _PolicyFacade:
-    """Rule controlling scan behavior, findings, and workflows.
+class _ScanLogRequestFacade:
+    """An Endor Labs ScanLogRequest entity extending BaseResource.
 
-    Identity kwargs: name (-> meta.name), policy_type (-> spec.policy_type).
+    Create mode: payload-only.
+    Workflow flags: request-style-endpoint.
     """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Policy]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Policy:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[Policy]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | Policy,
-        namespace: str | None = ...,
-    ) -> Policy:
-        """Fetch a single resource by UUID or resource object."""
-        ...
 
     def create(
         self,
@@ -858,494 +3125,16 @@ class _PolicyFacade:
         namespace_uuid: str | None = ...,
         namespace: str | None = ...,
         **kwargs: Any,
-    ) -> Policy:
+    ) -> ScanLogRequest:
         """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | Policy,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Policy:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | Policy,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | Policy,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> Policy:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | Policy,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> Policy:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _AuthorizationPolicyFacade:
-    """Permission grant for an authenticated identity.
-
-    Identity kwargs: name (-> meta.name).
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[AuthorizationPolicy]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> AuthorizationPolicy:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[AuthorizationPolicy]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | AuthorizationPolicy,
-        namespace: str | None = ...,
-    ) -> AuthorizationPolicy:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> AuthorizationPolicy:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | AuthorizationPolicy,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> AuthorizationPolicy:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | AuthorizationPolicy,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | AuthorizationPolicy,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> AuthorizationPolicy:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | AuthorizationPolicy,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> AuthorizationPolicy:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _PackageVersionFacade:
-    """Package version with dependency information.
-
-    Identity kwargs: name (-> meta.name).
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[PackageVersion]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> PackageVersion:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[PackageVersion]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | PackageVersion,
-        namespace: str | None = ...,
-    ) -> PackageVersion:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> PackageVersion:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | PackageVersion,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> PackageVersion:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | PackageVersion,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | PackageVersion,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> PackageVersion:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | PackageVersion,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> PackageVersion:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _InstallationFacade:
-    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
-
-    Identity kwargs: name (-> meta.name).
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Installation]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Installation:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[Installation]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | Installation,
-        namespace: str | None = ...,
-    ) -> Installation:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Installation:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | Installation,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Installation:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | Installation,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | Installation,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> Installation:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | Installation,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> Installation:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
 class _ScanProfileFacade:
-    """Scan configuration applied across projects.
+    """An Endor Labs ScanProfile entity extending BaseResource.
 
     Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
     """
 
     def list(
@@ -1489,10 +3278,12 @@ class _ScanProfileFacade:
         ...
 
 class _ScanResultFacade:
-    """Results from an endorctl scan.
+    """An Endor Labs ScanResult entity extending BaseResource.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
+    Create mode: both.
+    Update mode: update_mask required.
     """
 
     def list(
@@ -1635,24 +3426,8 @@ class _ScanResultFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
-class _ScanLogRequestFacade:
-    """Request for scan log messages."""
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> ScanLogRequest:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-class _LinterResultFacade:
-    """Linter analysis result for a package or repository version."""
+class _ScanWorkflowFacade:
+    """Scan Workflow resource model. List and get only."""
 
     def list(
         self,
@@ -1676,7 +3451,7 @@ class _LinterResultFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[LinterResult]:
+    ) -> list[ScanWorkflow]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1702,7 +3477,7 @@ class _LinterResultFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> LinterResult:
+    ) -> ScanWorkflow:
         """Return the single resource matching criteria."""
         ...
 
@@ -1727,34 +3502,21 @@ class _LinterResultFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[LinterResult]:
+    ) -> Iterator[ScanWorkflow]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
     def get(
         self,
-        id_or_resource: str | LinterResult,
+        id_or_resource: str | ScanWorkflow,
         namespace: str | None = ...,
-    ) -> LinterResult:
+    ) -> ScanWorkflow:
         """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> LinterResult:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
         ...
 
     def delete(
         self,
-        name_or_resource: str | LinterResult,
+        name_or_resource: str | ScanWorkflow,
         namespace: str | None = ...,
         *,
         ignore_missing: bool = ...,
@@ -1762,11 +3524,8 @@ class _LinterResultFacade:
         """Remove a resource by UUID or resource object."""
         ...
 
-class _MetricFacade:
-    """Analytics output attached to packages or repositories.
-
-    Identity kwargs: name (-> meta.name).
-    """
+class _ScanWorkflowResultFacade:
+    """Scan Workflow Result resource model. List and get only."""
 
     def list(
         self,
@@ -1790,7 +3549,7 @@ class _MetricFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Metric]:
+    ) -> list[ScanWorkflowResult]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1816,7 +3575,7 @@ class _MetricFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Metric:
+    ) -> ScanWorkflowResult:
         """Return the single resource matching criteria."""
         ...
 
@@ -1841,77 +3600,34 @@ class _MetricFacade:
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Metric]:
+    ) -> Iterator[ScanWorkflowResult]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
     def get(
         self,
-        id_or_resource: str | Metric,
+        id_or_resource: str | ScanWorkflowResult,
         namespace: str | None = ...,
-    ) -> Metric:
+    ) -> ScanWorkflowResult:
         """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Metric:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | Metric,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Metric:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
         ...
 
     def delete(
         self,
-        name_or_resource: str | Metric,
+        name_or_resource: str | ScanWorkflowResult,
         namespace: str | None = ...,
         *,
         ignore_missing: bool = ...,
     ) -> bool:
         """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | Metric,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> Metric:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | Metric,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> Metric:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
 class _SemgrepRuleFacade:
-    """Custom SAST rule in Semgrep/OpenGrep format.
+    """SemgrepRule resource model extending BaseResource.
 
     Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
     """
 
     def list(
@@ -2054,683 +3770,8 @@ class _SemgrepRuleFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
-class _APIKeyFacade:
-    """API key for programmatic access."""
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[APIKey]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> APIKey:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[APIKey]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | APIKey,
-        namespace: str | None = ...,
-    ) -> APIKey:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> APIKey:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | APIKey,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-class _AuditLogFacade:
-    """Audit trail of API operations."""
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[AuditLog]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> AuditLog:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[AuditLog]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | AuditLog,
-        namespace: str | None = ...,
-    ) -> AuditLog:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> AuditLog:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | AuditLog,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-class _FindingLogFacade:
-    """Historical snapshot of a finding state."""
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[FindingLog]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> FindingLog:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[FindingLog]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | FindingLog,
-        namespace: str | None = ...,
-    ) -> FindingLog:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> FindingLog:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | FindingLog,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-class _NotificationTargetFacade:
-    """Integration endpoint for notification delivery.
-
-    Identity kwargs: name (-> meta.name).
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[NotificationTarget]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> NotificationTarget:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[NotificationTarget]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | NotificationTarget,
-        namespace: str | None = ...,
-    ) -> NotificationTarget:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> NotificationTarget:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | NotificationTarget,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> NotificationTarget:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | NotificationTarget,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | NotificationTarget,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> NotificationTarget:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | NotificationTarget,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> NotificationTarget:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _ScanWorkflowFacade:
-    """Workflow orchestrating scan steps."""
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[ScanWorkflow]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> ScanWorkflow:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[ScanWorkflow]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | ScanWorkflow,
-        namespace: str | None = ...,
-    ) -> ScanWorkflow:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | ScanWorkflow,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-class _ScanWorkflowResultFacade:
-    """Result from a scan workflow execution."""
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[ScanWorkflowResult]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> ScanWorkflowResult:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[ScanWorkflowResult]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | ScanWorkflowResult,
-        namespace: str | None = ...,
-    ) -> ScanWorkflowResult:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | ScanWorkflowResult,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
 class _VersionUpgradeFacade:
-    """Suggested dependency version upgrade."""
+    """Version Upgrade resource model. List and get only."""
 
     def list(
         self,
@@ -2827,592 +3868,8 @@ class _VersionUpgradeFacade:
         """Remove a resource by UUID or resource object."""
         ...
 
-class _InvitationFacade:
-    """User invitation for platform access.
-
-    Identity kwargs: name (-> meta.name).
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Invitation]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Invitation:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[Invitation]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | Invitation,
-        namespace: str | None = ...,
-    ) -> Invitation:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Invitation:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | Invitation,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> Invitation:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | Invitation,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | Invitation,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> Invitation:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | Invitation,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> Invitation:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _CodeOwnersFacade:
-    """Code ownership assignments for a project.
-
-    Identity kwargs: name (-> meta.name).
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[CodeOwners]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> CodeOwners:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[CodeOwners]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | CodeOwners,
-        namespace: str | None = ...,
-    ) -> CodeOwners:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> CodeOwners:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | CodeOwners,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> CodeOwners:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | CodeOwners,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | CodeOwners,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> CodeOwners:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | CodeOwners,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> CodeOwners:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _PackageLicenseFacade:
-    """License information for a package.
-
-    OSS-scoped (namespace fixed to 'oss').
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[PackageLicense]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> PackageLicense:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[PackageLicense]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | PackageLicense,
-        namespace: str | None = ...,
-    ) -> PackageLicense:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> PackageLicense:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | PackageLicense,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> PackageLicense:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | PackageLicense,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | PackageLicense,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> PackageLicense:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | PackageLicense,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> PackageLicense:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
-class _DependencyMetadataFacade:
-    """Dependency relationship between packages.
-
-    OSS-scoped (namespace fixed to 'oss').
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[DependencyMetadata]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> DependencyMetadata:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[DependencyMetadata]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | DependencyMetadata,
-        namespace: str | None = ...,
-    ) -> DependencyMetadata:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> DependencyMetadata:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-    def update(
-        self,
-        id_or_resource: str | DependencyMetadata,
-        payload: Any | None = ...,
-        *,
-        update_mask: str | None = ...,
-        meta_description: str | None = ...,
-        meta_tags: list[str] | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> DependencyMetadata:
-        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
-        ...
-
-    def delete(
-        self,
-        name_or_resource: str | DependencyMetadata,
-        namespace: str | None = ...,
-        *,
-        ignore_missing: bool = ...,
-    ) -> bool:
-        """Remove a resource by UUID or resource object."""
-        ...
-
-    def tag(
-        self,
-        id_or_resource: str | DependencyMetadata,
-        tags: list[str],
-        namespace: str | None = ...,
-    ) -> DependencyMetadata:
-        """Set ``meta.tags`` (replaces existing tags)."""
-        ...
-
-    def untag(
-        self,
-        id_or_resource: str | DependencyMetadata,
-        keys: list[str],
-        namespace: str | None = ...,
-    ) -> DependencyMetadata:
-        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
-        ...
-
 class _VulnerabilityFacade:
-    """Open-source vulnerability records.
+    """Vulnerability resource model.
 
     Identity kwargs: name (-> meta.name).
     OSS-scoped (namespace fixed to 'oss').
@@ -3503,409 +3960,6 @@ class _VulnerabilityFacade:
         """Fetch a single resource by UUID or resource object."""
         ...
 
-class _MalwareFacade:
-    """Open-source malware records.
-
-    Identity kwargs: name (-> meta.name).
-    OSS-scoped (namespace fixed to 'oss').
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[Malware]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Malware:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[Malware]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | Malware,
-        namespace: str | None = ...,
-    ) -> Malware:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-class _QueryVulnerabilityFacade:
-    """Advanced vulnerability query endpoint.
-
-    OSS-scoped (namespace fixed to 'oss').
-    """
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> QueryVulnerability:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-class _QueryMalwareFacade:
-    """Advanced malware query endpoint.
-
-    OSS-scoped (namespace fixed to 'oss').
-    """
-
-    def create(
-        self,
-        payload: Any = ...,
-        *,
-        name: str | None = ...,
-        description: str | None = ...,
-        namespace_uuid: str | None = ...,
-        namespace: str | None = ...,
-        **kwargs: Any,
-    ) -> QueryMalware:
-        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
-        ...
-
-class _AuthenticationLogFacade:
-    """Authentication event log.
-
-    System-scoped.
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[AuthenticationLog]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> AuthenticationLog:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[AuthenticationLog]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | AuthenticationLog,
-        namespace: str | None = ...,
-    ) -> AuthenticationLog:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-class _EndorLicenseFacade:
-    """Platform license assigned to a tenant.
-
-    System-scoped.
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[EndorLicense]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> EndorLicense:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[EndorLicense]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | EndorLicense,
-        namespace: str | None = ...,
-    ) -> EndorLicense:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
-class _PolicyTemplateFacade:
-    """Reusable template for creating policies.
-
-    System-scoped.
-    """
-
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[PolicyTemplate]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
-
-    def lookup(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> PolicyTemplate:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[PolicyTemplate]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | PolicyTemplate,
-        namespace: str | None = ...,
-    ) -> PolicyTemplate:
-        """Fetch a single resource by UUID or resource object."""
-        ...
-
 class Client:
     """Resource-oriented client with typed facades.
 
@@ -3920,72 +3974,72 @@ class Client:
     Custom: scan_logs
     """
 
-    namespace: _NamespaceFacade
-    """Isolate and organize resources in a parent-child hierarchy."""
-    project: _ProjectFacade
-    """Logical root for a repository and its scan results."""
-    finding: _FindingFacade
-    """Security or compliance finding from a scan."""
-    repository: _RepositoryFacade
-    """Source control repository metadata."""
-    repository_version: _RepositoryVersionFacade
-    """Versioned snapshot of a repository."""
-    policy: _PolicyFacade
-    """Rule controlling scan behavior, findings, and workflows."""
-    authorization_policy: _AuthorizationPolicyFacade
-    """Permission grant for an authenticated identity."""
-    package_version: _PackageVersionFacade
-    """Package version with dependency information."""
-    installation: _InstallationFacade
-    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket)."""
-    scan_profile: _ScanProfileFacade
-    """Scan configuration applied across projects."""
-    scan_result: _ScanResultFacade
-    """Results from an endorctl scan."""
-    scan_log_request: _ScanLogRequestFacade
-    """Request for scan log messages."""
-    linter_result: _LinterResultFacade
-    """Linter analysis result for a package or repository version."""
-    metric: _MetricFacade
-    """Analytics output attached to packages or repositories."""
-    semgrep_rule: _SemgrepRuleFacade
-    """Custom SAST rule in Semgrep/OpenGrep format."""
     api_key: _APIKeyFacade
-    """API key for programmatic access."""
+    """API Key resource model extending BaseResource."""
     audit_log: _AuditLogFacade
-    """Audit trail of API operations."""
-    finding_log: _FindingLogFacade
-    """Historical snapshot of a finding state."""
-    notification_target: _NotificationTargetFacade
-    """Integration endpoint for notification delivery."""
-    scan_workflow: _ScanWorkflowFacade
-    """Workflow orchestrating scan steps."""
-    scan_workflow_result: _ScanWorkflowResultFacade
-    """Result from a scan workflow execution."""
-    version_upgrade: _VersionUpgradeFacade
-    """Suggested dependency version upgrade."""
-    invitation: _InvitationFacade
-    """User invitation for platform access."""
-    code_owners: _CodeOwnersFacade
-    """Code ownership assignments for a project."""
-    package_license: _PackageLicenseFacade
-    """License information for a package."""
-    dependency_metadata: _DependencyMetadataFacade
-    """Dependency relationship between packages."""
-    vulnerability: _VulnerabilityFacade
-    """Open-source vulnerability records."""
-    malware: _MalwareFacade
-    """Open-source malware records."""
-    query_vulnerability: _QueryVulnerabilityFacade
-    """Advanced vulnerability query endpoint."""
-    query_malware: _QueryMalwareFacade
-    """Advanced malware query endpoint."""
+    """Audit Log resource model extending BaseResource."""
     authentication_log: _AuthenticationLogFacade
-    """Authentication event log."""
+    """Authentication Log resource model. List and get only."""
+    authorization_policy: _AuthorizationPolicyFacade
+    """Authorization Policy resource model extending BaseResource."""
+    code_owners: _CodeOwnersFacade
+    """Code Owners resource model. List, get, create, update, delete."""
+    dependency_metadata: _DependencyMetadataFacade
+    """DependencyMetadata resource model extending BaseResource."""
     endor_license: _EndorLicenseFacade
-    """Platform license assigned to a tenant."""
+    """Endor License resource model. List and get only."""
+    finding: _FindingFacade
+    """An Endor Labs finding entity extending BaseResource."""
+    finding_log: _FindingLogFacade
+    """An Endor Labs FindingLog entity extending BaseResource."""
+    installation: _InstallationFacade
+    """Installation resource model extending BaseResource."""
+    invitation: _InvitationFacade
+    """Invitation resource model. List, get, create, update, delete."""
+    linter_result: _LinterResultFacade
+    """LinterResult resource model extending BaseResource."""
+    malware: _MalwareFacade
+    """Malware resource model."""
+    metric: _MetricFacade
+    """Metric resource model extending BaseResource."""
+    namespace: _NamespaceFacade
+    """An Endor Labs namespace entity extending BaseResource."""
+    notification_target: _NotificationTargetFacade
+    """Notification Target resource model."""
+    package_license: _PackageLicenseFacade
+    """PackageLicense resource model extending BaseResource."""
+    package_version: _PackageVersionFacade
+    """PackageVersion resource model extending BaseResource."""
+    policy: _PolicyFacade
+    """Policy resource model extending BaseResource."""
     policy_template: _PolicyTemplateFacade
-    """Reusable template for creating policies."""
+    """Policy Template resource model. List and get only."""
+    project: _ProjectFacade
+    """An Endor Labs project entity extending BaseResource."""
+    query_malware: _QueryMalwareFacade
+    """QueryMalware resource model returned by query endpoint."""
+    query_vulnerability: _QueryVulnerabilityFacade
+    """QueryVulnerability resource model returned by query endpoint."""
+    repository: _RepositoryFacade
+    """Repository resource model extending BaseResource."""
+    repository_version: _RepositoryVersionFacade
+    """RepositoryVersion resource model extending BaseResource."""
+    scan_log_request: _ScanLogRequestFacade
+    """An Endor Labs ScanLogRequest entity extending BaseResource."""
+    scan_profile: _ScanProfileFacade
+    """An Endor Labs ScanProfile entity extending BaseResource."""
+    scan_result: _ScanResultFacade
+    """An Endor Labs ScanResult entity extending BaseResource."""
+    scan_workflow: _ScanWorkflowFacade
+    """Scan Workflow resource model. List and get only."""
+    scan_workflow_result: _ScanWorkflowResultFacade
+    """Scan Workflow Result resource model. List and get only."""
+    semgrep_rule: _SemgrepRuleFacade
+    """SemgrepRule resource model extending BaseResource."""
+    version_upgrade: _VersionUpgradeFacade
+    """Version Upgrade resource model. List and get only."""
+    vulnerability: _VulnerabilityFacade
+    """Vulnerability resource model."""
     scan_logs: ScanLogsFacade
     """Scan logs facade. Use get_logs() to fetch log messages."""
 

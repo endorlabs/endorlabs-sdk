@@ -1,0 +1,5 @@
+{
+  "_comment": "Mapping profile for per-entity base classes in custom mapping generation.",
+  "default_base_class": "pydantic.BaseModel",
+  "entity_base_class_overrides": {}
+}

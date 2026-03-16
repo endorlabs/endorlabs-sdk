@@ -3,6 +3,8 @@
 **For SDK usage:** Start with [AGENTS.md](../../AGENTS.md) (install, APIClient, resource usage). This section is reference and boundaries.
 
 SDK reference documentation. OpenAPI spec (local): `.endorlabs-context/openapiv2.swagger.json`.
+Generated reference surfaces are canonical in `docs/generated-reference/`.
+Runtime generated artifacts are documented in `src/endorlabs/generated/README.md`.
 
 ## Public API
 
@@ -15,8 +17,10 @@ Stable surface: `endorlabs.__all__` — APIClient, Client, exceptions (EndorAPIE
 
 **Model consistency and aliasing:** Model consistency compares SDK Pydantic field paths (Python names) to the OpenAPI spec. **Greenfield:** Use Python name = spec key for shared fields (`context`, `processing_status`, `index_data`); no prefixed names. If you add a Tier 3 alias (prefixed name + alias) for a shared concept, add an entry to [model_consistency.SDK_FIELD_ALIAS_TO_SHARED](../../.github/scripts/model_consistency.py). See [contracts.md](../contracts.md) (Models and API parity -> Field aliasing).
 
-- [resources.md](resources.md) — Resource name, operations (list/get/create/update/delete), limitations.
+- [resources.md](resources.md) — Thin landing page to canonical generated resources matrix.
 - [namespace.md](namespace.md) — Namespace in the SDK (list/get/create/update/delete, parameters, pitfalls).
-- [api-surfaces.md](api-surfaces.md) — API surface contracts (Developer, Module-level, Raw client).
-- [create-update-payloads.md](create-update-payloads.md) — Per-resource create/update payload shapes.
+- [api-surfaces.md](api-surfaces.md) — Thin landing page to canonical generated API surfaces.
+- [create-update-payloads.md](create-update-payloads.md) — Thin landing page to canonical generated payload matrix.
+- [../../scripts/sync/README.md](../../scripts/sync/README.md) — Model-sync generation module guide.
+- [../../src/endorlabs/generated/README.md](../../src/endorlabs/generated/README.md) — Generated runtime artifact guide.
 

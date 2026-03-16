@@ -8,10 +8,13 @@ Each resource gets a dedicated stub class (e.g. ``_ProjectFacade``) that
 exposes only the methods the resource actually supports, with concrete
 return types and validated resource descriptions.
 """
+# ruff: noqa: E402, I001, C901, E501, PERF401, PERF402
 
 from __future__ import annotations
 
 import inspect
+import json
+import logging
 import re
 import sys
 from pathlib import Path
@@ -23,56 +26,52 @@ src = repo_root / "src"
 if str(src) not in sys.path:
     sys.path.insert(0, str(src))
 
-from endorlabs.facade import ResourceFacade, _ListableFacade
+from endorlabs.facade import ResourceRuntimeFacade, _ListableFacade
+from endorlabs.registry_overlay import merge_generated_contract_with_overlay
 from endorlabs.registry import (
     CUSTOM_FACADE_REGISTRY,
     RESOURCE_REGISTRY,
     ResourceEntry,
 )
 from endorlabs.utils.model_validation import get_tags_update_paths
+from sync.policy import model_sync_entity_for_model
+
+logger = logging.getLogger(__name__)
+
+
+MODEL_SYNC_MAPPING_PATH = (
+    repo_root
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "mapping"
+    / "entity_mapping.json"
+)
+RESOURCE_DESCRIPTION_OVERLAY_PATH = (
+    repo_root / "scripts" / "model_sync_profiles" / "resource_descriptions.json"
+)
 
 # ---------------------------------------------------------------------------
 # Resource descriptions — validated from OpenAPI spec + local user docs
 # ---------------------------------------------------------------------------
-RESOURCE_DESCRIPTIONS: dict[str, str] = {
-    "namespace": "Isolate and organize resources in a parent-child hierarchy.",
-    "project": "Logical root for a repository and its scan results.",
-    "finding": "Security or compliance finding from a scan.",
-    "repository": "Source control repository metadata.",
-    "repository_version": "Versioned snapshot of a repository.",
-    "policy": "Rule controlling scan behavior, findings, and workflows.",
-    "authorization_policy": "Permission grant for an authenticated identity.",
-    "package_version": "Package version with dependency information.",
-    "installation": (
-        "SCM platform integration (GitHub, GitLab, Azure, Bitbucket)."
-    ),
-    "scan_profile": "Scan configuration applied across projects.",
-    "scan_result": "Results from an endorctl scan.",
-    "scan_log_request": "Request for scan log messages.",
-    "linter_result": (
-        "Linter analysis result for a package or repository version."
-    ),
-    "metric": "Analytics output attached to packages or repositories.",
-    "semgrep_rule": "Custom SAST rule in Semgrep/OpenGrep format.",
-    "api_key": "API key for programmatic access.",
-    "audit_log": "Audit trail of API operations.",
-    "finding_log": "Historical snapshot of a finding state.",
-    "notification_target": "Integration endpoint for notification delivery.",
-    "scan_workflow": "Workflow orchestrating scan steps.",
-    "scan_workflow_result": "Result from a scan workflow execution.",
-    "version_upgrade": "Suggested dependency version upgrade.",
-    "invitation": "User invitation for platform access.",
-    "code_owners": "Code ownership assignments for a project.",
-    "package_license": "License information for a package.",
-    "dependency_metadata": "Dependency relationship between packages.",
-    "vulnerability": "Open-source vulnerability records.",
-    "malware": "Open-source malware records.",
-    "query_vulnerability": "Advanced vulnerability query endpoint.",
-    "query_malware": "Advanced malware query endpoint.",
-    "authentication_log": "Authentication event log.",
-    "endor_license": "Platform license assigned to a tenant.",
-    "policy_template": "Reusable template for creating policies.",
-}
+RESOURCE_DESCRIPTIONS: dict[str, str] = {}
+
+
+def _load_description_overlay() -> dict[str, str]:
+    if not RESOURCE_DESCRIPTION_OVERLAY_PATH.exists():
+        return {}
+    payload = json.loads(RESOURCE_DESCRIPTION_OVERLAY_PATH.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        return {}
+    overlay: dict[str, str] = {}
+    for key, value in payload.items():
+        if isinstance(key, str) and isinstance(value, str) and value.strip():
+            overlay[key] = value.strip()
+    return overlay
+
+
+def _default_description_from_attr(attr_name: str) -> str:
+    return f"{attr_name.replace('_', ' ').title()} resource facade."
 
 # ---------------------------------------------------------------------------
 # Signature helpers
@@ -80,7 +79,7 @@ RESOURCE_DESCRIPTIONS: dict[str, str] = {
 
 # Methods defined on _ListableFacade (always present when "list" is supported)
 _LISTABLE_METHODS = ("list", "lookup", "list_iter")
-# Methods defined on ResourceFacade
+# Methods defined on ResourceRuntimeFacade
 _CRUD_METHODS = ("get", "create", "update", "delete")
 _TAG_METHODS = ("tag", "untag")
 
@@ -89,7 +88,7 @@ _METHOD_SOURCE: dict[str, type] = {}
 for _m in _LISTABLE_METHODS:
     _METHOD_SOURCE[_m] = _ListableFacade
 for _m in (*_CRUD_METHODS, *_TAG_METHODS):
-    _METHOD_SOURCE[_m] = ResourceFacade
+    _METHOD_SOURCE[_m] = ResourceRuntimeFacade
 
 
 def _get_method_signatures() -> dict[str, inspect.Signature]:
@@ -153,10 +152,7 @@ def _format_method(
             continue
 
         # Insert bare * for keyword-only boundary
-        if (
-            param.kind == inspect.Parameter.KEYWORD_ONLY
-            and not saw_keyword_only
-        ):
+        if param.kind == inspect.Parameter.KEYWORD_ONLY and not saw_keyword_only:
             params.append(f"{indent}    *,")
             saw_keyword_only = True
 
@@ -208,7 +204,128 @@ def _get_available_methods(entry: ResourceEntry) -> list[str]:
     return methods
 
 
-def _build_class_docstring(entry: ResourceEntry) -> list[str]:
+def _load_model_sync_entities() -> set[str]:
+    """Load canonical model-sync entity names when available."""
+    if not MODEL_SYNC_MAPPING_PATH.exists():
+        return set()
+    payload = json.loads(MODEL_SYNC_MAPPING_PATH.read_text(encoding="utf-8"))
+    entries = payload.get("entries")
+    if not isinstance(entries, list):
+        return set()
+    entity_names: set[str] = set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        entity_name = entry.get("entity_name")
+        if isinstance(entity_name, str):
+            entity_names.add(entity_name)
+    return entity_names
+
+
+def _load_facade_contract_resources() -> dict[str, dict[str, Any]]:
+    """Load effective (generated + overlay) contract resources keyed by attr_name."""
+    try:
+        from endorlabs.generated.registry_contract import RUNTIME_REGISTRY_CONTRACT
+    except ImportError as error:
+        raise RuntimeError(
+            "Missing generated runtime contract module. "
+            "Run: uv run python scripts/model_sync.py"
+        ) from error
+
+    candidate = RUNTIME_REGISTRY_CONTRACT.get("resources")
+    if not isinstance(candidate, list):
+        raise RuntimeError("Invalid generated runtime contract: resources must be a list")
+    resources = [item for item in candidate if isinstance(item, dict)]
+
+    resources = merge_generated_contract_with_overlay(resources)
+
+    by_attr: dict[str, dict[str, Any]] = {}
+    for resource in resources:
+        attr_name = resource.get("attr_name")
+        if isinstance(attr_name, str):
+            by_attr[attr_name] = resource
+    if not by_attr:
+        raise RuntimeError("Invalid facade contract: resources list is empty")
+    return by_attr
+
+
+def _validate_descriptions_and_model_sync() -> None:
+    """Validate description propagation and model-sync coverage for registry models."""
+    contract_resources = _load_facade_contract_resources()
+    if not RESOURCE_DESCRIPTIONS:
+        overlay = _load_description_overlay()
+        for entry in RESOURCE_REGISTRY:
+            contract_row = contract_resources.get(entry.attr_name, {})
+            generated_description = contract_row.get("description")
+            description = (
+                generated_description
+                if isinstance(generated_description, str) and generated_description.strip()
+                else overlay.get(entry.attr_name, "")
+            )
+            if not description.strip():
+                description = _default_description_from_attr(entry.attr_name)
+            RESOURCE_DESCRIPTIONS[entry.attr_name] = description
+
+    missing_descriptions = sorted(
+        entry.attr_name
+        for entry in RESOURCE_REGISTRY
+        if not RESOURCE_DESCRIPTIONS.get(entry.attr_name, "").strip()
+    )
+    if missing_descriptions:
+        raise RuntimeError(
+            "Missing RESOURCE_DESCRIPTIONS entries for: "
+            + ", ".join(missing_descriptions)
+        )
+
+    missing_contract_resources = sorted(
+        entry.attr_name
+        for entry in RESOURCE_REGISTRY
+        if entry.attr_name not in contract_resources
+    )
+    if missing_contract_resources:
+        raise RuntimeError(
+            "Model-sync facade contract missing resources for registry entries: "
+            + ", ".join(missing_contract_resources)
+        )
+
+    entity_names = _load_model_sync_entities()
+    if not entity_names:
+        entity_names = set()
+        for resource in contract_resources.values():
+            canonical = resource.get("canonical_entities")
+            if isinstance(canonical, list):
+                entity_names.update(value for value in canonical if isinstance(value, str))
+
+    op_mismatches: list[str] = []
+    missing_sync_entities = sorted(
+        entry.model_class.__name__
+        for entry in RESOURCE_REGISTRY
+        if not (model_sync_entity_for_model(entry.model_class) & entity_names)
+    )
+    for entry in RESOURCE_REGISTRY:
+        resource = contract_resources[entry.attr_name]
+        contract_ops = resource.get("supported_ops")
+        if not isinstance(contract_ops, list):
+            op_mismatches.append(entry.attr_name)
+            continue
+        normalized_contract_ops = sorted(op for op in contract_ops if isinstance(op, str))
+        normalized_registry_ops = sorted(entry.supported_ops)
+        if normalized_contract_ops != normalized_registry_ops:
+            op_mismatches.append(entry.attr_name)
+
+    if missing_sync_entities:
+        raise RuntimeError(
+            "Model-sync mapping missing canonical entities for registry models: "
+            + ", ".join(missing_sync_entities)
+        )
+    if op_mismatches:
+        raise RuntimeError(
+            "Model-sync facade contract has supported_ops mismatches for: "
+            + ", ".join(sorted(op_mismatches))
+        )
+
+
+def _build_class_docstring(entry: ResourceEntry, contract_row: dict[str, Any]) -> list[str]:
     """Build multi-line class docstring from description + registry metadata."""
     desc = RESOURCE_DESCRIPTIONS.get(entry.attr_name, "")
     parts: list[str] = []
@@ -217,9 +334,7 @@ def _build_class_docstring(entry: ResourceEntry) -> list[str]:
 
     # Identity kwargs — wrap if the line would exceed 88 chars
     if entry.filter_kwarg_map:
-        items = [
-            f"{k} (-> {v})" for k, v in entry.filter_kwarg_map.items()
-        ]
+        items = [f"{k} (-> {v})" for k, v in entry.filter_kwarg_map.items()]
         id_line = f"Identity kwargs: {', '.join(items)}."
         # 4 chars indent in class body
         if len(id_line) + 4 <= 88:
@@ -240,6 +355,19 @@ def _build_class_docstring(entry: ResourceEntry) -> list[str]:
     elif entry.scope == "oss":
         parts.append("OSS-scoped (namespace fixed to 'oss').")
 
+    create_mode = contract_row.get("create_mode")
+    if isinstance(create_mode, str) and create_mode != "unsupported":
+        parts.append(f"Create mode: {create_mode}.")
+    if contract_row.get("update_requires_mask") is True:
+        parts.append("Update mode: update_mask required.")
+    workflow_flags = contract_row.get("workflow_flags")
+    if isinstance(workflow_flags, list) and workflow_flags:
+        normalized_flags = ", ".join(
+            flag for flag in workflow_flags if isinstance(flag, str)
+        )
+        if normalized_flags:
+            parts.append(f"Workflow flags: {normalized_flags}.")
+
     if not parts:
         return ['    """Resource facade."""']
 
@@ -255,6 +383,7 @@ def _build_class_docstring(entry: ResourceEntry) -> list[str]:
 
 def _emit_resource_class(
     entry: ResourceEntry,
+    contract_row: dict[str, Any],
     sigs: dict[str, inspect.Signature],
 ) -> list[str]:
     """Generate a per-resource stub class."""
@@ -265,7 +394,7 @@ def _emit_resource_class(
 
     lines: list[str] = []
     lines.append(f"class {class_name}:")
-    lines.extend(_build_class_docstring(entry))
+    lines.extend(_build_class_docstring(entry, contract_row))
     lines.append("")
 
     for i, method_name in enumerate(methods):
@@ -284,12 +413,13 @@ def _emit_resource_class(
 
 
 def main() -> None:  # noqa: D103
+    _validate_descriptions_and_model_sync()
+    contract_resources = _load_facade_contract_resources()
     out = src / "endorlabs" / "client_surface.pyi"
     sigs = _get_method_signatures()
 
     lines: list[str] = [
-        "# Generated by scripts/generate_client_stub.py"
-        " — do not edit by hand.",
+        "# Generated by scripts/generate_client_stub.py — do not edit by hand.",
         "# Source of truth: endorlabs.registry.RESOURCE_REGISTRY"
         " and CUSTOM_FACADE_REGISTRY.",
         "",
@@ -323,7 +453,7 @@ def main() -> None:  # noqa: D103
     # -- Per-resource stub classes -----------------------------------------
     for entry in RESOURCE_REGISTRY:
         lines.append("")
-        lines.extend(_emit_resource_class(entry, sigs))
+        lines.extend(_emit_resource_class(entry, contract_resources[entry.attr_name], sigs))
 
     # -- Client class ------------------------------------------------------
     lines.append("")
@@ -368,14 +498,10 @@ def main() -> None:  # noqa: D103
         if attr == "scan_logs":
             lines.append(f"    {attr}: ScanLogsFacade")
             lines.append(
-                '    """Scan logs facade. Use get_logs() to fetch'
-                ' log messages."""'
+                '    """Scan logs facade. Use get_logs() to fetch log messages."""'
             )
         else:
-            lines.append(
-                f"    {attr}: Any"
-                "  # Custom facade; add type when known"
-            )
+            lines.append(f"    {attr}: Any  # Custom facade; add type when known")
     lines.append("")
     lines.append("    _client: APIClient | None")
     lines.append("")
@@ -400,10 +526,7 @@ def main() -> None:  # noqa: D103
     lines.append("        exc_tb: Any,")
     lines.append("    ) -> None: ...")
     lines.append("    def whoami(self) -> str | None:")
-    lines.append(
-        '        """Return the authenticated identity name,'
-        ' or None."""'
-    )
+    lines.append('        """Return the authenticated identity name, or None."""')
     lines.append("        ...")
     lines.append("    def wait_until(")
     lines.append("        self,")
@@ -413,8 +536,9 @@ def main() -> None:  # noqa: D103
     lines.append("    ) -> bool: ...")
 
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Wrote {out} ({len(lines)} lines)")
+    logger.info("Wrote %s (%s lines)", out, len(lines))
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     main()

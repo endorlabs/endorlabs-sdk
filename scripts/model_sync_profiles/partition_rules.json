@@ -1,0 +1,8 @@
+{
+  "_comment": "Deterministic partition rules for custom mapping approach.",
+  "primary": "service_or_resource_domain",
+  "fallback": "operation_group",
+  "final_fallback": "per_entity_misc",
+  "stable_sort": true,
+  "module_name_case": "snake_case"
+}

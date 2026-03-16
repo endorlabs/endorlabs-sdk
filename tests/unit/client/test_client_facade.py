@@ -155,6 +155,91 @@ def test_client_exposes_all_registry_resources(
         assert hasattr(facade, "get")
 
 
+def test_registry_supported_ops_not_implemented_contract(
+    client_with_mock_transport: Client,
+) -> None:
+    """Unsupported registry operations should raise NotImplementedError."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    for entry in RESOURCE_REGISTRY:
+        facade = getattr(client, entry.attr_name)
+        namespace = (
+            "oss" if entry.scope in {"oss", "system"} else TEST_NAMESPACE_DEFAULT
+        )
+
+        if "list" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support list"):
+                facade.list(namespace=namespace, max_pages=TEST_MAX_PAGES)
+            with pytest.raises(NotImplementedError, match="support list_iter"):
+                list(facade.list_iter(namespace=namespace, max_pages=TEST_MAX_PAGES))
+            with pytest.raises(NotImplementedError, match="support lookup"):
+                facade.lookup(namespace=namespace, max_pages=TEST_MAX_PAGES)
+
+        if "get" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support get"):
+                facade.get("unit-uuid", namespace=namespace)
+
+        if "create" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support create"):
+                facade.create(payload=Mock(), namespace=namespace)
+
+        if "update" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support update"):
+                facade.update(
+                    "unit-uuid",
+                    payload=Mock(),
+                    update_mask="meta.description",
+                    namespace=namespace,
+                )
+
+        if "delete" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support delete"):
+                facade.delete("unit-uuid", namespace=namespace)
+
+
+def test_all_oss_scoped_resources_force_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """OSS-scoped resources should always resolve namespace to oss."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    oss_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "oss"]
+    assert oss_entries, "Expected at least one oss-scoped resource in registry."
+
+    for entry in oss_entries:
+        facade = getattr(client, entry.attr_name)
+        if "list" in entry.supported_ops:
+            facade._ops.list = Mock(return_value=[])
+            facade.list(namespace="tenant.other", max_pages=TEST_MAX_PAGES)
+            args, _ = facade._ops.list.call_args
+            assert args[0] == "oss", entry.attr_name
+        if "get" in entry.supported_ops:
+            facade._ops.get = Mock(return_value=Mock(uuid="unit-uuid"))
+            facade.get("unit-uuid", namespace="tenant.other")
+            args, _ = facade._ops.get.call_args
+            assert args[0] == "oss", entry.attr_name
+
+
+def test_all_system_scoped_get_requires_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """System-scoped get should reject non-oss namespace for all entries."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    system_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "system"]
+    assert system_entries, "Expected at least one system-scoped resource in registry."
+
+    for entry in system_entries:
+        if "get" not in entry.supported_ops:
+            continue
+        facade = getattr(client, entry.attr_name)
+        with pytest.raises(NotImplementedError, match="oss namespace"):
+            facade.get("unit-uuid", namespace="tenant.notoss")
+
+
 class TestBuildFacade:
     """_build_facade factory produces the correct facade scope per registry entry."""
 
