@@ -454,6 +454,15 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
+      - name: Download OpenAPI spec for coverage contract checks
+        run: |
+          mkdir -p .endorlabs-context
+          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+
+      - name: Generate canonical model-sync artifacts for coverage tests
+        run: |
+          uv run python scripts/model_sync.py
+
       - name: Run unit tests with coverage
         run: |
           uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow and not long"
