@@ -12,7 +12,6 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 
 - mapped entities: `337`
 - generated artifact files: `219`
-- artifacts manifest sha256: `5e7190561baad24355d5d19a0ca4d91914c1a498236a6092b181654d665103f5`
 - facade contract resources: `33`
 - registry parity status: `pass`
 - operation metadata entries: `709`
