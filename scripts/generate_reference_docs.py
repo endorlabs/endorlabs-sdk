@@ -174,13 +174,17 @@ def _model_sync_coverage_lines() -> list[str]:
             contract_resources = "unreadable"
     if REGISTRY_PARITY_REPORT_PATH.exists():
         try:
-            payload = json.loads(REGISTRY_PARITY_REPORT_PATH.read_text(encoding="utf-8"))
+            payload = json.loads(
+                REGISTRY_PARITY_REPORT_PATH.read_text(encoding="utf-8")
+            )
             parity_status = str(payload.get("status", "unavailable"))
         except Exception:
             parity_status = "unreadable"
     if OPERATION_PATH_METADATA_PATH.exists():
         try:
-            payload = json.loads(OPERATION_PATH_METADATA_PATH.read_text(encoding="utf-8"))
+            payload = json.loads(
+                OPERATION_PATH_METADATA_PATH.read_text(encoding="utf-8")
+            )
             operation_count = str(payload.get("operation_count", "unavailable"))
         except Exception:
             operation_count = "unreadable"
@@ -195,7 +199,9 @@ def _model_sync_coverage_lines() -> list[str]:
             payload = json.loads(RUNTIME_INDEX_PATH.read_text(encoding="utf-8"))
             model_index = payload.get("model_class_import_by_name")
             runtime_index_models = (
-                str(len(model_index)) if isinstance(model_index, dict) else "unavailable"
+                str(len(model_index))
+                if isinstance(model_index, dict)
+                else "unavailable"
             )
         except Exception:
             runtime_index_models = "unreadable"
@@ -635,7 +641,9 @@ def _generate_coverage_json(spec: dict[str, Any]) -> dict[str, Any]:
             payload_schemas_payload = {}
     if RUNTIME_INDEX_PATH.exists():
         try:
-            runtime_index_payload = json.loads(RUNTIME_INDEX_PATH.read_text(encoding="utf-8"))
+            runtime_index_payload = json.loads(
+                RUNTIME_INDEX_PATH.read_text(encoding="utf-8")
+            )
         except Exception:
             runtime_index_payload = {}
 
@@ -670,7 +678,9 @@ def _generate_coverage_json(spec: dict[str, Any]) -> dict[str, Any]:
         "model_sync_manifest_file_count": manifest_payload.get("file_count", 0),
         "model_sync_manifest_overall_sha256": manifest_payload.get("overall_sha256"),
         "facade_contract_path": contract_path,
-        "facade_contract_resource_count": facade_contract_payload.get("resource_count", 0),
+        "facade_contract_resource_count": facade_contract_payload.get(
+            "resource_count", 0
+        ),
         "registry_parity_report_path": parity_path,
         "registry_parity_status": registry_parity_payload.get("status"),
         "registry_parity_missing_in_mapping_count": len(
@@ -683,7 +693,9 @@ def _generate_coverage_json(spec: dict[str, Any]) -> dict[str, Any]:
             "operation_count", 0
         ),
         "payload_schemas_path": payload_path,
-        "payload_schema_resource_count": payload_schemas_payload.get("resource_count", 0),
+        "payload_schema_resource_count": payload_schemas_payload.get(
+            "resource_count", 0
+        ),
         "runtime_index_path": runtime_index_path,
         "runtime_model_import_count": len(
             runtime_index_payload.get("model_class_import_by_name", {})

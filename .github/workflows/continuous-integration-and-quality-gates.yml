@@ -255,7 +255,7 @@ jobs:
 
       - name: Validate CI-critical automation scripts
         run: |
-          uv run ruff check scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+          uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
           uv run pyright --project pyproject.toml scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
 
       - name: Download OpenAPI spec for model sync
