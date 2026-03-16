@@ -482,33 +482,40 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate required secrets
+      - name: Evaluate code review prerequisites (fail-open)
+        id: review_prereqs
         run: |
+          SHOULD_RUN=true
           if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
-            echo "❌ ERROR: ENDOR_NAMESPACE variable is not set"
-            exit 1
+            echo "::warning::ENDOR_NAMESPACE variable is not set; skipping AI security review."
+            SHOULD_RUN=false
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_KEY secret is not set"
-            exit 1
+            echo "::warning::ENDOR_API_CREDENTIALS_KEY secret is not set; skipping AI security review."
+            SHOULD_RUN=false
           fi
           if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
-            echo "❌ ERROR: ENDOR_API_CREDENTIALS_SECRET secret is not set"
-            exit 1
+            echo "::warning::ENDOR_API_CREDENTIALS_SECRET secret is not set; skipping AI security review."
+            SHOULD_RUN=false
           fi
           if [ -z "${{ vars.ENDOR_API }}" ]; then
-            echo "❌ ERROR: ENDOR_API variable is not set"
-            exit 1
+            echo "::warning::ENDOR_API variable is not set; skipping AI security review."
+            SHOULD_RUN=false
           fi
-          echo "✅ All required secrets are present"
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
+          if [ "$SHOULD_RUN" = "true" ]; then
+            echo "✅ AI security review prerequisites satisfied."
+          fi
 
       - name: Install endorctl
+        if: steps.review_prereqs.outputs.should_run == 'true'
         run: |
           curl -sSfL https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
           chmod +x endorctl
           ./endorctl --version
 
       - name: Run AI Security Code Review
+        if: steps.review_prereqs.outputs.should_run == 'true'
         run: |
           ./endorctl scan \
             --namespace "${{ vars.ENDOR_NAMESPACE }}" \
@@ -524,6 +531,11 @@ jobs:
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Review skipped summary
+        if: steps.review_prereqs.outputs.should_run != 'true'
+        run: |
+          echo "AI security code review skipped (fail-open); missing configuration prerequisites."
 
   # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.
