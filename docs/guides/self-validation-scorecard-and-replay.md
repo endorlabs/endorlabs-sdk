@@ -47,7 +47,7 @@ This allows straightforward diffing between runs.
 
 ## Nightly workflow
 
-Workflow: `.github/workflows/nightly-self-validation.yml`
+Workflow: `.github/workflows/nightly-self-validation-scorecard-and-replay.yml`
 
 Triggers:
 

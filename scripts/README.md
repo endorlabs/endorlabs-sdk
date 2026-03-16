@@ -12,3 +12,6 @@ endorlabs.init()  # downloads to .endorlabs-context/
 See [AGENTS.md](../AGENTS.md#context-bootstrap-for-ai-agents) for details.
 
 No legacy experimental export scripts are currently maintained in this folder.
+
+For canonical model-sync internals and maintenance responsibilities, see
+[`scripts/sync/README.md`](sync/README.md).

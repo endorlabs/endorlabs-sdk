@@ -1,7 +1,7 @@
 # pyright: reportImportCycles=false
 """Resource facade for the resource-oriented Client API.
 
-Provides ``ResourceFacade[T]`` — a single facade class that handles all
+Provides ``ResourceRuntimeFacade[T]`` — a single facade class that handles all
 resource scopes (tenant, system, oss) via the ``scope`` parameter — and
 ``ScanLogsFacade`` for the request-based scan logs workflow.
 
@@ -72,6 +72,7 @@ class _ListableFacade(Generic[T]):
         self._resource_name = entry.resource_name
         self._parent_kind = entry.parent_kind
         self._tags_paths = tags_paths or []
+        self._supported_ops = entry.supported_ops
         self._filter_kwarg_map: dict[str, str] = dict(entry.filter_kwarg_map)
         self._ops: BaseResourceOperations[Any] = BaseResourceOperations(
             client, entry.resource_name, entry.model_class
@@ -243,6 +244,8 @@ class _ListableFacade(Generic[T]):
                 )
 
         """
+        if "list" not in self._supported_ops:
+            raise NotImplementedError("This resource does not support list.") from None
         # Validate concurrent usage
         if concurrent and not traverse:
             raise ValueError(
@@ -433,6 +436,10 @@ class _ListableFacade(Generic[T]):
             project = client.project.lookup(namespace='tenant.team', name='my-project')
 
         """
+        if "list" not in self._supported_ops:
+            raise NotImplementedError(
+                "This resource does not support lookup."
+            ) from None
         items = self.list(
             traverse=traverse,
             concurrent=concurrent,
@@ -534,6 +541,10 @@ class _ListableFacade(Generic[T]):
                 process(finding)
 
         """
+        if "list" not in self._supported_ops:
+            raise NotImplementedError(
+                "This resource does not support list_iter."
+            ) from None
         if concurrent:
             raise NotImplementedError(
                 "concurrent=True is not supported for list_iter. "
@@ -568,7 +579,7 @@ class _ListableFacade(Generic[T]):
         return self._ops.list_iter(ns, lp, max_pages)
 
 
-class ResourceFacade(_ListableFacade[T]):
+class ResourceRuntimeFacade(_ListableFacade[T]):
     """Facade for resources with get/create/update/delete where supported.
 
     id_or_resource / name_or_resource: Methods accept either a UUID string or a
@@ -600,6 +611,9 @@ class ResourceFacade(_ListableFacade[T]):
             entry.build_create_payload_fn
         )
         self._scope: Literal["system", "oss"] | None = entry.scope
+        self._create_mode = entry.create_mode
+        self._update_requires_mask = entry.update_requires_mask
+        self._workflow_flags = entry.workflow_flags
 
     @property
     def scope(self) -> Literal["system", "oss"] | None:
@@ -727,11 +741,16 @@ class ResourceFacade(_ListableFacade[T]):
             raise TypeError("provide either payload= or kwargs for create(), not both.")
         if payload is None and not merged:
             raise TypeError("create() requires payload= or resource-specific kwargs.")
-        if payload is None and merged and self._build_create_payload_fn is not None:
+        if payload is None and merged and self._create_mode == "both":
             # namespace is consumed by _ns(); do not pass to builder
             create_kwargs = {k: v for k, v in merged.items() if k != "namespace"}
+            if self._build_create_payload_fn is None:
+                raise TypeError(
+                    "create() contract is inconsistent: "
+                    "create_mode=both without builder."
+                )
             payload = self._build_create_payload_fn(**create_kwargs)
-        elif payload is None and merged and self._build_create_payload_fn is None:
+        elif payload is None and merged and self._create_mode != "both":
             raise TypeError(
                 "create() for this resource requires payload=; kwargs not supported."
             )
@@ -1084,3 +1103,7 @@ class ScanLogsFacade:
             newest_first=newest_first,
         )
         return result if result is not None else []
+
+
+# Backward-compatible alias while generated stubs and imports converge.
+ResourceFacade = ResourceRuntimeFacade

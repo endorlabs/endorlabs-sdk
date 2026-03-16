@@ -30,10 +30,62 @@ logger = logging.getLogger(__name__)
 
 SPEC_PATH = REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
 SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
+MODEL_SYNC_MAPPING_PATH = (
+    REPO_ROOT
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "mapping"
+    / "entity_mapping.json"
+)
+MODEL_SYNC_MANIFEST_PATH = (
+    REPO_ROOT
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "artifacts_manifest.json"
+)
+FACADE_CONTRACT_PATH = (
+    REPO_ROOT / "workspace" / "model-sync" / "custom_mapping" / "facade_contract.json"
+)
+REGISTRY_PARITY_REPORT_PATH = (
+    REPO_ROOT
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "mapping"
+    / "registry_parity_report.json"
+)
+OPERATION_PATH_METADATA_PATH = (
+    REPO_ROOT
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "mapping"
+    / "operation_path_metadata.json"
+)
+PAYLOAD_SCHEMAS_PATH = (
+    REPO_ROOT
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "mapping"
+    / "payload_schemas.json"
+)
+RUNTIME_INDEX_PATH = (
+    REPO_ROOT
+    / "workspace"
+    / "model-sync"
+    / "custom_mapping"
+    / "mapping"
+    / "runtime_index.json"
+)
 
-RESOURCES_DOC = REPO_ROOT / "docs" / "reference" / "resources.md"
-PAYLOADS_DOC = REPO_ROOT / "docs" / "reference" / "create-update-payloads.md"
-SURFACES_DOC = REPO_ROOT / "docs" / "reference" / "api-surfaces.md"
+GENERATED_REFERENCE_DIR = REPO_ROOT / "docs" / "generated-reference"
+RESOURCES_DOC = GENERATED_REFERENCE_DIR / "resources.md"
+PAYLOADS_DOC = GENERATED_REFERENCE_DIR / "create-update-payloads.md"
+SURFACES_DOC = GENERATED_REFERENCE_DIR / "api-surfaces.md"
+COVERAGE_JSON = GENERATED_REFERENCE_DIR / "coverage.json"
 
 SDK_OP_ORDER = ("list", "get", "create", "update", "delete")
 
@@ -73,6 +125,94 @@ def _load_spec() -> dict[str, Any]:
 
 def _bool_cell(value: bool) -> str:
     return "yes" if value else "no"
+
+
+def _model_sync_summary() -> str:
+    """Return canonical model-sync summary for doc propagation."""
+    if not MODEL_SYNC_MAPPING_PATH.exists():
+        return "Model sync mapping: unavailable."
+    try:
+        payload = json.loads(MODEL_SYNC_MAPPING_PATH.read_text(encoding="utf-8"))
+        entries = payload.get("entries")
+        count = len(entries) if isinstance(entries, list) else 0
+        mapping_path = MODEL_SYNC_MAPPING_PATH.relative_to(REPO_ROOT).as_posix()
+        return f"Model sync mapping: `{mapping_path}` ({count} entities)."
+    except Exception:
+        return "Model sync mapping: unreadable."
+
+
+def _model_sync_coverage_lines() -> list[str]:
+    """Return model-sync coverage lines sourced from manifests."""
+    entry_count = "unavailable"
+    file_count = "unavailable"
+    overall_sha = "unavailable"
+    contract_resources = "unavailable"
+    parity_status = "unavailable"
+    operation_count = "unavailable"
+    payload_resource_count = "unavailable"
+    runtime_index_models = "unavailable"
+
+    if MODEL_SYNC_MAPPING_PATH.exists():
+        try:
+            payload = json.loads(MODEL_SYNC_MAPPING_PATH.read_text(encoding="utf-8"))
+            entry_count = str(payload.get("entry_count", "unavailable"))
+        except Exception:
+            entry_count = "unreadable"
+    if MODEL_SYNC_MANIFEST_PATH.exists():
+        try:
+            payload = json.loads(MODEL_SYNC_MANIFEST_PATH.read_text(encoding="utf-8"))
+            file_count = str(payload.get("file_count", "unavailable"))
+            overall_sha = str(payload.get("overall_sha256", "unavailable"))
+        except Exception:
+            file_count = "unreadable"
+            overall_sha = "unreadable"
+    if FACADE_CONTRACT_PATH.exists():
+        try:
+            payload = json.loads(FACADE_CONTRACT_PATH.read_text(encoding="utf-8"))
+            contract_resources = str(payload.get("resource_count", "unavailable"))
+        except Exception:
+            contract_resources = "unreadable"
+    if REGISTRY_PARITY_REPORT_PATH.exists():
+        try:
+            payload = json.loads(REGISTRY_PARITY_REPORT_PATH.read_text(encoding="utf-8"))
+            parity_status = str(payload.get("status", "unavailable"))
+        except Exception:
+            parity_status = "unreadable"
+    if OPERATION_PATH_METADATA_PATH.exists():
+        try:
+            payload = json.loads(OPERATION_PATH_METADATA_PATH.read_text(encoding="utf-8"))
+            operation_count = str(payload.get("operation_count", "unavailable"))
+        except Exception:
+            operation_count = "unreadable"
+    if PAYLOAD_SCHEMAS_PATH.exists():
+        try:
+            payload = json.loads(PAYLOAD_SCHEMAS_PATH.read_text(encoding="utf-8"))
+            payload_resource_count = str(payload.get("resource_count", "unavailable"))
+        except Exception:
+            payload_resource_count = "unreadable"
+    if RUNTIME_INDEX_PATH.exists():
+        try:
+            payload = json.loads(RUNTIME_INDEX_PATH.read_text(encoding="utf-8"))
+            model_index = payload.get("model_class_import_by_name")
+            runtime_index_models = (
+                str(len(model_index)) if isinstance(model_index, dict) else "unavailable"
+            )
+        except Exception:
+            runtime_index_models = "unreadable"
+
+    return [
+        "## Model-sync coverage snapshot",
+        "",
+        f"- mapped entities: `{entry_count}`",
+        f"- generated artifact files: `{file_count}`",
+        f"- artifacts manifest sha256: `{overall_sha}`",
+        f"- facade contract resources: `{contract_resources}`",
+        f"- registry parity status: `{parity_status}`",
+        f"- operation metadata entries: `{operation_count}`",
+        f"- payload schema resources: `{payload_resource_count}`",
+        f"- runtime model import index entries: `{runtime_index_models}`",
+        "",
+    ]
 
 
 def _sig_summary(fn: Any | None) -> str:
@@ -179,6 +319,7 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
         "# Resources (SDK API Surface)",
         "",
         "Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.",
+        _model_sync_summary(),
         "Each operation column is `sdk/spec` where spec is derived from OpenAPI",
         "collection and item paths.",
         "",
@@ -197,6 +338,7 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
         "Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |",
         "|----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|",
     ]
+    lines.extend(_model_sync_coverage_lines())
     for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
         spec_support = _spec_support_by_op(spec, entry.resource_name)
         limitations = RESOURCE_LIMITATIONS.get(entry.attr_name, "—")
@@ -249,6 +391,7 @@ def _generate_payloads_md() -> str:
         "",
         "Auto-generated from `RESOURCE_REGISTRY`, builder return types,",
         "and payload models.",
+        _model_sync_summary(),
         "",
         "## Create payload/builders",
         "",
@@ -256,6 +399,7 @@ def _generate_payloads_md() -> str:
         "Required fields | Optional fields |",
         "|----------|--------------------|---------|---------------|-----------------|-----------------|",
     ]
+    lines.extend(_model_sync_coverage_lines())
     for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
         create_supported = "create" in entry.supported_ops
         builder = entry.build_create_payload_fn
@@ -346,6 +490,7 @@ def _generate_api_surfaces_md() -> str:
         "## Top-level exports (`endorlabs.__all__`)",
         "",
     ]
+    lines.extend(_model_sync_coverage_lines())
     lines.extend([f"- `{symbol}`" for symbol in sorted(endorlabs.__all__)])
 
     lines.extend(
@@ -429,11 +574,130 @@ def _generate_api_surfaces_md() -> str:
 
 
 def _write_if_changed(path: Path, content: str) -> bool:
+    path.parent.mkdir(parents=True, exist_ok=True)
     old = path.read_text(encoding="utf-8") if path.exists() else ""
     if old == content:
         return False
     path.write_text(content, encoding="utf-8")
     return True
+
+
+def _generate_coverage_json(spec: dict[str, Any]) -> dict[str, Any]:
+    """Generate machine-readable coverage metadata for generated reference docs."""
+    mapping_payload: dict[str, Any] = {}
+    manifest_payload: dict[str, Any] = {}
+    facade_contract_payload: dict[str, Any] = {}
+    registry_parity_payload: dict[str, Any] = {}
+    operation_path_metadata_payload: dict[str, Any] = {}
+    payload_schemas_payload: dict[str, Any] = {}
+    runtime_index_payload: dict[str, Any] = {}
+    if MODEL_SYNC_MAPPING_PATH.exists():
+        try:
+            mapping_payload = json.loads(
+                MODEL_SYNC_MAPPING_PATH.read_text(encoding="utf-8")
+            )
+        except Exception:
+            mapping_payload = {}
+    if MODEL_SYNC_MANIFEST_PATH.exists():
+        try:
+            manifest_payload = json.loads(
+                MODEL_SYNC_MANIFEST_PATH.read_text(encoding="utf-8")
+            )
+        except Exception:
+            manifest_payload = {}
+    if FACADE_CONTRACT_PATH.exists():
+        try:
+            facade_contract_payload = json.loads(
+                FACADE_CONTRACT_PATH.read_text(encoding="utf-8")
+            )
+        except Exception:
+            facade_contract_payload = {}
+    if REGISTRY_PARITY_REPORT_PATH.exists():
+        try:
+            registry_parity_payload = json.loads(
+                REGISTRY_PARITY_REPORT_PATH.read_text(encoding="utf-8")
+            )
+        except Exception:
+            registry_parity_payload = {}
+    if OPERATION_PATH_METADATA_PATH.exists():
+        try:
+            operation_path_metadata_payload = json.loads(
+                OPERATION_PATH_METADATA_PATH.read_text(encoding="utf-8")
+            )
+        except Exception:
+            operation_path_metadata_payload = {}
+    if PAYLOAD_SCHEMAS_PATH.exists():
+        try:
+            payload_schemas_payload = json.loads(
+                PAYLOAD_SCHEMAS_PATH.read_text(encoding="utf-8")
+            )
+        except Exception:
+            payload_schemas_payload = {}
+    if RUNTIME_INDEX_PATH.exists():
+        try:
+            runtime_index_payload = json.loads(RUNTIME_INDEX_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            runtime_index_payload = {}
+
+    resource_rows: list[dict[str, Any]] = []
+    for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
+        spec_support = _spec_support_by_op(spec, entry.resource_name)
+        sdk_support = {
+            operation: operation in entry.supported_ops for operation in SDK_OP_ORDER
+        }
+        resource_rows.append(
+            {
+                "attr_name": entry.attr_name,
+                "resource_name": entry.resource_name,
+                "scope": entry.scope or "tenant",
+                "parent_kind": entry.parent_kind,
+                "supported_ops_sdk": sdk_support,
+                "supported_ops_spec": spec_support,
+            }
+        )
+
+    mapping_path = MODEL_SYNC_MAPPING_PATH.relative_to(REPO_ROOT).as_posix()
+    manifest_path = MODEL_SYNC_MANIFEST_PATH.relative_to(REPO_ROOT).as_posix()
+    contract_path = FACADE_CONTRACT_PATH.relative_to(REPO_ROOT).as_posix()
+    parity_path = REGISTRY_PARITY_REPORT_PATH.relative_to(REPO_ROOT).as_posix()
+    operation_path = OPERATION_PATH_METADATA_PATH.relative_to(REPO_ROOT).as_posix()
+    payload_path = PAYLOAD_SCHEMAS_PATH.relative_to(REPO_ROOT).as_posix()
+    runtime_index_path = RUNTIME_INDEX_PATH.relative_to(REPO_ROOT).as_posix()
+    return {
+        "model_sync_mapping_path": mapping_path,
+        "model_sync_entry_count": mapping_payload.get("entry_count", 0),
+        "model_sync_manifest_path": manifest_path,
+        "model_sync_manifest_file_count": manifest_payload.get("file_count", 0),
+        "model_sync_manifest_overall_sha256": manifest_payload.get("overall_sha256"),
+        "facade_contract_path": contract_path,
+        "facade_contract_resource_count": facade_contract_payload.get("resource_count", 0),
+        "registry_parity_report_path": parity_path,
+        "registry_parity_status": registry_parity_payload.get("status"),
+        "registry_parity_missing_in_mapping_count": len(
+            registry_parity_payload.get("missing_in_mapping", [])
+            if isinstance(registry_parity_payload.get("missing_in_mapping"), list)
+            else []
+        ),
+        "operation_path_metadata_path": operation_path,
+        "operation_path_metadata_count": operation_path_metadata_payload.get(
+            "operation_count", 0
+        ),
+        "payload_schemas_path": payload_path,
+        "payload_schema_resource_count": payload_schemas_payload.get("resource_count", 0),
+        "runtime_index_path": runtime_index_path,
+        "runtime_model_import_count": len(
+            runtime_index_payload.get("model_class_import_by_name", {})
+            if isinstance(runtime_index_payload.get("model_class_import_by_name"), dict)
+            else {}
+        ),
+        "runtime_capability_resource_count": len(
+            runtime_index_payload.get("capability_by_resource", {})
+            if isinstance(runtime_index_payload.get("capability_by_resource"), dict)
+            else {}
+        ),
+        "resource_count": len(RESOURCE_REGISTRY),
+        "resources": resource_rows,
+    }
 
 
 def main() -> int:
@@ -451,6 +715,9 @@ def main() -> int:
         RESOURCES_DOC: _generate_resources_md(spec),
         PAYLOADS_DOC: _generate_payloads_md(),
         SURFACES_DOC: _generate_api_surfaces_md(),
+        COVERAGE_JSON: (
+            json.dumps(_generate_coverage_json(spec), indent=2, sort_keys=True) + "\n"
+        ),
     }
 
     changed_files: list[Path] = []
@@ -468,9 +735,10 @@ def main() -> int:
     if changed_files:
         logger.info("Updated generated docs:")
         for path in changed_files:
-            logger.info(" - %s", path.relative_to(REPO_ROOT))
+            logger.info(" - %s", path.relative_to(REPO_ROOT).as_posix())
     else:
         logger.info("Generated docs are already up to date.")
+
     return 0
 
 

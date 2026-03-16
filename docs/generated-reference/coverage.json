@@ -1,0 +1,682 @@
+{
+  "facade_contract_path": "workspace/model-sync/custom_mapping/facade_contract.json",
+  "facade_contract_resource_count": 33,
+  "model_sync_entry_count": 337,
+  "model_sync_manifest_file_count": 219,
+  "model_sync_manifest_overall_sha256": "5e7190561baad24355d5d19a0ca4d91914c1a498236a6092b181654d665103f5",
+  "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
+  "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
+  "operation_path_metadata_count": 709,
+  "operation_path_metadata_path": "workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json",
+  "payload_schema_resource_count": 33,
+  "payload_schemas_path": "workspace/model-sync/custom_mapping/mapping/payload_schemas.json",
+  "registry_parity_missing_in_mapping_count": 0,
+  "registry_parity_report_path": "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json",
+  "registry_parity_status": "pass",
+  "resource_count": 33,
+  "resources": [
+    {
+      "attr_name": "api_key",
+      "parent_kind": null,
+      "resource_name": "api-keys",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "audit_log",
+      "parent_kind": null,
+      "resource_name": "audit-logs",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "authentication_log",
+      "parent_kind": null,
+      "resource_name": "authentication-logs",
+      "scope": "system",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "authorization_policy",
+      "parent_kind": null,
+      "resource_name": "authorization-policies",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "code_owners",
+      "parent_kind": null,
+      "resource_name": "codeowners",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "dependency_metadata",
+      "parent_kind": null,
+      "resource_name": "dependency-metadata",
+      "scope": "oss",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "endor_license",
+      "parent_kind": null,
+      "resource_name": "endor-licenses",
+      "scope": "system",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "finding",
+      "parent_kind": null,
+      "resource_name": "findings",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "finding_log",
+      "parent_kind": null,
+      "resource_name": "finding-logs",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "installation",
+      "parent_kind": null,
+      "resource_name": "installations",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "invitation",
+      "parent_kind": null,
+      "resource_name": "invitations",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "linter_result",
+      "parent_kind": null,
+      "resource_name": "linter-results",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "malware",
+      "parent_kind": null,
+      "resource_name": "malware",
+      "scope": "oss",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "metric",
+      "parent_kind": null,
+      "resource_name": "metrics",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "namespace",
+      "parent_kind": null,
+      "resource_name": "namespaces",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "notification_target",
+      "parent_kind": null,
+      "resource_name": "notification-targets",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "package_license",
+      "parent_kind": null,
+      "resource_name": "package-licenses",
+      "scope": "oss",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "package_version",
+      "parent_kind": null,
+      "resource_name": "package-versions",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "policy",
+      "parent_kind": null,
+      "resource_name": "policies",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "policy_template",
+      "parent_kind": null,
+      "resource_name": "policy-templates",
+      "scope": "system",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "project",
+      "parent_kind": null,
+      "resource_name": "projects",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "query_malware",
+      "parent_kind": null,
+      "resource_name": "queries/malware",
+      "scope": "oss",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "query_vulnerability",
+      "parent_kind": null,
+      "resource_name": "queries/vulnerabilities",
+      "scope": "oss",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "repository",
+      "parent_kind": null,
+      "resource_name": "repositories",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "repository_version",
+      "parent_kind": "project",
+      "resource_name": "repository-versions",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "scan_log_request",
+      "parent_kind": null,
+      "resource_name": "scan-log-requests",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "scan_profile",
+      "parent_kind": null,
+      "resource_name": "scan-profiles",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "scan_result",
+      "parent_kind": "project",
+      "resource_name": "scan-results",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "scan_workflow",
+      "parent_kind": null,
+      "resource_name": "scan-workflows",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "scan_workflow_result",
+      "parent_kind": null,
+      "resource_name": "scan-workflow-results",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "semgrep_rule",
+      "parent_kind": null,
+      "resource_name": "semgrep-rules",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "version_upgrade",
+      "parent_kind": null,
+      "resource_name": "version-upgrades",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "vulnerability",
+      "parent_kind": null,
+      "resource_name": "vulnerabilities",
+      "scope": "oss",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    }
+  ],
+  "runtime_capability_resource_count": 33,
+  "runtime_index_path": "workspace/model-sync/custom_mapping/mapping/runtime_index.json",
+  "runtime_model_import_count": 33
+}

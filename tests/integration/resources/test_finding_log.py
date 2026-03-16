@@ -3,7 +3,8 @@
 Tests GET, POST, and DELETE operations for FindingLog resources, including
 filtering by operation type and finding UUID.
 
-Greenfield alias unit tests live in tests/unit/models/test_greenfield_aliases.py.
+Greenfield alias unit tests live in
+tests/unit/platform/models/test_greenfield_aliases.py.
 """
 
 import pytest

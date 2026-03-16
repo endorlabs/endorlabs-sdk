@@ -6,7 +6,7 @@ For contributors and AI agents: process and checklists for implementing and vali
 - [resource-implementation.md](resource-implementation.md) — Checklists for adding a new resource; see [contracts.md](../contracts.md).
 - [api-validation.md](api-validation.md) — Pre-implementation validation steps; spec path in [contracts.md](../contracts.md).
 - [troubleshooting.md](troubleshooting.md) — Workflow only; detailed stories: local docs snapshots or repo issues.
-- [docs-drift-workflow.md](docs-drift-workflow.md) — Unified docs sync and schema drift detection.
+- [docs-drift-workflow.md](docs-drift-workflow.md) — Unified docs sync and canonical model sync workflow.
 - [namespace-traversal.md](namespace-traversal.md) — Traverse and list parameters; patterns and examples.
 - [spec-first-prototype-branch.md](spec-first-prototype-branch.md) — Prototype baseline and preserved components.
 - [spec-first-stainless-feasibility.md](spec-first-stainless-feasibility.md) — Stainless-first feasibility and fallback strategy.
