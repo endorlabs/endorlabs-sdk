@@ -145,7 +145,6 @@ def _model_sync_coverage_lines() -> list[str]:
     """Return model-sync coverage lines sourced from manifests."""
     entry_count = "unavailable"
     file_count = "unavailable"
-    overall_sha = "unavailable"
     contract_resources = "unavailable"
     parity_status = "unavailable"
     operation_count = "unavailable"
@@ -162,10 +161,8 @@ def _model_sync_coverage_lines() -> list[str]:
         try:
             payload = json.loads(MODEL_SYNC_MANIFEST_PATH.read_text(encoding="utf-8"))
             file_count = str(payload.get("file_count", "unavailable"))
-            overall_sha = str(payload.get("overall_sha256", "unavailable"))
         except Exception:
             file_count = "unreadable"
-            overall_sha = "unreadable"
     if FACADE_CONTRACT_PATH.exists():
         try:
             payload = json.loads(FACADE_CONTRACT_PATH.read_text(encoding="utf-8"))
@@ -211,7 +208,6 @@ def _model_sync_coverage_lines() -> list[str]:
         "",
         f"- mapped entities: `{entry_count}`",
         f"- generated artifact files: `{file_count}`",
-        f"- artifacts manifest sha256: `{overall_sha}`",
         f"- facade contract resources: `{contract_resources}`",
         f"- registry parity status: `{parity_status}`",
         f"- operation metadata entries: `{operation_count}`",
@@ -676,7 +672,6 @@ def _generate_coverage_json(spec: dict[str, Any]) -> dict[str, Any]:
         "model_sync_entry_count": mapping_payload.get("entry_count", 0),
         "model_sync_manifest_path": manifest_path,
         "model_sync_manifest_file_count": manifest_payload.get("file_count", 0),
-        "model_sync_manifest_overall_sha256": manifest_payload.get("overall_sha256"),
         "facade_contract_path": contract_path,
         "facade_contract_resource_count": facade_contract_payload.get(
             "resource_count", 0
