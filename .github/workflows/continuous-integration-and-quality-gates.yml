@@ -481,7 +481,7 @@ jobs:
     name: AI-Assisted Security Code Review
     runs-on: ubuntu-latest
     continue-on-error: true
-    if: github.event_name == 'pull_request'
+    if: ${{ false }} # Temporarily disabled per branch hardening pass
     permissions:
       contents: read
       pull-requests: write

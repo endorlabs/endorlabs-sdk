@@ -275,6 +275,9 @@ markers = [
 fail_under = 70
 omit = [
     "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
+    "src/endorlabs/generated/*",  # OpenAPI-generated artifacts; validated via contract quality gates
+    "src/endorlabs/_demo/*",  # Demo-only CLI surface
+    "src/endorlabs/agent/*",  # Optional extras package validated separately
 ]
 exclude_lines = [
     "pragma: no cover",
