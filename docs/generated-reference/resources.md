@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (337 entities).
+Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (257 entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -20,11 +20,11 @@ Legend:
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `337`
-- generated artifact files: `219`
+- mapped entities: `257`
+- generated artifact files: `169`
 - facade contract resources: `33`
 - registry parity status: `pass`
-- operation metadata entries: `709`
+- operation metadata entries: `719`
 - payload schema resources: `33`
 - runtime model import index entries: `33`
 
