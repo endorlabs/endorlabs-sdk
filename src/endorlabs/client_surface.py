@@ -1,7 +1,7 @@
 """Resource-oriented Client facade for the Endor Labs SDK.
 
 Provides endorlabs.Client(api_client=..., tenant=...) with .namespaces, etc.,
-building ResourceFacade instances from declarative registry entries.
+building ResourceRuntimeFacade instances from declarative registry entries.
 All facades are built from the registries in endorlabs.registry.
 """
 
@@ -13,8 +13,8 @@ from .api_client import APIClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-from .facade import ResourceFacade
-from .filter import F
+from .core.filter import F
+from .facade import ResourceRuntimeFacade
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
@@ -77,7 +77,7 @@ class Client:
 
     # -- Internal factory ---------------------------------------------------
 
-    def _build_facade(self, entry: ResourceEntry) -> ResourceFacade[Any]:
+    def _build_facade(self, entry: ResourceEntry) -> ResourceRuntimeFacade[Any]:
         """Build the appropriate facade for *entry* based on its scope."""
         if self._client is None:
             raise RuntimeError("Client is closed.")  # pragma: no cover
@@ -88,8 +88,8 @@ class Client:
             else []
         )
         return cast(
-            "ResourceFacade[Any]",
-            ResourceFacade[entry.model_class](
+            "ResourceRuntimeFacade[Any]",
+            ResourceRuntimeFacade[entry.model_class](
                 self._client,
                 self._default_namespace,
                 entry,

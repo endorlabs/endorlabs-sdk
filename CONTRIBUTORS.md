@@ -72,6 +72,11 @@ Integration tests (require valid credentials):
 uv run pytest -m integration -v
 ```
 
+Domain-driven test layout:
+
+- `tests/unit/{client,workflows,platform,tooling}`
+- `tests/integration/{client,resources,workflows}`
+
 ## Linting and type checking
 
 ```bash
@@ -83,7 +88,21 @@ git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/ci.yml](.github/workflows/ci.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
+CI runs these; see [.github/workflows/continuous-integration-and-quality-gates.yml](.github/workflows/continuous-integration-and-quality-gates.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
+
+## Model-Sync automation topology
+
+Model-sync automation is split by responsibility:
+
+- **Detector:** `.github/workflows/model-sync-change-detection-and-validation.yml`
+  - checks latest `endorctl` version + OpenAPI SHA drift
+  - dispatches `repository_dispatch` (`model-sync-check`) when a version/spec change is detected
+- **Sync + PR:** `.github/workflows/model-sync-sync-and-pr.yml`
+  - runs canonical generation (`scripts/model_sync.py --generate-stubs --generate-reference-docs`)
+  - scopes changed files to generated surfaces
+  - creates/updates bot PR branch (`chore/model-sync-auto`)
+- **CI gate:** `.github/workflows/continuous-integration-and-quality-gates.yml`
+  - remains the required merge gate for all PRs, including bot PRs
 
 ## Optional: direnv
 
@@ -93,9 +112,9 @@ If you use [direnv](https://direnv.net/), run `direnv allow` in the repo root. [
 
 When using or documenting the registry-based client (`client.namespace`, `client.project`, etc.):
 
-- **List:** Use flat kwargs on `.list()` — e.g. `client.project.list(traverse=True)`, `client.project.list(filter="...", mask="meta.name,spec.level", max_pages=1)`. Do **not** combine filter and mask into one parameter; filter = which rows, mask = which fields in the response. See [docs/conventions.md](docs/conventions.md) (List parameters, Update and update_mask) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+- **List:** Use flat kwargs on `.list()` — e.g. `client.project.list(traverse=True)`, `client.project.list(filter="...", mask="meta.name,spec.level", max_pages=1)`. Do **not** combine filter and mask into one parameter; filter = which rows, mask = which fields in the response. See [docs/contracts.md](docs/contracts.md) (List parameters, Update and update_mask) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
 - **Update:** Use `update_mask` only on `.update()`; it is separate from list mask.
-- **Spec-driven UX:** Align with spec; centralize sources of truth in modules (see [docs/conventions.md](docs/conventions.md) and [docs/rules-of-engagement/](docs/rules-of-engagement/)).
+- **Spec-driven UX:** Align with spec; centralize sources of truth in modules (see [docs/contracts.md](docs/contracts.md) and [docs/rules-of-engagement/](docs/rules-of-engagement/)).
 
 ## Optional: sync external docs
 
@@ -124,7 +143,7 @@ uv run python scripts/self_validation_scorecard.py \
   --deterministic
 ```
 
-Nightly automation is defined in `.github/workflows/nightly-self-validation.yml`.
+Nightly automation is defined in `.github/workflows/nightly-self-validation-scorecard-and-replay.yml`.
 
 Supported trigger paths:
 

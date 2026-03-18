@@ -1,0 +1,124 @@
+name: Release Validation, Build, and Publish
+
+# Triggered when a version tag is pushed (e.g. v0.1.0, v1.0.0-rc.1).
+# Builds the package, runs the quality gate, and creates a GitHub Release
+# with the wheel and sdist attached.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.13"
+  UV_VERSION: "0.9.3"
+
+jobs:
+  release:
+    name: Validate, Build, and Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0  # full history for hatch-vcs version derivation
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v7.2.0
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run quality gate
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run pyright
+          uv run pytest tests/unit/ -x -m "not slow and not long"
+
+      - name: Download OpenAPI spec for model sync
+        run: |
+          mkdir -p .endorlabs-context
+          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+
+      - name: Verify canonical model-sync artifacts are up to date
+        run: |
+          uv run python scripts/model_sync.py
+          if [ ! -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json ]; then
+            echo "::error::Model-sync mapping manifest was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/provenance.json ]; then
+            echo "::error::Model-sync provenance metadata was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/artifacts_manifest.json ]; then
+            echo "::error::Model-sync artifacts manifest was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/facade_contract.json ]; then
+            echo "::error::Model-sync facade contract was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/mapping/registry_parity_report.json ]; then
+            echo "::error::Model-sync registry parity report was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json ]; then
+            echo "::error::Model-sync operation metadata was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/mapping/payload_schemas.json ]; then
+            echo "::error::Model-sync payload schema metadata was not generated."
+            exit 1
+          fi
+          if [ ! -f workspace/model-sync/custom_mapping/mapping/runtime_index.json ]; then
+            echo "::error::Model-sync runtime index metadata was not generated."
+            exit 1
+          fi
+          if [ ! -f src/endorlabs/generated/models/__init__.py ]; then
+            echo "::error::Runtime generated model package was not generated."
+            exit 1
+          fi
+
+      - name: Verify generated client stub is up to date
+        run: |
+          uv run python scripts/generate_client_stub.py
+          if ! git diff --exit-code -- src/endorlabs/client_surface.pyi; then
+            echo "::error::client_surface.pyi is out of date. Run: uv run python scripts/generate_client_stub.py"
+            git --no-pager diff -- src/endorlabs/client_surface.pyi
+            exit 1
+          fi
+
+      - name: Verify generated reference docs are up to date
+        run: |
+          uv run python scripts/generate_reference_docs.py
+          if ! git diff --exit-code -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json; then
+            echo "::error::Reference docs are out of date. Run: uv run python scripts/generate_reference_docs.py"
+            git --no-pager diff -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json
+            exit 1
+          fi
+
+      - name: Build package
+        run: uv build
+
+      - name: Verify build artifacts
+        run: |
+          echo "Build artifacts:"
+          ls -la dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

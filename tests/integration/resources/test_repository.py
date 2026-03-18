@@ -47,8 +47,8 @@ class TestRepository:
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
         """
-        from endorlabs.exceptions import ServerError
-        from endorlabs.types import ListParameters
+        from endorlabs.core.exceptions import ServerError
+        from endorlabs.core.types import ListParameters
 
         try:
             results = self.endor_root_client.repository.list(
@@ -66,7 +66,7 @@ class TestRepository:
     def test_repository_list(self) -> None:
         """LIST from tenant root with traverse."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -84,7 +84,7 @@ class TestRepository:
     def test_repository_get(self) -> None:
         """GET first item from LIST (root + traverse)."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -112,7 +112,7 @@ class TestRepository:
     def test_repository_advanced_filtering(self) -> None:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING REPOSITORY FILTERING ===")
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         # Test filtering by platform source
         github_repos = self.endor_root_client.repository.list(
@@ -149,7 +149,7 @@ class TestRepository:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.exceptions import ValidationError
+        from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             self.endor_root_client.repository.get("invalid-uuid")
@@ -161,7 +161,7 @@ class TestRepository:
     def test_client_ux_update_repository(self) -> None:
         """Consumer UX: client.repository.get() then update then revert."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.namespace,

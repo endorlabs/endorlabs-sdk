@@ -11,5 +11,8 @@ When editing resource modules, enforce:
 2. **Field aliasing tiers:** Tier 1 (mandatory) — alias reserved words and invalid identifiers. Tier 2 — 1:1 with spec (snake_case). Tier 3 — avoid renaming for prettiness; alias only when API name is misleading; document reason.
 3. **Mutable fields:** Override `get_mutable_fields_cls()` and `get_immutable_fields_cls()` on the model when the resource has more than the base defaults. The facade's explicit kwargs are a convenience subset.
 4. **Create payloads:** Implement `build_create_payload` on the resource module when the resource supports create. The builder defines which kwargs are accepted.
+5. **Canonical model sync source:** Treat custom-mapped generated models from OpenAPI as the canonical schema source for resource modeling decisions. Hand-authored resource models/facades may add behavior, but field shape decisions must remain aligned with generated model sync outputs.
+6. **Eligibility policy:** Resource generation is eligible by default when `x-internal != true`. Explicit exceptions are allowed for already-modeled resources kept in the SDK surface (registry allowlist), even if endpoint metadata is inconsistent.
+7. **Deterministic bucketing:** Generated models must be bucketed deterministically (resource/service domain primary, operation fallback, bounded misc fallback) with a stable `entity -> module` mapping manifest.
 
 Full rules: [docs/rules-of-engagement/resource-implementation.md](docs/rules-of-engagement/resource-implementation.md).

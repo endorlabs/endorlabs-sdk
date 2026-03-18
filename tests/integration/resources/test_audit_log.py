@@ -10,8 +10,8 @@ import pytest
 
 import endorlabs
 from endorlabs.api_client import APIClient
+from endorlabs.core.types import ListParameters
 from endorlabs.resources.audit_log import AuditLogOperation
-from endorlabs.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_MAX_PAGES_TRAVERSE,
@@ -267,7 +267,7 @@ class TestAuditLog:
         remote_address, similar to test_audit_log_traverse pattern.
         """
         print("\n=== TESTING FILTER BY REMOTE ADDRESS ===")
-        from endorlabs.types import ListParameters
+        from endorlabs.core.types import ListParameters
 
         # Use traverse with filter to find logs with remote_address across namespaces
         # Filter to find logs that have a non-empty remote_address

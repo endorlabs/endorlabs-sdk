@@ -1,17 +1,17 @@
 # Troubleshooting Rules of Engagement
 
-Workflow below. Resolved-case narratives: `.endorlabs-context/docs/` (local) or [docs.endorlabs.com](https://docs.endorlabs.com/) (online fallback); also search repo issues.
+Workflow below. Resolved-case narratives: local docs snapshots under `.endorlabs-context/docs/` and repo issues.
 
 ## Platform insight: path namespace vs body UUID
 
 For endpoints that take a **resource UUID in the body** and a **namespace in the path** (e.g. create scan-log-request with `scan_result_uuid`), the path namespace must be the **owning** namespace of that resource (the resource’s `tenant_meta.namespace`). Using a **parent** namespace can return 500 even with a valid UUID. This behavior is not always stated in the API spec; document it in SDK docstrings once confirmed.
 
-**Avoiding 404 after traverse:** When you act on objects returned from `list(traverse=True)` (or broad filters), pass the **resource object** to `get`, `update`, or `delete` (e.g. `client.project.delete(target)`). The SDK then uses the resource's `tenant_meta.namespace` so the path matches the owning namespace; otherwise using the client default namespace can cause 404 Not Found. See [conventions.md](../conventions.md) (Namespace scoping) and `endorlabs.utils.resolve_namespace_for_resource`.
+**Avoiding 404 after traverse:** When you act on objects returned from `list(traverse=True)` (or broad filters), pass the **resource object** to `get`, `update`, or `delete` (e.g. `client.project.delete(target)`). The SDK then uses the resource's `tenant_meta.namespace` so the path matches the owning namespace; otherwise using the client default namespace can cause 404 Not Found. See [contracts.md](../contracts.md) (Namespace scoping) and `endorlabs.utils.resolve_namespace_for_resource`.
 
 ## Workflow
 
 1. **Document** — Task, context, approach, errors and stack traces.
-2. **Research** — Search codebase and docs; review API spec (see [conventions.md](../conventions.md)).
+2. **Research** — Search codebase and docs; review API spec (see [contracts.md](../contracts.md)).
 3. **Investigate** — Read SDK code and spec; test with endorctl; validate theories.
 4. **Resolve** — Implement fix; document signatures and learnings.
 
@@ -27,7 +27,7 @@ For endpoints that take a **resource UUID in the body** and a **namespace in the
 
 ## System-owned resources (authentication_log, endor_license, policy_template)
 
-These resources live in the system namespace; LIST is allowed, but GET, UPDATE, and DELETE return 403 (only system can perform them). The SDK Client exposes list() only for these resources; calling get/update/delete on the facade raises NotImplementedError. Use `client.authentication_log.list()`, `client.endor_license.list()`, and `client.policy_template.list()` only.
+These resources are system-scoped in the SDK facade. Use `list()` for tenant/system namespace visibility. `get()` is supported only when `namespace="oss"`. `create`, `update`, and `delete` are not exposed on these facades.
 
 ## Test skips (short test summary)
 
@@ -68,5 +68,5 @@ Tests that **create then delete** as the behavior under test (e.g. test_client_u
 
 ## References
 
-- OpenAPI/spec path and list/update patterns: [conventions.md](../conventions.md).
-- For resolved-case narratives (wrong URL pattern, update_mask, tags): see [docs.endorlabs.com](https://docs.endorlabs.com/) or repo issues.
+- OpenAPI/spec path and list/update patterns: [contracts.md](../contracts.md).
+- For resolved-case narratives (wrong URL pattern, update_mask, tags): use local docs snapshots under `.endorlabs-context/docs/` or repo issues.

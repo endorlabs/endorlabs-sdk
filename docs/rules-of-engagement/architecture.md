@@ -17,18 +17,19 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
    - Single `ResourceFacade[T]` class handles all scopes via the `scope` parameter (`None` for tenant, `"system"`, `"oss"`).
    - Enforces supported operations from registry metadata; unsupported methods raise `NotImplementedError`.
 
-4. **Registry** — single source of truth for which resources exist on `Client`
-   - One entry per resource via `ResourceEntry(attr_name=..., resource_name=..., model_class=..., supported_ops=..., ...)`.
-   - Adding a resource = one registry entry.
+4. **Registry adapter** — generated-contract + overlay source of truth for `Client`
+   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `scripts/model_sync.py`.
+   - `registry.py` adapts generated contract rows into `ResourceEntry(...)` objects and applies explicit overrides from `registry_overlay.py`.
+   - Adding/changing a resource should happen via model-sync inputs and the minimal overlay, not by hand-authoring a large registry table.
 
 ## Rules
 
 - **No coupling:** APIClient does not import or depend on resources, facade, or registry. Only the Client/facade layer depends on resource modules.
-- **Registry-driven:** New resources are added by appending to the registry (e.g. `RESOURCE_REGISTRY` in `registry.py`), not by adding new lines in `Client.__init__`.
+- **Contract-driven:** New resources are added through model-sync generated contract data (and explicit overlay when needed), not by adding new lines in `Client.__init__`.
 - **Facade delegates to BaseResourceOperations:** The facade instantiates `BaseResourceOperations` from registry metadata and delegates CRUD calls to it. Resource modules contain Pydantic models and convenience functions only — no module-level CRUD wrappers.
 - **Types:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.namespace.list()` is typed as `list[Namespace]`; keep full type annotations for Pyright.
 
 ## When to Use
 
-- Editing `client_surface.py`, `facade.py`, or `registry.py`.
-- Adding or changing a resource exposed on `Client` (e.g. adding a new resource to the registry after implementing its module).
+- Editing `client_surface.py`, `facade.py`, `registry.py`, or `registry_overlay.py`.
+- Adding or changing a resource exposed on `Client` (through model-sync contract generation plus minimal overlay).

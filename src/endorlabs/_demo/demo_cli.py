@@ -27,7 +27,7 @@ from typing import Any, cast
 
 import endorlabs
 from endorlabs import F
-from endorlabs.exceptions import PermissionDeniedError
+from endorlabs.core.exceptions import PermissionDeniedError
 from endorlabs.utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)

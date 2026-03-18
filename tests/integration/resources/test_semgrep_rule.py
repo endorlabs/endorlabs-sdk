@@ -100,7 +100,7 @@ class TestSemgrepRule:
             ),
             propagate=False,
         )
-        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.core.exceptions import PermissionDeniedError
 
         created = None
         try:
@@ -140,7 +140,7 @@ class TestSemgrepRule:
             ),
             propagate=False,
         )
-        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.core.exceptions import PermissionDeniedError
 
         created = None
         try:
@@ -202,7 +202,7 @@ class TestSemgrepRule:
             ),
             propagate=False,
         )
-        from endorlabs.exceptions import PermissionDeniedError
+        from endorlabs.core.exceptions import PermissionDeniedError
 
         try:
             created = client.semgrep_rule.create(payload)

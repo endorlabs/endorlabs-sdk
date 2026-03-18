@@ -24,7 +24,7 @@ pass the **resource object** to `get`, `update`, or `delete` (e.g.,
 `tenant_meta.namespace` so the path matches the owning namespace; otherwise
 using the client default namespace can cause 404 Not Found.
 
-See `docs/conventions.md` (Namespace scoping) and
+See `docs/contracts.md` (Namespace scoping) and
 `endorlabs.utils.resolve_namespace_for_resource`.
 
 ---
@@ -57,10 +57,10 @@ See `docs/conventions.md` (Namespace scoping) and
 
 ## System-Owned Resources
 
-`authentication_log`, `endor_license`, and `policy_template` live in the system
-namespace. LIST is allowed, but GET, UPDATE, and DELETE return 403 (only system
-can perform them). The SDK Client exposes `list()` only for these resources;
-calling `get`/`update`/`delete` on the facade raises `NotImplementedError`.
+`authentication_log`, `endor_license`, and `policy_template` are system-scoped
+resources. Use `list()` for system/tenant namespace visibility. `get()` is
+supported only when `namespace="oss"`. `create`, `update`, and `delete` are not
+exposed on these facades.
 
 ---
 
@@ -159,6 +159,6 @@ Use the same try/finally pattern:
 
 ## References
 
-- OpenAPI/spec path and list/update patterns: `docs/conventions.md`
+- OpenAPI/spec path and list/update patterns: `docs/contracts.md`
 - Resource operations: `docs/reference/resources.md`
 - For resolved-case narratives: [docs.endorlabs.com](https://docs.endorlabs.com/) or repo issues
