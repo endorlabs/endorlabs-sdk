@@ -13,16 +13,16 @@ import os
 import re
 import time
 from collections.abc import Iterable, Iterator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, cast
 
 import httpx
 
-from .exceptions import (
+from .core.exceptions import (
     EndorAPIError,
     map_status_code_to_exception,
 )
-from .types import ErrorResponse
+from .core.types import ErrorResponse
 from .utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
@@ -41,6 +41,7 @@ TOKEN_REFRESH_THRESHOLD_SECONDS: int = 30 * 60  # Proactive refresh 30 min befor
 TOKEN_EXPIRY_CHECK_SECONDS: int = 60  # Considered expired if <=60 s remaining
 BROWSER_AUTH_TIMEOUT_SECONDS: int = 20  # OAuth browser flow timeout
 TOKEN_VALIDATION_TIMEOUT_SECONDS: float = 5.0  # Quick health-check after token set
+AUTH_RETRY_MAX_ATTEMPTS: int = 2  # Retry transient auth transport/server errors
 
 AUTH_METHOD_ALIASES: dict[str, str] = {
     "browser": "browser-auth",
@@ -1199,15 +1200,17 @@ class APIClient:
                 _ = self.authenticate()
             return self._token
 
-        # If no token or token expires within 30 minutes, re-authenticate
-        if self._token is None or self._token_expires is None:
+        # If no token, authenticate.
+        if self._token is None:
             _ = self.authenticate()
-        else:
+        elif self._token_expires is not None:
             # Check if token expires within 30 minutes
             now = datetime.now(UTC)
             time_until_expiry = (self._token_expires - now).total_seconds()
             if time_until_expiry <= TOKEN_REFRESH_THRESHOLD_SECONDS:
                 _ = self.authenticate()
+        # Unknown-expiry API-key tokens are treated as session-valid until a 401
+        # triggers explicit reauthentication in _handle_unauthorized.
         return self._token
 
     @property
@@ -1271,62 +1274,118 @@ class APIClient:
     def _authenticate_api_key(self) -> str | None:
         """Authenticate using API key and secret."""
         assert self.client is not None, "APIClient is closed"
-        try:
-            payload = {"key": self.key, "secret": self.secret}
-            response = self.client.post(
-                "v1/auth/api-key",
-                headers={"Content-Type": "application/json"},
-                json=payload,
-            )
-            _ = response.raise_for_status()
-            data_raw = response.json()
-            if not isinstance(data_raw, dict):
-                raise TypeError("Invalid auth response: expected JSON object")
-            data = cast("dict[str, Any]", data_raw)
-            token_raw = data.get("token")
-            if not isinstance(token_raw, str) or not token_raw:
-                raise ValueError("Invalid auth response: missing token")
-            token = token_raw
+        payload = {"key": self.key, "secret": self.secret}
+        last_error: Exception | None = None
+        for attempt in range(AUTH_RETRY_MAX_ATTEMPTS + 1):
+            try:
+                response = self.client.post(
+                    "v1/auth/api-key",
+                    headers={"Content-Type": "application/json"},
+                    json=payload,
+                )
+                _ = response.raise_for_status()
+                data_raw = response.json()
+                if not isinstance(data_raw, dict):
+                    raise TypeError("Invalid auth response: expected JSON object")
+                data = cast("dict[str, Any]", data_raw)
+                token_raw = data.get("token")
+                if not isinstance(token_raw, str) or not token_raw:
+                    raise ValueError("Invalid auth response: missing token")
+                token = token_raw
 
-            # Parse expiration time from response
-            expires = None
-            if "expirationTime" in data:
-                expires = data["expirationTime"]
-            elif "expiration_time" in data:
-                expires = data["expiration_time"]
+                self._token_expires = self._parse_token_expiration(data)
 
-            # Parse expiration datetime if present
-            if expires is not None:
-                try:
-                    # Replace 'Z' with '+00:00' for ISO format compatibility
-                    utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires)
-                    self._token_expires = datetime.fromisoformat(utc_datetime_str)
-                except (TypeError, ValueError) as e:
-                    # If parsing fails, log but don't error out
-                    self.logger.debug(
-                        "Could not parse expiration time '%s': %s",
-                        expires,
-                        e,
+                # Store token
+                self._token = token
+
+                # Update request headers for subsequent requests
+                self._request_headers["Authorization"] = f"Bearer {token}"
+                self.default_headers = self._headers_copy()
+                return token
+            except ValueError:
+                # Surface malformed auth responses as explicit startup errors.
+                raise
+            except httpx.HTTPStatusError as error:
+                last_error = error
+                status = error.response.status_code
+                is_retryable = status >= 500 and attempt < AUTH_RETRY_MAX_ATTEMPTS
+                if is_retryable:
+                    backoff = self.backoff_factor * (2**attempt)
+                    self.logger.warning(
+                        "Transient auth HTTP %s, retrying in %.1fs (attempt %s/%s)",
+                        status,
+                        backoff,
+                        attempt + 1,
+                        AUTH_RETRY_MAX_ATTEMPTS + 1,
                     )
-                    self._token_expires = None
-            else:
-                self._token_expires = None
+                    time.sleep(backoff)
+                    continue
+                break
+            except (
+                httpx.ConnectError,
+                httpx.TimeoutException,
+                httpx.RequestError,
+            ) as error:
+                last_error = error
+                if attempt < AUTH_RETRY_MAX_ATTEMPTS:
+                    backoff = self.backoff_factor * (2**attempt)
+                    self.logger.warning(
+                        (
+                            "Transient auth transport error, retrying in %.1fs "
+                            "(attempt %s/%s): %s"
+                        ),
+                        backoff,
+                        attempt + 1,
+                        AUTH_RETRY_MAX_ATTEMPTS + 1,
+                        error,
+                    )
+                    time.sleep(backoff)
+                    continue
+                break
 
-            # Store token
-            self._token = token
+        if last_error is not None:
+            self.logger.error("Unable to authenticate with API key: %s", last_error)
+        self._token = None
+        self._token_expires = None
+        return None
 
-            # Update request headers for subsequent requests
-            self._request_headers["Authorization"] = f"Bearer {token}"
-            self.default_headers = self._headers_copy()
-            return token
-        except ValueError:
-            # Surface malformed auth responses as explicit startup errors.
-            raise
-        except httpx.HTTPError as e:
-            self.logger.error("Unable to authenticate with API key: %s", e)
-            self._token = None
-            self._token_expires = None
+    def _parse_token_expiration(self, data: dict[str, Any]) -> datetime | None:
+        """Parse token expiration from API auth response payload.
+
+        Supports:
+        - absolute timestamp fields: expirationTime / expiration_time
+        - ttl fields in seconds: expiresIn / expires_in / ttl / ttl_seconds
+        """
+        expires_value = data.get("expirationTime")
+        if expires_value is None:
+            expires_value = data.get("expiration_time")
+        if isinstance(expires_value, str) and expires_value:
+            try:
+                utc_datetime_str = re.sub(r"\s*Z$", "+00:00", expires_value)
+                return datetime.fromisoformat(utc_datetime_str)
+            except (TypeError, ValueError) as error:
+                self.logger.debug(
+                    "Could not parse expiration time '%s': %s",
+                    expires_value,
+                    error,
+                )
+
+        ttl_value = (
+            data.get("expiresIn")
+            or data.get("expires_in")
+            or data.get("ttl_seconds")
+            or data.get("ttl")
+        )
+        ttl_seconds: float | None = None
+        if isinstance(ttl_value, (int, float)):
+            ttl_seconds = float(ttl_value)
+        elif isinstance(ttl_value, str):
+            match = re.match(r"^\s*(\d+(?:\.\d+)?)\s*s?\s*$", ttl_value)
+            if match:
+                ttl_seconds = float(match.group(1))
+        if ttl_seconds is None:
             return None
+        return datetime.now(UTC) + timedelta(seconds=max(0.0, ttl_seconds))
 
     def _determine_browser_method(
         self, *, allow_direct_token_fallback: bool = False

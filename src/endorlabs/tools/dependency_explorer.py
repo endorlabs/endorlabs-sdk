@@ -1292,7 +1292,7 @@ def process_project(
 
     # 1. PackageVersions
     logger.info("  Fetching PackageVersions ...")
-    from endorlabs.filter import F
+    from endorlabs import F
 
     pvs = client.package_version.list(  # type: ignore[attr-defined]
         namespace=project_ns,

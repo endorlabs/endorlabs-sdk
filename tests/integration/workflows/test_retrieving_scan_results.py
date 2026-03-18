@@ -13,7 +13,7 @@ import os
 import pytest
 
 import endorlabs
-from endorlabs.types import ListParameters
+from endorlabs.core.types import ListParameters
 from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
@@ -141,7 +141,7 @@ class TestRetrievingScanResultsWorkflow:
 
     def test_complete_workflow_end_to_end(self) -> None:
         """Test complete workflow end-to-end."""
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         try:
             self._test_complete_workflow_end_to_end_impl()

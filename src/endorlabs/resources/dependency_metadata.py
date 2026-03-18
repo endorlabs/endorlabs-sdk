@@ -33,7 +33,7 @@ from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
-    from ..types import ListParameters
+    from ..core.types import ListParameters
 
 logger = get_resource_logger(__name__)
 

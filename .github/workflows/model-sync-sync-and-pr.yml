@@ -1,0 +1,153 @@
+name: Model Sync Generate and Open PR
+
+on:
+  repository_dispatch:
+    types: [model-sync-check]
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: "Force run even when no external trigger payload is provided"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: model-sync-sync-pr-chore-model-sync-auto
+  cancel-in-progress: false
+
+env:
+  PYTHON_VERSION: "3.13"
+  OPENAPI_SOURCE_URL_DEFAULT: "https://api.endorlabs.com/download/openapiv2.swagger.json"
+
+jobs:
+  sync-and-pr:
+    name: Generate Canonical Model Sync and Open PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Resolve trigger metadata
+        id: trigger
+        run: |
+          ENDORCTL_VERSION="${{ github.event.client_payload.endorctl_version || '' }}"
+          OPENAPI_SHA256="${{ github.event.client_payload.openapi_sha256 || '' }}"
+          OPENAPI_SOURCE_URL="${{ github.event.client_payload.openapi_source_url || env.OPENAPI_SOURCE_URL_DEFAULT }}"
+          REASON="${{ github.event.client_payload.reason || 'manual' }}"
+
+          echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "openapi_sha256=$OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
+          echo "openapi_source_url=$OPENAPI_SOURCE_URL" >> "$GITHUB_OUTPUT"
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+
+      - name: Guard against unsupported dispatch payload
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          if [ "${{ github.event.action }}" != "model-sync-check" ]; then
+            echo "Unexpected repository_dispatch action: ${{ github.event.action }}"
+            exit 1
+          fi
+
+      - name: Download OpenAPI spec
+        run: |
+          mkdir -p .endorlabs-context
+          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json "${{ steps.trigger.outputs.openapi_source_url }}"
+
+      - name: Run canonical model sync generation
+        run: |
+          uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
+          test -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json
+          test -f workspace/model-sync/custom_mapping/provenance.json
+          test -f workspace/model-sync/custom_mapping/artifacts_manifest.json
+          test -f workspace/model-sync/custom_mapping/facade_contract.json
+          test -f workspace/model-sync/custom_mapping/mapping/registry_parity_report.json
+          test -f workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json
+          test -f workspace/model-sync/custom_mapping/mapping/payload_schemas.json
+          test -f workspace/model-sync/custom_mapping/mapping/runtime_index.json
+          test -f src/endorlabs/generated/models/__init__.py
+          test -f docs/generated-reference/coverage.json
+        env:
+          ENDORCTL_VERSION: ${{ steps.trigger.outputs.endorctl_version }}
+          OPENAPI_SHA256: ${{ steps.trigger.outputs.openapi_sha256 }}
+          OPENAPI_SOURCE_URL: ${{ steps.trigger.outputs.openapi_source_url }}
+
+      - name: Validate changed file scope
+        id: diff_scope
+        run: |
+          CHANGED=$(git status --porcelain)
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "changed_files=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FILES=$(echo "$CHANGED" | awk '{print $2}')
+          UNEXPECTED=""
+          while IFS= read -r file; do
+            case "$file" in
+              workspace/model-sync/*|src/endorlabs/generated/*|src/endorlabs/client_surface.pyi|docs/generated-reference/*)
+                ;;
+              *)
+                UNEXPECTED="${UNEXPECTED}${file}\n"
+                ;;
+            esac
+          done <<< "$FILES"
+
+          if [ -n "$UNEXPECTED" ]; then
+            echo "Unexpected changed files outside generated scope:"
+            echo -e "$UNEXPECTED"
+            exit 1
+          fi
+
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update model-sync PR
+        if: steps.diff_scope.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: chore/model-sync-auto
+          branch-suffix: never
+          delete-branch: false
+          commit-message: "chore: sync generated model artifacts"
+          title: "chore: sync generated model artifacts"
+          body: |
+            ## Summary
+            - Regenerated model-sync artifacts from canonical pipeline.
+            - Updated runtime generated contract/models, client stub, and generated reference docs.
+            - Trigger reason: `${{ steps.trigger.outputs.reason }}`
+
+            ## Trigger metadata
+            - endorctl version: `${{ steps.trigger.outputs.endorctl_version }}`
+            - OpenAPI SHA256: `${{ steps.trigger.outputs.openapi_sha256 }}`
+            - OpenAPI source: `${{ steps.trigger.outputs.openapi_source_url }}`
+          add-paths: |
+            workspace/model-sync/**
+            src/endorlabs/generated/**
+            src/endorlabs/client_surface.pyi
+            docs/generated-reference/**
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Model Sync PR Workflow Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reason: \`${{ steps.trigger.outputs.reason }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- endorctl version: \`${{ steps.trigger.outputs.endorctl_version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- OpenAPI SHA256: \`${{ steps.trigger.outputs.openapi_sha256 }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- has changes: \`${{ steps.diff_scope.outputs.has_changes || 'false' }}\`" >> "$GITHUB_STEP_SUMMARY"

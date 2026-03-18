@@ -11,8 +11,8 @@ module functions is ignored. Use endorctl with -n oss to confirm presence/access
 import pytest
 
 import endorlabs
+from endorlabs.core.types import ListParameters
 from endorlabs.resources import dependency_metadata
-from endorlabs.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
@@ -57,7 +57,7 @@ class TestDependencyMetadata:
     def test_dependency_metadata_list(self) -> None:
         """LIST from tenant root with traverse (registry-based)."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -75,7 +75,7 @@ class TestDependencyMetadata:
     def test_dependency_metadata_get(self) -> None:
         """GET first item from LIST (root + traverse) (registry-based)."""
         import endorlabs
-        from endorlabs.exceptions import ServerError
+        from endorlabs.core.exceptions import ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
@@ -104,7 +104,7 @@ class TestDependencyMetadata:
         """Test error handling for invalid UUID."""
         # Test with invalid UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.exceptions import ValidationError
+        from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
             self.endor_root_client.dependency_metadata.get("invalid-uuid")
