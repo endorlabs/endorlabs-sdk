@@ -115,32 +115,66 @@ jobs:
           echo "$FILES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Create or update model-sync PR
+      - name: Create or update model-sync PR (native git + gh)
         if: steps.diff_scope.outputs.has_changes == 'true'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: ${{ github.event.repository.default_branch }}
-          branch: chore/model-sync-auto
-          branch-suffix: never
-          delete-branch: false
-          commit-message: "chore: sync generated model artifacts"
-          title: "chore: sync generated model artifacts"
-          body: |
-            ## Summary
-            - Regenerated model-sync artifacts from canonical pipeline.
-            - Updated runtime generated contract/models, client stub, and generated reference docs.
-            - Trigger reason: `${{ steps.trigger.outputs.reason }}`
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: chore/model-sync-auto
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+          REASON: ${{ steps.trigger.outputs.reason }}
+          ENDORCTL_VERSION: ${{ steps.trigger.outputs.endorctl_version }}
+          OPENAPI_SHA256: ${{ steps.trigger.outputs.openapi_sha256 }}
+          OPENAPI_SOURCE_URL: ${{ steps.trigger.outputs.openapi_source_url }}
+        run: |
+          set -euo pipefail
 
-            ## Trigger metadata
-            - endorctl version: `${{ steps.trigger.outputs.endorctl_version }}`
-            - OpenAPI SHA256: `${{ steps.trigger.outputs.openapi_sha256 }}`
-            - OpenAPI source: `${{ steps.trigger.outputs.openapi_source_url }}`
-          add-paths: |
-            workspace/model-sync/**
-            src/endorlabs/generated/**
-            src/endorlabs/client_surface.pyi
-            docs/generated-reference/**
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Reuse a stable automation branch to avoid branch proliferation.
+          git fetch origin "$BASE_BRANCH"
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+            git fetch origin "$BRANCH_NAME"
+            git checkout -B "$BRANCH_NAME" "origin/$BRANCH_NAME"
+          else
+            git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
+          fi
+
+          git add workspace/model-sync src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
+          if git diff --cached --quiet; then
+            echo "No staged changes after file scope validation; skipping PR update."
+            exit 0
+          fi
+
+          git commit -m "chore: sync generated model artifacts"
+          git push -u origin "$BRANCH_NAME"
+
+          PR_NUMBER="$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number // empty')"
+          PR_BODY="$(cat <<EOF
+          ## Summary
+          - Regenerated model-sync artifacts from canonical pipeline.
+          - Updated runtime generated contract/models, client stub, and generated reference docs.
+          - Trigger reason: \`$REASON\`
+
+          ## Trigger metadata
+          - endorctl version: \`$ENDORCTL_VERSION\`
+          - OpenAPI SHA256: \`$OPENAPI_SHA256\`
+          - OpenAPI source: \`$OPENAPI_SOURCE_URL\`
+          EOF
+          )"
+
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" \
+              --base "$BASE_BRANCH" \
+              --title "chore: sync generated model artifacts" \
+              --body "$PR_BODY"
+          else
+            gh pr create \
+              --base "$BASE_BRANCH" \
+              --head "$BRANCH_NAME" \
+              --title "chore: sync generated model artifacts" \
+              --body "$PR_BODY"
+          fi
 
       - name: Summary
         if: always()
