@@ -50,7 +50,7 @@ Two-layer, registry-driven design. The same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
 - **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceFacade[T]` instances; for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"system"`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
-- **Registry:** `endorlabs.registry` — one `ResourceEntry(attr_name=..., resource_name=..., model_class=..., supported_ops=..., ...)` per resource. Adding a resource = one registry entry.
+- **Registry adapter:** `endorlabs.registry` builds `ResourceEntry(...)` values from generated runtime contract data in `src/endorlabs/generated/registry_contract.py` plus explicit overrides in `src/endorlabs/registry_overlay.py`.
 - **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
 
 For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
@@ -60,7 +60,7 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 - **Canonical naming:** `tenant.namespace.child` only; no UUIDs in paths.
 - **Env and security:** Credentials via env; run `endorctl scan` before code changes.
 - **Return types:** Functions return typed models: `Resource | None` or `list[Resource]`.
-- **Field aliasing:** Follows a three-tier rule set (syntax collisions, spec case, semantic renames); see [docs/conventions.md](docs/conventions.md) (Models and API parity → Field aliasing).
+- **Field aliasing:** Follows a three-tier rule set (syntax collisions, spec case, semantic renames); see [docs/contracts.md](docs/contracts.md) (Models and API parity -> Field aliasing).
 - **Create/update:** Common create/update args may be exposed as explicit optional facade kwargs; validation remains in the resource’s builder and model; the model is the single source of truth for mutable and immutable fields.
 - **F() operator semantics:** Import: `from endorlabs import F`. `F().matches(pattern)` is for **string** substring/regex matching on scalar fields (e.g. `F("meta.name").matches("endor-sdk")`). `F().contains(value)` is for **array** membership checks on list fields (e.g. `F("spec.finding_tags").contains("FINDING_TAGS_REACHABLE_FUNCTION")`). Using `contains` on a scalar string field will silently return zero results. The `filter=` parameter on `.list()` accepts `str | FilterExpression | None`.
 - **Stdout hygiene:** Production SDK modules under `src/endorlabs/**` must not use `print()`. Use structured logging; keep any `print()` allowances limited to explicit demo entrypoints.
@@ -68,7 +68,13 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 
 ## Automation
 
-Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Run the same commands locally before pushing. Public API modules are strict-typed; internal roots are tightened incrementally via the pyright execution-environment ratchet. For the exact command list, see [.github/workflows/ci.yml](.github/workflows/ci.yml).
+Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Run the same commands locally before pushing. Public API modules are strict-typed; internal roots are tightened incrementally via the pyright execution-environment ratchet. For the exact command list, see [.github/workflows/continuous-integration-and-quality-gates.yml](.github/workflows/continuous-integration-and-quality-gates.yml).
+
+Model-sync automation is intentionally split:
+
+- **Detector workflow:** [.github/workflows/model-sync-change-detection-and-validation.yml](.github/workflows/model-sync-change-detection-and-validation.yml) detects upstream version/spec drift and dispatches sync events.
+- **Sync + PR workflow:** [.github/workflows/model-sync-sync-and-pr.yml](.github/workflows/model-sync-sync-and-pr.yml) regenerates canonical artifacts and opens/updates the bot PR branch.
+- **Required CI gate:** [.github/workflows/continuous-integration-and-quality-gates.yml](.github/workflows/continuous-integration-and-quality-gates.yml) validates all PRs (including bot-generated PRs).
 
 ## Repository-Scoped Rules (`.cursor/rules/`)
 
@@ -115,9 +121,10 @@ endorlabs/
 ## Reference — In-Repo
 
 - **Index:** [docs/README.md](docs/README.md) — what lives where.
-- **Conventions:** [docs/conventions.md](docs/conventions.md) — naming, traverse, ListParameters, OpenAPI path, models and API parity, update_mask, errors.
-- **Consumer UX (list/update):** filter vs mask, flat kwargs, spec-driven — [docs/conventions.md](docs/conventions.md), [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
-- **Reference:** [docs/reference/README.md](docs/reference/README.md) (public API, resources, namespace); [docs/reference/resources.md](docs/reference/resources.md) (operations per resource); [docs/reference/namespace.md](docs/reference/namespace.md) (list/get/create/update/delete).
+- **Contracts:** [docs/contracts.md](docs/contracts.md) — naming, traverse, ListParameters, OpenAPI path, models and API parity, update_mask, errors.
+- **Design notes:** [docs/design.md](docs/design.md) — rationale and tradeoffs for SDK behavior.
+- **Consumer UX (list/update):** filter vs mask, flat kwargs — [docs/contracts.md](docs/contracts.md), [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+- **Reference:** [docs/reference/README.md](docs/reference/README.md) (curated index and stable landing pages), [docs/generated-reference/resources.md](docs/generated-reference/resources.md) (canonical generated operations matrix), [docs/generated-reference/api-surfaces.md](docs/generated-reference/api-surfaces.md), [docs/generated-reference/create-update-payloads.md](docs/generated-reference/create-update-payloads.md), [docs/reference/namespace.md](docs/reference/namespace.md) (list/get/create/update/delete).
 - **Guides:** [docs/guides/README.md](docs/guides/README.md); consumer-ux-list-update, retrieving-scan-results.
 - **Rules of engagement:** [docs/rules-of-engagement/README.md](docs/rules-of-engagement/README.md); api-validation, resource-implementation, troubleshooting, docs-drift-workflow.
 

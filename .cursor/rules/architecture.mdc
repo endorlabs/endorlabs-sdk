@@ -8,7 +8,7 @@ globs: src/endorlabs/client_surface.py,src/endorlabs/facade.py,src/endorlabs/reg
 When editing these files, enforce:
 
 1. **No coupling:** `APIClient` does not import resources, facade, or registry. Only the Client/facade layer depends on resource modules.
-2. **Registry-driven:** New resources are added by appending to the registry (`RESOURCE_REGISTRY` in `registry.py`), never by hand-wiring in `Client.__init__`.
+2. **Contract-driven registry adapter:** New resources are added through generated runtime contract data (`src/endorlabs/generated/registry_contract.py`) plus minimal policy overrides (`registry_overlay.py`), never by hand-wiring in `Client.__init__`.
 3. **Facade delegates to BaseResourceOperations:** The facade instantiates `BaseResourceOperations` from registry metadata and delegates CRUD. Resource modules contain Pydantic models and convenience functions only — no module-level CRUD wrappers.
 4. **Typed facades:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.<resource>.list()` returns `list[T]`. Keep full type annotations for Pyright.
 

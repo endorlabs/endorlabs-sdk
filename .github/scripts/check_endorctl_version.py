@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Fast check for endorctl version updates.
+"""Fast check for endorctl version updates.
 
 This script queries the public Endor Labs API to check if a new version
 of endorctl is available. Designed for cron jobs - fast, lightweight,
@@ -22,17 +21,19 @@ Example cron job (check every 6 hours):
 """
 
 import argparse
-import time
 import sys
+import time
 from pathlib import Path
-from typing import Optional
 
 import httpx
 
 
-def get_latest_version(*, attempts: int = 3, backoff_seconds: float = 1.0) -> Optional[str]:
-    """
-    Query the public Endor Labs API for the latest endorctl version.
+def get_latest_version(
+    *,
+    attempts: int = 3,
+    backoff_seconds: float = 1.0,
+) -> str | None:
+    """Query the public Endor Labs API for the latest endorctl version.
 
     Returns:
         Version string (e.g., "v1.6.322") or None if query fails
@@ -58,12 +59,15 @@ def get_latest_version(*, attempts: int = 3, backoff_seconds: float = 1.0) -> Op
             return None
         except Exception as e:
             if attempt == attempts:
-                print(f"Error querying version API after {attempts} attempts: {e}", file=sys.stderr)
+                message = (
+                    f"Error querying version API after {attempts} attempts: {e}"
+                )
+                print(message, file=sys.stderr)
                 return None
             time.sleep(backoff_seconds * attempt)
 
 
-def load_stored_version(state_file: Path) -> Optional[str]:
+def load_stored_version(state_file: Path) -> str | None:
     """Load the last known version from state file."""
     try:
         if state_file.exists():
@@ -83,8 +87,7 @@ def save_version(state_file: Path, version: str) -> None:
 
 
 def compare_versions(current: str, latest: str) -> int:
-    """
-    Compare two version strings.
+    """Compare two version strings.
 
     Returns:
         -1 if current < latest (update available)
@@ -179,7 +182,7 @@ Examples:
 
 def _handle_version_retrieval(
     quiet: bool, *, attempts: int = 3, backoff_seconds: float = 1.0
-) -> Optional[str]:
+) -> str | None:
     """Handle API version retrieval and error cases."""
     latest_version = get_latest_version(
         attempts=attempts, backoff_seconds=backoff_seconds

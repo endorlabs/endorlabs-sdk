@@ -5,7 +5,7 @@ import httpx
 import pytest
 
 import endorlabs
-from endorlabs.exceptions import (
+from endorlabs.core.exceptions import (
     ValidationError as EndorValidationError,
 )
 from endorlabs.resources.namespace import (

@@ -15,7 +15,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
-from endorlabs.exceptions import AmbiguousError, NotFoundError
+from endorlabs.core.exceptions import AmbiguousError, NotFoundError
 from endorlabs.facade import ScanLogsFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
@@ -155,6 +155,91 @@ def test_client_exposes_all_registry_resources(
         assert hasattr(facade, "get")
 
 
+def test_registry_supported_ops_not_implemented_contract(
+    client_with_mock_transport: Client,
+) -> None:
+    """Unsupported registry operations should raise NotImplementedError."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    for entry in RESOURCE_REGISTRY:
+        facade = getattr(client, entry.attr_name)
+        namespace = (
+            "oss" if entry.scope in {"oss", "system"} else TEST_NAMESPACE_DEFAULT
+        )
+
+        if "list" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support list"):
+                facade.list(namespace=namespace, max_pages=TEST_MAX_PAGES)
+            with pytest.raises(NotImplementedError, match="support list_iter"):
+                list(facade.list_iter(namespace=namespace, max_pages=TEST_MAX_PAGES))
+            with pytest.raises(NotImplementedError, match="support lookup"):
+                facade.lookup(namespace=namespace, max_pages=TEST_MAX_PAGES)
+
+        if "get" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support get"):
+                facade.get("unit-uuid", namespace=namespace)
+
+        if "create" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support create"):
+                facade.create(payload=Mock(), namespace=namespace)
+
+        if "update" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support update"):
+                facade.update(
+                    "unit-uuid",
+                    payload=Mock(),
+                    update_mask="meta.description",
+                    namespace=namespace,
+                )
+
+        if "delete" not in entry.supported_ops:
+            with pytest.raises(NotImplementedError, match="support delete"):
+                facade.delete("unit-uuid", namespace=namespace)
+
+
+def test_all_oss_scoped_resources_force_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """OSS-scoped resources should always resolve namespace to oss."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    oss_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "oss"]
+    assert oss_entries, "Expected at least one oss-scoped resource in registry."
+
+    for entry in oss_entries:
+        facade = getattr(client, entry.attr_name)
+        if "list" in entry.supported_ops:
+            facade._ops.list = Mock(return_value=[])
+            facade.list(namespace="tenant.other", max_pages=TEST_MAX_PAGES)
+            args, _ = facade._ops.list.call_args
+            assert args[0] == "oss", entry.attr_name
+        if "get" in entry.supported_ops:
+            facade._ops.get = Mock(return_value=Mock(uuid="unit-uuid"))
+            facade.get("unit-uuid", namespace="tenant.other")
+            args, _ = facade._ops.get.call_args
+            assert args[0] == "oss", entry.attr_name
+
+
+def test_all_system_scoped_get_requires_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """System-scoped get should reject non-oss namespace for all entries."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    system_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "system"]
+    assert system_entries, "Expected at least one system-scoped resource in registry."
+
+    for entry in system_entries:
+        if "get" not in entry.supported_ops:
+            continue
+        facade = getattr(client, entry.attr_name)
+        with pytest.raises(NotImplementedError, match="oss namespace"):
+            facade.get("unit-uuid", namespace="tenant.notoss")
+
+
 class TestBuildFacade:
     """_build_facade factory produces the correct facade scope per registry entry."""
 
@@ -249,6 +334,39 @@ def test_oss_resource_facade_list_uses_oss_namespace(
     client.dependency_metadata._ops.list.assert_called_once()
     args, _ = client.dependency_metadata._ops.list.call_args
     assert args[0] == "oss"
+
+
+def test_vulnerability_facade_list_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """OSS-scoped vulnerability list() delegates with namespace 'oss'."""
+    client = client_with_mock_transport
+    client.vulnerability._ops.list = Mock(return_value=[])
+    client.vulnerability.list(max_pages=TEST_MAX_PAGES)
+    client.vulnerability._ops.list.assert_called_once()
+    args, _ = client.vulnerability._ops.list.call_args
+    assert args[0] == "oss"
+
+
+def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Create-only query_vulnerability uses builder and OSS namespace."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.query_vulnerability._build_create_payload_fn = Mock(
+        return_value=built_payload
+    )
+    client.query_vulnerability._ops.create = Mock(return_value=Mock(uuid="qv-1"))
+    client.query_vulnerability.create(
+        name="query-vuln",
+        package_version_name="pkg:maven/a/b@1.0.0",
+    )
+    client.query_vulnerability._build_create_payload_fn.assert_called_once()
+    client.query_vulnerability._ops.create.assert_called_once()
+    args, _ = client.query_vulnerability._ops.create.call_args
+    assert args[0] == "oss"
+    assert args[1] is built_payload
 
 
 def test_client_exposes_all_custom_facades(
@@ -697,7 +815,7 @@ def test_list_explicit_kwargs_override_list_params(
     client_with_mock_transport: Client,
 ) -> None:
     """Explicit kwargs override when both list_params and kwargs passed."""
-    from endorlabs.types import ListParameters
+    from endorlabs.core.types import ListParameters
 
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])

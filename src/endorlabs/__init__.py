@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from .api_client import APIClient
 from .client_surface import Client
-from .exceptions import (
+from .core.exceptions import (
     AmbiguousError,
     ConflictError,
     EndorAPIError,
@@ -23,19 +23,23 @@ from .exceptions import (
     ValidationError,
     map_status_code_to_exception,
 )
-from .filter import F, FilterExpression
+from .core.filter import F, FilterExpression
 from .resources import (
     dependency_metadata,
     finding,
     installation,
     linter_result,
+    malware,
     metric,
     namespace,
     package_version,
     policy,
     project,
+    query_malware,
+    query_vulnerability,
     repository,
     repository_version,
+    vulnerability,
 )
 
 if TYPE_CHECKING:
@@ -117,12 +121,16 @@ __all__ = [
     "init",
     "installation",
     "linter_result",
+    "malware",
     "map_status_code_to_exception",
     "metric",
     "namespace",
     "package_version",
     "policy",
     "project",
+    "query_malware",
+    "query_vulnerability",
     "repository",
     "repository_version",
+    "vulnerability",
 ]

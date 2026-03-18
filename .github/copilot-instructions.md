@@ -18,5 +18,5 @@
 
 - **API spec (OpenAPI)**: <https://api.endorlabs.com/download/openapiv2.swagger.json> (schema drift workflow downloads to `.endorlabs-context/` in CI; folder is gitignored)
 - **User documentation**: <https://docs.endorlabs.com/> — sitemap <https://docs.endorlabs.com/sitemap.xml>
-- **In-repo docs**: `docs/README.md` (index), `docs/conventions.md` (naming, traverse, ListParameters), `docs/reference/namespace.md`, `docs/rules-of-engagement/api-validation.md`, `docs/rules-of-engagement/resource-implementation.md`, `docs/rules-of-engagement/docs-drift-workflow.md`
+- **In-repo docs**: `docs/README.md` (index), `docs/contracts.md` (naming, traverse, ListParameters), `docs/reference/namespace.md`, `docs/rules-of-engagement/api-validation.md`, `docs/rules-of-engagement/resource-implementation.md`, `docs/rules-of-engagement/docs-drift-workflow.md`
 

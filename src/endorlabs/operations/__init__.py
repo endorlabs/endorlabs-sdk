@@ -7,17 +7,18 @@ separate from HTTP/transport logic.
 """
 
 import builtins
+import functools
 import os
 import re
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 import httpx
 from pydantic import BaseModel, ValidationError
 
-from ..exceptions import EndorAPIError
-from ..exceptions import ValidationError as EndorValidationError
-from ..types import ListParameters
+from ..core.exceptions import EndorAPIError
+from ..core.exceptions import ValidationError as EndorValidationError
+from ..core.types import ListParameters
 from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
@@ -45,6 +46,50 @@ def validate_namespace(ns: str) -> str:
     if not _NAMESPACE_RE.match(ns):
         raise EndorValidationError(f"Invalid namespace format: {ns!r}")
     return ns
+
+
+@functools.lru_cache(maxsize=1)
+def _load_generated_mutability_by_resource_name() -> dict[str, dict[str, list[str]]]:
+    resources: list[dict[str, Any]] = []
+    try:
+        from ..generated.registry_contract import RUNTIME_REGISTRY_CONTRACT
+    except Exception as error:
+        raise RuntimeError(
+            "Missing generated runtime registry contract; run scripts/model_sync.py"
+        ) from error
+    candidate = RUNTIME_REGISTRY_CONTRACT.get("resources")
+    if isinstance(candidate, list):
+        candidate_resources = cast("list[object]", candidate)
+        resources.extend(
+            cast("dict[str, Any]", item)
+            for item in candidate_resources
+            if isinstance(item, dict)
+        )
+
+    mutability: dict[str, dict[str, list[str]]] = {}
+    for resource in resources:
+        resource_name = resource.get("resource_name")
+        immutable_fields = resource.get("immutable_fields")
+        mutable_fields = resource.get("mutable_fields")
+        if (
+            isinstance(resource_name, str)
+            and isinstance(immutable_fields, list)
+            and isinstance(mutable_fields, list)
+        ):
+            immutable_items = cast("list[object]", immutable_fields)
+            immutable_values = [
+                value for value in immutable_items if isinstance(value, str)
+            ]
+            mutable_items = cast("list[object]", mutable_fields)
+            mutable_values = [
+                value for value in mutable_items if isinstance(value, str)
+            ]
+
+            mutability[resource_name] = {
+                "immutable_fields": sorted(immutable_values),
+                "mutable_fields": sorted(mutable_values),
+            }
+    return mutability
 
 
 class BaseResourceOperations(Generic[T]):
@@ -245,7 +290,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except ValidationError as e:
             # Pydantic validation error on response
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             error_details = "\n".join(
                 f"  {err['loc']}: {err['msg']} (type: {err['type']})"
@@ -263,7 +308,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -349,7 +394,7 @@ class BaseResourceOperations(Generic[T]):
             if resources:
                 return resources[0]
             # No resources found - raise NotFoundError
-            from ..exceptions import NotFoundError
+            from ..core.exceptions import NotFoundError
 
             raise NotFoundError(
                 message=(
@@ -370,7 +415,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -434,7 +479,7 @@ class BaseResourceOperations(Generic[T]):
 
             # Validate response structure
             if not isinstance(data, dict):
-                from ..exceptions import ServerError
+                from ..core.exceptions import ServerError
 
                 raise ServerError(
                     message=(
@@ -446,21 +491,23 @@ class BaseResourceOperations(Generic[T]):
                     response_text=str(data),
                 )
 
-            if "uuid" not in data:
+            data_obj = cast("dict[str, Any]", data)
+
+            if "uuid" not in data_obj:
                 self.logger.warning(
                     "Response missing UUID for %s: %s",
                     self.resource_name,
-                    data,
+                    data_obj,
                 )
 
             # DEBUG: Log successful response
             self.logger.debug(
                 "Successfully created %s: %s",
                 self.resource_name,
-                data.get("uuid", "unknown"),
+                data_obj.get("uuid", "unknown"),
             )
 
-            return self.model_class(**data)
+            return self.model_class(**data_obj)
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
@@ -471,7 +518,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except ValidationError as e:
             # Pydantic validation error on response
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -484,7 +531,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=f"Unexpected error creating {self.resource_name}: {e!s}",
@@ -528,9 +575,21 @@ class BaseResourceOperations(Generic[T]):
             payload, "update", tenant_meta_namespace
         )
 
-        # Block immutable fields in update_mask (model is canonical)
-        get_immutable = getattr(self.model_class, "get_immutable_fields_cls", None)
-        immutable: list[str] = get_immutable() if get_immutable is not None else []
+        # Block immutable fields in update_mask from generated contract metadata.
+        mutability_by_resource = _load_generated_mutability_by_resource_name()
+        immutable: list[str] = mutability_by_resource.get(self.resource_name, {}).get(
+            "immutable_fields", []
+        )
+        if not immutable:
+            raise EndorValidationError(
+                message=(
+                    "Resource mutability metadata missing from generated contract "
+                    f"for '{self.resource_name}'."
+                ),
+                operation="update",
+                namespace=tenant_meta_namespace,
+                resource_uuid=resource_uuid,
+            )
         for path in update_mask:
             if path.strip() in immutable:
                 raise EndorValidationError(
@@ -559,7 +618,7 @@ class BaseResourceOperations(Generic[T]):
                 )
 
             # Build request body with object and required update_mask
-            request_data = {
+            request_data: dict[str, Any] = {
                 "object": payload_dict,
                 "request": {"update_mask": ",".join(update_mask)},
             }
@@ -595,7 +654,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except ValidationError as e:
             # Pydantic validation error on response
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -609,7 +668,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -643,7 +702,7 @@ class BaseResourceOperations(Generic[T]):
             if res.status_code in [200, 204]:
                 return True
             # Unexpected status code - raise error
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -666,7 +725,7 @@ class BaseResourceOperations(Generic[T]):
             ) from e
         except Exception as e:
             # Unexpected errors
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -718,7 +777,7 @@ class BaseResourceOperations(Generic[T]):
                 e, "count", tenant_meta_namespace
             ) from e
         except Exception as e:
-            from ..exceptions import ServerError
+            from ..core.exceptions import ServerError
 
             raise ServerError(
                 message=(
@@ -733,7 +792,7 @@ class BaseResourceOperations(Generic[T]):
         self, list_params: ListParameters | None, **kwargs: Any
     ) -> dict[str, Any]:
         """Build query parameters from list_params and kwargs."""
-        params = {}
+        params: dict[str, Any] = {}
 
         if list_params:
             self._add_basic_params(params, list_params)

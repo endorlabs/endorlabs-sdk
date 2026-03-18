@@ -16,6 +16,7 @@ from . import (
     installation,
     invitation,
     linter_result,
+    malware,
     metric,
     namespace,
     notification_target,
@@ -24,6 +25,8 @@ from . import (
     policy,
     policy_template,
     project,
+    query_malware,
+    query_vulnerability,
     repository,
     repository_version,
     scan_log_request,
@@ -33,6 +36,7 @@ from . import (
     scan_workflow_result,
     semgrep_rule,
     version_upgrade,
+    vulnerability,
 )
 
 __all__ = [
@@ -48,6 +52,7 @@ __all__ = [
     "installation",
     "invitation",
     "linter_result",
+    "malware",
     "metric",
     "namespace",
     "notification_target",
@@ -56,6 +61,8 @@ __all__ = [
     "policy",
     "policy_template",
     "project",
+    "query_malware",
+    "query_vulnerability",
     "repository",
     "repository_version",
     "scan_log_request",
@@ -65,4 +72,5 @@ __all__ = [
     "scan_workflow_result",
     "semgrep_rule",
     "version_upgrade",
+    "vulnerability",
 ]
