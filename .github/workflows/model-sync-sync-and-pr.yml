@@ -258,7 +258,8 @@ jobs:
             git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
           fi
 
-          git add workspace/model-sync src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
+          git add src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
+          git add -f workspace/model-sync
           if git diff --cached --quiet; then
             echo "No staged changes after file scope validation; skipping PR update."
             exit 0
