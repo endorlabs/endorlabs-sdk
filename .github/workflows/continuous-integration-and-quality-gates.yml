@@ -5,10 +5,10 @@ name: Continuous Integration and Quality Gates
 #   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
 #   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "endor-solutions-tgowan")
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
-#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests + AI security review)
-#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests + AI security review)
+#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (integration tests only)
+#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (integration tests only)
 # Security: This repo is scanned by the Endor Labs app integration.
-# AI Security Code Review: Runs on PRs via endorctl --security-review (uses GITHUB_TOKEN for PR comments).
+# AI Security Code Review: Runs on PRs using GitHub OIDC + Endor Labs GitHub Action.
 #
 # Noop strategy (first principles — a job runs only when its inputs change):
 #   Layer 1: paths-ignore skips the entire workflow for universal noops (docs, IDE config, etc.).
@@ -83,6 +83,7 @@ env:
   ACTIONS_SETUP_PYTHON_VERSION: "v6.2.0"
   ACTIONS_CACHE_VERSION: "v5.0.2"
   ASTRAL_SETUP_UV_VERSION: "v7.2.0"
+  ENDOR_GITHUB_ACTION_SHA: "ea13ac38613bbf08ee75ec21ddec172e648976b7" # endorlabs/github-action v1.1.11
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -489,9 +490,10 @@ jobs:
     name: AI-Assisted Security Code Review
     runs-on: ubuntu-latest
     continue-on-error: true
-    if: ${{ false }} # Temporarily disabled per branch hardening pass
+    if: ${{ github.event_name == 'pull_request' }}
     permissions:
       contents: read
+      id-token: write
       pull-requests: write
     steps:
       - name: Checkout code
@@ -499,60 +501,103 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Evaluate code review prerequisites (fail-open)
+      - name: Evaluate OIDC review prerequisites (fail-open)
         id: review_prereqs
         run: |
           SHOULD_RUN=true
+          if [ "${{ github.event.pull_request.head.repo.fork || false }}" = "true" ]; then
+            echo "::notice::Skipping AI security review for forked pull request."
+            SHOULD_RUN=false
+          fi
           if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
             echo "::warning::ENDOR_NAMESPACE variable is not set; skipping AI security review."
             SHOULD_RUN=false
           fi
-          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
-            echo "::warning::ENDOR_API_CREDENTIALS_KEY secret is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
-          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
-            echo "::warning::ENDOR_API_CREDENTIALS_SECRET secret is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
-          if [ -z "${{ vars.ENDOR_API }}" ]; then
-            echo "::warning::ENDOR_API variable is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
           echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
           if [ "$SHOULD_RUN" = "true" ]; then
-            echo "✅ AI security review prerequisites satisfied."
+            echo "✅ AI security review OIDC prerequisites satisfied."
           fi
 
-      - name: Install endorctl
+      - name: Set up Endor Labs OIDC auth
         if: steps.review_prereqs.outputs.should_run == 'true'
-        run: |
-          curl -sSfL https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
-          chmod +x endorctl
-          ./endorctl --version
+        uses: endorlabs/github-action/setup@ea13ac38613bbf08ee75ec21ddec172e648976b7
+        with:
+          namespace: ${{ vars.ENDOR_NAMESPACE }}
 
-      - name: Run AI Security Code Review
+      - name: Validate GitHub OIDC auth policy
         if: steps.review_prereqs.outputs.should_run == 'true'
         run: |
-          ./endorctl scan \
-            --namespace "${{ vars.ENDOR_NAMESPACE }}" \
-            --pr \
-            --security-review \
-            --scm-pr-id "${{ github.event.pull_request.number }}" \
-            --scm-token "$GITHUB_TOKEN" \
-            --enable-pr-comments \
-            --log-level debug \
-            --verbose
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          set -euo pipefail
+          POLICY_JSON="$(endorctl api list -r AuthorizationPolicy -n "${{ vars.ENDOR_NAMESPACE }}" --traverse)"
+          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg policy_name "github-oidc-code-scanner" --arg claim "user=${{ github.repository_owner }}" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select(.meta.name == $policy_name) | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
+          if [ "$MATCH_COUNT" -lt 1 ]; then
+            echo "::error::Missing or mismatched OIDC authorization policy. Expected policy=github-oidc-code-scanner claim=user=${{ github.repository_owner }} role=SYSTEM_ROLE_CODE_SCANNER target=${{ vars.ENDOR_NAMESPACE }} propagate=true"
+            exit 1
+          fi
+          echo "OIDC policy validation passed."
+
+      - name: Run AI Security Code Review (OIDC)
+        if: steps.review_prereqs.outputs.should_run == 'true'
+        uses: endorlabs/github-action@ea13ac38613bbf08ee75ec21ddec172e648976b7
+        with:
+          namespace: ${{ vars.ENDOR_NAMESPACE }}
+          pr: true
+          scan_dependencies: true
+          scan_secrets: true
+          enable_pr_comments: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          additional_args: "--security-review --log-level debug --verbose"
 
       - name: Review skipped summary
         if: steps.review_prereqs.outputs.should_run != 'true'
         run: |
           echo "AI security code review skipped (fail-open); missing configuration prerequisites."
+
+  # ---------------------------------------------------------------------------
+  # OIDC smoke test — validates keyless auth plumbing independently from SDK
+  # integration tests (which still use API key auth).
+  # ---------------------------------------------------------------------------
+  oidc-smoke:
+    name: Endor OIDC Smoke Check
+    runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.ci == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Validate smoke prerequisites
+        run: |
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "::error::ENDOR_NAMESPACE variable is required for OIDC smoke check."
+            exit 1
+          fi
+
+      - name: Set up Endor Labs OIDC auth
+        uses: endorlabs/github-action/setup@ea13ac38613bbf08ee75ec21ddec172e648976b7
+        with:
+          namespace: ${{ vars.ENDOR_NAMESPACE }}
+
+      - name: Validate GitHub OIDC auth policy
+        run: |
+          set -euo pipefail
+          POLICY_JSON="$(endorctl api list -r AuthorizationPolicy -n "${{ vars.ENDOR_NAMESPACE }}" --traverse)"
+          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg policy_name "github-oidc-code-scanner" --arg claim "user=${{ github.repository_owner }}" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select(.meta.name == $policy_name) | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
+          if [ "$MATCH_COUNT" -lt 1 ]; then
+            echo "::error::Missing or mismatched OIDC authorization policy. Expected policy=github-oidc-code-scanner claim=user=${{ github.repository_owner }} role=SYSTEM_ROLE_CODE_SCANNER target=${{ vars.ENDOR_NAMESPACE }} propagate=true"
+            exit 1
+          fi
+          echo "OIDC policy validation passed."
+
+      - name: Run OIDC smoke command
+        run: |
+          endorctl api list -r Project -n "${{ vars.ENDOR_NAMESPACE }}" --count
 
   # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.
@@ -562,7 +607,7 @@ jobs:
     name: Branch Protection CI Gate
     runs-on: ubuntu-latest
     if: always()
-    needs: [lint, unit-tests, test-integration, coverage]
+    needs: [lint, unit-tests, test-integration, coverage, oidc-smoke]
     steps:
       - name: Verify no failures
         run: |
@@ -571,6 +616,7 @@ jobs:
             "${{ needs.unit-tests.result }}"
             "${{ needs.test-integration.result }}"
             "${{ needs.coverage.result }}"
+            "${{ needs.oidc-smoke.result }}"
           )
           failed=0
           for result in "${results[@]}"; do
@@ -597,4 +643,5 @@ jobs:
             echo "- Unit tests: \`${{ needs.unit-tests.result }}\`"
             echo "- Integration tests: \`${{ needs.test-integration.result }}\`"
             echo "- Coverage: \`${{ needs.coverage.result }}\`"
+            echo "- OIDC smoke: \`${{ needs.oidc-smoke.result }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

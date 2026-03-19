@@ -35,6 +35,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   self-validation:
@@ -69,6 +70,33 @@ jobs:
           echo "repository_url=$REPOSITORY_URL" >> "$GITHUB_OUTPUT"
           echo "deterministic=$DETERMINISTIC" >> "$GITHUB_OUTPUT"
           echo "strict_claims=$STRICT_CLAIMS" >> "$GITHUB_OUTPUT"
+
+      - name: Validate OIDC prerequisites
+        run: |
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            echo "ENDOR_NAMESPACE variable is required"
+            exit 1
+          fi
+
+      - name: Set up Endor Labs OIDC auth
+        uses: endorlabs/github-action/setup@ea13ac38613bbf08ee75ec21ddec172e648976b7
+        with:
+          namespace: ${{ vars.ENDOR_NAMESPACE }}
+
+      - name: Validate GitHub OIDC auth policy
+        run: |
+          set -euo pipefail
+          POLICY_JSON="$(endorctl api list -r AuthorizationPolicy -n "${{ vars.ENDOR_NAMESPACE }}" --traverse)"
+          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg policy_name "github-oidc-code-scanner" --arg claim "user=${{ github.repository_owner }}" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select(.meta.name == $policy_name) | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
+          if [ "$MATCH_COUNT" -lt 1 ]; then
+            echo "::error::Missing or mismatched OIDC authorization policy. Expected policy=github-oidc-code-scanner claim=user=${{ github.repository_owner }} role=SYSTEM_ROLE_CODE_SCANNER target=${{ vars.ENDOR_NAMESPACE }} propagate=true"
+            exit 1
+          fi
+          echo "OIDC policy validation passed."
+
+      - name: OIDC smoke command
+        run: |
+          endorctl api list -r Project -n "${{ vars.ENDOR_NAMESPACE }}" --count
 
       - name: Validate required secrets
         run: |
