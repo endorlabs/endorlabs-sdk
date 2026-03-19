@@ -258,12 +258,19 @@ jobs:
           uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
           uv run pyright --project pyproject.toml scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
 
+      - name: Note deterministic PR policy for OpenAPI checks
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "::notice::Skipping live OpenAPI regeneration checks on pull_request events to avoid flaky failures from upstream spec drift."
+
       - name: Download OpenAPI spec for model sync
+        if: github.event_name != 'pull_request'
         run: |
           mkdir -p .endorlabs-context
           curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
 
       - name: Verify canonical model-sync artifacts are up to date
+        if: github.event_name != 'pull_request'
         run: |
           uv run python scripts/model_sync.py
           if [ ! -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json ]; then
@@ -313,6 +320,7 @@ jobs:
           fi
 
       - name: Verify generated reference docs are up to date
+        if: github.event_name != 'pull_request'
         run: |
           uv run python scripts/generate_reference_docs.py
           if ! git diff --exit-code -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json; then
