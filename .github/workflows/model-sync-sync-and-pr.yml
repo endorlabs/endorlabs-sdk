@@ -22,10 +22,11 @@ concurrency:
 env:
   PYTHON_VERSION: "3.13"
   OPENAPI_SOURCE_URL_DEFAULT: "https://api.endorlabs.com/download/openapiv2.swagger.json"
+  PYTEST_MAXFAIL: "2"
 
 jobs:
-  sync-and-pr:
-    name: Generate Canonical Model Sync and Open PR
+  validate-generated-artifacts:
+    name: Generate and Validate Sync Artifacts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -64,6 +65,20 @@ jobs:
           mkdir -p .endorlabs-context
           curl -sSfL -o .endorlabs-context/openapiv2.swagger.json "${{ steps.trigger.outputs.openapi_source_url }}"
 
+      - name: Verify OpenAPI payload hash when provided
+        run: |
+          EXPECTED="${{ steps.trigger.outputs.openapi_sha256 }}"
+          if [ -z "$EXPECTED" ]; then
+            echo "::notice::No expected OpenAPI hash provided by trigger payload; skipping hash verification."
+            exit 0
+          fi
+          ACTUAL=$(sha256sum .endorlabs-context/openapiv2.swagger.json | awk '{print $1}')
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::OpenAPI hash mismatch. expected=$EXPECTED actual=$ACTUAL"
+            exit 1
+          fi
+          echo "✅ OpenAPI hash verified: $ACTUAL"
+
       - name: Run canonical model sync generation
         run: |
           uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
@@ -81,6 +96,109 @@ jobs:
           ENDORCTL_VERSION: ${{ steps.trigger.outputs.endorctl_version }}
           OPENAPI_SHA256: ${{ steps.trigger.outputs.openapi_sha256 }}
           OPENAPI_SOURCE_URL: ${{ steps.trigger.outputs.openapi_source_url }}
+
+      - name: Run lint/typecheck quality gate
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .
+          uv run pyright --project pyproject.toml
+
+      - name: Run unit test suite
+        run: |
+          uv run pytest tests/unit/ --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow and not long"
+
+      - name: Evaluate integration test prerequisites
+        id: integration_prereqs
+        run: |
+          SHOULD_RUN=true
+          if [ -z "${{ vars.ENDOR_API }}" ]; then
+            SHOULD_RUN=false
+          fi
+          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
+            SHOULD_RUN=false
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
+            SHOULD_RUN=false
+          fi
+          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
+            SHOULD_RUN=false
+          fi
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
+
+      - name: Run integration test suite
+        if: steps.integration_prereqs.outputs.should_run == 'true'
+        run: |
+          uv run pytest tests/integration/ --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not long"
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+
+      - name: Integration test skipped summary
+        if: steps.integration_prereqs.outputs.should_run != 'true'
+        run: |
+          echo "::notice::Integration tests skipped because required ENDOR_* vars/secrets are not fully configured."
+
+  sync-and-pr:
+    name: Open or Update Sync PR
+    needs: [validate-generated-artifacts]
+    if: needs.validate-generated-artifacts.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Resolve trigger metadata
+        id: trigger
+        run: |
+          ENDORCTL_VERSION="${{ github.event.client_payload.endorctl_version || '' }}"
+          OPENAPI_SHA256="${{ github.event.client_payload.openapi_sha256 || '' }}"
+          OPENAPI_SOURCE_URL="${{ github.event.client_payload.openapi_source_url || env.OPENAPI_SOURCE_URL_DEFAULT }}"
+          REASON="${{ github.event.client_payload.reason || 'manual' }}"
+
+          echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "openapi_sha256=$OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
+          echo "openapi_source_url=$OPENAPI_SOURCE_URL" >> "$GITHUB_OUTPUT"
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+
+      - name: Guard against unsupported dispatch payload
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          if [ "${{ github.event.action }}" != "model-sync-check" ]; then
+            echo "Unexpected repository_dispatch action: ${{ github.event.action }}"
+            exit 1
+          fi
+
+      - name: Download OpenAPI spec
+        run: |
+          mkdir -p .endorlabs-context
+          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json "${{ steps.trigger.outputs.openapi_source_url }}"
+
+      - name: Verify OpenAPI payload hash when provided
+        run: |
+          EXPECTED="${{ steps.trigger.outputs.openapi_sha256 }}"
+          if [ -z "$EXPECTED" ]; then
+            echo "::notice::No expected OpenAPI hash provided by trigger payload; skipping hash verification."
+            exit 0
+          fi
+          ACTUAL=$(sha256sum .endorlabs-context/openapiv2.swagger.json | awk '{print $1}')
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::OpenAPI hash mismatch. expected=$EXPECTED actual=$ACTUAL"
+            exit 1
+          fi
+          echo "✅ OpenAPI hash verified: $ACTUAL"
+
+      - name: Run canonical model sync generation
+        run: |
+          uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
 
       - name: Validate changed file scope
         id: diff_scope
