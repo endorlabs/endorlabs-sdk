@@ -135,9 +135,9 @@ jobs:
         run: |
           set -euo pipefail
           POLICY_JSON="$(endorctl api list -r AuthorizationPolicy -n "${{ vars.ENDOR_NAMESPACE }}" --traverse)"
-          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg policy_name "github-oidc-code-scanner" --arg claim "user=${{ github.repository_owner }}" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select(.meta.name == $policy_name) | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
+          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg claim "user=${{ github.repository_owner }}" --arg provider "github-action" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.clause // []) | index($provider)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
           if [ "$MATCH_COUNT" -lt 1 ]; then
-            echo "::error::Missing or mismatched OIDC authorization policy. Expected policy=github-oidc-code-scanner claim=user=${{ github.repository_owner }} role=SYSTEM_ROLE_CODE_SCANNER target=${{ vars.ENDOR_NAMESPACE }} propagate=true"
+            echo "::error::Missing or mismatched OIDC authorization policy. Expected clauses include github-action and user=${{ github.repository_owner }}, role=SYSTEM_ROLE_CODE_SCANNER, target=${{ vars.ENDOR_NAMESPACE }}, propagate=true"
             exit 1
           fi
           echo "OIDC policy validation passed."

@@ -529,9 +529,9 @@ jobs:
         run: |
           set -euo pipefail
           POLICY_JSON="$(endorctl api list -r AuthorizationPolicy -n "${{ vars.ENDOR_NAMESPACE }}" --traverse)"
-          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg policy_name "github-oidc-code-scanner" --arg claim "user=${{ github.repository_owner }}" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select(.meta.name == $policy_name) | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
+          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg claim "user=${{ github.repository_owner }}" --arg provider "github-action" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.clause // []) | index($provider)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
           if [ "$MATCH_COUNT" -lt 1 ]; then
-            echo "::error::Missing or mismatched OIDC authorization policy. Expected policy=github-oidc-code-scanner claim=user=${{ github.repository_owner }} role=SYSTEM_ROLE_CODE_SCANNER target=${{ vars.ENDOR_NAMESPACE }} propagate=true"
+            echo "::error::Missing or mismatched OIDC authorization policy. Expected clauses include github-action and user=${{ github.repository_owner }}, role=SYSTEM_ROLE_CODE_SCANNER, target=${{ vars.ENDOR_NAMESPACE }}, propagate=true"
             exit 1
           fi
           echo "OIDC policy validation passed."
@@ -588,9 +588,9 @@ jobs:
         run: |
           set -euo pipefail
           POLICY_JSON="$(endorctl api list -r AuthorizationPolicy -n "${{ vars.ENDOR_NAMESPACE }}" --traverse)"
-          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg policy_name "github-oidc-code-scanner" --arg claim "user=${{ github.repository_owner }}" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select(.meta.name == $policy_name) | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
+          MATCH_COUNT="$(echo "$POLICY_JSON" | jq --arg claim "user=${{ github.repository_owner }}" --arg provider "github-action" --arg namespace "${{ vars.ENDOR_NAMESPACE }}" '[.list.objects[]? | select((.spec.permissions.roles // []) | index("SYSTEM_ROLE_CODE_SCANNER")) | select((.spec.clause // []) | index($claim)) | select((.spec.clause // []) | index($provider)) | select((.spec.target_namespaces // []) | index($namespace)) | select(.spec.propagate == true)] | length')"
           if [ "$MATCH_COUNT" -lt 1 ]; then
-            echo "::error::Missing or mismatched OIDC authorization policy. Expected policy=github-oidc-code-scanner claim=user=${{ github.repository_owner }} role=SYSTEM_ROLE_CODE_SCANNER target=${{ vars.ENDOR_NAMESPACE }} propagate=true"
+            echo "::error::Missing or mismatched OIDC authorization policy. Expected clauses include github-action and user=${{ github.repository_owner }}, role=SYSTEM_ROLE_CODE_SCANNER, target=${{ vars.ENDOR_NAMESPACE }}, propagate=true"
             exit 1
           fi
           echo "OIDC policy validation passed."
@@ -611,20 +611,23 @@ jobs:
     steps:
       - name: Verify no failures
         run: |
-          results=(
+          required_results=(
             "${{ needs.lint.result }}"
             "${{ needs.unit-tests.result }}"
             "${{ needs.test-integration.result }}"
             "${{ needs.coverage.result }}"
-            "${{ needs.oidc-smoke.result }}"
           )
+          oidc_result="${{ needs.oidc-smoke.result }}"
           failed=0
-          for result in "${results[@]}"; do
+          for result in "${required_results[@]}"; do
             if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
               echo "::error::Job result: $result"
               failed=1
             fi
           done
+          if [ "$oidc_result" = "failure" ] || [ "$oidc_result" = "cancelled" ]; then
+            echo "::warning::OIDC smoke check is non-blocking during tenant policy rollout (result=$oidc_result)."
+          fi
           if [ "$failed" -eq 1 ]; then
             echo "One or more required jobs failed or were cancelled"
             exit 1
