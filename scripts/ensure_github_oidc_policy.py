@@ -16,7 +16,13 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import endorlabs
-from endorlabs.resources.authorization_policy import SystemRole
+from endorlabs.resources.authorization_policy import (
+    AuthorizationPolicyMeta,
+    AuthorizationPolicyPermissions,
+    AuthorizationPolicySpec,
+    CreateAuthorizationPolicyPayload,
+    SystemRole,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +104,10 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 def _normalize_claims(claims: list[str]) -> list[str]:
     normalized = [value.strip() for value in claims if value.strip()]
     if not normalized:
-        return ["user=Endor-Solutions-Architecture"]
-    return sorted(set(normalized))
+        normalized = ["github-action", "user=Endor-Solutions-Architecture"]
+    normalized_set = set(normalized)
+    normalized_set.add("github-action")
+    return sorted(normalized_set)
 
 
 def _normalize_target_namespaces(
@@ -241,21 +249,21 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 0
 
-        payload: dict[str, Any] = {
-            "meta": {
-                "name": desired.name,
-                "description": args.description.strip(),
-            },
-            "spec": {
-                "clause": sorted(desired.claims),
-                "target_namespaces": sorted(desired.target_namespaces),
-                "propagate": desired.propagate,
-                "permissions": {
-                    "roles": [desired.role],
-                },
-            },
-            "propagate": desired.propagate,
-        }
+        payload = CreateAuthorizationPolicyPayload(  # pyright: ignore[reportCallIssue]
+            meta=AuthorizationPolicyMeta(  # pyright: ignore[reportCallIssue]
+                name=desired.name,
+                description=args.description.strip(),
+            ),
+            spec=AuthorizationPolicySpec(  # pyright: ignore[reportCallIssue]
+                clause=sorted(desired.claims),
+                target_namespaces=sorted(desired.target_namespaces),
+                propagate=desired.propagate,
+                permissions=AuthorizationPolicyPermissions(  # pyright: ignore[reportCallIssue]
+                    roles=[desired.role]
+                ),
+            ),
+            propagate=desired.propagate,
+        )
         created = client.authorization_policy.create(payload, namespace=namespace)
         _emit_json(
             {

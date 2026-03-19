@@ -15,7 +15,7 @@ tests until the SDK harness supports token-mode auth.
 1. Ensure the root tenant namespace exists (for this repo: `endor-solutions-tgowan`).
 2. Create a GitHub Action OIDC authorization policy with:
    - **Name**: `github-oidc-code-scanner`
-   - **Claim**: `user=<github-org>` (for this repo: `user=Endor-Solutions-Architecture`)
+   - **Claims**: include both `github-action` and `user=<github-org>` (for this repo: `user=Endor-Solutions-Architecture`)
    - **Role**: `SYSTEM_ROLE_CODE_SCANNER`
    - **Target namespace**: root tenant namespace
    - **Propagate**: `true`
@@ -69,7 +69,7 @@ Notes:
 
 - **401/403 on OIDC jobs**
   - Confirm job has `permissions.id-token: write`.
-  - Confirm policy claim matches `user=${{ github.repository_owner }}`.
+  - Confirm policy claims include both `github-action` and `user=${{ github.repository_owner }}`.
   - Confirm policy target namespace matches `vars.ENDOR_NAMESPACE`.
 - **Policy validation step fails**
   - Re-run `scripts/ensure_github_oidc_policy.py --verify-only` locally.
