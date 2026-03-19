@@ -8,6 +8,8 @@ import json
 # endorctl_version: endorctl version v1.7.882
 # spec_sha256: 3eae43376579fca9f3142b585cc424932476753c23b84edd61cfe1b24ae8353b
 
+# model_sync_provenance: {"endorctl_version":"endorctl version v1.7.882","spec_sha256":"3eae43376579fca9f3142b585cc424932476753c23b84edd61cfe1b24ae8353b"}
+
 RUNTIME_REGISTRY_CONTRACT = json.loads(
     r"""{
   "resource_count": 33,
