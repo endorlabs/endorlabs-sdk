@@ -5,7 +5,6 @@ SDK how-to and workflows.
 - [consumer-ux-list-update.md](consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [retrieving-scan-results.md](retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 - [self-validation-scorecard-and-replay.md](self-validation-scorecard-and-replay.md) — Deterministic scorecards, nightly artifacts, and replay-friendly snapshots.
-- [oidc-ci-migration-runbook.md](oidc-ci-migration-runbook.md) — Tenant/CI OIDC setup, policy validation, and phased migration notes.
 
 ## Custom SAST Rules
 

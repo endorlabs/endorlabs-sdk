@@ -1,4 +1,4 @@
-name: Model Sync Generate and Open PR
+name: Model Sync PR
 
 on:
   repository_dispatch:
@@ -12,8 +12,8 @@ on:
         type: boolean
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
 
 concurrency:
   group: model-sync-sync-pr-chore-model-sync-auto
@@ -145,6 +145,9 @@ jobs:
     needs: [validate-generated-artifacts]
     if: needs.validate-generated-artifacts.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -207,6 +210,7 @@ jobs:
           if [ -z "$CHANGED" ]; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             echo "changed_files=" >> "$GITHUB_OUTPUT"
+            echo "changed_count=0" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -228,7 +232,9 @@ jobs:
             exit 1
           fi
 
+          CHANGED_COUNT=$(echo "$FILES" | sed '/^$/d' | wc -l | tr -d ' ')
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          echo "changed_count=$CHANGED_COUNT" >> "$GITHUB_OUTPUT"
           echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
           echo "$FILES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
@@ -295,12 +301,29 @@ jobs:
               --body "$PR_BODY"
           fi
 
-      - name: Summary
+      - name: Publish Workflow Summary
         if: always()
         run: |
-          echo "## Model Sync PR Workflow Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- reason: \`${{ steps.trigger.outputs.reason }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- endorctl version: \`${{ steps.trigger.outputs.endorctl_version }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- OpenAPI SHA256: \`${{ steps.trigger.outputs.openapi_sha256 }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- has changes: \`${{ steps.diff_scope.outputs.has_changes || 'false' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Model Sync PR Summary"
+            echo ""
+            echo "### Run Context"
+            echo "- Event: \`${{ github.event_name }}\`"
+            echo "- Ref: \`${{ github.ref }}\`"
+            echo "- Trigger reason: \`${{ steps.trigger.outputs.reason }}\`"
+            echo ""
+            echo "### Outcome Matrix"
+            echo "| Signal | Value |"
+            echo "|---|---|"
+            echo "| OpenAPI SHA256 | \`${{ steps.trigger.outputs.openapi_sha256 }}\` |"
+            echo "| endorctl version | \`${{ steps.trigger.outputs.endorctl_version }}\` |"
+            echo "| Generated changes detected | \`${{ steps.diff_scope.outputs.has_changes || 'false' }}\` |"
+            echo "| Changed file count | \`${{ steps.diff_scope.outputs.changed_count || '0' }}\` |"
+            echo ""
+            echo "### Skips/Reasons"
+            echo "- Integration tests are skipped when required ENDOR_* vars/secrets are not fully configured."
+            echo "- PR update is skipped when generated output has no file changes."
+            echo ""
+            echo "### Next Action"
+            echo "- If changes were detected, verify/update the generated-artifacts PR content and merge when CI is green."
+          } >> "$GITHUB_STEP_SUMMARY"

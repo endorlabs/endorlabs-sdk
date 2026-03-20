@@ -1,7 +1,7 @@
-name: Model Sync Change Detection and Contract Validation
+name: Model Sync Detector
 
 permissions:
-  contents: write
+  contents: read
 
 on:
   schedule:
@@ -41,6 +41,8 @@ jobs:
       spec-changed: ${{ steps.check.outputs.spec-changed }}
       latest-version: ${{ steps.check.outputs.version }}
       openapi-sha256: ${{ steps.check.outputs.openapi-sha256 }}
+      previous-version: ${{ steps.check.outputs.previous-version }}
+      previous-openapi-sha256: ${{ steps.check.outputs.previous-openapi-sha256 }}
       check-status: ${{ steps.check.outputs.status }}
     
     steps:
@@ -136,6 +138,8 @@ jobs:
           echo "status=ok" >> $GITHUB_OUTPUT
           echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
           echo "openapi-sha256=$OPENAPI_SHA256" >> $GITHUB_OUTPUT
+          echo "previous-version=${PREV_VERSION:-<none>}" >> $GITHUB_OUTPUT
+          echo "previous-openapi-sha256=${PREV_HASH:-<none>}" >> $GITHUB_OUTPUT
 
           if [ "$VERSION_CHANGED" = "true" ]; then
             echo "🔄 endorctl version update detected: ${PREV_VERSION:-<none>} -> $LATEST_VERSION"
@@ -171,8 +175,13 @@ jobs:
         github.event_name == 'workflow_dispatch'
       )
     runs-on: ubuntu-latest
+    outputs:
+      reason: ${{ steps.dispatch.outputs.reason }}
+    permissions:
+      contents: write
     steps:
       - name: Dispatch sync workflow
+        id: dispatch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -189,6 +198,7 @@ jobs:
           elif [ "$SPEC_CHANGED" = "true" ]; then
             REASON="spec-change"
           fi
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
 
           curl -sSfL -X POST \
             -H "Accept: application/vnd.github+json" \
@@ -215,9 +225,24 @@ jobs:
         run: |
           echo "## Model Sync Detector Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Decision" >> $GITHUB_STEP_SUMMARY
+          echo "- Dispatch sync workflow: \`${{ needs.dispatch-sync.result == 'success' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Reason: \`${{ needs.dispatch-sync.outputs.reason || 'no-dispatch' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Upstream Diff" >> $GITHUB_STEP_SUMMARY
+          echo "| Signal | Previous | Current | Changed |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| endorctl version | \`${{ needs.check-version.outputs.previous-version }}\` | \`${{ needs.check-version.outputs.latest-version }}\` | \`${{ needs.check-version.outputs.version-changed }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenAPI SHA256 | \`${{ needs.check-version.outputs.previous-openapi-sha256 }}\` | \`${{ needs.check-version.outputs.openapi-sha256 }}\` | \`${{ needs.check-version.outputs.spec-changed }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Trigger Context" >> $GITHUB_STEP_SUMMARY
+          echo "- Event: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Force run input: \`${{ inputs.force_run || github.event.inputs.force_run || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- check-version: \`${{ needs.check-version.result }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- dispatch-sync: \`${{ needs.dispatch-sync.result }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- endorctl version changed: \`${{ needs.check-version.outputs.version-changed }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- OpenAPI hash changed: \`${{ needs.check-version.outputs.spec-changed }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- endorctl version: \`${{ needs.check-version.outputs.latest-version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- OpenAPI SHA256: \`${{ needs.check-version.outputs.openapi-sha256 }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Skips/Reasons" >> $GITHUB_STEP_SUMMARY
+          echo "- When no upstream diff is detected and no force/manual trigger is used, dispatch is intentionally skipped." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Action" >> $GITHUB_STEP_SUMMARY
+          echo "- If dispatched, monitor \`Model Sync PR\` for generated artifact updates." >> $GITHUB_STEP_SUMMARY

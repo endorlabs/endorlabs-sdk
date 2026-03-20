@@ -25,7 +25,6 @@ Index for SDK-specific documentation.
 - [guides/README.md](guides/README.md) — List of guides.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
-- [guides/oidc-ci-migration-runbook.md](guides/oidc-ci-migration-runbook.md) — OIDC tenant/CI migration plan, validation, and troubleshooting.
 
 ## Rules of Engagement
 
