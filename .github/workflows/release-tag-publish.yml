@@ -1,4 +1,4 @@
-name: Release Validation, Build, and Publish
+name: Release Tag Publish
 
 # Triggered when a version tag is pushed (e.g. v0.1.0, v1.0.0-rc.1).
 # Builds the package, runs the quality gate, and creates a GitHub Release
@@ -122,3 +122,27 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+
+      - name: Publish release summary
+        if: always()
+        run: |
+          {
+            echo "## Release Summary"
+            echo ""
+            echo "### Run Context"
+            echo "- Event: \`${{ github.event_name }}\`"
+            echo "- Tag ref: \`${{ github.ref }}\`"
+            echo "- Actor: \`${{ github.actor }}\`"
+            echo ""
+            echo "### Outcome Matrix"
+            echo "| Signal | Value |"
+            echo "|---|---|"
+            echo "| Job status | \`${{ job.status }}\` |"
+            echo "| Release trigger tag | \`${{ github.ref_name }}\` |"
+            echo ""
+            echo "### Skips/Reasons"
+            echo "- This workflow runs only for \`v*\` tag pushes."
+            echo ""
+            echo "### Next Action"
+            echo "- Confirm release assets and signature verification in the GitHub release page."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,14 +1,13 @@
-name: Continuous Integration and Quality Gates
+name: CI PR Main
 
 # Required Repository Configuration:
 # Variables (Settings > Secrets and variables > Actions > Variables):
 #   - ENDOR_API: Endor Labs API endpoint (e.g., "https://api.endorlabs.com")
 #   - ENDOR_NAMESPACE: Endor namespace for CI (e.g., "endor-solutions-tgowan")
 # Secrets (Settings > Secrets and variables > Actions > Secrets):
-#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (for integration tests + AI security review)
-#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (for integration tests + AI security review)
+#   - ENDOR_API_CREDENTIALS_KEY: API credentials key (integration tests only)
+#   - ENDOR_API_CREDENTIALS_SECRET: API credentials secret (integration tests only)
 # Security: This repo is scanned by the Endor Labs app integration.
-# AI Security Code Review: Runs on PRs via endorctl --security-review (uses GITHUB_TOKEN for PR comments).
 #
 # Noop strategy (first principles — a job runs only when its inputs change):
 #   Layer 1: paths-ignore skips the entire workflow for universal noops (docs, IDE config, etc.).
@@ -69,6 +68,9 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   # CI Configuration - easily maintainable environment variables
@@ -199,7 +201,7 @@ jobs:
       - name: Generate cache key
         id: cache-key
         run: |
-          echo "key=${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/pyproject.toml') }}" >> $GITHUB_OUTPUT
+          echo "key=${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}" >> $GITHUB_OUTPUT
 
       - name: Cache UV dependencies
         uses: actions/cache@v5.0.2
@@ -382,11 +384,12 @@ jobs:
   test-integration:
     name: Integration Test Suite
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, unit-tests, detect-changes]
+    needs: [resolve-dependencies, lint, unit-tests, detect-changes]
     if: >-
       always() &&
       !cancelled() &&
       needs.resolve-dependencies.result == 'success' &&
+      needs.lint.result == 'success' &&
       needs.detect-changes.result == 'success' &&
       needs.unit-tests.result != 'failure' &&
       (inputs.run_integration != false && github.event.inputs.run_integration != 'false' && github.event.client_payload.run_integration != 'false') &&
@@ -482,79 +485,6 @@ jobs:
           echo "View detailed coverage with: uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
 
   # ---------------------------------------------------------------------------
-  # AI Security Code Review — runs on pull requests only (independent of other
-  # jobs; not gated by detect-changes since endorctl diffs the PR itself).
-  # ---------------------------------------------------------------------------
-  ai-security-review:
-    name: AI-Assisted Security Code Review
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    if: ${{ false }} # Temporarily disabled per branch hardening pass
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-
-      - name: Evaluate code review prerequisites (fail-open)
-        id: review_prereqs
-        run: |
-          SHOULD_RUN=true
-          if [ -z "${{ vars.ENDOR_NAMESPACE }}" ]; then
-            echo "::warning::ENDOR_NAMESPACE variable is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
-          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_KEY }}" ]; then
-            echo "::warning::ENDOR_API_CREDENTIALS_KEY secret is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
-          if [ -z "${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}" ]; then
-            echo "::warning::ENDOR_API_CREDENTIALS_SECRET secret is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
-          if [ -z "${{ vars.ENDOR_API }}" ]; then
-            echo "::warning::ENDOR_API variable is not set; skipping AI security review."
-            SHOULD_RUN=false
-          fi
-          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
-          if [ "$SHOULD_RUN" = "true" ]; then
-            echo "✅ AI security review prerequisites satisfied."
-          fi
-
-      - name: Install endorctl
-        if: steps.review_prereqs.outputs.should_run == 'true'
-        run: |
-          curl -sSfL https://api.endorlabs.com/download/latest/endorctl_linux_amd64 -o endorctl
-          chmod +x endorctl
-          ./endorctl --version
-
-      - name: Run AI Security Code Review
-        if: steps.review_prereqs.outputs.should_run == 'true'
-        run: |
-          ./endorctl scan \
-            --namespace "${{ vars.ENDOR_NAMESPACE }}" \
-            --pr \
-            --security-review \
-            --scm-pr-id "${{ github.event.pull_request.number }}" \
-            --scm-token "$GITHUB_TOKEN" \
-            --enable-pr-comments \
-            --log-level debug \
-            --verbose
-        env:
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Review skipped summary
-        if: steps.review_prereqs.outputs.should_run != 'true'
-        run: |
-          echo "AI security code review skipped (fail-open); missing configuration prerequisites."
-
-  # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.
   # Passes when every conditional job either succeeded or was correctly skipped.
   # ---------------------------------------------------------------------------
@@ -562,18 +492,20 @@ jobs:
     name: Branch Protection CI Gate
     runs-on: ubuntu-latest
     if: always()
-    needs: [lint, unit-tests, test-integration, coverage]
+    needs: [detect-changes, resolve-dependencies, lint, unit-tests, test-integration, coverage]
     steps:
       - name: Verify no failures
         run: |
-          results=(
+          required_results=(
+            "${{ needs.detect-changes.result }}"
+            "${{ needs.resolve-dependencies.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.unit-tests.result }}"
             "${{ needs.test-integration.result }}"
             "${{ needs.coverage.result }}"
           )
           failed=0
-          for result in "${results[@]}"; do
+          for result in "${required_results[@]}"; do
             if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
               echo "::error::Job result: $result"
               failed=1
@@ -591,10 +523,24 @@ jobs:
           {
             echo "## CI Summary"
             echo ""
+            echo "### Run Context"
             echo "- Event: \`${{ github.event_name }}\`"
             echo "- Ref: \`${{ github.ref }}\`"
-            echo "- Lint: \`${{ needs.lint.result }}\`"
-            echo "- Unit tests: \`${{ needs.unit-tests.result }}\`"
-            echo "- Integration tests: \`${{ needs.test-integration.result }}\`"
-            echo "- Coverage: \`${{ needs.coverage.result }}\`"
+            echo "- Actor: \`${{ github.actor }}\`"
+            echo ""
+            echo "### Outcome Matrix"
+            echo "| Job | Result |"
+            echo "|---|---|"
+            echo "| Detect changes | \`${{ needs.detect-changes.result }}\` |"
+            echo "| Resolve dependencies | \`${{ needs.resolve-dependencies.result }}\` |"
+            echo "| Lint/typecheck | \`${{ needs.lint.result }}\` |"
+            echo "| Unit tests | \`${{ needs.unit-tests.result }}\` |"
+            echo "| Integration tests | \`${{ needs.test-integration.result }}\` |"
+            echo "| Coverage | \`${{ needs.coverage.result }}\` |"
+            echo ""
+            echo "### Key Outputs"
+            echo "- Path categories: src=\`${{ needs.detect-changes.outputs.src }}\`, unit=\`${{ needs.detect-changes.outputs.unit-tests }}\`, integration=\`${{ needs.detect-changes.outputs.integration-tests }}\`, config=\`${{ needs.detect-changes.outputs.config }}\`, ci=\`${{ needs.detect-changes.outputs.ci }}\`, python=\`${{ needs.detect-changes.outputs.python }}\`"
+            echo ""
+            echo "### Next Action"
+            echo "- If a required row is \`failure\` or \`cancelled\`, fix and re-run this workflow."
           } >> "$GITHUB_STEP_SUMMARY"

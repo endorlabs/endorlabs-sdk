@@ -68,13 +68,13 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 
 ## Automation
 
-Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Run the same commands locally before pushing. Public API modules are strict-typed; internal roots are tightened incrementally via the pyright execution-environment ratchet. For the exact command list, see [.github/workflows/continuous-integration-and-quality-gates.yml](.github/workflows/continuous-integration-and-quality-gates.yml).
+Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Run the same commands locally before pushing. Public API modules are strict-typed; internal roots are tightened incrementally via the pyright execution-environment ratchet. For the exact command list, see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml).
 
 Model-sync automation is intentionally split:
 
-- **Detector workflow:** [.github/workflows/model-sync-change-detection-and-validation.yml](.github/workflows/model-sync-change-detection-and-validation.yml) detects upstream version/spec drift and dispatches sync events.
-- **Sync + PR workflow:** [.github/workflows/model-sync-sync-and-pr.yml](.github/workflows/model-sync-sync-and-pr.yml) regenerates canonical artifacts and opens/updates the bot PR branch.
-- **Required CI gate:** [.github/workflows/continuous-integration-and-quality-gates.yml](.github/workflows/continuous-integration-and-quality-gates.yml) validates all PRs (including bot-generated PRs).
+- **Detector workflow:** [.github/workflows/model-sync-detector.yml](.github/workflows/model-sync-detector.yml) detects upstream version/spec drift and dispatches sync events.
+- **Sync + PR workflow:** [.github/workflows/model-sync-pr.yml](.github/workflows/model-sync-pr.yml) regenerates canonical artifacts and opens/updates the bot PR branch.
+- **Required CI gate:** [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml) validates all PRs (including bot-generated PRs).
 
 ## Repository-Scoped Rules (`.cursor/rules/`)
 

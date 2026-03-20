@@ -19,7 +19,7 @@ Implemented in prototype:
   - `docs/generated-reference/create-update-payloads.md`
   - `docs/generated-reference/api-surfaces.md`
 - Strengthened release alignment:
-  - `.github/workflows/release-validation-and-publish.yml` now verifies generated stubs/docs are
+  - `.github/workflows/release-tag-publish.yml` now verifies generated stubs/docs are
     up to date before packaging.
 
 Preserved (explicitly unchanged by design):

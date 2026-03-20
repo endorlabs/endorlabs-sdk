@@ -1,4 +1,4 @@
-name: Nightly Self-Validation Scorecard and Replay
+name: Nightly Self Validation
 
 on:
   schedule:
@@ -139,9 +139,22 @@ jobs:
           {
             echo "## Nightly Self-Validation Summary"
             echo ""
+            echo "### Run Context"
+            echo "- Event: \`${{ github.event_name }}\`"
             echo "- Mode: \`${{ steps.runtime.outputs.mode }}\`"
             echo "- Repository: \`${{ steps.runtime.outputs.repository_url }}\`"
-            echo "- Deterministic: \`${{ steps.runtime.outputs.deterministic }}\`"
-            echo "- Strict threat claims: \`${{ steps.runtime.outputs.strict_claims }}\`"
-            echo "- Artifacts: \`.endorlabs-context/self-validation/\`"
+            echo ""
+            echo "### Outcome Matrix"
+            echo "| Signal | Value |"
+            echo "|---|---|"
+            echo "| Job status | \`${{ job.status }}\` |"
+            echo "| Deterministic output | \`${{ steps.runtime.outputs.deterministic }}\` |"
+            echo "| Strict threat claims | \`${{ steps.runtime.outputs.strict_claims }}\` |"
+            echo "| Artifact path | \`.endorlabs-context/self-validation/\` |"
+            echo ""
+            echo "### Skips/Reasons"
+            echo "- Orphan finding hygiene check runs only in \`full\` mode."
+            echo ""
+            echo "### Next Action"
+            echo "- Download artifact \`self-validation-artifacts-${{ github.run_number }}\` for triage and replay."
           } >> "$GITHUB_STEP_SUMMARY"
