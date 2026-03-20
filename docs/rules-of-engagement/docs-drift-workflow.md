@@ -49,8 +49,8 @@ in CI.
 
 **Files**:
 
-- `.github/workflows/model-sync-change-detection-and-validation.yml` (detector workflow)
-- `.github/workflows/model-sync-sync-and-pr.yml` (sync + PR workflow)
+- `.github/workflows/model-sync-detector.yml` (detector workflow)
+- `.github/workflows/model-sync-pr.yml` (sync + PR workflow)
 
 - **Detector schedule**: Hourly (endorctl version check); weekly Mondays 3 AM UTC.
 - **Detector jobs**:
@@ -72,7 +72,7 @@ in CI.
 ### Triage and rollback
 
 - If detector breaks, inspect `check-version` outputs and `.github/cache/model_sync_state.json` first.
-- If sync generation breaks, run `.github/workflows/model-sync-sync-and-pr.yml` via `workflow_dispatch` and inspect the workflow summary + PR attempt details.
+- If sync generation breaks, run `.github/workflows/model-sync-pr.yml` via `workflow_dispatch` and inspect the workflow summary + PR attempt details.
 
 ## Local Use
 
