@@ -88,20 +88,20 @@ git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/continuous-integration-and-quality-gates.yml](.github/workflows/continuous-integration-and-quality-gates.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
+CI runs these; see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
 
 ## Model-Sync automation topology
 
 Model-sync automation is split by responsibility:
 
-- **Detector:** `.github/workflows/model-sync-change-detection-and-validation.yml`
+- **Detector:** `.github/workflows/model-sync-detector.yml`
   - checks latest `endorctl` version + OpenAPI SHA drift
   - dispatches `repository_dispatch` (`model-sync-check`) when a version/spec change is detected
-- **Sync + PR:** `.github/workflows/model-sync-sync-and-pr.yml`
+- **Sync + PR:** `.github/workflows/model-sync-pr.yml`
   - runs canonical generation (`scripts/model_sync.py --generate-stubs --generate-reference-docs`)
   - scopes changed files to generated surfaces
   - creates/updates bot PR branch (`chore/model-sync-auto`)
-- **CI gate:** `.github/workflows/continuous-integration-and-quality-gates.yml`
+- **CI gate:** `.github/workflows/ci-pr-main.yml`
   - remains the required merge gate for all PRs, including bot PRs
 
 ## Optional: direnv
@@ -143,7 +143,7 @@ uv run python scripts/self_validation_scorecard.py \
   --deterministic
 ```
 
-Nightly automation is defined in `.github/workflows/nightly-self-validation-scorecard-and-replay.yml`.
+Nightly automation is defined in `.github/workflows/nightly-self-validation.yml`.
 
 Supported trigger paths:
 

@@ -1,6 +1,6 @@
 # Endor Labs SDK
 
-[![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/continuous-integration-and-quality-gates.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/continuous-integration-and-quality-gates.yml)
+[![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
 Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and 24 more) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
