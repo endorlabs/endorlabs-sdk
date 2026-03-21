@@ -382,6 +382,16 @@ def test_client_exposes_all_custom_facades(
         assert facade is not None, f"{entry.attr_name} is None"
 
 
+def test_custom_facade_registry_has_stub_metadata() -> None:
+    """Every custom facade entry must define pyi_* fields for stub generation."""
+    from endorlabs.registry import CUSTOM_FACADE_REGISTRY
+
+    for entry in CUSTOM_FACADE_REGISTRY:
+        assert entry.pyi_facade_class.strip(), f"{entry.attr_name}: pyi_facade_class"
+        assert entry.pyi_import_module.strip(), f"{entry.attr_name}: pyi_import_module"
+        assert entry.pyi_attr_doc.strip(), f"{entry.attr_name}: pyi_attr_doc"
+
+
 def test_client_namespace_list_uses_session_logging_only(
     client_with_mock_transport: Client,
 ) -> None:
