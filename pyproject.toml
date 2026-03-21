@@ -123,6 +123,8 @@ exclude = [
     "**/.hypothesis",
     ".DS_Store",
     "Thumbs.db",
+    ".tmp",
+    ".tmp/**",
 ]
 
 [tool.ruff.lint]
@@ -477,5 +479,7 @@ exclude = [
     ".DS_Store",
     "Thumbs.db",
     "**/node_modules",  # Pyright-specific
+    ".tmp",
+    ".tmp/**",
 ]
 

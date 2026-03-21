@@ -1,8 +1,8 @@
 {
   "facade_contract_path": "workspace/model-sync/custom_mapping/facade_contract.json",
   "facade_contract_resource_count": 33,
-  "model_sync_entry_count": 257,
-  "model_sync_manifest_file_count": 169,
+  "model_sync_entry_count": 255,
+  "model_sync_manifest_file_count": 167,
   "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
   "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
   "operation_path_metadata_count": 719,
@@ -15,7 +15,7 @@
   "resource_count": 33,
   "resources": [
     {
-      "attr_name": "api_key",
+      "attr_name": "APIKey",
       "parent_kind": null,
       "resource_name": "api-keys",
       "scope": "tenant",
@@ -35,7 +35,7 @@
       }
     },
     {
-      "attr_name": "audit_log",
+      "attr_name": "AuditLog",
       "parent_kind": null,
       "resource_name": "audit-logs",
       "scope": "tenant",
@@ -55,7 +55,7 @@
       }
     },
     {
-      "attr_name": "authentication_log",
+      "attr_name": "AuthenticationLog",
       "parent_kind": null,
       "resource_name": "authentication-logs",
       "scope": "system",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "attr_name": "authorization_policy",
+      "attr_name": "AuthorizationPolicy",
       "parent_kind": null,
       "resource_name": "authorization-policies",
       "scope": "tenant",
@@ -95,7 +95,7 @@
       }
     },
     {
-      "attr_name": "code_owners",
+      "attr_name": "CodeOwners",
       "parent_kind": null,
       "resource_name": "codeowners",
       "scope": "tenant",
@@ -115,7 +115,7 @@
       }
     },
     {
-      "attr_name": "dependency_metadata",
+      "attr_name": "DependencyMetadata",
       "parent_kind": null,
       "resource_name": "dependency-metadata",
       "scope": "oss",
@@ -135,7 +135,7 @@
       }
     },
     {
-      "attr_name": "endor_license",
+      "attr_name": "EndorLicense",
       "parent_kind": null,
       "resource_name": "endor-licenses",
       "scope": "system",
@@ -155,7 +155,7 @@
       }
     },
     {
-      "attr_name": "finding",
+      "attr_name": "Finding",
       "parent_kind": null,
       "resource_name": "findings",
       "scope": "tenant",
@@ -175,7 +175,7 @@
       }
     },
     {
-      "attr_name": "finding_log",
+      "attr_name": "FindingLog",
       "parent_kind": null,
       "resource_name": "finding-logs",
       "scope": "tenant",
@@ -195,7 +195,7 @@
       }
     },
     {
-      "attr_name": "installation",
+      "attr_name": "Installation",
       "parent_kind": null,
       "resource_name": "installations",
       "scope": "tenant",
@@ -215,7 +215,7 @@
       }
     },
     {
-      "attr_name": "invitation",
+      "attr_name": "Invitation",
       "parent_kind": null,
       "resource_name": "invitations",
       "scope": "tenant",
@@ -235,7 +235,7 @@
       }
     },
     {
-      "attr_name": "linter_result",
+      "attr_name": "LinterResult",
       "parent_kind": null,
       "resource_name": "linter-results",
       "scope": "tenant",
@@ -255,7 +255,7 @@
       }
     },
     {
-      "attr_name": "malware",
+      "attr_name": "Malware",
       "parent_kind": null,
       "resource_name": "malware",
       "scope": "oss",
@@ -275,7 +275,7 @@
       }
     },
     {
-      "attr_name": "metric",
+      "attr_name": "Metric",
       "parent_kind": null,
       "resource_name": "metrics",
       "scope": "tenant",
@@ -295,7 +295,7 @@
       }
     },
     {
-      "attr_name": "namespace",
+      "attr_name": "Namespace",
       "parent_kind": null,
       "resource_name": "namespaces",
       "scope": "tenant",
@@ -315,7 +315,7 @@
       }
     },
     {
-      "attr_name": "notification_target",
+      "attr_name": "NotificationTarget",
       "parent_kind": null,
       "resource_name": "notification-targets",
       "scope": "tenant",
@@ -335,7 +335,7 @@
       }
     },
     {
-      "attr_name": "package_license",
+      "attr_name": "PackageLicense",
       "parent_kind": null,
       "resource_name": "package-licenses",
       "scope": "oss",
@@ -355,7 +355,7 @@
       }
     },
     {
-      "attr_name": "package_version",
+      "attr_name": "PackageVersion",
       "parent_kind": null,
       "resource_name": "package-versions",
       "scope": "tenant",
@@ -375,7 +375,7 @@
       }
     },
     {
-      "attr_name": "policy",
+      "attr_name": "Policy",
       "parent_kind": null,
       "resource_name": "policies",
       "scope": "tenant",
@@ -395,7 +395,7 @@
       }
     },
     {
-      "attr_name": "policy_template",
+      "attr_name": "PolicyTemplate",
       "parent_kind": null,
       "resource_name": "policy-templates",
       "scope": "system",
@@ -415,7 +415,7 @@
       }
     },
     {
-      "attr_name": "project",
+      "attr_name": "Project",
       "parent_kind": null,
       "resource_name": "projects",
       "scope": "tenant",
@@ -435,7 +435,7 @@
       }
     },
     {
-      "attr_name": "query_malware",
+      "attr_name": "QueryMalware",
       "parent_kind": null,
       "resource_name": "queries/malware",
       "scope": "oss",
@@ -455,7 +455,7 @@
       }
     },
     {
-      "attr_name": "query_vulnerability",
+      "attr_name": "QueryVulnerability",
       "parent_kind": null,
       "resource_name": "queries/vulnerabilities",
       "scope": "oss",
@@ -475,7 +475,7 @@
       }
     },
     {
-      "attr_name": "repository",
+      "attr_name": "Repository",
       "parent_kind": null,
       "resource_name": "repositories",
       "scope": "tenant",
@@ -495,7 +495,7 @@
       }
     },
     {
-      "attr_name": "repository_version",
+      "attr_name": "RepositoryVersion",
       "parent_kind": "project",
       "resource_name": "repository-versions",
       "scope": "tenant",
@@ -515,7 +515,7 @@
       }
     },
     {
-      "attr_name": "scan_log_request",
+      "attr_name": "ScanLogRequest",
       "parent_kind": null,
       "resource_name": "scan-log-requests",
       "scope": "tenant",
@@ -535,7 +535,7 @@
       }
     },
     {
-      "attr_name": "scan_profile",
+      "attr_name": "ScanProfile",
       "parent_kind": null,
       "resource_name": "scan-profiles",
       "scope": "tenant",
@@ -555,7 +555,7 @@
       }
     },
     {
-      "attr_name": "scan_result",
+      "attr_name": "ScanResult",
       "parent_kind": "project",
       "resource_name": "scan-results",
       "scope": "tenant",
@@ -575,7 +575,7 @@
       }
     },
     {
-      "attr_name": "scan_workflow",
+      "attr_name": "ScanWorkflow",
       "parent_kind": null,
       "resource_name": "scan-workflows",
       "scope": "tenant",
@@ -595,7 +595,7 @@
       }
     },
     {
-      "attr_name": "scan_workflow_result",
+      "attr_name": "ScanWorkflowResult",
       "parent_kind": null,
       "resource_name": "scan-workflow-results",
       "scope": "tenant",
@@ -615,7 +615,7 @@
       }
     },
     {
-      "attr_name": "semgrep_rule",
+      "attr_name": "SemgrepRule",
       "parent_kind": null,
       "resource_name": "semgrep-rules",
       "scope": "tenant",
@@ -635,7 +635,7 @@
       }
     },
     {
-      "attr_name": "version_upgrade",
+      "attr_name": "VersionUpgrade",
       "parent_kind": null,
       "resource_name": "version-upgrades",
       "scope": "tenant",
@@ -655,7 +655,7 @@
       }
     },
     {
-      "attr_name": "vulnerability",
+      "attr_name": "Vulnerability",
       "parent_kind": null,
       "resource_name": "vulnerabilities",
       "scope": "oss",

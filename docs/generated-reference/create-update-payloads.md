@@ -2,7 +2,7 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (257 entities).
+Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (255 entities).
 
 ## Create payload/builders
 
@@ -10,120 +10,120 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 |----------|--------------------|---------|---------------|-----------------|-----------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `257`
-- generated artifact files: `169`
+- mapped entities: `255`
+- generated artifact files: `167`
 - facade contract resources: `33`
 - registry parity status: `pass`
 - operation metadata entries: `719`
 - payload schema resources: `33`
 - runtime model import index entries: `33`
 
-| api_key | yes | build_create_payload | CreateAPIKeyPayload | meta, spec | propagate |
-| audit_log | yes | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
-| authentication_log | no | N/A | N/A | N/A | N/A |
-| authorization_policy | yes | build_create_payload | CreateAuthorizationPolicyPayload | meta, spec | propagate |
-| code_owners | yes | build_create_payload | CreateCodeOwnersPayload | meta, spec | none |
-| dependency_metadata | yes | build_create_payload | CreateDependencyMetadataPayload | meta, spec | none |
-| endor_license | no | N/A | N/A | N/A | N/A |
-| finding | yes | build_create_payload | CreateFindingPayload | context, meta, spec | none |
-| finding_log | yes | build_create_payload | CreateFindingLogPayload | context, meta, spec | none |
-| installation | yes | build_create_payload | CreateInstallationPayload | meta, spec | none |
-| invitation | yes | build_create_payload | CreateInvitationPayload | meta, spec | none |
-| linter_result | yes | build_create_payload | CreateLinterResultPayload | meta, spec | none |
-| malware | no | N/A | N/A | N/A | N/A |
-| metric | yes | build_create_payload | CreateMetricPayload | meta, spec | none |
-| namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
-| notification_target | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
-| package_license | yes | build_create_payload | CreatePackageLicensePayload | meta, spec | none |
-| package_version | yes | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
-| policy | yes | build_create_payload | CreatePolicyPayload | meta, spec | propagate |
-| policy_template | no | N/A | N/A | N/A | N/A |
-| project | yes | build_create_payload | CreateProjectPayload | meta, namespace_uuid | none |
-| query_malware | yes | build_create_payload | CreateQueryMalwarePayload | meta, spec | none |
-| query_vulnerability | yes | build_create_payload | CreateQueryVulnerabilityPayload | meta, spec | none |
-| repository | yes | build_create_payload | CreateRepositoryPayload | meta, spec | none |
-| repository_version | yes | build_create_payload | CreateRepositoryVersionPayload | meta, spec | none |
-| scan_log_request | yes | N/A | N/A | N/A | N/A |
-| scan_profile | yes | build_create_payload | CreateScanProfilePayload | meta, spec | propagate |
-| scan_result | yes | build_create_payload | CreateScanResultPayload | context, meta, spec | none |
-| scan_workflow | no | N/A | N/A | N/A | N/A |
-| scan_workflow_result | no | N/A | N/A | N/A | N/A |
-| semgrep_rule | yes | build_create_payload | CreateSemgrepRulePayload | meta, spec | disabled, propagate |
-| version_upgrade | no | N/A | N/A | N/A | N/A |
-| vulnerability | no | N/A | N/A | N/A | N/A |
+| APIKey | yes | build_create_payload | CreateAPIKeyPayload | meta, spec | propagate |
+| AuditLog | yes | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
+| AuthenticationLog | no | N/A | N/A | N/A | N/A |
+| AuthorizationPolicy | yes | build_create_payload | CreateAuthorizationPolicyPayload | meta, spec | propagate |
+| CodeOwners | yes | build_create_payload | CreateCodeOwnersPayload | meta, spec | none |
+| DependencyMetadata | yes | build_create_payload | CreateDependencyMetadataPayload | meta, spec | none |
+| EndorLicense | no | N/A | N/A | N/A | N/A |
+| Finding | yes | build_create_payload | CreateFindingPayload | context, meta, spec | none |
+| FindingLog | yes | build_create_payload | CreateFindingLogPayload | context, meta, spec | none |
+| Installation | yes | build_create_payload | CreateInstallationPayload | meta, spec | none |
+| Invitation | yes | build_create_payload | CreateInvitationPayload | meta, spec | none |
+| LinterResult | yes | build_create_payload | CreateLinterResultPayload | meta, spec | none |
+| Malware | no | N/A | N/A | N/A | N/A |
+| Metric | yes | build_create_payload | CreateMetricPayload | meta, spec | none |
+| Namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
+| NotificationTarget | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
+| PackageLicense | yes | build_create_payload | CreatePackageLicensePayload | meta, spec | none |
+| PackageVersion | yes | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
+| Policy | yes | build_create_payload | CreatePolicyPayload | meta, spec | propagate |
+| PolicyTemplate | no | N/A | N/A | N/A | N/A |
+| Project | yes | build_create_payload | CreateProjectPayload | meta, namespace_uuid | none |
+| QueryMalware | yes | build_create_payload | CreateQueryMalwarePayload | meta, spec | none |
+| QueryVulnerability | yes | build_create_payload | CreateQueryVulnerabilityPayload | meta, spec | none |
+| Repository | yes | build_create_payload | CreateRepositoryPayload | meta, spec | none |
+| RepositoryVersion | yes | build_create_payload | CreateRepositoryVersionPayload | meta, spec | none |
+| ScanLogRequest | yes | N/A | N/A | N/A | N/A |
+| ScanProfile | yes | build_create_payload | CreateScanProfilePayload | meta, spec | propagate |
+| ScanResult | yes | build_create_payload | CreateScanResultPayload | context, meta, spec | none |
+| ScanWorkflow | no | N/A | N/A | N/A | N/A |
+| ScanWorkflowResult | no | N/A | N/A | N/A | N/A |
+| SemgrepRule | yes | build_create_payload | CreateSemgrepRulePayload | meta, spec | disabled, propagate |
+| VersionUpgrade | no | N/A | N/A | N/A | N/A |
+| Vulnerability | no | N/A | N/A | N/A | N/A |
 
 ## Update mutable fields
 
 | Resource | SDK update support | Mutable field paths (`get_mutable_fields_cls`) |
 |----------|--------------------|----------------------------------------------|
-| api_key | no | meta.description, meta.tags |
-| audit_log | no | meta.description, meta.tags |
-| authentication_log | no | meta.description, meta.tags |
-| authorization_policy | yes | meta.name, meta.description, meta.tags, spec, propagate |
-| code_owners | yes | meta.description, meta.tags |
-| dependency_metadata | yes | meta.name, meta.description, meta.tags, spec |
-| endor_license | no | meta.description, meta.tags |
-| finding | yes | meta.tags, spec.finding_tags, spec.dismiss, spec.remediation, context.tags |
-| finding_log | no | meta.description, meta.tags |
-| installation | yes | meta.name, meta.description, meta.tags, spec |
-| invitation | yes | meta.description, meta.tags |
-| linter_result | no | meta.name, meta.description, meta.tags, spec |
-| malware | no | meta.description, meta.tags |
-| metric | yes | meta.name, meta.description, meta.tags, spec |
-| namespace | yes | meta.description |
-| notification_target | yes | meta.description, meta.tags |
-| package_license | yes | meta.name, meta.description, meta.tags, spec |
-| package_version | yes | meta.name, meta.description, meta.tags, spec |
-| policy | yes | meta.name, meta.description, meta.tags, spec.rule, spec.disable, spec.project_selector, spec.project_exceptions, spec.template_values, propagate |
-| policy_template | no | meta.description, meta.tags |
-| project | yes | meta.description, meta.tags, processing_status.scan_state, processing_status.disable_automated_scan |
-| query_malware | no | meta.description, meta.tags |
-| query_vulnerability | no | meta.description, meta.tags |
-| repository | yes | meta.name, meta.description, meta.tags, spec |
-| repository_version | yes | meta.name, meta.description, meta.tags, spec |
-| scan_log_request | no | meta.description, meta.tags |
-| scan_profile | yes | meta.name, meta.description, meta.tags, spec |
-| scan_result | yes | meta.name, meta.description, meta.tags, spec |
-| scan_workflow | no | meta.description, meta.tags |
-| scan_workflow_result | no | meta.description, meta.tags |
-| semgrep_rule | yes | meta.name, meta.description, meta.tags, spec |
-| version_upgrade | no | meta.description, meta.tags |
-| vulnerability | no | meta.description, meta.tags |
+| APIKey | no | meta.description, meta.tags |
+| AuditLog | no | meta.description, meta.tags |
+| AuthenticationLog | no | meta.description, meta.tags |
+| AuthorizationPolicy | yes | meta.name, meta.description, meta.tags, spec, propagate |
+| CodeOwners | yes | meta.description, meta.tags |
+| DependencyMetadata | yes | meta.name, meta.description, meta.tags, spec |
+| EndorLicense | no | meta.description, meta.tags |
+| Finding | yes | meta.tags, spec.finding_tags, spec.dismiss, spec.remediation, context.tags |
+| FindingLog | no | meta.description, meta.tags |
+| Installation | yes | meta.name, meta.description, meta.tags, spec |
+| Invitation | yes | meta.description, meta.tags |
+| LinterResult | no | meta.name, meta.description, meta.tags, spec |
+| Malware | no | meta.description, meta.tags |
+| Metric | yes | meta.name, meta.description, meta.tags, spec |
+| Namespace | yes | meta.description |
+| NotificationTarget | yes | meta.description, meta.tags |
+| PackageLicense | yes | meta.name, meta.description, meta.tags, spec |
+| PackageVersion | yes | meta.name, meta.description, meta.tags, spec |
+| Policy | yes | meta.name, meta.description, meta.tags, spec.rule, spec.disable, spec.project_selector, spec.project_exceptions, spec.template_values, propagate |
+| PolicyTemplate | no | meta.description, meta.tags |
+| Project | yes | meta.description, meta.tags, processing_status.scan_state, processing_status.disable_automated_scan |
+| QueryMalware | no | meta.description, meta.tags |
+| QueryVulnerability | no | meta.description, meta.tags |
+| Repository | yes | meta.name, meta.description, meta.tags, spec |
+| RepositoryVersion | yes | meta.name, meta.description, meta.tags, spec |
+| ScanLogRequest | no | meta.description, meta.tags |
+| ScanProfile | yes | meta.name, meta.description, meta.tags, spec |
+| ScanResult | yes | meta.name, meta.description, meta.tags, spec |
+| ScanWorkflow | no | meta.description, meta.tags |
+| ScanWorkflowResult | no | meta.description, meta.tags |
+| SemgrepRule | yes | meta.name, meta.description, meta.tags, spec |
+| VersionUpgrade | no | meta.description, meta.tags |
+| Vulnerability | no | meta.description, meta.tags |
 
 ## Identity kwargs (`list()` / `lookup()` helpers)
 
 | Resource | Identity kwargs -> filter paths |
 |----------|---------------------------------|
-| api_key | — |
-| audit_log | — |
-| authentication_log | — |
-| authorization_policy | name->meta.name |
-| code_owners | name->meta.name |
-| dependency_metadata | — |
-| endor_license | — |
-| finding | name->meta.name |
-| finding_log | — |
-| installation | name->meta.name |
-| invitation | name->meta.name |
-| linter_result | — |
-| malware | name->meta.name |
-| metric | name->meta.name |
-| namespace | name->meta.name |
-| notification_target | name->meta.name |
-| package_license | — |
-| package_version | name->meta.name |
-| policy | name->meta.name, policy_type->spec.policy_type |
-| policy_template | — |
-| project | name->meta.name |
-| query_malware | — |
-| query_vulnerability | — |
-| repository | git_url->spec.vcs_url, name->meta.name, vcs_url->spec.vcs_url |
-| repository_version | name->meta.name |
-| scan_log_request | — |
-| scan_profile | name->meta.name |
-| scan_result | name->meta.name |
-| scan_workflow | — |
-| scan_workflow_result | — |
-| semgrep_rule | name->meta.name |
-| version_upgrade | — |
-| vulnerability | name->meta.name |
+| APIKey | — |
+| AuditLog | — |
+| AuthenticationLog | — |
+| AuthorizationPolicy | name->meta.name |
+| CodeOwners | name->meta.name |
+| DependencyMetadata | — |
+| EndorLicense | — |
+| Finding | name->meta.name |
+| FindingLog | — |
+| Installation | name->meta.name |
+| Invitation | name->meta.name |
+| LinterResult | — |
+| Malware | name->meta.name |
+| Metric | name->meta.name |
+| Namespace | name->meta.name |
+| NotificationTarget | name->meta.name |
+| PackageLicense | — |
+| PackageVersion | name->meta.name |
+| Policy | name->meta.name, policy_type->spec.policy_type |
+| PolicyTemplate | — |
+| Project | name->meta.name |
+| QueryMalware | — |
+| QueryVulnerability | — |
+| Repository | git_url->spec.vcs_url, name->meta.name, vcs_url->spec.vcs_url |
+| RepositoryVersion | name->meta.name |
+| ScanLogRequest | — |
+| ScanProfile | name->meta.name |
+| ScanResult | name->meta.name |
+| ScanWorkflow | — |
+| ScanWorkflowResult | — |
+| SemgrepRule | name->meta.name |
+| VersionUpgrade | — |
+| Vulnerability | name->meta.name |

@@ -271,7 +271,7 @@ def tag_findings_by_criteria(
         filter_parts.append(f'spec.dependency_file_paths contains ["{file_path}"]')
     filter_expr = " AND ".join(filter_parts)
 
-    findings = client.finding.list(
+    findings = client.Finding.list(
         namespace=namespace,
         filter=filter_expr,
         sort_by="spec.level",
@@ -296,7 +296,7 @@ def tag_findings_by_criteria(
 
         new_tags = [tag, *(t for t in existing_tags if t != tag)]
         try:
-            client.finding.update(
+            client.Finding.update(
                 finding_obj,
                 meta_tags=new_tags,
             )
@@ -462,7 +462,7 @@ def create_exception_policy(
         project_selector = [f"${t}" for t in project_tags]
 
     try:
-        policy = client.policy.create(
+        policy = client.Policy.create(
             name=policy_name,
             namespace=namespace,
             description=description,

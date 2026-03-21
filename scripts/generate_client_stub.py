@@ -2,7 +2,7 @@
 
 Single source of truth: the registry. Run from repo root with:
   uv run python scripts/generate_client_stub.py
-Writes src/endorlabs/client_surface.pyi so Pyright types client.project, etc.
+Writes src/endorlabs/client_surface.pyi so Pyright types client.Project, etc.
 
 Each resource gets a dedicated stub class (e.g. ``_ProjectFacade``) that
 exposes only the methods the resource actually supports, with concrete
@@ -71,7 +71,10 @@ def _load_description_overlay() -> dict[str, str]:
 
 
 def _default_description_from_attr(attr_name: str) -> str:
-    return f"{attr_name.replace('_', ' ').title()} resource facade."
+    """Fallback stub description (overlay keys match endorctl kind / model class name)."""
+    if "_" in attr_name:
+        return f"{attr_name.replace('_', ' ').title()} resource facade."
+    return f"{attr_name} resource facade."
 
 # ---------------------------------------------------------------------------
 # Signature helpers
@@ -495,7 +498,7 @@ def main() -> None:  # noqa: D103
             lines.append(f'    """{desc}"""')
     for custom in CUSTOM_FACADE_REGISTRY:
         attr = custom.attr_name
-        if attr == "scan_logs":
+        if attr == "ScanLogs":
             lines.append(f"    {attr}: ScanLogsFacade")
             lines.append(
                 '    """Scan logs facade. Use get_logs() to fetch log messages."""'

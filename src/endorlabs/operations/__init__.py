@@ -749,8 +749,7 @@ class BaseResourceOperations(Generic[T]):
         try:
             # Create count-specific list parameters
             if list_params:
-                count_params = list_params
-                count_params.count = True
+                count_params = list_params.model_copy(update={"count": True})
             else:
                 count_params = ListParameters(count=True)  # pyright: ignore[reportCallIssue]
 

@@ -97,7 +97,7 @@ def find_project_by_repository_url(
 
     for filter_expr in filter_attempts:
         logger.debug("Trying project filter: %s", filter_expr)
-        projects = client.project.list(
+        projects = client.Project.list(
             namespace=namespace,
             filter=filter_expr,
             max_pages=1,
@@ -113,7 +113,7 @@ def find_project_by_repository_url(
 
     # Fallback: search all projects with substring matching
     logger.debug("No projects found with filters, searching all projects...")
-    all_projects = client.project.list(namespace=namespace)
+    all_projects = client.Project.list(namespace=namespace)
 
     url_lower = repository_url.lower()
     for proj in all_projects:

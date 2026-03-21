@@ -51,7 +51,7 @@ class TestRepository:
         from endorlabs.core.types import ListParameters
 
         try:
-            results = self.endor_root_client.repository.list(
+            results = self.endor_root_client.Repository.list(
                 list_params=ListParameters(
                     page_size=TEST_TRAVERSE_PAGE_SIZE, traverse=True
                 ),
@@ -73,7 +73,7 @@ class TestRepository:
             api_client=self.client,
         )
         try:
-            result = client.repository.list(
+            result = client.Repository.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -91,7 +91,7 @@ class TestRepository:
             api_client=self.client,
         )
         try:
-            items = client.repository.list(
+            items = client.Repository.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -105,7 +105,7 @@ class TestRepository:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.repository.get(item.uuid, namespace=ns)
+        got = client.Repository.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -115,7 +115,7 @@ class TestRepository:
         from endorlabs.core.types import ListParameters
 
         # Test filtering by platform source
-        github_repos = self.endor_root_client.repository.list(
+        github_repos = self.endor_root_client.Repository.list(
             list_params=ListParameters(
                 filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
@@ -127,7 +127,7 @@ class TestRepository:
         print(f"Found {len(github_repos)} GitHub repositories")
 
         # Test field masking
-        masked_repos = self.endor_root_client.repository.list(
+        masked_repos = self.endor_root_client.Repository.list(
             list_params=ListParameters(
                 mask="meta.name,spec.platform_source",
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
@@ -152,14 +152,14 @@ class TestRepository:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.repository.get("invalid-uuid")
+            self.endor_root_client.Repository.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
     @pytest.mark.writes
     def test_client_ux_update_repository(self) -> None:
-        """Consumer UX: client.repository.get() then update then revert."""
+        """Consumer UX: client.Repository.get() then update then revert."""
         import endorlabs
         from endorlabs.core.exceptions import ServerError
 
@@ -168,7 +168,7 @@ class TestRepository:
             api_client=self.client,
         )
         try:
-            repos = client.repository.list(
+            repos = client.Repository.list(
                 traverse=True, max_pages=TEST_MAX_PAGES_TRAVERSE
             )
         except ServerError:
@@ -181,7 +181,7 @@ class TestRepository:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.repository.get(item.uuid, namespace=ns)
+        current = client.Repository.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve repository {item.uuid}")
         original_description = getattr(current.meta, "description", None) or ""
@@ -194,7 +194,7 @@ class TestRepository:
             meta=RepositoryMetaUpdate(description=new_description)
         )
         try:
-            updated = client.repository.update(
+            updated = client.Repository.update(
                 item.uuid, update_payload, update_mask="meta.description", namespace=ns
             )
         except Exception as e:
@@ -204,7 +204,7 @@ class TestRepository:
             meta=RepositoryMetaUpdate(description=original_description)
         )
         try:
-            client.repository.update(
+            client.Repository.update(
                 item.uuid, restore_payload, update_mask="meta.description", namespace=ns
             )
         except Exception as e:

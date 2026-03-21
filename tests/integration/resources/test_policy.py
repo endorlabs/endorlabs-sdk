@@ -53,7 +53,7 @@ class TestPolicy:
         """
         from endorlabs.core.types import ListParameters
 
-        results = self.endor_client.policy.list(
+        results = self.endor_client.Policy.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -111,7 +111,7 @@ match_finding[result] {
         )
 
         # Create the policy
-        created_policy = self.endor_client.policy.create(dummy_policy_payload)
+        created_policy = self.endor_client.Policy.create(dummy_policy_payload)
 
         assert created_policy is not None, "Policy creation should succeed"
         assert created_policy.meta.name == policy_name, "Policy name should match"
@@ -128,7 +128,7 @@ match_finding[result] {
         if hasattr(self, "created_policy_uuids"):
             for policy_uuid in self.created_policy_uuids:
                 try:
-                    self.endor_client.policy.delete(policy_uuid)
+                    self.endor_client.Policy.delete(policy_uuid)
                     print(f"[CLEANUP] Deleted test policy: {policy_uuid}")
                 except Exception as e:
                     print(f"[WARNING] Failed to delete test policy {policy_uuid}: {e}")
@@ -144,7 +144,7 @@ match_finding[result] {
             api_client=self.client,
         )
         try:
-            result = client.policy.list(
+            result = client.Policy.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -162,7 +162,7 @@ match_finding[result] {
             api_client=self.client,
         )
         try:
-            items = client.policy.list(
+            items = client.Policy.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -176,7 +176,7 @@ match_finding[result] {
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.policy.get(item.uuid, namespace=ns)
+        got = client.Policy.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -194,7 +194,7 @@ match_finding[result] {
         from endorlabs.core.types import ListParameters
 
         for policy_type in policy_types:
-            filtered_policies = self.endor_client.policy.list(
+            filtered_policies = self.endor_client.Policy.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
                 policy_type=policy_type,
@@ -253,7 +253,7 @@ match_finding[result] {
         # Create the exception policy
         created_policy = None
         try:
-            created_policy = self.endor_client.policy.create(exception_policy_payload)
+            created_policy = self.endor_client.Policy.create(exception_policy_payload)
 
             assert created_policy is not None, (
                 "Exception policy creation should succeed"
@@ -284,7 +284,7 @@ match_finding[result] {
         finally:
             if created_policy is not None:
                 try:
-                    self.endor_client.policy.delete(created_policy.uuid)
+                    self.endor_client.Policy.delete(created_policy.uuid)
                 except Exception as e:
                     print(
                         f"[WARNING] Cleanup failed for policy "
@@ -372,7 +372,7 @@ match_findings[result] {
         # Create the notification policy
         created_policy = None
         try:
-            created_policy = self.endor_client.policy.create(
+            created_policy = self.endor_client.Policy.create(
                 notification_policy_payload
             )
 
@@ -399,7 +399,7 @@ match_findings[result] {
         finally:
             if created_policy is not None:
                 try:
-                    self.endor_client.policy.delete(created_policy.uuid)
+                    self.endor_client.Policy.delete(created_policy.uuid)
                 except Exception as e:
                     print(
                         f"[WARNING] Cleanup failed for policy "
@@ -466,7 +466,7 @@ match_findings[result] {
         # Create the admission policy
         created_policy = None
         try:
-            created_policy = self.endor_client.policy.create(admission_policy_payload)
+            created_policy = self.endor_client.Policy.create(admission_policy_payload)
 
             assert created_policy is not None, (
                 "Admission policy creation should succeed"
@@ -487,7 +487,7 @@ match_findings[result] {
         finally:
             if created_policy is not None:
                 try:
-                    self.endor_client.policy.delete(created_policy.uuid)
+                    self.endor_client.Policy.delete(created_policy.uuid)
                 except Exception as e:
                     print(
                         f"[WARNING] Cleanup failed for policy "
@@ -496,7 +496,7 @@ match_findings[result] {
 
     @pytest.mark.writes
     def test_client_ux_create_policy(self) -> None:
-        """Consumer UX: client.policy.create(payload); teardown deletes."""
+        """Consumer UX: client.Policy.create(payload); teardown deletes."""
         import time
 
         import endorlabs
@@ -529,7 +529,7 @@ match_finding[result] {
         )
         created = None
         try:
-            created = client.policy.create(payload)
+            created = client.Policy.create(payload)
         except Exception as e:
             pytest.skip(f"Policy create not allowed in this environment: {e}")
         try:
@@ -539,7 +539,7 @@ match_finding[result] {
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_client.policy.delete(created.uuid)
+                    self.endor_client.Policy.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for policy {created.uuid}: {e}")
 
@@ -554,7 +554,7 @@ match_finding[result] {
             api_client=self.client,
         )
         try:
-            policies = client.policy.list(max_pages=TEST_MAX_PAGES)
+            policies = client.Policy.list(max_pages=TEST_MAX_PAGES)
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not policies:
@@ -565,7 +565,7 @@ match_finding[result] {
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.policy.get(item.uuid, namespace=ns)
+        current = client.Policy.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve policy {item.uuid}")
         original_description = getattr(current.meta, "description", None) or ""
@@ -573,7 +573,7 @@ match_finding[result] {
             meta=policy.PolicyMetaUpdate(description="Updated by client-ux")
         )
         try:
-            updated = client.policy.update(
+            updated = client.Policy.update(
                 item.uuid, update_payload, update_mask="meta.description", namespace=ns
             )
         except Exception as e:
@@ -583,7 +583,7 @@ match_finding[result] {
             meta=policy.PolicyMetaUpdate(description=original_description)
         )
         try:
-            client.policy.update(
+            client.Policy.update(
                 item.uuid, restore_payload, update_mask="meta.description", namespace=ns
             )
         except Exception as e:
@@ -591,7 +591,7 @@ match_finding[result] {
 
     @pytest.mark.writes
     def test_client_ux_delete_policy(self) -> None:
-        """Consumer UX: create then client.policy.delete(uuid)."""
+        """Consumer UX: create then client.Policy.delete(uuid)."""
         import time
 
         import endorlabs
@@ -623,10 +623,10 @@ match_finding[result] {
             propagate=False,
         )
         try:
-            created = client.policy.create(payload)
+            created = client.Policy.create(payload)
         except Exception as e:
             pytest.skip(f"Policy create not allowed in this environment: {e}")
         if not created:
             pytest.skip("Failed to create policy for delete test")
-        result = client.policy.delete(created.uuid)
+        result = client.Policy.delete(created.uuid)
         assert result is True

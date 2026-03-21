@@ -45,7 +45,7 @@ class TestAPIKey:
         if hasattr(self, "created_api_key_uuids"):
             for key_uuid in self.created_api_key_uuids:
                 try:
-                    self.endor_client.api_key.delete(key_uuid)
+                    self.endor_client.APIKey.delete(key_uuid)
                 except Exception as e:
                     print(f"[WARNING] Failed to delete API key {key_uuid}: {e}")
             self.created_api_key_uuids.clear()
@@ -58,7 +58,7 @@ class TestAPIKey:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.api_key.list(
+        result = client.APIKey.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -72,7 +72,7 @@ class TestAPIKey:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.api_key.list(
+        items = client.APIKey.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -84,12 +84,12 @@ class TestAPIKey:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.api_key.get(item.uuid, namespace=ns)
+        got = client.APIKey.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
     def test_client_ux_create_api_key(self) -> None:
-        """Consumer UX: client.api_key.create(payload); teardown deletes."""
+        """Consumer UX: client.APIKey.create(payload); teardown deletes."""
         import endorlabs
 
         expiration = (datetime.now(UTC) + timedelta(days=1)).strftime(
@@ -112,7 +112,7 @@ class TestAPIKey:
         )
         created = None
         try:
-            created = client.api_key.create(payload)
+            created = client.APIKey.create(payload)
         except Exception as e:
             pytest.skip(f"API key create not allowed in this environment: {e}")
         try:
@@ -122,12 +122,12 @@ class TestAPIKey:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_client.api_key.delete(created.uuid)
+                    self.endor_client.APIKey.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     def test_client_ux_delete_api_key(self) -> None:
-        """Consumer UX: create then client.api_key.delete(uuid)."""
+        """Consumer UX: create then client.APIKey.delete(uuid)."""
         import endorlabs
 
         expiration = (datetime.now(UTC) + timedelta(days=1)).strftime(
@@ -149,16 +149,16 @@ class TestAPIKey:
             api_client=self.client,
         )
         try:
-            created = client.api_key.create(payload)
+            created = client.APIKey.create(payload)
         except Exception as e:
             pytest.skip(f"API key create not allowed in this environment: {e}")
         if not created:
             pytest.skip("Failed to create API key for delete test")
-        result = client.api_key.delete(created.uuid)
+        result = client.APIKey.delete(created.uuid)
         assert result is True
 
     def test_api_key_update_raises_not_implemented(self) -> None:
-        """When update_fn is None, client.api_key.update raises NotImplementedError."""
+        """When update_fn is None, client.APIKey.update raises NotImplementedError."""
         from unittest.mock import Mock
 
         import endorlabs
@@ -169,4 +169,4 @@ class TestAPIKey:
             tenant=TEST_NAMESPACE_DEFAULT,
         )
         with pytest.raises(NotImplementedError, match="does not support update"):
-            client.api_key.update("dummy-uuid", {}, update_mask="meta.description")
+            client.APIKey.update("dummy-uuid", {}, update_mask="meta.description")

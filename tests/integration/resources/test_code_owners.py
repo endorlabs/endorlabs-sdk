@@ -25,7 +25,7 @@ class TestCodeOwners:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.code_owners.list(
+        result = client.CodeOwners.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -39,7 +39,7 @@ class TestCodeOwners:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.code_owners.list(
+        items = client.CodeOwners.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -51,7 +51,7 @@ class TestCodeOwners:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.code_owners.get(item.uuid, namespace=ns)
+        got = client.CodeOwners.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -63,7 +63,7 @@ class TestCodeOwners:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.code_owners.list(
+        items = client.CodeOwners.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -79,7 +79,7 @@ class TestCodeOwners:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.code_owners.get(item.uuid, namespace=ns)
+        got = client.CodeOwners.get(item.uuid, namespace=ns)
         if got and got.spec and got.spec.version is not None:
             assert hasattr(got.spec.version, "ref")
             assert hasattr(got.spec.version, "sha")

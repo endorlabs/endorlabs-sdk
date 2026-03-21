@@ -232,7 +232,7 @@ def create_notification_target(
     )
 
     try:
-        target = client.notification_target.create(payload=payload, namespace=namespace)
+        target = client.NotificationTarget.create(payload=payload, namespace=namespace)
         result.uuid = target.uuid
         result.message = f"Created notification target '{name}' (uuid={target.uuid})."
         logger.info(result.message)
@@ -318,7 +318,7 @@ def create_notification_policy(
         create_kwargs["project_selector"] = project_selector
 
     try:
-        policy = client.policy.create(**create_kwargs)
+        policy = client.Policy.create(**create_kwargs)
         result.uuid = policy.uuid
         result.message = f"Created notification policy '{name}' (uuid={policy.uuid})."
         logger.info(result.message)
