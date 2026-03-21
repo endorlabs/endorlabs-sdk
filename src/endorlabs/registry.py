@@ -41,10 +41,21 @@ class ResourceEntry:
 
 @dataclass
 class CustomFacadeEntry:
-    """Custom facade on Client; factory(client, default_namespace) -> facade."""
+    """Custom facade on Client; ``factory(client, default_namespace) -> facade``.
+
+    ``pyi_*`` fields are consumed only by ``scripts/generate_client_stub.py`` so
+    ``client_surface.pyi`` lists concrete facade types without hardcoding names in
+    the generator. They are not used at runtime.
+
+    Use this for SDK-only helpers that are not OpenAPI resources (no row in
+    ``registry_contract``), similar to ``ScanLogs`` vs ``ScanLogRequest``.
+    """
 
     attr_name: str
     factory: Callable[["APIClient", str | None], Any]  # noqa: UP037
+    pyi_facade_class: str
+    pyi_import_module: str
+    pyi_attr_doc: str
 
 
 def _scan_logs_facade(client: APIClient, default_namespace: str | None) -> Any:
@@ -198,5 +209,11 @@ RESOURCE_REGISTRY: list[ResourceEntry] = _build_resource_registry()
 # an endorctl ``--resource`` kind; CRUD for scan log *requests* uses
 # ``client.ScanLogRequest`` like endorctl.
 CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
-    CustomFacadeEntry("ScanLogs", _scan_logs_facade),
+    CustomFacadeEntry(
+        attr_name="ScanLogs",
+        factory=_scan_logs_facade,
+        pyi_facade_class="ScanLogsFacade",
+        pyi_import_module="facade",
+        pyi_attr_doc="Scan logs facade. Use get_logs() to fetch log messages.",
+    ),
 ]

@@ -435,7 +435,6 @@ def main() -> None:  # noqa: D103
     # isort requires one contiguous first-party block in alpha order.
     relative_imports: dict[str, list[str]] = {
         ".api_client": ["APIClient"],
-        ".facade": ["ScanLogsFacade"],
         ".core.filter": ["FilterExpression"],
         ".core.types": ["ListParameters"],
     }
@@ -448,6 +447,15 @@ def main() -> None:  # noqa: D103
             relative_imports[mod] = []
         if name not in relative_imports[mod]:
             relative_imports[mod].append(name)
+
+    for custom in CUSTOM_FACADE_REGISTRY:
+        rel = custom.pyi_import_module.strip()
+        if not rel.startswith("."):
+            rel = f".{rel}"
+        if rel not in relative_imports:
+            relative_imports[rel] = []
+        if custom.pyi_facade_class not in relative_imports[rel]:
+            relative_imports[rel].append(custom.pyi_facade_class)
 
     for mod in sorted(relative_imports.keys()):
         names = sorted(relative_imports[mod])
@@ -497,14 +505,9 @@ def main() -> None:  # noqa: D103
         if desc:
             lines.append(f'    """{desc}"""')
     for custom in CUSTOM_FACADE_REGISTRY:
-        attr = custom.attr_name
-        if attr == "ScanLogs":
-            lines.append(f"    {attr}: ScanLogsFacade")
-            lines.append(
-                '    """Scan logs facade. Use get_logs() to fetch log messages."""'
-            )
-        else:
-            lines.append(f"    {attr}: Any  # Custom facade; add type when known")
+        lines.append(f"    {custom.attr_name}: {custom.pyi_facade_class}")
+        if custom.pyi_attr_doc:
+            lines.append(f'    """{custom.pyi_attr_doc}"""')
     lines.append("")
     lines.append("    _client: APIClient | None")
     lines.append("")

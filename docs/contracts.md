@@ -16,11 +16,17 @@ This document is the in-repo source of truth for shared SDK semantics.
   `client.Project`, `client.QueryVulnerability`). This is an intentional
   deviation from typical PEP 8 *instance* attribute style so CLI and SDK share
   one vocabulary. Resource **Python modules** stay `snake_case`
-  (  `endorlabs.resources.project`, `build_create_payload` metadata slugs like
+  (`endorlabs.resources.project`, `build_create_payload` metadata slugs like
   `project_build_create`).
-- **Custom facades:** `client.ScanLogs` is SDK-only (fetch log lines); it is not
-  an endorctl `--resource` kind. Use `client.ScanLogRequest` for CRUD on scan log
-  requests.
+- **Custom facades (SDK-only helpers):** Register in `CUSTOM_FACADE_REGISTRY` in
+  [`src/endorlabs/registry.py`](src/endorlabs/registry.py), not in
+  `registry_contract`. Use **PascalCase** `attr_name` on `Client` for consistency.
+  Each entry carries `pyi_*` metadata for
+  `scripts/generate_client_stub.py` (typed `client_surface.pyi`); run
+  `uv run python scripts/generate_client_stub.py` after changes.
+- **Template — resource vs helper:** **`ScanLogRequest`** = generated
+  `ResourceEntry`, endorctl `--resource` kind. **`ScanLogs`** = custom facade for
+  log *lines* only (not a listable API resource).
 
 ## OpenAPI / spec
 
