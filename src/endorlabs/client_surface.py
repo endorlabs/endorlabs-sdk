@@ -25,7 +25,7 @@ class Client:
 
     Use endorlabs.Client(tenant="...") or
     endorlabs.Client(api_client=..., tenant="...").
-    Then client.namespace.list(traverse=True), client.namespace.get(uuid), etc.
+    Then client.Namespace.list(traverse=True), client.Namespace.get(uuid), etc.
     All resources are driven by the registry in endorlabs.registry.
 
     When api_client is not passed, Client creates an APIClient and owns it.
@@ -139,7 +139,7 @@ class Client:
     def _whoami_from_auth_policy_fallback(self, api_key: str) -> str | None:
         """Best-effort compatibility fallback via AuthorizationPolicy."""
         try:
-            policies: list[Any] = self.authorization_policy.list(  # type: ignore[attr-defined]
+            policies: list[Any] = self.AuthorizationPolicy.list(  # type: ignore[attr-defined]
                 traverse=True,
                 filter=F("spec.clause").contains(api_key),
                 page_size=1,
@@ -190,7 +190,7 @@ class Client:
 
         Uses jittered exponential backoff (cap at poll_interval_max).
         Typical usage: client.wait_until(
-            lambda: client.scan_result.get(uuid).spec.status == "COMPLETED",
+            lambda: client.ScanResult.get(uuid).spec.status == "COMPLETED",
             timeout=120,
         )
         """

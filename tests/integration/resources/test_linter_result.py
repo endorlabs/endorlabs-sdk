@@ -41,7 +41,7 @@ class TestLinterResult:
         from endorlabs.core.exceptions import NotFoundError, ServerError
 
         try:
-            results = self.endor_root_client.linter_result.list(
+            results = self.endor_root_client.LinterResult.list(
                 list_params=ListParameters(
                     page_size=TEST_TRAVERSE_PAGE_SIZE,
                     traverse=True,
@@ -67,7 +67,7 @@ class TestLinterResult:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.linter_result.list(
+        result = client.LinterResult.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -83,7 +83,7 @@ class TestLinterResult:
             api_client=self.client,
         )
         try:
-            items = client.linter_result.list(
+            items = client.LinterResult.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -102,7 +102,7 @@ class TestLinterResult:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.linter_result.get(item.uuid, namespace=ns)
+        got = client.LinterResult.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -127,7 +127,7 @@ class TestLinterResult:
             filter=f'spec.project_uuid=="{project_uuid}"',
         )
         list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
-        filtered_results = list_client.linter_result.list(
+        filtered_results = list_client.LinterResult.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -155,13 +155,13 @@ class TestLinterResult:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.linter_result.get("invalid-uuid")
+            self.endor_root_client.LinterResult.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
     def test_linter_result_update_raises_not_implemented(self) -> None:
-        """If update_fn is None, client.linter_result.update raises NotImplemented."""
+        """If update_fn is None, client.LinterResult.update raises NotImplemented."""
         from unittest.mock import Mock
 
         import endorlabs
@@ -172,6 +172,4 @@ class TestLinterResult:
             tenant=TEST_NAMESPACE_DEFAULT,
         )
         with pytest.raises(NotImplementedError, match="does not support update"):
-            client.linter_result.update(
-                "dummy-uuid", {}, update_mask="meta.description"
-            )
+            client.LinterResult.update("dummy-uuid", {}, update_mask="meta.description")

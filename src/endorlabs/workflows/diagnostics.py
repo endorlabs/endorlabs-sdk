@@ -130,7 +130,7 @@ def compare_scan_logs(
     """Compare the last N scan results and their logs for a project.
 
     Fetches recent ``ScanResult`` resources and retrieves logs via
-    ``client.scan_logs.get_logs()``.
+    ``client.ScanLogs.get_logs()``.
 
     Args:
         client: Authenticated ``endorlabs.Client`` instance.
@@ -151,7 +151,7 @@ def compare_scan_logs(
     # Fetch recent scan results
     from endorlabs import F
 
-    scan_results = client.scan_result.list(
+    scan_results = client.ScanResult.list(
         namespace=namespace,
         filter=F("meta.parent_uuid") == project_uuid,
         sort_by="meta.create_time",
@@ -196,7 +196,7 @@ def compare_scan_logs(
         )
 
         try:
-            logs = client.scan_logs.get_logs(
+            logs = client.ScanLogs.get_logs(
                 sr.uuid,
                 namespace=namespace,
                 log_levels=resolved_levels,
@@ -232,7 +232,7 @@ def list_project_dependencies(
 ) -> DependencyReport:
     """List all dependency metadata across namespaces.
 
-    Uses ``client.dependency_metadata.list()`` with traverse to query
+    Uses ``client.DependencyMetadata.list()`` with traverse to query
     all DependencyMetadata resources.
 
     Args:
@@ -243,7 +243,7 @@ def list_project_dependencies(
     Returns:
         DependencyReport with statistics and formatted dependency list.
     """
-    deps = client.dependency_metadata.list(namespace=namespace, traverse=traverse)
+    deps = client.DependencyMetadata.list(namespace=namespace, traverse=traverse)
 
     stats = DependencyStats(total=len(deps))
     ns_counts: dict[str, int] = defaultdict(int)
@@ -338,7 +338,7 @@ def check_dependency_visibility(
             f"spec.dependency_data.public=={str(filter_public).lower()}"
         )
 
-    deps = client.dependency_metadata.list(**list_kwargs)
+    deps = client.DependencyMetadata.list(**list_kwargs)
 
     stats = VisibilityStats(total=len(deps))
     eco_counts: dict[str, int] = defaultdict(int)

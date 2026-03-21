@@ -71,8 +71,8 @@ class TestLanggraphTools:
         for attr_name, entry in entry_map.items():
             list_name = f"list_{attr_name}"
             get_name = f"get_{attr_name}"
-            if attr_name == "finding":
-                # finding has a custom list tool name
+            if attr_name == "Finding":
+                # Finding has a custom list tool name
                 continue
             assert (list_name in tool_names) == ("list" in entry.supported_ops)
             assert (get_name in tool_names) == ("get" in entry.supported_ops)
@@ -83,7 +83,7 @@ class TestLanggraphTools:
         tools = tool_module.create_tools(client)
         tool_names = {t.name for t in tools}
         assert "list_findings" in tool_names
-        assert "get_finding" in tool_names
+        assert "get_Finding" in tool_names
 
     def test_list_findings_defaults_to_traverse_without_namespace(
         self, tool_module: object
@@ -96,7 +96,7 @@ class TestLanggraphTools:
             return []
 
         client = _build_fake_client(tool_module)
-        client.finding = SimpleNamespace(
+        client.Finding = SimpleNamespace(
             list=_finding_list,
             get=lambda _uuid, **_kwargs: None,
         )
@@ -119,7 +119,7 @@ class TestLanggraphTools:
             return []
 
         client = _build_fake_client(tool_module)
-        client.finding = SimpleNamespace(
+        client.Finding = SimpleNamespace(
             list=_finding_list,
             get=lambda _uuid, **_kwargs: None,
         )

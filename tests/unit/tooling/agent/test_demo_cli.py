@@ -33,10 +33,10 @@ def test_catalog_keeps_duplicate_repo_urls_by_namespace() -> None:
     proj_b = _project("uuid-b", project_name, "tenant.ns-b")
 
     fake_client = SimpleNamespace(
-        project=SimpleNamespace(
+        Project=SimpleNamespace(
             list=lambda **_kwargs: [proj_a, proj_b],
         ),
-        namespace=SimpleNamespace(
+        Namespace=SimpleNamespace(
             list=lambda **_kwargs: [],
         ),
     )
@@ -59,10 +59,10 @@ def test_catalog_fuzzy_match_returns_all_duplicate_repo_projects() -> None:
     proj_b = _project("uuid-b", project_name, "tenant.ns-b")
 
     fake_client = SimpleNamespace(
-        project=SimpleNamespace(
+        Project=SimpleNamespace(
             list=lambda **_kwargs: [proj_a, proj_b],
         ),
-        namespace=SimpleNamespace(
+        Namespace=SimpleNamespace(
             list=lambda **_kwargs: [],
         ),
     )
@@ -135,13 +135,13 @@ def test_resolve_project_by_uuid_returns_first_match_or_none() -> None:
         captured.update(kwargs)
         return [expected]
 
-    fake_client = SimpleNamespace(project=SimpleNamespace(list=_list))
+    fake_client = SimpleNamespace(Project=SimpleNamespace(list=_list))
     found = _resolve_project_by_uuid(fake_client, expected.uuid)
     assert found == expected
     assert captured["traverse"] is True
 
     fake_client_empty = SimpleNamespace(
-        project=SimpleNamespace(list=lambda **_kwargs: []),
+        Project=SimpleNamespace(list=lambda **_kwargs: []),
     )
     missing = _resolve_project_by_uuid(fake_client_empty, expected.uuid)
     assert missing is None

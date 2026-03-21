@@ -5,7 +5,8 @@ Single source for contributor setup and development workflow. Consumer install i
 ## Prerequisites
 
 - [uv](https://docs.astral.sh/uv/) (Python package and project manager)
-- Python 3.12+ (CI and releases are tested on 3.13 only; e.g. install via uv)
+- Python 3.12+ runtime support. Contributor/CI quality gates currently run on
+  Python 3.13 for deterministic lint/type/test behavior (install via uv).
 
 ## Setup
 
@@ -110,9 +111,9 @@ If you use [direnv](https://direnv.net/), run `direnv allow` in the repo root. [
 
 ## Consumer API style (SDK UX)
 
-When using or documenting the registry-based client (`client.namespace`, `client.project`, etc.):
+When using or documenting the registry-based client (`client.Namespace`, `client.Project`, etc.):
 
-- **List:** Use flat kwargs on `.list()` — e.g. `client.project.list(traverse=True)`, `client.project.list(filter="...", mask="meta.name,spec.level", max_pages=1)`. Do **not** combine filter and mask into one parameter; filter = which rows, mask = which fields in the response. See [docs/contracts.md](docs/contracts.md) (List parameters, Update and update_mask) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+- **List:** Use flat kwargs on `.list()` — e.g. `client.Project.list(traverse=True)`, `client.Project.list(filter="...", mask="meta.name,spec.level", max_pages=1)`. Do **not** combine filter and mask into one parameter; filter = which rows, mask = which fields in the response. See [docs/contracts.md](docs/contracts.md) (List parameters, Update and update_mask) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
 - **Update:** Use `update_mask` only on `.update()`; it is separate from list mask.
 - **Spec-driven UX:** Align with spec; centralize sources of truth in modules (see [docs/contracts.md](docs/contracts.md) and [docs/rules-of-engagement/](docs/rules-of-engagement/)).
 

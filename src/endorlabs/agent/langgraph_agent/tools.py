@@ -9,6 +9,7 @@ RESOURCE_REGISTRY.
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
@@ -24,45 +25,45 @@ if TYPE_CHECKING:
 
 # Human-readable descriptions for resources (overrides for better LLM UX)
 _RESOURCE_DESCRIPTIONS: dict[str, str] = {
-    "namespace": "namespaces (organizational units)",
-    "project": "projects (repositories being scanned)",
-    "finding": "security findings",
-    "repository": "repositories",
-    "repository_version": "repository versions (snapshots at specific commits)",
-    "policy": "policies (security rules and checks)",
-    "authorization_policy": "authorization policies (access control rules)",
-    "package_version": "package versions (dependencies)",
-    "package_license": "package licenses",
-    "dependency_metadata": "dependency metadata (OSS package information)",
-    "installation": "installations (GitHub/GitLab app installations)",
-    "scan_profile": "scan profiles (scan configurations)",
-    "scan_result": "scan results",
-    "linter_result": "linter results (code quality findings)",
-    "metric": "metrics",
-    "semgrep_rule": "Semgrep rules (custom SAST rules)",
-    "api_key": "API keys",
-    "audit_log": "audit logs",
-    "finding_log": "finding logs (historical finding changes)",
-    "notification_target": "notification targets (Slack, email, etc.)",
-    "scan_workflow": "scan workflows",
-    "scan_workflow_result": "scan workflow results",
-    "version_upgrade": "version upgrades (recommended dependency updates)",
-    "code_owners": "code owners",
-    "invitation": "invitations (pending user invites)",
-    "authentication_log": "authentication logs",
-    "endor_license": "Endor licenses",
-    "policy_template": "policy templates (built-in policy definitions)",
+    "Namespace": "namespaces (organizational units)",
+    "Project": "projects (repositories being scanned)",
+    "Finding": "security findings",
+    "Repository": "repositories",
+    "RepositoryVersion": "repository versions (snapshots at specific commits)",
+    "Policy": "policies (security rules and checks)",
+    "AuthorizationPolicy": "authorization policies (access control rules)",
+    "PackageVersion": "package versions (dependencies)",
+    "PackageLicense": "package licenses",
+    "DependencyMetadata": "dependency metadata (OSS package information)",
+    "Installation": "installations (GitHub/GitLab app installations)",
+    "ScanProfile": "scan profiles (scan configurations)",
+    "ScanResult": "scan results",
+    "LinterResult": "linter results (code quality findings)",
+    "Metric": "metrics",
+    "SemgrepRule": "Semgrep rules (custom SAST rules)",
+    "APIKey": "API keys",
+    "AuditLog": "audit logs",
+    "FindingLog": "finding logs (historical finding changes)",
+    "NotificationTarget": "notification targets (Slack, email, etc.)",
+    "ScanWorkflow": "scan workflows",
+    "ScanWorkflowResult": "scan workflow results",
+    "VersionUpgrade": "version upgrades (recommended dependency updates)",
+    "CodeOwners": "code owners",
+    "Invitation": "invitations (pending user invites)",
+    "AuthenticationLog": "authentication logs",
+    "EndorLicense": "Endor licenses",
+    "PolicyTemplate": "policy templates (built-in policy definitions)",
 }
 
 # Valid filter fields for each resource type (prevents LLM from hallucinating fields)
 # Resources not listed here use the default: meta.name, meta.description
 _RESOURCE_FILTER_FIELDS: dict[str, list[str]] = {
-    "project": [
+    "Project": [
         "meta.name (repo URL like 'https://github.com/org/repo.git')",
         "meta.description",
         "spec.platform_source (PLATFORM_SOURCE_GITHUB, GITLAB, etc.)",
     ],
-    "finding": [
+    "Finding": [
         "meta.name",
         "meta.description",
         "spec.level (FINDING_LEVEL_CRITICAL, HIGH, MEDIUM, LOW)",
@@ -70,33 +71,33 @@ _RESOURCE_FILTER_FIELDS: dict[str, list[str]] = {
         "spec.finding_categories",
         "spec.target_dependency_package_name",
     ],
-    "scan_result": [
+    "ScanResult": [
         "meta.name",
         "spec.project_uuid",
         "spec.status",
         "spec.exit_code",
     ],
-    "policy": [
+    "Policy": [
         "meta.name",
         "meta.description",
         "spec.disabled (true/false)",
     ],
-    "namespace": [
+    "Namespace": [
         "meta.name",
         "meta.description",
         "spec.parent_uuid",
     ],
-    "repository": [
+    "Repository": [
         "meta.name",
         "meta.description",
         "spec.http_clone_url",
     ],
-    "package_version": [
+    "PackageVersion": [
         "meta.name",
         "spec.resolved_version",
         "spec.ecosystem",
     ],
-    "installation": [
+    "Installation": [
         "meta.name",
         "spec.platform_source",
     ],
@@ -113,8 +114,11 @@ def _humanize_resource_name(attr_name: str) -> str:
     """Convert resource attr_name to human-readable description."""
     if attr_name in _RESOURCE_DESCRIPTIONS:
         return _RESOURCE_DESCRIPTIONS[attr_name]
-    # Fallback: convert snake_case to spaces
-    return attr_name.replace("_", " ") + "s"
+    if "_" in attr_name:
+        return attr_name.replace("_", " ") + "s"
+    # PascalCase (endorctl kind): split words for LLM readability
+    spaced = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", attr_name)
+    return f"{spaced} (resource)"
 
 
 def _get_tool_config_from_registry(entry: ResourceEntry) -> dict[str, Any]:
@@ -153,7 +157,7 @@ _COMMON_GET_FIELDS: list[tuple[str, Callable[[Any], Any]]] = [
 # Resource-specific field overrides (only for resources needing special fields)
 _FieldConfig = dict[str, list[tuple[str, Callable[[Any], Any]]]]
 _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
-    "namespace": {
+    "Namespace": {
         "get_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -161,7 +165,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ("parent_uuid", lambda r: r.spec.parent_uuid if r.spec else None),
         ],
     },
-    "project": {
+    "Project": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -184,7 +188,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ),
         ],
     },
-    "repository": {
+    "Repository": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -198,7 +202,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ("default_branch", lambda r: r.spec.default_branch if r.spec else None),
         ],
     },
-    "repository_version": {
+    "RepositoryVersion": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -224,7 +228,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ),
         ],
     },
-    "policy": {
+    "Policy": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -242,7 +246,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ),
         ],
     },
-    "package_version": {
+    "PackageVersion": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -256,7 +260,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ("ecosystem", lambda r: r.spec.ecosystem if r.spec else None),
         ],
     },
-    "installation": {
+    "Installation": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -268,7 +272,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ("platform", lambda r: r.spec.platform_source if r.spec else None),
         ],
     },
-    "scan_result": {
+    "ScanResult": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("name", lambda r: r.meta.name if r.meta else None),
@@ -287,7 +291,7 @@ _RESOURCE_FIELD_OVERRIDES: dict[str, _FieldConfig] = {
             ("exit_code", lambda r: r.spec.exit_code if r.spec else None),
         ],
     },
-    "finding": {
+    "Finding": {
         "list_fields": [
             ("uuid", lambda r: r.uuid),
             ("description", lambda r: r.meta.description if r.meta else None),
@@ -585,7 +589,7 @@ def create_tools(client: Client) -> list[BaseTool]:
     tools: list[BaseTool] = []
 
     # Resources with custom list implementations (finding has severity filter)
-    custom_list_resources = {"finding"}
+    custom_list_resources = {"Finding"}
     _validate_registry_alignment(custom_list_resources)
 
     # Generate tools from SDK registry (single source of truth)
@@ -601,7 +605,7 @@ def create_tools(client: Client) -> list[BaseTool]:
             tools.append(_make_get_tool(client, attr_name, config))
 
     # Custom implementation: list_findings with severity filter and traverse support
-    list_fields = _get_list_fields("finding")
+    list_fields = _get_list_fields("Finding")
 
     def list_findings(
         namespace: str | None = None,
@@ -650,7 +654,7 @@ def create_tools(client: Client) -> list[BaseTool]:
         if filters:
             kwargs["filter"] = " and ".join(filters)
 
-        findings = client.finding.list(**kwargs)
+        findings = client.Finding.list(**kwargs)
         results = [_extract_fields(f, list_fields) for f in findings[:max_results]]
         return json.dumps(results, indent=2, default=str)
 
@@ -673,14 +677,14 @@ def create_tools(client: Client) -> list[BaseTool]:
         This prevents errors from using invalid field paths.
 
         Args:
-            resource_type: Resource name (project, finding, scan_result, policy,
-                namespace, repository, package_version, installation, etc.)
+            resource_type: Resource kind (Project, Finding, ScanResult, Policy,
+                Namespace, Repository, PackageVersion, Installation, etc.)
 
         Returns:
             JSON with valid filter field paths for the resource and syntax reminder.
 
         Example:
-            get_filter_fields("project") returns fields like
+            get_filter_fields("Project") returns fields like
             meta.name, spec.platform_source
         """
         fields = _RESOURCE_FILTER_FIELDS.get(resource_type, _DEFAULT_FILTER_FIELDS)

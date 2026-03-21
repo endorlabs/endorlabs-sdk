@@ -20,7 +20,7 @@ SDK docstrings once confirmed.
 
 When you act on objects returned from `list(traverse=True)` (or broad filters),
 pass the **resource object** to `get`, `update`, or `delete` (e.g.,
-`client.project.delete(target)`). The SDK then uses the resource's
+`client.Project.delete(target)`). The SDK then uses the resource's
 `tenant_meta.namespace` so the path matches the owning namespace; otherwise
 using the client default namespace can cause 404 Not Found.
 

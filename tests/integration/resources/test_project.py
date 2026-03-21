@@ -46,7 +46,7 @@ class TestProject:
         from endorlabs.core.types import ListParameters
 
         try:
-            self.projects = self.endor_client.project.list(
+            self.projects = self.endor_client.Project.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -65,7 +65,7 @@ class TestProject:
         if hasattr(self, "created_scan_profile_uuids"):
             for scan_profile_uuid in self.created_scan_profile_uuids:
                 try:
-                    self.endor_client.scan_profile.delete(scan_profile_uuid)
+                    self.endor_client.ScanProfile.delete(scan_profile_uuid)
                     print(f"[CLEANUP] Deleted test scan profile: {scan_profile_uuid}")
                 except Exception as e:
                     print(
@@ -82,7 +82,7 @@ class TestProject:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.project.list(
+        result = client.Project.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -96,14 +96,14 @@ class TestProject:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.project.list(
+        items = client.Project.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        got = client.project.get(item)
+        got = client.Project.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -115,7 +115,7 @@ class TestProject:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.project.list(
+        items = client.Project.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -127,7 +127,7 @@ class TestProject:
         assert hasattr(item.spec, "toolchain_profile_uuid")
         assert hasattr(item.spec, "ingestion_token")
         assert hasattr(item.spec, "is_archived")
-        got = client.project.get(item)
+        got = client.Project.get(item)
         if got and got.spec:
             assert hasattr(got.spec, "scan_profile_uuid")
             assert hasattr(got.spec, "toolchain_profile_uuid")
@@ -163,7 +163,7 @@ class TestProject:
             propagate=False,
         )
 
-        created_profile = self.endor_client.scan_profile.create(payload)
+        created_profile = self.endor_client.ScanProfile.create(payload)
         if not created_profile:
             pytest.skip("Failed to create test scan profile")
 
@@ -204,7 +204,7 @@ class TestProject:
         finally:
             # Clean up: Remove scan profile association
             print("Cleaning up: Removing scan profile association...")
-            current_project = self.endor_client.project.get(project_uuid)
+            current_project = self.endor_client.Project.get(project_uuid)
             if current_project:
                 spec_dict = current_project.spec.model_dump()
                 spec_dict["scan_profile_uuid"] = None
@@ -228,7 +228,7 @@ class TestProject:
                     print(f"⚠️ Warning: Could not clean up association: {e}")
             # Delete the test scan profile
             try:
-                self.endor_client.scan_profile.delete(scan_profile_uuid)
+                self.endor_client.ScanProfile.delete(scan_profile_uuid)
                 print("✅ Deleted test scan profile")
             except Exception as e:
                 print(
@@ -241,7 +241,7 @@ class TestProject:
         # Test filtering by platform
         from endorlabs.core.types import ListParameters
 
-        github_projects = self.endor_client.project.list(
+        github_projects = self.endor_client.Project.list(
             list_params=ListParameters(
                 filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
                 page_size=TEST_PAGE_SIZE,
@@ -251,7 +251,7 @@ class TestProject:
         assert isinstance(github_projects, list)
 
         # Test field masking
-        masked_projects = self.endor_client.project.list(
+        masked_projects = self.endor_client.Project.list(
             list_params=ListParameters(
                 mask="meta.name,spec.platform_source",
                 page_size=TEST_PAGE_SIZE,
@@ -280,7 +280,7 @@ class TestProject:
         project_uuid = test_project.uuid
 
         # Get current project state
-        current_project = self.endor_client.project.get(project_uuid)
+        current_project = self.endor_client.Project.get(project_uuid)
         if not current_project:
             pytest.skip(f"Could not retrieve project {project_uuid}")
 
@@ -308,7 +308,7 @@ class TestProject:
         print(f"New tags: {new_tags}")
 
         # Update the project with update_mask
-        updated_project = self.endor_client.project.update(
+        updated_project = self.endor_client.Project.update(
             project_uuid,
             update_payload,
             update_mask="meta.description,meta.tags",
@@ -335,7 +335,7 @@ class TestProject:
             )
         )
         try:
-            self.endor_client.project.update(
+            self.endor_client.Project.update(
                 project_uuid,
                 restore_payload,
                 update_mask="meta.description,meta.tags",
@@ -351,21 +351,21 @@ class TestProject:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_client.project.get("invalid-uuid")
+            self.endor_client.Project.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
     @pytest.mark.writes
     def test_client_ux_update_project(self) -> None:
-        """Consumer UX: client.project.get() then update then revert."""
+        """Consumer UX: client.Project.get() then update then revert."""
         import endorlabs
 
         client = endorlabs.Client(
             tenant=self.namespace,
             api_client=self.client,
         )
-        projects = client.project.list(max_pages=TEST_MAX_PAGES)
+        projects = client.Project.list(max_pages=TEST_MAX_PAGES)
         if not projects:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = projects[0]
@@ -374,7 +374,7 @@ class TestProject:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.project.get(item.uuid, namespace=ns)
+        current = client.Project.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve project {item.uuid}")
         original_description = current.meta.description
@@ -386,7 +386,7 @@ class TestProject:
         )
         new_tags = [*original_tags, "client-ux-update"]
         try:
-            updated = client.project.update(
+            updated = client.Project.update(
                 current,
                 meta_description=new_description,
                 meta_tags=new_tags,
@@ -396,7 +396,7 @@ class TestProject:
         assert updated is not None
         assert updated.meta.description == new_description
         try:
-            client.project.update(
+            client.Project.update(
                 updated,
                 meta_description=original_description,
                 meta_tags=original_tags,

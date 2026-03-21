@@ -39,7 +39,7 @@ class TestRetrievingScanResultsWorkflow:
             traverse=True,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        projects = self.endor_client.project.list(
+        projects = self.endor_client.Project.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -51,7 +51,7 @@ class TestRetrievingScanResultsWorkflow:
                 traverse=True,
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
             )
-            all_projects = self.endor_client.project.list(
+            all_projects = self.endor_client.Project.list(
                 list_params=list_params,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -79,7 +79,7 @@ class TestRetrievingScanResultsWorkflow:
             desc=True,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        scan_results = self.endor_client.scan_result.list(
+        scan_results = self.endor_client.ScanResult.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -111,7 +111,7 @@ class TestRetrievingScanResultsWorkflow:
             traverse=True,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        findings = self.endor_client.finding.list(
+        findings = self.endor_client.Finding.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -131,7 +131,7 @@ class TestRetrievingScanResultsWorkflow:
             traverse=True,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
-        findings = self.endor_client.finding.list(
+        findings = self.endor_client.Finding.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )

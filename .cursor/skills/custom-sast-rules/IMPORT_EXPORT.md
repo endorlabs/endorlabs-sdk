@@ -196,10 +196,10 @@ import endorlabs
 client = endorlabs.Client(tenant="tenant.namespace")
 
 # List all custom rules
-rules = client.semgrep_rule.list()
+rules = client.SemgrepRule.list()
 
 # Get a specific rule by UUID
-rule = client.semgrep_rule.get(uuid="<rule-uuid>")
+rule = client.SemgrepRule.get(uuid="<rule-uuid>")
 
 # Access the rule spec for YAML content
 print(rule.spec)

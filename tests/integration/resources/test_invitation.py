@@ -25,7 +25,7 @@ class TestInvitation:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.invitation.list(
+        result = client.Invitation.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -39,7 +39,7 @@ class TestInvitation:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.invitation.list(
+        items = client.Invitation.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -51,6 +51,6 @@ class TestInvitation:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.invitation.get(item.uuid, namespace=ns)
+        got = client.Invitation.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid

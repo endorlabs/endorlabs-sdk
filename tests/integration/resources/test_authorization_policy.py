@@ -45,7 +45,7 @@ class TestAuthorizationPolicy:
         if hasattr(self, "created_policy_uuids"):
             for policy_uuid in self.created_policy_uuids:
                 try:
-                    self.endor_client.authorization_policy.delete(policy_uuid)
+                    self.endor_client.AuthorizationPolicy.delete(policy_uuid)
                     print(f"[CLEANUP] Deleted test authorization policy: {policy_uuid}")
                 except Exception as e:
                     print(
@@ -80,7 +80,7 @@ class TestAuthorizationPolicy:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.authorization_policy.list(
+        result = client.AuthorizationPolicy.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -94,7 +94,7 @@ class TestAuthorizationPolicy:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.authorization_policy.list(
+        items = client.AuthorizationPolicy.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -106,7 +106,7 @@ class TestAuthorizationPolicy:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.authorization_policy.get(item.uuid, namespace=ns)
+        got = client.AuthorizationPolicy.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -137,7 +137,7 @@ class TestAuthorizationPolicy:
         )
         created = None
         try:
-            created = client.authorization_policy.create(payload)
+            created = client.AuthorizationPolicy.create(payload)
         except Exception as e:
             pytest.skip(
                 f"Authorization policy create not allowed in this environment: {e}"
@@ -149,7 +149,7 @@ class TestAuthorizationPolicy:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_client.authorization_policy.delete(created.uuid)
+                    self.endor_client.AuthorizationPolicy.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -180,7 +180,7 @@ class TestAuthorizationPolicy:
         )
         created = None
         try:
-            created = client.authorization_policy.create(create_payload)
+            created = client.AuthorizationPolicy.create(create_payload)
         except Exception as e:
             pytest.skip(
                 f"Authorization policy create not allowed in this environment: {e}"
@@ -189,7 +189,7 @@ class TestAuthorizationPolicy:
             if not created:
                 pytest.skip("Failed to create authorization policy for update test")
             self.created_policy_uuids.append(created.uuid)
-            current = client.authorization_policy.get(
+            current = client.AuthorizationPolicy.get(
                 created.uuid, namespace=self.namespace
             )
             if not current:
@@ -202,7 +202,7 @@ class TestAuthorizationPolicy:
                 )
             )
             try:
-                updated = client.authorization_policy.update(
+                updated = client.AuthorizationPolicy.update(
                     created.uuid,
                     update_payload,
                     update_mask="meta.description",
@@ -220,7 +220,7 @@ class TestAuthorizationPolicy:
                 )
             )
             try:
-                client.authorization_policy.update(
+                client.AuthorizationPolicy.update(
                     created.uuid,
                     restore_payload,
                     update_mask="meta.description",
@@ -234,13 +234,13 @@ class TestAuthorizationPolicy:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_client.authorization_policy.delete(created.uuid)
+                    self.endor_client.AuthorizationPolicy.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_delete_authorization_policy(self) -> None:
-        """Consumer UX: create then client.authorization_policy.delete(uuid)."""
+        """Consumer UX: create then client.AuthorizationPolicy.delete(uuid)."""
         import endorlabs
 
         client = endorlabs.Client(
@@ -264,12 +264,12 @@ class TestAuthorizationPolicy:
             propagate=False,
         )
         try:
-            created = client.authorization_policy.create(payload)
+            created = client.AuthorizationPolicy.create(payload)
         except Exception as e:
             pytest.skip(
                 f"Authorization policy create not allowed in this environment: {e}"
             )
         if not created:
             pytest.skip("Failed to create authorization policy for delete test")
-        result = client.authorization_policy.delete(created.uuid)
+        result = client.AuthorizationPolicy.delete(created.uuid)
         assert result is True

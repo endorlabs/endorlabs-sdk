@@ -40,7 +40,7 @@ class TestScanProfile:
         if hasattr(self, "created_scan_profile_uuids"):
             for scan_profile_uuid in self.created_scan_profile_uuids:
                 try:
-                    self.endor_root_client.scan_profile.delete(scan_profile_uuid)
+                    self.endor_root_client.ScanProfile.delete(scan_profile_uuid)
                     print(f"[CLEANUP] Deleted test scan profile: {scan_profile_uuid}")
                 except Exception as e:
                     print(
@@ -60,7 +60,7 @@ class TestScanProfile:
         Only fetches 1 item for fast setup. Tests that need sample data should
         request this fixture explicitly.
         """
-        results = self.endor_root_client.scan_profile.list(
+        results = self.endor_root_client.ScanProfile.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -76,7 +76,7 @@ class TestScanProfile:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.scan_profile.list(
+        result = client.ScanProfile.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -90,7 +90,7 @@ class TestScanProfile:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.scan_profile.list(
+        items = client.ScanProfile.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -102,7 +102,7 @@ class TestScanProfile:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.scan_profile.get(item.uuid, namespace=ns)
+        got = client.ScanProfile.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -110,7 +110,7 @@ class TestScanProfile:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING SCAN PROFILE FILTERING ===")
         # Test filtering by is_default
-        default_profiles = self.endor_root_client.scan_profile.list(
+        default_profiles = self.endor_root_client.ScanProfile.list(
             list_params=ListParameters(
                 filter="spec.is_default==true",
                 page_size=TEST_PAGE_SIZE,
@@ -123,7 +123,7 @@ class TestScanProfile:
         print(f"Found {len(default_profiles)} default scan profiles")
 
         # Test field masking
-        masked_profiles = self.endor_root_client.scan_profile.list(
+        masked_profiles = self.endor_root_client.ScanProfile.list(
             list_params=ListParameters(
                 mask="meta.name,spec.is_default",
                 page_size=TEST_PAGE_SIZE,
@@ -147,14 +147,14 @@ class TestScanProfile:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.scan_profile.get("invalid-uuid")
+            self.endor_root_client.ScanProfile.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
 
     @pytest.mark.writes
     def test_client_ux_create_scan_profile(self) -> None:
-        """Consumer UX: client.scan_profile.create(payload); teardown deletes."""
+        """Consumer UX: client.ScanProfile.create(payload); teardown deletes."""
         import time
 
         import endorlabs
@@ -173,7 +173,7 @@ class TestScanProfile:
         )
         created = None
         try:
-            created = client.scan_profile.create(payload)
+            created = client.ScanProfile.create(payload)
         except Exception as e:
             pytest.skip(f"Scan profile create not allowed in this environment: {e}")
         try:
@@ -183,13 +183,13 @@ class TestScanProfile:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_root_client.scan_profile.delete(created.uuid)
+                    self.endor_root_client.ScanProfile.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_create_scan_profile_via_kwargs(self) -> None:
-        """Decoupled create: client.scan_profile.create(name=..., namespace=...)."""
+        """Decoupled create: client.ScanProfile.create(name=..., namespace=...)."""
         import time
 
         import endorlabs
@@ -201,7 +201,7 @@ class TestScanProfile:
         name = f"kwargs-profile-{int(time.time())}"
         created = None
         try:
-            created = client.scan_profile.create(
+            created = client.ScanProfile.create(
                 name=name,
                 description="Created via kwargs",
                 is_default=False,
@@ -216,7 +216,7 @@ class TestScanProfile:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_root_client.scan_profile.delete(created.uuid)
+                    self.endor_root_client.ScanProfile.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -241,14 +241,14 @@ class TestScanProfile:
         )
         created = None
         try:
-            created = client.scan_profile.create(payload)
+            created = client.ScanProfile.create(payload)
         except Exception as e:
             pytest.skip(f"Scan profile create not allowed in this environment: {e}")
         try:
             if not created:
                 pytest.skip("Failed to create scan profile for update test")
             self.created_scan_profile_uuids.append(created.uuid)
-            current = client.scan_profile.get(
+            current = client.ScanProfile.get(
                 created.uuid, namespace=self.parent_namespace
             )
             if not current:
@@ -258,7 +258,7 @@ class TestScanProfile:
                 meta=ScanProfileMetaUpdate(description="Updated by client-ux")
             )
             try:
-                updated = client.scan_profile.update(
+                updated = client.ScanProfile.update(
                     created.uuid,
                     update_payload,
                     update_mask="meta.description",
@@ -271,7 +271,7 @@ class TestScanProfile:
                 meta=ScanProfileMetaUpdate(description=original_description)
             )
             try:
-                client.scan_profile.update(
+                client.ScanProfile.update(
                     created.uuid,
                     restore_payload,
                     update_mask="meta.description",
@@ -282,13 +282,13 @@ class TestScanProfile:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_root_client.scan_profile.delete(created.uuid)
+                    self.endor_root_client.ScanProfile.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
     @pytest.mark.writes
     def test_client_ux_delete_scan_profile(self) -> None:
-        """Consumer UX: create then client.scan_profile.delete(uuid)."""
+        """Consumer UX: create then client.ScanProfile.delete(uuid)."""
         import time
 
         import endorlabs
@@ -306,11 +306,11 @@ class TestScanProfile:
             propagate=False,
         )
         try:
-            created = client.scan_profile.create(payload)
+            created = client.ScanProfile.create(payload)
         except Exception as e:
             pytest.skip(f"Scan profile create not allowed in this environment: {e}")
         if not created:
             pytest.skip("Failed to create scan profile for delete test")
-        result = client.scan_profile.delete(created.uuid)
+        result = client.ScanProfile.delete(created.uuid)
         assert result is True
         # Do not append to created_scan_profile_uuids; resource already deleted
