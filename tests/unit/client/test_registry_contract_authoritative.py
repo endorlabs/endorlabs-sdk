@@ -19,7 +19,7 @@ def test_registry_requires_model_import_path(monkeypatch: pytest.MonkeyPatch) ->
     def _rows() -> list[dict[str, object]]:
         return [
             {
-                "attr_name": "project",
+                "attr_name": "Project",
                 "resource_name": "projects",
                 "model_class": "Project",
                 "supported_ops": ["list", "get", "create", "update", "delete"],
@@ -46,7 +46,7 @@ def test_registry_requires_builder_import_path_when_builder_name_present(
     def _rows() -> list[dict[str, object]]:
         return [
             {
-                "attr_name": "project",
+                "attr_name": "Project",
                 "resource_name": "projects",
                 "model_class": "Project",
                 "model_class_import_path": "endorlabs.resources.project:Project",

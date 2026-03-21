@@ -30,7 +30,7 @@ namespaces recursively in a single API call.
 
 ```python
 # Client surface (recommended)
-all_deps = client.dependency_metadata.list(traverse=True)
+all_deps = client.DependencyMetadata.list(traverse=True)
 
 # Module-level (advanced)
 from endorlabs.resources import dependency_metadata
@@ -46,7 +46,7 @@ all_deps = dependency_metadata.list_dependency_metadata(
 
 ```python
 # All private dependencies across all namespaces
-private_deps = client.dependency_metadata.list(
+private_deps = client.DependencyMetadata.list(
     traverse=True,
     filter="spec.dependency_data.public==false",
 )
@@ -57,14 +57,14 @@ private_deps = client.dependency_metadata.list(
 #### Projects
 
 ```python
-projects = client.project.list(traverse=True, max_pages=2)
+projects = client.Project.list(traverse=True, max_pages=2)
 ```
 
 #### Findings
 
 ```python
 # All critical findings across tenant
-critical = client.finding.list(
+critical = client.Finding.list(
     filter="spec.level==FINDING_LEVEL_CRITICAL",
     traverse=True,
 )
@@ -74,7 +74,7 @@ critical = client.finding.list(
 
 ```python
 # All scan results for a specific project
-scans = client.scan_result.list(
+scans = client.ScanResult.list(
     parent=project,
     sort_by="meta.create_time",
     desc=True,
@@ -116,7 +116,7 @@ for ns in namespaces:
 
 ```python
 # Single API call
-all_deps = client.dependency_metadata.list(traverse=True)
+all_deps = client.DependencyMetadata.list(traverse=True)
 # Result: 1 API call (handles all namespaces automatically)
 ```
 
@@ -126,7 +126,7 @@ Use `max_pages` to limit results (not `page_size`):
 
 ```python
 # Uses API default page size, limits to 10 pages max
-deps = client.dependency_metadata.list(traverse=True, max_pages=10)
+deps = client.DependencyMetadata.list(traverse=True, max_pages=10)
 ```
 
 **Important**: Small page sizes (e.g., `page_size=1`) cause performance issues.
@@ -137,13 +137,13 @@ Only override `page_size` if you have a specific need.
 ### Tenant-Wide Count
 
 ```python
-findings = client.finding.list(traverse=True, count=True)
+findings = client.Finding.list(traverse=True, count=True)
 ```
 
 ### Filtered Tenant-Wide Query
 
 ```python
-private_deps = client.dependency_metadata.list(
+private_deps = client.DependencyMetadata.list(
     traverse=True,
     filter="spec.dependency_data.public==false",
 )
@@ -152,7 +152,7 @@ private_deps = client.dependency_metadata.list(
 ### Sorted with Field Mask
 
 ```python
-recent_scans = client.scan_result.list(
+recent_scans = client.ScanResult.list(
     traverse=True,
     sort_by="meta.create_time",
     desc=True,
@@ -169,10 +169,10 @@ When you act on objects returned from `list(traverse=True)`, pass the
 
 ```python
 # Correct: namespace derived from resource
-client.project.delete(target)
+client.Project.delete(target)
 
 # Wrong: may 404 if target lives in a child namespace
-client.project.delete(target.uuid, namespace="tenant-root")
+client.Project.delete(target.uuid, namespace="tenant-root")
 ```
 
 Helper: `endorlabs.utils.resolve_namespace_for_resource(resource, fallback)`

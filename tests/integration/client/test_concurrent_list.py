@@ -26,7 +26,7 @@ class TestConcurrentListIntegration:
             tenant=self.root_namespace,
             api_client=self.api_client,
         )
-        result = client.project.list(
+        result = client.Project.list(
             concurrent=True,
             traverse=True,
             max_workers=5,
@@ -40,7 +40,7 @@ class TestConcurrentListIntegration:
             tenant=self.root_namespace,
             api_client=self.api_client,
         )
-        result = client.namespace.list(
+        result = client.Namespace.list(
             concurrent=True,
             traverse=True,
             max_workers=5,
@@ -71,7 +71,7 @@ class TestConcurrentListPerformance:
         )
 
         start = time.time()
-        _ = client.project.list(
+        _ = client.Project.list(
             traverse=True,
             concurrent=False,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
@@ -79,7 +79,7 @@ class TestConcurrentListPerformance:
         sequential_time = time.time() - start
 
         start = time.time()
-        _ = client.project.list(
+        _ = client.Project.list(
             traverse=True,
             concurrent=True,
             max_workers=10,

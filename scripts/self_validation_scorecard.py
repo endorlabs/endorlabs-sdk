@@ -78,7 +78,7 @@ def main() -> int:
     out_root.mkdir(parents=True, exist_ok=True)
 
     try:
-        project = client.project.lookup(name=args.repository_url, traverse=True)
+        project = client.Project.lookup(name=args.repository_url, traverse=True)
     except Exception as exc:
         print(f"Unable to resolve project for {args.repository_url}: {exc}")
         client.close()

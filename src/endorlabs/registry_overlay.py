@@ -1,4 +1,9 @@
-"""Minimal policy overlay for generated runtime registry contract."""
+"""Minimal policy overlay for generated runtime registry contract.
+
+Keys in ``RESOURCE_CONTRACT_OVERLAY_BY_ATTR`` use the same ``attr_name`` as the
+runtime contract: PascalCase model class names (endorctl resource kinds), e.g.
+``QueryVulnerability``, not ``query_vulnerability``.
+"""
 
 from __future__ import annotations
 

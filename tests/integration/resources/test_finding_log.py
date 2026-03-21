@@ -43,7 +43,7 @@ class TestFindingLog:
         if hasattr(self, "created_finding_log_uuids"):
             for uuid in self.created_finding_log_uuids:
                 try:
-                    self.endor_client.finding_log.delete(uuid)
+                    self.endor_client.FindingLog.delete(uuid)
                 except Exception as e:
                     print(f"Warning: Failed to delete finding log {uuid}: {e}")
             self.created_finding_log_uuids.clear()
@@ -56,7 +56,7 @@ class TestFindingLog:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.finding_log.list(
+        result = client.FindingLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -70,7 +70,7 @@ class TestFindingLog:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.finding_log.list(
+        items = client.FindingLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -82,7 +82,7 @@ class TestFindingLog:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.finding_log.get(item.uuid, namespace=ns)
+        got = client.FindingLog.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -98,7 +98,7 @@ class TestFindingLog:
         from endorlabs.core.types import ListParameters
 
         try:
-            results = self.endor_client.finding_log.list(
+            results = self.endor_client.FindingLog.list(
                 list_params=ListParameters(
                     filter="spec.operation==OPERATION_CREATE",
                     page_size=TEST_PAGE_SIZE,
@@ -124,7 +124,7 @@ class TestFindingLog:
         )
 
         try:
-            logs = self.endor_root_client.finding_log.list(
+            logs = self.endor_root_client.FindingLog.list(
                 list_params=list_params,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -160,7 +160,7 @@ class TestFindingLog:
         )
 
         try:
-            logs = self.endor_root_client.finding_log.list(
+            logs = self.endor_root_client.FindingLog.list(
                 list_params=list_params,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -201,7 +201,7 @@ class TestFindingLog:
             else self.namespace
         )
 
-        got = self.endor_client.finding_log.get(sample_finding_log.uuid, namespace=ns)
+        got = self.endor_client.FindingLog.get(sample_finding_log.uuid, namespace=ns)
 
         assert got is not None, "GET should return a finding log"
         assert got.uuid == sample_finding_log.uuid, "UUID should match"
@@ -239,7 +239,7 @@ class TestFindingLog:
         )
 
         try:
-            logs = self.endor_root_client.finding_log.list(
+            logs = self.endor_root_client.FindingLog.list(
                 list_params=list_params,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -261,7 +261,7 @@ class TestFindingLog:
                 print(f"  {ns}: {count} logs")
 
     def test_finding_log_update_raises_not_implemented(self) -> None:
-        """When update_fn is None, client.finding_log.update raises NotImplemented."""
+        """When update_fn is None, client.FindingLog.update raises NotImplemented."""
         from unittest.mock import Mock
 
         import endorlabs
@@ -272,4 +272,4 @@ class TestFindingLog:
             tenant=TEST_NAMESPACE_DEFAULT,
         )
         with pytest.raises(NotImplementedError, match="does not support update"):
-            client.finding_log.update("dummy-uuid", {}, update_mask="meta.description")
+            client.FindingLog.update("dummy-uuid", {}, update_mask="meta.description")

@@ -90,7 +90,7 @@ def create_child_namespace(
         return result
 
     try:
-        ns = client.namespace.create(
+        ns = client.Namespace.create(
             name=name,
             description=description or f"Child namespace: {name}",
             namespace=parent,
@@ -154,7 +154,7 @@ def create_github_installation(
         create_kwargs["github_org"] = github_org
 
     try:
-        inst = client.installation.create(**create_kwargs)
+        inst = client.Installation.create(**create_kwargs)
         result.uuid = inst.uuid
         result.message = f"Created installation '{name}' (uuid={inst.uuid})."
         logger.info(result.message)
@@ -208,7 +208,7 @@ def create_scan_profile_with_defaults(
         return result
 
     try:
-        profile = client.scan_profile.create(
+        profile = client.ScanProfile.create(
             name=name,
             namespace=namespace,
             description=description or f"Scan profile: {name}",
@@ -264,7 +264,7 @@ def create_authorization_policy(
         return result
 
     try:
-        policy = client.authorization_policy.create(
+        policy = client.AuthorizationPolicy.create(
             name=name,
             namespace=namespace,
             description=description or f"Authorization policy: {name}",

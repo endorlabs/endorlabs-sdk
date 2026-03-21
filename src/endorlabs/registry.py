@@ -48,7 +48,7 @@ class CustomFacadeEntry:
 
 
 def _scan_logs_facade(client: APIClient, default_namespace: str | None) -> Any:
-    """Build ScanLogsFacade for client.scan_logs (request-based API)."""
+    """Build ScanLogsFacade for ``client.ScanLogs`` (request-based log lines API)."""
     from .facade import ScanLogsFacade
 
     return ScanLogsFacade(client, default_namespace)
@@ -194,6 +194,9 @@ def _build_resource_registry() -> list[ResourceEntry]:
 
 RESOURCE_REGISTRY: list[ResourceEntry] = _build_resource_registry()
 
+# ``ScanLogs`` is an SDK-only facade (fetch log lines for a scan result). It is not
+# an endorctl ``--resource`` kind; CRUD for scan log *requests* uses
+# ``client.ScanLogRequest`` like endorctl.
 CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
-    CustomFacadeEntry("scan_logs", _scan_logs_facade),
+    CustomFacadeEntry("ScanLogs", _scan_logs_facade),
 ]

@@ -50,7 +50,7 @@ class TestScanLogRequest:
         Use .uuid and .tenant_meta.namespace so create uses the scan result's
         namespace (API requires create in same namespace as the scan result).
         """
-        scan_results = self.endor_parent_client.scan_result.list(
+        scan_results = self.endor_parent_client.ScanResult.list(
             list_params=ListParameters(
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
@@ -93,7 +93,7 @@ class TestScanLogRequest:
         )
 
         ns_client = endorlabs.Client(tenant=ns, api_client=self.client)
-        request = ns_client.scan_log_request.create(payload)
+        request = ns_client.ScanLogRequest.create(payload)
 
         assert request is not None, "Should successfully create log request"
         assert request.spec is not None, "Request should have spec"
@@ -144,7 +144,7 @@ class TestScanLogRequest:
         )
 
         ns_client = endorlabs.Client(tenant=ns, api_client=self.client)
-        request = ns_client.scan_log_request.create(payload)
+        request = ns_client.ScanLogRequest.create(payload)
 
         assert request is not None, "Should successfully create log request"
         assert request.spec.log_levels == [
@@ -175,7 +175,7 @@ class TestScanLogRequest:
         )
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_parent_client.scan_log_request.create(payload)
+            self.endor_parent_client.ScanLogRequest.create(payload)
         assert exc_info.value.status_code == 400
         assert (
             "invalid" in exc_info.value.message.lower()
@@ -209,7 +209,7 @@ class TestScanLogRequest:
         print("\n=== PER-NAMESPACE SCAN LOG REQUEST DEBUG ===")
 
         # List namespaces under parent (traverse to get children)
-        namespaces_list = self.endor_parent_client.namespace.list(
+        namespaces_list = self.endor_parent_client.Namespace.list(
             traverse=True,
             list_params=ListParameters(page_size=TEST_TRAVERSE_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES_TRAVERSE,
@@ -233,7 +233,7 @@ class TestScanLogRequest:
                 ns_client = endorlabs.Client(
                     tenant=ns_canonical, api_client=self.client
                 )
-                results = ns_client.scan_result.list(
+                results = ns_client.ScanResult.list(
                     list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                     max_pages=TEST_MAX_PAGES,
                 )
@@ -249,7 +249,7 @@ class TestScanLogRequest:
                         scan_result_uuid=scan_result_uuid,
                     ),
                 )
-                ns_client.scan_log_request.create(payload)
+                ns_client.ScanLogRequest.create(payload)
                 create_ok = True
                 msg = (
                     f"  [{ns_canonical}] list_scan_results: ok, "

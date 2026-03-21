@@ -11,6 +11,16 @@ This document is the in-repo source of truth for shared SDK semantics.
 
 - Use `tenant.namespace.child` only; never UUIDs in namespace paths.
 - Example: `tenant_meta_namespace="endor-solutions-tgowan"` or `"tenant.bu.team"`.
+- **`Client` facade attributes (`attr_name`):** Use **PascalCase** matching the
+  resource model class name and `endorctl api … --resource <Kind>` (e.g.
+  `client.Project`, `client.QueryVulnerability`). This is an intentional
+  deviation from typical PEP 8 *instance* attribute style so CLI and SDK share
+  one vocabulary. Resource **Python modules** stay `snake_case`
+  (  `endorlabs.resources.project`, `build_create_payload` metadata slugs like
+  `project_build_create`).
+- **Custom facades:** `client.ScanLogs` is SDK-only (fetch log lines); it is not
+  an endorctl `--resource` kind. Use `client.ScanLogRequest` for CRUD on scan log
+  requests.
 
 ## OpenAPI / spec
 
@@ -64,7 +74,7 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - **PR-scope naming:** OpenAPI commonly uses `ci_run_uuid`; SDK currently exposes `pr_uuid` as a convenience parameter in facade/list types.
 - **archive**, **list_all**: SDK-exposed convenience parameters. Treat these as SDK behavior contracts, not guaranteed cross-endpoint OpenAPI fields.
 
-**Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<resource>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls.
+**Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<ResourceKind>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls.
 
 ## Create (decoupled)
 
@@ -76,8 +86,8 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 ## Update and update_mask
 
 - **Contract:** `update_mask` and list `mask` are separate concepts.
-- **UUID + payload path:** `update_mask` is required when updating by UUID (`client.<resource>.update(uuid, payload=..., update_mask="...")`).
-- **Resource-instance kwargs path:** `update_mask` is optional only when passing a resource object with field kwargs (`client.<resource>.update(resource, meta_description="...")`); SDK auto-derives `update_mask`.
+- **UUID + payload path:** `update_mask` is required when updating by UUID (`client.<ResourceKind>.update(uuid, payload=..., update_mask="...")`).
+- **Resource-instance kwargs path:** `update_mask` is optional only when passing a resource object with field kwargs (`client.<ResourceKind>.update(resource, meta_description="...")`); SDK auto-derives `update_mask`.
 - **Namespace:** Namespace updates require explicit `update_mask` + payload path and only mutable fields are allowed.
 - Immutable fields in `update_mask` are rejected by the SDK before request dispatch.
 

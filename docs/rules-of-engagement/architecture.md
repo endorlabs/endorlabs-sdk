@@ -9,7 +9,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
    - Do not add tenant or resource accessors here.
 
 2. **Resource surface (Client)** — `client_surface.py`
-   - Holds default namespace and exposes resource facades (e.g. `client.namespace`, `client.project`).
+   - Holds default namespace and exposes resource facades (e.g. `client.Namespace`, `client.Project`).
    - Build facades from the **registry**; do not hand-wire each resource in `Client.__init__`.
 
 3. **Facade (ResourceFacade[T])** — `facade.py`
@@ -27,7 +27,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
 - **No coupling:** APIClient does not import or depend on resources, facade, or registry. Only the Client/facade layer depends on resource modules.
 - **Contract-driven:** New resources are added through model-sync generated contract data (and explicit overlay when needed), not by adding new lines in `Client.__init__`.
 - **Facade delegates to BaseResourceOperations:** The facade instantiates `BaseResourceOperations` from registry metadata and delegates CRUD calls to it. Resource modules contain Pydantic models and convenience functions only — no module-level CRUD wrappers.
-- **Types:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.namespace.list()` is typed as `list[Namespace]`; keep full type annotations for Pyright.
+- **Types:** Use `ResourceFacade[T]` with the Pydantic model as `T` so `client.Namespace.list()` is typed as `list[Namespace]`; keep full type annotations for Pyright.
 
 ## When to Use
 

@@ -8,7 +8,7 @@ Runtime generated artifacts are documented in `src/endorlabs/generated/README.md
 
 ## Public API
 
-Stable surface: `endorlabs.__all__` — APIClient, Client, exceptions (EndorAPIError, NotFoundError, etc.). **Client:** `endorlabs.Client(tenant="...")` exposes all resources via `client.namespace`, `client.project`, `client.finding`, etc.; the list is driven by the registry in `endorlabs.registry`. Resources without update or delete raise `NotImplementedError` for those operations. The **full** resource set is under `endorlabs.resources` (list in [resources.md](resources.md)); the top-level package re-exports a subset. Signatures and behavior: see module and function docstrings (Pydantic/Pyright).
+Stable surface: `endorlabs.__all__` — APIClient, Client, exceptions (EndorAPIError, NotFoundError, etc.). **Client:** `endorlabs.Client(tenant="...")` exposes all resources via `client.Namespace`, `client.Project`, `client.Finding`, etc.; the list is driven by the registry in `endorlabs.registry`. Resources without update or delete raise `NotImplementedError` for those operations. The **full** resource set is under `endorlabs.resources` (list in [resources.md](resources.md)); the top-level package re-exports a subset. Signatures and behavior: see module and function docstrings (Pydantic/Pyright).
 
 ## Other surfaces
 

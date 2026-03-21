@@ -41,7 +41,7 @@ class TestSemgrepRule:
         if hasattr(self, "created_semgrep_rule_uuids"):
             for rule_uuid in self.created_semgrep_rule_uuids:
                 try:
-                    self.endor_client.semgrep_rule.delete(rule_uuid)
+                    self.endor_client.SemgrepRule.delete(rule_uuid)
                 except Exception as e:
                     print(f"[WARNING] Failed to delete semgrep rule {rule_uuid}: {e}")
             self.created_semgrep_rule_uuids.clear()
@@ -52,7 +52,7 @@ class TestSemgrepRule:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.semgrep_rule.list(
+        result = client.SemgrepRule.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -64,7 +64,7 @@ class TestSemgrepRule:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.semgrep_rule.list(
+        items = client.SemgrepRule.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -76,7 +76,7 @@ class TestSemgrepRule:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.semgrep_rule.get(item.uuid, namespace=ns)
+        got = client.SemgrepRule.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -104,7 +104,7 @@ class TestSemgrepRule:
 
         created = None
         try:
-            created = client.semgrep_rule.create(payload)
+            created = client.SemgrepRule.create(payload)
         except PermissionDeniedError as e:
             pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
         try:
@@ -114,7 +114,7 @@ class TestSemgrepRule:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_client.semgrep_rule.delete(created.uuid)
+                    self.endor_client.SemgrepRule.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -144,14 +144,14 @@ class TestSemgrepRule:
 
         created = None
         try:
-            created = client.semgrep_rule.create(create_payload)
+            created = client.SemgrepRule.create(create_payload)
         except PermissionDeniedError as e:
             pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
         try:
             if not created:
                 pytest.skip("Failed to create semgrep rule for update test")
             self.created_semgrep_rule_uuids.append(created.uuid)
-            current = client.semgrep_rule.get(created.uuid, namespace=self.namespace)
+            current = client.SemgrepRule.get(created.uuid, namespace=self.namespace)
             if not current:
                 pytest.skip(f"Could not retrieve semgrep rule {created.uuid}")
             # The semgrep rule API always validates spec during update,
@@ -164,7 +164,7 @@ class TestSemgrepRule:
                 spec=current.spec,
             )
             try:
-                updated = client.semgrep_rule.update(
+                updated = client.SemgrepRule.update(
                     created.uuid,
                     update_payload,
                     update_mask="meta.description,spec",
@@ -176,7 +176,7 @@ class TestSemgrepRule:
         finally:
             if created is not None:  # type: ignore[reportUnnecessaryComparison]
                 try:
-                    self.endor_client.semgrep_rule.delete(created.uuid)
+                    self.endor_client.SemgrepRule.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for {created.uuid}: {e}")
 
@@ -205,10 +205,10 @@ class TestSemgrepRule:
         from endorlabs.core.exceptions import PermissionDeniedError
 
         try:
-            created = client.semgrep_rule.create(payload)
+            created = client.SemgrepRule.create(payload)
         except PermissionDeniedError as e:
             pytest.skip(f"Semgrep rule create not allowed in this environment: {e}")
         if not created:
             pytest.skip("Failed to create semgrep rule for delete test")
-        result = client.semgrep_rule.delete(created.uuid)
+        result = client.SemgrepRule.delete(created.uuid)
         assert result is True

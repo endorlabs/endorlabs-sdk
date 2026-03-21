@@ -272,7 +272,7 @@ def cmd_import(
     """Import all rule YAML files from *rules_dir*.
 
     Each rule dict is validated through ``validate_rule_dict()`` before
-    import.  Uses ``client.semgrep_rule.create(payload=...)`` for creating
+    import.  Uses ``client.SemgrepRule.create(payload=...)`` for creating
     new rules on the platform.
     """
     logger.info("=== import: importing rules from %s ===", rules_dir)
@@ -320,7 +320,7 @@ def cmd_import(
             desc = _extract_description(rule_dict)
 
             # Check for existing rule
-            existing_rules = client.semgrep_rule.list(
+            existing_rules = client.SemgrepRule.list(
                 namespace=namespace,
                 filter=f'meta.name=="{rule_name}"',
                 max_pages=1,
@@ -341,7 +341,7 @@ def cmd_import(
                         ),
                         spec=SemgrepRuleSpec(yaml=wrapped_yaml),
                     )
-                    client.semgrep_rule.update(
+                    client.SemgrepRule.update(
                         existing,
                         payload=upd,
                         update_mask="spec,meta.description",
@@ -370,7 +370,7 @@ def cmd_import(
                     spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
                     propagate=True,
                 )
-                result = client.semgrep_rule.create(
+                result = client.SemgrepRule.create(
                     payload=create_payload,
                     namespace=namespace,
                 )
@@ -408,7 +408,7 @@ def cmd_delete(
     """
     logger.info('=== delete: removing rules matching "%s" ===', name_filter)
 
-    rules = client.semgrep_rule.list(
+    rules = client.SemgrepRule.list(
         namespace=namespace,
         filter=f'meta.name contains "{name_filter}"',
     )
@@ -431,7 +431,7 @@ def cmd_delete(
             continue
 
         try:
-            client.semgrep_rule.delete(rule, namespace=namespace)
+            client.SemgrepRule.delete(rule, namespace=namespace)
             logger.info("Deleted: %s", display)
             if name:
                 deleted_names.append(name)
@@ -471,7 +471,7 @@ def cmd_orphans(
     # Build a set of lower-cased substrings to match against
     needles = {n.lower() for n in deleted_names}
 
-    all_findings = client.finding.list(
+    all_findings = client.Finding.list(
         namespace=namespace,
         filter="spec.finding_categories contains [FINDING_CATEGORY_SAST]",
         traverse=True,
@@ -504,7 +504,7 @@ def cmd_orphans(
             continue
 
         try:
-            client.finding.delete(f, namespace=namespace)
+            client.Finding.delete(f, namespace=namespace)
             logger.info("Deleted finding: %s (uuid=%s)", desc, f.uuid)
             deleted += 1
         except Exception as exc:
@@ -574,7 +574,7 @@ def cmd_configure(
     for rule_id in sorted(all_ids):
         want_enabled = rule_id in enabled_ids
 
-        matches = client.semgrep_rule.list(
+        matches = client.SemgrepRule.list(
             namespace=namespace,
             filter=f'meta.name=="{rule_id}"',
             max_pages=1,
@@ -608,7 +608,7 @@ def cmd_configure(
                     yaml=rule_yaml,
                 ),
             )
-            client.semgrep_rule.update(
+            client.SemgrepRule.update(
                 rule,
                 payload=upd,
                 update_mask="disabled,spec.disabled,spec.yaml",

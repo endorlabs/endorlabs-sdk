@@ -111,11 +111,11 @@ class TestCreateNotificationTarget:
         assert isinstance(result, NotificationTargetResult)
         assert result.ok is True
         assert "DRY RUN" in result.message
-        client.notification_target.create.assert_not_called()
+        client.NotificationTarget.create.assert_not_called()
 
     def test_creates_target_via_facade(self) -> None:
         client = Mock()
-        client.notification_target.create.return_value = Mock(uuid="target-1")
+        client.NotificationTarget.create.return_value = Mock(uuid="target-1")
 
         result = create_notification_target(
             client,
@@ -129,7 +129,7 @@ class TestCreateNotificationTarget:
         )
         assert result.uuid == "target-1"
         assert result.ok is True
-        client.notification_target.create.assert_called_once()
+        client.NotificationTarget.create.assert_called_once()
 
     def test_invalid_action_type_returns_error(self) -> None:
         client = Mock()
@@ -145,7 +145,7 @@ class TestCreateNotificationTarget:
 
     def test_api_failure_returns_error(self) -> None:
         client = Mock()
-        client.notification_target.create.side_effect = RuntimeError("500")
+        client.NotificationTarget.create.side_effect = RuntimeError("500")
 
         result = create_notification_target(
             client,
@@ -178,11 +178,11 @@ class TestCreateNotificationPolicy:
         assert isinstance(result, NotificationPolicyResult)
         assert result.ok is True
         assert "DRY RUN" in result.message
-        client.policy.create.assert_not_called()
+        client.Policy.create.assert_not_called()
 
     def test_creates_policy_via_facade(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="policy-1")
+        client.Policy.create.return_value = Mock(uuid="policy-1")
 
         result = create_notification_policy(
             client, "ns", "My Policy", ["target-1", "target-2"]
@@ -193,7 +193,7 @@ class TestCreateNotificationPolicy:
 
     def test_passes_notification_config(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="p1")
+        client.Policy.create.return_value = Mock(uuid="p1")
 
         create_notification_policy(
             client,
@@ -203,14 +203,14 @@ class TestCreateNotificationPolicy:
             finding_level="FINDING_LEVEL_CRITICAL",
             project_selector=["$sdk"],
         )
-        kw = client.policy.create.call_args.kwargs
+        kw = client.Policy.create.call_args.kwargs
         assert kw["notification"]["notification_target_uuids"] == ["t1"]
         assert kw["finding_level"] == "FINDING_LEVEL_CRITICAL"
         assert kw["project_selector"] == ["$sdk"]
 
     def test_api_failure_returns_error(self) -> None:
         client = Mock()
-        client.policy.create.side_effect = RuntimeError("conflict")
+        client.Policy.create.side_effect = RuntimeError("conflict")
 
         result = create_notification_policy(client, "ns", "Pol", ["t1"])
         assert result.status == "error"
@@ -218,7 +218,7 @@ class TestCreateNotificationPolicy:
 
     def test_propagate_forwarded(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="p1")
+        client.Policy.create.return_value = Mock(uuid="p1")
 
         create_notification_policy(client, "ns", "Pol", ["t1"], propagate=False)
-        assert client.policy.create.call_args.kwargs["propagate"] is False
+        assert client.Policy.create.call_args.kwargs["propagate"] is False

@@ -49,7 +49,7 @@ class TestNamespaces:
         if hasattr(self, "created_namespace_uuids"):
             for namespace_uuid in self.created_namespace_uuids:
                 try:
-                    self.client.namespace.delete(namespace_uuid)
+                    self.client.Namespace.delete(namespace_uuid)
                     print(f"[CLEANUP] Deleted test namespace: {namespace_uuid}")
                 except Exception as e:
                     print(
@@ -80,7 +80,7 @@ class TestNamespaces:
         try:
             for payload in mock_namespaces_to_create:
                 try:
-                    ns = self.client.namespace.create(payload)
+                    ns = self.client.Namespace.create(payload)
                     if ns:
                         created_in_this_test.append(ns.uuid)
                         self.created_namespace_uuids.append(ns.uuid)
@@ -91,7 +91,7 @@ class TestNamespaces:
 
             # List from tenant root with traverse so created child namespaces
             # are in scope.
-            all_namespaces = self.root_client.namespace.list(
+            all_namespaces = self.root_client.Namespace.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -106,7 +106,7 @@ class TestNamespaces:
         finally:
             for uid in created_in_this_test:
                 try:
-                    self.client.namespace.delete(uid)
+                    self.client.Namespace.delete(uid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for namespace {uid}: {e}")
 
@@ -126,7 +126,7 @@ class TestNamespaces:
             )
         )
 
-        created_namespace = self.client.namespace.create(create_payload)
+        created_namespace = self.client.Namespace.create(create_payload)
         if not created_namespace:
             pytest.skip("Failed to create namespace for update test")
 
@@ -136,7 +136,7 @@ class TestNamespaces:
         try:
             time.sleep(2)
 
-            current_namespace = self.client.namespace.get(namespace_uuid)
+            current_namespace = self.client.Namespace.get(namespace_uuid)
             if not current_namespace:
                 pytest.skip(f"Could not retrieve namespace {namespace_uuid}")
 
@@ -153,7 +153,7 @@ class TestNamespaces:
             )
 
             try:
-                updated_namespace = self.client.namespace.update(
+                updated_namespace = self.client.Namespace.update(
                     namespace_uuid,
                     update_payload,
                     update_mask="meta.description",
@@ -187,7 +187,7 @@ class TestNamespaces:
                 meta=NamespaceMetaUpdate(description=original_description)
             )
             try:
-                self.client.namespace.update(
+                self.client.Namespace.update(
                     namespace_uuid,
                     restore_payload,
                     update_mask="meta.description",
@@ -197,7 +197,7 @@ class TestNamespaces:
                 print(f"[WARNING] Failed to restore original values: {e}")
         finally:
             try:
-                self.client.namespace.delete(namespace_uuid)
+                self.client.Namespace.delete(namespace_uuid)
             except Exception as e:
                 print(f"[WARNING] Cleanup failed for namespace {namespace_uuid}: {e}")
 
@@ -207,7 +207,7 @@ class TestNamespaces:
             meta=NamespaceMetaUpdate(description="irrelevant")
         )
         with pytest.raises(EndorValidationError) as exc_info:
-            self.client.namespace.update(
+            self.client.Namespace.update(
                 "any-uuid",
                 payload,
                 update_mask="",
@@ -216,7 +216,7 @@ class TestNamespaces:
 
     def test_namespace_list(self) -> None:
         """LIST from tenant root with traverse."""
-        result = self.root_client.namespace.list(
+        result = self.root_client.Namespace.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -224,20 +224,20 @@ class TestNamespaces:
 
     def test_namespace_get(self) -> None:
         """GET first item from LIST (root + traverse)."""
-        items = self.root_client.namespace.list(
+        items = self.root_client.Namespace.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        got = self.root_client.namespace.get(item)
+        got = self.root_client.Namespace.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
     def test_namespace_spec_has_full_name_and_managed(self) -> None:
         """Namespace spec exposes full_name and managed when returned by API."""
-        items = self.root_client.namespace.list(
+        items = self.root_client.Namespace.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -246,12 +246,12 @@ class TestNamespaces:
         item = items[0]
         assert hasattr(item.spec, "full_name")
         assert hasattr(item.spec, "managed")
-        got = self.root_client.namespace.get(item)
+        got = self.root_client.Namespace.get(item)
         assert hasattr(got.spec, "full_name")
         assert hasattr(got.spec, "managed")
 
     def test_client_ux_create_namespace(self) -> None:
-        """Consumer UX: client.namespace.create(payload); teardown deletes."""
+        """Consumer UX: client.Namespace.create(payload); teardown deletes."""
         import random
 
         timestamp = int(time.time())
@@ -264,7 +264,7 @@ class TestNamespaces:
         )
         created = None
         try:
-            created = self.client.namespace.create(payload)
+            created = self.client.Namespace.create(payload)
         except Exception as e:
             pytest.skip(f"Namespace create not allowed in this environment: {e}")
         try:
@@ -274,12 +274,12 @@ class TestNamespaces:
         finally:
             if created is not None:  # type: ignore[redundant-expr]
                 try:
-                    self.client.namespace.delete(created.uuid)
+                    self.client.Namespace.delete(created.uuid)
                 except Exception as e:
                     print(f"[WARNING] Cleanup failed for namespace {created.uuid}: {e}")
 
     def test_client_ux_delete_namespace(self) -> None:
-        """Consumer UX: create namespace then client.namespace.delete(uuid)."""
+        """Consumer UX: create namespace then client.Namespace.delete(uuid)."""
         import random
 
         timestamp = int(time.time())
@@ -291,10 +291,10 @@ class TestNamespaces:
             )
         )
         try:
-            created = self.client.namespace.create(payload)
+            created = self.client.Namespace.create(payload)
         except Exception as e:
             pytest.skip(f"Namespace create not allowed in this environment: {e}")
         if not created:
             pytest.skip("Failed to create namespace for delete test")
-        result = self.client.namespace.delete(created.uuid)
+        result = self.client.Namespace.delete(created.uuid)
         assert result is True

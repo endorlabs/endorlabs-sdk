@@ -108,7 +108,7 @@ class TestPullFindingsContext:
     def test_returns_empty_on_no_findings(self) -> None:
         """Returns FindingsContext with total=0 when no findings exist."""
         client = Mock()
-        client.finding.list.return_value = []
+        client.Finding.list.return_value = []
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -128,7 +128,7 @@ class TestPullFindingsContext:
             _make_mock_finding("f3", "FINDING_LEVEL_MEDIUM", ["FINDING_CATEGORY_SAST"]),
         ]
         client = Mock()
-        client.finding.list.return_value = findings
+        client.Finding.list.return_value = findings
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -145,7 +145,7 @@ class TestPullFindingsContext:
             _make_mock_finding("f2", "FINDING_LEVEL_LOW"),
         ]
         client = Mock()
-        client.finding.list.return_value = findings
+        client.Finding.list.return_value = findings
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -156,7 +156,7 @@ class TestPullFindingsContext:
     def test_handles_api_error_gracefully(self) -> None:
         """Returns empty context on API failure."""
         client = Mock()
-        client.finding.list.side_effect = Exception("API error")
+        client.Finding.list.side_effect = Exception("API error")
         project = _make_mock_project()
 
         ctx = pull_findings_context(client, project)
@@ -175,7 +175,7 @@ class TestPullPoliciesContext:
             _make_mock_policy("p2", "sast-policy", disabled=True),
         ]
         client = Mock()
-        client.policy.list.return_value = policies
+        client.Policy.list.return_value = policies
         project = _make_mock_project()
 
         ctx = pull_policies_context(client, project)
@@ -192,15 +192,15 @@ class TestPullVersionsContext:
         """Extracts version data correctly."""
         versions = [_make_mock_version()]
         client = Mock()
-        client.repository_version.list.return_value = versions
+        client.RepositoryVersion.list.return_value = versions
         project = _make_mock_project()
 
         ctx = pull_repository_versions_context(client, project)
 
         assert ctx.total == 1
         assert ctx.versions[0]["ref"] == "refs/heads/main"
-        client.repository_version.list.assert_called_once()
-        kwargs = client.repository_version.list.call_args.kwargs
+        client.RepositoryVersion.list.assert_called_once()
+        kwargs = client.RepositoryVersion.list.call_args.kwargs
         assert kwargs["parent"] == project
         assert kwargs["max_pages"] == 2
 
@@ -390,9 +390,9 @@ class TestCreateSession:
     def test_returns_session_result(self, tmp_path: Path) -> None:
         """create_session returns a SessionResult with status."""
         client = Mock()
-        client.finding.list.return_value = []
-        client.policy.list.return_value = []
-        client.repository_version.list.return_value = []
+        client.Finding.list.return_value = []
+        client.Policy.list.return_value = []
+        client.RepositoryVersion.list.return_value = []
 
         project = _make_mock_project()
         result = create_session(client, project, tmp_path)
@@ -404,9 +404,9 @@ class TestCreateSession:
     def test_sets_error_status_when_findings_fetch_fails(self, tmp_path: Path) -> None:
         """Session result surfaces data retrieval errors."""
         client = Mock()
-        client.finding.list.side_effect = Exception("boom")
-        client.policy.list.return_value = []
-        client.repository_version.list.return_value = []
+        client.Finding.list.side_effect = Exception("boom")
+        client.Policy.list.return_value = []
+        client.RepositoryVersion.list.return_value = []
         project = _make_mock_project()
 
         result = create_session(client, project, tmp_path)

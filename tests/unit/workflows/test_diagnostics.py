@@ -84,7 +84,7 @@ class TestCompareScanLogs:
 
     def test_no_scan_results(self) -> None:
         client = Mock()
-        client.scan_result.list.return_value = []
+        client.ScanResult.list.return_value = []
 
         result = compare_scan_logs(client, "ns", "proj-1")
         assert isinstance(result, ScanLogComparison)
@@ -95,21 +95,21 @@ class TestCompareScanLogs:
         sr1 = _make_scan_result("sr-1")
         sr2 = _make_scan_result("sr-2", status="FAILED", exit_code=1)
         client = Mock()
-        client.scan_result.list.return_value = [sr1, sr2]
-        client.scan_logs.get_logs.return_value = [
+        client.ScanResult.list.return_value = [sr1, sr2]
+        client.ScanLogs.get_logs.return_value = [
             _make_log_message("ERROR", "something failed")
         ]
 
         result = compare_scan_logs(client, "ns", "proj-1", num_scans=2)
         assert result.num_scans_found == 2
         assert len(result.entries) == 2
-        assert client.scan_logs.get_logs.call_count == 2
+        assert client.ScanLogs.get_logs.call_count == 2
 
     def test_handles_log_fetch_failure(self) -> None:
         sr = _make_scan_result("sr-1")
         client = Mock()
-        client.scan_result.list.return_value = [sr]
-        client.scan_logs.get_logs.side_effect = RuntimeError("timeout")
+        client.ScanResult.list.return_value = [sr]
+        client.ScanLogs.get_logs.side_effect = RuntimeError("timeout")
 
         result = compare_scan_logs(client, "ns", "proj-1")
         assert len(result.entries) == 1
@@ -117,10 +117,10 @@ class TestCompareScanLogs:
 
     def test_respects_num_scans(self) -> None:
         client = Mock()
-        client.scan_result.list.return_value = [
+        client.ScanResult.list.return_value = [
             _make_scan_result(f"sr-{i}") for i in range(5)
         ]
-        client.scan_logs.get_logs.return_value = []
+        client.ScanLogs.get_logs.return_value = []
 
         result = compare_scan_logs(client, "ns", "proj-1", num_scans=3)
         assert len(result.entries) == 3
@@ -128,11 +128,11 @@ class TestCompareScanLogs:
     def test_custom_log_levels(self) -> None:
         sr = _make_scan_result("sr-1")
         client = Mock()
-        client.scan_result.list.return_value = [sr]
-        client.scan_logs.get_logs.return_value = []
+        client.ScanResult.list.return_value = [sr]
+        client.ScanLogs.get_logs.return_value = []
 
         compare_scan_logs(client, "ns", "proj-1", log_levels=["ERROR", "INFO"])
-        call_kwargs = client.scan_logs.get_logs.call_args.kwargs
+        call_kwargs = client.ScanLogs.get_logs.call_args.kwargs
         assert len(call_kwargs["log_levels"]) == 2
 
 
@@ -146,7 +146,7 @@ class TestListProjectDependencies:
 
     def test_empty_results(self) -> None:
         client = Mock()
-        client.dependency_metadata.list.return_value = []
+        client.DependencyMetadata.list.return_value = []
 
         result = list_project_dependencies(client, "ns")
         assert isinstance(result, DependencyReport)
@@ -158,7 +158,7 @@ class TestListProjectDependencies:
         d3 = _make_dep("d-3", "ns2", "pkg-a", "PYPI", "imp-a")
 
         client = Mock()
-        client.dependency_metadata.list.return_value = [d1, d2, d3]
+        client.DependencyMetadata.list.return_value = [d1, d2, d3]
 
         result = list_project_dependencies(client, "ns")
         assert result.stats.total == 3
@@ -171,10 +171,10 @@ class TestListProjectDependencies:
 
     def test_traverse_kwarg_forwarded(self) -> None:
         client = Mock()
-        client.dependency_metadata.list.return_value = []
+        client.DependencyMetadata.list.return_value = []
 
         list_project_dependencies(client, "ns", traverse=False)
-        assert client.dependency_metadata.list.call_args.kwargs["traverse"] is False
+        assert client.DependencyMetadata.list.call_args.kwargs["traverse"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +191,7 @@ class TestCheckDependencyVisibility:
         d_unk = _make_dep("d-3", public=None)
 
         client = Mock()
-        client.dependency_metadata.list.return_value = [d_pub, d_priv, d_unk]
+        client.DependencyMetadata.list.return_value = [d_pub, d_priv, d_unk]
 
         result = check_dependency_visibility(client, "ns")
         assert isinstance(result, VisibilityReport)
@@ -202,18 +202,18 @@ class TestCheckDependencyVisibility:
 
     def test_filter_public_kwarg(self) -> None:
         client = Mock()
-        client.dependency_metadata.list.return_value = []
+        client.DependencyMetadata.list.return_value = []
 
         check_dependency_visibility(client, "ns", filter_public=True)
-        kw = client.dependency_metadata.list.call_args.kwargs
+        kw = client.DependencyMetadata.list.call_args.kwargs
         assert "true" in kw["filter"]
 
     def test_no_filter_when_none(self) -> None:
         client = Mock()
-        client.dependency_metadata.list.return_value = []
+        client.DependencyMetadata.list.return_value = []
 
         check_dependency_visibility(client, "ns")
-        kw = client.dependency_metadata.list.call_args.kwargs
+        kw = client.DependencyMetadata.list.call_args.kwargs
         assert "filter" not in kw
 
 
