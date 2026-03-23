@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import keyword
 import sys
 from pathlib import Path
 from typing import Any
@@ -13,10 +14,26 @@ _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))
 
-from endorlabs.registry import RESOURCE_REGISTRY
+from endorlabs.registry import RESOURCE_REGISTRY, ResourceEntry
 from endorlabs.utils.model_validation import get_tags_update_paths
 
 from .policy import MappingEntry, model_sync_entity_for_model
+
+
+def facade_attr_name(entry: ResourceEntry) -> str:
+    """Client attribute / endorctl --resource kind: PascalCase model class name."""
+    return entry.model_class.__name__
+
+
+def create_builder_slug(entry: ResourceEntry) -> str:
+    """Stable snake_case slug from resource module (e.g. endorlabs.resources.api_key -> api_key)."""
+    tail = entry.model_class.__module__.split(".")[-1]
+    return tail if tail else entry.model_class.__name__.lower()
+
+
+def _default_facade_description(model_class_name: str) -> str:
+    """Human-readable one-liner when model docstring is empty."""
+    return f"{model_class_name} resource facade."
 
 _REQUIRED_RESOURCE_KEYS = {
     "attr_name",
@@ -153,7 +170,7 @@ def build_payload_schemas(
         return path.endswith(f"/{resource_name}/{{uuid}}") and "/v1/namespaces/" in path
 
     resources: list[dict[str, Any]] = []
-    for entry in sorted(RESOURCE_REGISTRY, key=lambda e: e.attr_name):
+    for entry in sorted(RESOURCE_REGISTRY, key=facade_attr_name):
         create_entities: set[str] = set()
         update_entities: set[str] = set()
         for operation in operation_rows:
@@ -185,7 +202,7 @@ def build_payload_schemas(
         }
         resources.append(
             {
-                "attr_name": entry.attr_name,
+                "attr_name": facade_attr_name(entry),
                 "resource_name": entry.resource_name,
                 "create_payload_entities": sorted(create_entities),
                 "update_payload_entities": sorted(update_entities),
@@ -215,10 +232,11 @@ def build_facade_contract(
                 payload_by_attr[attr_name] = resource
 
     resources: list[dict[str, Any]] = []
-    for entry in sorted(RESOURCE_REGISTRY, key=lambda item: item.attr_name):
+    for entry in sorted(RESOURCE_REGISTRY, key=facade_attr_name):
         accepted = sorted(model_sync_entity_for_model(entry.model_class))
         canonical_entities = sorted(entity for entity in accepted if entity in mapping_entities)
-        payload = payload_by_attr.get(entry.attr_name, {})
+        attr = facade_attr_name(entry)
+        payload = payload_by_attr.get(attr, {})
         tags_paths = get_tags_update_paths(entry.model_class)
         build_create_fn = getattr(entry, "build_create_payload_fn", None)
         model_import_path = f"{entry.model_class.__module__}:{entry.model_class.__name__}"
@@ -261,17 +279,17 @@ def build_facade_contract(
             workflow_flags.append("request-style-endpoint")
         resources.append(
             {
-                "attr_name": entry.attr_name,
+                "attr_name": attr,
                 "resource_name": entry.resource_name,
                 "model_class": entry.model_class.__name__,
                 "model_class_import_path": model_import_path,
                 "description": (
                     (entry.model_class.__doc__ or "").strip().splitlines()[0].strip()
                     if (entry.model_class.__doc__ or "").strip()
-                    else f"{entry.attr_name.replace('_', ' ').title()} resource facade."
+                    else _default_facade_description(entry.model_class.__name__)
                 ),
                 "build_create_payload_fn_name": (
-                    f"{entry.attr_name}_build_create"
+                    f"{create_builder_slug(entry)}_build_create"
                     if getattr(entry, "build_create_payload_fn", None) is not None
                     else None
                 ),
@@ -475,6 +493,7 @@ def validate_contract_artifacts(
     if not isinstance(resources, list) or not resources:
         errors.append("facade_contract.resources must be a non-empty list")
     else:
+        seen_attr_names: list[str] = []
         for index, resource in enumerate(resources):
             if not isinstance(resource, dict):
                 errors.append(f"facade_contract.resources[{index}] must be an object")
@@ -513,6 +532,34 @@ def validate_contract_artifacts(
                 errors.append(
                     f"facade_contract.resources[{index}].workflow_flags must be list"
                 )
+
+            attr_name = resource.get("attr_name")
+            model_class = resource.get("model_class")
+            if isinstance(attr_name, str) and isinstance(model_class, str):
+                seen_attr_names.append(attr_name)
+                if attr_name != model_class:
+                    errors.append(
+                        f"facade_contract.resources[{index}]: attr_name must equal "
+                        f"model_class for endorctl parity (got {attr_name!r} vs "
+                        f"{model_class!r})"
+                    )
+                if not attr_name.isidentifier():
+                    errors.append(
+                        f"facade_contract.resources[{index}]: attr_name must be a "
+                        f"valid Python identifier (got {attr_name!r})"
+                    )
+                if keyword.iskeyword(attr_name):
+                    errors.append(
+                        f"facade_contract.resources[{index}]: attr_name must not be "
+                        f"a Python keyword (got {attr_name!r})"
+                    )
+
+        if len(seen_attr_names) != len(set(seen_attr_names)):
+            errors.append(
+                "facade_contract.resources: attr_name values must be unique "
+                f"(endorctl resource kinds); duplicates: "
+                f"{sorted({a for a in seen_attr_names if seen_attr_names.count(a) > 1})}"
+            )
 
     if registry_parity_report.get("status") not in {"pass", "fail"}:
         errors.append("registry_parity_report.status must be 'pass' or 'fail'")

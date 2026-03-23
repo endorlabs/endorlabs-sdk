@@ -9,7 +9,7 @@ OPERATIONS:
 - List, get, create, delete: implemented.
 - Update: UNIMPLEMENTED. Dependency metadata in "oss" is platform-managed and
   ingested by the platform; it is not intended for SDK consumers to update.
-  client.dependency_metadata.update() raises NotImplementedError.
+  client.DependencyMetadata.update() raises NotImplementedError.
 
 IMPORTANT: The tenant_meta_namespace parameter in all functions is kept for API
 compatibility but is ignored - all operations always use the "oss" namespace.
@@ -346,7 +346,7 @@ def update_dependency_metadata(
     platform receives and understands it without duplicating data across
     customer tenants. The platform ingests and manages this data; update is
     not exposed for SDK consumers. The Client facade does not expose update
-    for this resource (client.dependency_metadata.update raises
+    for this resource (client.DependencyMetadata.update raises
     NotImplementedError).
 
     Raises:

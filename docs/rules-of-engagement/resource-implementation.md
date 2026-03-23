@@ -30,7 +30,7 @@ Checklists for implementing new Endor Labs resources. CRUD operations are handle
 
 ## Phase 2: Expose on Client (optional)
 
-If the resource should be available via the resource-oriented Client (e.g. `client.project.list()`):
+If the resource should be available via the resource-oriented Client (e.g. `client.Project.list()`):
 
 - [ ] Ensure model-sync emits the resource row in `src/endorlabs/generated/registry_contract.py` (from canonical artifacts).
 - [ ] If the SDK needs intentional divergence, add a minimal override in `src/endorlabs/registry_overlay.py` (allowed keys only).

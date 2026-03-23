@@ -27,7 +27,7 @@ construction.
 
 - Generated CRUD metadata/resources flow through the registry adapter.
 - Manual custom facades remain explicit in `CUSTOM_FACADE_REGISTRY` (for example
-  `scan_logs`).
+  `ScanLogs`).
 
 ## Maintenance checklist for future agents
 

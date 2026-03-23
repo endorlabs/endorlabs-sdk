@@ -17,6 +17,22 @@ logger = get_resource_logger(__name__)
 T = TypeVar("T")
 
 
+class ConcurrentNamespaceQueryError(RuntimeError):
+    """Raised when one or more concurrent namespace queries fail."""
+
+    def __init__(self, failures: list[tuple[str, Exception]]) -> None:
+        self.failures = failures
+        self.failed_namespaces = [namespace for namespace, _ in failures]
+        details = "; ".join(
+            f"{namespace}: {type(error).__name__}({error})"
+            for namespace, error in failures
+        )
+        super().__init__(
+            "Concurrent namespace query failed for "
+            f"{len(failures)} namespace(s): {details}"
+        )
+
+
 def execute_across_namespaces(
     namespaces: list[str],
     query_fn: Callable[[str], list[T]],
@@ -25,8 +41,8 @@ def execute_across_namespaces(
     """Execute query_fn concurrently across namespaces and merge results.
 
     This function queries each namespace in parallel using a thread pool,
-    then merges all results into a single list. Errors in individual
-    namespaces are logged but do not fail the entire operation.
+    then merges all results into a single list. Any namespace failure raises
+    ``ConcurrentNamespaceQueryError`` after all submitted queries complete.
 
     Args:
         namespaces: List of namespace strings to query.
@@ -36,12 +52,15 @@ def execute_across_namespaces(
             Higher values may hit API rate limits.
 
     Returns:
-        Merged list of all results from all namespaces. Order is not
-        guaranteed due to concurrent execution.
+        Merged list of all results from all namespaces. Order is not guaranteed
+        due to concurrent execution.
+
+    Raises:
+        ConcurrentNamespaceQueryError: One or more namespace queries failed.
 
     Example:
         >>> def query_findings(ns: str) -> list[Finding]:
-        ...     return client.finding.list(namespace=ns)
+        ...     return client.Finding.list(namespace=ns)
         >>> all_findings = execute_across_namespaces(
         ...     namespaces=["tenant.ns1", "tenant.ns2"],
         ...     query_fn=query_findings,
@@ -89,16 +108,17 @@ def execute_across_namespaces(
                 errors.append((ns, e))
 
     if errors:
-        logger.warning(
-            "Concurrent query completed with %d errors out of %d namespaces",
+        logger.error(
+            "Concurrent query failed with %d errors out of %d namespaces",
             len(errors),
             len(namespaces),
         )
-    else:
-        logger.info(
-            "Concurrent query completed: %d total results from %d namespaces",
-            len(all_results),
-            len(namespaces),
-        )
+        raise ConcurrentNamespaceQueryError(errors)
+
+    logger.info(
+        "Concurrent query completed: %d total results from %d namespaces",
+        len(all_results),
+        len(namespaces),
+    )
 
     return all_results

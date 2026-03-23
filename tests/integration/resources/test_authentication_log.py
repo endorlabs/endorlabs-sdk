@@ -30,7 +30,7 @@ class TestAuthenticationLog:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.authentication_log.list(
+        result = client.AuthenticationLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -38,19 +38,19 @@ class TestAuthenticationLog:
 
     def test_authentication_log_facade_get_raises_for_non_oss_namespace(self) -> None:
         """System-scoped get only when namespace is oss; otherwise use list."""
-        assert hasattr(self.endor_root_client.authentication_log, "get")
+        assert hasattr(self.endor_root_client.AuthenticationLog, "get")
         with pytest.raises(NotImplementedError, match="oss namespace"):
-            self.endor_root_client.authentication_log.get(
+            self.endor_root_client.AuthenticationLog.get(
                 "any-uuid", namespace=self.root_namespace
             )
         with pytest.raises(NotImplementedError, match="oss namespace"):
-            self.endor_root_client.authentication_log.get("any-uuid")
+            self.endor_root_client.AuthenticationLog.get("any-uuid")
 
     def test_authentication_log_module_get_returns_403(self) -> None:
         """Facade get with non-oss namespace raises NotImplementedError."""
         from endorlabs.core.exceptions import PermissionDeniedError
 
-        items = self.endor_root_client.authentication_log.list(
+        items = self.endor_root_client.AuthenticationLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -63,12 +63,12 @@ class TestAuthenticationLog:
             else self.root_namespace
         )
         with pytest.raises((PermissionDeniedError, NotImplementedError)) as exc_info:
-            self.endor_root_client.authentication_log.get(item.uuid, namespace=ns)
+            self.endor_root_client.AuthenticationLog.get(item.uuid, namespace=ns)
         if hasattr(exc_info.value, "status_code"):
             assert exc_info.value.status_code == 403
 
     def test_authentication_log_facade_has_no_create(self) -> None:
         """System-scoped facade rejects create (system-owned, read-only)."""
-        assert "create" not in self.endor_root_client.authentication_log._supported_ops
+        assert "create" not in self.endor_root_client.AuthenticationLog._supported_ops
         with pytest.raises(NotImplementedError, match="does not support create"):
-            self.endor_root_client.authentication_log.create(payload={})
+            self.endor_root_client.AuthenticationLog.create(payload={})

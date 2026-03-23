@@ -64,7 +64,7 @@ class TestDependencyMetadata:
             api_client=self.client,
         )
         try:
-            result = client.dependency_metadata.list(
+            result = client.DependencyMetadata.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -82,7 +82,7 @@ class TestDependencyMetadata:
             api_client=self.client,
         )
         try:
-            items = client.dependency_metadata.list(
+            items = client.DependencyMetadata.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -96,7 +96,7 @@ class TestDependencyMetadata:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.dependency_metadata.get(item.uuid, namespace=ns)
+        got = client.DependencyMetadata.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -107,7 +107,7 @@ class TestDependencyMetadata:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.dependency_metadata.get("invalid-uuid")
+            self.endor_root_client.DependencyMetadata.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

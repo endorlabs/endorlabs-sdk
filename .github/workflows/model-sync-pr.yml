@@ -79,6 +79,20 @@ jobs:
           fi
           echo "✅ OpenAPI hash verified: $ACTUAL"
 
+      - name: Prepare sync branch
+        env:
+          BRANCH_NAME: chore/model-sync-auto
+          BASE_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_BRANCH"
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+            git fetch origin "$BRANCH_NAME"
+            git checkout -B "$BRANCH_NAME" "origin/$BRANCH_NAME"
+          else
+            git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
+          fi
+
       - name: Run canonical model sync generation
         run: |
           uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
@@ -255,15 +269,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Reuse a stable automation branch to avoid branch proliferation.
-          git fetch origin "$BASE_BRANCH"
-          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
-            git fetch origin "$BRANCH_NAME"
-            git checkout -B "$BRANCH_NAME" "origin/$BRANCH_NAME"
-          else
-            git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
-          fi
-
           git add src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
           git add -f workspace/model-sync
           if git diff --cached --quiet; then
@@ -304,6 +309,11 @@ jobs:
       - name: Publish Workflow Summary
         if: always()
         run: |
+          CHANGED_FILES="${{ steps.diff_scope.outputs.changed_files || '' }}"
+          DOC_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^docs/generated-reference/' || true)
+          MODEL_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^src/endorlabs/generated/' || true)
+          WORKSPACE_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^workspace/model-sync/' || true)
+          STUB_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^src/endorlabs/client_surface.pyi$' || true)
           {
             echo "## Model Sync PR Summary"
             echo ""
@@ -320,6 +330,21 @@ jobs:
             echo "| Generated changes detected | \`${{ steps.diff_scope.outputs.has_changes || 'false' }}\` |"
             echo "| Changed file count | \`${{ steps.diff_scope.outputs.changed_count || '0' }}\` |"
             echo ""
+            if [ "${{ steps.diff_scope.outputs.has_changes || 'false' }}" = "true" ]; then
+              echo "### Generated Diff (why stale)"
+              echo "- docs/generated-reference files changed: \`$DOC_COUNT\`"
+              echo "- src/endorlabs/generated files changed: \`$MODEL_COUNT\`"
+              echo "- workspace/model-sync files changed: \`$WORKSPACE_COUNT\`"
+              echo "- client stub changed: \`$STUB_COUNT\`"
+              echo ""
+              echo "<details><summary>Changed files</summary>"
+              echo ""
+              echo '```text'
+              printf "%s\n" "$CHANGED_FILES"
+              echo '```'
+              echo "</details>"
+              echo ""
+            fi
             echo "### Skips/Reasons"
             echo "- Integration tests are skipped when required ENDOR_* vars/secrets are not fully configured."
             echo "- PR update is skipped when generated output has no file changes."

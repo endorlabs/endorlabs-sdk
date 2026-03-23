@@ -40,7 +40,7 @@ class TestScanResult:
         Function-scoped but only fetches when explicitly requested by tests.
         Uses tenant root + traverse so resources in instance are captured.
         """
-        results = self.endor_root_client.scan_result.list(
+        results = self.endor_root_client.ScanResult.list(
             list_params=ListParameters(
                 page_size=TEST_TRAVERSE_PAGE_SIZE,
                 traverse=True,
@@ -59,7 +59,7 @@ class TestScanResult:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.scan_result.list(
+        result = client.ScanResult.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -73,14 +73,14 @@ class TestScanResult:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        projects = client.project.list(
+        projects = client.Project.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not projects:
             pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
         project = projects[0]
-        result = client.scan_result.list(
+        result = client.ScanResult.list(
             parent=project,
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
@@ -95,7 +95,7 @@ class TestScanResult:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.scan_result.list(
+        items = client.ScanResult.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -107,7 +107,7 @@ class TestScanResult:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.scan_result.get(item.uuid, namespace=ns)
+        got = client.ScanResult.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -133,7 +133,7 @@ class TestScanResult:
         )
 
         list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
-        filtered_results = list_client.scan_result.list(
+        filtered_results = list_client.ScanResult.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -159,7 +159,7 @@ class TestScanResult:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.scan_result.get("invalid-uuid")
+            self.endor_root_client.ScanResult.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

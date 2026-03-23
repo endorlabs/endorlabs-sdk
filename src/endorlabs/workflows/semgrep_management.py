@@ -241,7 +241,7 @@ def _import_single_rule(
 
     from endorlabs import F
 
-    existing_rules = client.semgrep_rule.list(
+    existing_rules = client.SemgrepRule.list(
         namespace=namespace,
         filter=F("meta.name") == rule_name,
         max_pages=1,
@@ -263,7 +263,7 @@ def _import_single_rule(
                 meta=SemgrepRuleMetaCreate(name=rule_name, description=desc),
                 spec=SemgrepRuleSpec(yaml=wrapped_yaml),
             )
-            client.semgrep_rule.update(
+            client.SemgrepRule.update(
                 existing, payload=payload, update_mask="spec,meta.description"
             )
             logger.info("Updated: %s (uuid=%s)", display_id, existing.uuid)
@@ -288,7 +288,7 @@ def _import_single_rule(
             spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
             propagate=True,
         )
-        created_rule = client.semgrep_rule.create(payload=payload, namespace=namespace)
+        created_rule = client.SemgrepRule.create(payload=payload, namespace=namespace)
         logger.info("Created: %s (uuid=%s)", display_id, created_rule.uuid)
         result.created += 1
     except Exception as exc:
@@ -390,24 +390,24 @@ def export_rules_to_yaml(
     # Resolve rules to export
     rules: list[Any] = []
     if uuid:
-        rule = client.semgrep_rule.get(uuid, namespace=namespace)
+        rule = client.SemgrepRule.get(uuid, namespace=namespace)
         rules = [rule]
     elif name:
         from endorlabs import F
 
-        rules = client.semgrep_rule.list(
+        rules = client.SemgrepRule.list(
             namespace=namespace,
             filter=F("meta.name") == name,
         )
         if not rules:
-            rules = client.semgrep_rule.list(
+            rules = client.SemgrepRule.list(
                 namespace=namespace,
                 filter=F("meta.name").matches(name),
             )
     elif filter_expr:
-        rules = client.semgrep_rule.list(namespace=namespace, filter=filter_expr)
+        rules = client.SemgrepRule.list(namespace=namespace, filter=filter_expr)
     elif export_all:
-        rules = client.semgrep_rule.list(namespace=namespace)
+        rules = client.SemgrepRule.list(namespace=namespace)
 
     result = ExportResult(total=len(rules))
 
@@ -502,7 +502,7 @@ def calibrate_rules(
         UpdateSemgrepRulePayload,
     )
 
-    all_rules = client.semgrep_rule.list(namespace=namespace)
+    all_rules = client.SemgrepRule.list(namespace=namespace)
 
     result = CalibrationResult(total=len(all_rules))
 
@@ -552,7 +552,7 @@ def calibrate_rules(
                 disabled=not want_enabled,
                 spec=SemgrepRuleSpec(disabled=not want_enabled) if rule.spec else None,
             )
-            client.semgrep_rule.update(
+            client.SemgrepRule.update(
                 rule, payload=payload, update_mask="disabled,spec.disabled"
             )
             if want_enabled:

@@ -54,21 +54,20 @@ class TestExecuteAcrossNamespaces:
         assert len(result) == 3
         assert query_fn.call_count == 3
 
-    def test_error_in_one_namespace_continues_with_others(self) -> None:
-        """Logs errors but returns results from successful namespaces."""
+    def test_error_in_one_namespace_raises_with_failed_namespaces(self) -> None:
+        """Any namespace failure raises and reports failed namespace names."""
 
         def query_with_error(ns: str) -> list[Mock]:
             if ns == "tenant.failing":
                 raise RuntimeError("Query failed")
             return [Mock(uuid=f"item-from-{ns}")]
 
-        result = execute_across_namespaces(
-            ["tenant.ok1", "tenant.failing", "tenant.ok2"],
-            query_with_error,
-            max_workers=3,
-        )
-        # Should have 2 items from successful namespaces
-        assert len(result) == 2
+        with pytest.raises(RuntimeError, match=r"tenant\.failing"):
+            execute_across_namespaces(
+                ["tenant.ok1", "tenant.failing", "tenant.ok2"],
+                query_with_error,
+                max_workers=3,
+            )
 
     def test_max_workers_limits_concurrency(self) -> None:
         """max_workers is respected (effective_workers = min(workers, len(ns)))."""
@@ -78,6 +77,25 @@ class TestExecuteAcrossNamespaces:
         result = execute_across_namespaces(namespaces, query_fn, max_workers=2)
         assert len(result) == 5
         assert query_fn.call_count == 5
+
+    def test_multiple_namespace_failures_are_reported(self) -> None:
+        """Raised error message includes every failed namespace."""
+
+        def query_with_multiple_errors(ns: str) -> list[Mock]:
+            if ns in {"tenant.failing1", "tenant.failing2"}:
+                raise ValueError(f"{ns} failed")
+            return [Mock(uuid=f"item-from-{ns}")]
+
+        with pytest.raises(RuntimeError) as exc_info:
+            execute_across_namespaces(
+                ["tenant.ok", "tenant.failing1", "tenant.failing2"],
+                query_with_multiple_errors,
+                max_workers=3,
+            )
+
+        error_message = str(exc_info.value)
+        assert "tenant.failing1" in error_message
+        assert "tenant.failing2" in error_message
 
 
 # ============================================================================
@@ -93,9 +111,9 @@ class TestFacadeConcurrentList:
     ) -> None:
         """list(concurrent=True, traverse=False) raises ValueError."""
         client = client_with_mock_transport
-        client.project._ops.list = Mock(return_value=[])
+        client.Project._ops.list = Mock(return_value=[])
         with pytest.raises(ValueError, match="concurrent=True requires traverse=True"):
-            client.project.list(
+            client.Project.list(
                 concurrent=True,
                 traverse=False,
                 max_pages=TEST_MAX_PAGES,
@@ -141,8 +159,8 @@ class TestFacadeConcurrentList:
                 return_value=[],
             ) as mock_execute,
         ):
-            client.project._ops.list = Mock(return_value=[])
-            client.project.list(
+            client.Project._ops.list = Mock(return_value=[])
+            client.Project.list(
                 concurrent=True,
                 traverse=True,
                 namespace="tenant",
@@ -191,8 +209,8 @@ class TestFacadeConcurrentList:
                 side_effect=capture_query_fn,
             ),
         ):
-            client.project._ops.list = Mock(return_value=[])
-            client.project.list(
+            client.Project._ops.list = Mock(return_value=[])
+            client.Project.list(
                 concurrent=True,
                 traverse=True,
                 namespace="tenant",
@@ -240,8 +258,8 @@ class TestFacadeConcurrentList:
                 return_value=merged_results,
             ),
         ):
-            client.project._ops.list = Mock(return_value=[])
-            result = client.project.list(
+            client.Project._ops.list = Mock(return_value=[])
+            result = client.Project.list(
                 concurrent=True,
                 traverse=True,
                 namespace="tenant",
@@ -273,8 +291,8 @@ class TestFacadeConcurrentList:
                 return_value=[],
             ) as mock_execute,
         ):
-            client.project._ops.list = Mock(return_value=[])
-            client.project.list(
+            client.Project._ops.list = Mock(return_value=[])
+            client.Project.list(
                 concurrent=True,
                 traverse=True,
                 namespace="tenant",
@@ -322,8 +340,8 @@ class TestFacadeConcurrentList:
                 side_effect=capture_execute,
             ),
         ):
-            client.project._ops.list = Mock(return_value=[])
-            client.project.list(
+            client.Project._ops.list = Mock(return_value=[])
+            client.Project.list(
                 concurrent=True,
                 traverse=True,
                 namespace="tenant",
@@ -342,12 +360,12 @@ class TestFacadeListIterConcurrent:
     ) -> None:
         """list_iter(concurrent=True) raises NotImplementedError."""
         client = client_with_mock_transport
-        client.project._ops.list_iter = Mock(return_value=iter([]))
+        client.Project._ops.list_iter = Mock(return_value=iter([]))
         with pytest.raises(
             NotImplementedError, match="concurrent=True is not supported for list_iter"
         ):
             list(
-                client.project.list_iter(
+                client.Project.list_iter(
                     concurrent=True,
                     traverse=True,
                     max_pages=TEST_MAX_PAGES,
@@ -359,9 +377,9 @@ class TestFacadeListIterConcurrent:
     ) -> None:
         """list_iter(concurrent=False) works normally."""
         client = client_with_mock_transport
-        client.project._ops.list_iter = Mock(return_value=iter([Mock(uuid="p1")]))
+        client.Project._ops.list_iter = Mock(return_value=iter([Mock(uuid="p1")]))
         result = list(
-            client.project.list_iter(
+            client.Project.list_iter(
                 concurrent=False,
                 traverse=True,
                 max_pages=TEST_MAX_PAGES,
@@ -407,8 +425,8 @@ class TestFacadeLookupConcurrent:
                 return_value=[mock_item],
             ),
         ):
-            client.project._ops.list = Mock(return_value=[mock_item])
-            result = client.project.lookup(
+            client.Project._ops.list = Mock(return_value=[mock_item])
+            result = client.Project.lookup(
                 concurrent=True,
                 traverse=True,
                 name="my-project",
@@ -422,9 +440,9 @@ class TestFacadeLookupConcurrent:
     ) -> None:
         """lookup(concurrent=True, traverse=False) raises ValueError via list()."""
         client = client_with_mock_transport
-        client.project._ops.list = Mock(return_value=[])
+        client.Project._ops.list = Mock(return_value=[])
         with pytest.raises(ValueError, match="concurrent=True requires traverse=True"):
-            client.project.lookup(
+            client.Project.lookup(
                 concurrent=True,
                 traverse=False,
                 name="my-project",

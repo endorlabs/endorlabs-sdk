@@ -30,10 +30,10 @@ integration failures.
 
 ```python
 # Correct
-client.project.delete(target)
+client.Project.delete(target)
 
 # Wrong -- may 404
-client.project.delete(target.uuid)
+client.Project.delete(target.uuid)
 ```
 
 The SDK extracts the namespace from `resource.tenant_meta.namespace`.
@@ -64,13 +64,13 @@ namespace = resource.tenant_meta.namespace  # or resource.namespace
 **Fix:** Always provide a comma-separated field path list:
 
 ```python
-client.namespace.update(ns, update_mask="meta.description")
+client.Namespace.update(ns, update_mask="meta.description")
 ```
 
 Or use field kwargs (mask is derived automatically):
 
 ```python
-ns.update(client.namespace, meta_description="new description")
+ns.update(client.Namespace, meta_description="new description")
 ```
 
 ### Partial responses with list mask

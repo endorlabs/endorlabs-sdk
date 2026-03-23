@@ -45,7 +45,7 @@ class TestWhoAmI:
         mock_policy = Mock()
         mock_policy.meta.name = "tgowan@endor.ai"
 
-        client_with_api_key.authorization_policy._ops.list = Mock(
+        client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             return_value=[mock_policy],
         )
 
@@ -57,7 +57,7 @@ class TestWhoAmI:
         client_with_api_key: Client,
     ) -> None:
         """whoami returns None when no AuthorizationPolicy matches."""
-        client_with_api_key.authorization_policy._ops.list = Mock(
+        client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             return_value=[],
         )
 
@@ -86,7 +86,7 @@ class TestWhoAmI:
         mock_policy = Mock()
         mock_policy.meta = None
 
-        client_with_api_key.authorization_policy._ops.list = Mock(
+        client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             return_value=[mock_policy],
         )
 
@@ -117,7 +117,7 @@ class TestWhoAmI:
     ) -> None:
         """whoami passes filter with spec.clause contains the API key."""
         mock_list = Mock(return_value=[])
-        client_with_api_key.authorization_policy._ops.list = mock_list
+        client_with_api_key.AuthorizationPolicy._ops.list = mock_list
 
         client_with_api_key.whoami()
 
@@ -159,7 +159,7 @@ class TestWhoAmI:
         client_with_api_key._client.get_user_info.return_value = {}
         mock_policy = Mock()
         mock_policy.meta.name = "fallback@endor.ai"
-        client_with_api_key.authorization_policy._ops.list = Mock(
+        client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             return_value=[mock_policy]
         )
 
@@ -171,7 +171,7 @@ class TestWhoAmI:
     ) -> None:
         """whoami does not raise when fallback AuthorizationPolicy lookup fails."""
         client_with_api_key._client.get_user_info.return_value = {}
-        client_with_api_key.authorization_policy._ops.list = Mock(
+        client_with_api_key.AuthorizationPolicy._ops.list = Mock(
             side_effect=RuntimeError("401 Unauthorized")
         )
         assert client_with_api_key.whoami() is None

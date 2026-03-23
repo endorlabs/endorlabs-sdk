@@ -36,7 +36,7 @@ class TestPackageVersion:
         from endorlabs.core.types import ListParameters
 
         # Fetch 1 item without traverse (fast)
-        results = self.endor_client.package_version.list(
+        results = self.endor_client.PackageVersion.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -62,7 +62,7 @@ class TestPackageVersion:
 
         # Get current package version state
         pv_client = endorlabs.Client(tenant=package_namespace, api_client=self.client)
-        current_pv = pv_client.package_version.get(package_version_uuid)
+        current_pv = pv_client.PackageVersion.get(package_version_uuid)
         if not current_pv:
             pytest.skip(f"Could not retrieve package version {package_version_uuid}")
 
@@ -97,7 +97,7 @@ class TestPackageVersion:
         print(f"New tags: {new_tags}")
 
         # Update the package version with update_mask
-        updated_pv = pv_client.package_version.update(
+        updated_pv = pv_client.PackageVersion.update(
             package_version_uuid,
             update_payload,
             update_mask="meta.description,meta.tags",
@@ -125,7 +125,7 @@ class TestPackageVersion:
             ).model_dump()
         )
         try:
-            pv_client.package_version.update(
+            pv_client.PackageVersion.update(
                 package_version_uuid,
                 restore_payload,
                 update_mask="meta.description,meta.tags",
@@ -144,7 +144,7 @@ class TestPackageVersion:
             api_client=self.client,
         )
         try:
-            result = client.package_version.list(
+            result = client.PackageVersion.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -162,7 +162,7 @@ class TestPackageVersion:
             api_client=self.client,
         )
         try:
-            items = client.package_version.list(
+            items = client.PackageVersion.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -176,13 +176,13 @@ class TestPackageVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.package_version.get(item.uuid, namespace=ns)
+        got = client.PackageVersion.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
     @pytest.mark.writes
     def test_client_ux_update_package_version(self) -> None:
-        """Consumer UX: client.package_version.get() then update then revert."""
+        """Consumer UX: client.PackageVersion.get() then update then revert."""
         import endorlabs
         from endorlabs.core.exceptions import ServerError
         from endorlabs.resources.package_version import UpdatePackageVersionPayload
@@ -192,7 +192,7 @@ class TestPackageVersion:
             api_client=self.client,
         )
         try:
-            versions = client.package_version.list(max_pages=TEST_MAX_PAGES)
+            versions = client.PackageVersion.list(max_pages=TEST_MAX_PAGES)
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not versions:
@@ -203,14 +203,14 @@ class TestPackageVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.package_version.get(item.uuid, namespace=ns)
+        current = client.PackageVersion.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve package version {item.uuid}")
         original_tags = list(getattr(current.meta, "tags", None) or [])
         new_tags = [*original_tags, "client-ux-update"]
         update_payload = UpdatePackageVersionPayload(meta={"tags": new_tags})
         try:
-            updated = client.package_version.update(
+            updated = client.PackageVersion.update(
                 item.uuid, update_payload, update_mask="meta.tags", namespace=ns
             )
         except Exception as e:
@@ -218,7 +218,7 @@ class TestPackageVersion:
         assert updated is not None
         restore_payload = UpdatePackageVersionPayload(meta={"tags": original_tags})
         try:
-            client.package_version.update(
+            client.PackageVersion.update(
                 item.uuid, restore_payload, update_mask="meta.tags", namespace=ns
             )
         except Exception as e:
@@ -234,7 +234,7 @@ def add_package_version_tag(
     from endorlabs.resources.package_version import UpdatePackageVersionPayload
 
     # Get current package version
-    current_pv = client.package_version.get(package_version_uuid)
+    current_pv = client.PackageVersion.get(package_version_uuid)
     if not current_pv:
         return None
 
@@ -250,7 +250,7 @@ def add_package_version_tag(
     payload = UpdatePackageVersionPayload(
         meta=MetaUpdate(tags=current_tags).model_dump()
     )
-    return client.package_version.update(
+    return client.PackageVersion.update(
         package_version_uuid, payload, update_mask="meta.tags"
     )
 
@@ -264,7 +264,7 @@ def remove_package_version_tag(
     from endorlabs.resources.package_version import UpdatePackageVersionPayload
 
     # Get current package version
-    current_pv = client.package_version.get(package_version_uuid)
+    current_pv = client.PackageVersion.get(package_version_uuid)
     if not current_pv:
         return None
 
@@ -280,12 +280,12 @@ def remove_package_version_tag(
     payload = UpdatePackageVersionPayload(
         meta=MetaUpdate(tags=current_tags).model_dump()
     )
-    return client.package_version.update(
+    return client.PackageVersion.update(
         package_version_uuid, payload, update_mask="meta.tags"
     )
 
 
 def list_package_version_tags(client: endorlabs.Client, package_version_uuid: str):
     """List tags for a package version."""
-    pv = client.package_version.get(package_version_uuid)
+    pv = client.PackageVersion.get(package_version_uuid)
     return pv.meta.tags if pv and pv.meta.tags else []

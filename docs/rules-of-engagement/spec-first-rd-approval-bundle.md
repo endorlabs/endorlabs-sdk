@@ -8,11 +8,11 @@ deferred, and how to make a go/no-go decision for broader rollout.
 Implemented in prototype:
 
 - Added first-class OSS resources:
-  - `client.vulnerability` (`list`, `get`)
-  - `client.malware` (`list`, `get`)
+  - `client.Vulnerability` (`list`, `get`)
+  - `client.Malware` (`list`, `get`)
 - Added first-class OSS query resources:
-  - `client.query_vulnerability` (`create`)
-  - `client.query_malware` (`create`)
+  - `client.QueryVulnerability` (`create`)
+  - `client.QueryMalware` (`create`)
 - Updated generated SDK surfaces:
   - `src/endorlabs/client_surface.pyi`
   - `docs/generated-reference/resources.md`

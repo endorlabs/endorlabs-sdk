@@ -3,7 +3,7 @@
 Represents authentication events (login, API key, etc.). This resource is
 system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
 system can perform them). The Client exposes list() only; use
-client.authentication_log.list().
+client.AuthenticationLog.list().
 """
 
 from __future__ import annotations

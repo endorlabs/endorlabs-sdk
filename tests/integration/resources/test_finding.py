@@ -53,7 +53,7 @@ class TestFinding:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.finding.list(
+        result = client.Finding.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -67,7 +67,7 @@ class TestFinding:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.finding.list(
+        items = client.Finding.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -79,7 +79,7 @@ class TestFinding:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.finding.get(item.uuid, namespace=ns)
+        got = client.Finding.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -95,7 +95,7 @@ class TestFinding:
         from endorlabs.core.types import ListParameters
 
         try:
-            results = self.endor_client.finding.list(
+            results = self.endor_client.Finding.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -135,7 +135,7 @@ class TestFinding:
             traverse=True,
         )
 
-        findings = self.endor_root_client.finding.list(
+        findings = self.endor_root_client.Finding.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -163,7 +163,7 @@ class TestFinding:
         finding_uuid = sample_finding.uuid
 
         # Get current finding state
-        current_finding = self.endor_client.finding.get(finding_uuid)
+        current_finding = self.endor_client.Finding.get(finding_uuid)
         if not current_finding:
             pytest.skip(f"Could not retrieve finding {finding_uuid}")
 
@@ -200,7 +200,7 @@ class TestFinding:
         print(f"New finding_tags: {new_finding_tags}")
 
         # Update the finding with update_mask (exclude spec.dismiss - API manages it)
-        updated_finding = self.endor_client.finding.update(
+        updated_finding = self.endor_client.Finding.update(
             finding_uuid,
             update_payload,
             update_mask="meta.tags,spec.finding_tags",
@@ -237,7 +237,7 @@ class TestFinding:
             ),
         )
         try:
-            self.endor_client.finding.update(
+            self.endor_client.Finding.update(
                 finding_uuid,
                 restore_payload,
                 update_mask="meta.tags,spec.finding_tags",
@@ -248,7 +248,7 @@ class TestFinding:
 
     @pytest.mark.writes
     def test_client_ux_update_finding(self) -> None:
-        """Consumer UX: client.finding.get() then update then revert."""
+        """Consumer UX: client.Finding.get() then update then revert."""
         import endorlabs
         from endorlabs.resources.finding import FindingTags
 
@@ -256,7 +256,7 @@ class TestFinding:
             tenant=self.namespace,
             api_client=self.client,
         )
-        findings = client.finding.list(max_pages=TEST_MAX_PAGES)
+        findings = client.Finding.list(max_pages=TEST_MAX_PAGES)
         if not findings:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = findings[0]
@@ -265,7 +265,7 @@ class TestFinding:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.finding.get(item.uuid, namespace=ns)
+        current = client.Finding.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve finding {item.uuid}")
         original_tags = current.meta.tags or []
@@ -279,7 +279,7 @@ class TestFinding:
             spec=FindingSpec(finding_tags=new_finding_tags),
         )
         try:
-            updated = client.finding.update(
+            updated = client.Finding.update(
                 item.uuid,
                 update_payload,
                 update_mask="meta.tags,spec.finding_tags",
@@ -293,7 +293,7 @@ class TestFinding:
             spec=FindingSpec(finding_tags=original_finding_tags),
         )
         try:
-            client.finding.update(
+            client.Finding.update(
                 item.uuid,
                 restore_payload,
                 update_mask="meta.tags,spec.finding_tags",

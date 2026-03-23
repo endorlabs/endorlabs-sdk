@@ -26,11 +26,11 @@ class TestCreateChildNamespace:
         assert isinstance(result, NamespaceResult)
         assert result.ok is True
         assert "DRY RUN" in result.message
-        client.namespace.create.assert_not_called()
+        client.Namespace.create.assert_not_called()
 
     def test_creates_namespace(self) -> None:
         client = Mock()
-        client.namespace.create.return_value = Mock(uuid="ns-1")
+        client.Namespace.create.return_value = Mock(uuid="ns-1")
 
         result = create_child_namespace(
             client, "tenant", "child", description="My child ns"
@@ -42,7 +42,7 @@ class TestCreateChildNamespace:
 
     def test_handles_error(self) -> None:
         client = Mock()
-        client.namespace.create.side_effect = RuntimeError("conflict")
+        client.Namespace.create.side_effect = RuntimeError("conflict")
 
         result = create_child_namespace(client, "tenant", "child")
         assert result.status == "error"
@@ -65,29 +65,29 @@ class TestCreateGithubInstallation:
 
     def test_creates_installation(self) -> None:
         client = Mock()
-        client.installation.create.return_value = Mock(uuid="inst-1")
+        client.Installation.create.return_value = Mock(uuid="inst-1")
 
         result = create_github_installation(
             client, "ns", "my-install", github_org="my-org"
         )
         assert result.uuid == "inst-1"
         assert result.ok is True
-        kw = client.installation.create.call_args.kwargs
+        kw = client.Installation.create.call_args.kwargs
         assert kw["github_org"] == "my-org"
 
     def test_handles_error(self) -> None:
         client = Mock()
-        client.installation.create.side_effect = RuntimeError("400")
+        client.Installation.create.side_effect = RuntimeError("400")
 
         result = create_github_installation(client, "ns", "my-install")
         assert result.status == "error"
 
     def test_extra_kwargs_forwarded(self) -> None:
         client = Mock()
-        client.installation.create.return_value = Mock(uuid="inst-1")
+        client.Installation.create.return_value = Mock(uuid="inst-1")
 
         create_github_installation(client, "ns", "my-install", scan_enabled=True)
-        kw = client.installation.create.call_args.kwargs
+        kw = client.Installation.create.call_args.kwargs
         assert kw["scan_enabled"] is True
 
 
@@ -110,28 +110,28 @@ class TestCreateScanProfileWithDefaults:
 
     def test_creates_profile(self) -> None:
         client = Mock()
-        client.scan_profile.create.return_value = Mock(uuid="sp-1")
+        client.ScanProfile.create.return_value = Mock(uuid="sp-1")
 
         result = create_scan_profile_with_defaults(
             client, "ns", "my-profile", is_default=True
         )
         assert result.uuid == "sp-1"
         assert result.ok is True
-        kw = client.scan_profile.create.call_args.kwargs
+        kw = client.ScanProfile.create.call_args.kwargs
         assert kw["is_default"] is True
         assert kw["propagate"] is True
 
     def test_propagate_false(self) -> None:
         client = Mock()
-        client.scan_profile.create.return_value = Mock(uuid="sp-1")
+        client.ScanProfile.create.return_value = Mock(uuid="sp-1")
 
         create_scan_profile_with_defaults(client, "ns", "my-profile", propagate=False)
-        kw = client.scan_profile.create.call_args.kwargs
+        kw = client.ScanProfile.create.call_args.kwargs
         assert kw["propagate"] is False
 
     def test_handles_error(self) -> None:
         client = Mock()
-        client.scan_profile.create.side_effect = RuntimeError("500")
+        client.ScanProfile.create.side_effect = RuntimeError("500")
 
         result = create_scan_profile_with_defaults(client, "ns", "my-profile")
         assert result.status == "error"
@@ -154,19 +154,19 @@ class TestCreateAuthorizationPolicy:
 
     def test_creates_policy(self) -> None:
         client = Mock()
-        client.authorization_policy.create.return_value = Mock(uuid="ap-1")
+        client.AuthorizationPolicy.create.return_value = Mock(uuid="ap-1")
 
         result = create_authorization_policy(
             client, "ns", "my-policy", description="Test"
         )
         assert result.uuid == "ap-1"
         assert result.ok is True
-        kw = client.authorization_policy.create.call_args.kwargs
+        kw = client.AuthorizationPolicy.create.call_args.kwargs
         assert kw["description"] == "Test"
 
     def test_handles_error(self) -> None:
         client = Mock()
-        client.authorization_policy.create.side_effect = RuntimeError("403")
+        client.AuthorizationPolicy.create.side_effect = RuntimeError("403")
 
         result = create_authorization_policy(client, "ns", "my-policy")
         assert result.status == "error"
@@ -174,8 +174,8 @@ class TestCreateAuthorizationPolicy:
 
     def test_extra_kwargs_forwarded(self) -> None:
         client = Mock()
-        client.authorization_policy.create.return_value = Mock(uuid="ap-1")
+        client.AuthorizationPolicy.create.return_value = Mock(uuid="ap-1")
 
         create_authorization_policy(client, "ns", "my-policy", roles=["admin"])
-        kw = client.authorization_policy.create.call_args.kwargs
+        kw = client.AuthorizationPolicy.create.call_args.kwargs
         assert kw["roles"] == ["admin"]

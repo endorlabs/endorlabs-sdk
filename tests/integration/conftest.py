@@ -109,7 +109,7 @@ def endor_client(api_client, namespace):
     """Client facade scoped to the test namespace.
 
     Wraps the APIClient with the high-level Client surface so integration tests
-    can call ``client.resource.list()`` etc.
+    can call ``client.ResourceKind.list()`` etc. (PascalCase, endorctl-aligned).
     """
     return endorlabs.Client(tenant=namespace, api_client=api_client)
 

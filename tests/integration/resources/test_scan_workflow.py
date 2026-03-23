@@ -25,7 +25,7 @@ class TestScanWorkflow:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.scan_workflow.list(
+        result = client.ScanWorkflow.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -39,7 +39,7 @@ class TestScanWorkflow:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.scan_workflow.list(
+        items = client.ScanWorkflow.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -51,7 +51,7 @@ class TestScanWorkflow:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.scan_workflow.get(item.uuid, namespace=ns)
+        got = client.ScanWorkflow.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -64,4 +64,4 @@ class TestScanWorkflow:
             api_client=self.client,
         )
         with pytest.raises(NotImplementedError, match="does not support create"):
-            client.scan_workflow.create({})
+            client.ScanWorkflow.create({})

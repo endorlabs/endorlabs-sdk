@@ -4,11 +4,11 @@ Namespace in the SDK: list, get, create, update, delete. Parameters use canonica
 
 ## Operations
 
-- **List**: `client.namespace.list(traverse=True, namespace="tenant")` — list child namespaces under a tenant (canonical name).
-- **Get**: `client.namespace.get(uuid, namespace="tenant")` — fetch one namespace by UUID.
-- **Create**: `client.namespace.create(payload=CreateNamespacePayload(...), namespace="tenant")` — payload with `meta` (name, description).
-- **Update**: `client.namespace.update(uuid, payload=..., update_mask="meta.description", namespace="tenant")` — **update_mask required** for UUID+payload updates.
-- **Delete**: `client.namespace.delete(uuid, namespace="tenant")` — cascades to children.
+- **List**: `client.Namespace.list(traverse=True, namespace="tenant")` — list child namespaces under a tenant (canonical name).
+- **Get**: `client.Namespace.get(uuid, namespace="tenant")` — fetch one namespace by UUID.
+- **Create**: `client.Namespace.create(payload=CreateNamespacePayload(...), namespace="tenant")` — payload with `meta` (name, description).
+- **Update**: `client.Namespace.update(uuid, payload=..., update_mask="meta.description", namespace="tenant")` — **update_mask required** for UUID+payload updates.
+- **Delete**: `client.Namespace.delete(uuid, namespace="tenant")` — cascades to children.
 
 ## Parameters
 

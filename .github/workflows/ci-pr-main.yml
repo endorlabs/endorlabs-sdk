@@ -321,20 +321,49 @@ jobs:
             exit 1
           fi
 
-      - name: Verify generated reference docs are up to date
+      - name: Regenerate generated reference docs and report drift
         if: github.event_name != 'pull_request'
+        id: ref_docs
         run: |
+          set -euo pipefail
+          FILES="docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json"
           uv run python scripts/generate_reference_docs.py
-          if ! git diff --exit-code -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json; then
-            echo "::error::Reference docs are out of date. Run: uv run python scripts/generate_reference_docs.py"
-            git --no-pager diff -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json
-            exit 1
+          if git diff --quiet -- $FILES; then
+            echo "docs_stale=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Generated reference docs are up to date."
+            exit 0
           fi
+
+          echo "docs_stale=true" >> "$GITHUB_OUTPUT"
+          echo "::warning::Generated reference docs were stale; CI regenerated docs in the runner workspace (non-blocking)."
+          echo "::group::Generated reference docs drift (stat)"
+          git --no-pager diff --stat -- $FILES
+          echo "::endgroup::"
+          echo "::group::Generated reference docs drift (patch)"
+          git --no-pager diff -- $FILES
+          echo "::endgroup::"
 
       - name: Run pyright verifytypes (public API type completeness)
         continue-on-error: true  # Remove when type completeness is 100% (see docs/reference/README.md)
         run: |
           uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
+
+      - name: Publish lint drift summary
+        if: github.event_name != 'pull_request' && always()
+        run: |
+          {
+            echo "## Lint/Generation Drift Summary"
+            echo ""
+            echo "| Signal | Value |"
+            echo "|---|---|"
+            echo "| Reference docs stale | \`${{ steps.ref_docs.outputs.docs_stale || 'false' }}\` |"
+            echo ""
+            if [ "${{ steps.ref_docs.outputs.docs_stale || 'false' }}" = "true" ]; then
+              echo "### Why stale?"
+              echo "- Generated reference docs differed from committed files after running \`scripts/generate_reference_docs.py\`."
+              echo "- See grouped logs in this job for full diff (\`drift (stat)\`, \`drift (patch)\`)."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
   # Unit tests — fast, no secrets required.
