@@ -40,7 +40,7 @@ class TestRepositoryVersion:
         from endorlabs.core.types import ListParameters
 
         try:
-            results = self.endor_client.repository_version.list(
+            results = self.endor_client.RepositoryVersion.list(
                 list_params=ListParameters(page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
@@ -57,7 +57,7 @@ class TestRepositoryVersion:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_client.repository_version.get("invalid-uuid")
+            self.endor_client.RepositoryVersion.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400
@@ -95,7 +95,7 @@ class TestRepositoryVersion:
             api_client=self.client,
         )
         try:
-            result = client.repository_version.list(
+            result = client.RepositoryVersion.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -113,7 +113,7 @@ class TestRepositoryVersion:
             api_client=self.client,
         )
         try:
-            projects = client.project.list(
+            projects = client.Project.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -123,7 +123,7 @@ class TestRepositoryVersion:
             pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
         project = projects[0]
         try:
-            result = client.repository_version.list(
+            result = client.RepositoryVersion.list(
                 parent=project,
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
@@ -142,7 +142,7 @@ class TestRepositoryVersion:
             api_client=self.client,
         )
         try:
-            items = client.repository_version.list(
+            items = client.RepositoryVersion.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -156,7 +156,7 @@ class TestRepositoryVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.repository_version.get(item.uuid, namespace=ns)
+        got = client.RepositoryVersion.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -170,7 +170,7 @@ class TestRepositoryVersion:
             api_client=self.client,
         )
         try:
-            items = client.repository_version.list(
+            items = client.RepositoryVersion.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -187,7 +187,7 @@ class TestRepositoryVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.repository_version.get(item.uuid, namespace=ns)
+        got = client.RepositoryVersion.get(item.uuid, namespace=ns)
         if (
             got
             and got.scan_object is not None
@@ -203,13 +203,13 @@ class TestRepositoryVersion:
 
         # Test filtering by parent UUID (if we have a sample)
         # First get a sample to use its parent UUID
-        sample_results = self.endor_client.repository_version.list(
+        sample_results = self.endor_client.RepositoryVersion.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
         if sample_results and sample_results[0].meta.parent_uuid:
             parent_uuid = sample_results[0].meta.parent_uuid
-            filtered_versions = self.endor_client.repository_version.list(
+            filtered_versions = self.endor_client.RepositoryVersion.list(
                 list_params=ListParameters(
                     filter=f'meta.parent_uuid=="{parent_uuid}"',
                     page_size=TEST_PAGE_SIZE,
@@ -225,7 +225,7 @@ class TestRepositoryVersion:
             )
 
         # Test field masking
-        masked_versions = self.endor_client.repository_version.list(
+        masked_versions = self.endor_client.RepositoryVersion.list(
             list_params=ListParameters(
                 mask="meta.name,spec.version",
                 page_size=TEST_PAGE_SIZE,
@@ -244,7 +244,7 @@ class TestRepositoryVersion:
 
     @pytest.mark.writes
     def test_client_ux_update_repository_version(self) -> None:
-        """Consumer UX: client.repository_version.get() then update then revert."""
+        """Consumer UX: client.RepositoryVersion.get() then update then revert."""
         import endorlabs
         from endorlabs.core.exceptions import ServerError
 
@@ -253,7 +253,7 @@ class TestRepositoryVersion:
             api_client=self.client,
         )
         try:
-            versions = client.repository_version.list(max_pages=TEST_MAX_PAGES)
+            versions = client.RepositoryVersion.list(max_pages=TEST_MAX_PAGES)
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not versions:
@@ -264,7 +264,7 @@ class TestRepositoryVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.repository_version.get(item.uuid, namespace=ns)
+        current = client.RepositoryVersion.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve repository version {item.uuid}")
         original_description = getattr(current.meta, "description", None) or ""
@@ -277,7 +277,7 @@ class TestRepositoryVersion:
             meta=RepositoryVersionMetaUpdate(description=new_description)
         )
         try:
-            updated = client.repository_version.update(
+            updated = client.RepositoryVersion.update(
                 item.uuid,
                 update_payload,
                 update_mask="meta.description",
@@ -292,7 +292,7 @@ class TestRepositoryVersion:
             meta=RepositoryVersionMetaUpdate(description=original_description)
         )
         try:
-            client.repository_version.update(
+            client.RepositoryVersion.update(
                 item.uuid,
                 restore_payload,
                 update_mask="meta.description",

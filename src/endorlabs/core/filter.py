@@ -9,10 +9,10 @@ Usage::
     from endorlabs import F
 
     # Simple equality
-    client.finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")
+    client.Finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")
 
     # Composition
-    client.finding.list(
+    client.Finding.list(
         filter=(
             F("spec.finding_tags").contains("FINDING_TAGS_REACHABLE_FUNCTION")
             & (F("spec.level").is_in("FINDING_LEVEL_CRITICAL", "FINDING_LEVEL_HIGH"))

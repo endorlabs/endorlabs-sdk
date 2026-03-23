@@ -121,8 +121,8 @@ def _make_finding(
 def _make_mock_client(findings: list[Mock] | None = None) -> Mock:
     """Build a mock Client for tagging tests."""
     client = Mock()
-    client.finding.list.return_value = findings or []
-    client.finding.update.return_value = Mock()
+    client.Finding.list.return_value = findings or []
+    client.Finding.update.return_value = Mock()
     return client
 
 
@@ -152,7 +152,7 @@ class TestTagFindingsByCriteria:
         )
         assert result.tagged == 2
         assert result.total == 2
-        client.finding.update.assert_not_called()
+        client.Finding.update.assert_not_called()
 
     def test_tags_findings_via_facade_update(self) -> None:
         findings = [_make_finding("f-1"), _make_finding("f-2")]
@@ -163,7 +163,7 @@ class TestTagFindingsByCriteria:
         assert result.tagged == 2
         assert result.total == 2
         assert result.ok is True
-        assert client.finding.update.call_count == 2
+        assert client.Finding.update.call_count == 2
 
     def test_skips_already_tagged_findings(self) -> None:
         findings = [_make_finding("f-1", tags=["fp"])]
@@ -173,13 +173,13 @@ class TestTagFindingsByCriteria:
         )
         assert result.skipped == 1
         assert result.tagged == 0
-        client.finding.update.assert_not_called()
+        client.Finding.update.assert_not_called()
 
     def test_partial_failure(self) -> None:
         f1 = _make_finding("f-1")
         f2 = _make_finding("f-2")
         client = _make_mock_client([f1, f2])
-        client.finding.update.side_effect = [Mock(), RuntimeError("API error")]
+        client.Finding.update.side_effect = [Mock(), RuntimeError("API error")]
         result = tag_findings_by_criteria(
             client, "ns", "proj-1", ["FINDING_CATEGORY_SECRETS"], "fp"
         )
@@ -197,7 +197,7 @@ class TestTagFindingsByCriteria:
             ["FINDING_CATEGORY_SECRETS", "FINDING_CATEGORY_SAST"],
             "fp",
         )
-        call_kwargs = client.finding.list.call_args.kwargs
+        call_kwargs = client.Finding.list.call_args.kwargs
         assert "FINDING_CATEGORY_SECRETS" in call_kwargs["filter"]
         assert "FINDING_CATEGORY_SAST" in call_kwargs["filter"]
 
@@ -211,7 +211,7 @@ class TestTagFindingsByCriteria:
             "fp",
             file_path="src/utils/",
         )
-        call_kwargs = client.finding.list.call_args.kwargs
+        call_kwargs = client.Finding.list.call_args.kwargs
         assert "src/utils/" in call_kwargs["filter"]
 
 
@@ -236,13 +236,13 @@ class TestCreateExceptionPolicy:
         assert result.ok is True
         assert "DRY RUN" in result.message
         assert result.rego_rule  # non-empty
-        client.policy.create.assert_not_called()
+        client.Policy.create.assert_not_called()
 
     def test_creates_policy_via_facade(self) -> None:
         client = Mock()
         mock_policy = Mock()
         mock_policy.uuid = "policy-uuid-1"
-        client.policy.create.return_value = mock_policy
+        client.Policy.create.return_value = mock_policy
 
         result = create_exception_policy(
             client,
@@ -253,11 +253,11 @@ class TestCreateExceptionPolicy:
         )
         assert result.uuid == "policy-uuid-1"
         assert result.ok is True
-        client.policy.create.assert_called_once()
+        client.Policy.create.assert_called_once()
 
     def test_auto_generates_description(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="p1")
+        client.Policy.create.return_value = Mock(uuid="p1")
 
         create_exception_policy(
             client,
@@ -268,7 +268,7 @@ class TestCreateExceptionPolicy:
             cwe_list=["CWE-22"],
             global_scope=True,
         )
-        call_kwargs = client.policy.create.call_args.kwargs
+        call_kwargs = client.Policy.create.call_args.kwargs
         assert "fp" in call_kwargs["description"]
         assert "FINDING_CATEGORY_SAST" in call_kwargs["description"]
         assert "CWE-22" in call_kwargs["description"]
@@ -276,7 +276,7 @@ class TestCreateExceptionPolicy:
 
     def test_handles_creation_error(self) -> None:
         client = Mock()
-        client.policy.create.side_effect = RuntimeError("API 500")
+        client.Policy.create.side_effect = RuntimeError("API 500")
 
         result = create_exception_policy(client, "ns", "Policy", tag="fp")
         assert result.status == "error"
@@ -285,7 +285,7 @@ class TestCreateExceptionPolicy:
 
     def test_propagate_kwarg_forwarded(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="p1")
+        client.Policy.create.return_value = Mock(uuid="p1")
 
         create_exception_policy(
             client,
@@ -294,11 +294,11 @@ class TestCreateExceptionPolicy:
             tag="fp",
             propagate=True,
         )
-        assert client.policy.create.call_args.kwargs["propagate"] is True
+        assert client.Policy.create.call_args.kwargs["propagate"] is True
 
     def test_project_selector_from_uuid(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="p1")
+        client.Policy.create.return_value = Mock(uuid="p1")
 
         create_exception_policy(
             client,
@@ -307,12 +307,12 @@ class TestCreateExceptionPolicy:
             tag="fp",
             project_uuid="proj-1",
         )
-        selector = client.policy.create.call_args.kwargs["project_selector"]
+        selector = client.Policy.create.call_args.kwargs["project_selector"]
         assert selector == ["$uuid=proj-1"]
 
     def test_project_selector_from_tags(self) -> None:
         client = Mock()
-        client.policy.create.return_value = Mock(uuid="p1")
+        client.Policy.create.return_value = Mock(uuid="p1")
 
         create_exception_policy(
             client,
@@ -322,5 +322,5 @@ class TestCreateExceptionPolicy:
             project_tags=["sdk", "python"],
             global_scope=True,
         )
-        selector = client.policy.create.call_args.kwargs["project_selector"]
+        selector = client.Policy.create.call_args.kwargs["project_selector"]
         assert selector == ["$sdk", "$python"]

@@ -119,7 +119,7 @@ The demo is intended as a guided learning surface; production automation should 
 
 ## Quick start
 
-Entry point is `endorlabs.Client` with a default tenant namespace. Each resource is exposed as a facade: `client.namespace`, `client.project`, `client.finding`, `client.scan_result`, etc., with `.list()`, `.get()`, `.create()`, `.update()`, and `.delete()`.
+Entry point is `endorlabs.Client` with a default tenant namespace. Each resource is exposed as a facade: `client.Namespace`, `client.Project`, `client.Finding`, `client.ScanResult`, etc., with `.list()`, `.get()`, `.create()`, `.update()`, and `.delete()`.
 
 ### Basic usage
 
@@ -134,24 +134,24 @@ client = endorlabs.Client(
 )
 
 # List namespaces (tenant-wide with traverse=True)
-namespaces = client.namespace.list(traverse=True)
+namespaces = client.Namespace.list(traverse=True)
 for ns in namespaces:
     print(ns.meta.name)
 
 # List projects
-projects = client.project.list(traverse=True)
+projects = client.Project.list(traverse=True)
 for p in projects:
     print(p.meta.name)
 
 # Filter and limit pages
-projects = client.project.list(
+projects = client.Project.list(
     filter="meta.name==https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
     max_pages=1,
 )
 
 # Get by UUID
 if projects:
-    project = client.project.get(projects[0].uuid)
+    project = client.Project.get(projects[0].uuid)
     print(project.meta.name)
     print(project.spec.platform_source)
     # Resources are Pydantic models
@@ -163,25 +163,25 @@ if projects:
 ```python
 # Resolve project by repo URL (like: endorctl api list -r Project --traverse --filter "meta.name contains <url>")
 repo_url = "https://github.com/tgowan-endor/BenchmarkJava.git"
-project = client.project.lookup(
+project = client.Project.lookup(
     traverse=True,
     filter=f"meta.name=={repo_url}",
 )
 
 # Request full rescan (flat kwargs; see resource update_mask / mutable fields)
-client.project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
+client.Project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
 
 # Poll until scan is idle
 client.wait_until(
     lambda: (
-        (p := client.project.get(project))
+        (p := client.Project.get(project))
         and p.processing_status.scan_state == "SCAN_STATE_IDLE"
     ),
     timeout=300,
 )
 
 # List latest scan results for the project (parent-scoped list)
-scans = client.scan_result.list(
+scans = client.ScanResult.list(
     parent=project,
     max_pages=1,
     sort_by="meta.create_time",
@@ -192,43 +192,45 @@ if scans:
     print(scans[0].model_dump_json(indent=2))
 ```
 
-### Alternative: transport + module-level API
+### Alternative: transport-only APIClient
 
-If you prefer the raw transport and explicit resource modules:
+If you need direct transport access for custom endpoints, use `APIClient`
+directly (the canonical resource interface is still `endorlabs.Client`):
 
 ```python
 from endorlabs import APIClient
-from endorlabs.resources import namespace, project
 
 client = APIClient()
-namespaces = namespace.list_namespaces(client, "tenant.namespace")
-projects = project.list_projects(client, "tenant.namespace", traverse=True)
+response = client.get("v1/namespaces/tenant.namespace/projects")
+projects_payload = response.json()
 ```
 
-Same behavior; use when you need only the HTTP client or module-level calls.
+Use this path when you need raw HTTP control; for typed models and consistent
+namespace handling, prefer `endorlabs.Client`.
 
 ## API surface
 
 ### Resources
 
-All 29 registry resources are exposed as typed facades on `Client`:
+All registry resources are exposed as typed facades on `Client` using **PascalCase**
+names that match `endorctl api … --resource <Kind>` (e.g. `Project`, `QueryVulnerability`):
 
-`api_key`, `audit_log`, `authentication_log`, `authorization_policy`, `code_owners`, `dependency_metadata`, `endor_license`, `finding`, `finding_log`, `installation`, `invitation`, `linter_result`, `metric`, `namespace`, `notification_target`, `package_license`, `package_version`, `policy`, `policy_template`, `project`, `repository`, `repository_version`, `scan_log_request`, `scan_profile`, `scan_result`, `scan_workflow`, `scan_workflow_result`, `semgrep_rule`, `version_upgrade`
+`APIKey`, `AuditLog`, `AuthenticationLog`, `AuthorizationPolicy`, `CodeOwners`, `DependencyMetadata`, `EndorLicense`, `Finding`, `FindingLog`, `Installation`, `Invitation`, `LinterResult`, `Malware`, `Metric`, `Namespace`, `NotificationTarget`, `PackageLicense`, `PackageVersion`, `Policy`, `PolicyTemplate`, `Project`, `QueryMalware`, `QueryVulnerability`, `Repository`, `RepositoryVersion`, `ScanLogRequest`, `ScanProfile`, `ScanResult`, `ScanWorkflow`, `ScanWorkflowResult`, `SemgrepRule`, `VersionUpgrade`, `Vulnerability`
 
-Plus `scan_logs` (custom facade for retrieving scan log messages).
+Plus `ScanLogs` (SDK-only custom facade for retrieving scan log messages; not an endorctl `--resource` kind — use `ScanLogRequest` for CRUD on log requests).
 
 Each facade exposes only the operations that resource supports. Hover over any facade or method in your IDE to see its docstring, parameters, and concrete return types.
 
 ### Operations
 
-- **List:** `client.<resource>.list(traverse=..., filter=..., mask=..., sort_by=..., desc=..., max_pages=..., page_size=..., parent=...)`. Use `traverse=True` for tenant-wide listing; use `parent=resource` for child resources (e.g. `scan_result.list(parent=project)`).
+- **List:** `client.<ResourceKind>.list(traverse=..., filter=..., mask=..., sort_by=..., desc=..., max_pages=..., page_size=..., parent=...)`. Use `traverse=True` for tenant-wide listing; use `parent=resource` for child resources (e.g. `ScanResult.list(parent=project)`).
 - **List (parallel):** `client.<resource>.list(traverse=True, concurrent=True, max_workers=10)` queries each namespace in parallel.
 - **List (streaming):** `client.<resource>.list_iter(...)` yields resources one at a time for memory-efficient pagination.
 - **Get / Create / Update / Delete:** `client.<resource>.get(id_or_resource)`, `.create(payload=... or **kwargs)`, `.update(resource, update_mask=... or field kwargs)`, `.delete(id_or_resource, ignore_missing=True)`.
 - **Lookup:** `client.<resource>.lookup(...)` returns exactly one result or raises `NotFoundError` / `AmbiguousError`.
 - **Tag / Untag:** `client.<resource>.tag(resource, tags=["reviewed"])`, `.untag(resource, keys=["deprecated"])` manage `meta.tags` on resources that support it.
-- **Identity kwargs:** `client.project.lookup(name="my-project")` — identity kwargs are mapped to filter clauses automatically (e.g. `name` → `meta.name`). Hover over a facade to see its available identity kwargs.
-- **Filtering:** Use raw strings (`filter="meta.name==foo"`) or the `F()` builder: `from endorlabs import F; client.finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")`.
+- **Identity kwargs:** `client.Project.lookup(name="my-project")` — identity kwargs are mapped to filter clauses automatically (e.g. `name` → `meta.name`). Hover over a facade to see its available identity kwargs.
+- **Filtering:** Use raw strings (`filter="meta.name==foo"`) or the `F()` builder: `from endorlabs import F; client.Finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")`.
 - **Polling:** `client.wait_until(predicate, timeout=..., poll_interval_max=...)` for readiness loops.
 - **Identity:** `client.whoami()` returns the authenticated identity name, or `None`.
 
@@ -239,7 +241,7 @@ Details: [docs/generated-reference/resources.md](docs/generated-reference/resour
 Two layers, one registry:
 
 - **Transport** (`api_client.py`): HTTP, auth, retries. Nothing else.
-- **Resource facades** (`client_surface.py`): Typed wrappers built automatically from a registry. `client.project`, `client.finding`, etc. are all the same `ResourceFacade` pattern.
+- **Resource facades** (`client_surface.py`): Typed wrappers built automatically from a registry. `client.Project`, `client.Finding`, etc. are all the same `ResourceFacade` pattern.
 - **Adding a resource** = one registry entry + a Pydantic model. No hand-written HTTP.
 
 Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
@@ -257,6 +259,9 @@ uv run --env-file .env pytest            # if using .env file
 uv run ruff check . && uv run ruff format --check .  # lint
 uv run pyright                           # type check
 ```
+
+Runtime compatibility is Python 3.12+, and CI validation is currently pinned to
+Python 3.13 for deterministic lint/type/test gates.
 
 Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.md). Doc index: [docs/README.md](docs/README.md).
 

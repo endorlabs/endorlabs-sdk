@@ -204,7 +204,7 @@ def _list_findings_for_namespace(
     if finding_filter:
         combined_filter = f"({finding_filter}) AND ({ns_filter})"
 
-    findings = client.finding.list(
+    findings = client.Finding.list(
         list_params=ListParameters(
             traverse=True,
             filter=combined_filter,
@@ -258,7 +258,7 @@ def _collect_orphaned_findings(
                         max_pages=max_pages,
                     )
                 )
-        namespaces = client.namespace.list(
+        namespaces = client.Namespace.list(
             list_params=ListParameters(traverse=True),
             max_pages=max_pages,
         )
@@ -371,7 +371,7 @@ def _delete_orphaned_findings(
         for finding in findings:
             finding_uuid = _read_attr_path(finding, "uuid")
             try:
-                client.finding.delete(finding)
+                client.Finding.delete(finding)
                 deleted += 1
             except Exception as exc:  # noqa: BLE001
                 failed += 1

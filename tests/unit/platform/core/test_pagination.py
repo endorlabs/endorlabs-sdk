@@ -253,3 +253,22 @@ class TestListIter:
         assert items[0].uuid == "a"
         assert items[1].uuid == "b"
         client.get_all.assert_called_once()
+
+
+class TestCount:
+    """Test count() behavior and list parameter handling."""
+
+    def test_count_does_not_mutate_caller_list_params(self) -> None:
+        """count() should not change the caller-owned ListParameters instance."""
+        client = Mock()
+        response_payload = {"list": {"response": {"total": 3}}}
+        client.get = Mock(return_value=Mock(json=Mock(return_value=response_payload)))
+        ops = BaseResourceOperations(client, "test-resources", Mock)
+        list_params = ListParameters(filter="meta.name==demo")
+        assert list_params.count is None
+
+        total = ops.count("tenant.ns", list_params=list_params)
+
+        assert total == 3
+        # Regression guard: count() must not mutate caller object.
+        assert list_params.count is None

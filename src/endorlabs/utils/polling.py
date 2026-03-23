@@ -35,7 +35,7 @@ def wait_until(
 
     Example:
         >>> client.wait_until(
-        ...     lambda: client.scan_result.get(uuid).spec.status == "COMPLETED",
+        ...     lambda: client.ScanResult.get(uuid).spec.status == "COMPLETED",
         ...     timeout=120,
         ... )
 

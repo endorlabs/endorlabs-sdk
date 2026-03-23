@@ -39,7 +39,7 @@ class TestAuditLog:
             tenant=root_namespace, api_client=api_client
         )
 
-        self.audit_logs = self.endor_client.audit_log.list(
+        self.audit_logs = self.endor_client.AuditLog.list(
             list_params=ListParameters(page_size=TEST_PAGE_SIZE),
             max_pages=TEST_MAX_PAGES,
         )
@@ -49,7 +49,7 @@ class TestAuditLog:
         if hasattr(self, "created_audit_log_uuids"):
             for log_uuid in self.created_audit_log_uuids:
                 try:
-                    self.endor_client.audit_log.delete(log_uuid)
+                    self.endor_client.AuditLog.delete(log_uuid)
                     print(f"[CLEANUP] Deleted test audit log: {log_uuid}")
                 except Exception as e:
                     print(f"[WARNING] Failed to delete test audit log {log_uuid}: {e}")
@@ -63,7 +63,7 @@ class TestAuditLog:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.audit_log.list(
+        result = client.AuditLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -77,7 +77,7 @@ class TestAuditLog:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.audit_log.list(
+        items = client.AuditLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -89,7 +89,7 @@ class TestAuditLog:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.audit_log.get(item.uuid, namespace=ns)
+        got = client.AuditLog.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -101,7 +101,7 @@ class TestAuditLog:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.audit_log.list(
+        items = client.AuditLog.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -119,7 +119,7 @@ class TestAuditLog:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.audit_log.get(item.uuid, namespace=ns)
+        got = client.AuditLog.get(item.uuid, namespace=ns)
         if got and got.spec and got.spec.error is not None:
             assert hasattr(got.spec.error, "code")
             assert hasattr(got.spec.error, "message")
@@ -133,7 +133,7 @@ class TestAuditLog:
         """
         print("\n=== TESTING LIST ARCHIVED AUDIT LOGS ===")
 
-        archived = self.endor_client.audit_log.list(
+        archived = self.endor_client.AuditLog.list(
             archive=True,
             page_size=TEST_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES,
@@ -163,7 +163,7 @@ class TestAuditLog:
         ]
 
         for operation_type in operation_types:
-            filtered_logs = self.endor_client.audit_log.list(
+            filtered_logs = self.endor_client.AuditLog.list(
                 list_params=ListParameters(
                     filter=f"spec.operation=='{operation_type.value}'",
                     page_size=TEST_PAGE_SIZE,
@@ -185,7 +185,7 @@ class TestAuditLog:
 
         # Test filtering by a common message kind (Policy)
         message_kind = "internal.endor.ai.endor.v1.Policy"
-        filtered_logs = self.endor_client.audit_log.list(
+        filtered_logs = self.endor_client.AuditLog.list(
             list_params=ListParameters(
                 filter=f"spec.message_kind=='{message_kind}'",
                 page_size=TEST_PAGE_SIZE,
@@ -214,7 +214,7 @@ class TestAuditLog:
         to_date_str = to_date.strftime("%Y-%m-%dT%H:%M:%SZ")
         from_date_str = from_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        filtered_logs = self.endor_client.audit_log.list(
+        filtered_logs = self.endor_client.AuditLog.list(
             list_params=ListParameters(
                 filter=(
                     f"meta.create_time>=date({from_date_str}) "
@@ -246,7 +246,7 @@ class TestAuditLog:
 
         # Test filtering by claims (API key identification)
         # Note: This is a regex match, so we search for patterns
-        filtered_logs = self.endor_client.audit_log.list(
+        filtered_logs = self.endor_client.AuditLog.list(
             list_params=ListParameters(
                 filter="spec.claims matches '.*api-key.*'",
                 page_size=TEST_PAGE_SIZE,
@@ -277,7 +277,7 @@ class TestAuditLog:
             traverse=True,
         )
 
-        logs_with_remote = self.endor_root_client.audit_log.list(
+        logs_with_remote = self.endor_root_client.AuditLog.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -300,7 +300,7 @@ class TestAuditLog:
             traverse=True,
         )
 
-        filtered_logs = self.endor_root_client.audit_log.list(
+        filtered_logs = self.endor_root_client.AuditLog.list(
             list_params=filter_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -319,7 +319,7 @@ class TestAuditLog:
 
         # Filter for logs that might contain API key claims
         # API keys typically have claims like 'api-key' or specific patterns
-        api_key_logs = self.endor_client.audit_log.list(
+        api_key_logs = self.endor_client.AuditLog.list(
             list_params=ListParameters(
                 filter="spec.claims matches '.*api-key.*'",
                 page_size=TEST_PAGE_SIZE,
@@ -349,14 +349,14 @@ class TestAuditLog:
         ]
 
         for pattern in alternative_patterns:
-            filtered_logs = self.endor_client.audit_log.list(
+            filtered_logs = self.endor_client.AuditLog.list(
                 list_params=ListParameters(filter=pattern, page_size=TEST_PAGE_SIZE),
                 max_pages=TEST_MAX_PAGES,
             )
             print(f"Pattern '{pattern}': {len(filtered_logs)} logs")
 
     def test_audit_log_update_raises_not_implemented(self) -> None:
-        """When update_fn is None, client.audit_log.update raises NotImplemented."""
+        """When update_fn is None, client.AuditLog.update raises NotImplemented."""
         from unittest.mock import Mock
 
         import endorlabs
@@ -367,4 +367,4 @@ class TestAuditLog:
             tenant=TEST_NAMESPACE_DEFAULT,
         )
         with pytest.raises(NotImplementedError, match="does not support update"):
-            client.audit_log.update("dummy-uuid", {}, update_mask="meta.description")
+            client.AuditLog.update("dummy-uuid", {}, update_mask="meta.description")

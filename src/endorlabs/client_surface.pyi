@@ -3964,83 +3964,83 @@ class Client:
     """Resource-oriented client with typed facades.
 
     Resources:
-    api_key, audit_log, authentication_log, authorization_policy, code_owners,
-    dependency_metadata, endor_license, finding, finding_log, installation,
-    invitation, linter_result, malware, metric, namespace, notification_target,
-    package_license, package_version, policy, policy_template, project,
-    query_malware, query_vulnerability, repository, repository_version,
-    scan_log_request, scan_profile, scan_result, scan_workflow,
-    scan_workflow_result, semgrep_rule, version_upgrade, vulnerability
-    Custom: scan_logs
+    APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
+    DependencyMetadata, EndorLicense, Finding, FindingLog, Installation,
+    Invitation, LinterResult, Malware, Metric, Namespace, NotificationTarget,
+    PackageLicense, PackageVersion, Policy, PolicyTemplate, Project,
+    QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
+    ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult,
+    SemgrepRule, VersionUpgrade, Vulnerability
+    Custom: ScanLogs
     """
 
-    api_key: _APIKeyFacade
+    APIKey: _APIKeyFacade
     """API Key resource model extending BaseResource."""
-    audit_log: _AuditLogFacade
+    AuditLog: _AuditLogFacade
     """Audit Log resource model extending BaseResource."""
-    authentication_log: _AuthenticationLogFacade
+    AuthenticationLog: _AuthenticationLogFacade
     """Authentication Log resource model. List and get only."""
-    authorization_policy: _AuthorizationPolicyFacade
+    AuthorizationPolicy: _AuthorizationPolicyFacade
     """Authorization Policy resource model extending BaseResource."""
-    code_owners: _CodeOwnersFacade
+    CodeOwners: _CodeOwnersFacade
     """Code Owners resource model. List, get, create, update, delete."""
-    dependency_metadata: _DependencyMetadataFacade
+    DependencyMetadata: _DependencyMetadataFacade
     """DependencyMetadata resource model extending BaseResource."""
-    endor_license: _EndorLicenseFacade
+    EndorLicense: _EndorLicenseFacade
     """Endor License resource model. List and get only."""
-    finding: _FindingFacade
+    Finding: _FindingFacade
     """An Endor Labs finding entity extending BaseResource."""
-    finding_log: _FindingLogFacade
+    FindingLog: _FindingLogFacade
     """An Endor Labs FindingLog entity extending BaseResource."""
-    installation: _InstallationFacade
+    Installation: _InstallationFacade
     """Installation resource model extending BaseResource."""
-    invitation: _InvitationFacade
+    Invitation: _InvitationFacade
     """Invitation resource model. List, get, create, update, delete."""
-    linter_result: _LinterResultFacade
+    LinterResult: _LinterResultFacade
     """LinterResult resource model extending BaseResource."""
-    malware: _MalwareFacade
+    Malware: _MalwareFacade
     """Malware resource model."""
-    metric: _MetricFacade
+    Metric: _MetricFacade
     """Metric resource model extending BaseResource."""
-    namespace: _NamespaceFacade
+    Namespace: _NamespaceFacade
     """An Endor Labs namespace entity extending BaseResource."""
-    notification_target: _NotificationTargetFacade
+    NotificationTarget: _NotificationTargetFacade
     """Notification Target resource model."""
-    package_license: _PackageLicenseFacade
+    PackageLicense: _PackageLicenseFacade
     """PackageLicense resource model extending BaseResource."""
-    package_version: _PackageVersionFacade
+    PackageVersion: _PackageVersionFacade
     """PackageVersion resource model extending BaseResource."""
-    policy: _PolicyFacade
+    Policy: _PolicyFacade
     """Policy resource model extending BaseResource."""
-    policy_template: _PolicyTemplateFacade
+    PolicyTemplate: _PolicyTemplateFacade
     """Policy Template resource model. List and get only."""
-    project: _ProjectFacade
+    Project: _ProjectFacade
     """An Endor Labs project entity extending BaseResource."""
-    query_malware: _QueryMalwareFacade
+    QueryMalware: _QueryMalwareFacade
     """QueryMalware resource model returned by query endpoint."""
-    query_vulnerability: _QueryVulnerabilityFacade
+    QueryVulnerability: _QueryVulnerabilityFacade
     """QueryVulnerability resource model returned by query endpoint."""
-    repository: _RepositoryFacade
+    Repository: _RepositoryFacade
     """Repository resource model extending BaseResource."""
-    repository_version: _RepositoryVersionFacade
+    RepositoryVersion: _RepositoryVersionFacade
     """RepositoryVersion resource model extending BaseResource."""
-    scan_log_request: _ScanLogRequestFacade
+    ScanLogRequest: _ScanLogRequestFacade
     """An Endor Labs ScanLogRequest entity extending BaseResource."""
-    scan_profile: _ScanProfileFacade
+    ScanProfile: _ScanProfileFacade
     """An Endor Labs ScanProfile entity extending BaseResource."""
-    scan_result: _ScanResultFacade
+    ScanResult: _ScanResultFacade
     """An Endor Labs ScanResult entity extending BaseResource."""
-    scan_workflow: _ScanWorkflowFacade
+    ScanWorkflow: _ScanWorkflowFacade
     """Scan Workflow resource model. List and get only."""
-    scan_workflow_result: _ScanWorkflowResultFacade
+    ScanWorkflowResult: _ScanWorkflowResultFacade
     """Scan Workflow Result resource model. List and get only."""
-    semgrep_rule: _SemgrepRuleFacade
+    SemgrepRule: _SemgrepRuleFacade
     """SemgrepRule resource model extending BaseResource."""
-    version_upgrade: _VersionUpgradeFacade
+    VersionUpgrade: _VersionUpgradeFacade
     """Version Upgrade resource model. List and get only."""
-    vulnerability: _VulnerabilityFacade
+    Vulnerability: _VulnerabilityFacade
     """Vulnerability resource model."""
-    scan_logs: ScanLogsFacade
+    ScanLogs: ScanLogsFacade
     """Scan logs facade. Use get_logs() to fetch log messages."""
 
     _client: APIClient | None

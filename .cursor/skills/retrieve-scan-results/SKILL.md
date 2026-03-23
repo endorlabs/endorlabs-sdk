@@ -28,7 +28,7 @@ Endor Labs SDK.
 
 ```python
 # By repository URL
-projects = client.project.list(
+projects = client.Project.list(
     filter='meta.name=="https://github.com/org/repo.git"',
     traverse=True,
     max_pages=1,
@@ -36,7 +36,7 @@ projects = client.project.list(
 project = projects[0] if projects else None
 
 # Or use lookup for a single match
-project = client.project.lookup(name="https://github.com/org/repo.git")
+project = client.Project.lookup(name="https://github.com/org/repo.git")
 ```
 
 Use `traverse=True` when the namespace is unknown or you need to search across all child namespaces.
@@ -45,7 +45,7 @@ Use `traverse=True` when the namespace is unknown or you need to search across a
 
 ```python
 # List scan results for the project, sorted by creation time
-scan_results = client.scan_result.list(
+scan_results = client.ScanResult.list(
     parent=project,                        # Derives namespace + parent_uuid filter
     sort_by="meta.create_time",
     desc=True,
@@ -60,20 +60,20 @@ The `parent=project` argument automatically scopes the query to the project's na
 
 ```python
 # All findings for the project
-findings = client.finding.list(
+findings = client.Finding.list(
     filter=f'spec.project_uuid=="{project.uuid}"',
     namespace=project.namespace,
     traverse=True,
 )
 
 # Or findings from a specific scan
-findings = client.finding.list(
+findings = client.Finding.list(
     filter=f'context.scan_uuid=="{latest_scan.uuid}"',
     namespace=latest_scan.namespace,
 )
 
 # Critical findings only
-findings = client.finding.list(
+findings = client.Finding.list(
     filter='spec.level==FINDING_LEVEL_CRITICAL',
     traverse=True,
 )
@@ -85,7 +85,7 @@ Use `mask` to limit response fields for performance:
 
 ```python
 # Only get finding name and severity
-findings = client.finding.list(
+findings = client.Finding.list(
     filter='spec.level==FINDING_LEVEL_CRITICAL',
     mask="meta.name,spec.level,spec.finding_categories",
     traverse=True,
@@ -110,10 +110,10 @@ When acting on resources returned from `list(traverse=True)`, pass the **resourc
 
 ```python
 # Correct: namespace derived from resource object
-client.project.delete(target)
+client.Project.delete(target)
 
 # Risky: may 404 if target is in a child namespace
-client.project.delete(target.uuid, namespace="tenant-root")
+client.Project.delete(target.uuid, namespace="tenant-root")
 ```
 
 For full traversal patterns, performance comparison, and filtering examples, see [TRAVERSAL_PATTERNS.md](TRAVERSAL_PATTERNS.md).
@@ -133,7 +133,7 @@ Findings are generated **per RepositoryVersion** (branch). A project with 2 scan
 
 ```python
 # Strategy 1: Filter to a single branch
-main_findings = client.finding.list(
+main_findings = client.Finding.list(
     filter=(
         (F("spec.project_uuid") == project.uuid)
         & F("spec.source_code_version.ref").matches("refs/heads/main")
@@ -153,7 +153,7 @@ for f in findings:
 # Each group represents one unique code issue (may have N branch variants)
 
 # Strategy 3: Use RepositoryVersion to understand branch coverage
-repo_versions = client.repository_version.list(
+repo_versions = client.RepositoryVersion.list(
     filter=f'spec.project_uuid=="{project.uuid}"',
     namespace=project.namespace,
 )
@@ -166,9 +166,9 @@ repo_versions = client.repository_version.list(
 
 | Operation | Example |
 |-----------|---------|
-| List all projects | `client.project.list(traverse=True)` |
-| Find project by URL | `client.project.lookup(name="https://github.com/org/repo.git")` |
-| Latest scan for a project | `client.scan_result.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)` |
-| Findings for a project | `client.finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` |
-| Critical findings, all namespaces | `client.finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True)` |
-| Count findings | `client.finding.list(filter='...', count=True, traverse=True)` |
+| List all projects | `client.Project.list(traverse=True)` |
+| Find project by URL | `client.Project.lookup(name="https://github.com/org/repo.git")` |
+| Latest scan for a project | `client.ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)` |
+| Findings for a project | `client.Finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` |
+| Critical findings, all namespaces | `client.Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True)` |
+| Count findings | `client.Finding.list(filter='...', count=True, traverse=True)` |

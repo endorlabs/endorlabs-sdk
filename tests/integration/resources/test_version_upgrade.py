@@ -25,7 +25,7 @@ class TestVersionUpgrade:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.version_upgrade.list(
+        result = client.VersionUpgrade.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -39,7 +39,7 @@ class TestVersionUpgrade:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.version_upgrade.list(
+        items = client.VersionUpgrade.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -51,7 +51,7 @@ class TestVersionUpgrade:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.version_upgrade.get(item.uuid, namespace=ns)
+        got = client.VersionUpgrade.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -64,4 +64,4 @@ class TestVersionUpgrade:
             api_client=self.client,
         )
         with pytest.raises(NotImplementedError, match="does not support create"):
-            client.version_upgrade.create({})
+            client.VersionUpgrade.create({})
