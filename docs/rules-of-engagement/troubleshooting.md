@@ -6,7 +6,7 @@ Workflow below. Resolved-case narratives: local docs snapshots under `.endorlabs
 
 For endpoints that take a **resource UUID in the body** and a **namespace in the path** (e.g. create scan-log-request with `scan_result_uuid`), the path namespace must be the **owning** namespace of that resource (the resource’s `tenant_meta.namespace`). Using a **parent** namespace can return 500 even with a valid UUID. This behavior is not always stated in the API spec; document it in SDK docstrings once confirmed.
 
-**Avoiding 404 after traverse:** When you act on objects returned from `list(traverse=True)` (or broad filters), pass the **resource object** to `get`, `update`, or `delete` (e.g. `client.project.delete(target)`). The SDK then uses the resource's `tenant_meta.namespace` so the path matches the owning namespace; otherwise using the client default namespace can cause 404 Not Found. See [contracts.md](../contracts.md) (Namespace scoping) and `endorlabs.utils.resolve_namespace_for_resource`.
+**Avoiding 404 after traverse:** When you act on objects returned from `list(traverse=True)` (or broad filters), pass the **resource object** to `get`, `update`, or `delete` (e.g. `client.Project.delete(target)`). The SDK then uses the resource's `tenant_meta.namespace` so the path matches the owning namespace; otherwise using the client default namespace can cause 404 Not Found. See [contracts.md](../contracts.md) (Namespace scoping) and `endorlabs.utils.resolve_namespace_for_resource`.
 
 ## Workflow
 

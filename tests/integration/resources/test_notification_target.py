@@ -25,7 +25,7 @@ class TestNotificationTarget:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.notification_target.list(
+        result = client.NotificationTarget.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -39,7 +39,7 @@ class TestNotificationTarget:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.notification_target.list(
+        items = client.NotificationTarget.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -51,7 +51,7 @@ class TestNotificationTarget:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.notification_target.get(item.uuid, namespace=ns)
+        got = client.NotificationTarget.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -63,7 +63,7 @@ class TestNotificationTarget:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.notification_target.list(
+        items = client.NotificationTarget.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -79,7 +79,7 @@ class TestNotificationTarget:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.notification_target.get(item.uuid, namespace=ns)
+        got = client.NotificationTarget.get(item.uuid, namespace=ns)
         if (
             got
             and got.spec

@@ -29,14 +29,14 @@ import endorlabs
 client = endorlabs.Client(tenant="endor-solutions-tgowan")
 
 # Query all DependencyMetadata across all namespaces
-all_deps = client.dependency_metadata.list(traverse=True)
+all_deps = client.DependencyMetadata.list(traverse=True)
 ```
 
 ### With Filtering
 
 ```python
 # Query all private dependencies across all namespaces
-private_deps = client.dependency_metadata.list(
+private_deps = client.DependencyMetadata.list(
     traverse=True,
     filter="spec.dependency_data.public==false",
 )
@@ -47,19 +47,19 @@ private_deps = client.dependency_metadata.list(
 #### DependencyMetadata (Recommended Pattern)
 
 ```python
-deps = client.dependency_metadata.list(traverse=True)
+deps = client.DependencyMetadata.list(traverse=True)
 ```
 
 #### PackageVersion
 
 ```python
-packages = client.package_version.list(traverse=True)
+packages = client.PackageVersion.list(traverse=True)
 ```
 
 #### Finding
 
 ```python
-findings = client.finding.list(traverse=True)
+findings = client.Finding.list(traverse=True)
 ```
 
 ## When to Use Traverse
@@ -85,10 +85,10 @@ findings = client.finding.list(traverse=True)
 
 ```python
 # ❌ SLOW: Multiple API calls
-namespaces = client.namespace.list(traverse=True)
+namespaces = client.Namespace.list(traverse=True)
 all_deps = []
 for ns in namespaces:
-    deps = client.dependency_metadata.list(namespace=ns.meta.name)
+    deps = client.DependencyMetadata.list(namespace=ns.meta.name)
     all_deps.extend(deps)
 # Result: N API calls (one per namespace)
 ```
@@ -97,7 +97,7 @@ for ns in namespaces:
 
 ```python
 # ✅ FAST: Single API call
-all_deps = client.dependency_metadata.list(traverse=True)
+all_deps = client.DependencyMetadata.list(traverse=True)
 # Result: 1 API call (handles all namespaces automatically)
 ```
 
@@ -137,13 +137,13 @@ The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true
        
        Uses traverse=True for efficient tenant-wide query.
        """
-       return client.dependency_metadata.list(traverse=True)
+       return client.DependencyMetadata.list(traverse=True)
    ```
 
 4. **Use MAX_PAGES for control**: Don't override page_size unless necessary. Use max_pages parameter to limit results:
    ```python
    # Uses API default page size, limits to 10 pages max
-   deps = client.dependency_metadata.list(traverse=True, max_pages=10)
+   deps = client.DependencyMetadata.list(traverse=True, max_pages=10)
    ```
    
    **Important**: Small page sizes (e.g., page_size=1) cause performance issues. Only override if you have a specific need.
@@ -154,7 +154,7 @@ The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true
 
 ```python
 # Get all resources of a type across the tenant
-projects = client.project.list(traverse=True)
+projects = client.Project.list(traverse=True)
 ```
 
 ### Pattern 2: Filtered Tenant-Wide Query
@@ -162,7 +162,7 @@ projects = client.project.list(traverse=True)
 ```python
 def get_private_dependencies(client):
     """Get all private dependencies across tenant."""
-    return client.dependency_metadata.list(
+    return client.DependencyMetadata.list(
         traverse=True,
         filter="spec.dependency_data.public==false",
     )
@@ -176,7 +176,7 @@ from endorlabs.core.types import ListParameters
 def count_all_findings(client):
     """Count all findings across tenant."""
     list_params = ListParameters(traverse=True, count=True)
-    return client.finding.list(list_params=list_params)
+    return client.Finding.list(list_params=list_params)
 ```
 
 ## Related Documentation

@@ -36,7 +36,7 @@ class TestMetric:
         pattern used in test_metric_list.
         """
         # Fetch 1 item with traverse to find metrics across namespaces
-        results = self.endor_root_client.metric.list(
+        results = self.endor_root_client.Metric.list(
             list_params=ListParameters(
                 traverse=True, page_size=TEST_TRAVERSE_PAGE_SIZE
             ),
@@ -56,7 +56,7 @@ class TestMetric:
             api_client=self.client,
         )
         try:
-            result = client.metric.list(
+            result = client.Metric.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -74,7 +74,7 @@ class TestMetric:
             api_client=self.client,
         )
         try:
-            items = client.metric.list(
+            items = client.Metric.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
@@ -88,7 +88,7 @@ class TestMetric:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.metric.get(item.uuid, namespace=ns)
+        got = client.Metric.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -110,7 +110,7 @@ class TestMetric:
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
 
-        filtered_results = self.endor_root_client.metric.list(
+        filtered_results = self.endor_root_client.Metric.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -147,7 +147,7 @@ class TestMetric:
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
 
-        filtered_results = self.endor_root_client.metric.list(
+        filtered_results = self.endor_root_client.Metric.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -173,7 +173,7 @@ class TestMetric:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.metric.get("invalid-uuid")
+            self.endor_root_client.Metric.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

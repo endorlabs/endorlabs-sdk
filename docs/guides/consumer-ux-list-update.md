@@ -20,7 +20,7 @@ Combining filter and list mask would blur "what to return" with "which subset of
 
 ## What to expose as arguments (ideal UX)
 
-Definitions: [contracts.md](../contracts.md) (List parameters, Update and update_mask). The ideal UX exposes the set of attributes and types defined by the spec while documenting SDK-only convenience behavior. The registry-based entrypoint (`client.namespace`, `client.project`, etc.) exposes **flat kwargs** so consumers do not have to construct `ListParameters` by hand.
+Definitions: [contracts.md](../contracts.md) (List parameters, Update and update_mask). The ideal UX exposes the set of attributes and types defined by the spec while documenting SDK-only convenience behavior. The registry-based entrypoint (`client.Namespace`, `client.Project`, etc.) exposes **flat kwargs** so consumers do not have to construct `ListParameters` by hand.
 
 **For `.list()`:**
 
@@ -36,10 +36,10 @@ Definitions: [contracts.md](../contracts.md) (List parameters, Update and update
 Recommended style:
 
 ```python
-client.project.list(traverse=True)
-client.project.list(filter='meta.name=="https://github.com/org/repo.git"', max_pages=1)
-client.project.list(filter="spec.level==FINDING_LEVEL_CRITICAL", mask="meta.name,spec.level")
-client.scan_result.list(filter="...", sort_by="meta.create_time", desc=True, page_size=5)
+client.Project.list(traverse=True)
+client.Project.list(filter='meta.name=="https://github.com/org/repo.git"', max_pages=1)
+client.Project.list(filter="spec.level==FINDING_LEVEL_CRITICAL", mask="meta.name,spec.level")
+client.ScanResult.list(filter="...", sort_by="meta.create_time", desc=True, page_size=5)
 ```
 
 **For `.create()`:**

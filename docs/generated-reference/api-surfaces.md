@@ -6,8 +6,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- mapped entities: `257`
-- generated artifact files: `169`
+- mapped entities: `255`
+- generated artifact files: `167`
 - facade contract resources: `33`
 - registry parity status: `pass`
 - operation metadata entries: `719`
@@ -116,36 +116,36 @@ Auto-generated inventories for stable/public surfaces.
 
 | Attr | Resource path | Scope | Parent kind | Supported ops |
 |------|---------------|-------|-------------|---------------|
-| api_key | api-keys | tenant | — | list, get, create, delete |
-| audit_log | audit-logs | tenant | — | list, get, create, delete |
-| authentication_log | authentication-logs | system | — | list, get |
-| authorization_policy | authorization-policies | tenant | — | list, get, create, update, delete |
-| code_owners | codeowners | tenant | — | list, get, create, update, delete |
-| dependency_metadata | dependency-metadata | oss | — | list, get, create, update, delete |
-| endor_license | endor-licenses | system | — | list, get |
-| finding | findings | tenant | — | list, get, create, update, delete |
-| finding_log | finding-logs | tenant | — | list, get, create, delete |
-| installation | installations | tenant | — | list, get, create, update, delete |
-| invitation | invitations | tenant | — | list, get, create, update, delete |
-| linter_result | linter-results | tenant | — | list, get, create, delete |
-| malware | malware | oss | — | list, get |
-| metric | metrics | tenant | — | list, get, create, update, delete |
-| namespace | namespaces | tenant | — | list, get, create, update, delete |
-| notification_target | notification-targets | tenant | — | list, get, create, update, delete |
-| package_license | package-licenses | oss | — | list, get, create, update, delete |
-| package_version | package-versions | tenant | — | list, get, create, update, delete |
-| policy | policies | tenant | — | list, get, create, update, delete |
-| policy_template | policy-templates | system | — | list, get |
-| project | projects | tenant | — | list, get, create, update, delete |
-| query_malware | queries/malware | oss | — | create |
-| query_vulnerability | queries/vulnerabilities | oss | — | create |
-| repository | repositories | tenant | — | list, get, create, update, delete |
-| repository_version | repository-versions | tenant | project | list, get, create, update, delete |
-| scan_log_request | scan-log-requests | tenant | — | create |
-| scan_profile | scan-profiles | tenant | — | list, get, create, update, delete |
-| scan_result | scan-results | tenant | project | list, get, create, update, delete |
-| scan_workflow | scan-workflows | tenant | — | list, get, delete |
-| scan_workflow_result | scan-workflow-results | tenant | — | list, get, delete |
-| semgrep_rule | semgrep-rules | tenant | — | list, get, create, update, delete |
-| version_upgrade | version-upgrades | tenant | — | list, get, delete |
-| vulnerability | vulnerabilities | oss | — | list, get |
+| APIKey | api-keys | tenant | — | list, get, create, delete |
+| AuditLog | audit-logs | tenant | — | list, get, create, delete |
+| AuthenticationLog | authentication-logs | system | — | list, get |
+| AuthorizationPolicy | authorization-policies | tenant | — | list, get, create, update, delete |
+| CodeOwners | codeowners | tenant | — | list, get, create, update, delete |
+| DependencyMetadata | dependency-metadata | oss | — | list, get, create, update, delete |
+| EndorLicense | endor-licenses | system | — | list, get |
+| Finding | findings | tenant | — | list, get, create, update, delete |
+| FindingLog | finding-logs | tenant | — | list, get, create, delete |
+| Installation | installations | tenant | — | list, get, create, update, delete |
+| Invitation | invitations | tenant | — | list, get, create, update, delete |
+| LinterResult | linter-results | tenant | — | list, get, create, delete |
+| Malware | malware | oss | — | list, get |
+| Metric | metrics | tenant | — | list, get, create, update, delete |
+| Namespace | namespaces | tenant | — | list, get, create, update, delete |
+| NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
+| PackageLicense | package-licenses | oss | — | list, get, create, update, delete |
+| PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
+| Policy | policies | tenant | — | list, get, create, update, delete |
+| PolicyTemplate | policy-templates | system | — | list, get |
+| Project | projects | tenant | — | list, get, create, update, delete |
+| QueryMalware | queries/malware | oss | — | create |
+| QueryVulnerability | queries/vulnerabilities | oss | — | create |
+| Repository | repositories | tenant | — | list, get, create, update, delete |
+| RepositoryVersion | repository-versions | tenant | project | list, get, create, update, delete |
+| ScanLogRequest | scan-log-requests | tenant | — | create |
+| ScanProfile | scan-profiles | tenant | — | list, get, create, update, delete |
+| ScanResult | scan-results | tenant | project | list, get, create, update, delete |
+| ScanWorkflow | scan-workflows | tenant | — | list, get, delete |
+| ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
+| SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
+| VersionUpgrade | version-upgrades | tenant | — | list, get, delete |
+| Vulnerability | vulnerabilities | oss | — | list, get |

@@ -38,7 +38,7 @@ class TestInstallation:
         from endorlabs.core.exceptions import ServerError
 
         try:
-            results = self.endor_root_client.installation.list(
+            results = self.endor_root_client.Installation.list(
                 list_params=ListParameters(
                     traverse=True, page_size=TEST_TRAVERSE_PAGE_SIZE
                 ),
@@ -58,7 +58,7 @@ class TestInstallation:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.installation.list(
+        result = client.Installation.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -72,7 +72,7 @@ class TestInstallation:
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        items = client.installation.list(
+        items = client.Installation.list(
             traverse=True,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -84,7 +84,7 @@ class TestInstallation:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.installation.get(item.uuid, namespace=ns)
+        got = client.Installation.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -113,7 +113,7 @@ class TestInstallation:
             page_size=TEST_TRAVERSE_PAGE_SIZE,
         )
 
-        filtered_results = self.endor_root_client.installation.list(
+        filtered_results = self.endor_root_client.Installation.list(
             list_params=list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -148,7 +148,7 @@ class TestInstallation:
         from endorlabs.core.exceptions import ValidationError
 
         with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.installation.get("invalid-uuid")
+            self.endor_root_client.Installation.get("invalid-uuid")
         assert exc_info.value.resource_uuid == "invalid-uuid"
         assert exc_info.value.operation == "get"
         assert exc_info.value.status_code == 400

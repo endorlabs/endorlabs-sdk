@@ -3,7 +3,7 @@
 EndorLicense represents a specific Endor license assigned to a tenant. This
 resource is system-owned: LIST is supported; GET, UPDATE, and DELETE return
 403 (only system can perform them). The Client exposes list() only; use
-client.endor_license.list().
+client.EndorLicense.list().
 """
 
 from __future__ import annotations

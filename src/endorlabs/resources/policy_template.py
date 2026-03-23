@@ -3,7 +3,7 @@
 Policy templates can be used to create policies from templates. This resource
 is system-owned: LIST is supported; GET, UPDATE, and DELETE return 403 (only
 system can perform them). The Client exposes list() only; use
-client.policy_template.list().
+client.PolicyTemplate.list().
 """
 
 from __future__ import annotations

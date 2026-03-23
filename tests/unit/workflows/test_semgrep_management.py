@@ -194,19 +194,19 @@ class TestImportRulesFromYaml:
         assert isinstance(result, ImportResult)
         assert result.skipped == 1
         assert result.created == 0
-        client.semgrep_rule.list.assert_not_called()
+        client.SemgrepRule.list.assert_not_called()
 
     def test_creates_new_rule(self, tmp_path: Path) -> None:
         f = tmp_path / "rule.yaml"
         f.write_text("rules:\n  - id: new-rule\n    message: hello\n")
 
         client = Mock()
-        client.semgrep_rule.list.return_value = []  # no existing rule
-        client.semgrep_rule.create.return_value = Mock(uuid="new-uuid")
+        client.SemgrepRule.list.return_value = []  # no existing rule
+        client.SemgrepRule.create.return_value = Mock(uuid="new-uuid")
 
         result = import_rules_from_yaml(client, "ns", [f])
         assert result.created == 1
-        client.semgrep_rule.create.assert_called_once()
+        client.SemgrepRule.create.assert_called_once()
 
     def test_skips_existing_without_force(self, tmp_path: Path) -> None:
         f = tmp_path / "rule.yaml"
@@ -215,7 +215,7 @@ class TestImportRulesFromYaml:
         existing_rule = Mock()
         existing_rule.uuid = "existing-uuid"
         client = Mock()
-        client.semgrep_rule.list.return_value = [existing_rule]
+        client.SemgrepRule.list.return_value = [existing_rule]
 
         result = import_rules_from_yaml(client, "ns", [f])
         assert result.skipped == 1
@@ -228,11 +228,11 @@ class TestImportRulesFromYaml:
         existing_rule = Mock()
         existing_rule.uuid = "existing-uuid"
         client = Mock()
-        client.semgrep_rule.list.return_value = [existing_rule]
+        client.SemgrepRule.list.return_value = [existing_rule]
 
         result = import_rules_from_yaml(client, "ns", [f], force=True)
         assert result.updated == 1
-        client.semgrep_rule.update.assert_called_once()
+        client.SemgrepRule.update.assert_called_once()
 
     def test_handles_parse_error(self, tmp_path: Path) -> None:
         f = tmp_path / "bad.yaml"
@@ -260,7 +260,7 @@ class TestExportRulesToYaml:
         rule.meta.name = "my-rule"
 
         client = Mock()
-        client.semgrep_rule.list.return_value = [rule]
+        client.SemgrepRule.list.return_value = [rule]
 
         result = export_rules_to_yaml(
             client, "ns", tmp_path, export_all=True, dry_run=True
@@ -277,7 +277,7 @@ class TestExportRulesToYaml:
         rule.meta.name = "my-rule"
 
         client = Mock()
-        client.semgrep_rule.list.return_value = [rule]
+        client.SemgrepRule.list.return_value = [rule]
 
         result = export_rules_to_yaml(client, "ns", tmp_path, export_all=True)
         assert result.exported == 1
@@ -288,7 +288,7 @@ class TestExportRulesToYaml:
 
     def test_no_matching_rules(self, tmp_path: Path) -> None:
         client = Mock()
-        client.semgrep_rule.list.return_value = []
+        client.SemgrepRule.list.return_value = []
 
         result = export_rules_to_yaml(client, "ns", tmp_path, export_all=True)
         assert result.total == 0
@@ -310,12 +310,12 @@ class TestCalibrateRules:
             disabled=True,
         )
         client = Mock()
-        client.semgrep_rule.list.return_value = [ai_rule]
+        client.SemgrepRule.list.return_value = [ai_rule]
 
         result = calibrate_rules(client, "ns", dry_run=True)
         assert result.enabled == 1
         assert result.disabled == 0
-        client.semgrep_rule.update.assert_not_called()
+        client.SemgrepRule.update.assert_not_called()
 
     def test_enables_ai_model_rules(self) -> None:
         ai_rule = _make_rule(
@@ -324,11 +324,11 @@ class TestCalibrateRules:
             disabled=True,
         )
         client = Mock()
-        client.semgrep_rule.list.return_value = [ai_rule]
+        client.SemgrepRule.list.return_value = [ai_rule]
 
         result = calibrate_rules(client, "ns")
         assert result.enabled == 1
-        client.semgrep_rule.update.assert_called_once()
+        client.SemgrepRule.update.assert_called_once()
 
     def test_disables_third_party_non_ai_rules(self) -> None:
         tp_rule = _make_rule(
@@ -346,7 +346,7 @@ class TestCalibrateRules:
         tp_rule.meta.name = "sql-injection"
 
         client = Mock()
-        client.semgrep_rule.list.return_value = [tp_rule]
+        client.SemgrepRule.list.return_value = [tp_rule]
 
         result = calibrate_rules(client, "ns")
         assert result.disabled == 1
@@ -367,11 +367,11 @@ class TestCalibrateRules:
         user_rule.meta.name = None
 
         client = Mock()
-        client.semgrep_rule.list.return_value = [user_rule]
+        client.SemgrepRule.list.return_value = [user_rule]
 
         result = calibrate_rules(client, "ns")
         assert result.skipped == 1
-        client.semgrep_rule.update.assert_not_called()
+        client.SemgrepRule.update.assert_not_called()
 
     def test_already_correct_counted(self) -> None:
         ai_rule = _make_rule(
@@ -380,7 +380,7 @@ class TestCalibrateRules:
             disabled=False,  # already enabled
         )
         client = Mock()
-        client.semgrep_rule.list.return_value = [ai_rule]
+        client.SemgrepRule.list.return_value = [ai_rule]
 
         result = calibrate_rules(client, "ns")
         assert result.already_correct == 1
@@ -393,8 +393,8 @@ class TestCalibrateRules:
             disabled=True,
         )
         client = Mock()
-        client.semgrep_rule.list.return_value = [ai_rule]
-        client.semgrep_rule.update.side_effect = RuntimeError("501 Method Not Allowed")
+        client.SemgrepRule.list.return_value = [ai_rule]
+        client.SemgrepRule.update.side_effect = RuntimeError("501 Method Not Allowed")
 
         result = calibrate_rules(client, "ns")
         assert result.failed == 1

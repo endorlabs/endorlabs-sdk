@@ -159,7 +159,7 @@ def pull_findings_context(
         if project_ns:
             list_kwargs["namespace"] = project_ns
 
-        findings = client.finding.list(**list_kwargs)
+        findings = client.Finding.list(**list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch findings: %s", exc)
         ctx.fetch_error = str(exc)
@@ -256,7 +256,7 @@ def pull_policies_context(
         if project_ns:
             list_kwargs["namespace"] = project_ns
 
-        policies = client.policy.list(**list_kwargs)
+        policies = client.Policy.list(**list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch policies: %s", exc)
         ctx.fetch_error = str(exc)
@@ -303,7 +303,7 @@ def pull_repository_versions_context(
             "max_pages": max_pages,
             "page_size": 100,
         }
-        versions = client.repository_version.list(**list_kwargs)
+        versions = client.RepositoryVersion.list(**list_kwargs)
     except Exception as exc:
         logger.warning("Unable to fetch repository versions: %s", exc)
         ctx.fetch_error = str(exc)

@@ -96,7 +96,7 @@ def _make_mock_client(
                     return value
         return all_results
 
-    client.project.list.side_effect = _list_side_effect
+    client.Project.list.side_effect = _list_side_effect
     return client
 
 
@@ -168,5 +168,5 @@ class TestFindProjectByRepositoryUrl:
             client, "my-tenant.my-ns", "https://github.com/org/repo"
         )
         # Verify namespace was passed to all list calls
-        for call in client.project.list.call_args_list:
+        for call in client.Project.list.call_args_list:
             assert call.kwargs.get("namespace") == "my-tenant.my-ns"

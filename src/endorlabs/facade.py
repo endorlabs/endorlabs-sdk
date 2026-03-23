@@ -198,6 +198,7 @@ class _ListableFacade(Generic[T]):
 
         Uses full pagination (list_all=True). With ``traverse=True`` and
         ``concurrent=True``, queries each namespace in parallel.
+        If any namespace query fails, raises after all queries complete.
 
         Args:
             traverse: Search child namespaces recursively (tenant-wide query).
@@ -234,11 +235,13 @@ class _ListableFacade(Generic[T]):
         Raises:
             ValueError: Missing namespace, unsupported parent, or concurrent
                 without traverse.
+            ConcurrentNamespaceQueryError: Any namespace query failed during
+                concurrent traversal.
 
         Example:
             List critical findings tenant-wide::
 
-                findings = client.finding.list(
+                findings = client.Finding.list(
                     traverse=True,
                     filter='spec.level==FINDING_LEVEL_CRITICAL'
                 )
@@ -315,7 +318,11 @@ class _ListableFacade(Generic[T]):
         parent: Any,
         **kwargs: Any,
     ) -> list[T]:
-        """Fetch namespaces with traverse, then query each in parallel; merge."""
+        """Fetch namespaces with traverse, then query each in parallel; merge.
+
+        Raises:
+            ConcurrentNamespaceQueryError: One or more namespace queries failed.
+        """
         from .resources.namespace import Namespace as NamespaceModel
         from .utils.parallel import execute_across_namespaces
 
@@ -433,7 +440,7 @@ class _ListableFacade(Generic[T]):
             ValueError: Missing namespace or concurrent without traverse.
 
         Example:
-            project = client.project.lookup(namespace='tenant.team', name='my-project')
+            project = client.Project.lookup(namespace='tenant.team', name='my-project')
 
         """
         if "list" not in self._supported_ops:
@@ -537,7 +544,7 @@ class _ListableFacade(Generic[T]):
             ValueError: Missing namespace or unsupported parent.
 
         Example:
-            for finding in client.finding.list_iter(traverse=True):
+            for finding in client.Finding.list_iter(traverse=True):
                 process(finding)
 
         """
@@ -656,8 +663,8 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             ValueError: Namespace required but not set.
 
         Example:
-            project = client.project.get('uuid-here', namespace='tenant.team')
-            updated = client.project.get(project)
+            project = client.Project.get('uuid-here', namespace='tenant.team')
+            updated = client.Project.get(project)
 
         """
         if "get" not in self._supported_ops:
@@ -719,7 +726,7 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             ValueError: Namespace required but not set.
 
         Example:
-            ns = client.namespace.create(name='my-namespace', namespace='tenant')
+            ns = client.Namespace.create(name='my-namespace', namespace='tenant')
 
         """
         if "create" not in self._supported_ops:
@@ -797,7 +804,7 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             ValueError: Missing namespace or immutable in update_mask.
 
         Example:
-            updated = client.project.update(project, meta_tags=['reviewed'])
+            updated = client.Project.update(project, meta_tags=['reviewed'])
 
         """
         if "update" not in self._supported_ops:
@@ -881,8 +888,8 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             ValueError: Namespace required but not set.
 
         Example:
-            client.project.delete(project)
-            deleted = client.project.delete(
+            client.Project.delete(project)
+            deleted = client.Project.delete(
                 'uuid', namespace='tenant.team', ignore_missing=True
             )
 
@@ -939,7 +946,7 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             ValueError: Missing namespace or no meta.
 
         Example:
-            updated = client.project.tag(project, tags=['reviewed', 'production'])
+            updated = client.Project.tag(project, tags=['reviewed', 'production'])
 
         """
         resource, uuid, ns, meta = self._resolve_for_tag(
@@ -975,7 +982,7 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             ValueError: Missing namespace or no meta.
 
         Example:
-            updated = client.project.untag(project, keys=['deprecated'])
+            updated = client.Project.untag(project, keys=['deprecated'])
 
         """
         resource, uuid, ns, meta = self._resolve_for_tag(
@@ -1039,8 +1046,8 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
 class ScanLogsFacade:
     """Facade for retrieving scan logs (request-based API; not in registry).
 
-    Use client.scan_logs.get_logs(scan_result_uuid) after obtaining a scan
-    result UUID (e.g. from client.scan_result.list() or .get()).
+    Use client.ScanLogs.get_logs(scan_result_uuid) after obtaining a scan
+    result UUID (e.g. from client.ScanResult.list() or .get()).
     """
 
     def __init__(self, client: APIClient, default_namespace: str | None) -> None:
@@ -1069,7 +1076,7 @@ class ScanLogsFacade:
         """Fetch log messages for a scan result (ScanLogRequest API).
 
         Args:
-            scan_result_uuid: UUID from client.scan_result.list() or .get().
+            scan_result_uuid: UUID from client.ScanResult.list() or .get().
             namespace: Target namespace; defaults to client tenant.
             max_entries: Max log entries (default 100).
             log_levels: Filter by level (ScanLogLevel); None = all.
@@ -1084,7 +1091,7 @@ class ScanLogsFacade:
             ValueError: Namespace required but not set.
 
         Example:
-            logs = client.scan_logs.get_logs(
+            logs = client.ScanLogs.get_logs(
                 scan_result_uuid='...', namespace='tenant.team'
             )
 

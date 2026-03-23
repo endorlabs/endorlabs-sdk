@@ -221,7 +221,7 @@ def _parse_project_target_choice(raw: str) -> ProjectTargetChoice:
 
 def _resolve_project_by_uuid(client: endorlabs.Client, project_uuid: str) -> Any | None:
     """Resolve a project UUID across namespaces using traverse search."""
-    projects = client.project.list(
+    projects = client.Project.list(
         filter=F("uuid") == project_uuid,
         traverse=True,
         max_pages=3,
@@ -294,7 +294,7 @@ def _summarize_findings(findings: list[Any]) -> tuple[Counter[str], Counter[str]
 def _project_has_scan_results(client: endorlabs.Client, project: Any) -> bool:
     """Return ``True`` when project has at least one scan result."""
     try:
-        scans = client.scan_result.list(parent=project, max_pages=1, page_size=1)
+        scans = client.ScanResult.list(parent=project, max_pages=1, page_size=1)
     except Exception:
         return False
     return bool(scans)
@@ -304,7 +304,7 @@ def _project_has_call_graph(client: endorlabs.Client, project: Any) -> bool:
     """Return ``True`` when project has at least one call graph package version."""
     namespace = _project_namespace(project)
     try:
-        pvs = client.package_version.list(
+        pvs = client.PackageVersion.list(
             namespace=namespace,
             filter=(
                 f'spec.project_uuid=="{project.uuid}"'
@@ -330,7 +330,7 @@ def _choose_project_from_search(
         "Project search text (repo/name; blank lists first results): ",
         default="",
     ).lower()
-    projects = client.project.list(
+    projects = client.Project.list(
         namespace=namespace,
         traverse=True,
         max_pages=5,
@@ -389,8 +389,8 @@ class TenantCatalog:
 
     def load(self, client: endorlabs.Client) -> None:
         """Pull all projects and namespaces using traverse mode."""
-        self.projects = client.project.list(traverse=True, max_pages=50, page_size=100)
-        self.namespaces = client.namespace.list(traverse=True)
+        self.projects = client.Project.list(traverse=True, max_pages=50, page_size=100)
+        self.namespaces = client.Namespace.list(traverse=True)
         self.project_index.clear()
         self.projects_by_uuid.clear()
         self.projects_by_name.clear()
@@ -441,15 +441,15 @@ class TenantCatalog:
 
 def _wizard_discovery(client: endorlabs.Client) -> None:
     """Show lightweight namespace/project discovery summary."""
-    namespaces = client.namespace.list(traverse=True)
-    projects = client.project.list(max_pages=1, page_size=25)
+    namespaces = client.Namespace.list(traverse=True)
+    projects = client.Project.list(max_pages=1, page_size=25)
     _log(f"  Namespaces discovered: {len(namespaces)}", style="green")
     _log(f"  Projects on first page: {len(projects)}", style="green")
 
 
 def _find_anchor_project(client: endorlabs.Client, namespace: str) -> Any | None:
     """Pick a stable project anchor for walkthrough sections."""
-    projects = client.project.list(
+    projects = client.Project.list(
         namespace=namespace,
         traverse=True,
         max_pages=3,
@@ -477,12 +477,12 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
             _log("  (continuing to next section)", style="dim")
 
     def _section_1() -> None:
-        namespaces = client.namespace.list(traverse=True)
+        namespaces = client.Namespace.list(traverse=True)
         _log(f"  Namespaces found: {len(namespaces)}")
         for ns in namespaces[:5]:
             full = ns.spec.full_name if ns.spec else ns.meta.name
             _log(f"    - {full}")
-        projects = client.project.list(namespace=namespace, max_pages=1, page_size=25)
+        projects = client.Project.list(namespace=namespace, max_pages=1, page_size=25)
         _log(f"  Projects (first page): {len(projects)}")
         for proj in projects[:3]:
             _log(f"    - {_project_name(proj)}")
@@ -491,18 +491,18 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
         if anchor is None:
             _log("  No project found for lookup demo.")
             return
-        looked_up = client.project.lookup(name=_project_name(anchor), traverse=True)
+        looked_up = client.Project.lookup(name=_project_name(anchor), traverse=True)
         _log(f"  Found project: {_project_name(looked_up)}")
         _log(f"  UUID:          {looked_up.uuid}")
 
     def _section_3() -> None:
-        critical = client.finding.list(
+        critical = client.Finding.list(
             filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",
             traverse=True,
             max_pages=1,
         )
         _log(f"  Critical findings (first page): {len(critical)}")
-        high_reachable = client.finding.list(
+        high_reachable = client.Finding.list(
             filter=(
                 F("spec.level").is_in("FINDING_LEVEL_CRITICAL", "FINDING_LEVEL_HIGH")
                 & F("spec.finding_tags").contains("FINDING_TAGS_REACHABLE_FUNCTION")
@@ -516,19 +516,19 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
         if anchor is None:
             _log("  No project found for cross-resource join demo.")
             return
-        findings = client.finding.list(
+        findings = client.Finding.list(
             filter=(F("spec.project_uuid") == anchor.uuid),
             max_pages=1,
         )
         _log(f"  Findings for project: {len(findings)}")
-        scans = client.scan_result.list(parent=anchor, max_pages=1, page_size=1)
+        scans = client.ScanResult.list(parent=anchor, max_pages=1, page_size=1)
         _log(f"  Scan results for project: {len(scans)}")
         if scans:
             _log(f"    Latest scan UUID: {scans[0].uuid}")
 
     def _section_5() -> None:
         count = 0
-        for finding in client.finding.list_iter(traverse=True, max_pages=1):
+        for finding in client.Finding.list_iter(traverse=True, max_pages=1):
             count += 1
             if count <= 3:
                 _log(f"    - [{finding.spec.level}] {finding.spec.summary}")
@@ -546,16 +546,16 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
 
     def _section_7() -> None:
         try:
-            _ = client.project.lookup(name="nonexistent-repo-that-does-not-exist")
+            _ = client.Project.lookup(name="nonexistent-repo-that-does-not-exist")
         except Exception as exc:
             _log(f"  Caught expected lookup error: {type(exc).__name__}")
         try:
-            _ = client.project.list(filter='meta.name matches "["')
+            _ = client.Project.list(filter='meta.name matches "["')
         except Exception as exc:
             _log(f"  Caught expected validation error: {type(exc).__name__}")
 
     def _section_8() -> None:
-        projects = client.project.list(
+        projects = client.Project.list(
             namespace=namespace,
             mask="meta.name,uuid",
             max_pages=1,
@@ -569,14 +569,14 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
         if anchor is None:
             _log("  No project found for workflow demo.")
             return
-        findings = client.finding.list(
+        findings = client.Finding.list(
             filter=(F("spec.project_uuid") == anchor.uuid),
             max_pages=2,
             page_size=100,
         )
         scope_label = f"project {_project_name(anchor)}"
         if not findings:
-            findings = client.finding.list(traverse=True, max_pages=1, page_size=100)
+            findings = client.Finding.list(traverse=True, max_pages=1, page_size=100)
             scope_label = "tenant sample"
 
         if not findings:
@@ -641,7 +641,7 @@ def _stream_scan_logs_for_project(
             project.uuid,
         )
         try:
-            _ = client.project.update(
+            _ = client.Project.update(
                 project,
                 scan_state="SCAN_STATE_REQUEST_FULL_RESCAN",
                 namespace=namespace,
@@ -658,7 +658,7 @@ def _stream_scan_logs_for_project(
             logger.debug("scan_trigger failed: %s", exc, exc_info=True)
             _log(f"  Scan trigger failed: {exc}", style="yellow")
 
-    scans = client.scan_result.list(
+    scans = client.ScanResult.list(
         parent=project,
         sort_by="meta.create_time",
         desc=True,
@@ -703,7 +703,7 @@ def _stream_scan_logs_for_project(
                 admin_filter=None,
             ),
         )
-        result = client.scan_log_request.create(payload, namespace=namespace)
+        result = client.ScanLogRequest.create(payload, namespace=namespace)
         lines: list[str] = []
         messages = result.spec.log_messages if result.spec else None
         for msg in messages or []:
@@ -740,7 +740,7 @@ def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
         _log("  Could not resolve project namespace for call graph.", style="yellow")
         return
 
-    pvs = client.package_version.list(
+    pvs = client.PackageVersion.list(
         namespace=namespace,
         filter=(
             f'spec.project_uuid=="{project.uuid}" AND spec.call_graph_available==true'

@@ -2,7 +2,7 @@
 
 Single source of truth: the registry. Run from repo root with:
   uv run python scripts/generate_client_stub.py
-Writes src/endorlabs/client_surface.pyi so Pyright types client.project, etc.
+Writes src/endorlabs/client_surface.pyi so Pyright types client.Project, etc.
 
 Each resource gets a dedicated stub class (e.g. ``_ProjectFacade``) that
 exposes only the methods the resource actually supports, with concrete
@@ -71,7 +71,10 @@ def _load_description_overlay() -> dict[str, str]:
 
 
 def _default_description_from_attr(attr_name: str) -> str:
-    return f"{attr_name.replace('_', ' ').title()} resource facade."
+    """Fallback stub description (overlay keys match endorctl kind / model class name)."""
+    if "_" in attr_name:
+        return f"{attr_name.replace('_', ' ').title()} resource facade."
+    return f"{attr_name} resource facade."
 
 # ---------------------------------------------------------------------------
 # Signature helpers
@@ -432,7 +435,6 @@ def main() -> None:  # noqa: D103
     # isort requires one contiguous first-party block in alpha order.
     relative_imports: dict[str, list[str]] = {
         ".api_client": ["APIClient"],
-        ".facade": ["ScanLogsFacade"],
         ".core.filter": ["FilterExpression"],
         ".core.types": ["ListParameters"],
     }
@@ -445,6 +447,15 @@ def main() -> None:  # noqa: D103
             relative_imports[mod] = []
         if name not in relative_imports[mod]:
             relative_imports[mod].append(name)
+
+    for custom in CUSTOM_FACADE_REGISTRY:
+        rel = custom.pyi_import_module.strip()
+        if not rel.startswith("."):
+            rel = f".{rel}"
+        if rel not in relative_imports:
+            relative_imports[rel] = []
+        if custom.pyi_facade_class not in relative_imports[rel]:
+            relative_imports[rel].append(custom.pyi_facade_class)
 
     for mod in sorted(relative_imports.keys()):
         names = sorted(relative_imports[mod])
@@ -494,14 +505,9 @@ def main() -> None:  # noqa: D103
         if desc:
             lines.append(f'    """{desc}"""')
     for custom in CUSTOM_FACADE_REGISTRY:
-        attr = custom.attr_name
-        if attr == "scan_logs":
-            lines.append(f"    {attr}: ScanLogsFacade")
-            lines.append(
-                '    """Scan logs facade. Use get_logs() to fetch log messages."""'
-            )
-        else:
-            lines.append(f"    {attr}: Any  # Custom facade; add type when known")
+        lines.append(f"    {custom.attr_name}: {custom.pyi_facade_class}")
+        if custom.pyi_attr_doc:
+            lines.append(f'    """{custom.pyi_attr_doc}"""')
     lines.append("")
     lines.append("    _client: APIClient | None")
     lines.append("")

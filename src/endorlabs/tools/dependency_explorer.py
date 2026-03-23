@@ -1294,7 +1294,7 @@ def process_project(
     logger.info("  Fetching PackageVersions ...")
     from endorlabs import F
 
-    pvs = client.package_version.list(  # type: ignore[attr-defined]
+    pvs = client.PackageVersion.list(  # type: ignore[attr-defined]
         namespace=project_ns,
         filter=F("spec.project_uuid") == project.uuid,
         max_pages=1,
