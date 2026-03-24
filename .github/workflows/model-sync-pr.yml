@@ -46,11 +46,14 @@ jobs:
           OPENAPI_SHA256="${{ github.event.client_payload.openapi_sha256 || '' }}"
           OPENAPI_SOURCE_URL="${{ github.event.client_payload.openapi_source_url || env.OPENAPI_SOURCE_URL_DEFAULT }}"
           REASON="${{ github.event.client_payload.reason || 'manual' }}"
+          BRANCH_TIMESTAMP="$(date -u +'%Y-%m-%d-%H%M%S')"
+          BRANCH_NAME="chore/model-sync-${BRANCH_TIMESTAMP}"
 
           echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
           echo "openapi_sha256=$OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
           echo "openapi_source_url=$OPENAPI_SOURCE_URL" >> "$GITHUB_OUTPUT"
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Guard against unsupported dispatch payload
         if: github.event_name == 'repository_dispatch'
@@ -78,20 +81,6 @@ jobs:
             exit 1
           fi
           echo "✅ OpenAPI hash verified: $ACTUAL"
-
-      - name: Prepare sync branch
-        env:
-          BRANCH_NAME: chore/model-sync-auto
-          BASE_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          set -euo pipefail
-          git fetch origin "$BASE_BRANCH"
-          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
-            git fetch origin "$BRANCH_NAME"
-            git checkout -B "$BRANCH_NAME" "origin/$BRANCH_NAME"
-          else
-            git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
-          fi
 
       - name: Run canonical model sync generation
         run: |
@@ -180,11 +169,14 @@ jobs:
           OPENAPI_SHA256="${{ github.event.client_payload.openapi_sha256 || '' }}"
           OPENAPI_SOURCE_URL="${{ github.event.client_payload.openapi_source_url || env.OPENAPI_SOURCE_URL_DEFAULT }}"
           REASON="${{ github.event.client_payload.reason || 'manual' }}"
+          BRANCH_TIMESTAMP="$(date -u +'%Y-%m-%d-%H%M%S')"
+          BRANCH_NAME="chore/model-sync-${BRANCH_TIMESTAMP}"
 
           echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
           echo "openapi_sha256=$OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
           echo "openapi_source_url=$OPENAPI_SOURCE_URL" >> "$GITHUB_OUTPUT"
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Guard against unsupported dispatch payload
         if: github.event_name == 'repository_dispatch'
@@ -253,11 +245,11 @@ jobs:
           echo "$FILES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Create or update model-sync PR (native git + gh)
+      - name: Create model-sync PR (native git + gh)
         if: steps.diff_scope.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH_NAME: chore/model-sync-auto
+          BRANCH_NAME: ${{ steps.trigger.outputs.branch_name }}
           BASE_BRANCH: ${{ github.event.repository.default_branch }}
           REASON: ${{ steps.trigger.outputs.reason }}
           ENDORCTL_VERSION: ${{ steps.trigger.outputs.endorctl_version }}
@@ -268,6 +260,8 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "$BASE_BRANCH"
+          git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
 
           git add src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
           git add -f workspace/model-sync
@@ -279,12 +273,12 @@ jobs:
           git commit -m "chore: sync generated model artifacts"
           git push -u origin "$BRANCH_NAME"
 
-          PR_NUMBER="$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number // empty')"
           PR_BODY="$(cat <<EOF
           ## Summary
           - Regenerated model-sync artifacts from canonical pipeline.
           - Updated runtime generated contract/models, client stub, and generated reference docs.
           - Trigger reason: \`$REASON\`
+          - Generated branch: \`$BRANCH_NAME\`
 
           ## Trigger metadata
           - endorctl version: \`$ENDORCTL_VERSION\`
@@ -293,18 +287,11 @@ jobs:
           EOF
           )"
 
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr edit "$PR_NUMBER" \
-              --base "$BASE_BRANCH" \
-              --title "chore: sync generated model artifacts" \
-              --body "$PR_BODY"
-          else
-            gh pr create \
-              --base "$BASE_BRANCH" \
-              --head "$BRANCH_NAME" \
-              --title "chore: sync generated model artifacts" \
-              --body "$PR_BODY"
-          fi
+          gh pr create \
+            --base "$BASE_BRANCH" \
+            --head "$BRANCH_NAME" \
+            --title "chore: sync generated model artifacts ($BRANCH_NAME)" \
+            --body "$PR_BODY"
 
       - name: Publish Workflow Summary
         if: always()
@@ -347,7 +334,7 @@ jobs:
             fi
             echo "### Skips/Reasons"
             echo "- Integration tests are skipped when required ENDOR_* vars/secrets are not fully configured."
-            echo "- PR update is skipped when generated output has no file changes."
+            echo "- PR creation is skipped when generated output has no file changes."
             echo ""
             echo "### Next Action"
             echo "- If changes were detected, verify/update the generated-artifacts PR content and merge when CI is green."
