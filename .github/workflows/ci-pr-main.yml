@@ -104,7 +104,7 @@ jobs:
       python: ${{ steps.changes.outputs.python }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # full history for accurate diff
 
@@ -191,10 +191,10 @@ jobs:
       cache-key: ${{ steps.cache-key.outputs.key }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Python
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -204,7 +204,7 @@ jobs:
           echo "key=${{ runner.os }}-uv-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}" >> $GITHUB_OUTPUT
 
       - name: Cache UV dependencies
-        uses: actions/cache@v5.0.2
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: ~/.cache/uv
           key: ${{ steps.cache-key.outputs.key }}
@@ -214,7 +214,7 @@ jobs:
 
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v7.2.0
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
         with:
           version: ${{ env.UV_VERSION }}
 
@@ -235,7 +235,7 @@ jobs:
       needs.detect-changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
@@ -383,7 +383,7 @@ jobs:
       needs.detect-changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
@@ -430,7 +430,7 @@ jobs:
       )
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
@@ -486,7 +486,7 @@ jobs:
       needs.detect-changes.outputs.ci == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
