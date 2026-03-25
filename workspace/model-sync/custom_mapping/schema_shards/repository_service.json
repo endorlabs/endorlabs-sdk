@@ -1,0 +1,694 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "GroupResponseGroupData": {
+      "description": "Information about objects matching the given key.",
+      "properties": {
+        "aggregation_count": {
+          "$ref": "#/definitions/v1CountResponse",
+          "description": "Number of objects in group.\nThis field is always set."
+        },
+        "aggregation_uuids": {
+          "description": "List of UUIDs of the objects in the group.\nOnly populated if show_aggregation_uuids is set.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "aggregation_value": {
+          "$ref": "#/definitions/v1GroupAggregationValueResponse",
+          "description": "Value of the aggregation operation as calculated by the query."
+        },
+        "unique_counts": {
+          "additionalProperties": {
+            "$ref": "#/definitions/v1CountResponse"
+          },
+          "description": "Map of counts for the given unique_count_paths fields.\nOnly populated if unique_count_paths is set.",
+          "type": "object"
+        },
+        "unique_values": {
+          "additionalProperties": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "description": "Map of values for the given unique_value_paths fields.\nOnly populated if unique_value_paths is set.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "IngestedObjectIngestedObjectStatus": {
+      "default": "INGESTED_OBJECT_STATUS_UNSPECIFIED",
+      "description": " - INGESTED_OBJECT_STATUS_LIGHT: Example: Use when a user exists because they are attached to a commit,\nbut are not found on a direct lookup.",
+      "enum": [
+        "INGESTED_OBJECT_STATUS_UNSPECIFIED",
+        "INGESTED_OBJECT_STATUS_FOUND",
+        "INGESTED_OBJECT_STATUS_NOT_FOUND",
+        "INGESTED_OBJECT_STATUS_LIGHT"
+      ],
+      "type": "string"
+    },
+    "RepositoryServiceCreateRepositoryBody": {
+      "description": "Repository represents the ingested information about a source control repository.\nA repository may refer to any type of source control repository, such as GitLab or GitHub.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested object."
+        },
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata required for all objects."
+        },
+        "spec": {
+          "$ref": "#/definitions/v1RepositorySpec",
+          "description": "Repository specifications."
+        },
+        "tenant_meta": {
+          "description": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+          "title": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+          "type": "object"
+        },
+        "uuid": {
+          "description": "The UUID of the source control repository.",
+          "readOnly": true,
+          "type": "string",
+          "x-endor-name": "Repository UUID"
+        }
+      },
+      "required": [
+        "meta",
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "RepositoryServiceUpdateRepositoryBody": {
+      "description": "Request to update the repository.",
+      "properties": {
+        "object": {
+          "description": "Repository represents the ingested information about a source control repository.\nA repository may refer to any type of source control repository, such as GitLab or GitHub.",
+          "properties": {
+            "ingested_object": {
+              "$ref": "#/definitions/v1IngestedObject",
+              "description": "Raw ingested object."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1RepositorySpec",
+              "description": "Repository specifications."
+            },
+            "tenant_meta": {
+              "description": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+              "title": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the source control repository.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "Repository UUID"
+            }
+          },
+          "type": "object"
+        },
+        "request": {
+          "$ref": "#/definitions/v1UpdateRequest"
+        }
+      },
+      "required": [
+        "meta",
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "endorv1Tag": {
+      "description": "The list of tags associated with commits. It is used to mark an individual point in the source control repository's history.",
+      "properties": {
+        "commit_date": {
+          "format": "date-time",
+          "title": "The commit date of the tag",
+          "type": "string"
+        },
+        "name": {
+          "description": "The display name of a tag.",
+          "type": "string",
+          "x-endor-name": "Tag Name"
+        },
+        "sha": {
+          "description": "The commit SHA of tag references.",
+          "type": "string",
+          "x-endor-name": "Tag Commit SHA"
+        }
+      },
+      "type": "object"
+    },
+    "googleprotobufAny": {
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }",
+      "properties": {
+        "@type": {
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "v1BranchProtection": {
+      "description": "The list of branch protection rules for protected branches.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested branch protection rule object."
+        }
+      },
+      "required": [
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "v1CountResponse": {
+      "description": "Response to a list count request.",
+      "properties": {
+        "count": {
+          "description": "Number of objects matching the given list parameters.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1GroupAggregationValueResponse": {
+      "description": "GroupAggregationValueResponse returns the value of the aggregation if\nrequested.",
+      "properties": {
+        "value": {
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "v1GroupResponse": {
+      "description": "Response to a list group request.",
+      "properties": {
+        "groups": {
+          "additionalProperties": {
+            "$ref": "#/definitions/GroupResponseGroupData"
+          },
+          "description": "Map indexed by values of the fields specified in aggregation_paths,\nfor example, {\"[{\"key\":\"meta.kind\",\"value\":\"Project\"}]\": {\n\"aggregation_count\": { \"count\": 1649 } } }.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "v1IndexData": {
+      "description": "IndexData is used to index the resource for search. It's an internal\nobject.",
+      "properties": {
+        "data": {
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
+        "search_score": {
+          "description": "search_score is the score of the resource for search. Internal use only.",
+          "format": "float",
+          "readOnly": true,
+          "type": "number"
+        },
+        "tenant": {
+          "readOnly": true,
+          "type": "string"
+        },
+        "will_be_deleted_at": {
+          "description": "Time that the resource will be deleted.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "x-internal": true
+    },
+    "v1IngestedObject": {
+      "description": "Raw ingested object from a 3rd party source,\nalong with any additional metadata we want\nto add to the object.",
+      "properties": {
+        "ingestion_time": {
+          "description": "Time the object was last ingested.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "raw": {
+          "description": "Generic representation of the object.",
+          "type": "object"
+        },
+        "status": {
+          "$ref": "#/definitions/IngestedObjectIngestedObjectStatus",
+          "description": "Current status of the ingested object."
+        }
+      },
+      "required": [
+        "raw",
+        "ingestion_time",
+        "status"
+      ],
+      "type": "object"
+    },
+    "v1Languages": {
+      "description": "The languages used and bytes of code for each language in the source control repository.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested object."
+        }
+      },
+      "required": [
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "v1ListRepositoriesResponse": {
+      "description": "Response returned for requests to list repositories.",
+      "properties": {
+        "count_response": {
+          "$ref": "#/definitions/v1CountResponse"
+        },
+        "group_response": {
+          "$ref": "#/definitions/v1GroupResponse"
+        },
+        "list": {
+          "$ref": "#/definitions/v1ListRepositoriesResponseList"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListRepositoriesResponseList": {
+      "properties": {
+        "objects": {
+          "items": {
+            "$ref": "#/definitions/v1Repository",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "response": {
+          "$ref": "#/definitions/v1ListResponse"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListResponse": {
+      "description": "Response to a list request.",
+      "properties": {
+        "next_page_id": {
+          "description": "The UUID of last message retrieved.",
+          "type": "string"
+        },
+        "next_page_token": {
+          "description": "Pagination token that can be used to retrieve the next page of results.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1Meta": {
+      "description": "Common fields for all Endor Labs resources.",
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Annotations can be used to attach metadata to a resource message.\nAnnotation values can be small or large, structured or unstructured,\nand may include characters not permitted by labels.\nThe keys may contain alphanumerics, underscores (_), dots (.) and dashes\n(-). The values of an annotation must be 16384 bytes or smaller.",
+          "type": "object"
+        },
+        "create_time": {
+          "description": "Time the resource was created.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        },
+        "created_by": {
+          "description": "Name and authentication source of the user who created the object,\nfor example, ewok@endor.ai@google@api-key.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "description": {
+          "description": "Resource description. Must be less than 1024 bytes.",
+          "type": "string"
+        },
+        "index_data": {
+          "$ref": "#/definitions/v1IndexData",
+          "description": "Index data for the object.",
+          "readOnly": true
+        },
+        "kind": {
+          "description": "Resource kind, for example, HelloResponse.\nAuto-generated using the protobuf message proto.MessageName().Name().",
+          "readOnly": true,
+          "type": "string"
+        },
+        "name": {
+          "description": "Resource name. Must be 63 characters or less.",
+          "type": "string",
+          "x-endor-name": "Name"
+        },
+        "parent_kind": {
+          "description": "Parent object resource kind, for example, Project.",
+          "type": "string",
+          "x-endor-name": "Parent Resource"
+        },
+        "parent_uuid": {
+          "description": "Parent object UUID.",
+          "type": "string",
+          "x-endor-name": "Parent UUID"
+        },
+        "references": {
+          "additionalProperties": {
+            "$ref": "#/definitions/googleprotobufAny"
+          },
+          "description": "Map of objects referenced in a query API.",
+          "readOnly": true,
+          "type": "object"
+        },
+        "tags": {
+          "description": "List of tags attached to the resource.\nTags can be used to select objects and to find collections of objects that\nsatisfy certain conditions. A tag must be 63 characters or less.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-endor-name": "Custom Tags"
+        },
+        "update_time": {
+          "description": "Time the resource was last updated.\nNote: Updated on all create/patch/delete operations.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        },
+        "updated_by": {
+          "description": "Name and authentication source of the last user who updated the object,\nfor example, vulnerabilityingestor@endor.ai@x509.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "upsert_time": {
+          "description": "Time the resource was last upserted.\n\nNote:\ncreate_time is only set the first time the resource is created.\nupsert_time is set every time the resource is upseted.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        },
+        "version": {
+          "description": "Message version.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "v1Organization": {
+      "description": "The ingested information about an organization.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested organization object."
+        }
+      },
+      "required": [
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "v1PlatformAccount": {
+      "description": "PlatformAccount represents an account of a user to third-party site like GitHub/Gitlab or some package platform.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested object."
+        },
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata required for all objects."
+        },
+        "spec": {
+          "$ref": "#/definitions/v1PlatformAccountSpec",
+          "description": "The details of the platform account."
+        },
+        "tenant_meta": {
+          "$ref": "#/definitions/v1TenantMeta",
+          "description": "Platform accounts are associated with a tenant.\nPublic accounts will be under a public tenant."
+        },
+        "uuid": {
+          "description": "The UUID of a platform account.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "meta",
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "v1PlatformAccountSpec": {
+      "properties": {
+        "create_time": {
+          "description": "Create time of the platform account.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "email": {
+          "description": "The email of the platform account.",
+          "type": "string"
+        },
+        "external_id": {
+          "description": "The ID of the platform account in the orginal platform.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the platform account.",
+          "type": "string"
+        },
+        "platform_source": {
+          "$ref": "#/definitions/v1PlatformSource",
+          "description": "The platform where this platform account was discovered."
+        },
+        "update_time": {
+          "description": "Update time of the platform account.",
+          "format": "date-time",
+          "type": "string"
+        }
+      },
+      "required": [
+        "platform_source",
+        "external_id"
+      ],
+      "type": "object"
+    },
+    "v1PlatformSource": {
+      "default": "PLATFORM_SOURCE_UNSPECIFIED",
+      "description": "Type of source control platform a resource was discovered on.",
+      "enum": [
+        "PLATFORM_SOURCE_UNSPECIFIED",
+        "PLATFORM_SOURCE_GITHUB",
+        "PLATFORM_SOURCE_GITLAB",
+        "PLATFORM_SOURCE_GITSERVER",
+        "PLATFORM_SOURCE_BITBUCKET",
+        "PLATFORM_SOURCE_BINARY",
+        "PLATFORM_SOURCE_HUGGING_FACE",
+        "PLATFORM_SOURCE_AZURE",
+        "PLATFORM_SOURCE_ARCHIVE",
+        "PLATFORM_SOURCE_EXTERNAL_AI_SERVICE",
+        "PLATFORM_SOURCE_GITHUB_ENTERPRISE"
+      ],
+      "type": "string"
+    },
+    "v1Repository": {
+      "description": "Repository represents the ingested information about a source control repository.\nA repository may refer to any type of source control repository, such as GitLab or GitHub.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested object."
+        },
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata required for all objects."
+        },
+        "spec": {
+          "$ref": "#/definitions/v1RepositorySpec",
+          "description": "Repository specifications."
+        },
+        "tenant_meta": {
+          "$ref": "#/definitions/v1TenantMeta",
+          "description": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant."
+        },
+        "uuid": {
+          "description": "The UUID of the source control repository.",
+          "readOnly": true,
+          "type": "string",
+          "x-endor-name": "Repository UUID"
+        }
+      },
+      "required": [
+        "meta",
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "v1RepositoryLicense": {
+      "description": "Contains information related to a source control repository software license.",
+      "properties": {
+        "ingested_object": {
+          "$ref": "#/definitions/v1IngestedObject",
+          "description": "Raw ingested repository software licence object."
+        },
+        "name": {
+          "description": "Name of the source control repository software license.",
+          "type": "string",
+          "x-endor-name": "License Name"
+        }
+      },
+      "required": [
+        "ingested_object"
+      ],
+      "type": "object"
+    },
+    "v1RepositorySpec": {
+      "properties": {
+        "branch_protections": {
+          "additionalProperties": {
+            "$ref": "#/definitions/v1BranchProtection"
+          },
+          "description": "Branch protections is a map of branch name to its github branch protection rules.",
+          "type": "object"
+        },
+        "commit_hashes": {
+          "description": "Commit hashes contains a list of all of the commit presents in the repository.\n\nA commit hash contains all commits branches that were already ingested.\n\nFor example: with branch A, branch B and branch C, where branch A and branch B were\ningested, the array contains the union of commits of branch A and branch B.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "contributors": {
+          "description": "Contributors represents all account external_ids that have been seen throughout the ingestion.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "create_time": {
+          "description": "Create time of the repository in the platform.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "default_branch": {
+          "description": "The default branch of the source control repository.",
+          "type": "string",
+          "x-endor-name": "Default Branch"
+        },
+        "external_id": {
+          "description": "The unique identifier of the repository in the source platform before ingestion.",
+          "type": "string"
+        },
+        "http_clone_url": {
+          "description": "The HTTP clone URL of the project.\nFor example, https://github.com/yarpc/yarpc-go.git.",
+          "type": "string",
+          "x-endor-name": "Git Clone URL"
+        },
+        "languages": {
+          "$ref": "#/definitions/v1Languages",
+          "description": "The languages of the repository."
+        },
+        "org": {
+          "$ref": "#/definitions/v1Organization",
+          "description": "Org contains the github organization information available for this repository."
+        },
+        "owner": {
+          "$ref": "#/definitions/v1PlatformAccount",
+          "description": "Determines the owner of the repository."
+        },
+        "platform_source": {
+          "$ref": "#/definitions/v1PlatformSource",
+          "description": "The source control platform to which the platform account belongs.",
+          "x-endor-name": "Source Control Platform"
+        },
+        "repository_license": {
+          "$ref": "#/definitions/v1RepositoryLicense",
+          "description": "The license of the repository."
+        },
+        "tags": {
+          "description": "The tags of the repository.",
+          "items": {
+            "$ref": "#/definitions/endorv1Tag",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "update_time": {
+          "description": "Update time of the repository in the platform.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "vulnerability_alerts_enabled": {
+          "description": "Denotes whether vulnerability alerts have been enabled on the source control repository.",
+          "type": "boolean",
+          "x-endor-name": "Vulnerability Subscriber"
+        }
+      },
+      "required": [
+        "platform_source",
+        "http_clone_url",
+        "default_branch"
+      ],
+      "type": "object"
+    },
+    "v1TenantMeta": {
+      "description": "Tenant related data for the tenant containing the resource.",
+      "properties": {
+        "namespace": {
+          "description": "Namespaces are a way to organize organizational units into virtual\ngroupings of resources. Namespaces must be a fully qualified name,\nfor example, the child namespace of namespace \"endor.prod\" called \"app\"\nis called \"endor.prod.app\".",
+          "type": "string",
+          "x-endor-name": "Namespace"
+        }
+      },
+      "required": [
+        "namespace"
+      ],
+      "type": "object"
+    },
+    "v1UpdateRequest": {
+      "description": "Message used for all update requests.",
+      "properties": {
+        "force": {
+          "description": "Force will force the update of the resource if any\nchecks fail.",
+          "type": "boolean"
+        },
+        "update_mask": {
+          "description": "Fields to update. Defaults to all fields.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "RepositoryServiceCreateRepositoryBody": {
+      "$ref": "#/definitions/RepositoryServiceCreateRepositoryBody"
+    },
+    "RepositoryServiceUpdateRepositoryBody": {
+      "$ref": "#/definitions/RepositoryServiceUpdateRepositoryBody"
+    },
+    "v1ListRepositoriesResponse": {
+      "$ref": "#/definitions/v1ListRepositoriesResponse"
+    },
+    "v1Repository": {
+      "$ref": "#/definitions/v1Repository"
+    }
+  },
+  "title": "repository_service",
+  "type": "object"
+}
