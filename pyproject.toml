@@ -29,12 +29,6 @@ context = [
     "defusedxml==0.7.1",
     "markdownify==1.2.0",
 ]
-agent = [
-    "langgraph==1.0.7",
-    "langchain-openai==1.1.7",
-    "langchain-google-genai[experimental]==4.2.0",
-    "rich>=13.0",
-]
 [project.scripts]
 endor-demo = "endorlabs._demo.demo_cli:main"
 endor-context = "endorlabs.context.cli:main"
