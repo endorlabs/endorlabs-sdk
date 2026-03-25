@@ -1,0 +1,56 @@
+rules:
+  - id: github-actions-third-party-action-unpinned-sha
+    languages:
+      - regex
+    message: |
+      Problem:
+      GitHub Actions workflow imports a third-party action without pinning to
+      an immutable commit SHA.
+
+      Refs like `@v4`, `@v2`, `@main`, or other non-SHA values are mutable and
+      can be retagged or changed upstream. This weakens supply-chain integrity.
+
+      Solution:
+      Pin third-party actions to a full 40-character commit SHA:
+      `uses: owner/repo/path@<40-hex-sha>`.
+    metadata:
+      category: security
+      confidence: HIGH
+      cwe:
+        - "CWE-494: Download of Code Without Integrity Check"
+      description: >-
+        Third-party GitHub Actions imports must be pinned to immutable
+        40-character commit SHAs.
+      endor-category: vulnerability
+      endor-rule-origin:
+        license: Apache-2.0
+        url: https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions
+      endor-tags:
+        - A06:2021
+        - Supply-Chain
+        - GitHub-Actions
+      endor-targets:
+        - ENDOR_TARGET_REPOSITORY
+      explanation: >-
+        Mutable action refs (tags, branches, and other symbolic references)
+        permit upstream changes without repository updates. Pinning to a full
+        commit SHA provides immutability and reduces CI/CD supply-chain risk.
+      impact: HIGH
+      owasp:
+        - A06:2021-Vulnerable and Outdated Components
+      references:
+        - https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions#using-third-party-actions
+      remediation: >-
+        Replace non-SHA refs in `uses:` statements with full 40-character
+        commit SHAs for external actions.
+      security-severity: High
+      version: v1.0.0
+    severity: WARNING
+    patterns:
+      - pattern-regex: (?m)^\s*uses:\s*(?!\./)(?!docker://)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)?@(?![a-fA-F0-9]{40}(?:\s|$|#))[^\s#]+
+    paths:
+      include:
+        - .github/workflows/*.yml
+        - .github/workflows/*.yaml
+        - .github/actions/**/action.yml
+        - .github/actions/**/action.yaml
