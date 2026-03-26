@@ -44,18 +44,20 @@ rules:
         Replace non-SHA refs in `uses:` statements with full 40-character
         commit SHAs for external actions.
       security-severity: High
-      version: v1.1.0
+      version: v1.2.0
     severity: WARNING
     patterns:
       - pattern-regex: |
           (?mx)
           ^\s*[-]?\s*uses:\s*
+          ['"]?
           (?!\./)                      # local action
           (?!docker://)                # docker action reference
           [A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)* # owner/repo[/path]
           @
-          (?![A-Fa-f0-9]{40}(?:\s|$|\#)) # not pinned to full 40-char SHA
-          [^\s#]+
+          (?![A-Fa-f0-9]{40}(?:['"]?\s*(?:\#.*)?$)) # not pinned to full 40-char SHA
+          [^\s#'"]+
+          ['"]?
     paths:
       include:
         - .github/workflows/*.yml
