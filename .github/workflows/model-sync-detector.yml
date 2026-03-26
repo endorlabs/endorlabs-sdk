@@ -37,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.check.outputs.changed }}
+      upstream-changed: ${{ steps.check.outputs.upstream-changed }}
       version-changed: ${{ steps.check.outputs.version-changed }}
       spec-changed: ${{ steps.check.outputs.spec-changed }}
       latest-version: ${{ steps.check.outputs.version }}
@@ -133,6 +134,7 @@ jobs:
           python -c "import json,datetime; json.dump({'endorctl_version':'$LATEST_VERSION','openapi_sha256':'$OPENAPI_SHA256','updated_at':datetime.datetime.utcnow().replace(microsecond=0).isoformat()+'Z'}, open('$STATE_FILE','w'))"
 
           echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+          echo "upstream-changed=$CHANGED" >> $GITHUB_OUTPUT
           echo "version-changed=$VERSION_CHANGED" >> $GITHUB_OUTPUT
           echo "spec-changed=$SPEC_CHANGED" >> $GITHUB_OUTPUT
           echo "status=ok" >> $GITHUB_OUTPUT
@@ -189,6 +191,9 @@ jobs:
           SPEC_CHANGED: ${{ needs.check-version.outputs.spec-changed }}
           LATEST_VERSION: ${{ needs.check-version.outputs.latest-version }}
           OPENAPI_SHA256: ${{ needs.check-version.outputs.openapi-sha256 }}
+          PREVIOUS_VERSION: ${{ needs.check-version.outputs.previous-version }}
+          PREVIOUS_OPENAPI_SHA256: ${{ needs.check-version.outputs.previous-openapi-sha256 }}
+          UPSTREAM_CHANGED: ${{ needs.check-version.outputs.upstream-changed }}
         run: |
           REASON="manual-or-dispatch"
           if [ "$VERSION_CHANGED" = "true" ] && [ "$SPEC_CHANGED" = "true" ]; then
@@ -209,8 +214,13 @@ jobs:
               \"client_payload\": {
                 \"endorctl_version\": \"$LATEST_VERSION\",
                 \"openapi_sha256\": \"$OPENAPI_SHA256\",
+                \"prev_endorctl_version\": \"$PREVIOUS_VERSION\",
+                \"prev_openapi_sha256\": \"$PREVIOUS_OPENAPI_SHA256\",
                 \"openapi_source_url\": \"https://api.endorlabs.com/download/openapiv2.swagger.json\",
                 \"reason\": \"$REASON\",
+                \"upstream_changed\": \"$UPSTREAM_CHANGED\",
+                \"version_changed\": \"$VERSION_CHANGED\",
+                \"spec_changed\": \"$SPEC_CHANGED\",
                 \"force_run\": \"true\"
               }
             }"
@@ -223,11 +233,20 @@ jobs:
     steps:
       - name: Publish summary
         run: |
+          DISPATCHED="${{ needs.dispatch-sync.result == 'success' }}"
+          REASON="${{ needs.dispatch-sync.outputs.reason || 'no-dispatch' }}"
           echo "## Model Sync Detector Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Decision" >> $GITHUB_STEP_SUMMARY
-          echo "- Dispatch sync workflow: \`${{ needs.dispatch-sync.result == 'success' }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Reason: \`${{ needs.dispatch-sync.outputs.reason || 'no-dispatch' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Dispatch sync workflow: \`$DISPATCHED\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Reason: \`$REASON\`" >> $GITHUB_STEP_SUMMARY
+          echo "- upstream_changed: \`${{ needs.check-version.outputs.upstream-changed }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Dispatch Predicate Inputs" >> $GITHUB_STEP_SUMMARY
+          echo "- version_changed: \`${{ needs.check-version.outputs.version-changed }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- spec_changed: \`${{ needs.check-version.outputs.spec-changed }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- force_run_input: \`${{ inputs.force_run || github.event.inputs.force_run || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- event: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Upstream Diff" >> $GITHUB_STEP_SUMMARY
           echo "| Signal | Previous | Current | Changed |" >> $GITHUB_STEP_SUMMARY
@@ -245,4 +264,4 @@ jobs:
           echo "- When no upstream diff is detected and no force/manual trigger is used, dispatch is intentionally skipped." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Action" >> $GITHUB_STEP_SUMMARY
-          echo "- If dispatched, monitor \`Model Sync PR\` for generated artifact updates." >> $GITHUB_STEP_SUMMARY
+          echo "- If dispatched, monitor \`Model Sync PR\` for generated artifact updates and resource-level changes." >> $GITHUB_STEP_SUMMARY
