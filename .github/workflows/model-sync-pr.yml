@@ -295,8 +295,9 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$BASE_BRANCH"
-          git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
+          # actions/checkout already checked out the base branch; creating a new branch at
+          # the current HEAD avoids failing on "local changes would be overwritten".
+          git checkout -B "$BRANCH_NAME"
 
           git add src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
           git add -f workspace/model-sync
