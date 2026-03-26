@@ -107,7 +107,6 @@ endorlabs/
 
 > **Stub regeneration:** `uv run python scripts/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
 
-- **Agent:** `endorlabs.agent` — LangGraph-based agent and demo CLI (requires `[agent]` extras).
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
 - **Internal:** utils (model_validation, schema_drift), operations.
 
