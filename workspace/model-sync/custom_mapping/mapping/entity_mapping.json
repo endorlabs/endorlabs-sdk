@@ -162,6 +162,20 @@
       "source_kind": "operation_ref"
     },
     {
+      "entity_name": "v1CallGraphData",
+      "module_path": "call_graph_data_service",
+      "operation_id": "CallGraphDataService_GetCallGraphData",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/call-graph-data/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListCallGraphDataResponse",
+      "module_path": "call_graph_data_service",
+      "operation_id": "CallGraphDataService_ListCallGraphData",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/call-graph-data:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
       "entity_name": "v1CodeOwners",
       "module_path": "code_owners_service",
       "operation_id": "CodeOwnersService_GetCodeOwners",
@@ -505,6 +519,20 @@
       "source_kind": "definition"
     },
     {
+      "entity_name": "endorv1Metric",
+      "module_path": "metric_service",
+      "operation_id": "MetricService_GetMetric",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/metrics/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListMetricsResponse",
+      "module_path": "metric_service",
+      "operation_id": "MetricService_ListMetrics",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/metrics:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
       "entity_name": "NamespaceServiceCreateNamespaceBody",
       "module_path": "namespace_service",
       "operation_id": "NamespaceService_CreateNamespace",
@@ -600,370 +628,6 @@
       "module_path": "on_prem_scheduler_service",
       "operation_id": "OnPremSchedulerService_UpdateOnPremScheduler",
       "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/onprem-schedulers:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationAllowedWorkflowsServiceCreateOrganizationAllowedWorkflowsBody",
-      "module_path": "organization_allowed_workflows_service",
-      "operation_id": "OrganizationAllowedWorkflowsService_CreateOrganizationAllowedWorkflows",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-allowed-workflows:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationAllowedWorkflowsServiceUpdateOrganizationAllowedWorkflowsBody",
-      "module_path": "organization_allowed_workflows_service",
-      "operation_id": "OrganizationAllowedWorkflowsService_UpdateOrganizationAllowedWorkflows",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-allowed-workflows:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationAllowedWorkflowsResponse",
-      "module_path": "organization_allowed_workflows_service",
-      "operation_id": "OrganizationAllowedWorkflowsService_ListOrganizationAllowedWorkflows",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-allowed-workflows:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationAllowedWorkflows",
-      "module_path": "organization_allowed_workflows_service",
-      "operation_id": "OrganizationAllowedWorkflowsService_UpdateOrganizationAllowedWorkflows",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-allowed-workflows:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationBlockListServiceCreateOrganizationBlockListBody",
-      "module_path": "organization_block_list_service",
-      "operation_id": "OrganizationBlockListService_CreateOrganizationBlockList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-block-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationBlockListServiceUpdateOrganizationBlockListBody",
-      "module_path": "organization_block_list_service",
-      "operation_id": "OrganizationBlockListService_UpdateOrganizationBlockList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-block-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationBlockListsResponse",
-      "module_path": "organization_block_list_service",
-      "operation_id": "OrganizationBlockListService_ListOrganizationBlockLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-block-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationBlockList",
-      "module_path": "organization_block_list_service",
-      "operation_id": "OrganizationBlockListService_UpdateOrganizationBlockList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-block-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationCICDPermissionsServiceCreateOrganizationCICDPermissionsBody",
-      "module_path": "organization_c_i_c_d_permissions_service",
-      "operation_id": "OrganizationCICDPermissionsService_CreateOrganizationCICDPermissions",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-cicd-permissions:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationCICDPermissionsServiceUpdateOrganizationCICDPermissionsBody",
-      "module_path": "organization_c_i_c_d_permissions_service",
-      "operation_id": "OrganizationCICDPermissionsService_UpdateOrganizationCICDPermissions",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-cicd-permissions:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationCICDPermissionsResponse",
-      "module_path": "organization_c_i_c_d_permissions_service",
-      "operation_id": "OrganizationCICDPermissionsService_ListOrganizationCICDPermissions",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-cicd-permissions:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationCICDPermissions",
-      "module_path": "organization_c_i_c_d_permissions_service",
-      "operation_id": "OrganizationCICDPermissionsService_UpdateOrganizationCICDPermissions",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-cicd-permissions:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationCustomPermissionListServiceCreateOrganizationCustomPermissionListBody",
-      "module_path": "organization_custom_permission_list_service",
-      "operation_id": "OrganizationCustomPermissionListService_CreateOrganizationCustomPermissionList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-custom-permission-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationCustomPermissionListServiceUpdateOrganizationCustomPermissionListBody",
-      "module_path": "organization_custom_permission_list_service",
-      "operation_id": "OrganizationCustomPermissionListService_UpdateOrganizationCustomPermissionList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-custom-permission-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationCustomPermissionListsResponse",
-      "module_path": "organization_custom_permission_list_service",
-      "operation_id": "OrganizationCustomPermissionListService_ListOrganizationCustomPermissionLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-custom-permission-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationCustomPermissionList",
-      "module_path": "organization_custom_permission_list_service",
-      "operation_id": "OrganizationCustomPermissionListService_UpdateOrganizationCustomPermissionList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-custom-permission-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationCustomRoleListServiceCreateOrganizationCustomRoleListBody",
-      "module_path": "organization_custom_role_list_service",
-      "operation_id": "OrganizationCustomRoleListService_CreateOrganizationCustomRoleList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-custom-role-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationCustomRoleListServiceUpdateOrganizationCustomRoleListBody",
-      "module_path": "organization_custom_role_list_service",
-      "operation_id": "OrganizationCustomRoleListService_UpdateOrganizationCustomRoleList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-custom-role-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationCustomRoleListsResponse",
-      "module_path": "organization_custom_role_list_service",
-      "operation_id": "OrganizationCustomRoleListService_ListOrganizationCustomRoleLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-custom-role-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationCustomRoleList",
-      "module_path": "organization_custom_role_list_service",
-      "operation_id": "OrganizationCustomRoleListService_UpdateOrganizationCustomRoleList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-custom-role-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationHookServiceCreateOrganizationHookBody",
-      "module_path": "organization_hook_service",
-      "operation_id": "OrganizationHookService_CreateOrganizationHook",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-hooks:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationHookServiceUpdateOrganizationHookBody",
-      "module_path": "organization_hook_service",
-      "operation_id": "OrganizationHookService_UpdateOrganizationHook",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-hooks:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationHooksResponse",
-      "module_path": "organization_hook_service",
-      "operation_id": "OrganizationHookService_ListOrganizationHooks",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-hooks:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationHook",
-      "module_path": "organization_hook_service",
-      "operation_id": "OrganizationHookService_UpdateOrganizationHook",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-hooks:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationInstallationListServiceCreateOrganizationInstallationListBody",
-      "module_path": "organization_installation_list_service",
-      "operation_id": "OrganizationInstallationListService_CreateOrganizationInstallationList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-installation-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationInstallationListServiceUpdateOrganizationInstallationListBody",
-      "module_path": "organization_installation_list_service",
-      "operation_id": "OrganizationInstallationListService_UpdateOrganizationInstallationList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-installation-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationInstallationListsResponse",
-      "module_path": "organization_installation_list_service",
-      "operation_id": "OrganizationInstallationListService_ListOrganizationInstallationLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-installation-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationInstallationList",
-      "module_path": "organization_installation_list_service",
-      "operation_id": "OrganizationInstallationListService_UpdateOrganizationInstallationList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-installation-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationInvitationListServiceCreateOrganizationInvitationListBody",
-      "module_path": "organization_invitation_list_service",
-      "operation_id": "OrganizationInvitationListService_CreateOrganizationInvitationList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-invitation-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationInvitationListServiceUpdateOrganizationInvitationListBody",
-      "module_path": "organization_invitation_list_service",
-      "operation_id": "OrganizationInvitationListService_UpdateOrganizationInvitationList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-invitation-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationInvitationListsResponse",
-      "module_path": "organization_invitation_list_service",
-      "operation_id": "OrganizationInvitationListService_ListOrganizationInvitationLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-invitation-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationInvitationList",
-      "module_path": "organization_invitation_list_service",
-      "operation_id": "OrganizationInvitationListService_UpdateOrganizationInvitationList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-invitation-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationMemberListServiceCreateOrganizationMemberListBody",
-      "module_path": "organization_member_list_service",
-      "operation_id": "OrganizationMemberListService_CreateOrganizationMemberList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-member-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationMemberListServiceUpdateOrganizationMemberListBody",
-      "module_path": "organization_member_list_service",
-      "operation_id": "OrganizationMemberListService_UpdateOrganizationMemberList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-member-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationMemberListsResponse",
-      "module_path": "organization_member_list_service",
-      "operation_id": "OrganizationMemberListService_ListOrganizationMemberLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-member-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationMemberList",
-      "module_path": "organization_member_list_service",
-      "operation_id": "OrganizationMemberListService_UpdateOrganizationMemberList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-member-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationOutsideCollaboratorListServiceCreateOrganizationOutsideCollaboratorListBody",
-      "module_path": "organization_outside_collaborator_list_service",
-      "operation_id": "OrganizationOutsideCollaboratorListService_CreateOrganizationOutsideCollaboratorList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-outside-collaborator-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationOutsideCollaboratorListServiceUpdateOrganizationOutsideCollaboratorListBody",
-      "module_path": "organization_outside_collaborator_list_service",
-      "operation_id": "OrganizationOutsideCollaboratorListService_UpdateOrganizationOutsideCollaboratorList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-outside-collaborator-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationOutsideCollaboratorListsResponse",
-      "module_path": "organization_outside_collaborator_list_service",
-      "operation_id": "OrganizationOutsideCollaboratorListService_ListOrganizationOutsideCollaboratorLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-outside-collaborator-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationOutsideCollaboratorList",
-      "module_path": "organization_outside_collaborator_list_service",
-      "operation_id": "OrganizationOutsideCollaboratorListService_UpdateOrganizationOutsideCollaboratorList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-outside-collaborator-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationRunnerGroupConfigServiceCreateOrganizationRunnerGroupConfigBody",
-      "module_path": "organization_runner_group_config_service",
-      "operation_id": "OrganizationRunnerGroupConfigService_CreateOrganizationRunnerGroupConfig",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-runner-group-config:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationRunnerGroupConfigServiceUpdateOrganizationRunnerGroupConfigBody",
-      "module_path": "organization_runner_group_config_service",
-      "operation_id": "OrganizationRunnerGroupConfigService_UpdateOrganizationRunnerGroupConfig",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-runner-group-config:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationRunnerGroupConfigsResponse",
-      "module_path": "organization_runner_group_config_service",
-      "operation_id": "OrganizationRunnerGroupConfigService_ListOrganizationRunnerGroupConfig",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-runner-group-config:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationRunnerGroupConfig",
-      "module_path": "organization_runner_group_config_service",
-      "operation_id": "OrganizationRunnerGroupConfigService_UpdateOrganizationRunnerGroupConfig",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-runner-group-config:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationSecurityManagerListServiceCreateOrganizationSecurityManagerListBody",
-      "module_path": "organization_security_manager_list_service",
-      "operation_id": "OrganizationSecurityManagerListService_CreateOrganizationSecurityManagerList",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-security-manager-lists:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationSecurityManagerListServiceUpdateOrganizationSecurityManagerListBody",
-      "module_path": "organization_security_manager_list_service",
-      "operation_id": "OrganizationSecurityManagerListService_UpdateOrganizationSecurityManagerList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-security-manager-lists:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationSecurityManagerListsResponse",
-      "module_path": "organization_security_manager_list_service",
-      "operation_id": "OrganizationSecurityManagerListService_ListOrganizationSecurityManagerLists",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-security-manager-lists:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationSecurityManagerList",
-      "module_path": "organization_security_manager_list_service",
-      "operation_id": "OrganizationSecurityManagerListService_UpdateOrganizationSecurityManagerList",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-security-manager-lists:patch:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationWorkflowPermissionsServiceCreateOrganizationWorkflowPermissionsBody",
-      "module_path": "organization_workflow_permissions_service",
-      "operation_id": "OrganizationWorkflowPermissionsService_CreateOrganizationWorkflowPermissions",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-workflow-permissions:post",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "OrganizationWorkflowPermissionsServiceUpdateOrganizationWorkflowPermissionsBody",
-      "module_path": "organization_workflow_permissions_service",
-      "operation_id": "OrganizationWorkflowPermissionsService_UpdateOrganizationWorkflowPermissions",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-workflow-permissions:patch",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1ListOrganizationWorkflowPermissionsResponse",
-      "module_path": "organization_workflow_permissions_service",
-      "operation_id": "OrganizationWorkflowPermissionsService_ListOrganizationWorkflowPermissions",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/organization-workflow-permissions:get:200",
-      "source_kind": "operation_ref"
-    },
-    {
-      "entity_name": "v1OrganizationWorkflowPermissions",
-      "module_path": "organization_workflow_permissions_service",
-      "operation_id": "OrganizationWorkflowPermissionsService_UpdateOrganizationWorkflowPermissions",
-      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/organization-workflow-permissions:patch:200",
       "source_kind": "operation_ref"
     },
     {
@@ -1737,6 +1401,20 @@
       "source_kind": "operation_ref"
     },
     {
+      "entity_name": "v1ListVectorStoresResponse",
+      "module_path": "vector_store_service",
+      "operation_id": "VectorStoreService_ListVectorStores",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vector-stores:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1VectorStore",
+      "module_path": "vector_store_service",
+      "operation_id": "VectorStoreService_GetVectorStore",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vector-stores/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
       "entity_name": "VersionUpgradeServiceCreateVersionUpgradeBody",
       "module_path": "version_upgrade_service",
       "operation_id": "VersionUpgradeService_CreateVersionUpgrade",
@@ -1765,13 +1443,6 @@
       "source_kind": "operation_ref"
     },
     {
-      "entity_name": "VulnerabilityServiceCreateVulnerabilityBody",
-      "module_path": "vulnerability_service",
-      "operation_id": "VulnerabilityService_CreateVulnerability",
-      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vulnerabilities:post",
-      "source_kind": "operation_ref"
-    },
-    {
       "entity_name": "v1ListVulnerabilitiesResponse",
       "module_path": "vulnerability_service",
       "operation_id": "VulnerabilityService_ListVulnerabilities",
@@ -1786,7 +1457,7 @@
       "source_kind": "operation_ref"
     }
   ],
-  "entry_count": 255,
+  "entry_count": 208,
   "profiles": {
     "aliases.json": {
       "_comment": "Custom mapping aliases. Keep deterministic and source-controlled.",

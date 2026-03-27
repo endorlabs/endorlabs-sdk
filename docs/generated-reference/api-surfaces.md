@@ -6,8 +6,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- mapped entities: `255`
-- generated artifact files: `167`
+- mapped entities: `208`
+- generated artifact files: `147`
 - facade contract resources: `33`
 - registry parity status: `pass`
 - operation metadata entries: `719`

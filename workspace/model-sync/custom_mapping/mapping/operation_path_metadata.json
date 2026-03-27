@@ -885,7 +885,7 @@
       "tags": [
         "OrganizationAllowedWorkflowsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -901,7 +901,7 @@
       "tags": [
         "OrganizationBlockListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -917,7 +917,7 @@
       "tags": [
         "OrganizationCICDPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -933,7 +933,7 @@
       "tags": [
         "OrganizationCustomPermissionListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -949,7 +949,7 @@
       "tags": [
         "OrganizationCustomRoleListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -965,7 +965,7 @@
       "tags": [
         "OrganizationHookService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -981,7 +981,7 @@
       "tags": [
         "OrganizationInstallationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -997,7 +997,7 @@
       "tags": [
         "OrganizationInvitationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -1013,7 +1013,7 @@
       "tags": [
         "OrganizationMemberListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -1029,7 +1029,7 @@
       "tags": [
         "OrganizationOutsideCollaboratorListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -1045,7 +1045,7 @@
       "tags": [
         "OrganizationRunnerGroupConfigService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -1061,7 +1061,7 @@
       "tags": [
         "OrganizationSecurityManagerListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -1077,7 +1077,7 @@
       "tags": [
         "OrganizationWorkflowPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "patch",
@@ -2961,7 +2961,7 @@
       "tags": [
         "CallGraphDataService"
       ],
-      "x_internal": true
+      "x_internal": false
     },
     {
       "method": "post",
@@ -3004,7 +3004,7 @@
       "tags": [
         "CallGraphDataService"
       ],
-      "x_internal": true
+      "x_internal": false
     },
     {
       "method": "post",
@@ -5465,7 +5465,7 @@
       "tags": [
         "MetricService"
       ],
-      "x_internal": true
+      "x_internal": false
     },
     {
       "method": "post",
@@ -5508,7 +5508,7 @@
       "tags": [
         "MetricService"
       ],
-      "x_internal": true
+      "x_internal": false
     },
     {
       "method": "get",
@@ -5782,7 +5782,7 @@
       "tags": [
         "OrganizationAllowedWorkflowsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -5798,7 +5798,7 @@
       "tags": [
         "OrganizationAllowedWorkflowsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -5811,7 +5811,7 @@
       "tags": [
         "OrganizationAllowedWorkflowsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5825,7 +5825,7 @@
       "tags": [
         "OrganizationAllowedWorkflowsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5839,7 +5839,7 @@
       "tags": [
         "OrganizationBlockListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -5855,7 +5855,7 @@
       "tags": [
         "OrganizationBlockListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -5868,7 +5868,7 @@
       "tags": [
         "OrganizationBlockListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5882,7 +5882,7 @@
       "tags": [
         "OrganizationBlockListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5896,7 +5896,7 @@
       "tags": [
         "OrganizationCICDPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -5912,7 +5912,7 @@
       "tags": [
         "OrganizationCICDPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -5925,7 +5925,7 @@
       "tags": [
         "OrganizationCICDPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5939,7 +5939,7 @@
       "tags": [
         "OrganizationCICDPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5953,7 +5953,7 @@
       "tags": [
         "OrganizationCustomPermissionListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -5969,7 +5969,7 @@
       "tags": [
         "OrganizationCustomPermissionListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -5982,7 +5982,7 @@
       "tags": [
         "OrganizationCustomPermissionListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -5996,7 +5996,7 @@
       "tags": [
         "OrganizationCustomPermissionListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6010,7 +6010,7 @@
       "tags": [
         "OrganizationCustomRoleListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6026,7 +6026,7 @@
       "tags": [
         "OrganizationCustomRoleListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6039,7 +6039,7 @@
       "tags": [
         "OrganizationCustomRoleListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6053,7 +6053,7 @@
       "tags": [
         "OrganizationCustomRoleListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6067,7 +6067,7 @@
       "tags": [
         "OrganizationHookService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6083,7 +6083,7 @@
       "tags": [
         "OrganizationHookService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6096,7 +6096,7 @@
       "tags": [
         "OrganizationHookService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6110,7 +6110,7 @@
       "tags": [
         "OrganizationHookService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6124,7 +6124,7 @@
       "tags": [
         "OrganizationInstallationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6140,7 +6140,7 @@
       "tags": [
         "OrganizationInstallationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6153,7 +6153,7 @@
       "tags": [
         "OrganizationInstallationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6167,7 +6167,7 @@
       "tags": [
         "OrganizationInstallationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6181,7 +6181,7 @@
       "tags": [
         "OrganizationInvitationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6197,7 +6197,7 @@
       "tags": [
         "OrganizationInvitationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6210,7 +6210,7 @@
       "tags": [
         "OrganizationInvitationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6224,7 +6224,7 @@
       "tags": [
         "OrganizationInvitationListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6238,7 +6238,7 @@
       "tags": [
         "OrganizationMemberListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6254,7 +6254,7 @@
       "tags": [
         "OrganizationMemberListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6267,7 +6267,7 @@
       "tags": [
         "OrganizationMemberListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6281,7 +6281,7 @@
       "tags": [
         "OrganizationMemberListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6295,7 +6295,7 @@
       "tags": [
         "OrganizationOutsideCollaboratorListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6311,7 +6311,7 @@
       "tags": [
         "OrganizationOutsideCollaboratorListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6324,7 +6324,7 @@
       "tags": [
         "OrganizationOutsideCollaboratorListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6338,7 +6338,7 @@
       "tags": [
         "OrganizationOutsideCollaboratorListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6352,7 +6352,7 @@
       "tags": [
         "OrganizationRunnerGroupConfigService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6368,7 +6368,7 @@
       "tags": [
         "OrganizationRunnerGroupConfigService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6381,7 +6381,7 @@
       "tags": [
         "OrganizationRunnerGroupConfigService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6395,7 +6395,7 @@
       "tags": [
         "OrganizationRunnerGroupConfigService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6409,7 +6409,7 @@
       "tags": [
         "OrganizationSecurityManagerListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6425,7 +6425,7 @@
       "tags": [
         "OrganizationSecurityManagerListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6438,7 +6438,7 @@
       "tags": [
         "OrganizationSecurityManagerListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6452,7 +6452,7 @@
       "tags": [
         "OrganizationSecurityManagerListService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6466,7 +6466,7 @@
       "tags": [
         "OrganizationWorkflowPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -6482,7 +6482,7 @@
       "tags": [
         "OrganizationWorkflowPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -6495,7 +6495,7 @@
       "tags": [
         "OrganizationWorkflowPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",
@@ -6509,7 +6509,7 @@
       "tags": [
         "OrganizationWorkflowPermissionsService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "post",
@@ -10059,7 +10059,7 @@
       "tags": [
         "VectorStoreService"
       ],
-      "x_internal": true
+      "x_internal": false
     },
     {
       "method": "post",
@@ -10102,7 +10102,7 @@
       "tags": [
         "VectorStoreService"
       ],
-      "x_internal": true
+      "x_internal": false
     },
     {
       "method": "get",
@@ -10262,7 +10262,7 @@
       "tags": [
         "VulnerabilityService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "delete",
@@ -10275,7 +10275,7 @@
       "tags": [
         "VulnerabilityService"
       ],
-      "x_internal": false
+      "x_internal": true
     },
     {
       "method": "get",

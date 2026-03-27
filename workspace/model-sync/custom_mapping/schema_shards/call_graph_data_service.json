@@ -1,76 +1,18 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "AuthorizationPolicyServiceCreateAuthorizationPolicyBody": {
-      "description": "Represents an authorization policy in the system.",
-      "properties": {
-        "meta": {
-          "$ref": "#/definitions/v1Meta",
-          "description": "Metadata is generic for any object."
-        },
-        "propagate": {
-          "description": "Indicates that the object should be visible in the child namespaces.",
-          "type": "boolean"
-        },
-        "spec": {
-          "$ref": "#/definitions/v1AuthorizationPolicySpec"
-        },
-        "tenant_meta": {
-          "description": "Authorization policies are associated with a tenant.",
-          "title": "Authorization policies are associated with a tenant.",
-          "type": "object"
-        },
-        "uuid": {
-          "description": "The UUID of the AuthorizationPolicy resource.",
-          "readOnly": true,
-          "type": "string"
-        }
-      },
-      "required": [
-        "meta",
-        "spec"
+    "ContextContextType": {
+      "default": "CONTEXT_TYPE_UNSPECIFIED",
+      "description": " - CONTEXT_TYPE_MAIN: Objects from a scan of the default branch.\nAll objects in the oss namespace are in the main context.\nThe context id is always \"default\".\n - CONTEXT_TYPE_EXTERNAL: Indicates that this object is a copy/temporary value of an object in\nanother project. Used for same-tenant dependencies. In source code\nreference this is equivalent to \"vendor\" folders. Package versions in\nthe external context are only scanned for call graphs. No other\noperations are performed on them.\n - CONTEXT_TYPE_CI_RUN: Objects from a PR scan. The context id is the PR UUID.\nObjects in this context are deleted after 30 days.\n - CONTEXT_TYPE_SBOM: Objects from an SBOM scan. The context id is the SBOM serial number or\nsome other unique identifier.\n - CONTEXT_TYPE_REF: Objects from a scan of a specific branch. The context id is the branch\nreference name.",
+      "enum": [
+        "CONTEXT_TYPE_UNSPECIFIED",
+        "CONTEXT_TYPE_MAIN",
+        "CONTEXT_TYPE_EXTERNAL",
+        "CONTEXT_TYPE_CI_RUN",
+        "CONTEXT_TYPE_SBOM",
+        "CONTEXT_TYPE_REF"
       ],
-      "type": "object"
-    },
-    "AuthorizationPolicyServiceUpdateAuthorizationPolicyBody": {
-      "description": "Request to update an authorization policy.",
-      "properties": {
-        "object": {
-          "description": "Represents an authorization policy in the system.",
-          "properties": {
-            "meta": {
-              "$ref": "#/definitions/v1Meta",
-              "description": "Metadata is generic for any object."
-            },
-            "propagate": {
-              "description": "Indicates that the object should be visible in the child namespaces.",
-              "type": "boolean"
-            },
-            "spec": {
-              "$ref": "#/definitions/v1AuthorizationPolicySpec"
-            },
-            "tenant_meta": {
-              "description": "Authorization policies are associated with a tenant.",
-              "title": "Authorization policies are associated with a tenant.",
-              "type": "object"
-            },
-            "uuid": {
-              "description": "The UUID of the AuthorizationPolicy resource.",
-              "readOnly": true,
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "request": {
-          "$ref": "#/definitions/v1UpdateRequest"
-        }
-      },
-      "required": [
-        "meta",
-        "spec"
-      ],
-      "type": "object"
+      "type": "string"
     },
     "GroupResponseGroupData": {
       "description": "Information about objects matching the given key.",
@@ -110,18 +52,6 @@
       },
       "type": "object"
     },
-    "PermissionsMethods": {
-      "description": "An array of allowed methods.",
-      "properties": {
-        "methods": {
-          "items": {
-            "$ref": "#/definitions/v1Method"
-          },
-          "type": "array"
-        }
-      },
-      "type": "object"
-    },
     "googleprotobufAny": {
       "additionalProperties": {},
       "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }",
@@ -133,76 +63,80 @@
       },
       "type": "object"
     },
-    "v1AuthorizationPolicy": {
-      "description": "Represents an authorization policy in the system.",
+    "v1CallGraphData": {
+      "description": "CallGraphData represents a call graph data request in the system.",
       "properties": {
+        "any": {
+          "$ref": "#/definitions/googleprotobufAny",
+          "description": "Callgraph is encoded in json bytes.\nUse the HTTP header x-callgraph-encoding=any to get the spec in this format."
+        },
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "description": "The context of the call graph that is equal to the context of the associated\npackage."
+        },
         "meta": {
           "$ref": "#/definitions/v1Meta",
           "description": "Metadata is generic for any object."
         },
-        "propagate": {
-          "description": "Indicates that the object should be visible in the child namespaces.",
-          "type": "boolean"
+        "related_object": {
+          "description": "An internal value that identifies the callgraph storage location.",
+          "readOnly": true,
+          "type": "string"
         },
-        "spec": {
-          "$ref": "#/definitions/v1AuthorizationPolicySpec"
+        "storage_url": {
+          "description": "The URL of the storage location of the callgraph.",
+          "readOnly": true,
+          "type": "string"
         },
         "tenant_meta": {
           "$ref": "#/definitions/v1TenantMeta",
-          "description": "Authorization policies are associated with a tenant."
+          "description": "Namespaces are associated with a tenant."
         },
         "uuid": {
-          "description": "The UUID of the AuthorizationPolicy resource.",
+          "description": "The UUID for a call graph resource.",
           "readOnly": true,
+          "type": "string"
+        },
+        "zstd_bytes": {
+          "description": "Callgraph proto bytes are encoded in zstd bytes.\nThe caller is responsible to compress/uncompress the bytes.",
+          "format": "byte",
           "type": "string"
         }
       },
       "required": [
-        "tenant_meta",
         "meta",
-        "spec"
+        "tenant_meta"
       ],
       "type": "object"
     },
-    "v1AuthorizationPolicySpec": {
+    "v1Context": {
+      "description": "Contexts keep objects from different scans separated.",
       "properties": {
-        "clause": {
-          "description": "The list of claims that must match. This is essentially\nan AND operator. User claims must match all the\ncriteria in the clause for the policy to match.\n\nFor example, [\"group=X\", \"email=user@endor.ai\"] will match\nusers of group X with this email.\n\nClause strings must contain only allowed characters to prevent XSS attacks\nand ensure exact matching with incoming JWT claims. Allowed characters:\nletters, numbers, and the following: =@._-/: +()& (space, plus, parentheses, ampersand).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "expiration_time": {
-          "description": "Disables this policy after its expiration time.\nIf expiration time is not provided, the policy will never expire.",
-          "format": "date-time",
+        "id": {
+          "description": "The context ID, such as a pull request ID or branch reference.",
           "type": "string"
         },
-        "is_support_policy": {
-          "description": "is_support_policy indicates that the policy is a support policy and\ncannot be altered without using the SupportAccess API.",
-          "readOnly": true,
-          "type": "boolean"
-        },
-        "permissions": {
-          "$ref": "#/definitions/v1Permissions"
-        },
-        "propagate": {
-          "description": "Propagate indicates that the policy should include\nthe children of the target namespace as well as allowed targets.",
-          "type": "boolean"
-        },
-        "target_namespaces": {
-          "description": "The target namespaces of the policy. The policy can\napply to one or more target namespaces. The targets\ncan only be the current namespace or its children.",
+        "tags": {
+          "description": "A list of tags applied to a context. Used primarily for CI and SBOM\ncontexts.",
           "items": {
             "type": "string"
           },
           "type": "array"
+        },
+        "type": {
+          "$ref": "#/definitions/ContextContextType",
+          "description": "Context type, usually defined based on how endorctl is being used."
+        },
+        "will_be_deleted_at": {
+          "description": "Time that all objects in this context will be deleted.\nThis field is deprecated and will be removed in the future.\nPlease use the meta.will_be_deleted_at field instead.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
         }
       },
       "required": [
-        "clause",
-        "target_namespaces",
-        "propagate",
-        "permissions"
+        "type",
+        "id"
       ],
       "type": "object"
     },
@@ -270,8 +204,8 @@
       "type": "object",
       "x-internal": true
     },
-    "v1ListAuthorizationPoliciesResponse": {
-      "description": "Response to the request to list all authorization policies for a given\ntenant.",
+    "v1ListCallGraphDataResponse": {
+      "description": "Response to the request to list call graph data.",
       "properties": {
         "count_response": {
           "$ref": "#/definitions/v1CountResponse"
@@ -280,16 +214,16 @@
           "$ref": "#/definitions/v1GroupResponse"
         },
         "list": {
-          "$ref": "#/definitions/v1ListAuthorizationPoliciesResponseList"
+          "$ref": "#/definitions/v1ListCallGraphDataResponseList"
         }
       },
       "type": "object"
     },
-    "v1ListAuthorizationPoliciesResponseList": {
+    "v1ListCallGraphDataResponseList": {
       "properties": {
         "objects": {
           "items": {
-            "$ref": "#/definitions/v1AuthorizationPolicy",
+            "$ref": "#/definitions/v1CallGraphData",
             "type": "object"
           },
           "type": "array"
@@ -409,62 +343,6 @@
       ],
       "type": "object"
     },
-    "v1Method": {
-      "default": "METHOD_UNSPECIFIED",
-      "description": "The type of allowed action.\n\n - METHOD_READ: METHOD_READ is for LIST/GET\n - METHOD_CREATE: METHOD_CREATE is for POST\n - METHOD_UPDATE: METHOD_UPDATE is for PATCH\n - METHOD_DELETE: METHOD_DELETE is for DELETE\n - METHOD_ALL: METHOD_ALL is for all methods (essentially *)",
-      "enum": [
-        "METHOD_UNSPECIFIED",
-        "METHOD_READ",
-        "METHOD_CREATE",
-        "METHOD_UPDATE",
-        "METHOD_DELETE",
-        "METHOD_ALL"
-      ],
-      "type": "string"
-    },
-    "v1Permissions": {
-      "description": "Holds a map associating each resource kind with the\n set of methods that are allowed for this kind.\n\n For example:",
-      "properties": {
-        "except_resources": {
-          "description": "List of resources that should not be accounted in any * resource rules.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "roles": {
-          "items": {
-            "$ref": "#/definitions/v1SystemRole"
-          },
-          "type": "array"
-        },
-        "rules": {
-          "additionalProperties": {
-            "$ref": "#/definitions/PermissionsMethods"
-          },
-          "title": "For message (or resource) repository, I want to provide permissions READ\nonly. This will create map[\"repository\"] = []{READ}",
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    "v1SystemRole": {
-      "default": "SYSTEM_ROLE_UNSPECIFIED",
-      "description": "Captures the default system roles for permissions.\n\n - SYSTEM_ROLE_ADMIN: ADMIN has read/write access to all objects in the tenant.\n - SYSTEM_ROLE_READ_ONLY: READ_ONLY only can read all data, but perform no updates.\n - SYSTEM_ROLE_POLICY_EDITOR: Policy editor has read access on all objects, and the ability to create and\nmanage policies.\n - SYSTEM_ROLE_CODE_SCANNER: CODE_SCANNER has all permissions to run a scan and view the results.\n - SYSTEM_ROLE_ENDOR_PATCHING: ENDOR_PATCHING has permissions to use Endor Lab's factory.\n - SYSTEM_ROLE_SYNC_ORG: SYNC_ORG has permissions to perform a sync-org scan on all supported\nplatforms (GitHub, Azure, GitLab etc).\n - SYSTEM_ROLE_ONPREM_SCHEDULER: ONPREM_SCHEDULER has permissions to perform sync-org, scans and manage\nonprem scheduler related objects.\n - SYSTEM_ROLE_ENDOR_PROXY: Deprecated: Use SYSTEM_ROLE_PACKAGE_FIREWALL instead.\nENDOR_PROXY has permissions to access proxy endpoints in endorfactory service.\n - SYSTEM_ROLE_PACKAGE_FIREWALL: PACKAGE_FIREWALL has permissions to access firewall endpoints for package firewall in endorfactory service.",
-      "enum": [
-        "SYSTEM_ROLE_UNSPECIFIED",
-        "SYSTEM_ROLE_ADMIN",
-        "SYSTEM_ROLE_READ_ONLY",
-        "SYSTEM_ROLE_POLICY_EDITOR",
-        "SYSTEM_ROLE_CODE_SCANNER",
-        "SYSTEM_ROLE_ENDOR_PATCHING",
-        "SYSTEM_ROLE_SYNC_ORG",
-        "SYSTEM_ROLE_ONPREM_SCHEDULER",
-        "SYSTEM_ROLE_ENDOR_PROXY",
-        "SYSTEM_ROLE_PACKAGE_FIREWALL"
-      ],
-      "type": "string"
-    },
     "v1TenantMeta": {
       "description": "Tenant related data for the tenant containing the resource.",
       "properties": {
@@ -478,36 +356,16 @@
         "namespace"
       ],
       "type": "object"
-    },
-    "v1UpdateRequest": {
-      "description": "Message used for all update requests.",
-      "properties": {
-        "force": {
-          "description": "Force will force the update of the resource if any\nchecks fail.",
-          "type": "boolean"
-        },
-        "update_mask": {
-          "description": "Fields to update. Defaults to all fields.",
-          "type": "string"
-        }
-      },
-      "type": "object"
     }
   },
   "properties": {
-    "AuthorizationPolicyServiceCreateAuthorizationPolicyBody": {
-      "$ref": "#/definitions/AuthorizationPolicyServiceCreateAuthorizationPolicyBody"
+    "v1CallGraphData": {
+      "$ref": "#/definitions/v1CallGraphData"
     },
-    "AuthorizationPolicyServiceUpdateAuthorizationPolicyBody": {
-      "$ref": "#/definitions/AuthorizationPolicyServiceUpdateAuthorizationPolicyBody"
-    },
-    "v1AuthorizationPolicy": {
-      "$ref": "#/definitions/v1AuthorizationPolicy"
-    },
-    "v1ListAuthorizationPoliciesResponse": {
-      "$ref": "#/definitions/v1ListAuthorizationPoliciesResponse"
+    "v1ListCallGraphDataResponse": {
+      "$ref": "#/definitions/v1ListCallGraphDataResponse"
     }
   },
-  "title": "authorization_policy_service",
+  "title": "call_graph_data_service",
   "type": "object"
 }
