@@ -22,7 +22,10 @@ concurrency:
 env:
   PYTHON_VERSION: "3.13"
   OPENAPI_SOURCE_URL_DEFAULT: "https://api.endorlabs.com/download/openapiv2.swagger.json"
+  OPENAPI_SPEC_PATH: ".endorlabs-context/openapiv2.swagger.json"
   PYTEST_MAXFAIL: "2"
+  CLEANUP_TTL_DAYS: "30"
+  CLEANUP_KEEP_LAST_N: "3"
 
 jobs:
   validate-generated-artifacts:
@@ -43,16 +46,26 @@ jobs:
         id: trigger
         run: |
           ENDORCTL_VERSION="${{ github.event.client_payload.endorctl_version || '' }}"
+          PREV_ENDORCTL_VERSION="${{ github.event.client_payload.prev_endorctl_version || '' }}"
           OPENAPI_SHA256="${{ github.event.client_payload.openapi_sha256 || '' }}"
+          PREV_OPENAPI_SHA256="${{ github.event.client_payload.prev_openapi_sha256 || '' }}"
           OPENAPI_SOURCE_URL="${{ github.event.client_payload.openapi_source_url || env.OPENAPI_SOURCE_URL_DEFAULT }}"
           REASON="${{ github.event.client_payload.reason || 'manual' }}"
+          UPSTREAM_CHANGED="${{ github.event.client_payload.upstream_changed || 'unknown' }}"
+          VERSION_CHANGED="${{ github.event.client_payload.version_changed || 'unknown' }}"
+          SPEC_CHANGED="${{ github.event.client_payload.spec_changed || 'unknown' }}"
           BRANCH_TIMESTAMP="$(date -u +'%Y-%m-%d-%H%M%S')"
           BRANCH_NAME="chore/model-sync-${BRANCH_TIMESTAMP}"
 
           echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "prev_endorctl_version=$PREV_ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
           echo "openapi_sha256=$OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
+          echo "prev_openapi_sha256=$PREV_OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
           echo "openapi_source_url=$OPENAPI_SOURCE_URL" >> "$GITHUB_OUTPUT"
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+          echo "upstream_changed=$UPSTREAM_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "spec_changed=$SPEC_CHANGED" >> "$GITHUB_OUTPUT"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Guard against unsupported dispatch payload
@@ -66,7 +79,7 @@ jobs:
       - name: Download OpenAPI spec
         run: |
           mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json "${{ steps.trigger.outputs.openapi_source_url }}"
+          curl -sSfL -o "${{ env.OPENAPI_SPEC_PATH }}" "${{ steps.trigger.outputs.openapi_source_url }}"
 
       - name: Verify OpenAPI payload hash when provided
         run: |
@@ -75,7 +88,7 @@ jobs:
             echo "::notice::No expected OpenAPI hash provided by trigger payload; skipping hash verification."
             exit 0
           fi
-          ACTUAL=$(sha256sum .endorlabs-context/openapiv2.swagger.json | awk '{print $1}')
+          ACTUAL=$(sha256sum "${{ env.OPENAPI_SPEC_PATH }}" | awk '{print $1}')
           if [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::OpenAPI hash mismatch. expected=$EXPECTED actual=$ACTUAL"
             exit 1
@@ -166,16 +179,26 @@ jobs:
         id: trigger
         run: |
           ENDORCTL_VERSION="${{ github.event.client_payload.endorctl_version || '' }}"
+          PREV_ENDORCTL_VERSION="${{ github.event.client_payload.prev_endorctl_version || '' }}"
           OPENAPI_SHA256="${{ github.event.client_payload.openapi_sha256 || '' }}"
+          PREV_OPENAPI_SHA256="${{ github.event.client_payload.prev_openapi_sha256 || '' }}"
           OPENAPI_SOURCE_URL="${{ github.event.client_payload.openapi_source_url || env.OPENAPI_SOURCE_URL_DEFAULT }}"
           REASON="${{ github.event.client_payload.reason || 'manual' }}"
+          UPSTREAM_CHANGED="${{ github.event.client_payload.upstream_changed || 'unknown' }}"
+          VERSION_CHANGED="${{ github.event.client_payload.version_changed || 'unknown' }}"
+          SPEC_CHANGED="${{ github.event.client_payload.spec_changed || 'unknown' }}"
           BRANCH_TIMESTAMP="$(date -u +'%Y-%m-%d-%H%M%S')"
           BRANCH_NAME="chore/model-sync-${BRANCH_TIMESTAMP}"
 
           echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
+          echo "prev_endorctl_version=$PREV_ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
           echo "openapi_sha256=$OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
+          echo "prev_openapi_sha256=$PREV_OPENAPI_SHA256" >> "$GITHUB_OUTPUT"
           echo "openapi_source_url=$OPENAPI_SOURCE_URL" >> "$GITHUB_OUTPUT"
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+          echo "upstream_changed=$UPSTREAM_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "spec_changed=$SPEC_CHANGED" >> "$GITHUB_OUTPUT"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Guard against unsupported dispatch payload
@@ -189,7 +212,7 @@ jobs:
       - name: Download OpenAPI spec
         run: |
           mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json "${{ steps.trigger.outputs.openapi_source_url }}"
+          curl -sSfL -o "${{ env.OPENAPI_SPEC_PATH }}" "${{ steps.trigger.outputs.openapi_source_url }}"
 
       - name: Verify OpenAPI payload hash when provided
         run: |
@@ -198,7 +221,7 @@ jobs:
             echo "::notice::No expected OpenAPI hash provided by trigger payload; skipping hash verification."
             exit 0
           fi
-          ACTUAL=$(sha256sum .endorlabs-context/openapiv2.swagger.json | awk '{print $1}')
+          ACTUAL=$(sha256sum "${{ env.OPENAPI_SPEC_PATH }}" | awk '{print $1}')
           if [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::OpenAPI hash mismatch. expected=$EXPECTED actual=$ACTUAL"
             exit 1
@@ -212,56 +235,69 @@ jobs:
       - name: Validate changed file scope
         id: diff_scope
         run: |
-          CHANGED=$(git status --porcelain)
-          if [ -z "$CHANGED" ]; then
+          mapfile -d '' FILES_ARRAY < <(git status --porcelain -z -- \
+            workspace/model-sync \
+            src/endorlabs/generated \
+            src/endorlabs/client_surface.pyi \
+            docs/generated-reference)
+          if [ ${#FILES_ARRAY[@]} -eq 0 ]; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "generated_changed=false" >> "$GITHUB_OUTPUT"
             echo "changed_files=" >> "$GITHUB_OUTPUT"
             echo "changed_count=0" >> "$GITHUB_OUTPUT"
+            echo "resource_changes=" >> "$GITHUB_OUTPUT"
+            echo "resource_change_count=0" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          FILES=$(echo "$CHANGED" | awk '{print $2}')
-          UNEXPECTED=""
-          while IFS= read -r file; do
-            case "$file" in
-              workspace/model-sync/*|src/endorlabs/generated/*|src/endorlabs/client_surface.pyi|docs/generated-reference/*)
-                ;;
-              *)
-                UNEXPECTED="${UNEXPECTED}${file}\n"
-                ;;
-            esac
-          done <<< "$FILES"
-
-          if [ -n "$UNEXPECTED" ]; then
-            echo "Unexpected changed files outside generated scope:"
-            echo -e "$UNEXPECTED"
-            exit 1
-          fi
-
-          CHANGED_COUNT=$(echo "$FILES" | sed '/^$/d' | wc -l | tr -d ' ')
+          FILES=$(
+            printf "%s\n" "${FILES_ARRAY[@]}" \
+              | sed '/^$/d' \
+              | sed -E 's/^...//' \
+              | sed -E 's/^[^[:space:]]+[[:space:]]+//' \
+              | sed -E 's/^"//; s/"$//' \
+              | sed -E 's# -> .*##' \
+              | sed '/^$/d' \
+              | sort -u
+          )
+          CHANGED_COUNT=$(printf "%s\n" "$FILES" | sed '/^$/d' | wc -l | tr -d ' ')
+          RESOURCES=$(
+            printf "%s\n" "$FILES" \
+              | sed -n 's#^src/endorlabs/generated/models/\(.*\)\.py$#\1#p' \
+              | sed '/^__init__$/d' \
+              | sed '/^$/d' \
+              | sort -u
+          )
+          RESOURCE_COUNT=$(printf "%s\n" "$RESOURCES" | sed '/^$/d' | wc -l | tr -d ' ')
           echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          echo "generated_changed=true" >> "$GITHUB_OUTPUT"
           echo "changed_count=$CHANGED_COUNT" >> "$GITHUB_OUTPUT"
           echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
           echo "$FILES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "resource_change_count=$RESOURCE_COUNT" >> "$GITHUB_OUTPUT"
+          echo "resource_changes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$RESOURCES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
-      - name: Create model-sync PR (native git + gh)
-        if: steps.diff_scope.outputs.has_changes == 'true'
+      - name: Push model-sync branch (manual PR)
+        if: steps.diff_scope.outputs.generated_changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH_NAME: ${{ steps.trigger.outputs.branch_name }}
           BASE_BRANCH: ${{ github.event.repository.default_branch }}
           REASON: ${{ steps.trigger.outputs.reason }}
           ENDORCTL_VERSION: ${{ steps.trigger.outputs.endorctl_version }}
           OPENAPI_SHA256: ${{ steps.trigger.outputs.openapi_sha256 }}
           OPENAPI_SOURCE_URL: ${{ steps.trigger.outputs.openapi_source_url }}
+          API_SPEC_PATH: ${{ env.OPENAPI_SPEC_PATH }}
         run: |
           set -euo pipefail
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$BASE_BRANCH"
-          git checkout -B "$BRANCH_NAME" "origin/$BASE_BRANCH"
+          # actions/checkout already checked out the base branch; creating a new branch at
+          # the current HEAD avoids failing on "local changes would be overwritten".
+          git checkout -B "$BRANCH_NAME"
 
           git add src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
           git add -f workspace/model-sync
@@ -272,31 +308,90 @@ jobs:
 
           git commit -m "chore: sync generated model artifacts"
           git push -u origin "$BRANCH_NAME"
+          echo "::notice::PR creation is disabled in this workflow. Branch pushed for manual PR: $BRANCH_NAME"
 
-          PR_BODY="$(cat <<EOF
-          ## Summary
-          - Regenerated model-sync artifacts from canonical pipeline.
-          - Updated runtime generated contract/models, client stub, and generated reference docs.
-          - Trigger reason: \`$REASON\`
-          - Generated branch: \`$BRANCH_NAME\`
+      - name: Cleanup stale model-sync branches
+        id: cleanup
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TTL_DAYS: ${{ env.CLEANUP_TTL_DAYS }}
+          KEEP_LAST_N: ${{ env.CLEANUP_KEEP_LAST_N }}
+        run: |
+          set -euo pipefail
 
-          ## Trigger metadata
-          - endorctl version: \`$ENDORCTL_VERSION\`
-          - OpenAPI SHA256: \`$OPENAPI_SHA256\`
-          - OpenAPI source: \`$OPENAPI_SOURCE_URL\`
-          EOF
-          )"
+          NOW_EPOCH=$(date -u +%s)
+          TTL_SECONDS=$((TTL_DAYS * 86400))
+          REPO="${{ github.repository }}"
 
-          gh pr create \
-            --base "$BASE_BRANCH" \
-            --head "$BRANCH_NAME" \
-            --title "chore: sync generated model artifacts ($BRANCH_NAME)" \
-            --body "$PR_BODY"
+          OPEN_PR_HEADS=$(gh pr list --state open --limit 200 --json headRefName --jq '.[].headRefName' || true)
+          mapfile -t ALL_BRANCHES < <(gh api --paginate "repos/$REPO/branches?per_page=100" --jq '.[].name' | sed -n 's/^\(chore\/model-sync-.*\)$/\1/p' || true)
+
+          if [ ${#ALL_BRANCHES[@]} -eq 0 ]; then
+            echo "deleted_count=0" >> "$GITHUB_OUTPUT"
+            echo "skipped_count=0" >> "$GITHUB_OUTPUT"
+            echo "deleted_branches=" >> "$GITHUB_OUTPUT"
+            echo "skipped_branches=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          mapfile -t SORTED_BRANCHES < <(printf "%s\n" "${ALL_BRANCHES[@]}" | sort -r)
+
+          DELETED=""
+          SKIPPED=""
+          INDEX=0
+          for BRANCH in "${SORTED_BRANCHES[@]}"; do
+            INDEX=$((INDEX + 1))
+
+            if [ "$INDEX" -le "$KEEP_LAST_N" ]; then
+              SKIPPED="${SKIPPED}${BRANCH} (protected:keep-last-n)\n"
+              continue
+            fi
+
+            if printf "%s\n" "$OPEN_PR_HEADS" | grep -Fx "$BRANCH" > /dev/null; then
+              SKIPPED="${SKIPPED}${BRANCH} (protected:open-pr)\n"
+              continue
+            fi
+
+            COMMIT_DATE=$(gh api "repos/$REPO/commits/$BRANCH" --jq '.commit.committer.date' 2>/dev/null || true)
+            if [ -z "$COMMIT_DATE" ]; then
+              SKIPPED="${SKIPPED}${BRANCH} (skip:date-lookup-failed)\n"
+              continue
+            fi
+            BRANCH_EPOCH=$(date -ud "$COMMIT_DATE" +%s 2>/dev/null || true)
+            if [ -z "$BRANCH_EPOCH" ]; then
+              SKIPPED="${SKIPPED}${BRANCH} (skip:date-parse-failed)\n"
+              continue
+            fi
+            AGE=$((NOW_EPOCH - BRANCH_EPOCH))
+            if [ "$AGE" -lt "$TTL_SECONDS" ]; then
+              SKIPPED="${SKIPPED}${BRANCH} (protected:ttl)\n"
+              continue
+            fi
+
+            if gh api -X DELETE "repos/$REPO/git/refs/heads/$BRANCH" > /dev/null 2>&1; then
+              DELETED="${DELETED}${BRANCH}\n"
+            else
+              SKIPPED="${SKIPPED}${BRANCH} (skip:delete-failed)\n"
+            fi
+          done
+
+          DELETED_COUNT=$(printf "%b" "$DELETED" | sed '/^$/d' | wc -l | tr -d ' ')
+          SKIPPED_COUNT=$(printf "%b" "$SKIPPED" | sed '/^$/d' | wc -l | tr -d ' ')
+          echo "deleted_count=$DELETED_COUNT" >> "$GITHUB_OUTPUT"
+          echo "skipped_count=$SKIPPED_COUNT" >> "$GITHUB_OUTPUT"
+          echo "deleted_branches<<EOF" >> "$GITHUB_OUTPUT"
+          printf "%b" "$DELETED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "skipped_branches<<EOF" >> "$GITHUB_OUTPUT"
+          printf "%b" "$SKIPPED" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
 
       - name: Publish Workflow Summary
         if: always()
         run: |
           CHANGED_FILES="${{ steps.diff_scope.outputs.changed_files || '' }}"
+          RESOURCE_CHANGES="${{ steps.diff_scope.outputs.resource_changes || '' }}"
           DOC_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^docs/generated-reference/' || true)
           MODEL_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^src/endorlabs/generated/' || true)
           WORKSPACE_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^workspace/model-sync/' || true)
@@ -312,10 +407,20 @@ jobs:
             echo "### Outcome Matrix"
             echo "| Signal | Value |"
             echo "|---|---|"
+            echo "| Upstream changed | \`${{ steps.trigger.outputs.upstream_changed }}\` |"
+            echo "| version_changed | \`${{ steps.trigger.outputs.version_changed }}\` |"
+            echo "| spec_changed | \`${{ steps.trigger.outputs.spec_changed }}\` |"
+            echo "| Previous OpenAPI SHA256 | \`${{ steps.trigger.outputs.prev_openapi_sha256 || '<none>' }}\` |"
             echo "| OpenAPI SHA256 | \`${{ steps.trigger.outputs.openapi_sha256 }}\` |"
+            echo "| Previous endorctl version | \`${{ steps.trigger.outputs.prev_endorctl_version || '<none>' }}\` |"
             echo "| endorctl version | \`${{ steps.trigger.outputs.endorctl_version }}\` |"
-            echo "| Generated changes detected | \`${{ steps.diff_scope.outputs.has_changes || 'false' }}\` |"
+            echo "| generated_changed | \`${{ steps.diff_scope.outputs.generated_changed || 'false' }}\` |"
             echo "| Changed file count | \`${{ steps.diff_scope.outputs.changed_count || '0' }}\` |"
+            echo "| API spec path | \`${{ env.OPENAPI_SPEC_PATH }}\` |"
+            echo ""
+            echo "### PR Creation"
+            echo "- Status: `disabled (manual)`"
+            echo "- Branch (if generated_changed=true): \`${{ steps.trigger.outputs.branch_name }}\`"
             echo ""
             if [ "${{ steps.diff_scope.outputs.has_changes || 'false' }}" = "true" ]; then
               echo "### Generated Diff (why stale)"
@@ -324,6 +429,17 @@ jobs:
               echo "- workspace/model-sync files changed: \`$WORKSPACE_COUNT\`"
               echo "- client stub changed: \`$STUB_COUNT\`"
               echo ""
+              echo "### Resource Changes"
+              echo "- Resource change count: \`${{ steps.diff_scope.outputs.resource_change_count || '0' }}\`"
+              if [ -n "$RESOURCE_CHANGES" ]; then
+                echo "<details><summary>Changed resources derived from generated model file paths</summary>"
+                echo ""
+                echo '```text'
+                printf "%s\n" "$RESOURCE_CHANGES"
+                echo '```'
+                echo "</details>"
+                echo ""
+              fi
               echo "<details><summary>Changed files</summary>"
               echo ""
               echo '```text'
@@ -331,10 +447,31 @@ jobs:
               echo '```'
               echo "</details>"
               echo ""
+            else
+              if [ "${{ steps.trigger.outputs.upstream_changed }}" = "true" ]; then
+                echo "### No-op Rationale"
+                echo "- Upstream changed, but regeneration produced zero in-scope artifact diffs."
+                echo "- Branch and PR creation intentionally skipped."
+                echo ""
+              fi
+            fi
+            echo "### Cleanup"
+            echo "- TTL days: \`${{ env.CLEANUP_TTL_DAYS }}\`"
+            echo "- Keep last N branches: \`${{ env.CLEANUP_KEEP_LAST_N }}\`"
+            echo "- Deleted stale branches: \`${{ steps.cleanup.outputs.deleted_count || '0' }}\`"
+            echo "- Skipped branches: \`${{ steps.cleanup.outputs.skipped_count || '0' }}\`"
+            if [ -n "${{ steps.cleanup.outputs.deleted_branches || '' }}" ]; then
+              echo "<details><summary>Deleted branches</summary>"
+              echo ""
+              echo '```text'
+              printf "%s\n" "${{ steps.cleanup.outputs.deleted_branches }}"
+              echo '```'
+              echo "</details>"
+              echo ""
             fi
             echo "### Skips/Reasons"
             echo "- Integration tests are skipped when required ENDOR_* vars/secrets are not fully configured."
-            echo "- PR creation is skipped when generated output has no file changes."
+            echo "- No PR is created by this workflow; manual PR creation is required when generated_changed=true."
             echo ""
             echo "### Next Action"
             echo "- If changes were detected, verify/update the generated-artifacts PR content and merge when CI is green."
