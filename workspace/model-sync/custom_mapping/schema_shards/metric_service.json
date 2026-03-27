@@ -441,6 +441,44 @@
       },
       "type": "object"
     },
+    "GroupResponseGroupData": {
+      "description": "Information about objects matching the given key.",
+      "properties": {
+        "aggregation_count": {
+          "$ref": "#/definitions/v1CountResponse",
+          "description": "Number of objects in group.\nThis field is always set."
+        },
+        "aggregation_uuids": {
+          "description": "List of UUIDs of the objects in the group.\nOnly populated if show_aggregation_uuids is set.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "aggregation_value": {
+          "$ref": "#/definitions/v1GroupAggregationValueResponse",
+          "description": "Value of the aggregation operation as calculated by the query."
+        },
+        "unique_counts": {
+          "additionalProperties": {
+            "$ref": "#/definitions/v1CountResponse"
+          },
+          "description": "Map of counts for the given unique_count_paths fields.\nOnly populated if unique_count_paths is set.",
+          "type": "object"
+        },
+        "unique_values": {
+          "additionalProperties": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "description": "Map of values for the given unique_value_paths fields.\nOnly populated if unique_value_paths is set.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "IngestedObjectIngestedObjectStatus": {
       "default": "INGESTED_OBJECT_STATUS_UNSPECIFIED",
       "description": " - INGESTED_OBJECT_STATUS_LIGHT: Example: Use when a user exists because they are attached to a commit,\nbut are not found on a direct lookup.",
@@ -623,38 +661,6 @@
           "type": "object"
         }
       },
-      "type": "object"
-    },
-    "MetricServiceCreateMetricBody": {
-      "description": "This contains the definition all metrics.",
-      "properties": {
-        "context": {
-          "$ref": "#/definitions/v1Context"
-        },
-        "meta": {
-          "$ref": "#/definitions/v1Meta",
-          "description": "Metadata identifies the object."
-        },
-        "spec": {
-          "$ref": "#/definitions/v1MetricSpec",
-          "description": "The internal specification of a metric."
-        },
-        "tenant_meta": {
-          "description": "Metrics are associated with a tenant and tenant information must be provided.",
-          "title": "Metrics are associated with a tenant and tenant information must be provided.",
-          "type": "object"
-        },
-        "uuid": {
-          "description": "The UUID of the the metric resource.",
-          "readOnly": true,
-          "type": "string"
-        }
-      },
-      "required": [
-        "meta",
-        "spec",
-        "context"
-      ],
       "type": "object"
     },
     "NVDVulnerabilityCvssMetricV2": {
@@ -1790,6 +1796,38 @@
       ],
       "type": "string"
     },
+    "endorv1Metric": {
+      "description": "This contains the definition all metrics.",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context"
+        },
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata identifies the object."
+        },
+        "spec": {
+          "$ref": "#/definitions/v1MetricSpec",
+          "description": "The internal specification of a metric."
+        },
+        "tenant_meta": {
+          "$ref": "#/definitions/v1TenantMeta",
+          "description": "Metrics are associated with a tenant and tenant information must be provided."
+        },
+        "uuid": {
+          "description": "The UUID of the the metric resource.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenant_meta",
+        "meta",
+        "spec",
+        "context"
+      ],
+      "type": "object"
+    },
     "endorv1Vulnerability": {
       "description": "Vulnerability models information that can be extracted by analyzing CVEs.",
       "properties": {
@@ -2542,6 +2580,17 @@
       ],
       "type": "object"
     },
+    "v1CountResponse": {
+      "description": "Response to a list count request.",
+      "properties": {
+        "count": {
+          "description": "Number of objects matching the given list parameters.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
     "v1CvssDataV2": {
       "properties": {
         "access_complexity": {
@@ -3191,6 +3240,29 @@
       },
       "type": "object"
     },
+    "v1GroupAggregationValueResponse": {
+      "description": "GroupAggregationValueResponse returns the value of the aggregation if\nrequested.",
+      "properties": {
+        "value": {
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "v1GroupResponse": {
+      "description": "Response to a list group request.",
+      "properties": {
+        "groups": {
+          "additionalProperties": {
+            "$ref": "#/definitions/GroupResponseGroupData"
+          },
+          "description": "Map indexed by values of the fields specified in aggregation_paths,\nfor example, {\"[{\"key\":\"meta.kind\",\"value\":\"Project\"}]\": {\n\"aggregation_count\": { \"count\": 1649 } } }.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "v1IndexData": {
       "description": "IndexData is used to index the resource for search. It's an internal\nobject.",
       "properties": {
@@ -3560,6 +3632,51 @@
           },
           "description": "The ratio of result count/LOC per severity level.",
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListMetricsResponse": {
+      "description": "Response to the request to retrieve the metrics.",
+      "properties": {
+        "count_response": {
+          "$ref": "#/definitions/v1CountResponse"
+        },
+        "group_response": {
+          "$ref": "#/definitions/v1GroupResponse"
+        },
+        "list": {
+          "$ref": "#/definitions/v1ListMetricsResponseList"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListMetricsResponseList": {
+      "properties": {
+        "objects": {
+          "items": {
+            "$ref": "#/definitions/endorv1Metric",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "response": {
+          "$ref": "#/definitions/v1ListResponse"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListResponse": {
+      "description": "Response to a list request.",
+      "properties": {
+        "next_page_id": {
+          "description": "The UUID of last message retrieved.",
+          "type": "string"
+        },
+        "next_page_token": {
+          "description": "Pagination token that can be used to retrieve the next page of results.",
+          "format": "int32",
+          "type": "integer"
         }
       },
       "type": "object"
@@ -4908,10 +5025,13 @@
     }
   },
   "properties": {
-    "MetricServiceCreateMetricBody": {
-      "$ref": "#/definitions/MetricServiceCreateMetricBody"
+    "endorv1Metric": {
+      "$ref": "#/definitions/endorv1Metric"
+    },
+    "v1ListMetricsResponse": {
+      "$ref": "#/definitions/v1ListMetricsResponse"
     }
   },
-  "title": "metric",
+  "title": "metric_service",
   "type": "object"
 }
