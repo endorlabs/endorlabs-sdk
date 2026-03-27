@@ -2,7 +2,7 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (255 entities).
+Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (208 entities).
 
 ## Create payload/builders
 
@@ -10,8 +10,8 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 |----------|--------------------|---------|---------------|-----------------|-----------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `255`
-- generated artifact files: `167`
+- mapped entities: `208`
+- generated artifact files: `147`
 - facade contract resources: `33`
 - registry parity status: `pass`
 - operation metadata entries: `719`
