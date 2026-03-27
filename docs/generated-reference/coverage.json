@@ -1,8 +1,8 @@
 {
   "facade_contract_path": "workspace/model-sync/custom_mapping/facade_contract.json",
   "facade_contract_resource_count": 33,
-  "model_sync_entry_count": 255,
-  "model_sync_manifest_file_count": 167,
+  "model_sync_entry_count": 208,
+  "model_sync_manifest_file_count": 147,
   "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
   "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
   "operation_path_metadata_count": 719,
