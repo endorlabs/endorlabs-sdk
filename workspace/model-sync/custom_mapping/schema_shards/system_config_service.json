@@ -602,7 +602,7 @@
           "type": "object"
         },
         "tags": {
-          "description": "List of tags attached to the resource.\nTags can be used to select objects and to find collections of objects that\nsatisfy certain conditions. A tag must be 63 characters or less.",
+          "description": "List of tags attached to the resource.\nTags can be used to select objects and to find collections of objects that\nsatisfy certain conditions. A tag must be 255 characters or less.",
           "items": {
             "type": "string"
           },

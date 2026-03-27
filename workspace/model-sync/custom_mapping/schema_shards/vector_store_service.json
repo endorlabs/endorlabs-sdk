@@ -39,90 +39,6 @@
       },
       "type": "object"
     },
-    "IngestedObjectIngestedObjectStatus": {
-      "default": "INGESTED_OBJECT_STATUS_UNSPECIFIED",
-      "description": " - INGESTED_OBJECT_STATUS_LIGHT: Example: Use when a user exists because they are attached to a commit,\nbut are not found on a direct lookup.",
-      "enum": [
-        "INGESTED_OBJECT_STATUS_UNSPECIFIED",
-        "INGESTED_OBJECT_STATUS_FOUND",
-        "INGESTED_OBJECT_STATUS_NOT_FOUND",
-        "INGESTED_OBJECT_STATUS_LIGHT"
-      ],
-      "type": "string"
-    },
-    "OrganizationBlockListServiceCreateOrganizationBlockListBody": {
-      "description": "Represents the information about the blocked user list of a platform organization.",
-      "properties": {
-        "ingested_object": {
-          "$ref": "#/definitions/v1IngestedObject",
-          "description": "Raw ingested object."
-        },
-        "meta": {
-          "$ref": "#/definitions/v1Meta",
-          "description": "Metadata required for all objects."
-        },
-        "spec": {
-          "$ref": "#/definitions/v1OrganizationBlockListSpec",
-          "description": "The internal specification of the object."
-        },
-        "tenant_meta": {
-          "description": "Organization's block list is associated to a tenant.",
-          "title": "Organization's block list is associated to a tenant.",
-          "type": "object"
-        },
-        "uuid": {
-          "description": "The UUID of an organization's block list.",
-          "readOnly": true,
-          "type": "string"
-        }
-      },
-      "required": [
-        "meta",
-        "ingested_object"
-      ],
-      "type": "object"
-    },
-    "OrganizationBlockListServiceUpdateOrganizationBlockListBody": {
-      "description": "Request to update the block list of an organization.",
-      "properties": {
-        "object": {
-          "description": "Represents the information about the blocked user list of a platform organization.",
-          "properties": {
-            "ingested_object": {
-              "$ref": "#/definitions/v1IngestedObject",
-              "description": "Raw ingested object."
-            },
-            "meta": {
-              "$ref": "#/definitions/v1Meta",
-              "description": "Metadata required for all objects."
-            },
-            "spec": {
-              "$ref": "#/definitions/v1OrganizationBlockListSpec",
-              "description": "The internal specification of the object."
-            },
-            "tenant_meta": {
-              "description": "Organization's block list is associated to a tenant.",
-              "title": "Organization's block list is associated to a tenant.",
-              "type": "object"
-            },
-            "uuid": {
-              "description": "The UUID of an organization's block list.",
-              "readOnly": true,
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        "request": {
-          "$ref": "#/definitions/v1UpdateRequest"
-        }
-      },
-      "required": [
-        "meta",
-        "ingested_object"
-      ],
-      "type": "object"
-    },
     "googleprotobufAny": {
       "additionalProperties": {},
       "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }",
@@ -144,6 +60,28 @@
         }
       },
       "type": "object"
+    },
+    "v1EmbeddingModel": {
+      "default": "EMBEDDING_MODEL_UNSPECIFIED",
+      "description": "EmbeddingModel is the model of the embedding provider.",
+      "enum": [
+        "EMBEDDING_MODEL_UNSPECIFIED",
+        "EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_ADA_002",
+        "EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_3_SMALL",
+        "EMBEDDING_MODEL_GOOGLE_TEXT_EMBEDDING_LARGE",
+        "EMBEDDING_MODEL_OPENAI_TEXT_EMBEDDING_3_LARGE"
+      ],
+      "type": "string"
+    },
+    "v1EmbeddingProvider": {
+      "default": "EMBEDDING_PROVIDER_UNSPECIFIED",
+      "description": "EmbeddingProvider is the provider of the embeddings.",
+      "enum": [
+        "EMBEDDING_PROVIDER_UNSPECIFIED",
+        "EMBEDDING_PROVIDER_OPENAI",
+        "EMBEDDING_PROVIDER_GOOGLE"
+      ],
+      "type": "string"
     },
     "v1GroupAggregationValueResponse": {
       "description": "GroupAggregationValueResponse returns the value of the aggregation if\nrequested.",
@@ -198,60 +136,6 @@
       "type": "object",
       "x-internal": true
     },
-    "v1IngestedObject": {
-      "description": "Raw ingested object from a 3rd party source,\nalong with any additional metadata we want\nto add to the object.",
-      "properties": {
-        "ingestion_time": {
-          "description": "Time the object was last ingested.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "raw": {
-          "description": "Generic representation of the object.",
-          "type": "object"
-        },
-        "status": {
-          "$ref": "#/definitions/IngestedObjectIngestedObjectStatus",
-          "description": "Current status of the ingested object."
-        }
-      },
-      "required": [
-        "raw",
-        "ingestion_time",
-        "status"
-      ],
-      "type": "object"
-    },
-    "v1ListOrganizationBlockListsResponse": {
-      "description": "Response returned for the request to list the block lists of organizations.",
-      "properties": {
-        "count_response": {
-          "$ref": "#/definitions/v1CountResponse"
-        },
-        "group_response": {
-          "$ref": "#/definitions/v1GroupResponse"
-        },
-        "list": {
-          "$ref": "#/definitions/v1ListOrganizationBlockListsResponseList"
-        }
-      },
-      "type": "object"
-    },
-    "v1ListOrganizationBlockListsResponseList": {
-      "properties": {
-        "objects": {
-          "items": {
-            "$ref": "#/definitions/v1OrganizationBlockList",
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "response": {
-          "$ref": "#/definitions/v1ListResponse"
-        }
-      },
-      "type": "object"
-    },
     "v1ListResponse": {
       "description": "Response to a list request.",
       "properties": {
@@ -263,6 +147,37 @@
           "description": "Pagination token that can be used to retrieve the next page of results.",
           "format": "int32",
           "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListVectorStoresResponse": {
+      "description": "Response to the request to list available VectorStores.",
+      "properties": {
+        "count_response": {
+          "$ref": "#/definitions/v1CountResponse"
+        },
+        "group_response": {
+          "$ref": "#/definitions/v1GroupResponse"
+        },
+        "list": {
+          "$ref": "#/definitions/v1ListVectorStoresResponseList"
+        }
+      },
+      "type": "object",
+      "x-internal": true
+    },
+    "v1ListVectorStoresResponseList": {
+      "properties": {
+        "objects": {
+          "items": {
+            "$ref": "#/definitions/v1VectorStore",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "response": {
+          "$ref": "#/definitions/v1ListResponse"
         }
       },
       "type": "object"
@@ -326,7 +241,7 @@
           "type": "object"
         },
         "tags": {
-          "description": "List of tags attached to the resource.\nTags can be used to select objects and to find collections of objects that\nsatisfy certain conditions. A tag must be 63 characters or less.",
+          "description": "List of tags attached to the resource.\nTags can be used to select objects and to find collections of objects that\nsatisfy certain conditions. A tag must be 255 characters or less.",
           "items": {
             "type": "string"
           },
@@ -361,40 +276,6 @@
       ],
       "type": "object"
     },
-    "v1OrganizationBlockList": {
-      "description": "Represents the information about the blocked user list of a platform organization.",
-      "properties": {
-        "ingested_object": {
-          "$ref": "#/definitions/v1IngestedObject",
-          "description": "Raw ingested object."
-        },
-        "meta": {
-          "$ref": "#/definitions/v1Meta",
-          "description": "Metadata required for all objects."
-        },
-        "spec": {
-          "$ref": "#/definitions/v1OrganizationBlockListSpec",
-          "description": "The internal specification of the object."
-        },
-        "tenant_meta": {
-          "$ref": "#/definitions/v1TenantMeta",
-          "description": "Organization's block list is associated to a tenant."
-        },
-        "uuid": {
-          "description": "The UUID of an organization's block list.",
-          "readOnly": true,
-          "type": "string"
-        }
-      },
-      "required": [
-        "meta",
-        "ingested_object"
-      ],
-      "type": "object"
-    },
-    "v1OrganizationBlockListSpec": {
-      "type": "object"
-    },
     "v1TenantMeta": {
       "description": "Tenant related data for the tenant containing the resource.",
       "properties": {
@@ -409,35 +290,72 @@
       ],
       "type": "object"
     },
-    "v1UpdateRequest": {
-      "description": "Message used for all update requests.",
+    "v1VectorStore": {
+      "description": "Represents a vector store in the system. The vector store will create all\nthe infrastructure for semantic searches.",
       "properties": {
-        "force": {
-          "description": "Force will force the update of the resource if any\nchecks fail.",
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata required for all objects."
+        },
+        "propagate": {
+          "description": "Vector stores can be propagated and accessed in child namespaces.",
           "type": "boolean"
         },
-        "update_mask": {
-          "description": "Fields to update. Defaults to all fields.",
+        "spec": {
+          "$ref": "#/definitions/v1VectorStoreSpec",
+          "description": "The internal specification of the object."
+        },
+        "tenant_meta": {
+          "$ref": "#/definitions/v1TenantMeta",
+          "description": "VectorStores are associated with a tenant or are global."
+        },
+        "uuid": {
+          "description": "The UUID of an VectorStore.",
+          "readOnly": true,
           "type": "string"
         }
       },
+      "required": [
+        "meta"
+      ],
+      "type": "object",
+      "x-internal": true
+    },
+    "v1VectorStoreSpec": {
+      "properties": {
+        "dimensions": {
+          "description": "Dimensions is the number of dimensions to be used.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "embedding_model": {
+          "$ref": "#/definitions/v1EmbeddingModel",
+          "description": "EmbeddingModel is the embedding model of the vector store."
+        },
+        "embedding_provider": {
+          "$ref": "#/definitions/v1EmbeddingProvider",
+          "description": "EmbeddingProvider is the embedding provider of the vector store."
+        },
+        "uniqueness_fields": {
+          "description": "uniqueness_fields specifies which metadata fields are used for document uniqueness.\nWhen provided, a unique index is created on these fields at store creation time.\nAll add/update/delete operations must include these fields in document metadata.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "embedding_provider",
+        "embedding_model"
+      ],
       "type": "object"
     }
   },
   "properties": {
-    "OrganizationBlockListServiceCreateOrganizationBlockListBody": {
-      "$ref": "#/definitions/OrganizationBlockListServiceCreateOrganizationBlockListBody"
+    "v1ListVectorStoresResponse": {
+      "$ref": "#/definitions/v1ListVectorStoresResponse"
     },
-    "OrganizationBlockListServiceUpdateOrganizationBlockListBody": {
-      "$ref": "#/definitions/OrganizationBlockListServiceUpdateOrganizationBlockListBody"
-    },
-    "v1ListOrganizationBlockListsResponse": {
-      "$ref": "#/definitions/v1ListOrganizationBlockListsResponse"
-    },
-    "v1OrganizationBlockList": {
-      "$ref": "#/definitions/v1OrganizationBlockList"
+    "v1VectorStore": {
+      "$ref": "#/definitions/v1VectorStore"
     }
   },
-  "title": "organization_block_list_service",
+  "title": "vector_store_service",
   "type": "object"
 }
