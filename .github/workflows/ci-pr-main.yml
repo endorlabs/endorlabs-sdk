@@ -71,6 +71,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 env:
   # CI Configuration - easily maintainable environment variables
@@ -223,12 +224,54 @@ jobs:
           uv sync --dev
 
   # ---------------------------------------------------------------------------
+  # Single model_sync run shared by lint + unit tests via artifact (see unit-tests job).
+  # ---------------------------------------------------------------------------
+  generate-model-sync:
+    name: Generate Model Sync Artifacts
+    runs-on: ubuntu-latest
+    needs: [resolve-dependencies, detect-changes]
+    if: >-
+      needs.detect-changes.outputs.python == 'true' ||
+      needs.detect-changes.outputs.config == 'true' ||
+      needs.detect-changes.outputs.ci == 'true' ||
+      needs.detect-changes.outputs.src == 'true' ||
+      needs.detect-changes.outputs.unit-tests == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
+
+      - name: Download OpenAPI spec for model sync
+        run: |
+          mkdir -p .endorlabs-context
+          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+
+      - name: Run canonical model sync generation
+        run: |
+          uv run python scripts/model_sync.py
+
+      - name: Upload generated model-sync tree
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: model-sync-generated
+          if-no-files-found: error
+          path: |
+            workspace/model-sync
+            src/endorlabs/generated
+            .endorlabs-context/openapiv2.swagger.json
+
+  # ---------------------------------------------------------------------------
   # Lint — runs when any Python file, config, or CI definition changed.
   # ---------------------------------------------------------------------------
   lint:
     name: Lint, Typecheck, and Verify Generated Artifacts
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, detect-changes]
+    needs: [resolve-dependencies, detect-changes, generate-model-sync]
     if: >-
       needs.detect-changes.outputs.python == 'true' ||
       needs.detect-changes.outputs.config == 'true' ||
@@ -260,21 +303,14 @@ jobs:
           uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
           uv run pyright --project pyproject.toml scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
 
-      - name: Note deterministic PR policy for OpenAPI checks
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "::notice::Skipping live OpenAPI regeneration checks on pull_request events to avoid flaky failures from upstream spec drift."
+      - name: Download generated model-sync artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: model-sync-generated
+          path: .
 
-      - name: Download OpenAPI spec for model sync
-        if: github.event_name != 'pull_request'
+      - name: Verify canonical model-sync artifacts are present
         run: |
-          mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
-
-      - name: Verify canonical model-sync artifacts are up to date
-        if: github.event_name != 'pull_request'
-        run: |
-          uv run python scripts/model_sync.py
           if [ ! -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json ]; then
             echo "::error::Model-sync mapping manifest was not generated."
             exit 1
@@ -366,14 +402,14 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
-  # Unit tests — fast, no secrets required.
+  # Unit tests + coverage — one model_sync (via generate-model-sync artifact) and one pytest run.
   # Domain buckets live under tests/unit/{client,workflows,platform,tooling}.
   # Runs when src/, unit test files, config, or CI definition changed.
   # Note: lint conditions are a superset of unit-test conditions, so lint
   # is never skipped when this job needs to run — no always() required.
   # ---------------------------------------------------------------------------
   unit-tests:
-    name: Unit Test Suite
+    name: Unit Tests and Coverage
     runs-on: ubuntu-latest
     needs: [resolve-dependencies, lint, detect-changes]
     if: >-
@@ -391,18 +427,21 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
 
-      - name: Download OpenAPI spec for unit contract checks
-        run: |
-          mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+      - name: Download generated model-sync artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: model-sync-generated
+          path: .
 
-      - name: Generate canonical model-sync artifacts for unit tests
+      - name: Run unit tests with coverage
         run: |
-          uv run python scripts/model_sync.py
+          uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow and not long"
 
-      - name: Run unit tests
+      - name: Display coverage summary
         run: |
-          uv run pytest tests/unit/ --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow and not long"
+          echo "Coverage report generated successfully"
+          echo "Coverage data available in coverage.xml"
+          echo "View detailed coverage with: uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
 
   # ---------------------------------------------------------------------------
   # Integration tests — slower, requires secrets.
@@ -472,48 +511,6 @@ jobs:
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
   # ---------------------------------------------------------------------------
-  # Coverage — runs unit tests only (fast, deterministic).
-  # Conditions mirror unit-tests; if unit-tests runs, coverage runs too.
-  # ---------------------------------------------------------------------------
-  coverage:
-    name: Unit Test Coverage Report
-    runs-on: ubuntu-latest
-    needs: [resolve-dependencies, unit-tests, detect-changes]
-    if: >-
-      needs.detect-changes.outputs.src == 'true' ||
-      needs.detect-changes.outputs.unit-tests == 'true' ||
-      needs.detect-changes.outputs.config == 'true' ||
-      needs.detect-changes.outputs.ci == 'true'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Setup Python with UV
-        uses: ./.github/actions/setup-python-uv
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache-key: ${{ needs.resolve-dependencies.outputs.cache-key }}
-
-      - name: Download OpenAPI spec for coverage contract checks
-        run: |
-          mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
-
-      - name: Generate canonical model-sync artifacts for coverage tests
-        run: |
-          uv run python scripts/model_sync.py
-
-      - name: Run unit tests with coverage
-        run: |
-          uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=xml --cov-report=term-missing --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow and not long"
-
-      - name: Display coverage summary
-        run: |
-          echo "Coverage report generated successfully"
-          echo "Coverage data available in coverage.xml"
-          echo "View detailed coverage with: uv run pytest tests/unit/ --cov=${{ env.COVERAGE_PACKAGE }} --cov-report=html"
-
-  # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.
   # Passes when every conditional job either succeeded or was correctly skipped.
   # ---------------------------------------------------------------------------
@@ -521,17 +518,17 @@ jobs:
     name: Branch Protection CI Gate
     runs-on: ubuntu-latest
     if: always()
-    needs: [detect-changes, resolve-dependencies, lint, unit-tests, test-integration, coverage]
+    needs: [detect-changes, resolve-dependencies, generate-model-sync, lint, unit-tests, test-integration]
     steps:
       - name: Verify no failures
         run: |
           required_results=(
             "${{ needs.detect-changes.result }}"
             "${{ needs.resolve-dependencies.result }}"
+            "${{ needs.generate-model-sync.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.unit-tests.result }}"
             "${{ needs.test-integration.result }}"
-            "${{ needs.coverage.result }}"
           )
           failed=0
           for result in "${required_results[@]}"; do
@@ -562,10 +559,10 @@ jobs:
             echo "|---|---|"
             echo "| Detect changes | \`${{ needs.detect-changes.result }}\` |"
             echo "| Resolve dependencies | \`${{ needs.resolve-dependencies.result }}\` |"
+            echo "| Generate model sync | \`${{ needs.generate-model-sync.result }}\` |"
             echo "| Lint/typecheck | \`${{ needs.lint.result }}\` |"
-            echo "| Unit tests | \`${{ needs.unit-tests.result }}\` |"
+            echo "| Unit tests and coverage | \`${{ needs.unit-tests.result }}\` |"
             echo "| Integration tests | \`${{ needs.test-integration.result }}\` |"
-            echo "| Coverage | \`${{ needs.coverage.result }}\` |"
             echo ""
             echo "### Key Outputs"
             echo "- Path categories: src=\`${{ needs.detect-changes.outputs.src }}\`, unit=\`${{ needs.detect-changes.outputs.unit-tests }}\`, integration=\`${{ needs.detect-changes.outputs.integration-tests }}\`, config=\`${{ needs.detect-changes.outputs.config }}\`, ci=\`${{ needs.detect-changes.outputs.ci }}\`, python=\`${{ needs.detect-changes.outputs.python }}\`"
