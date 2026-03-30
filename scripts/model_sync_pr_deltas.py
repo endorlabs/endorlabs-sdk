@@ -12,6 +12,10 @@ large per-resource snapshot (facade descriptions, mutable/immutable paths, and
 payload property types + API descriptions). Use when you need the full picture,
 not a change list.
 
+When counts are all zero, **Maintainer readout** subsections explain what that means.
+If only ``provenance.json`` moved, use ``--provenance-only`` / the workflow provenance
+step for a field-level diff.
+
 Used by `.github/workflows/model-sync-pr.yml` and runnable locally after
 `model_sync.py`.
 """
@@ -33,6 +37,7 @@ DEFAULT_FACADE = Path("workspace/model-sync/custom_mapping/facade_contract.json"
 DEFAULT_PAYLOAD = Path(
     "workspace/model-sync/custom_mapping/mapping/payload_schemas.json"
 )
+DEFAULT_PROVENANCE = Path("workspace/model-sync/custom_mapping/provenance.json")
 
 
 def load_json_file(path: Path) -> dict[str, Any]:
@@ -342,10 +347,75 @@ def _signature_drift_lines(
     return sig_drift
 
 
+def _fmt_scalar_for_summary(key: str, val: Any, max_len: int = 96) -> str:
+    if val is None:
+        return "null"
+    if isinstance(val, str):
+        if key == "spec_sha256" and len(val) >= 16:
+            return f"{val[:12]}… (len={len(val)})"
+        if len(val) > max_len:
+            return val[: max_len - 3] + "..."
+        return val
+    s = json.dumps(val, sort_keys=True)
+    return s if len(s) <= max_len else s[: max_len - 3] + "..."
+
+
+def render_provenance_delta_markdown(
+    old_data: dict[str, Any],
+    new_data: dict[str, Any],
+    *,
+    baseline_ref: str = "HEAD",
+) -> list[str]:
+    """Field-level diff for provenance.json (excluded from sync branch)."""
+    lines: list[str] = []
+    lines.append("### Provenance delta (excluded from model-sync branch)")
+    lines.append(
+        "- **Compared:** working tree after generation vs "
+        f"`git show {baseline_ref}:workspace/model-sync/custom_mapping/provenance.json`"
+    )
+    scalar_keys = (
+        "endorctl_version",
+        "generated_at_utc",
+        "spec_sha256",
+        "spec_path",
+    )
+    for key in scalar_keys:
+        o = old_data.get(key)
+        n = new_data.get(key)
+        if o == n:
+            lines.append(
+                f"- `{key}`: **unchanged** — `{_fmt_scalar_for_summary(key, n)}`"
+            )
+        else:
+            lines.append(
+                f"- `{key}`: **changed** — `{_fmt_scalar_for_summary(key, o)}` → "
+                f"`{_fmt_scalar_for_summary(key, n)}`"
+            )
+    old_tc = old_data.get("toolchain")
+    new_tc = new_data.get("toolchain")
+    if old_tc != new_tc:
+        lines.append(
+            "- `toolchain`: **changed** (nested object; paths often differ per runner)"
+        )
+        lines.append(f"  - before: `{_fmt_scalar_for_summary('toolchain', old_tc)}`")
+        lines.append(f"  - after: `{_fmt_scalar_for_summary('toolchain', new_tc)}`")
+    else:
+        lines.append("- `toolchain`: **unchanged**")
+    lines.append("")
+    lines.append("#### Maintainer readout")
+    lines.append(
+        "- **Typical case:** Only `generated_at_utc` (and maybe `spec_path`) moves — "
+        "the OpenAPI **hash** and generated SDK files already match `main`."
+    )
+    lines.append("  Nothing to merge from this run.")
+    return lines
+
+
 def render_upstream_delta_markdown(
     old_data: dict[str, Any],
     new_data: dict[str, Any],
     *,
+    baseline_ref: str = "HEAD",
     max_tag_delta_lines: int = 80,
     max_endpoint_samples: int = 40,
     max_signature_drift: int = 40,
@@ -384,17 +454,17 @@ def render_upstream_delta_markdown(
     lines: list[str] = []
     lines.append("### Upstream API Delta")
     lines.append(
-        f"- Unique path+method endpoints (HEAD baseline): {len(old_endpoints)}"
+        f"- Unique path+method endpoints (git {baseline_ref}): {len(old_endpoints)}"
     )
     lines.append(f"- Unique path+method endpoints (current run): {len(new_endpoints)}")
-    lines.append(f"- Operation tag groups (HEAD baseline): {len(old_tag_names)}")
+    lines.append(f"- Operation tag groups (git {baseline_ref}): {len(old_tag_names)}")
     lines.append(f"- Operation tag groups (current run): {len(new_tag_names)}")
     lines.append(f"- Added tag groups: {len(added_tags)}")
     lines.append(f"- Removed tag groups: {len(removed_tags)}")
     lines.append(f"- Tag groups with endpoint-set deltas: {len(tag_deltas)}")
     lines.append(f"- Added endpoint signatures: {len(added_endpoints)}")
     lines.append(f"- Removed endpoint signatures: {len(removed_endpoints)}")
-    lines.append(f"- Total operation entries (HEAD baseline): {old_count}")
+    lines.append(f"- Total operation entries (git {baseline_ref}): {old_count}")
     lines.append(f"- Total operation entries (current run): {new_count}")
 
     if added_tags:
@@ -428,6 +498,40 @@ def render_upstream_delta_markdown(
         lines.extend(sig_drift[:max_signature_drift])
         lines.append("```")
         lines.append("</details>")
+
+    no_net_delta = (
+        bool(old_ops)
+        and bool(new_ops)
+        and not added_tags
+        and not removed_tags
+        and not tag_deltas
+        and not added_endpoints
+        and not removed_endpoints
+        and not sig_drift
+    )
+    if no_net_delta:
+        lines.append("")
+        lines.append("#### Maintainer readout")
+        lines.append(
+            "- **What changed in the API catalog:** Nothing vs "
+            f"`git {baseline_ref}` — on-disk `operation_path_metadata.json` matches "
+            "the committed file."
+        )
+        lines.append(
+            "  Same path+method set, tag groups, and operation metadata as baseline."
+        )
+        lines.append(
+            "- **Why the workflow still ran:** Dispatch can fire on `spec_changed` / "
+            "`version_changed` while **main already embeds** that spec output."
+        )
+        lines.append("  Idempotent regeneration.")
+        lines.append(
+            "- **If you expected API drift:** Compare **Outcome Matrix** OpenAPI "
+            "SHA256 to `provenance.json` `spec_sha256` after this job."
+        )
+        lines.append(
+            "  If hashes align, the spec is already reflected in tracked artifacts."
+        )
 
     return lines
 
@@ -636,6 +740,7 @@ def render_resource_delta_markdown(
     old_payload: dict[str, Any],
     new_payload: dict[str, Any],
     *,
+    baseline_ref: str = "HEAD",
     include_resource_inventory: bool = False,
     max_list_lines: int = 80,
     max_payload_lines: int = 120,
@@ -665,8 +770,9 @@ def render_resource_delta_markdown(
         _append_resource_field_inventory(lines, new_r, new_p)
     else:
         lines.append(
-            "- **Scope (summary):** only **changes** vs baseline "
-            "``facade_contract.json`` / ``payload_schemas.json`` from git — "
+            "- **Scope (summary):** only **changes** vs "
+            f"``git {baseline_ref}`` copies of "
+            "``facade_contract.json`` / ``payload_schemas.json`` — "
             "not a full dump of every resource or field."
         )
         lines.append(
@@ -733,6 +839,31 @@ def render_resource_delta_markdown(
     else:
         lines.append("- Payload operation attribute deltas: 0")
 
+    no_res_delta = (
+        bool(old_r)
+        and bool(new_r)
+        and not added
+        and not removed
+        and not op_changes
+        and not field_changes
+        and not payload_changes
+    )
+    if no_res_delta:
+        lines.append("")
+        lines.append("#### Maintainer readout")
+        lines.append(
+            "- **What changed in facade/payload JSON:** Nothing vs "
+            f"`git {baseline_ref}` — same resources, `supported_ops`, "
+            "mutable/immutable field sets, and create/update payload shapes."
+        )
+        lines.append(
+            "- **So why did git status show workspace changes?** Usually "
+            "`provenance.json` only (timestamps/paths); it is reset before branch push."
+        )
+        lines.append(
+            "  **Provenance delta** appears in this summary when that file was dirty."
+        )
+
     return lines
 
 
@@ -780,6 +911,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Path to payload_schemas.json",
     )
     parser.add_argument(
+        "--provenance",
+        type=Path,
+        default=DEFAULT_PROVENANCE,
+        help="Path to provenance.json",
+    )
+    parser.add_argument(
         "--print-upstream",
         action="store_true",
         help="Print upstream delta markdown to stdout",
@@ -795,10 +932,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Include large per-resource facade+payload snapshot (not a diff list)",
     )
     parser.add_argument(
+        "--print-provenance",
+        action="store_true",
+        help="Print provenance.json field delta vs --git-ref",
+    )
+    parser.add_argument(
         "--write-github-output",
         action="store_true",
-        help="Append summary_markdown to GITHUB_OUTPUT (use with --upstream-only or "
-        "--resource-only)",
+        help="Append summary_markdown to GITHUB_OUTPUT (use with one of *-only flags)",
     )
     wf = parser.add_mutually_exclusive_group()
     wf.add_argument(
@@ -811,21 +952,30 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="With --write-github-output: write only resource delta",
     )
+    wf.add_argument(
+        "--provenance-only",
+        action="store_true",
+        help="With --write-github-output: write only provenance delta",
+    )
     args = parser.parse_args(argv)
 
-    if args.write_github_output and not (args.upstream_only or args.resource_only):
+    if args.write_github_output and not (
+        args.upstream_only or args.resource_only or args.provenance_only
+    ):
         parser.error(
-            "--write-github-output requires --upstream-only or --resource-only"
+            "--write-github-output requires --upstream-only, --resource-only, or "
+            "--provenance-only"
         )
 
     if (
         not args.print_upstream
         and not args.print_resource
+        and not args.print_provenance
         and not args.write_github_output
     ):
         parser.error(
             "Specify at least one of --print-upstream, --print-resource, "
-            "--write-github-output"
+            "--print-provenance, --write-github-output"
         )
 
     run_upstream = args.print_upstream or (
@@ -834,11 +984,16 @@ def main(argv: list[str] | None = None) -> int:
     run_resource = args.print_resource or (
         args.write_github_output and args.resource_only
     )
+    run_provenance = args.print_provenance or (
+        args.write_github_output and args.provenance_only
+    )
 
     if run_upstream:
         old_meta = git_show_json(args.git_ref, args.operation_metadata)
         new_meta = load_json_file(args.operation_metadata)
-        up_lines = render_upstream_delta_markdown(old_meta, new_meta)
+        up_lines = render_upstream_delta_markdown(
+            old_meta, new_meta, baseline_ref=args.git_ref
+        )
         if args.print_upstream:
             _write_stdout("\n".join(up_lines))
         if args.write_github_output and args.upstream_only:
@@ -854,12 +1009,24 @@ def main(argv: list[str] | None = None) -> int:
             new_facade,
             old_payload,
             new_payload,
+            baseline_ref=args.git_ref,
             include_resource_inventory=args.include_resource_inventory,
         )
         if args.print_resource:
             _write_stdout("\n".join(res_lines))
         if args.write_github_output and args.resource_only:
             append_github_output_markdown("summary_markdown", res_lines)
+
+    if run_provenance:
+        old_prov = git_show_json(args.git_ref, args.provenance)
+        new_prov = load_json_file(args.provenance)
+        prov_lines = render_provenance_delta_markdown(
+            old_prov, new_prov, baseline_ref=args.git_ref
+        )
+        if args.print_provenance:
+            _write_stdout("\n".join(prov_lines))
+        if args.write_github_output and args.provenance_only:
+            append_github_output_markdown("summary_markdown", prov_lines)
 
     return 0
 

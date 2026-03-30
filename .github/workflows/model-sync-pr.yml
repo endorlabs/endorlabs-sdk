@@ -320,6 +320,12 @@ jobs:
         run: |
           uv run python scripts/model_sync_pr_deltas.py --write-github-output --resource-only
 
+      - name: Compute provenance delta
+        id: provenance_delta
+        if: steps.diff_scope.outputs.provenance_changed == 'true'
+        run: |
+          uv run python scripts/model_sync_pr_deltas.py --write-github-output --provenance-only
+
       - name: Push model-sync branch (manual PR)
         if: steps.diff_scope.outputs.generated_changed == 'true'
         env:
@@ -503,6 +509,10 @@ jobs:
               else
                 echo "- No in-scope generated artifact changes were detected."
               fi
+              echo ""
+            fi
+            if [ -n "${{ steps.provenance_delta.outputs.summary_markdown || '' }}" ]; then
+              printf "%s\n" "${{ steps.provenance_delta.outputs.summary_markdown }}"
               echo ""
             fi
             if [ -n "${{ steps.resource_delta.outputs.summary_markdown || '' }}" ]; then
