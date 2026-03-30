@@ -411,29 +411,29 @@ jobs:
                       fragments.append(f"+{len(add_ops)} ops")
                   if del_ops:
                       fragments.append(f"-{len(del_ops)} ops")
-                  op_deltas.append(f"- `{name}`: " + ", ".join(fragments))
+                  op_deltas.append(f"- {name}: " + ", ".join(fragments))
 
           added_endpoints = sorted(new_endpoints - old_endpoints)
           removed_endpoints = sorted(old_endpoints - new_endpoints)
 
           lines: list[str] = []
           lines.append("### Upstream API Delta")
-          lines.append(f"- OpenAPI paths+methods (HEAD baseline): `{len(old_endpoints)}`")
-          lines.append(f"- OpenAPI paths+methods (current run): `{len(new_endpoints)}`")
-          lines.append(f"- Resources in metadata (HEAD baseline): `{len(old_names)}`")
-          lines.append(f"- Resources in metadata (current run): `{len(new_names)}`")
-          lines.append(f"- Added resources: `{len(added)}`")
-          lines.append(f"- Removed resources: `{len(removed)}`")
-          lines.append(f"- Resources with operation-set deltas: `{len(op_deltas)}`")
-          lines.append(f"- Added endpoint signatures: `{len(added_endpoints)}`")
-          lines.append(f"- Removed endpoint signatures: `{len(removed_endpoints)}`")
-          lines.append(f"- Total operation entries (HEAD baseline): `{old_ops_count}`")
-          lines.append(f"- Total operation entries (current run): `{new_ops_count}`")
+          lines.append(f"- OpenAPI paths+methods (HEAD baseline): {len(old_endpoints)}")
+          lines.append(f"- OpenAPI paths+methods (current run): {len(new_endpoints)}")
+          lines.append(f"- Resources in metadata (HEAD baseline): {len(old_names)}")
+          lines.append(f"- Resources in metadata (current run): {len(new_names)}")
+          lines.append(f"- Added resources: {len(added)}")
+          lines.append(f"- Removed resources: {len(removed)}")
+          lines.append(f"- Resources with operation-set deltas: {len(op_deltas)}")
+          lines.append(f"- Added endpoint signatures: {len(added_endpoints)}")
+          lines.append(f"- Removed endpoint signatures: {len(removed_endpoints)}")
+          lines.append(f"- Total operation entries (HEAD baseline): {old_ops_count}")
+          lines.append(f"- Total operation entries (current run): {new_ops_count}")
 
           if added:
-              lines.append(f"- New resources (sample): `{', '.join(added[:20])}`")
+              lines.append(f"- New resources (sample): {', '.join(added[:20])}")
           if removed:
-              lines.append(f"- Removed resources (sample): `{', '.join(removed[:20])}`")
+              lines.append(f"- Removed resources (sample): {', '.join(removed[:20])}")
 
           if op_deltas:
               lines.append("<details><summary>Resource-level operation delta samples</summary>")
@@ -532,12 +532,12 @@ jobs:
 
           lines: list[str] = []
           lines.append("### Resource/Operation/Attribute Delta")
-          lines.append(f"- Added resources: `{len(added)}`")
-          lines.append(f"- Removed resources: `{len(removed)}`")
+          lines.append(f"- Added resources: {len(added)}")
+          lines.append(f"- Removed resources: {len(removed)}")
           if added:
-              lines.append(f"- New resources: `{', '.join(added[:20])}`")
+              lines.append(f"- New resources: {', '.join(added[:20])}")
           if removed:
-              lines.append(f"- Removed resources: `{', '.join(removed[:20])}`")
+              lines.append(f"- Removed resources: {', '.join(removed[:20])}")
 
           op_changes: list[str] = []
           field_changes: list[str] = []
@@ -556,7 +556,7 @@ jobs:
                       fragments.append(f"+ops={','.join(add_ops)}")
                   if del_ops:
                       fragments.append(f"-ops={','.join(del_ops)}")
-                  op_changes.append(f"- `{name}`: " + "; ".join(fragments))
+                  op_changes.append(f"- {name}: " + "; ".join(fragments))
 
               old_mut = set(old_item.get("mutable_fields", []))
               new_mut = set(new_item.get("mutable_fields", []))
@@ -576,7 +576,7 @@ jobs:
                       frag.append(f"+immutable={','.join(imm_add[:8])}")
                   if imm_del:
                       frag.append(f"-immutable={','.join(imm_del[:8])}")
-                  field_changes.append(f"- `{name}`: " + "; ".join(frag))
+                  field_changes.append(f"- {name}: " + "; ".join(frag))
 
               old_payload_item = old_p.get(name, {})
               new_payload_item = new_p.get(name, {})
@@ -615,11 +615,11 @@ jobs:
                           if del_req:
                               frag.append(f"-required={','.join(del_req[:8])}")
                           payload_changes.append(
-                              f"- `{name}` `{kind}` `{def_name}`: " + "; ".join(frag)
+                              f"- {name} {kind} {def_name}: " + "; ".join(frag)
                           )
 
           if op_changes:
-              lines.append(f"- Resources with operation changes: `{len(op_changes)}`")
+              lines.append(f"- Resources with operation changes: {len(op_changes)}")
               lines.append("<details><summary>Operation changes by resource</summary>")
               lines.append("")
               lines.append("```text")
@@ -627,10 +627,10 @@ jobs:
               lines.append("```")
               lines.append("</details>")
           else:
-              lines.append("- Resources with operation changes: `0`")
+              lines.append("- Resources with operation changes: 0")
 
           if field_changes:
-              lines.append(f"- Resources with mutable/immutable attribute changes: `{len(field_changes)}`")
+              lines.append(f"- Resources with mutable/immutable attribute changes: {len(field_changes)}")
               lines.append("<details><summary>Mutable/immutable attribute changes</summary>")
               lines.append("")
               lines.append("```text")
@@ -638,10 +638,10 @@ jobs:
               lines.append("```")
               lines.append("</details>")
           else:
-              lines.append("- Resources with mutable/immutable attribute changes: `0`")
+              lines.append("- Resources with mutable/immutable attribute changes: 0")
 
           if payload_changes:
-              lines.append(f"- Payload operation attribute deltas: `{len(payload_changes)}`")
+              lines.append(f"- Payload operation attribute deltas: {len(payload_changes)}")
               lines.append("<details><summary>Create/update payload attribute deltas</summary>")
               lines.append("")
               lines.append("```text")
@@ -649,7 +649,7 @@ jobs:
               lines.append("```")
               lines.append("</details>")
           else:
-              lines.append("- Payload operation attribute deltas: `0`")
+              lines.append("- Payload operation attribute deltas: 0")
 
           output_path = os.environ.get("GITHUB_OUTPUT")
           if output_path:
@@ -800,7 +800,7 @@ jobs:
             echo "| API spec path | \`${{ env.OPENAPI_SPEC_PATH }}\` |"
             echo ""
             echo "### PR Creation"
-            echo "- Status: `disabled (manual)`"
+            echo "- Status: disabled (manual)"
             echo "- Branch (if generated_changed=true): \`${{ steps.trigger.outputs.branch_name }}\`"
             echo "- Note: \`workspace/model-sync/custom_mapping/provenance.json\` is excluded from branch creation scope."
             echo ""
