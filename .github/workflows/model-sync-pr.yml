@@ -123,6 +123,41 @@ jobs:
         run: |
           uv run pytest tests/unit/ --maxfail=${{ env.PYTEST_MAXFAIL }} -m "not slow and not long"
 
+      - name: Compute resource delta JSON
+        id: resource_delta_json
+        run: |
+          uv run python scripts/model_sync_pr_deltas.py --write-github-output --resource-json-only
+
+      - name: Detect non-generated src drift
+        id: src_drift
+        run: |
+          FILES=$(
+            git status --porcelain -- src \
+              | sed '/^$/d' \
+              | sed -E 's/^...//' \
+              | sed -E 's/^[^[:space:]]+[[:space:]]+//' \
+              | sed -E 's/^"//; s/"$//' \
+              | sed -E 's# -> .*##' \
+              | sort -u
+          )
+          NON_GENERATED=$(
+            printf "%s\n" "$FILES" \
+              | sed '/^$/d' \
+              | grep '^src/' \
+              | grep -v '^src/endorlabs/generated/' \
+              | grep -v '^src/endorlabs/client_surface.pyi$' \
+              || true
+          )
+          if [ -n "$NON_GENERATED" ]; then
+            echo "src_non_generated_changed=true" >> "$GITHUB_OUTPUT"
+            echo "src_non_generated_files<<EOF" >> "$GITHUB_OUTPUT"
+            printf "%s\n" "$NON_GENERATED" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "src_non_generated_changed=false" >> "$GITHUB_OUTPUT"
+            echo "src_non_generated_files=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Evaluate integration test prerequisites
         id: integration_prereqs
         run: |
@@ -141,8 +176,106 @@ jobs:
           fi
           echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
 
-      - name: Run integration test suite
-        if: steps.integration_prereqs.outputs.should_run == 'true'
+      - name: Select integration test scope
+        id: integration_scope
+        run: |
+          if [ "${{ steps.integration_prereqs.outputs.should_run }}" != "true" ]; then
+            echo "run_integration_selected=false" >> "$GITHUB_OUTPUT"
+            echo "selection_mode=skip" >> "$GITHUB_OUTPUT"
+            echo "selection_reason=required ENDOR_* vars/secrets are not fully configured" >> "$GITHUB_OUTPUT"
+            echo "selected_test_paths=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ steps.src_drift.outputs.src_non_generated_changed }}" = "true" ]; then
+            echo "run_integration_selected=true" >> "$GITHUB_OUTPUT"
+            echo "selection_mode=full" >> "$GITHUB_OUTPUT"
+            echo "selection_reason=non-generated src drift detected" >> "$GITHUB_OUTPUT"
+            echo "selected_test_paths=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "${DELTA_JSON}" ]; then
+            echo "run_integration_selected=false" >> "$GITHUB_OUTPUT"
+            echo "selection_mode=skip" >> "$GITHUB_OUTPUT"
+            echo "selection_reason=no resource delta JSON available" >> "$GITHUB_OUTPUT"
+            echo "selected_test_paths=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+          import sys
+
+          out_path = os.environ["GITHUB_OUTPUT"]
+          delta_json = os.environ.get("DELTA_JSON", "")
+          try:
+              data = json.loads(delta_json)
+          except json.JSONDecodeError:
+              data = {}
+
+          changed = data.get("changed_resources", [])
+          if not isinstance(changed, list):
+              changed = []
+
+          def to_snake(name: str) -> str:
+              return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+
+          selected: set[str] = set()
+          unmapped: list[str] = []
+          for item in sorted(x for x in changed if isinstance(x, str)):
+              candidate = pathlib.Path(f"tests/integration/resources/test_{to_snake(item)}.py")
+              if candidate.exists():
+                  selected.add(candidate.as_posix())
+              else:
+                  unmapped.append(item)
+
+          workflow_map = {
+              "Finding": "tests/integration/workflows/test_retrieving_scan_results.py",
+              "Project": "tests/integration/workflows/test_retrieving_scan_results.py",
+              "Repository": "tests/integration/workflows/test_retrieving_scan_results.py",
+              "RepositoryVersion": "tests/integration/workflows/test_retrieving_scan_results.py",
+              "ScanResult": "tests/integration/workflows/test_retrieving_scan_results.py",
+          }
+          for item in sorted(x for x in changed if isinstance(x, str)):
+              wf = workflow_map.get(item)
+              if wf and pathlib.Path(wf).exists():
+                  selected.add(wf)
+
+          with open(out_path, "a", encoding="utf-8") as fh:
+              if changed and unmapped:
+                  fh.write("run_integration_selected=true\n")
+                  fh.write("selection_mode=full\n")
+                  fh.write("selection_reason=resource deltas include unmapped resources\n")
+                  fh.write("selected_test_paths<<EOF\n")
+                  for path in sorted(selected):
+                      fh.write(f"{path}\n")
+                  fh.write("EOF\n")
+                  sys.exit(0)
+              if selected:
+                  fh.write("run_integration_selected=true\n")
+                  fh.write("selection_mode=targeted\n")
+                  fh.write("selection_reason=resource deltas mapped to targeted integration tests\n")
+                  fh.write("selected_test_paths<<EOF\n")
+                  for path in sorted(selected):
+                      fh.write(f"{path}\n")
+                  fh.write("EOF\n")
+                  sys.exit(0)
+              fh.write("run_integration_selected=false\n")
+              fh.write("selection_mode=skip\n")
+              fh.write("selection_reason=no relevant resource deltas detected\n")
+              fh.write("selected_test_paths=\n")
+          PY
+        env:
+          DELTA_JSON: ${{ steps.resource_delta_json.outputs.delta_json || '' }}
+
+      - name: Run full integration test suite
+        if: >-
+          steps.integration_scope.outputs.run_integration_selected == 'true' &&
+          steps.integration_scope.outputs.selection_mode == 'full'
         run: |
           uv run pytest tests/integration/ --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not long"
         env:
@@ -151,10 +284,50 @@ jobs:
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
 
-      - name: Integration test skipped summary
-        if: steps.integration_prereqs.outputs.should_run != 'true'
+      - name: Run targeted integration tests
+        if: >-
+          steps.integration_scope.outputs.run_integration_selected == 'true' &&
+          steps.integration_scope.outputs.selection_mode == 'targeted'
         run: |
-          echo "::notice::Integration tests skipped because required ENDOR_* vars/secrets are not fully configured."
+          mapfile -t TEST_PATHS <<< "${{ steps.integration_scope.outputs.selected_test_paths }}"
+          uv run pytest "${TEST_PATHS[@]}" --maxfail=${{ env.PYTEST_MAXFAIL }} --disable-warnings -m "not long"
+        env:
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+
+      - name: Integration test skipped summary
+        if: steps.integration_scope.outputs.run_integration_selected != 'true'
+        run: |
+          echo "::notice::Integration tests skipped: ${{ steps.integration_scope.outputs.selection_reason }}"
+
+      - name: Publish integration selection summary
+        if: always()
+        run: |
+          {
+            echo "### Integration Test Selection"
+            echo "- Prereqs available: \`${{ steps.integration_prereqs.outputs.should_run }}\`"
+            echo "- src non-generated drift: \`${{ steps.src_drift.outputs.src_non_generated_changed }}\`"
+            echo "- selection mode: \`${{ steps.integration_scope.outputs.selection_mode }}\`"
+            echo "- selection reason: \`${{ steps.integration_scope.outputs.selection_reason }}\`"
+            if [ -n "${{ steps.src_drift.outputs.src_non_generated_files || '' }}" ]; then
+              echo "<details><summary>Non-generated src drift files</summary>"
+              echo ""
+              echo '```text'
+              printf "%s\n" "${{ steps.src_drift.outputs.src_non_generated_files }}"
+              echo '```'
+              echo "</details>"
+            fi
+            if [ -n "${{ steps.integration_scope.outputs.selected_test_paths || '' }}" ]; then
+              echo "<details><summary>Selected integration tests</summary>"
+              echo ""
+              echo '```text'
+              printf "%s\n" "${{ steps.integration_scope.outputs.selected_test_paths }}"
+              echo '```'
+              echo "</details>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   sync-and-pr:
     name: Open or Update Sync PR
