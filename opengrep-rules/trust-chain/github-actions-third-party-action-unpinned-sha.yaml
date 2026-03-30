@@ -49,7 +49,7 @@ rules:
     patterns:
       - pattern-regex: |
           (?mx)
-          ^\s*[-]?\s*uses:\s*
+          ^\s*[-]?\s*uses\s*:\s*
           ['"]?
           (?!\./)                      # local action
           (?!docker://)                # docker action reference
