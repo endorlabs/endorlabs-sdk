@@ -12,6 +12,8 @@ if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
 from model_sync_pr_deltas import (
+    build_resource_delta_structured,
+    build_upstream_delta_structured,
     render_provenance_delta_markdown,
     render_resource_delta_markdown,
     render_upstream_delta_markdown,
@@ -334,3 +336,92 @@ def test_resource_summary_default_skips_full_inventory() -> None:
     assert "SDK facade resources (current run, attr_name)" not in text
     assert "Per-resource fields" not in text
     assert "**Scope (summary):**" in text
+
+
+def test_build_upstream_delta_structured_no_deltas() -> None:
+    meta = {
+        "operations": [
+            {
+                "method": "get",
+                "path": "/x",
+                "operation_id": "ReadX",
+                "tags": ["TagX"],
+                "request_refs": [],
+                "response_refs": ["R"],
+            }
+        ]
+    }
+    data = build_upstream_delta_structured(meta, meta)
+    assert data["has_upstream_delta"] is False
+    assert data["added_endpoints"] == []
+    assert data["removed_endpoints"] == []
+    assert data["added_tags"] == []
+    assert data["removed_tags"] == []
+    assert data["signature_drift"] == []
+
+
+def test_build_resource_delta_structured_payload_and_ops_and_fields() -> None:
+    old_facade = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "supported_ops": ["get"],
+                "mutable_fields": [],
+                "immutable_fields": ["uuid"],
+            }
+        ]
+    }
+    new_facade = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "supported_ops": ["get", "update"],
+                "mutable_fields": ["spec.title"],
+                "immutable_fields": [],
+            }
+        ]
+    }
+    old_payload = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "create_payload_definitions": {
+                    "WidgetBody": {
+                        "properties": {"spec": {"$ref": "#/definitions/v1WidgetSpec"}},
+                        "required": [],
+                    }
+                },
+                "update_payload_definitions": {},
+            }
+        ]
+    }
+    new_payload = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "create_payload_definitions": {
+                    "WidgetBody": {
+                        "properties": {"spec": {"type": "object"}},
+                        "required": ["spec"],
+                    }
+                },
+                "update_payload_definitions": {},
+            }
+        ]
+    }
+    data = build_resource_delta_structured(
+        old_facade,
+        new_facade,
+        old_payload,
+        new_payload,
+    )
+    assert data["has_resource_delta"] is True
+    assert data["changed_resources"] == ["Widget"]
+    assert "Widget" in data["resource_op_changes"]
+    assert "Widget" in data["resource_field_changes"]
+    assert "Widget" in data["resource_payload_changes"]
+    assert any("+ops=update" in x for x in data["resource_op_changes"]["Widget"])
+    assert any(
+        "+mutable=spec.title" in x for x in data["resource_field_changes"]["Widget"]
+    )
+    assert any("prop `spec`" in x for x in data["resource_payload_changes"]["Widget"])
