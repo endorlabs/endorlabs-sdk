@@ -302,4 +302,5 @@ jobs:
           echo "- When no upstream diff is detected and no force/manual trigger is used, dispatch is intentionally skipped." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Action" >> $GITHUB_STEP_SUMMARY
-          echo "- If dispatched, monitor \`Model Sync PR\` for generated artifact updates and resource-level changes." >> $GITHUB_STEP_SUMMARY
+          echo "- If dispatched, monitor \`Model Sync PR\` for upstream API delta reporting and generated artifact/resource-level changes." >> $GITHUB_STEP_SUMMARY
+          echo "- The sync workflow now reports upstream deltas even when generated artifacts are unchanged." >> $GITHUB_STEP_SUMMARY
