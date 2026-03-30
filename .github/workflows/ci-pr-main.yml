@@ -300,8 +300,8 @@ jobs:
 
       - name: Validate CI-critical automation scripts
         run: |
-          uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
-          uv run pyright --project pyproject.toml scripts/model_sync.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+          uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+          uv run pyright --project pyproject.toml scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
 
       - name: Download generated model-sync artifacts
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
