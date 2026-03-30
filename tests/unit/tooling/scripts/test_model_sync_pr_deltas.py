@@ -12,6 +12,7 @@ if _SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, _SCRIPTS_DIR)
 
 from model_sync_pr_deltas import (
+    render_provenance_delta_markdown,
     render_resource_delta_markdown,
     render_upstream_delta_markdown,
 )
@@ -54,7 +55,7 @@ def test_upstream_delta_uses_operations_not_resources() -> None:
     }
     lines = render_upstream_delta_markdown(old, new)
     text = "\n".join(lines)
-    assert "Unique path+method endpoints (HEAD baseline): 1" in text
+    assert "Unique path+method endpoints (git HEAD): 1" in text
     assert "Unique path+method endpoints (current run): 2" in text
     assert "Added endpoint signatures: 1" in text
     assert "POST /v1/b" in text or "+ POST /v1/b" in text
@@ -258,6 +259,60 @@ def test_resource_inventory_includes_payload_field_descriptions() -> None:
     )
     assert "spec: $ref:v1WidgetSpec | The widget body." in text
     assert "uuid: type:string [readOnly] | Server-assigned id." in text
+
+
+def test_upstream_maintainer_readout_when_no_deltas() -> None:
+    meta = {
+        "operation_count": 1,
+        "operations": [
+            {"method": "get", "path": "/x", "tags": ["T"], "request_refs": []}
+        ],
+    }
+    lines = render_upstream_delta_markdown(meta, meta, baseline_ref="HEAD")
+    text = "\n".join(lines)
+    assert "#### Maintainer readout" in text
+    assert "Nothing vs `git HEAD`" in text
+
+
+def test_provenance_delta_lists_field_changes() -> None:
+    old = {
+        "endorctl_version": "1.0.0",
+        "generated_at_utc": "2026-01-01T00:00:00Z",
+        "spec_sha256": "aa" * 32,
+        "spec_path": "/old/path.json",
+    }
+    new = {
+        **old,
+        "generated_at_utc": "2026-01-02T00:00:00Z",
+        "spec_path": "/new/path.json",
+    }
+    lines = render_provenance_delta_markdown(old, new, baseline_ref="HEAD")
+    text = "\n".join(lines)
+    assert "### Provenance delta" in text
+    assert "`generated_at_utc`: **changed**" in text
+    assert "`spec_sha256`: **unchanged**" in text
+    assert "`endorctl_version`: **unchanged**" in text
+
+
+def test_resource_maintainer_readout_when_no_deltas() -> None:
+    facade = {
+        "resources": [
+            {
+                "attr_name": "X",
+                "supported_ops": ["get"],
+                "mutable_fields": [],
+                "immutable_fields": [],
+            }
+        ]
+    }
+    empty_p = {"resources": []}
+    lines = render_resource_delta_markdown(
+        facade, facade, empty_p, empty_p, baseline_ref="main"
+    )
+    text = "\n".join(lines)
+    assert "git main" in text
+    assert "#### Maintainer readout" in text
+    assert "provenance.json" in text
 
 
 def test_resource_summary_default_skips_full_inventory() -> None:
