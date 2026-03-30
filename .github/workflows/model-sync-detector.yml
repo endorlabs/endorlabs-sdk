@@ -173,8 +173,7 @@ jobs:
         needs.check-version.outputs.spec-changed == 'true' ||
         inputs.force_run == true ||
         github.event.inputs.force_run == 'true' ||
-        github.event_name == 'repository_dispatch' ||
-        github.event_name == 'workflow_dispatch'
+        github.event.client_payload.force_run == 'true'
       )
     runs-on: ubuntu-latest
     outputs:
