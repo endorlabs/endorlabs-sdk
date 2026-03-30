@@ -235,6 +235,7 @@ jobs:
       - name: Validate changed file scope
         id: diff_scope
         run: |
+          EXCLUDED_FILE="workspace/model-sync/custom_mapping/provenance.json"
           mapfile -d '' FILES_ARRAY < <(git status --porcelain -z -- \
             workspace/model-sync \
             src/endorlabs/generated \
@@ -257,10 +258,20 @@ jobs:
               | sed -E 's/^[^[:space:]]+[[:space:]]+//' \
               | sed -E 's/^"//; s/"$//' \
               | sed -E 's# -> .*##' \
+              | sed "\#^${EXCLUDED_FILE}\$#d" \
               | sed '/^$/d' \
               | sort -u
           )
           CHANGED_COUNT=$(printf "%s\n" "$FILES" | sed '/^$/d' | wc -l | tr -d ' ')
+          if [ "$CHANGED_COUNT" -eq 0 ]; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "generated_changed=false" >> "$GITHUB_OUTPUT"
+            echo "changed_files=" >> "$GITHUB_OUTPUT"
+            echo "changed_count=0" >> "$GITHUB_OUTPUT"
+            echo "resource_changes=" >> "$GITHUB_OUTPUT"
+            echo "resource_change_count=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           RESOURCES=$(
             printf "%s\n" "$FILES" \
               | sed -n 's#^src/endorlabs/generated/models/\(.*\)\.py$#\1#p' \
@@ -301,6 +312,7 @@ jobs:
 
           git add src/endorlabs/generated src/endorlabs/client_surface.pyi docs/generated-reference
           git add -f workspace/model-sync
+          git reset --quiet -- workspace/model-sync/custom_mapping/provenance.json
           if git diff --cached --quiet; then
             echo "No staged changes after file scope validation; skipping PR update."
             exit 0
@@ -421,9 +433,10 @@ jobs:
             echo "### PR Creation"
             echo "- Status: `disabled (manual)`"
             echo "- Branch (if generated_changed=true): \`${{ steps.trigger.outputs.branch_name }}\`"
+            echo "- Note: \`workspace/model-sync/custom_mapping/provenance.json\` is excluded from branch creation scope."
             echo ""
             if [ "${{ steps.diff_scope.outputs.has_changes || 'false' }}" = "true" ]; then
-              echo "### Generated Diff (why stale)"
+              echo "### Generated Diff (branch-worthy changes)"
               echo "- docs/generated-reference files changed: \`$DOC_COUNT\`"
               echo "- src/endorlabs/generated files changed: \`$MODEL_COUNT\`"
               echo "- workspace/model-sync files changed: \`$WORKSPACE_COUNT\`"
@@ -448,12 +461,11 @@ jobs:
               echo "</details>"
               echo ""
             else
-              if [ "${{ steps.trigger.outputs.upstream_changed }}" = "true" ]; then
-                echo "### No-op Rationale"
-                echo "- Upstream changed, but regeneration produced zero in-scope artifact diffs."
-                echo "- Branch and PR creation intentionally skipped."
-                echo ""
-              fi
+              echo "### No-op Rationale"
+              echo "- Regeneration produced zero in-scope artifact diffs."
+              echo "- Branch and PR creation intentionally skipped."
+              echo "- Changes limited to excluded provenance metadata do not trigger branch creation."
+              echo ""
             fi
             echo "### Cleanup"
             echo "- TTL days: \`${{ env.CLEANUP_TTL_DAYS }}\`"
