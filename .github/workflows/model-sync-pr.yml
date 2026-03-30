@@ -291,6 +291,200 @@ jobs:
           echo "$RESOURCES" >> "$GITHUB_OUTPUT"
           echo "EOF" >> "$GITHUB_OUTPUT"
 
+      - name: Compute resource and attribute deltas
+        id: resource_delta
+        if: steps.diff_scope.outputs.has_changes == 'true'
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          import subprocess
+          from pathlib import Path
+          import os
+
+          repo = Path(".")
+          files = {
+              "facade": Path("workspace/model-sync/custom_mapping/facade_contract.json"),
+              "payload": Path("workspace/model-sync/custom_mapping/mapping/payload_schemas.json"),
+          }
+
+          def _git_show(path: Path) -> dict:
+              try:
+                  raw = subprocess.check_output(
+                      ["git", "show", f"HEAD:{path.as_posix()}"], text=True
+                  )
+              except subprocess.CalledProcessError:
+                  return {}
+              try:
+                  data = json.loads(raw)
+              except json.JSONDecodeError:
+                  return {}
+              return data if isinstance(data, dict) else {}
+
+          def _load(path: Path) -> dict:
+              try:
+                  data = json.loads(path.read_text(encoding="utf-8"))
+              except (FileNotFoundError, json.JSONDecodeError):
+                  return {}
+              return data if isinstance(data, dict) else {}
+
+          old_facade = _git_show(files["facade"])
+          new_facade = _load(files["facade"])
+          old_payload = _git_show(files["payload"])
+          new_payload = _load(files["payload"])
+
+          def _resources(data: dict) -> dict[str, dict]:
+              resources = data.get("resources")
+              if not isinstance(resources, list):
+                  return {}
+              result: dict[str, dict] = {}
+              for item in resources:
+                  if isinstance(item, dict):
+                      key = item.get("attr_name")
+                      if isinstance(key, str):
+                          result[key] = item
+              return result
+
+          old_r = _resources(old_facade)
+          new_r = _resources(new_facade)
+          old_p = _resources(old_payload)
+          new_p = _resources(new_payload)
+
+          old_names = set(old_r)
+          new_names = set(new_r)
+          added = sorted(new_names - old_names)
+          removed = sorted(old_names - new_names)
+          shared = sorted(old_names & new_names)
+
+          lines: list[str] = []
+          lines.append("### Resource/Operation/Attribute Delta")
+          lines.append(f"- Added resources: `{len(added)}`")
+          lines.append(f"- Removed resources: `{len(removed)}`")
+          if added:
+              lines.append(f"- New resources: `{', '.join(added[:20])}`")
+          if removed:
+              lines.append(f"- Removed resources: `{', '.join(removed[:20])}`")
+
+          op_changes: list[str] = []
+          field_changes: list[str] = []
+          payload_changes: list[str] = []
+
+          for name in shared:
+              old_item = old_r[name]
+              new_item = new_r[name]
+              old_ops = set(old_item.get("supported_ops", []))
+              new_ops = set(new_item.get("supported_ops", []))
+              add_ops = sorted(new_ops - old_ops)
+              del_ops = sorted(old_ops - new_ops)
+              if add_ops or del_ops:
+                  fragments = []
+                  if add_ops:
+                      fragments.append(f"+ops={','.join(add_ops)}")
+                  if del_ops:
+                      fragments.append(f"-ops={','.join(del_ops)}")
+                  op_changes.append(f"- `{name}`: " + "; ".join(fragments))
+
+              old_mut = set(old_item.get("mutable_fields", []))
+              new_mut = set(new_item.get("mutable_fields", []))
+              old_imm = set(old_item.get("immutable_fields", []))
+              new_imm = set(new_item.get("immutable_fields", []))
+              mut_add = sorted(new_mut - old_mut)
+              mut_del = sorted(old_mut - new_mut)
+              imm_add = sorted(new_imm - old_imm)
+              imm_del = sorted(old_imm - new_imm)
+              if mut_add or mut_del or imm_add or imm_del:
+                  frag = []
+                  if mut_add:
+                      frag.append(f"+mutable={','.join(mut_add[:8])}")
+                  if mut_del:
+                      frag.append(f"-mutable={','.join(mut_del[:8])}")
+                  if imm_add:
+                      frag.append(f"+immutable={','.join(imm_add[:8])}")
+                  if imm_del:
+                      frag.append(f"-immutable={','.join(imm_del[:8])}")
+                  field_changes.append(f"- `{name}`: " + "; ".join(frag))
+
+              old_payload_item = old_p.get(name, {})
+              new_payload_item = new_p.get(name, {})
+              if not isinstance(old_payload_item, dict) or not isinstance(new_payload_item, dict):
+                  continue
+
+              for kind in ("create", "update"):
+                  old_defs = old_payload_item.get(f"{kind}_payload_definitions", {})
+                  new_defs = new_payload_item.get(f"{kind}_payload_definitions", {})
+                  if not isinstance(old_defs, dict) or not isinstance(new_defs, dict):
+                      continue
+                  def_names = sorted(set(old_defs) | set(new_defs))
+                  for def_name in def_names:
+                      old_def = old_defs.get(def_name) if isinstance(old_defs.get(def_name), dict) else {}
+                      new_def = new_defs.get(def_name) if isinstance(new_defs.get(def_name), dict) else {}
+                      old_props = old_def.get("properties", {})
+                      new_props = new_def.get("properties", {})
+                      if not isinstance(old_props, dict):
+                          old_props = {}
+                      if not isinstance(new_props, dict):
+                          new_props = {}
+                      old_req = set(old_def.get("required", [])) if isinstance(old_def.get("required", []), list) else set()
+                      new_req = set(new_def.get("required", [])) if isinstance(new_def.get("required", []), list) else set()
+                      add_props = sorted(set(new_props) - set(old_props))
+                      del_props = sorted(set(old_props) - set(new_props))
+                      add_req = sorted(new_req - old_req)
+                      del_req = sorted(old_req - new_req)
+                      if add_props or del_props or add_req or del_req:
+                          frag = []
+                          if add_props:
+                              frag.append(f"+attrs={','.join(add_props[:8])}")
+                          if del_props:
+                              frag.append(f"-attrs={','.join(del_props[:8])}")
+                          if add_req:
+                              frag.append(f"+required={','.join(add_req[:8])}")
+                          if del_req:
+                              frag.append(f"-required={','.join(del_req[:8])}")
+                          payload_changes.append(
+                              f"- `{name}` `{kind}` `{def_name}`: " + "; ".join(frag)
+                          )
+
+          if op_changes:
+              lines.append(f"- Resources with operation changes: `{len(op_changes)}`")
+              lines.append("<details><summary>Operation changes by resource</summary>")
+              lines.append("")
+              lines.append("```text")
+              lines.extend(op_changes[:80])
+              lines.append("```")
+              lines.append("</details>")
+          else:
+              lines.append("- Resources with operation changes: `0`")
+
+          if field_changes:
+              lines.append(f"- Resources with mutable/immutable attribute changes: `{len(field_changes)}`")
+              lines.append("<details><summary>Mutable/immutable attribute changes</summary>")
+              lines.append("")
+              lines.append("```text")
+              lines.extend(field_changes[:80])
+              lines.append("```")
+              lines.append("</details>")
+          else:
+              lines.append("- Resources with mutable/immutable attribute changes: `0`")
+
+          if payload_changes:
+              lines.append(f"- Payload operation attribute deltas: `{len(payload_changes)}`")
+              lines.append("<details><summary>Create/update payload attribute deltas</summary>")
+              lines.append("")
+              lines.append("```text")
+              lines.extend(payload_changes[:120])
+              lines.append("```")
+              lines.append("</details>")
+          else:
+              lines.append("- Payload operation attribute deltas: `0`")
+
+          output_path = os.environ.get("GITHUB_OUTPUT")
+          if output_path:
+              with open(output_path, "a", encoding="utf-8") as fh:
+                  fh.write("summary_markdown<<EOF\n")
+                  fh.write("\n".join(lines))
+                  fh.write("\nEOF\n")
+          PY
+
       - name: Push model-sync branch (manual PR)
         if: steps.diff_scope.outputs.generated_changed == 'true'
         env:
@@ -465,6 +659,10 @@ jobs:
               echo "- Regeneration produced zero in-scope artifact diffs."
               echo "- Branch and PR creation intentionally skipped."
               echo "- Changes limited to excluded provenance metadata do not trigger branch creation."
+              echo ""
+            fi
+            if [ -n "${{ steps.resource_delta.outputs.summary_markdown || '' }}" ]; then
+              printf "%s\n" "${{ steps.resource_delta.outputs.summary_markdown }}"
               echo ""
             fi
             echo "### Cleanup"
