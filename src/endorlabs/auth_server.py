@@ -13,6 +13,7 @@ import logging
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, cast, override
+from urllib.parse import parse_qs, urlparse
 from webbrowser import get as get_browser
 
 from .utils.redaction import (
@@ -66,22 +67,17 @@ class TokenHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 return
 
-            # Parse query parameters (matches ewok-util approach)
-            if "?" not in self.path:
+            parsed_url = urlparse(self.path)
+            if not parsed_url.query:
                 logger.warning("No query parameters in redirect: %s", self.path)
                 self.send_response(404)
                 self.end_headers()
                 return
 
-            _loc, query = self.path.split("?", 1)
-            params = {}
-            for param in query.split("&"):
-                if "=" in param:
-                    k, v = param.split("=", 1)
-                    params[k] = v
-
-            if "token" in params:
-                _captured_token = cast("str", params["token"])
+            params = parse_qs(parsed_url.query, keep_blank_values=False)
+            tokens = params.get("token", [])
+            if len(tokens) == 1 and tokens[0]:
+                _captured_token = cast("str", tokens[0])
                 logger.info("Token captured successfully")
                 # Return simple HTML page instead of redirect to prevent new tabs
                 self.send_response(200)

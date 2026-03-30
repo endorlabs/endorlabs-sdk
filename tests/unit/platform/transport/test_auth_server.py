@@ -108,6 +108,59 @@ class TestTokenHandler:
             server.server_close()
         auth_server_mod._captured_token = None
 
+    def test_token_handler_decodes_urlencoded_token(self) -> None:
+        """Token from query string should be URL-decoded."""
+        auth_server_mod._captured_token = None
+        server = HTTPServer(("localhost", 0), TokenHandler)
+        port = server.server_address[1]
+        handled = threading.Event()
+
+        def handle_one() -> None:
+            server.handle_request()
+            handled.set()
+
+        try:
+            thread = threading.Thread(target=handle_one)
+            thread.start()
+            with urllib.request.urlopen(
+                f"http://localhost:{port}/?token=abc%2Bdef%3D%3D",
+                timeout=5,
+            ) as resp:
+                assert resp.status == 200
+            handled.wait(timeout=5)
+            thread.join(timeout=5)
+            assert auth_server_mod._captured_token == "abc+def=="
+        finally:
+            server.server_close()
+        auth_server_mod._captured_token = None
+
+    def test_token_handler_rejects_multiple_token_values(self) -> None:
+        """Ambiguous token query should not capture a token."""
+        auth_server_mod._captured_token = None
+        server = HTTPServer(("localhost", 0), TokenHandler)
+        port = server.server_address[1]
+        handled = threading.Event()
+
+        def handle_one() -> None:
+            server.handle_request()
+            handled.set()
+
+        try:
+            thread = threading.Thread(target=handle_one)
+            thread.start()
+            with urllib.request.urlopen(
+                f"http://localhost:{port}/?token=first&token=second",
+                timeout=5,
+            ):
+                # No assertion on status: urllib may follow redirects automatically.
+                pass
+            handled.wait(timeout=5)
+            thread.join(timeout=5)
+            assert auth_server_mod._captured_token is None
+        finally:
+            server.server_close()
+        auth_server_mod._captured_token = None
+
 
 class TestGetToken:
     """Test get_token function for browser OAuth flow."""
