@@ -234,6 +234,30 @@ jobs:
         run: |
           DISPATCHED="${{ needs.dispatch-sync.result == 'success' }}"
           REASON="${{ needs.dispatch-sync.outputs.reason || 'no-dispatch' }}"
+          VERSION_CHANGED="${{ needs.check-version.outputs.version-changed }}"
+          SPEC_CHANGED="${{ needs.check-version.outputs.spec-changed }}"
+          PREV_VERSION="${{ needs.check-version.outputs.previous-version }}"
+          CURR_VERSION="${{ needs.check-version.outputs.latest-version }}"
+          PREV_HASH="${{ needs.check-version.outputs.previous-openapi-sha256 }}"
+          CURR_HASH="${{ needs.check-version.outputs.openapi-sha256 }}"
+          HASH_PREV_SHORT=$(printf "%s" "$PREV_HASH" | cut -c1-12)
+          HASH_CURR_SHORT=$(printf "%s" "$CURR_HASH" | cut -c1-12)
+          FORCE_INPUT="${{ inputs.force_run || github.event.inputs.force_run || github.event.client_payload.force_run || 'false' }}"
+
+          DISPATCH_CAUSES=""
+          if [ "$VERSION_CHANGED" = "true" ]; then
+            DISPATCH_CAUSES="${DISPATCH_CAUSES}- endorctl version changed\n"
+          fi
+          if [ "$SPEC_CHANGED" = "true" ]; then
+            DISPATCH_CAUSES="${DISPATCH_CAUSES}- OpenAPI hash changed\n"
+          fi
+          if [ "${{ inputs.force_run }}" = "true" ] || [ "${{ github.event.inputs.force_run }}" = "true" ] || [ "${{ github.event.client_payload.force_run }}" = "true" ]; then
+            DISPATCH_CAUSES="${DISPATCH_CAUSES}- force_run explicitly requested\n"
+          fi
+          if [ -z "$DISPATCH_CAUSES" ]; then
+            DISPATCH_CAUSES="- none (dispatch should be skipped)"
+          fi
+
           echo "## Model Sync Detector Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Decision" >> $GITHUB_STEP_SUMMARY
@@ -241,10 +265,25 @@ jobs:
           echo "- Reason: \`$REASON\`" >> $GITHUB_STEP_SUMMARY
           echo "- upstream_changed: \`${{ needs.check-version.outputs.upstream-changed }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What Changed" >> $GITHUB_STEP_SUMMARY
+          if [ "$VERSION_CHANGED" = "true" ]; then
+            echo "- endorctl: \`$PREV_VERSION\` -> \`$CURR_VERSION\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- endorctl: unchanged (\`$CURR_VERSION\`)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "$SPEC_CHANGED" = "true" ]; then
+            echo "- OpenAPI hash: \`$HASH_PREV_SHORT...\` -> \`$HASH_CURR_SHORT...\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- OpenAPI hash: unchanged (\`$HASH_CURR_SHORT...\`)" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Why Dispatch Happened" >> $GITHUB_STEP_SUMMARY
+          printf "%b\n" "$DISPATCH_CAUSES" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Dispatch Predicate Inputs" >> $GITHUB_STEP_SUMMARY
-          echo "- version_changed: \`${{ needs.check-version.outputs.version-changed }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- spec_changed: \`${{ needs.check-version.outputs.spec-changed }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- force_run_input: \`${{ inputs.force_run || github.event.inputs.force_run || 'false' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- version_changed: \`$VERSION_CHANGED\`" >> $GITHUB_STEP_SUMMARY
+          echo "- spec_changed: \`$SPEC_CHANGED\`" >> $GITHUB_STEP_SUMMARY
+          echo "- force_run_input: \`$FORCE_INPUT\`" >> $GITHUB_STEP_SUMMARY
           echo "- event: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Upstream Diff" >> $GITHUB_STEP_SUMMARY
