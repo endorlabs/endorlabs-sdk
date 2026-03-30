@@ -672,6 +672,116 @@ def _payload_delta_lines_for_resource(
     return lines
 
 
+def _group_lines_by_resource(lines: list[str]) -> dict[str, list[str]]:
+    """Group summary lines by resource attr_name token."""
+    grouped: dict[str, list[str]] = {}
+    for line in lines:
+        if not isinstance(line, str) or not line.startswith("- "):
+            continue
+        content = line[2:].strip()
+        resource = content.split(" ", 1)[0].strip().rstrip(":")
+        if not resource:
+            continue
+        grouped.setdefault(resource, []).append(line)
+    return grouped
+
+
+def build_upstream_delta_structured(
+    old_data: dict[str, Any],
+    new_data: dict[str, Any],
+) -> dict[str, Any]:
+    """Return machine-readable upstream delta payload for CI gating."""
+    old_ops = _operations_list(old_data)
+    new_ops = _operations_list(new_data)
+    old_endpoints = _endpoints_set(old_ops)
+    new_endpoints = _endpoints_set(new_ops)
+    old_by_tag = _endpoints_by_tag(old_ops)
+    new_by_tag = _endpoints_by_tag(new_ops)
+    old_tag_names = set(old_by_tag)
+    new_tag_names = set(new_by_tag)
+    added_tags = sorted(new_tag_names - old_tag_names)
+    removed_tags = sorted(old_tag_names - new_tag_names)
+    shared_tags = sorted(old_tag_names & new_tag_names)
+    tag_deltas = _tag_group_deltas(old_by_tag, new_by_tag, shared_tags)
+    added_endpoints = sorted(new_endpoints - old_endpoints)
+    removed_endpoints = sorted(old_endpoints - new_endpoints)
+    old_ix = _index_op_by_endpoint(old_ops)
+    new_ix = _index_op_by_endpoint(new_ops)
+    signature_drift = _signature_drift_lines(old_ix, new_ix)
+    has_delta = bool(
+        added_tags
+        or removed_tags
+        or tag_deltas
+        or added_endpoints
+        or removed_endpoints
+        or signature_drift
+    )
+    return {
+        "has_upstream_delta": has_delta,
+        "added_tags": added_tags,
+        "removed_tags": removed_tags,
+        "tag_deltas": tag_deltas,
+        "added_endpoints": added_endpoints,
+        "removed_endpoints": removed_endpoints,
+        "signature_drift": signature_drift,
+    }
+
+
+def build_resource_delta_structured(
+    old_facade: dict[str, Any],
+    new_facade: dict[str, Any],
+    old_payload: dict[str, Any],
+    new_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Return machine-readable resource delta payload for CI gating."""
+    old_r = _resources_index(old_facade)
+    new_r = _resources_index(new_facade)
+    old_p = _resources_index(old_payload)
+    new_p = _resources_index(new_payload)
+
+    old_names = set(old_r)
+    new_names = set(new_r)
+    added = sorted(new_names - old_names)
+    removed = sorted(old_names - new_names)
+    shared = sorted(old_names & new_names)
+
+    op_changes: list[str] = []
+    field_changes: list[str] = []
+    payload_changes: list[str] = []
+    for name in shared:
+        o_lines, f_lines = _shared_facade_diff_lines(name, old_r[name], new_r[name])
+        op_changes.extend(o_lines)
+        field_changes.extend(f_lines)
+        old_payload_item = old_p.get(name, {})
+        new_payload_item = new_p.get(name, {})
+        if isinstance(old_payload_item, dict) and isinstance(new_payload_item, dict):
+            payload_changes.extend(
+                _payload_delta_lines_for_resource(
+                    name, old_payload_item, new_payload_item
+                )
+            )
+
+    op_by_resource = _group_lines_by_resource(op_changes)
+    field_by_resource = _group_lines_by_resource(field_changes)
+    payload_by_resource = _group_lines_by_resource(payload_changes)
+    changed_resources = sorted(
+        set(added)
+        | set(removed)
+        | set(op_by_resource)
+        | set(field_by_resource)
+        | set(payload_by_resource)
+    )
+    return {
+        "has_resource_delta": bool(changed_resources),
+        "added_resources": added,
+        "removed_resources": removed,
+        "changed_resources": changed_resources,
+        "resource_op_changes": op_by_resource,
+        "resource_field_changes": field_by_resource,
+        "resource_payload_changes": payload_by_resource,
+    }
+
+
 def _append_resource_field_inventory(
     lines: list[str],
     new_r: dict[str, dict[str, Any]],
@@ -878,13 +988,24 @@ def append_github_output_markdown(key: str, lines: list[str]) -> None:
         fh.write("\nEOF\n")
 
 
+def append_github_output_text(key: str, text: str) -> None:
+    """Write a text block to GITHUB_OUTPUT."""
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if not output_path:
+        return
+    with open(output_path, "a", encoding="utf-8") as fh:
+        fh.write(f"{key}<<EOF\n")
+        fh.write(text)
+        fh.write("\nEOF\n")
+
+
 def _write_stdout(text: str) -> None:
     sys.stdout.write(text)
     if not text.endswith("\n"):
         sys.stdout.write("\n")
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901
     """Parse CLI args and print or write delta markdown."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -957,14 +1078,26 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="With --write-github-output: write only provenance delta",
     )
+    wf.add_argument(
+        "--upstream-json-only",
+        action="store_true",
+        help="With --write-github-output: write only upstream structured JSON",
+    )
+    wf.add_argument(
+        "--resource-json-only",
+        action="store_true",
+        help="With --write-github-output: write only resource structured JSON",
+    )
     args = parser.parse_args(argv)
 
     if args.write_github_output and not (
         args.upstream_only or args.resource_only or args.provenance_only
+        or args.upstream_json_only
+        or args.resource_json_only
     ):
         parser.error(
             "--write-github-output requires --upstream-only, --resource-only, or "
-            "--provenance-only"
+            "--provenance-only, --upstream-json-only, --resource-json-only"
         )
 
     if (
@@ -979,10 +1112,10 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     run_upstream = args.print_upstream or (
-        args.write_github_output and args.upstream_only
+        args.write_github_output and (args.upstream_only or args.upstream_json_only)
     )
     run_resource = args.print_resource or (
-        args.write_github_output and args.resource_only
+        args.write_github_output and (args.resource_only or args.resource_json_only)
     )
     run_provenance = args.print_provenance or (
         args.write_github_output and args.provenance_only
@@ -998,6 +1131,9 @@ def main(argv: list[str] | None = None) -> int:
             _write_stdout("\n".join(up_lines))
         if args.write_github_output and args.upstream_only:
             append_github_output_markdown("summary_markdown", up_lines)
+        if args.write_github_output and args.upstream_json_only:
+            up_json = build_upstream_delta_structured(old_meta, new_meta)
+            append_github_output_text("delta_json", json.dumps(up_json, sort_keys=True))
 
     if run_resource:
         old_facade = git_show_json(args.git_ref, args.facade)
@@ -1016,6 +1152,13 @@ def main(argv: list[str] | None = None) -> int:
             _write_stdout("\n".join(res_lines))
         if args.write_github_output and args.resource_only:
             append_github_output_markdown("summary_markdown", res_lines)
+        if args.write_github_output and args.resource_json_only:
+            res_json = build_resource_delta_structured(
+                old_facade, new_facade, old_payload, new_payload
+            )
+            append_github_output_text(
+                "delta_json", json.dumps(res_json, sort_keys=True)
+            )
 
     if run_provenance:
         old_prov = git_show_json(args.git_ref, args.provenance)
