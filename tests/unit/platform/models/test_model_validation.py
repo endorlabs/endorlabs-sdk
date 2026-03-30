@@ -75,6 +75,15 @@ class TestMergePartialUpdate:
         result = merge_partial_update(existing, update, update_mask=["meta.tags"])
         assert result.get("meta", {}).get("tags") == ["a"]
 
+    def test_with_mask_does_not_mutate_existing_nested_dict(self) -> None:
+        """Nested updates should not mutate the caller-provided existing data."""
+        existing = {"spec": {"level": "low", "name": "x"}}
+        update = {"spec": {"level": "high"}}
+
+        _ = merge_partial_update(existing, update, update_mask=["spec.level"])
+
+        assert existing["spec"]["level"] == "low"
+
 
 class TestGetImmutableFieldsCls:
     """Tests for model get_immutable_fields_cls() (canonical source)."""

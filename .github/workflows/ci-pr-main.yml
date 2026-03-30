@@ -80,6 +80,8 @@ env:
   PYTEST_MAXFAIL: "2"
   COVERAGE_PACKAGE: "endorlabs"
   UV_VERSION: "0.9.3"
+  VERIFYTYPES_RATCHET_MODE: "observe"
+  VERIFYTYPES_MIN_COMPLETENESS: "0.0"
   
   # Action versions - pinned for security
   ACTIONS_CHECKOUT_VERSION: "v6.0.2"
@@ -381,8 +383,28 @@ jobs:
 
       - name: Run pyright verifytypes (public API type completeness)
         continue-on-error: true  # Remove when type completeness is 100% (see docs/reference/README.md)
+        id: verifytypes
         run: |
-          uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
+          set -euo pipefail
+          OUT_FILE="$(mktemp)"
+          # Keep this step non-blocking while we ratchet in a follow-up step.
+          uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml | tee "$OUT_FILE"
+          SCORE=$(python -c "import pathlib,re,sys; text=pathlib.Path(sys.argv[1]).read_text(encoding='utf-8', errors='replace'); m=re.search(r'Type completeness score:\\s*([0-9]+(?:\\.[0-9]+)?)%?', text); print(m.group(1) if m else '')" "$OUT_FILE")
+          echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce verifytypes ratchet
+        if: always()
+        run: |
+          set -euo pipefail
+          SCORE="${{ steps.verifytypes.outputs.score }}"
+          MODE="${{ env.VERIFYTYPES_RATCHET_MODE }}"
+          MIN="${{ env.VERIFYTYPES_MIN_COMPLETENESS }}"
+          if [ -z "$SCORE" ]; then
+            echo "::warning::verifytypes score could not be parsed; skipping ratchet enforcement."
+            exit 0
+          fi
+
+          python -c "import sys; score=float(sys.argv[1]); minimum=float(sys.argv[2]); mode=sys.argv[3]; print(f'verifytypes completeness score: {score:.2f}% (mode={mode}, min={minimum:.2f}%)'); raise SystemExit(1 if mode == 'enforce' and score < minimum else 0)" "$SCORE" "$MIN" "$MODE"
 
       - name: Publish lint drift summary
         if: github.event_name != 'pull_request' && always()
