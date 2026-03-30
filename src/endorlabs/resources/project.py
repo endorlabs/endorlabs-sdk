@@ -524,11 +524,13 @@ def verify_scan_profile_association(
         bool: True if the scan profile is associated, False otherwise
 
     """
+    from ..core.exceptions import NotFoundError
+
     try:
         ops = BaseResourceOperations(client, "projects", Project)
         project = ops.get(tenant_meta_namespace, project_uuid)
-    except Exception:
-        # Project not found or other error
+    except NotFoundError:
+        # Project not found means association is absent.
         return False
 
     current_scan_profile_uuid = getattr(project.spec, "scan_profile_uuid", None)

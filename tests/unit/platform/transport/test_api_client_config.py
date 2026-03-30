@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from endorlabs.api_client import APIClient
+from endorlabs.core.exceptions import ValidationError
 from endorlabs.utils.logging_config import setup_logging
 
 
@@ -427,3 +428,42 @@ class TestRequestDelegation:
             client.get("/v1/namespaces", params={"traverse": "true"})
 
         assert mock_retry.call_args.kwargs.get("params") == {"traverse": "true"}
+
+    def test_absolute_url_same_host_is_allowed(self) -> None:
+        """Absolute URLs to configured API host are allowed."""
+        client = self._make_client()
+        mock_retry = Mock(return_value=Mock())
+        with patch.object(client, "_request_with_retry", mock_retry):
+            client.get("https://api.endorlabs.com/v1/namespaces")
+
+        url = mock_retry.call_args[0][1]
+        assert url == "https://api.endorlabs.com/v1/namespaces"
+
+    def test_absolute_url_different_host_is_rejected(self) -> None:
+        """Absolute URLs to untrusted hosts are rejected before request."""
+        client = self._make_client()
+
+        with pytest.raises(ValidationError, match="disallowed host"):
+            client.get("https://evil.example.test/v1/namespaces")
+
+    @patch.dict(
+        os.environ,
+        {
+            "ENDOR_API_CREDENTIALS_KEY": "test-key",
+            "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
+            "ENDOR_TOKEN": "",
+            "ENDOR_AUTH_METHOD": "",
+            "ENDOR_ALLOWED_API_HOSTS": "api.staging.endorlabs.com",
+        },
+        clear=True,
+    )
+    def test_absolute_url_allowlist_env_host_is_allowed(self) -> None:
+        """Explicit allowlist hosts permit trusted multi-env absolute URLs."""
+        with _patch_httpx_client_for_auth():
+            client = APIClient()
+        mock_retry = Mock(return_value=Mock())
+        with patch.object(client, "_request_with_retry", mock_retry):
+            client.get("https://api.staging.endorlabs.com/v1/namespaces")
+
+        url = mock_retry.call_args[0][1]
+        assert url == "https://api.staging.endorlabs.com/v1/namespaces"

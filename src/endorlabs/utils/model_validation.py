@@ -4,6 +4,7 @@ This module provides utilities for safe serialization, partial updates,
 and enum validation to handle API evolution gracefully.
 """
 
+import copy
 from datetime import datetime
 from typing import Any, TypeVar
 
@@ -61,7 +62,7 @@ def merge_partial_update(
         Merged data dictionary
 
     """
-    result = existing_data.copy()
+    result = copy.deepcopy(existing_data)
 
     if update_mask:
         # Only update specified fields

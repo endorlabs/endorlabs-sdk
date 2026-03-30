@@ -60,9 +60,7 @@ dev = [
     "pytest-cov==7.0.0",
     "ruff==0.14.14",
     "pyright==1.1.408",
-    "pre-commit==4.5.1",
-    "codespell==2.4.1",
-    "rich>=13.0",
+    "rich==14.3.2",
     # Context deps needed for unit tests (mirrors [project.optional-dependencies.context])
     "beautifulsoup4==4.14.2",
     "defusedxml==0.7.1",

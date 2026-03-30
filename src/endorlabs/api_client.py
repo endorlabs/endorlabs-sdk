@@ -15,11 +15,13 @@ import time
 from collections.abc import Iterable, Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal, cast
+from urllib.parse import urlparse
 
 import httpx
 
 from .core.exceptions import (
     EndorAPIError,
+    ValidationError,
     map_status_code_to_exception,
 )
 from .core.types import ErrorResponse
@@ -133,6 +135,7 @@ class APIClient:
         auth_method: str | None = None,
         email: str | None = None,
         auth_tenant: str | None = None,
+        allowed_api_hosts: list[str] | None = None,
     ) -> None:
         super().__init__()
         # Set up logging
@@ -167,6 +170,7 @@ class APIClient:
         self.base_url = (
             base_url or os.getenv("ENDOR_API") or "https://api.endorlabs.com"
         )
+        self._allowed_api_hosts = self._build_allowed_api_hosts(allowed_api_hosts)
 
         # Get token if provided directly
         self._provided_token = token or os.getenv("ENDOR_TOKEN")
@@ -303,11 +307,45 @@ class APIClient:
     def _normalize_url(self, url: str) -> str:
         """Normalize URL: use as-is if absolute, prepend base_url if relative."""
         if url.startswith(("http://", "https://")):
+            self._validate_absolute_url_host(url)
             return url
         # Relative URL: prepend base_url with proper slash handling
         base = self.base_url.rstrip("/")
         url = url.lstrip("/")
         return f"{base}/{url}"
+
+    def _build_allowed_api_hosts(
+        self, allowed_api_hosts: list[str] | None
+    ) -> set[str]:
+        """Build a trusted host allowlist from base_url and optional configuration."""
+        hosts: set[str] = set()
+        base_host = urlparse(self.base_url).hostname
+        if base_host:
+            hosts.add(base_host.lower())
+
+        env_hosts_raw = os.getenv("ENDOR_ALLOWED_API_HOSTS", "")
+        env_hosts = [h.strip() for h in env_hosts_raw.split(",") if h.strip()]
+
+        for host in [*(allowed_api_hosts or []), *env_hosts]:
+            normalized = host.lower()
+            if normalized:
+                hosts.add(normalized)
+        return hosts
+
+    def _validate_absolute_url_host(self, absolute_url: str) -> None:
+        """Reject absolute URLs pointing to hosts outside the trusted allowlist."""
+        parsed = urlparse(absolute_url)
+        host = parsed.hostname.lower() if parsed.hostname else None
+        if not host:
+            raise ValidationError(
+                f"Absolute URL '{absolute_url}' is missing a valid host"
+            )
+        if host not in self._allowed_api_hosts:
+            allowed = ", ".join(sorted(self._allowed_api_hosts))
+            raise ValidationError(
+                f"Absolute URL '{absolute_url}' targets disallowed host '{host}'. "
+                f"Allowed hosts: {allowed}"
+            )
 
     def _redact_log_data(self, data: Any) -> str:
         """Redact sensitive data from logging."""
