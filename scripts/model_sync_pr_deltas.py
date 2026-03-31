@@ -3,8 +3,9 @@
 **Upstream section:** compares OpenAPI operation metadata (current file vs git).
 
 **Resource section (default):** only **diffs** vs the baseline JSON from git
-(``--git-ref``, default ``HEAD``) — added/removed resources, operation / field /
-payload *changes*. This is the small **summary** suitable for CI.
+(``--git-ref``, default ``HEAD``) — added/removed resources, ``supported_ops`` /
+mutable / immutable paths, and create/update payload property *changes*, rendered
+as a **tree** (``(+)`` / ``(-)`` / ``(~)``) for CI summaries.
 
 **Full inventory (opt-in):** pass ``--include-resource-inventory`` with
 ``--print-resource`` (or ``--write-github-output --resource-only``) to emit the
@@ -607,6 +608,216 @@ def _payload_lines_for_definitions(
     return out
 
 
+def _tree_branch() -> str:
+    """Prefix for child lines in workflow summary tree output."""
+    return "|- "
+
+
+def _field_type_and_desc(schema: dict[str, Any]) -> tuple[str, str]:
+    """Return bracketed type label and truncated API description for a schema dict."""
+    type_s = _short_schema_label(schema)
+    raw_desc = schema.get("description") if isinstance(schema, dict) else None
+    desc = _truncate_desc(raw_desc if isinstance(raw_desc, str) else None)
+    return type_s, desc
+
+
+def _facade_tree_lines(
+    old_item: dict[str, Any],
+    new_item: dict[str, Any],
+) -> list[str]:
+    """Tree lines for façade supported_ops and mutable/immutable field deltas."""
+    bp = _tree_branch()
+    out: list[str] = []
+    old_ops = set(old_item.get("supported_ops", []))
+    new_ops = set(new_item.get("supported_ops", []))
+    add_ops = sorted(x for x in (new_ops - old_ops) if isinstance(x, str))
+    del_ops = sorted(x for x in (old_ops - new_ops) if isinstance(x, str))
+    out.extend(f"{bp}(+) supported_ops: {op}" for op in add_ops)
+    out.extend(f"{bp}(-) supported_ops: {op}" for op in del_ops)
+
+    old_mut = set(old_item.get("mutable_fields", []))
+    new_mut = set(new_item.get("mutable_fields", []))
+    old_imm = set(old_item.get("immutable_fields", []))
+    new_imm = set(new_item.get("immutable_fields", []))
+    mut_add = sorted(x for x in (new_mut - old_mut) if isinstance(x, str))
+    mut_del = sorted(x for x in (old_mut - new_mut) if isinstance(x, str))
+    imm_add = sorted(x for x in (new_imm - old_imm) if isinstance(x, str))
+    imm_del = sorted(x for x in (old_imm - new_imm) if isinstance(x, str))
+    out.extend(f"{bp}(+) mutable_fields: {p}" for p in mut_add)
+    out.extend(f"{bp}(-) mutable_fields: {p}" for p in mut_del)
+    out.extend(f"{bp}(+) immutable_fields: {p}" for p in imm_add)
+    out.extend(f"{bp}(-) immutable_fields: {p}" for p in imm_del)
+    return out
+
+
+def _norm_payload_props_and_required(
+    body: dict[str, Any],
+) -> tuple[dict[str, Any], set[str]]:
+    props = body.get("properties", {})
+    if not isinstance(props, dict):
+        props = {}
+    req_raw = body.get("required", [])
+    req = set(req_raw) if isinstance(req_raw, list) else set()
+    return props, req
+
+
+def _payload_tree_desc_tail(desc_old: str, desc_new: str) -> str:
+    if not desc_old and not desc_new:
+        return ""
+    if desc_old and desc_new:
+        if desc_old != desc_new:
+            return f": {desc_old} → {desc_new}"
+        return ""
+    if desc_new:
+        return f": {desc_new}"
+    return f": {desc_old}"
+
+
+def _payload_tree_add_remove_prop_lines(
+    bp: str,
+    ctx: str,
+    prop_names: list[str],
+    props: dict[str, Any],
+    sign: str,
+) -> list[str]:
+    """Emit one tree line per added (+) or removed (-) payload property."""
+    prop_lines: list[str] = []
+    for prop_name in prop_names:
+        raw = props.get(prop_name)
+        if not isinstance(raw, dict):
+            continue
+        type_s, desc = _field_type_and_desc(raw)
+        tail = f": {desc}" if desc else ""
+        prop_lines.append(f"{bp}({sign}) {ctx} {prop_name} [{type_s}]{tail}")
+    return prop_lines
+
+
+def _payload_tree_shared_shape_lines(
+    bp: str,
+    ctx: str,
+    old_props: dict[str, Any],
+    new_props: dict[str, Any],
+    shared_props: list[str],
+) -> list[str]:
+    out: list[str] = []
+    for prop_name in shared_props:
+        raw_old = old_props.get(prop_name)
+        raw_new = new_props.get(prop_name)
+        if not isinstance(raw_old, dict) or not isinstance(raw_new, dict):
+            continue
+        if _property_fingerprint(raw_old) == _property_fingerprint(raw_new):
+            continue
+        label_old = _short_schema_label(raw_old)
+        label_new = _short_schema_label(raw_new)
+        _, desc_old = _field_type_and_desc(raw_old)
+        _, desc_new = _field_type_and_desc(raw_new)
+        desc_tail = _payload_tree_desc_tail(desc_old, desc_new)
+        out.append(f"{bp}(~) {ctx} {prop_name}: {label_old} → {label_new}{desc_tail}")
+    return out
+
+
+def _payload_tree_lines_for_definitions(
+    kind: str,
+    def_name: str,
+    old_def: dict[str, Any],
+    new_def: dict[str, Any],
+) -> list[str]:
+    """Tree lines for create/update payload definition deltas (types + descriptions)."""
+    bp = _tree_branch()
+    ctx = f"{kind} {def_name}"
+    old_props, old_req = _norm_payload_props_and_required(old_def)
+    new_props, new_req = _norm_payload_props_and_required(new_def)
+
+    add_props = sorted(set(new_props) - set(old_props))
+    del_props = sorted(set(old_props) - set(new_props))
+    add_req = sorted(x for x in (new_req - old_req) if isinstance(x, str))
+    del_req = sorted(x for x in (old_req - new_req) if isinstance(x, str))
+
+    out: list[str] = []
+    out.extend(_payload_tree_add_remove_prop_lines(bp, ctx, add_props, new_props, "+"))
+    out.extend(_payload_tree_add_remove_prop_lines(bp, ctx, del_props, old_props, "-"))
+
+    out.extend(f"{bp}(+) {ctx} required: {r}" for r in add_req)
+    out.extend(f"{bp}(-) {ctx} required: {r}" for r in del_req)
+
+    shared_props = sorted(set(old_props) & set(new_props))
+    out.extend(
+        _payload_tree_shared_shape_lines(bp, ctx, old_props, new_props, shared_props)
+    )
+    return out
+
+
+def _payload_tree_lines_for_resource(
+    old_payload_item: dict[str, Any],
+    new_payload_item: dict[str, Any],
+) -> list[str]:
+    lines: list[str] = []
+    for kind in ("create", "update"):
+        old_defs = old_payload_item.get(f"{kind}_payload_definitions", {})
+        new_defs = new_payload_item.get(f"{kind}_payload_definitions", {})
+        if not isinstance(old_defs, dict) or not isinstance(new_defs, dict):
+            continue
+        def_names = sorted(set(old_defs) | set(new_defs))
+        for def_name in def_names:
+            raw_o = old_defs.get(def_name)
+            raw_n = new_defs.get(def_name)
+            old_def = raw_o if isinstance(raw_o, dict) else {}
+            new_def = raw_n if isinstance(raw_n, dict) else {}
+            lines.extend(
+                _payload_tree_lines_for_definitions(kind, def_name, old_def, new_def)
+            )
+    return lines
+
+
+def _build_resource_delta_tree_lines(
+    old_r: dict[str, dict[str, Any]],
+    new_r: dict[str, dict[str, Any]],
+    old_p: dict[str, dict[str, Any]],
+    new_p: dict[str, dict[str, Any]],
+    *,
+    max_tree_lines: int = 400,
+) -> list[str]:
+    """Assemble tree text lines for changed resources only (deterministic order)."""
+    old_names = set(old_r)
+    new_names = set(new_r)
+    added = sorted(new_names - old_names)
+    removed = sorted(old_names - new_names)
+    shared = sorted(old_names & new_names)
+
+    blocks: list[str] = []
+    bp = _tree_branch()
+
+    for name in added:
+        blocks.append(name)
+        blocks.append(f"{bp}(+) resource [added to SDK façade]")
+
+    for name in removed:
+        blocks.append(name)
+        blocks.append(f"{bp}(-) resource [removed from SDK façade]")
+
+    for name in shared:
+        old_item = old_r[name]
+        new_item = new_r[name]
+        child_lines: list[str] = []
+        child_lines.extend(_facade_tree_lines(old_item, new_item))
+        old_payload_item = old_p.get(name, {})
+        new_payload_item = new_p.get(name, {})
+        if isinstance(old_payload_item, dict) and isinstance(new_payload_item, dict):
+            child_lines.extend(
+                _payload_tree_lines_for_resource(old_payload_item, new_payload_item)
+            )
+        if not child_lines:
+            continue
+        blocks.append(name)
+        blocks.extend(child_lines)
+
+    if len(blocks) > max_tree_lines:
+        omitted = len(blocks) - max_tree_lines + 1
+        trunc = f"{bp}… (truncated: {omitted} more lines omitted)"
+        return [*blocks[: max_tree_lines - 1], trunc]
+    return blocks
+
+
 def _shared_facade_diff_lines(
     name: str,
     old_item: dict[str, Any],
@@ -854,8 +1065,17 @@ def render_resource_delta_markdown(
     include_resource_inventory: bool = False,
     max_list_lines: int = 80,
     max_payload_lines: int = 120,
+    max_tree_lines: int = 400,
 ) -> list[str]:
-    """Build markdown: diffs vs baseline; optionally full per-resource inventory."""
+    """Build markdown: tree diffs vs baseline; optionally full per-resource inventory.
+
+    Default output is a **tree view** of changed resources and fields only
+    (facade ``supported_ops`` / mutable / immutable paths and create/update payload
+    properties). Section headings are emitted by the workflow; this function returns
+    body lines (tree in a ``text`` code fence, or inventory expanders).
+    """
+    effective_tree_cap = min(max_tree_lines, max_list_lines + max_payload_lines)
+
     old_r = _resources_index(old_facade)
     new_r = _resources_index(new_facade)
     old_p = _resources_index(old_payload)
@@ -866,30 +1086,6 @@ def render_resource_delta_markdown(
     added = sorted(new_names - old_names)
     removed = sorted(old_names - new_names)
     shared = sorted(old_names & new_names)
-
-    lines: list[str] = []
-    lines.append("### Resource/Operation/Attribute Delta")
-    lines.append(f"- Added resources: {len(added)}")
-    lines.append(f"- Removed resources: {len(removed)}")
-    if added:
-        lines.append(f"- New resources: {', '.join(added[:20])}")
-    if removed:
-        lines.append(f"- Removed resources: {', '.join(removed[:20])}")
-
-    if include_resource_inventory:
-        _append_resource_field_inventory(lines, new_r, new_p)
-    else:
-        lines.append(
-            "- **Scope (summary):** only **changes** vs "
-            f"``git {baseline_ref}`` copies of "
-            "``facade_contract.json`` / ``payload_schemas.json`` — "
-            "not a full dump of every resource or field."
-        )
-        lines.append(
-            "- **Full field inventory** (all resources; types + API descriptions): "
-            "``uv run python scripts/model_sync_pr_deltas.py --print-resource "
-            "--include-resource-inventory``"
-        )
 
     op_changes: list[str] = []
     field_changes: list[str] = []
@@ -913,41 +1109,29 @@ def render_resource_delta_markdown(
             _payload_delta_lines_for_resource(name, old_payload_item, new_payload_item)
         )
 
-    if op_changes:
-        lines.append(f"- Resources with operation changes: {len(op_changes)}")
-        lines.append("<details><summary>Operation changes by resource</summary>")
-        lines.append("")
-        lines.append("```text")
-        lines.extend(op_changes[:max_list_lines])
-        lines.append("```")
-        lines.append("</details>")
-    else:
-        lines.append("- Resources with operation changes: 0")
+    lines: list[str] = []
+    tree_lines = _build_resource_delta_tree_lines(
+        old_r, new_r, old_p, new_p, max_tree_lines=effective_tree_cap
+    )
 
-    if field_changes:
-        n_field = len(field_changes)
-        lines.append(f"- Resources with mutable/immutable attribute changes: {n_field}")
-        lines.append("<details><summary>Mutable/immutable attribute changes</summary>")
-        lines.append("")
+    if tree_lines:
         lines.append("```text")
-        lines.extend(field_changes[:max_list_lines])
+        lines.extend(tree_lines)
         lines.append("```")
-        lines.append("</details>")
     else:
-        lines.append("- Resources with mutable/immutable attribute changes: 0")
-
-    if payload_changes:
-        lines.append(f"- Payload operation attribute deltas: {len(payload_changes)}")
         lines.append(
-            "<details><summary>Create/update payload attribute deltas</summary>"
+            "*No resource façade or payload deltas vs baseline "
+            f"``git {baseline_ref}``.*"
         )
+
+    if include_resource_inventory:
         lines.append("")
-        lines.append("```text")
-        lines.extend(payload_changes[:max_payload_lines])
-        lines.append("```")
-        lines.append("</details>")
-    else:
-        lines.append("- Payload operation attribute deltas: 0")
+        lines.append("#### Full field inventory (opt-in)")
+        lines.append(
+            "Run ``uv run python scripts/model_sync_pr_deltas.py --print-resource "
+            "--include-resource-inventory`` for the full snapshot."
+        )
+        _append_resource_field_inventory(lines, new_r, new_p)
 
     no_res_delta = (
         bool(old_r)
@@ -1091,7 +1275,9 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     args = parser.parse_args(argv)
 
     if args.write_github_output and not (
-        args.upstream_only or args.resource_only or args.provenance_only
+        args.upstream_only
+        or args.resource_only
+        or args.provenance_only
         or args.upstream_json_only
         or args.resource_json_only
     ):
