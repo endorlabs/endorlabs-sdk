@@ -573,7 +573,7 @@ jobs:
           uv sync --dev
 
       - name: Endor Labs Secrets scan (fast)
-        uses: endorlabs/github-action@519df81de5f68536c84ae05ebb2986d0bb1d19fc # v1
+        uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
         with:
           namespace: ${{ vars.ENDOR_NAMESPACE }}
           scan_summary_output_type: table
@@ -584,7 +584,7 @@ jobs:
           enable_pr_comments: false
 
       - name: Endor Labs SCA scan
-        uses: endorlabs/github-action@519df81de5f68536c84ae05ebb2986d0bb1d19fc # v1
+        uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
         with:
           namespace: ${{ vars.ENDOR_NAMESPACE }}
           scan_summary_output_type: table
@@ -595,7 +595,7 @@ jobs:
           enable_pr_comments: false
 
       - name: Endor Labs comprehensive SAST + AI SAST scan
-        uses: endorlabs/github-action@519df81de5f68536c84ae05ebb2986d0bb1d19fc # v1
+        uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
         with:
           namespace: ${{ vars.ENDOR_NAMESPACE }}
           scan_summary_output_type: table
