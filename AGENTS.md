@@ -71,6 +71,8 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 
 Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproject.toml](pyproject.toml). CI runs `ruff check .`, `ruff format --check`, `pyright`, `pytest`. Run the same commands locally before pushing. Public API modules are strict-typed; internal roots are tightened incrementally via the pyright execution-environment ratchet. For the exact command list, see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml).
 
+Commits targeting `main` and `dev` must keep a clean bill-of-health in security scanning: `.github/workflows/ci-pr-main.yml` now includes a dedicated Endor Labs CI security scan job (OIDC auth + PR comments + SCA/Secrets/SAST/AI SAST), and changes should not merge with unresolved policy-breaking findings under current enforcement settings.
+
 Model-sync automation is intentionally split:
 
 - **Detector workflow:** [.github/workflows/model-sync-detector.yml](.github/workflows/model-sync-detector.yml) detects upstream version/spec drift and dispatches sync events.
