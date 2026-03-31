@@ -610,21 +610,23 @@ jobs:
       - name: Publish Workflow Summary
         if: always()
         run: |
-          CHANGED_FILES="${{ steps.diff_scope.outputs.changed_files || '' }}"
-          RESOURCE_CHANGES="${{ steps.diff_scope.outputs.resource_changes || '' }}"
-          DOC_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^docs/generated-reference/' || true)
-          MODEL_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^src/endorlabs/generated/' || true)
-          WORKSPACE_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^workspace/model-sync/' || true)
-          STUB_COUNT=$(printf "%s\n" "$CHANGED_FILES" | grep -c '^src/endorlabs/client_surface.pyi$' || true)
           {
             echo "## Model Sync PR Summary"
+            echo ""
+            echo "### Summary of Changes"
+            echo ""
+            if [ -n "${{ steps.resource_delta.outputs.summary_markdown || '' }}" ]; then
+              printf "%s\n" "${{ steps.resource_delta.outputs.summary_markdown }}"
+            else
+              echo "*No resource façade or payload deltas vs baseline (resource delta step did not run or produced no output).*"
+            fi
             echo ""
             echo "### Run Context"
             echo "- Event: \`${{ github.event_name }}\`"
             echo "- Ref: \`${{ github.ref }}\`"
             echo "- Trigger reason: \`${{ steps.trigger.outputs.reason }}\`"
             echo ""
-            echo "### Outcome Matrix"
+            echo "### Summary of changes"
             echo "| Signal | Value |"
             echo "|---|---|"
             echo "| Upstream changed | \`${{ steps.trigger.outputs.upstream_changed }}\` |"
@@ -638,78 +640,4 @@ jobs:
             echo "| Changed file count | \`${{ steps.diff_scope.outputs.changed_count || '0' }}\` |"
             echo "| provenance_changed (excluded) | \`${{ steps.diff_scope.outputs.provenance_changed || 'false' }}\` |"
             echo "| API spec path | \`${{ env.OPENAPI_SPEC_PATH }}\` |"
-            echo ""
-            echo "### PR Creation"
-            echo "- Status: disabled (manual)"
-            echo "- Branch (if generated_changed=true): \`${{ steps.trigger.outputs.branch_name }}\`"
-            echo "- Note: \`workspace/model-sync/custom_mapping/provenance.json\` is excluded from branch creation scope."
-            echo ""
-            if [ -n "${{ steps.upstream_delta.outputs.summary_markdown || '' }}" ]; then
-              printf "%s\n" "${{ steps.upstream_delta.outputs.summary_markdown }}"
-              echo ""
-            fi
-            if [ "${{ steps.diff_scope.outputs.has_changes || 'false' }}" = "true" ]; then
-              echo "### SDK Artifact Delta (branch-worthy changes)"
-              echo "- docs/generated-reference files changed: \`$DOC_COUNT\`"
-              echo "- src/endorlabs/generated files changed: \`$MODEL_COUNT\`"
-              echo "- workspace/model-sync files changed: \`$WORKSPACE_COUNT\`"
-              echo "- client stub changed: \`$STUB_COUNT\`"
-              echo ""
-              echo "### Resource Changes"
-              echo "- Resource change count: \`${{ steps.diff_scope.outputs.resource_change_count || '0' }}\`"
-              if [ -n "$RESOURCE_CHANGES" ]; then
-                echo "<details><summary>Changed resources derived from generated model file paths</summary>"
-                echo ""
-                echo '```text'
-                printf "%s\n" "$RESOURCE_CHANGES"
-                echo '```'
-                echo "</details>"
-                echo ""
-              fi
-              echo "<details><summary>Changed files</summary>"
-              echo ""
-              echo '```text'
-              printf "%s\n" "$CHANGED_FILES"
-              echo '```'
-              echo "</details>"
-              echo ""
-            else
-              echo "### SDK Artifact Delta"
-              echo "- No Artifact Drift: regeneration produced zero in-scope artifact diffs."
-              echo "- Branch and PR creation intentionally skipped."
-              if [ "${{ steps.diff_scope.outputs.provenance_changed || 'false' }}" = "true" ]; then
-                echo "- Only excluded provenance metadata changed (\`workspace/model-sync/custom_mapping/provenance.json\`)."
-              else
-                echo "- No in-scope generated artifact changes were detected."
-              fi
-              echo ""
-            fi
-            if [ -n "${{ steps.provenance_delta.outputs.summary_markdown || '' }}" ]; then
-              printf "%s\n" "${{ steps.provenance_delta.outputs.summary_markdown }}"
-              echo ""
-            fi
-            if [ -n "${{ steps.resource_delta.outputs.summary_markdown || '' }}" ]; then
-              printf "%s\n" "${{ steps.resource_delta.outputs.summary_markdown }}"
-              echo ""
-            fi
-            echo "### Cleanup"
-            echo "- TTL days: \`${{ env.CLEANUP_TTL_DAYS }}\`"
-            echo "- Keep last N branches: \`${{ env.CLEANUP_KEEP_LAST_N }}\`"
-            echo "- Deleted stale branches: \`${{ steps.cleanup.outputs.deleted_count || '0' }}\`"
-            echo "- Skipped branches: \`${{ steps.cleanup.outputs.skipped_count || '0' }}\`"
-            if [ -n "${{ steps.cleanup.outputs.deleted_branches || '' }}" ]; then
-              echo "<details><summary>Deleted branches</summary>"
-              echo ""
-              echo '```text'
-              printf "%s\n" "${{ steps.cleanup.outputs.deleted_branches }}"
-              echo '```'
-              echo "</details>"
-              echo ""
-            fi
-            echo "### Skips/Reasons"
-            echo "- Integration tests are skipped when required ENDOR_* vars/secrets are not fully configured."
-            echo "- No PR is created by this workflow; manual PR creation is required when generated_changed=true."
-            echo ""
-            echo "### Next Action"
-            echo "- If changes were detected, verify/update the generated-artifacts PR content and merge when CI is green."
           } >> "$GITHUB_STEP_SUMMARY"
