@@ -314,9 +314,7 @@ class APIClient:
         url = url.lstrip("/")
         return f"{base}/{url}"
 
-    def _build_allowed_api_hosts(
-        self, allowed_api_hosts: list[str] | None
-    ) -> set[str]:
+    def _build_allowed_api_hosts(self, allowed_api_hosts: list[str] | None) -> set[str]:
         """Build a trusted host allowlist from base_url and optional configuration."""
         hosts: set[str] = set()
         base_host = urlparse(self.base_url).hostname

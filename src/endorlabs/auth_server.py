@@ -12,7 +12,7 @@ import contextlib
 import logging
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, cast, override
+from typing import Any, override
 from urllib.parse import parse_qs, urlparse
 from webbrowser import get as get_browser
 
@@ -77,7 +77,7 @@ class TokenHandler(BaseHTTPRequestHandler):
             params = parse_qs(parsed_url.query, keep_blank_values=False)
             tokens = params.get("token", [])
             if len(tokens) == 1 and tokens[0]:
-                _captured_token = cast("str", tokens[0])
+                _captured_token = tokens[0]
                 logger.info("Token captured successfully")
                 # Return simple HTML page instead of redirect to prevent new tabs
                 self.send_response(200)
