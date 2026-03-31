@@ -16,6 +16,23 @@ repos:
       - id: codespell
         args: [--skip, "*.json,*.lock,.git,.endorlabs-context"]
 
+  # --- Python SAST ---
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ["-q", "-r", "src/endorlabs", "-x", "tests", "-lll"]
+        pass_filenames: false
+        stages: [pre-push]
+
+  # --- Secrets detection ---
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+        args: ["--staged", "--redact"]
+        pass_filenames: false
+
   # --- General file hygiene ---
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
