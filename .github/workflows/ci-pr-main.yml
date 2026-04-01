@@ -558,7 +558,6 @@ jobs:
       ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
       ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'true' }}
       ENDOR_GITHUB_CHECK_MODE: ${{ vars.ENDOR_GITHUB_CHECK_MODE || 'dry-run' }}
-      ENDOR_INHOUSE_POST_REVIEW_COMMENTS: ${{ vars.ENDOR_INHOUSE_POST_REVIEW_COMMENTS || 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -615,7 +614,7 @@ jobs:
           enable_pr_comments: ${{ github.event_name == 'pull_request' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Option B - in-house parallel PR comments (dry-run/apply)
+      - name: Option B - inline PR review comments (dry-run/apply)
         id: option_b_comments
         if: >-
           github.event_name == 'pull_request' &&
@@ -623,23 +622,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
-          POST_REVIEW: ${{ env.ENDOR_INHOUSE_POST_REVIEW_COMMENTS }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
         run: |
           set -e
-          EXTRA=""
-          if [ "${POST_REVIEW}" = "false" ]; then
-            EXTRA="--no-post-review-comments"
-          fi
           uv run python .github/scripts/post_parallel_pr_comments.py \
             --repo "${{ github.repository }}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
-            --mode "${COMMENT_MODE}" \
-            ${EXTRA}
+            --mode "${COMMENT_MODE}"
 
       - name: Option C - GitHub Check Run annotations (dry-run/apply)
         id: option_c_checks
@@ -666,7 +659,6 @@ jobs:
             echo "### PR Comment Flow Status"
             echo "- Option B enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
             echo "- Option B mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
-            echo "- Option B post review comments: \`${{ env.ENDOR_INHOUSE_POST_REVIEW_COMMENTS }}\`"
             echo "- Option B outcome: \`${{ steps.option_b_comments.outcome || 'skipped' }}\`"
             echo "- Option C (Checks API) enabled: \`${{ env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS }}\`"
             echo "- Option C mode: \`${{ env.ENDOR_GITHUB_CHECK_MODE }}\`"
