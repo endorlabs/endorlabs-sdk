@@ -391,6 +391,14 @@
           "description": "The Job ID.",
           "type": "string"
         },
+        "imposter_commit": {
+          "description": "Imposter commit SHA detected for the job.",
+          "items": {
+            "$ref": "#/definitions/JobImposterCommit",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "name": {
           "description": "Name of the job.",
           "type": "string"
@@ -494,6 +502,31 @@
         },
         "step_name": {
           "description": "Step name for the non-OIDC cloud resource access.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "JobImposterCommit": {
+      "properties": {
+        "action": {
+          "description": "Full action reference (e.g. \"actions/checkout@abc123...\").",
+          "type": "string"
+        },
+        "action_repo_clone_url": {
+          "description": "Constructed clone URL used for the lookup.",
+          "type": "string"
+        },
+        "action_sha": {
+          "description": "The pinned commit SHA.",
+          "type": "string"
+        },
+        "location_uri": {
+          "description": "Workflow file path with line number for the imposter action step.",
+          "type": "string"
+        },
+        "step_name": {
+          "description": "Step name where the imposter action is used.",
           "type": "string"
         }
       },

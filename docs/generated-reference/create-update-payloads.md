@@ -2,7 +2,7 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (208 entities).
+Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (210 entities).
 
 ## Create payload/builders
 
@@ -10,13 +10,13 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 |----------|--------------------|---------|---------------|-----------------|-----------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `208`
-- generated artifact files: `147`
-- facade contract resources: `33`
+- mapped entities: `210`
+- generated artifact files: `149`
+- facade contract resources: `34`
 - registry parity status: `pass`
-- operation metadata entries: `719`
-- payload schema resources: `33`
-- runtime model import index entries: `33`
+- operation metadata entries: `723`
+- payload schema resources: `34`
+- runtime model import index entries: `34`
 
 | APIKey | yes | build_create_payload | CreateAPIKeyPayload | meta, spec | propagate |
 | AuditLog | yes | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
@@ -34,6 +34,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | Metric | yes | build_create_payload | CreateMetricPayload | meta, spec | none |
 | Namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
 | NotificationTarget | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
+| PRCommentConfig | yes | build_create_payload | CreatePRCommentConfigPayload | meta, spec | propagate |
 | PackageLicense | yes | build_create_payload | CreatePackageLicensePayload | meta, spec | none |
 | PackageVersion | yes | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
 | Policy | yes | build_create_payload | CreatePolicyPayload | meta, spec | propagate |
@@ -72,6 +73,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | Metric | yes | meta.name, meta.description, meta.tags, spec |
 | Namespace | yes | meta.description |
 | NotificationTarget | yes | meta.description, meta.tags |
+| PRCommentConfig | yes | meta.description, meta.tags |
 | PackageLicense | yes | meta.name, meta.description, meta.tags, spec |
 | PackageVersion | yes | meta.name, meta.description, meta.tags, spec |
 | Policy | yes | meta.name, meta.description, meta.tags, spec.rule, spec.disable, spec.project_selector, spec.project_exceptions, spec.template_values, propagate |
@@ -110,6 +112,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | Metric | name->meta.name |
 | Namespace | name->meta.name |
 | NotificationTarget | name->meta.name |
+| PRCommentConfig | name->meta.name |
 | PackageLicense | — |
 | PackageVersion | name->meta.name |
 | Policy | name->meta.name, policy_type->spec.policy_type |

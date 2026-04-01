@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (208 entities).
+Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (210 entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -20,13 +20,13 @@ Legend:
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `208`
-- generated artifact files: `147`
-- facade contract resources: `33`
+- mapped entities: `210`
+- generated artifact files: `149`
+- facade contract resources: `34`
 - registry parity status: `pass`
-- operation metadata entries: `719`
-- payload schema resources: `33`
-- runtime model import index entries: `33`
+- operation metadata entries: `723`
+- payload schema resources: `34`
+- runtime model import index entries: `34`
 
 | APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | AuditLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
@@ -44,6 +44,7 @@ Legend:
 | Metric | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
+| PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
 | PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |

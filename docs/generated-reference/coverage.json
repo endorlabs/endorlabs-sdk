@@ -1,18 +1,18 @@
 {
   "facade_contract_path": "workspace/model-sync/custom_mapping/facade_contract.json",
-  "facade_contract_resource_count": 33,
-  "model_sync_entry_count": 208,
-  "model_sync_manifest_file_count": 147,
+  "facade_contract_resource_count": 34,
+  "model_sync_entry_count": 210,
+  "model_sync_manifest_file_count": 149,
   "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
   "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
-  "operation_path_metadata_count": 719,
+  "operation_path_metadata_count": 723,
   "operation_path_metadata_path": "workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json",
-  "payload_schema_resource_count": 33,
+  "payload_schema_resource_count": 34,
   "payload_schemas_path": "workspace/model-sync/custom_mapping/mapping/payload_schemas.json",
   "registry_parity_missing_in_mapping_count": 0,
   "registry_parity_report_path": "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json",
   "registry_parity_status": "pass",
-  "resource_count": 33,
+  "resource_count": 34,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -318,6 +318,26 @@
       "attr_name": "NotificationTarget",
       "parent_kind": null,
       "resource_name": "notification-targets",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": true
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "PRCommentConfig",
+      "parent_kind": null,
+      "resource_name": "pr-comment-configs",
       "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,
@@ -675,7 +695,7 @@
       }
     }
   ],
-  "runtime_capability_resource_count": 33,
+  "runtime_capability_resource_count": 34,
   "runtime_index_path": "workspace/model-sync/custom_mapping/mapping/runtime_index.json",
-  "runtime_model_import_count": 33
+  "runtime_model_import_count": 34
 }
