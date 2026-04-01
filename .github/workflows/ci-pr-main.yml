@@ -642,6 +642,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHECK_MODE: ${{ env.ENDOR_GITHUB_CHECK_MODE }}
+          # success = green check while annotations still show warning/failure severity
+          ENDOR_GITHUB_CHECK_CONCLUSION: ${{ vars.ENDOR_GITHUB_CHECK_CONCLUSION || 'success' }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}

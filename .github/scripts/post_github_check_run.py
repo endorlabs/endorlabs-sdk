@@ -11,7 +11,11 @@ import urllib.request
 from typing import Any
 
 from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
-from endor_scan_findings import extract_location, normalize_pr_path
+from endor_scan_findings import (
+    extract_location,
+    is_valid_annotation_path,
+    normalize_pr_path,
+)
 
 # Max annotations per Checks API create/update (docs.github.com REST check-runs).
 ANNOTATION_BATCH_SIZE = 50
@@ -91,12 +95,24 @@ def _finding_message(finding: dict[str, Any]) -> str:
 
 
 def _check_conclusion(findings: list[dict[str, Any]]) -> str:
-    if not findings:
-        return "success"
-    for f in findings:
-        if _finding_annotation_level(f) == "failure":
-            return "failure"
-    return "neutral"
+    """Check-run conclusion for the published run (not per-annotation severity).
+
+    Default ``success`` so this informational check does not show a red X on the PR
+    when Endor reports HIGH/CRITICAL; those severities still appear on annotations.
+    Set env ``ENDOR_GITHUB_CHECK_CONCLUSION`` to ``neutral`` or ``from_findings``
+    (legacy: fail the check if any finding maps to annotation_level failure).
+    """
+    policy = os.environ.get("ENDOR_GITHUB_CHECK_CONCLUSION", "success").strip().lower()
+    if policy in ("success", "neutral"):
+        return policy
+    if policy == "from_findings":
+        if not findings:
+            return "success"
+        for f in findings:
+            if _finding_annotation_level(f) == "failure":
+                return "failure"
+        return "neutral"
+    return "success"
 
 
 def build_annotations(
@@ -106,7 +122,12 @@ def build_annotations(
     out: list[dict[str, Any]] = []
     for finding in findings_with_location:
         loc = extract_location(finding)
-        path = normalize_pr_path(str(loc["file"])).replace("\\", "/")
+        raw_file = loc.get("file")
+        if not isinstance(raw_file, str) or not is_valid_annotation_path(raw_file):
+            continue
+        path = normalize_pr_path(raw_file).replace("\\", "/")
+        if not is_valid_annotation_path(path):
+            continue
         start = _line_as_int(loc["line"])
         line_end = loc.get("line_end")
         end = _line_as_int(line_end) if line_end is not None else start

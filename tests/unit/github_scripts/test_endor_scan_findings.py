@@ -106,6 +106,41 @@ def test_summarize_location_coverage() -> None:
     assert s["without_location"] == 1
 
 
+def test_extract_location_rejects_dot_repo_path() -> None:
+    f = {"spec": {"dependency_file_paths": ["."]}}
+    loc = esf.extract_location(f)
+    assert loc["file"] is None
+    assert loc["line"] is None
+
+
+def test_extract_location_github_blob_url_overrides_line() -> None:
+    blob = (
+        "https://github.com/endor-solutions-architecture/endorlabs-sdk/blob/"
+        "9a7001e64bc421a4b3de13d2eba4e5a028e04808/"
+        "src/endorlabs/resources/authorization_policy.py?plain=1#L134"
+    )
+    f = {
+        "spec": {
+            "summary": f"Secret Location: {blob}",
+            "finding_metadata": {
+                "file_path": "src/endorlabs/resources/authorization_policy.py",
+                "line_number": 1,
+            },
+        }
+    }
+    loc = esf.extract_location(f)
+    assert loc["file"] == "src/endorlabs/resources/authorization_policy.py"
+    assert loc["line"] == 134
+
+
+def test_extract_location_github_blob_url_when_no_structured_path() -> None:
+    blob = "https://github.com/org/repo/blob/abc/src/foo.py#L99"
+    f = {"spec": {"summary": f"See {blob}"}}
+    loc = esf.extract_location(f)
+    assert loc["file"] == "src/foo.py"
+    assert loc["line"] == 99
+
+
 def test_golden_fixture_json_roundtrip() -> None:
     """Golden list shape: what we expect the API + model_dump to be consumable."""
     raw = [
