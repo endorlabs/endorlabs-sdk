@@ -28,6 +28,7 @@ from .resources.package_license import PackageLicense
 from .resources.package_version import PackageVersion
 from .resources.policy import Policy
 from .resources.policy_template import PolicyTemplate
+from .resources.pr_comment_config import PRCommentConfig
 from .resources.project import Project
 from .resources.query_malware import QueryMalware
 from .resources.query_vulnerability import QueryVulnerability
@@ -2086,6 +2087,154 @@ class _NotificationTargetFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
+class _PRCommentConfigFacade:
+    """PR comment configuration resource model.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[PRCommentConfig]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> PRCommentConfig:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[PRCommentConfig]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        namespace: str | None = ...,
+    ) -> PRCommentConfig:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PRCommentConfig:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PRCommentConfig:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | PRCommentConfig,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> PRCommentConfig:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> PRCommentConfig:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
 class _PackageLicenseFacade:
     """PackageLicense resource model extending BaseResource.
 
@@ -3967,8 +4116,8 @@ class Client:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
     DependencyMetadata, EndorLicense, Finding, FindingLog, Installation,
     Invitation, LinterResult, Malware, Metric, Namespace, NotificationTarget,
-    PackageLicense, PackageVersion, Policy, PolicyTemplate, Project,
-    QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
+    PRCommentConfig, PackageLicense, PackageVersion, Policy, PolicyTemplate,
+    Project, QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
     ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult,
     SemgrepRule, VersionUpgrade, Vulnerability
     Custom: ScanLogs
@@ -4006,6 +4155,8 @@ class Client:
     """An Endor Labs namespace entity extending BaseResource."""
     NotificationTarget: _NotificationTargetFacade
     """Notification Target resource model."""
+    PRCommentConfig: _PRCommentConfigFacade
+    """PR comment configuration resource model."""
     PackageLicense: _PackageLicenseFacade
     """PackageLicense resource model extending BaseResource."""
     PackageVersion: _PackageVersionFacade
