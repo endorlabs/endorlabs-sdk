@@ -229,6 +229,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/resources/semgrep_rule.py" = ["ARG003"]
 # --- Utils: intentional patterns ---
 ".github/scripts/model_consistency.py" = ["S310"]  # URL open for spec download
+".github/scripts/endor_ci_fetch_scan_findings.py" = ["T201"]  # CI helper; stderr progress
 ".github/scripts/post_github_check_run.py" = ["S310", "T201"]  # GitHub REST; CLI progress
 ".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter

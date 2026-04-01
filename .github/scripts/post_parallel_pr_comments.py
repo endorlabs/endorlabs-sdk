@@ -9,14 +9,10 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
-from pathlib import Path
 from typing import Any
 
-from endor_scan_findings import (
-    extract_findings,
-    extract_location,
-    normalize_pr_path,
-)
+from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
+from endor_scan_findings import extract_location, normalize_pr_path
 
 SUMMARY_MARKER = "<!-- endorlabs-inhouse-summary -->"
 
@@ -106,7 +102,7 @@ def _summary_body(findings: list[dict[str, Any]], repo: str, sha: str) -> str:
         SUMMARY_MARKER,
         "## Endor Labs In-House Comment Summary",
         "",
-        f"- Findings discovered in scan artifact: `{len(findings)}`",
+        f"- Findings loaded: `{len(findings)}`",
         "- Line comments are posted only for findings with precise file+line metadata.",
         "",
     ]
@@ -215,9 +211,20 @@ def _post_inline_review_comments(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Parse CLI args and post rollup or inline PR comments from scan JSON."""
+    """CLI: post PR comments using findings loaded from the Endor API."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scan-output", type=Path, required=True)
+    parser.add_argument(
+        "--poll-timeout",
+        type=float,
+        default=120.0,
+        help="Seconds to wait for a terminal ScanResult after the scan.",
+    )
+    parser.add_argument(
+        "--max-findings",
+        type=int,
+        default=500,
+        help="Max findings to hydrate via Finding.get.",
+    )
     parser.add_argument("--repo", required=True, help="owner/repo")
     parser.add_argument("--pr-number", type=int, required=True)
     parser.add_argument("--commit-sha", required=True)
@@ -237,24 +244,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "apply" and not token:
         raise RuntimeError("GITHUB_TOKEN is required in apply mode.")
 
-    if not args.scan_output.exists():
-        print(f"Scan output not found: {args.scan_output}. Skipping.")
-        return 0
+    findings = load_findings_dicts_for_pr(
+        repo=args.repo,
+        head_sha=args.commit_sha,
+        poll_timeout_sec=args.poll_timeout,
+        max_findings=args.max_findings,
+    )
 
-    raw = args.scan_output.read_text(encoding="utf-8").strip()
-    if not raw:
-        print(f"Scan output is empty: {args.scan_output}. Skipping.")
-        return 0
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        print(
-            f"Scan output is not valid JSON ({args.scan_output}): {exc}. Skipping.",
-        )
-        return 0
-    findings = extract_findings(payload)
     if not findings:
-        print("No findings discovered in scan artifact. Skipping comment flow.")
+        print("No findings to post. Skipping comment flow.")
         return 0
 
     api_base = f"https://api.github.com/repos/{args.repo}"

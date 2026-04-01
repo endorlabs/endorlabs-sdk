@@ -8,14 +8,10 @@ import json
 import os
 import urllib.error
 import urllib.request
-from pathlib import Path
 from typing import Any
 
-from endor_scan_findings import (
-    extract_findings,
-    extract_location,
-    normalize_pr_path,
-)
+from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
+from endor_scan_findings import extract_location, normalize_pr_path
 
 # Max annotations per Checks API create/update (docs.github.com REST check-runs).
 ANNOTATION_BATCH_SIZE = 50
@@ -72,13 +68,12 @@ def _finding_annotation_level(finding: dict[str, Any]) -> str:
 
 
 def _finding_title(finding: dict[str, Any]) -> str:
+    meta = finding.get("meta") if isinstance(finding.get("meta"), dict) else {}
     spec = finding.get("spec") if isinstance(finding.get("spec"), dict) else {}
-    meta = spec.get("meta") if isinstance(spec.get("meta"), dict) else {}
     name = (
         meta.get("name") or spec.get("rule_name") or str(finding.get("uuid", "finding"))
     )
-    text = str(name)[:250]
-    return text
+    return str(name)[:250]
 
 
 def _finding_message(finding: dict[str, Any]) -> str:
@@ -87,9 +82,11 @@ def _finding_message(finding: dict[str, Any]) -> str:
         f"UUID: `{finding.get('uuid', 'unknown')}`",
         f"Level: `{spec.get('level', 'n/a')}`",
     ]
-    desc = spec.get("description")
-    if isinstance(desc, str) and desc.strip():
-        parts.append(desc.strip()[:4000])
+    for key in ("summary", "description", "explanation"):
+        text = spec.get(key)
+        if isinstance(text, str) and text.strip():
+            parts.append(text.strip()[:4000])
+            break
     return "\n\n".join(parts)
 
 
@@ -136,7 +133,7 @@ def _summary_markdown(
     lines = [
         "## Endor Labs scan findings",
         "",
-        f"- **Findings in artifact:** {len(findings)}",
+        f"- **Findings:** {len(findings)}",
         (
             f"- **Line-anchored annotations posted:** {annotations_total} "
             f"(batches: {batches_posted}, cap {ANNOTATION_BATCH_SIZE}/request)."
@@ -163,7 +160,18 @@ def _summary_markdown(
 def main(argv: list[str] | None = None) -> int:
     """Parse CLI args and create or update a GitHub Check Run with annotations."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--scan-output", type=Path, required=True)
+    parser.add_argument(
+        "--poll-timeout",
+        type=float,
+        default=120.0,
+        help="Seconds to wait for a terminal ScanResult.",
+    )
+    parser.add_argument(
+        "--max-findings",
+        type=int,
+        default=500,
+        help="Max findings to hydrate via Finding.get.",
+    )
     parser.add_argument("--repo", required=True, help="owner/repo")
     parser.add_argument(
         "--commit-sha", required=True, help="HEAD SHA for the check run"
@@ -176,22 +184,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "apply" and not token:
         raise RuntimeError("GITHUB_TOKEN is required in apply mode.")
 
-    if not args.scan_output.exists():
-        print(f"Scan output not found: {args.scan_output}. Skipping.")
-        return 0
-
-    raw = args.scan_output.read_text(encoding="utf-8").strip()
-    if not raw:
-        print(f"Scan output is empty: {args.scan_output}. Skipping.")
-        return 0
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError as exc:
-        print(
-            f"Scan output is not valid JSON ({args.scan_output}): {exc}. Skipping.",
-        )
-        return 0
-    findings = extract_findings(payload)
+    findings = load_findings_dicts_for_pr(
+        repo=args.repo,
+        head_sha=args.commit_sha,
+        poll_timeout_sec=args.poll_timeout,
+        max_findings=args.max_findings,
+    )
     located: list[dict[str, Any]] = []
     for f in findings:
         loc = extract_location(f)
