@@ -553,8 +553,7 @@ jobs:
       checks: write
       actions: read
     env:
-      # Defaults: run all PR-comment paths on PRs (research/validation). Set repo vars to 'false' to disable.
-      ENDOR_ENABLE_TEMPLATE_SYNC: ${{ vars.ENDOR_ENABLE_TEMPLATE_SYNC || 'true' }}
+      # Defaults: run B/C on PRs (API-backed findings). Set repo vars to 'false' to disable.
       ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'true' }}
       ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
       ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'true' }}
@@ -580,10 +579,6 @@ jobs:
       - name: Sync dependencies for dependency-aware scans
         run: |
           uv sync --dev
-
-      - name: Prepare Endor scan artifact directory
-        run: |
-          mkdir -p .endorlabs-artifacts
 
       - name: Endor Labs Secrets scan (fast)
         uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
@@ -619,25 +614,6 @@ jobs:
           additional_args: --ai-sast-analysis=agent-fallback
           enable_pr_comments: ${{ github.event_name == 'pull_request' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          output_file: .endorlabs-artifacts/scan-output.json
-
-      - name: Option A - sync Endor PR comment template config
-        id: option_a_sync
-        if: >-
-          github.event_name == 'pull_request' &&
-          env.ENDOR_ENABLE_TEMPLATE_SYNC == 'true' &&
-          vars.ENDOR_NAMESPACE != ''
-        env:
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-        run: |
-          uv run python .github/scripts/sync_pr_comment_template.py \
-            --namespace "${ENDOR_NAMESPACE}" \
-            --name "github-pr-comments-template" \
-            --template-path ".github/templates/pr-findings-summary.tmpl" \
-            --platform-type "PLATFORM_SOURCE_GITHUB"
 
       - name: Option B - in-house parallel PR comments (dry-run/apply)
         id: option_b_comments
@@ -648,6 +624,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
           POST_REVIEW: ${{ env.ENDOR_INHOUSE_POST_REVIEW_COMMENTS }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
         run: |
           set -e
           EXTRA=""
@@ -655,7 +635,6 @@ jobs:
             EXTRA="--no-post-review-comments"
           fi
           uv run python .github/scripts/post_parallel_pr_comments.py \
-            --scan-output ".endorlabs-artifacts/scan-output.json" \
             --repo "${{ github.repository }}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
@@ -670,9 +649,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CHECK_MODE: ${{ env.ENDOR_GITHUB_CHECK_MODE }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
         run: |
           uv run python .github/scripts/post_github_check_run.py \
-            --scan-output ".endorlabs-artifacts/scan-output.json" \
             --repo "${{ github.repository }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
             --mode "${CHECK_MODE}"
@@ -682,10 +664,6 @@ jobs:
         run: |
           {
             echo "### PR Comment Flow Status"
-            echo "- Option A enabled: \`${{ env.ENDOR_ENABLE_TEMPLATE_SYNC }}\`"
-            echo "- Option A outcome: \`${{ steps.option_a_sync.outcome || 'skipped' }}\`"
-            echo "- Option A status: \`${{ steps.option_a_sync.outputs.template_sync_status || 'not-set' }}\`"
-            echo "- Option A reason: \`${{ steps.option_a_sync.outputs.template_sync_reason || 'n/a' }}\`"
             echo "- Option B enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
             echo "- Option B mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
             echo "- Option B post review comments: \`${{ env.ENDOR_INHOUSE_POST_REVIEW_COMMENTS }}\`"
