@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Any
 
 _SCRIPTS = Path(__file__).resolve().parents[3] / ".github" / "scripts"
 if str(_SCRIPTS) not in sys.path:
@@ -99,7 +100,7 @@ def test_prepare_inline_comment_objects_respects_cap_and_dedupe() -> None:
         },
     ]
     bodies = {"<!-- endorlabs-inhouse-finding:a:f.py:1 -->\nold"}
-    objs, skipped, n_loc, n_un = ppc.prepare_inline_comment_objects(
+    objs, skipped, n_loc, n_un, snips = ppc.prepare_inline_comment_objects(
         findings,
         pr_files={"f.py"},
         existing_bodies=bodies,
@@ -112,4 +113,27 @@ def test_prepare_inline_comment_objects_respects_cap_and_dedupe() -> None:
     assert n_loc == 2
     assert n_un == 0
     assert len(objs) == 1
+    assert len(snips) == 1
     assert "b" in objs[0]["body"] or "endorlabs-inhouse-finding:b:" in objs[0]["body"]
+
+
+def test_code_region_fence_and_emit_smoke(capsys: Any) -> None:
+    text = ppc._code_region_fence("src/x.py", 3, 5, "line1\nline2")
+    assert "3:5:src/x.py" in text
+    assert "line1" in text
+    ppc.emit_inline_comment_plan_to_log(
+        comment_objects=[
+            {
+                "path": "a.py",
+                "line": 2,
+                "side": "RIGHT",
+                "body": "hello",
+            }
+        ],
+        preview_snippets=["x = 1"],
+    )
+    out = capsys.readouterr().out
+    assert "a.py" in out
+    assert "2:2:a.py" in out
+    assert "x = 1" in out
+    assert "hello" in out

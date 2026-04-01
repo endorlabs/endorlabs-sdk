@@ -555,9 +555,9 @@ jobs:
     env:
       # Defaults: run B/C on PRs (API-backed findings). Set repo vars to 'false' to disable.
       ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'true' }}
-      ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
+      ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'apply' }}
       ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'true' }}
-      ENDOR_GITHUB_CHECK_MODE: ${{ vars.ENDOR_GITHUB_CHECK_MODE || 'dry-run' }}
+      ENDOR_GITHUB_CHECK_MODE: ${{ vars.ENDOR_GITHUB_CHECK_MODE || 'apply' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
