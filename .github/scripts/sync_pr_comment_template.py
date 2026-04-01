@@ -30,6 +30,11 @@ def _append_github_output(key: str, value: str) -> None:
         fh.write(f"{key}={value}\n")
 
 
+def _set_status(status: str, reason: str = "") -> None:
+    _append_github_output("template_sync_status", status)
+    _append_github_output("template_sync_reason", reason)
+
+
 def _load_template(path: Path) -> str:
     content = path.read_text(encoding="utf-8")
     if not content.strip():
@@ -86,24 +91,35 @@ def main(argv: list[str] | None = None) -> int:
         template_text = _load_template(args.template_path)
     except Exception as exc:
         print(f"Template sync failed during input validation: {exc}", file=sys.stderr)
-        _append_github_output("template_sync_status", "error")
+        _set_status("error", f"input_validation: {exc}")
         return 1
 
-    client = endorlabs.Client(tenant=args.namespace)
+    try:
+        client = endorlabs.Client(tenant=args.namespace)
+    except Exception as exc:
+        print(f"Template sync failed creating client: {exc}", file=sys.stderr)
+        _set_status("error", f"client_init: {exc}")
+        return 1
 
-    existing = client.PRCommentConfig.list(name=args.name, max_pages=2)
+    try:
+        existing = client.PRCommentConfig.list(name=args.name, max_pages=2)
+    except Exception as exc:
+        print(f"Template sync failed listing PRCommentConfig: {exc}", file=sys.stderr)
+        _set_status("error", f"list_failed: {exc}")
+        return 1
+
     if len(existing) > 1:
         print(
             f"Multiple PRCommentConfig resources found for name {args.name!r}; refusing.",
             file=sys.stderr,
         )
-        _append_github_output("template_sync_status", "error")
+        _set_status("error", "multiple_named_configs")
         return 1
 
     if not existing:
         if args.dry_run:
             print(f"[DRY-RUN] Would create PRCommentConfig {args.name!r}.")
-            _append_github_output("template_sync_status", "dry_run_create")
+            _set_status("dry_run_create", "create_planned")
             return 0
         payload = CreatePRCommentConfigPayload(
             meta=PRCommentConfigMeta(
@@ -117,9 +133,18 @@ def main(argv: list[str] | None = None) -> int:
             ),
             propagate=args.propagate,
         )
-        created = client.PRCommentConfig.create(payload)
+        try:
+            created = client.PRCommentConfig.create(payload)
+        except Exception as exc:
+            msg = str(exc)
+            reason = "create_failed"
+            if "invalid template" in msg.lower():
+                reason = "template_validation_failed"
+            print(f"Template sync failed creating PRCommentConfig: {exc}", file=sys.stderr)
+            _set_status("error", f"{reason}: {exc}")
+            return 1
         print(f"Created PRCommentConfig {created.uuid} ({args.name}).")
-        _append_github_output("template_sync_status", "created")
+        _set_status("created", "created_new")
         _append_github_output("template_sync_uuid", created.uuid)
         return 0
 
@@ -137,13 +162,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     if not needs_update:
         print(f"PRCommentConfig {current.uuid} already matches desired template.")
-        _append_github_output("template_sync_status", "unchanged")
+        _set_status("unchanged", "already_in_sync")
         _append_github_output("template_sync_uuid", current.uuid)
         return 0
 
     if args.dry_run:
         print(f"[DRY-RUN] Would update PRCommentConfig {current.uuid}.")
-        _append_github_output("template_sync_status", "dry_run_update")
+        _set_status("dry_run_update", "update_planned")
         _append_github_output("template_sync_uuid", current.uuid)
         return 0
 
@@ -162,18 +187,27 @@ def main(argv: list[str] | None = None) -> int:
             "propagate": args.propagate,
         },
     )
-    updated = client.PRCommentConfig.update(
-        current.uuid,
-        payload=update_payload,
-        update_mask=(
-            "meta.description,"
-            "spec.platform_type,"
-            "spec.template.findings_summary_template,"
-            "propagate"
-        ),
-    )
+    try:
+        updated = client.PRCommentConfig.update(
+            current.uuid,
+            payload=update_payload,
+            update_mask=(
+                "meta.description,"
+                "spec.platform_type,"
+                "spec.template.findings_summary_template,"
+                "propagate"
+            ),
+        )
+    except Exception as exc:
+        msg = str(exc)
+        reason = "update_failed"
+        if "invalid template" in msg.lower():
+            reason = "template_validation_failed"
+        print(f"Template sync failed updating PRCommentConfig: {exc}", file=sys.stderr)
+        _set_status("error", f"{reason}: {exc}")
+        return 1
     print(f"Updated PRCommentConfig {updated.uuid}.")
-    _append_github_output("template_sync_status", "updated")
+    _set_status("updated", "updated_existing")
     _append_github_output("template_sync_uuid", updated.uuid)
     return 0
 

@@ -94,7 +94,67 @@ def _extract_location(finding: dict[str, Any]) -> dict[str, Any]:
     return {"file": file_path, "line": line, "line_end": line_end}
 
 
-def _summary_body(findings: list[dict[str, Any]]) -> str:
+def _normalize_pr_path(path: str) -> str:
+    if path.startswith("a/") or path.startswith("b/"):
+        return path[2:]
+    return path
+
+
+def _github_blob_link(repo: str, sha: str, file_path: str, line: int) -> str:
+    clean_path = _normalize_pr_path(file_path).replace("\\", "/")
+    encoded_path = urllib.parse.quote(clean_path, safe="/._-")
+    return f"https://github.com/{repo}/blob/{sha}/{encoded_path}#L{line}"
+
+
+def _optional_snippet_line(finding: dict[str, Any]) -> str | None:
+    """Return a single short line from finding metadata for inline comment body, if any."""
+    spec = finding.get("spec", {}) if isinstance(finding.get("spec"), dict) else {}
+    metadata = spec.get("finding_metadata", {})
+    if not isinstance(metadata, dict):
+        return None
+    sec_review = metadata.get("security_review_data", {})
+    if not isinstance(sec_review, dict):
+        sec_review = {}
+    code_snippet = sec_review.get("code_snippet", {})
+    if isinstance(code_snippet, dict):
+        text = code_snippet.get("text") or code_snippet.get("snippet")
+        if isinstance(text, str) and text.strip():
+            line = text.strip().splitlines()[0]
+            return line[:200] if len(line) > 200 else line
+    return None
+
+
+def build_inline_review_payload(
+    finding: dict[str, Any],
+    repo: str,
+    sha: str,
+    marker: str,
+) -> dict[str, Any] | None:
+    """Build minimal GitHub pull review-comment JSON from location metadata, or None."""
+    loc = _extract_location(finding)
+    if not loc.get("file") or not loc.get("line"):
+        return None
+    body_lines = [
+        marker,
+        f"Endor Labs finding `{finding.get('uuid', 'unknown')}`",
+        f"Location: `{loc['file']}:{loc['line']}`",
+        "[Open code at finding location]"
+        f"({_github_blob_link(repo, sha, str(loc['file']), int(loc['line']))})",
+    ]
+    snippet = _optional_snippet_line(finding)
+    if snippet:
+        body_lines.append(f"Snippet: `{snippet}`")
+    body = "\n".join(body_lines)
+    return {
+        "body": body,
+        "path": str(loc["file"]),
+        "line": int(loc["line"]),
+        "side": "RIGHT",
+        "commit_id": sha,
+    }
+
+
+def _summary_body(findings: list[dict[str, Any]], repo: str, sha: str) -> str:
     lines = [
         SUMMARY_MARKER,
         "## Endor Labs In-House Comment Summary",
@@ -105,14 +165,20 @@ def _summary_body(findings: list[dict[str, Any]]) -> str:
     ]
     preview = findings[:20]
     if preview:
-        lines.append("| Finding UUID | Location |")
-        lines.append("|---|---|")
+        lines.append("| Finding UUID | Location | Code Link |")
+        lines.append("|---|---|---|")
         for finding in preview:
             loc = _extract_location(finding)
             location = (
                 f"`{loc['file']}:{loc['line']}`" if loc.get("file") and loc.get("line") else "_n/a_"
             )
-            lines.append(f"| `{finding.get('uuid', 'unknown')}` | {location} |")
+            code_link = "_n/a_"
+            if loc.get("file") and loc.get("line"):
+                link = _github_blob_link(repo, sha, str(loc["file"]), int(loc["line"]))
+                code_link = f"[Open code]({link})"
+            lines.append(
+                f"| `{finding.get('uuid', 'unknown')}` | {location} | {code_link} |"
+            )
     if len(findings) > len(preview):
         lines.append(f"\n_... plus {len(findings) - len(preview)} additional findings._")
     return "\n".join(lines)
@@ -142,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     api_base = f"https://api.github.com/repos/{args.repo}"
-    summary = _summary_body(findings)
+    summary = _summary_body(findings, args.repo, args.commit_sha)
 
     located = [f for f in findings if _extract_location(f).get("file") and _extract_location(f).get("line")]
     unlocated = len(findings) - len(located)
@@ -202,18 +268,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         if any(marker in body for body in existing_markers):
             continue
-        body = (
-            f"{marker}\n"
-            f"Endor Labs finding `{finding.get('uuid', 'unknown')}`\n"
-            f"Location: `{loc['file']}:{loc['line']}`"
+        comment_payload = build_inline_review_payload(
+            finding, args.repo, args.commit_sha, marker
         )
-        comment_payload = {
-            "body": body,
-            "path": str(loc["file"]),
-            "line": int(loc["line"]),
-            "side": "RIGHT",
-            "commit_id": args.commit_sha,
-        }
+        if comment_payload is None:
+            continue
         try:
             _gh_request(
                 token=token,
