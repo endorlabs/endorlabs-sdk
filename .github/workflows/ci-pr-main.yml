@@ -576,6 +576,10 @@ jobs:
         run: |
           uv sync --dev
 
+      - name: Prepare Endor scan artifact directory
+        run: |
+          mkdir -p .endorlabs-artifacts
+
       - name: Endor Labs Secrets scan (fast)
         uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
         with:
@@ -613,6 +617,7 @@ jobs:
           output_file: .endorlabs-artifacts/scan-output.json
 
       - name: Option A - sync Endor PR comment template config
+        id: option_a_sync
         if: >-
           github.event_name == 'pull_request' &&
           env.ENDOR_ENABLE_TEMPLATE_SYNC == 'true' &&
@@ -630,6 +635,7 @@ jobs:
             --platform-type "PLATFORM_SOURCE_GITHUB"
 
       - name: Option B - in-house parallel PR comments (dry-run/apply)
+        id: option_b_comments
         if: >-
           github.event_name == 'pull_request' &&
           env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
@@ -643,6 +649,20 @@ jobs:
             --pr-number "${{ github.event.pull_request.number }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
             --mode "${COMMENT_MODE}"
+
+      - name: Comment flow status summary
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          {
+            echo "### PR Comment Flow Status"
+            echo "- Option A enabled: \`${{ env.ENDOR_ENABLE_TEMPLATE_SYNC }}\`"
+            echo "- Option A outcome: \`${{ steps.option_a_sync.outcome || 'skipped' }}\`"
+            echo "- Option A status: \`${{ steps.option_a_sync.outputs.template_sync_status || 'not-set' }}\`"
+            echo "- Option A reason: \`${{ steps.option_a_sync.outputs.template_sync_reason || 'n/a' }}\`"
+            echo "- Option B enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
+            echo "- Option B mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
+            echo "- Option B outcome: \`${{ steps.option_b_comments.outcome || 'skipped' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.

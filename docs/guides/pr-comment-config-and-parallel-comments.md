@@ -28,7 +28,7 @@ Behavior:
 
 - Creates `github-pr-comments-template` if it does not exist.
 - Updates the existing resource when template/platform/propagate drift.
-- Emits status through workflow logs and `GITHUB_OUTPUT`.
+- Emits status through workflow logs and `GITHUB_OUTPUT` (`template_sync_status`, `template_sync_reason`).
 
 ## Option B - In-house parallel GitHub comments
 
@@ -50,10 +50,46 @@ Required permissions:
 Behavior:
 
 - Extracts findings from scan JSON recursively.
-- Posts/updates one deterministic rollup summary comment (`<!-- endorlabs-inhouse-summary -->` marker).
-- Attempts line comments for findings with precise `file` + `line` metadata.
+- Posts/updates one deterministic rollup summary comment (`<!-- endorlabs-inhouse-summary -->` marker) with deep links.
+- Attempts line comments for findings with precise `file` + `line` metadata and includes direct GitHub blob links.
 - Uses deterministic per-finding markers to avoid duplicate line comments on reruns.
 - Gracefully skips line comments when diff hunks are stale or not commentable.
+
+## Embedded UX capability matrix
+
+GitHub PR comments do not expose arbitrary widget or iframe embed APIs. The practical “embedded” patterns are:
+
+- **Option A (template):** Markdown **fenced code blocks** for snippets using Endor’s template helpers `getCustomCodeSnippet` and `fixBackticks` (see `.endorlabs-context/docs/scan-pr-scans-pr-comments.md`). This is the platform’s documented way to render Custom metadata snippets safely in comment bodies.
+- **Option B (script):** GitHub **REST** payloads with `path`, `line`, `side`, and `commit_id` for **inline review comments** on the diff, built from `file` / `line` in finding metadata (see `.github/scripts/post_parallel_pr_comments.py`).
+
+| Capability | Option A (`PRCommentConfig` template) | Option B (repo-native script) |
+|---|---|---|
+| Markdown links in comment body | Supported | Supported |
+| Snippet “embed” as fenced code in summary | Supported via `getCustomCodeSnippet` + `fixBackticks` | Optional one-line snippet in inline comment body when metadata includes text |
+| File+line deep links in markdown | Supported via `getFindingURL` / `getCustomLocation`; no GitHub blob URL in template root | Supported via constructed blob links from repo + commit SHA |
+| Inline review comments in PR diff | Platform-dependent scanner behavior | Supported via GitHub review comments API |
+| Deterministic dedupe across reruns | Limited to scanner behavior | Supported via marker keys |
+| Arbitrary widget/iframe embed in PR comment | Not supported | Not supported |
+
+## PRCommentConfig gap analysis
+
+`PRCommentConfig` currently exposes only:
+
+- `spec.platform_type`
+- `spec.template.findings_summary_template`
+
+Practical gaps for embedded UX:
+
+- No dedicated structured fields for `file`, `line`, `line_end`, or precomputed deep-link URLs **in the template root**; deep links in the threaded summary rely on Endor URLs from helpers such as `getFindingURL` unless the platform extends the data model.
+- No controls for line-comment placement behavior (path/line anchoring strategy) from this resource alone.
+- No support for custom GitHub UI widgets/cards/iframes; output is still markdown/text rendered by GitHub comments.
+- No native dedupe key fields for custom in-house comment update semantics.
+
+Recommended fallback patterns:
+
+- Use Option A for consistent markdown summary formatting and link-heavy output.
+- Use Option B for deterministic inline anchors and blob links when location metadata is present.
+- Run both together for best UX parity with GitHub constraints.
 
 ## Choosing Option A vs Option B
 
