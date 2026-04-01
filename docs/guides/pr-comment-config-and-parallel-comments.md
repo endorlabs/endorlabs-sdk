@@ -1,9 +1,10 @@
 # PR Comment Config and Parallel Comments
 
-This guide covers two complementary PR-comment paths in CI:
+This guide covers complementary PR feedback paths in CI:
 
-- Option A: Endor-managed PR comments using `PRCommentConfig` template sync.
-- Option B: In-house parallel PR comments based on scan finding location metadata.
+- **Option A:** Endor-managed PR comments using `PRCommentConfig` template sync.
+- **Option B:** In-house issue comments and optional inline review comments from scan metadata.
+- **Option C:** GitHub **Checks API** check runs with **annotations** (Checks tab / file annotations), from the same scan artifact.
 
 ## Option A - Template sync via `PRCommentConfig`
 
@@ -55,21 +56,52 @@ Behavior:
 - Uses deterministic per-finding markers to avoid duplicate line comments on reruns.
 - Gracefully skips line comments when diff hunks are stale or not commentable.
 
+Repository variables:
+
+- `ENDOR_INHOUSE_POST_REVIEW_COMMENTS` — `true` (default) or `false`. Set to `false` when using Option C to avoid duplicate inline markers (rollup issue comment still runs when Option B is enabled).
+
+## Option C - GitHub Check Run annotations
+
+Workflow step: `Option C - GitHub Check Run annotations (dry-run/apply)`
+
+- Script: `.github/scripts/post_github_check_run.py`
+- Scan artifact: `.endorlabs-artifacts/scan-output.json` (same as Option B)
+- Shared extraction: `.github/scripts/endor_scan_findings.py`
+
+Enable in repository variables:
+
+- `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS=true`
+- `ENDOR_GITHUB_CHECK_MODE=dry-run` or `apply`
+
+Required permissions:
+
+- Workflow job permissions `checks: write` (in addition to `pull-requests: write` if Option B is enabled) and `GITHUB_TOKEN`.
+
+Behavior:
+
+- Creates a completed **check run** on the PR head commit with `output.annotations` for findings that have `file` + `line` in metadata.
+- Maps `spec.level` to GitHub annotation levels (`FINDING_LEVEL_CRITICAL` / `HIGH` → `failure`, `MEDIUM` → `warning`, else `notice`).
+- Sends annotations in batches of up to **50** per REST request (additional batches use **Update check run**).
+- Findings without location still appear in the check run **summary** markdown table.
+- For **SARIF** upload to Code Scanning (alternative native UX), use GitHub’s official `github/codeql-action/upload-sarif` after generating SARIF; this repo’s Option C uses the Checks API only.
+
 ## Embedded UX capability matrix
 
 GitHub PR comments do not expose arbitrary widget or iframe embed APIs. The practical “embedded” patterns are:
 
 - **Option A (template):** Markdown **fenced code blocks** for snippets using Endor’s template helpers `getCustomCodeSnippet` and `fixBackticks` (see `.endorlabs-context/docs/scan-pr-scans-pr-comments.md`). This is the platform’s documented way to render Custom metadata snippets safely in comment bodies.
 - **Option B (script):** GitHub **REST** payloads with `path`, `line`, `side`, and `commit_id` for **inline review comments** on the diff, built from `file` / `line` in finding metadata (see `.github/scripts/post_parallel_pr_comments.py`).
+- **Option C (script):** GitHub **Checks API** (`POST`/`PATCH` check-runs) with `output.annotations` (see `.github/scripts/post_github_check_run.py`).
 
-| Capability | Option A (`PRCommentConfig` template) | Option B (repo-native script) |
-|---|---|---|
-| Markdown links in comment body | Supported | Supported |
-| Snippet “embed” as fenced code in summary | Supported via `getCustomCodeSnippet` + `fixBackticks` | Optional one-line snippet in inline comment body when metadata includes text |
-| File+line deep links in markdown | Supported via `getFindingURL` / `getCustomLocation`; no GitHub blob URL in template root | Supported via constructed blob links from repo + commit SHA |
-| Inline review comments in PR diff | Platform-dependent scanner behavior | Supported via GitHub review comments API |
-| Deterministic dedupe across reruns | Limited to scanner behavior | Supported via marker keys |
-| Arbitrary widget/iframe embed in PR comment | Not supported | Not supported |
+| Capability | Option A (`PRCommentConfig` template) | Option B (repo-native script) | Option C (Checks API) |
+|---|---|---|---|
+| Markdown links in comment body | Supported | Supported | In check summary text |
+| Snippet “embed” as fenced code in summary | Supported via `getCustomCodeSnippet` + `fixBackticks` | Optional one-line snippet in inline comment body when metadata includes text | Message text per annotation |
+| File+line deep links in markdown | Supported via `getFindingURL` / `getCustomLocation`; no GitHub blob URL in template root | Supported via constructed blob links from repo + commit SHA | N/A (annotations anchor to path/lines) |
+| Inline review comments in PR diff | Platform-dependent scanner behavior | Supported via GitHub review comments API | Not used (use annotations instead) |
+| Checks tab / structured annotations | Not supported | Not supported | Supported |
+| Deterministic dedupe across reruns | Limited to scanner behavior | Supported via marker keys | New check run per workflow run |
+| Arbitrary widget/iframe embed in PR comment | Not supported | Not supported | Not supported |
 
 ## PRCommentConfig gap analysis
 
@@ -88,14 +120,15 @@ Practical gaps for embedded UX:
 Recommended fallback patterns:
 
 - Use Option A for consistent markdown summary formatting and link-heavy output.
-- Use Option B for deterministic inline anchors and blob links when location metadata is present.
-- Run both together for best UX parity with GitHub constraints.
+- Use Option B for rollup issue comments and optional threaded inline review comments.
+- Use Option C for GitHub-native **Checks** UX (annotations on files/lines). Prefer `ENDOR_INHOUSE_POST_REVIEW_COMMENTS=false` when Option B and C are both enabled to reduce duplicate inline surfaces.
+- Run A + B, A + C, or all three as needed; align variables so comments and checks do not duplicate the same finding on the diff.
 
-## Choosing Option A vs Option B
+## Choosing Option A vs Option B vs Option C
 
-- Use **Option A** when you want to stay on Endor-native PR comments and control the summary format.
-- Use **Option B** when you need a parallel comment stream with custom dedupe/reporting behavior.
-- You can run both: Option A for native comments, Option B for supplemental in-house annotations.
+- Use **Option A** when you want Endor-native PR comments and template-controlled formatting.
+- Use **Option B** when you want issue-thread rollup and optional review comments with deterministic markers.
+- Use **Option C** when you want the **Checks** tab and API-driven annotations without maintaining raw REST upload code for SARIF (SARIF remains an optional separate path via `upload-sarif`).
 
 ## Failure modes
 
@@ -104,3 +137,5 @@ Recommended fallback patterns:
 - Missing finding location metadata (`file`, `line`) -> Option B falls back to rollup only.
 - Outdated PR diff/hunks -> line comment POST may fail; script logs and continues.
 - Missing write permissions -> Option B comment writes fail; keep `dry-run` for verification.
+- Option C: `checks: write` missing or denied -> check run creation fails; use `dry-run` first.
+- Option C: GitHub may cap annotations per request (batching implemented); very large result sets may prefer SARIF + `upload-sarif` instead.
