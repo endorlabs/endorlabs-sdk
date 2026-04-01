@@ -1,36 +1,9 @@
-"""Shared helpers to walk Endor scan JSON for findings and file/line locations."""
+"""Helpers for finding dicts from the Endor API (file/line for GitHub REST)."""
 
 from __future__ import annotations
 
 import re
 from typing import Any
-
-
-def extract_findings(node: Any) -> list[dict[str, Any]]:
-    """Recursively collect finding-like dicts from scan output JSON."""
-    findings: list[dict[str, Any]] = []
-
-    def walk(value: Any) -> None:
-        if isinstance(value, dict):
-            if "uuid" in value and (
-                "finding_metadata" in value
-                or "security_review_data" in value
-                or ("spec" in value and isinstance(value["spec"], dict))
-            ):
-                findings.append(value)
-            for child in value.values():
-                walk(child)
-        elif isinstance(value, list):
-            for item in value:
-                walk(item)
-
-    walk(node)
-    dedup: dict[str, dict[str, Any]] = {}
-    for finding in findings:
-        fid = str(finding.get("uuid", ""))
-        if fid:
-            dedup[fid] = finding
-    return list(dedup.values()) if dedup else findings
 
 
 def extract_location(finding: dict[str, Any]) -> dict[str, Any]:
