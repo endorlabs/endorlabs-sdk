@@ -4,6 +4,21 @@ from __future__ import annotations
 
 import re
 from typing import Any
+from urllib.parse import unquote
+
+# github.com/org/repo/blob/<sha>/path?...#L123 (plain=1 optional)
+_GITHUB_BLOB_LINE_RE = re.compile(
+    r"github\.com/[^/]+/[^/]+/blob/[a-fA-F0-9]+/([^?#\s]+)(?:\?[^#]*)?#L(\d+)",
+    re.IGNORECASE,
+)
+
+
+def is_valid_annotation_path(path: str) -> bool:
+    """Reject empty, ``.``, ``..``, and slash-only paths for GitHub annotations."""
+    p = path.strip().replace("\\", "/")
+    if not p or p in (".", ".."):
+        return False
+    return not (p == "/" or all(part in ("", ".") for part in p.split("/")))
 
 
 def _coerce_positive_int(value: Any) -> int | None:
@@ -55,6 +70,30 @@ def _location_from_custom(
             return p, ln, el
 
     return None, None, None
+
+
+def _merge_github_blob_url_location(
+    spec: dict[str, Any], file_path: str | None, line: Any
+) -> tuple[str | None, Any]:
+    """Prefer path+line from github.com ``blob/.../file#Ln`` links in spec text."""
+    norm_fp: str | None = None
+    if isinstance(file_path, str) and file_path.strip():
+        norm_fp = normalize_pr_path(file_path).replace("\\", "/").lstrip("./")
+
+    for key in ("summary", "explanation", "remediation", "description"):
+        text = spec.get(key)
+        if not isinstance(text, str):
+            continue
+        for m in _GITHUB_BLOB_LINE_RE.finditer(text):
+            up = unquote(m.group(1)).replace("\\", "/").lstrip("./")
+            ul: Any = int(m.group(2))
+            if not norm_fp:
+                return up, ul
+            base = up.split("/")[-1]
+            want = norm_fp.split("/")[-1]
+            if up == norm_fp or up.endswith("/" + norm_fp) or base == want:
+                return up, ul
+    return file_path, line
 
 
 def _line_after_path_in_text(text: str, path: str) -> int | None:
@@ -135,6 +174,10 @@ def extract_location(finding: dict[str, Any]) -> dict[str, Any]:
             file_path = file_path or m.group("file")
             line = line or int(m.group("line"))
 
+    file_path, line = _merge_github_blob_url_location(spec, file_path, line)
+
+    if not isinstance(file_path, str) or not is_valid_annotation_path(file_path):
+        return {"file": None, "line": None, "line_end": None}
     return {"file": file_path, "line": line, "line_end": line_end}
 
 
