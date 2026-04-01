@@ -180,7 +180,17 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Scan output not found: {args.scan_output}. Skipping.")
         return 0
 
-    payload = json.loads(args.scan_output.read_text(encoding="utf-8"))
+    raw = args.scan_output.read_text(encoding="utf-8").strip()
+    if not raw:
+        print(f"Scan output is empty: {args.scan_output}. Skipping.")
+        return 0
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        print(
+            f"Scan output is not valid JSON ({args.scan_output}): {exc}. Skipping.",
+        )
+        return 0
     findings = extract_findings(payload)
     located: list[dict[str, Any]] = []
     for f in findings:
