@@ -8,7 +8,14 @@ In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endo
 
 1. The **Endor Labs** action runs a scan and uploads results to the platform.
 2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), prefers a result whose `spec.versions[].sha` matches the PR **head SHA**, and reads finding UUIDs from `spec.findings` (or `blocking_findings` + `warning_findings`). It **GETs** each **Finding** and serializes to dicts for the GitHub scripts.
-3. **Option B** / **Option C** map those dicts to GitHub REST payloads (same field expectations as [`.github/scripts/endor_scan_findings.py`](.github/scripts/endor_scan_findings.py) for `file` / `line` in `spec.finding_metadata`).
+3. **Option B** / **Option C** map those dicts to GitHub REST payloads. Location resolution is centralized in [`.github/scripts/endor_scan_findings.py`](.github/scripts/endor_scan_findings.py) (`extract_location`): it reads `spec.finding_metadata` (including `file_path` / `line_number`, `security_review_data.code_snippet`, and `custom` Semgrep-style `path` + `start.line`), then `spec.dependency_file_paths` and a summary fallback when needed.
+
+**Validate before pushing (golden flow):**
+
+- Offline (no credentials): `uv run python .github/scripts/validate_pr_comment_flow.py --fixture tests/unit/github_scripts/fixtures/pr_comment_flow_golden.json`
+- Live (same API path as CI): `uv run --env-file .env python .github/scripts/validate_pr_comment_flow.py --repo owner/repo --commit-sha <head-sha>`
+
+Use `--fail-if-zero-located` to exit non-zero when findings load but none have an extractable file+line (common when API shape drifts).
 
 Short poll (default ~120s, jittered backoff) waits for a **non-running** ScanResult so the job does not race the platform indexer. On failure or empty data, scripts **fail open** (log and exit 0) so cosmetic steps do not break CI.
 
