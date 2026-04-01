@@ -1,6 +1,6 @@
 # PR comments and GitHub Checks (API-backed findings)
 
-This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → `Finding`), then posted only to surfaces GitHub renders (issue comments, review comments, Checks annotations).
+This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → `Finding`), then posted to **pull request review comments** (Option B) and/or **Checks annotations** (Option C).
 
 In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Option B** and **Option C** default to **enabled** on pull requests. Set repository variables to `false` to turn a path off. Both default to **`dry-run`** until you set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to `apply`.
 
@@ -12,11 +12,13 @@ In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endo
 
 Short poll (default ~120s, jittered backoff) waits for a **non-running** ScanResult so the job does not race the platform indexer. On failure or empty data, scripts **fail open** (log and exit 0) so cosmetic steps do not break CI.
 
-## Option B — In-house parallel GitHub comments
+## Option B — Inline pull request review comments
 
-Workflow step: `Option B - in-house parallel PR comments (dry-run/apply)`
+Workflow step: `Option B - inline PR review comments (dry-run/apply)`
 
 - Script: [`.github/scripts/post_parallel_pr_comments.py`](.github/scripts/post_parallel_pr_comments.py)
+
+Option B posts **only** [pull request review comments](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews) (inline on the diff). GitHub shows the **diff context** for each anchored line. Comments are submitted in batches via `POST .../pulls/{n}/reviews` with `event: COMMENT`; failed batches fall back to per-comment `POST .../pulls/{n}/comments`. Finding paths are matched against `GET .../pulls/{n}/files` so anchors align with the PR.
 
 Repository variables (optional overrides):
 
@@ -34,18 +36,17 @@ Required permissions:
 
 Behavior:
 
-- Posts/updates one deterministic rollup summary comment (`<!-- endorlabs-inhouse-summary -->` marker) with deep links.
-- Optional per-line review comments for findings with precise `file` + `line` metadata and GitHub blob links.
-- Deterministic per-finding markers to avoid duplicate line comments on reruns.
-
-Repository variables:
-
-- `ENDOR_INHOUSE_POST_REVIEW_COMMENTS` — `true` (default) or `false`. Set to `false` when using Option C to reduce duplicate inline surfaces (rollup issue comment still runs when Option B is enabled).
+- Paginated fetch of existing PR review comments to dedupe via hidden HTML markers.
+- Skips findings whose path is not in the PR file list (or normalizes path when the file list is empty).
+- Optional multi-line anchors when `line_end` is present in metadata (`start_line` / `line` on `RIGHT` side).
+- Failed review batches log the **full GitHub error body** then try per-comment fallback.
 
 CLI (optional):
 
 - `--poll-timeout` — seconds to wait for a terminal ScanResult (default `120`).
 - `--max-findings` — cap on `Finding.get` calls (default `500`).
+- `--max-inline` — max inline threads (default `30`).
+- `--review-batch-size` — comments per `.../reviews` request (default `25`).
 
 ## Option C — GitHub Check Run annotations
 
@@ -73,14 +74,13 @@ For **SARIF** upload to Code Scanning, use GitHub’s `github/codeql-action/uplo
 
 ## Embedded UX capability matrix
 
-| Capability | Option B (script) | Option C (Checks API) |
+| Capability | Option B (inline reviews) | Option C (Checks API) |
 |---|---|---|
-| Markdown links in comment body | Supported | In check summary text |
-| Snippet line in inline body | When metadata includes text | Message text per annotation |
-| File+line deep links in markdown | Blob links from repo + commit SHA | N/A (annotations anchor to path/lines) |
-| Inline review comments on PR diff | Supported via review comments API | Not used (annotations instead) |
-| Checks tab / structured annotations | Not supported | Supported |
-| Deterministic dedupe across reruns | Markers in comment bodies | New check run per workflow run |
+| Native diff snippet on conversation / files | Yes (anchored review comments) | No (Checks / annotations UX) |
+| Markdown in comment body | Yes | In check summary text |
+| File+line blob links | Yes | N/A (annotations anchor to path/lines) |
+| Checks tab | No | Yes |
+| Dedupe across reruns | Hidden markers in bodies | New check run per workflow run |
 
 ## Historical: `PRCommentConfig` (not used in this CI path)
 
@@ -105,14 +105,15 @@ Endor’s GitHub Action step may still use **`enable_pr_comments: true`** so the
 
 ## Choosing Option B vs Option C
 
-- Use **Option B** when you want an issue-thread rollup and optional review comments with deterministic markers.
-- Use **Option C** when you want the **Checks** tab and API-driven annotations. Prefer `ENDOR_INHOUSE_POST_REVIEW_COMMENTS=false` when both run to reduce duplicate inline markers.
+- Use **Option B** when you want **inline threads on the PR diff** (same class of UX as native line comments).
+- Use **Option C** when you want the **Checks** tab and structured annotations.
+- Running **both** can duplicate signals on the same lines; disable one if that is too noisy.
 
 ## Failure modes
 
 - Missing `ENDOR_API_CREDENTIALS_*` or `ENDOR_NAMESPACE` → API fetch logs errors; scripts skip with exit 0.
 - No **Project** for the repository URL → skip (ensure `meta.name` on the Project matches `https://github.com/owner/repo.git` or the same without `.git`).
 - ScanResult still **RUNNING** until poll timeout → best-effort pick; may yield empty finding UUIDs.
-- Missing finding location metadata → Option B rollup only; Option C summary-only for those rows.
-- Outdated PR diff → line comment POST may fail; script logs and continues.
+- Missing finding location metadata → Option B posts nothing for those rows; Option C lists them in the check summary only.
+- Path not in PR diff / line not commentable → GitHub **422**; batch failure logs response body; per-comment fallback may still skip.
 - Option C: missing `checks: write` → apply mode fails; use `dry-run` first.
