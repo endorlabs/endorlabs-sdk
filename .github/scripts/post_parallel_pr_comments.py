@@ -12,7 +12,11 @@ import urllib.request
 from typing import Any
 
 from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
-from endor_scan_findings import extract_location, normalize_pr_path
+from endor_scan_findings import (
+    extract_location,
+    is_valid_annotation_path,
+    normalize_pr_path,
+)
 
 # GitHub does not document a hard cap; chunk to reduce 422/payload risk.
 _DEFAULT_REVIEW_COMMENTS_PER_REQUEST = 25
@@ -361,7 +365,12 @@ def prepare_inline_comment_objects(
     located: list[dict[str, Any]] = []
     for f in findings:
         loc = extract_location(f)
-        if loc.get("file") and loc.get("line") is not None:
+        rf = loc.get("file")
+        if (
+            rf is not None
+            and loc.get("line") is not None
+            and is_valid_annotation_path(str(rf))
+        ):
             located.append(f)
     n_unlocated = len(findings) - len(located)
     comment_objects: list[dict[str, Any]] = []
@@ -379,6 +388,9 @@ def prepare_inline_comment_objects(
                 continue
         else:
             resolved = normalize_pr_path(raw_file).replace("\\", "/").lstrip("./")
+        if not is_valid_annotation_path(resolved):
+            skipped_path += 1
+            continue
         uid = finding.get("uuid")
         fp = resolved
         ln = loc["line"]

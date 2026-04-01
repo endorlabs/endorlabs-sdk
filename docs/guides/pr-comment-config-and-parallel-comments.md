@@ -72,7 +72,9 @@ Required permissions:
 
 Behavior:
 
-- Creates a completed **check run** on the PR head commit with `output.annotations` for findings that have `file` + `line` in metadata.
+- Creates a completed **check run** named **Endor Labs findings** (GitHub Actions app) on the PR head commit with `output.annotations` for findings that have a valid repo-relative `file` + `line`. It is **not** the CodeQL workflow; GitHub may show its annotations near other **Security** / code-scanning style UI, but the failing red check you saw was this run’s **`conclusion`**, not CodeQL registering the step.
+- **Check conclusion** defaults to **`success`** (green) so publishing findings does not duplicate a failing gate; annotation rows still use `failure` / `warning` / `notice` for severity. Override with repo variable **`ENDOR_GITHUB_CHECK_CONCLUSION`**: `neutral`, or `from_findings` (fail the check if any finding is HIGH/CRITICAL).
+- Invalid anchor paths such as **`.`** (repo root) are skipped so the Checks API does not attach bogus dots to the tree.
 - Maps `spec.level` to GitHub annotation levels (`FINDING_LEVEL_CRITICAL` / `HIGH` → `failure`, `MEDIUM` → `warning`, else `notice`).
 - Batches annotations (50 per request) with PATCH for follow-up batches.
 - Findings without location still appear in the check run **summary** markdown table.
