@@ -134,6 +134,23 @@ def list_existing_review_comment_bodies(
     return bodies
 
 
+def _code_snippet_text(finding: dict[str, Any]) -> str | None:
+    """Full code_snippet text from finding metadata, if any."""
+    spec = finding.get("spec", {}) if isinstance(finding.get("spec"), dict) else {}
+    metadata = spec.get("finding_metadata", {})
+    if not isinstance(metadata, dict):
+        return None
+    sec_review = metadata.get("security_review_data", {})
+    if not isinstance(sec_review, dict):
+        sec_review = {}
+    code_snippet = sec_review.get("code_snippet", {})
+    if isinstance(code_snippet, dict):
+        text = code_snippet.get("text") or code_snippet.get("snippet")
+        if isinstance(text, str) and text.strip():
+            return text.strip()
+    return None
+
+
 def _optional_snippet_line(finding: dict[str, Any]) -> str | None:
     spec = finding.get("spec", {}) if isinstance(finding.get("spec"), dict) else {}
     metadata = spec.get("finding_metadata", {})
@@ -284,6 +301,52 @@ def submit_pull_request_reviews(
     return submitted
 
 
+def _code_region_fence(
+    path: str, start_line: int, end_line: int, snippet: str | None
+) -> str:
+    """GitHub-flavored fenced block with path/line span (visible in Actions logs)."""
+    fence_open = f"```{start_line}:{end_line}:{path}"
+    if snippet and snippet.strip():
+        body = snippet.strip()
+    else:
+        body = "(no code_snippet text in finding metadata)"
+    return f"{fence_open}\n{body}\n```"
+
+
+def emit_inline_comment_plan_to_log(
+    *,
+    comment_objects: list[dict[str, Any]],
+    preview_snippets: list[str | None],
+) -> None:
+    """Print each planned inline comment with a code-region fence and full body."""
+    if len(preview_snippets) != len(comment_objects):
+        raise ValueError("preview_snippets must align with comment_objects")
+    use_groups = os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    for i, (obj, snip) in enumerate(
+        zip(comment_objects, preview_snippets, strict=True), start=1
+    ):
+        path = str(obj.get("path") or "")
+        end_line = obj.get("line")
+        start_line = obj.get("start_line", end_line)
+        try:
+            s_ln = int(start_line) if start_line is not None else 0
+            e_ln = int(end_line) if end_line is not None else s_ln
+        except (TypeError, ValueError):
+            s_ln, e_ln = 0, 0
+        title = f"Option B inline #{i}: {path}:{s_ln}" + (
+            f"-{e_ln}" if e_ln != s_ln else ""
+        )
+        if use_groups:
+            print(f"::group::{title}")
+        else:
+            print(f"\n--- {title} ---")
+        print(_code_region_fence(path, s_ln, e_ln, snip))
+        print("Comment body:")
+        print(str(obj.get("body") or ""))
+        if use_groups:
+            print("::endgroup::")
+
+
 def prepare_inline_comment_objects(
     findings: list[dict[str, Any]],
     *,
@@ -293,8 +356,8 @@ def prepare_inline_comment_objects(
     commit_sha: str,
     max_inline: int,
     check_existing: bool,
-) -> tuple[list[dict[str, Any]], int, int, int]:
-    """Build GitHub review `comments` list and path/summary counts."""
+) -> tuple[list[dict[str, Any]], int, int, int, list[str | None]]:
+    """Build GitHub review `comments` list, path/summary counts, and log snippets."""
     located: list[dict[str, Any]] = []
     for f in findings:
         loc = extract_location(f)
@@ -302,6 +365,7 @@ def prepare_inline_comment_objects(
             located.append(f)
     n_unlocated = len(findings) - len(located)
     comment_objects: list[dict[str, Any]] = []
+    preview_snippets: list[str | None] = []
     skipped_path = 0
     for finding in located:
         if len(comment_objects) >= max_inline:
@@ -331,7 +395,8 @@ def prepare_inline_comment_objects(
         )
         if obj is not None:
             comment_objects.append(obj)
-    return comment_objects, skipped_path, len(located), n_unlocated
+            preview_snippets.append(_code_snippet_text(finding))
+    return comment_objects, skipped_path, len(located), n_unlocated, preview_snippets
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -399,16 +464,20 @@ def main(argv: list[str] | None = None) -> int:
             token=token, api_base=api_base, pr_number=args.pr_number
         )
 
-    comment_objects, skipped_path, n_located, n_unlocated = (
-        prepare_inline_comment_objects(
-            findings,
-            pr_files=pr_files,
-            existing_bodies=existing_bodies,
-            repo=args.repo,
-            commit_sha=args.commit_sha,
-            max_inline=args.max_inline,
-            check_existing=(args.mode == "apply"),
-        )
+    (
+        comment_objects,
+        skipped_path,
+        n_located,
+        n_unlocated,
+        preview_snippets,
+    ) = prepare_inline_comment_objects(
+        findings,
+        pr_files=pr_files,
+        existing_bodies=existing_bodies,
+        repo=args.repo,
+        commit_sha=args.commit_sha,
+        max_inline=args.max_inline,
+        check_existing=(args.mode == "apply"),
     )
 
     print(
@@ -417,6 +486,13 @@ def main(argv: list[str] | None = None) -> int:
         f"to post (after cap/dedupe/path): {len(comment_objects)}, "
         f"skipped (path not in PR): {skipped_path}."
     )
+
+    if comment_objects:
+        print("Inline comment plan (code regions + bodies):")
+        emit_inline_comment_plan_to_log(
+            comment_objects=comment_objects,
+            preview_snippets=preview_snippets,
+        )
 
     if args.mode == "dry-run":
         print("[DRY-RUN] Would submit pull request review(s) with inline comments.")

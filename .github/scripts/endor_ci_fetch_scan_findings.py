@@ -108,6 +108,19 @@ def finding_uuids_from_scan_result(spec: ScanResultSpec | None) -> list[str]:
     return deduped
 
 
+def _sort_scan_results_newest_first(rows: list[ScanResult]) -> list[ScanResult]:
+    """Order by meta.create_time descending (ISO timestamps sort lexicographically)."""
+
+    def create_time_key(sr: ScanResult) -> tuple[int, str]:
+        meta = getattr(sr, "meta", None)
+        ct = getattr(meta, "create_time", None) if meta is not None else None
+        if isinstance(ct, str) and ct:
+            return (1, ct)
+        return (0, "")
+
+    return sorted(rows, key=create_time_key, reverse=True)
+
+
 def list_scan_results_for_project(
     client: endorlabs.Client,
     project_uuid: str,
@@ -115,19 +128,23 @@ def list_scan_results_for_project(
     namespace: str | None,
     max_pages: int = _MAX_SCAN_LIST_PAGES,
 ) -> list[ScanResult]:
-    """List ScanResults for a project, newest first."""
+    """List ScanResults for a project, newest first.
+
+    Server-side ``sort`` combined with cursor pagination (``page_id``) returns
+    HTTP 400 ("page id cannot be provided with sort method"). We list without
+    sort and order client-side.
+    """
     list_params = ListParameters(
         filter=f'meta.parent_uuid=="{project_uuid}"',
-        sort_by="meta.create_time",
-        desc=True,
         traverse=True,
         page_size=_TRAVERSE_PAGE_SIZE,
     )
-    return client.ScanResult.list(
+    rows = client.ScanResult.list(
         list_params=list_params,
         max_pages=max_pages,
         namespace=namespace,
     )
+    return _sort_scan_results_newest_first(rows)
 
 
 def wait_for_scan_result_ready(
