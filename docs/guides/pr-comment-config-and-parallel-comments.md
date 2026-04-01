@@ -6,6 +6,8 @@ This guide covers complementary PR feedback paths in CI:
 - **Option B:** In-house issue comments and optional inline review comments from scan metadata.
 - **Option C:** GitHub **Checks API** check runs with **annotations** (Checks tab / file annotations), from the same scan artifact.
 
+In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Options A–C default to enabled** on pull requests (`ENDOR_ENABLE_*` falls back to `true`). Set a repository variable to `false` to turn a path off. **Option B** and **Option C** modes default to **`dry-run`** until you set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to `apply`.
+
 ## Option A - Template sync via `PRCommentConfig`
 
 Workflow step: `Option A - sync Endor PR comment template config`
@@ -14,9 +16,9 @@ Workflow step: `Option A - sync Endor PR comment template config`
 - Template file: `.github/templates/pr-findings-summary.tmpl`
 - Resource: `Client.PRCommentConfig` (PascalCase, endorctl semantics)
 
-Enable in repository variables:
+Repository variables (optional overrides):
 
-- `ENDOR_ENABLE_TEMPLATE_SYNC=true`
+- `ENDOR_ENABLE_TEMPLATE_SYNC` — omit or `true` to run; set `false` to skip.
 - `ENDOR_NAMESPACE=<tenant.namespace>`
 - Optional: `ENDOR_API=<api base URL>`
 
@@ -38,10 +40,10 @@ Workflow step: `Option B - in-house parallel PR comments (dry-run/apply)`
 - Script: `.github/scripts/post_parallel_pr_comments.py`
 - Scan artifact input: `.endorlabs-artifacts/scan-output.json`
 
-Enable in repository variables:
+Repository variables (optional overrides):
 
-- `ENDOR_ENABLE_INHOUSE_PR_COMMENTS=true`
-- `ENDOR_INHOUSE_PR_COMMENTS_MODE=dry-run` or `apply`
+- `ENDOR_ENABLE_INHOUSE_PR_COMMENTS` — omit or `true` to run; set `false` to skip.
+- `ENDOR_INHOUSE_PR_COMMENTS_MODE=dry-run` (default) or `apply`
 
 Required permissions:
 
@@ -68,10 +70,10 @@ Workflow step: `Option C - GitHub Check Run annotations (dry-run/apply)`
 - Scan artifact: `.endorlabs-artifacts/scan-output.json` (same as Option B)
 - Shared extraction: `.github/scripts/endor_scan_findings.py`
 
-Enable in repository variables:
+Repository variables (optional overrides):
 
-- `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS=true`
-- `ENDOR_GITHUB_CHECK_MODE=dry-run` or `apply`
+- `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS` — omit or `true` to run; set `false` to skip.
+- `ENDOR_GITHUB_CHECK_MODE=dry-run` (default) or `apply`
 
 Required permissions:
 
