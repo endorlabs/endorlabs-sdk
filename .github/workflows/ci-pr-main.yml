@@ -553,10 +553,11 @@ jobs:
       checks: write
       actions: read
     env:
-      ENDOR_ENABLE_TEMPLATE_SYNC: ${{ vars.ENDOR_ENABLE_TEMPLATE_SYNC || 'false' }}
-      ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'false' }}
+      # Defaults: run all PR-comment paths on PRs (research/validation). Set repo vars to 'false' to disable.
+      ENDOR_ENABLE_TEMPLATE_SYNC: ${{ vars.ENDOR_ENABLE_TEMPLATE_SYNC || 'true' }}
+      ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'true' }}
       ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
-      ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'false' }}
+      ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'true' }}
       ENDOR_GITHUB_CHECK_MODE: ${{ vars.ENDOR_GITHUB_CHECK_MODE || 'dry-run' }}
       ENDOR_INHOUSE_POST_REVIEW_COMMENTS: ${{ vars.ENDOR_INHOUSE_POST_REVIEW_COMMENTS || 'true' }}
     steps:
