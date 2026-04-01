@@ -1,0 +1,13 @@
+[
+  {
+    "uuid": "golden-sample",
+    "spec": {
+      "finding_metadata": {
+        "custom": {
+          "path": "golden_example.py",
+          "start": { "line": 10 }
+        }
+      }
+    }
+  }
+]
