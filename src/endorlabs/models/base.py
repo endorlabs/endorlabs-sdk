@@ -64,6 +64,7 @@ RESOURCE_NAME_TO_TYPE: dict[str, str] = {
     "authentication-logs": "authentication_log",
     "endor-licenses": "endor_license",
     "policy-templates": "policy_template",
+    "pr-comment-configs": "pr_comment_config",
 }
 
 

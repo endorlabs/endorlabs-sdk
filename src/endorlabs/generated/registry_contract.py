@@ -12,7 +12,7 @@ import json
 
 RUNTIME_REGISTRY_CONTRACT = json.loads(
     r"""{
-  "resource_count": 33,
+  "resource_count": 34,
   "resources": [
     {
       "accepted_canonical_entities": [
@@ -1123,6 +1123,66 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "PolicyTemplateServiceUpdatePolicyTemplateBody"
       ],
       "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1PRCommentConfig"
+      ],
+      "attr_name": "PRCommentConfig",
+      "build_create_payload_fn_import_path": "endorlabs.resources.pr_comment_config:build_create_payload",
+      "build_create_payload_fn_name": "pr_comment_config_build_create",
+      "canonical_entities": [
+        "v1PRCommentConfig"
+      ],
+      "create_mode": "both",
+      "create_payload_entities": [
+        "PRCommentConfigServiceCreatePRCommentConfigBody"
+      ],
+      "description": "PR comment configuration resource model.",
+      "filter_kwarg_map": {
+        "name": "meta.name"
+      },
+      "has_tag_methods": true,
+      "identity_filter_fields": [
+        "name"
+      ],
+      "immutable_fields": [
+        "meta.create_time",
+        "meta.created_by",
+        "meta.index_data",
+        "meta.kind",
+        "meta.references",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.version",
+        "tenant_meta.namespace",
+        "uuid"
+      ],
+      "model_class": "PRCommentConfig",
+      "model_class_import_path": "endorlabs.resources.pr_comment_config:PRCommentConfig",
+      "mutable_fields": [
+        "meta.description",
+        "meta.name",
+        "meta.tags",
+        "propagate",
+        "spec"
+      ],
+      "parent_kind": null,
+      "resource_name": "pr-comment-configs",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ],
+      "update_payload_entities": [
+        "PRCommentConfigServiceUpdatePRCommentConfigBody"
+      ],
+      "update_requires_mask": true,
       "workflow_flags": []
     },
     {
