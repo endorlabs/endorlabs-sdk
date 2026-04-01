@@ -1,4 +1,28 @@
-## Endor Labs Findings Summary
+{{- if .comment_header }}{{ .comment_header }}{{ end }}
 
-This pull request has policy/security findings detected by Endor Labs.
-Review line-level comments and the scan summary for remediation guidance.
+## Endor Labs Findings
+
+{{- if .api_endpoint }}
+- [Open Endor]({{ .api_endpoint }})
+{{- end }}
+- Findings in this comment: `{{ len .findings_map }}`
+
+{{- range $uuid, $finding := .findings_map }}
+### Finding `{{ $uuid }}`
+- **Severity:** `{{ $finding.spec.level }}`
+- **Endor:** [Open finding]({{ getFindingURL $finding }})
+{{- if isNotEmptyString (getCustomLocation $finding) }}
+- **Location:** `{{ getCustomLocation $finding }}`
+{{- end }}
+{{- if isNotEmptyString (getCustomCodeSnippet $finding) }}
+
+```text
+{{ fixBackticks (getCustomCodeSnippet $finding) }}
+```
+{{- end }}
+
+{{- end }}
+
+{{- if .comment_footer }}
+{{ .comment_footer }}
+{{- end }}
