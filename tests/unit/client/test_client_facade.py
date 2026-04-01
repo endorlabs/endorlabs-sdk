@@ -382,6 +382,23 @@ def test_client_exposes_all_custom_facades(
         assert facade is not None, f"{entry.attr_name} is None"
 
 
+def test_client_exposes_pr_comment_config_with_endorctl_pascal_case(
+    client_with_mock_transport: Client,
+) -> None:
+    """Client should expose PRCommentConfig using endorctl-style PascalCase."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    client = client_with_mock_transport
+    assert hasattr(client, "PRCommentConfig")
+    entry = next(
+        (r for r in RESOURCE_REGISTRY if r.attr_name == "PRCommentConfig"),
+        None,
+    )
+    assert entry is not None
+    assert entry.resource_name == "pr-comment-configs"
+    assert {"list", "get", "create", "update", "delete"}.issubset(entry.supported_ops)
+
+
 def test_custom_facade_registry_has_stub_metadata() -> None:
     """Every custom facade entry must define pyi_* fields for stub generation."""
     from endorlabs.registry import CUSTOM_FACADE_REGISTRY

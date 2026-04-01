@@ -82,7 +82,7 @@ env:
   UV_VERSION: "0.9.3"
   VERIFYTYPES_RATCHET_MODE: "observe"
   VERIFYTYPES_MIN_COMPLETENESS: "0.0"
-  
+
   # Action versions - pinned for security
   ACTIONS_CHECKOUT_VERSION: "v6.0.2"
   ACTIONS_SETUP_PYTHON_VERSION: "v6.2.0"
@@ -551,6 +551,10 @@ jobs:
       pull-requests: write
       security-events: write
       actions: read
+    env:
+      ENDOR_ENABLE_TEMPLATE_SYNC: ${{ vars.ENDOR_ENABLE_TEMPLATE_SYNC || 'false' }}
+      ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'false' }}
+      ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -606,6 +610,39 @@ jobs:
           additional_args: --ai-sast-analysis=agent-fallback
           enable_pr_comments: ${{ github.event_name == 'pull_request' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          output_file: .endorlabs-artifacts/scan-output.json
+
+      - name: Option A - sync Endor PR comment template config
+        if: >-
+          github.event_name == 'pull_request' &&
+          env.ENDOR_ENABLE_TEMPLATE_SYNC == 'true' &&
+          vars.ENDOR_NAMESPACE != ''
+        env:
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+        run: |
+          uv run python .github/scripts/sync_pr_comment_template.py \
+            --namespace "${ENDOR_NAMESPACE}" \
+            --name "github-pr-comments-template" \
+            --template-path ".github/templates/pr-findings-summary.tmpl" \
+            --platform-type "PLATFORM_SOURCE_GITHUB"
+
+      - name: Option B - in-house parallel PR comments (dry-run/apply)
+        if: >-
+          github.event_name == 'pull_request' &&
+          env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
+        run: |
+          uv run python .github/scripts/post_parallel_pr_comments.py \
+            --scan-output ".endorlabs-artifacts/scan-output.json" \
+            --repo "${{ github.repository }}" \
+            --pr-number "${{ github.event.pull_request.number }}" \
+            --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --mode "${COMMENT_MODE}"
 
   # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.
