@@ -139,6 +139,7 @@ Recommended fallback patterns:
 - Missing template credentials (`ENDOR_API_CREDENTIALS_*`) -> Option A step should be disabled or will fail auth.
 - Invalid Go template syntax/content -> Option A create/update returns API validation error.
 - Missing finding location metadata (`file`, `line`) -> Option B falls back to rollup only.
+- Scan artifact exists but is **not valid JSON** (e.g. table-only log, truncated write) -> Option B/C log and **skip** (exit 0) so the job does not fail for cosmetic steps.
 - Outdated PR diff/hunks -> line comment POST may fail; script logs and continues.
 - Missing write permissions -> Option B comment writes fail; keep `dry-run` for verification.
 - Option C: `checks: write` missing or denied -> check run creation fails; use `dry-run` first.
