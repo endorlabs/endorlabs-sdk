@@ -33,6 +33,8 @@ Behavior:
 - Updates the existing resource when template/platform/propagate drift.
 - Emits status through workflow logs and `GITHUB_OUTPUT` (`template_sync_status`, `template_sync_reason`).
 
+Template syntax (Go `text/template` on `GithubCommentData`): use **Go/protobuf struct field names**, not JSON snake_case — e.g. `.CommentHeader.Value`, `.FindingsMap`, `.ApiEndpoint.Value`, `.CommentFooter.Value`, and on each finding `.Spec.Level` with `enumToString`. See `.endorlabs-context/docs/setup-deployment-scm-integrations-gitlab-app-gitlab-mr-scan.md` (default MR template) for the same data shape. Keep the **CommentHeader** block at the top as in the stock templates; Endor uses it to identify generated comments.
+
 ## Option B - In-house parallel GitHub comments
 
 Workflow step: `Option B - in-house parallel PR comments (dry-run/apply)`
