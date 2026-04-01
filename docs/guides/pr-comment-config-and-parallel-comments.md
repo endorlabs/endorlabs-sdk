@@ -1,13 +1,13 @@
 # PR comments and GitHub Checks (API-backed findings)
 
-This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → `Finding`), then posted to **pull request review comments** (Option B) and/or **Checks annotations** (Option C).
+This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → findings scoped by PR context when available), then posted as [**pull request review comments**](https://docs.github.com/en/rest/pulls/comments) inside a [**pull request review**](https://docs.github.com/en/rest/pulls/reviews) (Option B) and/or **Checks annotations** (Option C). These are **not** issue comments or commit comments.
 
-In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Option B** and **Option C** default to **enabled** on pull requests. Set repository variables to `false` to turn a path off. Both default to **`apply`** (post inline reviews and check-run annotations). Set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to **`dry-run`** to log the plan only (Option B still prints each inline comment with a code-region fence in the job log).
+In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Option B** and **Option C** default to **enabled** on pull requests. Set repository variables to `false` to turn a path off. Both default to **`apply`** (submit reviews with diff-anchored comments and check-run annotations). Set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to **`dry-run`** to log the plan only (Option B still prints each planned review comment with a code-region fence in the job log).
 
 ## Data flow (Options B and C)
 
 1. The **Endor Labs** action runs a scan and uploads results to the platform.
-2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), prefers a result whose `spec.versions[].sha` matches the PR **head SHA**, and reads finding UUIDs from `spec.findings` (or `blocking_findings` + `warning_findings`). It **GETs** each **Finding** and serializes to dicts for the GitHub scripts.
+2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), and picks a result whose `spec.versions[].sha` matches the PR **head SHA** (preferring `TYPE_PR_SECURITY_REVIEW` when several match). When `spec.environment.config` exposes a PR context id (e.g. `ExecutionID`), findings are loaded with **`Finding.list`** and OpenAPI **`list_parameters.ci_run_uuid`**; otherwise UUIDs from `spec.findings` (or blocking + warning lists) are hydrated via **`Finding.get`**. Dicts are passed to the GitHub scripts.
 3. **Option B** / **Option C** map those dicts to GitHub REST payloads. Location resolution is centralized in [`.github/scripts/endor_scan_findings.py`](.github/scripts/endor_scan_findings.py) (`extract_location`): it reads `spec.finding_metadata` (including `file_path` / `line_number`, `security_review_data.code_snippet`, and `custom` Semgrep-style `path` + `start.line`), then `spec.dependency_file_paths` and a summary fallback when needed.
 
 **Validate before pushing (golden flow):**
@@ -19,13 +19,13 @@ Use `--fail-if-zero-located` to exit non-zero when findings load but none have a
 
 Short poll (default ~120s, jittered backoff) waits for a **non-running** ScanResult so the job does not race the platform indexer. On failure or empty data, scripts **fail open** (log and exit 0) so cosmetic steps do not break CI.
 
-## Option B — Inline pull request review comments
+## Option B — Pull request review comments (diff-anchored)
 
-Workflow step: `Option B - inline PR review comments (dry-run/apply)`
+Workflow step: `Option B - pull request review comments (dry-run/apply)`
 
 - Script: [`.github/scripts/post_parallel_pr_comments.py`](.github/scripts/post_parallel_pr_comments.py)
 
-Option B posts **only** [pull request review comments](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews) (inline on the diff). GitHub shows the **diff context** for each anchored line. Comments are submitted in batches via `POST .../pulls/{n}/reviews` with `event: COMMENT`; failed batches fall back to per-comment `POST .../pulls/{n}/comments`. Finding paths are matched against `GET .../pulls/{n}/files` so anchors align with the PR.
+Option B submits a **pull request review** whose **`comments`** array holds [**pull request review comments**](https://docs.github.com/en/rest/pulls/comments) on the **unified diff** (`path`, `line`, `side: RIGHT`, optional multiline fields). See [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request). Failed batches fall back to per-comment `POST .../pulls/{n}/comments` ([create a review comment](https://docs.github.com/en/rest/pulls/comments#create-a-review-comment-for-a-pull-request)). Finding paths are matched against `GET .../pulls/{n}/files`, and only lines present in the patch hunks are kept so GitHub does not return 422.
 
 Repository variables (optional overrides):
 
@@ -43,7 +43,7 @@ Required permissions:
 
 Behavior:
 
-- Paginated fetch of existing PR review comments to dedupe via hidden HTML markers.
+- Paginated fetch of existing pull request review comments to dedupe via hidden HTML markers.
 - Skips findings whose path is not in the PR file list (or normalizes path when the file list is empty).
 - Optional multi-line anchors when `line_end` is present in metadata (`start_line` / `line` on `RIGHT` side).
 - Failed review batches log the **full GitHub error body** then try per-comment fallback.
@@ -51,8 +51,8 @@ Behavior:
 CLI (optional):
 
 - `--poll-timeout` — seconds to wait for a terminal ScanResult (default `120`).
-- `--max-findings` — cap on `Finding.get` calls (default `500`).
-- `--max-inline` — max inline threads (default `30`).
+- `--max-findings` — cap on loaded findings (`Finding.list` or `Finding.get`, default `500`).
+- `--max-inline` — max review comments per run (default `30`).
 - `--review-batch-size` — comments per `.../reviews` request (default `25`).
 
 ## Option C — GitHub Check Run annotations
@@ -83,9 +83,9 @@ For **SARIF** upload to Code Scanning, use GitHub’s `github/codeql-action/uplo
 
 ## Embedded UX capability matrix
 
-| Capability | Option B (inline reviews) | Option C (Checks API) |
+| Capability | Option B (pull request review comments) | Option C (Checks API) |
 |---|---|---|
-| Native diff snippet on conversation / files | Yes (anchored review comments) | No (Checks / annotations UX) |
+| Native diff snippet on conversation / files | Yes (diff-anchored) | No (Checks / annotations UX) |
 | Markdown in comment body | Yes | In check summary text |
 | File+line blob links | Yes | N/A (annotations anchor to path/lines) |
 | Checks tab | No | Yes |
@@ -114,7 +114,7 @@ Endor’s GitHub Action step may still use **`enable_pr_comments: true`** so the
 
 ## Choosing Option B vs Option C
 
-- Use **Option B** when you want **inline threads on the PR diff** (same class of UX as native line comments).
+- Use **Option B** when you want **pull request review comments on the unified diff** (GitHub’s native review-comment UX).
 - Use **Option C** when you want the **Checks** tab and structured annotations.
 - Running **both** can duplicate signals on the same lines; disable one if that is too noisy.
 
