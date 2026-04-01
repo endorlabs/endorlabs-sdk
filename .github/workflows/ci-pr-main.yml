@@ -550,11 +550,15 @@ jobs:
       contents: read
       pull-requests: write
       security-events: write
+      checks: write
       actions: read
     env:
       ENDOR_ENABLE_TEMPLATE_SYNC: ${{ vars.ENDOR_ENABLE_TEMPLATE_SYNC || 'false' }}
       ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'false' }}
       ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
+      ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'false' }}
+      ENDOR_GITHUB_CHECK_MODE: ${{ vars.ENDOR_GITHUB_CHECK_MODE || 'dry-run' }}
+      ENDOR_INHOUSE_POST_REVIEW_COMMENTS: ${{ vars.ENDOR_INHOUSE_POST_REVIEW_COMMENTS || 'true' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -642,13 +646,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
+          POST_REVIEW: ${{ env.ENDOR_INHOUSE_POST_REVIEW_COMMENTS }}
         run: |
+          set -e
+          EXTRA=""
+          if [ "${POST_REVIEW}" = "false" ]; then
+            EXTRA="--no-post-review-comments"
+          fi
           uv run python .github/scripts/post_parallel_pr_comments.py \
             --scan-output ".endorlabs-artifacts/scan-output.json" \
             --repo "${{ github.repository }}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
-            --mode "${COMMENT_MODE}"
+            --mode "${COMMENT_MODE}" \
+            ${EXTRA}
+
+      - name: Option C - GitHub Check Run annotations (dry-run/apply)
+        id: option_c_checks
+        if: >-
+          github.event_name == 'pull_request' &&
+          env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHECK_MODE: ${{ env.ENDOR_GITHUB_CHECK_MODE }}
+        run: |
+          uv run python .github/scripts/post_github_check_run.py \
+            --scan-output ".endorlabs-artifacts/scan-output.json" \
+            --repo "${{ github.repository }}" \
+            --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --mode "${CHECK_MODE}"
 
       - name: Comment flow status summary
         if: always() && github.event_name == 'pull_request'
@@ -661,7 +687,11 @@ jobs:
             echo "- Option A reason: \`${{ steps.option_a_sync.outputs.template_sync_reason || 'n/a' }}\`"
             echo "- Option B enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
             echo "- Option B mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
+            echo "- Option B post review comments: \`${{ env.ENDOR_INHOUSE_POST_REVIEW_COMMENTS }}\`"
             echo "- Option B outcome: \`${{ steps.option_b_comments.outcome || 'skipped' }}\`"
+            echo "- Option C (Checks API) enabled: \`${{ env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS }}\`"
+            echo "- Option C mode: \`${{ env.ENDOR_GITHUB_CHECK_MODE }}\`"
+            echo "- Option C outcome: \`${{ steps.option_c_checks.outcome || 'skipped' }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
