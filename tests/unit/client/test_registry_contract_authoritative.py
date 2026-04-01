@@ -65,3 +65,10 @@ def test_registry_requires_builder_import_path_when_builder_name_present(
 
     with pytest.raises(TypeError, match="Missing build_create_payload_fn_import_path"):
         registry_module._build_resource_registry()
+
+
+def test_registry_contains_pr_comment_config_pascal_case() -> None:
+    """Runtime registry should expose PRCommentConfig (endorctl-style PascalCase)."""
+    rows = registry_module._load_generated_runtime_contract()
+    attrs = {row.get("attr_name") for row in rows}
+    assert "PRCommentConfig" in attrs
