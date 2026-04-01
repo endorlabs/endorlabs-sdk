@@ -2,7 +2,7 @@
 
 This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → `Finding`), then posted to **pull request review comments** (Option B) and/or **Checks annotations** (Option C).
 
-In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Option B** and **Option C** default to **enabled** on pull requests. Set repository variables to `false` to turn a path off. Both default to **`dry-run`** until you set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to `apply`.
+In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Option B** and **Option C** default to **enabled** on pull requests. Set repository variables to `false` to turn a path off. Both default to **`apply`** (post inline reviews and check-run annotations). Set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to **`dry-run`** to log the plan only (Option B still prints each inline comment with a code-region fence in the job log).
 
 ## Data flow (Options B and C)
 
@@ -23,7 +23,7 @@ Option B posts **only** [pull request review comments](https://docs.github.com/e
 Repository variables (optional overrides):
 
 - `ENDOR_ENABLE_INHOUSE_PR_COMMENTS` — omit or `true` to run; set `false` to skip.
-- `ENDOR_INHOUSE_PR_COMMENTS_MODE=dry-run` (default) or `apply`
+- `ENDOR_INHOUSE_PR_COMMENTS_MODE=apply` (default) or `dry-run`
 
 Required secrets and variables:
 
@@ -57,7 +57,7 @@ Workflow step: `Option C - GitHub Check Run annotations (dry-run/apply)`
 Repository variables (optional overrides):
 
 - `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS` — omit or `true` to run; set `false` to skip.
-- `ENDOR_GITHUB_CHECK_MODE=dry-run` (default) or `apply`
+- `ENDOR_GITHUB_CHECK_MODE=apply` (default) or `dry-run`
 
 Required permissions:
 

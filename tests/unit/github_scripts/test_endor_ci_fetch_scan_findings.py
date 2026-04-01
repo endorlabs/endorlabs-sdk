@@ -73,6 +73,34 @@ def test_load_findings_dicts_for_pr_no_namespace() -> None:
     assert fetch.load_findings_dicts_for_pr(repo="o/r", head_sha="sha") == []
 
 
+def test_list_scan_results_for_project_sorts_without_server_sort() -> None:
+    mock_client = MagicMock()
+    older = MagicMock()
+    older.meta = MagicMock(create_time="2020-01-01T00:00:00Z")
+    newer = MagicMock()
+    newer.meta = MagicMock(create_time="2021-01-01T00:00:00Z")
+    mock_client.ScanResult.list.return_value = [older, newer]
+    out = fetch.list_scan_results_for_project(
+        mock_client, "proj-uuid", namespace="ns.test"
+    )
+    assert out == [newer, older]
+    lp = mock_client.ScanResult.list.call_args.kwargs["list_params"]
+    assert lp.sort_by is None
+
+
+def test_sort_scan_results_newest_first() -> None:
+    old = MagicMock()
+    old.meta = MagicMock(create_time="2024-01-01T00:00:00Z")
+    new = MagicMock()
+    new.meta = MagicMock(create_time="2025-06-01T12:00:00Z")
+    no_time = MagicMock()
+    no_time.meta = MagicMock(create_time=None)
+    out = fetch._sort_scan_results_newest_first([no_time, old, new])
+    assert out[0] is new
+    assert out[1] is old
+    assert out[2] is no_time
+
+
 @patch("endor_ci_fetch_scan_findings.endorlabs.Client")
 def test_load_findings_dicts_for_pr_no_project(mock_client_cls: MagicMock) -> None:
     mock_client = MagicMock()
