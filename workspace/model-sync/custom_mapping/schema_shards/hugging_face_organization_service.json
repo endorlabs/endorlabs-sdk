@@ -61,32 +61,6 @@
       },
       "type": "object"
     },
-    "v1Discussion": {
-      "properties": {
-        "count": {
-          "description": "Total count of discussion posts/pull requests.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "num_closed": {
-          "description": "Count of closed discussion posts/pull requests.",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "type": "object"
-    },
-    "v1Gated": {
-      "properties": {
-        "disabled": {
-          "type": "boolean"
-        },
-        "mode_type": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "v1GroupAggregationValueResponse": {
       "description": "GroupAggregationValueResponse returns the value of the aggregation if\nrequested.",
       "properties": {
@@ -110,23 +84,23 @@
       },
       "type": "object"
     },
-    "v1HuggingFaceModel": {
-      "description": "HuggingFaceModel represents the JSON object from ingesting from the HuggingFace API.",
+    "v1HuggingFaceOrganization": {
+      "description": "HuggingFaceOrganization represents a HuggingFace organization and its associated metadata.",
       "properties": {
         "meta": {
           "$ref": "#/definitions/v1Meta",
           "description": "Metadata required for all objects."
         },
         "spec": {
-          "$ref": "#/definitions/v1HuggingFaceModelSpec",
-          "description": "The specification of the model."
+          "$ref": "#/definitions/v1HuggingFaceOrganizationSpec",
+          "description": "The specification of the organization."
         },
         "tenant_meta": {
           "$ref": "#/definitions/v1TenantMeta",
-          "description": "Models scanned per namespace."
+          "description": "Organizations scanned per namespace."
         },
         "uuid": {
-          "description": "The UUID for the ingested HuggingFace model.",
+          "description": "The UUID for the HuggingFace organization.",
           "readOnly": true,
           "type": "string"
         }
@@ -137,160 +111,24 @@
       ],
       "type": "object"
     },
-    "v1HuggingFaceModelSpec": {
+    "v1HuggingFaceOrganizationSpec": {
       "properties": {
-        "author": {
-          "description": "Author of the model. For example, \"openai\".",
-          "type": "string"
-        },
-        "authorization_required": {
-          "description": "Requires authorized request to access the model.",
-          "type": "boolean"
-        },
-        "card_data": {
-          "description": "Model card metadata.",
-          "type": "object"
-        },
-        "config": {
-          "description": "Model configuration.",
-          "type": "object"
-        },
-        "config_content": {
-          "description": "config.json file content.",
-          "type": "string"
-        },
-        "created_at": {
-          "description": "Date of creation of the repository on the Hub.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "disabled": {
-          "description": "Whether the repository is disabled or not.",
-          "type": "boolean"
-        },
-        "discussions": {
-          "$ref": "#/definitions/v1Discussion",
-          "description": "Discussion metadata."
-        },
-        "downloads": {
-          "description": "Number of downloads of the model.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "gated": {
-          "$ref": "#/definitions/v1Gated",
-          "description": "Whether the repository is gated or not. If so, whether there is manual or automatic approval."
-        },
-        "id": {
-          "description": "ID of model (_id).",
-          "type": "string"
-        },
-        "last_modified": {
-          "description": "Date of last commit to the repository.",
-          "format": "date-time",
-          "type": "string"
-        },
-        "library_name": {
-          "description": "Library associated with the model.",
-          "type": "string"
-        },
-        "likes": {
-          "description": "Number of likes of the model.",
-          "format": "int32",
-          "type": "integer"
-        },
-        "mask_token": {
-          "description": "Mask token used by the model.",
-          "type": "string"
-        },
-        "model_id": {
-          "description": "Author and model name (seems to hold the same value as the name field).",
-          "type": "string"
-        },
-        "model_index": {
-          "description": "Model index for evaluation.",
+        "model_names": {
+          "description": "Names of models that belong to this organization.",
           "items": {
-            "type": "object"
+            "type": "string"
           },
           "type": "array"
-        },
-        "name": {
-          "description": "Author and model name (id). For example, \"openai/clip-vit-base-patch16\".",
-          "type": "string"
         },
         "organization_name": {
-          "description": "Organization name for which this model belongs to.",
+          "description": "Name of the HuggingFace organization.",
           "type": "string"
         },
-        "pipeline_tag": {
-          "description": "Pipeline tag associated with the model.",
+        "url": {
+          "description": "URL of the HuggingFace organization page.",
           "type": "string"
-        },
-        "private": {
-          "description": "Whether the repository is private not.",
-          "type": "boolean"
-        },
-        "project_uuid": {
-          "description": "The UUID of the project that this model relates to.",
-          "type": "string"
-        },
-        "pull_requests": {
-          "$ref": "#/definitions/v1Discussion",
-          "description": "Pull request metadata."
-        },
-        "readme_content": {
-          "description": "README.md file content.",
-          "type": "string"
-        },
-        "readme_metadata": {
-          "$ref": "#/definitions/v1ReadmeMetadata",
-          "description": "README file metadata."
-        },
-        "safetensors": {
-          "description": "Model's safetensors information.",
-          "type": "object"
-        },
-        "sha": {
-          "description": "Repository SHA at this particular revision.",
-          "type": "string"
-        },
-        "siblings": {
-          "description": "List of files that constitute the model.",
-          "items": {
-            "$ref": "#/definitions/v1Sibling",
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "spaces": {
-          "description": "List of spaces using the model.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "tags": {
-          "description": "List of tags of the model.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "transformers_info": {
-          "description": "Transformers-specific information associated with the model.",
-          "type": "object"
-        },
-        "widget_data": {
-          "description": "Widget data associated with the model.",
-          "items": {
-            "type": "object"
-          },
-          "type": "array"
         }
       },
-      "required": [
-        "project_uuid"
-      ],
       "type": "object"
     },
     "v1IndexData": {
@@ -323,8 +161,8 @@
       "type": "object",
       "x-internal": true
     },
-    "v1ListHuggingFaceModelsResponse": {
-      "description": "Response to the request to list HuggingFace models.",
+    "v1ListHuggingFaceOrganizationsResponse": {
+      "description": "Response to the request to list HuggingFace organizations.",
       "properties": {
         "count_response": {
           "$ref": "#/definitions/v1CountResponse"
@@ -333,16 +171,16 @@
           "$ref": "#/definitions/v1GroupResponse"
         },
         "list": {
-          "$ref": "#/definitions/v1ListHuggingFaceModelsResponseList"
+          "$ref": "#/definitions/v1ListHuggingFaceOrganizationsResponseList"
         }
       },
       "type": "object"
     },
-    "v1ListHuggingFaceModelsResponseList": {
+    "v1ListHuggingFaceOrganizationsResponseList": {
       "properties": {
         "objects": {
           "items": {
-            "$ref": "#/definitions/v1HuggingFaceModel",
+            "$ref": "#/definitions/v1HuggingFaceOrganization",
             "type": "object"
           },
           "type": "array"
@@ -462,76 +300,6 @@
       ],
       "type": "object"
     },
-    "v1ReadmeAIQuery": {
-      "properties": {
-        "answer": {
-          "description": "Extracted string answer from the raw response.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "evidence": {
-          "description": "Extracted evidence supporting answer from the raw response.",
-          "type": "string"
-        },
-        "exists": {
-          "description": "Extracted boolean whether or not specified field in prompt exists.",
-          "type": "boolean"
-        },
-        "prompt": {
-          "description": "Prompt to query AI.",
-          "type": "string"
-        },
-        "raw_response": {
-          "description": "Raw response received from the query.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "v1ReadmeMetadata": {
-      "properties": {
-        "alignment_trained": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README specify if this model was alignment trained."
-        },
-        "base_model": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README specify if this model has a base model (or base models)."
-        },
-        "evaluation_results": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README specify if this model has evaluation/ performance results."
-        },
-        "example_code": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README contain example code on how to use the model."
-        },
-        "fine_tuned": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README specify if this model was fine-tuned."
-        },
-        "linked_github": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README contain a linked GitHub repository."
-        },
-        "training_data": {
-          "$ref": "#/definitions/v1ReadmeAIQuery",
-          "description": "Does the README specify if this model has training data."
-        }
-      },
-      "type": "object"
-    },
-    "v1Sibling": {
-      "properties": {
-        "rfilename": {
-          "description": "The filename within a specific model.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "v1TenantMeta": {
       "description": "Tenant related data for the tenant containing the resource.",
       "properties": {
@@ -548,13 +316,13 @@
     }
   },
   "properties": {
-    "v1HuggingFaceModel": {
-      "$ref": "#/definitions/v1HuggingFaceModel"
+    "v1HuggingFaceOrganization": {
+      "$ref": "#/definitions/v1HuggingFaceOrganization"
     },
-    "v1ListHuggingFaceModelsResponse": {
-      "$ref": "#/definitions/v1ListHuggingFaceModelsResponse"
+    "v1ListHuggingFaceOrganizationsResponse": {
+      "$ref": "#/definitions/v1ListHuggingFaceOrganizationsResponse"
     }
   },
-  "title": "hugging_face_model_service",
+  "title": "hugging_face_organization_service",
   "type": "object"
 }
