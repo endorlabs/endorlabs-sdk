@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
-"""Post inline PR review comments (GitHub diff context) from Endor findings."""
+"""Post GitHub pull request review comments (unified-diff anchors) from Endor findings.
+
+Submits a **pull request review** (``POST .../pulls/{n}/reviews``) with
+``event: COMMENT`` and a ``comments`` array of **pull request review comments**
+— not issue comments or commit comments. See
+https://docs.github.com/en/rest/pulls/reviews and
+https://docs.github.com/en/rest/pulls/comments
+"""
 
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Iterator
 from typing import Any
 
 from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
@@ -75,9 +84,10 @@ def _github_blob_link(repo: str, sha: str, file_path: str, line: int) -> str:
     return f"https://github.com/{repo}/blob/{sha}/{encoded_path}#L{line}"
 
 
-def fetch_pr_filenames(*, token: str, api_base: str, pr_number: int) -> set[str]:
-    """Return set of `filename` values from GET pulls/{pr}/files (paginated)."""
-    names: set[str] = set()
+def iter_pr_file_rows(
+    *, token: str, api_base: str, pr_number: int
+) -> Iterator[dict[str, Any]]:
+    """Yield dict rows from GET pulls/{pr}/files (paginated)."""
     page = 1
     while True:
         q = urllib.parse.urlencode({"per_page": _GH_PER_PAGE, "page": page})
@@ -87,13 +97,119 @@ def fetch_pr_filenames(*, token: str, api_base: str, pr_number: int) -> set[str]
             break
         for row in batch:
             if isinstance(row, dict):
-                fn = row.get("filename")
-                if isinstance(fn, str) and fn:
-                    names.add(fn.replace("\\", "/"))
+                yield row
         if len(batch) < _GH_PER_PAGE:
             break
         page += 1
+
+
+def fetch_pr_filenames(*, token: str, api_base: str, pr_number: int) -> set[str]:
+    """Return set of `filename` values from GET pulls/{pr}/files (paginated)."""
+    names: set[str] = set()
+    for row in iter_pr_file_rows(token=token, api_base=api_base, pr_number=pr_number):
+        fn = row.get("filename")
+        if isinstance(fn, str) and fn:
+            names.add(fn.replace("\\", "/"))
     return names
+
+
+_HUNK_NEW_START_RE = re.compile(r"^@@(?:\s+-\d+(?:,\d+)?\s+)?\+(\d+)(?:,(\d+))?\s+@@")
+
+
+def parse_patch_right_side_line_numbers(patch: str) -> set[int]:
+    """1-based new-file line numbers that appear in a unified diff (RIGHT / side=RIGHT).
+
+    GitHub only accepts pull request review comments on lines present in the PR patch.
+    Tools like Qodo anchor on added/changed hunks; Endor file:line often points outside
+    the visible diff, which yields HTTP 422 and no visible thread.
+    """
+    valid: set[int] = set()
+    i = 0
+    plines = patch.split("\n")
+    while i < len(plines):
+        raw = plines[i]
+        if raw.startswith("@@"):
+            m = _HUNK_NEW_START_RE.match(raw)
+            if not m:
+                i += 1
+                continue
+            new_line = int(m.group(1))
+            i += 1
+            while i < len(plines) and not plines[i].startswith("@@"):
+                dl = plines[i]
+                if not dl:
+                    i += 1
+                    continue
+                tag = dl[0]
+                if tag in (" ", "+"):
+                    valid.add(new_line)
+                    new_line += 1
+                elif tag in ("-", "\\"):
+                    pass
+                i += 1
+            continue
+        i += 1
+    return valid
+
+
+def fetch_pr_diff_right_lines_by_path(
+    *, token: str, api_base: str, pr_number: int
+) -> dict[str, set[int] | None]:
+    """Map PR filename to RIGHT-side line numbers in the patch, or None if omitted."""
+    out: dict[str, set[int] | None] = {}
+    for row in iter_pr_file_rows(token=token, api_base=api_base, pr_number=pr_number):
+        fn = row.get("filename")
+        if not isinstance(fn, str) or not fn:
+            continue
+        key = fn.replace("\\", "/")
+        patch = row.get("patch")
+        if isinstance(patch, str) and patch.strip():
+            out[key] = parse_patch_right_side_line_numbers(patch)
+        else:
+            out[key] = None
+    return out
+
+
+def filter_comments_to_pr_diff(
+    comment_objects: list[dict[str, Any]],
+    preview_snippets: list[str | None],
+    diff_right_lines_by_path: dict[str, set[int] | None],
+) -> tuple[list[dict[str, Any]], list[str | None], int]:
+    """Drop comments whose line range is outside the PR unified diff."""
+    kept_o: list[dict[str, Any]] = []
+    kept_s: list[str | None] = []
+    skipped = 0
+    for obj, snip in zip(comment_objects, preview_snippets, strict=True):
+        if comment_fits_pr_diff_hunk(obj, diff_right_lines_by_path):
+            kept_o.append(obj)
+            kept_s.append(snip)
+        else:
+            skipped += 1
+    return kept_o, kept_s, skipped
+
+
+def comment_fits_pr_diff_hunk(
+    obj: dict[str, Any],
+    diff_right_lines_by_path: dict[str, set[int] | None],
+) -> bool:
+    """Return True if the review comment's line range lies on RIGHT-side diff lines."""
+    path = obj.get("path")
+    if not isinstance(path, str):
+        return False
+    if path not in diff_right_lines_by_path:
+        return False
+    allowed = diff_right_lines_by_path[path]
+    if allowed is None:
+        # File in PR but GitHub omitted `patch` (binary/large); cannot validate hunks.
+        return True
+    try:
+        end = int(obj["line"])
+        start = int(obj.get("start_line", end))
+    except (TypeError, ValueError, KeyError):
+        return False
+    if start > end:
+        start, end = end, start
+    return all(ln in allowed for ln in range(start, end + 1))
 
 
 def resolve_path_to_pr_file(raw_path: str, pr_filenames: set[str]) -> str | None:
@@ -118,7 +234,10 @@ def resolve_path_to_pr_file(raw_path: str, pr_filenames: set[str]) -> str | None
 def list_existing_review_comment_bodies(
     *, token: str, api_base: str, pr_number: int
 ) -> set[str]:
-    """All PR review comment bodies (paginated) for dedupe markers."""
+    """Bodies of existing pull request review comments.
+
+    Fetched via ``GET .../pulls/{n}/comments``.
+    """
     bodies: set[str] = set()
     page = 1
     while True:
@@ -196,12 +315,16 @@ def build_review_comment_body(
     line: int,
     marker: str,
 ) -> str:
-    """Markdown body for one inline thread (includes hidden dedupe marker)."""
+    """Markdown body for one pull request review comment (includes dedupe marker)."""
     spec = finding.get("spec", {}) if isinstance(finding.get("spec"), dict) else {}
     level = spec.get("level", "n/a")
+    meta_parts = [f"`{finding.get('uuid', 'unknown')}`", f"`{level}`"]
+    cat = spec.get("category")
+    if isinstance(cat, str) and cat.strip():
+        meta_parts.append(f"`{cat.strip()}`")
     lines = [
         marker,
-        f"**Endor Labs** · `{finding.get('uuid', 'unknown')}` · `{level}`",
+        "**Endor Labs** · " + " · ".join(meta_parts),
     ]
     summ = _finding_summary_one_line(finding)
     if summ:
@@ -223,7 +346,7 @@ def build_review_comment_object(
     loc: dict[str, Any],
     marker: str,
 ) -> dict[str, Any] | None:
-    """Single entry for POST .../pulls/{n}/reviews `comments` array."""
+    """One review-comment object: path, line, side, body."""
     line = loc.get("line")
     if line is None:
         return None
@@ -259,7 +382,7 @@ def submit_pull_request_reviews(
     comment_objects: list[dict[str, Any]],
     batch_size: int,
 ) -> int:
-    """POST review batches; return count of successfully submitted reviews."""
+    """Submit pull request reviews; return count of submitted reviews."""
     url = f"{api_base}/pulls/{pr_number}/reviews"
     submitted = 0
     for i in range(0, len(comment_objects), batch_size):
@@ -268,15 +391,15 @@ def submit_pull_request_reviews(
             "commit_id": commit_sha,
             "event": "COMMENT",
             "body": (
-                f"**Endor Labs** — {len(chunk)} finding(s) in this batch "
-                f"(automated CI)."
+                f"**Endor Labs** — {len(chunk)} pull request review comment(s) "
+                f"in this batch (automated CI)."
             ),
             "comments": chunk,
         }
         result = _gh_post_json(token=token, url=url, payload=payload)
         if result is not None:
             submitted += 1
-            print(f"Submitted review batch with {len(chunk)} inline comment(s).")
+            print(f"Submitted pull request review with {len(chunk)} review comment(s).")
         else:
             print(
                 f"Batch review failed for {len(chunk)} comment(s); "
@@ -301,7 +424,7 @@ def submit_pull_request_reviews(
                 if fb is not None:
                     pth = c.get("path")
                     ln = c.get("line")
-                    print(f"Posted fallback inline comment on {pth}:{ln}.")
+                    print(f"Posted fallback pull request review comment on {pth}:{ln}.")
     return submitted
 
 
@@ -361,7 +484,7 @@ def prepare_inline_comment_objects(
     max_inline: int,
     check_existing: bool,
 ) -> tuple[list[dict[str, Any]], int, int, int, list[str | None]]:
-    """Build GitHub review `comments` list, path/summary counts, and log snippets."""
+    """Build review ``comments`` payloads, path/summary counts, and log snippets."""
     located: list[dict[str, Any]] = []
     for f in findings:
         loc = extract_location(f)
@@ -412,7 +535,7 @@ def prepare_inline_comment_objects(
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI: post inline PR review comments from Endor API findings."""
+    """CLI: post pull request review comments from Endor API findings."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--poll-timeout",
@@ -424,19 +547,19 @@ def main(argv: list[str] | None = None) -> int:
         "--max-findings",
         type=int,
         default=500,
-        help="Max findings to hydrate via Finding.get.",
+        help="Max findings to load (Finding.list by ci_run_uuid or Finding.get).",
     )
     parser.add_argument(
         "--max-inline",
         type=int,
         default=_DEFAULT_MAX_INLINE,
-        help="Max inline review comments to create (default 30).",
+        help="Max pull request review comments per run (default 30).",
     )
     parser.add_argument(
         "--review-batch-size",
         type=int,
         default=_DEFAULT_REVIEW_COMMENTS_PER_REQUEST,
-        help="Max comments per POST .../reviews request (default 25).",
+        help="Max review comments per POST .../pulls/{n}/reviews request (default 25).",
     )
     parser.add_argument("--repo", required=True, help="owner/repo")
     parser.add_argument("--pr-number", type=int, required=True)
@@ -462,10 +585,12 @@ def main(argv: list[str] | None = None) -> int:
     api_base = f"https://api.github.com/repos/{args.repo}"
     pr_files: set[str] = set()
     existing_bodies: set[str] = set()
+    diff_right_lines_by_path: dict[str, set[int] | None] = {}
     if args.mode == "apply":
-        pr_files = fetch_pr_filenames(
+        diff_right_lines_by_path = fetch_pr_diff_right_lines_by_path(
             token=token, api_base=api_base, pr_number=args.pr_number
         )
+        pr_files = set(diff_right_lines_by_path.keys())
         print(f"PR has {len(pr_files)} changed file(s) for path matching.")
         if not pr_files:
             print(
@@ -492,26 +617,46 @@ def main(argv: list[str] | None = None) -> int:
         check_existing=(args.mode == "apply"),
     )
 
+    before_diff_filter = len(comment_objects)
+    skipped_diff = 0
+    if args.mode == "apply" and diff_right_lines_by_path:
+        comment_objects, preview_snippets, skipped_diff = filter_comments_to_pr_diff(
+            comment_objects,
+            preview_snippets,
+            diff_right_lines_by_path,
+        )
+
     print(
         f"Findings: {len(findings)}, with file+line: {n_located}, "
         f"unlocated: {n_unlocated}, "
-        f"to post (after cap/dedupe/path): {len(comment_objects)}, "
-        f"skipped (path not in PR): {skipped_path}."
+        f"candidates (cap/dedupe/path): {before_diff_filter}, "
+        f"after PR-diff hunk filter: {len(comment_objects)}, "
+        f"skipped (path not in PR): {skipped_path}, "
+        f"skipped (line not in diff hunks): {skipped_diff}."
     )
+    if skipped_diff:
+        print(
+            "Note: GitHub only attaches pull request review comments to lines that "
+            "appear in the PR unified diff (added/context in hunks). Other lines "
+            "return HTTP 422."
+        )
 
     if comment_objects:
-        print("Inline comment plan (code regions + bodies):")
+        print("Pull request review comment plan (code regions + bodies):")
         emit_inline_comment_plan_to_log(
             comment_objects=comment_objects,
             preview_snippets=preview_snippets,
         )
 
     if args.mode == "dry-run":
-        print("[DRY-RUN] Would submit pull request review(s) with inline comments.")
+        print(
+            "[DRY-RUN] Would submit pull request review(s) with review comments "
+            "on the diff."
+        )
         return 0
 
     if not comment_objects:
-        print("No inline comments to submit.")
+        print("No pull request review comments to submit.")
         return 0
 
     submit_pull_request_reviews(

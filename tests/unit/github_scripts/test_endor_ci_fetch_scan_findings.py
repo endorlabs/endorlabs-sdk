@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from endorlabs.resources.scan_result import ScanResultSpecType
+
 _SCRIPTS = Path(__file__).resolve().parents[3] / ".github" / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
@@ -59,6 +61,50 @@ def test_pick_scan_result_newest_when_no_sha_match() -> None:
     second = MagicMock()
     second.spec = spec
     assert fetch.pick_scan_result([first, second], "nomatch") is first
+
+
+def test_pick_scan_result_prefers_pr_security_review_when_sha_matches_both() -> None:
+    v = MagicMock(sha="shared")
+    spec_all = MagicMock(versions=[v], type=ScanResultSpecType.ALL_SCANS)
+    spec_pr = MagicMock(versions=[v], type=ScanResultSpecType.PR_SECURITY_REVIEW)
+    sr_all = MagicMock()
+    sr_all.spec = spec_all
+    sr_pr = MagicMock()
+    sr_pr.spec = spec_pr
+    picked = fetch.pick_scan_result([sr_all, sr_pr], "shared")
+    assert picked is sr_pr
+
+
+def test_extract_ci_run_uuid_from_execution_id() -> None:
+    env = MagicMock()
+    env.config = {"ExecutionID": "  ex-123  "}
+    spec = MagicMock()
+    spec.environment = env
+    assert fetch.extract_ci_run_uuid_from_scan_result(spec) == "ex-123"
+
+
+def test_extract_ci_run_uuid_missing() -> None:
+    assert fetch.extract_ci_run_uuid_from_scan_result(None) is None
+    spec = MagicMock()
+    spec.environment = None
+    assert fetch.extract_ci_run_uuid_from_scan_result(spec) is None
+
+
+def test_list_findings_for_ci_run_calls_finding_list() -> None:
+    f1 = MagicMock()
+    f1.model_dump = MagicMock(return_value={"uuid": "a"})
+    mock_client = MagicMock()
+    mock_client.Finding.list.return_value = [f1]
+    out = fetch.list_findings_for_ci_run(
+        mock_client,
+        ci_run_uuid="cid",
+        namespace="ns.x",
+        max_findings=10,
+    )
+    assert out == [{"uuid": "a"}]
+    mock_client.Finding.list.assert_called_once()
+    lp = mock_client.Finding.list.call_args.kwargs["list_params"]
+    assert lp.ci_run_uuid == "cid"
 
 
 def test_finding_to_github_dict() -> None:
