@@ -229,6 +229,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/resources/semgrep_rule.py" = ["ARG003"]
 # --- Utils: intentional patterns ---
 ".github/scripts/model_consistency.py" = ["S310"]  # URL open for spec download
+".github/scripts/post_github_check_run.py" = ["S310", "T201"]  # GitHub REST; CLI progress
+".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
