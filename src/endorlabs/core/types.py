@@ -227,7 +227,17 @@ class ListParameters(BaseModel):
     )
     pr_uuid: str | None = Field(
         None,
-        description="Only list resources from this PR scan.",
+        description=(
+            "Deprecated alias for ``ci_run_uuid`` on the wire "
+            "(``list_parameters.ci_run_uuid`` per OpenAPI)."
+        ),
+    )
+    ci_run_uuid: str | None = Field(
+        None,
+        description=(
+            "Only return objects from PR scans that match this context id "
+            "(OpenAPI: list_parameters.ci_run_uuid)."
+        ),
     )
     # Grouping / aggregation (endorctl: group-aggregation-paths, group-by-time, etc.)
     group_aggregation_paths: list[str] | None = Field(

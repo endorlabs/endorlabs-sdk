@@ -117,6 +117,43 @@ def test_prepare_inline_comment_objects_respects_cap_and_dedupe() -> None:
     assert "b" in objs[0]["body"] or "endorlabs-inhouse-finding:b:" in objs[0]["body"]
 
 
+def test_parse_patch_right_side_line_numbers_new_file() -> None:
+    patch = "@@ -0,0 +1,3 @@\n+a\n+b\n+c\n"
+    assert ppc.parse_patch_right_side_line_numbers(patch) == {1, 2, 3}
+
+
+def test_parse_patch_right_side_line_numbers_mixed_hunk() -> None:
+    patch = "@@ -1,3 +1,4 @@\n a\n-b\n+c\n+d\n"
+    assert ppc.parse_patch_right_side_line_numbers(patch) == {1, 2, 3}
+
+
+def test_filter_comments_to_pr_diff_drops_outside_hunk() -> None:
+    diff = {"f.py": {1, 2, 3}}
+    objs = [{"path": "f.py", "line": 100, "side": "RIGHT"}]
+    snips: list[str | None] = [None]
+    out, out_snips, skipped = ppc.filter_comments_to_pr_diff(objs, snips, diff)
+    assert skipped == 1
+    assert out == []
+    assert out_snips == []
+
+
+def test_filter_comments_to_pr_diff_keeps_multiline_in_hunk() -> None:
+    diff = {"f.py": {1, 2, 3, 4, 5}}
+    objs = [{"path": "f.py", "start_line": 2, "line": 4, "side": "RIGHT"}]
+    snips = ["x"]
+    out, out_snips, skipped = ppc.filter_comments_to_pr_diff(objs, snips, diff)
+    assert skipped == 0
+    assert len(out) == 1
+    assert out_snips == ["x"]
+
+
+def test_comment_fits_pr_diff_hunk_missing_path() -> None:
+    assert not ppc.comment_fits_pr_diff_hunk(
+        {"path": "x.py", "line": 1},
+        {"y.py": {1}},
+    )
+
+
 def test_code_region_fence_and_emit_smoke(capsys: Any) -> None:
     text = ppc._code_region_fence("src/x.py", 3, 5, "line1\nline2")
     assert "3:5:src/x.py" in text

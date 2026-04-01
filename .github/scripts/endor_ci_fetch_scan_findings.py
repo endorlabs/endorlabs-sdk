@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import endorlabs
 from endorlabs.core.types import ListParameters
-from endorlabs.resources.scan_result import ScanResultSpecStatus
+from endorlabs.resources.scan_result import ScanResultSpecStatus, ScanResultSpecType
 
 if TYPE_CHECKING:
     from endorlabs.resources.project import Project
@@ -21,6 +21,8 @@ _DEFAULT_POLL_INTERVAL_MAX = 10.0
 _DEFAULT_MAX_FINDINGS = 500
 _TRAVERSE_PAGE_SIZE = 50
 _MAX_SCAN_LIST_PAGES = 5
+# OpenAPI Finding list max page_size is 500.
+_FINDING_LIST_PAGE_SIZE = 500
 
 
 def github_repo_url_variants(repo: str) -> list[str]:
@@ -71,20 +73,61 @@ def _scan_result_terminal(spec: ScanResultSpec | None) -> bool:
 def pick_scan_result(
     scan_results: list[ScanResult], head_sha: str
 ) -> ScanResult | None:
-    """Pick ScanResult matching head_sha in spec.versions, else newest (first)."""
+    """Pick ScanResult matching head_sha in spec.versions, else newest (first).
+
+    When several results share the same head SHA, prefer
+    ``TYPE_PR_SECURITY_REVIEW`` (PR Runs) over generic aggregate scan types.
+    """
     if not scan_results:
         return None
     want = head_sha.strip().lower()
+
+    def sha_matches(sr: ScanResult) -> bool:
+        if not want:
+            return False
+        spec = sr.spec
+        if not spec or not spec.versions:
+            return False
+        for ver in spec.versions:
+            sha = getattr(ver, "sha", None)
+            if isinstance(sha, str) and sha.lower() == want:
+                return True
+        return False
+
     if want:
-        for sr in scan_results:
-            spec = sr.spec
-            if not spec or not spec.versions:
-                continue
-            for ver in spec.versions:
-                sha = getattr(ver, "sha", None)
-                if isinstance(sha, str) and sha.lower() == want:
+        matches = [sr for sr in scan_results if sha_matches(sr)]
+        if matches:
+            for sr in matches:
+                sp = sr.spec
+                if sp and sp.type == ScanResultSpecType.PR_SECURITY_REVIEW:
                     return sr
+            return matches[0]
     return scan_results[0]
+
+
+def extract_ci_run_uuid_from_scan_result(spec: ScanResultSpec | None) -> str | None:
+    """Best-effort PR context id for ``Finding.list`` (``list_parameters.ci_run_uuid``).
+
+    Populated from ``spec.environment.config`` (endorctl scan config), e.g.
+    ``ExecutionID`` — see platform docs / ScanResult environment model.
+    """
+    if not spec or not spec.environment:
+        return None
+    config = spec.environment.config
+    if not isinstance(config, dict):
+        return None
+    for key in (
+        "ExecutionID",
+        "execution_id",
+        "executionId",
+        "ci_run_uuid",
+        "CiRunUUID",
+        "pr_uuid",
+    ):
+        raw = config.get(key)
+        if isinstance(raw, str) and raw.strip():
+            return raw.strip()
+    return None
 
 
 def finding_uuids_from_scan_result(spec: ScanResultSpec | None) -> list[str]:
@@ -186,6 +229,40 @@ def finding_to_github_dict(finding: Any) -> dict[str, Any]:
     return finding.model_dump(mode="json")
 
 
+def list_findings_for_ci_run(
+    client: endorlabs.Client,
+    *,
+    ci_run_uuid: str,
+    namespace: str | None,
+    max_findings: int,
+) -> list[dict[str, Any]]:
+    """List findings scoped to a PR scan via OpenAPI ``list_parameters.ci_run_uuid``."""
+    if not namespace:
+        return []
+    max_pages = max(
+        1,
+        (max_findings + _FINDING_LIST_PAGE_SIZE - 1) // _FINDING_LIST_PAGE_SIZE,
+    )
+    try:
+        rows = client.Finding.list(
+            list_params=ListParameters(
+                ci_run_uuid=ci_run_uuid,
+                traverse=True,
+                page_size=_FINDING_LIST_PAGE_SIZE,
+            ),
+            max_pages=max_pages,
+            namespace=namespace,
+        )
+    except Exception as exc:
+        print(
+            f"Finding.list(ci_run_uuid=...) failed: {exc}; "
+            "will fall back to GET by UUID.",
+            file=sys.stderr,
+        )
+        return []
+    return [finding_to_github_dict(f) for f in rows[:max_findings]]
+
+
 def hydrate_findings(
     client: endorlabs.Client,
     uuids: list[str],
@@ -216,7 +293,11 @@ def load_findings_dicts_for_pr(
     poll_timeout_sec: float = _DEFAULT_POLL_TIMEOUT_SEC,
     max_findings: int = _DEFAULT_MAX_FINDINGS,
 ) -> list[dict[str, Any]]:
-    """Resolve Project → ScanResult → Finding UUIDs → dict payloads.
+    """Resolve Project → ScanResult → findings for the PR head commit.
+
+    Prefer ``Finding.list(ci_run_uuid=...)`` when ``ExecutionID`` (or similar)
+    is present on the picked ScanResult's environment config (PR Runs scope).
+    Otherwise hydrate from ``spec.findings`` / blocking+warning UUID lists.
 
     Fail-open: logs to stderr and returns [] on missing project, API errors, or timeout.
     """
@@ -256,6 +337,34 @@ def load_findings_dicts_for_pr(
             picked = pick_scan_result(scan_rows, head_sha)
             if not picked:
                 return []
+            scan_uuid = getattr(picked, "uuid", None) or "unknown"
+            ci_run = extract_ci_run_uuid_from_scan_result(picked.spec)
+            if ci_run:
+                print(
+                    f"ScanResult {scan_uuid}: using Finding.list scoped to "
+                    f"ci_run_uuid (PR context).",
+                    file=sys.stderr,
+                )
+                listed = list_findings_for_ci_run(
+                    client,
+                    ci_run_uuid=ci_run,
+                    namespace=p_ns,
+                    max_findings=max_findings,
+                )
+                if listed:
+                    return listed
+                print(
+                    "Finding.list returned no rows; falling back to "
+                    "ScanResult finding UUIDs + Finding.get.",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    f"ScanResult {scan_uuid}: no ci_run_uuid in environment.config; "
+                    "using ScanResult finding UUIDs + Finding.get.",
+                    file=sys.stderr,
+                )
+
             uuids = finding_uuids_from_scan_result(picked.spec)
             if not uuids:
                 print(
@@ -264,6 +373,11 @@ def load_findings_dicts_for_pr(
                     file=sys.stderr,
                 )
                 return []
+            n_hydrate = min(len(uuids), max_findings)
+            print(
+                f"Hydrating {n_hydrate} finding(s) via Finding.get.",
+                file=sys.stderr,
+            )
             return hydrate_findings(
                 client,
                 uuids,

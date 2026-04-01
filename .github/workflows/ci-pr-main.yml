@@ -614,7 +614,7 @@ jobs:
           enable_pr_comments: ${{ github.event_name == 'pull_request' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Option B - inline PR review comments (dry-run/apply)
+      - name: Option B - pull request review comments (dry-run/apply)
         id: option_b_comments
         if: >-
           github.event_name == 'pull_request' &&
