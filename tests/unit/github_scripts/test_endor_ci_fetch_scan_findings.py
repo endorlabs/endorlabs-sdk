@@ -75,36 +75,75 @@ def test_pick_scan_result_prefers_pr_security_review_when_sha_matches_both() -> 
     assert picked is sr_pr
 
 
-def test_extract_ci_run_uuid_from_execution_id() -> None:
-    env = MagicMock()
-    env.config = {"ExecutionID": "  ex-123  "}
-    spec = MagicMock()
-    spec.environment = env
-    assert fetch.extract_ci_run_uuid_from_scan_result(spec) == "ex-123"
+def _mk_repo_version(*, uuid: str, ref: str = "", sha: str = "") -> MagicMock:
+    rv = MagicMock()
+    rv.uuid = uuid
+    version = MagicMock(ref=ref, sha=sha)
+    rv.spec = MagicMock(version=version)
+    return rv
 
 
-def test_extract_ci_run_uuid_missing() -> None:
-    assert fetch.extract_ci_run_uuid_from_scan_result(None) is None
-    spec = MagicMock()
-    spec.environment = None
-    assert fetch.extract_ci_run_uuid_from_scan_result(spec) is None
-
-
-def test_list_findings_for_ci_run_calls_finding_list() -> None:
-    f1 = MagicMock()
-    f1.model_dump = MagicMock(return_value={"uuid": "a"})
-    mock_client = MagicMock()
-    mock_client.Finding.list.return_value = [f1]
-    out = fetch.list_findings_for_ci_run(
-        mock_client,
-        ci_run_uuid="cid",
-        namespace="ns.x",
-        max_findings=10,
+def test_resolve_repository_version_prefers_hint_uuid() -> None:
+    versions = [
+        _mk_repo_version(uuid="rv-1", ref="feature/a", sha="111"),
+        _mk_repo_version(uuid="rv-2", ref="feature/b", sha="222"),
+    ]
+    picked, strategy = fetch.resolve_repository_version(
+        versions,
+        head_sha="222",
+        head_ref="feature/b",
+        repository_version_hint="rv-1",
     )
-    assert out == [{"uuid": "a"}]
-    mock_client.Finding.list.assert_called_once()
-    lp = mock_client.Finding.list.call_args.kwargs["list_params"]
-    assert lp.ci_run_uuid == "cid"
+    assert picked is versions[0]
+    assert strategy == "hint:uuid"
+
+
+def test_resolve_repository_version_prefers_sha_then_ref() -> None:
+    versions = [
+        _mk_repo_version(uuid="rv-1", ref="feature/a", sha="111"),
+        _mk_repo_version(uuid="rv-2", ref="feature/b", sha="222"),
+    ]
+    picked, strategy = fetch.resolve_repository_version(
+        versions,
+        head_sha="222",
+        head_ref="feature/a",
+        repository_version_hint=None,
+    )
+    assert picked is versions[1]
+    assert strategy == "sha"
+
+
+def test_resolve_repository_version_ref_fallback() -> None:
+    versions = [
+        _mk_repo_version(uuid="rv-1", ref="feature/a", sha="111"),
+        _mk_repo_version(uuid="rv-2", ref="feature/b", sha="222"),
+    ]
+    picked, strategy = fetch.resolve_repository_version(
+        versions,
+        head_sha="missing",
+        head_ref="feature/b",
+        repository_version_hint=None,
+    )
+    assert picked is versions[1]
+    assert strategy == "ref"
+
+
+def test_pick_scan_result_for_repository_version_prefers_pr_review_type() -> None:
+    rv = _mk_repo_version(uuid="rv-1", ref="feature/a", sha="abc")
+    v = MagicMock(ref="feature/a", sha="abc")
+    spec_all = MagicMock(versions=[v], type=ScanResultSpecType.ALL_SCANS)
+    spec_pr = MagicMock(versions=[v], type=ScanResultSpecType.PR_SECURITY_REVIEW)
+    sr_all = MagicMock()
+    sr_all.spec = spec_all
+    sr_pr = MagicMock()
+    sr_pr.spec = spec_pr
+    picked = fetch.pick_scan_result_for_repository_version(
+        [sr_all, sr_pr],
+        repository_version=rv,
+        head_sha="abc",
+        head_ref="feature/a",
+    )
+    assert picked is sr_pr
 
 
 def test_finding_to_github_dict() -> None:
@@ -159,3 +198,43 @@ def test_load_findings_dicts_for_pr_no_project(mock_client_cls: MagicMock) -> No
             repo="o/r", head_sha="abc", tenant="t.ns"
         )
     assert out == []
+
+
+@patch("endor_ci_fetch_scan_findings.endorlabs.Client")
+def test_load_findings_dicts_for_pr_hydrates_scan_result_findings(
+    mock_client_cls: MagicMock,
+) -> None:
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+    mock_client_cls.return_value = mock_client
+
+    project = MagicMock()
+    project.uuid = "proj-1"
+    project.tenant_meta = MagicMock(namespace="ns.test")
+
+    picked_scan = MagicMock()
+    picked_scan.uuid = "scan-1"
+    picked_scan.spec = MagicMock(
+        findings=["f-1"], blocking_findings=None, warning_findings=None
+    )
+
+    with (
+        patch.object(fetch, "find_project_by_repo", return_value=project),
+        patch.object(fetch, "list_repository_versions_for_project", return_value=[]),
+        patch.object(fetch, "resolve_repository_version", return_value=(None, "none")),
+        patch.object(fetch, "wait_for_scan_result_ready", return_value=[picked_scan]),
+        patch.object(
+            fetch,
+            "pick_scan_result_for_repository_version",
+            return_value=picked_scan,
+        ),
+        patch.object(fetch, "hydrate_findings", return_value=[{"uuid": "f-1"}]),
+    ):
+        out = fetch.load_findings_dicts_for_pr(
+            repo="o/r",
+            head_sha="abc",
+            head_ref="feature/a",
+            tenant="t.ns",
+        )
+    assert out == [{"uuid": "f-1"}]

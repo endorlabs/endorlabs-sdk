@@ -191,11 +191,21 @@ def main(argv: list[str] | None = None) -> int:
         "--max-findings",
         type=int,
         default=500,
-        help="Max findings to hydrate via Finding.get.",
+        help="Max findings to hydrate from selected ScanResult UUIDs.",
     )
     parser.add_argument("--repo", required=True, help="owner/repo")
     parser.add_argument(
         "--commit-sha", required=True, help="HEAD SHA for the check run"
+    )
+    parser.add_argument(
+        "--head-ref",
+        default=os.environ.get("GITHUB_HEAD_REF", ""),
+        help="PR head branch ref used for repository-version resolution.",
+    )
+    parser.add_argument(
+        "--repository-version-hint",
+        default=os.environ.get("ENDOR_REPOSITORY_VERSION_HINT", ""),
+        help="Optional repository-version hint (e.g. Endor check external_id).",
     )
     parser.add_argument("--check-name", default=_CHECK_NAME_DEFAULT)
     parser.add_argument("--mode", choices=("dry-run", "apply"), default="dry-run")
@@ -208,6 +218,10 @@ def main(argv: list[str] | None = None) -> int:
     findings = load_findings_dicts_for_pr(
         repo=args.repo,
         head_sha=args.commit_sha,
+        head_ref=args.head_ref,
+        repository_version_hint=(
+            args.repository_version_hint if args.repository_version_hint else None
+        ),
         poll_timeout_sec=args.poll_timeout,
         max_findings=args.max_findings,
     )
