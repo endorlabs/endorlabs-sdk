@@ -1,5 +1,5 @@
 {
-  "operation_count": 719,
+  "operation_count": 723,
   "operations": [
     {
       "method": "get",
@@ -4292,6 +4292,63 @@
       ],
       "tags": [
         "HuggingFaceModelService"
+      ],
+      "x_internal": false
+    },
+    {
+      "method": "get",
+      "operation_id": "HuggingFaceOrganizationService_ListHuggingFaceOrganizations",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListHuggingFaceOrganizationsResponse"
+      ],
+      "tags": [
+        "HuggingFaceOrganizationService"
+      ],
+      "x_internal": false
+    },
+    {
+      "method": "post",
+      "operation_id": "HuggingFaceOrganizationService_CreateHuggingFaceOrganization",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations",
+      "request_refs": [
+        "HuggingFaceOrganizationServiceCreateHuggingFaceOrganizationBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1HuggingFaceOrganization"
+      ],
+      "tags": [
+        "HuggingFaceOrganizationService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "HuggingFaceOrganizationService_DeleteHuggingFaceOrganization",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "HuggingFaceOrganizationService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "HuggingFaceOrganizationService_GetHuggingFaceOrganization",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1HuggingFaceOrganization"
+      ],
+      "tags": [
+        "HuggingFaceOrganizationService"
       ],
       "x_internal": false
     },
