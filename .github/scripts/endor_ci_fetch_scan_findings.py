@@ -1,6 +1,9 @@
 """Load Finding dicts for a GitHub PR via Endor API.
 
-Primary flow: Project -> RepositoryVersion -> ScanResult -> Finding.get
+Primary flow: Project -> RepositoryVersion -> terminal ScanResult(s) -> union
+of ``spec`` finding UUID lists -> ``Finding.get``. If every matching scan has
+empty lists, fall back to ``Finding.list`` scoped to the RepositoryVersion
+(same scope as the UI version findings page).
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ if TYPE_CHECKING:
     from endorlabs.resources.scan_result import ScanResult, ScanResultSpec
 
 # Poll until ScanResult is ready after the GitHub Action completes.
-_DEFAULT_POLL_TIMEOUT_SEC = 120.0
+_DEFAULT_POLL_TIMEOUT_SEC = 300.0
 _DEFAULT_POLL_INTERVAL_MAX = 10.0
 _DEFAULT_MAX_FINDINGS = 500
 _TRAVERSE_PAGE_SIZE = 50
@@ -151,6 +154,24 @@ def _version_sha(v: RepositoryVersion) -> str:
     return str(sha).strip() if isinstance(sha, str) else ""
 
 
+def _refs_loosely_equal(a: str, b: str) -> bool:
+    """True if two git refs denote the same branch (case-insensitive, heads prefix)."""
+    x, y = a.strip().lower(), b.strip().lower()
+    if not x or not y:
+        return False
+    if x == y:
+        return True
+
+    def heads_form(r: str) -> str:
+        if r.startswith("refs/heads/"):
+            return r
+        if r.startswith("refs/"):
+            return r
+        return f"refs/heads/{r}"
+
+    return heads_form(x) == heads_form(y)
+
+
 def _match_repository_version_hint(
     versions: list[RepositoryVersion], hint: str
 ) -> tuple[RepositoryVersion | None, str]:
@@ -180,8 +201,13 @@ def _match_repository_version_sha(
 def _match_repository_version_ref(
     versions: list[RepositoryVersion], want_ref: str
 ) -> RepositoryVersion | None:
+    """Match head ref to RepositoryVersion.spec.version.ref."""
+    want = want_ref.strip()
+    if not want:
+        return None
     for rv in versions:
-        if _version_ref(rv) == want_ref:
+        r = _version_ref(rv)
+        if r and _refs_loosely_equal(r, want):
             return rv
     return None
 
@@ -239,18 +265,24 @@ def finding_uuids_from_scan_result(spec: ScanResultSpec | None) -> list[str]:
     return deduped
 
 
-def pick_scan_result_for_repository_version(
+def scan_results_matching_repository_version(
     scan_results: list[ScanResult],
     *,
     repository_version: RepositoryVersion | None,
     head_sha: str,
     head_ref: str,
-) -> ScanResult | None:
-    """Pick terminal scan result that best matches repository version identity."""
+) -> list[ScanResult]:
+    """All ScanResults matching repo version / PR head (identity rules).
+
+    The UI version findings view aggregates findings from every scan on that
+    version (SCA, SAST, PR security review, etc.). Matching ScanResults are
+    merged downstream via :func:`union_finding_uuids_from_scan_results`.
+    """
     if not scan_results:
-        return None
+        return []
     if repository_version is None:
-        return pick_scan_result(scan_results, head_sha)
+        p = pick_scan_result(scan_results, head_sha)
+        return [p] if p else []
 
     rv_sha = _version_sha(repository_version).lower()
     rv_ref = _version_ref(repository_version)
@@ -269,12 +301,87 @@ def pick_scan_result_for_repository_version(
         )
     ]
     if not matches:
-        return pick_scan_result(scan_results, head_sha)
+        p = pick_scan_result(scan_results, head_sha)
+        return [p] if p else []
+    return matches
+
+
+def pick_scan_result_for_repository_version(
+    scan_results: list[ScanResult],
+    *,
+    repository_version: RepositoryVersion | None,
+    head_sha: str,
+    head_ref: str,
+) -> ScanResult | None:
+    """Pick a single ScanResult (prefer PR security review when tied)."""
+    matches = scan_results_matching_repository_version(
+        scan_results,
+        repository_version=repository_version,
+        head_sha=head_sha,
+        head_ref=head_ref,
+    )
+    if not matches:
+        return None
     for sr in matches:
         sp = sr.spec
         if sp and sp.type == ScanResultSpecType.PR_SECURITY_REVIEW:
             return sr
     return matches[0]
+
+
+def union_finding_uuids_from_scan_results(
+    scan_results: list[ScanResult],
+) -> list[str]:
+    """Deduped union of ``spec.findings`` / blocking / warning UUID lists."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for sr in scan_results:
+        for u in finding_uuids_from_scan_result(sr.spec):
+            if u not in seen:
+                seen.add(u)
+                out.append(u)
+    return out
+
+
+def list_finding_uuids_for_repository_version(
+    client: endorlabs.Client,
+    repository_version: RepositoryVersion,
+    *,
+    namespace: str | None,
+    max_findings: int,
+) -> list[str]:
+    """List finding UUIDs whose parent is the RepositoryVersion (UI parity)."""
+    rv_uuid = getattr(repository_version, "uuid", None)
+    if not isinstance(rv_uuid, str) or not rv_uuid.strip() or not namespace:
+        return []
+    page_size = min(_TRAVERSE_PAGE_SIZE, max(1, max_findings))
+    max_pages = max(1, min(10, (max_findings + page_size - 1) // page_size))
+    try:
+        rows = client.Finding.list(
+            list_params=ListParameters(
+                filter=f'meta.parent_uuid=="{rv_uuid}"',
+                traverse=True,
+                page_size=page_size,
+            ),
+            max_pages=max_pages,
+            namespace=namespace,
+        )
+    except Exception as exc:
+        print(
+            f"Finding.list by RepositoryVersion failed: {exc}",
+            file=sys.stderr,
+        )
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for f in rows:
+        uid = getattr(f, "uuid", None)
+        if isinstance(uid, str) and uid and uid not in seen:
+            seen.add(uid)
+            out.append(uid)
+            if len(out) >= max_findings:
+                break
+    return out
 
 
 def _sort_scan_results_newest_first(rows: list[ScanResult]) -> list[ScanResult]:
@@ -318,11 +425,11 @@ def _scan_result_matches_identity(
     for sha, ref in _scan_version_pairs(sr):
         if rv_sha and sha and sha == rv_sha:
             return True
-        if rv_ref and ref and ref == rv_ref:
+        if rv_ref and ref and _refs_loosely_equal(ref, rv_ref):
             return True
         if want_sha and sha and sha == want_sha:
             return True
-        if want_ref and ref and ref == want_ref:
+        if want_ref and ref and _refs_loosely_equal(ref, want_ref):
             return True
     return False
 
@@ -384,6 +491,19 @@ def wait_for_scan_result_ready(
         if sleep_for > 0:
             time.sleep(sleep_for)
         interval = min(interval * 2, interval_max)
+    # Do not consume a still-running ScanResult: spec UUID lists are often empty
+    # until the run finishes, which looks like "no annotations" in GitHub Checks.
+    if last:
+        picked = pick_scan_result(last, head_sha)
+        if picked and picked.spec and not _scan_result_terminal(picked.spec):
+            st = getattr(picked.spec, "status", None)
+            print(
+                "Timed out waiting for a terminal ScanResult for "
+                f"head_sha={head_sha!r}; latest pick status={st!r}. "
+                "Not using non-terminal scan for findings.",
+                file=sys.stderr,
+            )
+            return []
     return last
 
 
@@ -483,24 +603,50 @@ def load_findings_dicts_for_pr(
                     file=sys.stderr,
                 )
                 return []
-            picked = pick_scan_result_for_repository_version(
+            candidates = scan_results_matching_repository_version(
                 scan_rows,
                 repository_version=repo_version,
                 head_sha=head_sha,
                 head_ref=head_ref,
             )
-            if not picked:
+            terminal_matches = [
+                sr
+                for sr in candidates
+                if sr and sr.spec and _scan_result_terminal(sr.spec)
+            ]
+            if not terminal_matches:
+                print(
+                    "No terminal ScanResult matched repository version / head; "
+                    "cannot resolve finding UUIDs.",
+                    file=sys.stderr,
+                )
                 return []
-            scan_uuid = getattr(picked, "uuid", None) or "unknown"
+            scan_ids = ",".join(
+                str(getattr(sr, "uuid", None) or "?") for sr in terminal_matches
+            )
+            uuids = union_finding_uuids_from_scan_results(terminal_matches)
             print(
-                f"ScanResult {scan_uuid}: using "
-                "ScanResult finding UUIDs + Finding.get.",
+                f"Merged finding UUIDs from {len(terminal_matches)} terminal "
+                f"ScanResult(s) [{scan_ids}]: {len(uuids)} unique id(s).",
                 file=sys.stderr,
             )
-            uuids = finding_uuids_from_scan_result(picked.spec)
+            if not uuids and repo_version is not None:
+                uuids = list_finding_uuids_for_repository_version(
+                    client,
+                    repo_version,
+                    namespace=p_ns,
+                    max_findings=max_findings,
+                )
+                if uuids:
+                    print(
+                        "Using Finding.list(meta.parent_uuid=RepositoryVersion) "
+                        f"fallback: {len(uuids)} id(s) (ScanResult specs had no "
+                        "finding lists).",
+                        file=sys.stderr,
+                    )
             if not uuids:
                 print(
-                    "Selected ScanResult has no finding UUIDs in spec; "
+                    "No finding UUIDs from ScanResults or RepositoryVersion list; "
                     "nothing to hydrate.",
                     file=sys.stderr,
                 )

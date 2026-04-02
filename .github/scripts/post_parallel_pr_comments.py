@@ -540,7 +540,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--poll-timeout",
         type=float,
-        default=120.0,
+        default=300.0,
         help="Seconds to wait for a terminal ScanResult after the scan.",
     )
     parser.add_argument(

@@ -15,6 +15,7 @@ from endor_scan_findings import (
     extract_location,
     is_valid_annotation_path,
     normalize_pr_path,
+    summarize_location_coverage,
 )
 
 # Max annotations per Checks API create/update (docs.github.com REST check-runs).
@@ -184,7 +185,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--poll-timeout",
         type=float,
-        default=120.0,
+        default=300.0,
         help="Seconds to wait for a terminal ScanResult.",
     )
     parser.add_argument(
@@ -224,6 +225,12 @@ def main(argv: list[str] | None = None) -> int:
         ),
         poll_timeout_sec=args.poll_timeout,
         max_findings=args.max_findings,
+    )
+    cov = summarize_location_coverage(findings)
+    print(
+        "Location coverage: "
+        f"total={cov['total']}, with_file_and_line={cov['with_file_and_line']}, "
+        f"without_location={cov['without_location']}"
     )
     located: list[dict[str, Any]] = []
     for f in findings:
