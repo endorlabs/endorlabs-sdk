@@ -316,6 +316,20 @@
       "source_kind": "operation_ref"
     },
     {
+      "entity_name": "v1HuggingFaceOrganization",
+      "module_path": "hugging_face_organization_service",
+      "operation_id": "HuggingFaceOrganizationService_GetHuggingFaceOrganization",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListHuggingFaceOrganizationsResponse",
+      "module_path": "hugging_face_organization_service",
+      "operation_id": "HuggingFaceOrganizationService_ListHuggingFaceOrganizations",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
       "entity_name": "IPAddressPolicyServiceCreateIPAddressPolicyBody",
       "module_path": "i_p_address_policy_service",
       "operation_id": "IPAddressPolicyService_CreateIPAddressPolicy",
@@ -1457,7 +1471,7 @@
       "source_kind": "operation_ref"
     }
   ],
-  "entry_count": 208,
+  "entry_count": 210,
   "profiles": {
     "aliases.json": {
       "_comment": "Custom mapping aliases. Keep deterministic and source-controlled.",
