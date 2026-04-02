@@ -628,7 +628,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          HINT="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" --jq '.check_runs[] | select(.name=="Endor Labs Automated Scan") | .external_id' | head -n 1 || true)"
+          HINT="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs?per_page=100" --jq '.check_runs[] | select(.name=="Endor Labs Automated Scan") | .external_id' | head -n 1 || true)"
           if [ -n "${HINT}" ]; then
             echo "repository_version_hint=${HINT}" >> "$GITHUB_OUTPUT"
             echo "Resolved repository-version hint from Endor check external_id."
