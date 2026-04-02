@@ -614,6 +614,29 @@ jobs:
           enable_pr_comments: ${{ github.event_name == 'pull_request' }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve RepositoryVersion hint for PR findings flow
+        id: resolve_repo_version_hint
+        if: >-
+          github.event_name == 'pull_request' &&
+          (
+            env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true' ||
+            env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS == 'true'
+          )
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          HINT="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" --jq '.check_runs[] | select(.name=="Endor Labs Automated Scan") | .external_id' | head -n 1 || true)"
+          if [ -n "${HINT}" ]; then
+            echo "repository_version_hint=${HINT}" >> "$GITHUB_OUTPUT"
+            echo "Resolved repository-version hint from Endor check external_id."
+          else
+            echo "repository_version_hint=" >> "$GITHUB_OUTPUT"
+            echo "No Endor check external_id found; scripts will match by sha/ref."
+          fi
+
       - name: Option B - pull request review comments (dry-run/apply)
         id: option_b_comments
         if: >-
@@ -626,12 +649,15 @@ jobs:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_REPOSITORY_VERSION_HINT: ${{ steps.resolve_repo_version_hint.outputs.repository_version_hint }}
         run: |
           set -e
           uv run python .github/scripts/post_parallel_pr_comments.py \
             --repo "${{ github.repository }}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --head-ref "${{ github.event.pull_request.head.ref }}" \
+            --repository-version-hint "${ENDOR_REPOSITORY_VERSION_HINT}" \
             --mode "${COMMENT_MODE}"
 
       - name: Option C - GitHub Check Run annotations (dry-run/apply)
@@ -648,10 +674,13 @@ jobs:
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_REPOSITORY_VERSION_HINT: ${{ steps.resolve_repo_version_hint.outputs.repository_version_hint }}
         run: |
           uv run python .github/scripts/post_github_check_run.py \
             --repo "${{ github.repository }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --head-ref "${{ github.event.pull_request.head.ref }}" \
+            --repository-version-hint "${ENDOR_REPOSITORY_VERSION_HINT}" \
             --mode "${CHECK_MODE}"
 
       - name: Comment flow status summary
@@ -665,6 +694,7 @@ jobs:
             echo "- Option C (Checks API) enabled: \`${{ env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS }}\`"
             echo "- Option C mode: \`${{ env.ENDOR_GITHUB_CHECK_MODE }}\`"
             echo "- Option C outcome: \`${{ steps.option_c_checks.outcome || 'skipped' }}\`"
+            echo "- RepositoryVersion hint (Endor check external_id): \`${{ steps.resolve_repo_version_hint.outputs.repository_version_hint || 'none' }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------

@@ -1,4 +1,7 @@
-"""Load Finding dicts for a GitHub PR via Endor API (Project, ScanResult, Finding)."""
+"""Load Finding dicts for a GitHub PR via Endor API.
+
+Primary flow: Project -> RepositoryVersion -> ScanResult -> Finding.get
+"""
 
 from __future__ import annotations
 
@@ -13,6 +16,7 @@ from endorlabs.resources.scan_result import ScanResultSpecStatus, ScanResultSpec
 
 if TYPE_CHECKING:
     from endorlabs.resources.project import Project
+    from endorlabs.resources.repository_version import RepositoryVersion
     from endorlabs.resources.scan_result import ScanResult, ScanResultSpec
 
 # Poll until ScanResult is ready after the GitHub Action completes.
@@ -21,8 +25,6 @@ _DEFAULT_POLL_INTERVAL_MAX = 10.0
 _DEFAULT_MAX_FINDINGS = 500
 _TRAVERSE_PAGE_SIZE = 50
 _MAX_SCAN_LIST_PAGES = 5
-# OpenAPI Finding list max page_size is 500.
-_FINDING_LIST_PAGE_SIZE = 500
 
 
 def github_repo_url_variants(repo: str) -> list[str]:
@@ -105,29 +107,115 @@ def pick_scan_result(
     return scan_results[0]
 
 
-def extract_ci_run_uuid_from_scan_result(spec: ScanResultSpec | None) -> str | None:
-    """Best-effort PR context id for ``Finding.list`` (``list_parameters.ci_run_uuid``).
+def list_repository_versions_for_project(
+    client: endorlabs.Client,
+    *,
+    project: Project,
+    namespace: str | None,
+    max_pages: int = 3,
+) -> list[RepositoryVersion]:
+    """List repository versions for a project, newest first."""
+    try:
+        rows = client.RepositoryVersion.list(
+            parent=project,
+            traverse=True,
+            page_size=_TRAVERSE_PAGE_SIZE,
+            max_pages=max_pages,
+            namespace=namespace,
+        )
+    except Exception:
+        # Fallback for environments where parent=project is unavailable.
+        rows = client.RepositoryVersion.list(
+            list_params=ListParameters(
+                filter=f'meta.parent_uuid=="{project.uuid}"',
+                traverse=True,
+                page_size=_TRAVERSE_PAGE_SIZE,
+            ),
+            max_pages=max_pages,
+            namespace=namespace,
+        )
+    return _sort_scan_results_newest_first(rows)  # same meta.create_time strategy
 
-    Populated from ``spec.environment.config`` (endorctl scan config), e.g.
-    ``ExecutionID`` — see platform docs / ScanResult environment model.
-    """
-    if not spec or not spec.environment:
-        return None
-    config = spec.environment.config
-    if not isinstance(config, dict):
-        return None
-    for key in (
-        "ExecutionID",
-        "execution_id",
-        "executionId",
-        "ci_run_uuid",
-        "CiRunUUID",
-        "pr_uuid",
-    ):
-        raw = config.get(key)
-        if isinstance(raw, str) and raw.strip():
-            return raw.strip()
+
+def _version_ref(v: RepositoryVersion) -> str:
+    spec = getattr(v, "spec", None)
+    ver = getattr(spec, "version", None) if spec is not None else None
+    ref = getattr(ver, "ref", None) if ver is not None else None
+    return str(ref).strip() if isinstance(ref, str) else ""
+
+
+def _version_sha(v: RepositoryVersion) -> str:
+    spec = getattr(v, "spec", None)
+    ver = getattr(spec, "version", None) if spec is not None else None
+    sha = getattr(ver, "sha", None) if ver is not None else None
+    return str(sha).strip() if isinstance(sha, str) else ""
+
+
+def _match_repository_version_hint(
+    versions: list[RepositoryVersion], hint: str
+) -> tuple[RepositoryVersion | None, str]:
+    for rv in versions:
+        rv_uuid = getattr(rv, "uuid", None)
+        if isinstance(rv_uuid, str) and rv_uuid.lower() == hint:
+            return rv, "hint:uuid"
+    for rv in versions:
+        if _version_sha(rv).lower() == hint:
+            return rv, "hint:sha"
+    for rv in versions:
+        if _version_ref(rv).lower() == hint:
+            return rv, "hint:ref"
+    return None, "none"
+
+
+def _match_repository_version_sha(
+    versions: list[RepositoryVersion], want_sha: str
+) -> RepositoryVersion | None:
+    for rv in versions:
+        sha = _version_sha(rv)
+        if sha and sha.lower() == want_sha:
+            return rv
     return None
+
+
+def _match_repository_version_ref(
+    versions: list[RepositoryVersion], want_ref: str
+) -> RepositoryVersion | None:
+    for rv in versions:
+        if _version_ref(rv) == want_ref:
+            return rv
+    return None
+
+
+def resolve_repository_version(
+    versions: list[RepositoryVersion],
+    *,
+    head_sha: str,
+    head_ref: str,
+    repository_version_hint: str | None,
+) -> tuple[RepositoryVersion | None, str]:
+    """Resolve repository version by hint, sha, then ref."""
+    if not versions:
+        return None, "none"
+    hint = (repository_version_hint or "").strip().lower()
+    want_sha = head_sha.strip().lower()
+    want_ref = head_ref.strip()
+
+    if hint:
+        rv, strategy = _match_repository_version_hint(versions, hint)
+        if rv is not None:
+            return rv, strategy
+
+    if want_sha:
+        rv = _match_repository_version_sha(versions, want_sha)
+        if rv is not None:
+            return rv, "sha"
+
+    if want_ref:
+        rv = _match_repository_version_ref(versions, want_ref)
+        if rv is not None:
+            return rv, "ref"
+
+    return versions[0], "newest"
 
 
 def finding_uuids_from_scan_result(spec: ScanResultSpec | None) -> list[str]:
@@ -151,6 +239,44 @@ def finding_uuids_from_scan_result(spec: ScanResultSpec | None) -> list[str]:
     return deduped
 
 
+def pick_scan_result_for_repository_version(
+    scan_results: list[ScanResult],
+    *,
+    repository_version: RepositoryVersion | None,
+    head_sha: str,
+    head_ref: str,
+) -> ScanResult | None:
+    """Pick terminal scan result that best matches repository version identity."""
+    if not scan_results:
+        return None
+    if repository_version is None:
+        return pick_scan_result(scan_results, head_sha)
+
+    rv_sha = _version_sha(repository_version).lower()
+    rv_ref = _version_ref(repository_version)
+    want_sha = head_sha.strip().lower()
+    want_ref = head_ref.strip()
+
+    matches = [
+        sr
+        for sr in scan_results
+        if _scan_result_matches_identity(
+            sr,
+            rv_sha=rv_sha,
+            rv_ref=rv_ref,
+            want_sha=want_sha,
+            want_ref=want_ref,
+        )
+    ]
+    if not matches:
+        return pick_scan_result(scan_results, head_sha)
+    for sr in matches:
+        sp = sr.spec
+        if sp and sp.type == ScanResultSpecType.PR_SECURITY_REVIEW:
+            return sr
+    return matches[0]
+
+
 def _sort_scan_results_newest_first(rows: list[ScanResult]) -> list[ScanResult]:
     """Order by meta.create_time descending (ISO timestamps sort lexicographically)."""
 
@@ -162,6 +288,43 @@ def _sort_scan_results_newest_first(rows: list[ScanResult]) -> list[ScanResult]:
         return (0, "")
 
     return sorted(rows, key=create_time_key, reverse=True)
+
+
+def _scan_version_pairs(sr: ScanResult) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    spec = sr.spec
+    if not spec or not spec.versions:
+        return out
+    for ver in spec.versions:
+        sha = getattr(ver, "sha", None)
+        ref = getattr(ver, "ref", None)
+        out.append(
+            (
+                str(sha).strip().lower() if isinstance(sha, str) else "",
+                str(ref).strip() if isinstance(ref, str) else "",
+            )
+        )
+    return out
+
+
+def _scan_result_matches_identity(
+    sr: ScanResult,
+    *,
+    rv_sha: str,
+    rv_ref: str,
+    want_sha: str,
+    want_ref: str,
+) -> bool:
+    for sha, ref in _scan_version_pairs(sr):
+        if rv_sha and sha and sha == rv_sha:
+            return True
+        if rv_ref and ref and ref == rv_ref:
+            return True
+        if want_sha and sha and sha == want_sha:
+            return True
+        if want_ref and ref and ref == want_ref:
+            return True
+    return False
 
 
 def list_scan_results_for_project(
@@ -229,40 +392,6 @@ def finding_to_github_dict(finding: Any) -> dict[str, Any]:
     return finding.model_dump(mode="json")
 
 
-def list_findings_for_ci_run(
-    client: endorlabs.Client,
-    *,
-    ci_run_uuid: str,
-    namespace: str | None,
-    max_findings: int,
-) -> list[dict[str, Any]]:
-    """List findings scoped to a PR scan via OpenAPI ``list_parameters.ci_run_uuid``."""
-    if not namespace:
-        return []
-    max_pages = max(
-        1,
-        (max_findings + _FINDING_LIST_PAGE_SIZE - 1) // _FINDING_LIST_PAGE_SIZE,
-    )
-    try:
-        rows = client.Finding.list(
-            list_params=ListParameters(
-                ci_run_uuid=ci_run_uuid,
-                traverse=True,
-                page_size=_FINDING_LIST_PAGE_SIZE,
-            ),
-            max_pages=max_pages,
-            namespace=namespace,
-        )
-    except Exception as exc:
-        print(
-            f"Finding.list(ci_run_uuid=...) failed: {exc}; "
-            "will fall back to GET by UUID.",
-            file=sys.stderr,
-        )
-        return []
-    return [finding_to_github_dict(f) for f in rows[:max_findings]]
-
-
 def hydrate_findings(
     client: endorlabs.Client,
     uuids: list[str],
@@ -289,18 +418,13 @@ def load_findings_dicts_for_pr(
     *,
     repo: str,
     head_sha: str,
+    head_ref: str = "",
+    repository_version_hint: str | None = None,
     tenant: str | None = None,
     poll_timeout_sec: float = _DEFAULT_POLL_TIMEOUT_SEC,
     max_findings: int = _DEFAULT_MAX_FINDINGS,
 ) -> list[dict[str, Any]]:
-    """Resolve Project → ScanResult → findings for the PR head commit.
-
-    Prefer ``Finding.list(ci_run_uuid=...)`` when ``ExecutionID`` (or similar)
-    is present on the picked ScanResult's environment config (PR Runs scope).
-    Otherwise hydrate from ``spec.findings`` / blocking+warning UUID lists.
-
-    Fail-open: logs to stderr and returns [] on missing project, API errors, or timeout.
-    """
+    """Resolve Project -> RepositoryVersion -> ScanResult -> Finding.get for PR head."""
     ns = tenant or os.getenv("ENDOR_NAMESPACE")
     if not ns:
         print(
@@ -320,6 +444,31 @@ def load_findings_dicts_for_pr(
                 return []
             p_ns = _project_namespace(project)
             proj_uuid = project.uuid
+            versions = list_repository_versions_for_project(
+                client, project=project, namespace=p_ns
+            )
+            repo_version, match_strategy = resolve_repository_version(
+                versions,
+                head_sha=head_sha,
+                head_ref=head_ref,
+                repository_version_hint=repository_version_hint,
+            )
+            if repo_version is not None:
+                rv_uuid = getattr(repo_version, "uuid", None) or "unknown"
+                rv_ref = _version_ref(repo_version) or "unknown"
+                rv_sha = _version_sha(repo_version) or "unknown"
+                print(
+                    "RepositoryVersion resolved: "
+                    f"uuid={rv_uuid}, ref={rv_ref}, sha={rv_sha}, "
+                    f"strategy={match_strategy}",
+                    file=sys.stderr,
+                )
+            else:
+                print(
+                    "No RepositoryVersion rows found; falling back to "
+                    "ScanResult matching only.",
+                    file=sys.stderr,
+                )
             scan_rows = wait_for_scan_result_ready(
                 client,
                 proj_uuid,
@@ -334,37 +483,20 @@ def load_findings_dicts_for_pr(
                     file=sys.stderr,
                 )
                 return []
-            picked = pick_scan_result(scan_rows, head_sha)
+            picked = pick_scan_result_for_repository_version(
+                scan_rows,
+                repository_version=repo_version,
+                head_sha=head_sha,
+                head_ref=head_ref,
+            )
             if not picked:
                 return []
             scan_uuid = getattr(picked, "uuid", None) or "unknown"
-            ci_run = extract_ci_run_uuid_from_scan_result(picked.spec)
-            if ci_run:
-                print(
-                    f"ScanResult {scan_uuid}: using Finding.list scoped to "
-                    f"ci_run_uuid (PR context).",
-                    file=sys.stderr,
-                )
-                listed = list_findings_for_ci_run(
-                    client,
-                    ci_run_uuid=ci_run,
-                    namespace=p_ns,
-                    max_findings=max_findings,
-                )
-                if listed:
-                    return listed
-                print(
-                    "Finding.list returned no rows; falling back to "
-                    "ScanResult finding UUIDs + Finding.get.",
-                    file=sys.stderr,
-                )
-            else:
-                print(
-                    f"ScanResult {scan_uuid}: no ci_run_uuid in environment.config; "
-                    "using ScanResult finding UUIDs + Finding.get.",
-                    file=sys.stderr,
-                )
-
+            print(
+                f"ScanResult {scan_uuid}: using "
+                "ScanResult finding UUIDs + Finding.get.",
+                file=sys.stderr,
+            )
             uuids = finding_uuids_from_scan_result(picked.spec)
             if not uuids:
                 print(
