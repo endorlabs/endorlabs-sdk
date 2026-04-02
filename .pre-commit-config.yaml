@@ -14,7 +14,9 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: [--skip, "*.json,*.lock,.git,.endorlabs-context"]
+        args: [--skip, "*.json,*.lock,.git,.endorlabs-context,src/endorlabs/generated,workspace/model-sync"]
+        # pre-push passes explicit paths; --skip alone does not ignore them.
+        exclude: ^(src/endorlabs/generated/|workspace/model-sync/).*$
 
   # --- Python SAST ---
   - repo: https://github.com/PyCQA/bandit
