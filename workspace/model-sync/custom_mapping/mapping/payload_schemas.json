@@ -1,5 +1,5 @@
 {
-  "resource_count": 33,
+  "resource_count": 34,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -1209,6 +1209,89 @@
       },
       "update_payload_entities": [
         "NotificationTargetServiceUpdateNotificationTargetBody"
+      ]
+    },
+    {
+      "attr_name": "PRCommentConfig",
+      "create_payload_definitions": {
+        "PRCommentConfigServiceCreatePRCommentConfigBody": {
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata is generic for any object."
+            },
+            "propagate": {
+              "description": "Whether the object should be visible in child namespaces or not.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PRCommentConfigSpec"
+            },
+            "tenant_meta": {
+              "description": "PR comment configurations are associated with a tenant.",
+              "title": "PR comment configurations are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a PR comment configuration.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PRCommentConfigServiceCreatePRCommentConfigBody"
+      ],
+      "resource_name": "pr-comment-configs",
+      "update_payload_definitions": {
+        "PRCommentConfigServiceUpdatePRCommentConfigBody": {
+          "description": "Request to update a PR comment configuration.",
+          "properties": {
+            "object": {
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata is generic for any object."
+                },
+                "propagate": {
+                  "description": "Whether the object should be visible in child namespaces or not.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1PRCommentConfigSpec"
+                },
+                "tenant_meta": {
+                  "description": "PR comment configurations are associated with a tenant.",
+                  "title": "PR comment configurations are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of a PR comment configuration.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "PRCommentConfigServiceUpdatePRCommentConfigBody"
       ]
     },
     {
