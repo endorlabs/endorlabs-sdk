@@ -81,6 +81,36 @@ Behavior:
 
 For **SARIF** upload to Code Scanning, use GitHub’s `github/codeql-action/upload-sarif` separately; Option C uses the Checks API only.
 
+### Validating Check annotations end-to-end
+
+**Phase A — GitHub REST only (no Endor):** Confirm `checks: write`, payload shape, and that **`head_sha` is the PR head** (not the merge ref). Use the standalone script [`.github/scripts/smoke_github_check_annotation.py`](../../.github/scripts/smoke_github_check_annotation.py):
+
+```bash
+# Print the JSON body (no network)
+uv run python .github/scripts/smoke_github_check_annotation.py \
+  --repo owner/repo --commit-sha <pr_head_sha> --mode dry-run
+
+# Post a check named "Annotation smoke test" with one notice on pyproject.toml:1
+GITHUB_TOKEN=... uv run python .github/scripts/smoke_github_check_annotation.py \
+  --repo owner/repo --commit-sha <pr_head_sha> --mode apply
+```
+
+Use `--path` / `--line` if `pyproject.toml` is absent on that branch. Success: a new check appears on the PR and the annotation shows for that file.
+
+**Phase B — Option C log (Endor → annotations):** In the workflow log for `Option C - GitHub Check Run annotations`, read:
+
+- `Location coverage: total=..., with_file_and_line=..., without_location=...`
+- `Findings: N, with file+line: M — annotations to send: K, conclusion: ...`
+
+If **`K == 0`** but **`N > 0`**, the Checks client is fine; findings lack extractable file+line (see [`.github/scripts/endor_scan_findings.py`](../../.github/scripts/endor_scan_findings.py) and [findings-github-checks-annotation-matrix.md](../findings-github-checks-annotation-matrix.md)). If **`N == 0`**, trace scan result resolution in [`.github/scripts/endor_ci_fetch_scan_findings.py`](../../.github/scripts/endor_ci_fetch_scan_findings.py).
+
+**Phase C — Opt-in smoke on the real check (optional):** Append one synthetic annotation to the **Endor Labs findings** check when finding-backed annotations are sparse:
+
+- CLI: `post_github_check_run.py ... --smoke-annotation` (optional `--smoke-path`, `--smoke-line`)
+- Or env: `ENDOR_GITHUB_CHECK_SMOKE=1`, optional `ENDOR_GITHUB_CHECK_SMOKE_PATH`, `ENDOR_GITHUB_CHECK_SMOKE_LINE`
+
+Default synthetic path is `pyproject.toml` line `1` (must exist on the PR head commit). Off by default so production runs are unchanged.
+
 ## Embedded UX capability matrix
 
 | Capability | Option B (pull request review comments) | Option C (Checks API) |

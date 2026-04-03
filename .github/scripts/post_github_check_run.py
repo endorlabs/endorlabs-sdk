@@ -147,6 +147,46 @@ def build_annotations(
     return out
 
 
+def maybe_append_smoke_annotation(
+    annotations: list[dict[str, Any]],
+    *,
+    do_append: bool,
+    smoke_path: str,
+    smoke_line: int,
+) -> list[dict[str, Any]]:
+    """Append one synthetic ``notice`` annotation when opt-in is set (CI validation).
+
+    GitHub requires ``path`` and lines to be valid for the check run's ``head_sha``.
+    Default path ``pyproject.toml`` is expected to exist in this repository.
+    """
+    if not do_append:
+        return annotations
+    p = normalize_pr_path(smoke_path.strip()).replace("\\", "/")
+    if not is_valid_annotation_path(p):
+        print(f"Warning: smoke annotation skipped — invalid path {smoke_path!r}")
+        return annotations
+    line = max(1, int(smoke_line))
+    smoke: dict[str, Any] = {
+        "path": p,
+        "start_line": line,
+        "end_line": line,
+        "annotation_level": "notice",
+        "title": "Smoke (opt-in)",
+        "message": (
+            "Opt-in smoke annotation — validates Checks API when anchors are sparse."
+        ),
+    }
+    return [*annotations, smoke]
+
+
+def smoke_annotation_requested(*, cli_flag: bool) -> bool:
+    """True when ``--smoke-annotation`` or ``ENDOR_GITHUB_CHECK_SMOKE`` is enabled."""
+    if cli_flag:
+        return True
+    v = os.environ.get("ENDOR_GITHUB_CHECK_SMOKE", "").strip().lower()
+    return v in ("1", "true", "yes")
+
+
 def _summary_markdown(
     findings: list[dict[str, Any]],
     annotations_total: int,
@@ -210,6 +250,25 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--check-name", default=_CHECK_NAME_DEFAULT)
     parser.add_argument("--mode", choices=("dry-run", "apply"), default="dry-run")
+    parser.add_argument(
+        "--smoke-annotation",
+        action="store_true",
+        help=(
+            "Append one synthetic annotation (path/line). "
+            "Or set env ENDOR_GITHUB_CHECK_SMOKE=1."
+        ),
+    )
+    parser.add_argument(
+        "--smoke-path",
+        default=os.environ.get("ENDOR_GITHUB_CHECK_SMOKE_PATH", "pyproject.toml"),
+        help="Repo-relative path for synthetic annotation.",
+    )
+    parser.add_argument(
+        "--smoke-line",
+        type=int,
+        default=int(os.environ.get("ENDOR_GITHUB_CHECK_SMOKE_LINE", "1")),
+        help="1-based line for synthetic annotation.",
+    )
     args = parser.parse_args(argv)
 
     token = os.environ.get("GITHUB_TOKEN", "")
@@ -238,8 +297,20 @@ def main(argv: list[str] | None = None) -> int:
         if loc.get("file") and loc.get("line") is not None:
             located.append(f)
     annotations = build_annotations(located)
+    smoke_on = smoke_annotation_requested(cli_flag=bool(args.smoke_annotation))
+    annotations = maybe_append_smoke_annotation(
+        annotations,
+        do_append=smoke_on,
+        smoke_path=str(args.smoke_path),
+        smoke_line=int(args.smoke_line),
+    )
     conclusion = _check_conclusion(findings)
 
+    if smoke_on:
+        print(
+            "Opt-in smoke annotation: enabled "
+            f"(path={args.smoke_path!r}, line={args.smoke_line})."
+        )
     print(
         f"Findings: {len(findings)}, with file+line: {len(located)} — "
         f"annotations to send: {len(annotations)}, conclusion: {conclusion}"
