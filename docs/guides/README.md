@@ -3,7 +3,7 @@
 SDK how-to and workflows.
 
 - [consumer-ux-list-update.md](consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
-- [pr-comment-config-and-parallel-comments.md](pr-comment-config-and-parallel-comments.md) — API-backed inline PR reviews and Checks annotations; historical PRCommentConfig notes.
+- [pr-comment-config-and-parallel-comments.md](pr-comment-config-and-parallel-comments.md) — Endor findings → GitHub pull request review comments in CI; historical PRCommentConfig notes.
 - [retrieving-scan-results.md](retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 - [self-validation-scorecard-and-replay.md](self-validation-scorecard-and-replay.md) — Deterministic scorecards, nightly artifacts, and replay-friendly snapshots.
 

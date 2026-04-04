@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""Validate Endor API finding → file/line extraction for Option B / Option C.
+r"""Validate Endor API finding → file/line extraction for PR review comments.
 
 Offline: pass ``--fixture`` with a JSON array of finding dicts.
 
@@ -48,6 +48,11 @@ def main(argv: list[str] | None = None) -> int:
         help="PR head commit for live API fetch",
     )
     parser.add_argument(
+        "--head-ref",
+        default=os.environ.get("GITHUB_HEAD_REF", ""),
+        help="PR head ref for ScanResult / RepositoryVersion matching (live only)",
+    )
+    parser.add_argument(
         "--fixture",
         type=Path,
         help="JSON array of finding dicts (offline golden)",
@@ -63,6 +68,14 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=500,
         help="Max Finding.get calls (live only)",
+    )
+    parser.add_argument(
+        "--scan-result-uuid",
+        default="",
+        help=(
+            "Optional ScanResult UUID (live only): findings from that scan only; "
+            "see load_findings_dicts_for_pr."
+        ),
     )
     parser.add_argument(
         "--fail-if-zero-located",
@@ -91,8 +104,10 @@ def main(argv: list[str] | None = None) -> int:
         findings = load_findings_dicts_for_pr(
             repo=args.repo,
             head_sha=args.commit_sha,
+            head_ref=args.head_ref.strip(),
             poll_timeout_sec=args.poll_timeout,
             max_findings=args.max_findings,
+            scan_result_uuid=args.scan_result_uuid.strip() or None,
         )
         source = "live API"
 
