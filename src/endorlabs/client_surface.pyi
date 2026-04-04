@@ -28,6 +28,7 @@ from .resources.package_license import PackageLicense
 from .resources.package_version import PackageVersion
 from .resources.policy import Policy
 from .resources.policy_template import PolicyTemplate
+from .resources.pr_comment_config import PRCommentConfig
 from .resources.project import Project
 from .resources.query_malware import QueryMalware
 from .resources.query_vulnerability import QueryVulnerability
@@ -69,6 +70,7 @@ class _APIKeyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[APIKey]:
         """List resources with full pagination and optional concurrent mode."""
@@ -95,6 +97,7 @@ class _APIKeyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> APIKey:
         """Return the single resource matching criteria."""
@@ -120,6 +123,7 @@ class _APIKeyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[APIKey]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -183,6 +187,7 @@ class _AuditLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[AuditLog]:
         """List resources with full pagination and optional concurrent mode."""
@@ -209,6 +214,7 @@ class _AuditLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> AuditLog:
         """Return the single resource matching criteria."""
@@ -234,6 +240,7 @@ class _AuditLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[AuditLog]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -297,6 +304,7 @@ class _AuthenticationLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[AuthenticationLog]:
         """List resources with full pagination and optional concurrent mode."""
@@ -323,6 +331,7 @@ class _AuthenticationLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> AuthenticationLog:
         """Return the single resource matching criteria."""
@@ -348,6 +357,7 @@ class _AuthenticationLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[AuthenticationLog]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -390,6 +400,7 @@ class _AuthorizationPolicyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[AuthorizationPolicy]:
         """List resources with full pagination and optional concurrent mode."""
@@ -416,6 +427,7 @@ class _AuthorizationPolicyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> AuthorizationPolicy:
         """Return the single resource matching criteria."""
@@ -441,6 +453,7 @@ class _AuthorizationPolicyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[AuthorizationPolicy]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -538,6 +551,7 @@ class _CodeOwnersFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[CodeOwners]:
         """List resources with full pagination and optional concurrent mode."""
@@ -564,6 +578,7 @@ class _CodeOwnersFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> CodeOwners:
         """Return the single resource matching criteria."""
@@ -589,6 +604,7 @@ class _CodeOwnersFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[CodeOwners]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -686,6 +702,7 @@ class _DependencyMetadataFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[DependencyMetadata]:
         """List resources with full pagination and optional concurrent mode."""
@@ -712,6 +729,7 @@ class _DependencyMetadataFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> DependencyMetadata:
         """Return the single resource matching criteria."""
@@ -737,6 +755,7 @@ class _DependencyMetadataFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[DependencyMetadata]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -832,6 +851,7 @@ class _EndorLicenseFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[EndorLicense]:
         """List resources with full pagination and optional concurrent mode."""
@@ -858,6 +878,7 @@ class _EndorLicenseFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> EndorLicense:
         """Return the single resource matching criteria."""
@@ -883,6 +904,7 @@ class _EndorLicenseFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[EndorLicense]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -925,6 +947,7 @@ class _FindingFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Finding]:
         """List resources with full pagination and optional concurrent mode."""
@@ -951,6 +974,7 @@ class _FindingFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Finding:
         """Return the single resource matching criteria."""
@@ -976,6 +1000,7 @@ class _FindingFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Finding]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1071,6 +1096,7 @@ class _FindingLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[FindingLog]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1097,6 +1123,7 @@ class _FindingLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> FindingLog:
         """Return the single resource matching criteria."""
@@ -1122,6 +1149,7 @@ class _FindingLogFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[FindingLog]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1187,6 +1215,7 @@ class _InstallationFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Installation]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1213,6 +1242,7 @@ class _InstallationFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Installation:
         """Return the single resource matching criteria."""
@@ -1238,6 +1268,7 @@ class _InstallationFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Installation]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1335,6 +1366,7 @@ class _InvitationFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Invitation]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1361,6 +1393,7 @@ class _InvitationFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Invitation:
         """Return the single resource matching criteria."""
@@ -1386,6 +1419,7 @@ class _InvitationFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Invitation]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1481,6 +1515,7 @@ class _LinterResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[LinterResult]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1507,6 +1542,7 @@ class _LinterResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> LinterResult:
         """Return the single resource matching criteria."""
@@ -1532,6 +1568,7 @@ class _LinterResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[LinterResult]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1596,6 +1633,7 @@ class _MalwareFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Malware]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1622,6 +1660,7 @@ class _MalwareFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Malware:
         """Return the single resource matching criteria."""
@@ -1647,6 +1686,7 @@ class _MalwareFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Malware]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1689,6 +1729,7 @@ class _MetricFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Metric]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1715,6 +1756,7 @@ class _MetricFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Metric:
         """Return the single resource matching criteria."""
@@ -1740,6 +1782,7 @@ class _MetricFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Metric]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1837,6 +1880,7 @@ class _NamespaceFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Namespace]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1863,6 +1907,7 @@ class _NamespaceFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Namespace:
         """Return the single resource matching criteria."""
@@ -1888,6 +1933,7 @@ class _NamespaceFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Namespace]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -1967,6 +2013,7 @@ class _NotificationTargetFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[NotificationTarget]:
         """List resources with full pagination and optional concurrent mode."""
@@ -1993,6 +2040,7 @@ class _NotificationTargetFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> NotificationTarget:
         """Return the single resource matching criteria."""
@@ -2018,6 +2066,7 @@ class _NotificationTargetFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[NotificationTarget]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2086,6 +2135,157 @@ class _NotificationTargetFacade:
         """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
         ...
 
+class _PRCommentConfigFacade:
+    """PR comment configuration resource model.
+
+    Identity kwargs: name (-> meta.name).
+    Create mode: both.
+    Update mode: update_mask required.
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[PRCommentConfig]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> PRCommentConfig:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[PRCommentConfig]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        namespace: str | None = ...,
+    ) -> PRCommentConfig:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PRCommentConfig:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
+    def update(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        payload: Any | None = ...,
+        *,
+        update_mask: str | None = ...,
+        meta_description: str | None = ...,
+        meta_tags: list[str] | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> PRCommentConfig:
+        """Update a resource: ``update_mask`` + payload, or field kwargs (mask."""
+        ...
+
+    def delete(
+        self,
+        name_or_resource: str | PRCommentConfig,
+        namespace: str | None = ...,
+        *,
+        ignore_missing: bool = ...,
+    ) -> bool:
+        """Remove a resource by UUID or resource object."""
+        ...
+
+    def tag(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        tags: list[str],
+        namespace: str | None = ...,
+    ) -> PRCommentConfig:
+        """Set ``meta.tags`` (replaces existing tags)."""
+        ...
+
+    def untag(
+        self,
+        id_or_resource: str | PRCommentConfig,
+        keys: list[str],
+        namespace: str | None = ...,
+    ) -> PRCommentConfig:
+        """Remove listed tags from ``meta.tags``; fetch, filter, then update."""
+        ...
+
 class _PackageLicenseFacade:
     """PackageLicense resource model extending BaseResource.
 
@@ -2115,6 +2315,7 @@ class _PackageLicenseFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[PackageLicense]:
         """List resources with full pagination and optional concurrent mode."""
@@ -2141,6 +2342,7 @@ class _PackageLicenseFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> PackageLicense:
         """Return the single resource matching criteria."""
@@ -2166,6 +2368,7 @@ class _PackageLicenseFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[PackageLicense]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2263,6 +2466,7 @@ class _PackageVersionFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[PackageVersion]:
         """List resources with full pagination and optional concurrent mode."""
@@ -2289,6 +2493,7 @@ class _PackageVersionFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> PackageVersion:
         """Return the single resource matching criteria."""
@@ -2314,6 +2519,7 @@ class _PackageVersionFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[PackageVersion]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2411,6 +2617,7 @@ class _PolicyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Policy]:
         """List resources with full pagination and optional concurrent mode."""
@@ -2437,6 +2644,7 @@ class _PolicyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Policy:
         """Return the single resource matching criteria."""
@@ -2462,6 +2670,7 @@ class _PolicyFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Policy]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2557,6 +2766,7 @@ class _PolicyTemplateFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[PolicyTemplate]:
         """List resources with full pagination and optional concurrent mode."""
@@ -2583,6 +2793,7 @@ class _PolicyTemplateFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> PolicyTemplate:
         """Return the single resource matching criteria."""
@@ -2608,6 +2819,7 @@ class _PolicyTemplateFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[PolicyTemplate]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2650,6 +2862,7 @@ class _ProjectFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Project]:
         """List resources with full pagination and optional concurrent mode."""
@@ -2676,6 +2889,7 @@ class _ProjectFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Project:
         """Return the single resource matching criteria."""
@@ -2701,6 +2915,7 @@ class _ProjectFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Project]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2841,6 +3056,7 @@ class _RepositoryFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Repository]:
         """List resources with full pagination and optional concurrent mode."""
@@ -2867,6 +3083,7 @@ class _RepositoryFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Repository:
         """Return the single resource matching criteria."""
@@ -2892,6 +3109,7 @@ class _RepositoryFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Repository]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -2990,6 +3208,7 @@ class _RepositoryVersionFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[RepositoryVersion]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3016,6 +3235,7 @@ class _RepositoryVersionFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> RepositoryVersion:
         """Return the single resource matching criteria."""
@@ -3041,6 +3261,7 @@ class _RepositoryVersionFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[RepositoryVersion]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3158,6 +3379,7 @@ class _ScanProfileFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[ScanProfile]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3184,6 +3406,7 @@ class _ScanProfileFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> ScanProfile:
         """Return the single resource matching criteria."""
@@ -3209,6 +3432,7 @@ class _ScanProfileFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[ScanProfile]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3307,6 +3531,7 @@ class _ScanResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[ScanResult]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3333,6 +3558,7 @@ class _ScanResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> ScanResult:
         """Return the single resource matching criteria."""
@@ -3358,6 +3584,7 @@ class _ScanResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[ScanResult]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3450,6 +3677,7 @@ class _ScanWorkflowFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[ScanWorkflow]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3476,6 +3704,7 @@ class _ScanWorkflowFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> ScanWorkflow:
         """Return the single resource matching criteria."""
@@ -3501,6 +3730,7 @@ class _ScanWorkflowFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[ScanWorkflow]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3548,6 +3778,7 @@ class _ScanWorkflowResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[ScanWorkflowResult]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3574,6 +3805,7 @@ class _ScanWorkflowResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> ScanWorkflowResult:
         """Return the single resource matching criteria."""
@@ -3599,6 +3831,7 @@ class _ScanWorkflowResultFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[ScanWorkflowResult]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3651,6 +3884,7 @@ class _SemgrepRuleFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[SemgrepRule]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3677,6 +3911,7 @@ class _SemgrepRuleFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> SemgrepRule:
         """Return the single resource matching criteria."""
@@ -3702,6 +3937,7 @@ class _SemgrepRuleFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[SemgrepRule]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3794,6 +4030,7 @@ class _VersionUpgradeFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[VersionUpgrade]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3820,6 +4057,7 @@ class _VersionUpgradeFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> VersionUpgrade:
         """Return the single resource matching criteria."""
@@ -3845,6 +4083,7 @@ class _VersionUpgradeFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[VersionUpgrade]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3896,6 +4135,7 @@ class _VulnerabilityFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> list[Vulnerability]:
         """List resources with full pagination and optional concurrent mode."""
@@ -3922,6 +4162,7 @@ class _VulnerabilityFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Vulnerability:
         """Return the single resource matching criteria."""
@@ -3947,6 +4188,7 @@ class _VulnerabilityFacade:
         to_date: str | None = ...,
         archive: bool | None = ...,
         pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> Iterator[Vulnerability]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
@@ -3967,8 +4209,8 @@ class Client:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
     DependencyMetadata, EndorLicense, Finding, FindingLog, Installation,
     Invitation, LinterResult, Malware, Metric, Namespace, NotificationTarget,
-    PackageLicense, PackageVersion, Policy, PolicyTemplate, Project,
-    QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
+    PRCommentConfig, PackageLicense, PackageVersion, Policy, PolicyTemplate,
+    Project, QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
     ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult,
     SemgrepRule, VersionUpgrade, Vulnerability
     Custom: ScanLogs
@@ -4006,6 +4248,8 @@ class Client:
     """An Endor Labs namespace entity extending BaseResource."""
     NotificationTarget: _NotificationTargetFacade
     """Notification Target resource model."""
+    PRCommentConfig: _PRCommentConfigFacade
+    """PR comment configuration resource model."""
     PackageLicense: _PackageLicenseFacade
     """PackageLicense resource model extending BaseResource."""
     PackageVersion: _PackageVersionFacade

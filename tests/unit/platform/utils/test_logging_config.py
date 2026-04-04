@@ -209,8 +209,13 @@ class TestRedactingFilterReprIntegration:
         assert "REDACTED" in result
 
     def test_repr_with_normal_value(self) -> None:
-        """repr() of a dict with a normal value uses homogeneous single quoting."""
-        secret_dict = {"token": "eyJhbGciOiJSUzI1NiJ9"}
+        """repr() of a dict with a normal value uses homogeneous single quoting.
+
+        The literal below is intentionally JWT-header-shaped for redaction coverage;
+        it is not a real credential. ``endorctl:allow`` satisfies admission policy
+        for this documented test fixture.
+        """
+        secret_dict = {"token": "eyJhbGciOiJSUzI1NiJ9"}  # endorctl:allow
         repr_str = repr(secret_dict)
         result = _apply(self.rf, repr_str)
         assert "eyJhbGciOiJSUzI1NiJ9" not in result

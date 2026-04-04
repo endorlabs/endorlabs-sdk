@@ -6,13 +6,13 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- mapped entities: `208`
-- generated artifact files: `147`
-- facade contract resources: `33`
+- mapped entities: `210`
+- generated artifact files: `149`
+- facade contract resources: `34`
 - registry parity status: `pass`
-- operation metadata entries: `719`
-- payload schema resources: `33`
-- runtime model import index entries: `33`
+- operation metadata entries: `723`
+- payload schema resources: `34`
+- runtime model import index entries: `34`
 
 - `APIClient`
 - `AmbiguousError`
@@ -68,6 +68,7 @@ Auto-generated inventories for stable/public surfaces.
 - `package_version`
 - `policy`
 - `policy_template`
+- `pr_comment_config`
 - `project`
 - `query_malware`
 - `query_vulnerability`
@@ -99,9 +100,9 @@ Auto-generated inventories for stable/public surfaces.
 
 ### `_ListableFacade` methods
 
-- `list(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, **kwargs: 'Any') -> 'list[T]'`
-- `lookup(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int' = 2, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, **kwargs: 'Any') -> 'T'`
-- `list_iter(self, traverse: 'bool' = False, concurrent: 'bool' = False, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, **kwargs: 'Any') -> 'Iterator[T]'`
+- `list(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'list[T]'`
+- `lookup(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int' = 2, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'T'`
+- `list_iter(self, traverse: 'bool' = False, concurrent: 'bool' = False, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'Iterator[T]'`
 
 ### `ResourceFacade` methods
 
@@ -132,6 +133,7 @@ Auto-generated inventories for stable/public surfaces.
 | Metric | metrics | tenant | — | list, get, create, update, delete |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
+| PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
 | PackageLicense | package-licenses | oss | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |

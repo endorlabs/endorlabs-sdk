@@ -51,4 +51,3 @@ Each resource test file follows the same order where the registry supports the o
 **Fixtures:** Use conftest `api_client`, `namespace`, `root_namespace`. For resources where `"update" not in entry.supported_ops` (api_keys, audit_logs, finding_logs, linter_results), add a test that asserts `client.<attr>.update(...)` raises `NotImplementedError`.
 
 **Checklist after changes:** Every registry entry has a test file; List/Get Y for all; Update N tests for api_keys, audit_logs, finding_logs, linter_results; `pytest tests/test_openapi_spec.py -v` passes when spec is present.
-

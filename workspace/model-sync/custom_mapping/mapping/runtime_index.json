@@ -143,6 +143,14 @@
       "update_requires_mask": false,
       "workflow_flags": []
     },
+    "pr-comment-configs": {
+      "create_mode": "both",
+      "identity_filter_fields": [
+        "name"
+      ],
+      "update_requires_mask": true,
+      "workflow_flags": []
+    },
     "projects": {
       "create_mode": "both",
       "identity_filter_fields": [
@@ -257,6 +265,7 @@
     "package_license_build_create": "endorlabs.resources.package_license:build_create_payload",
     "package_version_build_create": "endorlabs.resources.package_version:build_create_payload",
     "policy_build_create": "endorlabs.resources.policy:build_create_payload",
+    "pr_comment_config_build_create": "endorlabs.resources.pr_comment_config:build_create_payload",
     "project_build_create": "endorlabs.resources.project:build_create_payload",
     "query_malware_build_create": "endorlabs.resources.query_malware:build_create_payload",
     "query_vulnerability_build_create": "endorlabs.resources.query_vulnerability:build_create_payload",
@@ -283,6 +292,7 @@
     "Metric": "endorlabs.resources.metric:Metric",
     "Namespace": "endorlabs.resources.namespace:Namespace",
     "NotificationTarget": "endorlabs.resources.notification_target:NotificationTarget",
+    "PRCommentConfig": "endorlabs.resources.pr_comment_config:PRCommentConfig",
     "PackageLicense": "endorlabs.resources.package_license:PackageLicense",
     "PackageVersion": "endorlabs.resources.package_version:PackageVersion",
     "Policy": "endorlabs.resources.policy:Policy",
@@ -690,6 +700,25 @@
       ]
     },
     "policy-templates": {
+      "immutable_fields": [
+        "meta.create_time",
+        "meta.created_by",
+        "meta.index_data",
+        "meta.kind",
+        "meta.references",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.version",
+        "tenant_meta.namespace",
+        "uuid"
+      ],
+      "mutable_fields": [
+        "meta.description",
+        "meta.tags"
+      ]
+    },
+    "pr-comment-configs": {
       "immutable_fields": [
         "meta.create_time",
         "meta.created_by",
