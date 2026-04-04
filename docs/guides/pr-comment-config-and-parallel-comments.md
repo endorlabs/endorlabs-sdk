@@ -1,106 +1,93 @@
-# PR Comment Config and Parallel Comments
+# PR review comments from Endor findings (API-backed)
 
-This guide covers two complementary PR-comment paths in CI:
+This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → findings scoped by PR context when available), then posted as [**pull request review comments**](https://docs.github.com/en/rest/pulls/comments) inside a [**pull request review**](https://docs.github.com/en/rest/pulls/reviews). These are **not** issue comments, commit comments, or GitHub Checks annotations.
 
-- Option A: Endor-managed PR comments using `PRCommentConfig` template sync.
-- Option B: In-house parallel PR comments based on scan finding location metadata.
+In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), this flow defaults to **enabled** on pull requests. Set repository variable `ENDOR_ENABLE_INHOUSE_PR_COMMENTS` to `false` to skip. Default mode is **`apply`**; set `ENDOR_INHOUSE_PR_COMMENTS_MODE` to **`dry-run`** to log the planned comments only (each planned comment is printed with a code-region fence in the job log).
 
-## Option A - Template sync via `PRCommentConfig`
+## Data flow
 
-Workflow step: `Option A - sync Endor PR comment template config`
+1. The **Endor Labs** action runs a scan and uploads results to the platform.
+2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), and picks a result whose `spec.versions[].sha` matches the PR **head SHA** (preferring `TYPE_PR_SECURITY_REVIEW` when several match). When `spec.environment.config` exposes a PR context id (e.g. `ExecutionID`), findings are loaded with **`Finding.list`** and OpenAPI **`list_parameters.ci_run_uuid`**; otherwise UUIDs from `spec.findings` (or blocking + warning lists) are hydrated via **`Finding.get`**. Dicts are passed to the posting script.
+3. [`.github/scripts/post_parallel_pr_comments.py`](.github/scripts/post_parallel_pr_comments.py) maps findings to GitHub review payloads. Location resolution is centralized in [`.github/scripts/endor_scan_findings.py`](.github/scripts/endor_scan_findings.py) (`extract_location`): `spec.finding_metadata` (including `file_path` / `line_number`, `security_review_data.code_snippet`, and `custom` Semgrep-style `path` + `start.line`), then `spec.dependency_file_paths` and summary fallbacks when needed.
 
-- Script: `.github/scripts/sync_pr_comment_template.py`
-- Template file: `.github/templates/pr-findings-summary.tmpl`
-- Resource: `Client.PRCommentConfig` (PascalCase, endorctl semantics)
+**Field-level crosswalk:** [findings-pr-review-comment-matrix.md](../findings-pr-review-comment-matrix.md).
 
-Enable in repository variables:
+**Validate before pushing:**
 
-- `ENDOR_ENABLE_TEMPLATE_SYNC=true`
-- `ENDOR_NAMESPACE=<tenant.namespace>`
-- Optional: `ENDOR_API=<api base URL>`
+- Offline (no credentials): `uv run python .github/scripts/validate_pr_comment_flow.py --fixture tests/unit/github_scripts/fixtures/pr_comment_flow_golden.json`
+- Live (same API path as CI): `uv run --env-file .env python .github/scripts/validate_pr_comment_flow.py --repo owner/repo --commit-sha <head-sha>`
 
-Required secrets:
+Use `--fail-if-zero-located` to exit non-zero when findings load but none have an extractable file+line (common when API shape drifts).
 
-- `ENDOR_API_CREDENTIALS_KEY`
-- `ENDOR_API_CREDENTIALS_SECRET`
+Short poll (default ~120s in the script, workflow may pass `--poll-timeout`) waits for a **non-running** ScanResult so the job does not race the platform indexer. On failure or empty data, the script **fails open** (log and exit 0) so cosmetic steps do not break CI.
 
-Behavior:
+## Workflow step and script
 
-- Creates `github-pr-comments-template` if it does not exist.
-- Updates the existing resource when template/platform/propagate drift.
-- Emits status through workflow logs and `GITHUB_OUTPUT` (`template_sync_status`, `template_sync_reason`).
+Workflow step: **Post Endor findings as PR review comments (dry-run/apply)**
 
-## Option B - In-house parallel GitHub comments
+- Script: [`.github/scripts/post_parallel_pr_comments.py`](.github/scripts/post_parallel_pr_comments.py)
 
-Workflow step: `Option B - in-house parallel PR comments (dry-run/apply)`
+The script submits a **pull request review** (`POST .../pulls/{n}/reviews`) with `event: COMMENT` and a `comments` array of review comments on the **unified diff** (`path`, `line`, `side: RIGHT`, optional multi-line fields). See [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request). Failed batches fall back to per-comment `POST .../pulls/{n}/comments`. Finding paths are matched against `GET .../pulls/{n}/files`, and only lines present in **RIGHT-side** patch hunks are kept so GitHub does not return **422**. That is why comments appear under URLs like `.../pull/N/changes/...#r<comment_id>` only when the finding anchors to a changed line in the PR.
 
-- Script: `.github/scripts/post_parallel_pr_comments.py`
-- Scan artifact input: `.endorlabs-artifacts/scan-output.json`
+### Repository variables
 
-Enable in repository variables:
+- `ENDOR_ENABLE_INHOUSE_PR_COMMENTS` — omit or `true` to run; set `false` to skip.
+- `ENDOR_INHOUSE_PR_COMMENTS_MODE=apply` (default) or `dry-run`
 
-- `ENDOR_ENABLE_INHOUSE_PR_COMMENTS=true`
-- `ENDOR_INHOUSE_PR_COMMENTS_MODE=dry-run` or `apply`
+### Required secrets and variables
 
-Required permissions:
+- `GITHUB_TOKEN` in the job
+- `ENDOR_NAMESPACE`, `ENDOR_API` (variable), `ENDOR_API_CREDENTIALS_KEY` / `ENDOR_API_CREDENTIALS_SECRET` (secrets)
+
+### Required permissions
 
 - Workflow job permission `pull-requests: write`
-- `GITHUB_TOKEN` available in workflow environment
 
-Behavior:
+The job also keeps `checks: write` so the **Endor Labs GitHub Action** (which receives `github_token` on the comprehensive scan step) can continue to register its own check runs (e.g. “Endor Labs Automated Scan”); that is separate from this review-comment flow.
 
-- Extracts findings from scan JSON recursively.
-- Posts/updates one deterministic rollup summary comment (`<!-- endorlabs-inhouse-summary -->` marker) with deep links.
-- Attempts line comments for findings with precise `file` + `line` metadata and includes direct GitHub blob links.
-- Uses deterministic per-finding markers to avoid duplicate line comments on reruns.
-- Gracefully skips line comments when diff hunks are stale or not commentable.
+### Behavior
 
-## Embedded UX capability matrix
+- Paginated fetch of existing pull request review comments to dedupe via hidden HTML markers.
+- Skips findings whose path is not in the PR file list (or normalizes path when the file list is empty).
+- Optional multi-line anchors when `line_end` is present in metadata (`start_line` / `line` on `RIGHT` side).
+- Failed review batches log the **full GitHub error body** then try per-comment fallback.
 
-GitHub PR comments do not expose arbitrary widget or iframe embed APIs. The practical “embedded” patterns are:
+### CLI (optional)
 
-- **Option A (template):** Markdown **fenced code blocks** for snippets using Endor’s template helpers `getCustomCodeSnippet` and `fixBackticks` (see `.endorlabs-context/docs/scan-pr-scans-pr-comments.md`). This is the platform’s documented way to render Custom metadata snippets safely in comment bodies.
-- **Option B (script):** GitHub **REST** payloads with `path`, `line`, `side`, and `commit_id` for **inline review comments** on the diff, built from `file` / `line` in finding metadata (see `.github/scripts/post_parallel_pr_comments.py`).
+- `--poll-timeout` — seconds to wait for a terminal ScanResult (default `120` in script; CI may override).
+- `--max-findings` — cap on loaded findings (default `500`).
+- `--max-inline` — max review comments per run (default `30`).
+- `--review-batch-size` — comments per `.../reviews` request (default `25`).
 
-| Capability | Option A (`PRCommentConfig` template) | Option B (repo-native script) |
-|---|---|---|
-| Markdown links in comment body | Supported | Supported |
-| Snippet “embed” as fenced code in summary | Supported via `getCustomCodeSnippet` + `fixBackticks` | Optional one-line snippet in inline comment body when metadata includes text |
-| File+line deep links in markdown | Supported via `getFindingURL` / `getCustomLocation`; no GitHub blob URL in template root | Supported via constructed blob links from repo + commit SHA |
-| Inline review comments in PR diff | Platform-dependent scanner behavior | Supported via GitHub review comments API |
-| Deterministic dedupe across reruns | Limited to scanner behavior | Supported via marker keys |
-| Arbitrary widget/iframe embed in PR comment | Not supported | Not supported |
+## Historical: `PRCommentConfig` (not used in this CI path)
 
-## PRCommentConfig gap analysis
+The **`PRCommentConfig`** resource configures **Endor-managed** PR comments (server-side Go templates), not the repo script above. Relevant spec fields:
 
-`PRCommentConfig` currently exposes only:
+- `spec.platform_type` — SCM platform (e.g. `PLATFORM_SOURCE_GITHUB`).
+- `spec.template.findings_summary_template` — Go `text/template` evaluated on the platform when Endor posts PR comments.
 
-- `spec.platform_type`
-- `spec.template.findings_summary_template`
+This repo **no longer** syncs a custom template from CI. To restore the **vendor default** wording on a tenant after a custom template was applied, run locally (once) with API credentials:
 
-Practical gaps for embedded UX:
+```bash
+uv run python .github/scripts/sync_pr_comment_template.py \
+  --namespace "$ENDOR_NAMESPACE" \
+  --name github-pr-comments-template \
+  --template-path .tmp/pr-findings-summary-default-from-endor.tmpl \
+  --platform-type PLATFORM_SOURCE_GITHUB
+```
 
-- No dedicated structured fields for `file`, `line`, `line_end`, or precomputed deep-link URLs **in the template root**; deep links in the threaded summary rely on Endor URLs from helpers such as `getFindingURL` unless the platform extends the data model.
-- No controls for line-comment placement behavior (path/line anchoring strategy) from this resource alone.
-- No support for custom GitHub UI widgets/cards/iframes; output is still markdown/text rendered by GitHub comments.
-- No native dedupe key fields for custom in-house comment update semantics.
+Place the stock template text in `.tmp/pr-findings-summary-default-from-endor.tmpl` (that path is typically gitignored). See [`.github/templates/README.md`](.github/templates/README.md).
 
-Recommended fallback patterns:
+In **this repo’s CI** ([`ci-pr-main.yml`](../../.github/workflows/ci-pr-main.yml)), all Endor Labs Action scan steps set **`enable_pr_comments: false`**. PR feedback on pull requests comes only from **Post Endor findings as PR review comments** (`post_parallel_pr_comments.py`). Tenant-side `PRCommentConfig` templates still apply if other scans or automation enable platform PR comments outside this workflow.
 
-- Use Option A for consistent markdown summary formatting and link-heavy output.
-- Use Option B for deterministic inline anchors and blob links when location metadata is present.
-- Run both together for best UX parity with GitHub constraints.
-
-## Choosing Option A vs Option B
-
-- Use **Option A** when you want to stay on Endor-native PR comments and control the summary format.
-- Use **Option B** when you need a parallel comment stream with custom dedupe/reporting behavior.
-- You can run both: Option A for native comments, Option B for supplemental in-house annotations.
+**Deprecated GitHub repository variables (safe to remove in repo settings if set):** `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, and `ENDOR_GITHUB_CHECK_CONCLUSION` were used by a removed Checks-annotations path and are no longer read by workflows.
 
 ## Failure modes
 
-- Missing template credentials (`ENDOR_API_CREDENTIALS_*`) -> Option A step should be disabled or will fail auth.
-- Invalid Go template syntax/content -> Option A create/update returns API validation error.
-- Missing finding location metadata (`file`, `line`) -> Option B falls back to rollup only.
-- Outdated PR diff/hunks -> line comment POST may fail; script logs and continues.
-- Missing write permissions -> Option B comment writes fail; keep `dry-run` for verification.
+- Missing `ENDOR_API_CREDENTIALS_*` or `ENDOR_NAMESPACE` → API fetch logs errors; script skips with exit 0.
+- No **Project** for the repository URL → skip (ensure `meta.name` on the Project matches `https://github.com/owner/repo.git` or the same without `.git`).
+- ScanResult still **RUNNING** until poll timeout → best-effort pick; may yield empty finding UUIDs.
+- Missing finding location metadata → nothing posted for those rows.
+- Path not in PR diff / line not on RIGHT side of a hunk → GitHub **422**; batch failure logs response body; per-comment fallback may still skip.
+
+For **SARIF** upload to Code Scanning, use GitHub’s `github/codeql-action/upload-sarif` separately; this path does not replace code scanning uploads.

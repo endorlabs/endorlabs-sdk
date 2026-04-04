@@ -2,7 +2,9 @@
 """Sync Endor Labs PR comment template via PRCommentConfig resource.
 
 Creates or updates a tenant-scoped PRCommentConfig entry for GitHub using a
-template file on disk. Designed for CI usage in pull_request workflows.
+template file on disk. Intended for **manual** or one-off runs (for example
+restoring the vendor default template from ``.tmp/``); the main PR CI workflow
+does not invoke this script.
 """
 
 from __future__ import annotations

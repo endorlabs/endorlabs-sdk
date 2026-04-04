@@ -40,6 +40,7 @@ Index for SDK-specific documentation.
 
 ## Findings / Research
 
+- [findings-pr-review-comment-matrix.md](findings-pr-review-comment-matrix.md) — Endor Finding fields vs GitHub pull request review comment payloads (CI script crosswalk).
 - [findings/integration-test-pagination-research.md](findings/integration-test-pagination-research.md) — Research on test pagination configuration and conftest constants.
 
 ## When to update docs

@@ -550,11 +550,12 @@ jobs:
       contents: read
       pull-requests: write
       security-events: write
+      checks: write
       actions: read
     env:
-      ENDOR_ENABLE_TEMPLATE_SYNC: ${{ vars.ENDOR_ENABLE_TEMPLATE_SYNC || 'false' }}
-      ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'false' }}
-      ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'dry-run' }}
+      # Default: post PR review comments from Endor API findings on PRs. Set repo var to 'false' to skip.
+      ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'true' }}
+      ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'apply' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -575,10 +576,6 @@ jobs:
       - name: Sync dependencies for dependency-aware scans
         run: |
           uv sync --dev
-
-      - name: Prepare Endor scan artifact directory
-        run: |
-          mkdir -p .endorlabs-artifacts
 
       - name: Endor Labs Secrets scan (fast)
         uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
@@ -612,56 +609,61 @@ jobs:
           scan_secrets: true
           scan_sast: true
           additional_args: --ai-sast-analysis=agent-fallback
-          enable_pr_comments: ${{ github.event_name == 'pull_request' }}
+          enable_pr_comments: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          output_file: .endorlabs-artifacts/scan-output.json
 
-      - name: Option A - sync Endor PR comment template config
-        id: option_a_sync
+      - name: Resolve RepositoryVersion hint for PR findings flow
+        id: resolve_repo_version_hint
         if: >-
           github.event_name == 'pull_request' &&
-          env.ENDOR_ENABLE_TEMPLATE_SYNC == 'true' &&
-          vars.ENDOR_NAMESPACE != ''
+          env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
         env:
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
         run: |
-          uv run python .github/scripts/sync_pr_comment_template.py \
-            --namespace "${ENDOR_NAMESPACE}" \
-            --name "github-pr-comments-template" \
-            --template-path ".github/templates/pr-findings-summary.tmpl" \
-            --platform-type "PLATFORM_SOURCE_GITHUB"
+          set -euo pipefail
+          HINT="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs?per_page=100" --jq '.check_runs[] | select(.name=="Endor Labs Automated Scan") | .external_id' | head -n 1 || true)"
+          if [ -n "${HINT}" ]; then
+            echo "repository_version_hint=${HINT}" >> "$GITHUB_OUTPUT"
+            echo "Resolved repository-version hint from Endor check external_id."
+          else
+            echo "repository_version_hint=" >> "$GITHUB_OUTPUT"
+            echo "No Endor check external_id found; scripts will match by sha/ref."
+          fi
 
-      - name: Option B - in-house parallel PR comments (dry-run/apply)
-        id: option_b_comments
+      - name: Post Endor findings as PR review comments (dry-run/apply)
+        id: pr_review_comments
         if: >-
           github.event_name == 'pull_request' &&
           env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_REPOSITORY_VERSION_HINT: ${{ steps.resolve_repo_version_hint.outputs.repository_version_hint }}
         run: |
+          set -e
           uv run python .github/scripts/post_parallel_pr_comments.py \
-            --scan-output ".endorlabs-artifacts/scan-output.json" \
             --repo "${{ github.repository }}" \
             --pr-number "${{ github.event.pull_request.number }}" \
             --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --head-ref "${{ github.event.pull_request.head.ref }}" \
+            --repository-version-hint "${ENDOR_REPOSITORY_VERSION_HINT}" \
             --mode "${COMMENT_MODE}"
 
       - name: Comment flow status summary
         if: always() && github.event_name == 'pull_request'
         run: |
           {
-            echo "### PR Comment Flow Status"
-            echo "- Option A enabled: \`${{ env.ENDOR_ENABLE_TEMPLATE_SYNC }}\`"
-            echo "- Option A outcome: \`${{ steps.option_a_sync.outcome || 'skipped' }}\`"
-            echo "- Option A status: \`${{ steps.option_a_sync.outputs.template_sync_status || 'not-set' }}\`"
-            echo "- Option A reason: \`${{ steps.option_a_sync.outputs.template_sync_reason || 'n/a' }}\`"
-            echo "- Option B enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
-            echo "- Option B mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
-            echo "- Option B outcome: \`${{ steps.option_b_comments.outcome || 'skipped' }}\`"
+            echo "### PR review comments (Endor findings)"
+            echo "- Enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
+            echo "- Mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
+            echo "- Step outcome: \`${{ steps.pr_review_comments.outcome || 'skipped' }}\`"
+            echo "- RepositoryVersion hint (Endor check external_id): \`${{ steps.resolve_repo_version_hint.outputs.repository_version_hint || 'none' }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
