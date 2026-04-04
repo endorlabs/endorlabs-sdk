@@ -364,9 +364,10 @@ def build_review_comment_object(
         }
         if end_line is not None:
             end = _line_as_int(end_line)
-            if end > start:
-                obj["start_line"] = start
-                obj["line"] = end
+            lo, hi = (start, end) if start <= end else (end, start)
+            if hi > lo:
+                obj["start_line"] = lo
+                obj["line"] = hi
                 obj["start_side"] = "RIGHT"
         return obj
     except (TypeError, ValueError):
