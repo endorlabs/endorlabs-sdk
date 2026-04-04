@@ -23,4 +23,3 @@ Stable surface: `endorlabs.__all__` — APIClient, Client, exceptions (EndorAPIE
 - [create-update-payloads.md](create-update-payloads.md) — Thin landing page to canonical generated payload matrix.
 - [../../scripts/sync/README.md](../../scripts/sync/README.md) — Model-sync generation module guide.
 - [../../src/endorlabs/generated/README.md](../../src/endorlabs/generated/README.md) — Generated runtime artifact guide.
-

@@ -82,7 +82,7 @@ env:
   UV_VERSION: "0.9.3"
   VERIFYTYPES_RATCHET_MODE: "observe"
   VERIFYTYPES_MIN_COMPLETENESS: "0.0"
-  
+
   # Action versions - pinned for security
   ACTIONS_CHECKOUT_VERSION: "v6.0.2"
   ACTIONS_SETUP_PYTHON_VERSION: "v6.2.0"
@@ -550,7 +550,12 @@ jobs:
       contents: read
       pull-requests: write
       security-events: write
+      checks: write
       actions: read
+    env:
+      # Default: post PR review comments from Endor API findings on PRs. Set repo var to 'false' to skip.
+      ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'true' }}
+      ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'apply' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -604,8 +609,62 @@ jobs:
           scan_secrets: true
           scan_sast: true
           additional_args: --ai-sast-analysis=agent-fallback
-          enable_pr_comments: ${{ github.event_name == 'pull_request' }}
+          enable_pr_comments: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve RepositoryVersion hint for PR findings flow
+        id: resolve_repo_version_hint
+        if: >-
+          github.event_name == 'pull_request' &&
+          env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          HINT="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs?per_page=100" --jq '.check_runs[] | select(.name=="Endor Labs Automated Scan") | .external_id' | head -n 1 || true)"
+          if [ -n "${HINT}" ]; then
+            echo "repository_version_hint=${HINT}" >> "$GITHUB_OUTPUT"
+            echo "Resolved repository-version hint from Endor check external_id."
+          else
+            echo "repository_version_hint=" >> "$GITHUB_OUTPUT"
+            echo "No Endor check external_id found; scripts will match by sha/ref."
+          fi
+
+      - name: Post Endor findings as PR review comments (dry-run/apply)
+        id: pr_review_comments
+        if: >-
+          github.event_name == 'pull_request' &&
+          env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
+          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          ENDOR_API: ${{ vars.ENDOR_API }}
+          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
+          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
+          ENDOR_REPOSITORY_VERSION_HINT: ${{ steps.resolve_repo_version_hint.outputs.repository_version_hint }}
+        run: |
+          set -e
+          uv run python .github/scripts/post_parallel_pr_comments.py \
+            --repo "${{ github.repository }}" \
+            --pr-number "${{ github.event.pull_request.number }}" \
+            --commit-sha "${{ github.event.pull_request.head.sha }}" \
+            --head-ref "${{ github.event.pull_request.head.ref }}" \
+            --repository-version-hint "${ENDOR_REPOSITORY_VERSION_HINT}" \
+            --mode "${COMMENT_MODE}"
+
+      - name: Comment flow status summary
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          {
+            echo "### PR review comments (Endor findings)"
+            echo "- Enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
+            echo "- Mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
+            echo "- Step outcome: \`${{ steps.pr_review_comments.outcome || 'skipped' }}\`"
+            echo "- RepositoryVersion hint (Endor check external_id): \`${{ steps.resolve_repo_version_hint.outputs.repository_version_hint || 'none' }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ---------------------------------------------------------------------------
   # CI gate — single required status check for branch protection.
