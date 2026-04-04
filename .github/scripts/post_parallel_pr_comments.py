@@ -460,7 +460,7 @@ def emit_inline_comment_plan_to_log(
             e_ln = int(end_line) if end_line is not None else s_ln
         except (TypeError, ValueError):
             s_ln, e_ln = 0, 0
-        title = f"Option B inline #{i}: {path}:{s_ln}" + (
+        title = f"Finding inline #{i}: {path}:{s_ln}" + (
             f"-{e_ln}" if e_ln != s_ln else ""
         )
         if use_groups:
@@ -574,6 +574,16 @@ def main(argv: list[str] | None = None) -> int:
         default=os.environ.get("ENDOR_REPOSITORY_VERSION_HINT", ""),
         help="Optional repository-version hint (e.g. Endor check external_id).",
     )
+    parser.add_argument(
+        "--scan-result-uuid",
+        default=os.environ.get("ENDOR_SCAN_RESULT_UUID", ""),
+        help=(
+            "Optional ScanResult UUID: hydrate findings from that scan only "
+            "(must match PR head / repository version). "
+            "Default: merge all matching terminal scans. "
+            "Override with ENDOR_SCAN_RESULT_UUID."
+        ),
+    )
     parser.add_argument("--mode", choices=("dry-run", "apply"), default="dry-run")
     args = parser.parse_args(argv)
 
@@ -587,6 +597,9 @@ def main(argv: list[str] | None = None) -> int:
         head_ref=args.head_ref,
         repository_version_hint=(
             args.repository_version_hint if args.repository_version_hint else None
+        ),
+        scan_result_uuid=(
+            args.scan_result_uuid if args.scan_result_uuid.strip() else None
         ),
         poll_timeout_sec=args.poll_timeout,
         max_findings=args.max_findings,

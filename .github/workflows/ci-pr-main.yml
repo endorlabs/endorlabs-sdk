@@ -553,11 +553,9 @@ jobs:
       checks: write
       actions: read
     env:
-      # Defaults: run B/C on PRs (API-backed findings). Set repo vars to 'false' to disable.
+      # Default: post PR review comments from Endor API findings on PRs. Set repo var to 'false' to skip.
       ENDOR_ENABLE_INHOUSE_PR_COMMENTS: ${{ vars.ENDOR_ENABLE_INHOUSE_PR_COMMENTS || 'true' }}
       ENDOR_INHOUSE_PR_COMMENTS_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'apply' }}
-      ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS: ${{ vars.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS || 'true' }}
-      ENDOR_GITHUB_CHECK_MODE: ${{ vars.ENDOR_GITHUB_CHECK_MODE || 'apply' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -611,17 +609,14 @@ jobs:
           scan_secrets: true
           scan_sast: true
           additional_args: --ai-sast-analysis=agent-fallback
-          enable_pr_comments: ${{ github.event_name == 'pull_request' }}
+          enable_pr_comments: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Resolve RepositoryVersion hint for PR findings flow
         id: resolve_repo_version_hint
         if: >-
           github.event_name == 'pull_request' &&
-          (
-            env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true' ||
-            env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS == 'true'
-          )
+          env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -637,8 +632,8 @@ jobs:
             echo "No Endor check external_id found; scripts will match by sha/ref."
           fi
 
-      - name: Option B - pull request review comments (dry-run/apply)
-        id: option_b_comments
+      - name: Post Endor findings as PR review comments (dry-run/apply)
+        id: pr_review_comments
         if: >-
           github.event_name == 'pull_request' &&
           env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
@@ -660,40 +655,14 @@ jobs:
             --repository-version-hint "${ENDOR_REPOSITORY_VERSION_HINT}" \
             --mode "${COMMENT_MODE}"
 
-      - name: Option C - GitHub Check Run annotations (dry-run/apply)
-        id: option_c_checks
-        if: >-
-          github.event_name == 'pull_request' &&
-          env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHECK_MODE: ${{ env.ENDOR_GITHUB_CHECK_MODE }}
-          # success = green check while annotations still show warning/failure severity
-          ENDOR_GITHUB_CHECK_CONCLUSION: ${{ vars.ENDOR_GITHUB_CHECK_CONCLUSION || 'success' }}
-          ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
-          ENDOR_API: ${{ vars.ENDOR_API }}
-          ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
-          ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
-          ENDOR_REPOSITORY_VERSION_HINT: ${{ steps.resolve_repo_version_hint.outputs.repository_version_hint }}
-        run: |
-          uv run python .github/scripts/post_github_check_run.py \
-            --repo "${{ github.repository }}" \
-            --commit-sha "${{ github.event.pull_request.head.sha }}" \
-            --head-ref "${{ github.event.pull_request.head.ref }}" \
-            --repository-version-hint "${ENDOR_REPOSITORY_VERSION_HINT}" \
-            --mode "${CHECK_MODE}"
-
       - name: Comment flow status summary
         if: always() && github.event_name == 'pull_request'
         run: |
           {
-            echo "### PR Comment Flow Status"
-            echo "- Option B enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
-            echo "- Option B mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
-            echo "- Option B outcome: \`${{ steps.option_b_comments.outcome || 'skipped' }}\`"
-            echo "- Option C (Checks API) enabled: \`${{ env.ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS }}\`"
-            echo "- Option C mode: \`${{ env.ENDOR_GITHUB_CHECK_MODE }}\`"
-            echo "- Option C outcome: \`${{ steps.option_c_checks.outcome || 'skipped' }}\`"
+            echo "### PR review comments (Endor findings)"
+            echo "- Enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
+            echo "- Mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
+            echo "- Step outcome: \`${{ steps.pr_review_comments.outcome || 'skipped' }}\`"
             echo "- RepositoryVersion hint (Endor check external_id): \`${{ steps.resolve_repo_version_hint.outputs.repository_version_hint || 'none' }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
 

@@ -4,6 +4,10 @@ Primary flow: Project -> RepositoryVersion -> terminal ScanResult(s) -> union
 of ``spec`` finding UUID lists -> ``Finding.get``. If every matching scan has
 empty lists, fall back to ``Finding.list`` scoped to the RepositoryVersion
 (same scope as the UI version findings page).
+
+Pass ``scan_result_uuid`` to :func:`load_findings_dicts_for_pr` to use **one**
+terminal scan's finding lists only (no cross-scan merge, no RepositoryVersion
+list fallback).
 """
 
 from __future__ import annotations
@@ -534,17 +538,83 @@ def hydrate_findings(
     return out
 
 
+def _pick_finding_uuids_from_terminal_scans(
+    *,
+    scan_rows: list[Any],
+    terminal_matches: list[Any],
+    scan_result_uuid: str | None,
+) -> tuple[list[str], bool] | None:
+    """Collect finding UUIDs from merged terminal scans or one selected scan.
+
+    Returns ``(uuids, single_scan_mode)``, or ``None`` after logging a fatal
+    selection error to stderr.
+    """
+    scan_ids = ",".join(
+        str(getattr(sr, "uuid", None) or "?") for sr in terminal_matches
+    )
+    want_scan = (scan_result_uuid or "").strip().lower()
+    if want_scan:
+        selected = None
+        for sr in scan_rows:
+            u = getattr(sr, "uuid", None)
+            if isinstance(u, str) and u.strip().lower() == want_scan:
+                selected = sr
+                break
+        allowed_uuids = {
+            str(sr.uuid).lower()
+            for sr in terminal_matches
+            if getattr(sr, "uuid", None) is not None
+        }
+        sel_uuid = (
+            str(selected.uuid).lower()
+            if selected is not None and getattr(selected, "uuid", None)
+            else ""
+        )
+        if selected is None or sel_uuid not in allowed_uuids:
+            print(
+                "scan_result_uuid does not identify a terminal ScanResult "
+                "that matches this PR head / repository version, or it was "
+                f"not found in recent project results (wanted={want_scan!r}, "
+                f"terminal=[{scan_ids}]).",
+                file=sys.stderr,
+            )
+            return None
+        uuids = finding_uuids_from_scan_result(selected.spec)
+        print(
+            f"Single ScanResult mode: uuid={selected.uuid!r} -> "
+            f"{len(uuids)} finding id(s) (no cross-scan merge).",
+            file=sys.stderr,
+        )
+        return uuids, True
+    uuids = union_finding_uuids_from_scan_results(terminal_matches)
+    print(
+        f"Merged finding UUIDs from {len(terminal_matches)} terminal "
+        f"ScanResult(s) [{scan_ids}]: {len(uuids)} unique id(s).",
+        file=sys.stderr,
+    )
+    return uuids, False
+
+
 def load_findings_dicts_for_pr(
     *,
     repo: str,
     head_sha: str,
     head_ref: str = "",
     repository_version_hint: str | None = None,
+    scan_result_uuid: str | None = None,
     tenant: str | None = None,
     poll_timeout_sec: float = _DEFAULT_POLL_TIMEOUT_SEC,
     max_findings: int = _DEFAULT_MAX_FINDINGS,
 ) -> list[dict[str, Any]]:
-    """Resolve Project -> RepositoryVersion -> ScanResult -> Finding.get for PR head."""
+    """Resolve Project -> RepositoryVersion -> ScanResult -> Finding.get for PR head.
+
+    By default, finding UUIDs are the deduplicated union across every **terminal**
+    ``ScanResult`` that matches the repository version / PR head (UI-style
+    aggregation). Pass ``scan_result_uuid`` to hydrate findings from **only** that
+    scan's ``spec.findings`` / blocking / warning lists (strict single-scan
+    parity). The UUID must appear among those terminal matches; there is no
+    RepositoryVersion list fallback in single-scan mode.
+    """
     ns = tenant or os.getenv("ENDOR_NAMESPACE")
     if not ns:
         print(
@@ -621,16 +691,15 @@ def load_findings_dicts_for_pr(
                     file=sys.stderr,
                 )
                 return []
-            scan_ids = ",".join(
-                str(getattr(sr, "uuid", None) or "?") for sr in terminal_matches
+            picked = _pick_finding_uuids_from_terminal_scans(
+                scan_rows=scan_rows,
+                terminal_matches=terminal_matches,
+                scan_result_uuid=scan_result_uuid,
             )
-            uuids = union_finding_uuids_from_scan_results(terminal_matches)
-            print(
-                f"Merged finding UUIDs from {len(terminal_matches)} terminal "
-                f"ScanResult(s) [{scan_ids}]: {len(uuids)} unique id(s).",
-                file=sys.stderr,
-            )
-            if not uuids and repo_version is not None:
+            if picked is None:
+                return []
+            uuids, single_scan_mode = picked
+            if not uuids and repo_version is not None and not single_scan_mode:
                 uuids = list_finding_uuids_for_repository_version(
                     client,
                     repo_version,
