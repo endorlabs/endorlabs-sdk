@@ -49,13 +49,15 @@ class _ListableFacade(Generic[T]):
     Shared parameter vocabulary (list, lookup, list_iter):
     traverse, concurrent, max_workers, namespace, list_params, max_pages, parent,
     filter, mask, page_size, page_token, page_id, sort_by, desc, count,
-    from_date, to_date, archive, pr_uuid, **kwargs (identity → filter).
+    from_date, to_date, archive, pr_uuid, ci_run_uuid, **kwargs (identity → filter).
     See method docstrings for signatures; semantics: traverse=tenant-wide,
     concurrent=parallel namespaces when traverse=True, namespace=canonical path,
     list_params=ListParameters (kwargs override), max_pages=None=all,
     parent=scope by meta.parent_uuid, filter/mask=API expressions,
     page_*=pagination, sort_by/desc=ordering, count=return count only,
-    from_date/to_date=ISO 8601, archive=from archive, pr_uuid=PR scan scope.
+    from_date/to_date=ISO 8601, archive=from archive,
+    ci_run_uuid=PR scan context id (OpenAPI list_parameters.ci_run_uuid);
+    pr_uuid=deprecated alias for the same wire param.
     """
 
     def __init__(
@@ -122,6 +124,7 @@ class _ListableFacade(Generic[T]):
         to_date: str | None,
         archive: bool | None,
         pr_uuid: str | None,
+        ci_run_uuid: str | None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         """Build merged kwargs dict from explicit params, identity kwargs, and parent.
@@ -150,6 +153,7 @@ class _ListableFacade(Generic[T]):
                 ("to_date", to_date),
                 ("archive", archive),
                 ("pr_uuid", pr_uuid),
+                ("ci_run_uuid", ci_run_uuid),
             )
             if v is not None
         }
@@ -192,6 +196,7 @@ class _ListableFacade(Generic[T]):
         to_date: str | None = None,
         archive: bool | None = None,
         pr_uuid: str | None = None,
+        ci_run_uuid: str | None = None,
         **kwargs: Any,
     ) -> list[T]:
         """List resources with full pagination and optional concurrent mode.
@@ -224,7 +229,9 @@ class _ListableFacade(Generic[T]):
             from_date: ISO 8601 lower-bound date filter.
             to_date: ISO 8601 upper-bound date filter.
             archive: Query archived resources when ``True``.
-            pr_uuid: Scope to a specific PR scan.
+            pr_uuid: Deprecated; use ``ci_run_uuid``. Sent as
+                ``list_parameters.ci_run_uuid``.
+            ci_run_uuid: PR scan context id (OpenAPI ``list_parameters.ci_run_uuid``).
             **kwargs: Identity kwargs mapped to filter clauses via
                 ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
                 ``meta.name=="foo"``).
@@ -286,6 +293,7 @@ class _ListableFacade(Generic[T]):
                 to_date=to_date,
                 archive=archive,
                 pr_uuid=pr_uuid,
+                ci_run_uuid=ci_run_uuid,
                 **kwargs,
             )
 
@@ -304,6 +312,7 @@ class _ListableFacade(Generic[T]):
             to_date=to_date,
             archive=archive,
             pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
         lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
@@ -393,6 +402,7 @@ class _ListableFacade(Generic[T]):
         to_date: str | None = None,
         archive: bool | None = None,
         pr_uuid: str | None = None,
+        ci_run_uuid: str | None = None,
         **kwargs: Any,
     ) -> T:
         """Return the single resource matching criteria.
@@ -426,7 +436,8 @@ class _ListableFacade(Generic[T]):
             from_date: ISO 8601 lower-bound date filter.
             to_date: ISO 8601 upper-bound date filter.
             archive: Query archived resources when ``True``.
-            pr_uuid: Scope to a specific PR scan.
+            pr_uuid: Deprecated; use ``ci_run_uuid``.
+            ci_run_uuid: PR scan context id for list scoping.
             **kwargs: Identity kwargs mapped to filter clauses via
                 ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
                 ``meta.name=="foo"``).
@@ -467,6 +478,7 @@ class _ListableFacade(Generic[T]):
             to_date=to_date,
             archive=archive,
             pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
         if not items:
@@ -501,6 +513,7 @@ class _ListableFacade(Generic[T]):
         to_date: str | None = None,
         archive: bool | None = None,
         pr_uuid: str | None = None,
+        ci_run_uuid: str | None = None,
         **kwargs: Any,
     ) -> Iterator[T]:
         """Yield resources one at a time; memory-efficient lazy pagination.
@@ -531,7 +544,8 @@ class _ListableFacade(Generic[T]):
             from_date: ISO 8601 lower-bound date filter.
             to_date: ISO 8601 upper-bound date filter.
             archive: Query archived resources when ``True``.
-            pr_uuid: Scope to a specific PR scan.
+            pr_uuid: Deprecated; use ``ci_run_uuid``.
+            ci_run_uuid: PR scan context id for list scoping.
             **kwargs: Identity kwargs mapped to filter clauses via
                 ``filter_kwarg_map`` (e.g. ``name="foo"`` becomes
                 ``meta.name=="foo"``).
@@ -580,6 +594,7 @@ class _ListableFacade(Generic[T]):
             to_date=to_date,
             archive=archive,
             pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
         lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)

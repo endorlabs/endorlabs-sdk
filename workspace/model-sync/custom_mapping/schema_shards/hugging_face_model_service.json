@@ -218,6 +218,10 @@
           "description": "Author and model name (id). For example, \"openai/clip-vit-base-patch16\".",
           "type": "string"
         },
+        "organization_name": {
+          "description": "Organization name for which this model belongs to.",
+          "type": "string"
+        },
         "pipeline_tag": {
           "description": "Pipeline tag associated with the model.",
           "type": "string"

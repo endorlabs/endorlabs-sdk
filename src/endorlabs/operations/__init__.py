@@ -888,9 +888,10 @@ class BaseResourceOperations(Generic[T]):
     def _add_extra_list_params(
         self, params: dict[str, Any], list_params: ListParameters
     ) -> None:
-        """Add extra common list parameters (pr_uuid, etc.)."""
-        if list_params.pr_uuid:
-            params["list_parameters.pr_uuid"] = list_params.pr_uuid
+        """Add PR / CI-run scoping (OpenAPI: list_parameters.ci_run_uuid)."""
+        wire = list_params.ci_run_uuid or list_params.pr_uuid
+        if wire:
+            params["list_parameters.ci_run_uuid"] = wire
 
     def _add_group_params(
         self, params: dict[str, Any], list_params: ListParameters

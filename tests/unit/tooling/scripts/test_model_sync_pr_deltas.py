@@ -139,7 +139,8 @@ def test_resource_delta_payload_property_shape_drift() -> None:
         old_facade, new_facade, old_payload, new_payload
     )
     text = "\n".join(lines)
-    assert "prop `spec`:" in text
+    assert "(~)" in text
+    assert "create WidgetBody spec:" in text
     assert "$ref:v1WidgetSpec" in text
     assert "type:object" in text
 
@@ -168,9 +169,8 @@ def test_resource_delta_facade_ops_change() -> None:
     empty_p = {"resources": []}
     lines = render_resource_delta_markdown(old_f, new_f, empty_p, empty_p)
     text = "\n".join(lines)
-    assert "Resources with operation changes: 1" in text
-    assert "+ops=list" in text
-    assert "**Scope (summary):**" in text
+    assert "|- (+) supported_ops: list" in text
+    assert "Z" in text
     assert "Per-resource fields" not in text
 
 
@@ -198,6 +198,7 @@ def test_resource_inventory_lists_facade_attr_names() -> None:
         facade, facade, empty_p, empty_p, include_resource_inventory=True
     )
     text = "\n".join(lines)
+    assert "Full field inventory (opt-in)" in text
     assert "SDK facade resources (current run, attr_name): 2" in text
     assert "Finding (facade attr_name)" in text
     assert "supported_ops: get, list" in text
@@ -249,6 +250,7 @@ def test_resource_inventory_includes_payload_field_descriptions() -> None:
         facade, facade, payload, payload, include_resource_inventory=True
     )
     text = "\n".join(lines)
+    assert "Full field inventory (opt-in)" in text
     assert "Resource description (facade → class docstring source)" in text
     assert "Widget resource for tests." in text
     assert "mutable_fields (update):" in text
@@ -335,7 +337,7 @@ def test_resource_summary_default_skips_full_inventory() -> None:
     text = "\n".join(lines)
     assert "SDK facade resources (current run, attr_name)" not in text
     assert "Per-resource fields" not in text
-    assert "**Scope (summary):**" in text
+    assert "No resource façade or payload deltas" in text
 
 
 def test_build_upstream_delta_structured_no_deltas() -> None:
@@ -425,3 +427,84 @@ def test_build_resource_delta_structured_payload_and_ops_and_fields() -> None:
         "+mutable=spec.title" in x for x in data["resource_field_changes"]["Widget"]
     )
     assert any("prop `spec`" in x for x in data["resource_payload_changes"]["Widget"])
+
+
+def test_resource_delta_tree_resource_added_and_removed() -> None:
+    old_f = {
+        "resources": [
+            {
+                "attr_name": "Gone",
+                "supported_ops": ["get"],
+                "mutable_fields": [],
+                "immutable_fields": [],
+            }
+        ]
+    }
+    new_f = {
+        "resources": [
+            {
+                "attr_name": "Nova",
+                "supported_ops": ["get"],
+                "mutable_fields": [],
+                "immutable_fields": [],
+            }
+        ]
+    }
+    empty_p = {"resources": []}
+    lines = render_resource_delta_markdown(old_f, new_f, empty_p, empty_p)
+    text = "\n".join(lines)
+    assert "|- (+) resource [added to SDK façade]" in text
+    assert "|- (-) resource [removed from SDK façade]" in text
+    assert "Gone" in text
+    assert "Nova" in text
+
+
+def test_resource_delta_tree_payload_add_property() -> None:
+    facade = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "supported_ops": ["create"],
+                "mutable_fields": [],
+                "immutable_fields": [],
+            }
+        ]
+    }
+    old_payload = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "create_payload_definitions": {
+                    "WidgetBody": {
+                        "properties": {},
+                        "required": [],
+                    }
+                },
+                "update_payload_definitions": {},
+            }
+        ]
+    }
+    new_payload = {
+        "resources": [
+            {
+                "attr_name": "Widget",
+                "create_payload_definitions": {
+                    "WidgetBody": {
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "description": "Widget title from API spec.",
+                            }
+                        },
+                        "required": [],
+                    }
+                },
+                "update_payload_definitions": {},
+            }
+        ]
+    }
+    lines = render_resource_delta_markdown(facade, facade, old_payload, new_payload)
+    text = "\n".join(lines)
+    assert "|- (+) create WidgetBody title" in text
+    assert "[type:string]" in text
+    assert "Widget title from API spec." in text
