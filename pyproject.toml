@@ -230,8 +230,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 # --- Utils: intentional patterns ---
 ".github/scripts/model_consistency.py" = ["S310"]  # URL open for spec download
 ".github/scripts/endor_ci_fetch_scan_findings.py" = ["T201"]  # CI helper; stderr progress
-".github/scripts/post_github_check_run.py" = ["S310", "T201"]  # GitHub REST; CLI progress
-".github/scripts/smoke_github_check_annotation.py" = ["S310", "T201", "D103", "D301", "E501"]  # GitHub REST; CLI diagnostic
 ".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
 ".github/scripts/endor_scan_findings.py" = ["C901"]  # layered location extraction
 ".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic

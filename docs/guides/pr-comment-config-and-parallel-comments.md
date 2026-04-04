@@ -1,129 +1,67 @@
-# PR comments and GitHub Checks (API-backed findings)
+# PR review comments from Endor findings (API-backed)
 
-This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → findings scoped by PR context when available), then posted as [**pull request review comments**](https://docs.github.com/en/rest/pulls/comments) inside a [**pull request review**](https://docs.github.com/en/rest/pulls/reviews) (Option B) and/or **Checks annotations** (Option C). These are **not** issue comments or commit comments.
+This guide covers **repo-side** PR feedback in CI after an Endor Labs GitHub Action scan. Findings are loaded from the **Endor API** (Project → ScanResult → findings scoped by PR context when available), then posted as [**pull request review comments**](https://docs.github.com/en/rest/pulls/comments) inside a [**pull request review**](https://docs.github.com/en/rest/pulls/reviews). These are **not** issue comments, commit comments, or GitHub Checks annotations.
 
-In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), **Option B** and **Option C** default to **enabled** on pull requests. Set repository variables to `false` to turn a path off. Both default to **`apply`** (submit reviews with diff-anchored comments and check-run annotations). Set `ENDOR_INHOUSE_PR_COMMENTS_MODE` / `ENDOR_GITHUB_CHECK_MODE` to **`dry-run`** to log the plan only (Option B still prints each planned review comment with a code-region fence in the job log).
+In [`.github/workflows/ci-pr-main.yml`](.github/workflows/ci-pr-main.yml) (`endorlabs-security-scan` job), this flow defaults to **enabled** on pull requests. Set repository variable `ENDOR_ENABLE_INHOUSE_PR_COMMENTS` to `false` to skip. Default mode is **`apply`**; set `ENDOR_INHOUSE_PR_COMMENTS_MODE` to **`dry-run`** to log the planned comments only (each planned comment is printed with a code-region fence in the job log).
 
-## Data flow (Options B and C)
+## Data flow
 
 1. The **Endor Labs** action runs a scan and uploads results to the platform.
-2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), and picks a result whose `spec.versions[].sha` matches the PR **head SHA** (preferring `TYPE_PR_SECURITY_REVIEW` when several match). When `spec.environment.config` exposes a PR context id (e.g. `ExecutionID`), findings are loaded with **`Finding.list`** and OpenAPI **`list_parameters.ci_run_uuid`**; otherwise UUIDs from `spec.findings` (or blocking + warning lists) are hydrated via **`Finding.get`**. Dicts are passed to the GitHub scripts.
-3. **Option B** / **Option C** map those dicts to GitHub REST payloads. Location resolution is centralized in [`.github/scripts/endor_scan_findings.py`](.github/scripts/endor_scan_findings.py) (`extract_location`): it reads `spec.finding_metadata` (including `file_path` / `line_number`, `security_review_data.code_snippet`, and `custom` Semgrep-style `path` + `start.line`), then `spec.dependency_file_paths` and a summary fallback when needed.
+2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), and picks a result whose `spec.versions[].sha` matches the PR **head SHA** (preferring `TYPE_PR_SECURITY_REVIEW` when several match). When `spec.environment.config` exposes a PR context id (e.g. `ExecutionID`), findings are loaded with **`Finding.list`** and OpenAPI **`list_parameters.ci_run_uuid`**; otherwise UUIDs from `spec.findings` (or blocking + warning lists) are hydrated via **`Finding.get`**. Dicts are passed to the posting script.
+3. [`.github/scripts/post_parallel_pr_comments.py`](.github/scripts/post_parallel_pr_comments.py) maps findings to GitHub review payloads. Location resolution is centralized in [`.github/scripts/endor_scan_findings.py`](.github/scripts/endor_scan_findings.py) (`extract_location`): `spec.finding_metadata` (including `file_path` / `line_number`, `security_review_data.code_snippet`, and `custom` Semgrep-style `path` + `start.line`), then `spec.dependency_file_paths` and summary fallbacks when needed.
 
-**Validate before pushing (golden flow):**
+**Field-level crosswalk:** [findings-pr-review-comment-matrix.md](../findings-pr-review-comment-matrix.md).
+
+**Validate before pushing:**
 
 - Offline (no credentials): `uv run python .github/scripts/validate_pr_comment_flow.py --fixture tests/unit/github_scripts/fixtures/pr_comment_flow_golden.json`
 - Live (same API path as CI): `uv run --env-file .env python .github/scripts/validate_pr_comment_flow.py --repo owner/repo --commit-sha <head-sha>`
 
 Use `--fail-if-zero-located` to exit non-zero when findings load but none have an extractable file+line (common when API shape drifts).
 
-Short poll (default ~120s, jittered backoff) waits for a **non-running** ScanResult so the job does not race the platform indexer. On failure or empty data, scripts **fail open** (log and exit 0) so cosmetic steps do not break CI.
+Short poll (default ~120s in the script, workflow may pass `--poll-timeout`) waits for a **non-running** ScanResult so the job does not race the platform indexer. On failure or empty data, the script **fails open** (log and exit 0) so cosmetic steps do not break CI.
 
-## Option B — Pull request review comments (diff-anchored)
+## Workflow step and script
 
-Workflow step: `Option B - pull request review comments (dry-run/apply)`
+Workflow step: **Post Endor findings as PR review comments (dry-run/apply)**
 
 - Script: [`.github/scripts/post_parallel_pr_comments.py`](.github/scripts/post_parallel_pr_comments.py)
 
-Option B submits a **pull request review** whose **`comments`** array holds [**pull request review comments**](https://docs.github.com/en/rest/pulls/comments) on the **unified diff** (`path`, `line`, `side: RIGHT`, optional multiline fields). See [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request). Failed batches fall back to per-comment `POST .../pulls/{n}/comments` ([create a review comment](https://docs.github.com/en/rest/pulls/comments#create-a-review-comment-for-a-pull-request)). Finding paths are matched against `GET .../pulls/{n}/files`, and only lines present in the patch hunks are kept so GitHub does not return 422.
+The script submits a **pull request review** (`POST .../pulls/{n}/reviews`) with `event: COMMENT` and a `comments` array of review comments on the **unified diff** (`path`, `line`, `side: RIGHT`, optional multi-line fields). See [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request). Failed batches fall back to per-comment `POST .../pulls/{n}/comments`. Finding paths are matched against `GET .../pulls/{n}/files`, and only lines present in **RIGHT-side** patch hunks are kept so GitHub does not return **422**. That is why comments appear under URLs like `.../pull/N/changes/...#r<comment_id>` only when the finding anchors to a changed line in the PR.
 
-Repository variables (optional overrides):
+### Repository variables
 
 - `ENDOR_ENABLE_INHOUSE_PR_COMMENTS` — omit or `true` to run; set `false` to skip.
 - `ENDOR_INHOUSE_PR_COMMENTS_MODE=apply` (default) or `dry-run`
 
-Required secrets and variables:
+### Required secrets and variables
 
-- `GITHUB_TOKEN` in the job (write perms below)
+- `GITHUB_TOKEN` in the job
 - `ENDOR_NAMESPACE`, `ENDOR_API` (variable), `ENDOR_API_CREDENTIALS_KEY` / `ENDOR_API_CREDENTIALS_SECRET` (secrets)
 
-Required permissions:
+### Required permissions
 
 - Workflow job permission `pull-requests: write`
 
-Behavior:
+The job also keeps `checks: write` so the **Endor Labs GitHub Action** (which receives `github_token` on the comprehensive scan step) can continue to register its own check runs (e.g. “Endor Labs Automated Scan”); that is separate from this review-comment flow.
+
+### Behavior
 
 - Paginated fetch of existing pull request review comments to dedupe via hidden HTML markers.
 - Skips findings whose path is not in the PR file list (or normalizes path when the file list is empty).
 - Optional multi-line anchors when `line_end` is present in metadata (`start_line` / `line` on `RIGHT` side).
 - Failed review batches log the **full GitHub error body** then try per-comment fallback.
 
-CLI (optional):
+### CLI (optional)
 
-- `--poll-timeout` — seconds to wait for a terminal ScanResult (default `120`).
-- `--max-findings` — cap on loaded findings (`Finding.list` or `Finding.get`, default `500`).
+- `--poll-timeout` — seconds to wait for a terminal ScanResult (default `120` in script; CI may override).
+- `--max-findings` — cap on loaded findings (default `500`).
 - `--max-inline` — max review comments per run (default `30`).
 - `--review-batch-size` — comments per `.../reviews` request (default `25`).
 
-## Option C — GitHub Check Run annotations
-
-Workflow step: `Option C - GitHub Check Run annotations (dry-run/apply)`
-
-- Script: [`.github/scripts/post_github_check_run.py`](.github/scripts/post_github_check_run.py)
-
-Repository variables (optional overrides):
-
-- `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS` — omit or `true` to run; set `false` to skip.
-- `ENDOR_GITHUB_CHECK_MODE=apply` (default) or `dry-run`
-
-Required permissions:
-
-- `checks: write` and `GITHUB_TOKEN`. Same `ENDOR_*` credentials as Option B.
-
-Behavior:
-
-- Creates a completed **check run** named **Endor Labs findings** (GitHub Actions app) on the PR head commit with `output.annotations` for findings that have a valid repo-relative `file` + `line`. It is **not** the CodeQL workflow; GitHub may show its annotations near other **Security** / code-scanning style UI, but the failing red check you saw was this run’s **`conclusion`**, not CodeQL registering the step.
-- **Check conclusion** defaults to **`success`** (green) so publishing findings does not duplicate a failing gate; annotation rows still use `failure` / `warning` / `notice` for severity. Override with repo variable **`ENDOR_GITHUB_CHECK_CONCLUSION`**: `neutral`, or `from_findings` (fail the check if any finding is HIGH/CRITICAL).
-- Invalid anchor paths such as **`.`** (repo root) are skipped so the Checks API does not attach bogus dots to the tree.
-- Maps `spec.level` to GitHub annotation levels (`FINDING_LEVEL_CRITICAL` / `HIGH` → `failure`, `MEDIUM` → `warning`, else `notice`).
-- Batches annotations (50 per request) with PATCH for follow-up batches.
-- Findings without location still appear in the check run **summary** markdown table.
-
-For **SARIF** upload to Code Scanning, use GitHub’s `github/codeql-action/upload-sarif` separately; Option C uses the Checks API only.
-
-### Validating Check annotations end-to-end
-
-**Phase A — GitHub REST only (no Endor):** Confirm `checks: write`, payload shape, and that **`head_sha` is the PR head** (not the merge ref). Use the standalone script [`.github/scripts/smoke_github_check_annotation.py`](../../.github/scripts/smoke_github_check_annotation.py):
-
-```bash
-# Print the JSON body (no network)
-uv run python .github/scripts/smoke_github_check_annotation.py \
-  --repo owner/repo --commit-sha <pr_head_sha> --mode dry-run
-
-# Post a check named "Annotation smoke test" with one notice on pyproject.toml:1
-GITHUB_TOKEN=... uv run python .github/scripts/smoke_github_check_annotation.py \
-  --repo owner/repo --commit-sha <pr_head_sha> --mode apply
-```
-
-Use `--path` / `--line` if `pyproject.toml` is absent on that branch. Success: a new check appears on the PR and the annotation shows for that file.
-
-**Phase B — Option C log (Endor → annotations):** In the workflow log for `Option C - GitHub Check Run annotations`, read:
-
-- `Location coverage: total=..., with_file_and_line=..., without_location=...`
-- `Findings: N, with file+line: M — annotations to send: K, conclusion: ...`
-
-If **`K == 0`** but **`N > 0`**, the Checks client is fine; findings lack extractable file+line (see [`.github/scripts/endor_scan_findings.py`](../../.github/scripts/endor_scan_findings.py) and [findings-github-checks-annotation-matrix.md](../findings-github-checks-annotation-matrix.md)). If **`N == 0`**, trace scan result resolution in [`.github/scripts/endor_ci_fetch_scan_findings.py`](../../.github/scripts/endor_ci_fetch_scan_findings.py).
-
-**Phase C — Opt-in smoke on the real check (optional):** Append one synthetic annotation to the **Endor Labs findings** check when finding-backed annotations are sparse:
-
-- CLI: `post_github_check_run.py ... --smoke-annotation` (optional `--smoke-path`, `--smoke-line`)
-- Or env: `ENDOR_GITHUB_CHECK_SMOKE=1`, optional `ENDOR_GITHUB_CHECK_SMOKE_PATH`, `ENDOR_GITHUB_CHECK_SMOKE_LINE`
-
-Default synthetic path is `pyproject.toml` line `1` (must exist on the PR head commit). Off by default so production runs are unchanged.
-
-## Embedded UX capability matrix
-
-| Capability | Option B (pull request review comments) | Option C (Checks API) |
-|---|---|---|
-| Native diff snippet on conversation / files | Yes (diff-anchored) | No (Checks / annotations UX) |
-| Markdown in comment body | Yes | In check summary text |
-| File+line blob links | Yes | N/A (annotations anchor to path/lines) |
-| Checks tab | No | Yes |
-| Dedupe across reruns | Hidden markers in bodies | New check run per workflow run |
-
 ## Historical: `PRCommentConfig` (not used in this CI path)
 
-The **`PRCommentConfig`** resource configures **Endor-managed** PR comments (server-side Go templates), not the repo scripts above. Relevant spec fields:
+The **`PRCommentConfig`** resource configures **Endor-managed** PR comments (server-side Go templates), not the repo script above. Relevant spec fields:
 
 - `spec.platform_type` — SCM platform (e.g. `PLATFORM_SOURCE_GITHUB`).
 - `spec.template.findings_summary_template` — Go `text/template` evaluated on the platform when Endor posts PR comments.
@@ -140,19 +78,16 @@ uv run python .github/scripts/sync_pr_comment_template.py \
 
 Place the stock template text in `.tmp/pr-findings-summary-default-from-endor.tmpl` (that path is typically gitignored). See [`.github/templates/README.md`](.github/templates/README.md).
 
-Endor’s GitHub Action step may still use **`enable_pr_comments: true`** so the platform posts comments using whatever template is configured tenant-side (default after revert).
+In **this repo’s CI** ([`ci-pr-main.yml`](../../.github/workflows/ci-pr-main.yml)), all Endor Labs Action scan steps set **`enable_pr_comments: false`**. PR feedback on pull requests comes only from **Post Endor findings as PR review comments** (`post_parallel_pr_comments.py`). Tenant-side `PRCommentConfig` templates still apply if other scans or automation enable platform PR comments outside this workflow.
 
-## Choosing Option B vs Option C
-
-- Use **Option B** when you want **pull request review comments on the unified diff** (GitHub’s native review-comment UX).
-- Use **Option C** when you want the **Checks** tab and structured annotations.
-- Running **both** can duplicate signals on the same lines; disable one if that is too noisy.
+**Deprecated GitHub repository variables (safe to remove in repo settings if set):** `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, and `ENDOR_GITHUB_CHECK_CONCLUSION` were used by a removed Checks-annotations path and are no longer read by workflows.
 
 ## Failure modes
 
-- Missing `ENDOR_API_CREDENTIALS_*` or `ENDOR_NAMESPACE` → API fetch logs errors; scripts skip with exit 0.
+- Missing `ENDOR_API_CREDENTIALS_*` or `ENDOR_NAMESPACE` → API fetch logs errors; script skips with exit 0.
 - No **Project** for the repository URL → skip (ensure `meta.name` on the Project matches `https://github.com/owner/repo.git` or the same without `.git`).
 - ScanResult still **RUNNING** until poll timeout → best-effort pick; may yield empty finding UUIDs.
-- Missing finding location metadata → Option B posts nothing for those rows; Option C lists them in the check summary only.
-- Path not in PR diff / line not commentable → GitHub **422**; batch failure logs response body; per-comment fallback may still skip.
-- Option C: missing `checks: write` → apply mode fails; use `dry-run` first.
+- Missing finding location metadata → nothing posted for those rows.
+- Path not in PR diff / line not on RIGHT side of a hunk → GitHub **422**; batch failure logs response body; per-comment fallback may still skip.
+
+For **SARIF** upload to Code Scanning, use GitHub’s `github/codeql-action/upload-sarif` separately; this path does not replace code scanning uploads.
