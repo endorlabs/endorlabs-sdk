@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from typing import Any
 from urllib.parse import unquote
 
@@ -72,39 +73,105 @@ def _location_from_custom(
     return None, None, None
 
 
+def _github_blob_hits_in_text(text: str) -> list[tuple[str, int]]:
+    """Path and 1-based line for each ``blob/.../path...#Ln`` in ``text``."""
+    out: list[tuple[str, int]] = []
+    for m in _GITHUB_BLOB_LINE_RE.finditer(text):
+        up = unquote(m.group(1)).replace("\\", "/").lstrip("./")
+        ul = int(m.group(2))
+        out.append((up, ul))
+    return out
+
+
+def _iter_metadata_strings_with_blob(obj: Any, depth: int = 0) -> Iterator[str]:
+    """Yield string values that may contain GitHub blob URLs (nested metadata)."""
+    if depth > 14:
+        return
+    if isinstance(obj, str) and "github.com" in obj and "/blob/" in obj:
+        yield obj
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            yield from _iter_metadata_strings_with_blob(v, depth + 1)
+    elif isinstance(obj, list):
+        for item in obj:
+            yield from _iter_metadata_strings_with_blob(item, depth + 1)
+
+
+def _choose_blob_path_line(
+    hits: list[tuple[str, int]],
+    norm_fp: str | None,
+) -> tuple[str | None, int | None]:
+    """Pick a single anchor; for the same file, prefer the highest line (secret row).
+
+    Policy findings may embed multiple ``#L`` references (e.g. docstring vs match).
+    The canonical ``Secret Location`` URL is usually the deepest line in the file.
+    """
+    if not hits:
+        return None, None
+    if not norm_fp:
+        return hits[0][0], hits[0][1]
+    want_base = norm_fp.split("/")[-1]
+    matching = [
+        (up, ul)
+        for up, ul in hits
+        if up.rstrip("/") == norm_fp.rstrip("/")
+        or up.endswith("/" + norm_fp)
+        or up.split("/")[-1] == want_base
+    ]
+    if not matching:
+        return None, None
+    best_up, best_ln = max(matching, key=lambda t: t[1])
+    return best_up, best_ln
+
+
 def _merge_github_blob_url_location(
-    spec: dict[str, Any], file_path: str | None, line: Any
+    spec: dict[str, Any],
+    file_path: str | None,
+    line: Any,
+    metadata: dict[str, Any] | None = None,
 ) -> tuple[str | None, Any]:
-    """Prefer path+line from github.com ``blob/.../file#Ln`` links in spec text."""
+    """Prefer path+line from ``blob/...#L`` links in spec text and nested metadata."""
     norm_fp: str | None = None
     if isinstance(file_path, str) and file_path.strip():
         norm_fp = normalize_pr_path(file_path).replace("\\", "/").lstrip("./")
 
+    hits: list[tuple[str, int]] = []
     for key in ("summary", "explanation", "remediation", "description"):
         text = spec.get(key)
-        if not isinstance(text, str):
-            continue
-        for m in _GITHUB_BLOB_LINE_RE.finditer(text):
-            up = unquote(m.group(1)).replace("\\", "/").lstrip("./")
-            ul: Any = int(m.group(2))
-            if not norm_fp:
-                return up, ul
-            base = up.split("/")[-1]
-            want = norm_fp.split("/")[-1]
-            if up == norm_fp or up.endswith("/" + norm_fp) or base == want:
-                return up, ul
+        if isinstance(text, str):
+            hits.extend(_github_blob_hits_in_text(text))
+    if isinstance(metadata, dict):
+        for blob_text in _iter_metadata_strings_with_blob(metadata):
+            hits.extend(_github_blob_hits_in_text(blob_text))
+
+    picked_p, picked_ln = _choose_blob_path_line(hits, norm_fp)
+    if picked_ln is not None and picked_p:
+        return picked_p, picked_ln
     return file_path, line
 
 
 def _line_after_path_in_text(text: str, path: str) -> int | None:
-    """If ``text`` contains ``path``, try to read a line number immediately after it."""
+    """If ``text`` contains ``path``, read a line after it (``#L`` / ``:`` forms).
+
+    GitHub blob URLs use ``?plain=1#L219``; naive digit parsing would treat
+    ``plain=1`` as line ``1`` instead of ``219``.
+    """
     if not text or not path:
         return None
     i = text.find(path)
     if i < 0:
         return None
-    tail = text[i + len(path) : i + len(path) + 48]
-    m = re.match(r"[^0-9#:L]*[#:L]?(\d+)", tail)
+    tail = text[i + len(path) : i + len(path) + 512]
+    m = re.search(r"#L(\d+)\b", tail, re.IGNORECASE)
+    if m:
+        return _coerce_positive_int(m.group(1))
+    m = re.search(r"#(\d+)\b", tail)
+    if m:
+        return _coerce_positive_int(m.group(1))
+    m = re.match(r"^\s*:\s*(\d+)", tail)
+    if m:
+        return _coerce_positive_int(m.group(1))
+    m = re.match(r"[^0-9#:L]*[#:L](\d+)", tail)
     if m:
         return _coerce_positive_int(m.group(1))
     return None
@@ -174,7 +241,14 @@ def extract_location(finding: dict[str, Any]) -> dict[str, Any]:
             file_path = file_path or m.group("file")
             line = line or int(m.group("line"))
 
-    file_path, line = _merge_github_blob_url_location(spec, file_path, line)
+    prev_line = line
+    file_path, line = _merge_github_blob_url_location(spec, file_path, line, metadata)
+    pl = _coerce_positive_int(prev_line)
+    nl = _coerce_positive_int(line)
+    if nl is not None and (
+        (pl is not None and nl != pl) or (pl is None and line_end is not None)
+    ):
+        line_end = None
 
     if not isinstance(file_path, str) or not is_valid_annotation_path(file_path):
         return {"file": None, "line": None, "line_end": None}

@@ -141,6 +141,91 @@ def test_extract_location_github_blob_url_when_no_structured_path() -> None:
     assert loc["line"] == 99
 
 
+def test_extract_location_plain_query_does_not_yield_line_1() -> None:
+    """``?plain=1#L219`` must not be parsed as line 1 (digits in query)."""
+    path = "tests/unit/platform/utils/test_logging_config.py"
+    blob = f"https://github.com/org/repo/blob/deadbeef/{path}?plain=1#L219"
+    f = {
+        "spec": {
+            "dependency_file_paths": [path],
+            "summary": f"Secret Location: {blob}",
+        }
+    }
+    loc = esf.extract_location(f)
+    assert loc["file"] == path
+    assert loc["line"] == 219
+
+
+def test_extract_location_prefers_highest_blob_line_same_file() -> None:
+    """Multiple blob anchors for one file: use the deepest line (secret row)."""
+    path = "tests/unit/platform/utils/test_logging_config.py"
+    low = f"https://github.com/o/r/blob/a/{path}?plain=1#L213"
+    high = f"https://github.com/o/r/blob/a/{path}?plain=1#L219"
+    f = {
+        "spec": {
+            "dependency_file_paths": [path],
+            "summary": f"A {low}\nB {high}",
+        }
+    }
+    loc = esf.extract_location(f)
+    assert loc["line"] == 219
+
+
+def test_extract_location_policy_metadata_blob_supplements_spec() -> None:
+    """``source_policy_info`` Secret Location URLs live under finding_metadata."""
+    path = "tests/unit/platform/utils/test_logging_config.py"
+    secret_url = (
+        f"https://github.com/endor-solutions-architecture/endorlabs-sdk/blob/"
+        f"caae61c4498bbc98f98b2384b4b6f72c66ced5bb/{path}?plain=1#L219"
+    )
+    f = {
+        "spec": {
+            "dependency_file_paths": [path],
+            "summary": "A potential secret leak has been detected.",
+            "finding_metadata": {
+                "line_number": 213,
+                "source_policy_info": {
+                    "results": [
+                        {
+                            "fields": {
+                                "Secret Location": secret_url,
+                            }
+                        }
+                    ]
+                },
+            },
+        }
+    }
+    loc = esf.extract_location(f)
+    assert loc["file"] == path
+    assert loc["line"] == 219
+    assert loc["line_end"] is None
+
+
+def test_extract_location_blob_merge_clears_stale_multiline_range() -> None:
+    """Blob merge replaces ``line``; stale ``line_end`` is cleared."""
+    path = "x.py"
+    f = {
+        "spec": {
+            "dependency_file_paths": [path],
+            "summary": f"https://github.com/o/r/blob/a/{path}#L50",
+            "finding_metadata": {
+                "security_review_data": {
+                    "code_snippet": {
+                        "file": path,
+                        "line": 10,
+                        "line_end": 40,
+                    }
+                }
+            },
+        }
+    }
+    loc = esf.extract_location(f)
+    assert loc["file"] == path
+    assert loc["line"] == 50
+    assert loc["line_end"] is None
+
+
 def test_golden_fixture_json_roundtrip() -> None:
     """Golden list shape: what we expect the API + model_dump to be consumable."""
     raw = [
