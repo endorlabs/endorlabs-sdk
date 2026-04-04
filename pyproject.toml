@@ -229,6 +229,10 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/resources/semgrep_rule.py" = ["ARG003"]
 # --- Utils: intentional patterns ---
 ".github/scripts/model_consistency.py" = ["S310"]  # URL open for spec download
+".github/scripts/endor_ci_fetch_scan_findings.py" = ["T201"]  # CI helper; stderr progress
+".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
+".github/scripts/endor_scan_findings.py" = ["C901"]  # layered location extraction
+".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
@@ -282,7 +286,7 @@ exclude_lines = [
 ]
 
 [tool.codespell]
-skip = ".git,.venv,*.lock,*.json,.endorlabs-context"
+skip = ".git,.venv,*.lock,*.json,.endorlabs-context,src/endorlabs/generated,workspace/model-sync"
 ignore-words-list = "endor,endorlabs"
 
 [tool.pyright]

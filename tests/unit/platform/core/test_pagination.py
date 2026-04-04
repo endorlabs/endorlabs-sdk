@@ -119,13 +119,30 @@ class TestListParametersSerialization:
         assert params.get("list_parameters.archive") == "true"
         assert params.get("list_parameters.list_all") == "true"
 
-    def test_page_id_pr_uuid_serialize(self) -> None:
-        """page_id and pr_uuid serialize to list_parameters.*."""
+    def test_page_id_pr_uuid_serialize_as_ci_run_uuid(self) -> None:
+        """pr_uuid is a deprecated alias; wire uses list_parameters.ci_run_uuid."""
         client = Mock()
         ops = BaseResourceOperations(client, "test-resources", Mock)
         params = ops._build_params(ListParameters(page_id="cursor-1", pr_uuid="pr-abc"))
         assert params.get("list_parameters.page_id") == "cursor-1"
-        assert params.get("list_parameters.pr_uuid") == "pr-abc"
+        assert params.get("list_parameters.ci_run_uuid") == "pr-abc"
+        assert params.get("list_parameters.pr_uuid") is None
+
+    def test_ci_run_uuid_serializes(self) -> None:
+        """Explicit ci_run_uuid maps to list_parameters.ci_run_uuid."""
+        client = Mock()
+        ops = BaseResourceOperations(client, "test-resources", Mock)
+        params = ops._build_params(ListParameters(ci_run_uuid="run-xyz"))
+        assert params.get("list_parameters.ci_run_uuid") == "run-xyz"
+
+    def test_ci_run_uuid_preferred_over_pr_uuid_on_wire(self) -> None:
+        """When both are set, wire uses ci_run_uuid (checked first in operations)."""
+        client = Mock()
+        ops = BaseResourceOperations(client, "test-resources", Mock)
+        params = ops._build_params(
+            ListParameters(ci_run_uuid="primary", pr_uuid="secondary")
+        )
+        assert params.get("list_parameters.ci_run_uuid") == "primary"
 
     def test_group_params_serialize(self) -> None:
         """group_aggregation_paths and group_* serialize to list_parameters.*."""

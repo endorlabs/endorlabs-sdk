@@ -91,6 +91,8 @@ uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 
 CI runs these; see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
 
+**Repository variables (GitHub Settings → Actions):** If present, you may remove deprecated names that are no longer read by workflows: `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, `ENDOR_GITHUB_CHECK_CONCLUSION` (removed Checks-annotations path). See [docs/guides/pr-comment-config-and-parallel-comments.md](docs/guides/pr-comment-config-and-parallel-comments.md) for the active PR-comment variables.
+
 ## Model-Sync automation topology
 
 Model-sync automation is split by responsibility:
@@ -167,4 +169,3 @@ Example remote dispatch payload:
 ```
 
 Operational rollback: switch dispatch `mode` to `smoke` and set `deterministic=true` to reduce run time and flake surface while preserving scorecard continuity.
-
