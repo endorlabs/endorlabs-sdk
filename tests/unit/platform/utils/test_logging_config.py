@@ -212,11 +212,10 @@ class TestRedactingFilterReprIntegration:
         """repr() of a dict with a normal value uses homogeneous single quoting.
 
         The literal below is intentionally JWT-header-shaped for redaction coverage;
-        it is not a real credential. Secrets scanners (e.g. Endor full scan) may
-        still flag it — that is expected; do not add endorctl:allow unless policy
-        requires suppressing this test fixture.
+        it is not a real credential. ``endorctl:allow`` satisfies admission policy
+        for this documented test fixture.
         """
-        secret_dict = {"token": "eyJhbGciOiJSUzI1NiJ9"}
+        secret_dict = {"token": "eyJhbGciOiJSUzI1NiJ9"}  # endorctl:allow
         repr_str = repr(secret_dict)
         result = _apply(self.rf, repr_str)
         assert "eyJhbGciOiJSUzI1NiJ9" not in result
