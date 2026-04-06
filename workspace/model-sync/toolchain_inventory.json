@@ -1,6 +1,6 @@
 {
   "datamodel-codegen": {
     "available": true,
-    "path": "G:\\GitHub\\endorlabs-sdk\\.venv\\Scripts\\datamodel-codegen.EXE"
+    "path": "/home/runner/work/endorlabs-sdk/endorlabs-sdk/.venv/bin/datamodel-codegen"
   }
 }
