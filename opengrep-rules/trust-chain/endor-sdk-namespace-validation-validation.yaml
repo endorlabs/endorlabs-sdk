@@ -23,10 +23,9 @@ rules:
 
       Trust chain:
       This is the validation half of the namespace format validation
-      trust chain.  The paired enforcement rule
-      `endor-sdk-namespace-validation-enforcement` verifies that
-      validate_namespace() is called before every URL construction site.
-      Both rules must pass for the security contract to hold.
+      trust chain.  It certifies that validate_namespace() keeps the
+      required security invariants and can be safely reused anywhere
+      URL path segments are built from namespace values.
 
       Solution:
       Restore the invariant(s) that this finding identified as missing.
