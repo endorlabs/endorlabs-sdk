@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-import defusedxml.ElementTree as ET  # noqa: N817
+import defusedxml.ElementTree as DefusedElementTree
 import httpx
 
 if TYPE_CHECKING:
@@ -132,6 +132,8 @@ def _write_hash_manifest(
     urls_by_file: dict[str, str],
 ) -> None:
     """Write markdown hash manifest for synced docs."""
+    from endorlabs.utils.path_safety import safe_write_text
+
     lines = [
         "# Docs Content Hash Manifest",
         "",
@@ -144,7 +146,12 @@ def _write_hash_manifest(
         hash_value = hashes_by_file[rel_path]
         url = urls_by_file.get(rel_path, "")
         lines.append(f"| `{rel_path}` | `{hash_value}` | {url} |")
-    _ = manifest_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # Keep writes constrained to the selected docs directory.
+    safe_write_text(
+        manifest_path.parent,
+        manifest_path,
+        "\n".join(lines) + "\n",
+    )
 
 
 async def _download_sitemap(timeout: int = 10) -> list[str]:
@@ -164,7 +171,7 @@ async def _download_sitemap(timeout: int = 10) -> list[str]:
             _ = response.raise_for_status()
 
         # Parse XML sitemap
-        root = ET.fromstring(response.content)
+        root = DefusedElementTree.fromstring(response.content)
         namespaces = {"sitemap": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
         urls: list[str] = []

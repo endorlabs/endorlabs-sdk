@@ -36,19 +36,19 @@ Deferred:
 
 ## Decision Log
 
-1. **Spec-first direction accepted for prototype.**  
+1. **Spec-first direction accepted for prototype.**
    We treated OpenAPI as the contract source and added resources directly tied
    to dedicated API endpoints (`vulnerabilities`, `malware`, `queries/*`).
 
-2. **Thin slice over big-bang refactor.**  
+2. **Thin slice over big-bang refactor.**
    We implemented two domains end-to-end to validate approach and integration
    points before broad migration.
 
-3. **Adapter continuity prioritized.**  
+3. **Adapter continuity prioritized.**
    Existing auth, client, and demo flows were preserved to avoid regressions
    while proving spec-first additions.
 
-4. **Stainless-first architecture, adapter-compatible implementation.**  
+4. **Stainless-first architecture, adapter-compatible implementation.**
    Feasibility notes are captured in
    `spec-first-stainless-feasibility.md`; current prototype remains compatible
    with a future Stainless-backed generator integration.

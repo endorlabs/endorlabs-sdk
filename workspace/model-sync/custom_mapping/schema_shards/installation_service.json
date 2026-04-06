@@ -418,6 +418,10 @@
         "bitbucket_config": {
           "$ref": "#/definitions/v1BitBucketConfig"
         },
+        "cleanup_stale_namespaces": {
+          "description": "Indicates whether stale managed namespaces that no longer correspond\nto groups or projects in the SCM should be automatically deleted\nduring installation reconciliation. Default value is false.",
+          "type": "boolean"
+        },
         "enabled_features": {
           "items": {
             "$ref": "#/definitions/SpecEnabledFeatureType"

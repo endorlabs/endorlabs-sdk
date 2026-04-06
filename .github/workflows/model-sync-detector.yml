@@ -45,7 +45,7 @@ jobs:
       previous-version: ${{ steps.check.outputs.previous-version }}
       previous-openapi-sha256: ${{ steps.check.outputs.previous-openapi-sha256 }}
       check-status: ${{ steps.check.outputs.status }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
