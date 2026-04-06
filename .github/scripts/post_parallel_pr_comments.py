@@ -299,6 +299,50 @@ def _finding_summary_one_line(finding: dict[str, Any]) -> str | None:
     return None
 
 
+def _first_nonempty_one_line(*values: Any, max_len: int = 500) -> str | None:
+    """Return first non-empty string collapsed to one line."""
+    for value in values:
+        if isinstance(value, str):
+            text = " ".join(value.strip().split())
+            if text:
+                return text[:max_len]
+    return None
+
+
+def _finding_endor_ui_link(finding: dict[str, Any]) -> str | None:
+    """Best-effort direct link to finding details in Endor Labs UI."""
+    uid = finding.get("uuid")
+    if not isinstance(uid, str) or not uid.strip():
+        return None
+    tenant_meta = finding.get("tenant_meta")
+    namespace = (
+        tenant_meta.get("namespace")
+        if isinstance(tenant_meta, dict)
+        else os.environ.get("ENDOR_NAMESPACE")
+    )
+    if not isinstance(namespace, str) or not namespace.strip():
+        return None
+    return f"https://app.endorlabs.com/t/{namespace.strip()}/findings/{uid.strip()}"
+
+
+def _finding_description_lines(finding: dict[str, Any]) -> list[str]:
+    """Concise risk/remediation details extracted from finding fields."""
+    spec = finding.get("spec", {}) if isinstance(finding.get("spec"), dict) else {}
+    why_risky = _first_nonempty_one_line(
+        spec.get("explanation"),
+        spec.get("description"),
+        spec.get("summary"),
+        max_len=650,
+    )
+    remediation = _first_nonempty_one_line(spec.get("remediation"), max_len=650)
+    lines: list[str] = []
+    if why_risky:
+        lines.append(f"**Why this is risky:** {why_risky}")
+    if remediation:
+        lines.append(f"**Suggested remediation:** {remediation}")
+    return lines
+
+
 def _line_as_int(value: Any) -> int:
     if isinstance(value, bool):
         return int(value)
@@ -329,9 +373,13 @@ def build_review_comment_body(
     summ = _finding_summary_one_line(finding)
     if summ:
         lines.append(summ)
+    endor_ui_link = _finding_endor_ui_link(finding)
+    if endor_ui_link:
+        lines.append(f"[View finding in Endor Labs]({endor_ui_link})")
     lines.append(
         f"[View on branch]({_github_blob_link(repo, sha, resolved_path, line)})"
     )
+    lines.extend(_finding_description_lines(finding))
     snippet = _optional_snippet_line(finding)
     if snippet:
         lines.append(f"`{snippet}`")
@@ -364,9 +412,10 @@ def build_review_comment_object(
         }
         if end_line is not None:
             end = _line_as_int(end_line)
-            if end > start:
-                obj["start_line"] = start
-                obj["line"] = end
+            lo, hi = (start, end) if start <= end else (end, start)
+            if hi > lo:
+                obj["start_line"] = lo
+                obj["line"] = hi
                 obj["start_side"] = "RIGHT"
         return obj
     except (TypeError, ValueError):
