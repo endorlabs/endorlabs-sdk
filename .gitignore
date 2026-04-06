@@ -63,7 +63,7 @@ src/endorlabs/_version.py
 .endorlabs-context/
 .tmp/
 .generated/
-workspace/model-sync/
+workspace/
 
 # Model consistency reports (optional local output)
 model_consistency_report.json

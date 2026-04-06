@@ -47,15 +47,25 @@ def _run_command(command: list[str], cwd: Path) -> subprocess.CompletedProcess[s
     )
 
 
-def _build_codegen_command(input_path: Path, output_file: Path) -> list[str]:
+def _repo_relative_cli_argument(path: Path, repo_root: Path) -> str:
+    """Repo-root-relative path with POSIX separators (stable command logs)."""
+    try:
+        return path.resolve().relative_to(repo_root.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def _build_codegen_command(
+    repo_root: Path, input_path: Path, output_file: Path
+) -> list[str]:
     return [
         "datamodel-codegen",
         "--input",
-        str(input_path),
+        _repo_relative_cli_argument(input_path, repo_root),
         "--input-file-type",
         "jsonschema",
         "--output",
-        str(output_file),
+        _repo_relative_cli_argument(output_file, repo_root),
         "--output-model-type",
         "pydantic_v2.BaseModel",
         "--target-python-version",
@@ -101,12 +111,16 @@ def generate_modules(
         )
         output_file = generated_dir / f"{module_path}.py"
         output_file.parent.mkdir(parents=True, exist_ok=True)
-        command = _build_codegen_command(shard_path, output_file)
+        command = _build_codegen_command(repo_root, shard_path, output_file)
         commands.append(" ".join(command))
         result = _run_command(command, repo_root)
         if result.returncode != 0:
             message = (result.stderr or result.stdout).strip()
-            return (False, f"Shard generation failed for {module_path}: {message}", commands)
+            return (
+                False,
+                f"Shard generation failed for {module_path}: {message}",
+                commands,
+            )
 
         generated_content = output_file.read_text(encoding="utf-8")
         output_file.write_text(header + "\n" + generated_content, encoding="utf-8")

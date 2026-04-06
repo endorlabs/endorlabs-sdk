@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import shutil
 import subprocess
@@ -16,8 +15,8 @@ from .contract import (
     build_facade_contract,
     build_operation_path_metadata,
     build_payload_schemas,
-    build_runtime_index_metadata,
     build_registry_parity_report,
+    build_runtime_index_metadata,
     render_generated_registry_contract_module,
     validate_contract_artifacts,
 )
@@ -127,7 +126,6 @@ def run_sync(
     toolchain = {
         "datamodel-codegen": {
             "available": shutil.which("datamodel-codegen") is not None,
-            "path": shutil.which("datamodel-codegen"),
         }
     }
     write_json(output_root / "toolchain_inventory.json", toolchain)
@@ -137,7 +135,11 @@ def run_sync(
 
     spec = load_openapi_spec(spec_path)
     profiles = load_profiles(profiles_dir)
-    provenance = build_provenance(spec_path, toolchain)
+    try:
+        spec_for_provenance = spec_path.resolve().relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        spec_for_provenance = spec_path
+    provenance = build_provenance(spec_for_provenance, toolchain)
     model_output = output_root / "custom_mapping"
     if model_output.exists():
         shutil.rmtree(model_output)
@@ -243,7 +245,6 @@ def main(argv: list[str] | None = None) -> int:
         toolchain = {
             "datamodel-codegen": {
                 "available": shutil.which("datamodel-codegen") is not None,
-                "path": shutil.which("datamodel-codegen"),
             }
         }
         write_json(args.output_root / "toolchain_inventory.json", toolchain)
