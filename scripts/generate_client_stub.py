@@ -260,12 +260,21 @@ def _validate_descriptions_and_model_sync() -> None:
         for entry in RESOURCE_REGISTRY:
             contract_row = contract_resources.get(entry.attr_name, {})
             generated_description = contract_row.get("description")
-            description = (
-                generated_description
-                if isinstance(generated_description, str) and generated_description.strip()
-                else overlay.get(entry.attr_name, "")
+            generated_str = (
+                generated_description.strip()
+                if isinstance(generated_description, str)
+                and generated_description.strip()
+                else ""
             )
-            if not description.strip():
+            overlay_str = overlay.get(entry.attr_name, "").strip()
+            # Curated overlay (scripts/model_sync_profiles/resource_descriptions.json)
+            # wins over generated contract text, which is often boilerplate like
+            # "X resource model extending BaseResource." and hides API-focused copy.
+            if overlay_str:
+                description = overlay_str
+            elif generated_str:
+                description = generated_str
+            else:
                 description = _default_description_from_attr(entry.attr_name)
             RESOURCE_DESCRIPTIONS[entry.attr_name] = description
 

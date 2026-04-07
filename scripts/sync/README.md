@@ -34,16 +34,36 @@ Runtime-consumed generated files:
 
 ## Regeneration commands
 
-Linux/macOS:
+**Recommended (download latest public OpenAPI, regenerate, print compact delta vs default branch):**
+
+```bash
+uv run python scripts/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs --delta-summary
+```
+
+Same on PowerShell.
+
+**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs-context/openapiv2.swagger.json`):
 
 ```bash
 uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
-PowerShell:
+**SHA-256 of the spec file only** (optional `--fetch-spec` first):
 
-```powershell
-uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
+```bash
+uv run python scripts/model_sync.py --spec-hash-only
+```
+
+**Compact delta only** (after a sync; baseline = `origin/main` / `main` / … when available):
+
+```bash
+uv run python scripts/model_sync_pr_deltas.py --auto-baseline --print-summary
+```
+
+**Full narrative delta** (upstream + resources + provenance markdown):
+
+```bash
+uv run python scripts/model_sync_pr_deltas.py --auto-baseline --print-all-markdown
 ```
 
 Tooling inventory-only check:

@@ -149,7 +149,7 @@ jobs:
       - name: Compute resource delta JSON
         id: resource_delta_json
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --write-github-output --resource-json-only
+          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --resource-json-only
 
       - name: Detect non-generated src drift
         id: src_drift
@@ -453,7 +453,7 @@ jobs:
           needs.validate-generated-artifacts.outputs.version_changed == 'true' ||
           github.event_name == 'workflow_dispatch'
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --write-github-output --upstream-only
+          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --upstream-only
 
       - name: Compute resource and attribute deltas
         id: resource_delta
@@ -463,13 +463,13 @@ jobs:
           needs.validate-generated-artifacts.outputs.version_changed == 'true' ||
           github.event_name == 'workflow_dispatch'
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --write-github-output --resource-only
+          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --resource-only
 
       - name: Compute provenance delta
         id: provenance_delta
         if: steps.diff_scope.outputs.provenance_changed == 'true'
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --write-github-output --provenance-only
+          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --provenance-only
 
       - name: Push model-sync branch (manual PR)
         if: steps.diff_scope.outputs.generated_changed == 'true'
@@ -585,31 +585,50 @@ jobs:
           {
             echo "## Model Sync PR Summary"
             echo ""
-            echo "### Summary of Changes"
+            echo "### At a glance"
+            echo "- OpenAPI SHA256 (previous → current): \`${{ needs.validate-generated-artifacts.outputs.prev_openapi_sha256 || '<none>' }}\` → \`${{ needs.validate-generated-artifacts.outputs.openapi_sha256 }}\`"
+            echo "- Download generated outputs from this run: artifact **model-sync-generated**"
+            echo "- \`generated_changed\`: \`${{ steps.diff_scope.outputs.generated_changed || 'false' }}\`"
+            echo "- Changed file count: \`${{ steps.diff_scope.outputs.changed_count || '0' }}\`"
             echo ""
+            echo "### Upstream (OpenAPI operations)"
+            if [ -n "${{ steps.upstream_delta.outputs.summary_markdown || '' }}" ]; then
+              printf "%s\n" "${{ steps.upstream_delta.outputs.summary_markdown }}"
+            else
+              echo "_Upstream delta step did not run or produced no output._"
+            fi
+            echo ""
+            echo "### Resources and payloads"
             if [ -n "${{ steps.resource_delta.outputs.summary_markdown || '' }}" ]; then
               printf "%s\n" "${{ steps.resource_delta.outputs.summary_markdown }}"
             else
-              echo "*No resource façade or payload deltas vs baseline (resource delta step did not run or produced no output).*"
+              echo "_No resource façade or payload markdown (step skipped or empty)._"
             fi
             echo ""
-            echo "### Run Context"
-            echo "- Event: \`${{ github.event_name }}\`"
-            echo "- Ref: \`${{ github.ref }}\`"
-            echo "- Trigger reason: \`${{ needs.validate-generated-artifacts.outputs.reason }}\`"
+            echo "### Provenance"
+            if [ -n "${{ steps.provenance_delta.outputs.summary_markdown || '' }}" ]; then
+              printf "%s\n" "${{ steps.provenance_delta.outputs.summary_markdown }}"
+            else
+              echo "_Provenance delta step did not run or provenance unchanged vs baseline._"
+            fi
             echo ""
-            echo "### Summary of changes"
+            echo "### Regenerated reference docs"
+            echo "- \`docs/generated-reference/resources.md\`"
+            echo "- \`docs/generated-reference/api-surfaces.md\`"
+            echo "- \`docs/generated-reference/create-update-payloads.md\`"
+            echo "- \`docs/generated-reference/coverage.json\`"
+            echo ""
+            echo "### Run context"
             echo "| Signal | Value |"
             echo "|---|---|"
+            echo "| Event | \`${{ github.event_name }}\` |"
+            echo "| Ref | \`${{ github.ref }}\` |"
+            echo "| Trigger reason | \`${{ needs.validate-generated-artifacts.outputs.reason }}\` |"
             echo "| Upstream changed | \`${{ needs.validate-generated-artifacts.outputs.upstream_changed }}\` |"
             echo "| version_changed | \`${{ needs.validate-generated-artifacts.outputs.version_changed }}\` |"
             echo "| spec_changed | \`${{ needs.validate-generated-artifacts.outputs.spec_changed }}\` |"
-            echo "| Previous OpenAPI SHA256 | \`${{ needs.validate-generated-artifacts.outputs.prev_openapi_sha256 || '<none>' }}\` |"
-            echo "| OpenAPI SHA256 | \`${{ needs.validate-generated-artifacts.outputs.openapi_sha256 }}\` |"
-            echo "| Previous endorctl version | \`${{ needs.validate-generated-artifacts.outputs.prev_endorctl_version || '<none>' }}\` |"
+            echo "| Previous endorctl | \`${{ needs.validate-generated-artifacts.outputs.prev_endorctl_version || '<none>' }}\` |"
             echo "| endorctl version | \`${{ needs.validate-generated-artifacts.outputs.endorctl_version }}\` |"
-            echo "| generated_changed | \`${{ steps.diff_scope.outputs.generated_changed || 'false' }}\` |"
-            echo "| Changed file count | \`${{ steps.diff_scope.outputs.changed_count || '0' }}\` |"
-            echo "| provenance_changed (excluded) | \`${{ steps.diff_scope.outputs.provenance_changed || 'false' }}\` |"
+            echo "| provenance_changed (excluded from branch) | \`${{ steps.diff_scope.outputs.provenance_changed || 'false' }}\` |"
             echo "| API spec path | \`${{ env.OPENAPI_SPEC_PATH }}\` |"
           } >> "$GITHUB_STEP_SUMMARY"
