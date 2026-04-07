@@ -103,7 +103,7 @@ Model-sync automation is split by responsibility:
 - **Sync + PR:** `.github/workflows/model-sync-pr.yml`
   - runs canonical generation (`scripts/model_sync.py --generate-stubs --generate-reference-docs`)
   - scopes changed files to generated surfaces
-  - creates/updates bot PR branch (`chore/model-sync-auto`)
+  - creates/updates bot PR branch (`chore/model-sync-<utc-timestamp>`)
 - **CI gate:** `.github/workflows/ci-pr-main.yml`
   - remains the required merge gate for all PRs, including bot PRs
 
