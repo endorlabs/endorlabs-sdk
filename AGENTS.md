@@ -79,6 +79,8 @@ Model-sync automation is intentionally split:
 - **Sync + PR workflow:** [.github/workflows/model-sync-pr.yml](.github/workflows/model-sync-pr.yml) regenerates canonical artifacts and opens/updates the bot PR branch.
 - **Required CI gate:** [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml) validates all PRs (including bot-generated PRs).
 
+**Maintainer commands** (fetch spec, regenerate, compact deltas): [scripts/sync/README.md](scripts/sync/README.md).
+
 ## Repository-Scoped Rules (`.cursor/rules/`)
 
 Cursor rules apply when working here. Use **@rule** in chat or rely on glob/always-apply:

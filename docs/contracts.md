@@ -19,7 +19,7 @@ This document is the in-repo source of truth for shared SDK semantics.
   (`endorlabs.resources.project`, `build_create_payload` metadata slugs like
   `project_build_create`).
 - **Custom facades (SDK-only helpers):** Register in `CUSTOM_FACADE_REGISTRY` in
-  [`src/endorlabs/registry.py`](src/endorlabs/registry.py), not in
+  [`src/endorlabs/registry.py`](../src/endorlabs/registry.py), not in
   `registry_contract`. Use **PascalCase** `attr_name` on `Client` for consistency.
   Each entry carries `pyi_*` metadata for
   `scripts/generate_client_stub.py` (typed `client_surface.pyi`); run
@@ -104,5 +104,6 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 ## Errors
 
-- Use `endorlabs.exceptions`; resources may return `None` on 404 where documented.
+- Use exception classes exported at top-level `endorlabs` (defined in
+  `endorlabs.core.exceptions`); resources may return `None` on 404 where documented.
 - Preserve full server error context in SDK error handling.

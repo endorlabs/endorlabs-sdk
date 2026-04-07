@@ -32,6 +32,11 @@ def test_build_parser_has_expected_flags() -> None:
     assert hasattr(args, "generate_stubs")
     assert hasattr(args, "generate_reference_docs")
     assert hasattr(args, "inventory_only")
+    assert hasattr(args, "fetch_spec")
+    assert hasattr(args, "spec_url")
+    assert hasattr(args, "spec_hash_only")
+    assert hasattr(args, "delta_summary")
+    assert hasattr(args, "delta_git_ref")
 
 
 def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:
@@ -59,7 +64,7 @@ def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:
     )
 
     assert result == 7
-    assert captured["spec_path"] == Path("spec.json")
+    assert captured["spec_path"] == Path("spec.json").resolve()
     assert captured["output_root"] == Path("out")
     assert captured["profiles_dir"] == Path("profiles")
     assert captured["generate_stubs"] is True
