@@ -1195,7 +1195,10 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser.add_argument(
         "--git-ref",
         default="HEAD",
-        help="Git ref for baseline JSON (default: HEAD; ignored when --auto-baseline is set)",
+        help=(
+            "Git ref for baseline JSON (default HEAD). "
+            "Ignored when --auto-baseline is set."
+        ),
     )
     parser.add_argument(
         "--auto-baseline",
@@ -1321,7 +1324,9 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     repo_root = Path(__file__).resolve().parents[1]
     from sync.baseline_ref import resolve_auto_baseline_ref
 
-    effective_ref = resolve_auto_baseline_ref(repo_root) if args.auto_baseline else args.git_ref
+    effective_ref = (
+        resolve_auto_baseline_ref(repo_root) if args.auto_baseline else args.git_ref
+    )
 
     if args.print_summary:
         from sync.delta_summary import render_compact_delta_summary_lines
@@ -1343,7 +1348,13 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
         old_meta = git_show_json(effective_ref, args.operation_metadata)
         new_meta = load_json_file(args.operation_metadata)
         _write_stdout("## Upstream\n")
-        _write_stdout("\n".join(render_upstream_delta_markdown(old_meta, new_meta, baseline_ref=effective_ref)))
+        _write_stdout(
+            "\n".join(
+                render_upstream_delta_markdown(
+                    old_meta, new_meta, baseline_ref=effective_ref
+                )
+            )
+        )
         _write_stdout("\n\n## Resources\n")
         old_facade = git_show_json(effective_ref, args.facade)
         new_facade = load_json_file(args.facade)
