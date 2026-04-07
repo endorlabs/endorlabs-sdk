@@ -248,7 +248,7 @@ Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
 
 ## Errors
 
-Raised exceptions live in `endorlabs.exceptions`: `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/contracts.md](docs/contracts.md) (Errors section).
+Raised exceptions are exported from top-level `endorlabs` (implemented in `endorlabs.core.exceptions`): `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/contracts.md](docs/contracts.md) (Errors section).
 
 ## Development
 
