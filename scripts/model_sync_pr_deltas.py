@@ -1195,7 +1195,15 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser.add_argument(
         "--git-ref",
         default="HEAD",
-        help="Git ref for baseline JSON (default: HEAD)",
+        help="Git ref for baseline JSON (default: HEAD; ignored when --auto-baseline is set)",
+    )
+    parser.add_argument(
+        "--auto-baseline",
+        action="store_true",
+        help=(
+            "Resolve baseline via origin/main, origin/master, main, master, else HEAD "
+            "(overrides --git-ref)"
+        ),
     )
     parser.add_argument(
         "--operation-metadata",
@@ -1240,6 +1248,16 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
         "--print-provenance",
         action="store_true",
         help="Print provenance.json field delta vs --git-ref",
+    )
+    parser.add_argument(
+        "--print-summary",
+        action="store_true",
+        help="Print compact delta summary vs baseline (upstream/resources/provenance)",
+    )
+    parser.add_argument(
+        "--print-all-markdown",
+        action="store_true",
+        help="Print full upstream, resource, and provenance markdown sections",
     )
     parser.add_argument(
         "--write-github-output",
@@ -1291,10 +1309,67 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
         and not args.print_resource
         and not args.print_provenance
         and not args.write_github_output
+        and not args.print_summary
+        and not args.print_all_markdown
     ):
         parser.error(
             "Specify at least one of --print-upstream, --print-resource, "
-            "--print-provenance, --write-github-output"
+            "--print-provenance, --print-summary, --print-all-markdown, "
+            "--write-github-output"
+        )
+
+    repo_root = Path(__file__).resolve().parents[1]
+    from sync.baseline_ref import resolve_auto_baseline_ref
+
+    effective_ref = resolve_auto_baseline_ref(repo_root) if args.auto_baseline else args.git_ref
+
+    if args.print_summary:
+        from sync.delta_summary import render_compact_delta_summary_lines
+
+        _write_stdout(
+            "\n".join(
+                render_compact_delta_summary_lines(
+                    git_ref=effective_ref,
+                    repo_root=repo_root,
+                    operation_metadata=args.operation_metadata,
+                    facade=args.facade,
+                    payload=args.payload,
+                    provenance=args.provenance,
+                )
+            )
+        )
+
+    if args.print_all_markdown:
+        old_meta = git_show_json(effective_ref, args.operation_metadata)
+        new_meta = load_json_file(args.operation_metadata)
+        _write_stdout("## Upstream\n")
+        _write_stdout("\n".join(render_upstream_delta_markdown(old_meta, new_meta, baseline_ref=effective_ref)))
+        _write_stdout("\n\n## Resources\n")
+        old_facade = git_show_json(effective_ref, args.facade)
+        new_facade = load_json_file(args.facade)
+        old_payload = git_show_json(effective_ref, args.payload)
+        new_payload = load_json_file(args.payload)
+        _write_stdout(
+            "\n".join(
+                render_resource_delta_markdown(
+                    old_facade,
+                    new_facade,
+                    old_payload,
+                    new_payload,
+                    baseline_ref=effective_ref,
+                    include_resource_inventory=args.include_resource_inventory,
+                )
+            )
+        )
+        _write_stdout("\n\n## Provenance\n")
+        old_prov = git_show_json(effective_ref, args.provenance)
+        new_prov = load_json_file(args.provenance)
+        _write_stdout(
+            "\n".join(
+                render_provenance_delta_markdown(
+                    old_prov, new_prov, baseline_ref=effective_ref
+                )
+            )
         )
 
     run_upstream = args.print_upstream or (
@@ -1308,10 +1383,10 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
     )
 
     if run_upstream:
-        old_meta = git_show_json(args.git_ref, args.operation_metadata)
+        old_meta = git_show_json(effective_ref, args.operation_metadata)
         new_meta = load_json_file(args.operation_metadata)
         up_lines = render_upstream_delta_markdown(
-            old_meta, new_meta, baseline_ref=args.git_ref
+            old_meta, new_meta, baseline_ref=effective_ref
         )
         if args.print_upstream:
             _write_stdout("\n".join(up_lines))
@@ -1322,16 +1397,16 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
             append_github_output_text("delta_json", json.dumps(up_json, sort_keys=True))
 
     if run_resource:
-        old_facade = git_show_json(args.git_ref, args.facade)
+        old_facade = git_show_json(effective_ref, args.facade)
         new_facade = load_json_file(args.facade)
-        old_payload = git_show_json(args.git_ref, args.payload)
+        old_payload = git_show_json(effective_ref, args.payload)
         new_payload = load_json_file(args.payload)
         res_lines = render_resource_delta_markdown(
             old_facade,
             new_facade,
             old_payload,
             new_payload,
-            baseline_ref=args.git_ref,
+            baseline_ref=effective_ref,
             include_resource_inventory=args.include_resource_inventory,
         )
         if args.print_resource:
@@ -1347,10 +1422,10 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
             )
 
     if run_provenance:
-        old_prov = git_show_json(args.git_ref, args.provenance)
+        old_prov = git_show_json(effective_ref, args.provenance)
         new_prov = load_json_file(args.provenance)
         prov_lines = render_provenance_delta_markdown(
-            old_prov, new_prov, baseline_ref=args.git_ref
+            old_prov, new_prov, baseline_ref=effective_ref
         )
         if args.print_provenance:
             _write_stdout("\n".join(prov_lines))
