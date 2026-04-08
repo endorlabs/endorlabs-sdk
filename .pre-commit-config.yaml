@@ -1,13 +1,86 @@
 # Pre-commit hooks — last gate before code lands in history.
+#
+# Ruff/pyright steps mirror .github/workflows/ci-pr-main.yml (lint job):
+#   uv run ruff check .
+#   uv run ruff format --check .
+#   uv run pyright --project pyproject.toml
+#   uv run ruff check --select E,F,I,UP <CI-critical scripts>
+#   uv run pyright --project pyproject.toml <same scripts>
+#
+# We use local `uv run` hooks instead of astral-sh/ruff-pre-commit because that
+# hook passes --force-exclude, which skips paths listed in [tool.ruff] exclude
+# (including scripts/) even when those files are staged — diverging from CI.
+#
 # Install: uv run pre-commit install
 # Run manually: uv run pre-commit run --all-files
 repos:
-  # --- Ruff: lint + format (pinned to match dev dep) ---
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+  # --- Ruff + Pyright (parity with CI PR Main lint job) ---
+  - repo: local
     hooks:
-      - id: ruff
-      - id: ruff-format
+      - id: ruff-check
+        name: ruff check (repo-wide)
+        entry: uv
+        args: [run, ruff, check, .]
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^pyproject\.toml$|^\.github/workflows/.*\.(yaml|yml)$|.*\.(py|pyi)$)
+
+      - id: ruff-format-check
+        name: ruff format --check (repo-wide)
+        entry: uv
+        args: [run, ruff, format, --check, .]
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^pyproject\.toml$|^\.github/workflows/.*\.(yaml|yml)$|.*\.(py|pyi)$)
+
+      - id: pyright
+        name: pyright (project; src + tests per pyproject)
+        entry: uv
+        args: [run, pyright, --project, pyproject.toml]
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^pyproject\.toml$|^\.github/workflows/.*\.(yaml|yml)$|.*\.(py|pyi)$)
+
+      # Paths must stay aligned with ci-pr-main.yml "Validate CI-critical automation scripts".
+      - id: ruff-check-ci-critical-automation
+        name: ruff check (CI-critical automation; E,F,I,UP)
+        entry: uv
+        args:
+          - run
+          - ruff
+          - check
+          - --select
+          - E,F,I,UP
+          - scripts/model_sync.py
+          - scripts/model_sync_pr_deltas.py
+          - scripts/generate_client_stub.py
+          - scripts/generate_reference_docs.py
+          - .github/scripts/check_endorctl_version.py
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^pyproject\.toml$|^(scripts/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
+
+      - id: pyright-ci-critical-automation
+        name: pyright (CI-critical automation scripts)
+        entry: uv
+        args:
+          - run
+          - pyright
+          - --project
+          - pyproject.toml
+          - scripts/model_sync.py
+          - scripts/model_sync_pr_deltas.py
+          - scripts/generate_client_stub.py
+          - scripts/generate_reference_docs.py
+          - .github/scripts/check_endorctl_version.py
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^pyproject\.toml$|^(scripts/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
   # --- Spell checking ---
   - repo: https://github.com/codespell-project/codespell
