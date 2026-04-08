@@ -300,6 +300,7 @@ jobs:
         run: |
           uv run pyright --project pyproject.toml
 
+      # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
         run: |
           uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
