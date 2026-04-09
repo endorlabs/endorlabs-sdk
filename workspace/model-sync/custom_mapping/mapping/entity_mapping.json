@@ -1,0 +1,1501 @@
+{
+  "entries": [
+    {
+      "entity_name": "APIKeyServiceCreateAPIKeyBody",
+      "module_path": "a_p_i_key_service",
+      "operation_id": "APIKeyService_CreateAPIKey",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/api-keys:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1APIKey",
+      "module_path": "a_p_i_key_service",
+      "operation_id": "APIKeyService_GetAPIKey",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/api-keys/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListAPIKeysResponse",
+      "module_path": "a_p_i_key_service",
+      "operation_id": "APIKeyService_ListAPIKeys",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/api-keys:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "googlerpcStatus",
+      "module_path": "a_p_i_key_validator_service",
+      "operation_id": "APIKeyValidatorService_CreateAPIKeyValidator",
+      "source_key": "/v1/auth/api-key/validate:post:default",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ValidateAPIKeyReq",
+      "module_path": "a_p_i_key_validator_service",
+      "operation_id": "APIKeyValidatorService_CreateAPIKeyValidator",
+      "source_key": "/v1/auth/api-key/validate:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ArtifactSignatureServiceCreateArtifactSignatureBody",
+      "module_path": "artifact_signature_service",
+      "operation_id": "ArtifactSignatureService_CreateArtifactSignature",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/artifact-signatures:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ArtifactSignatureServiceUpdateArtifactSignatureBody",
+      "module_path": "artifact_signature_service",
+      "operation_id": "ArtifactSignatureService_UpdateArtifactSignature",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/artifact-signatures:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ArtifactSignature",
+      "module_path": "artifact_signature_service",
+      "operation_id": "ArtifactSignatureService_UpdateArtifactSignature",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/artifact-signatures:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListArtifactSignaturesResponse",
+      "module_path": "artifact_signature_service",
+      "operation_id": "ArtifactSignatureService_ListArtifactSignatures",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/artifact-signatures:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1AuditLog",
+      "module_path": "audit_log_service",
+      "operation_id": "AuditLogService_GetAuditLog",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/audit-logs/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListAuditLogsResponse",
+      "module_path": "audit_log_service",
+      "operation_id": "AuditLogService_ListAuditLogs",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/audit-logs:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "AuthenticationLogServiceCreateAuthenticationLogBody",
+      "module_path": "authentication_log_service",
+      "operation_id": "AuthenticationLogService_CreateAuthenticationLog",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/authentication-logs:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1AuthenticationLog",
+      "module_path": "authentication_log_service",
+      "operation_id": "AuthenticationLogService_GetAuthenticationLog",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/authentication-logs/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListAuthenticationLogsResponse",
+      "module_path": "authentication_log_service",
+      "operation_id": "AuthenticationLogService_ListAuthenticationLogs",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/authentication-logs:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1AuthenticationResponse",
+      "module_path": "authentication_service",
+      "operation_id": "AuthenticationService_Logout",
+      "source_key": "/v1/auth/{authentication_source}/logout:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "AuthorizationPolicyServiceCreateAuthorizationPolicyBody",
+      "module_path": "authorization_policy_service",
+      "operation_id": "AuthorizationPolicyService_CreateAuthorizationPolicy",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/authorization-policies:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "AuthorizationPolicyServiceUpdateAuthorizationPolicyBody",
+      "module_path": "authorization_policy_service",
+      "operation_id": "AuthorizationPolicyService_UpdateAuthorizationPolicy",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/authorization-policies:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1AuthorizationPolicy",
+      "module_path": "authorization_policy_service",
+      "operation_id": "AuthorizationPolicyService_UpdateAuthorizationPolicy",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/authorization-policies:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListAuthorizationPoliciesResponse",
+      "module_path": "authorization_policy_service",
+      "operation_id": "AuthorizationPolicyService_ListAuthorizationPolicies",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/authorization-policies:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "BatchFileSegmentsServiceCreateBatchFileSegmentsBody",
+      "module_path": "batch_file_segments_service",
+      "operation_id": "BatchFileSegmentsService_CreateBatchFileSegments",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/batch/file-segments:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1BatchFileSegments",
+      "module_path": "batch_file_segments_service",
+      "operation_id": "BatchFileSegmentsService_CreateBatchFileSegments",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/batch/file-segments:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "BatchNotificationServiceCreateBatchNotificationBody",
+      "module_path": "batch_notification_service",
+      "operation_id": "BatchNotificationService_CreateBatchNotification",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/batch/notifications:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1BatchNotification",
+      "module_path": "batch_notification_service",
+      "operation_id": "BatchNotificationService_CreateBatchNotification",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/batch/notifications:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1CallGraphData",
+      "module_path": "call_graph_data_service",
+      "operation_id": "CallGraphDataService_GetCallGraphData",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/call-graph-data/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListCallGraphDataResponse",
+      "module_path": "call_graph_data_service",
+      "operation_id": "CallGraphDataService_ListCallGraphData",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/call-graph-data:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1CodeOwners",
+      "module_path": "code_owners_service",
+      "operation_id": "CodeOwnersService_GetCodeOwners",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/codeowners/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListCodeOwnersResponse",
+      "module_path": "code_owners_service",
+      "operation_id": "CodeOwnersService_ListCodeOwners",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/codeowners:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1DependencyMetadata",
+      "module_path": "dependency_metadata_service",
+      "operation_id": "DependencyMetadataService_GetDependencyMetadata",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/dependency-metadata/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListDependencyMetadataResponse",
+      "module_path": "dependency_metadata_service",
+      "operation_id": "DependencyMetadataService_ListDependencyMetadata",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/dependency-metadata:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1EndorLicense",
+      "module_path": "endor",
+      "operation_id": null,
+      "source_key": "v1EndorLicense",
+      "source_kind": "definition"
+    },
+    {
+      "entity_name": "EndorIgnoreEntryServiceCreateEndorIgnoreEntryBody",
+      "module_path": "endor_ignore_entry_service",
+      "operation_id": "EndorIgnoreEntryService_CreateEndorIgnoreEntry",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/endor-ignore-entries:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "EndorIgnoreEntryServiceUpdateEndorIgnoreEntryBody",
+      "module_path": "endor_ignore_entry_service",
+      "operation_id": "EndorIgnoreEntryService_UpdateEndorIgnoreEntry",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/endor-ignore-entries:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1EndorIgnoreEntry",
+      "module_path": "endor_ignore_entry_service",
+      "operation_id": "EndorIgnoreEntryService_UpdateEndorIgnoreEntry",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/endor-ignore-entries:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListEndorIgnoreEntriesResponse",
+      "module_path": "endor_ignore_entry_service",
+      "operation_id": "EndorIgnoreEntryService_ListEndorIgnoreEntries",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/endor-ignore-entries:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ExporterServiceCreateExporterBody",
+      "module_path": "exporter_service",
+      "operation_id": "ExporterService_CreateExporter",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/exporters:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ExporterServiceUpdateExporterBody",
+      "module_path": "exporter_service",
+      "operation_id": "ExporterService_UpdateExporter",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/exporters:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Exporter",
+      "module_path": "exporter_service",
+      "operation_id": "ExporterService_UpdateExporter",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/exporters:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListExportersResponse",
+      "module_path": "exporter_service",
+      "operation_id": "ExporterService_ListExporters",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/exporters:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1FindingLog",
+      "module_path": "finding_log_service",
+      "operation_id": "FindingLogService_GetFindingLog",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/finding-logs/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListFindingLogsResponse",
+      "module_path": "finding_log_service",
+      "operation_id": "FindingLogService_ListFindingLogs",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/finding-logs:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "FindingServiceUpdateFindingBody",
+      "module_path": "finding_service",
+      "operation_id": "FindingService_UpdateFinding",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/findings:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Finding",
+      "module_path": "finding_service",
+      "operation_id": "FindingService_UpdateFinding",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/findings:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListFindingsResponse",
+      "module_path": "finding_service",
+      "operation_id": "FindingService_ListFindings",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/findings:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1HuggingFaceModel",
+      "module_path": "hugging_face_model_service",
+      "operation_id": "HuggingFaceModelService_GetHuggingFaceModel",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-models/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListHuggingFaceModelsResponse",
+      "module_path": "hugging_face_model_service",
+      "operation_id": "HuggingFaceModelService_ListHuggingFaceModels",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-models:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1HuggingFaceOrganization",
+      "module_path": "hugging_face_organization_service",
+      "operation_id": "HuggingFaceOrganizationService_GetHuggingFaceOrganization",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListHuggingFaceOrganizationsResponse",
+      "module_path": "hugging_face_organization_service",
+      "operation_id": "HuggingFaceOrganizationService_ListHuggingFaceOrganizations",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/hugging-face-organizations:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "IPAddressPolicyServiceCreateIPAddressPolicyBody",
+      "module_path": "i_p_address_policy_service",
+      "operation_id": "IPAddressPolicyService_CreateIPAddressPolicy",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/ip-address-policies:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1IPAddressPolicy",
+      "module_path": "i_p_address_policy_service",
+      "operation_id": "IPAddressPolicyService_GetIPAddressPolicy",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/ip-address-policies/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListIPAddressPoliciesResponse",
+      "module_path": "i_p_address_policy_service",
+      "operation_id": "IPAddressPolicyService_ListIPAddressPolicies",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/ip-address-policies:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "IdentityProviderServiceCreateIdentityProviderBody",
+      "module_path": "identity_provider_service",
+      "operation_id": "IdentityProviderService_CreateIdentityProvider",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/identity-providers:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "IdentityProviderServiceUpdateIdentityProviderBody",
+      "module_path": "identity_provider_service",
+      "operation_id": "IdentityProviderService_UpdateIdentityProvider",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/identity-providers:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1IdentityProvider",
+      "module_path": "identity_provider_service",
+      "operation_id": "IdentityProviderService_UpdateIdentityProvider",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/identity-providers:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListIdentityProvidersResponse",
+      "module_path": "identity_provider_service",
+      "operation_id": "IdentityProviderService_ListIdentityProviders",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/identity-providers:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "InstallationServiceCreateInstallationBody",
+      "module_path": "installation_service",
+      "operation_id": "InstallationService_CreateInstallation",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/installations:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "InstallationServiceUpdateInstallationBody",
+      "module_path": "installation_service",
+      "operation_id": "InstallationService_UpdateInstallation",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/installations:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Installation",
+      "module_path": "installation_service",
+      "operation_id": "InstallationService_UpdateInstallation",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/installations:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListInstallationsResponse",
+      "module_path": "installation_service",
+      "operation_id": "InstallationService_ListInstallations",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/installations:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "InvitationServiceCreateInvitationBody",
+      "module_path": "invitation_service",
+      "operation_id": "InvitationService_CreateInvitation",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/invitations:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Invitation",
+      "module_path": "invitation_service",
+      "operation_id": "InvitationService_GetInvitation",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/invitations/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListInvitationsResponse",
+      "module_path": "invitation_service",
+      "operation_id": "InvitationService_ListInvitations",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/invitations:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "LicenseDependencyServiceCreateLicenseDependencyBody",
+      "module_path": "license_dependency_service",
+      "operation_id": "LicenseDependencyService_CreateLicenseDependency",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/license-dependencies:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "LicenseDependencyServiceUpdateLicenseDependencyBody",
+      "module_path": "license_dependency_service",
+      "operation_id": "LicenseDependencyService_UpdateLicenseDependency",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/license-dependencies:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1LicenseDependency",
+      "module_path": "license_dependency_service",
+      "operation_id": "LicenseDependencyService_UpdateLicenseDependency",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/license-dependencies:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListLicenseDependenciesResponse",
+      "module_path": "license_dependency_service",
+      "operation_id": "LicenseDependencyService_ListLicenseDependencies",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/license-dependencies:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "LicenseNoticesReportServiceCreateLicenseNoticesReportBody",
+      "module_path": "license_notices_report_service",
+      "operation_id": "LicenseNoticesReportService_CreateLicenseNoticesReport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/license-notices-reports:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1LicenseNoticesReport",
+      "module_path": "license_notices_report_service",
+      "operation_id": "LicenseNoticesReportService_CreateLicenseNoticesReport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/license-notices-reports:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "LicenseSummaryServiceCreateLicenseSummaryBody",
+      "module_path": "license_summary_service",
+      "operation_id": "LicenseSummaryService_CreateLicenseSummary",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/license-summaries:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "LicenseSummaryServiceUpdateLicenseSummaryBody",
+      "module_path": "license_summary_service",
+      "operation_id": "LicenseSummaryService_UpdateLicenseSummary",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/license-summaries:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1LicenseSummary",
+      "module_path": "license_summary_service",
+      "operation_id": "LicenseSummaryService_UpdateLicenseSummary",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/license-summaries:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListLicenseSummariesResponse",
+      "module_path": "license_summary_service",
+      "operation_id": "LicenseSummaryService_ListLicenseSummaries",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/license-summaries:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1LinterResult",
+      "module_path": "linter_result_service",
+      "operation_id": "LinterResultService_GetLinterResult",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/linter-results/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListLinterResultsResponse",
+      "module_path": "linter_result_service",
+      "operation_id": "LinterResultService_ListLinterResults",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/linter-results:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListMalwareResponse",
+      "module_path": "malware_service",
+      "operation_id": "MalwareService_ListMalware",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/malware:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Malware",
+      "module_path": "malware_service",
+      "operation_id": "MalwareService_GetMalware",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/malware/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "MetricServiceCreateMetricBody",
+      "module_path": "metric",
+      "operation_id": null,
+      "source_key": "MetricServiceCreateMetricBody",
+      "source_kind": "definition"
+    },
+    {
+      "entity_name": "endorv1Metric",
+      "module_path": "metric_service",
+      "operation_id": "MetricService_GetMetric",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/metrics/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListMetricsResponse",
+      "module_path": "metric_service",
+      "operation_id": "MetricService_ListMetrics",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/metrics:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "NamespaceServiceCreateNamespaceBody",
+      "module_path": "namespace_service",
+      "operation_id": "NamespaceService_CreateNamespace",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/namespaces:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "NamespaceServiceUpdateNamespaceBody",
+      "module_path": "namespace_service",
+      "operation_id": "NamespaceService_UpdateNamespace2",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/namespaces/{object.uuid}/namespaces:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListNamespacesResponse",
+      "module_path": "namespace_service",
+      "operation_id": "NamespaceService_ListNamespaces",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/namespaces:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Namespace",
+      "module_path": "namespace_service",
+      "operation_id": "NamespaceService_UpdateNamespace2",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/namespaces/{object.uuid}/namespaces:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListNotificationsResponse",
+      "module_path": "notification_service",
+      "operation_id": "NotificationService_ListNotifications",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/notifications:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Notification",
+      "module_path": "notification_service",
+      "operation_id": "NotificationService_GetNotification",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/notifications/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "NotificationTargetServiceCreateNotificationTargetBody",
+      "module_path": "notification_target_service",
+      "operation_id": "NotificationTargetService_CreateNotificationTarget",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/notification-targets:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "NotificationTargetServiceUpdateNotificationTargetBody",
+      "module_path": "notification_target_service",
+      "operation_id": "NotificationTargetService_UpdateNotificationTarget",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/notification-targets:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListNotificationTargetsResponse",
+      "module_path": "notification_target_service",
+      "operation_id": "NotificationTargetService_ListNotificationTargets",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/notification-targets:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1NotificationTarget",
+      "module_path": "notification_target_service",
+      "operation_id": "NotificationTargetService_UpdateNotificationTarget",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/notification-targets:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "OnPremSchedulerServiceCreateOnPremSchedulerBody",
+      "module_path": "on_prem_scheduler_service",
+      "operation_id": "OnPremSchedulerService_CreateOnPremScheduler",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/onprem-schedulers:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "OnPremSchedulerServiceUpdateOnPremSchedulerBody",
+      "module_path": "on_prem_scheduler_service",
+      "operation_id": "OnPremSchedulerService_UpdateOnPremScheduler",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/onprem-schedulers:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListOnPremSchedulersResponse",
+      "module_path": "on_prem_scheduler_service",
+      "operation_id": "OnPremSchedulerService_ListOnPremSchedulers",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/onprem-schedulers:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1OnPremScheduler",
+      "module_path": "on_prem_scheduler_service",
+      "operation_id": "OnPremSchedulerService_UpdateOnPremScheduler",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/onprem-schedulers:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PRCommentConfigServiceCreatePRCommentConfigBody",
+      "module_path": "p_r_comment_config_service",
+      "operation_id": "PRCommentConfigService_CreatePRCommentConfig",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/pr-comment-configs:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PRCommentConfigServiceUpdatePRCommentConfigBody",
+      "module_path": "p_r_comment_config_service",
+      "operation_id": "PRCommentConfigService_UpdatePRCommentConfig",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/pr-comment-configs:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPRCommentConfigsResponse",
+      "module_path": "p_r_comment_config_service",
+      "operation_id": "PRCommentConfigService_ListPRCommentConfigs",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/pr-comment-configs:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PRCommentConfig",
+      "module_path": "p_r_comment_config_service",
+      "operation_id": "PRCommentConfigService_UpdatePRCommentConfig",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/pr-comment-configs:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPackageFirewallLogsResponse",
+      "module_path": "package_firewall_log_service",
+      "operation_id": "PackageFirewallLogService_ListPackageFirewallLogs",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-firewall-logs:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PackageFirewallLog",
+      "module_path": "package_firewall_log_service",
+      "operation_id": "PackageFirewallLogService_GetPackageFirewallLog",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-firewall-logs/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageLicenseOverrideServiceCreatePackageLicenseOverrideBody",
+      "module_path": "package_license_override_service",
+      "operation_id": "PackageLicenseOverrideService_CreatePackageLicenseOverride",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-license-overrides:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageLicenseOverrideServiceUpdatePackageLicenseOverrideBody",
+      "module_path": "package_license_override_service",
+      "operation_id": "PackageLicenseOverrideService_UpdatePackageLicenseOverride",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-license-overrides:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPackageLicenseOverridesResponse",
+      "module_path": "package_license_override_service",
+      "operation_id": "PackageLicenseOverrideService_ListPackageLicenseOverrides",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-license-overrides:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PackageLicenseOverride",
+      "module_path": "package_license_override_service",
+      "operation_id": "PackageLicenseOverrideService_UpdatePackageLicenseOverride",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-license-overrides:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageLicenseQueryServiceCreatePackageLicenseQueryBody",
+      "module_path": "package_license_query_service",
+      "operation_id": "PackageLicenseQueryService_CreatePackageLicenseQuery",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/package-license-queries:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PackageLicenseQuery",
+      "module_path": "package_license_query_service",
+      "operation_id": "PackageLicenseQueryService_CreatePackageLicenseQuery",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/package-license-queries:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageLicenseServiceCreatePackageLicenseBody",
+      "module_path": "package_license_service",
+      "operation_id": "PackageLicenseService_CreatePackageLicense",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-licenses:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageLicenseServiceUpdatePackageLicenseBody",
+      "module_path": "package_license_service",
+      "operation_id": "PackageLicenseService_UpdatePackageLicense",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-licenses:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPackageLicenseResponse",
+      "module_path": "package_license_service",
+      "operation_id": "PackageLicenseService_ListPackageLicenses",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-licenses:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PackageLicense",
+      "module_path": "package_license_service",
+      "operation_id": "PackageLicenseService_UpdatePackageLicense",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-licenses:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageManagerServiceCreatePackageManagerBody",
+      "module_path": "package_manager_service",
+      "operation_id": "PackageManagerService_CreatePackageManager",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-managers:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageManagerServiceUpdatePackageManagerBody",
+      "module_path": "package_manager_service",
+      "operation_id": "PackageManagerService_UpdatePackageManager",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-managers:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPackageManagersResponse",
+      "module_path": "package_manager_service",
+      "operation_id": "PackageManagerService_ListPackageManagers",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-managers:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PackageManager",
+      "module_path": "package_manager_service",
+      "operation_id": "PackageManagerService_UpdatePackageManager",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-managers:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PackageVersionServiceUpdatePackageVersionBody",
+      "module_path": "package_version_service",
+      "operation_id": "PackageVersionService_UpdatePackageVersion",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-versions:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPackageVersionsResponse",
+      "module_path": "package_version_service",
+      "operation_id": "PackageVersionService_ListPackageVersions",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/package-versions:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PackageVersion",
+      "module_path": "package_version_service",
+      "operation_id": "PackageVersionService_UpdatePackageVersion",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/package-versions:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPluginBinariesResponse",
+      "module_path": "plugin_binary_service",
+      "operation_id": "PluginBinaryService_ListPluginBinaries",
+      "source_key": "/v1/plugin-binaries:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PluginBinary",
+      "module_path": "plugin_binary_service",
+      "operation_id": "PluginBinaryService_GetPluginBinary",
+      "source_key": "/v1/plugin-binaries/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PolicyServiceCreatePolicyBody",
+      "module_path": "policy_service",
+      "operation_id": "PolicyService_CreatePolicy",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/policies:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "PolicyServiceUpdatePolicyBody",
+      "module_path": "policy_service",
+      "operation_id": "PolicyService_UpdatePolicy",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/policies:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPoliciesResponse",
+      "module_path": "policy_service",
+      "operation_id": "PolicyService_ListPolicies",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/policies:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Policy",
+      "module_path": "policy_service",
+      "operation_id": "PolicyService_UpdatePolicy",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/policies:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListPolicyTemplatesResponse",
+      "module_path": "policy_template_service",
+      "operation_id": "PolicyTemplateService_ListPolicyTemplates",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/policy-templates:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1PolicyTemplate",
+      "module_path": "policy_template_service",
+      "operation_id": "PolicyTemplateService_GetPolicyTemplate",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/policy-templates/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ProjectServiceCreateProjectBody",
+      "module_path": "project_service",
+      "operation_id": "ProjectService_CreateProject",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/projects:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ProjectServiceUpdateProjectBody",
+      "module_path": "project_service",
+      "operation_id": "ProjectService_UpdateProject",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/projects:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListProjectsResponse",
+      "module_path": "project_service",
+      "operation_id": "ProjectService_ListProjects",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/projects:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Project",
+      "module_path": "project_service",
+      "operation_id": "ProjectService_UpdateProject",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/projects:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListProvisioningResultsResponse",
+      "module_path": "provisioning_result_service",
+      "operation_id": "ProvisioningResultService_ListProvisioningResults",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/provisioning-results:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ProvisioningResult",
+      "module_path": "provisioning_result_service",
+      "operation_id": "ProvisioningResultService_GetProvisioningResult",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/provisioning-results/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "QueryMalwareServiceCreateQueryMalwareBody",
+      "module_path": "query_malware_service",
+      "operation_id": "QueryMalwareService_CreateQueryMalware",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/malware:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1QueryMalware",
+      "module_path": "query_malware_service",
+      "operation_id": "QueryMalwareService_CreateQueryMalware",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/malware:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "QueryServiceCreateQueryBody",
+      "module_path": "query_service",
+      "operation_id": "QueryService_CreateQuery",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Query",
+      "module_path": "query_service",
+      "operation_id": "QueryService_CreateQuery",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody",
+      "module_path": "query_similar_packages_service",
+      "operation_id": "QuerySimilarPackagesService_CreateQuerySimilarPackages",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/similar-packages:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1QuerySimilarPackages",
+      "module_path": "query_similar_packages_service",
+      "operation_id": "QuerySimilarPackagesService_CreateQuerySimilarPackages",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/similar-packages:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "QueryVulnerabilityServiceCreateQueryVulnerabilityBody",
+      "module_path": "query_vulnerability_service",
+      "operation_id": "QueryVulnerabilityService_CreateQueryVulnerability",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/vulnerabilities:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1QueryVulnerability",
+      "module_path": "query_vulnerability_service",
+      "operation_id": "QueryVulnerabilityService_CreateQueryVulnerability",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/queries/vulnerabilities:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RegistryIngestionCheckpointServiceCreateRegistryIngestionCheckpointBody",
+      "module_path": "registry_ingestion_checkpoint_service",
+      "operation_id": "RegistryIngestionCheckpointService_CreateRegistryIngestionCheckpoint",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/registry-ingestion-checkpoints:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RegistryIngestionCheckpointServiceUpdateRegistryIngestionCheckpointBody",
+      "module_path": "registry_ingestion_checkpoint_service",
+      "operation_id": "RegistryIngestionCheckpointService_UpdateRegistryIngestionCheckpoint",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/registry-ingestion-checkpoints:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListRegistryIngestionCheckpointResponse",
+      "module_path": "registry_ingestion_checkpoint_service",
+      "operation_id": "RegistryIngestionCheckpointService_ListRegistryIngestionCheckpoint",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/registry-ingestion-checkpoints:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1RegistryIngestionCheckpoint",
+      "module_path": "registry_ingestion_checkpoint_service",
+      "operation_id": "RegistryIngestionCheckpointService_UpdateRegistryIngestionCheckpoint",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/registry-ingestion-checkpoints:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RepositoryServiceCreateRepositoryBody",
+      "module_path": "repository_service",
+      "operation_id": "RepositoryService_CreateRepository",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/repositories:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RepositoryServiceUpdateRepositoryBody",
+      "module_path": "repository_service",
+      "operation_id": "RepositoryService_UpdateRepository",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/repositories:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListRepositoriesResponse",
+      "module_path": "repository_service",
+      "operation_id": "RepositoryService_ListRepositories",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/repositories:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Repository",
+      "module_path": "repository_service",
+      "operation_id": "RepositoryService_UpdateRepository",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/repositories:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RepositoryVersionServiceCreateRepositoryVersionBody",
+      "module_path": "repository_version_service",
+      "operation_id": "RepositoryVersionService_CreateRepositoryVersion",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/repository-versions:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RepositoryVersionServiceUpdateRepositoryVersionBody",
+      "module_path": "repository_version_service",
+      "operation_id": "RepositoryVersionService_UpdateRepositoryVersion",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/repository-versions:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListRepositoryVersionsResponse",
+      "module_path": "repository_version_service",
+      "operation_id": "RepositoryVersionService_ListRepositoryVersions",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/repository-versions:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1RepositoryVersion",
+      "module_path": "repository_version_service",
+      "operation_id": "RepositoryVersionService_UpdateRepositoryVersion",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/repository-versions:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RuleSetImportServiceCreateRuleSetImportBody",
+      "module_path": "rule_set_import_service",
+      "operation_id": "RuleSetImportService_CreateRuleSetImport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/rule-set-imports:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "RuleSetImportServiceUpdateRuleSetImportBody",
+      "module_path": "rule_set_import_service",
+      "operation_id": "RuleSetImportService_UpdateRuleSetImport",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/rule-set-imports:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ImportedRuleSet",
+      "module_path": "rule_set_import_service",
+      "operation_id": "RuleSetImportService_UpdateRuleSetImport",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/rule-set-imports:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListRuleSetImportsResponse",
+      "module_path": "rule_set_import_service",
+      "operation_id": "RuleSetImportService_ListRuleSetImports",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/rule-set-imports:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SBOMExportServiceCreateSBOMExportBody",
+      "module_path": "s_b_o_m_export_service",
+      "operation_id": "SBOMExportService_CreateSBOMExport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/sbom-export:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ExportedSBOM",
+      "module_path": "s_b_o_m_export_service",
+      "operation_id": "SBOMExportService_CreateSBOMExport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/sbom-export:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SBOMImportServiceCreateSBOMImportBody",
+      "module_path": "s_b_o_m_import_service",
+      "operation_id": "SBOMImportService_CreateSBOMImport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/sbom-imports:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SBOMImportServiceUpdateSBOMImportBody",
+      "module_path": "s_b_o_m_import_service",
+      "operation_id": "SBOMImportService_UpdateSBOMImport",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/sbom-imports:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ImportedSBOM",
+      "module_path": "s_b_o_m_import_service",
+      "operation_id": "SBOMImportService_UpdateSBOMImport",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/sbom-imports:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListSBOMImportsResponse",
+      "module_path": "s_b_o_m_import_service",
+      "operation_id": "SBOMImportService_ListSBOMImports",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/sbom-imports:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SCMCredentialServiceCreateSCMCredentialBody",
+      "module_path": "s_c_m_credential_service",
+      "operation_id": "SCMCredentialService_CreateSCMCredential",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scm-credentials:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SCMCredentialServiceUpdateSCMCredentialBody",
+      "module_path": "s_c_m_credential_service",
+      "operation_id": "SCMCredentialService_UpdateSCMCredential",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scm-credentials:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListSCMCredentialsResponse",
+      "module_path": "s_c_m_credential_service",
+      "operation_id": "SCMCredentialService_ListSCMCredentials",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scm-credentials:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1SCMCredential",
+      "module_path": "s_c_m_credential_service",
+      "operation_id": "SCMCredentialService_UpdateSCMCredential",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scm-credentials:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SavedQueryServiceCreateSavedQueryBody",
+      "module_path": "saved_query_service",
+      "operation_id": "SavedQueryService_CreateSavedQuery",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/saved-queries:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SavedQueryServiceUpdateSavedQueryBody",
+      "module_path": "saved_query_service",
+      "operation_id": "SavedQueryService_UpdateSavedQuery",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/saved-queries:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListSavedQueriesResponse",
+      "module_path": "saved_query_service",
+      "operation_id": "SavedQueryService_ListSavedQueries",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/saved-queries:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1SavedQuery",
+      "module_path": "saved_query_service",
+      "operation_id": "SavedQueryService_UpdateSavedQuery",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/saved-queries:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanLogRequestServiceCreateScanLogRequestBody",
+      "module_path": "scan_log_request_service",
+      "operation_id": "ScanLogRequestService_CreateScanLogRequest",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-log-requests:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ScanLogRequest",
+      "module_path": "scan_log_request_service",
+      "operation_id": "ScanLogRequestService_CreateScanLogRequest",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-log-requests:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanProfileServiceCreateScanProfileBody",
+      "module_path": "scan_profile_service",
+      "operation_id": "ScanProfileService_CreateScanProfile",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-profiles:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanProfileServiceUpdateScanProfileBody",
+      "module_path": "scan_profile_service",
+      "operation_id": "ScanProfileService_UpdateScanProfile",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-profiles:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListScanProfilesResponse",
+      "module_path": "scan_profile_service",
+      "operation_id": "ScanProfileService_ListScanProfiles",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-profiles:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ScanProfile",
+      "module_path": "scan_profile_service",
+      "operation_id": "ScanProfileService_UpdateScanProfile",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-profiles:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanResultServiceCreateScanResultBody",
+      "module_path": "scan_result_service",
+      "operation_id": "ScanResultService_CreateScanResult",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-results:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanResultServiceUpdateScanResultBody",
+      "module_path": "scan_result_service",
+      "operation_id": "ScanResultService_UpdateScanResult",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-results:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListScanResultsResponse",
+      "module_path": "scan_result_service",
+      "operation_id": "ScanResultService_ListScanResults",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-results:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ScanResult",
+      "module_path": "scan_result_service",
+      "operation_id": "ScanResultService_UpdateScanResult",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-results:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanWorkflowResultServiceCreateScanWorkflowResultBody",
+      "module_path": "scan_workflow_result_service",
+      "operation_id": "ScanWorkflowResultService_CreateScanWorkflowResult",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-workflow-results:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanWorkflowResultServiceUpdateScanWorkflowResultBody",
+      "module_path": "scan_workflow_result_service",
+      "operation_id": "ScanWorkflowResultService_UpdateScanWorkflowResult",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-workflow-results:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListScanWorkflowResultsResponse",
+      "module_path": "scan_workflow_result_service",
+      "operation_id": "ScanWorkflowResultService_ListScanWorkflowResults",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-workflow-results:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ScanWorkflowResult",
+      "module_path": "scan_workflow_result_service",
+      "operation_id": "ScanWorkflowResultService_UpdateScanWorkflowResult",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-workflow-results:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanWorkflowServiceCreateScanWorkflowBody",
+      "module_path": "scan_workflow_service",
+      "operation_id": "ScanWorkflowService_CreateScanWorkflow",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-workflows:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "ScanWorkflowServiceUpdateScanWorkflowBody",
+      "module_path": "scan_workflow_service",
+      "operation_id": "ScanWorkflowService_UpdateScanWorkflow",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-workflows:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListScanWorkflowsResponse",
+      "module_path": "scan_workflow_service",
+      "operation_id": "ScanWorkflowService_ListScanWorkflows",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/scan-workflows:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ScanWorkflow",
+      "module_path": "scan_workflow_service",
+      "operation_id": "ScanWorkflowService_UpdateScanWorkflow",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/scan-workflows:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SecretRuleServiceCreateSecretRuleBody",
+      "module_path": "secret_rule_service",
+      "operation_id": "SecretRuleService_CreateSecretRule",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/secret-rules:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SecretRuleServiceUpdateSecretRuleBody",
+      "module_path": "secret_rule_service",
+      "operation_id": "SecretRuleService_UpdateSecretRule",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/secret-rules:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListSecretRulesResponse",
+      "module_path": "secret_rule_service",
+      "operation_id": "SecretRuleService_ListSecretRules",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/secret-rules:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1SecretRule",
+      "module_path": "secret_rule_service",
+      "operation_id": "SecretRuleService_UpdateSecretRule",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/secret-rules:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SemgrepRuleServiceCreateSemgrepRuleBody",
+      "module_path": "semgrep_rule_service",
+      "operation_id": "SemgrepRuleService_CreateSemgrepRule",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/semgrep-rules:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SemgrepRuleServiceUpdateSemgrepRuleBody",
+      "module_path": "semgrep_rule_service",
+      "operation_id": "SemgrepRuleService_UpdateSemgrepRule",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/semgrep-rules:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListSemgrepRulesResponse",
+      "module_path": "semgrep_rule_service",
+      "operation_id": "SemgrepRuleService_ListSemgrepRules",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/semgrep-rules:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1SemgrepRule",
+      "module_path": "semgrep_rule_service",
+      "operation_id": "SemgrepRuleService_UpdateSemgrepRule",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/semgrep-rules:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SystemConfigServiceCreateSystemConfigBody",
+      "module_path": "system_config_service",
+      "operation_id": "SystemConfigService_CreateSystemConfig",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/system-config:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "SystemConfigServiceUpdateSystemConfigBody",
+      "module_path": "system_config_service",
+      "operation_id": "SystemConfigService_UpdateSystemConfig",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/system-config:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListSystemConfigResponse",
+      "module_path": "system_config_service",
+      "operation_id": "SystemConfigService_ListSystemConfig",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/system-config:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1SystemConfig",
+      "module_path": "system_config_service",
+      "operation_id": "SystemConfigService_UpdateSystemConfig",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/system-config:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListTenantsResponse",
+      "module_path": "tenant_service",
+      "operation_id": "TenantService_ListTenants",
+      "source_key": "/v1/tenants:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Tenant",
+      "module_path": "tenant_service",
+      "operation_id": "TenantService_GetTenant",
+      "source_key": "/v1/tenants/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1UpdateTenantRequest",
+      "module_path": "tenant_service",
+      "operation_id": "TenantService_UpdateTenant",
+      "source_key": "/v1/tenants:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "VEXExportServiceCreateVEXExportBody",
+      "module_path": "v_e_x_export_service",
+      "operation_id": "VEXExportService_CreateVEXExport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vex-export:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ExportedVEX",
+      "module_path": "v_e_x_export_service",
+      "operation_id": "VEXExportService_CreateVEXExport",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vex-export:post:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListVectorStoresResponse",
+      "module_path": "vector_store_service",
+      "operation_id": "VectorStoreService_ListVectorStores",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vector-stores:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1VectorStore",
+      "module_path": "vector_store_service",
+      "operation_id": "VectorStoreService_GetVectorStore",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vector-stores/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "VersionUpgradeServiceCreateVersionUpgradeBody",
+      "module_path": "version_upgrade_service",
+      "operation_id": "VersionUpgradeService_CreateVersionUpgrade",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/version-upgrades:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "VersionUpgradeServiceUpdateVersionUpgradeBody",
+      "module_path": "version_upgrade_service",
+      "operation_id": "VersionUpgradeService_UpdateVersionUpgrade",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/version-upgrades:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListVersionUpgradesResponse",
+      "module_path": "version_upgrade_service",
+      "operation_id": "VersionUpgradeService_ListVersionUpgrades",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/version-upgrades:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1VersionUpgrade",
+      "module_path": "version_upgrade_service",
+      "operation_id": "VersionUpgradeService_UpdateVersionUpgrade",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/version-upgrades:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListVulnerabilitiesResponse",
+      "module_path": "vulnerability_service",
+      "operation_id": "VulnerabilityService_ListVulnerabilities",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vulnerabilities:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1Vuln",
+      "module_path": "vulnerability_service",
+      "operation_id": "VulnerabilityService_GetVulnerability",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/vulnerabilities/{uuid}:get:200",
+      "source_kind": "operation_ref"
+    }
+  ],
+  "entry_count": 210,
+  "profiles": {
+    "aliases.json": {
+      "_comment": "Custom mapping aliases. Keep deterministic and source-controlled.",
+      "class_aliases": {},
+      "field_aliases": {}
+    },
+    "base_class_map.json": {
+      "_comment": "Mapping profile for per-entity base classes in custom mapping generation.",
+      "default_base_class": "pydantic.BaseModel",
+      "entity_base_class_overrides": {}
+    },
+    "enum_policy.json": {
+      "_comment": "Enum handling policy for custom mapping approach.",
+      "allow_unknown_values": true,
+      "fallback": "string",
+      "strategy": "enum"
+    },
+    "partition_rules.json": {
+      "_comment": "Deterministic partition rules for custom mapping approach.",
+      "fallback": "operation_group",
+      "final_fallback": "per_entity_misc",
+      "module_name_case": "snake_case",
+      "primary": "service_or_resource_domain",
+      "stable_sort": true
+    }
+  }
+}

@@ -1,0 +1,2611 @@
+{
+  "resource_count": 34,
+  "resources": [
+    {
+      "attr_name": "APIKey",
+      "create_payload_definitions": {
+        "APIKeyServiceCreateAPIKeyBody": {
+          "description": "Manages the system API keys.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Indicates whether the API key can be used for the child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1APIKeySpec"
+            },
+            "tenant_meta": {
+              "description": "APIKeys are namespaced objects.",
+              "title": "APIKeys are namespaced objects.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of an API key resource.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "APIKeyServiceCreateAPIKeyBody"
+      ],
+      "resource_name": "api-keys",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "AuditLog",
+      "create_payload_definitions": {
+        "AuditLogServiceCreateAuditLogBody": {
+          "description": "AuditLog represents a CRUD operation on a message.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1AuditLogSpec"
+            },
+            "tenant_meta": {
+              "description": "Namespace of the message that is accessed.",
+              "title": "Namespace of the message that is accessed.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the audit log.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "AuditLogServiceCreateAuditLogBody"
+      ],
+      "resource_name": "audit-logs",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "AuthenticationLog",
+      "create_payload_definitions": {
+        "AuthenticationLogServiceCreateAuthenticationLogBody": {
+          "description": "Represents a CRUD operation on a message.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1AuthenticationLogSpec"
+            },
+            "tenant_meta": {
+              "description": "Namespace of the message that is accessed.",
+              "title": "Namespace of the message that is accessed.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the authentication log.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "AuthenticationLogServiceCreateAuthenticationLogBody"
+      ],
+      "resource_name": "authentication-logs",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "AuthorizationPolicy",
+      "create_payload_definitions": {
+        "AuthorizationPolicyServiceCreateAuthorizationPolicyBody": {
+          "description": "Represents an authorization policy in the system.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata is generic for any object."
+            },
+            "propagate": {
+              "description": "Indicates that the object should be visible in the child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1AuthorizationPolicySpec"
+            },
+            "tenant_meta": {
+              "description": "Authorization policies are associated with a tenant.",
+              "title": "Authorization policies are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the AuthorizationPolicy resource.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "AuthorizationPolicyServiceCreateAuthorizationPolicyBody"
+      ],
+      "resource_name": "authorization-policies",
+      "update_payload_definitions": {
+        "AuthorizationPolicyServiceUpdateAuthorizationPolicyBody": {
+          "description": "Request to update an authorization policy.",
+          "properties": {
+            "object": {
+              "description": "Represents an authorization policy in the system.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata is generic for any object."
+                },
+                "propagate": {
+                  "description": "Indicates that the object should be visible in the child namespaces.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1AuthorizationPolicySpec"
+                },
+                "tenant_meta": {
+                  "description": "Authorization policies are associated with a tenant.",
+                  "title": "Authorization policies are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the AuthorizationPolicy resource.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "AuthorizationPolicyServiceUpdateAuthorizationPolicyBody"
+      ]
+    },
+    {
+      "attr_name": "CodeOwners",
+      "create_payload_definitions": {
+        "CodeOwnersServiceCreateCodeOwnersBody": {
+          "description": "Code owner information for a project.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1CodeOwnersSpec",
+              "description": "Object specific data."
+            },
+            "tenant_meta": {
+              "description": "Tenant data.",
+              "title": "Tenant data.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the object.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "CodeOwnersServiceCreateCodeOwnersBody"
+      ],
+      "resource_name": "codeowners",
+      "update_payload_definitions": {
+        "CodeOwnersServiceUpdateCodeOwnersBody": {
+          "description": "Request to update a CodeOwners object.",
+          "properties": {
+            "object": {
+              "description": "Code owner information for a project.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1CodeOwnersSpec",
+                  "description": "Object specific data."
+                },
+                "tenant_meta": {
+                  "description": "Tenant data.",
+                  "title": "Tenant data.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the object.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "CodeOwnersServiceUpdateCodeOwnersBody"
+      ]
+    },
+    {
+      "attr_name": "DependencyMetadata",
+      "create_payload_definitions": {
+        "BatchDependencyMetadataServiceCreateBatchDependencyMetadataBody": {
+          "description": "Request to create multiple DependencyMetadata objects.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1BatchDependencyMetadataSpec",
+              "description": "Resource kind specific data."
+            },
+            "tenant_meta": {
+              "description": "Information about the tenant to which the root package (importer)\nbelongs.",
+              "title": "Information about the tenant to which the root package (importer)\nbelongs.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "DependencyMetadataServiceCreateDependencyMetadataBody": {
+          "description": "Information about the relationship between a root package version (importer)\nand one of its dependencies.\nDependencyMetadata objects are children of the root PackageVersion object and\nbelong to the same project and namespace as the root PackageVersion object.\nThey are connected to the importer project through\nspec.importer_data.project_uuid, and to the dependency project through\nspec.dependency_data.project_uuid.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Contexts keep objects from different scans separated."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1DependencyMetadataSpec",
+              "description": "Resource kind specific data."
+            },
+            "tenant_meta": {
+              "description": "Information about the tenant to which the root package (importer) belongs.",
+              "title": "Information about the tenant to which the root package (importer) belongs.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the object.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "BatchDependencyMetadataServiceCreateBatchDependencyMetadataBody",
+        "DependencyMetadataServiceCreateDependencyMetadataBody"
+      ],
+      "resource_name": "dependency-metadata",
+      "update_payload_definitions": {
+        "DependencyMetadataServiceUpdateDependencyMetadataBody": {
+          "description": "Request to update a DependencyMetadata object.",
+          "properties": {
+            "object": {
+              "description": "Information about the relationship between a root package version (importer)\nand one of its dependencies.\nDependencyMetadata objects are children of the root PackageVersion object and\nbelong to the same project and namespace as the root PackageVersion object.\nThey are connected to the importer project through\nspec.importer_data.project_uuid, and to the dependency project through\nspec.dependency_data.project_uuid.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Contexts keep objects from different scans separated."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1DependencyMetadataSpec",
+                  "description": "Resource kind specific data."
+                },
+                "tenant_meta": {
+                  "description": "Information about the tenant to which the root package (importer) belongs.",
+                  "title": "Information about the tenant to which the root package (importer) belongs.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the object.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "DependencyMetadataServiceUpdateDependencyMetadataBody"
+      ]
+    },
+    {
+      "attr_name": "EndorLicense",
+      "create_payload_definitions": {
+        "EndorLicenseServiceCreateEndorLicenseBody": {
+          "description": "EndorLicense represents a specific Endor license assigned to a tenant.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata is generic for any object."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1EndorLicenseSpec",
+              "description": "The specification of the Endor Labs license."
+            },
+            "tenant_meta": {
+              "description": "EndorLicenses are associated with a tenant.",
+              "title": "EndorLicenses are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of an Endor Labs license.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object",
+          "x-internal": true
+        }
+      },
+      "create_payload_entities": [
+        "EndorLicenseServiceCreateEndorLicenseBody"
+      ],
+      "resource_name": "endor-licenses",
+      "update_payload_definitions": {
+        "EndorLicenseServiceUpdateEndorLicenseBody": {
+          "description": "Request to update an Endor Labs license.",
+          "properties": {
+            "object": {
+              "description": "EndorLicense represents a specific Endor license assigned to a tenant.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata is generic for any object."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1EndorLicenseSpec",
+                  "description": "The specification of the Endor Labs license."
+                },
+                "tenant_meta": {
+                  "description": "EndorLicenses are associated with a tenant.",
+                  "title": "EndorLicenses are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of an Endor Labs license.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object",
+              "x-internal": true
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object",
+          "x-internal": true
+        }
+      },
+      "update_payload_entities": [
+        "EndorLicenseServiceUpdateEndorLicenseBody"
+      ]
+    },
+    {
+      "attr_name": "Finding",
+      "create_payload_definitions": {
+        "FindingServiceCreateFindingBody": {
+          "description": "A finding contains details of a problem that needs to be fixed.\nThe finding applies to the parent object, which can be one of:\nRepository, RepositoryVersion, or PackageVersion.\nFinding objects are connected to the project via spec.project_uuid.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Contexts keep objects from different scans separated."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1FindingSpec",
+              "description": "Resource kind specific data."
+            },
+            "tenant_meta": {
+              "description": "Information about the tenant and namespace that the finding belongs to.",
+              "title": "Information about the tenant and namespace that the finding belongs to.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the object.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "FindingServiceCreateFindingBody"
+      ],
+      "resource_name": "findings",
+      "update_payload_definitions": {
+        "FindingServiceUpdateFindingBody": {
+          "description": "Request used to update a finding.",
+          "properties": {
+            "object": {
+              "description": "A finding contains details of a problem that needs to be fixed.\nThe finding applies to the parent object, which can be one of:\nRepository, RepositoryVersion, or PackageVersion.\nFinding objects are connected to the project via spec.project_uuid.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Contexts keep objects from different scans separated."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1FindingSpec",
+                  "description": "Resource kind specific data."
+                },
+                "tenant_meta": {
+                  "description": "Information about the tenant and namespace that the finding belongs to.",
+                  "title": "Information about the tenant and namespace that the finding belongs to.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the object.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "FindingServiceUpdateFindingBody"
+      ]
+    },
+    {
+      "attr_name": "FindingLog",
+      "create_payload_definitions": {
+        "FindingLogServiceCreateFindingLogBody": {
+          "description": "A finding log contains details of the state of a finding at the time it was\ncreated, updated or deleted.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Contexts keep objects from different scans separated."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1FindingLogSpec",
+              "description": "Resource kind specific data."
+            },
+            "tenant_meta": {
+              "description": "Namespace of the finding log.",
+              "title": "Namespace of the finding log.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the finding log.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "FindingLogServiceCreateFindingLogBody"
+      ],
+      "resource_name": "finding-logs",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "Installation",
+      "create_payload_definitions": {
+        "InstallationServiceCreateInstallationBody": {
+          "description": "Installation represents an installation request in the system.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata is generic for any object."
+            },
+            "processing_status": {
+              "$ref": "#/definitions/v1ProcessingStatus"
+            },
+            "propagate": {
+              "description": "Propagate indicates that the object should be visible in child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1InstallationSpec"
+            },
+            "tenant_meta": {
+              "description": "Namespaces are associated with a tenant.",
+              "title": "Namespaces are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the installation.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "InstallationServiceCreateInstallationBody"
+      ],
+      "resource_name": "installations",
+      "update_payload_definitions": {
+        "InstallationServiceUpdateInstallationBody": {
+          "description": "Request to update an installation.",
+          "properties": {
+            "object": {
+              "description": "Installation represents an installation request in the system.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata is generic for any object."
+                },
+                "processing_status": {
+                  "$ref": "#/definitions/v1ProcessingStatus"
+                },
+                "propagate": {
+                  "description": "Propagate indicates that the object should be visible in child namespaces.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1InstallationSpec"
+                },
+                "tenant_meta": {
+                  "description": "Namespaces are associated with a tenant.",
+                  "title": "Namespaces are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the installation.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "InstallationServiceUpdateInstallationBody"
+      ]
+    },
+    {
+      "attr_name": "Invitation",
+      "create_payload_definitions": {
+        "InvitationServiceCreateInvitationBody": {
+          "description": "Invitation represents an invitation for a new user in the system.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1InvitationSpec"
+            },
+            "tenant_meta": {
+              "description": "Invitations can be issued per namespace.",
+              "title": "Invitations can be issued per namespace.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the invitation.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "InvitationServiceCreateInvitationBody"
+      ],
+      "resource_name": "invitations",
+      "update_payload_definitions": {
+        "InvitationServiceUpdateInvitationBody": {
+          "description": "Request to update an invitation.",
+          "properties": {
+            "object": {
+              "description": "Invitation represents an invitation for a new user in the system.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1InvitationSpec"
+                },
+                "tenant_meta": {
+                  "description": "Invitations can be issued per namespace.",
+                  "title": "Invitations can be issued per namespace.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the invitation.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "InvitationServiceUpdateInvitationBody"
+      ]
+    },
+    {
+      "attr_name": "LinterResult",
+      "create_payload_definitions": {
+        "LinterResultServiceCreateLinterResultBody": {
+          "description": "The meta parent_kind can take one of two values - PackageVersion or RepositoryVersion.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Context for the repository version will be automatically updated\nto that of the version, unless it is a CI run."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Meta identifies the object."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1LinterResultSpec"
+            },
+            "tenant_meta": {
+              "description": "Linter results are associated with a tenant and namespace.",
+              "title": "Linter results are associated with a tenant and namespace.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a linter result.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "LinterResultServiceCreateLinterResultBody"
+      ],
+      "resource_name": "linter-results",
+      "update_payload_definitions": {
+        "LinterResultServiceUpdateLinterResultBody": {
+          "description": "Request to update a linter result.",
+          "properties": {
+            "object": {
+              "description": "The meta parent_kind can take one of two values - PackageVersion or RepositoryVersion.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Context for the repository version will be automatically updated\nto that of the version, unless it is a CI run."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Meta identifies the object."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1LinterResultSpec"
+                },
+                "tenant_meta": {
+                  "description": "Linter results are associated with a tenant and namespace.",
+                  "title": "Linter results are associated with a tenant and namespace.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of a linter result.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "LinterResultServiceUpdateLinterResultBody"
+      ]
+    },
+    {
+      "attr_name": "Malware",
+      "create_payload_definitions": {
+        "MalwareServiceCreateMalwareBody": {
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1MalwareSpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a malware record.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        },
+        "QueryMalwareServiceCreateQueryMalwareBody": {
+          "description": "QueryMalware is used to do query request on malware that are\nnot supported by ListMalware and the filter. For instance, you must\nuse this method to get a list of malware based on a version.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "response": {
+              "$ref": "#/definitions/v1ListMalwareResponse"
+            },
+            "responses": {
+              "$ref": "#/definitions/v1QueryMalwareResponseMap"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1QueryMalwareSpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "MalwareServiceCreateMalwareBody",
+        "QueryMalwareServiceCreateQueryMalwareBody"
+      ],
+      "resource_name": "malware",
+      "update_payload_definitions": {
+        "MalwareServiceUpdateMalwareBody": {
+          "description": "Request to update a malware record.",
+          "properties": {
+            "object": {
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1MalwareSpec"
+                },
+                "tenant_meta": {
+                  "description": "Tenant related data for the tenant containing the resource.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of a malware record.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "MalwareServiceUpdateMalwareBody"
+      ]
+    },
+    {
+      "attr_name": "Metric",
+      "create_payload_definitions": {
+        "MetricServiceCreateMetricBody": {
+          "description": "This contains the definition all metrics.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context"
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata identifies the object."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1MetricSpec",
+              "description": "The internal specification of a metric."
+            },
+            "tenant_meta": {
+              "description": "Metrics are associated with a tenant and tenant information must be provided.",
+              "title": "Metrics are associated with a tenant and tenant information must be provided.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the the metric resource.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "MetricServiceCreateMetricBody"
+      ],
+      "resource_name": "metrics",
+      "update_payload_definitions": {
+        "MetricServiceUpdateMetricBody": {
+          "description": "Request to update a metric.",
+          "properties": {
+            "object": {
+              "description": "This contains the definition all metrics.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context"
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata identifies the object."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1MetricSpec",
+                  "description": "The internal specification of a metric."
+                },
+                "tenant_meta": {
+                  "description": "Metrics are associated with a tenant and tenant information must be provided.",
+                  "title": "Metrics are associated with a tenant and tenant information must be provided.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the the metric resource.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "MetricServiceUpdateMetricBody"
+      ]
+    },
+    {
+      "attr_name": "Namespace",
+      "create_payload_definitions": {
+        "NamespaceServiceCreateNamespaceBody": {
+          "description": "Namespace provides a mechanism for isolating groups of resources.\nNamespaces may be defined in a parent child hierarchy.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1NamespaceSpec"
+            },
+            "tenant_meta": {
+              "description": "Namespaces are associated with a tenant.",
+              "title": "Namespaces are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a namespace.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "NamespaceServiceCreateNamespaceBody"
+      ],
+      "resource_name": "namespaces",
+      "update_payload_definitions": {
+        "NamespaceServiceUpdateNamespaceBody": {
+          "description": "Request to update a namespace.",
+          "properties": {
+            "object": {
+              "description": "Namespace provides a mechanism for isolating groups of resources.\nNamespaces may be defined in a parent child hierarchy.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1NamespaceSpec"
+                },
+                "tenant_meta": {
+                  "description": "Namespaces are associated with a tenant.",
+                  "title": "Namespaces are associated with a tenant.",
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "NamespaceServiceUpdateNamespaceBody"
+      ]
+    },
+    {
+      "attr_name": "NotificationTarget",
+      "create_payload_definitions": {
+        "NotificationTargetServiceCreateNotificationTargetBody": {
+          "description": "Indicates actions taken when a corresponding notification is raised.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Indicates whether the object should be visible in the child namespaces or not.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1NotificationTargetSpec",
+              "description": "The project specification."
+            },
+            "tenant_meta": {
+              "description": "Notification Targets are associated with a tenant.",
+              "title": "Notification Targets are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the notification target.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "NotificationTargetServiceCreateNotificationTargetBody"
+      ],
+      "resource_name": "notification-targets",
+      "update_payload_definitions": {
+        "NotificationTargetServiceUpdateNotificationTargetBody": {
+          "description": "Request to update the notification target.",
+          "properties": {
+            "object": {
+              "description": "Indicates actions taken when a corresponding notification is raised.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "propagate": {
+                  "description": "Indicates whether the object should be visible in the child namespaces or not.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1NotificationTargetSpec",
+                  "description": "The project specification."
+                },
+                "tenant_meta": {
+                  "description": "Notification Targets are associated with a tenant.",
+                  "title": "Notification Targets are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the notification target.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "NotificationTargetServiceUpdateNotificationTargetBody"
+      ]
+    },
+    {
+      "attr_name": "PRCommentConfig",
+      "create_payload_definitions": {
+        "PRCommentConfigServiceCreatePRCommentConfigBody": {
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata is generic for any object."
+            },
+            "propagate": {
+              "description": "Whether the object should be visible in child namespaces or not.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PRCommentConfigSpec"
+            },
+            "tenant_meta": {
+              "description": "PR comment configurations are associated with a tenant.",
+              "title": "PR comment configurations are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a PR comment configuration.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PRCommentConfigServiceCreatePRCommentConfigBody"
+      ],
+      "resource_name": "pr-comment-configs",
+      "update_payload_definitions": {
+        "PRCommentConfigServiceUpdatePRCommentConfigBody": {
+          "description": "Request to update a PR comment configuration.",
+          "properties": {
+            "object": {
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata is generic for any object."
+                },
+                "propagate": {
+                  "description": "Whether the object should be visible in child namespaces or not.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1PRCommentConfigSpec"
+                },
+                "tenant_meta": {
+                  "description": "PR comment configurations are associated with a tenant.",
+                  "title": "PR comment configurations are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of a PR comment configuration.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "PRCommentConfigServiceUpdatePRCommentConfigBody"
+      ]
+    },
+    {
+      "attr_name": "PackageLicense",
+      "create_payload_definitions": {
+        "PackageLicenseServiceCreatePackageLicenseBody": {
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Contexts keep objects from different scans separated."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "The metadata of the package license."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PackageLicenseSpec",
+              "description": "The specification of the package license."
+            },
+            "tenant_meta": {
+              "description": "The tenant metadata of the package license.",
+              "title": "The tenant metadata of the package license.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the package license.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PackageLicenseServiceCreatePackageLicenseBody"
+      ],
+      "resource_name": "package-licenses",
+      "update_payload_definitions": {
+        "PackageLicenseServiceUpdatePackageLicenseBody": {
+          "description": "Request to update a package license.",
+          "properties": {
+            "object": {
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Contexts keep objects from different scans separated."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "The metadata of the package license."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1PackageLicenseSpec",
+                  "description": "The specification of the package license."
+                },
+                "tenant_meta": {
+                  "description": "The tenant metadata of the package license.",
+                  "title": "The tenant metadata of the package license.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the package license.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "PackageLicenseServiceUpdatePackageLicenseBody"
+      ]
+    },
+    {
+      "attr_name": "PackageVersion",
+      "create_payload_definitions": {
+        "PackageVersionServiceCreatePackageVersionBody": {
+          "description": "PackageVersion represents a version of a package.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context"
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "processing_status": {
+              "$ref": "#/definitions/v1ProcessingStatus"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PackageVersionSpec"
+            },
+            "tenant_meta": {
+              "description": "PackageVersions are associated with a tenant.",
+              "title": "PackageVersions are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the package version resource.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "Package Version UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PackageVersionServiceCreatePackageVersionBody"
+      ],
+      "resource_name": "package-versions",
+      "update_payload_definitions": {
+        "PackageVersionServiceUpdatePackageVersionBody": {
+          "description": "The request to update a package version.",
+          "properties": {
+            "object": {
+              "description": "PackageVersion represents a version of a package.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context"
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "processing_status": {
+                  "$ref": "#/definitions/v1ProcessingStatus"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1PackageVersionSpec"
+                },
+                "tenant_meta": {
+                  "description": "PackageVersions are associated with a tenant.",
+                  "title": "PackageVersions are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the package version resource.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "Package Version UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "PackageVersionServiceUpdatePackageVersionBody"
+      ]
+    },
+    {
+      "attr_name": "Policy",
+      "create_payload_definitions": {
+        "PolicyServiceCreatePolicyBody": {
+          "description": "Policy represents a policy in the system.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Whether the object should be visible in child namespaces or not.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PolicySpec"
+            },
+            "tenant_meta": {
+              "description": "Policies can be issued per namespace.",
+              "title": "Policies can be issued per namespace.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the policy.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PolicyServiceCreatePolicyBody"
+      ],
+      "resource_name": "policies",
+      "update_payload_definitions": {
+        "PolicyServiceUpdatePolicyBody": {
+          "description": "Request to update a policy.",
+          "properties": {
+            "object": {
+              "description": "Policy represents a policy in the system.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "propagate": {
+                  "description": "Whether the object should be visible in child namespaces or not.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1PolicySpec"
+                },
+                "tenant_meta": {
+                  "description": "Policies can be issued per namespace.",
+                  "title": "Policies can be issued per namespace.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the policy.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "PolicyServiceUpdatePolicyBody"
+      ]
+    },
+    {
+      "attr_name": "PolicyTemplate",
+      "create_payload_definitions": {
+        "PolicyTemplateServiceCreatePolicyTemplateBody": {
+          "description": "PolicyTemplate represents a policy system in the system. Policy\ntemplates can be used to create policies from these templates.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Whether the object should be visible in child namespaces or not.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PolicyTemplateSpec"
+            },
+            "tenant_meta": {
+              "description": "PolicyTemplates can be issued per namespace.",
+              "title": "PolicyTemplates can be issued per namespace.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the policy template.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PolicyTemplateServiceCreatePolicyTemplateBody"
+      ],
+      "resource_name": "policy-templates",
+      "update_payload_definitions": {
+        "PolicyTemplateServiceUpdatePolicyTemplateBody": {
+          "description": "Request to update a policy template.",
+          "properties": {
+            "object": {
+              "description": "PolicyTemplate represents a policy system in the system. Policy\ntemplates can be used to create policies from these templates.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "propagate": {
+                  "description": "Whether the object should be visible in child namespaces or not.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1PolicyTemplateSpec"
+                },
+                "tenant_meta": {
+                  "description": "PolicyTemplates can be issued per namespace.",
+                  "title": "PolicyTemplates can be issued per namespace.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the policy template.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "PolicyTemplateServiceUpdatePolicyTemplateBody"
+      ]
+    },
+    {
+      "attr_name": "Project",
+      "create_payload_definitions": {
+        "ProjectServiceCreateProjectBody": {
+          "description": "Logical root object that serves as the basis for organizing and managing all\ninformation related to a repository.\n\nA project corresponds to a repository.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "processing_status": {
+              "$ref": "#/definitions/v1ProcessingStatus"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1ProjectSpec",
+              "description": "Project specifications."
+            },
+            "tenant_meta": {
+              "description": "The tenant to which the project belongs.",
+              "title": "The tenant to which the project belongs.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The unique identifier of the project.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "Project UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "ProjectServiceCreateProjectBody"
+      ],
+      "resource_name": "projects",
+      "update_payload_definitions": {
+        "ProjectServiceUpdateProjectBody": {
+          "description": "Request used to update a project.",
+          "properties": {
+            "object": {
+              "description": "Logical root object that serves as the basis for organizing and managing all\ninformation related to a repository.\n\nA project corresponds to a repository.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "processing_status": {
+                  "$ref": "#/definitions/v1ProcessingStatus"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1ProjectSpec",
+                  "description": "Project specifications."
+                },
+                "tenant_meta": {
+                  "description": "The tenant to which the project belongs.",
+                  "title": "The tenant to which the project belongs.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The unique identifier of the project.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "Project UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "ProjectServiceUpdateProjectBody"
+      ]
+    },
+    {
+      "attr_name": "QueryMalware",
+      "create_payload_definitions": {
+        "QueryMalwareServiceCreateQueryMalwareBody": {
+          "description": "QueryMalware is used to do query request on malware that are\nnot supported by ListMalware and the filter. For instance, you must\nuse this method to get a list of malware based on a version.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "response": {
+              "$ref": "#/definitions/v1ListMalwareResponse"
+            },
+            "responses": {
+              "$ref": "#/definitions/v1QueryMalwareResponseMap"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1QueryMalwareSpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "QueryMalwareServiceCreateQueryMalwareBody"
+      ],
+      "resource_name": "queries/malware",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "QueryVulnerability",
+      "create_payload_definitions": {
+        "QueryVulnerabilityServiceCreateQueryVulnerabilityBody": {
+          "description": "QueryVulnerability is used to do query request on vulnerabilities that are\nnot supported by ListVulnerabilities and the filter. For instance, you must\nuse this method to get a list of vulnerabilities based on a version.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "response": {
+              "$ref": "#/definitions/v1ListVulnerabilitiesResponse"
+            },
+            "responses": {
+              "$ref": "#/definitions/v1QueryVulnerabilityResponseMap"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1QueryVulnerabilitySpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "QueryVulnerabilityServiceCreateQueryVulnerabilityBody"
+      ],
+      "resource_name": "queries/vulnerabilities",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "Repository",
+      "create_payload_definitions": {
+        "RepositoryServiceCreateRepositoryBody": {
+          "description": "Repository represents the ingested information about a source control repository.\nA repository may refer to any type of source control repository, such as GitLab or GitHub.",
+          "properties": {
+            "ingested_object": {
+              "$ref": "#/definitions/v1IngestedObject",
+              "description": "Raw ingested object."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1RepositorySpec",
+              "description": "Repository specifications."
+            },
+            "tenant_meta": {
+              "description": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+              "title": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the source control repository.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "Repository UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "ingested_object"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "RepositoryServiceCreateRepositoryBody"
+      ],
+      "resource_name": "repositories",
+      "update_payload_definitions": {
+        "RepositoryServiceUpdateRepositoryBody": {
+          "description": "Request to update the repository.",
+          "properties": {
+            "object": {
+              "description": "Repository represents the ingested information about a source control repository.\nA repository may refer to any type of source control repository, such as GitLab or GitHub.",
+              "properties": {
+                "ingested_object": {
+                  "$ref": "#/definitions/v1IngestedObject",
+                  "description": "Raw ingested object."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1RepositorySpec",
+                  "description": "Repository specifications."
+                },
+                "tenant_meta": {
+                  "description": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+                  "title": "Repositories are associated with a tenant.\nPublic repositories are created as repositories under a public tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the source control repository.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "Repository UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "ingested_object"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "RepositoryServiceUpdateRepositoryBody"
+      ]
+    },
+    {
+      "attr_name": "RepositoryVersion",
+      "create_payload_definitions": {
+        "RepositoryVersionServiceCreateRepositoryVersionBody": {
+          "description": "The ingested information about a repository version.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Context for the repository version will be automatically updated\nto that of the version, unless if it is a CI run."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "scan_object": {
+              "$ref": "#/definitions/RepositoryVersionScanObject"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1RepositoryVersionSpec",
+              "description": "Repository version specifications."
+            },
+            "tenant_meta": {
+              "description": "Repository versions are associated with a tenant.",
+              "title": "Repository versions are associated with a tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the repository version.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "RepositoryVersionServiceCreateRepositoryVersionBody"
+      ],
+      "resource_name": "repository-versions",
+      "update_payload_definitions": {
+        "RepositoryVersionServiceUpdateRepositoryVersionBody": {
+          "description": "Request to update the repository version.",
+          "properties": {
+            "object": {
+              "description": "The ingested information about a repository version.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Context for the repository version will be automatically updated\nto that of the version, unless if it is a CI run."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "scan_object": {
+                  "$ref": "#/definitions/RepositoryVersionScanObject"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1RepositoryVersionSpec",
+                  "description": "Repository version specifications."
+                },
+                "tenant_meta": {
+                  "description": "Repository versions are associated with a tenant.",
+                  "title": "Repository versions are associated with a tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the repository version.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "RepositoryVersionServiceUpdateRepositoryVersionBody"
+      ]
+    },
+    {
+      "attr_name": "ScanLogRequest",
+      "create_payload_definitions": {
+        "ScanLogRequestServiceCreateScanLogRequestBody": {
+          "description": "ScanLogRequest represents a CRUD operation on a message.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1ScanLogRequestSpec"
+            },
+            "tenant_meta": {
+              "description": "Namespace of the message that is accessed.",
+              "title": "Namespace of the message that is accessed.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of scan log request.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "ScanLogRequestServiceCreateScanLogRequestBody"
+      ],
+      "resource_name": "scan-log-requests",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "ScanProfile",
+      "create_payload_definitions": {
+        "ScanProfileServiceCreateScanProfileBody": {
+          "description": "ScanProfile represents the scan configuration to use across different\nprojects.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Meta identifies the tool chain object."
+            },
+            "propagate": {
+              "description": "Indicates that the object should be visible in the child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1ScanProfileSpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "UUID is a universally unique identifier for the tool chain profile.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "ScanProfileServiceCreateScanProfileBody"
+      ],
+      "resource_name": "scan-profiles",
+      "update_payload_definitions": {
+        "ScanProfileServiceUpdateScanProfileBody": {
+          "description": "UpdateScanProfileRequest is used by UpdateScanProfile.",
+          "properties": {
+            "object": {
+              "description": "ScanProfile represents the scan configuration to use across different\nprojects.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Meta identifies the tool chain object."
+                },
+                "propagate": {
+                  "description": "Indicates that the object should be visible in the child namespaces.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1ScanProfileSpec"
+                },
+                "tenant_meta": {
+                  "description": "Tenant related data for the tenant containing the resource.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "UUID is a universally unique identifier for the tool chain profile.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "ScanProfileServiceUpdateScanProfileBody"
+      ]
+    },
+    {
+      "attr_name": "ScanResult",
+      "create_payload_definitions": {
+        "ScanResultServiceCreateScanResultBody": {
+          "description": "Contains the results of an endorctl scan.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Contexts keep objects from different scans separated."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1ScanResultSpec",
+              "description": "Resource kind specific data."
+            },
+            "tenant_meta": {
+              "description": "Information about the tenant and namespace that the scan ran in.",
+              "title": "Information about the tenant and namespace that the scan ran in.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the object.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "ScanResultServiceCreateScanResultBody"
+      ],
+      "resource_name": "scan-results",
+      "update_payload_definitions": {
+        "ScanResultServiceUpdateScanResultBody": {
+          "description": "Request to update a scan result.",
+          "properties": {
+            "object": {
+              "description": "Contains the results of an endorctl scan.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Contexts keep objects from different scans separated."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1ScanResultSpec",
+                  "description": "Resource kind specific data."
+                },
+                "tenant_meta": {
+                  "description": "Information about the tenant and namespace that the scan ran in.",
+                  "title": "Information about the tenant and namespace that the scan ran in.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the object.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "ScanResultServiceUpdateScanResultBody"
+      ]
+    },
+    {
+      "attr_name": "ScanWorkflow",
+      "create_payload_definitions": {
+        "ScanWorkflowServiceCreateScanWorkflowBody": {
+          "description": "ScanWorkflow corresponds to a workflow of scan steps.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1ScanWorkflowSpec",
+              "description": "Scan Workflow specifications."
+            },
+            "tenant_meta": {
+              "description": "The tenant to which the scan workflow belongs.",
+              "title": "The tenant to which the scan workflow belongs.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The unique identifier of the scan workflow.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "Scan Workflow UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "ScanWorkflowServiceCreateScanWorkflowBody"
+      ],
+      "resource_name": "scan-workflows",
+      "update_payload_definitions": {
+        "ScanWorkflowServiceUpdateScanWorkflowBody": {
+          "description": "Request used to update a scan workflow.",
+          "properties": {
+            "object": {
+              "description": "ScanWorkflow corresponds to a workflow of scan steps.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1ScanWorkflowSpec",
+                  "description": "Scan Workflow specifications."
+                },
+                "tenant_meta": {
+                  "description": "The tenant to which the scan workflow belongs.",
+                  "title": "The tenant to which the scan workflow belongs.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The unique identifier of the scan workflow.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "Scan Workflow UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "ScanWorkflowServiceUpdateScanWorkflowBody"
+      ]
+    },
+    {
+      "attr_name": "ScanWorkflowResult",
+      "create_payload_definitions": {
+        "ScanWorkflowResultServiceCreateScanWorkflowResultBody": {
+          "description": "ScanWorkflowResult corresponds to a workflow scan result.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context",
+              "description": "Contexts keep objects from different scans separated."
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1ScanWorkflowResultSpec",
+              "description": "Scan Workflow Result specifications."
+            },
+            "tenant_meta": {
+              "description": "The tenant to which the scan workflow result belongs.",
+              "title": "The tenant to which the scan workflow result belongs.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The unique identifier of the scan workflow result.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "Scan Workflow Result UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "ScanWorkflowResultServiceCreateScanWorkflowResultBody"
+      ],
+      "resource_name": "scan-workflow-results",
+      "update_payload_definitions": {
+        "ScanWorkflowResultServiceUpdateScanWorkflowResultBody": {
+          "description": "Request used to update a scan workflow result.",
+          "properties": {
+            "object": {
+              "description": "ScanWorkflowResult corresponds to a workflow scan result.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context",
+                  "description": "Contexts keep objects from different scans separated."
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1ScanWorkflowResultSpec",
+                  "description": "Scan Workflow Result specifications."
+                },
+                "tenant_meta": {
+                  "description": "The tenant to which the scan workflow result belongs.",
+                  "title": "The tenant to which the scan workflow result belongs.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The unique identifier of the scan workflow result.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "Scan Workflow Result UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "ScanWorkflowResultServiceUpdateScanWorkflowResultBody"
+      ]
+    },
+    {
+      "attr_name": "SemgrepRule",
+      "create_payload_definitions": {
+        "SemgrepRuleServiceCreateSemgrepRuleBody": {
+          "properties": {
+            "disabled": {
+              "type": "boolean"
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata that identifies the object."
+            },
+            "propagate": {
+              "description": "Propagate indicates that the object should be visible in child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1SemgrepRuleSpec"
+            },
+            "tenant_meta": {
+              "description": "Rules are associated with a tenant and namespace.",
+              "title": "Rules are associated with a tenant and namespace.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the Semgrep rule.",
+              "readOnly": true,
+              "type": "string",
+              "x-endor-name": "UUID"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "SemgrepRuleServiceCreateSemgrepRuleBody"
+      ],
+      "resource_name": "semgrep-rules",
+      "update_payload_definitions": {
+        "SemgrepRuleServiceUpdateSemgrepRuleBody": {
+          "description": "Request to update Semgrep rule.",
+          "properties": {
+            "object": {
+              "properties": {
+                "disabled": {
+                  "type": "boolean"
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata that identifies the object."
+                },
+                "propagate": {
+                  "description": "Propagate indicates that the object should be visible in child namespaces.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1SemgrepRuleSpec"
+                },
+                "tenant_meta": {
+                  "description": "Rules are associated with a tenant and namespace.",
+                  "title": "Rules are associated with a tenant and namespace.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the Semgrep rule.",
+                  "readOnly": true,
+                  "type": "string",
+                  "x-endor-name": "UUID"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "SemgrepRuleServiceUpdateSemgrepRuleBody"
+      ]
+    },
+    {
+      "attr_name": "VersionUpgrade",
+      "create_payload_definitions": {
+        "VersionUpgradeServiceCreateVersionUpgradeBody": {
+          "description": "VersionUpgrade contains all information about a possible version upgrade of a dependency package.\nThis upgrade object can be under a project or a package version object.",
+          "properties": {
+            "context": {
+              "$ref": "#/definitions/v1Context"
+            },
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1VersionUpgradeSpec",
+              "description": "The internal specification of the object."
+            },
+            "tenant_meta": {
+              "description": "Tenant metadata information.",
+              "title": "Tenant metadata information.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the resource.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "VersionUpgradeServiceCreateVersionUpgradeBody"
+      ],
+      "resource_name": "version-upgrades",
+      "update_payload_definitions": {
+        "VersionUpgradeServiceUpdateVersionUpgradeBody": {
+          "description": "Request to update a version upgrade.",
+          "properties": {
+            "object": {
+              "description": "VersionUpgrade contains all information about a possible version upgrade of a dependency package.\nThis upgrade object can be under a project or a package version object.",
+              "properties": {
+                "context": {
+                  "$ref": "#/definitions/v1Context"
+                },
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1VersionUpgradeSpec",
+                  "description": "The internal specification of the object."
+                },
+                "tenant_meta": {
+                  "description": "Tenant metadata information.",
+                  "title": "Tenant metadata information.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of the resource.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "context"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "VersionUpgradeServiceUpdateVersionUpgradeBody"
+      ]
+    },
+    {
+      "attr_name": "Vulnerability",
+      "create_payload_definitions": {
+        "QueryVulnerabilityServiceCreateQueryVulnerabilityBody": {
+          "description": "QueryVulnerability is used to do query request on vulnerabilities that are\nnot supported by ListVulnerabilities and the filter. For instance, you must\nuse this method to get a list of vulnerabilities based on a version.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "response": {
+              "$ref": "#/definitions/v1ListVulnerabilitiesResponse"
+            },
+            "responses": {
+              "$ref": "#/definitions/v1QueryVulnerabilityResponseMap"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1QueryVulnerabilitySpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "VulnerabilityServiceCreateVulnerabilityBody": {
+          "description": "Vuln represents an Endor Labs vulnerability in the system.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1VulnSpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a vulnerability.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "QueryVulnerabilityServiceCreateQueryVulnerabilityBody",
+        "VulnerabilityServiceCreateVulnerabilityBody"
+      ],
+      "resource_name": "vulnerabilities",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    }
+  ]
+}
