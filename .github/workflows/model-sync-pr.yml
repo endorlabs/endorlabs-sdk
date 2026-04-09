@@ -65,8 +65,7 @@ jobs:
           UPSTREAM_CHANGED="${{ github.event.client_payload.upstream_changed || 'unknown' }}"
           VERSION_CHANGED="${{ github.event.client_payload.version_changed || 'unknown' }}"
           SPEC_CHANGED="${{ github.event.client_payload.spec_changed || 'unknown' }}"
-          BRANCH_TIMESTAMP="$(date -u +'%Y-%m-%d-%H%M%S')"
-          BRANCH_NAME="chore/model-sync-${BRANCH_TIMESTAMP}"
+          BRANCH_NAME="chore/model-sync-auto"
 
           echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
           echo "prev_endorctl_version=$PREV_ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
@@ -499,8 +498,8 @@ jobs:
           fi
 
           git commit -m "chore: sync generated model artifacts"
-          git push -u origin "$BRANCH_NAME"
-          echo "::notice::PR creation is disabled in this workflow. Branch pushed for manual PR: $BRANCH_NAME"
+          git push -u origin "$BRANCH_NAME" --force-with-lease
+          echo "::notice::PR creation is disabled in this workflow. Rolling branch updated for manual PR: $BRANCH_NAME"
 
       - name: Cleanup stale model-sync branches
         id: cleanup
@@ -512,12 +511,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          NOW_EPOCH=$(date -u +%s)
-          TTL_SECONDS=$((TTL_DAYS * 86400))
           REPO="${{ github.repository }}"
+          STABLE_BRANCH="chore/model-sync-auto"
+          TS_REGEX='^chore/model-sync-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{6}$'
 
           OPEN_PR_HEADS=$(gh pr list --state open --limit 200 --json headRefName --jq '.[].headRefName' || true)
-          mapfile -t ALL_BRANCHES < <(gh api --paginate "repos/$REPO/branches?per_page=100" --jq '.[].name' | sed -n 's/^\(chore\/model-sync-.*\)$/\1/p' || true)
+          mapfile -t ALL_BRANCHES < <(gh api --paginate "repos/$REPO/branches?per_page=100" --jq '.[].name' || true)
 
           if [ ${#ALL_BRANCHES[@]} -eq 0 ]; then
             echo "deleted_count=0" >> "$GITHUB_OUTPUT"
@@ -531,33 +530,19 @@ jobs:
 
           DELETED=""
           SKIPPED=""
-          INDEX=0
           for BRANCH in "${SORTED_BRANCHES[@]}"; do
-            INDEX=$((INDEX + 1))
+            if [ "$BRANCH" = "$STABLE_BRANCH" ]; then
+              SKIPPED="${SKIPPED}${BRANCH} (protected:stable-branch)\n"
+              continue
+            fi
 
-            if [ "$INDEX" -le "$KEEP_LAST_N" ]; then
-              SKIPPED="${SKIPPED}${BRANCH} (protected:keep-last-n)\n"
+            if ! [[ "$BRANCH" =~ $TS_REGEX ]]; then
+              SKIPPED="${SKIPPED}${BRANCH} (protected:non-timestamp)\n"
               continue
             fi
 
             if printf "%s\n" "$OPEN_PR_HEADS" | grep -Fx "$BRANCH" > /dev/null; then
               SKIPPED="${SKIPPED}${BRANCH} (protected:open-pr)\n"
-              continue
-            fi
-
-            COMMIT_DATE=$(gh api "repos/$REPO/commits/$BRANCH" --jq '.commit.committer.date' 2>/dev/null || true)
-            if [ -z "$COMMIT_DATE" ]; then
-              SKIPPED="${SKIPPED}${BRANCH} (skip:date-lookup-failed)\n"
-              continue
-            fi
-            BRANCH_EPOCH=$(date -ud "$COMMIT_DATE" +%s 2>/dev/null || true)
-            if [ -z "$BRANCH_EPOCH" ]; then
-              SKIPPED="${SKIPPED}${BRANCH} (skip:date-parse-failed)\n"
-              continue
-            fi
-            AGE=$((NOW_EPOCH - BRANCH_EPOCH))
-            if [ "$AGE" -lt "$TTL_SECONDS" ]; then
-              SKIPPED="${SKIPPED}${BRANCH} (protected:ttl)\n"
               continue
             fi
 
@@ -588,6 +573,7 @@ jobs:
             echo "### At a glance"
             echo "- OpenAPI SHA256 (previous → current): \`${{ needs.validate-generated-artifacts.outputs.prev_openapi_sha256 || '<none>' }}\` → \`${{ needs.validate-generated-artifacts.outputs.openapi_sha256 }}\`"
             echo "- Download generated outputs from this run: artifact **model-sync-generated**"
+            echo "- Rolling branch for manual PR: \`chore/model-sync-auto\`"
             echo "- \`generated_changed\`: \`${{ steps.diff_scope.outputs.generated_changed || 'false' }}\`"
             echo "- Changed file count: \`${{ steps.diff_scope.outputs.changed_count || '0' }}\`"
             echo ""
@@ -631,4 +617,9 @@ jobs:
             echo "| endorctl version | \`${{ needs.validate-generated-artifacts.outputs.endorctl_version }}\` |"
             echo "| provenance_changed (excluded from branch) | \`${{ steps.diff_scope.outputs.provenance_changed || 'false' }}\` |"
             echo "| API spec path | \`${{ env.OPENAPI_SPEC_PATH }}\` |"
+            echo ""
+            echo "### Morning Workflow"
+            echo "- Review changes on \`chore/model-sync-auto\`."
+            echo "- Open a PR to your target base branch directly from the GitHub UI."
+            echo "- Legacy timestamp branches are pruned automatically unless they back an open PR."
           } >> "$GITHUB_STEP_SUMMARY"
