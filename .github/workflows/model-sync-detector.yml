@@ -303,4 +303,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Action" >> $GITHUB_STEP_SUMMARY
           echo "- If dispatched, monitor \`Model Sync PR\` for upstream API delta reporting and generated artifact/resource-level changes." >> $GITHUB_STEP_SUMMARY
+          echo "- Latest generated outputs are published to rolling branch \`chore/model-sync-auto\` for manual PR creation in GitHub UI." >> $GITHUB_STEP_SUMMARY
           echo "- The sync workflow now reports upstream deltas even when generated artifacts are unchanged." >> $GITHUB_STEP_SUMMARY
