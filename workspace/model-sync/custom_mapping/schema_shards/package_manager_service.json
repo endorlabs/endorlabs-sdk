@@ -1,0 +1,878 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "GroupResponseGroupData": {
+      "description": "Information about objects matching the given key.",
+      "properties": {
+        "aggregation_count": {
+          "$ref": "#/definitions/v1CountResponse",
+          "description": "Number of objects in group.\nThis field is always set."
+        },
+        "aggregation_uuids": {
+          "description": "List of UUIDs of the objects in the group.\nOnly populated if show_aggregation_uuids is set.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "aggregation_value": {
+          "$ref": "#/definitions/v1GroupAggregationValueResponse",
+          "description": "Value of the aggregation operation as calculated by the query."
+        },
+        "unique_counts": {
+          "additionalProperties": {
+            "$ref": "#/definitions/v1CountResponse"
+          },
+          "description": "Map of counts for the given unique_count_paths fields.\nOnly populated if unique_count_paths is set.",
+          "type": "object"
+        },
+        "unique_values": {
+          "additionalProperties": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "description": "Map of values for the given unique_value_paths fields.\nOnly populated if unique_value_paths is set.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "PackageManagerAWSAuthProvider": {
+      "description": "AWSAuthProvider represents a configuration for the authentication with the\nAWS Code Artifact repository.",
+      "properties": {
+        "allowed_audience": {
+          "description": "allowed_audience is the allowed audience value to retrieve the role.",
+          "type": "string"
+        },
+        "domain": {
+          "description": "domain name of the AWS Code Artifact repository.",
+          "type": "string"
+        },
+        "domain_owner": {
+          "description": "domain_owner of the AWS Code Artifact repository.",
+          "type": "string"
+        },
+        "region": {
+          "description": "region is the region of the AWS Code Artifact repository.",
+          "type": "string"
+        },
+        "repository": {
+          "description": "repositiry of the AWS Code Artifact repository.",
+          "type": "string"
+        },
+        "target_role_arn": {
+          "description": "target_role_arn is the role that we need to assume in AWS.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "domain",
+        "domain_owner",
+        "repository",
+        "target_role_arn",
+        "allowed_audience",
+        "region"
+      ],
+      "type": "object"
+    },
+    "PackageManagerAuthProvider": {
+      "properties": {
+        "aws": {
+          "$ref": "#/definitions/PackageManagerAWSAuthProvider"
+        },
+        "package_manager_type": {
+          "$ref": "#/definitions/PackageManagerAuthProviderPackageManagerType"
+        }
+      },
+      "required": [
+        "package_manager_type"
+      ],
+      "type": "object"
+    },
+    "PackageManagerAuthProviderPackageManagerType": {
+      "default": "PACKAGE_MANAGER_TYPE_UNSPECIFIED",
+      "enum": [
+        "PACKAGE_MANAGER_TYPE_UNSPECIFIED",
+        "PACKAGE_MANAGER_TYPE_NPM",
+        "PACKAGE_MANAGER_TYPE_MVN",
+        "PACKAGE_MANAGER_TYPE_CARGO",
+        "PACKAGE_MANAGER_TYPE_PYPI",
+        "PACKAGE_MANAGER_TYPE_GEM",
+        "PACKAGE_MANAGER_TYPE_NUGET",
+        "PACKAGE_MANAGER_TYPE_PACKAGIST",
+        "PACKAGE_MANAGER_TYPE_GRADLE",
+        "PACKAGE_MANAGER_TYPE_COCOAPOD",
+        "PACKAGE_MANAGER_TYPE_SWIFT"
+      ],
+      "type": "string"
+    },
+    "PackageManagerServiceCreatePackageManagerBody": {
+      "description": "PackageManager holds the data for the various package\nmanagers of the enterprise. Mainly locations and\naccess credentials when needed to resolve/scan packages\nfrom private package managers.\nAn enterprise can create one or more package managers\nin a namespace. All the package managers of the given\nnamespace will be taken into account when resolving.",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata is generic for any object."
+        },
+        "propagate": {
+          "description": "Propagate indicates that the object should be visible in child namespaces.",
+          "type": "boolean"
+        },
+        "spec": {
+          "$ref": "#/definitions/v1PackageManagerSpec",
+          "description": "Specification of the package manager."
+        },
+        "tenant_meta": {
+          "description": "Git repositories are associated tenant.",
+          "title": "Git repositories are associated tenant.",
+          "type": "object"
+        },
+        "uuid": {
+          "description": "The UUID of the package manager.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "meta",
+        "spec"
+      ],
+      "type": "object"
+    },
+    "PackageManagerServiceUpdatePackageManagerBody": {
+      "description": "Request to update the package manager.",
+      "properties": {
+        "object": {
+          "description": "PackageManager holds the data for the various package\nmanagers of the enterprise. Mainly locations and\naccess credentials when needed to resolve/scan packages\nfrom private package managers.\nAn enterprise can create one or more package managers\nin a namespace. All the package managers of the given\nnamespace will be taken into account when resolving.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata is generic for any object."
+            },
+            "propagate": {
+              "description": "Propagate indicates that the object should be visible in child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PackageManagerSpec",
+              "description": "Specification of the package manager."
+            },
+            "tenant_meta": {
+              "description": "Git repositories are associated tenant.",
+              "title": "Git repositories are associated tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the package manager.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "request": {
+          "$ref": "#/definitions/v1UpdateRequest"
+        }
+      },
+      "required": [
+        "meta",
+        "spec"
+      ],
+      "type": "object"
+    },
+    "PackagistSpecAuthKind": {
+      "default": "AUTH_KIND_UNSPECIFIED",
+      "description": "Auth methods for Packagist - reference\nhttps://getcomposer.org/doc/articles/authentication-for-private-packages.md.",
+      "enum": [
+        "AUTH_KIND_UNSPECIFIED",
+        "AUTH_KIND_HTTP_BASIC",
+        "AUTH_KIND_HTTP_BEARER",
+        "AUTH_KIND_GITHUB_OAUTH",
+        "AUTH_KIND_GITLAB_OAUTH",
+        "AUTH_KIND_GITLAB_TOKEN",
+        "AUTH_KIND_BITBUCKET_OAUTH"
+      ],
+      "type": "string"
+    },
+    "SpecPackageManagerStatus": {
+      "properties": {
+        "error_message": {
+          "description": "error_message if any was found.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "last_tested_at": {
+          "description": "last_tested_at is the time when the package manager was last tested.",
+          "format": "date-time",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/SpecPackageManagerStatusState",
+          "description": "The state of the package manager.",
+          "readOnly": true
+        }
+      },
+      "type": "object"
+    },
+    "SpecPackageManagerStatusState": {
+      "default": "STATE_UNSPECIFIED",
+      "description": "The status of the package manager.",
+      "enum": [
+        "STATE_UNSPECIFIED",
+        "STATE_SUCCESS",
+        "STATE_FAIL"
+      ],
+      "type": "string"
+    },
+    "SwiftSpecBasicAuth": {
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "googleprotobufAny": {
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }",
+      "properties": {
+        "@type": {
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com. As of May 2023, there are no widely used type server\nimplementations and no plans to implement one.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "v1CargoSpec": {
+      "description": "CargoSpec represents a configuration for Cargo.",
+      "properties": {
+        "priority": {
+          "description": "The priority of Cargo.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "token": {
+          "description": "A token that must be provided by the repository owner.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The url of the crates registry that Cargo must use.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1CocoapodSpec": {
+      "description": "Represents a configuration for the Cocoapod package manager.\nCocoapods does not support any registry authentication.",
+      "properties": {
+        "priority": {
+          "description": "The priority of the Cocoapod package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "url": {
+          "description": "The URL of the registry that the Cocoapods package manager must use.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1CountResponse": {
+      "description": "Response to a list count request.",
+      "properties": {
+        "count": {
+          "description": "Number of objects matching the given list parameters.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1GemSpec": {
+      "description": "GemSpec represents a configuration for the Ruby gems package manager.",
+      "properties": {
+        "password": {
+          "description": "An encrypted password that must be provided by the repository owner.",
+          "type": "string"
+        },
+        "priority": {
+          "description": "The priority of the Ruby gems package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "url": {
+          "description": "The URL of the registry that the Ruby gems package manager must use.",
+          "type": "string"
+        },
+        "user": {
+          "description": "The user name to use to access this repository.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1GradleSpec": {
+      "description": "GradleSpec represents properties that need to be set for Gradle projects.",
+      "properties": {
+        "mtls": {
+          "$ref": "#/definitions/v1MTLSAuth",
+          "description": "MTLS authentication for the Gradle package manager."
+        },
+        "property_key_name": {
+          "description": "The key name for Gradle properties.",
+          "type": "string"
+        },
+        "property_key_value": {
+          "description": "The key value for Gradle properties.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "v1GroupAggregationValueResponse": {
+      "description": "GroupAggregationValueResponse returns the value of the aggregation if\nrequested.",
+      "properties": {
+        "value": {
+          "format": "float",
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "v1GroupResponse": {
+      "description": "Response to a list group request.",
+      "properties": {
+        "groups": {
+          "additionalProperties": {
+            "$ref": "#/definitions/GroupResponseGroupData"
+          },
+          "description": "Map indexed by values of the fields specified in aggregation_paths,\nfor example, {\"[{\"key\":\"meta.kind\",\"value\":\"Project\"}]\": {\n\"aggregation_count\": { \"count\": 1649 } } }.",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "v1IndexData": {
+      "description": "IndexData is used to index the resource for search. It's an internal\nobject.",
+      "properties": {
+        "data": {
+          "items": {
+            "type": "string"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
+        "search_score": {
+          "description": "search_score is the score of the resource for search. Internal use only.",
+          "format": "float",
+          "readOnly": true,
+          "type": "number"
+        },
+        "tenant": {
+          "readOnly": true,
+          "type": "string"
+        },
+        "will_be_deleted_at": {
+          "description": "Time that the resource will be deleted.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object",
+      "x-internal": true
+    },
+    "v1ListPackageManagersResponse": {
+      "description": "Response to the request to list package managers.",
+      "properties": {
+        "count_response": {
+          "$ref": "#/definitions/v1CountResponse"
+        },
+        "group_response": {
+          "$ref": "#/definitions/v1GroupResponse"
+        },
+        "list": {
+          "$ref": "#/definitions/v1ListPackageManagersResponseList"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListPackageManagersResponseList": {
+      "properties": {
+        "objects": {
+          "items": {
+            "$ref": "#/definitions/v1PackageManager",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "response": {
+          "$ref": "#/definitions/v1ListResponse"
+        }
+      },
+      "type": "object"
+    },
+    "v1ListResponse": {
+      "description": "Response to a list request.",
+      "properties": {
+        "next_page_id": {
+          "description": "The UUID of last message retrieved.",
+          "type": "string"
+        },
+        "next_page_token": {
+          "description": "Pagination token that can be used to retrieve the next page of results.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "v1MTLSAuth": {
+      "properties": {
+        "ca_cert": {
+          "description": "The CA certificate in PEM format.",
+          "type": "string"
+        },
+        "client_cert": {
+          "description": "The client certificate in PEM format.",
+          "type": "string"
+        },
+        "client_key": {
+          "description": "The client key in PEM format.",
+          "type": "string"
+        },
+        "server_cert": {
+          "description": "The server certificate in PEM format.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "client_cert",
+        "client_key"
+      ],
+      "type": "object"
+    },
+    "v1MavenSpec": {
+      "description": "MavenSpec represents a configuration for the Maven package manager.",
+      "properties": {
+        "id": {
+          "description": "A string that uniquely identifies this proxy/server. This is the\nUUID of the object if not provided.",
+          "type": "string"
+        },
+        "is_plugin_repository": {
+          "description": "Indicates whether the repository is a plugin or binary repository.",
+          "type": "boolean"
+        },
+        "mtls": {
+          "$ref": "#/definitions/v1MTLSAuth",
+          "description": "MTLS authentication for the Maven package manager."
+        },
+        "name": {
+          "description": "User identifiable name for the repository. This is the name\nof the package manager if not provided.",
+          "type": "string"
+        },
+        "password": {
+          "title": "An encrypted password that must be provided by the repository owner.\nhttps://maven.apache.org/guides/mini/guide-encryption.html",
+          "type": "string"
+        },
+        "priority": {
+          "description": "The priority of the Maven package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "public_repository": {
+          "description": "Indicates if cloud storage is accessible publicly.",
+          "type": "boolean"
+        },
+        "region": {
+          "title": "Region to be used for cloud storage integration",
+          "type": "string"
+        },
+        "snapshots": {
+          "description": "Indicates whether the repository can contain snapshot versions.",
+          "type": "boolean"
+        },
+        "url": {
+          "description": "The URL of the registry that the Maven package manager must use.",
+          "type": "string"
+        },
+        "user": {
+          "description": "The user name to use to access this repo.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1Meta": {
+      "description": "Common fields for all Endor Labs resources.",
+      "properties": {
+        "annotations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Annotations can be used to attach metadata to a resource message.\nAnnotation values can be small or large, structured or unstructured,\nand may include characters not permitted by labels.\nThe keys may contain alphanumerics, underscores (_), dots (.) and dashes\n(-). The values of an annotation must be 16384 bytes or smaller.",
+          "type": "object"
+        },
+        "create_time": {
+          "description": "Time the resource was created.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        },
+        "created_by": {
+          "description": "Name and authentication source of the user who created the object,\nfor example, ewok@endor.ai@google@api-key.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "description": {
+          "description": "Resource description. Must be less than 1024 bytes.",
+          "type": "string"
+        },
+        "index_data": {
+          "$ref": "#/definitions/v1IndexData",
+          "description": "Index data for the object.",
+          "readOnly": true
+        },
+        "kind": {
+          "description": "Resource kind, for example, HelloResponse.\nAuto-generated using the protobuf message proto.MessageName().Name().",
+          "readOnly": true,
+          "type": "string"
+        },
+        "name": {
+          "description": "Resource name. Must be 63 characters or less.",
+          "type": "string",
+          "x-endor-name": "Name"
+        },
+        "parent_kind": {
+          "description": "Parent object resource kind, for example, Project.",
+          "type": "string",
+          "x-endor-name": "Parent Resource"
+        },
+        "parent_uuid": {
+          "description": "Parent object UUID.",
+          "type": "string",
+          "x-endor-name": "Parent UUID"
+        },
+        "references": {
+          "additionalProperties": {
+            "$ref": "#/definitions/googleprotobufAny"
+          },
+          "description": "Map of objects referenced in a query API.",
+          "readOnly": true,
+          "type": "object"
+        },
+        "tags": {
+          "description": "List of tags attached to the resource.\nTags can be used to select objects and to find collections of objects that\nsatisfy certain conditions. A tag must be 255 characters or less.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "x-endor-name": "Custom Tags"
+        },
+        "update_time": {
+          "description": "Time the resource was last updated.\nNote: Updated on all create/patch/delete operations.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        },
+        "updated_by": {
+          "description": "Name and authentication source of the last user who updated the object,\nfor example, vulnerabilityingestor@endor.ai@x509.",
+          "readOnly": true,
+          "type": "string"
+        },
+        "upsert_time": {
+          "description": "Time the resource was last upserted.\n\nNote:\ncreate_time is only set the first time the resource is created.\nupsert_time is set every time the resource is upseted.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        },
+        "version": {
+          "description": "Message version.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "v1NPMSpec": {
+      "description": "NPMSpec represents a configuration for the Node package manager.",
+      "properties": {
+        "auth_token": {
+          "description": "An auth token that cloud providers typically provide to connect to the\nregistry.",
+          "type": "string"
+        },
+        "mtls": {
+          "$ref": "#/definitions/v1MTLSAuth",
+          "description": "MTLS authentication for the NPM package manager."
+        },
+        "priority": {
+          "description": "The priority of the Node package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "scope": {
+          "title": "A private registry scope.\nEx: @myorg/pkg\nmyorg is the scope",
+          "type": "string"
+        },
+        "token": {
+          "description": "A base64 encoded user name and password as token.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The URL of the registry that NPM must use.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1NugetSpec": {
+      "description": "NugetSpec represents a configuration for the NuGet package manager.",
+      "properties": {
+        "password": {
+          "description": "An encrypted password that must be provided by the repository owner.",
+          "type": "string"
+        },
+        "priority": {
+          "description": "The priority of the NuGet package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "url": {
+          "description": "The URL of the registry that the NuGet package manager must use.",
+          "type": "string"
+        },
+        "user": {
+          "description": "The username to use to access this repository.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1PackageManager": {
+      "description": "PackageManager holds the data for the various package\nmanagers of the enterprise. Mainly locations and\naccess credentials when needed to resolve/scan packages\nfrom private package managers.\nAn enterprise can create one or more package managers\nin a namespace. All the package managers of the given\nnamespace will be taken into account when resolving.",
+      "properties": {
+        "meta": {
+          "$ref": "#/definitions/v1Meta",
+          "description": "Metadata is generic for any object."
+        },
+        "propagate": {
+          "description": "Propagate indicates that the object should be visible in child namespaces.",
+          "type": "boolean"
+        },
+        "spec": {
+          "$ref": "#/definitions/v1PackageManagerSpec",
+          "description": "Specification of the package manager."
+        },
+        "tenant_meta": {
+          "$ref": "#/definitions/v1TenantMeta",
+          "description": "Git repositories are associated tenant."
+        },
+        "uuid": {
+          "description": "The UUID of the package manager.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "meta",
+        "spec"
+      ],
+      "type": "object"
+    },
+    "v1PackageManagerSpec": {
+      "properties": {
+        "auth_provider": {
+          "$ref": "#/definitions/PackageManagerAuthProvider",
+          "description": "AuthProvider is the authentication provider for the package manager\nthat must be used."
+        },
+        "cargo": {
+          "$ref": "#/definitions/v1CargoSpec"
+        },
+        "cocoapod": {
+          "$ref": "#/definitions/v1CocoapodSpec"
+        },
+        "gem": {
+          "$ref": "#/definitions/v1GemSpec"
+        },
+        "gradle": {
+          "$ref": "#/definitions/v1GradleSpec"
+        },
+        "mvn": {
+          "$ref": "#/definitions/v1MavenSpec"
+        },
+        "npm": {
+          "$ref": "#/definitions/v1NPMSpec"
+        },
+        "nuget": {
+          "$ref": "#/definitions/v1NugetSpec"
+        },
+        "package_manager_status": {
+          "$ref": "#/definitions/SpecPackageManagerStatus"
+        },
+        "packagist": {
+          "$ref": "#/definitions/v1PackagistSpec"
+        },
+        "pypi": {
+          "$ref": "#/definitions/v1PypiSpec"
+        },
+        "swift": {
+          "$ref": "#/definitions/v1SwiftSpec"
+        }
+      },
+      "type": "object"
+    },
+    "v1PackagistSpec": {
+      "description": "Represents a configuration for the Packagist(PHP) package manager.",
+      "properties": {
+        "auth_kind": {
+          "$ref": "#/definitions/PackagistSpecAuthKind"
+        },
+        "host": {
+          "description": "The host name of the registry or repository where the PHP packages are\nhosted.",
+          "type": "string"
+        },
+        "password": {
+          "description": "An encrypted password that must be provided by the repository owner.",
+          "type": "string"
+        },
+        "user": {
+          "description": "The user name to use to access the given host.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "auth_kind"
+      ],
+      "type": "object"
+    },
+    "v1PypiSpec": {
+      "description": "PypiSpec represents a configuration for the Python package manager.",
+      "properties": {
+        "mtls": {
+          "$ref": "#/definitions/v1MTLSAuth",
+          "description": "MTLS authentication for the Python package manager."
+        },
+        "password": {
+          "description": "An encrypted password that must be provided by the repository owner.",
+          "type": "string"
+        },
+        "priority": {
+          "description": "The priority of the Python package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "url": {
+          "description": "The URL of the registry that the Python package manager must use.",
+          "type": "string"
+        },
+        "user": {
+          "description": "The user name to use to access this repository.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1SwiftSpec": {
+      "description": "Represents a configuration for the Swift package manager.",
+      "properties": {
+        "basic_auth": {
+          "$ref": "#/definitions/SwiftSpecBasicAuth",
+          "description": "Basic auth credentials to authenticate to the registry."
+        },
+        "priority": {
+          "description": "The priority of the Swift package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "scope": {
+          "description": "The private registry scope.",
+          "type": "string"
+        },
+        "token": {
+          "description": "Access token to authenticate to the registry.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The URL of the registry that the Swift package manager must use.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority"
+      ],
+      "type": "object"
+    },
+    "v1TenantMeta": {
+      "description": "Tenant related data for the tenant containing the resource.",
+      "properties": {
+        "namespace": {
+          "description": "Namespaces are a way to organize organizational units into virtual\ngroupings of resources. Namespaces must be a fully qualified name,\nfor example, the child namespace of namespace \"endor.prod\" called \"app\"\nis called \"endor.prod.app\".",
+          "type": "string",
+          "x-endor-name": "Namespace"
+        }
+      },
+      "required": [
+        "namespace"
+      ],
+      "type": "object"
+    },
+    "v1UpdateRequest": {
+      "description": "Message used for all update requests.",
+      "properties": {
+        "force": {
+          "description": "Force will force the update of the resource if any\nchecks fail.",
+          "type": "boolean"
+        },
+        "update_mask": {
+          "description": "Fields to update. Defaults to all fields.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "PackageManagerServiceCreatePackageManagerBody": {
+      "$ref": "#/definitions/PackageManagerServiceCreatePackageManagerBody"
+    },
+    "PackageManagerServiceUpdatePackageManagerBody": {
+      "$ref": "#/definitions/PackageManagerServiceUpdatePackageManagerBody"
+    },
+    "v1ListPackageManagersResponse": {
+      "$ref": "#/definitions/v1ListPackageManagersResponse"
+    },
+    "v1PackageManager": {
+      "$ref": "#/definitions/v1PackageManager"
+    }
+  },
+  "title": "package_manager_service",
+  "type": "object"
+}
