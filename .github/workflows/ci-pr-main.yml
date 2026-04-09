@@ -640,7 +640,7 @@ jobs:
           env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          COMMENT_MODE: ${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}
+          COMMENT_MODE: ${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'apply' }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
           ENDOR_API: ${{ vars.ENDOR_API }}
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
@@ -662,7 +662,7 @@ jobs:
           {
             echo "### PR review comments (Endor findings)"
             echo "- Enabled: \`${{ env.ENDOR_ENABLE_INHOUSE_PR_COMMENTS }}\`"
-            echo "- Mode: \`${{ env.ENDOR_INHOUSE_PR_COMMENTS_MODE }}\`"
+            echo "- Mode: \`${{ vars.ENDOR_INHOUSE_PR_COMMENTS_MODE || 'apply' }}\`"
             echo "- Step outcome: \`${{ steps.pr_review_comments.outcome || 'skipped' }}\`"
             echo "- RepositoryVersion hint (Endor check external_id): \`${{ steps.resolve_repo_version_hint.outputs.repository_version_hint || 'none' }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
