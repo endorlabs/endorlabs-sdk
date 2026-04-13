@@ -88,6 +88,18 @@ uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_m
 For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` as shown above
 instead of shell-specific `eval` export workflows.
 
+### Authentication troubleshooting (Agent Skill)
+
+For **`AuthenticationLog`**, **`AuthorizationPolicy`**, and optional **`AuditLog`**
+correlation during SSO / tenant login investigations, use the **troubleshoot-authlog**
+Agent Skill: [.cursor/skills/troubleshoot-authlog/SKILL.md](.cursor/skills/troubleshoot-authlog/SKILL.md).
+
+Run from the repo root:
+
+```bash
+uv run --env-file .env python .cursor/skills/troubleshoot-authlog/troubleshoot_authlog.py --help
+```
+
 ## Demo CLI
 
 The SDK includes an interactive demo wizard that walks through common API patterns and
