@@ -142,6 +142,7 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
 | [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
 | [troubleshoot-sdk](.cursor/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
+| [troubleshoot-authlog](.cursor/skills/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |
 
 Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
 
