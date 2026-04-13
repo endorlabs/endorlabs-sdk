@@ -1,5 +1,5 @@
 {
-  "operation_count": 723,
+  "operation_count": 728,
   "operations": [
     {
       "method": "get",
@@ -276,6 +276,22 @@
       ],
       "tags": [
         "ContributorHistoryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "ContributorIdentityMappingService_UpdateContributorIdentityMapping",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/contributor-identity-mappings",
+      "request_refs": [
+        "ContributorIdentityMappingServiceUpdateContributorIdentityMappingBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ContributorIdentityMapping"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
       ],
       "x_internal": true
     },
@@ -3206,6 +3222,63 @@
       ],
       "tags": [
         "ContributorHistoryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "ContributorIdentityMappingService_ListContributorIdentityMappings",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListContributorIdentityMappingsResponse"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "post",
+      "operation_id": "ContributorIdentityMappingService_CreateContributorIdentityMapping",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings",
+      "request_refs": [
+        "ContributorIdentityMappingServiceCreateContributorIdentityMappingBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ContributorIdentityMapping"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "ContributorIdentityMappingService_DeleteContributorIdentityMapping",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "ContributorIdentityMappingService_GetContributorIdentityMapping",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ContributorIdentityMapping"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
       ],
       "x_internal": true
     },

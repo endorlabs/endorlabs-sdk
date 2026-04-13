@@ -24,7 +24,7 @@ Legend:
 - generated artifact files: `149`
 - facade contract resources: `34`
 - registry parity status: `pass`
-- operation metadata entries: `723`
+- operation metadata entries: `728`
 - payload schema resources: `34`
 - runtime model import index entries: `34`
 

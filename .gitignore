@@ -33,6 +33,8 @@ venv.bak/
 # IDE
 .vscode/
 .idea/
+# Cursor — local MCP server config (machine paths, tokens)
+.cursor/mcp.json
 .claude/settings.local.json
 *.swp
 *.swo
