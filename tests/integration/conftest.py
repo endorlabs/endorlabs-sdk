@@ -56,8 +56,15 @@ def api_client():
 
     Uses API key authentication only (not browser auth).
     Client is closed after the test (or fixture consumer) finishes.
+
+    Integration LIST operations can be slow on large traversals; use one retry
+    and a long request timeout to balance resiliency with bounded retry loops.
     """
-    client = APIClient(auth_method="api-key")
+    client = APIClient(
+        auth_method="api-key",
+        max_retries=1,
+        timeout=1800.0,  # 30 minutes
+    )
     try:
         yield client
     finally:
@@ -72,8 +79,9 @@ def api_client_fast_retry():
     """
     client = APIClient(
         auth_method="api-key",
-        max_retries=2,
+        max_retries=1,
         backoff_factor=0.1,
+        timeout=1800.0,  # Keep consistency with integration LIST behavior.
     )
     try:
         yield client
