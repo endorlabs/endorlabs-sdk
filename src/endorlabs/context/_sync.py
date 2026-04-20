@@ -54,6 +54,7 @@ def _import_docs_deps() -> tuple[Any, Callable[..., str]]:
 
 # Constants
 SITEMAP_URL = "https://docs.endorlabs.com/sitemap.xml"
+LLMS_INDEX_URL = "https://docs.endorlabs.com/llms.txt"
 OPENAPI_PATH = "/download/openapiv2.swagger.json"
 
 # Default output paths (single source of truth for context downloads)
@@ -77,17 +78,179 @@ def _normalize_url(url: str) -> str:
     return url
 
 
-def _generate_filename(full_url: str) -> str:
-    """Generate filename from URL."""
-    parsed_url = urlparse(full_url)
-    path_parts = parsed_url.path.strip("/").split("/")
-    if not path_parts or path_parts == [""]:
-        return "index.md"
-    # Clean path parts and create filename
-    clean_parts = [re.sub(r"[^\w\-_.]", "_", part) for part in path_parts if part]
-    if clean_parts:
-        return f"{'-'.join(clean_parts)}.md"
-    return "index.md"
+def _canonicalize_doc_url(url: str) -> str:
+    """Return canonical docs page URL without markdown/index suffix."""
+    normalized = _normalize_url(url.strip())
+    parsed = urlparse(normalized)
+    path = parsed.path.rstrip("/")
+    if path.endswith("/index.md"):
+        path = path.removesuffix("/index.md")
+    elif path.endswith(".md"):
+        path = path.removesuffix(".md")
+    if not path:
+        path = "/"
+    return f"https://docs.endorlabs.com{path}"
+
+
+def _is_included_doc_url(url: str) -> bool:
+    """Whether URL should be included in the local user-doc sync corpus."""
+    parsed = urlparse(url)
+    path = parsed.path.lower()
+    if path.startswith("/api-reference/"):
+        return False
+    if path in {"/llms.txt", "/llms-full.txt"}:
+        return False
+    return not path.endswith(".json")
+
+
+def _extract_urls_from_llms_index(content: str) -> list[str]:
+    """Extract docs URLs from llms.txt markdown index."""
+    matches = re.findall(r"\((https://docs\.endorlabs\.com/[^\s)]+)\)", content)
+    extracted: list[str] = []
+    seen: set[str] = set()
+    for match in matches:
+        canonical = _canonicalize_doc_url(match)
+        if not _is_included_doc_url(canonical):
+            continue
+        if canonical in seen:
+            continue
+        seen.add(canonical)
+        extracted.append(canonical)
+    return extracted
+
+
+def _safe_path_segment(part: str) -> str:
+    """Make a URL segment filesystem-safe while preserving readability."""
+    return re.sub(r"[^\w\-_.]", "_", part)
+
+
+def _generate_relative_output_path(doc_url: str) -> Path:
+    """Generate readable relative path from canonical docs URL."""
+    parsed_url = urlparse(doc_url)
+    raw_parts = [part for part in parsed_url.path.strip("/").split("/") if part]
+    if not raw_parts:
+        return Path("index.md")
+    clean_parts = [_safe_path_segment(part) for part in raw_parts]
+    return Path(*clean_parts).with_suffix(".md")
+
+
+def _doc_markdown_source_url(doc_url: str) -> str:
+    """Return source markdown URL for a canonical docs page URL."""
+    path = urlparse(doc_url).path.rstrip("/")
+    if not path:
+        return "https://docs.endorlabs.com/index.md"
+    return f"https://docs.endorlabs.com{path}/index.md"
+
+
+# MDX inline component: export const Name = () => { ... return <code>...</code>; ... };
+_MINTLIFY_INLINE_EXPORT_RE = re.compile(
+    r"export const (\w+)\s*=\s*\(\)\s*=>\s*\{[\s\S]*?"
+    r"return\s*<code>(.*?)</code>;[\s\S]*?\n\};",
+    re.MULTILINE,
+)
+
+_MINTLIFY_FIELD_PREFIXES: tuple[str, ...] = (
+    "    - Flag:",
+    "    Environment_Variable:",
+    "    Type:",
+    "    Description:",
+)
+
+
+def _mintlify_replace_inline_components(text: str) -> str:
+    """Replace MDX inline component exports with backtick literals."""
+    inline_component_values: dict[str, str] = {}
+    for match in _MINTLIFY_INLINE_EXPORT_RE.finditer(text):
+        inline_component_values[match.group(1)] = match.group(2).strip()
+
+    for name, value in inline_component_values.items():
+        text = re.sub(rf"<{re.escape(name)}\s*/>", f"`{value}`", text)
+    return text
+
+
+def _mintlify_strip_mdx_noise(text: str) -> str:
+    """Strip MDX component definitions/imports that are not user-doc content."""
+    text = re.sub(
+        r"^export const [\s\S]*?^\};\n?",
+        "",
+        text,
+        flags=re.MULTILINE,
+    )
+    text = re.sub(r"^import .*$\n?", "", text, flags=re.MULTILINE)
+    text = text.replace("\\`", "`")
+    return re.sub(r"```(\w+)\s+theme=\{null\}", r"```\1", text)
+
+
+def _mintlify_skip_documentation_index_block(lines: list[str]) -> list[str]:
+    """Drop Mintlify index boilerplate blockquote after 'Documentation Index'."""
+    skip_through = 0
+    for i, line in enumerate(lines[:12]):
+        if "Documentation Index" in line:
+            skip_through = i + 1
+            break
+    while skip_through < len(lines) and lines[skip_through].strip():
+        skip_through += 1
+    if skip_through > 0:
+        return lines[skip_through + 1 :]
+    return lines
+
+
+def _mintlify_normalize_body_line(line: str) -> str | None:
+    """Normalize one body line; return None to drop the line."""
+    stripped = line.strip()
+    if stripped in {"{`", "`}", "{", "}"}:
+        return None
+    if re.fullmatch(r"</?[A-Za-z][A-Za-z0-9]*(\s+[^>]*)?>", stripped):
+        return None
+    if any(line.startswith(p) for p in _MINTLIFY_FIELD_PREFIXES):
+        return line[4:]
+    return line
+
+
+def _mintlify_collapse_blank_runs(lines: list[str]) -> list[str]:
+    """Collapse long blank runs; trim trailing whitespace-only lines."""
+    compacted: list[str] = []
+    blank_run = 0
+    for line in lines:
+        if line.strip():
+            blank_run = 0
+            compacted.append(line)
+            continue
+        blank_run += 1
+        if blank_run <= 2:
+            compacted.append(line)
+
+    while compacted and not compacted[-1].strip():
+        del compacted[-1]
+    return compacted
+
+
+def _normalize_mintlify_markdown(markdown: str) -> str:
+    """Normalize Mintlify markdown for RAG-friendly local context."""
+    text = markdown.replace("\r\n", "\n")
+    text = _mintlify_replace_inline_components(text)
+    text = _mintlify_strip_mdx_noise(text)
+    lines = text.splitlines()
+    lines = _mintlify_skip_documentation_index_block(lines)
+    normalized: list[str] = []
+    for line in lines:
+        out = _mintlify_normalize_body_line(line)
+        if out is not None:
+            normalized.append(out)
+    compacted = _mintlify_collapse_blank_runs(normalized)
+    return "\n".join(compacted) + "\n"
+
+
+def _extract_title_from_markdown(markdown: str, *, fallback_url: str) -> str:
+    """Extract first H1 from markdown body; fallback to URL-derived title."""
+    for line in markdown.splitlines():
+        if line.startswith("# "):
+            title = line[2:].strip()
+            if title:
+                return title
+    tail = urlparse(fallback_url).path.strip("/").split("/")[-1]
+    tail = tail.replace("-", " ").replace("_", " ").strip() or "Documentation"
+    return tail.title()
 
 
 def _compute_content_hash(content: str) -> str:
@@ -154,6 +317,33 @@ def _write_hash_manifest(
     )
 
 
+def _prune_stale_docs(
+    output_dir: Path,
+    *,
+    expected_rel_paths: set[str],
+    existing_hashes: dict[str, str],
+) -> int:
+    """Remove stale generated markdown files no longer part of current corpus."""
+    removed = 0
+    base_resolved = output_dir.resolve()
+    stale_rel_paths = set(existing_hashes).difference(expected_rel_paths)
+    for rel_path in sorted(stale_rel_paths):
+        target = (output_dir / rel_path).resolve()
+        if not target.is_relative_to(base_resolved):
+            continue
+        if target.exists() and target.is_file():
+            target.unlink()
+            removed += 1
+        parent = target.parent
+        while parent != base_resolved and parent.exists():
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+    return removed
+
+
 async def _download_sitemap(timeout: int = 10) -> list[str]:
     """Download and parse sitemap.xml to extract URLs.
 
@@ -188,9 +378,24 @@ async def _download_sitemap(timeout: int = 10) -> list[str]:
         return []
 
 
+async def _download_llms_index(timeout: int = 10) -> list[str]:
+    """Download llms.txt index and extract docs URLs."""
+    try:
+        logger.info("Downloading docs index from: %s", LLMS_INDEX_URL)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(LLMS_INDEX_URL)
+            _ = response.raise_for_status()
+        extracted = _extract_urls_from_llms_index(response.text)
+        logger.info("Found %d docs URLs in llms index", len(extracted))
+        return extracted
+    except Exception as e:
+        logger.warning("Unable to download llms index: %s", e)
+        return []
+
+
 async def _download_single_page(
     client: httpx.AsyncClient,
-    full_url: str,
+    doc_url: str,
     output_file: Path,
     base_dir: Path,
     previous_hash: str | None,
@@ -199,20 +404,11 @@ async def _download_single_page(
     """Download and convert single page to markdown."""
     from endorlabs.utils.path_safety import safe_write_text
 
-    beautiful_soup_cls, md = _import_docs_deps()
     try:
-        response = await client.get(full_url)
+        source_url = _doc_markdown_source_url(doc_url)
+        response = await client.get(source_url)
         _ = response.raise_for_status()
-
-        # Parse HTML and extract content
-        soup = beautiful_soup_cls(response.content, "html.parser")
-
-        # Remove unwanted elements
-        for element in soup(["script", "style", "nav", "footer", "header"]):
-            element.decompose()
-
-        # Convert to markdown
-        markdown_content = md(str(soup), heading_style="ATX")
+        markdown_content = _normalize_mintlify_markdown(response.text)
         content_hash = _compute_content_hash(markdown_content)
 
         if not force:
@@ -225,9 +421,9 @@ async def _download_single_page(
                 return (0, content_hash)
 
         # Add metadata header
-        title = soup.title.string if soup.title else "Untitled"
+        title = _extract_title_from_markdown(markdown_content, fallback_url=doc_url)
         metadata = f"""---
-url: {full_url}
+url: {doc_url}
 title: {title}
 downloaded: {time.strftime("%Y-%m-%d %H:%M:%S")}
 ---
@@ -238,14 +434,15 @@ downloaded: {time.strftime("%Y-%m-%d %H:%M:%S")}
         return (1, content_hash)
 
     except Exception as e:
-        logger.warning("Unable to download %s: %s", full_url, e)
+        logger.warning("Unable to download %s: %s", doc_url, e)
         return (0, None)
 
 
 async def _download_one(
     client: httpx.AsyncClient,
     semaphore: asyncio.Semaphore,
-    full_url: str,
+    doc_url: str,
+    rel_path: str,
     output_file: Path,
     base_dir: Path,
     previous_hash: str | None,
@@ -256,17 +453,16 @@ async def _download_one(
         try:
             changed_count, content_hash = await _download_single_page(
                 client,
-                full_url,
+                doc_url,
                 output_file,
                 base_dir,
                 previous_hash,
                 force,
             )
-            rel_path = output_file.name
-            return (rel_path, changed_count, content_hash, full_url)
+            return (rel_path, changed_count, content_hash, doc_url)
         except Exception as e:
-            logger.warning("Unable to process %s: %s", full_url, e)
-            return (output_file.name, 0, None, full_url)
+            logger.warning("Unable to process %s: %s", doc_url, e)
+            return (rel_path, 0, None, doc_url)
 
 
 async def _download_user_docs_async(
@@ -289,26 +485,40 @@ async def _download_user_docs_async(
         Number of successfully downloaded pages.
 
     """
-    # Check deps early to fail fast
-    _ = _import_docs_deps()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Get URLs from sitemap
-    sitemap_urls = await _download_sitemap(timeout)
-    if not sitemap_urls:
-        logger.error("No URLs found in sitemap")
+    # Discover docs pages from Mintlify llms index first.
+    doc_urls = await _download_llms_index(timeout)
+    if not doc_urls:
+        # Fallback for legacy docs hosts if llms index is unavailable.
+        sitemap_urls = await _download_sitemap(timeout)
+        doc_urls = [_canonicalize_doc_url(url) for url in sitemap_urls]
+        doc_urls = [url for url in doc_urls if _is_included_doc_url(url)]
+    if not doc_urls:
+        logger.error("No documentation URLs found")
         return 0
 
-    urls = sitemap_urls[:max_pages] if max_pages else sitemap_urls
-    work_list: list[tuple[str, Path, str | None]] = []
+    urls = doc_urls[:max_pages] if max_pages else doc_urls
+    work_list: list[tuple[str, str, Path, str | None]] = []
     manifest_path = output_dir / DOCS_HASH_MANIFEST_FILENAME
     existing_hashes = _load_hash_manifest(manifest_path)
 
     for url in urls:
-        full_url = _normalize_url(url)
-        output_file = output_dir / _generate_filename(full_url)
-        previous_hash = existing_hashes.get(output_file.name)
-        work_list.append((full_url, output_file, previous_hash))
+        canonical_url = _canonicalize_doc_url(url)
+        rel_path = _generate_relative_output_path(canonical_url).as_posix()
+        output_file = output_dir / rel_path
+        previous_hash = existing_hashes.get(rel_path)
+        work_list.append((canonical_url, rel_path, output_file, previous_hash))
+
+    expected_rel_paths = {rel_path for _, rel_path, _, _ in work_list}
+    if max_pages is None:
+        removed_stale = _prune_stale_docs(
+            output_dir,
+            expected_rel_paths=expected_rel_paths,
+            existing_hashes=existing_hashes,
+        )
+        if removed_stale:
+            logger.info("Pruned %d stale docs from previous sync runs", removed_stale)
 
     concurrency = max_concurrent or _default_concurrency()
     semaphore = asyncio.Semaphore(concurrency)
@@ -326,18 +536,23 @@ async def _download_user_docs_async(
             _download_one(
                 client,
                 semaphore,
-                full_url,
+                doc_url,
+                rel_path,
                 output_file,
                 output_dir,
                 previous_hash,
                 force,
             )
-            for full_url, output_file, previous_hash in work_list
+            for doc_url, rel_path, output_file, previous_hash in work_list
         ]
         results = await asyncio.gather(*tasks)
 
     changed_count = 0
-    updated_hashes = dict(existing_hashes)
+    updated_hashes = {
+        rel_path: existing_hashes[rel_path]
+        for rel_path in expected_rel_paths
+        if rel_path in existing_hashes
+    }
     urls_by_file: dict[str, str] = {}
     for rel_path, changed, content_hash, full_url in results:
         urls_by_file[rel_path] = full_url
