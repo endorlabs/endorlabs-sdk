@@ -5,7 +5,7 @@
   "model_sync_manifest_file_count": 149,
   "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
   "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
-  "operation_path_metadata_count": 728,
+  "operation_path_metadata_count": 734,
   "operation_path_metadata_path": "workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json",
   "payload_schema_resource_count": 34,
   "payload_schemas_path": "workspace/model-sync/custom_mapping/mapping/payload_schemas.json",
