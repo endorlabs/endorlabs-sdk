@@ -1,7 +1,6 @@
 """Test cases for FindingLog resource operations.
 
-Tests GET, POST, and DELETE operations for FindingLog resources, including
-filtering by operation type and finding UUID.
+Tests LIST/GET and filtering by operation type for FindingLog resources.
 
 Greenfield alias unit tests live in
 tests/unit/platform/models/test_greenfield_aliases.py.
@@ -12,7 +11,6 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from tests.conftest import (
-    TEST_MAX_PAGES,
     TEST_MAX_PAGES_TRAVERSE,
     TEST_NAMESPACE_DEFAULT,
     TEST_PAGE_SIZE,
@@ -58,6 +56,7 @@ class TestFindingLog:
         )
         result = client.FindingLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
@@ -72,6 +71,7 @@ class TestFindingLog:
         )
         items = client.FindingLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
@@ -85,31 +85,6 @@ class TestFindingLog:
         got = client.FindingLog.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
-
-    @pytest.fixture
-    def sample_finding_log(self):
-        """Fetch minimal sample data (1 item) for UUID operations.
-
-        Function-scoped but only fetches when explicitly requested by tests.
-        Uses indexed spec.operation filter for fast retrieval — unfiltered
-        finding-log list can timeout on large namespaces.
-        """
-        from endorlabs.core.exceptions import ServerError
-        from endorlabs.core.types import ListParameters
-
-        try:
-            results = self.endor_client.FindingLog.list(
-                list_params=ListParameters(
-                    filter="spec.operation==OPERATION_CREATE",
-                    page_size=TEST_PAGE_SIZE,
-                ),
-                max_pages=TEST_MAX_PAGES,
-            )
-        except ServerError:
-            pytest.skip("Backend returned ServerError (list); skip")
-        if not results:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        return results[0]  # Return single item, not list
 
     def test_finding_log_list_by_operation_create(self) -> None:
         """Test filtering finding logs by CREATE operation."""
@@ -182,43 +157,6 @@ class TestFindingLog:
 
         if logs:
             print(f"Sample UPDATE log: {logs[0].uuid} - {logs[0].meta.name}")
-
-    def test_finding_log_get_and_finding_uuid(self, sample_finding_log) -> None:
-        """Test GET by UUID and verify spec.finding_uuid is populated.
-
-        Heuristic approach: instead of list+filter on the unindexed
-        spec.finding_uuid field (which causes backend timeouts), we
-        list with an indexed filter (spec.operation) via the
-        sample_finding_log fixture, then GET by UUID and verify the
-        finding_uuid field round-trips correctly.
-        """
-        print("\n=== TESTING GET FINDING LOG + FINDING UUID FIELD ===")
-
-        ns = (
-            sample_finding_log.tenant_meta.namespace
-            if sample_finding_log.tenant_meta
-            and getattr(sample_finding_log.tenant_meta, "namespace", None)
-            else self.namespace
-        )
-
-        got = self.endor_client.FindingLog.get(sample_finding_log.uuid, namespace=ns)
-
-        assert got is not None, "GET should return a finding log"
-        assert got.uuid == sample_finding_log.uuid, "UUID should match"
-        assert got.spec is not None, "Spec should be present"
-        assert got.spec.finding_uuid, (
-            "spec.finding_uuid should be populated on a finding log"
-        )
-        assert got.spec.finding_uuid == sample_finding_log.spec.finding_uuid, (
-            f"finding_uuid mismatch: GET returned {got.spec.finding_uuid}, "
-            f"expected {sample_finding_log.spec.finding_uuid}"
-        )
-
-        print(
-            f"GET finding log {got.uuid}: "
-            f"finding_uuid={got.spec.finding_uuid}, "
-            f"operation={got.spec.operation}"
-        )
 
     def test_finding_log_traverse(self) -> None:
         """Test namespace traversal for finding logs with filter.

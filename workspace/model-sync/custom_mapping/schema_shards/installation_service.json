@@ -152,13 +152,14 @@
       "type": "object"
     },
     "v1AppPasswordConfig": {
+      "description": "AppPasswordConfig holds HTTP Basic Auth credentials for Bitbucket Cloud.\nIt supports both legacy App Passwords and its replacement, Atlassian\nScoped API Tokens (https://support.atlassian.com/bitbucket-cloud/docs/api-tokens/).\nBoth use the same HTTP Basic Auth mechanism (username:token).\nNOTE: Bitbucket App Passwords are deprecated and will be removed on June 9, 2026.\nNew integrations should use Scoped API Tokens.",
       "properties": {
         "app_password": {
-          "description": "The App Password associated with the Bitbucket Cloud account.",
+          "description": "The App Password or Atlassian Scoped API Token used for HTTP Basic Auth.\nBoth credential types are wire-compatible (username:token in Basic Auth header).",
           "type": "string"
         },
         "username": {
-          "description": "The username of the Bitbucket Cloud account used for authentication.",
+          "description": "The username (or Atlassian account email for Scoped API Tokens) used for\nHTTP Basic Auth against Bitbucket Cloud.",
           "type": "string"
         }
       },
@@ -347,6 +348,22 @@
       },
       "type": "object"
     },
+    "v1HuggingFaceConfig": {
+      "properties": {
+        "access_token": {
+          "description": "Optional HuggingFace API token used to authenticate requests for\nprivate models within the organization. When omitted, only publicly\naccessible models are discovered.",
+          "type": "string"
+        },
+        "host_url": {
+          "title": "The HuggingFace organization URL.\nExample: \"https://huggingface.co/meta-llama\"",
+          "type": "string"
+        }
+      },
+      "required": [
+        "host_url"
+      ],
+      "type": "object"
+    },
     "v1IndexData": {
       "description": "IndexData is used to index the resource for search. It's an internal\nobject.",
       "properties": {
@@ -443,6 +460,9 @@
         },
         "gitlab_config": {
           "$ref": "#/definitions/v1GitLabConfig"
+        },
+        "huggingface_config": {
+          "$ref": "#/definitions/v1HuggingFaceConfig"
         },
         "include_archived_repos": {
           "description": "include_archived_repos is a boolean value that indicates if the archived\nrepos should be included. Default will be off.",

@@ -90,11 +90,54 @@ class GitLabConfig(BaseModel):
     access_token: str = Field(..., description="GitLab Access Token")
 
 
+class BitBucketCloudAuthConfig(BaseModel):
+    """Bitbucket cloud auth configuration for installation."""
+
+    workspace: str | None = Field(None, description="Bitbucket workspace")
+    access_token: str | None = Field(None, description="Bitbucket access token")
+
+
+class BitBucketDataCenterAuthConfig(BaseModel):
+    """Bitbucket data center auth configuration for installation."""
+
+    user: str | None = Field(None, description="Bitbucket data center username")
+    personal_access_token: str | None = Field(
+        None, description="Bitbucket data center personal access token"
+    )
+
+
 class BitBucketConfig(BaseModel):
     """BitBucket configuration for installation."""
 
-    workspace: str = Field(..., description="BitBucket Workspace")
-    access_token: str = Field(..., description="BitBucket Access Token")
+    # Legacy fields retained for backward compatibility with older payload shapes.
+    workspace: str | None = Field(None, description="BitBucket Workspace")
+    access_token: str | None = Field(None, description="BitBucket Access Token")
+
+    # Canonical generated-model fields from installation_service.V1BitBucketConfig.
+    cloud: BitBucketCloudAuthConfig | None = Field(
+        None, description="Bitbucket Cloud authentication settings"
+    )
+    data_center: BitBucketDataCenterAuthConfig | None = Field(
+        None, description="Bitbucket Data Center authentication settings"
+    )
+    host_url: str | None = Field(
+        None, description="Workspace URL (cloud) or project host URL"
+    )
+    webhook_secret: str | None = Field(
+        None,
+        description="Webhook secret configured in Bitbucket for event validation",
+    )
+    enable_full_scan: bool | None = Field(
+        None, description="Whether full scan is enabled"
+    )
+    enable_pr_scans: bool | None = Field(
+        None, description="Whether automated PR scans are enabled"
+    )
+    enable_pr_comments: bool | None = Field(
+        None, description="Whether automated PR comments are enabled"
+    )
+
+    model_config = ConfigDict(extra="ignore")
 
 
 class InstallationMeta(BaseMeta):
@@ -208,6 +251,12 @@ class InstallationSpec(BaseSpec):
     scm_app_uuid: str | None = Field(
         None, description="The UUID of the SCM app being installed"
     )  # IMMUTABLE: Set at creation
+    cleanup_stale_namespaces: bool | None = Field(
+        None,
+        description=(
+            "Whether stale managed namespaces should be deleted during reconciliation"
+        ),
+    )  # MUTABLE: Can be updated
 
     @field_validator("enabled_features", mode="before")
     @classmethod
@@ -346,6 +395,7 @@ class Installation(BaseResource):
                 "include_archived_repos",
                 "installation_error_message",
                 "scm_app_uuid",
+                "cleanup_stale_namespaces",
             }
             unknown_fields = set(v.keys()) - known_fields
             if unknown_fields:

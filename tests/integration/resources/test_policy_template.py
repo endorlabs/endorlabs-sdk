@@ -3,7 +3,7 @@
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -26,6 +26,7 @@ class TestPolicyTemplate:
         """LIST from tenant root with traverse (registry-based)."""
         result = self.endor_root_client.PolicyTemplate.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
@@ -46,6 +47,7 @@ class TestPolicyTemplate:
 
         items = self.endor_root_client.PolicyTemplate.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:

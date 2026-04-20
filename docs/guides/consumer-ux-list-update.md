@@ -28,6 +28,7 @@ Definitions: [contracts.md](../contracts.md) (List parameters, Update and update
   - **filter** — row filter expression.
   - **mask** — response field mask (comma-separated paths).
   - **traverse**, **page_size**, **page_token**, **sort_by**, **desc**, **count**, **from_date**, **to_date** (all from `ListParameters`).
+  - **ci_run_uuid** — PR scan context id (OpenAPI `list_parameters.ci_run_uuid`); use for PR-scoped lists when supported. **pr_uuid** is a deprecated alias for the same wire field.
   - **namespace** — override default namespace.
   - **list_params** — optional; to pass a full `ListParameters` instead of kwargs.
   - **max_pages** — pagination cap.
