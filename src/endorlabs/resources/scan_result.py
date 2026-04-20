@@ -432,7 +432,7 @@ class ScanResult(BaseResource):
             # - provisioning_result: SpecProvisioningResultData model
             # - versions: List[Version] models
             # - deleted_findings, all_findings, exception_findings:
-            #   Dict[str, SpecFindingData]
+            #   string-keyed maps of SpecFindingData
             # - stats, runtimes, ecosystem_pkg_counts, ecosystem_dep_counts:
             #   Dict with dynamic keys
             known_fields = {

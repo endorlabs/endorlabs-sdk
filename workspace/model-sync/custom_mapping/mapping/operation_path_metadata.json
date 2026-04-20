@@ -1,5 +1,5 @@
 {
-  "operation_count": 728,
+  "operation_count": 734,
   "operations": [
     {
       "method": "get",
@@ -121,6 +121,22 @@
     },
     {
       "method": "patch",
+      "operation_id": "AgentHookPolicyDefinitionService_UpdateAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/agent-hook-policy-definitions",
+      "request_refs": [
+        "AgentHookPolicyDefinitionServiceUpdateAgentHookPolicyDefinitionBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgentHookPolicyDefinition"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
       "operation_id": "AgentSessionService_UpdateAgentSession",
       "path": "/v1/namespaces/{object.tenant_meta.namespace}/agent-sessions",
       "request_refs": [
@@ -148,6 +164,22 @@
       ],
       "tags": [
         "AgentWorkflowService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "AgenticInventoryService_UpdateAgenticInventory",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/agentic-inventory",
+      "request_refs": [
+        "AgenticInventoryServiceUpdateAgenticInventoryBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgenticInventory"
+      ],
+      "tags": [
+        "AgenticInventoryService"
       ],
       "x_internal": true
     },
@@ -2054,6 +2086,63 @@
       ],
       "tags": [
         "AgentHookEventService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AgentHookPolicyDefinitionService_ListAgentHookPolicyDefinitions",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListAgentHookPolicyDefinitionsResponse"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "post",
+      "operation_id": "AgentHookPolicyDefinitionService_CreateAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions",
+      "request_refs": [
+        "AgentHookPolicyDefinitionServiceCreateAgentHookPolicyDefinitionBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgentHookPolicyDefinition"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "AgentHookPolicyDefinitionService_DeleteAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AgentHookPolicyDefinitionService_GetAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgentHookPolicyDefinition"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
       ],
       "x_internal": true
     },

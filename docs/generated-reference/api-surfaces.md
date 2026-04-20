@@ -10,7 +10,7 @@ Auto-generated inventories for stable/public surfaces.
 - generated artifact files: `149`
 - facade contract resources: `34`
 - registry parity status: `pass`
-- operation metadata entries: `728`
+- operation metadata entries: `734`
 - payload schema resources: `34`
 - runtime model import index entries: `34`
 

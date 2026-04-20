@@ -394,7 +394,7 @@ class SemgrepRule(BaseResource):
     @classmethod
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift in semgrep rule responses."""
-        # Implementation for schema drift detection
+        _ = info  # Reserved for future drift logging; matches BaseResource signature.
         return v
 
     @override
