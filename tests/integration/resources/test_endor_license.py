@@ -3,7 +3,7 @@
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -26,6 +26,7 @@ class TestEndorLicense:
         """LIST from tenant root with traverse (registry-based)."""
         result = self.endor_root_client.EndorLicense.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
@@ -34,6 +35,7 @@ class TestEndorLicense:
         """EndorLicense spec exposes quota and license_configurations when returned."""
         items = self.endor_root_client.EndorLicense.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
@@ -69,6 +71,7 @@ class TestEndorLicense:
 
         items = self.endor_root_client.EndorLicense.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
