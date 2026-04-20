@@ -56,126 +56,150 @@ logger = logging.getLogger(__name__)
 # Validation guardrail
 # ---------------------------------------------------------------------------
 
-ALLOWED_METADATA_KEYS: frozenset[str] = frozenset({
-    # --- Core fields (originally modeled) ---
-    "category",
-    "confidence",
-    "cwe",
-    "description",
-    "endor-category",
-    "endor-rule-origin",
-    "endor-tags",
-    "endor-targets",
-    "explanation",
-    "impact",
-    "owasp",
-    "references",
-    "remediation",
-    "security-severity",
-    "version",
-    # --- Additional v1SemgrepRuleMeta spec fields ---
-    "author",
-    "asvs",
-    "bandit-code",
-    "cwe2020-top25",
-    "cwe2021-top25",
-    "cwe2022-top25",
-    "cwe2023-top25",
-    "deprecated",
-    "display-name",
-    "endor-attack-examples",
-    "functional-categories",
-    "help",
-    "interfile",
-    "license",
-    "likelihood",
-    "masvs",
-    "owaspapi",
-    "precision",
-    "resources",
-    "rule-origin-note",
-    "severity",
-    "short-description",
-    "shortDescription",
-    "source-rule-url",
-    "source-url-open",
-    "subcategory",
-    "tags",
-    "technology",
-    "vulnerability",
-    "vulnerability-class",
-})
-
+REQUIRED_TOP_LEVEL_KEYS: frozenset[str] = frozenset(
+    {"id", "languages", "severity", "message"}
+)
 VALID_SEVERITIES: frozenset[str] = frozenset({"WARNING", "ERROR", "INFO"})
+PATTERN_KEYS: frozenset[str] = frozenset(
+    {
+        "pattern",
+        "patterns",
+        "pattern-either",
+        "pattern-regex",
+        "pattern-sources",
+        "pattern-sinks",
+        "pattern_either",
+        "pattern_regex",
+        "pattern_sources",
+        "pattern_sinks",
+    }
+)
+ALLOWED_METADATA_KEYS: frozenset[str] = frozenset(
+    {
+        "asvs",
+        "author",
+        "bandit-code",
+        "category",
+        "confidence",
+        "cwe",
+        "cwe2020-top25",
+        "cwe2021-top25",
+        "cwe2022-top25",
+        "cwe2023-top25",
+        "deprecated",
+        "description",
+        "display-name",
+        "endor-attack-examples",
+        "endor-category",
+        "endor-rule-origin",
+        "endor-tags",
+        "endor-targets",
+        "explanation",
+        "functional-categories",
+        "help",
+        "impact",
+        "interfile",
+        "license",
+        "likelihood",
+        "masvs",
+        "owasp",
+        "owaspapi",
+        "precision",
+        "references",
+        "remediation",
+        "resources",
+        "rule-origin-note",
+        "security-severity",
+        "severity",
+        "short-description",
+        "shortDescription",
+        "source-rule-url",
+        "source-url-open",
+        "subcategory",
+        "tags",
+        "technology",
+        "version",
+        "vulnerability",
+        "vulnerability-class",
+    }
+)
+CRUD_PARSER_UNSUPPORTED_METADATA_KEYS: frozenset[str] = frozenset(
+    {"short-description", "shortDescription", "short_description"}
+)
 
-PATTERN_KEYS: frozenset[str] = frozenset({
-    "pattern",
-    "patterns",
-    "pattern-either",
-    "pattern-regex",
-    "pattern-sources",
-})
 
-REQUIRED_TOP_LEVEL: frozenset[str] = frozenset({
-    "id",
-    "languages",
-    "severity",
-    "message",
-})
+class RuleNormalizationResult:
+    """Container for normalized rule and validation outcomes."""
+
+    def __init__(
+        self,
+        rule: dict[str, Any],
+        warnings: list[str],
+        errors: list[str],
+        dropped_metadata_keys: list[str],
+    ) -> None:
+        self.rule = rule
+        self.warnings = warnings
+        self.errors = errors
+        self.dropped_metadata_keys = dropped_metadata_keys
 
 
-def validate_rule_dict(rule: dict[str, Any]) -> tuple[bool, list[str]]:
-    """Validate a parsed rule dict against the API-accepted schema.
-
-    Pure function — no API calls.  Returns ``(ok, errors)`` where *ok*
-    is ``True`` when the rule passes all checks.
-
-    Checks:
-        - Required top-level keys: id, languages, severity, message
-        - At least one pattern key present
-        - severity is one of WARNING, ERROR, INFO
-        - All keys under metadata are in ALLOWED_METADATA_KEYS
-        - metadata.description <= 1024 UTF-8 bytes
-    """
+def normalize_rule_dict_for_semgrep_crud(rule: dict[str, Any]) -> RuleNormalizationResult:
+    """Normalize and validate a Semgrep rule dict for /semgrep-rules CRUD."""
+    normalized = dict(rule)
+    warnings: list[str] = []
     errors: list[str] = []
+    dropped: list[str] = []
 
-    # Required top-level keys
-    for key in sorted(REQUIRED_TOP_LEVEL):
-        if key not in rule:
-            errors.append(f"Missing required top-level key: '{key}'")
+    missing = [k for k in sorted(REQUIRED_TOP_LEVEL_KEYS) if k not in normalized]
+    errors.extend([f"Missing required top-level key: '{key}'" for key in missing])
 
-    # At least one pattern key
-    if not PATTERN_KEYS & rule.keys():
-        errors.append(
-            f"At least one pattern key required: {sorted(PATTERN_KEYS)}"
-        )
+    if not (set(normalized.keys()) & PATTERN_KEYS):
+        errors.append(f"At least one pattern key required: {sorted(PATTERN_KEYS)}")
 
-    # Severity value
-    severity = rule.get("severity")
+    severity = normalized.get("severity")
     if severity is not None and severity not in VALID_SEVERITIES:
         errors.append(
             f"Invalid severity '{severity}'; must be one of {sorted(VALID_SEVERITIES)}"
         )
 
-    # Metadata field allowlist
-    metadata = rule.get("metadata")
+    metadata = normalized.get("metadata")
     if isinstance(metadata, dict):
-        unknown = set(metadata.keys()) - ALLOWED_METADATA_KEYS
+        unknown = sorted(set(metadata.keys()) - ALLOWED_METADATA_KEYS)
+        for key in unknown:
+            metadata.pop(key, None)
+            dropped.append(key)
         if unknown:
-            errors.append(
-                f"Unknown metadata key(s): {sorted(unknown)}. "
-                f"Allowed: {sorted(ALLOWED_METADATA_KEYS)}"
+            warnings.append(
+                f"Dropped unknown metadata key(s): {unknown}. "
+                f"Allowed keys: {sorted(ALLOWED_METADATA_KEYS)}"
             )
 
-        # Description length
+        parser_unsupported = sorted(
+            key for key in CRUD_PARSER_UNSUPPORTED_METADATA_KEYS if key in metadata
+        )
+        for key in parser_unsupported:
+            metadata.pop(key, None)
+            dropped.append(key)
+        if parser_unsupported:
+            warnings.append(
+                "Dropped parser-unsupported metadata key(s) for /semgrep-rules CRUD: "
+                f"{parser_unsupported}"
+            )
+
         desc = metadata.get("description", "")
         if isinstance(desc, str) and len(desc.encode("utf-8")) > 1024:
             errors.append(
-                f"metadata.description exceeds 1024 UTF-8 bytes "
+                "metadata.description exceeds 1024 UTF-8 bytes "
                 f"({len(desc.encode('utf-8'))} bytes)"
             )
 
-    return (len(errors) == 0, errors)
+    return RuleNormalizationResult(
+        rule=normalized,
+        warnings=warnings,
+        errors=errors,
+        dropped_metadata_keys=sorted(set(dropped)),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -223,8 +247,7 @@ def _parse_yaml_rules(path: Path) -> list[dict[str, Any]]:
 
 def _wrap_yaml(rule_dict: dict[str, Any], raw_yaml: str) -> str:
     """Ensure YAML content is wrapped in a ``rules:`` envelope."""
-    if raw_yaml.lstrip().startswith("rules:"):
-        return raw_yaml
+    _ = raw_yaml
     return yaml.dump(
         {"rules": [rule_dict]},
         default_flow_style=False,
@@ -235,9 +258,9 @@ def _wrap_yaml(rule_dict: dict[str, Any], raw_yaml: str) -> str:
 
 def _extract_description(rule_dict: dict[str, Any]) -> str:
     """Extract a description from a parsed rule dict, truncated to 1024 bytes."""
-    desc: str = rule_dict.get("metadata", {}).get(
-        "description", ""
-    ) or rule_dict.get("message", "")
+    desc: str = rule_dict.get("metadata", {}).get("description", "") or rule_dict.get(
+        "message", ""
+    )
     if len(desc.encode("utf-8")) > 1024:
         desc = desc[:1020] + "..."
     return desc
@@ -303,10 +326,13 @@ def cmd_import(
             rid = _display_id(rule_dict)
             rule_name = str(rule_dict.get("id", ""))
 
-            # --- Validation guardrail ---
-            ok, errors = validate_rule_dict(rule_dict)
-            if not ok:
-                for err in errors:
+            # --- Validation guardrail (warn-and-drop for unknown metadata) ---
+            normalized = normalize_rule_dict_for_semgrep_crud(rule_dict)
+            for warning in normalized.warnings:
+                logger.warning("Normalization warning for '%s': %s", rid, warning)
+
+            if normalized.errors:
+                for err in normalized.errors:
                     logger.error("Validation failed for '%s': %s", rid, err)
                 failed += 1
                 continue
@@ -316,8 +342,9 @@ def cmd_import(
                 skipped += 1
                 continue
 
-            wrapped_yaml = _wrap_yaml(rule_dict, raw_yaml)
-            desc = _extract_description(rule_dict)
+            normalized_rule = normalized.rule
+            wrapped_yaml = _wrap_yaml(normalized_rule, raw_yaml)
+            desc = _extract_description(normalized_rule)
 
             # Check for existing rule
             existing_rules = client.SemgrepRule.list(
@@ -335,11 +362,10 @@ def cmd_import(
             if existing:
                 # Update existing rule
                 try:
+                    native_rule = SemgrepNativeRule.model_validate(normalized_rule)
                     upd = UpdateSemgrepRulePayload(
-                        meta=SemgrepRuleMetaCreate(
-                            name=rule_name, description=desc
-                        ),
-                        spec=SemgrepRuleSpec(yaml=wrapped_yaml),
+                        meta=SemgrepRuleMetaCreate(name=rule_name, description=desc),
+                        spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
                     )
                     client.SemgrepRule.update(
                         existing,
@@ -355,18 +381,9 @@ def cmd_import(
 
             # Create new rule with validate=False for compound patterns
             try:
-                native_rule = SemgrepNativeRule(
-                    id=rule_dict.get("id"),
-                    languages=rule_dict.get("languages"),
-                    message=rule_dict.get("message"),
-                    severity=rule_dict.get("severity"),
-                    pattern=rule_dict.get("pattern"),
-                    mode=rule_dict.get("mode"),
-                )
+                native_rule = SemgrepNativeRule.model_validate(normalized_rule)
                 create_payload = CreateSemgrepRulePayload(
-                    meta=SemgrepRuleMetaCreate(
-                        name=rule_name, description=desc
-                    ),
+                    meta=SemgrepRuleMetaCreate(name=rule_name, description=desc),
                     spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
                     propagate=True,
                 )
@@ -466,7 +483,9 @@ def cmd_orphans(
         logger.info("No deleted rule names provided; skipping orphan cleanup.")
         return 0
 
-    logger.info("=== orphans: cleaning findings for %d deleted rule(s) ===", len(deleted_names))
+    logger.info(
+        "=== orphans: cleaning findings for %d deleted rule(s) ===", len(deleted_names)
+    )
 
     # Build a set of lower-cased substrings to match against
     needles = {n.lower() for n in deleted_names}
@@ -563,7 +582,9 @@ def cmd_configure(
     id_to_yaml = _build_rule_yaml_map(rules_dir)
 
     logger.info(
-        "Enabled set (%d): %s", len(enabled_ids), ", ".join(sorted(enabled_ids)) or "(none)"
+        "Enabled set (%d): %s",
+        len(enabled_ids),
+        ", ".join(sorted(enabled_ids)) or "(none)",
     )
     logger.info(
         "Disabled set (%d): %s",
@@ -643,17 +664,13 @@ def cmd_sync(
     # Step 1: Delete
     deleted_names: list[str] = []
     if name_filter:
-        deleted_names = cmd_delete(
-            client, namespace, name_filter, dry_run=dry_run
-        )
+        deleted_names = cmd_delete(client, namespace, name_filter, dry_run=dry_run)
         logger.info("Deleted %d rule(s).", len(deleted_names))
     else:
         logger.info("No --name-filter provided; skipping delete step.")
 
     # Step 2: Orphan cleanup
-    orphans_deleted = cmd_orphans(
-        client, namespace, deleted_names, dry_run=dry_run
-    )
+    orphans_deleted = cmd_orphans(client, namespace, deleted_names, dry_run=dry_run)
     logger.info("Deleted %d orphaned finding(s).", orphans_deleted)
 
     # Step 3: Import
@@ -666,9 +683,7 @@ def cmd_sync(
     )
 
     # Step 4: Configure
-    cmd_configure(
-        client, namespace, rules_dir, enabled_dir, dry_run=dry_run
-    )
+    cmd_configure(client, namespace, rules_dir, enabled_dir, dry_run=dry_run)
 
     logger.info("=== sync complete ===")
 
