@@ -42,6 +42,8 @@ jobs:
       version_changed: ${{ steps.trigger.outputs.version_changed }}
       spec_changed: ${{ steps.trigger.outputs.spec_changed }}
       branch_name: ${{ steps.trigger.outputs.branch_name }}
+      repo_baseline_endorctl: ${{ steps.trigger.outputs.repo_baseline_endorctl }}
+      repo_baseline_spec_sha256: ${{ steps.trigger.outputs.repo_baseline_spec_sha256 }}
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -65,6 +67,8 @@ jobs:
           UPSTREAM_CHANGED="${{ github.event.client_payload.upstream_changed || 'unknown' }}"
           VERSION_CHANGED="${{ github.event.client_payload.version_changed || 'unknown' }}"
           SPEC_CHANGED="${{ github.event.client_payload.spec_changed || 'unknown' }}"
+          REPO_BASELINE_ENDORCTL="${{ github.event.client_payload.repo_baseline_endorctl || '' }}"
+          REPO_BASELINE_SPEC_SHA256="${{ github.event.client_payload.repo_baseline_spec_sha256 || '' }}"
           BRANCH_NAME="chore/model-sync-auto"
 
           echo "endorctl_version=$ENDORCTL_VERSION" >> "$GITHUB_OUTPUT"
@@ -77,6 +81,8 @@ jobs:
           echo "version_changed=$VERSION_CHANGED" >> "$GITHUB_OUTPUT"
           echo "spec_changed=$SPEC_CHANGED" >> "$GITHUB_OUTPUT"
           echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          echo "repo_baseline_endorctl=$REPO_BASELINE_ENDORCTL" >> "$GITHUB_OUTPUT"
+          echo "repo_baseline_spec_sha256=$REPO_BASELINE_SPEC_SHA256" >> "$GITHUB_OUTPUT"
 
       - name: Guard against unsupported dispatch payload
         if: github.event_name == 'repository_dispatch'
@@ -613,8 +619,10 @@ jobs:
             echo "| Upstream changed | \`${{ needs.validate-generated-artifacts.outputs.upstream_changed }}\` |"
             echo "| version_changed | \`${{ needs.validate-generated-artifacts.outputs.version_changed }}\` |"
             echo "| spec_changed | \`${{ needs.validate-generated-artifacts.outputs.spec_changed }}\` |"
-            echo "| Previous endorctl | \`${{ needs.validate-generated-artifacts.outputs.prev_endorctl_version || '<none>' }}\` |"
-            echo "| endorctl version | \`${{ needs.validate-generated-artifacts.outputs.endorctl_version }}\` |"
+            echo "| Previous endorctl (detector cache) | \`${{ needs.validate-generated-artifacts.outputs.prev_endorctl_version || '<none>' }}\` |"
+            echo "| endorctl version (API) | \`${{ needs.validate-generated-artifacts.outputs.endorctl_version }}\` |"
+            echo "| Repo baseline endorctl (\`registry_contract\`) | \`${{ needs.validate-generated-artifacts.outputs.repo_baseline_endorctl || '<none>' }}\` |"
+            echo "| Repo baseline spec SHA256 (\`registry_contract\`) | \`${{ needs.validate-generated-artifacts.outputs.repo_baseline_spec_sha256 || '<none>' }}\` |"
             echo "| provenance_changed (excluded from branch) | \`${{ steps.diff_scope.outputs.provenance_changed || 'false' }}\` |"
             echo "| API spec path | \`${{ env.OPENAPI_SPEC_PATH }}\` |"
             echo ""
