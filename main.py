@@ -52,13 +52,18 @@ def _namespace_for(resource: Any, fallback: str) -> str:
     return fallback
 
 
+def _print_generic_error(message: str) -> None:
+    """Print a concise operator message without backend exception details."""
+    print(message)
+
+
 def demo_list_projects(client: Client) -> None:
     """``Project.list`` with pagination and tenant-wide traversal."""
     _banner("List projects (traverse=True)")
     try:
         projects = client.Project.list(traverse=True, max_pages=2, page_size=10)
-    except EndorAPIError as exc:
-        print(f"Could not list projects: {exc}")
+    except EndorAPIError:
+        _print_generic_error("Could not list projects.")
         return
     print(f"Fetched {len(projects)} project(s) (up to 2 pages).")
     for p in projects[:5]:
@@ -73,8 +78,8 @@ def demo_list_and_get_finding(client: Client, default_namespace: str) -> None:
     _banner("List findings, then get one by UUID")
     try:
         findings = client.Finding.list(traverse=True, max_pages=1, page_size=5)
-    except EndorAPIError as exc:
-        print(f"Could not list findings: {exc}")
+    except EndorAPIError:
+        _print_generic_error("Could not list findings.")
         return
     if not findings:
         print("No findings returned (empty tenant or filters). Skipping get.")
@@ -84,8 +89,8 @@ def demo_list_and_get_finding(client: Client, default_namespace: str) -> None:
     print(f"First finding uuid={first.uuid}  namespace={ns}")
     try:
         detail = client.Finding.get(first.uuid, namespace=ns)
-    except EndorAPIError as exc:
-        print(f"Could not get finding: {exc}")
+    except EndorAPIError:
+        _print_generic_error("Could not get finding.")
         return
     title = getattr(detail.meta, "name", None) or "(no title)"
     print(f"GET succeeded: {title}")
@@ -96,8 +101,8 @@ def demo_list_api_keys(client: Client) -> None:
     _banner("List API keys (metadata only)")
     try:
         keys = client.APIKey.list(max_pages=1, page_size=20)
-    except EndorAPIError as exc:
-        print(f"Could not list API keys: {exc}")
+    except EndorAPIError:
+        _print_generic_error("Could not list API keys.")
         return
     print(f"Fetched {len(keys)} key record(s).")
     for row in keys[:10]:
@@ -131,8 +136,8 @@ def demo_semgrep_rule_create_and_delete(client: Client) -> None:
     try:
         try:
             created = client.SemgrepRule.create(payload)
-        except PermissionDeniedError as exc:
-            print(f"Skipping create (no permission): {exc}")
+        except PermissionDeniedError:
+            _print_generic_error("Skipping create (no permission).")
             return
         print(f"Created SemgrepRule uuid={created.uuid} name={created.meta.name}")
     finally:
@@ -140,8 +145,10 @@ def demo_semgrep_rule_create_and_delete(client: Client) -> None:
             try:
                 client.SemgrepRule.delete(created.uuid)
                 print(f"Deleted SemgrepRule uuid={created.uuid}")
-            except EndorAPIError as exc:
-                print(f"Cleanup delete failed (you may need to remove it in UI): {exc}")
+            except EndorAPIError:
+                _print_generic_error(
+                    "Cleanup delete failed; you may need to remove it in the UI."
+                )
 
 
 def demo_policy_create_update_delete(client: Client, default_namespace: str) -> None:
@@ -174,11 +181,11 @@ match_finding[result] {
     try:
         try:
             created = client.Policy.create(create_payload)
-        except PermissionDeniedError as exc:
-            print(f"Skipping policy create (no permission): {exc}")
+        except PermissionDeniedError:
+            _print_generic_error("Skipping policy create (no permission).")
             return
-        except EndorAPIError as exc:
-            print(f"Policy create failed: {exc}")
+        except EndorAPIError:
+            _print_generic_error("Policy create failed.")
             return
         print(f"Created Policy uuid={created.uuid} name={created.meta.name}")
 
@@ -199,8 +206,8 @@ match_finding[result] {
             try:
                 client.Policy.delete(created.uuid)
                 print(f"Deleted Policy uuid={created.uuid}")
-            except EndorAPIError as exc:
-                print(f"Cleanup delete failed: {exc}")
+            except EndorAPIError:
+                _print_generic_error("Cleanup delete failed.")
 
 
 def main() -> int:
