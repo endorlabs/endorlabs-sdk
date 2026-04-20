@@ -125,9 +125,9 @@ sast_rule_manager.py import --rules-dir PATH [--force] [--dry-run]
 | `--rules-dir PATH` | Directory containing rule YAML files (recursive) |
 | `--force` | Update existing rules (matched by `meta.name`) |
 
-Each rule dict is validated through `validate_rule_dict()` before
-import. Unknown metadata keys cause the rule to be rejected (not
-silently stripped).
+Each rule dict is normalized through the Semgrep CRUD guardrails before
+import. Unknown metadata keys are warned-and-dropped; required shape
+violations still fail fast.
 
 ### `delete` -- Delete rules by name filter
 
@@ -209,11 +209,10 @@ For bulk export, iterate over the list results and write each rule's spec to a Y
 
 ---
 
-## Validation Guardrail: `validate_rule_dict()`
+## Validation Guardrail: CRUD shape normalization
 
-The SAST Rule Manager validates every rule dict before import. This is
-the gate an agent must pass; unknown metadata fields are **errors**, not
-silently stripped.
+The SAST Rule Manager normalizes every rule dict before import. This is
+the gate an agent must pass for `/semgrep-rules` create/update safety.
 
 ### Allowed metadata keys
 
@@ -268,15 +267,25 @@ matches `v1SemgrepRuleMeta` from the Endor Labs API spec.
 | `vulnerability` | Vulnerability identifier |
 | `vulnerability-class` | `[SQL-Injection]` |
 
-Any other key under `metadata` will cause `validate_rule_dict()` to
-fail with an explicit error listing the unknown key(s).
+Any other key under `metadata` is dropped with a structured warning so
+imports can proceed without backend parser failures.
+
+### Accepted vs dropped vs rejected
+
+- Accepted: known metadata keys from `v1SemgrepRuleMeta`
+- Dropped with warning: unknown metadata keys
+- Dropped with warning: parser-unsupported keys (`short-description`, `shortDescription`)
+- Rejected with error: missing `id`/`languages`/`message`/`severity`
+- Rejected with error: missing all pattern keys
+- Rejected with error: invalid `severity` value
+- Rejected with error: `metadata.description` over 1024 UTF-8 bytes
 
 ### Checks performed
 
 1. Required top-level keys: `id`, `languages`, `severity`, `message`
 2. At least one pattern key: `pattern`, `patterns`, `pattern-either`, `pattern-regex`, `pattern-sources`
 3. `severity` must be one of `WARNING`, `ERROR`, `INFO`
-4. All `metadata` keys must be in the allowed set above
+4. Unknown `metadata` keys are dropped with warning
 5. `metadata.description` must not exceed 1024 UTF-8 bytes
 
 ---
@@ -428,7 +437,8 @@ After importing, verify end-to-end:
 | "spec.rule is required" | `CreateSemgrepRulePayload.spec.rule` is `None` | Build a minimal `SemgrepNativeRule` (see above) |
 | "Meta.Description: value length must be at most 1024 bytes" | `meta.description` too long | Truncate to 1020 chars + "..." (handled automatically by the script) |
 | "Semgrep rule validation failed" | Client-side Pydantic validation rejects pattern operators | The script uses `validate=False` by default |
-| "Unknown metadata key(s)" from `validate_rule_dict` | Rule YAML contains fields not in `ALLOWED_METADATA_KEYS` | Remove or relocate the unknown field (e.g., move into `endor-tags`) |
+| "Dropped unknown metadata key(s)" warning | Rule YAML contains fields not in CRUD allowlist | Keep import result, then migrate dropped fields into supported keys |
+| "Dropped parser-unsupported metadata key(s)" warning | Rule contains parser-breaking keys for `/semgrep-rules` | Remove those keys from source YAML (`short-description`, `shortDescription`) |
 | Rule imported but no findings in scan | Rule `paths.include` does not match scanned files, or rule is disabled | Check rule YAML scope; use `configure` to enable |
 | "already exists" / duplicate | Rule with same `meta.name` exists | Use `--force` to update, or choose a different name |
 | Orphaned findings after rule deletion | Findings persist after their rule is deleted | Run `orphans` or `sync` (includes orphan cleanup automatically) |
