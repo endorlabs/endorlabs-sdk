@@ -45,6 +45,8 @@ jobs:
       previous-version: ${{ steps.check.outputs.previous-version }}
       previous-openapi-sha256: ${{ steps.check.outputs.previous-openapi-sha256 }}
       check-status: ${{ steps.check.outputs.status }}
+      repo-baseline-endorctl: ${{ steps.check.outputs.repo_baseline_endorctl }}
+      repo-baseline-spec-sha256: ${{ steps.check.outputs.repo_baseline_spec_sha256 }}
 
     steps:
       - name: Checkout code
@@ -131,6 +133,10 @@ jobs:
             CHANGED=false
           fi
 
+          if [ "$VERSION_CHANGED" = "true" ] && [ "$SPEC_CHANGED" = "false" ]; then
+            echo "::warning::endorctl version changed vs cached state but OpenAPI SHA256 did not — confirm downloads are not stale (CDN/proxy) and cache restore is healthy."
+          fi
+
           python -c "import json,datetime; json.dump({'endorctl_version':'$LATEST_VERSION','openapi_sha256':'$OPENAPI_SHA256','updated_at':datetime.datetime.utcnow().replace(microsecond=0).isoformat()+'Z'}, open('$STATE_FILE','w'))"
 
           echo "changed=$CHANGED" >> $GITHUB_OUTPUT
@@ -154,14 +160,33 @@ jobs:
             echo "✅ OpenAPI hash unchanged: $OPENAPI_SHA256"
           fi
 
+          uv run python <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          ev = ""
+          ss = ""
+          p = Path("src/endorlabs/generated/registry_contract.py")
+          if p.is_file():
+              m = re.search(r"# model_sync_provenance: (\{.*\})", p.read_text(encoding="utf-8"))
+              if m:
+                  data = json.loads(m.group(1))
+                  ev = str(data.get("endorctl_version") or "")
+                  ss = str(data.get("spec_sha256") or "")
+          out = Path(os.environ["GITHUB_OUTPUT"])
+          with out.open("a", encoding="utf-8") as fh:
+              fh.write(f"repo_baseline_endorctl={ev}\n")
+              fh.write(f"repo_baseline_spec_sha256={ss}\n")
+          PY
+
       - name: Save model-sync state to cache
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.status == 'ok'
         uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v5.0.2
         with:
           path: .github/cache/model_sync_state.json
-          key: model-sync-state-${{ runner.os }}-${{ steps.check.outputs.version }}-${{ steps.check.outputs.openapi-sha256 }}
-          restore-keys: |
-            model-sync-state-${{ runner.os }}
+          key: model-sync-state-${{ runner.os }}
 
   dispatch-sync:
     name: Dispatch Model Sync PR Workflow
@@ -193,6 +218,8 @@ jobs:
           PREVIOUS_VERSION: ${{ needs.check-version.outputs.previous-version }}
           PREVIOUS_OPENAPI_SHA256: ${{ needs.check-version.outputs.previous-openapi-sha256 }}
           UPSTREAM_CHANGED: ${{ needs.check-version.outputs.upstream-changed }}
+          REPO_BASELINE_ENDORCTL: ${{ needs.check-version.outputs.repo-baseline-endorctl }}
+          REPO_BASELINE_SPEC: ${{ needs.check-version.outputs.repo-baseline-spec-sha256 }}
         run: |
           REASON="manual-or-dispatch"
           if [ "$VERSION_CHANGED" = "true" ] && [ "$SPEC_CHANGED" = "true" ]; then
@@ -220,7 +247,9 @@ jobs:
                 \"upstream_changed\": \"$UPSTREAM_CHANGED\",
                 \"version_changed\": \"$VERSION_CHANGED\",
                 \"spec_changed\": \"$SPEC_CHANGED\",
-                \"force_run\": \"true\"
+                \"force_run\": \"true\",
+                \"repo_baseline_endorctl\": \"$REPO_BASELINE_ENDORCTL\",
+                \"repo_baseline_spec_sha256\": \"$REPO_BASELINE_SPEC\"
               }
             }"
 
@@ -291,6 +320,10 @@ jobs:
           echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| endorctl version | \`${{ needs.check-version.outputs.previous-version }}\` | \`${{ needs.check-version.outputs.latest-version }}\` | \`${{ needs.check-version.outputs.version-changed }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| OpenAPI SHA256 | \`${{ needs.check-version.outputs.previous-openapi-sha256 }}\` | \`${{ needs.check-version.outputs.openapi-sha256 }}\` | \`${{ needs.check-version.outputs.spec-changed }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Repo baseline (merge branch, \`registry_contract\` provenance)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`endorctl_version\`: \`${{ needs.check-version.outputs.repo-baseline-endorctl }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`spec_sha256\`: \`${{ needs.check-version.outputs.repo-baseline-spec-sha256 }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Trigger Context" >> $GITHUB_STEP_SUMMARY
           echo "- Event: \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY

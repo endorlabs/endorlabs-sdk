@@ -254,7 +254,8 @@
         "LANGUAGE_OBJECTIVEC",
         "LANGUAGE_C",
         "LANGUAGE_CPP",
-        "LANGUAGE_SWIFTURL"
+        "LANGUAGE_SWIFTURL",
+        "LANGUAGE_CONAN"
       ],
       "type": "string"
     },

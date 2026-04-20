@@ -6,7 +6,7 @@ Unit tests for the concurrent facade live in tests/unit/client/test_concurrent_l
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -29,6 +29,7 @@ class TestConcurrentListIntegration:
         result = client.Project.list(
             concurrent=True,
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_workers=5,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -43,6 +44,7 @@ class TestConcurrentListIntegration:
         result = client.Namespace.list(
             concurrent=True,
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_workers=5,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
@@ -74,6 +76,7 @@ class TestConcurrentListPerformance:
         _ = client.Project.list(
             traverse=True,
             concurrent=False,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         sequential_time = time.time() - start
@@ -82,6 +85,7 @@ class TestConcurrentListPerformance:
         _ = client.Project.list(
             traverse=True,
             concurrent=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_workers=10,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
