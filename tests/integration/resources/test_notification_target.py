@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -27,6 +27,7 @@ class TestNotificationTarget:
         )
         result = client.NotificationTarget.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
@@ -41,6 +42,7 @@ class TestNotificationTarget:
         )
         items = client.NotificationTarget.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
@@ -65,6 +67,7 @@ class TestNotificationTarget:
         )
         items = client.NotificationTarget.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
