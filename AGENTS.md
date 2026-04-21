@@ -49,7 +49,7 @@ This is the recommended way for agents to bootstrap Endor Labs context before pe
 Two-layer, registry-driven design. The same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceFacade[T]` instances; for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"system"`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceFacade[T]` instances; for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
 - **Registry adapter:** `endorlabs.registry` builds `ResourceEntry(...)` values from generated runtime contract data in `src/endorlabs/generated/registry_contract.py` plus explicit overrides in `src/endorlabs/registry_overlay.py`.
 - **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
 
@@ -141,6 +141,7 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | [custom-sast-rules](.cursor/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
 | [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
 | [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
+| [sso-integration-validation-troubleshooting](.cursor/skills/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
 | [troubleshooting-scans](.cursor/skills/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `scripts/troubleshooting_scans/` |
 | [troubleshoot-sdk](.cursor/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
 | [troubleshoot-authlog](.cursor/skills/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |

@@ -84,11 +84,14 @@ ns.update(client.Namespace, meta_description="new description")
 
 **Caller responsibility:** Handle `None` for these fields when using masks.
 
-### System-owned resources (403 on GET/UPDATE/DELETE)
+### Tenant-context read-only resources
 
-Resources `authentication_log`, `endor_license`, and `policy_template` are system-owned. LIST is allowed, but GET/UPDATE/DELETE return 403.
+Resources `authentication_log`, `endor_license`, and `policy_template` are
+tenant-context resources. Use tenant clients and `traverse=True` when broad
+visibility is needed.
 
-The SDK Client exposes `list()` only for these. Calling `get`/`update`/`delete` raises `NotImplementedError`.
+The SDK Client exposes `list()` and `get()` for these resources.
+`create`/`update`/`delete` remain unsupported.
 
 ## Test Debugging
 

@@ -58,7 +58,7 @@
       "attr_name": "AuthenticationLog",
       "parent_kind": null,
       "resource_name": "authentication-logs",
-      "scope": "system",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,
@@ -138,7 +138,7 @@
       "attr_name": "EndorLicense",
       "parent_kind": null,
       "resource_name": "endor-licenses",
-      "scope": "system",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,
@@ -418,7 +418,7 @@
       "attr_name": "PolicyTemplate",
       "parent_kind": null,
       "resource_name": "policy-templates",
-      "scope": "system",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,

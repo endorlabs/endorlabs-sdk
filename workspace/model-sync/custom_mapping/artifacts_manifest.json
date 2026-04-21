@@ -3,7 +3,7 @@
   "files": [
     {
       "path": "facade_contract.json",
-      "sha256": "5c5eca2635d391db2cb8fad2dac262c73c22d6735de844b94d61e156a6f0347c",
+      "sha256": "a2d37b1e343be4f89bb0a62995d878b32733c445c432e125fa01c6f99664ee24",
       "size_bytes": 55283
     },
     {
@@ -747,5 +747,5 @@
       "size_bytes": 86796
     }
   ],
-  "overall_sha256": "3f2d985a78a2a047585d38218b2bc8daddccdc8b7cf8dc40fcaa5d9de859f0bb"
+  "overall_sha256": "90ff74cec78c18e8cb34836a1060356c05245ceb75697d3c7738e18c93f0e4cc"
 }
