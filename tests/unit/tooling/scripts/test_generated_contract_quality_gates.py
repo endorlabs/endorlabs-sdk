@@ -81,7 +81,7 @@ def test_facade_contract_has_stable_resource_shape() -> None:
         seen_attrs.append(attr_name)
         assert isinstance(resource["model_class_import_path"], str)
 
-        assert resource["scope"] in {"tenant", "oss", "system"}
+        assert resource["scope"] in {"tenant", "oss"}
         assert (
             resource["parent_kind"] is None or isinstance(resource["parent_kind"], str)
         )

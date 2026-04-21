@@ -32,9 +32,9 @@ For endpoints that take a **resource UUID in the body** and a **namespace in the
 - List responses may omit spec-required fields when using a **mask** (`list_params.mask`) or at certain scopes (e.g. tenant root). The OpenAPI spec describes the full resource; list is not guaranteed to return every required field.
 - The SDK accepts these partial responses for list via spec-aligned leniency: **Finding** `context` is optional when the list response omits it; **Project** `spec.platform_source` is optional when the list mask omits it; **BaseMeta** `name` is optional when the list mask omits it. Callers that use these fields should handle `None` (e.g. `finding.context`, `project.spec.platform_source`, `resource.meta.name`).
 
-## System-owned resources (authentication_log, endor_license, policy_template)
+## Tenant-accessed resources (authentication_log, endor_license, policy_template)
 
-These resources are system-scoped in the SDK facade. Use `list()` for tenant/system namespace visibility. `get()` is supported only when `namespace="oss"`. `create`, `update`, and `delete` are not exposed on these facades.
+`authentication_log`, `endor_license`, and `policy_template` are customer-accessible through tenant context. Use tenant clients and `traverse=True` where broad visibility is needed. `create`, `update`, and `delete` are not exposed on these facades.
 
 ## Test skips (short test summary)
 
