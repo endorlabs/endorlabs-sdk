@@ -31,18 +31,8 @@ class TestPolicyTemplate:
         )
         assert isinstance(result, list)
 
-    def test_policy_template_facade_get_raises_for_non_oss_namespace(self) -> None:
-        """System-scoped get only when namespace is oss; otherwise use list."""
-        assert hasattr(self.endor_root_client.PolicyTemplate, "get")
-        with pytest.raises(NotImplementedError, match="oss namespace"):
-            self.endor_root_client.PolicyTemplate.get(
-                "any-uuid", namespace=self.root_namespace
-            )
-        with pytest.raises(NotImplementedError, match="oss namespace"):
-            self.endor_root_client.PolicyTemplate.get("any-uuid")
-
-    def test_policy_template_module_get_returns_403(self) -> None:
-        """Facade get with non-oss namespace raises NotImplementedError or 403."""
+    def test_policy_template_module_get_uses_item_namespace(self) -> None:
+        """Facade get uses item namespace; backend auth decides access."""
         from endorlabs.core.exceptions import PermissionDeniedError
 
         items = self.endor_root_client.PolicyTemplate.list(
@@ -58,7 +48,7 @@ class TestPolicyTemplate:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        with pytest.raises((PermissionDeniedError, NotImplementedError)) as exc_info:
+        with pytest.raises(PermissionDeniedError) as exc_info:
             self.endor_root_client.PolicyTemplate.get(item.uuid, namespace=ns)
         if hasattr(exc_info.value, "status_code"):
             assert exc_info.value.status_code == 403

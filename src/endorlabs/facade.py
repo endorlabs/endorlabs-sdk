@@ -2,13 +2,12 @@
 """Resource facade for the resource-oriented Client API.
 
 Provides ``ResourceRuntimeFacade[T]`` — a single facade class that handles all
-resource scopes (tenant, system, oss) via the ``scope`` parameter — and
+resource scopes (tenant, oss) via the ``scope`` parameter — and
 ``ScanLogsFacade`` for the request-based scan logs workflow.
 
 ``scope`` controls namespace resolution:
 
 * ``None`` (default) — tenant-scoped; namespace from client default or arg.
-* ``"system"`` — system-owned; ``get()`` restricted to ``namespace="oss"``.
 * ``"oss"`` — OSS-scoped; namespace is always ``"oss"``.
 
 See docs/reference/resources.md and docs/guides/retrieving-scan-results.md.
@@ -615,7 +614,6 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
 
     Scope (set at facade construction):
         * ``None`` — tenant-scoped; namespace from client default or argument.
-        * ``"system"`` — system-owned; get() only when namespace="oss".
         * ``"oss"`` — OSS-scoped; namespace always "oss".
     """
 
@@ -632,14 +630,14 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
         self._build_create_payload_fn: Callable[..., Any] | None = (
             entry.build_create_payload_fn
         )
-        self._scope: Literal["system", "oss"] | None = entry.scope
+        self._scope: Literal["oss"] | None = entry.scope
         self._create_mode = entry.create_mode
         self._update_requires_mask = entry.update_requires_mask
         self._workflow_flags = entry.workflow_flags
 
     @property
-    def scope(self) -> Literal["system", "oss"] | None:
-        """The resource scope: ``"system"``, ``"oss"``, or ``None`` (tenant)."""
+    def scope(self) -> Literal["oss"] | None:
+        """The resource scope: ``"oss"`` or ``None`` (tenant)."""
         return self._scope
 
     @override
@@ -673,8 +671,7 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
             The resource.
 
         Raises:
-            NotImplementedError: No get support, or system scope and
-                namespace is not ``"oss"``.
+            NotImplementedError: No get support.
             ValueError: Namespace required but not set.
 
         Example:
@@ -699,10 +696,6 @@ class ResourceRuntimeFacade(_ListableFacade[T]):
         else:
             uuid = id_or_resource
             ns = self._ns(namespace)
-        if self._scope == "system" and ns != "oss":
-            raise NotImplementedError(
-                "GET only supported for oss namespace; use list() for system/tenant."
-            ) from None
         return self._ops.get(ns, cast("str", uuid))
 
     def create(

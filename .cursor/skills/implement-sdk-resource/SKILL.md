@@ -81,7 +81,7 @@ ResourceEntry(
     resource_name="api-path",
     model_class=ResourceModel,
     supported_ops=frozenset({"list", "get", "create", "update", "delete"}),
-    scope=None,  # "system", "oss", or None
+    scope=None,  # "oss" or None
 )
 ```
 

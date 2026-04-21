@@ -362,9 +362,7 @@ def _build_class_docstring(entry: ResourceEntry, contract_row: dict[str, Any]) -
         parts.append(f"Supports list(parent=<{entry.parent_kind}>).")
 
     # Scope
-    if entry.scope == "system":
-        parts.append("System-scoped.")
-    elif entry.scope == "oss":
+    if entry.scope == "oss":
         parts.append("OSS-scoped (namespace fixed to 'oss').")
 
     create_mode = contract_row.get("create_mode")
