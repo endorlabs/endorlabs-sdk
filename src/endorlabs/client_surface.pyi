@@ -278,10 +278,7 @@ class _AuditLogFacade:
         ...
 
 class _AuthenticationLogFacade:
-    """Authentication event log.
-
-    System-scoped.
-    """
+    """Authentication event log."""
 
     def list(
         self,
@@ -825,10 +822,7 @@ class _DependencyMetadataFacade:
         ...
 
 class _EndorLicenseFacade:
-    """Platform license assigned to a tenant.
-
-    System-scoped.
-    """
+    """Platform license assigned to a tenant."""
 
     def list(
         self,
@@ -2740,10 +2734,7 @@ class _PolicyFacade:
         ...
 
 class _PolicyTemplateFacade:
-    """Reusable template for creating policies.
-
-    System-scoped.
-    """
+    """Reusable template for creating policies."""
 
     def list(
         self,
