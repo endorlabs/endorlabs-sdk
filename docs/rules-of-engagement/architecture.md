@@ -14,7 +14,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
 
 3. **Facade (ResourceFacade[T])** — `facade.py`
    - Resolves namespace, builds `ListParameters` from convenience kwargs, and delegates CRUD/list behavior to `BaseResourceOperations`.
-   - Single `ResourceFacade[T]` class handles all scopes via the `scope` parameter (`None` for tenant, `"system"`, `"oss"`).
+   - Single `ResourceFacade[T]` class handles all scopes via the `scope` parameter (`None` for tenant, `"oss"`).
    - Enforces supported operations from registry metadata; unsupported methods raise `NotImplementedError`.
 
 4. **Registry adapter** — generated-contract + overlay source of truth for `Client`

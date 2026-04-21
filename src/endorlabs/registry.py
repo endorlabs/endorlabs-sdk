@@ -31,7 +31,7 @@ class ResourceEntry:
     build_create_payload_fn: Callable[..., Any] | None = None
     filter_kwarg_map: dict[str, str] = field(default_factory=dict)  # pyright: ignore[reportUnknownVariableType]
     parent_kind: str | None = None
-    scope: Literal["system"] | Literal["oss"] | None = None
+    scope: Literal["oss"] | None = None
     create_mode: Literal["both"] | Literal["payload-only"] | Literal["unsupported"] = (
         "unsupported"
     )
@@ -164,8 +164,8 @@ def _build_resource_registry() -> list[ResourceEntry]:
                 f"for resource '{attr_name}'"
             )
         scope_value = item.get("scope")
-        scope = cast("Literal['system'] | Literal['oss'] | None", None)
-        if scope_value in {"system", "oss"}:
+        scope = cast("Literal['oss'] | None", None)
+        if scope_value == "oss":
             scope = scope_value
         parent_kind_value = item.get("parent_kind")
         parent_kind = parent_kind_value if isinstance(parent_kind_value, str) else None
