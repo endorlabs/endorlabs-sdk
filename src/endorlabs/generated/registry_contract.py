@@ -153,7 +153,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       ],
       "parent_kind": null,
       "resource_name": "authentication-logs",
-      "scope": "system",
+      "scope": "tenant",
       "supported_ops": [
         "get",
         "list"
@@ -375,7 +375,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       ],
       "parent_kind": null,
       "resource_name": "endor-licenses",
-      "scope": "system",
+      "scope": "tenant",
       "supported_ops": [
         "get",
         "list"
@@ -1171,7 +1171,7 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       ],
       "parent_kind": null,
       "resource_name": "policy-templates",
-      "scope": "system",
+      "scope": "tenant",
       "supported_ops": [
         "get",
         "list"

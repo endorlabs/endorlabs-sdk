@@ -55,12 +55,12 @@ See `docs/contracts.md` (Namespace scoping) and
 
 ---
 
-## System-Owned Resources
+## Tenant-Accessed Read-Only Resources
 
-`authentication_log`, `endor_license`, and `policy_template` are system-scoped
-resources. Use `list()` for system/tenant namespace visibility. `get()` is
-supported only when `namespace="oss"`. `create`, `update`, and `delete` are not
-exposed on these facades.
+`authentication_log`, `endor_license`, and `policy_template` are accessed
+through tenant context. Use `list()` with tenant scoping (and `traverse=True`
+when needed). `create`, `update`, and `delete` are not exposed on these
+facades.
 
 ---
 
