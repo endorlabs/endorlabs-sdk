@@ -5,6 +5,8 @@ is a special case - it's not standard CRUD, but a request-based API that
 returns logs in the response.
 """
 
+import os
+
 import pytest
 
 import endorlabs
@@ -92,8 +94,13 @@ class TestScanLogRequest:
             ),
         )
 
+        from endorlabs.core.exceptions import PermissionDeniedError
+
         ns_client = endorlabs.Client(tenant=ns, api_client=self.client)
-        request = ns_client.ScanLogRequest.create(payload)
+        try:
+            request = ns_client.ScanLogRequest.create(payload)
+        except PermissionDeniedError as e:
+            pytest.skip(f"ScanLogRequest create not allowed in this environment: {e}")
 
         assert request is not None, "Should successfully create log request"
         assert request.spec is not None, "Request should have spec"
@@ -143,8 +150,13 @@ class TestScanLogRequest:
             ),
         )
 
+        from endorlabs.core.exceptions import PermissionDeniedError
+
         ns_client = endorlabs.Client(tenant=ns, api_client=self.client)
-        request = ns_client.ScanLogRequest.create(payload)
+        try:
+            request = ns_client.ScanLogRequest.create(payload)
+        except PermissionDeniedError as e:
+            pytest.skip(f"ScanLogRequest create not allowed in this environment: {e}")
 
         assert request is not None, "Should successfully create log request"
         assert request.spec.log_levels == [
@@ -164,7 +176,7 @@ class TestScanLogRequest:
 
         # Test with invalid scan result UUID format - should raise ValidationError
         # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.core.exceptions import ValidationError
+        from endorlabs.core.exceptions import PermissionDeniedError, ValidationError
 
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-invalid-uuid-request"),
@@ -174,8 +186,11 @@ class TestScanLogRequest:
             ),
         )
 
-        with pytest.raises(ValidationError) as exc_info:
-            self.endor_parent_client.ScanLogRequest.create(payload)
+        try:
+            with pytest.raises(ValidationError) as exc_info:
+                self.endor_parent_client.ScanLogRequest.create(payload)
+        except PermissionDeniedError as e:
+            pytest.skip(f"ScanLogRequest create not allowed in this environment: {e}")
         assert exc_info.value.status_code == 400
         assert (
             "invalid" in exc_info.value.message.lower()
@@ -203,6 +218,12 @@ class TestScanLogRequest:
         -k per_namespace_debug
         """
         import logging
+
+        if os.getenv("CI") or os.getenv("RUN_PER_NAMESPACE_DEBUG") != "1":
+            pytest.skip(
+                "Per-namespace debug test is disabled by default; "
+                "set RUN_PER_NAMESPACE_DEBUG=1 to run it"
+            )
 
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)

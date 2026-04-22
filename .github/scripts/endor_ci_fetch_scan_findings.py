@@ -34,6 +34,11 @@ _TRAVERSE_PAGE_SIZE = 50
 _MAX_SCAN_LIST_PAGES = 5
 
 
+def _stderr_notice(message: str) -> None:
+    """Write a concise user-facing message without raw exception details."""
+    print(message, file=sys.stderr)
+
+
 def github_repo_url_variants(repo: str) -> list[str]:
     """Return canonical https URLs tried for Project.meta.name lookup."""
     repo = repo.strip()
@@ -65,8 +70,8 @@ def find_project_by_repo(
                 ),
                 max_pages=max_pages,
             )
-        except Exception as exc:
-            print(f"Project list failed for {url!r}: {exc}", file=sys.stderr)
+        except Exception:
+            _stderr_notice("Project list failed for a GitHub URL variant.")
             continue
         if projects:
             return projects[0]
@@ -370,11 +375,8 @@ def list_finding_uuids_for_repository_version(
             max_pages=max_pages,
             namespace=namespace,
         )
-    except Exception as exc:
-        print(
-            f"Finding.list by RepositoryVersion failed: {exc}",
-            file=sys.stderr,
-        )
+    except Exception:
+        _stderr_notice("Finding.list by RepositoryVersion failed.")
         return []
     out: list[str] = []
     seen: set[str] = set()
@@ -482,8 +484,8 @@ def wait_for_scan_result_ready(
             last = list_scan_results_for_project(
                 client, project_uuid, namespace=namespace
             )
-        except Exception as exc:
-            print(f"ScanResult list failed (will retry): {exc}", file=sys.stderr)
+        except Exception:
+            _stderr_notice("ScanResult list failed; retrying.")
             last = []
         if last:
             picked = pick_scan_result(last, head_sha)
@@ -530,8 +532,8 @@ def hydrate_findings(
     for uid in uuids[:max_findings]:
         try:
             got = client.Finding.get(uid, namespace=namespace)
-        except Exception as exc:
-            print(f"Finding.get {uid!r} failed: {exc}", file=sys.stderr)
+        except Exception:
+            _stderr_notice(f"Finding.get failed for uuid={uid!r}.")
             continue
         if got is not None:
             out.append(finding_to_github_dict(got))
@@ -731,6 +733,6 @@ def load_findings_dicts_for_pr(
                 namespace=p_ns,
                 max_findings=max_findings,
             )
-    except Exception as exc:
-        print(f"load_findings_dicts_for_pr failed: {exc}", file=sys.stderr)
+    except Exception:
+        _stderr_notice("load_findings_dicts_for_pr failed.")
         return []

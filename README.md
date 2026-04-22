@@ -2,7 +2,7 @@
 
 [![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
-Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and 24 more) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
+Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
 - **Python:** 3.12+
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
