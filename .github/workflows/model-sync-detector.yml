@@ -217,9 +217,6 @@ jobs:
           OPENAPI_SHA256: ${{ needs.check-version.outputs.openapi-sha256 }}
           PREVIOUS_VERSION: ${{ needs.check-version.outputs.previous-version }}
           PREVIOUS_OPENAPI_SHA256: ${{ needs.check-version.outputs.previous-openapi-sha256 }}
-          UPSTREAM_CHANGED: ${{ needs.check-version.outputs.upstream-changed }}
-          REPO_BASELINE_ENDORCTL: ${{ needs.check-version.outputs.repo-baseline-endorctl }}
-          REPO_BASELINE_SPEC: ${{ needs.check-version.outputs.repo-baseline-spec-sha256 }}
         run: |
           REASON="manual-or-dispatch"
           if [ "$VERSION_CHANGED" = "true" ] && [ "$SPEC_CHANGED" = "true" ]; then
@@ -243,13 +240,7 @@ jobs:
                 \"prev_endorctl_version\": \"$PREVIOUS_VERSION\",
                 \"prev_openapi_sha256\": \"$PREVIOUS_OPENAPI_SHA256\",
                 \"openapi_source_url\": \"https://api.endorlabs.com/download/openapiv2.swagger.json\",
-                \"reason\": \"$REASON\",
-                \"upstream_changed\": \"$UPSTREAM_CHANGED\",
-                \"version_changed\": \"$VERSION_CHANGED\",
-                \"spec_changed\": \"$SPEC_CHANGED\",
-                \"force_run\": \"true\",
-                \"repo_baseline_endorctl\": \"$REPO_BASELINE_ENDORCTL\",
-                \"repo_baseline_spec_sha256\": \"$REPO_BASELINE_SPEC\"
+                \"reason\": \"$REASON\"
               }
             }"
 
