@@ -399,6 +399,11 @@
           "description": "The bearer token to authenticate with Jira.",
           "type": "string"
         },
+        "cloud_id": {
+          "description": "The Jira Cloud ID required to route API requests through the Atlassian API gateway.",
+          "readOnly": true,
+          "type": "string"
+        },
         "components": {
           "description": "The Components field in Jira board.",
           "items": {
