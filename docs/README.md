@@ -34,9 +34,7 @@ Index for SDK-specific documentation.
 - [rules-of-engagement/troubleshooting.md](rules-of-engagement/troubleshooting.md)
 - [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md)
 - [rules-of-engagement/namespace-traversal.md](rules-of-engagement/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
-- [rules-of-engagement/spec-first-prototype-branch.md](rules-of-engagement/spec-first-prototype-branch.md)
-- [rules-of-engagement/spec-first-stainless-feasibility.md](rules-of-engagement/spec-first-stainless-feasibility.md)
-- [rules-of-engagement/spec-first-rd-approval-bundle.md](rules-of-engagement/spec-first-rd-approval-bundle.md)
+- [rules-of-engagement/list-query-performance.md](rules-of-engagement/list-query-performance.md) — List scope, filters, pagination, debugging slow queries.
 
 ## Findings / Research
 

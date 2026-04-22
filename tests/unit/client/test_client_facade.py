@@ -164,9 +164,7 @@ def test_registry_supported_ops_not_implemented_contract(
     client = client_with_mock_transport
     for entry in RESOURCE_REGISTRY:
         facade = getattr(client, entry.attr_name)
-        namespace = (
-            "oss" if entry.scope in {"oss", "system"} else TEST_NAMESPACE_DEFAULT
-        )
+        namespace = "oss" if entry.scope == "oss" else TEST_NAMESPACE_DEFAULT
 
         if "list" not in entry.supported_ops:
             with pytest.raises(NotImplementedError, match="support list"):
@@ -222,39 +220,8 @@ def test_all_oss_scoped_resources_force_oss_namespace(
             assert args[0] == "oss", entry.attr_name
 
 
-def test_all_system_scoped_get_requires_oss_namespace(
-    client_with_mock_transport: Client,
-) -> None:
-    """System-scoped get should reject non-oss namespace for all entries."""
-    from endorlabs.registry import RESOURCE_REGISTRY
-
-    client = client_with_mock_transport
-    system_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "system"]
-    assert system_entries, "Expected at least one system-scoped resource in registry."
-
-    for entry in system_entries:
-        if "get" not in entry.supported_ops:
-            continue
-        facade = getattr(client, entry.attr_name)
-        with pytest.raises(NotImplementedError, match="oss namespace"):
-            facade.get("unit-uuid", namespace="tenant.notoss")
-
-
 class TestBuildFacade:
     """_build_facade factory produces the correct facade scope per registry entry."""
-
-    def test_system_scope_facade_has_system_scope(
-        self, client_with_mock_transport: Client
-    ) -> None:
-        from endorlabs.registry import RESOURCE_REGISTRY
-
-        for entry in RESOURCE_REGISTRY:
-            if entry.scope == "system":
-                facade = getattr(client_with_mock_transport, entry.attr_name)
-                assert facade.scope == "system", entry.attr_name
-                break
-        else:
-            pytest.skip("No system-scoped resource in registry")
 
     def test_oss_scope_facade_has_oss_scope(
         self, client_with_mock_transport: Client
@@ -283,29 +250,18 @@ class TestBuildFacade:
             pytest.skip("No tenant-scoped resource in registry")
 
 
-def test_system_resource_facade_get_with_oss_namespace_delegates(
+def test_authentication_log_facade_get_uses_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """System-scoped get(id, namespace='oss') delegates to _ops.get with 'oss'."""
+    """AuthenticationLog get resolves through tenant namespace in SDK."""
     client = client_with_mock_transport
     client.AuthenticationLog._ops.get = Mock(return_value=Mock(uuid="log-123"))
-    result = client.AuthenticationLog.get("log-123", namespace="oss")
+    result = client.AuthenticationLog.get("log-123")
     assert result.uuid == "log-123"
     client.AuthenticationLog._ops.get.assert_called_once()
     args, _ = client.AuthenticationLog._ops.get.call_args
-    assert args[0] == "oss"
+    assert args[0] == TEST_NAMESPACE_DEFAULT
     assert args[1] == "log-123"
-
-
-def test_system_resource_facade_get_with_non_oss_namespace_raises(
-    client_with_mock_transport: Client,
-) -> None:
-    """System-scoped get(id) or get(id, namespace=tenant) raises."""
-    client = client_with_mock_transport
-    with pytest.raises(NotImplementedError, match="oss namespace"):
-        client.AuthenticationLog.get("log-123")
-    with pytest.raises(NotImplementedError, match="oss namespace"):
-        client.AuthenticationLog.get("log-123", namespace="tenant.foo")
 
 
 def test_oss_resource_facade_get_uses_oss_namespace(

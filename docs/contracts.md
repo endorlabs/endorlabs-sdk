@@ -77,8 +77,9 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - **page_size**, **page_token**, **page_id**: Pagination controls.
 - **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.
 - **count**, **from_date**, **to_date**: Supported by `ListParameters`.
-- **PR-scope naming:** OpenAPI commonly uses `ci_run_uuid`; SDK currently exposes `pr_uuid` as a convenience parameter in facade/list types.
+- **PR-scope list filtering:** **`ci_run_uuid`** is the OpenAPI-aligned parameter on `ListParameters` and maps to `list_parameters.ci_run_uuid` on the wire. **`pr_uuid`** is a **deprecated** convenience alias for the same field (see `ListParameters` in `src/endorlabs/core/types.py`).
 - **archive**, **list_all**: SDK-exposed convenience parameters. Treat these as SDK behavior contracts, not guaranteed cross-endpoint OpenAPI fields.
+- **Advanced / grouping:** `ListParameters` also exposes grouping and aggregation knobs (`group_aggregation_paths`, `group_by_time`, `group_by_time_interval`, and related fields) that map to OpenAPI list parameters where the resource supports them. Prefer the model docstrings on `ListParameters` and the local OpenAPI spec over duplicating the full matrix here.
 
 **Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<ResourceKind>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls.
 

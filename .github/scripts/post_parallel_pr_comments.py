@@ -14,12 +14,11 @@ import argparse
 import json
 import os
 import re
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections.abc import Iterator
 from typing import Any
+from urllib.parse import quote, urlencode, urlsplit
 
+import httpx
 from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
 from endor_scan_findings import (
     extract_location,
@@ -31,20 +30,41 @@ from endor_scan_findings import (
 _DEFAULT_REVIEW_COMMENTS_PER_REQUEST = 25
 _DEFAULT_MAX_INLINE = 30
 _GH_PER_PAGE = 100
+_GITHUB_API_HOSTS = frozenset({"api.github.com"})
+
+
+def _validate_github_api_url(url: str) -> str:
+    """Allow only direct HTTPS requests to the GitHub REST API host."""
+    parsed = urlsplit(url)
+    if parsed.scheme.lower() != "https":
+        raise ValueError("GitHub API URL must use https.")
+    if parsed.username or parsed.password:
+        raise ValueError("GitHub API URL must not include credentials.")
+    if parsed.fragment:
+        raise ValueError("GitHub API URL must not include a fragment.")
+    hostname = (parsed.hostname or "").lower()
+    if hostname not in _GITHUB_API_HOSTS:
+        raise ValueError("GitHub API URL host is not allowlisted.")
+    return url
+
+
+def _github_api_headers(token: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
 
 def _gh_get_json(*, token: str, url: str) -> Any:
-    req = urllib.request.Request(
-        url,
-        method="GET",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+    response = httpx.get(
+        _validate_github_api_url(url),
+        headers=_github_api_headers(token),
+        timeout=60,
+        follow_redirects=False,
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        body = resp.read().decode("utf-8")
+    response.raise_for_status()
+    body = response.text
     return json.loads(body) if body else []
 
 
@@ -54,33 +74,32 @@ def _gh_post_json(
     url: str,
     payload: dict[str, Any],
 ) -> dict[str, Any] | None:
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "Content-Type": "application/json",
-        },
-    )
+    validated_url = _validate_github_api_url(url)
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            body = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        err_body = exc.read().decode("utf-8", errors="replace")
+        response = httpx.post(
+            validated_url,
+            headers={
+                **_github_api_headers(token),
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=60,
+            follow_redirects=False,
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
         print(
-            f"GitHub API POST {exc.code} {exc.reason} {url}\n{err_body}",
+            "GitHub API POST failed with status "
+            f"{exc.response.status_code} for {validated_url}.",
         )
         return None
+    body = response.text
     return json.loads(body) if body else {}
 
 
 def _github_blob_link(repo: str, sha: str, file_path: str, line: int) -> str:
     clean_path = normalize_pr_path(file_path).replace("\\", "/")
-    encoded_path = urllib.parse.quote(clean_path, safe="/._-")
+    encoded_path = quote(clean_path, safe="/._-")
     return f"https://github.com/{repo}/blob/{sha}/{encoded_path}#L{line}"
 
 
@@ -90,7 +109,7 @@ def iter_pr_file_rows(
     """Yield dict rows from GET pulls/{pr}/files (paginated)."""
     page = 1
     while True:
-        q = urllib.parse.urlencode({"per_page": _GH_PER_PAGE, "page": page})
+        q = urlencode({"per_page": _GH_PER_PAGE, "page": page})
         url = f"{api_base}/pulls/{pr_number}/files?{q}"
         batch = _gh_get_json(token=token, url=url)
         if not isinstance(batch, list) or not batch:
@@ -241,7 +260,7 @@ def list_existing_review_comment_bodies(
     bodies: set[str] = set()
     page = 1
     while True:
-        q = urllib.parse.urlencode({"per_page": _GH_PER_PAGE, "page": page})
+        q = urlencode({"per_page": _GH_PER_PAGE, "page": page})
         url = f"{api_base}/pulls/{pr_number}/comments?{q}"
         batch = _gh_get_json(token=token, url=url)
         if not isinstance(batch, list) or not batch:
