@@ -4,11 +4,13 @@
 from __future__ import annotations
 
 import argparse
-import json
+import hashlib
 import logging
 import shutil
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 from .codegen import generate_modules, load_profiles
@@ -16,8 +18,8 @@ from .contract import (
     build_facade_contract,
     build_operation_path_metadata,
     build_payload_schemas,
-    build_runtime_index_metadata,
     build_registry_parity_report,
+    build_runtime_index_metadata,
     render_generated_registry_contract_module,
     validate_contract_artifacts,
 )
@@ -27,6 +29,7 @@ from .provenance import build_artifacts_manifest, build_provenance, write_json
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SPEC_PATH = REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
+DEFAULT_SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
 DEFAULT_OUTPUT_ROOT = REPO_ROOT / "workspace" / "model-sync"
 DEFAULT_CUSTOM_PROFILES_DIR = REPO_ROOT / "scripts" / "model_sync_profiles"
 LEGACY_OUTPUT_ROOT = REPO_ROOT / "workspace" / "model-bakeoff"
@@ -36,6 +39,28 @@ GENERATED_CONTRACT_MODULE_PATH = (
 GENERATED_PACKAGE_INIT_PATH = REPO_ROOT / "src" / "endorlabs" / "generated" / "__init__.py"
 GENERATED_RUNTIME_MODELS_ROOT = REPO_ROOT / "src" / "endorlabs" / "generated" / "models"
 logger = logging.getLogger(__name__)
+
+
+def _fetch_openapi_spec(url: str, dest: Path) -> bool:
+    """Download OpenAPI JSON to ``dest``. Return True on success."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with urllib.request.urlopen(url, timeout=120) as resp:  # noqa: S310
+            data = resp.read()
+        dest.write_bytes(data)
+    except (OSError, urllib.error.URLError) as exc:
+        logger.error("Failed to download spec from %s: %s", url, exc)
+        return False
+    logger.info("Wrote spec to %s", dest)
+    return True
+
+
+def _sha256_hex(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _run_command(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -127,7 +152,6 @@ def run_sync(
     toolchain = {
         "datamodel-codegen": {
             "available": shutil.which("datamodel-codegen") is not None,
-            "path": shutil.which("datamodel-codegen"),
         }
     }
     write_json(output_root / "toolchain_inventory.json", toolchain)
@@ -137,7 +161,11 @@ def run_sync(
 
     spec = load_openapi_spec(spec_path)
     profiles = load_profiles(profiles_dir)
-    provenance = build_provenance(spec_path, toolchain)
+    try:
+        spec_for_provenance = spec_path.resolve().relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        spec_for_provenance = spec_path
+    provenance = build_provenance(spec_for_provenance, toolchain)
     model_output = output_root / "custom_mapping"
     if model_output.exists():
         shutil.rmtree(model_output)
@@ -201,6 +229,12 @@ def run_sync(
     if contract_errors:
         for error in contract_errors:
             logger.error("model-sync contract validation failed: %s", error)
+        logger.error(
+            "Contract validation triage: inspect "
+            "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json "
+            "and workspace/model-sync/custom_mapping/facade_contract.json; see "
+            "docs/rules-of-engagement/docs-drift-workflow.md"
+        )
         return 1
     ok, message, commands = generate_modules(
         repo_root=REPO_ROOT,
@@ -227,11 +261,36 @@ def run_sync(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec-path", type=Path, default=DEFAULT_SPEC_PATH)
+    parser.add_argument(
+        "--spec-url",
+        default=DEFAULT_SPEC_URL,
+        help="URL for --fetch-spec (default: public Endor Labs OpenAPI download)",
+    )
+    parser.add_argument(
+        "--fetch-spec",
+        action="store_true",
+        help="Download OpenAPI JSON to --spec-path before running sync",
+    )
+    parser.add_argument(
+        "--spec-hash-only",
+        action="store_true",
+        help="Print SHA-256 of --spec-path and exit (runs --fetch-spec first if set)",
+    )
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--custom-profiles-dir", type=Path, default=DEFAULT_CUSTOM_PROFILES_DIR)
     parser.add_argument("--generate-stubs", action="store_true")
     parser.add_argument("--generate-reference-docs", action="store_true")
     parser.add_argument("--inventory-only", action="store_true")
+    parser.add_argument(
+        "--delta-summary",
+        action="store_true",
+        help="After a successful sync, print a compact delta vs git baseline",
+    )
+    parser.add_argument(
+        "--delta-git-ref",
+        default="",
+        help="Baseline ref for --delta-summary (default: auto origin/main..master)",
+    )
     return parser
 
 
@@ -243,15 +302,42 @@ def main(argv: list[str] | None = None) -> int:
         toolchain = {
             "datamodel-codegen": {
                 "available": shutil.which("datamodel-codegen") is not None,
-                "path": shutil.which("datamodel-codegen"),
             }
         }
         write_json(args.output_root / "toolchain_inventory.json", toolchain)
         return 0
-    return run_sync(
-        spec_path=args.spec_path,
+
+    spec_path = args.spec_path.expanduser().resolve()
+
+    if args.fetch_spec:
+        if not _fetch_openapi_spec(args.spec_url, spec_path):
+            return 1
+
+    if args.spec_hash_only:
+        if not spec_path.is_file():
+            logger.error("Spec file not found: %s", spec_path)
+            return 1
+        print(_sha256_hex(spec_path))
+        return 0
+
+    code = run_sync(
+        spec_path=spec_path,
         output_root=args.output_root,
         profiles_dir=args.custom_profiles_dir,
         generate_stubs=args.generate_stubs,
         generate_reference_docs=args.generate_reference_docs,
     )
+    if code != 0:
+        return code
+
+    if args.delta_summary:
+        from .baseline_ref import resolve_auto_baseline_ref
+        from .delta_summary import render_compact_delta_summary_lines
+
+        ref = (args.delta_git_ref or "").strip() or resolve_auto_baseline_ref(REPO_ROOT)
+        summary_text = "\n".join(
+            render_compact_delta_summary_lines(git_ref=ref, repo_root=REPO_ROOT)
+        )
+        print(summary_text)
+
+    return 0

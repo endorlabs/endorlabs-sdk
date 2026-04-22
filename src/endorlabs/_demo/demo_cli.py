@@ -303,12 +303,13 @@ def _project_has_scan_results(client: endorlabs.Client, project: Any) -> bool:
 def _project_has_call_graph(client: endorlabs.Client, project: Any) -> bool:
     """Return ``True`` when project has at least one call graph package version."""
     namespace = _project_namespace(project)
+    call_graph_enabled = True
     try:
         pvs = client.PackageVersion.list(
             namespace=namespace,
             filter=(
-                f'spec.project_uuid=="{project.uuid}"'
-                " AND spec.call_graph_available==true"
+                (F("spec.project_uuid") == str(project.uuid))
+                & (F("spec.call_graph_available") == call_graph_enabled)
             ),
             max_pages=1,
             page_size=1,
@@ -740,10 +741,12 @@ def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
         _log("  Could not resolve project namespace for call graph.", style="yellow")
         return
 
+    call_graph_enabled = True
     pvs = client.PackageVersion.list(
         namespace=namespace,
         filter=(
-            f'spec.project_uuid=="{project.uuid}" AND spec.call_graph_available==true'
+            (F("spec.project_uuid") == str(project.uuid))
+            & (F("spec.call_graph_available") == call_graph_enabled)
         ),
         max_pages=1,
         page_size=1,

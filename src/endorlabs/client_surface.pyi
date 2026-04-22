@@ -44,7 +44,7 @@ from .resources.version_upgrade import VersionUpgrade
 from .resources.vulnerability import Vulnerability
 
 class _APIKeyFacade:
-    """API Key resource model extending BaseResource.
+    """API key for programmatic access.
 
     Create mode: both.
     """
@@ -161,7 +161,7 @@ class _APIKeyFacade:
         ...
 
 class _AuditLogFacade:
-    """Audit Log resource model extending BaseResource.
+    """Audit trail of API operations.
 
     Create mode: both.
     """
@@ -278,10 +278,7 @@ class _AuditLogFacade:
         ...
 
 class _AuthenticationLogFacade:
-    """Authentication Log resource model. List and get only.
-
-    System-scoped.
-    """
+    """Authentication event log."""
 
     def list(
         self,
@@ -372,7 +369,7 @@ class _AuthenticationLogFacade:
         ...
 
 class _AuthorizationPolicyFacade:
-    """Authorization Policy resource model extending BaseResource.
+    """Permission grant for an authenticated identity.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -523,7 +520,7 @@ class _AuthorizationPolicyFacade:
         ...
 
 class _CodeOwnersFacade:
-    """Code Owners resource model. List, get, create, update, delete.
+    """Code ownership assignments for a project.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -674,7 +671,7 @@ class _CodeOwnersFacade:
         ...
 
 class _DependencyMetadataFacade:
-    """DependencyMetadata resource model extending BaseResource.
+    """Dependency relationship between packages.
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
@@ -825,10 +822,7 @@ class _DependencyMetadataFacade:
         ...
 
 class _EndorLicenseFacade:
-    """Endor License resource model. List and get only.
-
-    System-scoped.
-    """
+    """Platform license assigned to a tenant."""
 
     def list(
         self,
@@ -919,7 +913,7 @@ class _EndorLicenseFacade:
         ...
 
 class _FindingFacade:
-    """An Endor Labs finding entity extending BaseResource.
+    """Security or compliance finding from a scan.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1070,7 +1064,7 @@ class _FindingFacade:
         ...
 
 class _FindingLogFacade:
-    """An Endor Labs FindingLog entity extending BaseResource.
+    """Historical snapshot of a finding state.
 
     Create mode: both.
     """
@@ -1187,7 +1181,7 @@ class _FindingLogFacade:
         ...
 
 class _InstallationFacade:
-    """Installation resource model extending BaseResource.
+    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1338,7 +1332,7 @@ class _InstallationFacade:
         ...
 
 class _InvitationFacade:
-    """Invitation resource model. List, get, create, update, delete.
+    """User invitation for platform access.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1489,7 +1483,7 @@ class _InvitationFacade:
         ...
 
 class _LinterResultFacade:
-    """LinterResult resource model extending BaseResource.
+    """Linter analysis result for a package or repository version.
 
     Create mode: both.
     """
@@ -1606,7 +1600,7 @@ class _LinterResultFacade:
         ...
 
 class _MalwareFacade:
-    """Malware resource model.
+    """Open-source malware records.
 
     Identity kwargs: name (-> meta.name).
     OSS-scoped (namespace fixed to 'oss').
@@ -1701,7 +1695,7 @@ class _MalwareFacade:
         ...
 
 class _MetricFacade:
-    """Metric resource model extending BaseResource.
+    """Analytics output attached to packages or repositories.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1852,7 +1846,7 @@ class _MetricFacade:
         ...
 
 class _NamespaceFacade:
-    """An Endor Labs namespace entity extending BaseResource.
+    """Isolate and organize resources in a parent-child hierarchy.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -1985,7 +1979,7 @@ class _NamespaceFacade:
         ...
 
 class _NotificationTargetFacade:
-    """Notification Target resource model.
+    """Integration endpoint for notification delivery.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -2287,7 +2281,7 @@ class _PRCommentConfigFacade:
         ...
 
 class _PackageLicenseFacade:
-    """PackageLicense resource model extending BaseResource.
+    """License information for a package.
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
@@ -2438,7 +2432,7 @@ class _PackageLicenseFacade:
         ...
 
 class _PackageVersionFacade:
-    """PackageVersion resource model extending BaseResource.
+    """Package version with dependency information.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -2589,7 +2583,7 @@ class _PackageVersionFacade:
         ...
 
 class _PolicyFacade:
-    """Policy resource model extending BaseResource.
+    """Rule controlling scan behavior, findings, and workflows.
 
     Identity kwargs: name (-> meta.name), policy_type (-> spec.policy_type).
     Create mode: both.
@@ -2740,10 +2734,7 @@ class _PolicyFacade:
         ...
 
 class _PolicyTemplateFacade:
-    """Policy Template resource model. List and get only.
-
-    System-scoped.
-    """
+    """Reusable template for creating policies."""
 
     def list(
         self,
@@ -2834,7 +2825,7 @@ class _PolicyTemplateFacade:
         ...
 
 class _ProjectFacade:
-    """An Endor Labs project entity extending BaseResource.
+    """Logical root for a repository and its scan results.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -2985,7 +2976,7 @@ class _ProjectFacade:
         ...
 
 class _QueryMalwareFacade:
-    """QueryMalware resource model returned by query endpoint.
+    """Advanced malware query endpoint.
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
@@ -3005,7 +2996,7 @@ class _QueryMalwareFacade:
         ...
 
 class _QueryVulnerabilityFacade:
-    """QueryVulnerability resource model returned by query endpoint.
+    """Advanced vulnerability query endpoint.
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
@@ -3025,7 +3016,7 @@ class _QueryVulnerabilityFacade:
         ...
 
 class _RepositoryFacade:
-    """Repository resource model extending BaseResource.
+    """Source control repository metadata.
 
     Identity kwargs:
       git_url (-> spec.vcs_url)
@@ -3179,7 +3170,7 @@ class _RepositoryFacade:
         ...
 
 class _RepositoryVersionFacade:
-    """RepositoryVersion resource model extending BaseResource.
+    """Versioned snapshot of a repository.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
@@ -3331,7 +3322,7 @@ class _RepositoryVersionFacade:
         ...
 
 class _ScanLogRequestFacade:
-    """An Endor Labs ScanLogRequest entity extending BaseResource.
+    """Request for scan log messages.
 
     Create mode: payload-only.
     Workflow flags: request-style-endpoint.
@@ -3351,7 +3342,7 @@ class _ScanLogRequestFacade:
         ...
 
 class _ScanProfileFacade:
-    """An Endor Labs ScanProfile entity extending BaseResource.
+    """Scan configuration applied across projects.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -3502,7 +3493,7 @@ class _ScanProfileFacade:
         ...
 
 class _ScanResultFacade:
-    """An Endor Labs ScanResult entity extending BaseResource.
+    """Results from an endorctl scan.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
@@ -3654,7 +3645,7 @@ class _ScanResultFacade:
         ...
 
 class _ScanWorkflowFacade:
-    """Scan Workflow resource model. List and get only."""
+    """Workflow orchestrating scan steps."""
 
     def list(
         self,
@@ -3755,7 +3746,7 @@ class _ScanWorkflowFacade:
         ...
 
 class _ScanWorkflowResultFacade:
-    """Scan Workflow Result resource model. List and get only."""
+    """Result from a scan workflow execution."""
 
     def list(
         self,
@@ -3856,7 +3847,7 @@ class _ScanWorkflowResultFacade:
         ...
 
 class _SemgrepRuleFacade:
-    """SemgrepRule resource model extending BaseResource.
+    """Custom SAST rule in Semgrep/OpenGrep format.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -4007,7 +3998,7 @@ class _SemgrepRuleFacade:
         ...
 
 class _VersionUpgradeFacade:
-    """Version Upgrade resource model. List and get only."""
+    """Suggested dependency version upgrade."""
 
     def list(
         self,
@@ -4108,7 +4099,7 @@ class _VersionUpgradeFacade:
         ...
 
 class _VulnerabilityFacade:
-    """Vulnerability resource model.
+    """Open-source vulnerability records.
 
     Identity kwargs: name (-> meta.name).
     OSS-scoped (namespace fixed to 'oss').
@@ -4217,73 +4208,73 @@ class Client:
     """
 
     APIKey: _APIKeyFacade
-    """API Key resource model extending BaseResource."""
+    """API key for programmatic access."""
     AuditLog: _AuditLogFacade
-    """Audit Log resource model extending BaseResource."""
+    """Audit trail of API operations."""
     AuthenticationLog: _AuthenticationLogFacade
-    """Authentication Log resource model. List and get only."""
+    """Authentication event log."""
     AuthorizationPolicy: _AuthorizationPolicyFacade
-    """Authorization Policy resource model extending BaseResource."""
+    """Permission grant for an authenticated identity."""
     CodeOwners: _CodeOwnersFacade
-    """Code Owners resource model. List, get, create, update, delete."""
+    """Code ownership assignments for a project."""
     DependencyMetadata: _DependencyMetadataFacade
-    """DependencyMetadata resource model extending BaseResource."""
+    """Dependency relationship between packages."""
     EndorLicense: _EndorLicenseFacade
-    """Endor License resource model. List and get only."""
+    """Platform license assigned to a tenant."""
     Finding: _FindingFacade
-    """An Endor Labs finding entity extending BaseResource."""
+    """Security or compliance finding from a scan."""
     FindingLog: _FindingLogFacade
-    """An Endor Labs FindingLog entity extending BaseResource."""
+    """Historical snapshot of a finding state."""
     Installation: _InstallationFacade
-    """Installation resource model extending BaseResource."""
+    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket)."""
     Invitation: _InvitationFacade
-    """Invitation resource model. List, get, create, update, delete."""
+    """User invitation for platform access."""
     LinterResult: _LinterResultFacade
-    """LinterResult resource model extending BaseResource."""
+    """Linter analysis result for a package or repository version."""
     Malware: _MalwareFacade
-    """Malware resource model."""
+    """Open-source malware records."""
     Metric: _MetricFacade
-    """Metric resource model extending BaseResource."""
+    """Analytics output attached to packages or repositories."""
     Namespace: _NamespaceFacade
-    """An Endor Labs namespace entity extending BaseResource."""
+    """Isolate and organize resources in a parent-child hierarchy."""
     NotificationTarget: _NotificationTargetFacade
-    """Notification Target resource model."""
+    """Integration endpoint for notification delivery."""
     PRCommentConfig: _PRCommentConfigFacade
     """PR comment configuration resource model."""
     PackageLicense: _PackageLicenseFacade
-    """PackageLicense resource model extending BaseResource."""
+    """License information for a package."""
     PackageVersion: _PackageVersionFacade
-    """PackageVersion resource model extending BaseResource."""
+    """Package version with dependency information."""
     Policy: _PolicyFacade
-    """Policy resource model extending BaseResource."""
+    """Rule controlling scan behavior, findings, and workflows."""
     PolicyTemplate: _PolicyTemplateFacade
-    """Policy Template resource model. List and get only."""
+    """Reusable template for creating policies."""
     Project: _ProjectFacade
-    """An Endor Labs project entity extending BaseResource."""
+    """Logical root for a repository and its scan results."""
     QueryMalware: _QueryMalwareFacade
-    """QueryMalware resource model returned by query endpoint."""
+    """Advanced malware query endpoint."""
     QueryVulnerability: _QueryVulnerabilityFacade
-    """QueryVulnerability resource model returned by query endpoint."""
+    """Advanced vulnerability query endpoint."""
     Repository: _RepositoryFacade
-    """Repository resource model extending BaseResource."""
+    """Source control repository metadata."""
     RepositoryVersion: _RepositoryVersionFacade
-    """RepositoryVersion resource model extending BaseResource."""
+    """Versioned snapshot of a repository."""
     ScanLogRequest: _ScanLogRequestFacade
-    """An Endor Labs ScanLogRequest entity extending BaseResource."""
+    """Request for scan log messages."""
     ScanProfile: _ScanProfileFacade
-    """An Endor Labs ScanProfile entity extending BaseResource."""
+    """Scan configuration applied across projects."""
     ScanResult: _ScanResultFacade
-    """An Endor Labs ScanResult entity extending BaseResource."""
+    """Results from an endorctl scan."""
     ScanWorkflow: _ScanWorkflowFacade
-    """Scan Workflow resource model. List and get only."""
+    """Workflow orchestrating scan steps."""
     ScanWorkflowResult: _ScanWorkflowResultFacade
-    """Scan Workflow Result resource model. List and get only."""
+    """Result from a scan workflow execution."""
     SemgrepRule: _SemgrepRuleFacade
-    """SemgrepRule resource model extending BaseResource."""
+    """Custom SAST rule in Semgrep/OpenGrep format."""
     VersionUpgrade: _VersionUpgradeFacade
-    """Version Upgrade resource model. List and get only."""
+    """Suggested dependency version upgrade."""
     Vulnerability: _VulnerabilityFacade
-    """Vulnerability resource model."""
+    """Open-source vulnerability records."""
     ScanLogs: ScanLogsFacade
     """Scan logs facade. Use get_logs() to fetch log messages."""
 

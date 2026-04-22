@@ -82,14 +82,16 @@ Domain-driven test layout:
 
 ```bash
 uv run ruff check .
-uv run ruff format .
+uv run ruff format --check .
 uv run pyright --project pyproject.toml
+uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+uv run pyright --project pyproject.toml scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
 uv run python scripts/generate_client_stub.py
 git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-CI runs these; see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
+Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI runs the same ruff/pyright sequence (plus generated-artifact checks); see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). **Pre-commit** mirrors that lint job via local `uv run` hooks (see [.pre-commit-config.yaml](.pre-commit-config.yaml)); install with `uv run pre-commit install`. Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
 
 **Repository variables (GitHub Settings → Actions):** If present, you may remove deprecated names that are no longer read by workflows: `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, `ENDOR_GITHUB_CHECK_CONCLUSION` (removed Checks-annotations path). See [docs/guides/pr-comment-config-and-parallel-comments.md](docs/guides/pr-comment-config-and-parallel-comments.md) for the active PR-comment variables.
 
@@ -103,7 +105,7 @@ Model-sync automation is split by responsibility:
 - **Sync + PR:** `.github/workflows/model-sync-pr.yml`
   - runs canonical generation (`scripts/model_sync.py --generate-stubs --generate-reference-docs`)
   - scopes changed files to generated surfaces
-  - creates/updates bot PR branch (`chore/model-sync-auto`)
+  - creates/updates bot PR branch (`chore/model-sync-<utc-timestamp>`)
 - **CI gate:** `.github/workflows/ci-pr-main.yml`
   - remains the required merge gate for all PRs, including bot PRs
 

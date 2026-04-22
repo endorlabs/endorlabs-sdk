@@ -13,8 +13,7 @@ Legend:
   method was not found.
 - `no/no`: operation not exposed by SDK and not present in OpenAPI paths.
 - Scope values: `tenant` (default namespace resolution), `oss`
-  (namespace fixed to `oss`),
-  `system` (system-owned resources; additional SDK constraints may apply).
+  (namespace fixed to `oss`).
 
 | Resource | List (sdk/spec) | Get (sdk/spec) | Create (sdk/spec) | Update (sdk/spec) | Delete (sdk/spec) | Scope | Parent | Limitations |
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
@@ -24,17 +23,17 @@ Legend:
 - generated artifact files: `149`
 - facade contract resources: `34`
 - registry parity status: `pass`
-- operation metadata entries: `723`
+- operation metadata entries: `734`
 - payload schema resources: `34`
 - runtime model import index entries: `34`
 
 | APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | AuditLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
-| AuthenticationLog | yes/yes | yes/yes | no/yes | no/no | no/yes | system | — | — |
+| AuthenticationLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | AuthorizationPolicy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | CodeOwners | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | DependencyMetadata | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
-| EndorLicense | yes/yes | yes/yes | no/yes | no/no | no/yes | system | — | — |
+| EndorLicense | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Finding | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | FindingLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
@@ -48,7 +47,7 @@ Legend:
 | PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
 | PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | system | — | — |
+| PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Project | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | QueryMalware | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
 | QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |

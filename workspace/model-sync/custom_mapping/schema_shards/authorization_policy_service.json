@@ -450,7 +450,7 @@
     },
     "v1SystemRole": {
       "default": "SYSTEM_ROLE_UNSPECIFIED",
-      "description": "Captures the default system roles for permissions.\n\n - SYSTEM_ROLE_ADMIN: ADMIN has read/write access to all objects in the tenant.\n - SYSTEM_ROLE_READ_ONLY: READ_ONLY only can read all data, but perform no updates.\n - SYSTEM_ROLE_POLICY_EDITOR: Policy editor has read access on all objects, and the ability to create and\nmanage policies.\n - SYSTEM_ROLE_CODE_SCANNER: CODE_SCANNER has all permissions to run a scan and view the results.\n - SYSTEM_ROLE_ENDOR_PATCHING: ENDOR_PATCHING has permissions to use Endor Lab's factory.\n - SYSTEM_ROLE_SYNC_ORG: SYNC_ORG has permissions to perform a sync-org scan on all supported\nplatforms (GitHub, Azure, GitLab etc).\n - SYSTEM_ROLE_ONPREM_SCHEDULER: ONPREM_SCHEDULER has permissions to perform sync-org, scans and manage\nonprem scheduler related objects.\n - SYSTEM_ROLE_ENDOR_PROXY: Deprecated: Use SYSTEM_ROLE_PACKAGE_FIREWALL instead.\nENDOR_PROXY has permissions to access proxy endpoints in endorfactory service.\n - SYSTEM_ROLE_PACKAGE_FIREWALL: PACKAGE_FIREWALL has permissions to access firewall endpoints for package firewall in endorfactory service.",
+      "description": "Captures the default system roles for permissions.\n\n - SYSTEM_ROLE_ADMIN: ADMIN has read/write access to all objects in the tenant.\n - SYSTEM_ROLE_READ_ONLY: READ_ONLY only can read all data, but perform no updates.\n - SYSTEM_ROLE_POLICY_EDITOR: Policy editor has read access on all objects, and the ability to create and\nmanage policies.\n - SYSTEM_ROLE_CODE_SCANNER: CODE_SCANNER has all permissions to run a scan and view the results.\n - SYSTEM_ROLE_ENDOR_PATCHING: ENDOR_PATCHING has permissions to use Endor Lab's factory.\n - SYSTEM_ROLE_SYNC_ORG: SYNC_ORG has permissions to perform a sync-org scan on all supported\nplatforms (GitHub, Azure, GitLab etc).\n - SYSTEM_ROLE_ONPREM_SCHEDULER: ONPREM_SCHEDULER has permissions to perform sync-org, scans and manage\nonprem scheduler related objects.\n - SYSTEM_ROLE_ENDOR_PROXY: Deprecated: Use SYSTEM_ROLE_PACKAGE_FIREWALL instead.\nENDOR_PROXY has permissions to access proxy endpoints in endorfactory service.\n - SYSTEM_ROLE_PACKAGE_FIREWALL: PACKAGE_FIREWALL has permissions to access firewall endpoints for package firewall in endorfactory service.\n - SYSTEM_ROLE_AI_AUDIT: AI_AUDIT has least-privilege permissions to run ai-audit hooks (agent session events).",
       "enum": [
         "SYSTEM_ROLE_UNSPECIFIED",
         "SYSTEM_ROLE_ADMIN",
@@ -461,7 +461,8 @@
         "SYSTEM_ROLE_SYNC_ORG",
         "SYSTEM_ROLE_ONPREM_SCHEDULER",
         "SYSTEM_ROLE_ENDOR_PROXY",
-        "SYSTEM_ROLE_PACKAGE_FIREWALL"
+        "SYSTEM_ROLE_PACKAGE_FIREWALL",
+        "SYSTEM_ROLE_AI_AUDIT"
       ],
       "type": "string"
     },

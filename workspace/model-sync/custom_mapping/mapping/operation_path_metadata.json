@@ -1,5 +1,5 @@
 {
-  "operation_count": 723,
+  "operation_count": 734,
   "operations": [
     {
       "method": "get",
@@ -121,6 +121,22 @@
     },
     {
       "method": "patch",
+      "operation_id": "AgentHookPolicyDefinitionService_UpdateAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/agent-hook-policy-definitions",
+      "request_refs": [
+        "AgentHookPolicyDefinitionServiceUpdateAgentHookPolicyDefinitionBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgentHookPolicyDefinition"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
       "operation_id": "AgentSessionService_UpdateAgentSession",
       "path": "/v1/namespaces/{object.tenant_meta.namespace}/agent-sessions",
       "request_refs": [
@@ -148,6 +164,22 @@
       ],
       "tags": [
         "AgentWorkflowService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "AgenticInventoryService_UpdateAgenticInventory",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/agentic-inventory",
+      "request_refs": [
+        "AgenticInventoryServiceUpdateAgenticInventoryBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgenticInventory"
+      ],
+      "tags": [
+        "AgenticInventoryService"
       ],
       "x_internal": true
     },
@@ -276,6 +308,22 @@
       ],
       "tags": [
         "ContributorHistoryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "ContributorIdentityMappingService_UpdateContributorIdentityMapping",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/contributor-identity-mappings",
+      "request_refs": [
+        "ContributorIdentityMappingServiceUpdateContributorIdentityMappingBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ContributorIdentityMapping"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
       ],
       "x_internal": true
     },
@@ -2043,6 +2091,63 @@
     },
     {
       "method": "get",
+      "operation_id": "AgentHookPolicyDefinitionService_ListAgentHookPolicyDefinitions",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListAgentHookPolicyDefinitionsResponse"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "post",
+      "operation_id": "AgentHookPolicyDefinitionService_CreateAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions",
+      "request_refs": [
+        "AgentHookPolicyDefinitionServiceCreateAgentHookPolicyDefinitionBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgentHookPolicyDefinition"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "AgentHookPolicyDefinitionService_DeleteAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AgentHookPolicyDefinitionService_GetAgentHookPolicyDefinition",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/agent-hook-policy-definitions/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AgentHookPolicyDefinition"
+      ],
+      "tags": [
+        "AgentHookPolicyDefinitionService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
       "operation_id": "AgentSessionService_ListAgentSessions",
       "path": "/v1/namespaces/{tenant_meta.namespace}/agent-sessions",
       "request_refs": [],
@@ -3206,6 +3311,63 @@
       ],
       "tags": [
         "ContributorHistoryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "ContributorIdentityMappingService_ListContributorIdentityMappings",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListContributorIdentityMappingsResponse"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "post",
+      "operation_id": "ContributorIdentityMappingService_CreateContributorIdentityMapping",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings",
+      "request_refs": [
+        "ContributorIdentityMappingServiceCreateContributorIdentityMappingBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ContributorIdentityMapping"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "ContributorIdentityMappingService_DeleteContributorIdentityMapping",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "ContributorIdentityMappingService_GetContributorIdentityMapping",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/contributor-identity-mappings/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ContributorIdentityMapping"
+      ],
+      "tags": [
+        "ContributorIdentityMappingService"
       ],
       "x_internal": true
     },
