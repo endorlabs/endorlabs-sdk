@@ -10,7 +10,7 @@ This document is the in-repo source of truth for shared SDK semantics.
 ## Canonical naming
 
 - Use `tenant.namespace.child` only; never UUIDs in namespace paths.
-- Example: `tenant_meta_namespace="endor-solutions-tgowan"` or `"tenant.bu.team"`.
+- Example: `tenant_meta_namespace="endor-solutions-tgowan"` or `"tenant.acme.backend"`.
 - **`Client` facade attributes (`attr_name`):** Use **PascalCase** matching the
   resource model class name and `endorctl api … --resource <Kind>` (e.g.
   `client.Project`, `client.QueryVulnerability`). This is an intentional
@@ -19,7 +19,7 @@ This document is the in-repo source of truth for shared SDK semantics.
   (`endorlabs.resources.project`, `build_create_payload` metadata slugs like
   `project_build_create`).
 - **Custom facades (SDK-only helpers):** Register in `CUSTOM_FACADE_REGISTRY` in
-  [`src/endorlabs/registry.py`](src/endorlabs/registry.py), not in
+  [`src/endorlabs/registry.py`](../src/endorlabs/registry.py), not in
   `registry_contract`. Use **PascalCase** `attr_name` on `Client` for consistency.
   Each entry carries `pyi_*` metadata for
   `scripts/generate_client_stub.py` (typed `client_surface.pyi`); run
@@ -77,8 +77,9 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - **page_size**, **page_token**, **page_id**: Pagination controls.
 - **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.
 - **count**, **from_date**, **to_date**: Supported by `ListParameters`.
-- **PR-scope naming:** OpenAPI commonly uses `ci_run_uuid`; SDK currently exposes `pr_uuid` as a convenience parameter in facade/list types.
+- **PR-scope list filtering:** **`ci_run_uuid`** is the OpenAPI-aligned parameter on `ListParameters` and maps to `list_parameters.ci_run_uuid` on the wire. **`pr_uuid`** is a **deprecated** convenience alias for the same field (see `ListParameters` in `src/endorlabs/core/types.py`).
 - **archive**, **list_all**: SDK-exposed convenience parameters. Treat these as SDK behavior contracts, not guaranteed cross-endpoint OpenAPI fields.
+- **Advanced / grouping:** `ListParameters` also exposes grouping and aggregation knobs (`group_aggregation_paths`, `group_by_time`, `group_by_time_interval`, and related fields) that map to OpenAPI list parameters where the resource supports them. Prefer the model docstrings on `ListParameters` and the local OpenAPI spec over duplicating the full matrix here.
 
 **Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<ResourceKind>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls.
 
@@ -104,5 +105,6 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 ## Errors
 
-- Use `endorlabs.exceptions`; resources may return `None` on 404 where documented.
+- Use exception classes exported at top-level `endorlabs` (defined in
+  `endorlabs.core.exceptions`); resources may return `None` on 404 where documented.
 - Preserve full server error context in SDK error handling.

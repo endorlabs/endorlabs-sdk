@@ -15,6 +15,13 @@ For endpoints that take a **resource UUID in the body** and a **namespace in the
 3. **Investigate** — Read SDK code and spec; test with endorctl; validate theories.
 4. **Resolve** — Implement fix; document signatures and learnings.
 
+## Slow or hanging list operations
+
+- **Narrow scope** first: list from a **child namespace** without `traverse` before using tenant-wide `traverse=True`.
+- **Tighten `filter`** when the resource supports selective filters; avoid broad unfiltered lists on large tenants when possible.
+- **Compare with `endorctl`** for the same resource, namespace, filter, and traverse to isolate client vs backend latency.
+- **`max_pages`/`page_size`:** Capping pages bounds the client loop; it does not guarantee cheap server-side work for the first page. See [list-query-performance.md](list-query-performance.md).
+
 ## List ServerError ("Spec is not full" / "not fully defined")
 
 - The backend may return errors such as `FindingSpec` / `InstallationSpec` / `RepositorySpec` / `PackageVersionSpec` "is not full..." or "not fully defined" when listing at a given namespace (e.g. tenant root). The SDK surfaces these as `ServerError`.
@@ -25,9 +32,9 @@ For endpoints that take a **resource UUID in the body** and a **namespace in the
 - List responses may omit spec-required fields when using a **mask** (`list_params.mask`) or at certain scopes (e.g. tenant root). The OpenAPI spec describes the full resource; list is not guaranteed to return every required field.
 - The SDK accepts these partial responses for list via spec-aligned leniency: **Finding** `context` is optional when the list response omits it; **Project** `spec.platform_source` is optional when the list mask omits it; **BaseMeta** `name` is optional when the list mask omits it. Callers that use these fields should handle `None` (e.g. `finding.context`, `project.spec.platform_source`, `resource.meta.name`).
 
-## System-owned resources (authentication_log, endor_license, policy_template)
+## Tenant-accessed resources (authentication_log, endor_license, policy_template)
 
-These resources are system-scoped in the SDK facade. Use `list()` for tenant/system namespace visibility. `get()` is supported only when `namespace="oss"`. `create`, `update`, and `delete` are not exposed on these facades.
+`authentication_log`, `endor_license`, and `policy_template` are customer-accessible through tenant context. Use tenant clients and `traverse=True` where broad visibility is needed. `create`, `update`, and `delete` are not exposed on these facades.
 
 ## Test skips (short test summary)
 

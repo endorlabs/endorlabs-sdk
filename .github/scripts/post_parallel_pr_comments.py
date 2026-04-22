@@ -14,12 +14,11 @@ import argparse
 import json
 import os
 import re
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections.abc import Iterator
 from typing import Any
+from urllib.parse import quote, urlencode, urlsplit
 
+import httpx
 from endor_ci_fetch_scan_findings import load_findings_dicts_for_pr
 from endor_scan_findings import (
     extract_location,
@@ -31,20 +30,41 @@ from endor_scan_findings import (
 _DEFAULT_REVIEW_COMMENTS_PER_REQUEST = 25
 _DEFAULT_MAX_INLINE = 30
 _GH_PER_PAGE = 100
+_GITHUB_API_HOSTS = frozenset({"api.github.com"})
+
+
+def _validate_github_api_url(url: str) -> str:
+    """Allow only direct HTTPS requests to the GitHub REST API host."""
+    parsed = urlsplit(url)
+    if parsed.scheme.lower() != "https":
+        raise ValueError("GitHub API URL must use https.")
+    if parsed.username or parsed.password:
+        raise ValueError("GitHub API URL must not include credentials.")
+    if parsed.fragment:
+        raise ValueError("GitHub API URL must not include a fragment.")
+    hostname = (parsed.hostname or "").lower()
+    if hostname not in _GITHUB_API_HOSTS:
+        raise ValueError("GitHub API URL host is not allowlisted.")
+    return url
+
+
+def _github_api_headers(token: str) -> dict[str, str]:
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
 
 def _gh_get_json(*, token: str, url: str) -> Any:
-    req = urllib.request.Request(
-        url,
-        method="GET",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
+    response = httpx.get(
+        _validate_github_api_url(url),
+        headers=_github_api_headers(token),
+        timeout=60,
+        follow_redirects=False,
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        body = resp.read().decode("utf-8")
+    response.raise_for_status()
+    body = response.text
     return json.loads(body) if body else []
 
 
@@ -54,33 +74,32 @@ def _gh_post_json(
     url: str,
     payload: dict[str, Any],
 ) -> dict[str, Any] | None:
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "Content-Type": "application/json",
-        },
-    )
+    validated_url = _validate_github_api_url(url)
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            body = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        err_body = exc.read().decode("utf-8", errors="replace")
+        response = httpx.post(
+            validated_url,
+            headers={
+                **_github_api_headers(token),
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=60,
+            follow_redirects=False,
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as exc:
         print(
-            f"GitHub API POST {exc.code} {exc.reason} {url}\n{err_body}",
+            "GitHub API POST failed with status "
+            f"{exc.response.status_code} for {validated_url}.",
         )
         return None
+    body = response.text
     return json.loads(body) if body else {}
 
 
 def _github_blob_link(repo: str, sha: str, file_path: str, line: int) -> str:
     clean_path = normalize_pr_path(file_path).replace("\\", "/")
-    encoded_path = urllib.parse.quote(clean_path, safe="/._-")
+    encoded_path = quote(clean_path, safe="/._-")
     return f"https://github.com/{repo}/blob/{sha}/{encoded_path}#L{line}"
 
 
@@ -90,7 +109,7 @@ def iter_pr_file_rows(
     """Yield dict rows from GET pulls/{pr}/files (paginated)."""
     page = 1
     while True:
-        q = urllib.parse.urlencode({"per_page": _GH_PER_PAGE, "page": page})
+        q = urlencode({"per_page": _GH_PER_PAGE, "page": page})
         url = f"{api_base}/pulls/{pr_number}/files?{q}"
         batch = _gh_get_json(token=token, url=url)
         if not isinstance(batch, list) or not batch:
@@ -241,7 +260,7 @@ def list_existing_review_comment_bodies(
     bodies: set[str] = set()
     page = 1
     while True:
-        q = urllib.parse.urlencode({"per_page": _GH_PER_PAGE, "page": page})
+        q = urlencode({"per_page": _GH_PER_PAGE, "page": page})
         url = f"{api_base}/pulls/{pr_number}/comments?{q}"
         batch = _gh_get_json(token=token, url=url)
         if not isinstance(batch, list) or not batch:
@@ -299,6 +318,50 @@ def _finding_summary_one_line(finding: dict[str, Any]) -> str | None:
     return None
 
 
+def _first_nonempty_one_line(*values: Any, max_len: int = 500) -> str | None:
+    """Return first non-empty string collapsed to one line."""
+    for value in values:
+        if isinstance(value, str):
+            text = " ".join(value.strip().split())
+            if text:
+                return text[:max_len]
+    return None
+
+
+def _finding_endor_ui_link(finding: dict[str, Any]) -> str | None:
+    """Best-effort direct link to finding details in Endor Labs UI."""
+    uid = finding.get("uuid")
+    if not isinstance(uid, str) or not uid.strip():
+        return None
+    tenant_meta = finding.get("tenant_meta")
+    namespace = (
+        tenant_meta.get("namespace")
+        if isinstance(tenant_meta, dict)
+        else os.environ.get("ENDOR_NAMESPACE")
+    )
+    if not isinstance(namespace, str) or not namespace.strip():
+        return None
+    return f"https://app.endorlabs.com/t/{namespace.strip()}/findings/{uid.strip()}"
+
+
+def _finding_description_lines(finding: dict[str, Any]) -> list[str]:
+    """Concise risk/remediation details extracted from finding fields."""
+    spec = finding.get("spec", {}) if isinstance(finding.get("spec"), dict) else {}
+    why_risky = _first_nonempty_one_line(
+        spec.get("explanation"),
+        spec.get("description"),
+        spec.get("summary"),
+        max_len=650,
+    )
+    remediation = _first_nonempty_one_line(spec.get("remediation"), max_len=650)
+    lines: list[str] = []
+    if why_risky:
+        lines.append(f"**Why this is risky:** {why_risky}")
+    if remediation:
+        lines.append(f"**Suggested remediation:** {remediation}")
+    return lines
+
+
 def _line_as_int(value: Any) -> int:
     if isinstance(value, bool):
         return int(value)
@@ -329,9 +392,13 @@ def build_review_comment_body(
     summ = _finding_summary_one_line(finding)
     if summ:
         lines.append(summ)
+    endor_ui_link = _finding_endor_ui_link(finding)
+    if endor_ui_link:
+        lines.append(f"[View finding in Endor Labs]({endor_ui_link})")
     lines.append(
         f"[View on branch]({_github_blob_link(repo, sha, resolved_path, line)})"
     )
+    lines.extend(_finding_description_lines(finding))
     snippet = _optional_snippet_line(finding)
     if snippet:
         lines.append(f"`{snippet}`")

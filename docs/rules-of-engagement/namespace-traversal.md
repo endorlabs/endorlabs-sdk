@@ -134,7 +134,7 @@ The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true
    ```python
    def get_all_dependencies(client):
        """Get all dependencies across all namespaces in tenant.
-       
+
        Uses traverse=True for efficient tenant-wide query.
        """
        return client.DependencyMetadata.list(traverse=True)
@@ -145,7 +145,7 @@ The SDK maps `traverse=True` to the API parameter `list_parameters.traverse=true
    # Uses API default page size, limits to 10 pages max
    deps = client.DependencyMetadata.list(traverse=True, max_pages=10)
    ```
-   
+
    **Important**: Small page sizes (e.g., page_size=1) cause performance issues. Only override if you have a specific need.
 
 ## Common Patterns
@@ -181,7 +181,7 @@ def count_all_findings(client):
 
 ## Related Documentation
 
+- [list-query-performance.md](list-query-performance.md) — Scope, filters, pagination, and debugging slow list calls.
 - [ListParameters API Reference](../../src/endorlabs/core/types.py)
 - [BaseResourceOperations Implementation](../../src/endorlabs/operations/__init__.py)
 - DependencyMetadata: `endorlabs.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.
-

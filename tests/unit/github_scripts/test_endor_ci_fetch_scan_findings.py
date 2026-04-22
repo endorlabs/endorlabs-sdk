@@ -24,6 +24,16 @@ def test_github_repo_url_variants() -> None:
     assert fetch.github_repo_url_variants("nope") == []
 
 
+def test_find_project_by_repo_hides_exception_details(capsys: object) -> None:
+    client = MagicMock()
+    client.Project.list.side_effect = RuntimeError("sensitive backend detail")
+    assert fetch.find_project_by_repo(client, "owner/repo") is None
+    err = capsys.readouterr().err
+    assert "Project list failed" in err
+    assert "owner/repo" not in err
+    assert "sensitive backend detail" not in err
+
+
 def test_finding_uuids_from_scan_result_prefers_findings() -> None:
     spec = MagicMock()
     spec.findings = ["u1", "u2", "u1"]

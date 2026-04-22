@@ -131,8 +131,7 @@ class AuthorizationPolicySpec(BaseSpec):
             "• Domain Wildcard: '*@endor.ai' (all users from domain)\n"
             "• Identity Provider UUID: '68fae83022a47bdae812bb42' "
             "(all users from this IDP)\n"
-            "• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key' "
-            "# endorctl:allow\n"
+            "• API Key: 'endr+abCdefGhIJKL0PQrs' with 'api-key'\n"  # endorctl:allow
             "• Group Claims: 'group=developers', 'group=admins'\n"
             "• Mixed: 'tgowan@endor.ai,68fae83022a47bdae812bb42' "
             "(user + IDP)\n\n"

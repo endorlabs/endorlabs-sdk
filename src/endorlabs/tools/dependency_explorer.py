@@ -780,11 +780,8 @@ def write_json(path: str | Path, data: Any, *, base_dir: Path | None = None) -> 
 
     path = Path(path)
     content = json.dumps(data, indent=2, default=str, ensure_ascii=False)
-    if base_dir is not None:
-        safe_write_text(base_dir, path, content)
-    else:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+    write_root = base_dir if base_dir is not None else path.parent
+    safe_write_text(write_root, path, content)
     logger.info("  Wrote %s", path)
 
 
