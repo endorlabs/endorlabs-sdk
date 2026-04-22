@@ -119,11 +119,11 @@ Auto-generated inventories for stable/public surfaces.
 |------|---------------|-------|-------------|---------------|
 | APIKey | api-keys | tenant | — | list, get, create, delete |
 | AuditLog | audit-logs | tenant | — | list, get, create, delete |
-| AuthenticationLog | authentication-logs | system | — | list, get |
+| AuthenticationLog | authentication-logs | tenant | — | list, get |
 | AuthorizationPolicy | authorization-policies | tenant | — | list, get, create, update, delete |
 | CodeOwners | codeowners | tenant | — | list, get, create, update, delete |
 | DependencyMetadata | dependency-metadata | oss | — | list, get, create, update, delete |
-| EndorLicense | endor-licenses | system | — | list, get |
+| EndorLicense | endor-licenses | tenant | — | list, get |
 | Finding | findings | tenant | — | list, get, create, update, delete |
 | FindingLog | finding-logs | tenant | — | list, get, create, delete |
 | Installation | installations | tenant | — | list, get, create, update, delete |
@@ -137,7 +137,7 @@ Auto-generated inventories for stable/public surfaces.
 | PackageLicense | package-licenses | oss | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
-| PolicyTemplate | policy-templates | system | — | list, get |
+| PolicyTemplate | policy-templates | tenant | — | list, get |
 | Project | projects | tenant | — | list, get, create, update, delete |
 | QueryMalware | queries/malware | oss | — | create |
 | QueryVulnerability | queries/vulnerabilities | oss | — | create |

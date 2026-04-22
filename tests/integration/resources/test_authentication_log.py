@@ -3,7 +3,7 @@
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -32,26 +32,18 @@ class TestAuthenticationLog:
         )
         result = client.AuthenticationLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
 
-    def test_authentication_log_facade_get_raises_for_non_oss_namespace(self) -> None:
-        """System-scoped get only when namespace is oss; otherwise use list."""
-        assert hasattr(self.endor_root_client.AuthenticationLog, "get")
-        with pytest.raises(NotImplementedError, match="oss namespace"):
-            self.endor_root_client.AuthenticationLog.get(
-                "any-uuid", namespace=self.root_namespace
-            )
-        with pytest.raises(NotImplementedError, match="oss namespace"):
-            self.endor_root_client.AuthenticationLog.get("any-uuid")
-
-    def test_authentication_log_module_get_returns_403(self) -> None:
-        """Facade get with non-oss namespace raises NotImplementedError."""
+    def test_authentication_log_module_get_uses_item_namespace(self) -> None:
+        """Facade get uses item namespace; backend auth decides access."""
         from endorlabs.core.exceptions import PermissionDeniedError
 
         items = self.endor_root_client.AuthenticationLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
@@ -62,7 +54,7 @@ class TestAuthenticationLog:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        with pytest.raises((PermissionDeniedError, NotImplementedError)) as exc_info:
+        with pytest.raises(PermissionDeniedError) as exc_info:
             self.endor_root_client.AuthenticationLog.get(item.uuid, namespace=ns)
         if hasattr(exc_info.value, "status_code"):
             assert exc_info.value.status_code == 403

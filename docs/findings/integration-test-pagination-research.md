@@ -2,7 +2,7 @@
 
 Findings from reviewing test configuration and pagination patterns across the integration test suite.
 
-Status note: this document captures a point-in-time audit. Enforced conventions now live in `tests/unit/test_integration_pagination_guard.py` and `tests/conftest.py`.
+Status note: this document captures a point-in-time audit. Enforced conventions now live in `tests/unit/platform/core/test_integration_pagination_guard.py` and `tests/conftest.py`.
 
 ## 1. Conftest configuration
 

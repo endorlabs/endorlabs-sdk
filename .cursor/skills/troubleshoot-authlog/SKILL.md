@@ -1,8 +1,8 @@
 ---
 name: troubleshoot-authlog
 description: >-
-  Investigate tenant SSO/login issues using AuthenticationLog (system scope),
-  AuthorizationPolicy (tenant + system namespaces), and optional AuditLog.
+  Investigate tenant SSO/login issues using AuthenticationLog,
+  AuthorizationPolicy, and optional AuditLog.
   Use when correlating IdP claims with Endor policy mapping, "no authorized
   tenant" symptoms, or exporting structured, flow-agnostic auth investigation JSON.
 ---
@@ -19,16 +19,16 @@ Systematic workflow for **Endor-side** evidence: what the platform recorded at l
 - **Local context (optional):** API spec at `.endorlabs-context/openapiv2.swagger.json`;
   resource models in `src/endorlabs/resources/authentication_log.py`,
   `authorization_policy.py`
-- **Permissions:** token must be able to list `AuthenticationLog` in namespace
-  `system` and `AuthorizationPolicy` in tenant namespaces (and `system` unless
-  `--no-system-authorization-policies`)
+- **Permissions:** token must be able to list `AuthenticationLog` and
+  `AuthorizationPolicy` in the target tenant context (typically with
+  `traverse=True`).
 
 ## What this skill does
 
-1. Lists **`AuthenticationLog` with `Client(tenant="system")`** — required; listing
-   against a tenant-only client misses system-scoped auth rows.
-2. Traverses **namespaces** under `--tenant-hint`, optionally **`system`**, and pulls
-   full **`AuthorizationPolicy`** `meta`/`spec` (clauses, `target_namespaces`,
+1. Lists **`AuthenticationLog` with `Client(tenant=<tenant-hint>)`** using
+   traversal so auth evidence is collected from the customer context.
+2. Traverses **namespaces** under `--tenant-hint` and pulls full
+   **`AuthorizationPolicy`** `meta`/`spec` (clauses, `target_namespaces`,
    `propagate`, `permissions`, expiration).
 3. Runs **validated probes**: control email + SSO URI filter, tenant-attributed SSO
    slice, target identity/group filters, failed / no-tenant slices.
@@ -63,7 +63,6 @@ uv run --env-file .env python .cursor/skills/troubleshoot-authlog/troubleshoot_a
 | `--max-pages-auth` / `--max-pages-policy` / `--max-pages-audit` | Pagination depth |
 | `--include-audit` | Parallel `AuditLog` sweep per discovered namespace |
 | `--control-email` | Known-positive control for SSO filter validation |
-| `--no-system-authorization-policies` | Skip listing policies in `system` |
 | `--investigation-export` | Also write structured investigation JSON (evidence + scalars) |
 | `--investigation-max-auth-rows-per-probe N` | Cap rows **only** in investigation evidence file (`0` = no cap) |
 

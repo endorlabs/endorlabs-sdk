@@ -181,6 +181,7 @@ def count_all_findings(client):
 
 ## Related Documentation
 
+- [list-query-performance.md](list-query-performance.md) — Scope, filters, pagination, and debugging slow list calls.
 - [ListParameters API Reference](../../src/endorlabs/core/types.py)
 - [BaseResourceOperations Implementation](../../src/endorlabs/operations/__init__.py)
 - DependencyMetadata: `endorlabs.resources.dependency_metadata`; see [reference/resources.md](../reference/resources.md) and module docstrings.

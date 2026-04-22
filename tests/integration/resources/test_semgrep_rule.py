@@ -95,6 +95,7 @@ class TestSemgrepRule:
                     id=rule_id,
                     languages=["python"],
                     message="Client UX test rule",
+                    severity="ERROR",
                     pattern="exec($VAR)",
                 )
             ),
@@ -135,6 +136,7 @@ class TestSemgrepRule:
                     id=rule_id,
                     languages=["python"],
                     message="Client UX update test",
+                    severity="ERROR",
                     pattern="eval($X)",
                 )
             ),
@@ -197,6 +199,7 @@ class TestSemgrepRule:
                     id=rule_id,
                     languages=["python"],
                     message="Client UX delete test",
+                    severity="ERROR",
                     pattern="open($F)",
                 )
             ),
