@@ -82,6 +82,9 @@
         "aws": {
           "$ref": "#/definitions/PackageManagerAWSAuthProvider"
         },
+        "gar": {
+          "$ref": "#/definitions/PackageManagerGARAuthProvider"
+        },
         "package_manager_type": {
           "$ref": "#/definitions/PackageManagerAuthProviderPackageManagerType"
         }
@@ -107,6 +110,34 @@
         "PACKAGE_MANAGER_TYPE_SWIFT"
       ],
       "type": "string"
+    },
+    "PackageManagerGARAuthProvider": {
+      "description": "GARAuthProvider represents a configuration for authentication with\nGoogle Artifact Registry.\nSupported package manager types: NPM, MVN, GRADLE, PYPI.\nUnsupported types (CARGO, GEM, NUGET, PACKAGIST, COCOAPOD, SWIFT)\nare rejected at runtime.",
+      "properties": {
+        "location": {
+          "description": "location is the GCP region or multi-region where the repository is hosted\n(e.g., \"us-central1\", \"europe-west1\", \"us\").",
+          "type": "string"
+        },
+        "project_id": {
+          "description": "project_id is the GCP project ID that hosts the Artifact Registry repository.",
+          "type": "string"
+        },
+        "repository": {
+          "description": "repository is the name of the Artifact Registry repository.",
+          "type": "string"
+        },
+        "service_account_key": {
+          "description": "service_account_key is the JSON key for a GCP service account with\nartifactregistry.reader permissions. Encrypted at rest.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id",
+        "location",
+        "repository",
+        "service_account_key"
+      ],
+      "type": "object"
     },
     "PackageManagerServiceCreatePackageManagerBody": {
       "description": "PackageManager holds the data for the various package\nmanagers of the enterprise. Mainly locations and\naccess credentials when needed to resolve/scan packages\nfrom private package managers.\nAn enterprise can create one or more package managers\nin a namespace. All the package managers of the given\nnamespace will be taken into account when resolving.",
