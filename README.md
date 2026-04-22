@@ -2,7 +2,7 @@
 
 [![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
-Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and 24 more) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
+Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
 - **Python:** 3.12+
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
@@ -87,6 +87,18 @@ uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_m
 
 For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` as shown above
 instead of shell-specific `eval` export workflows.
+
+### Authentication troubleshooting (Agent Skill)
+
+For **`AuthenticationLog`**, **`AuthorizationPolicy`**, and optional **`AuditLog`**
+correlation during SSO / tenant login investigations, use the **troubleshoot-authlog**
+Agent Skill: [.cursor/skills/troubleshoot-authlog/SKILL.md](.cursor/skills/troubleshoot-authlog/SKILL.md).
+
+Run from the repo root:
+
+```bash
+uv run --env-file .env python .cursor/skills/troubleshoot-authlog/troubleshoot_authlog.py --help
+```
 
 ## Demo CLI
 
@@ -248,7 +260,7 @@ Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
 
 ## Errors
 
-Raised exceptions live in `endorlabs.exceptions`: `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/contracts.md](docs/contracts.md) (Errors section).
+Raised exceptions are exported from top-level `endorlabs` (implemented in `endorlabs.core.exceptions`): `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/contracts.md](docs/contracts.md) (Errors section).
 
 ## Development
 

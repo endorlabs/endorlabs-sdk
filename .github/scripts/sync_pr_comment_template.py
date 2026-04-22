@@ -17,10 +17,10 @@ from pathlib import Path
 import endorlabs
 from endorlabs.resources.pr_comment_config import (
     CreatePRCommentConfigPayload,
+    PlatformSource,
     PRCommentConfigMeta,
     PRCommentConfigSpec,
     PRCommentsTemplate,
-    PlatformSource,
 )
 
 
@@ -35,6 +35,13 @@ def _append_github_output(key: str, value: str) -> None:
 def _set_status(status: str, reason: str = "") -> None:
     _append_github_output("template_sync_status", status)
     _append_github_output("template_sync_reason", reason)
+
+
+def _report_failure(*, console_message: str, status_reason: str) -> int:
+    """Report a generic failure without echoing backend exception details."""
+    sys.stderr.write(f"{console_message}\n")
+    _set_status("error", status_reason)
+    return 1
 
 
 def _load_template(path: Path) -> str:
@@ -91,24 +98,27 @@ def main(argv: list[str] | None = None) -> int:
     try:
         platform = _platform_enum(args.platform_type)
         template_text = _load_template(args.template_path)
-    except Exception as exc:
-        print(f"Template sync failed during input validation: {exc}", file=sys.stderr)
-        _set_status("error", f"input_validation: {exc}")
-        return 1
+    except Exception:
+        return _report_failure(
+            console_message="Template sync failed during input validation.",
+            status_reason="input_validation",
+        )
 
     try:
         client = endorlabs.Client(tenant=args.namespace)
-    except Exception as exc:
-        print(f"Template sync failed creating client: {exc}", file=sys.stderr)
-        _set_status("error", f"client_init: {exc}")
-        return 1
+    except Exception:
+        return _report_failure(
+            console_message="Template sync failed creating client.",
+            status_reason="client_init",
+        )
 
     try:
         existing = client.PRCommentConfig.list(name=args.name, max_pages=2)
-    except Exception as exc:
-        print(f"Template sync failed listing PRCommentConfig: {exc}", file=sys.stderr)
-        _set_status("error", f"list_failed: {exc}")
-        return 1
+    except Exception:
+        return _report_failure(
+            console_message="Template sync failed listing PRCommentConfig.",
+            status_reason="list_failed",
+        )
 
     if len(existing) > 1:
         print(
@@ -142,9 +152,10 @@ def main(argv: list[str] | None = None) -> int:
             reason = "create_failed"
             if "invalid template" in msg.lower():
                 reason = "template_validation_failed"
-            print(f"Template sync failed creating PRCommentConfig: {exc}", file=sys.stderr)
-            _set_status("error", f"{reason}: {exc}")
-            return 1
+            return _report_failure(
+                console_message="Template sync failed creating PRCommentConfig.",
+                status_reason=reason,
+            )
         print(f"Created PRCommentConfig {created.uuid} ({args.name}).")
         _set_status("created", "created_new")
         _append_github_output("template_sync_uuid", created.uuid)
@@ -205,9 +216,10 @@ def main(argv: list[str] | None = None) -> int:
         reason = "update_failed"
         if "invalid template" in msg.lower():
             reason = "template_validation_failed"
-        print(f"Template sync failed updating PRCommentConfig: {exc}", file=sys.stderr)
-        _set_status("error", f"{reason}: {exc}")
-        return 1
+        return _report_failure(
+            console_message="Template sync failed updating PRCommentConfig.",
+            status_reason=reason,
+        )
     print(f"Updated PRCommentConfig {updated.uuid}.")
     _set_status("updated", "updated_existing")
     _append_github_output("template_sync_uuid", updated.uuid)

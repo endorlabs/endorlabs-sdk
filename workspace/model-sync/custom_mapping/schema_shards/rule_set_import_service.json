@@ -208,6 +208,10 @@
           "format": "byte",
           "type": "string"
         },
+        "opengrep_validate": {
+          "description": "Validate this import request with opengrep.",
+          "type": "boolean"
+        },
         "result": {
           "$ref": "#/definitions/SpecImportedRuleSetResult"
         },

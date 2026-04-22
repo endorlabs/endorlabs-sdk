@@ -65,6 +65,7 @@ class TestAuditLog:
         )
         result = client.AuditLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         assert isinstance(result, list)
@@ -79,6 +80,7 @@ class TestAuditLog:
         )
         items = client.AuditLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:
@@ -103,6 +105,7 @@ class TestAuditLog:
         )
         items = client.AuditLog.list(
             traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not items:

@@ -2008,6 +2008,10 @@
           "description": "The earliest version or commit in which this vulnerability was\nintroduced.",
           "type": "string"
         },
+        "last_affected": {
+          "description": "The last version known to be affected. Versions strictly after this\nare assumed to be fixed. Used when an explicit fixed version is unavailable.",
+          "type": "string"
+        },
         "repo": {
           "description": "The repository URL.",
           "type": "string"
@@ -3946,7 +3950,7 @@
     },
     "v1Ecosystem": {
       "default": "ECOSYSTEM_UNSPECIFIED",
-      "description": " - ECOSYSTEM_GO: GoLang.\n - ECOSYSTEM_MAVEN: Maven.\n - ECOSYSTEM_PYPI: Python.\n - ECOSYSTEM_CARGO: Rust.\n - ECOSYSTEM_NPM: Javascript.\n - ECOSYSTEM_GEM: Ruby.\n - ECOSYSTEM_NUGET: Dotnet.\n - ECOSYSTEM_PACKAGIST: PHP.\n - ECOSYSTEM_SBOM: SBOMs.\n - ECOSYSTEM_RPM: RPM.\n - ECOSYSTEM_DEBIAN: Debian.\n - ECOSYSTEM_GITHUB_ACTION: GitHub Actions.\n - ECOSYSTEM_COCOAPOD: Cocoapods.\n - ECOSYSTEM_APK: APK (alpine et.al).\n - ECOSYSTEM_CONTAINER: Containers.\n - ECOSYSTEM_HUGGING_FACE: Hugging Face.\n - ECOSYSTEM_C: C/C++.\n - ECOSYSTEM_GIT: ecosystem GIT for GIT repository dependencies.\nThis can be used for package name of the resolved dependencies when a\ngiven repository has dependencies to other GIT repositories. Currently we\nuse this to represent vulnerabilities for the given GIT repository. ex:\ngit submodules, C/C++ dependencies.\n - ECOSYSTEM_AI_MODEL: AI models.\n - ECOSYSTEM_SWIFT: Ecosystem Swift consists of native Swift packages, which are defined\nusing the Package.swift manifest file and managed by the Swift Package\nManager. There is a separate ecosystem for Cocoapod packages called\nECOSYSTEM_COCOAPOD, which is an alternative package manager for Swift\npackages.",
+      "description": " - ECOSYSTEM_GO: GoLang.\n - ECOSYSTEM_MAVEN: Maven.\n - ECOSYSTEM_PYPI: Python.\n - ECOSYSTEM_CARGO: Rust.\n - ECOSYSTEM_NPM: Javascript.\n - ECOSYSTEM_GEM: Ruby.\n - ECOSYSTEM_NUGET: Dotnet.\n - ECOSYSTEM_PACKAGIST: PHP.\n - ECOSYSTEM_SBOM: SBOMs.\n - ECOSYSTEM_RPM: RPM.\n - ECOSYSTEM_DEBIAN: Debian.\n - ECOSYSTEM_GITHUB_ACTION: GitHub Actions.\n - ECOSYSTEM_COCOAPOD: Cocoapods.\n - ECOSYSTEM_APK: APK (alpine et.al).\n - ECOSYSTEM_CONTAINER: Containers.\n - ECOSYSTEM_HUGGING_FACE: Hugging Face.\n - ECOSYSTEM_C: C/C++.\n - ECOSYSTEM_GIT: ecosystem GIT for GIT repository dependencies.\nThis can be used for package name of the resolved dependencies when a\ngiven repository has dependencies to other GIT repositories. Currently we\nuse this to represent vulnerabilities for the given GIT repository. ex:\ngit submodules, C/C++ dependencies.\n - ECOSYSTEM_AI_MODEL: AI models.\n - ECOSYSTEM_SWIFT: Ecosystem Swift consists of native Swift packages, which are defined\nusing the Package.swift manifest file and managed by the Swift Package\nManager. There is a separate ecosystem for Cocoapod packages called\nECOSYSTEM_COCOAPOD, which is an alternative package manager for Swift\npackages.\n - ECOSYSTEM_CONAN: Ecosystem Conan for C/C++ packages managed by the Conan 2.x package manager.",
       "enum": [
         "ECOSYSTEM_UNSPECIFIED",
         "ECOSYSTEM_GO",
@@ -3968,7 +3972,8 @@
         "ECOSYSTEM_C",
         "ECOSYSTEM_GIT",
         "ECOSYSTEM_AI_MODEL",
-        "ECOSYSTEM_SWIFT"
+        "ECOSYSTEM_SWIFT",
+        "ECOSYSTEM_CONAN"
       ],
       "type": "string"
     },
@@ -4546,7 +4551,8 @@
         "LANGUAGE_OBJECTIVEC",
         "LANGUAGE_C",
         "LANGUAGE_CPP",
-        "LANGUAGE_SWIFTURL"
+        "LANGUAGE_SWIFTURL",
+        "LANGUAGE_CONAN"
       ],
       "type": "string"
     },
@@ -4727,6 +4733,10 @@
         "cwe_id": {
           "description": "The CWE ID for the malware record.",
           "type": "string"
+        },
+        "deletion_exempt": {
+          "description": "When true, this record is exempt from orphaned malware deletion and will never be\nautomatically removed during ingestion cleanup, regardless of whether it was ingested.",
+          "type": "boolean"
         },
         "ecosystem": {
           "$ref": "#/definitions/v1Ecosystem",

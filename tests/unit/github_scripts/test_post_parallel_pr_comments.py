@@ -6,11 +6,34 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 _SCRIPTS = Path(__file__).resolve().parents[3] / ".github" / "scripts"
 if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
 import post_parallel_pr_comments as ppc
+
+
+def test_validate_github_api_url_accepts_github_api() -> None:
+    url = "https://api.github.com/repos/o/r/pulls/1/comments?page=2"
+    assert ppc._validate_github_api_url(url) == url
+
+
+@pytest.mark.parametrize(
+    ("url", "message"),
+    [
+        ("http://api.github.com/repos/o/r", "https"),
+        ("https://github.com/repos/o/r", "host"),
+        ("https://user:pass@api.github.com/repos/o/r", "credentials"),
+        ("https://api.github.com/repos/o/r#frag", "fragment"),
+    ],
+)
+def test_validate_github_api_url_rejects_untrusted_inputs(
+    url: str, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        ppc._validate_github_api_url(url)
 
 
 def test_resolve_path_to_pr_file_exact() -> None:
@@ -35,9 +58,12 @@ def test_resolve_path_to_pr_file_missing() -> None:
 def test_build_review_comment_object_single_line() -> None:
     finding = {
         "uuid": "u1",
+        "tenant_meta": {"namespace": "demo-tenant"},
         "spec": {
             "level": "FINDING_LEVEL_HIGH",
             "summary": "Bad thing",
+            "explanation": "Unsanitized input can hit a dangerous sink.",
+            "remediation": "Validate input before using it in the sink.",
             "finding_metadata": {},
         },
     }
@@ -57,6 +83,10 @@ def test_build_review_comment_object_single_line() -> None:
     assert "start_line" not in obj
     assert "<!-- m -->" in obj["body"]
     assert "Bad thing" in obj["body"]
+    assert "View finding in Endor Labs" in obj["body"]
+    assert "https://app.endorlabs.com/t/demo-tenant/findings/u1" in obj["body"]
+    assert "Why this is risky" in obj["body"]
+    assert "Suggested remediation" in obj["body"]
 
 
 def test_build_review_comment_object_multiline() -> None:

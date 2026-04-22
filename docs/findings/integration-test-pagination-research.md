@@ -2,7 +2,7 @@
 
 Findings from reviewing test configuration and pagination patterns across the integration test suite.
 
-Status note: this document captures a point-in-time audit. Enforced conventions now live in `tests/unit/test_integration_pagination_guard.py` and `tests/conftest.py`.
+Status note: this document captures a point-in-time audit. Enforced conventions now live in `tests/unit/platform/core/test_integration_pagination_guard.py` and `tests/conftest.py`.
 
 ## 1. Conftest configuration
 
@@ -76,12 +76,12 @@ Status note: this document captures a point-in-time audit. Enforced conventions 
 
 ## 3. ListParameters with filters and timeout risk
 
-- **test_installation.py — `test_installation_filter_by_platform`**  
-  `ListParameters(filter=..., traverse=True)` passed to `installation.list(list_params=list_params)` **with no `max_pages`**. On large tenants this can request many pages and contribute to API-side timeouts.  
+- **test_installation.py — `test_installation_filter_by_platform`**
+  `ListParameters(filter=..., traverse=True)` passed to `installation.list(list_params=list_params)` **with no `max_pages`**. On large tenants this can request many pages and contribute to API-side timeouts.
   **Recommendation:** Add `max_pages=TEST_MAX_PAGES_TRAVERSE` (and optionally `page_size=TEST_TRAVERSE_PAGE_SIZE` in list_params).
 
-- **test_retrieving_scan_results.py — `_get_findings_directly`**  
-  `ListParameters(filter=f'spec.project_uuid=="{project_uuid}"', traverse=True)` passed to `finding.list(list_params=list_params)` **with no `max_pages`**. Same risk for large datasets.  
+- **test_retrieving_scan_results.py — `_get_findings_directly`**
+  `ListParameters(filter=f'spec.project_uuid=="{project_uuid}"', traverse=True)` passed to `finding.list(list_params=list_params)` **with no `max_pages`**. Same risk for large datasets.
   **Recommendation:** Add `max_pages=TEST_MAX_PAGES_TRAVERSE` (and optionally `page_size=TEST_TRAVERSE_PAGE_SIZE` in list_params).
 
 - **Other filter tests** (e.g. linter_result, metric, scan_result, repository, project) pass `max_pages` (either `TEST_MAX_PAGES` or `TEST_MAX_PAGES_TRAVERSE`) and are bounded.

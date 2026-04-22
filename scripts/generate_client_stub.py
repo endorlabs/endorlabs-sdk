@@ -260,12 +260,21 @@ def _validate_descriptions_and_model_sync() -> None:
         for entry in RESOURCE_REGISTRY:
             contract_row = contract_resources.get(entry.attr_name, {})
             generated_description = contract_row.get("description")
-            description = (
-                generated_description
-                if isinstance(generated_description, str) and generated_description.strip()
-                else overlay.get(entry.attr_name, "")
+            generated_str = (
+                generated_description.strip()
+                if isinstance(generated_description, str)
+                and generated_description.strip()
+                else ""
             )
-            if not description.strip():
+            overlay_str = overlay.get(entry.attr_name, "").strip()
+            # Curated overlay (scripts/model_sync_profiles/resource_descriptions.json)
+            # wins over generated contract text, which is often boilerplate like
+            # "X resource model extending BaseResource." and hides API-focused copy.
+            if overlay_str:
+                description = overlay_str
+            elif generated_str:
+                description = generated_str
+            else:
                 description = _default_description_from_attr(entry.attr_name)
             RESOURCE_DESCRIPTIONS[entry.attr_name] = description
 
@@ -353,9 +362,7 @@ def _build_class_docstring(entry: ResourceEntry, contract_row: dict[str, Any]) -
         parts.append(f"Supports list(parent=<{entry.parent_kind}>).")
 
     # Scope
-    if entry.scope == "system":
-        parts.append("System-scoped.")
-    elif entry.scope == "oss":
+    if entry.scope == "oss":
         parts.append("OSS-scoped (namespace fixed to 'oss').")
 
     create_mode = contract_row.get("create_mode")

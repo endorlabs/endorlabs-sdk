@@ -58,7 +58,7 @@ Create in `src/endorlabs/resources/{resource_name}.py`:
 CRUD operations are handled by `BaseResourceOperations` via the `Client` facade — no module-level CRUD wrapper functions needed. The resource module only needs to define Pydantic models and any resource-specific convenience functions (e.g. `associate_scan_profile_with_project`).
 
 - `update` requires `update_mask: str` (comma-separated paths); sparse PATCH always
-- Use `endorlabs.exceptions`; log full `response.text` on errors
+- Use exception classes exported by `endorlabs` (implemented in `endorlabs.core.exceptions`); log full `response.text` on errors
 
 ### Create/Update fields
 
@@ -81,7 +81,7 @@ ResourceEntry(
     resource_name="api-path",
     model_class=ResourceModel,
     supported_ops=frozenset({"list", "get", "create", "update", "delete"}),
-    scope=None,  # "system", "oss", or None
+    scope=None,  # "oss" or None
 )
 ```
 

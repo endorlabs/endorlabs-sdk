@@ -21,6 +21,7 @@ def _prompt_yes_no(prompt: str) -> bool:
     answer = input(f"{prompt} [y/N]: ").strip().lower()
     return answer in {"y", "yes"}
 
+
 def _read_attr_path(obj: Any, attr_path: str) -> Any:
     """Resolve dotted attribute path on Pydantic models/dicts safely."""
     current = obj
@@ -135,7 +136,9 @@ def _list_grouped_finding_namespace_counts(
     if finding_filter:
         count_params["list_parameters.filter"] = finding_filter
 
-    count_response = api_client.get(f"v1/namespaces/{tenant}/findings", params=count_params)
+    count_response = api_client.get(
+        f"v1/namespaces/{tenant}/findings", params=count_params
+    )
     count_payload = count_response.json()
     total_count = 0
     if isinstance(count_payload, dict):
@@ -236,12 +239,14 @@ def _collect_orphaned_findings(
     effective_tenant = tenant
     client = endorlabs.Client(tenant=effective_tenant)
     try:
-        observed_namespace_counts, total_findings_scanned = _list_grouped_finding_namespace_counts(
-            client=client,
-            tenant=effective_tenant,
-            finding_filter=finding_filter,
-            finding_namespace_attr=finding_namespace_attr,
-            max_pages=max_pages,
+        observed_namespace_counts, total_findings_scanned = (
+            _list_grouped_finding_namespace_counts(
+                client=client,
+                tenant=effective_tenant,
+                finding_filter=finding_filter,
+                finding_namespace_attr=finding_namespace_attr,
+                max_pages=max_pages,
+            )
         )
         if total_findings_scanned == 0 and "." in requested_tenant:
             root_tenant = requested_tenant.split(".", maxsplit=1)[0]
@@ -321,15 +326,12 @@ def _collect_orphaned_findings(
             for ns in sorted(observed_namespace_counts.keys())
         ],
         "orphan_namespaces": [
-            {"namespace": ns, "count": counts_by_namespace[ns]} for ns in orphan_namespaces
+            {"namespace": ns, "count": counts_by_namespace[ns]}
+            for ns in orphan_namespaces
         ],
         "orphaned_finding_count": sum(counts_by_namespace.values()),
         "orphaned_findings": orphaned_finding_details,
-        "message": (
-            "Dry run analysis complete."
-            if dry_run
-            else "Analysis complete."
-        ),
+        "message": ("Dry run analysis complete." if dry_run else "Analysis complete."),
     }
     return result, orphaned_finding_resources
 
@@ -373,12 +375,12 @@ def _delete_orphaned_findings(
             try:
                 client.Finding.delete(finding)
                 deleted += 1
-            except Exception as exc:  # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 failed += 1
                 errors.append(
                     {
                         "uuid": finding_uuid,
-                        "error": str(exc),
+                        "error": "delete_failed",
                     }
                 )
     finally:
@@ -412,18 +414,9 @@ def _print_summary(result: dict[str, Any]) -> None:
     print(f"Finding filter:    {config.get('finding_filter') or '(none)'}")
     print(f"Namespace attr:    {config.get('finding_namespace_attr')}")
     print(f"Namespace name:    {config.get('namespace_name_attr')}")
-    print(
-        "Scanned findings:  "
-        f"{summary.get('total_findings_scanned', 0)}"
-    )
-    print(
-        "Known namespaces:  "
-        f"{summary.get('known_namespaces_count', 0)}"
-    )
-    print(
-        "Observed ns count: "
-        f"{summary.get('observed_finding_namespaces_count', 0)}"
-    )
+    print(f"Scanned findings:  {summary.get('total_findings_scanned', 0)}")
+    print(f"Known namespaces:  {summary.get('known_namespaces_count', 0)}")
+    print(f"Observed ns count: {summary.get('observed_finding_namespaces_count', 0)}")
     print(f"Orphaned findings: {result.get('orphaned_finding_count', 0)}")
     print()
 
@@ -459,8 +452,7 @@ def main() -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
         description=(
-            "Analyze orphaned findings and optionally delete them. "
-            "Defaults to dry-run."
+            "Analyze orphaned findings and optionally delete them. Defaults to dry-run."
         )
     )
     parser.add_argument(
@@ -473,7 +465,7 @@ def main() -> int:
         default=None,
         help=(
             "Optional SDK/API filter expression for findings "
-            '(example: spec.level==FINDING_LEVEL_CRITICAL).'
+            "(example: spec.level==FINDING_LEVEL_CRITICAL)."
         ),
     )
     parser.add_argument(
@@ -545,7 +537,9 @@ def main() -> int:
         help="Print indented JSON output.",
     )
     args = parser.parse_args()
-    output_attrs = [attr.strip() for attr in args.output_attrs.split(",") if attr.strip()]
+    output_attrs = [
+        attr.strip() for attr in args.output_attrs.split(",") if attr.strip()
+    ]
     if not args.tenant:
         print(
             "Error: tenant is required. Pass --tenant or set ENDOR_TENANT.",
@@ -586,8 +580,8 @@ def main() -> int:
                     findings=orphan_resources,
                     auto_approve=args.yes,
                 )
-    except Exception as exc:  # pragma: no cover - defensive CLI error guard
-        print(f"Error: {exc}", file=sys.stderr)
+    except Exception:  # pragma: no cover - defensive CLI error guard
+        print("Error: operation failed.", file=sys.stderr)
         return 1
 
     if args.pretty_json:

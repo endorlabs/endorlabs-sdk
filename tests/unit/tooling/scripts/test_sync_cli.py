@@ -19,7 +19,7 @@ from sync.cli import (
     build_parser,
     main,
 )
-from sync.codegen import load_profiles
+from sync.codegen import _build_codegen_command, load_profiles
 from sync.provenance import write_json
 
 
@@ -32,6 +32,11 @@ def test_build_parser_has_expected_flags() -> None:
     assert hasattr(args, "generate_stubs")
     assert hasattr(args, "generate_reference_docs")
     assert hasattr(args, "inventory_only")
+    assert hasattr(args, "fetch_spec")
+    assert hasattr(args, "spec_url")
+    assert hasattr(args, "spec_hash_only")
+    assert hasattr(args, "delta_summary")
+    assert hasattr(args, "delta_git_ref")
 
 
 def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:
@@ -59,7 +64,7 @@ def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:
     )
 
     assert result == 7
-    assert captured["spec_path"] == Path("spec.json")
+    assert captured["spec_path"] == Path("spec.json").resolve()
     assert captured["output_root"] == Path("out")
     assert captured["profiles_dir"] == Path("profiles")
     assert captured["generate_stubs"] is True
@@ -72,6 +77,26 @@ def test_main_inventory_only_writes_toolchain_inventory(tmp_path: Path) -> None:
     inventory_path = output_root / "toolchain_inventory.json"
     assert result == 0
     assert inventory_path.exists()
+    data = json.loads(inventory_path.read_text(encoding="utf-8"))
+    assert "datamodel-codegen" in data
+    assert "path" not in data["datamodel-codegen"]
+    assert "available" in data["datamodel-codegen"]
+
+
+def test_build_codegen_command_uses_repo_relative_posix_paths(tmp_path: Path) -> None:
+    repo_root = tmp_path / "repo"
+    repo_root.mkdir()
+    cm = repo_root / "workspace" / "model-sync" / "custom_mapping"
+    input_path = cm / "schema_shards" / "a.json"
+    output_file = cm / "generated" / "a.py"
+    input_path.parent.mkdir(parents=True)
+    output_file.parent.mkdir(parents=True)
+    input_path.write_text("{}", encoding="utf-8")
+    cmd = _build_codegen_command(repo_root, input_path, output_file)
+    want_in = "workspace/model-sync/custom_mapping/schema_shards/a.json"
+    want_out = "workspace/model-sync/custom_mapping/generated/a.py"
+    assert cmd[2].replace("\\", "/") == want_in
+    assert cmd[6].replace("\\", "/") == want_out
 
 
 def test_load_profiles_marks_missing_files(tmp_path: Path) -> None:
