@@ -16,18 +16,18 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "pydantic==2.12.5",
+    "pydantic==2.13.3",
     "pyyaml==6.0.3",
     "httpx==0.28.1",
-    "tenacity==9.1.2",
+    "tenacity==9.1.4",
     "zstandard==0.25.0",
 ]
 
 [project.optional-dependencies]
 context = [
-    "beautifulsoup4==4.14.2",
+    "beautifulsoup4==4.14.3",
     "defusedxml==0.7.1",
-    "markdownify==1.2.0",
+    "markdownify==1.2.2",
 ]
 [project.scripts]
 endor-demo = "endorlabs._demo.demo_cli:main"
@@ -63,9 +63,9 @@ dev = [
     "pre-commit==4.5.1",
     "rich==14.3.2",
     # Context deps needed for unit tests (mirrors [project.optional-dependencies.context])
-    "beautifulsoup4==4.14.2",
+    "beautifulsoup4==4.14.3",
     "defusedxml==0.7.1",
-    "markdownify==1.2.0",
+    "markdownify==1.2.2",
     "datamodel-code-generator==0.55.0",
 ]
 
