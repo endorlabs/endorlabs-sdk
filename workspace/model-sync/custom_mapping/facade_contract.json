@@ -309,7 +309,7 @@
       ],
       "parent_kind": null,
       "resource_name": "dependency-metadata",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops": [
         "create",
         "delete",
