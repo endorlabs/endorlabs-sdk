@@ -43,7 +43,6 @@ def authed_client() -> Iterator[APIClient]:
                 "ENDOR_API_CREDENTIALS_KEY": "test-key",
                 "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
                 "ENDOR_TOKEN": "",
-                "ENDOR_AUTH_METHOD": "",
             },
             clear=True,
         ),

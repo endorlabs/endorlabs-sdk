@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "facade_contract.json",
-      "sha256": "25a6069e0751373a4600c618570245e6d640c50cd6777ce42686b0c85a833d58",
-      "size_bytes": 55286
+      "sha256": "a2d37b1e343be4f89bb0a62995d878b32733c445c432e125fa01c6f99664ee24",
+      "size_bytes": 55283
     },
     {
       "path": "generated/a_p_i_key_service.py",
@@ -747,5 +747,5 @@
       "size_bytes": 86796
     }
   ],
-  "overall_sha256": "d4e5f960fe9d84f5f96c8ce535b32cdd4529bb763e510eae75602f4a90633da6"
+  "overall_sha256": "a1324b3c204904b958d3b163668080f114deaaa79ba6056a283e614f8b7706c0"
 }

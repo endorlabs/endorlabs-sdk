@@ -49,8 +49,7 @@ The SDK uses **environment variables** only (no config file loading). Precedence
 | `ENDOR_API` | API base URL (default: `https://api.endorlabs.com`) |
 | `ENDOR_API_CREDENTIALS_KEY` | API key |
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret |
-| `ENDOR_TOKEN` | Bearer token (direct token auth or browser auth trigger with value `browser`) |
-| `ENDOR_AUTH_METHOD` | Auth mode: `api-key` (default) or browser modes (`browser`, `admin`, `google`, `github`, `gitlab`, `email`) |
+| `ENDOR_TOKEN` | Bearer token. Takes precedence when present and is validated before any interactive auth flow. |
 | `ENDOR_NAMESPACE` | Default tenant namespace (e.g. `tenant.namespace`) |
 | `ENDOR_LOG_LEVEL` | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
 | `ENDOR_MAX_RETRIES` | Optional: retry count (default: 5) |
@@ -76,13 +75,13 @@ After a browser token is validated, it is treated as a session token: repeated
 triggered by real `401 Unauthorized` responses.
 
 ```bash
-uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser'); print(c.token)"
+uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth'); print(c.token)"
 ```
 
 You can also provide a candidate token and let the SDK validate/fallback automatically:
 
 ```bash
-uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser', token='your-token'); print(c.token)"
+uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth', token='your-token'); print(c.token)"
 ```
 
 For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` as shown above
@@ -115,7 +114,7 @@ uv run endor-demo --verbose
 Demo prerequisites:
 
 - `ENDOR_NAMESPACE` must be set (or entered in the wizard)
-- Auth supports: `api-key`, `browser-auth`, `sso`, `google`, `github`, `gitlab`, `email`
+- Auth supports: `browser-auth`, `sso`, `google`, `github`, `gitlab`, `azureadv2`
 - Credentials/tokens use the same environment variables documented in [Configuration](#configuration)
 
 What the wizard demonstrates:
@@ -142,7 +141,8 @@ import endorlabs
 client = endorlabs.Client(
     tenant=os.getenv("ENDOR_NAMESPACE", "your-tenant.namespace"),
     logging_level="ERROR",   # passed to APIClient via **client_kwargs
-    auth_method="api-key",   # passed to APIClient via **client_kwargs
+    # Optional: pass auth_method for interactive login flows.
+    # When ENDOR_TOKEN is set, it is validated and used first.
 )
 
 # List namespaces (tenant-wide with traverse=True)
