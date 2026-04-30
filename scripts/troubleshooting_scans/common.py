@@ -5,7 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from datetime import UTC, datetime
+from collections.abc import Sequence
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -140,7 +141,9 @@ def match_projects(
     project_name_regex: str | None,
 ) -> list[dict[str, Any]]:
     """Apply project selection filters."""
-    regex = re.compile(project_name_regex, re.IGNORECASE) if project_name_regex else None
+    regex = (
+        re.compile(project_name_regex, re.IGNORECASE) if project_name_regex else None
+    )
     selected: list[dict[str, Any]] = []
     for project in projects:
         uuid = project.get("uuid", "")
@@ -171,7 +174,9 @@ def list_scan_results_for_project(
         "list_parameters.sort_path": "meta.create_time",
         "list_parameters.sort_order": "descending",
     }
-    results = list(api.get_all(f"v1/namespaces/{namespace}/scan-results", params=params))
+    results = list(
+        api.get_all(f"v1/namespaces/{namespace}/scan-results", params=params)
+    )
     filtered = [
         item
         for item in results
@@ -184,6 +189,195 @@ def list_scan_results_for_project(
             if (item.get("spec") or {}).get("status") == status_filter
         ]
     return filtered[:limit]
+
+
+# App UI: https://app.endorlabs.com/t/{namespace}/scan-history/{scan_result_uuid}
+_APP_SCAN_HISTORY_URL = re.compile(
+    r"^https://app\.endorlabs\.com/t/(?P<ns>[^/]+)/scan-history/(?P<uuid>[0-9a-f]{24})(?:[/?#].*)?$",
+    re.IGNORECASE,
+)
+# Findings, versions, etc.: .../t/{namespace}/projects/{project_uuid}/...
+_APP_PROJECT_URL = re.compile(
+    r"^https://app\.endorlabs\.com/t/(?P<ns>[^/]+)/projects/(?P<puuid>[0-9a-f]{24})(?:/.*)?(?:[?#].*)?$",
+    re.IGNORECASE,
+)
+
+
+def parse_app_scan_history_url(url: str) -> tuple[str, str]:
+    """Parse namespace and ScanResult UUID from an Endor Labs app scan-history URL."""
+    m = _APP_SCAN_HISTORY_URL.match(url.strip())
+    if not m:
+        raise ValueError(
+            "URL must look like "
+            "https://app.endorlabs.com/t/{namespace}/scan-history/{scan_result_uuid}"
+        )
+    return m.group("ns"), m.group("uuid")
+
+
+def parse_endor_app_url(url: str) -> dict[str, str]:
+    """Classify app.endorlabs.com URLs; extract fields for troubleshooting scripts.
+
+    Routing only: pass ``--tenant`` separately (same as SDK / env). This parser does
+    not infer tenant from the URL.
+
+    Returns:
+        - ``kind`` — ``"scan_history"`` or ``"project"``.
+        - ``namespace`` — path segment after ``/t/`` (e.g. ``a.b.c``).
+        - ``scan_result_uuid`` or ``project_uuid`` depending on ``kind``.
+    """
+    raw = url.strip()
+    m_hist = _APP_SCAN_HISTORY_URL.match(raw)
+    if m_hist:
+        ns = m_hist.group("ns")
+        return {
+            "kind": "scan_history",
+            "namespace": ns,
+            "scan_result_uuid": m_hist.group("uuid"),
+        }
+    m_proj = _APP_PROJECT_URL.match(raw)
+    if m_proj:
+        ns = m_proj.group("ns")
+        return {
+            "kind": "project",
+            "namespace": ns,
+            "project_uuid": m_proj.group("puuid"),
+        }
+    raise ValueError(
+        "Unrecognized app URL. Expected scan-history: "
+        "https://app.endorlabs.com/t/{namespace}/scan-history/{scan_result_uuid} "
+        "or project: https://app.endorlabs.com/t/{namespace}/projects/{project_uuid}/..."
+    )
+
+
+def date_window_from_days(*, days: int, end: datetime | None = None) -> tuple[str, str]:
+    """Return (from_date, to_date) ISO strings for ListParameters, inclusive window."""
+    if days < 0:
+        raise ValueError("days must be non-negative")
+    end_dt = (end or datetime.now(UTC)).astimezone(UTC)
+    start_dt = end_dt - timedelta(days=days)
+    return _dt_iso_z(start_dt), _dt_iso_z(end_dt)
+
+
+def date_window_from_bounds(
+    *,
+    from_date: str | None,
+    to_date: str | None,
+    days: int | None,
+    end: datetime | None = None,
+) -> tuple[str, str]:
+    """Resolve list window: explicit from/to wins; else last ``days`` (default 30)."""
+    if from_date and to_date:
+        return from_date, to_date
+    if from_date or to_date:
+        raise ValueError("Provide both --from-date and --to-date, or neither")
+    d = days if days is not None else 30
+    return date_window_from_days(days=d, end=end)
+
+
+def _dt_iso_z(dt: datetime) -> str:
+    return dt.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def summarize_environment_config(config: Any, *, max_keys: int = 80) -> dict[str, Any]:
+    """Shape-only summary of spec.environment.config (no secret values)."""
+    if not isinstance(config, dict):
+        return {}
+    out: dict[str, Any] = {}
+    for i, (k, v) in enumerate(config.items()):
+        if i >= max_keys:
+            out["_truncated_keys"] = len(config) - max_keys
+            break
+        if isinstance(v, dict):
+            out[str(k)] = {"kind": "object", "child_keys": list(v.keys())[:40]}
+        elif isinstance(v, list):
+            out[str(k)] = {"kind": "array", "length": len(v)}
+        else:
+            out[str(k)] = {"kind": "scalar"}
+    return out
+
+
+def _duration_seconds(start: str | None, end: str | None) -> float | None:
+    if not start or not end:
+        return None
+    try:
+        s = datetime.fromisoformat(start)
+        e = datetime.fromisoformat(end)
+        return (e - s).total_seconds()
+    except (TypeError, ValueError):
+        return None
+
+
+def scan_result_extended_summary(scan_result: dict[str, Any]) -> dict[str, Any]:
+    """Rich machine-readable summary for ScanResult triage (dict/API shape)."""
+    spec = scan_result.get("spec") or {}
+    meta = scan_result.get("meta") or {}
+    stats = spec.get("stats") or {}
+    env = spec.get("environment") or {}
+    versions = spec.get("versions") or []
+    prov = spec.get("provisioning_result")
+    prov_summary: dict[str, Any] | None = None
+    if isinstance(prov, dict):
+        prov_summary = {
+            "provisioning_result_uuid": prov.get("provisioning_result_uuid"),
+            "exit_code": prov.get("exit_code"),
+            "error": prov.get("error"),
+            "tool_chains_source": prov.get("tool_chains_source"),
+            "has_scan_profile": bool(prov.get("scan_profile")),
+        }
+    return {
+        **scan_result_metrics(scan_result),
+        "meta_parent_uuid": meta.get("parent_uuid"),
+        "namespace": (scan_result.get("tenant_meta") or {}).get("namespace"),
+        "start_time": spec.get("start_time"),
+        "end_time": spec.get("end_time"),
+        "duration_seconds": _duration_seconds(
+            spec.get("start_time"), spec.get("end_time")
+        ),
+        "type": spec.get("type"),
+        "has_panic": spec.get("has_panic"),
+        "languages_detected": spec.get("languages_detected"),
+        "runtimes_ms": spec.get("runtimes"),
+        "ecosystem_dep_counts": spec.get("ecosystem_dep_counts"),
+        "ecosystem_pkg_counts": spec.get("ecosystem_pkg_counts"),
+        "stats": stats,
+        "environment": {
+            "arch": env.get("arch"),
+            "os": env.get("os"),
+            "num_cpus": env.get("num_cpus"),
+            "memory_bytes": env.get("memory"),
+            "endorctl_version": env.get("endorctl_version"),
+            "tools": [
+                {"name": t.get("name"), "version": t.get("version")}
+                for t in (env.get("tools") or [])
+                if isinstance(t, dict)
+            ],
+            "config_summary": summarize_environment_config(env.get("config")),
+        },
+        "versions": versions,
+        "provisioning_result_summary": prov_summary,
+        "log_line_count": len(spec.get("logs") or []),
+    }
+
+
+def duplicate_project_decision(
+    matches: Sequence[Any], *, max_auto: int = 3
+) -> tuple[bool, list[str], str | None]:
+    """Return (proceed_with_all, warnings, error_if_too_many)."""
+    n = len(matches)
+    if n == 0:
+        return False, [], "no_projects_matched"
+    if n > max_auto:
+        return (
+            False,
+            [],
+            f"too_many_project_matches:{n}>max_auto:{max_auto}",
+        )
+    warnings: list[str] = []
+    if n > 1:
+        warnings.append(
+            f"duplicate_candidates:{n}:verify_these_are_distinct_projects_before_proceeding"
+        )
+    return True, warnings, None
 
 
 def scan_result_metrics(scan_result: dict[str, Any]) -> dict[str, Any]:
