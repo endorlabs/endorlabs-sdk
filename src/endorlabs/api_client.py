@@ -181,17 +181,24 @@ class APIClient:
             or os.getenv("ENDOR_INIT_AUTH_TENANT")
         )
 
-        # Determine authentication method
-        # Precedence: parameter > env var > default (api-key)
-        raw_auth_method = auth_method or os.getenv("ENDOR_AUTH_METHOD") or "api-key"
-        normalized_auth_method = self._normalize_auth_method(raw_auth_method)
-        if self._provided_token == "browser" and normalized_auth_method == "api-key":
+        # Determine interactive auth mode. No undocumented env-mode fallback:
+        # - explicit auth_method wins
+        # - otherwise a provided token implies browser-auth validation path
+        # - otherwise use api-key credentials flow
+        normalized_auth_method = "api-key"
+        if auth_method:
+            normalized_auth_method = self._normalize_auth_method(auth_method)
+        elif key is not None or secret is not None:
+            # Explicit constructor credentials take precedence over env token.
+            normalized_auth_method = "api-key"
+        elif token is not None or self._provided_token:
             normalized_auth_method = "browser-auth"
         self.auth_method = normalized_auth_method
         self._validate_auth_method()
 
-        # For browser auth, check if token is "browser" to trigger OAuth flow
-        if self._provided_token == "browser" or self.auth_method != "api-key":
+        # Browser-family flows validate ENDOR_TOKEN first; if invalid, then
+        # interactive browser fallback.
+        if self.auth_method != "api-key":
             # Browser-based authentication
             self.key = None
             self.secret = None
@@ -209,7 +216,7 @@ class APIClient:
                     "  - Environment variables: ENDOR_API_CREDENTIALS_KEY and "
                     "ENDOR_API_CREDENTIALS_SECRET\n"
                     "  - Or use browser authentication: "
-                    "APIClient(auth_method='browser')"
+                    "APIClient(auth_method='browser-auth')"
                 )
                 self.logger.error(error_msg)
                 raise ValueError(error_msg)
