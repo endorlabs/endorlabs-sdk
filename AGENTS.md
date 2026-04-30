@@ -93,6 +93,7 @@ Cursor rules apply when working here. Use **@rule** in chat or rely on glob/alwa
 | **security.mdc** | When editing `src/endorlabs/**` (credential handling, network safety, dangerous ops) |
 | **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
 | **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
+| **python-examples.mdc** | When editing `**/*.py` (examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals) |
 
 Details (patterns, LIST/UPDATE, errors) live in those rules and in the docs below. For API workflow guidance, use the **implement-sdk-resource** skill. For troubleshooting, use the **troubleshoot-sdk** skill or see [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
 

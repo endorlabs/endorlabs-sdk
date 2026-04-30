@@ -272,6 +272,17 @@ uv run --env-file .env python scripts/troubleshooting_scans/pull_scan_logs.py \
   --output-dir .tmp --timestamped
 ```
 
+Fast regression check (latest pair only, logs only when regression exists):
+
+```bash
+uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_workflow.py \
+  --tenant YOUR_ROOT \
+  --project-name "ORG/REPO" \
+  --scan-window 2 \
+  --regression-only \
+  --output-dir .tmp
+```
+
 ```bash
 uv run --env-file .env python scripts/troubleshooting_scans/search_scan_errors.py \
   --tenant YOUR_ROOT \
@@ -285,3 +296,12 @@ uv run --env-file .env python scripts/troubleshooting_scans/search_scan_errors.p
 - **`scan_success` → 0** with **`dependency_count_total` collapsed** often points to dependency resolution.
 - Triage **`endorctl_version`** and dependency stats, then **`pull_scan_logs`** for detail.
 - **`search_scan_errors.py`** after scope is fixed.
+
+## Recommended defaults
+
+- Fast regression check:
+  - `--scan-window 2 --regression-only`
+- Full RCA:
+  - `--scan-window 30` (or `50` for noisier repos)
+- Emit diff in regression-only mode only when needed:
+  - add `--emit-diff`

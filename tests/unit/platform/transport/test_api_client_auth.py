@@ -74,7 +74,6 @@ class TestTokenExpirationTracking:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",  # Clear any stored token
-            "ENDOR_AUTH_METHOD": "",  # Clear auth method
         },
         clear=True,
     )
@@ -100,7 +99,6 @@ class TestTokenExpirationTracking:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -123,7 +121,6 @@ class TestTokenExpirationTracking:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -159,7 +156,6 @@ class TestTokenExpirationTracking:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -190,7 +186,6 @@ class TestTokenExpirationTracking:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -222,7 +217,7 @@ class TestTokenExpirationTracking:
 class TestBrowserAuthentication:
     """Test browser-based OAuth authentication."""
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_auth_alias_normalizes_to_browser_auth(
         self, mock_get_token: Mock
@@ -239,7 +234,7 @@ class TestBrowserAuthentication:
         mock_get_token.assert_called_once()
         assert mock_get_token.call_args.kwargs["method"] == "browser-auth"
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_auth_method(self, mock_get_token: Mock) -> None:
         """Test browser authentication method."""
@@ -252,7 +247,7 @@ class TestBrowserAuthentication:
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_sso_auth_passes_tenant_to_browser_token_flow(
         self, mock_get_token: Mock
@@ -272,7 +267,7 @@ class TestBrowserAuthentication:
             mock_get_token.call_args.kwargs["auth_tenant"] == "endor-solutions-tgowan"
         )
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_auth_with_provided_token(self, mock_get_token: Mock) -> None:
         """Test browser auth with directly provided token."""
@@ -284,7 +279,7 @@ class TestBrowserAuthentication:
         # Should not call get_token if token is provided
         mock_get_token.assert_not_called()
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_auth_with_invalid_provided_token_falls_back(
         self, mock_get_token: Mock
@@ -306,7 +301,7 @@ class TestBrowserAuthentication:
         assert client._token == "browser-token-123"
         mock_get_token.assert_called_once()
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_auth_with_invalid_provided_token_and_no_fallback_token(
         self, mock_get_token: Mock
@@ -327,23 +322,17 @@ class TestBrowserAuthentication:
         assert client._token is None
         mock_get_token.assert_called_once()
 
-    @patch.dict(
-        os.environ,
-        {
-            "ENDOR_TOKEN": "env-token-789",
-            "ENDOR_AUTH_METHOD": "browser",
-        },
-        clear=True,
-    )
-    def test_browser_auth_from_env(self) -> None:
-        """Test browser auth from environment variables."""
+    @patch.dict(os.environ, {"ENDOR_TOKEN": "env-token-789"}, clear=True)
+    def test_token_from_env_uses_token_validation_flow(self) -> None:
+        """ENDOR_TOKEN alone should trigger token validation auth path."""
         with _patch_httpx_client(get_return=_auth_get_response()):
             client = APIClient()
 
         assert client._auth_type == "browser"
+        assert client.auth_method == "browser-auth"
         assert client._token == "env-token-789"
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_token_reads_do_not_reopen_browser_session(
         self, mock_get_token: Mock
@@ -360,7 +349,7 @@ class TestBrowserAuthentication:
         assert second == "browser-token-123"
         mock_get_token.assert_called_once()
 
-    @patch.dict(os.environ, {"ENDOR_TOKEN": "", "ENDOR_AUTH_METHOD": ""}, clear=True)
+    @patch.dict(os.environ, {"ENDOR_TOKEN": ""}, clear=True)
     @patch("endorlabs.auth_server.get_token")
     def test_browser_401_triggers_single_browser_reauth_and_recovers(
         self, mock_get_token: Mock
@@ -419,7 +408,6 @@ class TestAuthenticationBackwardCompatibility:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -435,7 +423,6 @@ class TestAuthenticationBackwardCompatibility:
         os.environ,
         {
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -451,7 +438,6 @@ class TestAuthenticationBackwardCompatibility:
         os.environ,
         {
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -467,7 +453,6 @@ class TestAuthenticationBackwardCompatibility:
         os.environ,
         {
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -483,7 +468,6 @@ class TestAuthenticationBackwardCompatibility:
         os.environ,
         {
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -501,7 +485,6 @@ class TestAuthenticationBackwardCompatibility:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -519,7 +502,6 @@ class TestAuthenticationBackwardCompatibility:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -545,7 +527,6 @@ class TestReauthRetryGuard:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
