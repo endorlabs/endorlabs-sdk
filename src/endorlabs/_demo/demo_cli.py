@@ -844,17 +844,14 @@ def _run_wizard_mode(*, verbose: bool) -> None:
         style="dim",
     )
 
-    auth_default = _normalize_wizard_auth_method(
-        os.getenv("ENDOR_AUTH_METHOD", ""),
-        default=(
-            "api-key"
-            if (
-                os.getenv("ENDOR_API_CREDENTIALS_KEY")
-                and os.getenv("ENDOR_API_CREDENTIALS_SECRET")
-            )
-            else "browser-auth"
-        ),
-    )
+    if os.getenv("ENDOR_TOKEN"):
+        auth_default = "browser-auth"
+    elif os.getenv("ENDOR_API_CREDENTIALS_KEY") and os.getenv(
+        "ENDOR_API_CREDENTIALS_SECRET"
+    ):
+        auth_default = "api-key"
+    else:
+        auth_default = "browser-auth"
     auth_choice = _prompt_input(
         "Authentication method [api-key/browser-auth/sso/google/github/gitlab/email] ",
         default=auth_default,

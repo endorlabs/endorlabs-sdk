@@ -14,6 +14,7 @@ Keep **filter** and **mask** as separate concepts and separate parameters:
 
 - **filter** = "which resources" (e.g. `spec.level==FINDING_LEVEL_CRITICAL`).
 - **mask** (on list) = "which fields in the response" (e.g. `meta.name,spec.level`).
+- `filter` and list `mask` semantics mirror MongoDB-style MQL query/projection conventions.
 - **update_mask** = "which fields to send in the PATCH body"; only for `.update()`, not list.
 
 Combining filter and list mask would blur "what to return" with "which subset of that to show" and would be confusing. Keeping them separate matches the API (`list_parameters.filter` vs `list_parameters.mask`) and keeps list vs update semantics clear.

@@ -47,7 +47,6 @@ class TestEndorMaxRetries:
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_MAX_RETRIES": "3",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -65,7 +64,6 @@ class TestEndorMaxRetries:
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_MAX_RETRIES": "7",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -82,7 +80,6 @@ class TestEndorMaxRetries:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -100,7 +97,6 @@ class TestEndorMaxRetries:
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_MAX_RETRIES": "3",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -122,7 +118,6 @@ class TestRequestTimeout:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -140,7 +135,6 @@ class TestRequestTimeout:
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_REQUEST_TIMEOUT": "20",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -158,7 +152,6 @@ class TestRequestTimeout:
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_REQUEST_TIMEOUT": "15",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -179,7 +172,6 @@ class TestContentTypeAndAcceptEncoding:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -196,7 +188,6 @@ class TestContentTypeAndAcceptEncoding:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -213,7 +204,6 @@ class TestContentTypeAndAcceptEncoding:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -282,7 +272,6 @@ class TestClientSessionLogLevel:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
         },
         clear=True,
     )
@@ -359,7 +348,6 @@ class TestRequestDelegation:
                     "ENDOR_API_CREDENTIALS_KEY": "test-key",
                     "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
                     "ENDOR_TOKEN": "",
-                    "ENDOR_AUTH_METHOD": "",
                 },
                 clear=True,
             ),
@@ -452,7 +440,6 @@ class TestRequestDelegation:
             "ENDOR_API_CREDENTIALS_KEY": "test-key",
             "ENDOR_API_CREDENTIALS_SECRET": "test-secret",
             "ENDOR_TOKEN": "",
-            "ENDOR_AUTH_METHOD": "",
             "ENDOR_ALLOWED_API_HOSTS": "api.staging.endorlabs.com",
         },
         clear=True,

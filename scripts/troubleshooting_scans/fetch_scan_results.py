@@ -28,15 +28,20 @@ except ModuleNotFoundError:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch scan result window")
-    parser.add_argument("--tenant", required=True)
-    parser.add_argument("--project-uuid")
-    parser.add_argument("--project-name")
-    parser.add_argument("--namespace")
-    parser.add_argument("--all-projects", action="store_true")
-    parser.add_argument("--limit", type=int, default=25)
-    parser.add_argument("--status-filter")
-    parser.add_argument("--output-dir", default=".tmp")
-    parser.add_argument("--timestamped", action="store_true")
+    _ = parser.add_argument("--tenant", required=True)
+    _ = parser.add_argument("--project-uuid")
+    _ = parser.add_argument("--project-name")
+    _ = parser.add_argument("--namespace")
+    _ = parser.add_argument("--all-projects", action="store_true")
+    _ = parser.add_argument("--limit", type=int, default=25)
+    _ = parser.add_argument(
+        "--scan-window",
+        type=int,
+        help="Optional alias for --limit to emphasize bounded scan windows.",
+    )
+    _ = parser.add_argument("--status-filter")
+    _ = parser.add_argument("--output-dir", default=".tmp")
+    _ = parser.add_argument("--timestamped", action="store_true")
     return parser
 
 
@@ -45,6 +50,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
     output_dir = Path(args.output_dir)
+    effective_limit = args.scan_window or args.limit
 
     projects = list_projects(api, ns)
     selected_projects = projects
@@ -71,7 +77,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             api,
             namespace=project_ns,
             project_uuid=project_uuid,
-            limit=args.limit,
+            limit=effective_limit,
             status_filter=args.status_filter,
         )
         all_results.extend(results)
