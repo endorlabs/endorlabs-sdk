@@ -7,6 +7,8 @@ Greenfield alias unit tests live in
 tests/unit/platform/models/test_greenfield_aliases.py.
 """
 
+from datetime import UTC, datetime, timedelta
+
 import pytest
 
 import endorlabs
@@ -151,6 +153,49 @@ class TestScanResult:
             )
 
         print(f"Found {len(filtered_results)} scan results for project {project_uuid}")
+
+    def test_scan_result_list_parent_with_date_window(self, sample_scan_result) -> None:
+        """LIST with parent=Project and from_date/to_date (pull_scan_results path)."""
+        first_scan = sample_scan_result
+        if not first_scan.meta or not first_scan.meta.parent_uuid:
+            pytest.skip("Scan result has no parent_uuid (project)")
+
+        project_uuid = first_scan.meta.parent_uuid
+        list_namespace = (
+            first_scan.tenant_meta.namespace
+            if first_scan.tenant_meta
+            and getattr(first_scan.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
+        project = list_client.Project.get(project_uuid, namespace=list_namespace)
+        assert project is not None
+
+        to_dt = datetime.now(UTC)
+        from_dt = to_dt - timedelta(days=365)
+        to_d = to_dt.isoformat().replace("+00:00", "Z")
+        from_d = from_dt.isoformat().replace("+00:00", "Z")
+
+        list_params = ListParameters(
+            from_date=from_d,
+            to_date=to_d,
+            sort_by="meta.create_time",
+            desc=True,
+            page_size=TEST_PAGE_SIZE,
+        )
+        results = list_client.ScanResult.list(
+            parent=project,
+            list_params=list_params,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(results, list)
+        if not results:
+            pytest.skip(
+                "No scan results in date window (empty; may be filter/auth/scope)"
+            )
+        for r in results:
+            assert r.meta is not None
+            assert r.meta.parent_uuid == project_uuid
 
     def test_scan_result_error_handling(self) -> None:
         """Test error handling for invalid UUID."""

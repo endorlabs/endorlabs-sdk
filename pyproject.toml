@@ -234,6 +234,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "scripts/pod_findings_workflow.py" = ["T201", "D103", "S603", "S607", "E501"]  # endorctl CLI helper
 "scripts/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
+"scripts/troubleshooting_scans/*.py" = ["T201", "D103"]  # CLI; stdout artifact paths
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---

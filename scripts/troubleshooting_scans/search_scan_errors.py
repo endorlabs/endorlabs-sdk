@@ -1,9 +1,15 @@
-"""Search scan results and logs for an error pattern."""
+"""Search embedded scan log lines for a regex pattern within an explicit project scope.
+
+Avoids unbounded tenant-wide loops unless ``--all-projects`` is passed explicitly
+(and then caps how many projects are scanned).
+"""
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +18,7 @@ try:
         build_api_client,
         list_projects,
         list_scan_results_for_project,
+        load_json,
         root_tenant,
         write_json,
     )
@@ -20,45 +27,121 @@ except ModuleNotFoundError:
         build_api_client,
         list_projects,
         list_scan_results_for_project,
+        load_json,
         root_tenant,
         write_json,
     )
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Search scan error signatures")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Search embedded spec.logs lines for a regex. "
+            "Requires explicit scope: project selector, --from-search-artifact, "
+            "or --all-projects."
+        )
+    )
     parser.add_argument("--tenant", required=True)
     parser.add_argument("--namespace")
     parser.add_argument("--project-uuid")
     parser.add_argument("--project-name")
-    parser.add_argument("--all-projects", action="store_true")
+    parser.add_argument(
+        "--from-search-artifact",
+        default=None,
+        help="JSON from search_projects.py (uses projects[0].uuid unless --project-uuid)",
+    )
+    parser.add_argument(
+        "--all-projects",
+        action="store_true",
+        help="Search all projects under namespace (expensive; see --max-projects)",
+    )
+    parser.add_argument(
+        "--max-projects",
+        type=int,
+        default=25,
+        help="Cap when using --all-projects (default 25)",
+    )
     parser.add_argument("--error-pattern", required=True)
     parser.add_argument("--limit", type=int, default=25)
-    parser.add_argument("--context-lines", type=int, default=1)
+    parser.add_argument(
+        "--context-lines",
+        type=int,
+        default=1,
+        help="Reserved for future use (embedded logs are single-line JSON strings)",
+    )
     parser.add_argument("--output-dir", default=".tmp")
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
 
+def _resolve_scope(
+    args: argparse.Namespace, projects: list[dict[str, Any]]
+) -> tuple[list[dict[str, Any]], str]:
+    """Return (selected_projects, scope_label)."""
+    ns = args.namespace or args.tenant
+
+    if args.from_search_artifact:
+        data = load_json(Path(args.from_search_artifact))
+        plist = data.get("projects") or []
+        if not plist:
+            raise ValueError("search artifact has no projects[]")
+        if args.project_uuid:
+            sel = [p for p in plist if p.get("uuid") == args.project_uuid]
+            if not sel:
+                raise ValueError("--project-uuid not found in search artifact")
+            return sel, "artifact"
+        return [plist[0]], "artifact"
+
+    if args.all_projects:
+        if len(projects) > args.max_projects:
+            projects = projects[: args.max_projects]
+        print(
+            json.dumps(
+                {
+                    "warning": "all_projects_capped",
+                    "max_projects": args.max_projects,
+                    "scanned": len(projects),
+                }
+            ),
+            file=sys.stderr,
+        )
+        return projects, "all_projects_capped"
+
+    if args.project_uuid:
+        selected = [p for p in projects if p.get("uuid") == args.project_uuid]
+        if not selected:
+            raise ValueError("project-uuid not found under tenant listing")
+        return selected, "project_uuid"
+
+    if args.project_name:
+        selected = [
+            p
+            for p in projects
+            if args.project_name.lower()
+            in str((p.get("meta") or {}).get("name", "")).lower()
+        ]
+        if not selected:
+            raise ValueError("No project matched --project-name")
+        return selected, "project_name"
+
+    raise ValueError(
+        "Provide --project-uuid, --project-name, --from-search-artifact, or --all-projects"
+    )
+
+
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    _ = args.context_lines
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
     pattern = re.compile(args.error_pattern, re.IGNORECASE)
     api = build_api_client()
+    projects = (
+        list_projects(api, ns)
+        if not args.from_search_artifact
+        else []
+    )
 
-    projects = list_projects(api, ns)
-    if args.all_projects:
-        selected_projects = projects
-    elif args.project_uuid:
-        selected_projects = [p for p in projects if p.get("uuid") == args.project_uuid]
-    elif args.project_name:
-        selected_projects = [
-            p
-            for p in projects
-            if args.project_name.lower() in str((p.get("meta") or {}).get("name", "")).lower()
-        ]
-    else:
-        raise ValueError("Provide target project selector or --all-projects")
+    selected_projects, scope_label = _resolve_scope(args, projects)
 
     hits: list[dict[str, Any]] = []
     for project in selected_projects:
@@ -84,10 +167,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                         }
                     )
 
-    scope_uuid = args.project_uuid or "tenant-scope"
+    scope_uuid = args.project_uuid or selected_projects[0].get("uuid") or "scoped"
     payload = {
         "root_tenant": root,
         "query_namespace": ns,
+        "scope_mode": scope_label,
         "error_pattern": args.error_pattern,
         "project_count": len(selected_projects),
         "hit_count": len(hits),
@@ -97,7 +181,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         output_dir=Path(args.output_dir),
         root_tenant_name=root,
         object_kind="scan_error_hits",
-        object_uuid=scope_uuid,
+        object_uuid=str(scope_uuid),
         purpose="results",
         payload=payload,
         timestamped=args.timestamped,
@@ -108,7 +192,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 def main() -> int:
     args = build_parser().parse_args()
-    result = run(args)
+    try:
+        result = run(args)
+    except ValueError as e:
+        print(json.dumps({"error": str(e)}), file=sys.stderr)
+        return 1
     print(result["artifact"])
     return 0
 
