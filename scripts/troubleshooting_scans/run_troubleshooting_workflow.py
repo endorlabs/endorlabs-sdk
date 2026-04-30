@@ -25,20 +25,35 @@ except ModuleNotFoundError:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run full troubleshooting workflow")
-    parser.add_argument("--tenant", required=True)
-    parser.add_argument("--namespace")
-    parser.add_argument("--project-uuid")
-    parser.add_argument("--project-name")
-    parser.add_argument("--project-url")
-    parser.add_argument("--project-name-regex")
-    parser.add_argument("--limit", type=int, default=25)
-    parser.add_argument("--status-filter")
-    parser.add_argument("--pair-mode", choices=["adjacent", "best-anomaly"], default="best-anomaly")
-    parser.add_argument("--min-delta-findings", type=int, default=10)
-    parser.add_argument("--min-delta-deps", type=int, default=50)
-    parser.add_argument("--max-log-entries", type=int, default=500)
-    parser.add_argument("--output-dir", default=".tmp")
-    parser.add_argument("--timestamped", action="store_true")
+    _ = parser.add_argument("--tenant", required=True)
+    _ = parser.add_argument("--namespace")
+    _ = parser.add_argument("--project-uuid")
+    _ = parser.add_argument("--project-name")
+    _ = parser.add_argument("--project-url")
+    _ = parser.add_argument("--project-name-regex")
+    _ = parser.add_argument("--limit", type=int, default=25)
+    _ = parser.add_argument("--scan-window", type=int, help="Optional alias for --limit.")
+    _ = parser.add_argument("--status-filter")
+    _ = parser.add_argument(
+        "--pair-mode",
+        choices=["adjacent", "best-anomaly", "latest"],
+        default="best-anomaly",
+    )
+    _ = parser.add_argument("--min-delta-findings", type=int, default=10)
+    _ = parser.add_argument("--min-delta-deps", type=int, default=50)
+    _ = parser.add_argument("--max-log-entries", type=int, default=500)
+    _ = parser.add_argument(
+        "--regression-only",
+        action="store_true",
+        help="Check latest pair for regression and pull logs only on regression.",
+    )
+    _ = parser.add_argument(
+        "--emit-diff",
+        action="store_true",
+        help="When used with --regression-only, also generate diff report.",
+    )
+    _ = parser.add_argument("--output-dir", default=".tmp")
+    _ = parser.add_argument("--timestamped", action="store_true")
     return parser
 
 
@@ -46,6 +61,8 @@ def main() -> int:
     args = build_parser().parse_args()
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
+    effective_limit = args.scan_window or args.limit
+    selected_pair_mode = "latest" if args.regression_only else args.pair_mode
 
     step1 = resolve_projects.run(
         SimpleNamespace(
@@ -74,7 +91,8 @@ def main() -> int:
             project_uuid=project_uuid,
             project_name=None,
             all_projects=False,
-            limit=args.limit,
+            limit=effective_limit,
+            scan_window=effective_limit,
             status_filter=args.status_filter,
             output_dir=args.output_dir,
             timestamped=args.timestamped,
@@ -86,12 +104,18 @@ def main() -> int:
             output_dir=args.output_dir,
             root_tenant=root,
             project_uuid=project_uuid,
-            pair_mode=args.pair_mode,
+            pair_mode=selected_pair_mode,
             min_delta_findings=args.min_delta_findings,
             min_delta_deps=args.min_delta_deps,
             timestamped=args.timestamped,
         )
     )
+    regression_detected = bool(step3.get("regression_detected"))
+
+    if args.regression_only and not regression_detected:
+        print("No regression detected in latest scan pair; skipped logs and diff.")
+        return 0
+
     step4 = fetch_scan_logs.run(
         SimpleNamespace(
             tenant=args.tenant,
@@ -103,6 +127,10 @@ def main() -> int:
             timestamped=args.timestamped,
         )
     )
+    if args.regression_only and not args.emit_diff:
+        print(step4["artifact"])
+        return 0
+
     step5 = diff_scans.run(
         SimpleNamespace(
             tenant=args.tenant,

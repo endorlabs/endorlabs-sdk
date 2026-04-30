@@ -74,6 +74,7 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 - **filter**: Which rows match.
 - **mask**: Which fields are returned in list responses.
+- **MQL conventions:** `filter` query expressions and list `mask` projections mirror MongoDB-style MQL conventions.
 - **page_size**, **page_token**, **page_id**: Pagination controls.
 - **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.
 - **count**, **from_date**, **to_date**: Supported by `ListParameters`.
