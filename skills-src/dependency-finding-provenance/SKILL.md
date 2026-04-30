@@ -25,6 +25,7 @@ Playbook for customer-facing dependency/finding investigations.
 - Use customer-request framing and output style from `.cursor/rules/customer-requests.mdc`.
 - Confirm auth mode before running queries:
   - If both API key/secret and `ENDOR_TOKEN` exist, pass `auth_method="browser-auth"` explicitly for token-first customer access.
+- For package-lineage semantics (multi-manifest path separation, direct vs transitive normalization), apply `dependency-provenance` rules.
 
 ## Flow B — Finding Provenance
 

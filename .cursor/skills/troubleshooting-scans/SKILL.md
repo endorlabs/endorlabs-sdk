@@ -40,6 +40,7 @@ Located in `scripts/troubleshooting_scans/`.
 - `fetch_scan_results.py`
   - Pulls raw scan results and normalized summary rows.
   - Inputs: project UUID (or project-name mode / all-projects mode), limit/status.
+  - Use `--scan-window` (alias of `--limit`) to bound retrieved scan count.
   - Output object kind: `scan_results`.
 
 - `select_anomalous_scans.py`
@@ -64,6 +65,9 @@ Located in `scripts/troubleshooting_scans/`.
 
 - `run_troubleshooting_workflow.py`
   - End-to-end orchestrator using only outputs from prior step.
+  - Supports `--regression-only` to evaluate latest-vs-previous and skip expensive
+    outputs when no regression is detected.
+  - Supports `--emit-diff` when regression-only mode still needs a diff artifact.
 
 ## Fast path examples
 
@@ -76,6 +80,17 @@ uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_
   --limit 30 \
   --output-dir .tmp \
   --timestamped
+```
+
+Fast regression check (latest pair only, logs only when regression exists):
+
+```bash
+uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_workflow.py \
+  --tenant datavant \
+  --project-name "Apixio/codenavigator-monitoring" \
+  --scan-window 2 \
+  --regression-only \
+  --output-dir .tmp
 ```
 
 Tenant-wide error signature search:
@@ -104,3 +119,12 @@ uv run --env-file .env python scripts/troubleshooting_scans/diff_scans.py --tena
 - `scan_success` drop to zero + `dependency_count_total` collapse usually indicates dependency-resolution pipeline failure.
 - Compare `endorctl_version`, scan status, and dependency metrics first.
 - Use `search_scan_errors.py` with ecosystem-specific patterns to confirm signature recurrence.
+
+## Recommended defaults
+
+- Fast regression check:
+  - `--scan-window 2 --regression-only`
+- Full RCA:
+  - `--scan-window 30` (or `50` for noisier repos)
+- Emit diff in regression-only mode only when needed:
+  - add `--emit-diff`

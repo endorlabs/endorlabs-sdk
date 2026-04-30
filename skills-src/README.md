@@ -9,6 +9,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
 | [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
+| [dependency-provenance](dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [dependency-finding-provenance](dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
 | [fetch-and-search-call-graph](fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | Skill-owned (`scripts/callgraph/`) |
 | [implement-sdk-resource](implement-sdk-resource/) | Adding a new Endor Labs resource to the SDK | `docs/rules-of-engagement/` |
