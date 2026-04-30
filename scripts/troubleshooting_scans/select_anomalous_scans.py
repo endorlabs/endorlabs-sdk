@@ -60,20 +60,26 @@ def anomaly_score(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Rank anomalous scan pairs")
-    parser.add_argument("--input-summary", required=True)
-    parser.add_argument("--output-dir", default=".tmp")
-    parser.add_argument("--root-tenant", required=True)
-    parser.add_argument("--project-uuid", required=True)
-    parser.add_argument("--pair-mode", choices=["adjacent", "best-anomaly"], default="best-anomaly")
-    parser.add_argument("--min-delta-findings", type=int, default=10)
-    parser.add_argument("--min-delta-deps", type=int, default=50)
-    parser.add_argument("--timestamped", action="store_true")
+    _ = parser.add_argument("--input-summary", required=True)
+    _ = parser.add_argument("--output-dir", default=".tmp")
+    _ = parser.add_argument("--root-tenant", required=True)
+    _ = parser.add_argument("--project-uuid", required=True)
+    _ = parser.add_argument(
+        "--pair-mode",
+        choices=["adjacent", "best-anomaly", "latest"],
+        default="best-anomaly",
+    )
+    _ = parser.add_argument("--min-delta-findings", type=int, default=10)
+    _ = parser.add_argument("--min-delta-deps", type=int, default=50)
+    _ = parser.add_argument("--timestamped", action="store_true")
     return parser
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     summary = load_json(Path(args.input_summary))
     items = summary.get("scan_results_summary", [])
+    if len(items) < 2:
+        raise ValueError("Need at least two scan results to build scan pairs")
     ranked: list[dict[str, Any]] = []
     for idx in range(len(items) - 1):
         current = items[idx]
@@ -95,14 +101,22 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             }
         )
 
+    latest_pair = ranked[0]
     ranked.sort(key=lambda item: item["score"], reverse=True)
-    selected = ranked[:1] if args.pair_mode == "best-anomaly" else ranked
-    payload = {
+    if args.pair_mode == "best-anomaly":
+        selected = ranked[:1]
+    elif args.pair_mode == "latest":
+        selected = [latest_pair]
+    else:
+        selected = ranked
+    regression_detected = bool(selected and selected[0]["score"] > 0)
+    payload: dict[str, Any] = {
         "root_tenant": args.root_tenant,
         "project_uuid": args.project_uuid,
         "pair_mode": args.pair_mode,
         "candidate_pair_count": len(ranked),
         "selected_pairs": selected,
+        "regression_detected": regression_detected,
     }
     artifact = write_json(
         output_dir=Path(args.output_dir),
