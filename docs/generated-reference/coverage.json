@@ -700,10 +700,10 @@
       "resource_name": "queries",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": false,
+        "create": true,
         "delete": false,
-        "get": true,
-        "list": true,
+        "get": false,
+        "list": false,
         "update": false
       },
       "supported_ops_spec": {
@@ -720,10 +720,10 @@
       "resource_name": "queries/similar-packages",
       "scope": "tenant",
       "supported_ops_sdk": {
-        "create": false,
+        "create": true,
         "delete": false,
-        "get": true,
-        "list": true,
+        "get": false,
+        "list": false,
         "update": false
       },
       "supported_ops_spec": {
