@@ -1,5 +1,5 @@
 {
-  "resource_count": 34,
+  "resource_count": 41,
   "resources": [
     {
       "accepted_canonical_entities": [
@@ -1769,6 +1769,275 @@
         "SemgrepRuleServiceUpdateSemgrepRuleBody"
       ],
       "update_requires_mask": true,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1IdentityProvider"
+      ],
+      "attr_name": "V1IdentityProvider",
+      "build_create_payload_fn_import_path": null,
+      "build_create_payload_fn_name": null,
+      "canonical_entities": [
+        "v1IdentityProvider"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "IdentityProviderServiceCreateIdentityProviderBody"
+      ],
+      "description": "V1IdentityProvider resource facade.",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "V1IdentityProvider",
+      "model_class_import_path": "endorlabs.generated.models.identity_provider_service:V1IdentityProvider",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "identity-providers",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [
+        "IdentityProviderServiceUpdateIdentityProviderBody"
+      ],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1PackageFirewallLog"
+      ],
+      "attr_name": "V1PackageFirewallLog",
+      "build_create_payload_fn_import_path": null,
+      "build_create_payload_fn_name": null,
+      "canonical_entities": [
+        "v1PackageFirewallLog"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "PackageFirewallLogServiceCreatePackageFirewallLogBody"
+      ],
+      "description": "V1PackageFirewallLog resource facade.",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "V1PackageFirewallLog",
+      "model_class_import_path": "endorlabs.generated.models.package_firewall_log_service:V1PackageFirewallLog",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "package-firewall-logs",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1Query"
+      ],
+      "attr_name": "V1Query",
+      "build_create_payload_fn_import_path": null,
+      "build_create_payload_fn_name": null,
+      "canonical_entities": [
+        "v1Query"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "QueryServiceCreateQueryBody"
+      ],
+      "description": "V1Query resource facade.",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "V1Query",
+      "model_class_import_path": "endorlabs.generated.models.query_service:V1Query",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1QuerySimilarPackages"
+      ],
+      "attr_name": "V1QuerySimilarPackages",
+      "build_create_payload_fn_import_path": null,
+      "build_create_payload_fn_name": null,
+      "canonical_entities": [
+        "v1QuerySimilarPackages"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody"
+      ],
+      "description": "V1QuerySimilarPackages resource facade.",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "V1QuerySimilarPackages",
+      "model_class_import_path": "endorlabs.generated.models.query_similar_packages_service:V1QuerySimilarPackages",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "queries/similar-packages",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1SavedQuery"
+      ],
+      "attr_name": "V1SavedQuery",
+      "build_create_payload_fn_import_path": null,
+      "build_create_payload_fn_name": null,
+      "canonical_entities": [
+        "v1SavedQuery"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "SavedQueryServiceCreateSavedQueryBody"
+      ],
+      "description": "V1SavedQuery resource facade.",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [],
+      "model_class": "V1SavedQuery",
+      "model_class_import_path": "endorlabs.generated.models.saved_query_service:V1SavedQuery",
+      "mutable_fields": [],
+      "parent_kind": null,
+      "resource_name": "saved-queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [
+        "SavedQueryServiceUpdateSavedQueryBody"
+      ],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1VectorStore"
+      ],
+      "attr_name": "VectorStore",
+      "build_create_payload_fn_import_path": null,
+      "build_create_payload_fn_name": null,
+      "canonical_entities": [
+        "v1VectorStore"
+      ],
+      "create_mode": "unsupported",
+      "create_payload_entities": [
+        "VectorStoreQueryServiceCreateVectorStoreQueryBody",
+        "VectorStoreServiceCreateVectorStoreBody"
+      ],
+      "description": "Vector store resource.",
+      "filter_kwarg_map": {
+        "name": "meta.name"
+      },
+      "has_tag_methods": false,
+      "identity_filter_fields": [
+        "name"
+      ],
+      "immutable_fields": [
+        "meta.create_time",
+        "meta.created_by",
+        "meta.index_data",
+        "meta.kind",
+        "meta.references",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.version",
+        "tenant_meta.namespace",
+        "uuid"
+      ],
+      "model_class": "VectorStore",
+      "model_class_import_path": "endorlabs.resources.vector_store:VectorStore",
+      "mutable_fields": [
+        "meta.description",
+        "meta.tags"
+      ],
+      "parent_kind": null,
+      "resource_name": "vector-stores",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    {
+      "accepted_canonical_entities": [
+        "v1VectorStoreQuery"
+      ],
+      "attr_name": "VectorStoreQuery",
+      "build_create_payload_fn_import_path": "endorlabs.resources.vector_store_query:build_create_payload",
+      "build_create_payload_fn_name": "vector_store_query_build_create",
+      "canonical_entities": [
+        "v1VectorStoreQuery"
+      ],
+      "create_mode": "both",
+      "create_payload_entities": [
+        "VectorStoreQueryServiceCreateVectorStoreQueryBody"
+      ],
+      "description": "VectorStoreQuery resource model returned by the query endpoint.",
+      "filter_kwarg_map": {},
+      "has_tag_methods": false,
+      "identity_filter_fields": [],
+      "immutable_fields": [
+        "meta.create_time",
+        "meta.created_by",
+        "meta.index_data",
+        "meta.kind",
+        "meta.references",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.version",
+        "tenant_meta.namespace",
+        "uuid"
+      ],
+      "model_class": "VectorStoreQuery",
+      "model_class_import_path": "endorlabs.resources.vector_store_query:VectorStoreQuery",
+      "mutable_fields": [
+        "meta.description",
+        "meta.tags"
+      ],
+      "parent_kind": null,
+      "resource_name": "queries/vector-stores",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ],
+      "update_payload_entities": [],
+      "update_requires_mask": false,
       "workflow_flags": []
     },
     {

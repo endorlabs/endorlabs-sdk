@@ -1,5 +1,5 @@
 {
-  "resource_count": 34,
+  "resource_count": 41,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -2459,6 +2459,401 @@
       "update_payload_entities": [
         "SemgrepRuleServiceUpdateSemgrepRuleBody"
       ]
+    },
+    {
+      "attr_name": "V1IdentityProvider",
+      "create_payload_definitions": {
+        "IdentityProviderServiceCreateIdentityProviderBody": {
+          "description": "Represents an identity provider.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Propagate indicates that the object should be visible in child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1IdentityProviderSpec"
+            },
+            "tenant_meta": {
+              "description": "IdentityProviders are associated with a tenant and namespace.",
+              "title": "IdentityProviders are associated with a tenant and namespace.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of an identify provider.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "IdentityProviderServiceCreateIdentityProviderBody"
+      ],
+      "resource_name": "identity-providers",
+      "update_payload_definitions": {
+        "IdentityProviderServiceUpdateIdentityProviderBody": {
+          "description": "Request to update an identity provider.",
+          "properties": {
+            "object": {
+              "description": "Represents an identity provider.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "propagate": {
+                  "description": "Propagate indicates that the object should be visible in child namespaces.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1IdentityProviderSpec"
+                },
+                "tenant_meta": {
+                  "description": "IdentityProviders are associated with a tenant and namespace.",
+                  "title": "IdentityProviders are associated with a tenant and namespace.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of an identify provider.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "IdentityProviderServiceUpdateIdentityProviderBody"
+      ]
+    },
+    {
+      "attr_name": "V1PackageFirewallLog",
+      "create_payload_definitions": {
+        "PackageFirewallLogServiceCreatePackageFirewallLogBody": {
+          "description": "PackageFirewallLog represents a package firewall audit event recording the\naction taken and the reason that triggered it.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1PackageFirewallLogSpec",
+              "description": "Resource kind specific data."
+            },
+            "tenant_meta": {
+              "description": "Namespace of the package firewall log.",
+              "title": "Namespace of the package firewall log.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the package firewall log.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta",
+            "spec"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "PackageFirewallLogServiceCreatePackageFirewallLogBody"
+      ],
+      "resource_name": "package-firewall-logs",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "V1Query",
+      "create_payload_definitions": {
+        "QueryServiceCreateQueryBody": {
+          "description": "Query implements the metric query requests.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata identifies the object."
+            },
+            "spec": {
+              "$ref": "#/definitions/v1QuerySpec",
+              "description": "{\n    \"meta\": {\n        \"name\": \"my first query\"\n    },\n    \"spec\": {\n        \"query_spec\": {\n            \"kind\": \"Project\",\n            \"list_parameters\": {\n                \"page_size\": 1,\n                \"mask\": \"uuid,meta.name,processing_status\"\n            },\n            \"references\": [\n                {\n                    \"connect_from\": \"uuid\",\n                    \"connect_to\": \"meta.parent_uuid\",\n                    \"query_spec\": {\n                        \"kind\": \"RepositoryVersion\",\n                        \"list_parameters\": {\n                            \"filter\": \"context.type==CONTEXT_TYPE_MAIN\",\n                            \"mask\": \"uuid,meta.name,spec\"\n                        },\n                        \"references\": [\n                           {\n                            \"connect_to\": \"meta.parent_uuid\",\n                            \"connect_from\": \"uuid\",\n                            \"query_spec\": {\n                                \"kind\": \"Metric\",\n                                \"list_parameters\": {\n                                    \"filter\": \"meta.name==repo_scorecard\",\n                                    \"mask\": \"meta,spec\"\n                                }\n                            }\n                        }]\n                    }\n                },\n                {\n                    \"connect_from\": \"uuid\",\n                    \"connect_to\": \"spec.project_uuid\",\n                    \"query_spec\": {\n                        \"kind\": \"PackageVersion\",\n                        \"list_parameters\": {\n                            \"filter\": \"context.type==CONTEXT_TYPE_MAIN\",\n                            \"page_size\": 1,\n                            \"mask\": \"uuid,meta,spec\"\n                        }\n                    }\n                }\n            ]\n        }\n    }\n}",
+              "title": "A query spec allows an aggregation against various objects\nin the database. Assume for example:\nList all projects and their processing status.\nFor each project list all repository versions that correspond to the default branch\nFor each repository version derive some metrics\nFor each project, also list all the package versions that this project implements\nThe query in json format looks like below:"
+            },
+            "tenant_meta": {
+              "description": "The Tenant Metadata restricts access to a specific tenant.",
+              "title": "The Tenant Metadata restricts access to a specific tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the resource.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "QueryServiceCreateQueryBody"
+      ],
+      "resource_name": "queries",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "V1QuerySimilarPackages",
+      "create_payload_definitions": {
+        "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody": {
+          "description": "QuerySimilarPackages implements the similar packages query requests.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata identifies the object."
+            },
+            "query_response": {
+              "description": "Aggregates the results of the query.",
+              "items": {
+                "$ref": "#/definitions/QuerySimilarPackagesQueryResponse",
+                "type": "object"
+              },
+              "readOnly": true,
+              "type": "array"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1QuerySimilarPackagesSpec"
+            },
+            "tenant_meta": {
+              "description": "The tenant metadata restricts access to a specific tenant.",
+              "title": "The tenant metadata restricts access to a specific tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of the resource.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody"
+      ],
+      "resource_name": "queries/similar-packages",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "V1SavedQuery",
+      "create_payload_definitions": {
+        "SavedQueryServiceCreateSavedQueryBody": {
+          "description": "SavedQuery implements the metric query requests.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Indicates that the object should be visible in child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1SavedQuerySpec"
+            },
+            "tenant_meta": {
+              "description": "The Tenant Metadata restricts access to a specific tenant.",
+              "title": "The Tenant Metadata restricts access to a specific tenant.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of a saved query.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "create_payload_entities": [
+        "SavedQueryServiceCreateSavedQueryBody"
+      ],
+      "resource_name": "saved-queries",
+      "update_payload_definitions": {
+        "SavedQueryServiceUpdateSavedQueryBody": {
+          "description": "Request to update a saved query.",
+          "properties": {
+            "object": {
+              "description": "SavedQuery implements the metric query requests.",
+              "properties": {
+                "meta": {
+                  "$ref": "#/definitions/v1Meta",
+                  "description": "Metadata required for all objects."
+                },
+                "propagate": {
+                  "description": "Indicates that the object should be visible in child namespaces.",
+                  "type": "boolean"
+                },
+                "spec": {
+                  "$ref": "#/definitions/v1SavedQuerySpec"
+                },
+                "tenant_meta": {
+                  "description": "The Tenant Metadata restricts access to a specific tenant.",
+                  "title": "The Tenant Metadata restricts access to a specific tenant.",
+                  "type": "object"
+                },
+                "uuid": {
+                  "description": "The UUID of a saved query.",
+                  "readOnly": true,
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "request": {
+              "$ref": "#/definitions/v1UpdateRequest"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object"
+        }
+      },
+      "update_payload_entities": [
+        "SavedQueryServiceUpdateSavedQueryBody"
+      ]
+    },
+    {
+      "attr_name": "VectorStore",
+      "create_payload_definitions": {
+        "VectorStoreQueryServiceCreateVectorStoreQueryBody": {
+          "description": "VectorStoreQuery is the message to query the vector store.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1VectorStoreQuerySpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "spec"
+          ],
+          "type": "object",
+          "x-internal": true
+        },
+        "VectorStoreServiceCreateVectorStoreBody": {
+          "description": "Represents a vector store in the system. The vector store will create all\nthe infrastructure for semantic searches.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta",
+              "description": "Metadata required for all objects."
+            },
+            "propagate": {
+              "description": "Vector stores can be propagated and accessed in child namespaces.",
+              "type": "boolean"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1VectorStoreSpec",
+              "description": "The internal specification of the object."
+            },
+            "tenant_meta": {
+              "description": "VectorStores are associated with a tenant or are global.",
+              "title": "VectorStores are associated with a tenant or are global.",
+              "type": "object"
+            },
+            "uuid": {
+              "description": "The UUID of an VectorStore.",
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "meta"
+          ],
+          "type": "object",
+          "x-internal": true
+        }
+      },
+      "create_payload_entities": [
+        "VectorStoreQueryServiceCreateVectorStoreQueryBody",
+        "VectorStoreServiceCreateVectorStoreBody"
+      ],
+      "resource_name": "vector-stores",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
+    },
+    {
+      "attr_name": "VectorStoreQuery",
+      "create_payload_definitions": {
+        "VectorStoreQueryServiceCreateVectorStoreQueryBody": {
+          "description": "VectorStoreQuery is the message to query the vector store.",
+          "properties": {
+            "meta": {
+              "$ref": "#/definitions/v1Meta"
+            },
+            "spec": {
+              "$ref": "#/definitions/v1VectorStoreQuerySpec"
+            },
+            "tenant_meta": {
+              "description": "Tenant related data for the tenant containing the resource.",
+              "type": "object"
+            },
+            "uuid": {
+              "readOnly": true,
+              "type": "string"
+            }
+          },
+          "required": [
+            "spec"
+          ],
+          "type": "object",
+          "x-internal": true
+        }
+      },
+      "create_payload_entities": [
+        "VectorStoreQueryServiceCreateVectorStoreQueryBody"
+      ],
+      "resource_name": "queries/vector-stores",
+      "update_payload_definitions": {},
+      "update_payload_entities": []
     },
     {
       "attr_name": "VersionUpgrade",
