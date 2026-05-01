@@ -30,6 +30,8 @@
   "ScanWorkflow": "Workflow orchestrating scan steps.",
   "ScanWorkflowResult": "Result from a scan workflow execution.",
   "SemgrepRule": "Custom SAST rule in Semgrep/OpenGrep format.",
+  "VectorStore": "Tenant vector store inventory (embeddings index metadata).",
+  "VectorStoreQuery": "Natural-language query against a vector store (create-only).",
   "VersionUpgrade": "Suggested dependency version upgrade.",
   "Vulnerability": "Open-source vulnerability records."
 }

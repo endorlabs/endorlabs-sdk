@@ -30,6 +30,7 @@ from endorlabs.facade import ResourceRuntimeFacade, _ListableFacade
 from endorlabs.registry_overlay import merge_generated_contract_with_overlay
 from endorlabs.registry import (
     CUSTOM_FACADE_REGISTRY,
+    EXPERIMENTAL_REGISTRY_ATTR_NAMES,
     RESOURCE_REGISTRY,
     ResourceEntry,
 )
@@ -249,6 +250,21 @@ def _load_facade_contract_resources() -> dict[str, dict[str, Any]]:
             by_attr[attr_name] = resource
     if not by_attr:
         raise RuntimeError("Invalid facade contract: resources list is empty")
+    # Experimental registry facades are not in the generated runtime contract;
+    # synthesize minimal rows so stub generation and validation stay aligned.
+    for entry in RESOURCE_REGISTRY:
+        if entry.attr_name in by_attr:
+            continue
+        if entry.attr_name not in EXPERIMENTAL_REGISTRY_ATTR_NAMES:
+            continue
+        by_attr[entry.attr_name] = {
+            "attr_name": entry.attr_name,
+            "supported_ops": sorted(entry.supported_ops),
+            "canonical_entities": sorted(
+                model_sync_entity_for_model(entry.model_class)
+            ),
+            "description": "",
+        }
     return by_attr
 
 
@@ -312,6 +328,7 @@ def _validate_descriptions_and_model_sync() -> None:
     missing_sync_entities = sorted(
         entry.model_class.__name__
         for entry in RESOURCE_REGISTRY
+        if entry.attr_name not in EXPERIMENTAL_REGISTRY_ATTR_NAMES
         if not (model_sync_entity_for_model(entry.model_class) & entity_names)
     )
     for entry in RESOURCE_REGISTRY:
@@ -469,7 +486,14 @@ def main() -> None:  # noqa: D103
         lines.append(f"from {mod} import {', '.join(names)}")
 
     # -- Per-resource stub classes -----------------------------------------
+    # One stub class per model (e.g. EndorLicense + License alias share _EndorLicenseFacade).
+    emitted_facade_classes: set[str] = set()
     for entry in RESOURCE_REGISTRY:
+        model_name = entry.model_class.__name__
+        class_name = f"_{model_name}Facade"
+        if class_name in emitted_facade_classes:
+            continue
+        emitted_facade_classes.add(class_name)
         lines.append("")
         lines.extend(_emit_resource_class(entry, contract_resources[entry.attr_name], sigs))
 

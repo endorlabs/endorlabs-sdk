@@ -325,6 +325,26 @@ def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
     assert args[1] is built_payload
 
 
+def test_vector_store_query_create_builds_payload_and_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Create-only VectorStoreQuery uses builder and client tenant namespace."""
+    client = client_with_mock_transport
+    built_payload = Mock()
+    client.VectorStoreQuery._build_create_payload_fn = Mock(return_value=built_payload)
+    client.VectorStoreQuery._ops.create = Mock(return_value=Mock(uuid="vsq-1"))
+    client.VectorStoreQuery.create(
+        name="nl-query",
+        vector_store_uuid="6997574c9482b12a38ffeef3",
+        query="functions that sanitize a command injection",
+    )
+    client.VectorStoreQuery._build_create_payload_fn.assert_called_once()
+    client.VectorStoreQuery._ops.create.assert_called_once()
+    args, _ = client.VectorStoreQuery._ops.create.call_args
+    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[1] is built_payload
+
+
 def test_client_exposes_all_custom_facades(
     client_with_mock_transport: Client,
 ) -> None:
