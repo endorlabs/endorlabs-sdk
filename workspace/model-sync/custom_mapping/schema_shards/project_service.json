@@ -395,6 +395,10 @@
     },
     "v1ModelSpec": {
       "properties": {
+        "external_installation_id": {
+          "description": "Endor Labs Hugging Face installation ID of this project.\nOptional and only available if the project is created through an installation.",
+          "type": "string"
+        },
         "full_name": {
           "description": "The author and model name.\nFor example, author/model_name.",
           "type": "string"

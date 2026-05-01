@@ -1,18 +1,18 @@
 {
   "facade_contract_path": "workspace/model-sync/custom_mapping/facade_contract.json",
-  "facade_contract_resource_count": 34,
-  "model_sync_entry_count": 210,
-  "model_sync_manifest_file_count": 149,
+  "facade_contract_resource_count": 41,
+  "model_sync_entry_count": 211,
+  "model_sync_manifest_file_count": 151,
   "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
   "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
-  "operation_path_metadata_count": 734,
+  "operation_path_metadata_count": 739,
   "operation_path_metadata_path": "workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json",
-  "payload_schema_resource_count": 34,
+  "payload_schema_resource_count": 41,
   "payload_schemas_path": "workspace/model-sync/custom_mapping/mapping/payload_schemas.json",
   "registry_parity_missing_in_mapping_count": 0,
   "registry_parity_report_path": "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json",
   "registry_parity_status": "pass",
-  "resource_count": 42,
+  "resource_count": 41,
   "resources": [
     {
       "attr_name": "APIKey",
@@ -195,26 +195,6 @@
       }
     },
     {
-      "attr_name": "IdentityProvider",
-      "parent_kind": null,
-      "resource_name": "identity-providers",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
       "attr_name": "Installation",
       "parent_kind": null,
       "resource_name": "installations",
@@ -245,26 +225,6 @@
         "get": true,
         "list": true,
         "update": true
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "License",
-      "parent_kind": null,
-      "resource_name": "licenses",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
       },
       "supported_ops_spec": {
         "create": true,
@@ -395,26 +355,6 @@
       }
     },
     {
-      "attr_name": "PackageFirewallLog",
-      "parent_kind": null,
-      "resource_name": "package-firewall-logs",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
       "attr_name": "PackageLicense",
       "parent_kind": null,
       "resource_name": "package-licenses",
@@ -515,26 +455,6 @@
       }
     },
     {
-      "attr_name": "Query",
-      "parent_kind": null,
-      "resource_name": "queries",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": false,
-        "get": false,
-        "list": false,
-        "update": false
-      }
-    },
-    {
       "attr_name": "QueryMalware",
       "parent_kind": null,
       "resource_name": "queries/malware",
@@ -544,26 +464,6 @@
         "delete": false,
         "get": false,
         "list": false,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": false,
-        "get": false,
-        "list": false,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "QuerySimilarPackages",
-      "parent_kind": null,
-      "resource_name": "queries/similar-packages",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
         "update": false
       },
       "supported_ops_spec": {
@@ -625,26 +525,6 @@
         "get": true,
         "list": true,
         "update": true
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "SavedQuery",
-      "parent_kind": null,
-      "resource_name": "saved-queries",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
       },
       "supported_ops_spec": {
         "create": true,
@@ -775,6 +655,106 @@
       }
     },
     {
+      "attr_name": "V1IdentityProvider",
+      "parent_kind": null,
+      "resource_name": "identity-providers",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "V1PackageFirewallLog",
+      "parent_kind": null,
+      "resource_name": "package-firewall-logs",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "V1Query",
+      "parent_kind": null,
+      "resource_name": "queries",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "V1QuerySimilarPackages",
+      "parent_kind": null,
+      "resource_name": "queries/similar-packages",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": false,
+        "get": false,
+        "list": false,
+        "update": false
+      }
+    },
+    {
+      "attr_name": "V1SavedQuery",
+      "parent_kind": null,
+      "resource_name": "saved-queries",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
       "attr_name": "VectorStore",
       "parent_kind": null,
       "resource_name": "vector-stores",
@@ -855,7 +835,7 @@
       }
     }
   ],
-  "runtime_capability_resource_count": 34,
+  "runtime_capability_resource_count": 41,
   "runtime_index_path": "workspace/model-sync/custom_mapping/mapping/runtime_index.json",
-  "runtime_model_import_count": 34
+  "runtime_model_import_count": 41
 }
