@@ -28,6 +28,17 @@ MODEL_SYNC_ENTITY_ALIASES_BY_MODEL: dict[str, str] = {
 }
 
 
+def _canonical_entity_for_model_name(model_name: str) -> str:
+    """Return canonical OpenAPI entity name for a model class name.
+
+    Most models map to ``v1<ModelName>``; generated classes already prefixed
+    with ``V1`` map to ``v1<suffix>`` (e.g. ``V1Query`` -> ``v1Query``).
+    """
+    if model_name.startswith("V1") and len(model_name) > 2:
+        return f"v1{model_name[2:]}"
+    return f"v1{model_name}"
+
+
 @dataclass(frozen=True)
 class SpecEntity:
     """One model-worthy OpenAPI entity."""
@@ -72,7 +83,7 @@ def modeled_resource_exception_entities() -> set[str]:
     except Exception:
         return set()
     entities = {
-        f"v1{entry.model_class.__name__}"
+        _canonical_entity_for_model_name(entry.model_class.__name__)
         for entry in RESOURCE_REGISTRY
         if getattr(entry, "model_class", None) is not None
     }
@@ -83,7 +94,7 @@ def modeled_resource_exception_entities() -> set[str]:
 def model_sync_entity_for_model(model_class: type[Any]) -> set[str]:
     """Return accepted canonical entity names for a model class."""
     model_name = model_class.__name__
-    accepted = {f"v1{model_name}"}
+    accepted = {_canonical_entity_for_model_name(model_name)}
     alias = MODEL_SYNC_ENTITY_ALIASES_BY_MODEL.get(model_name)
     if alias:
         accepted.add(alias)

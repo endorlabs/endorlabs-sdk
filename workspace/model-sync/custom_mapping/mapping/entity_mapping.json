@@ -1415,6 +1415,13 @@
       "source_kind": "operation_ref"
     },
     {
+      "entity_name": "v1VectorStoreQuery",
+      "module_path": "vector",
+      "operation_id": null,
+      "source_key": "v1VectorStoreQuery",
+      "source_kind": "definition"
+    },
+    {
       "entity_name": "v1ListVectorStoresResponse",
       "module_path": "vector_store_service",
       "operation_id": "VectorStoreService_ListVectorStores",
@@ -1471,7 +1478,7 @@
       "source_kind": "operation_ref"
     }
   ],
-  "entry_count": 210,
+  "entry_count": 211,
   "profiles": {
     "aliases.json": {
       "_comment": "Custom mapping aliases. Keep deterministic and source-controlled.",
