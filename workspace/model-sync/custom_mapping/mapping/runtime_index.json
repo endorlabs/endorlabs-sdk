@@ -172,7 +172,7 @@
       "workflow_flags": []
     },
     "queries": {
-      "create_mode": "unsupported",
+      "create_mode": "payload-only",
       "identity_filter_fields": [],
       "update_requires_mask": false,
       "workflow_flags": []
@@ -184,7 +184,7 @@
       "workflow_flags": []
     },
     "queries/similar-packages": {
-      "create_mode": "unsupported",
+      "create_mode": "payload-only",
       "identity_filter_fields": [],
       "update_requires_mask": false,
       "workflow_flags": []
