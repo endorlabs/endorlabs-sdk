@@ -8,6 +8,11 @@ from .api_client import APIClient
 from .core.filter import FilterExpression
 from .core.types import ListParameters
 from .facade import ScanLogsFacade
+from .generated.models.identity_provider_service import V1IdentityProvider
+from .generated.models.package_firewall_log_service import V1PackageFirewallLog
+from .generated.models.query_service import V1Query
+from .generated.models.query_similar_packages_service import V1QuerySimilarPackages
+from .generated.models.saved_query_service import V1SavedQuery
 from .resources.api_key import APIKey
 from .resources.audit_log import AuditLog
 from .resources.authentication_log import AuthenticationLog
@@ -40,6 +45,8 @@ from .resources.scan_result import ScanResult
 from .resources.scan_workflow import ScanWorkflow
 from .resources.scan_workflow_result import ScanWorkflowResult
 from .resources.semgrep_rule import SemgrepRule
+from .resources.vector_store import VectorStore
+from .resources.vector_store_query import VectorStoreQuery
 from .resources.version_upgrade import VersionUpgrade
 from .resources.vulnerability import Vulnerability
 
@@ -4193,17 +4200,584 @@ class _VulnerabilityFacade:
         """Fetch a single resource by UUID or resource object."""
         ...
 
+class _VectorStoreFacade:
+    """Tenant vector store inventory (embeddings index metadata).
+
+    Identity kwargs: name (-> meta.name).
+    """
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[VectorStore]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> VectorStore:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[VectorStore]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | VectorStore,
+        namespace: str | None = ...,
+    ) -> VectorStore:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _V1IdentityProviderFacade:
+    """IdentityProvider resource facade."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[V1IdentityProvider]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> V1IdentityProvider:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[V1IdentityProvider]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | V1IdentityProvider,
+        namespace: str | None = ...,
+    ) -> V1IdentityProvider:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _V1SavedQueryFacade:
+    """SavedQuery resource facade."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[V1SavedQuery]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> V1SavedQuery:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[V1SavedQuery]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | V1SavedQuery,
+        namespace: str | None = ...,
+    ) -> V1SavedQuery:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _V1QueryFacade:
+    """Query resource facade."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[V1Query]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> V1Query:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[V1Query]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | V1Query,
+        namespace: str | None = ...,
+    ) -> V1Query:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _V1QuerySimilarPackagesFacade:
+    """QuerySimilarPackages resource facade."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[V1QuerySimilarPackages]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> V1QuerySimilarPackages:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[V1QuerySimilarPackages]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | V1QuerySimilarPackages,
+        namespace: str | None = ...,
+    ) -> V1QuerySimilarPackages:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _V1PackageFirewallLogFacade:
+    """PackageFirewallLog resource facade."""
+
+    def list(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> list[V1PackageFirewallLog]:
+        """List resources with full pagination and optional concurrent mode."""
+        ...
+
+    def lookup(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        max_workers: int = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> V1PackageFirewallLog:
+        """Return the single resource matching criteria."""
+        ...
+
+    def list_iter(
+        self,
+        traverse: bool = ...,
+        concurrent: bool = ...,
+        namespace: str | None = ...,
+        list_params: ListParameters | None = ...,
+        max_pages: int | None = ...,
+        parent: Any = ...,
+        filter: str | FilterExpression | None = ...,
+        mask: str | None = ...,
+        page_size: int | None = ...,
+        page_token: str | None = ...,
+        page_id: str | None = ...,
+        sort_by: str | None = ...,
+        desc: bool | None = ...,
+        count: bool | None = ...,
+        from_date: str | None = ...,
+        to_date: str | None = ...,
+        archive: bool | None = ...,
+        pr_uuid: str | None = ...,
+        ci_run_uuid: str | None = ...,
+        **kwargs: Any,
+    ) -> Iterator[V1PackageFirewallLog]:
+        """Yield resources one at a time; memory-efficient lazy pagination."""
+        ...
+
+    def get(
+        self,
+        id_or_resource: str | V1PackageFirewallLog,
+        namespace: str | None = ...,
+    ) -> V1PackageFirewallLog:
+        """Fetch a single resource by UUID or resource object."""
+        ...
+
+class _VectorStoreQueryFacade:
+    """Natural-language query against a vector store (create-only)."""
+
+    def create(
+        self,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
+        namespace: str | None = ...,
+        **kwargs: Any,
+    ) -> VectorStoreQuery:
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
+        ...
+
 class Client:
     """Resource-oriented client with typed facades.
 
     Resources:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
-    DependencyMetadata, EndorLicense, Finding, FindingLog, Installation,
-    Invitation, LinterResult, Malware, Metric, Namespace, NotificationTarget,
-    PRCommentConfig, PackageLicense, PackageVersion, Policy, PolicyTemplate,
-    Project, QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
-    ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult,
-    SemgrepRule, VersionUpgrade, Vulnerability
+    DependencyMetadata, EndorLicense, Finding, FindingLog, IdentityProvider,
+    Installation, Invitation, License, LinterResult, Malware, Metric,
+    Namespace, NotificationTarget, PRCommentConfig, PackageFirewallLog,
+    PackageLicense, PackageVersion, Policy, PolicyTemplate, Project, Query,
+    QueryMalware, QuerySimilarPackages, QueryVulnerability, Repository,
+    RepositoryVersion, SavedQuery, ScanLogRequest, ScanProfile, ScanResult,
+    ScanWorkflow, ScanWorkflowResult, SemgrepRule, VectorStore,
+    VectorStoreQuery, VersionUpgrade, Vulnerability
     Custom: ScanLogs
     """
 
@@ -4275,6 +4849,22 @@ class Client:
     """Suggested dependency version upgrade."""
     Vulnerability: _VulnerabilityFacade
     """Open-source vulnerability records."""
+    VectorStore: _VectorStoreFacade
+    """Tenant vector store inventory (embeddings index metadata)."""
+    IdentityProvider: _V1IdentityProviderFacade
+    """IdentityProvider resource facade."""
+    License: _EndorLicenseFacade
+    """License resource facade."""
+    SavedQuery: _V1SavedQueryFacade
+    """SavedQuery resource facade."""
+    Query: _V1QueryFacade
+    """Query resource facade."""
+    QuerySimilarPackages: _V1QuerySimilarPackagesFacade
+    """QuerySimilarPackages resource facade."""
+    PackageFirewallLog: _V1PackageFirewallLogFacade
+    """PackageFirewallLog resource facade."""
+    VectorStoreQuery: _VectorStoreQueryFacade
+    """Natural-language query against a vector store (create-only)."""
     ScanLogs: ScanLogsFacade
     """Scan logs facade. Use get_logs() to fetch log messages."""
 
