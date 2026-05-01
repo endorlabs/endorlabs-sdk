@@ -5,6 +5,26 @@
       "entity_name": "MetricServiceCreateMetricBody"
     },
     {
+      "attr_name": "V1IdentityProvider",
+      "entity_name": "v1IdentityProvider"
+    },
+    {
+      "attr_name": "V1PackageFirewallLog",
+      "entity_name": "v1PackageFirewallLog"
+    },
+    {
+      "attr_name": "V1Query",
+      "entity_name": "v1Query"
+    },
+    {
+      "attr_name": "V1QuerySimilarPackages",
+      "entity_name": "v1QuerySimilarPackages"
+    },
+    {
+      "attr_name": "V1SavedQuery",
+      "entity_name": "v1SavedQuery"
+    },
+    {
       "attr_name": "Vulnerability",
       "entity_name": "v1Vuln"
     }
@@ -105,7 +125,6 @@
     "v1HuggingFaceModel",
     "v1HuggingFaceOrganization",
     "v1IPAddressPolicy",
-    "v1IdentityProvider",
     "v1ImportedRuleSet",
     "v1ImportedSBOM",
     "v1LicenseDependency",
@@ -169,23 +188,18 @@
     "v1ListVulnerabilitiesResponse",
     "v1Notification",
     "v1OnPremScheduler",
-    "v1PackageFirewallLog",
     "v1PackageLicenseOverride",
     "v1PackageLicenseQuery",
     "v1PackageManager",
     "v1PluginBinary",
     "v1ProvisioningResult",
-    "v1Query",
-    "v1QuerySimilarPackages",
     "v1RegistryIngestionCheckpoint",
     "v1SCMCredential",
-    "v1SavedQuery",
     "v1SecretRule",
     "v1SystemConfig",
     "v1Tenant",
     "v1UpdateTenantRequest",
-    "v1ValidateAPIKeyReq",
-    "v1VectorStore"
+    "v1ValidateAPIKeyReq"
   ],
   "missing_in_mapping": [],
   "status": "pass"

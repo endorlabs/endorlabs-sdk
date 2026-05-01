@@ -9,10 +9,26 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-_ALLOWED_OVERRIDE_KEYS = {"supported_ops", "scope", "parent_kind", "filter_kwarg_map"}
+_ALLOWED_OVERRIDE_KEYS = {
+    "supported_ops",
+    "scope",
+    "parent_kind",
+    "filter_kwarg_map",
+    "create_mode",
+}
 
 # Keep this intentionally small: only explicit SDK divergences belong here.
-RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {}
+RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
+    # OpenAPI exposes POST-only query endpoints (no collection GET/list).
+    "V1Query": {
+        "supported_ops": ["create"],
+        "create_mode": "payload-only",
+    },
+    "V1QuerySimilarPackages": {
+        "supported_ops": ["create"],
+        "create_mode": "payload-only",
+    },
+}
 
 
 def merge_generated_contract_with_overlay(
