@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (210 entities).
+Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (211 entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -19,13 +19,13 @@ Legend:
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `210`
-- generated artifact files: `149`
-- facade contract resources: `34`
+- mapped entities: `211`
+- generated artifact files: `151`
+- facade contract resources: `41`
 - registry parity status: `pass`
-- operation metadata entries: `734`
-- payload schema resources: `34`
-- runtime model import index entries: `34`
+- operation metadata entries: `739`
+- payload schema resources: `41`
+- runtime model import index entries: `41`
 
 | APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | AuditLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
@@ -36,35 +36,34 @@ Legend:
 | EndorLicense | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Finding | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | FindingLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
-| IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| License | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | LinterResult | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | — |
 | Metric | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
 | PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Project | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| Query | yes/no | yes/no | no/yes | no/no | no/no | tenant | — | — |
 | QueryMalware | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
-| QuerySimilarPackages | yes/no | yes/no | no/yes | no/no | no/no | tenant | — | — |
 | QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
 | Repository | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | RepositoryVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | project | — |
-| SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | ScanLogRequest | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | ScanProfile | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | ScanResult | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | project | — |
 | ScanWorkflow | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |
 | ScanWorkflowResult | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |
 | SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
+| V1IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
+| V1PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
+| V1Query | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| V1QuerySimilarPackages | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| V1SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |

@@ -1,8 +1,8 @@
 {
-  "endorctl_version": "endorctl version v1.7.940",
-  "generated_at_utc": "2026-04-29T14:55:50.526081+00:00",
+  "endorctl_version": "endorctl version v1.7.946",
+  "generated_at_utc": "2026-05-01T14:31:37.874542+00:00",
   "spec_path": ".endorlabs-context/openapiv2.swagger.json",
-  "spec_sha256": "b5f6ecd3adca5c44b4e97c0cdbf7a299f68db73a1ff03050e2accbf48b7a30ad",
+  "spec_sha256": "dabbf5a386763219c7ce2d69fc26c471f0a86a4821d9c349e27d85db75e8ffe0",
   "toolchain": {
     "datamodel-codegen": {
       "available": true

@@ -6,13 +6,13 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- mapped entities: `210`
-- generated artifact files: `149`
-- facade contract resources: `34`
+- mapped entities: `211`
+- generated artifact files: `151`
+- facade contract resources: `41`
 - registry parity status: `pass`
-- operation metadata entries: `734`
-- payload schema resources: `34`
-- runtime model import index entries: `34`
+- operation metadata entries: `739`
+- payload schema resources: `41`
+- runtime model import index entries: `41`
 
 - `APIClient`
 - `AmbiguousError`
@@ -126,35 +126,34 @@ Auto-generated inventories for stable/public surfaces.
 | EndorLicense | endor-licenses | tenant | — | list, get |
 | Finding | findings | tenant | — | list, get, create, update, delete |
 | FindingLog | finding-logs | tenant | — | list, get, create, delete |
-| IdentityProvider | identity-providers | tenant | — | list, get |
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
-| License | licenses | tenant | — | list, get |
 | LinterResult | linter-results | tenant | — | list, get, create, delete |
 | Malware | malware | oss | — | list, get |
 | Metric | metrics | tenant | — | list, get, create, update, delete |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
 | PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
-| PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
 | PackageLicense | package-licenses | oss | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
 | Project | projects | tenant | — | list, get, create, update, delete |
-| Query | queries | tenant | — | list, get |
 | QueryMalware | queries/malware | oss | — | create |
-| QuerySimilarPackages | queries/similar-packages | tenant | — | list, get |
 | QueryVulnerability | queries/vulnerabilities | oss | — | create |
 | Repository | repositories | tenant | — | list, get, create, update, delete |
 | RepositoryVersion | repository-versions | tenant | project | list, get, create, update, delete |
-| SavedQuery | saved-queries | tenant | — | list, get |
 | ScanLogRequest | scan-log-requests | tenant | — | create |
 | ScanProfile | scan-profiles | tenant | — | list, get, create, update, delete |
 | ScanResult | scan-results | tenant | project | list, get, create, update, delete |
 | ScanWorkflow | scan-workflows | tenant | — | list, get, delete |
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
+| V1IdentityProvider | identity-providers | tenant | — | list, get |
+| V1PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
+| V1Query | queries | tenant | — | create |
+| V1QuerySimilarPackages | queries/similar-packages | tenant | — | create |
+| V1SavedQuery | saved-queries | tenant | — | list, get |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |
