@@ -227,7 +227,7 @@ namespace handling, prefer `endorlabs.Client`.
 All registry resources are exposed as typed facades on `Client` using **PascalCase**
 names that match `endorctl api … --resource <Kind>` (e.g. `Project`, `QueryVulnerability`):
 
-`APIKey`, `AuditLog`, `AuthenticationLog`, `AuthorizationPolicy`, `CodeOwners`, `DependencyMetadata`, `EndorLicense`, `Finding`, `FindingLog`, `Installation`, `Invitation`, `LinterResult`, `Malware`, `Metric`, `Namespace`, `NotificationTarget`, `PackageLicense`, `PackageVersion`, `Policy`, `PolicyTemplate`, `Project`, `QueryMalware`, `QueryVulnerability`, `Repository`, `RepositoryVersion`, `ScanLogRequest`, `ScanProfile`, `ScanResult`, `ScanWorkflow`, `ScanWorkflowResult`, `SemgrepRule`, `VersionUpgrade`, `Vulnerability`
+`APIKey`, `AuditLog`, `AuthenticationLog`, `AuthorizationPolicy`, `CodeOwners`, `DependencyMetadata`, `EndorLicense`, `Finding`, `FindingLog`, `Installation`, `Invitation`, `LinterResult`, `Malware`, `Metric`, `Namespace`, `NotificationTarget`, `PackageLicense`, `PackageVersion`, `Policy`, `PolicyTemplate`, `Project`, `QueryMalware`, `QueryVulnerability`, `Repository`, `RepositoryVersion`, `ScanLogRequest`, `ScanProfile`, `ScanResult`, `ScanWorkflow`, `ScanWorkflowResult`, `SemgrepRule`, `VectorStore`, `VectorStoreQuery`, `VersionUpgrade`, `Vulnerability`
 
 Plus `ScanLogs` (SDK-only custom facade for retrieving scan log messages; not an endorctl `--resource` kind — use `ScanLogRequest` for CRUD on log requests).
 

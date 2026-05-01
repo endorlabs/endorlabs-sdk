@@ -8,7 +8,7 @@ manual overlay for intentional SDK divergences.
 from __future__ import annotations
 
 import importlib
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal, cast
 
@@ -31,7 +31,7 @@ class ResourceEntry:
     build_create_payload_fn: Callable[..., Any] | None = None
     filter_kwarg_map: dict[str, str] = field(default_factory=dict)  # pyright: ignore[reportUnknownVariableType]
     parent_kind: str | None = None
-    scope: Literal["oss"] | None = None
+    scope: Literal["system"] | Literal["oss"] | None = None
     create_mode: Literal["both"] | Literal["payload-only"] | Literal["unsupported"] = (
         "unsupported"
     )
@@ -164,8 +164,8 @@ def _build_resource_registry() -> list[ResourceEntry]:
                 f"for resource '{attr_name}'"
             )
         scope_value = item.get("scope")
-        scope = cast("Literal['oss'] | None", None)
-        if scope_value == "oss":
+        scope = cast("Literal['system'] | Literal['oss'] | None", None)
+        if scope_value in {"system", "oss"}:
             scope = scope_value
         parent_kind_value = item.get("parent_kind")
         parent_kind = parent_kind_value if isinstance(parent_kind_value, str) else None
@@ -203,7 +203,156 @@ def _build_resource_registry() -> list[ResourceEntry]:
     return registry
 
 
-RESOURCE_REGISTRY: list[ResourceEntry] = _build_resource_registry()
+def _normalize_experimental_supported_ops(value: Any) -> frozenset[str]:
+    """Default list/get; accept set, frozenset, list, tuple, or single str."""
+    if value is None:
+        return frozenset({"list", "get"})
+    if isinstance(value, (frozenset, set)):
+        return frozenset(str(x) for x in cast("Iterable[object]", value))
+    if isinstance(value, (list, tuple)):
+        return frozenset(str(x) for x in cast("Iterable[object]", value))
+    if isinstance(value, str):
+        return frozenset({value})
+    return frozenset({"list", "get"})
+
+
+# Facades appended to the generated runtime contract (see ``_build_resource_registry``).
+EXPERIMENTAL_RESOURCE_SPECS: list[dict[str, Any]] = [
+    {
+        "attr_name": "VectorStore",
+        "resource_name": "vector-stores",
+        "model_import_path": "endorlabs.resources.vector_store:VectorStore",
+        "filter_kwarg_map": {"name": "meta.name"},
+    },
+    {
+        "attr_name": "IdentityProvider",
+        "resource_name": "identity-providers",
+        "model_import_path": (
+            "endorlabs.generated.models.identity_provider_service:V1IdentityProvider"
+        ),
+    },
+    {
+        "attr_name": "License",
+        "resource_name": "licenses",
+        "model_import_path": "endorlabs.resources.endor_license:EndorLicense",
+    },
+    {
+        "attr_name": "SavedQuery",
+        "resource_name": "saved-queries",
+        "model_import_path": (
+            "endorlabs.generated.models.saved_query_service:V1SavedQuery"
+        ),
+    },
+    {
+        "attr_name": "Query",
+        "resource_name": "queries",
+        "model_import_path": "endorlabs.generated.models.query_service:V1Query",
+    },
+    {
+        "attr_name": "QuerySimilarPackages",
+        "resource_name": "queries/similar-packages",
+        "model_import_path": (
+            "endorlabs.generated.models.query_similar_packages_service:"
+            "V1QuerySimilarPackages"
+        ),
+    },
+    {
+        "attr_name": "PackageFirewallLog",
+        "resource_name": "package-firewall-logs",
+        "model_import_path": (
+            "endorlabs.generated.models.package_firewall_log_service:V1PackageFirewallLog"
+        ),
+    },
+    {
+        "attr_name": "VectorStoreQuery",
+        "resource_name": "queries/vector-stores",
+        "model_import_path": "endorlabs.resources.vector_store_query:VectorStoreQuery",
+        "supported_ops": frozenset({"create"}),
+        "create_mode": "both",
+        "build_create_payload_fn_import_path": (
+            "endorlabs.resources.vector_store_query:build_create_payload"
+        ),
+    },
+]
+
+EXPERIMENTAL_REGISTRY_ATTR_NAMES: frozenset[str] = frozenset(
+    str(s["attr_name"])
+    for s in EXPERIMENTAL_RESOURCE_SPECS
+    if isinstance(s.get("attr_name"), str)
+)
+
+
+def _build_generated_experimental_facades() -> list[ResourceEntry]:
+    """Build additional generated-model facades not yet in runtime contract.
+
+    These facades are intentionally lightweight and primarily support read/list
+    experimentation for newly exposed API resources.
+    """
+    specs = EXPERIMENTAL_RESOURCE_SPECS
+
+    existing = {entry.attr_name for entry in _build_resource_registry()}
+    entries: list[ResourceEntry] = []
+    for spec in specs:
+        attr_name = spec["attr_name"]
+        if not isinstance(attr_name, str):
+            continue
+        if attr_name in existing:
+            continue
+        model_import_path = spec.get("model_import_path")
+        if not isinstance(model_import_path, str):
+            continue
+        loaded_model = _load_symbol(model_import_path)
+        if not isinstance(loaded_model, type):
+            continue
+        supported_ops = _normalize_experimental_supported_ops(spec.get("supported_ops"))
+        scope_value = spec.get("scope")
+        scope = cast("Literal['system'] | Literal['oss'] | None", None)
+        if scope_value in {"system", "oss"}:
+            scope = scope_value
+        create_mode_value = spec.get("create_mode")
+        create_mode: (
+            Literal["both"] | Literal["payload-only"] | Literal["unsupported"]
+        ) = "unsupported"
+        if create_mode_value in {"both", "payload-only", "unsupported"}:
+            create_mode = create_mode_value
+        build_path = spec.get("build_create_payload_fn_import_path")
+        build_create_payload_fn: Callable[..., Any] | None = None
+        if isinstance(build_path, str):
+            loaded_builder = _load_symbol(build_path)
+            if not callable(loaded_builder):
+                raise TypeError(
+                    "Experimental build_create_payload import path did not resolve "
+                    f"to callable: {build_path}"
+                )
+            build_create_payload_fn = loaded_builder
+        resource_name = spec.get("resource_name")
+        if not isinstance(resource_name, str):
+            continue
+        filter_kwarg_map: dict[str, str] = {}
+        fkm = spec.get("filter_kwarg_map")
+        if isinstance(fkm, dict):
+            for key, val in cast("dict[str, Any]", fkm).items():
+                if isinstance(val, str):
+                    filter_kwarg_map[key] = val
+        entries.append(
+            ResourceEntry(
+                attr_name=attr_name,
+                resource_name=resource_name,
+                model_class=loaded_model,
+                supported_ops=supported_ops,
+                build_create_payload_fn=build_create_payload_fn,
+                filter_kwarg_map=filter_kwarg_map,
+                scope=scope,
+                create_mode=create_mode,
+            )
+        )
+    return entries
+
+
+_PRIMARY_RESOURCE_REGISTRY = _build_resource_registry()
+RESOURCE_REGISTRY: list[ResourceEntry] = _PRIMARY_RESOURCE_REGISTRY + (
+    _build_generated_experimental_facades()
+)
 
 # ``ScanLogs`` is an SDK-only facade (fetch log lines for a scan result). It is not
 # an endorctl ``--resource`` kind; CRUD for scan log *requests* uses
