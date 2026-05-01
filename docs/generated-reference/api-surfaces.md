@@ -151,8 +151,8 @@ Auto-generated inventories for stable/public surfaces.
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
 | V1IdentityProvider | identity-providers | tenant | — | list, get |
 | V1PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
-| V1Query | queries | tenant | — | list, get |
-| V1QuerySimilarPackages | queries/similar-packages | tenant | — | list, get |
+| V1Query | queries | tenant | — | create |
+| V1QuerySimilarPackages | queries/similar-packages | tenant | — | create |
 | V1SavedQuery | saved-queries | tenant | — | list, get |
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |

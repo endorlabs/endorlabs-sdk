@@ -61,8 +61,8 @@ Legend:
 | SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | V1IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | V1PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
-| V1Query | yes/no | yes/no | no/yes | no/no | no/no | tenant | — | — |
-| V1QuerySimilarPackages | yes/no | yes/no | no/yes | no/no | no/no | tenant | — | — |
+| V1Query | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| V1QuerySimilarPackages | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | V1SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |

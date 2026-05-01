@@ -52,8 +52,8 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | SemgrepRule | yes | build_create_payload | CreateSemgrepRulePayload | meta, spec | disabled, propagate |
 | V1IdentityProvider | no | N/A | N/A | N/A | N/A |
 | V1PackageFirewallLog | no | N/A | N/A | N/A | N/A |
-| V1Query | no | N/A | N/A | N/A | N/A |
-| V1QuerySimilarPackages | no | N/A | N/A | N/A | N/A |
+| V1Query | yes | N/A | N/A | N/A | N/A |
+| V1QuerySimilarPackages | yes | N/A | N/A | N/A | N/A |
 | V1SavedQuery | no | N/A | N/A | N/A | N/A |
 | VectorStore | no | N/A | N/A | N/A | N/A |
 | VectorStoreQuery | yes | build_create_payload | CreateVectorStoreQueryPayload | meta, spec | none |

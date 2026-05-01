@@ -4187,185 +4187,41 @@ class _V1PackageFirewallLogFacade:
         ...
 
 class _V1QueryFacade:
-    """V1Query resource facade."""
+    """V1Query resource facade.
 
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[V1Query]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
+    Create mode: payload-only.
+    """
 
-    def lookup(
+    def create(
         self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
         namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> V1Query:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[V1Query]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | V1Query,
-        namespace: str | None = ...,
-    ) -> V1Query:
-        """Fetch a single resource by UUID or resource object."""
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
         ...
 
 class _V1QuerySimilarPackagesFacade:
-    """V1QuerySimilarPackages resource facade."""
+    """V1QuerySimilarPackages resource facade.
 
-    def list(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> list[V1QuerySimilarPackages]:
-        """List resources with full pagination and optional concurrent mode."""
-        ...
+    Create mode: payload-only.
+    """
 
-    def lookup(
+    def create(
         self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        max_workers: int = ...,
+        payload: Any = ...,
+        *,
+        name: str | None = ...,
+        description: str | None = ...,
+        namespace_uuid: str | None = ...,
         namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
         **kwargs: Any,
     ) -> V1QuerySimilarPackages:
-        """Return the single resource matching criteria."""
-        ...
-
-    def list_iter(
-        self,
-        traverse: bool = ...,
-        concurrent: bool = ...,
-        namespace: str | None = ...,
-        list_params: ListParameters | None = ...,
-        max_pages: int | None = ...,
-        parent: Any = ...,
-        filter: str | FilterExpression | None = ...,
-        mask: str | None = ...,
-        page_size: int | None = ...,
-        page_token: str | None = ...,
-        page_id: str | None = ...,
-        sort_by: str | None = ...,
-        desc: bool | None = ...,
-        count: bool | None = ...,
-        from_date: str | None = ...,
-        to_date: str | None = ...,
-        archive: bool | None = ...,
-        pr_uuid: str | None = ...,
-        ci_run_uuid: str | None = ...,
-        **kwargs: Any,
-    ) -> Iterator[V1QuerySimilarPackages]:
-        """Yield resources one at a time; memory-efficient lazy pagination."""
-        ...
-
-    def get(
-        self,
-        id_or_resource: str | V1QuerySimilarPackages,
-        namespace: str | None = ...,
-    ) -> V1QuerySimilarPackages:
-        """Fetch a single resource by UUID or resource object."""
+        """Create a resource via ``payload=`` or kwargs (``build_create_payload``)."""
         ...
 
 class _V1SavedQueryFacade:
