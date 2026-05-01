@@ -60,6 +60,12 @@
       "update_requires_mask": true,
       "workflow_flags": []
     },
+    "identity-providers": {
+      "create_mode": "unsupported",
+      "identity_filter_fields": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
     "installations": {
       "create_mode": "both",
       "identity_filter_fields": [
@@ -114,6 +120,12 @@
       "update_requires_mask": true,
       "workflow_flags": []
     },
+    "package-firewall-logs": {
+      "create_mode": "unsupported",
+      "identity_filter_fields": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
     "package-licenses": {
       "create_mode": "both",
       "identity_filter_fields": [],
@@ -159,7 +171,25 @@
       "update_requires_mask": true,
       "workflow_flags": []
     },
+    "queries": {
+      "create_mode": "payload-only",
+      "identity_filter_fields": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
     "queries/malware": {
+      "create_mode": "both",
+      "identity_filter_fields": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    "queries/similar-packages": {
+      "create_mode": "payload-only",
+      "identity_filter_fields": [],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
+    "queries/vector-stores": {
       "create_mode": "both",
       "identity_filter_fields": [],
       "update_requires_mask": false,
@@ -187,6 +217,12 @@
         "name"
       ],
       "update_requires_mask": true,
+      "workflow_flags": []
+    },
+    "saved-queries": {
+      "create_mode": "unsupported",
+      "identity_filter_fields": [],
+      "update_requires_mask": false,
       "workflow_flags": []
     },
     "scan-log-requests": {
@@ -233,6 +269,14 @@
       "update_requires_mask": true,
       "workflow_flags": []
     },
+    "vector-stores": {
+      "create_mode": "unsupported",
+      "identity_filter_fields": [
+        "name"
+      ],
+      "update_requires_mask": false,
+      "workflow_flags": []
+    },
     "version-upgrades": {
       "create_mode": "unsupported",
       "identity_filter_fields": [],
@@ -273,7 +317,8 @@
     "repository_version_build_create": "endorlabs.resources.repository_version:build_create_payload",
     "scan_profile_build_create": "endorlabs.resources.scan_profile:build_create_payload",
     "scan_result_build_create": "endorlabs.resources.scan_result:build_create_payload",
-    "semgrep_rule_build_create": "endorlabs.resources.semgrep_rule:build_create_payload"
+    "semgrep_rule_build_create": "endorlabs.resources.semgrep_rule:build_create_payload",
+    "vector_store_query_build_create": "endorlabs.resources.vector_store_query:build_create_payload"
   },
   "model_class_import_by_name": {
     "APIKey": "endorlabs.resources.api_key:APIKey",
@@ -308,6 +353,13 @@
     "ScanWorkflow": "endorlabs.resources.scan_workflow:ScanWorkflow",
     "ScanWorkflowResult": "endorlabs.resources.scan_workflow_result:ScanWorkflowResult",
     "SemgrepRule": "endorlabs.resources.semgrep_rule:SemgrepRule",
+    "V1IdentityProvider": "endorlabs.generated.models.identity_provider_service:V1IdentityProvider",
+    "V1PackageFirewallLog": "endorlabs.generated.models.package_firewall_log_service:V1PackageFirewallLog",
+    "V1Query": "endorlabs.generated.models.query_service:V1Query",
+    "V1QuerySimilarPackages": "endorlabs.generated.models.query_similar_packages_service:V1QuerySimilarPackages",
+    "V1SavedQuery": "endorlabs.generated.models.saved_query_service:V1SavedQuery",
+    "VectorStore": "endorlabs.resources.vector_store:VectorStore",
+    "VectorStoreQuery": "endorlabs.resources.vector_store_query:VectorStoreQuery",
     "VersionUpgrade": "endorlabs.resources.version_upgrade:VersionUpgrade",
     "Vulnerability": "endorlabs.resources.vulnerability:Vulnerability"
   },
@@ -491,6 +543,10 @@
         "spec.remediation"
       ]
     },
+    "identity-providers": {
+      "immutable_fields": [],
+      "mutable_fields": []
+    },
     "installations": {
       "immutable_fields": [
         "meta.create_time",
@@ -631,6 +687,10 @@
         "meta.tags"
       ]
     },
+    "package-firewall-logs": {
+      "immutable_fields": [],
+      "mutable_fields": []
+    },
     "package-licenses": {
       "immutable_fields": [
         "meta.create_time",
@@ -755,7 +815,34 @@
         "processing_status.scan_state"
       ]
     },
+    "queries": {
+      "immutable_fields": [],
+      "mutable_fields": []
+    },
     "queries/malware": {
+      "immutable_fields": [
+        "meta.create_time",
+        "meta.created_by",
+        "meta.index_data",
+        "meta.kind",
+        "meta.references",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.version",
+        "tenant_meta.namespace",
+        "uuid"
+      ],
+      "mutable_fields": [
+        "meta.description",
+        "meta.tags"
+      ]
+    },
+    "queries/similar-packages": {
+      "immutable_fields": [],
+      "mutable_fields": []
+    },
+    "queries/vector-stores": {
       "immutable_fields": [
         "meta.create_time",
         "meta.created_by",
@@ -834,6 +921,10 @@
         "meta.tags",
         "spec"
       ]
+    },
+    "saved-queries": {
+      "immutable_fields": [],
+      "mutable_fields": []
     },
     "scan-log-requests": {
       "immutable_fields": [
@@ -955,6 +1046,25 @@
         "meta.name",
         "meta.tags",
         "spec"
+      ]
+    },
+    "vector-stores": {
+      "immutable_fields": [
+        "meta.create_time",
+        "meta.created_by",
+        "meta.index_data",
+        "meta.kind",
+        "meta.references",
+        "meta.update_time",
+        "meta.updated_by",
+        "meta.upsert_time",
+        "meta.version",
+        "tenant_meta.namespace",
+        "uuid"
+      ],
+      "mutable_fields": [
+        "meta.description",
+        "meta.tags"
       ]
     },
     "version-upgrades": {

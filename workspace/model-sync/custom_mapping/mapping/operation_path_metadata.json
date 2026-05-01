@@ -1,5 +1,5 @@
 {
-  "operation_count": 734,
+  "operation_count": 739,
   "operations": [
     {
       "method": "get",
@@ -180,6 +180,22 @@
       ],
       "tags": [
         "AgenticInventoryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "AISASTScanCacheService_UpdateAISASTScanCache",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/ai-sast-scan-caches",
+      "request_refs": [
+        "AISASTScanCacheServiceUpdateAISASTScanCacheBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISASTScanCache"
+      ],
+      "tags": [
+        "AISASTScanCacheService"
       ],
       "x_internal": true
     },
@@ -2486,6 +2502,63 @@
       ],
       "tags": [
         "AIRequestService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AISASTScanCacheService_ListAISASTScanCaches",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-scan-caches",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListAISASTScanCachesResponse"
+      ],
+      "tags": [
+        "AISASTScanCacheService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "post",
+      "operation_id": "AISASTScanCacheService_CreateAISASTScanCache",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-scan-caches",
+      "request_refs": [
+        "AISASTScanCacheServiceCreateAISASTScanCacheBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISASTScanCache"
+      ],
+      "tags": [
+        "AISASTScanCacheService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "AISASTScanCacheService_DeleteAISASTScanCache",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-scan-caches/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "AISASTScanCacheService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AISASTScanCacheService_GetAISASTScanCache",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-scan-caches/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISASTScanCache"
+      ],
+      "tags": [
+        "AISASTScanCacheService"
       ],
       "x_internal": true
     },
