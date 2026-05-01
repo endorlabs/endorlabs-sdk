@@ -225,45 +225,6 @@ EXPERIMENTAL_RESOURCE_SPECS: list[dict[str, Any]] = [
         "filter_kwarg_map": {"name": "meta.name"},
     },
     {
-        "attr_name": "IdentityProvider",
-        "resource_name": "identity-providers",
-        "model_import_path": (
-            "endorlabs.generated.models.identity_provider_service:V1IdentityProvider"
-        ),
-    },
-    {
-        "attr_name": "License",
-        "resource_name": "licenses",
-        "model_import_path": "endorlabs.resources.endor_license:EndorLicense",
-    },
-    {
-        "attr_name": "SavedQuery",
-        "resource_name": "saved-queries",
-        "model_import_path": (
-            "endorlabs.generated.models.saved_query_service:V1SavedQuery"
-        ),
-    },
-    {
-        "attr_name": "Query",
-        "resource_name": "queries",
-        "model_import_path": "endorlabs.generated.models.query_service:V1Query",
-    },
-    {
-        "attr_name": "QuerySimilarPackages",
-        "resource_name": "queries/similar-packages",
-        "model_import_path": (
-            "endorlabs.generated.models.query_similar_packages_service:"
-            "V1QuerySimilarPackages"
-        ),
-    },
-    {
-        "attr_name": "PackageFirewallLog",
-        "resource_name": "package-firewall-logs",
-        "model_import_path": (
-            "endorlabs.generated.models.package_firewall_log_service:V1PackageFirewallLog"
-        ),
-    },
-    {
         "attr_name": "VectorStoreQuery",
         "resource_name": "queries/vector-stores",
         "model_import_path": "endorlabs.resources.vector_store_query:VectorStoreQuery",
@@ -290,7 +251,9 @@ def _build_generated_experimental_facades() -> list[ResourceEntry]:
     """
     specs = EXPERIMENTAL_RESOURCE_SPECS
 
-    existing = {entry.attr_name for entry in _build_resource_registry()}
+    primary_registry = _build_resource_registry()
+    existing = {entry.attr_name for entry in primary_registry}
+    existing_model_classes = {entry.model_class for entry in primary_registry}
     entries: list[ResourceEntry] = []
     for spec in specs:
         attr_name = spec["attr_name"]
@@ -303,6 +266,10 @@ def _build_generated_experimental_facades() -> list[ResourceEntry]:
             continue
         loaded_model = _load_symbol(model_import_path)
         if not isinstance(loaded_model, type):
+            continue
+        if loaded_model in existing_model_classes:
+            # Contract/stub tooling keys facade rows by model-class name; skip
+            # experimental aliases that would duplicate existing modeled rows.
             continue
         supported_ops = _normalize_experimental_supported_ops(spec.get("supported_ops"))
         scope_value = spec.get("scope")
