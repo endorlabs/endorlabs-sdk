@@ -1849,7 +1849,7 @@
       "canonical_entities": [
         "v1Query"
       ],
-      "create_mode": "unsupported",
+      "create_mode": "payload-only",
       "create_payload_entities": [
         "QueryServiceCreateQueryBody"
       ],
@@ -1865,8 +1865,7 @@
       "resource_name": "queries",
       "scope": "tenant",
       "supported_ops": [
-        "get",
-        "list"
+        "create"
       ],
       "update_payload_entities": [],
       "update_requires_mask": false,
@@ -1882,7 +1881,7 @@
       "canonical_entities": [
         "v1QuerySimilarPackages"
       ],
-      "create_mode": "unsupported",
+      "create_mode": "payload-only",
       "create_payload_entities": [
         "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody"
       ],
@@ -1898,8 +1897,7 @@
       "resource_name": "queries/similar-packages",
       "scope": "tenant",
       "supported_ops": [
-        "get",
-        "list"
+        "create"
       ],
       "update_payload_entities": [],
       "update_requires_mask": false,
