@@ -354,6 +354,10 @@
           "description": "Optional HuggingFace API token used to authenticate requests for\nprivate models within the organization. When omitted, only publicly\naccessible models are discovered.",
           "type": "string"
         },
+        "avatar_url": {
+          "description": "Avatar URL of the HuggingFace organization.",
+          "type": "string"
+        },
         "host_url": {
           "title": "The HuggingFace organization URL.\nExample: \"https://huggingface.co/meta-llama\"",
           "type": "string"
