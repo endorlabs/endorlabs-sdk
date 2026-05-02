@@ -8,6 +8,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
+| [project-agent-context](project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](project-agent-context/MULTIPASS_LLM_CONTRACT.md) | Skill-owned (`scripts/agent_context/`) |
 | [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
 | [dependency-provenance](dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [dependency-finding-provenance](dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
@@ -29,9 +30,9 @@ Skills use progressive disclosure to minimize context window usage:
 
 ## Location
 
-These skills live in `.cursor/skills/` and are discovered automatically by Cursor.
+**Source of truth:** this directory, `skills-src/`, is mirrored into [`.cursor/skills/`](../.cursor/skills/) for Cursor discovery. Edit here first, then sync the same skill tree to `.cursor/skills/` (see [AGENTS.md](../AGENTS.md) — agent skills table).
 
-For **Claude Code** users: copy this directory to `.claude/skills/` at the repo root. The SKILL.md format is identical.
+For **Claude Code** users: copy either `skills-src/` or `.cursor/skills/` to `.claude/skills/` at the repo root. The SKILL.md format is identical.
 
 For **Claude API** users: zip each skill directory and upload via the `/v1/skills` endpoints. See [Anthropic Skills API docs](https://platform.claude.com/docs/en/build-with-claude/skills-guide).
 
