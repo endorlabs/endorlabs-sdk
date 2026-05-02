@@ -8,6 +8,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
+| [project-agent-context](project-agent-context/) | Multi-pass bundle (PV index, hydration, optional sweep); see `MULTIPASS_LLM_CONTRACT.md` | Skill-owned (`scripts/agent_context/`) |
 | [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
 | [dependency-finding-provenance](dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
 | [fetch-and-search-call-graph](fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | Skill-owned (`scripts/callgraph/`) |
@@ -29,7 +30,7 @@ Skills use progressive disclosure to minimize context window usage:
 
 ## Location
 
-These skills live in `.cursor/skills/` and are discovered automatically by Cursor.
+**Canonical copy:** [skills-src/](../../skills-src/); this directory is kept in sync for Cursor discovery. Prefer editing `skills-src/` and mirroring here.
 
 For **Claude Code** users: copy this directory to `.claude/skills/` at the repo root. The SKILL.md format is identical.
 
