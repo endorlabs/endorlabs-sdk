@@ -140,6 +140,9 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | Skill | When to use |
 |-------|-------------|
 | [custom-sast-rules](.cursor/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
+| [project-agent-context](.cursor/skills/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`scripts/agent_context/`) |
+| [map-project-dependency-relationships](.cursor/skills/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `scripts/relationship_mapping/` |
+| [fetch-and-search-call-graph](.cursor/skills/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts |
 | [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
 | [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
 | [sso-integration-validation-troubleshooting](.cursor/skills/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
