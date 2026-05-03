@@ -82,7 +82,7 @@ Verify: compiles without errors, flags expected files, zero false positives.
 
 ## Phase 4: Import to Platform
 
-Use the SAST Rule Manager script (`scripts/sast_rule_manager.py`) for all platform operations. It validates every rule against the API-accepted schema before import and handles orphaned findings on delete.
+Use the SAST Rule Manager script (`.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`) for all platform operations. It validates every rule against the API-accepted schema before import and handles orphaned findings on delete.
 
 ```bash
 # Import all rules (validates each rule dict before calling the API)
@@ -135,5 +135,5 @@ Compare finding count and affected files against local OpenGrep/Semgrep results.
 | Threat model | Manual / checklist | Threat spec per finding |
 | Author | Text editor + reference rules | Rule YAML file |
 | Validate | `opengrep scan` / `semgrep scan` | Finding count + file list |
-| Import | `scripts/sast_rule_manager.py` | Rule created in namespace |
+| Import | `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py` | Rule created in namespace |
 | Verify | `endorctl scan --sast` | Platform findings match local |

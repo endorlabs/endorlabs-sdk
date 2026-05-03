@@ -1,19 +1,16 @@
-"""Unit tests for endorlabs.workflows.diagnostics."""
+"""Unit tests for dependency reports and scan log comparison workflows."""
 
 from unittest.mock import Mock
 
-from endorlabs.workflows.diagnostics import (
+from endorlabs.workflows.dependencies import (
     DependencyReport,
-    DependencyStats,
-    ScanLogComparison,
-    ScanLogEntry,
-    SelfValidationScorecard,
     VisibilityReport,
-    VisibilityStats,
-    build_self_validation_scorecard,
     check_dependency_visibility,
-    compare_scan_logs,
     list_project_dependencies,
+)
+from endorlabs.workflows.troubleshooting_scans.scan_logs import (
+    ScanLogComparison,
+    compare_scan_logs,
 )
 
 # ---------------------------------------------------------------------------
@@ -215,60 +212,3 @@ class TestCheckDependencyVisibility:
         check_dependency_visibility(client, "ns")
         kw = client.DependencyMetadata.list.call_args.kwargs
         assert "filter" not in kw
-
-
-class TestBuildSelfValidationScorecard:
-    """Tests for deterministic scorecard generation."""
-
-    def test_builds_expected_sections(self) -> None:
-        dep_report = DependencyReport(
-            stats=DependencyStats(
-                total=3,
-                unique_packages=2,
-                unique_importers=1,
-                by_namespace={"tenant.a": 2, "tenant.b": 1},
-            )
-        )
-        visibility_report = VisibilityReport(
-            stats=VisibilityStats(total=3, public=1, private=1, unknown=1)
-        )
-        scan_comparison = ScanLogComparison(
-            entries=[
-                ScanLogEntry(scan_result_uuid="s1", status="OK", exit_code=0),
-                ScanLogEntry(scan_result_uuid="s2", status="FAILED", exit_code=1),
-            ]
-        )
-
-        scorecard = build_self_validation_scorecard(
-            repository="https://github.com/org/repo.git",
-            namespace="tenant",
-            findings_total=8,
-            findings_critical=2,
-            findings_high=3,
-            policies_total=5,
-            dependency_report=dep_report,
-            visibility_report=visibility_report,
-            scan_comparison=scan_comparison,
-            generated_at="2026-01-01T00:00:00Z",
-        )
-        assert isinstance(scorecard, SelfValidationScorecard)
-        assert scorecard.repository == "https://github.com/org/repo.git"
-        assert scorecard.risk["findings_total"] == 8
-        assert scorecard.reliability["scan_failure_rate"] == 0.5
-        assert scorecard.dependencies["total"] == 3
-        assert scorecard.policies["total"] == 5
-
-    def test_failure_rate_zero_without_scans(self) -> None:
-        scorecard = build_self_validation_scorecard(
-            repository="repo",
-            namespace="ns",
-            findings_total=0,
-            findings_critical=0,
-            findings_high=0,
-            policies_total=0,
-            dependency_report=DependencyReport(),
-            visibility_report=VisibilityReport(),
-            scan_comparison=ScanLogComparison(),
-            generated_at="2026-01-01T00:00:00Z",
-        )
-        assert scorecard.reliability["scan_failure_rate"] == 0.0

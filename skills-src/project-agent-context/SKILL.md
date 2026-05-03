@@ -16,9 +16,9 @@ Produce a **versioned, machine-readable context bundle** for a single project: `
 ## Ordering
 
 1. **Resolve credentials** — `uv run --env-file .env` (or equivalent) so `endorlabs.Client` can authenticate. Tenant-scoped; never paste secrets into skills or logs.
-2. **Single-project context export** — run `scripts/agent_context/export_project_context.py` with `--tenant`, `--project`, optional `--namespace`, and `--output-dir` (default `.tmp/`). **Done** means `context_manifest.json` exists and `artifacts` paths resolve on disk.
+2. **Single-project context export** — run `uv run endor-agent-context` (or `uv run python -m endorlabs.workflows.agent_context.cli`) with `--tenant`, `--project`, optional `--namespace`, and `--output-dir` (default `.tmp/`). **Done** means `context_manifest.json` exists and `artifacts` paths resolve on disk. If `--project` is a repo URL and resolution fails with **multiple matches**, pass **`--namespace`** for the intended child namespace or use the **24-hex project UUID** instead (same as `endorlabs.workflows.projects.resolve`). See [AGENTS.md](../../AGENTS.md) (Agent notes — ambiguous project URL).
 3. **Read the manifest first (LLM)** — open only `context_manifest.json`, then follow progressive disclosure (see [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md)).
-4. **Namespace project graph** (different question) — for *cross-project* edges in a namespace, use `scripts/relationship_mapping/map_project_dependency_relationships.py` ([map-project-dependency-relationships](map-project-dependency-relationships/SKILL.md)); not a substitute for the per-project bundle.
+4. **Namespace project graph** (different question) — for *cross-project* edges in a namespace, use `uv run python -m endorlabs.workflows.relationships.map` ([map-project-dependency-relationships](map-project-dependency-relationships/SKILL.md)); not a substitute for the per-project bundle.
 5. **Call graphs** — Pass 3: **`--callgraph-sweep`** on the export script, or standalone [fetch-and-search-call-graph](fetch-and-search-call-graph/SKILL.md).
 6. **Findings, scans, lineage** — [retrieve-scan-results](retrieve-scan-results/SKILL.md), [dependency-provenance](dependency-provenance/SKILL.md), [dependency-finding-provenance](dependency-finding-provenance/SKILL.md).
 
@@ -32,16 +32,16 @@ Produce a **versioned, machine-readable context bundle** for a single project: `
 
 **LLM contract:** Always interpret `inventory`, `selection`, `hydration`, and `warnings` before claiming full coverage. Details: [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md).
 
-## Scripts and SDK entrypoints
+## Library and CLI entrypoints
 
 | Step | Path |
 |------|------|
-| Project resolution | `scripts/agent_context/resolve_project.py` |
-| Context export + manifest | `scripts/agent_context/export_project_context.py` |
-| PV index helpers | `scripts/agent_context/package_versions_index.py` |
-| Call-graph sweep (Pass 3) | `scripts/agent_context/callgraph_sweep.py` |
-| Relationship map (namespace) | `scripts/relationship_mapping/map_project_dependency_relationships.py` |
-| Standalone call graph | `scripts/callgraph/fetch_project_callgraph.py`, `scripts/callgraph/search_callgraph.py` |
+| Project resolution | `endorlabs.workflows.projects.resolve` |
+| Context export + manifest | `endorlabs.workflows.agent_context.export` / `endor-agent-context` |
+| PV index helpers | `endorlabs.workflows.agent_context.package_versions` |
+| Call-graph sweep (Pass 3) | `endorlabs.workflows.callgraph.sweep` (via export `--callgraph-sweep`) |
+| Relationship map (namespace) | `python -m endorlabs.workflows.relationships.map` |
+| Local search on decoded JSON | `endor-callgraph-search` / `python -m endorlabs.workflows.callgraph.search` |
 
 ## Inputs
 

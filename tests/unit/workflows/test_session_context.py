@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from unittest.mock import Mock
 
-from endorlabs.workflows.session_context import (
+from endorlabs.workflows.agent_context.session_artifacts import (
     FindingsContext,
     PoliciesContext,
     SessionResult,

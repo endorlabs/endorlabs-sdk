@@ -279,7 +279,7 @@ Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.
 
 ## Scripts and automation
 
-Utility scripts live in `scripts/` (stub generation, debug helpers). For SAST rule management (import, export, delete, configure), see `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`. The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [scripts/README.md](scripts/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). For SAST rule management (import, export, delete, configure), see `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`. The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

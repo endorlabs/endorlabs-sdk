@@ -53,7 +53,7 @@ jobs:
 
       - name: Verify canonical model-sync artifacts are up to date
         run: |
-          uv run python scripts/model_sync.py
+          uv run python devtools/model_sync.py
           if [ ! -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json ]; then
             echo "::error::Model-sync mapping manifest was not generated."
             exit 1
@@ -93,18 +93,18 @@ jobs:
 
       - name: Verify generated client stub is up to date
         run: |
-          uv run python scripts/generate_client_stub.py
+          uv run python devtools/generate_client_stub.py
           if ! git diff --exit-code -- src/endorlabs/client_surface.pyi; then
-            echo "::error::client_surface.pyi is out of date. Run: uv run python scripts/generate_client_stub.py"
+            echo "::error::client_surface.pyi is out of date. Run: uv run python devtools/generate_client_stub.py"
             git --no-pager diff -- src/endorlabs/client_surface.pyi
             exit 1
           fi
 
       - name: Verify generated reference docs are up to date
         run: |
-          uv run python scripts/generate_reference_docs.py
+          uv run python devtools/generate_reference_docs.py
           if ! git diff --exit-code -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json; then
-            echo "::error::Reference docs are out of date. Run: uv run python scripts/generate_reference_docs.py"
+            echo "::error::Reference docs are out of date. Run: uv run python devtools/generate_reference_docs.py"
             git --no-pager diff -- docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json
             exit 1
           fi

@@ -24,9 +24,9 @@ Return JSON artifacts only.
 5. Computes direct and indirect project-to-project relationships.
 6. Writes JSON outputs with confidence/evidence details.
 
-## Script
+## CLI
 
-- `scripts/relationship_mapping/map_project_dependency_relationships.py`
+- `python -m endorlabs.workflows.relationships.map`
   - Namespace-wide relationship graph extractor.
   - Requires **`--tenant`** and **`--namespace`**. Lists `Project` and `PackageVersion` with `traverse=True` from the given namespace; lists `DependencyMetadata` per project filtered to `spec.importer_data.project_uuid` (when exposed on the model).
   - Writes:
@@ -37,7 +37,7 @@ Return JSON artifacts only.
 Example:
 
 ```bash
-uv run --env-file .env python scripts/relationship_mapping/map_project_dependency_relationships.py \
+uv run --env-file .env python -m endorlabs.workflows.relationships.map \
   --tenant "<endor_or_auth_tenant>" \
   --namespace "<tenant.namespace>" \
   --max-depth 3 \
@@ -46,7 +46,7 @@ uv run --env-file .env python scripts/relationship_mapping/map_project_dependenc
 
 ## Purpose
 
-For a **tenant/namespace** inventory of how repositories relate through package production and consumption, with bounded API usage. Not a substitute for single-project SBOM export (`scripts/agent_context/export_project_context.py`); use that when the subject is one repository’s dependency context and manifest.
+For a **tenant/namespace** inventory of how repositories relate through package production and consumption, with bounded API usage. Not a substitute for single-project SBOM export (`uv run endor-agent-context`); use that when the subject is one repository’s dependency context and manifest.
 
 ## Cross-skill boundary (LLM)
 
@@ -77,6 +77,8 @@ Three JSON files under `output_dir` (see [JSON outputs](#json-outputs-required) 
 
 - `max_pages` / `dep_metadata_max_pages` prevent unbounded namespace-wide listing. Do not set these to “fetch everything” without explicit approval.
 - Prefer the same `traverse=True` + namespace pattern documented here when listing from tenant root.
+
+> **Agent note — empty edges vs truncation:** Producer-side matching uses a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `direct_project_edge_count` is **0**, distinguish (a) **no consumer `DependencyMetadata`** rows / no overlapping producer coordinates from (b) **truncated PV listing** where a producer never entered the capped window. Raise caps only with user approval. Tenant-wide context: [AGENTS.md](../../AGENTS.md) (Agent notes — relationship map coverage).
 
 ## Documentation hops
 
