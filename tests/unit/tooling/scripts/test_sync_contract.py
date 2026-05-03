@@ -50,7 +50,9 @@ def _spec() -> dict:
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "object": {"$ref": "#/definitions/FindingUpdateBody"},
+                                    "object": {
+                                        "$ref": "#/definitions/FindingUpdateBody"
+                                    },
                                     "request": {
                                         "$ref": "#/definitions/UpdateRequest",
                                     },

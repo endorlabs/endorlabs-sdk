@@ -17,10 +17,10 @@ Turn raw call graph storage into **searchable, join-friendly JSON** (`decoded_ca
 
 1. **Credentials** — `uv run --env-file .env` (or equivalent) for `endorlabs.Client`.
 2. **Fetch (choose one):**
-   - **Standalone** — `scripts/callgraph/fetch_project_callgraph.py` with `--tenant`, `--namespace`, `--project`, and optional `--decode-zstd`. Use a namespace consistent with how the `Project` resource is stored: projects may live under a **child** `tenant_meta.namespace` while the CLI still accepts a **parent** namespace for listing in some tools; if results are empty, align `--namespace` with the project’s `tenant_meta.namespace` from the UI or API.
-   - **Context bundle** — if you already ran [project-agent-context](project-agent-context/SKILL.md) with **`--callgraph-sweep`**, use **`context_manifest.json`** in the bundle: it lists artifact paths, including the call-graph sweep subfolder and (when used) a sweep manifest. You can skip a second `fetch_project_callgraph` when the manifest already points at decoded or raw exports you need.
-3. **Discover paths** — open the `manifest.json` in the output directory (from `fetch_project_callgraph`) or the nested call-graph object under `context_manifest.json` `artifacts` when using the export workflow.
-4. **Search** — `scripts/callgraph/search_callgraph.py` with paths to callables/edges and filter patterns.
+   - **Context bundle (recommended)** — run [project-agent-context](project-agent-context/SKILL.md) with **`--callgraph-sweep`** (`uv run endor-agent-context ...`). Use **`context_manifest.json`** `artifacts.callgraph_sweep` for paths to raw/decoded exports and the sweep manifest.
+   - **Programmatic** — `endorlabs.tools.dependency_explorer.retrieve_call_graph_full` plus `decode_callgraph` (same primitives as `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep`) when you need a one-off fetch outside the export CLI.
+3. **Discover paths** — from `context_manifest.json` `artifacts.callgraph_sweep`, or from a sweep output directory’s `manifest.json`. Use a namespace consistent with the project’s `tenant_meta.namespace` when listing or resolving the project.
+4. **Search** — `uv run endor-callgraph-search` (or `uv run python -m endorlabs.workflows.callgraph.search`) with `--callables`, `--edges`, and filter patterns.
 5. **Reason** — join on method IDs; treat edges as static analysis facts, not proof of runtime execution.
 
 ## Why this skill exists
@@ -29,13 +29,11 @@ Raw call graph payloads are not directly search-friendly. Safe retrieval should
 start from decoded files (`decoded_callables.json`, `decoded_edges.json`) and
 use method IDs for joins, intersections, and path checks.
 
-## Scripts and SDK entrypoints
+## Library and CLI entrypoints
 
-- `scripts/callgraph/fetch_project_callgraph.py`
-  - Fetches project call graph artifacts; optional `--decode-zstd` writes decoded node/edge files.
-- `scripts/callgraph/search_callgraph.py`
-  - Searches decoded callables and edges with deterministic filters.
-- Optional related bundle: `scripts/agent_context/export_project_context.py` with `--callgraph-sweep` (see [project-agent-context](project-agent-context/SKILL.md)).
+- `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep` — enumerates PVs and writes call graph exports (used by agent context `--callgraph-sweep`).
+- `endorlabs.workflows.callgraph.search` — searches decoded callables/edges (`endor-callgraph-search`).
+- Bundle orchestration: `uv run endor-agent-context ... --callgraph-sweep` (see [project-agent-context](project-agent-context/SKILL.md)).
 
 ## Inputs
 
@@ -47,7 +45,7 @@ use method IDs for joins, intersections, and path checks.
 
 ## Outputs
 
-- A directory (often under `.tmp/`) with `manifest.json` mapping artifact paths from `fetch_project_callgraph`.
+- A directory (often under `.tmp/`) with sweep output and `manifest.json` mapping artifact paths when using the sweep workflow.
 - Decoded `decoded_*.json` when `--decode-zstd` is set.
 - When using **project context export** with a sweep, **`context_manifest.json`** at the bundle root: read `artifacts.callgraph_sweep` to locate the sweep output (or `null` if the sweep was not run).
 
@@ -57,7 +55,7 @@ use method IDs for joins, intersections, and path checks.
 
 ## Multi-pass bundles (project-agent-context)
 
-When the user ran `export_project_context.py` with **`--callgraph-sweep`** (Pass 3), **`context_manifest.json`** records `artifacts.callgraph_sweep` with export counts and list caps. **Read that object before** concluding “missing call graphs” — Pass 1 may list many PVs while Pass 2 only hydrated a subset unless `--hydrate-pv-uuids` / `--hydrate-top-n` was used.
+When the user ran `endor-agent-context` with **`--callgraph-sweep`** (Pass 3), **`context_manifest.json`** records `artifacts.callgraph_sweep` with export counts and list caps. **Read that object before** concluding “missing call graphs” — Pass 1 may list many PVs while Pass 2 only hydrated a subset unless `--hydrate-pv-uuids` / `--hydrate-top-n` was used.
 
 **Progressive disclosure:** full pass/manifest rules live in [project-agent-context/MULTIPASS_LLM_CONTRACT.md](../project-agent-context/MULTIPASS_LLM_CONTRACT.md). Load it only when you need truncation/escalation semantics.
 
@@ -66,19 +64,21 @@ When the user ran `export_project_context.py` with **`--callgraph-sweep`** (Pass
 1. Fetch and decode:
 
 ```bash
-uv run --env-file .env python scripts/callgraph/fetch_project_callgraph.py \
+uv run --env-file .env endor-agent-context \
   --tenant "<tenant>" \
   --namespace "<namespace>" \
   --project "<project-uuid-or-name>" \
+  --output-dir .tmp \
+  --callgraph-sweep \
   --decode-zstd
 ```
 
-2. Use the generated `manifest.json` to locate decoded files.
+2. Use `context_manifest.json` `artifacts.callgraph_sweep` (or the sweep folder `manifest.json`) to locate decoded files.
 
 3. Search nodes/edges:
 
 ```bash
-uv run --env-file .env python scripts/callgraph/search_callgraph.py \
+uv run endor-callgraph-search \
   --callables "<decoded_callables.json>" \
   --edges "<decoded_edges.json>" \
   --node-pattern "requests" \
