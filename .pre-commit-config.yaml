@@ -9,7 +9,7 @@
 #
 # We use local `uv run` hooks instead of astral-sh/ruff-pre-commit because that
 # hook passes --force-exclude, which skips paths listed in [tool.ruff] exclude
-# (including scripts/) even when those files are staged — diverging from CI.
+# (including devtools/) even when those files are staged — diverging from CI.
 #
 # Install: uv run pre-commit install
 # Run manually: uv run pre-commit run --all-files
@@ -54,15 +54,15 @@ repos:
           - check
           - --select
           - E,F,I,UP
-          - scripts/model_sync.py
-          - scripts/model_sync_pr_deltas.py
-          - scripts/generate_client_stub.py
-          - scripts/generate_reference_docs.py
+          - devtools/model_sync.py
+          - devtools/model_sync_pr_deltas.py
+          - devtools/generate_client_stub.py
+          - devtools/generate_reference_docs.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(scripts/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: pyright-ci-critical-automation
         name: pyright (CI-critical automation scripts)
@@ -72,15 +72,15 @@ repos:
           - pyright
           - --project
           - pyproject.toml
-          - scripts/model_sync.py
-          - scripts/model_sync_pr_deltas.py
-          - scripts/generate_client_stub.py
-          - scripts/generate_reference_docs.py
+          - devtools/model_sync.py
+          - devtools/model_sync_pr_deltas.py
+          - devtools/generate_client_stub.py
+          - devtools/generate_reference_docs.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(scripts/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: model-sync-contract-validate
         name: model-sync contract validation
@@ -94,7 +94,7 @@ repos:
         pass_filenames: false
         require_serial: true
         stages: [pre-push]
-        files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(scripts/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
+        files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
   # --- Spell checking ---
   - repo: https://github.com/codespell-project/codespell

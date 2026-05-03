@@ -113,7 +113,7 @@ jobs:
 
       - name: Run canonical model sync generation
         run: |
-          uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
+          uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
           test -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json
           test -f workspace/model-sync/custom_mapping/provenance.json
           test -f workspace/model-sync/custom_mapping/artifacts_manifest.json
@@ -154,7 +154,7 @@ jobs:
       - name: Compute resource delta JSON
         id: resource_delta_json
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --resource-json-only
+          uv run python devtools/model_sync_pr_deltas.py --auto-baseline --write-github-output --resource-json-only
 
       - name: Detect non-generated src drift
         id: src_drift
@@ -458,7 +458,7 @@ jobs:
           needs.validate-generated-artifacts.outputs.version_changed == 'true' ||
           github.event_name == 'workflow_dispatch'
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --upstream-only
+          uv run python devtools/model_sync_pr_deltas.py --auto-baseline --write-github-output --upstream-only
 
       - name: Compute resource and attribute deltas
         id: resource_delta
@@ -468,13 +468,13 @@ jobs:
           needs.validate-generated-artifacts.outputs.version_changed == 'true' ||
           github.event_name == 'workflow_dispatch'
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --resource-only
+          uv run python devtools/model_sync_pr_deltas.py --auto-baseline --write-github-output --resource-only
 
       - name: Compute provenance delta
         id: provenance_delta
         if: steps.diff_scope.outputs.provenance_changed == 'true'
         run: |
-          uv run python scripts/model_sync_pr_deltas.py --auto-baseline --write-github-output --provenance-only
+          uv run python devtools/model_sync_pr_deltas.py --auto-baseline --write-github-output --provenance-only
 
       - name: Push model-sync branch (manual PR)
         if: steps.diff_scope.outputs.generated_changed == 'true'

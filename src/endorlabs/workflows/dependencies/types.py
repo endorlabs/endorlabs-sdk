@@ -1,0 +1,47 @@
+"""Datatypes for dependency listing and visibility workflows."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from ..common import WorkflowResult
+
+
+@dataclass
+class DependencyStats:
+    """Aggregated statistics about dependencies."""
+
+    total: int = 0
+    by_namespace: dict[str, int] = field(default_factory=dict)
+    by_ecosystem: dict[str, int] = field(default_factory=dict)
+    by_scope: dict[str, int] = field(default_factory=dict)
+    by_reachability: dict[str, int] = field(default_factory=dict)
+    unique_packages: int = 0
+    unique_importers: int = 0
+
+
+@dataclass
+class DependencyReport(WorkflowResult):
+    """Result of listing project dependencies."""
+
+    stats: DependencyStats = field(default_factory=DependencyStats)
+    dependencies: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass
+class VisibilityStats:
+    """Aggregated visibility statistics."""
+
+    total: int = 0
+    public: int = 0
+    private: int = 0
+    unknown: int = 0
+    by_ecosystem: dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
+class VisibilityReport(WorkflowResult):
+    """Result of checking dependency visibility."""
+
+    stats: VisibilityStats = field(default_factory=VisibilityStats)
