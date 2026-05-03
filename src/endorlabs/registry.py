@@ -43,7 +43,7 @@ class ResourceEntry:
 class CustomFacadeEntry:
     """Custom facade on Client; ``factory(client, default_namespace) -> facade``.
 
-    ``pyi_*`` fields are consumed only by ``scripts/generate_client_stub.py`` so
+    ``pyi_*`` fields are consumed only by ``devtools/generate_client_stub.py`` so
     ``client_surface.pyi`` lists concrete facade types without hardcoding names in
     the generator. They are not used at runtime.
 
@@ -79,7 +79,7 @@ def _load_generated_runtime_contract() -> list[dict[str, Any]]:
     except Exception as error:
         raise RuntimeError(
             "Missing generated runtime registry contract. "
-            "Run: uv run python scripts/model_sync.py"
+            "Run: uv run python devtools/model_sync.py"
         ) from error
     runtime_contract = cast("dict[str, Any]", RUNTIME_REGISTRY_CONTRACT)
     resources_any = runtime_contract.get("resources")

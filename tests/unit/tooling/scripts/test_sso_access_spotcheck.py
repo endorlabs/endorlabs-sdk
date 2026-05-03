@@ -10,13 +10,20 @@ from types import ModuleType
 
 def _load_spotcheck_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    script_path = (
+    cursor_path = (
         repo_root
         / ".cursor"
         / "skills"
         / "sso-integration-validation-troubleshooting"
         / "sso_access_spotcheck.py"
     )
+    skills_src_path = (
+        repo_root
+        / "skills-src"
+        / "sso-integration-validation-troubleshooting"
+        / "sso_access_spotcheck.py"
+    )
+    script_path = cursor_path if cursor_path.is_file() else skills_src_path
     spec = spec_from_file_location("sso_access_spotcheck", script_path)
     assert spec is not None
     assert spec.loader is not None

@@ -49,7 +49,7 @@ API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-
 
 The files in `docs/generated-reference/` are generated from SDK and spec sources of truth:
 
-- `uv run python scripts/generate_client_stub.py`
-- `uv run python scripts/generate_reference_docs.py`
+- `uv run python devtools/generate_client_stub.py`
+- `uv run python devtools/generate_reference_docs.py`
 
 CI validates both generated surfaces and fails if they are out of date.

@@ -6,9 +6,8 @@ SDK how-to and workflows.
 - List performance (scope, traverse, debugging): [rules-of-engagement/list-query-performance.md](../rules-of-engagement/list-query-performance.md).
 - [pr-comment-config-and-parallel-comments.md](pr-comment-config-and-parallel-comments.md) — Endor findings → GitHub pull request review comments in CI; historical PRCommentConfig notes.
 - [retrieving-scan-results.md](retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
-- [self-validation-scorecard-and-replay.md](self-validation-scorecard-and-replay.md) — Deterministic scorecards, nightly artifacts, and replay-friendly snapshots.
 
-**Scan regression troubleshooting:** Agent skill [.cursor/skills/troubleshooting-scans/](../../.cursor/skills/troubleshooting-scans/); parameterized scripts in [`scripts/troubleshooting_scans/`](../../scripts/troubleshooting_scans/). Related: [list-query-performance.md](../rules-of-engagement/list-query-performance.md), [troubleshooting.md](../rules-of-engagement/troubleshooting.md).
+**Scan regression troubleshooting:** Agent skill [.cursor/skills/troubleshooting-scans/](../../.cursor/skills/troubleshooting-scans/); workflows in `endorlabs.workflows.troubleshooting_scans` (e.g. `python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow`). Related: [list-query-performance.md](../rules-of-engagement/list-query-performance.md), [troubleshooting.md](../rules-of-engagement/troubleshooting.md).
 
 ## Custom SAST Rules
 

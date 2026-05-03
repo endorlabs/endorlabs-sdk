@@ -15,6 +15,16 @@ namespaces = client.Namespace.list(traverse=True)
 projects = client.Project.list(max_pages=2)
 ```
 
+### Agent notes: projects, findings, and workflows
+
+These apply across tenants and skills; prefer them before assuming `lookup`, `main`, or full-tenant sweeps.
+
+- **Ambiguous project URL:** The same `meta.name` (e.g. identical GitHub URL) may be registered as **multiple** `Project` resources under different child namespaces. `Project.lookup(name=...)` can raise **`AmbiguousError`**. Use `Project.list` with `traverse=True` (and pick `tenant_meta.namespace`), pass an explicit **namespace** to resolution CLIs, or use the **project UUID** from the UI/API.
+- **Finding branch field:** `spec.source_code_version.ref` is **not** always `refs/heads/main`; it may be a **short branch name** (e.g. default branch label only). Use `RepositoryVersion.list` for the project, or list findings **without** a branch filter first, then narrow once you know stored ref values.
+- **Tenant-wide troubleshooting:** `python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --all-projects` is **O(projects × scans)** and can run a long time. Prefer **project-scoped** `--project-name` / `--project-uuid` for interactive RCA; reserve all-projects for batch or narrow `--limit` / `--status-filter` windows.
+- **Relationship map coverage:** `relationships.map` builds producer edges from a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `dependency_row_count` is zero, distinguish **missing DependencyMetadata in `oss`** / unscanned consumers from **pagination truncation** before raising caps (ask before “fetch everything”).
+- **List deserialization vs API drift:** Rarely, `client.*.list()` may fail with Pydantic validation on a field the API populated differently than the shipped model (**ServerError** / validation details). That is a **model-sync** or payload-tolerance issue—see **troubleshoot-sdk** and `devtools/sync/`, not something to fix by changing query parameters alone.
+
 ## Context Bootstrap (for AI Agents)
 
 If you need full Endor Labs platform context (API spec, user docs) for agentic workflows:
@@ -79,7 +89,7 @@ Model-sync automation is intentionally split:
 - **Sync + PR workflow:** [.github/workflows/model-sync-pr.yml](.github/workflows/model-sync-pr.yml) regenerates canonical artifacts and opens/updates the bot PR branch.
 - **Required CI gate:** [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml) validates all PRs (including bot-generated PRs).
 
-**Maintainer commands** (fetch spec, regenerate, compact deltas): [scripts/sync/README.md](scripts/sync/README.md).
+**Maintainer commands** (fetch spec, regenerate, compact deltas): [devtools/sync/README.md](devtools/sync/README.md).
 
 ## Repository-Scoped Rules (`.cursor/rules/`)
 
@@ -110,9 +120,10 @@ endorlabs/
 └── models/
 ```
 
-> **Stub regeneration:** `uv run python scripts/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
+> **Stub regeneration:** `uv run python devtools/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
 
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
+- **Workflows:** `endorlabs.workflows` — tenant-facing orchestration (no LLM calls): `agent_context` (context bundles), `callgraph`, `troubleshooting_scans`, `relationships`, `semgrep`, `findings`, `platform`, `notifications`, `dependencies`, `projects`. Optional CLIs: `endor-agent-context`, `endor-callgraph-search`, `endor-semgrep-inventory` (see `[project.scripts]` in [pyproject.toml](pyproject.toml)).
 - **Internal:** utils (model_validation, schema_drift), operations.
 
 ## Reference — External
@@ -140,13 +151,13 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | Skill | When to use |
 |-------|-------------|
 | [custom-sast-rules](.cursor/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
-| [project-agent-context](.cursor/skills/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`scripts/agent_context/`) |
-| [map-project-dependency-relationships](.cursor/skills/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `scripts/relationship_mapping/` |
-| [fetch-and-search-call-graph](.cursor/skills/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts |
+| [project-agent-context](.cursor/skills/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`endorlabs.workflows.agent_context`) |
+| [map-project-dependency-relationships](.cursor/skills/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `python -m endorlabs.workflows.relationships.map` |
+| [fetch-and-search-call-graph](.cursor/skills/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts (`endorlabs.workflows.callgraph`; `endor-callgraph-search` for local JSON search) |
 | [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
 | [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
 | [sso-integration-validation-troubleshooting](.cursor/skills/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
-| [troubleshooting-scans](.cursor/skills/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `scripts/troubleshooting_scans/` |
+| [troubleshooting-scans](.cursor/skills/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `python -m endorlabs.workflows.troubleshooting_scans.*` |
 | [troubleshoot-sdk](.cursor/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
 | [troubleshoot-authlog](.cursor/skills/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |
 
