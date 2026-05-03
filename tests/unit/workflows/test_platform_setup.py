@@ -1,8 +1,8 @@
-"""Unit tests for endorlabs.workflows.platform_setup."""
+"""Unit tests for endorlabs.workflows.platform.setup."""
 
 from unittest.mock import Mock
 
-from endorlabs.workflows.platform_setup import (
+from endorlabs.workflows.platform.setup import (
     AuthorizationPolicyResult,
     NamespaceResult,
     ScanProfileResult,

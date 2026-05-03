@@ -38,8 +38,8 @@ The model sync workflow:
 Release builds must validate generated SDK surfaces from the current OpenAPI snapshot before packaging artifacts:
 
 - Canonical model-sync generator must produce no unexpected diffs
-- `scripts/generate_client_stub.py` must produce no diff
-- `scripts/generate_reference_docs.py` must produce no diff
+- `devtools/generate_client_stub.py` must produce no diff
+- `devtools/generate_reference_docs.py` must produce no diff
 - Runtime generated package (`src/endorlabs/generated/**`) must be refreshed by model sync
 
 This keeps release artifacts aligned with the same spec-driven surfaces checked
@@ -59,7 +59,7 @@ in CI.
 - **Sync workflow triggers**: `repository_dispatch` (`model-sync-check`) and `workflow_dispatch` (manual override).
 - **Sync workflow responsibilities**:
   1. Download OpenAPI snapshot.
-  2. Run canonical generation (`scripts/model_sync.py --generate-stubs --generate-reference-docs`).
+  2. Run canonical generation (`devtools/model_sync.py --generate-stubs --generate-reference-docs`).
   3. Validate generated artifact presence and changed-file scope.
   4. Create or update bot PR branch for generated changes.
 
@@ -95,7 +95,7 @@ export ENDOR_API_CREDENTIALS_KEY="your-key"
 export ENDOR_API_CREDENTIALS_SECRET="your-secret"
 export ENDOR_NAMESPACE="your-namespace"
 
-uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 **Windows (PowerShell):**
@@ -106,22 +106,22 @@ $env:ENDOR_API_CREDENTIALS_KEY = "your-key"
 $env:ENDOR_API_CREDENTIALS_SECRET = "your-secret"
 $env:ENDOR_NAMESPACE = "your-namespace"
 
-uv run python scripts/model_sync.py --generate-stubs --generate-reference-docs
+uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 Check tooling availability without re-running generation:
 
 ```bash
-uv run python scripts/model_sync.py --inventory-only
+uv run python devtools/model_sync.py --inventory-only
 ```
 
-**Model consistency (static):** Use canonical model-sync artifacts as the static contract signal (no integration test run). Run: `uv run python scripts/model_sync.py` and inspect generated contract outputs under `workspace/model-sync/custom_mapping/` (`facade_contract.json`, `mapping/registry_parity_report.json`, `mapping/operation_path_metadata.json`, `mapping/payload_schemas.json`, `mapping/runtime_index.json`).
+**Model consistency (static):** Use canonical model-sync artifacts as the static contract signal (no integration test run). Run: `uv run python devtools/model_sync.py` and inspect generated contract outputs under `workspace/model-sync/custom_mapping/` (`facade_contract.json`, `mapping/registry_parity_report.json`, `mapping/operation_path_metadata.json`, `mapping/payload_schemas.json`, `mapping/runtime_index.json`).
 
 ## Scripts
 
 - **`.github/scripts/check_endorctl_version.py`** — Version check (used by first job).
-- **`scripts/model_sync.py`** — Canonical model sync generator/check entrypoint.
-- **`scripts/sync/README.md`** — Generation module responsibilities and triage map.
+- **`devtools/model_sync.py`** — Canonical model sync generator/check entrypoint.
+- **`devtools/sync/README.md`** — Generation module responsibilities and triage map.
 - **`src/endorlabs/generated/README.md`** — Runtime generated package maintenance policy.
 
 ## Related

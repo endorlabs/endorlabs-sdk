@@ -32,6 +32,9 @@ context = [
 [project.scripts]
 endor-demo = "endorlabs._demo.demo_cli:main"
 endor-context = "endorlabs.context.cli:main"
+endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
+endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
+endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 
 [project.urls]
 Homepage = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"
@@ -93,8 +96,10 @@ exclude = [
     "src/endorlabs/generated/**",
     "src/endorlabs/generated/models",
     "src/endorlabs/generated/models/**",
-    "scripts",
-    "scripts/**",
+    "devtools",
+    "devtools/**",
+    "skills-src",
+    "skills-src/**",
     ".github/scripts",
     ".github/scripts/**",
     "*.log",
@@ -231,14 +236,23 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 ".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
 ".github/scripts/endor_scan_findings.py" = ["C901"]  # layered location extraction
 ".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic
-"scripts/pod_findings_workflow.py" = ["T201", "D103", "S603", "S607", "E501"]  # endorctl CLI helper
-"scripts/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
+"devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
-"scripts/troubleshooting_scans/*.py" = ["T201", "D103"]  # CLI; stdout artifact paths
+# Workflows: migrated CLIs + orchestration; relax style rules (stdout/argparse-heavy)
+"src/endorlabs/workflows/**" = [
+    "C901",
+    "D103",
+    "E501",
+    "PERF401",
+    "PERF402",
+    "SIM108",
+    "F841",
+    "T201",
+]  # many modules are thin CLIs or large orchestrators
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
-"tests/**" = ["ANN", "D", "E402", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW"]
+"tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT018", "RUF100"]
 # --- Agent: broadly relaxed (langgraph types) ---
 "src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
 # --- Internal demo CLI: readability-focused walkthrough module ---
@@ -322,7 +336,7 @@ executionEnvironments = [
     { root = "src/endorlabs/generated/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportMissingTypeArgument = "none", reportAttributeAccessIssue = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportUnnecessaryTypeIgnoreComment = "none" },
     # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
     { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
-    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", "scripts", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
+    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", "devtools", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
     { root = "src", pythonVersion = "3.13" },
 ]
 
@@ -454,8 +468,10 @@ exclude = [
     "src/endorlabs/generated/**",
     "src/endorlabs/generated/models",
     "src/endorlabs/generated/models/**",
-    "scripts",
-    "scripts/**",
+    "devtools",
+    "devtools/**",
+    "skills-src",
+    "skills-src/**",
     ".github/scripts",
     ".github/scripts/**",
     "*.log",
