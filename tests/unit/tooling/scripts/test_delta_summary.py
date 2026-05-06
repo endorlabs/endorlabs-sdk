@@ -1,4 +1,4 @@
-"""Unit tests for scripts/sync/delta_summary."""
+"""Unit tests for devtools/sync/delta_summary."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS = _REPO_ROOT / "scripts"
-if str(_SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS))
+_DEVTOOLS = _REPO_ROOT / "devtools"
+if str(_DEVTOOLS) not in sys.path:
+    sys.path.insert(0, str(_DEVTOOLS))
 
 from sync.delta_summary import (  # noqa: E402
     provenance_meaningful_delta,

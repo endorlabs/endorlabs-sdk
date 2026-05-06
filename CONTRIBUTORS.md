@@ -84,9 +84,9 @@ Domain-driven test layout:
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright --project pyproject.toml
-uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
-uv run pyright --project pyproject.toml scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
-uv run python scripts/generate_client_stub.py
+uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/model_sync_pr_deltas.py devtools/generate_client_stub.py devtools/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+uv run pyright --project pyproject.toml devtools/model_sync.py devtools/model_sync_pr_deltas.py devtools/generate_client_stub.py devtools/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+uv run python devtools/generate_client_stub.py
 git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
@@ -103,7 +103,7 @@ Model-sync automation is split by responsibility:
   - checks latest `endorctl` version + OpenAPI SHA drift
   - dispatches `repository_dispatch` (`model-sync-check`) when a version/spec change is detected
 - **Sync + PR:** `.github/workflows/model-sync-pr.yml`
-  - runs canonical generation (`scripts/model_sync.py --generate-stubs --generate-reference-docs`)
+  - runs canonical generation (`devtools/model_sync.py --generate-stubs --generate-reference-docs`)
   - scopes changed files to generated surfaces
   - creates/updates bot PR branch (`chore/model-sync-<utc-timestamp>`)
 - **CI gate:** `.github/workflows/ci-pr-main.yml`
@@ -135,39 +135,3 @@ endorlabs.init()  # downloads to .endorlabs-context/
 ```
 
 Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](AGENTS.md#context-bootstrap-for-ai-agents) for details.
-
-## Self-Validation and Nightly Operations
-
-Use the SDK self-validation scorecard script to generate deterministic posture artifacts:
-
-```bash
-uv run python scripts/self_validation_scorecard.py \
-  --repository-url "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git" \
-  --tenant "$ENDOR_NAMESPACE" \
-  --output-dir ".endorlabs-context/self-validation" \
-  --deterministic
-```
-
-Nightly automation is defined in `.github/workflows/nightly-self-validation.yml`.
-
-Supported trigger paths:
-
-- Scheduled nightly run (`schedule`)
-- Manual run (`workflow_dispatch`) with typed inputs (`mode`, `repository_url`, `deterministic`, `strict_threat_claims`)
-- Remote run (`repository_dispatch`) with event type `nightly-self-validation`
-
-Example remote dispatch payload:
-
-```json
-{
-  "event_type": "nightly-self-validation",
-  "client_payload": {
-    "mode": "full",
-    "repository_url": "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
-    "deterministic": "true",
-    "strict_threat_claims": "false"
-  }
-}
-```
-
-Operational rollback: switch dispatch `mode` to `smoke` and set `deterministic=true` to reduce run time and flake surface while preserving scorecard continuity.

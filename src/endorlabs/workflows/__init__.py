@@ -5,13 +5,18 @@ as the rest of the SDK.
 
 Workflows sit between the Client facade (CRUD) and consumer surfaces
 (CLI, agents, notebooks). Each function takes a ``Client`` instance,
-returns a typed result dataclass, and has no CLI/IO concerns.
+returns a typed result dataclass, and has no CLI/IO concerns (except
+dedicated ``*.cli`` entry modules).
 
-Submodules:
+Subpackages:
     common: Project lookup, shared result types.
-    finding_triage: Tag findings, create exception policies.
-    notification_setup: Create notification targets and policies.
-    semgrep_management: Import/export YAML rules, calibrate rules.
-    diagnostics: Compare scan logs, dependency reports.
-    platform_setup: Create namespaces, installations, scan profiles.
+    agent_context: Project context bundles, session markdown artifacts.
+    callgraph: Call graph sweep and local decoded-graph search.
+    dependencies: Dependency metadata reports and visibility.
+    findings: Finding triage and exception policies.
+    notifications: Notification targets and policies.
+    platform: Namespaces, installations, scan profiles, auth policies.
+    relationships: Project relationship graph helpers.
+    semgrep: Semgrep rule import/export, calibration, metadata inventory.
+    troubleshooting_scans: Scan result/log triage scripts (CLI-oriented).
 """

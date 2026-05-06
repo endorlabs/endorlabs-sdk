@@ -1,4 +1,4 @@
-"""Unit tests for scripts/sync/baseline_ref."""
+"""Unit tests for devtools/sync/baseline_ref."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from pathlib import Path
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS_SYNC = _REPO_ROOT / "scripts" / "sync"
-if str(_SCRIPTS_SYNC.parent) not in __import__("sys").path:
-    __import__("sys").path.insert(0, str(_SCRIPTS_SYNC.parent))
+_DEVTOOLS = _REPO_ROOT / "devtools"
+if str(_DEVTOOLS) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(_DEVTOOLS))
 
 from sync.baseline_ref import resolve_auto_baseline_ref  # noqa: E402
 
