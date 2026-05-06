@@ -1241,6 +1241,8 @@ class ProjectResult:
     dep_metadata_namespace: str = ""
     dep_metadata_count: int = 0
     report: str = ""
+    pv_list_truncated: bool = False
+    hydration_missing_pv_uuids: list[str] = field(default_factory=list)
 
 
 def process_project(
@@ -1253,6 +1255,9 @@ def process_project(
     dep_metadata_max_pages: int = 10,
     *,
     deterministic: bool = False,
+    pv_uuid_order: list[str] | None = None,
+    pv_list_max_pages: int = 50,
+    pv_list_page_size: int = 200,
 ) -> ProjectResult:
     """Retrieve full dependency tree and call graph data for one project.
 
@@ -1266,6 +1271,10 @@ def process_project(
         dep_metadata_max_pages: Max pages for DependencyMetadata pagination.
         deterministic: When True, sort package versions and dependency rows
             so output artifacts are stable across runs.
+        pv_uuid_order: When set, list with broader pagination then hydrate only
+            these UUIDs (in order), after applying *pv_limit* to that sequence.
+        pv_list_max_pages: Max list pages when resolving *pv_uuid_order*.
+        pv_list_page_size: List page size when resolving *pv_uuid_order*.
 
     Returns:
         :class:`ProjectResult` with paths to all written artifacts.
@@ -1291,15 +1300,42 @@ def process_project(
     logger.info("  Fetching PackageVersions ...")
     from endorlabs import F
 
-    pvs = client.PackageVersion.list(  # type: ignore[attr-defined]
-        namespace=project_ns,
-        filter=F("spec.project_uuid") == project.uuid,
-        max_pages=1,
-        page_size=pv_limit,
-    )
-    pvs = pvs[:pv_limit]
-    if deterministic:
-        pvs = sorted(pvs, key=lambda pv: str(pv.meta.name if pv.meta else pv.uuid))
+    missing: list[str] = []
+    if pv_uuid_order:
+        pvs_full = client.PackageVersion.list(  # type: ignore[attr-defined]
+            namespace=project_ns,
+            filter=F("spec.project_uuid") == project.uuid,
+            max_pages=pv_list_max_pages,
+            page_size=pv_list_page_size,
+        )
+        listed_cap = pv_list_max_pages * pv_list_page_size
+        result.pv_list_truncated = len(pvs_full) >= listed_cap
+        by_uuid = {pv.uuid: pv for pv in pvs_full if getattr(pv, "uuid", None)}
+        ordered: list[Any] = []
+        for uid in pv_uuid_order:
+            if uid in by_uuid:
+                ordered.append(by_uuid[uid])
+            else:
+                missing.append(uid)
+        if missing:
+            logger.warning(
+                "  Package versions not found in list results (first 10): %s",
+                missing[:10],
+            )
+        pvs = ordered
+        if pv_limit and pv_limit > 0:
+            pvs = pvs[:pv_limit]
+    else:
+        pvs = client.PackageVersion.list(  # type: ignore[attr-defined]
+            namespace=project_ns,
+            filter=F("spec.project_uuid") == project.uuid,
+            max_pages=1,
+            page_size=pv_limit,
+        )
+        pvs = pvs[:pv_limit]
+        if deterministic:
+            pvs = sorted(pvs, key=lambda pv: str(pv.meta.name if pv.meta else pv.uuid))
+    result.hydration_missing_pv_uuids = missing
     single_pv = len(pvs) == 1
 
     # 2. Per-PV: BOM + Call Graph

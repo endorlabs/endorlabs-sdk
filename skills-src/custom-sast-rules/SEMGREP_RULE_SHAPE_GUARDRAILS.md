@@ -44,7 +44,7 @@ rule metadata before create/update.
 Use the inventory script to snapshot metadata key usage in your tenant:
 
 ```bash
-uv run python scripts/semgrep_rule_metadata_inventory.py --namespace tenant.namespace
+uv run endor-semgrep-inventory --namespace tenant.namespace
 ```
 
 Outputs:
