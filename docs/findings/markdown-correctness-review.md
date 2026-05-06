@@ -15,7 +15,7 @@ Scope:
   - `docs/**`: `30`
   - `.cursor/**`: `12`
   - `.github/**`: `2`
-  - `scripts/**`: `2`
+  - `devtools/**`: `2`
   - `src/**`: `1`
   - repo root (`README.md`, `AGENTS.md`, `CONTRIBUTORS.md`): `3`
 
@@ -69,7 +69,7 @@ Recommended follow-up sequence (minor DX polish):
 1. **Terminology normalization**
    - Standardize phrasing for generated vs runtime surfaces (e.g., "generated contract", "runtime registry adapter") across `docs/contracts.md`, `docs/README.md`, and `AGENTS.md`.
 2. **Command style normalization**
-   - Prefer one canonical "recommended model-sync command" block in each maintainer-facing doc and cross-link to `scripts/sync/README.md`.
+   - Prefer one canonical "recommended model-sync command" block in each maintainer-facing doc and cross-link to `devtools/sync/README.md`.
 3. **Automated docs checks in CI**
    - Optional future hardening: add a markdown/link checker job for tracked docs to prevent link regressions.
 
@@ -80,6 +80,6 @@ Recommended follow-up sequence (minor DX polish):
 - `CONTRIBUTORS.md`
 - `docs/contracts.md`
 - `docs/rules-of-engagement/docs-drift-workflow.md`
-- `scripts/sync/README.md`
+- `devtools/sync/README.md`
 - `docs/reference/README.md`
 - `docs/guides/retrieving-scan-results.md`

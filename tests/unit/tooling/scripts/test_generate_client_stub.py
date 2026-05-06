@@ -31,7 +31,9 @@ def test_validate_descriptions_fails_when_registry_description_missing(
         entry.attr_name: {
             "attr_name": entry.attr_name,
             "supported_ops": sorted(entry.supported_ops),
-            "canonical_entities": sorted(model_sync_entity_for_model(entry.model_class)),
+            "canonical_entities": sorted(
+                model_sync_entity_for_model(entry.model_class)
+            ),
         }
         for entry in stubgen.RESOURCE_REGISTRY
     }
@@ -56,7 +58,9 @@ def test_validate_model_sync_fails_when_registry_entity_missing(
         entry.attr_name: {
             "attr_name": entry.attr_name,
             "supported_ops": sorted(entry.supported_ops),
-            "canonical_entities": sorted(model_sync_entity_for_model(entry.model_class) & names),
+            "canonical_entities": sorted(
+                model_sync_entity_for_model(entry.model_class) & names
+            ),
         }
         for entry in stubgen.RESOURCE_REGISTRY
     }

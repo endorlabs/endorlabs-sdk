@@ -255,7 +255,7 @@ jobs:
 
       - name: Run canonical model sync generation
         run: |
-          uv run python scripts/model_sync.py
+          uv run python devtools/model_sync.py
 
       - name: Upload generated model-sync tree
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -303,8 +303,8 @@ jobs:
       # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
         run: |
-          uv run ruff check --select E,F,I,UP scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
-          uv run pyright --project pyproject.toml scripts/model_sync.py scripts/model_sync_pr_deltas.py scripts/generate_client_stub.py scripts/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/model_sync_pr_deltas.py devtools/generate_client_stub.py devtools/generate_reference_docs.py .github/scripts/check_endorctl_version.py
+          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/model_sync_pr_deltas.py devtools/generate_client_stub.py devtools/generate_reference_docs.py .github/scripts/check_endorctl_version.py
 
       - name: Download generated model-sync artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -353,9 +353,9 @@ jobs:
 
       - name: Verify generated client stub is up to date
         run: |
-          uv run python scripts/generate_client_stub.py
+          uv run python devtools/generate_client_stub.py
           if ! git diff --exit-code -- src/endorlabs/client_surface.pyi; then
-            echo "::error::client_surface.pyi is out of date. Run: uv run python scripts/generate_client_stub.py"
+            echo "::error::client_surface.pyi is out of date. Run: uv run python devtools/generate_client_stub.py"
             git --no-pager diff -- src/endorlabs/client_surface.pyi
             exit 1
           fi
@@ -366,7 +366,7 @@ jobs:
         run: |
           set -euo pipefail
           FILES="docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json"
-          uv run python scripts/generate_reference_docs.py
+          uv run python devtools/generate_reference_docs.py
           if git diff --quiet -- $FILES; then
             echo "docs_stale=false" >> "$GITHUB_OUTPUT"
             echo "::notice::Generated reference docs are up to date."
@@ -419,7 +419,7 @@ jobs:
             echo ""
             if [ "${{ steps.ref_docs.outputs.docs_stale || 'false' }}" = "true" ]; then
               echo "### Why stale?"
-              echo "- Generated reference docs differed from committed files after running \`scripts/generate_reference_docs.py\`."
+              echo "- Generated reference docs differed from committed files after running \`devtools/generate_reference_docs.py\`."
               echo "- See grouped logs in this job for full diff (\`drift (stat)\`, \`drift (patch)\`)."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
