@@ -1,10 +1,10 @@
-"""Unit tests for endorlabs.workflows.notification_setup."""
+"""Unit tests for endorlabs.workflows.notifications.setup."""
 
 from unittest.mock import Mock
 
 import pytest
 
-from endorlabs.workflows.notification_setup import (
+from endorlabs.workflows.notifications.setup import (
     NotificationPolicyResult,
     NotificationTargetResult,
     _build_action_spec,

@@ -18,7 +18,7 @@ Two-layer, registry-driven design for the Endor Labs SDK. Use this when editing 
    - Enforces supported operations from registry metadata; unsupported methods raise `NotImplementedError`.
 
 4. **Registry adapter** — generated-contract + overlay source of truth for `Client`
-   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `scripts/model_sync.py`.
+   - Runtime contract is generated at `src/endorlabs/generated/registry_contract.py` by `devtools/model_sync.py`.
    - `registry.py` adapts generated contract rows into `ResourceEntry(...)` objects and applies explicit overrides from `registry_overlay.py`.
    - Adding/changing a resource should happen via model-sync inputs and the minimal overlay, not by hand-authoring a large registry table.
 

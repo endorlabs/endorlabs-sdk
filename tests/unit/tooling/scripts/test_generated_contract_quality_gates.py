@@ -12,13 +12,14 @@ from typing import Any
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS_DIR = str(_REPO_ROOT / "scripts")
-if _SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, _SCRIPTS_DIR)
+_DEVTOOLS_DIR = str(_REPO_ROOT / "devtools")
+if _DEVTOOLS_DIR not in sys.path:
+    sys.path.insert(0, _DEVTOOLS_DIR)
 
 from sync.policy import MODEL_SYNC_ENTITY_ALIASES_BY_MODEL
 
 from endorlabs.registry import RESOURCE_REGISTRY
+
 _MODEL_SYNC_ROOT = _REPO_ROOT / "workspace" / "model-sync" / "custom_mapping"
 _FACADE_CONTRACT_PATH = _MODEL_SYNC_ROOT / "facade_contract.json"
 _PARITY_REPORT_PATH = _MODEL_SYNC_ROOT / "mapping" / "registry_parity_report.json"
@@ -82,8 +83,8 @@ def test_facade_contract_has_stable_resource_shape() -> None:
         assert isinstance(resource["model_class_import_path"], str)
 
         assert resource["scope"] in {"tenant", "oss"}
-        assert (
-            resource["parent_kind"] is None or isinstance(resource["parent_kind"], str)
+        assert resource["parent_kind"] is None or isinstance(
+            resource["parent_kind"], str
         )
         assert isinstance(resource["has_tag_methods"], bool)
         assert resource["create_mode"] in {"both", "payload-only", "unsupported"}
@@ -123,7 +124,11 @@ def test_registry_parity_report_contract_is_well_formed() -> None:
     """Parity report must be structured and indicate no missing registry mappings."""
     payload = _load_json(_PARITY_REPORT_PATH)
     assert payload.get("status") in {"pass", "fail"}
-    for key in ("missing_in_mapping", "mapping_without_registry_match", "alias_matches"):
+    for key in (
+        "missing_in_mapping",
+        "mapping_without_registry_match",
+        "alias_matches",
+    ):
         assert isinstance(payload.get(key), list)
     assert payload.get("status") == "pass"
     assert payload.get("missing_in_mapping") == []
@@ -158,9 +163,8 @@ def test_operation_metadata_has_unique_path_method_pairs() -> None:
         assert pair not in seen_pairs
         seen_pairs.add(pair)
 
-        assert (
-            operation["operation_id"] is None
-            or isinstance(operation["operation_id"], str)
+        assert operation["operation_id"] is None or isinstance(
+            operation["operation_id"], str
         )
         assert isinstance(operation["x_internal"], bool)
         assert isinstance(operation["tags"], list)
@@ -237,10 +241,14 @@ def test_alias_exceptions_are_explicit_and_resolvable() -> None:
         model_name = row.get("model_class")
         accepted = row.get("accepted_canonical_entities")
         if isinstance(model_name, str) and isinstance(accepted, list):
-            accepted_by_model[model_name] = {value for value in accepted if isinstance(value, str)}
+            accepted_by_model[model_name] = {
+                value for value in accepted if isinstance(value, str)
+            }
 
     for model_name, alias in MODEL_SYNC_ENTITY_ALIASES_BY_MODEL.items():
-        assert model_name in accepted_by_model, f"Alias model missing from contract: {model_name}"
+        assert model_name in accepted_by_model, (
+            f"Alias model missing from contract: {model_name}"
+        )
         assert alias in accepted_by_model[model_name], (
             f"Alias {alias} missing for model {model_name}; "
             "keep alias exceptions explicit and resolvable."

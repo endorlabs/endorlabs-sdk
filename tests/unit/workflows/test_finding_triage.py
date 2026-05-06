@@ -1,8 +1,8 @@
-"""Unit tests for endorlabs.workflows.finding_triage."""
+"""Unit tests for endorlabs.workflows.findings.triage."""
 
 from unittest.mock import Mock
 
-from endorlabs.workflows.finding_triage import (
+from endorlabs.workflows.findings.triage import (
     ExceptionPolicyResult,
     TaggingResult,
     build_exception_rego_rule,
@@ -72,9 +72,9 @@ class TestBuildExceptionRegoRule:
         assert "CWE-78:" in rule
 
     def test_file_path_generates_helpers(self) -> None:
-        rule = build_exception_rego_rule(file_path="scripts/")
+        rule = build_exception_rego_rule(file_path="devtools/")
         assert "file_path_match(finding" in rule
-        assert 'file_path_match(finding, "scripts/")' in rule
+        assert 'file_path_match(finding, "devtools/")' in rule
 
     def test_project_uuid_scoping(self) -> None:
         rule = build_exception_rego_rule(project_uuid="proj-123")

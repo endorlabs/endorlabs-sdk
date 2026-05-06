@@ -12,7 +12,7 @@ import yaml
 
 def _load_sast_rule_manager() -> ModuleType:
     root = Path(__file__).resolve().parents[4]
-    script_path = (
+    cursor_path = (
         root
         / ".cursor"
         / "skills"
@@ -20,6 +20,10 @@ def _load_sast_rule_manager() -> ModuleType:
         / "scripts"
         / "sast_rule_manager.py"
     )
+    skills_src_path = (
+        root / "skills-src" / "custom-sast-rules" / "scripts" / "sast_rule_manager.py"
+    )
+    script_path = cursor_path if cursor_path.is_file() else skills_src_path
     spec = importlib.util.spec_from_file_location(
         "sast_rule_manager_for_test", script_path
     )
