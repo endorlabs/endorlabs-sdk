@@ -96,6 +96,20 @@ repos:
         stages: [pre-push]
         files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
+      - id: model-sync-contract-validate
+        name: model-sync contract validation
+        entry: uv
+        args:
+          - run
+          - pytest
+          - tests/unit/tooling/scripts/test_generated_contract_quality_gates.py
+          - -q
+        language: system
+        pass_filenames: false
+        require_serial: true
+        stages: [pre-push]
+        files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(scripts/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
+
   # --- Spell checking ---
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
