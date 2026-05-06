@@ -29,9 +29,9 @@ filename contract:
 - Read access to project, scan results, and scan logs in target namespace.
 - If package lineage questions arise (same package, multiple manifest paths/versions), hand off to `dependency-provenance`.
 
-## Scripts
+## Modules (`endorlabs.workflows.troubleshooting_scans`)
 
-Located in `scripts/troubleshooting_scans/`.
+Installed package modules (run with `uv run python -m endorlabs.workflows.troubleshooting_scans.<name>`).
 
 - `resolve_projects.py`
   - Resolves target project candidates.
@@ -42,7 +42,9 @@ Located in `scripts/troubleshooting_scans/`.
   - Pulls raw scan results and normalized summary rows.
   - Inputs: project UUID (or project-name mode / all-projects mode), limit/status.
   - Use `--scan-window` (alias of `--limit`) to bound retrieved scan count.
+  - Optional **`--status-filter`** (e.g. `STATUS_FAILURE`, `STATUS_PARTIAL_SUCCESS`) filters results client-side after listing.
   - Output object kind: `scan_results`.
+  - **Cost:** `--all-projects` walks **every** project under `--tenant`; expect **long runtimes** on large tenants. Prefer project-scoped `--project-name` / `--project-uuid` for interactive RCA (see [AGENTS.md](../../AGENTS.md) — Agent notes, tenant-wide troubleshooting).
 
 - `select_anomalous_scans.py`
   - Scores adjacent pairs for likely regressions.
@@ -75,7 +77,7 @@ Located in `scripts/troubleshooting_scans/`.
 Project-specific RCA from project name:
 
 ```bash
-uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_workflow.py \
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
   --tenant datavant \
   --project-name "Apixio/codenavigator-monitoring" \
   --limit 30 \
@@ -86,7 +88,7 @@ uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_
 Fast regression check (latest pair only, logs only when regression exists):
 
 ```bash
-uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_workflow.py \
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
   --tenant datavant \
   --project-name "Apixio/codenavigator-monitoring" \
   --scan-window 2 \
@@ -97,7 +99,7 @@ uv run --env-file .env python scripts/troubleshooting_scans/run_troubleshooting_
 Tenant-wide error signature search:
 
 ```bash
-uv run --env-file .env python scripts/troubleshooting_scans/search_scan_errors.py \
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.search_scan_errors \
   --tenant datavant \
   --all-projects \
   --error-pattern "maven-profiler|dependency-resolution-error|STATUS_FAILURE" \
@@ -108,11 +110,11 @@ uv run --env-file .env python scripts/troubleshooting_scans/search_scan_errors.p
 Manual step-by-step mode:
 
 ```bash
-uv run --env-file .env python scripts/troubleshooting_scans/resolve_projects.py --tenant datavant --project-name "Apixio/codenavigator-monitoring"
-uv run --env-file .env python scripts/troubleshooting_scans/fetch_scan_results.py --tenant datavant --project-name "Apixio/codenavigator-monitoring" --limit 30
-uv run --env-file .env python scripts/troubleshooting_scans/select_anomalous_scans.py --input-summary <summary-json> --root-tenant datavant --project-uuid <project-uuid>
-uv run --env-file .env python scripts/troubleshooting_scans/fetch_scan_logs.py --tenant datavant --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
-uv run --env-file .env python scripts/troubleshooting_scans/diff_scans.py --tenant datavant --namespace <project-namespace> --input-pairs <pairs-json>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.resolve_projects --tenant datavant --project-name "Apixio/codenavigator-monitoring"
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --tenant datavant --project-name "Apixio/codenavigator-monitoring" --limit 30
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.select_anomalous_scans --input-summary <summary-json> --root-tenant datavant --project-uuid <project-uuid>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_logs --tenant datavant --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans --tenant datavant --namespace <project-namespace> --input-pairs <pairs-json>
 ```
 
 ## Interpretation hints
