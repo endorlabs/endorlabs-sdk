@@ -91,12 +91,13 @@ instead of shell-specific `eval` export workflows.
 
 For **`AuthenticationLog`**, **`AuthorizationPolicy`**, and optional **`AuditLog`**
 correlation during SSO / tenant login investigations, use the **troubleshoot-authlog**
-Agent Skill: [.cursor/skills/troubleshoot-authlog/SKILL.md](.cursor/skills/troubleshoot-authlog/SKILL.md).
+Agent Skill: [skills-src/troubleshoot-authlog/SKILL.md](skills-src/troubleshoot-authlog/SKILL.md)
+(`.cursor/skills` is the mirrored runtime path used by Cursor).
 
 Run from the repo root:
 
 ```bash
-uv run --env-file .env python .cursor/skills/troubleshoot-authlog/troubleshoot_authlog.py --help
+uv run --env-file .env python skills-src/troubleshoot-authlog/troubleshoot_authlog.py --help
 ```
 
 ## Demo CLI
@@ -224,12 +225,13 @@ namespace handling, prefer `endorlabs.Client`.
 
 ### Resources
 
-All registry resources are exposed as typed facades on `Client` using **PascalCase**
-names that match `endorctl api … --resource <Kind>` (e.g. `Project`, `QueryVulnerability`):
+Registry resources are exposed as typed facades on `Client` using **PascalCase**
+names that match `endorctl api … --resource <Kind>` (e.g. `Project`, `QueryVulnerability`).
+The canonical current list is generated in
+[docs/generated-reference/resources.md](docs/generated-reference/resources.md).
 
-`APIKey`, `AuditLog`, `AuthenticationLog`, `AuthorizationPolicy`, `CodeOwners`, `DependencyMetadata`, `EndorLicense`, `Finding`, `FindingLog`, `Installation`, `Invitation`, `LinterResult`, `Malware`, `Metric`, `Namespace`, `NotificationTarget`, `PackageLicense`, `PackageVersion`, `Policy`, `PolicyTemplate`, `Project`, `QueryMalware`, `QueryVulnerability`, `Repository`, `RepositoryVersion`, `ScanLogRequest`, `ScanProfile`, `ScanResult`, `ScanWorkflow`, `ScanWorkflowResult`, `SemgrepRule`, `VectorStore`, `VectorStoreQuery`, `VersionUpgrade`, `Vulnerability`
-
-Plus `ScanLogs` (SDK-only custom facade for retrieving scan log messages; not an endorctl `--resource` kind — use `ScanLogRequest` for CRUD on log requests).
+`ScanLogs` is an SDK-only custom facade for retrieving scan log messages; it is
+not an endorctl `--resource` kind (use `ScanLogRequest` for CRUD on log requests).
 
 Each facade exposes only the operations that resource supports. Hover over any facade or method in your IDE to see its docstring, parameters, and concrete return types.
 
@@ -279,7 +281,7 @@ Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.
 
 ## Scripts and automation
 
-Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). For SAST rule management (import, export, delete, configure), see `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`. The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). For SAST rule management (import, export, delete, configure), see `skills-src/custom-sast-rules/scripts/sast_rule_manager.py` (`.cursor/skills` is the mirror path in Cursor runtime). The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 
