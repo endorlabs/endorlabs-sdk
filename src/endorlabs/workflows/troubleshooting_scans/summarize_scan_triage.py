@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .common import root_tenant, write_text
+from .common import root_tenant, write_json, write_text
 
 
 def _load_json(path: str) -> dict[str, Any]:
@@ -83,6 +83,180 @@ def _first_line(text: str | None, *, max_len: int = 240) -> str:
     return line[: max_len - 3] + "..."
 
 
+def _value_excerpt(value: Any, *, max_len: int = 320) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        text = value
+    else:
+        try:
+            text = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        except TypeError:
+            text = str(value)
+    compact = " ".join(text.split())
+    if len(compact) <= max_len:
+        return compact
+    return compact[: max_len - 3] + "..."
+
+
+def _latest_scan_raw(
+    results_artifact: dict[str, Any], scan_uuid: str | None = None
+) -> dict[str, Any]:
+    scans = results_artifact.get("scan_results") or []
+    if not isinstance(scans, list) or not scans:
+        return {}
+    if scan_uuid:
+        for candidate in scans:
+            if (
+                isinstance(candidate, dict)
+                and str(candidate.get("uuid") or "") == scan_uuid
+            ):
+                return candidate
+    first = scans[0]
+    return first if isinstance(first, dict) else {}
+
+
+def _extract_log_evidence(
+    logs_artifact: dict[str, Any], *, max_entries: int = 8
+) -> list[dict[str, str]]:
+    entries: list[dict[str, str]] = []
+    messages = logs_artifact.get("messages") or []
+    if not isinstance(messages, list):
+        return entries
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        payload = message.get("json_payload")
+        p = payload if isinstance(payload, dict) else {}
+        level = str(message.get("level") or "")
+        payload_level = str(p.get("level") or "")
+        norm_level = payload_level.lower() or level.lower()
+        if norm_level not in {"error", "warn", "warning", "fatal", "log_level_error"}:
+            continue
+        entries.append(
+            {
+                "path": "messages[].json_payload.msg",
+                "value": _value_excerpt(p.get("msg") or ""),
+                "source": "scan_logs_artifact",
+            }
+        )
+        if len(entries) >= max_entries:
+            break
+    return entries
+
+
+def _signature_tags(
+    scan_raw: dict[str, Any], logs_artifact: dict[str, Any]
+) -> list[str]:
+    tags: set[str] = set()
+    spec = scan_raw.get("spec")
+    s = spec if isinstance(spec, dict) else {}
+    provisioning = s.get("provisioning_result")
+    p = provisioning if isinstance(provisioning, dict) else {}
+    blob = " ".join(
+        [
+            str(p.get("error") or ""),
+            json.dumps(logs_artifact.get("messages") or [], ensure_ascii=False).lower(),
+        ]
+    ).lower()
+    if "hash sum mismatch" in blob:
+        tags.add("repo_index_hash_mismatch")
+    if "bazel" in blob and "build did not complete successfully" in blob:
+        tags.add("build_orchestration_failure")
+    if "gradle init" in blob:
+        tags.add("manifest_or_tooling_discovery_issue")
+    if "unable to generate manifest path" in blob:
+        tags.add("manifest_generation_failure")
+    if str(s.get("status") or "") == "STATUS_PARTIAL_SUCCESS":
+        tags.add("partial_scan_coverage")
+    return sorted(tags)
+
+
+def _build_evidence_payload(
+    *,
+    tenant: str,
+    project_uuid: str,
+    project_name: str,
+    namespace: str,
+    scan_uuid: str,
+    results_artifact: dict[str, Any],
+    logs_artifact: dict[str, Any],
+) -> dict[str, Any]:
+    scan_raw = _latest_scan_raw(results_artifact, scan_uuid)
+    spec = scan_raw.get("spec")
+    s = spec if isinstance(spec, dict) else {}
+    provisioning = s.get("provisioning_result")
+    p = provisioning if isinstance(provisioning, dict) else {}
+    stats = s.get("stats")
+    st = stats if isinstance(stats, dict) else {}
+
+    status_evidence = [
+        {
+            "path": "scan_results[].spec.status",
+            "value": _value_excerpt(s.get("status")),
+            "source": "scan_results_artifact",
+        },
+        {
+            "path": "scan_results[].spec.type",
+            "value": _value_excerpt(s.get("type")),
+            "source": "scan_results_artifact",
+        },
+    ]
+    provisioning_evidence = [
+        {
+            "path": "scan_results[].spec.provisioning_result.exit_code",
+            "value": _value_excerpt(p.get("exit_code")),
+            "source": "scan_results_artifact",
+        },
+        {
+            "path": "scan_results[].spec.provisioning_result.error",
+            "value": _value_excerpt(p.get("error")),
+            "source": "scan_results_artifact",
+        },
+    ]
+    stats_evidence = [
+        {
+            "path": "scan_results[].spec.stats.scan_success",
+            "value": _value_excerpt(st.get("scan_success")),
+            "source": "scan_results_artifact",
+        },
+        {
+            "path": "scan_results[].spec.stats.scan_failures",
+            "value": _value_excerpt(st.get("scan_failures")),
+            "source": "scan_results_artifact",
+        },
+        {
+            "path": "scan_results[].spec.stats.package_versions",
+            "value": _value_excerpt(st.get("package_versions")),
+            "source": "scan_results_artifact",
+        },
+        {
+            "path": "scan_results[].spec.stats.dependency_analysis_num_full",
+            "value": _value_excerpt(st.get("dependency_analysis_num_full")),
+            "source": "scan_results_artifact",
+        },
+        {
+            "path": "scan_results[].spec.stats.dependency_analysis_num_approximate",
+            "value": _value_excerpt(st.get("dependency_analysis_num_approximate")),
+            "source": "scan_results_artifact",
+        },
+    ]
+    log_evidence = _extract_log_evidence(logs_artifact)
+
+    return {
+        "tenant": tenant,
+        "namespace": namespace,
+        "project_uuid": project_uuid,
+        "project_name": project_name or None,
+        "scan_result_uuid": scan_uuid,
+        "status_evidence": status_evidence,
+        "provisioning_evidence": provisioning_evidence,
+        "stats_evidence": stats_evidence,
+        "log_evidence": log_evidence,
+        "matched_signatures": _signature_tags(scan_raw, logs_artifact),
+    }
+
+
 def _error_markdown_rows(errors: list[dict[str, Any]], max_errors: int) -> list[str]:
     rows: list[str] = []
     for idx, entry in enumerate(errors[:max_errors], start=1):
@@ -156,6 +330,7 @@ def _build_markdown(
     results_artifact: dict[str, Any],
     logs_artifact: dict[str, Any],
     max_errors: int,
+    evidence_payload: dict[str, Any],
 ) -> str:
     latest = _latest_scan_summary(results_artifact)
     errors = _error_entries(logs_artifact)
@@ -228,6 +403,46 @@ def _build_markdown(
         ]
     )
     lines.extend(_fix_guidance(errors))
+    lines.extend(
+        [
+            "",
+            "## Evidence (Field Paths)",
+            "",
+            "- status_evidence:",
+        ]
+    )
+    for entry in evidence_payload.get("status_evidence", []):
+        if isinstance(entry, dict):
+            lines.append(
+                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+                f"(source: `{entry.get('source', '')}`)"
+            )
+    lines.append("- provisioning_evidence:")
+    for entry in evidence_payload.get("provisioning_evidence", []):
+        if isinstance(entry, dict):
+            lines.append(
+                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+                f"(source: `{entry.get('source', '')}`)"
+            )
+    lines.append("- stats_evidence:")
+    for entry in evidence_payload.get("stats_evidence", []):
+        if isinstance(entry, dict):
+            lines.append(
+                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+                f"(source: `{entry.get('source', '')}`)"
+            )
+    lines.append("- log_evidence:")
+    for entry in evidence_payload.get("log_evidence", []):
+        if isinstance(entry, dict):
+            lines.append(
+                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+                f"(source: `{entry.get('source', '')}`)"
+            )
+    signatures = evidence_payload.get("matched_signatures") or []
+    if isinstance(signatures, list) and signatures:
+        lines.append("- matched_signatures:")
+        for tag in signatures:
+            lines.append(f"  - `{tag}`")
 
     lines.extend(
         [
@@ -252,6 +467,31 @@ def main() -> int:
         else None
     )
 
+    latest = _latest_scan_summary(results_artifact)
+    project_uuid = str(logs_artifact.get("project_uuid") or "") or str(
+        results_artifact.get("project_uuid") or ""
+    )
+    namespace = str(logs_artifact.get("namespace") or latest.get("namespace") or "")
+    scan_uuid = str(logs_artifact.get("scan_result_uuid") or latest.get("uuid") or "")
+    project_name = ""
+    if isinstance(search_artifact, dict):
+        projects = search_artifact.get("projects") or []
+        if isinstance(projects, list) and projects:
+            first = projects[0]
+            if isinstance(first, dict):
+                meta = first.get("meta")
+                if isinstance(meta, dict):
+                    project_name = str(meta.get("name") or "")
+    evidence_payload = _build_evidence_payload(
+        tenant=args.tenant,
+        project_uuid=project_uuid,
+        project_name=project_name,
+        namespace=namespace,
+        scan_uuid=scan_uuid,
+        results_artifact=results_artifact,
+        logs_artifact=logs_artifact,
+    )
+
     md = _build_markdown(
         tenant=args.tenant,
         search_path=args.project_search_artifact,
@@ -261,21 +501,35 @@ def main() -> int:
         results_artifact=results_artifact,
         logs_artifact=logs_artifact,
         max_errors=args.max_errors,
+        evidence_payload=evidence_payload,
     )
 
-    scan_uuid = str(logs_artifact.get("scan_result_uuid") or "unknown-scan")
+    scan_uuid_out = scan_uuid or "unknown-scan"
     root = root_tenant(args.tenant)
     out_path = write_text(
         output_dir=Path(args.output_dir),
         root_tenant_name=root,
         object_kind="scan_triage",
-        object_uuid=scan_uuid,
+        object_uuid=scan_uuid_out,
         purpose="summary",
         text=md,
         extension=".md",
         timestamped=args.timestamped,
     )
-    print(str(out_path))
+    evidence_path = write_json(
+        output_dir=Path(args.output_dir),
+        root_tenant_name=root,
+        object_kind="scan_triage_evidence",
+        object_uuid=scan_uuid_out,
+        purpose="summary",
+        payload=evidence_payload,
+        timestamped=args.timestamped,
+    )
+    print(
+        json.dumps(
+            {"summary_markdown": str(out_path), "summary_evidence": str(evidence_path)}
+        )
+    )
     return 0
 
 
