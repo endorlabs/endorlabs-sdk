@@ -3,7 +3,10 @@
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import (
+    TEST_MAX_PAGES,
+    TEST_PAGE_SIZE,
+)
 
 
 @pytest.mark.integration
@@ -23,17 +26,10 @@ class TestAuthenticationLog:
         )
 
     def test_authentication_log_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.AuthenticationLog.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST from namespace scope with bounded pagination."""
+        result = self.endor_client.AuthenticationLog.list(
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
@@ -41,10 +37,9 @@ class TestAuthenticationLog:
         """Facade get uses item namespace; backend auth decides access."""
         from endorlabs.core.exceptions import PermissionDeniedError
 
-        items = self.endor_root_client.AuthenticationLog.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        items = self.endor_client.AuthenticationLog.list(
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")

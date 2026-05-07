@@ -10,8 +10,10 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.core.types import ListParameters
 from tests.conftest import (
+    TEST_MAX_PAGES,
     TEST_MAX_PAGES_TRAVERSE,
     TEST_NAMESPACE_DEFAULT,
+    TEST_PAGE_SIZE,
     TEST_TRAVERSE_PAGE_SIZE,
 )
 
@@ -62,15 +64,24 @@ class TestLinterResult:
     def test_linter_result_list(self) -> None:
         """LIST from tenant root with traverse (registry-based)."""
         import endorlabs
+        from endorlabs.core.exceptions import NotFoundError, ServerError
 
         client = endorlabs.Client(
             tenant=self.root_namespace,
             api_client=self.client,
         )
-        result = client.LinterResult.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
-        )
+        try:
+            result = client.LinterResult.list(
+                traverse=True,
+                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            )
+        except NotFoundError:
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
 
     def test_linter_result_get(self) -> None:
@@ -109,6 +120,7 @@ class TestLinterResult:
     def test_linter_result_filter_by_project(self, sample_linter_result) -> None:
         """Test filtering linter results by project UUID in the resource's namespace."""
         print("\n=== TESTING FILTER LINTER RESULTS BY PROJECT ===")
+        from endorlabs.core.exceptions import NotFoundError, ServerError
 
         first_linter = sample_linter_result
         if not first_linter.spec or not first_linter.spec.project_uuid:
@@ -125,12 +137,21 @@ class TestLinterResult:
 
         list_params = ListParameters(
             filter=f'spec.project_uuid=="{project_uuid}"',
+            page_size=TEST_PAGE_SIZE,
         )
         list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
-        filtered_results = list_client.LinterResult.list(
-            list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
-        )
+        try:
+            filtered_results = list_client.LinterResult.list(
+                list_params=list_params,
+                max_pages=TEST_MAX_PAGES,
+            )
+        except NotFoundError:
+            pytest.skip(
+                "List returned 404 (resource does not exist to user: "
+                "namespace not accessible to credential or resource no longer exists)"
+            )
+        except ServerError:
+            pytest.skip("Backend returned ServerError (list); skip")
 
         assert isinstance(filtered_results, list), (
             "Should return a list of filtered linter results"

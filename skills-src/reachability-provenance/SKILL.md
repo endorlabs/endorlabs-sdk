@@ -26,7 +26,28 @@ Use the `oss` namespace as the canonical vulnerability provenance source for:
 
 Do not infer function-level provenance from advisory prose alone when structured `affected_callpath_uris` are available in `oss`.
 
+## Where call graphs are stored (customer vs `oss`)
+
+Reachability triage often mixes two graph planes:
+
+- **Customer tenant graph (project package version):**
+  - `CallGraphData` is stored under the customer namespace and is effectively keyed by the importing `PackageVersion` (`meta.parent_uuid == <customer_pv_uuid>`).
+  - This graph captures app-side and resolved external-call edges as observed for that project scan.
+- **`oss` tenant graph (dependency package version):**
+  - For third-party packages, `DependencyMetadata.spec.dependency_data.package_version_uuid` can point to an `oss` package-version UUID.
+  - That `oss` package version may have its own `CallGraphData` object(s), independently retrievable in `oss`.
+- **Finding metadata bridge:**
+  - `Finding.spec.target_uuid` is often a `DependencyMetadata` UUID (customer namespace), not a package-version UUID.
+  - `Finding.spec.finding_metadata.vulnerability` commonly embeds vulnerability context sourced from `oss` (including `affected_callpath_uris`).
+
+Practical implication: a finding can be `REACHABLE_FUNCTION` even when a direct path is hard to prove from only the customer `CallGraphData`; the path evidence can be a stitched result across customer graph + `oss` vulnerability/function metadata.
+
 ## Workflow
+
+0. Build unified context artifact (default path)
+   - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .tmp/reachability`.
+   - Use `--pv-uuid` for direct PV analysis.
+   - Treat `reachability_context.json` as the canonical triage bundle (customer graph plane, `oss` graph plane, stitching summary, warnings).
 
 1. Gather finding evidence
    - Record finding UUID, tags, summary, `target_dependency_package_name`, `extra_key`, and `call_graph_analysis_type`.
@@ -44,6 +65,20 @@ Do not infer function-level provenance from advisory prose alone when structured
 3. Compare strict function map vs graph evidence
    - Strict check: vulnerable function reachability should be determined from `affected_callpath_uris`.
    - Practical-risk check: inspect whether risky API surface in the same package is reachable even when strict vulnerable callpaths are not matched.
+   - Graph-plane check: test customer graph and `oss` graph separately, then test stitched reachability (`customer internal -> shared dependency entrypoint -> oss vulnerable function`).
+
+### Control-case method (reachable vs unresolved)
+
+When validating tooling behavior, use one known reachable control and one unresolved case from the same project/tenant:
+
+- **Reachable control (example pattern):** a finding where customer-tenant path plus `oss` callpath metadata agrees (for example Tomcat TOCTOU-style chain with explicit affected functions).
+- **Unresolved comparison (example pattern):** a finding where customer graph reaches dependency API surface but cannot statically reach the exact vulnerable methods in `affected_callpath_uris` (possible CG coverage/normalization/runtime-dispatch limits).
+
+Record both outcomes explicitly so the triage output distinguishes:
+
+- data availability issue,
+- URI/signature matching issue,
+- or true function-level non-reachability.
 
 4. Classify mismatch type
    - **Provenance fragmentation**: aliases disagree or one alias lacks structured function mapping.
