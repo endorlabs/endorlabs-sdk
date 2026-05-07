@@ -11,6 +11,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from tests.conftest import (
+    TEST_MAX_PAGES,
     TEST_MAX_PAGES_TRAVERSE,
     TEST_NAMESPACE_DEFAULT,
     TEST_PAGE_SIZE,
@@ -47,32 +48,18 @@ class TestFindingLog:
             self.created_finding_log_uuids.clear()
 
     def test_finding_log_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.FindingLog.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST from namespace scope with bounded pagination."""
+        result = self.endor_client.FindingLog.list(
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_finding_log_get(self) -> None:
-        """GET first item from LIST (root + traverse) (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.FindingLog.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from bounded LIST in namespace scope."""
+        items = self.endor_client.FindingLog.list(
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
@@ -82,7 +69,7 @@ class TestFindingLog:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.FindingLog.get(item.uuid, namespace=ns)
+        got = self.endor_client.FindingLog.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -95,13 +82,12 @@ class TestFindingLog:
         list_params = ListParameters(
             filter="spec.operation==OPERATION_CREATE",
             page_size=TEST_PAGE_SIZE,
-            traverse=True,
         )
 
         try:
-            logs = self.endor_root_client.FindingLog.list(
+            logs = self.endor_client.FindingLog.list(
                 list_params=list_params,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -131,13 +117,12 @@ class TestFindingLog:
         list_params = ListParameters(
             filter="spec.operation==OPERATION_UPDATE",
             page_size=TEST_PAGE_SIZE,
-            traverse=True,
         )
 
         try:
-            logs = self.endor_root_client.FindingLog.list(
+            logs = self.endor_client.FindingLog.list(
                 list_params=list_params,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")

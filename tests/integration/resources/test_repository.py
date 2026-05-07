@@ -10,7 +10,12 @@ from endorlabs.resources.repository import (
     RepositoryMetaUpdate,
     UpdateRepositoryPayload,
 )
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import (
+    TEST_MAX_PAGES,
+    TEST_MAX_PAGES_TRAVERSE,
+    TEST_PAGE_SIZE,
+    TEST_TRAVERSE_PAGE_SIZE,
+)
 
 
 @pytest.mark.integration
@@ -109,31 +114,38 @@ class TestRepository:
         assert got is not None
         assert got.uuid == item.uuid
 
-    def test_repository_advanced_filtering(self) -> None:
+    def test_repository_advanced_filtering(self, sample_repository) -> None:
         """Test advanced filtering capabilities."""
         print("\n=== TESTING REPOSITORY FILTERING ===")
         from endorlabs.core.types import ListParameters
 
+        sample_repo = sample_repository
+        list_namespace = (
+            sample_repo.tenant_meta.namespace
+            if sample_repo.tenant_meta
+            and getattr(sample_repo.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
+        list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
+
         # Test filtering by platform source
-        github_repos = self.endor_root_client.Repository.list(
+        github_repos = list_client.Repository.list(
             list_params=ListParameters(
                 filter="spec.platform_source==PLATFORM_SOURCE_GITHUB",
-                page_size=TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
+                page_size=TEST_PAGE_SIZE,
             ),
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(github_repos, list), "Should return a list of repositories"
         print(f"Found {len(github_repos)} GitHub repositories")
 
         # Test field masking
-        masked_repos = self.endor_root_client.Repository.list(
+        masked_repos = list_client.Repository.list(
             list_params=ListParameters(
                 mask="meta.name,spec.platform_source",
-                page_size=TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
+                page_size=TEST_PAGE_SIZE,
             ),
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(masked_repos, list), (
             "Should return a list of masked repositories"

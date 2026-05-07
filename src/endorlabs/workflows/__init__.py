@@ -16,6 +16,7 @@ Subpackages:
     findings: Finding triage and exception policies.
     notifications: Notification targets and policies.
     platform: Namespaces, installations, scan profiles, auth policies.
+    reachability: PV/finding reachability context and stitched evidence helpers.
     relationships: Project relationship graph helpers.
     semgrep: Semgrep rule import/export, calibration, metadata inventory.
     troubleshooting_scans: Scan result/log triage scripts (CLI-oriented).

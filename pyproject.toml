@@ -35,6 +35,7 @@ endor-context = "endorlabs.context.cli:main"
 endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
+endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"

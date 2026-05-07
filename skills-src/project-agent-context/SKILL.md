@@ -21,6 +21,7 @@ Produce a **versioned, machine-readable context bundle** for a single project: `
 4. **Namespace project graph** (different question) — for *cross-project* edges in a namespace, use `uv run python -m endorlabs.workflows.relationships.map` ([map-project-dependency-relationships](map-project-dependency-relationships/SKILL.md)); not a substitute for the per-project bundle.
 5. **Call graphs** — Pass 3: **`--callgraph-sweep`** on the export script, or standalone [fetch-and-search-call-graph](fetch-and-search-call-graph/SKILL.md).
 6. **Findings, scans, lineage** — [retrieve-scan-results](retrieve-scan-results/SKILL.md), [dependency-provenance](dependency-provenance/SKILL.md), [dependency-finding-provenance](dependency-finding-provenance/SKILL.md).
+7. **Reachability stitching** — run `uv run endor-reachability-context` with `--finding-uuid` or `--pv-uuid` and feed bundle outputs from this skill as source context when deeper function-level proof is needed.
 
 ## Multi-pass behavior (summary)
 
