@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+import argparse
+import sys
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from endorlabs.tools.dependency_explorer import (
     ProjectResult,
     PVResult,
 )
-from endorlabs.workflows.agent_context.export import build_context_manifest
+from endorlabs.workflows.agent_context import export as export_mod
+from endorlabs.workflows.agent_context.export import build_context_manifest, parse_args
 from endorlabs.workflows.agent_context.package_versions import (
+    _iso_timestamp,
+    build_index_rows,
+    index_row_from_pv,
+    list_package_versions_for_index,
     parse_uuid_list_csv,
     select_top_n_uuids_by_update_time,
+    source_ref_sha_from_pv,
 )
 from endorlabs.workflows.projects.resolve import is_hex_project_id
 
@@ -74,3 +84,306 @@ def test_select_top_n_uuids_by_update_time() -> None:
         {"pv_uuid": "u3", "meta_update_time": "2019-01-01T00:00:00Z"},
     ]
     assert select_top_n_uuids_by_update_time(rows, 2) == ["u2", "u1"]
+
+
+def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None:
+    pr = ProjectResult(
+        project_uuid="p1",
+        project_name="proj",
+        namespace="t.ns",
+        slug="proj",
+        out_dir=str(tmp_path),
+        dep_metadata_count=4,
+        dep_metadata_namespace="oss",
+    )
+    m = build_context_manifest(
+        version=2,
+        tenant="t",
+        project_uuid="p1",
+        project_name="proj",
+        project_namespace="t.ns",
+        cli={"pv_limit": 1, "dep_metadata_max_pages": 2},
+        warnings=[],
+        project_result=pr,
+        out_dir=tmp_path,
+        callgraph_sweep={"package_versions_total": 5},
+        inventory={"enabled": True},
+        selection={"mode": "explicit"},
+        hydration={"pass_2_dependency_explorer": {"skipped": False}},
+    )
+    assert m["inventory"]["enabled"] is True
+    assert m["selection"]["mode"] == "explicit"
+    assert m["hydration"]["pass_2_dependency_explorer"]["skipped"] is False
+    assert m["artifacts"]["dep_metadata_list_namespace"] == "oss"
+    assert m["artifacts"]["dep_metadata_row_count"] == 4
+    assert m["artifacts"]["callgraph_sweep"]["package_versions_total"] == 5
+
+
+def test_source_ref_sha_from_pv_version_fallback() -> None:
+    pv = SimpleNamespace(
+        spec=SimpleNamespace(
+            source_code_reference=SimpleNamespace(
+                ref=None,
+                sha=None,
+                version=SimpleNamespace(ref="refs/heads/main", sha="abc123"),
+            )
+        )
+    )
+    ref, sha = source_ref_sha_from_pv(pv)
+    assert ref == "refs/heads/main"
+    assert sha == "abc123"
+
+
+def test_index_row_from_pv_serializes_metadata() -> None:
+    pv = SimpleNamespace(
+        uuid="pv1",
+        meta=SimpleNamespace(
+            name="npm://pkg@1.2.3",
+            create_time="2024-01-01T00:00:00Z",
+            update_time="2024-01-02T00:00:00Z",
+            upsert_time="2024-01-03T00:00:00Z",
+        ),
+        spec=SimpleNamespace(
+            ecosystem="ECOSYSTEM_NPM",
+            language="LANGUAGE_JAVASCRIPT",
+            package_name="npm://pkg",
+            relative_path="src",
+            call_graph_available=True,
+            precomputed_call_graph_state=SimpleNamespace(
+                model_dump=lambda **_: {"status": "READY"}
+            ),
+            source_code_reference=SimpleNamespace(ref="r", sha="s", version=None),
+        ),
+    )
+    row = index_row_from_pv(pv, project_uuid="p1", namespace="t.ns")
+    assert row["pv_uuid"] == "pv1"
+    assert row["project_uuid"] == "p1"
+    assert row["namespace"] == "t.ns"
+    assert row["precomputed_call_graph_state"] == {"status": "READY"}
+    assert row["source_ref"] == "r"
+    assert row["source_sha"] == "s"
+
+
+def test_build_index_rows_maps_all_entries() -> None:
+    pvs = [
+        SimpleNamespace(uuid="a", meta=SimpleNamespace(name="npm://a@1"), spec=None),
+        SimpleNamespace(uuid="b", meta=SimpleNamespace(name="npm://b@1"), spec=None),
+    ]
+    rows = build_index_rows(pvs, project_uuid="p1", namespace="n1")
+    assert [r["pv_uuid"] for r in rows] == ["a", "b"]
+    assert all(r["project_uuid"] == "p1" for r in rows)
+
+
+def test_list_package_versions_for_index_truncated_and_sorted() -> None:
+    class FakeClient:
+        class PackageVersion:
+            @staticmethod
+            def list(**_kwargs):
+                return [
+                    SimpleNamespace(
+                        uuid="2",
+                        meta=SimpleNamespace(name="npm://z@1"),
+                        spec=None,
+                    ),
+                    SimpleNamespace(
+                        uuid="1",
+                        meta=SimpleNamespace(name="npm://a@1"),
+                        spec=None,
+                    ),
+                ]
+
+    with patch("endorlabs.workflows.agent_context.package_versions.LOGGER.warning"):
+        pvs, meta = list_package_versions_for_index(
+            FakeClient(),
+            namespace="n1",
+            project_uuid="p1",
+            max_pages=1,
+            page_size=2,
+            deterministic=True,
+        )
+    assert [pv.uuid for pv in pvs] == ["1", "2"]
+    assert meta["truncated"] is True
+    assert meta["capacity_rows"] == 2
+    assert meta["coverage_mode"] == "truncated_at_capacity"
+
+
+def test_parse_args_defaults(monkeypatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "prog",
+            "--tenant",
+            "t",
+            "--project",
+            "p",
+        ],
+    )
+    args = parse_args()
+    assert isinstance(args, argparse.Namespace)
+    assert args.pv_limit == 5
+    assert args.pv_index is True
+    assert args.callgraph_sweep is False
+    assert args.decode_zstd is False
+
+
+def test_main_rejects_index_only_with_top_n() -> None:
+    args = SimpleNamespace(
+        tenant="t",
+        namespace="",
+        project="p",
+        output_dir=".tmp",
+        pv_limit=5,
+        dep_metadata_max_pages=10,
+        deterministic=False,
+        pv_index=True,
+        pv_index_max_pages=50,
+        pv_index_page_size=200,
+        index_only=True,
+        hydrate_pv_uuids="",
+        hydrate_top_n=1,
+        pv_list_max_pages=50,
+        pv_list_page_size=200,
+        callgraph_sweep=False,
+        callgraph_max_pages=50,
+        callgraph_page_size=200,
+        decode_zstd=False,
+    )
+    with patch.object(export_mod, "parse_args", return_value=args):
+        assert export_mod.main() == 2
+
+
+def test_main_rejects_index_only_with_hydrate_uuids() -> None:
+    args = SimpleNamespace(
+        tenant="t",
+        namespace="",
+        project="p",
+        output_dir=".tmp",
+        pv_limit=5,
+        dep_metadata_max_pages=10,
+        deterministic=False,
+        pv_index=True,
+        pv_index_max_pages=50,
+        pv_index_page_size=200,
+        index_only=True,
+        hydrate_pv_uuids="abc",
+        hydrate_top_n=0,
+        pv_list_max_pages=50,
+        pv_list_page_size=200,
+        callgraph_sweep=False,
+        callgraph_max_pages=50,
+        callgraph_page_size=200,
+        decode_zstd=False,
+    )
+    with patch.object(export_mod, "parse_args", return_value=args):
+        assert export_mod.main() == 2
+
+
+def test_main_rejects_top_n_without_index() -> None:
+    args = SimpleNamespace(
+        tenant="t",
+        namespace="",
+        project="p",
+        output_dir=".tmp",
+        pv_limit=5,
+        dep_metadata_max_pages=10,
+        deterministic=False,
+        pv_index=False,
+        pv_index_max_pages=50,
+        pv_index_page_size=200,
+        index_only=False,
+        hydrate_pv_uuids="",
+        hydrate_top_n=3,
+        pv_list_max_pages=50,
+        pv_list_page_size=200,
+        callgraph_sweep=False,
+        callgraph_max_pages=50,
+        callgraph_page_size=200,
+        decode_zstd=False,
+    )
+    with patch.object(export_mod, "parse_args", return_value=args):
+        assert export_mod.main() == 2
+
+
+def test_iso_timestamp_handles_isoformat_errors() -> None:
+    class BadTime:
+        def isoformat(self):
+            raise ValueError("bad")
+
+    assert _iso_timestamp(BadTime()) is None
+    assert _iso_timestamp(123) == "123"
+
+
+def test_source_ref_sha_from_pv_missing_spec_or_scr() -> None:
+    assert source_ref_sha_from_pv(SimpleNamespace(spec=None)) == (None, None)
+    assert source_ref_sha_from_pv(
+        SimpleNamespace(spec=SimpleNamespace(source_code_reference=None))
+    ) == (None, None)
+
+
+def test_index_row_from_pv_stringifies_non_dict_pcg_state() -> None:
+    pv = SimpleNamespace(
+        uuid="pvx",
+        meta=SimpleNamespace(
+            name="", create_time=None, update_time=None, upsert_time=None
+        ),
+        spec=SimpleNamespace(
+            ecosystem=None,
+            language=None,
+            package_name=None,
+            relative_path=None,
+            call_graph_available=None,
+            precomputed_call_graph_state=object(),
+            source_code_reference=None,
+        ),
+    )
+    row = index_row_from_pv(pv, project_uuid="p1", namespace="n1")
+    assert row["pv_name"] == "pvx"
+    assert isinstance(row["precomputed_call_graph_state"], str)
+
+
+def test_main_index_only_success_flow(tmp_path: Path) -> None:
+    args = SimpleNamespace(
+        tenant="root",
+        namespace="root.ns",
+        project="proj-name",
+        output_dir=str(tmp_path),
+        pv_limit=5,
+        dep_metadata_max_pages=10,
+        deterministic=False,
+        pv_index=False,
+        pv_index_max_pages=1,
+        pv_index_page_size=1,
+        index_only=True,
+        hydrate_pv_uuids="",
+        hydrate_top_n=0,
+        pv_list_max_pages=1,
+        pv_list_page_size=1,
+        callgraph_sweep=False,
+        callgraph_max_pages=1,
+        callgraph_page_size=1,
+        decode_zstd=False,
+    )
+    proj = SimpleNamespace(
+        uuid="p1",
+        meta=SimpleNamespace(name="repo"),
+        tenant_meta=SimpleNamespace(namespace="root.ns"),
+    )
+    fake_client = SimpleNamespace(_client=object(), close=lambda: None)
+
+    with (
+        patch.object(export_mod, "parse_args", return_value=args),
+        patch(
+            "endorlabs.workflows.agent_context.export.endorlabs.Client",
+            return_value=fake_client,
+        ),
+        patch(
+            "endorlabs.workflows.agent_context.export.resolve_project",
+            return_value=proj,
+        ),
+        patch("endorlabs.workflows.agent_context.export.slugify", return_value="repo"),
+        patch("endorlabs.workflows.agent_context.export.write_json"),
+        patch("endorlabs.workflows.agent_context.export._write_text"),
+        patch("endorlabs.workflows.agent_context.export.print"),
+    ):
+        assert export_mod.main() == 0

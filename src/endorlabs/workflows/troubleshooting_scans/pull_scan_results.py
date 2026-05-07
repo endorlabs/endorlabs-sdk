@@ -17,24 +17,12 @@ from endorlabs.core.types import ListParameters
 
 from .common import (
     date_window_from_bounds,
+    object_to_dict,
+    project_namespace,
     root_tenant,
     scan_result_extended_summary,
     write_json,
 )
-
-
-def _scan_to_dict(scan: Any) -> dict[str, Any]:
-    if hasattr(scan, "model_dump"):
-        return scan.model_dump(mode="json")
-    if isinstance(scan, dict):
-        return scan
-    return {}
-
-
-def _project_namespace(project: Any) -> str | None:
-    tm = getattr(project, "tenant_meta", None)
-    ns = getattr(tm, "namespace", None) if tm else None
-    return str(ns) if ns else None
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -81,7 +69,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     client = endorlabs.Client(tenant=args.tenant)
     try:
         project = client.Project.get(args.project_uuid, namespace=ns)
-        list_ns = _project_namespace(project) or ns
+        list_ns = project_namespace(project) or ns
 
         lp = ListParameters(
             from_date=from_d,
@@ -99,7 +87,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     finally:
         client.close()
 
-    raw_list = [_scan_to_dict(s) for s in scans]
+    raw_list = [object_to_dict(s) for s in scans]
     summaries = [scan_result_extended_summary(d) for d in raw_list]
 
     payload = {

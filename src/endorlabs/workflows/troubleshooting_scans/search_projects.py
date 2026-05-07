@@ -13,6 +13,12 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.workflows.projects.resolve import (
+    resolve_project as canonical_resolve_project,
+)
+from endorlabs.workflows.projects.resolve import (
+    search_projects_by_name_or_uuid,
+)
 
 from .common import (
     duplicate_project_decision,
@@ -121,23 +127,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     try:
         if args.project_uuid:
             ns = args.namespace or args.tenant
-            pr = client.Project.get(args.project_uuid, namespace=ns)
+            pr = canonical_resolve_project(client, ns, args.project_uuid, warnings)
             projects_out.append(_dump(pr))
 
         elif args.project_name:
-            needle = args.project_name.strip().lower()
-            all_projects = client.Project.list(
-                namespace=args.tenant,
-                traverse=True,
-                max_pages=50,
-                page_size=100,
+            matched = search_projects_by_name_or_uuid(
+                client, namespace=args.tenant, query=args.project_name
             )
-            matched = [
-                p
-                for p in all_projects
-                if needle in (_name(p).lower())
-                or needle in str(getattr(p, "uuid", "")).lower()
-            ]
 
             if not matched:
                 raise ValueError(

@@ -18,7 +18,6 @@ from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
-    TEST_TRAVERSE_PAGE_SIZE,
 )
 
 
@@ -131,13 +130,12 @@ class TestFinding:
 
         list_params = ListParameters(
             filter=f"spec.finding_categories contains [{category}]",
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            traverse=True,
+            page_size=TEST_PAGE_SIZE,
         )
 
-        findings = self.endor_root_client.Finding.list(
+        findings = self.endor_client.Finding.list(
             list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
 
         assert isinstance(findings, list), "Should return a list of findings"
