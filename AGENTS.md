@@ -123,7 +123,7 @@ endorlabs/
 > **Stub regeneration:** `uv run python devtools/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
 
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
-- **Workflows:** `endorlabs.workflows` — tenant-facing orchestration (no LLM calls): `agent_context` (context bundles), `callgraph`, `troubleshooting_scans`, `relationships`, `semgrep`, `findings`, `platform`, `notifications`, `dependencies`, `projects`. Optional CLIs: `endor-agent-context`, `endor-callgraph-search`, `endor-semgrep-inventory` (see `[project.scripts]` in [pyproject.toml](pyproject.toml)).
+- **Workflows:** `endorlabs.workflows` — tenant-facing orchestration (no LLM calls): `agent_context` (context bundles), `callgraph`, `troubleshooting_scans`, `relationships`, `semgrep`, `findings`, `platform`, `notifications`, `dependencies`, `projects`, `reachability`. Optional CLIs: `endor-agent-context`, `endor-callgraph-search`, `endor-semgrep-inventory`, `endor-reachability-context` (see `[project.scripts]` in [pyproject.toml](pyproject.toml)).
 - **Internal:** utils (model_validation, schema_drift), operations.
 
 ## Reference — External
@@ -150,18 +150,18 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 
 | Skill | When to use |
 |-------|-------------|
-| [custom-sast-rules](.cursor/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
-| [project-agent-context](.cursor/skills/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`endorlabs.workflows.agent_context`) |
-| [map-project-dependency-relationships](.cursor/skills/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `python -m endorlabs.workflows.relationships.map` |
-| [fetch-and-search-call-graph](.cursor/skills/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts (`endorlabs.workflows.callgraph`; `endor-callgraph-search` for local JSON search) |
-| [implement-sdk-resource](.cursor/skills/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
-| [retrieve-scan-results](.cursor/skills/retrieve-scan-results/) | Querying projects, scan results, and findings |
-| [sso-integration-validation-troubleshooting](.cursor/skills/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
-| [troubleshooting-scans](.cursor/skills/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `python -m endorlabs.workflows.troubleshooting_scans.*` |
-| [troubleshoot-sdk](.cursor/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
-| [troubleshoot-authlog](.cursor/skills/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |
+| [custom-sast-rules](skills-src/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
+| [project-agent-context](skills-src/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`endorlabs.workflows.agent_context`) |
+| [map-project-dependency-relationships](skills-src/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `python -m endorlabs.workflows.relationships.map` |
+| [fetch-and-search-call-graph](skills-src/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts (`endorlabs.workflows.callgraph`; `endor-callgraph-search` for local JSON search) |
+| [implement-sdk-resource](skills-src/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
+| [retrieve-scan-results](skills-src/retrieve-scan-results/) | Querying projects, scan results, and findings |
+| [sso-integration-validation-troubleshooting](skills-src/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
+| [troubleshooting-scans](skills-src/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `python -m endorlabs.workflows.troubleshooting_scans.*` |
+| [troubleshoot-sdk](skills-src/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
+| [troubleshoot-authlog](skills-src/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |
 
-Setup and usage: [.cursor/skills/README.md](.cursor/skills/README.md).
+Setup and usage: [skills-src/README.md](skills-src/README.md) (`.cursor/skills` is the mirrored runtime path used by Cursor).
 
 ## Essential Commands
 
