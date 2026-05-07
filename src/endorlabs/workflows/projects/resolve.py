@@ -39,3 +39,30 @@ def resolve_project(
             )
             return matches[0]
     return client.Project.lookup(name=project, namespace=namespace, traverse=True)
+
+
+def search_projects_by_name_or_uuid(
+    client: endorlabs.Client,
+    *,
+    namespace: str,
+    query: str,
+    max_pages: int = 50,
+    page_size: int = 100,
+) -> list[Any]:
+    """Search projects by UUID or case-insensitive name substring."""
+    needle = query.strip().lower()
+    projects = client.Project.list(
+        namespace=namespace,
+        traverse=True,
+        max_pages=max_pages,
+        page_size=page_size,
+    )
+    out: list[Any] = []
+    for project in projects:
+        pname = (
+            project.meta.name if project.meta and project.meta.name else ""
+        ).lower()
+        puid = str(project.uuid).lower() if project.uuid else ""
+        if needle in pname or needle in puid:
+            out.append(project)
+    return out
