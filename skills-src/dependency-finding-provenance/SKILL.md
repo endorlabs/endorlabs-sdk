@@ -49,6 +49,9 @@ Playbook for customer-facing dependency/finding investigations.
    - `spec.importer_data.project_uuid`
    - optional `package_version_ref`/`sha`
 4. Validate referenced UUIDs from findings (`spec.target_uuid`) and flag non-resolving resources.
+5. When function-level provenance/reachability is required, hand off to:
+   - `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .tmp/reachability`
+   - Use generated `reachability_context.json` for cross-plane (`customer` + `oss`) stitching evidence.
 
 ## Flow D — Artifact Reconciliation
 

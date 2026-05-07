@@ -8,7 +8,12 @@ import pytest
 
 import endorlabs
 from endorlabs.core.types import ListParameters
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import (
+    TEST_MAX_PAGES,
+    TEST_MAX_PAGES_TRAVERSE,
+    TEST_PAGE_SIZE,
+    TEST_TRAVERSE_PAGE_SIZE,
+)
 
 
 @pytest.mark.integration
@@ -106,16 +111,22 @@ class TestInstallation:
             else str(platform_type)
         )
 
-        # Filter installations by platform (tenant root + traverse for tenant-wide)
+        # Scope filter to the sampled resource namespace to avoid broad traversal.
+        list_namespace = (
+            first_installation.tenant_meta.namespace
+            if first_installation.tenant_meta
+            and getattr(first_installation.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
         list_params = ListParameters(
             filter=f'spec.platform_type=="{platform_type_value}"',
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
+            page_size=TEST_PAGE_SIZE,
         )
 
-        filtered_results = self.endor_root_client.Installation.list(
+        list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
+        filtered_results = list_client.Installation.list(
             list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
 
         assert isinstance(filtered_results, list), (

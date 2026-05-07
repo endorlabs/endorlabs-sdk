@@ -9,11 +9,9 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs import F
-from endorlabs.tools.dependency_explorer import (
-    decode_callgraph,
-    retrieve_call_graph_full,
-)
+from endorlabs.tools.dependency_explorer import retrieve_call_graph_full
 from endorlabs.utils.path_safety import safe_write_text
+from endorlabs.workflows.callgraph.decoded import decode_payload
 
 LOGGER = logging.getLogger(__name__)
 
@@ -64,61 +62,13 @@ def run_callgraph_sweep(
         }
 
         if decode_zstd and "zstd_bytes" in cg_data:
-            decoded = decode_callgraph(cg_data)
-            all_callables = [
-                method
-                for typ in (decoded.internal_types + decoded.external_types)
-                for method in typ.methods
-            ]
+            summary, callables, edges = decode_payload(cg_data)
             summary_file = out_dir / f"{idx:04d}_{pv.uuid}.decoded_summary.json"
             callables_file = out_dir / f"{idx:04d}_{pv.uuid}.decoded_callables.json"
             edges_file = out_dir / f"{idx:04d}_{pv.uuid}.decoded_edges.json"
-            _write_json_base(
-                out_dir,
-                summary_file,
-                {
-                    "uuid": decoded.uuid,
-                    "namespace": decoded.namespace,
-                    "parent_uuid": decoded.parent_uuid,
-                    "package_name": decoded.package_name,
-                    "language": decoded.language,
-                    "version": decoded.version,
-                    "internal_types": len(decoded.internal_types),
-                    "external_types": len(decoded.external_types),
-                    "call_edges": len(decoded.call_edges),
-                    "total_callables": len(all_callables),
-                },
-            )
-            _write_json_base(
-                out_dir,
-                callables_file,
-                [
-                    {
-                        "method_id": method.method_id,
-                        "uri": method.uri,
-                        "access": method.access,
-                        "first_line": method.first_line,
-                        "last_line": method.last_line,
-                        "defined": method.defined,
-                    }
-                    for method in sorted(all_callables, key=lambda item: item.method_id)
-                ],
-            )
-            _write_json_base(
-                out_dir,
-                edges_file,
-                [
-                    {
-                        "source_id": edge.source_id,
-                        "target_id": edge.target_id,
-                        "source_uri": decoded.callable_label(edge.source_id),
-                        "target_uri": decoded.callable_label(edge.target_id),
-                        "callsite_count": len(edge.callsites),
-                        "call_types": sorted({s.call_type for s in edge.callsites}),
-                    }
-                    for edge in decoded.call_edges
-                ],
-            )
+            _write_json_base(out_dir, summary_file, summary)
+            _write_json_base(out_dir, callables_file, callables)
+            _write_json_base(out_dir, edges_file, edges)
             row["decoded_summary_file"] = str(summary_file)
             row["decoded_callables_file"] = str(callables_file)
             row["decoded_edges_file"] = str(edges_file)

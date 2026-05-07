@@ -191,6 +191,30 @@ def list_scan_results_for_project(
     return filtered[:limit]
 
 
+def object_to_dict(item: Any) -> dict[str, Any]:
+    """Convert SDK model objects to JSON dict; passthrough dicts."""
+    if hasattr(item, "model_dump"):
+        return item.model_dump(mode="json")
+    if isinstance(item, dict):
+        return item
+    return {}
+
+
+def project_namespace(project: Any) -> str | None:
+    """Extract tenant namespace from project-like object."""
+    tenant_meta = getattr(project, "tenant_meta", None)
+    ns = getattr(tenant_meta, "namespace", None)
+    return str(ns) if ns else None
+
+
+def scanlog_line(message: Any) -> str:
+    """Normalize a ScanLogs message object into plain text."""
+    level = str(getattr(message, "log_level", "UNKNOWN"))
+    timestamp = getattr(message, "timestamp", "")
+    text = getattr(message, "message", "")
+    return f"{timestamp} [{level}] {text}"
+
+
 # App UI: https://app.endorlabs.com/t/{namespace}/scan-history/{scan_result_uuid}
 _APP_SCAN_HISTORY_URL = re.compile(
     r"^https://app\.endorlabs\.com/t/(?P<ns>[^/]+)/scan-history/(?P<uuid>[0-9a-f]{24})(?:[/?#].*)?$",

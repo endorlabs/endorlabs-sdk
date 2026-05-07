@@ -11,6 +11,7 @@ from .common import (
     build_scanlogs_client,
     load_json,
     root_tenant,
+    scanlog_line,
     write_json,
     write_text,
 )
@@ -63,10 +64,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 max_entries=args.max_entries,
             )
             for message in log_messages:
-                level = str(getattr(message, "log_level", "UNKNOWN"))
-                ts = getattr(message, "timestamp", "")
-                txt = getattr(message, "message", "")
-                entries.append(f"{ts} [{level}] {txt}")
+                entries.append(scanlog_line(message))
         except Exception:
             entries = []
 

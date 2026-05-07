@@ -8,7 +8,12 @@ import pytest
 
 import endorlabs
 from endorlabs.core.types import ListParameters
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import (
+    TEST_MAX_PAGES,
+    TEST_MAX_PAGES_TRAVERSE,
+    TEST_PAGE_SIZE,
+    TEST_TRAVERSE_PAGE_SIZE,
+)
 
 
 @pytest.mark.integration
@@ -103,16 +108,22 @@ class TestMetric:
 
         project_uuid = first_metric.spec.project_uuid
 
-        # Filter metrics by project
+        # Scope filter to the sampled resource namespace to avoid broad traversal.
+        list_namespace = (
+            first_metric.tenant_meta.namespace
+            if first_metric.tenant_meta
+            and getattr(first_metric.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
         list_params = ListParameters(
             filter=f'spec.project_uuid=="{project_uuid}"',
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
+            page_size=TEST_PAGE_SIZE,
         )
 
-        filtered_results = self.endor_root_client.Metric.list(
+        list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
+        filtered_results = list_client.Metric.list(
             list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
 
         assert isinstance(filtered_results, list), (
@@ -140,16 +151,22 @@ class TestMetric:
 
         analytic_name = first_metric.spec.analytic
 
-        # Filter metrics by analytic
+        # Scope filter to the sampled resource namespace to avoid broad traversal.
+        list_namespace = (
+            first_metric.tenant_meta.namespace
+            if first_metric.tenant_meta
+            and getattr(first_metric.tenant_meta, "namespace", None)
+            else self.root_namespace
+        )
         list_params = ListParameters(
             filter=f'spec.analytic=="{analytic_name}"',
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
+            page_size=TEST_PAGE_SIZE,
         )
 
-        filtered_results = self.endor_root_client.Metric.list(
+        list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
+        filtered_results = list_client.Metric.list(
             list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
 
         assert isinstance(filtered_results, list), (

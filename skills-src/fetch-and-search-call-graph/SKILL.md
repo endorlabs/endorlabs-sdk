@@ -13,6 +13,8 @@ description: >-
 
 Turn raw call graph storage into **searchable, join-friendly JSON** (`decoded_callables.json`, `decoded_edges.json` when using `--decode-zstd`) and run **deterministic** node/edge/path queries. Use this skill when the task is symbol reachability, presence checks, or extracting graph facts for reasoning—not for listing scan findings (see [retrieve-scan-results](retrieve-scan-results/SKILL.md)).
 
+For full PV/finding reachability triage across customer and `oss` planes, prefer `uv run endor-reachability-context` first; use this skill as the graph-plane utility layer when you need focused symbol/path extraction from decoded artifacts.
+
 ## Ordering
 
 1. **Credentials** — `uv run --env-file .env` (or equivalent) for `endorlabs.Client`.
@@ -32,6 +34,7 @@ use method IDs for joins, intersections, and path checks.
 ## Library and CLI entrypoints
 
 - `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep` — enumerates PVs and writes call graph exports (used by agent context `--callgraph-sweep`).
+- `endorlabs.workflows.callgraph.decoded.decode_payload` — canonical decoded shape contract (`summary`, `callables`, `edges`) shared by sweep + reachability workflows.
 - `endorlabs.workflows.callgraph.search` — searches decoded callables/edges (`endor-callgraph-search`).
 - Bundle orchestration: `uv run endor-agent-context ... --callgraph-sweep` (see [project-agent-context](project-agent-context/SKILL.md)).
 
