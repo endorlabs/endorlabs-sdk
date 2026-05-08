@@ -48,6 +48,22 @@ Same on PowerShell.
 uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
+**Verify committed artifacts vs live upstream** (downloads OpenAPI + queries `meta/version`; no generation):
+
+```bash
+uv run python devtools/model_sync.py --verify-upstream-only
+```
+
+**Refresh only when stale** (if drift is detected, fetch OpenAPI and run full sync + stubs + reference docs):
+
+```bash
+uv run python devtools/model_sync.py --verify-and-sync-if-stale
+```
+
+Pre-push hooks run `--verify-upstream-only` so pushes fail when the public OpenAPI digest
+drifts from `registry_contract.py` provenance; newer published endorctl versions log a
+warning without blocking.
+
 **SHA-256 of the spec file only** (optional `--fetch-spec` first):
 
 ```bash

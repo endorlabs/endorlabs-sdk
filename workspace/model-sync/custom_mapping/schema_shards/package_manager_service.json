@@ -107,7 +107,8 @@
         "PACKAGE_MANAGER_TYPE_PACKAGIST",
         "PACKAGE_MANAGER_TYPE_GRADLE",
         "PACKAGE_MANAGER_TYPE_COCOAPOD",
-        "PACKAGE_MANAGER_TYPE_SWIFT"
+        "PACKAGE_MANAGER_TYPE_SWIFT",
+        "PACKAGE_MANAGER_TYPE_CONAN"
       ],
       "type": "string"
     },
@@ -256,17 +257,6 @@
       ],
       "type": "string"
     },
-    "SwiftSpecBasicAuth": {
-      "properties": {
-        "password": {
-          "type": "string"
-        },
-        "username": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "googleprotobufAny": {
       "additionalProperties": {},
       "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }",
@@ -315,6 +305,54 @@
       },
       "required": [
         "priority"
+      ],
+      "type": "object"
+    },
+    "v1ConanSpec": {
+      "description": "Represents a configuration for the Conan package manager.",
+      "properties": {
+        "aws": {
+          "$ref": "#/definitions/PackageManagerAWSAuthProvider",
+          "description": "AWS authentication for the Conan remote (for example CodeArtifact)."
+        },
+        "basic_auth": {
+          "$ref": "#/definitions/v1ConanSpecBasicAuth",
+          "description": "Basic auth credentials for the Conan remote."
+        },
+        "priority": {
+          "description": "The priority of the Conan package manager.\nPriorities are relative. If multiple package managers\nhave the same priority, the order between them can be random.\nLower number means higher priority.",
+          "format": "int32",
+          "type": "integer"
+        },
+        "remote_name": {
+          "description": "The logical name of the remote in the Conan client configuration.",
+          "type": "string"
+        },
+        "url": {
+          "description": "The URL of the Conan remote registry.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priority",
+        "url"
+      ],
+      "type": "object"
+    },
+    "v1ConanSpecBasicAuth": {
+      "properties": {
+        "password": {
+          "description": "Password or API token for basic auth.",
+          "type": "string"
+        },
+        "username": {
+          "description": "Username for basic auth (JFrog Artifactory or self-hosted).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "username",
+        "password"
       ],
       "type": "object"
     },
@@ -747,6 +785,9 @@
         "cocoapod": {
           "$ref": "#/definitions/v1CocoapodSpec"
         },
+        "conan": {
+          "$ref": "#/definitions/v1ConanSpec"
+        },
         "gem": {
           "$ref": "#/definitions/v1GemSpec"
         },
@@ -835,7 +876,7 @@
       "description": "Represents a configuration for the Swift package manager.",
       "properties": {
         "basic_auth": {
-          "$ref": "#/definitions/SwiftSpecBasicAuth",
+          "$ref": "#/definitions/v1SwiftSpecBasicAuth",
           "description": "Basic auth credentials to authenticate to the registry."
         },
         "priority": {
@@ -859,6 +900,17 @@
       "required": [
         "priority"
       ],
+      "type": "object"
+    },
+    "v1SwiftSpecBasicAuth": {
+      "properties": {
+        "password": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "v1TenantMeta": {
