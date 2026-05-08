@@ -11,7 +11,7 @@
 # hook passes --force-exclude, which skips paths listed in [tool.ruff] exclude
 # (including devtools/) even when those files are staged — diverging from CI.
 #
-# Install: uv run pre-commit install
+# Install: uv run pre-commit install && uv run pre-commit install --hook-type pre-push
 # Run manually: uv run pre-commit run --all-files
 repos:
   # --- Ruff + Pyright (parity with CI PR Main lint job) ---
@@ -58,11 +58,13 @@ repos:
           - devtools/model_sync_pr_deltas.py
           - devtools/generate_client_stub.py
           - devtools/generate_reference_docs.py
+          - devtools/sync/cli.py
+          - devtools/sync/upstream_verify.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: pyright-ci-critical-automation
         name: pyright (CI-critical automation scripts)
@@ -76,11 +78,13 @@ repos:
           - devtools/model_sync_pr_deltas.py
           - devtools/generate_client_stub.py
           - devtools/generate_reference_docs.py
+          - devtools/sync/cli.py
+          - devtools/sync/upstream_verify.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: model-sync-contract-validate
         name: model-sync contract validation
@@ -96,19 +100,14 @@ repos:
         stages: [pre-push]
         files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
-      - id: model-sync-contract-validate
-        name: model-sync contract validation
+      - id: model-sync-upstream-verify
+        name: model-sync upstream verify (OpenAPI digest vs committed)
         entry: uv
-        args:
-          - run
-          - pytest
-          - tests/unit/tooling/scripts/test_generated_contract_quality_gates.py
-          - -q
+        args: [run, python, devtools/model_sync.py, --verify-upstream-only]
         language: system
         pass_filenames: false
         require_serial: true
         stages: [pre-push]
-        files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(scripts/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
   # --- Spell checking ---
   - repo: https://github.com/codespell-project/codespell
