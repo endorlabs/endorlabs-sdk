@@ -36,9 +36,71 @@ LEGACY_OUTPUT_ROOT = REPO_ROOT / "workspace" / "model-bakeoff"
 GENERATED_CONTRACT_MODULE_PATH = (
     REPO_ROOT / "src" / "endorlabs" / "generated" / "registry_contract.py"
 )
-GENERATED_PACKAGE_INIT_PATH = REPO_ROOT / "src" / "endorlabs" / "generated" / "__init__.py"
+GENERATED_PACKAGE_INIT_PATH = (
+    REPO_ROOT / "src" / "endorlabs" / "generated" / "__init__.py"
+)
 GENERATED_RUNTIME_MODELS_ROOT = REPO_ROOT / "src" / "endorlabs" / "generated" / "models"
 logger = logging.getLogger(__name__)
+
+
+def _print_delta_summary(*, git_ref_override: str, repo_root: Path) -> None:
+    from .baseline_ref import resolve_auto_baseline_ref
+    from .delta_summary import render_compact_delta_summary_lines
+
+    ref = (git_ref_override or "").strip() or resolve_auto_baseline_ref(repo_root)
+    summary_text = "\n".join(
+        render_compact_delta_summary_lines(git_ref=ref, repo_root=repo_root)
+    )
+    print(summary_text)  # noqa: T201
+
+
+def _run_upstream_verify_only(args: argparse.Namespace) -> int:
+    from .upstream_verify import verify_upstream_matches_committed
+
+    drift = verify_upstream_matches_committed(
+        registry_contract_path=GENERATED_CONTRACT_MODULE_PATH,
+        spec_url=args.spec_url,
+    )
+    if drift:
+        for line in drift:
+            logger.error("%s", line)
+        return 1
+    logger.info("Upstream OpenAPI spec matches committed model-sync provenance.")
+    return 0
+
+
+def _run_verify_and_sync_if_stale(args: argparse.Namespace, spec_path: Path) -> int:
+    from .upstream_verify import verify_upstream_matches_committed
+
+    drift = verify_upstream_matches_committed(
+        registry_contract_path=GENERATED_CONTRACT_MODULE_PATH,
+        spec_url=args.spec_url,
+    )
+    if not drift:
+        logger.info(
+            "Committed model-sync provenance matches upstream; skipping regeneration.",
+        )
+        return 0
+    for line in drift:
+        logger.warning("%s", line)
+    logger.info("Upstream drift detected; running full model sync.")
+    if not _fetch_openapi_spec(args.spec_url, spec_path):
+        return 1
+    code = run_sync(
+        spec_path=spec_path,
+        output_root=args.output_root,
+        profiles_dir=args.custom_profiles_dir,
+        generate_stubs=True,
+        generate_reference_docs=True,
+    )
+    if code != 0:
+        return code
+    if args.delta_summary:
+        _print_delta_summary(
+            git_ref_override=args.delta_git_ref,
+            repo_root=REPO_ROOT,
+        )
+    return 0
 
 
 def _fetch_openapi_spec(url: str, dest: Path) -> bool:
@@ -83,18 +145,26 @@ def _run_optional_generators(
 ) -> bool:
     ok = True
     if generate_stubs:
-        result = _run_command([sys.executable, "devtools/generate_client_stub.py"], REPO_ROOT)
-        if result.returncode != 0:
-            ok = False
-            logger.error("generate_client_stub failed: %s", (result.stderr or result.stdout).strip())
-        else:
-            logger.info("generate_client_stub completed.")
-    if generate_reference_docs:
-        result = _run_command([sys.executable, "devtools/generate_reference_docs.py"], REPO_ROOT)
+        result = _run_command(
+            [sys.executable, "devtools/generate_client_stub.py"], REPO_ROOT
+        )
         if result.returncode != 0:
             ok = False
             logger.error(
-                "generate_reference_docs failed: %s", (result.stderr or result.stdout).strip()
+                "generate_client_stub failed: %s",
+                (result.stderr or result.stdout).strip(),
+            )
+        else:
+            logger.info("generate_client_stub completed.")
+    if generate_reference_docs:
+        result = _run_command(
+            [sys.executable, "devtools/generate_reference_docs.py"], REPO_ROOT
+        )
+        if result.returncode != 0:
+            ok = False
+            logger.error(
+                "generate_reference_docs failed: %s",
+                (result.stderr or result.stdout).strip(),
             )
         else:
             logger.info("generate_reference_docs completed.")
@@ -129,7 +199,9 @@ def _mirror_generated_models_to_runtime(model_output: Path) -> None:
         GENERATED_RUNTIME_MODELS_ROOT / "__init__.py",
         '"""Generated model modules mirrored from model-sync output."""',
     )
-    for package_dir in sorted(path for path in GENERATED_RUNTIME_MODELS_ROOT.rglob("*") if path.is_dir()):
+    for package_dir in sorted(
+        path for path in GENERATED_RUNTIME_MODELS_ROOT.rglob("*") if path.is_dir()
+    ):
         _ensure_package_init(package_dir / "__init__.py")
 
 
@@ -173,7 +245,9 @@ def run_sync(
     write_json(model_output / "provenance.json", provenance)
 
     plan = build_plan(spec)
-    write_mapping_metadata(plan.entries, model_output / "mapping" / "entity_mapping.json", profiles)
+    write_mapping_metadata(
+        plan.entries, model_output / "mapping" / "entity_mapping.json", profiles
+    )
     operation_path_metadata = build_operation_path_metadata(spec)
     write_json(
         model_output / "mapping" / "operation_path_metadata.json",
@@ -201,7 +275,9 @@ def run_sync(
             '"""Generated artifacts consumed by runtime registry adapter."""\n',
             encoding="utf-8",
         )
-    GENERATED_CONTRACT_MODULE_PATH.write_text(generated_contract_content, encoding="utf-8")
+    GENERATED_CONTRACT_MODULE_PATH.write_text(
+        generated_contract_content, encoding="utf-8"
+    )
     format_result = _run_command(
         [sys.executable, "-m", "ruff", "format", str(GENERATED_CONTRACT_MODULE_PATH)],
         REPO_ROOT,
@@ -248,7 +324,9 @@ def run_sync(
     _mirror_generated_models_to_runtime(model_output)
 
     write_json(output_root / "commands.json", {"commands": commands})
-    manifest = build_artifacts_manifest(model_output, excluded_paths={"provenance.json"})
+    manifest = build_artifacts_manifest(
+        model_output, excluded_paths={"provenance.json"}
+    )
     write_json(model_output / "artifacts_manifest.json", manifest)
 
     optional_ok = _run_optional_generators(generate_stubs, generate_reference_docs)
@@ -277,7 +355,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print SHA-256 of --spec-path and exit (runs --fetch-spec first if set)",
     )
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
-    parser.add_argument("--custom-profiles-dir", type=Path, default=DEFAULT_CUSTOM_PROFILES_DIR)
+    parser.add_argument(
+        "--custom-profiles-dir", type=Path, default=DEFAULT_CUSTOM_PROFILES_DIR
+    )
     parser.add_argument("--generate-stubs", action="store_true")
     parser.add_argument("--generate-reference-docs", action="store_true")
     parser.add_argument("--inventory-only", action="store_true")
@@ -291,6 +371,22 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Baseline ref for --delta-summary (default: auto origin/main..master)",
     )
+    parser.add_argument(
+        "--verify-upstream-only",
+        action="store_true",
+        help=(
+            "Download OpenAPI + query meta/version; fail if committed registry_contract "
+            "provenance is stale vs upstream (no code generation)"
+        ),
+    )
+    parser.add_argument(
+        "--verify-and-sync-if-stale",
+        action="store_true",
+        help=(
+            "If upstream differs from committed provenance, fetch OpenAPI and run full "
+            "model sync (implies --fetch-spec, --generate-stubs, --generate-reference-docs)"
+        ),
+    )
     return parser
 
 
@@ -298,6 +394,10 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.verify_upstream_only and args.verify_and_sync_if_stale:
+        parser.error(
+            "--verify-upstream-only and --verify-and-sync-if-stale are mutually exclusive"
+        )
     if args.inventory_only:
         toolchain = {
             "datamodel-codegen": {
@@ -309,15 +409,20 @@ def main(argv: list[str] | None = None) -> int:
 
     spec_path = args.spec_path.expanduser().resolve()
 
-    if args.fetch_spec:
-        if not _fetch_openapi_spec(args.spec_url, spec_path):
-            return 1
+    if args.verify_upstream_only:
+        return _run_upstream_verify_only(args)
+
+    if args.verify_and_sync_if_stale:
+        return _run_verify_and_sync_if_stale(args, spec_path)
+
+    if args.fetch_spec and not _fetch_openapi_spec(args.spec_url, spec_path):
+        return 1
 
     if args.spec_hash_only:
         if not spec_path.is_file():
             logger.error("Spec file not found: %s", spec_path)
             return 1
-        print(_sha256_hex(spec_path))
+        print(_sha256_hex(spec_path))  # noqa: T201
         return 0
 
     code = run_sync(
@@ -331,13 +436,9 @@ def main(argv: list[str] | None = None) -> int:
         return code
 
     if args.delta_summary:
-        from .baseline_ref import resolve_auto_baseline_ref
-        from .delta_summary import render_compact_delta_summary_lines
-
-        ref = (args.delta_git_ref or "").strip() or resolve_auto_baseline_ref(REPO_ROOT)
-        summary_text = "\n".join(
-            render_compact_delta_summary_lines(git_ref=ref, repo_root=REPO_ROOT)
+        _print_delta_summary(
+            git_ref_override=args.delta_git_ref,
+            repo_root=REPO_ROOT,
         )
-        print(summary_text)
 
     return 0
