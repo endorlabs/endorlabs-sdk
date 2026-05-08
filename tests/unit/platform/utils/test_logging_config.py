@@ -101,14 +101,14 @@ class TestRedactingFilterQuotingCombinations:
 
     def test_single_key_single_value(self) -> None:
         """'key': 'value' -- standard Python repr."""
-        result = _apply(self.rf, "'token': 'eyJhbGciOiJSUz'")
-        assert "eyJhbGciOiJSUz" not in result
+        result = _apply(self.rf, "'token': 'jwt-placeholder-header'")
+        assert "jwt-placeholder-header" not in result
         assert "REDACTED" in result
 
     def test_double_key_double_value(self) -> None:
         """\"key\": \"value\" -- standard JSON."""
-        result = _apply(self.rf, '"token": "eyJhbGciOiJSUz"')
-        assert "eyJhbGciOiJSUz" not in result
+        result = _apply(self.rf, '"token": "jwt-placeholder-header"')
+        assert "jwt-placeholder-header" not in result
         assert "REDACTED" in result
 
     # -- Mixed quoting (the cross-quoting gap) ------------------------------
@@ -211,12 +211,11 @@ class TestRedactingFilterReprIntegration:
     def test_repr_with_normal_value(self) -> None:
         """repr() of a dict with a normal value uses homogeneous single quoting.
 
-        The literal below is intentionally JWT-header-shaped for redaction coverage;
-        it is not a real credential. ``endorctl:allow`` satisfies admission policy
-        for this documented test fixture.
+        The literal below is a synthetic token-like placeholder used only for
+        redaction coverage.
         """
-        secret_dict = {"token": "eyJhbGciOiJSUzI1NiJ9"}  # endorctl:allow
+        secret_dict = {"token": "jwt-placeholder-header-full"}
         repr_str = repr(secret_dict)
         result = _apply(self.rf, repr_str)
-        assert "eyJhbGciOiJSUzI1NiJ9" not in result
+        assert "jwt-placeholder-header-full" not in result
         assert "REDACTED" in result
