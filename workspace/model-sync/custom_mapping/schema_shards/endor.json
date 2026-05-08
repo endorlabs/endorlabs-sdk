@@ -43,7 +43,7 @@
     },
     "SpecEndorLicenseBundleType": {
       "default": "ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED",
-      "description": "Enum representing different types of Endor Labs license bundles.\n\n - ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED: Default value. Should not be used.\n - ENDOR_LICENSE_BUNDLE_TYPE_OSS_CORE: Open Source Software (OSS) Core license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_OSS_PRO: Open Source Software (OSS) Pro license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_CICD: Continuous Integration/Continuous Deployment (CI/CD) license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SECRETS: Secrets Management license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SBOM_HUB: Software Bill of Materials (SBOM) Hub license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SUPPLY_CHAIN: Supply Chain Security license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_ENDOR_PATCHING: Endor Patching license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_CODE: Discover risks in 1st party code.\n - ENDOR_LICENSE_BUNDLE_TYPE_ENDOR_OUTPOST: Endor Outpost license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SECURITY_REVIEW: Security Review license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_CODE_PRO: Discover risks in 1st party code using AI.",
+      "description": "Enum representing different types of Endor Labs license bundles.\n\n - ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED: Default value. Should not be used.\n - ENDOR_LICENSE_BUNDLE_TYPE_OSS_CORE: Open Source Software (OSS) Core license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_OSS_PRO: Open Source Software (OSS) Pro license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_CICD: Continuous Integration/Continuous Deployment (CI/CD) license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SECRETS: Secrets Management license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SBOM_HUB: Software Bill of Materials (SBOM) Hub license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SUPPLY_CHAIN: Supply Chain Security license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_ENDOR_PATCHING: Endor Patching license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_CODE: Discover risks in 1st party code.\n - ENDOR_LICENSE_BUNDLE_TYPE_ENDOR_OUTPOST: Endor Outpost license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_SECURITY_REVIEW: Security Review license bundle.\n - ENDOR_LICENSE_BUNDLE_TYPE_CODE_PRO: Discover risks in 1st party code using AI.\n - ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL: Endor OSS Firewall license bundle.",
       "enum": [
         "ENDOR_LICENSE_BUNDLE_TYPE_UNSPECIFIED",
         "ENDOR_LICENSE_BUNDLE_TYPE_OSS_CORE",
@@ -56,7 +56,8 @@
         "ENDOR_LICENSE_BUNDLE_TYPE_CODE",
         "ENDOR_LICENSE_BUNDLE_TYPE_ENDOR_OUTPOST",
         "ENDOR_LICENSE_BUNDLE_TYPE_SECURITY_REVIEW",
-        "ENDOR_LICENSE_BUNDLE_TYPE_CODE_PRO"
+        "ENDOR_LICENSE_BUNDLE_TYPE_CODE_PRO",
+        "ENDOR_LICENSE_BUNDLE_TYPE_OSS_FIREWALL"
       ],
       "type": "string"
     },
