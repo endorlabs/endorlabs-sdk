@@ -194,7 +194,7 @@
           "x-internal": true
         },
         "full_index_started_time": {
-          "description": "Timestamp when a full index operation started.\nUsed to detect if a full index is in progress: if full_index_started_time > last_full_index_time,\na full index is currently running. Can be overridden by setting force_full_indexing to true.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "description": "Deprecated: was used as a distributed lock for concurrent indexing, but the\nlock had a TOCTOU race and content-addressed indexing makes it unnecessary.\nField kept for backward compatibility; no longer read or written.",
           "format": "date-time",
           "type": "string",
           "x-internal": true
@@ -213,15 +213,13 @@
           "x-internal": true
         },
         "last_partial_index_sha": {
-          "description": "Format: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
-          "title": "The SHA of the last commit that was partially indexed into a vector store.\nNote: this is only used for aisast feature.\nTODO (dogild): update the documentation once it is not internal anymore",
+          "description": "Deprecated: use last_full_index_sha instead. The indexer now uses a single\nIndex method; the full/partial distinction no longer exists.",
           "type": "string",
           "x-internal": true
         },
         "last_partial_index_time": {
-          "description": "Format: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
+          "description": "Deprecated: use last_full_index_time instead. The indexer now uses a single\nIndex method; the full/partial distinction no longer exists.\n\nFormat: 2017-01-15T01:30:15.01Z\nRFC 3339: https://www.ietf.org/rfc/rfc3339.txt.",
           "format": "date-time",
-          "title": "Last time a part of the code of the repository version was indexed into a vector store.\nNote: this is only used for aisast feature.\nTODO (dogild): update the documentation once it is not internal anymore",
           "type": "string",
           "x-internal": true
         },
