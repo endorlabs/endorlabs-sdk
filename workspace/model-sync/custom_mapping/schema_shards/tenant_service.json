@@ -303,7 +303,7 @@
           "type": "array"
         },
         "organizational_entity_name": {
-          "title": "The name of the organization that they will use as supplier for the SBOM.\nalthough this is not a required field this will be validated when trying to export an SBOM.bool",
+          "title": "The human-readable name of the organization. Will be used as supplier for the SBOM.\nAlthough this is not a required field this will be validated when trying to export an SBOM.bool",
           "type": "string"
         },
         "phone_number": {
