@@ -323,6 +323,10 @@
     },
     "v1VectorStoreSpec": {
       "properties": {
+        "apply_uniqueness_index_changes": {
+          "description": "apply_uniqueness_index_changes explicitly authorizes migrating uniqueness indexes\nwhen the requested uniqueness_fields differ from the currently provisioned index.\nThis must be true any time changes are made to the uniqueness_fields.",
+          "type": "boolean"
+        },
         "dimensions": {
           "description": "Dimensions is the number of dimensions to be used.",
           "format": "int32",
