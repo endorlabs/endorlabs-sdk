@@ -48,6 +48,9 @@ Practical implication: a finding can be `REACHABLE_FUNCTION` even when a direct 
    - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .tmp/reachability`.
    - Use `--pv-uuid` for direct PV analysis.
    - Treat `reachability_context.json` as the canonical triage bundle (customer graph plane, `oss` graph plane, stitching summary, warnings).
+   - Bundle requirement (deterministic): include decoded call graphs from both planes:
+     - customer/app side: `app_call_graph_decoded_summary.json`, `app_call_graph_decoded_callables.json`, `app_call_graph_decoded_edges.json`
+     - `oss` side: `oss_call_graph_decoded_summary.json`, `oss_call_graph_decoded_callables.json`, `oss_call_graph_decoded_edges.json`
 
 1. Gather finding evidence
    - Record finding UUID, tags, summary, `target_dependency_package_name`, `extra_key`, and `call_graph_analysis_type`.
@@ -66,6 +69,10 @@ Practical implication: a finding can be `REACHABLE_FUNCTION` even when a direct 
    - Strict check: vulnerable function reachability should be determined from `affected_callpath_uris`.
    - Practical-risk check: inspect whether risky API surface in the same package is reachable even when strict vulnerable callpaths are not matched.
    - Graph-plane check: test customer graph and `oss` graph separately, then test stitched reachability (`customer internal -> shared dependency entrypoint -> oss vulnerable function`).
+   - Edge-list requirement (deterministic): when triaging reachability markers, list relevant edges from the source function to candidate target symbols from decoded edge files.
+   - Overloaded-symbol scaffold (deterministic): if the same symbol name appears across multiple target edges from the same source, include:
+     - `possible_symbol_collision: true`
+     - `collision_symbol: <symbol>`
 
 ### Control-case method (reachable vs unresolved)
 
@@ -121,6 +128,18 @@ Use this structure in the final triage result:
 
 - Recommended next action:
   - <normalization/curation/coverage action>
+```
+
+When overloaded edges are present for a symbol, append this deterministic scaffold:
+
+```yaml
+overloaded_edge_check:
+  source_function: <fully-qualified-source-signature>
+  possible_symbol_collision: true
+  collision_symbol: <symbol-name>
+  relevant_edges:
+    - <source> -> <target-1>
+    - <source> -> <target-2>
 ```
 
 ## Guardrails
