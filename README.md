@@ -1,6 +1,6 @@
 # Endor Labs SDK
 
-[![Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml/badge.svg)](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
+[Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
 Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
@@ -10,12 +10,14 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 
 ## Start here
 
-| You want to... | Go to |
-|----------------|-------|
-| **Use the SDK** in your project | Keep reading (Installation → Quick start) |
-| **Try the interactive SDK demo** | [Demo CLI](#demo-cli) |
-| **Contribute** to this repo | [CONTRIBUTORS.md](CONTRIBUTORS.md) |
-| **Work with an AI agent** (Cursor, Claude, etc.) | [AGENTS.md](AGENTS.md) |
+
+| You want to...                                   | Go to                                     |
+| ------------------------------------------------ | ----------------------------------------- |
+| **Use the SDK** in your project                  | Keep reading (Installation → Quick start) |
+| **Try the interactive SDK demo**                 | [Demo CLI](#demo-cli)                     |
+| **Contribute** to this repo                      | [CONTRIBUTORS.md](CONTRIBUTORS.md)        |
+| **Work with an AI agent** (Cursor, Claude, etc.) | [AGENTS.md](AGENTS.md)                    |
+
 
 ## Installation
 
@@ -44,15 +46,17 @@ Verify: `uv run python -c "import endorlabs; print(endorlabs.__version__)"`
 
 The SDK uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.
 
-| Variable | Purpose |
-|----------|---------|
-| `ENDOR_API` | API base URL (default: `https://api.endorlabs.com`) |
-| `ENDOR_API_CREDENTIALS_KEY` | API key |
-| `ENDOR_API_CREDENTIALS_SECRET` | API secret |
-| `ENDOR_TOKEN` | Bearer token. Takes precedence when present and is validated before any interactive auth flow. |
-| `ENDOR_NAMESPACE` | Default tenant namespace (e.g. `tenant.namespace`) |
-| `ENDOR_LOG_LEVEL` | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
-| `ENDOR_MAX_RETRIES` | Optional: retry count (default: 5) |
+
+| Variable                       | Purpose                                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `ENDOR_API`                    | API base URL (default: `https://api.endorlabs.com`)                                            |
+| `ENDOR_API_CREDENTIALS_KEY`    | API key                                                                                        |
+| `ENDOR_API_CREDENTIALS_SECRET` | API secret                                                                                     |
+| `ENDOR_TOKEN`                  | Bearer token. Takes precedence when present and is validated before any interactive auth flow. |
+| `ENDOR_NAMESPACE`              | Default tenant namespace (e.g. `tenant.namespace`)                                             |
+| `ENDOR_LOG_LEVEL`              | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`                                      |
+| `ENDOR_MAX_RETRIES`            | Optional: retry count (default: 5)                                                             |
+
 
 Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths.
 
@@ -65,9 +69,9 @@ ENDOR_NAMESPACE=your-tenant.namespace
 ENDOR_LOG_LEVEL=INFO
 ```
 
-### Programmatic browser auth (`ewok token`-style)
+### Programmatic browser auth
 
-If you want behavior similar to `ewok token`, use browser auth mode with `APIClient`.
+The SDK supports browser auth mode with `APIClient`.
 The SDK validates a provided token first, and if it is invalid (or missing), it falls
 back to interactive browser authentication.
 After a browser token is validated, it is treated as a session token: repeated
@@ -89,7 +93,7 @@ instead of shell-specific `eval` export workflows.
 
 ### Authentication troubleshooting (Agent Skill)
 
-For **`AuthenticationLog`**, **`AuthorizationPolicy`**, and optional **`AuditLog`**
+For `**AuthenticationLog**`, `**AuthorizationPolicy**`, and optional `**AuditLog**`
 correlation during SSO / tenant login investigations, use the **troubleshoot-authlog**
 Agent Skill: [skills-src/troubleshoot-authlog/SKILL.md](skills-src/troubleshoot-authlog/SKILL.md)
 (`.cursor/skills` is the mirrored runtime path used by Cursor).
