@@ -23,7 +23,7 @@ if str(SRC_DIR) not in sys.path:
 
 import endorlabs  # noqa: E402
 from endorlabs import resources as resource_modules  # noqa: E402
-from endorlabs.facade import ResourceFacade, _ListableFacade  # noqa: E402
+from endorlabs.facade import ResourceRuntimeFacade, _ListableFacade  # noqa: E402
 from endorlabs.registry import RESOURCE_REGISTRY  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -542,10 +542,14 @@ def _generate_api_surfaces_md() -> str:
         ]
     )
 
-    lines.extend(["", "### `ResourceFacade` methods", ""])
+    lines.extend(
+        ["", "### `ResourceRuntimeFacade` methods (`ResourceFacade` alias)", ""]
+    )
     lines.extend(
         [
-            _format_signature_line(method_name, getattr(ResourceFacade, method_name))
+            _format_signature_line(
+                method_name, getattr(ResourceRuntimeFacade, method_name)
+            )
             for method_name in ("get", "create", "update", "delete", "tag", "untag")
         ]
     )
