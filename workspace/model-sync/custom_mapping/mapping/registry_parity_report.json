@@ -30,6 +30,8 @@
     }
   ],
   "mapping_without_registry_match": [
+    "AISastCustomerContextServiceCreateAISastCustomerContextBody",
+    "AISastCustomerContextServiceUpdateAISastCustomerContextBody",
     "APIKeyServiceCreateAPIKeyBody",
     "ArtifactSignatureServiceCreateArtifactSignatureBody",
     "ArtifactSignatureServiceUpdateArtifactSignatureBody",
@@ -113,6 +115,7 @@
     "VersionUpgradeServiceUpdateVersionUpgradeBody",
     "endorv1Metric",
     "googlerpcStatus",
+    "v1AISastCustomerContext",
     "v1ArtifactSignature",
     "v1AuthenticationResponse",
     "v1BatchFileSegments",
@@ -130,6 +133,7 @@
     "v1LicenseDependency",
     "v1LicenseNoticesReport",
     "v1LicenseSummary",
+    "v1ListAISastCustomerContextsResponse",
     "v1ListAPIKeysResponse",
     "v1ListArtifactSignaturesResponse",
     "v1ListAuditLogsResponse",
