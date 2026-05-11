@@ -1,6 +1,34 @@
 {
   "entries": [
     {
+      "entity_name": "AISastCustomerContextServiceCreateAISastCustomerContextBody",
+      "module_path": "a_i_sast_customer_context_service",
+      "operation_id": "AISastCustomerContextService_CreateAISastCustomerContext",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-customer-contexts:post",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "AISastCustomerContextServiceUpdateAISastCustomerContextBody",
+      "module_path": "a_i_sast_customer_context_service",
+      "operation_id": "AISastCustomerContextService_UpdateAISastCustomerContext",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/ai-sast-customer-contexts:patch",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1AISastCustomerContext",
+      "module_path": "a_i_sast_customer_context_service",
+      "operation_id": "AISastCustomerContextService_UpdateAISastCustomerContext",
+      "source_key": "/v1/namespaces/{object.tenant_meta.namespace}/ai-sast-customer-contexts:patch:200",
+      "source_kind": "operation_ref"
+    },
+    {
+      "entity_name": "v1ListAISastCustomerContextsResponse",
+      "module_path": "a_i_sast_customer_context_service",
+      "operation_id": "AISastCustomerContextService_ListAISastCustomerContexts",
+      "source_key": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-customer-contexts:get:200",
+      "source_kind": "operation_ref"
+    },
+    {
       "entity_name": "APIKeyServiceCreateAPIKeyBody",
       "module_path": "a_p_i_key_service",
       "operation_id": "APIKeyService_CreateAPIKey",
@@ -1478,7 +1506,7 @@
       "source_kind": "operation_ref"
     }
   ],
-  "entry_count": 211,
+  "entry_count": 215,
   "profiles": {
     "aliases.json": {
       "_comment": "Custom mapping aliases. Keep deterministic and source-controlled.",
