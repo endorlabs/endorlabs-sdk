@@ -256,11 +256,11 @@ Details: [docs/generated-reference/resources.md](docs/generated-reference/resour
 
 ## How it works
 
-Two layers, one registry:
+Two runtime layers, one effective registry:
 
 - **Transport** (`api_client.py`): HTTP, auth, retries. Nothing else.
-- **Resource facades** (`client_surface.py`): Typed wrappers built automatically from a registry. `client.Project`, `client.Finding`, etc. are all the same `ResourceFacade` pattern.
-- **Adding a resource** = one registry entry + a Pydantic model. No hand-written HTTP.
+- **Resource facades** (`client_surface.py`): Typed wrappers built automatically from the effective registry. `client.Project`, `client.Finding`, etc. all use the same `ResourceRuntimeFacade` pattern (`ResourceFacade` remains as a compatibility alias).
+- **Adding a resource** usually means updating model-sync inputs plus a Pydantic model, then regenerating the effective registry. No hand-written HTTP.
 
 Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
 
