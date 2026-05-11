@@ -59,8 +59,8 @@ This is the recommended way for agents to bootstrap Endor Labs context before pe
 Two-layer, registry-driven design. The same pattern applies to all resources.
 
 - **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceFacade[T]` instances; for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"oss"`) is set per-resource from the registry and controls namespace resolution.
-- **Registry adapter:** `endorlabs.registry` builds `ResourceEntry(...)` values from generated runtime contract data in `src/endorlabs/generated/registry_contract.py` plus explicit overrides in `src/endorlabs/registry_overlay.py`.
+- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceRuntimeFacade[T]` instances (with `ResourceFacade` kept as a backward-compatible alias); for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"oss"`, `"system"`) is set per-resource from the registry and controls namespace resolution.
+- **Registry adapter:** `endorlabs.registry` builds `ResourceEntry(...)` values from generated runtime contract data in `src/endorlabs/generated/registry_contract.py`, applies explicit overrides in `src/endorlabs/registry_overlay.py`, and can append narrowly scoped experimental facades when the generated contract has not caught up yet.
 - **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
 
 For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
@@ -114,7 +114,7 @@ endorlabs/
 ├── api_client.py        # Transport only (Layer 1)
 ├── client_surface.py    # Client facade (Layer 2 entry point)
 ├── client_surface.pyi   # Generated stub: per-resource typed facades for IDE DX
-├── facade.py            # ResourceFacade, _ListableFacade, ScanLogsFacade
+├── facade.py            # ResourceRuntimeFacade (ResourceFacade alias), _ListableFacade, ScanLogsFacade
 ├── registry.py          # Registry of resources exposed on Client
 ├── resources/           # Pydantic models, convenience functions, and resource-specific logic
 └── models/
