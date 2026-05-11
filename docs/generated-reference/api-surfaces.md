@@ -104,7 +104,7 @@ Auto-generated inventories for stable/public surfaces.
 - `lookup(self, traverse: 'bool' = False, concurrent: 'bool' = False, max_workers: 'int' = 10, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int' = 2, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'T'`
 - `list_iter(self, traverse: 'bool' = False, concurrent: 'bool' = False, namespace: 'str | None' = None, list_params: 'ListParameters | None' = None, max_pages: 'int | None' = None, parent: 'Any' = None, filter: 'str | FilterExpression | None' = None, mask: 'str | None' = None, page_size: 'int | None' = None, page_token: 'str | None' = None, page_id: 'str | None' = None, sort_by: 'str | None' = None, desc: 'bool | None' = None, count: 'bool | None' = None, from_date: 'str | None' = None, to_date: 'str | None' = None, archive: 'bool | None' = None, pr_uuid: 'str | None' = None, ci_run_uuid: 'str | None' = None, **kwargs: 'Any') -> 'Iterator[T]'`
 
-### `ResourceFacade` methods
+### `ResourceRuntimeFacade` methods (`ResourceFacade` alias)
 
 - `get(self, id_or_resource: 'str | T', namespace: 'str | None' = None) -> 'T'`
 - `create(self, payload: 'Any' = None, *, name: 'str | None' = None, description: 'str | None' = None, namespace_uuid: 'str | None' = None, namespace: 'str | None' = None, **kwargs: 'Any') -> 'T'`
