@@ -24,7 +24,9 @@ def _merge_token_into_dotenv(
     also_admin_alias: bool = True,
 ) -> None:
     key_token = "ENDOR_TOKEN"
+    key_admin = "ENDOR_ADMIN_TOKEN"
     line_token = f"{key_token}={token}\n"
+    line_admin = f"{key_admin}={token}\n"
 
     if env_path.is_file():
         raw = env_path.read_text(encoding="utf-8")
@@ -43,6 +45,8 @@ def _merge_token_into_dotenv(
             lines[idx] = line
 
     upsert(key_token, line_token)
+    if also_admin_alias:
+        upsert(key_admin, line_admin)
 
     env_path.write_text("".join(lines), encoding="utf-8")
 
@@ -74,6 +78,11 @@ def main() -> int:
         default=120,
         help="Seconds to wait for OAuth callback (default: 120)",
     )
+    parser.add_argument(
+        "--no-admin-alias",
+        action="store_true",
+        help="Do not set ENDOR_ADMIN_TOKEN (only ENDOR_TOKEN)",
+    )
     args = parser.parse_args()
 
     from endorlabs.auth_server import get_token
@@ -97,7 +106,12 @@ def main() -> int:
         token,
         also_admin_alias=not args.no_admin_alias,
     )
-    print(f"Updated {args.env_file.resolve()} (ENDOR_TOKEN set)", file=sys.stderr)
+    print(
+        f"Updated {args.env_file.resolve()} (ENDOR_TOKEN"
+        + ("" if args.no_admin_alias else " + ENDOR_ADMIN_TOKEN")
+        + " set)",
+        file=sys.stderr,
+    )
     return 0
 
 
