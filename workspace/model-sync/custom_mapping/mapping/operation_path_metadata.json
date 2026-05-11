@@ -1,5 +1,5 @@
 {
-  "operation_count": 739,
+  "operation_count": 749,
   "operations": [
     {
       "method": "get",
@@ -182,6 +182,38 @@
         "AgenticInventoryService"
       ],
       "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "AISastContextSummaryService_UpdateAISastContextSummary",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/ai-sast-context-summaries",
+      "request_refs": [
+        "AISastContextSummaryServiceUpdateAISastContextSummaryBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISastContextSummary"
+      ],
+      "tags": [
+        "AISastContextSummaryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "patch",
+      "operation_id": "AISastCustomerContextService_UpdateAISastCustomerContext",
+      "path": "/v1/namespaces/{object.tenant_meta.namespace}/ai-sast-customer-contexts",
+      "request_refs": [
+        "AISastCustomerContextServiceUpdateAISastCustomerContextBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISastCustomerContext"
+      ],
+      "tags": [
+        "AISastCustomerContextService"
+      ],
+      "x_internal": false
     },
     {
       "method": "patch",
@@ -2504,6 +2536,120 @@
         "AIRequestService"
       ],
       "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AISastContextSummaryService_ListAISastContextSummaries",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-context-summaries",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListAISastContextSummariesResponse"
+      ],
+      "tags": [
+        "AISastContextSummaryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "post",
+      "operation_id": "AISastContextSummaryService_CreateAISastContextSummary",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-context-summaries",
+      "request_refs": [
+        "AISastContextSummaryServiceCreateAISastContextSummaryBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISastContextSummary"
+      ],
+      "tags": [
+        "AISastContextSummaryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "delete",
+      "operation_id": "AISastContextSummaryService_DeleteAISastContextSummary",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-context-summaries/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "AISastContextSummaryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AISastContextSummaryService_GetAISastContextSummary",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-context-summaries/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISastContextSummary"
+      ],
+      "tags": [
+        "AISastContextSummaryService"
+      ],
+      "x_internal": true
+    },
+    {
+      "method": "get",
+      "operation_id": "AISastCustomerContextService_ListAISastCustomerContexts",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-customer-contexts",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1ListAISastCustomerContextsResponse"
+      ],
+      "tags": [
+        "AISastCustomerContextService"
+      ],
+      "x_internal": false
+    },
+    {
+      "method": "post",
+      "operation_id": "AISastCustomerContextService_CreateAISastCustomerContext",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-customer-contexts",
+      "request_refs": [
+        "AISastCustomerContextServiceCreateAISastCustomerContextBody"
+      ],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISastCustomerContext"
+      ],
+      "tags": [
+        "AISastCustomerContextService"
+      ],
+      "x_internal": false
+    },
+    {
+      "method": "delete",
+      "operation_id": "AISastCustomerContextService_DeleteAISastCustomerContext",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-customer-contexts/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus"
+      ],
+      "tags": [
+        "AISastCustomerContextService"
+      ],
+      "x_internal": false
+    },
+    {
+      "method": "get",
+      "operation_id": "AISastCustomerContextService_GetAISastCustomerContext",
+      "path": "/v1/namespaces/{tenant_meta.namespace}/ai-sast-customer-contexts/{uuid}",
+      "request_refs": [],
+      "response_refs": [
+        "googlerpcStatus",
+        "v1AISastCustomerContext"
+      ],
+      "tags": [
+        "AISastCustomerContextService"
+      ],
+      "x_internal": false
     },
     {
       "method": "get",

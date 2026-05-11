@@ -36,10 +36,26 @@
           "$ref": "#/definitions/v1ContainerDependencyMetadata",
           "description": "Container image metadata for the dependency if applicable."
         },
+        "declared_licenses": {
+          "description": "Declared license information for the dependency.",
+          "items": {
+            "$ref": "#/definitions/v1LicenseDependencyMetadata",
+            "type": "object"
+          },
+          "type": "array"
+        },
         "direct": {
           "description": "True if this is a direct dependency.",
           "type": "boolean",
           "x-endor-name": "This is a Direct Dependency"
+        },
+        "discovered_licenses": {
+          "description": "Discovered license information for the dependency.",
+          "items": {
+            "$ref": "#/definitions/v1LicenseDependencyMetadata",
+            "type": "object"
+          },
+          "type": "array"
         },
         "discovery_type": {
           "$ref": "#/definitions/DependencyMetadataDiscoveryType",
@@ -586,6 +602,24 @@
       },
       "type": "object",
       "x-internal": true
+    },
+    "v1LicenseDependencyMetadata": {
+      "description": "LicenseDependencyMetadata contains license information for a dependency.",
+      "properties": {
+        "category": {
+          "description": "License category (e.g. \"Restricted\").",
+          "type": "string"
+        },
+        "spdx_id": {
+          "description": "SPDX license identifier (e.g. \"Apache-2.0\").",
+          "type": "string"
+        },
+        "type": {
+          "description": "License classification (based on licenseclassifier by Google).",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "v1ListDependencyMetadataResponse": {
       "description": "Response returned for requests to list dependency metadata objects.",
