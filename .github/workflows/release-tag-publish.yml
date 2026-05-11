@@ -1,6 +1,7 @@
 name: Release Tag Publish
 
-# Triggered when a version tag is pushed (e.g. v0.1.0, v1.0.0-rc.1).
+# Triggered when a PEP 440-compatible version tag is pushed
+# (e.g. v0.1.0, v1.0.0rc1, v1.1.0.dev0).
 # Builds the package, runs the quality gate, and creates a GitHub Release
 # with the wheel and sdist attached.
 
