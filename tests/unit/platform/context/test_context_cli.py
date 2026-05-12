@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import ClassVar
 
 from endorlabs.context import cli as context_cli
 
@@ -15,6 +16,7 @@ def test_parse_args_defaults() -> None:
     assert parsed.include_user_docs is True
     assert parsed.max_pages is None
     assert parsed.force is False
+    assert parsed.sync_skills == "none"
 
 
 def test_parse_args_supports_switches() -> None:
@@ -28,6 +30,8 @@ def test_parse_args_supports_switches() -> None:
             "--max-pages",
             "12",
             "--force",
+            "--sync-skills",
+            "auto",
         ]
     )
     assert parsed.output_dir == "tmp-context"
@@ -35,6 +39,7 @@ def test_parse_args_supports_switches() -> None:
     assert parsed.include_user_docs is False
     assert parsed.max_pages == 12
     assert parsed.force is True
+    assert parsed.sync_skills == "auto"
 
 
 def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
@@ -45,6 +50,7 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
         openapi_path = tmp_path / "openapiv2.swagger.json"
         user_docs_path = tmp_path / "docs"
         user_docs_count = 42
+        synced_skill_paths: ClassVar[dict[str, Path]] = {}
 
     def _fake_init(**kwargs: object) -> _Status:
         calls.update(kwargs)
@@ -58,6 +64,8 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
             "--max-pages",
             "5",
             "--force",
+            "--sync-skills",
+            "cursor",
         ]
     )
 
@@ -66,3 +74,4 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
     assert calls["include_user_docs"] is True
     assert calls["max_pages"] == 5
     assert calls["force"] is True
+    assert calls["sync_skills"] == "cursor"
