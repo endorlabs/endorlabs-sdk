@@ -51,6 +51,7 @@ print(status.user_docs_count)  # number of docs downloaded
 - `include_user_docs`: Download user docs (default: True)
 - `max_pages`: Limit user doc pages (default: all)
 - `force`: Re-download even if files exist (default: False)
+- `sync_skills`: Mirror `skills-src/` into `.cursor/skills/`, `.claude/skills/`, or both (`none`, `cursor`, `claude`, `both`, `auto`; default: `none`)
 
 This is the recommended way for agents to bootstrap Endor Labs context before performing platform administration tasks.
 

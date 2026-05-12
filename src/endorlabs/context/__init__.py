@@ -18,7 +18,7 @@ Example::
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from .models import InitStatus
 
@@ -45,6 +45,7 @@ def init(
     include_user_docs: bool = True,
     max_pages: int | None = None,
     force: bool = False,
+    sync_skills: Literal["none", "cursor", "claude", "both", "auto"] = "none",
     client: APIClient | None = None,
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
@@ -57,6 +58,7 @@ def init(
         include_user_docs=include_user_docs,
         max_pages=max_pages,
         force=force,
+        sync_skills=sync_skills,
         client=client,
     )
 
@@ -97,9 +99,24 @@ def sync_user_docs(
     )
 
 
+def sync_agent_skills(
+    *,
+    repo_root: str | Path = ".",
+    target: Literal["none", "cursor", "claude", "both", "auto"] = "none",
+    source_dir: str | Path | None = None,
+) -> dict[str, Path]:
+    """Mirror repo skill sources into runtime discovery directories."""
+    return _get_sync().sync_agent_skills(
+        repo_root=repo_root,
+        target=target,
+        source_dir=source_dir,
+    )
+
+
 __all__ = [
     "InitStatus",
     "init",
+    "sync_agent_skills",
     "sync_openapi",
     "sync_user_docs",
 ]
