@@ -1,0 +1,24 @@
+---
+description: Prefer local context even when gitignored paths are hard to see
+alwaysApply: true
+---
+
+# Local Context Discovery
+
+When repository guidance references local context under gitignored paths, do not
+assume those files are absent just because a search or listing did not show them.
+
+- Check likely local-context paths explicitly when relevant, especially:
+  - `.endorlabs-context/`
+  - `.endorlabs-context/docs/`
+  - `.endorlabs-context/openapiv2.swagger.json`
+  - `.env`
+- Gitignored files and directories may be missing from broad search results or
+  normal workspace exploration. Try targeted access anyway before concluding the
+  local context is unavailable.
+- Use semantic search and direct file reads against the expected local-context
+  paths when investigating platform behavior, API shape, workflows, or setup.
+- Prefer local `.endorlabs-context` docs/spec content before going to external
+  docs or the web.
+- Never print secrets from `.env`; only confirm whether expected variables exist
+  when that is necessary for the task.
