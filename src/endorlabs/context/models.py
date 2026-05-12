@@ -1,6 +1,6 @@
 """Models for context bootstrap functionality."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import override
@@ -14,6 +14,7 @@ class InitStatus:
         openapi_path: Path to downloaded OpenAPI spec (None if not downloaded).
         user_docs_path: Path to user docs directory (None if not downloaded).
         user_docs_count: Number of user doc pages downloaded.
+        synced_skill_paths: Runtime skill mirrors refreshed during bootstrap.
         downloaded_at: Timestamp when download completed.
 
     """
@@ -22,6 +23,7 @@ class InitStatus:
     user_docs_path: Path | None
     user_docs_count: int
     downloaded_at: datetime
+    synced_skill_paths: dict[str, Path] = field(default_factory=dict)
 
     @override
     def __repr__(self) -> str:
@@ -32,4 +34,6 @@ class InitStatus:
         if self.user_docs_path:
             parts.append(f"user_docs_path={self.user_docs_path!r}")
             parts.append(f"user_docs_count={self.user_docs_count}")
+        if self.synced_skill_paths:
+            parts.append(f"synced_skill_paths={self.synced_skill_paths!r}")
         return ", ".join(parts) + ")"
