@@ -6,7 +6,7 @@ A Python SDK for the Endor Labs platform.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from .api_client import APIClient
 from .client_surface import Client
@@ -57,12 +57,13 @@ def init(
     include_user_docs: bool = True,
     max_pages: int | None = None,
     force: bool = False,
+    sync_skills: Literal["none", "cursor", "claude", "both", "auto"] = "none",
     client: APIClient | None = None,
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Downloads API specification and user documentation to a local directory.
-    Requires authentication via APIClient - no public URL fallback.
+    Downloads API specification and user documentation to a local directory,
+    and can optionally refresh runtime skill mirrors.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
@@ -70,14 +71,17 @@ def init(
         include_user_docs: Download user documentation (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download even if files exist (default: False).
+        sync_skills: Mirror `skills-src/` into runtime discovery directories.
+            Use `none`, `cursor`, `claude`, `both`, or `auto`.
         client: Optional APIClient instance. If not provided, one is created
-            (requires ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
+            when `include_openapi=True` (requires
+            ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
 
     Returns:
         InitStatus with paths to downloaded files and metadata.
 
     Raises:
-        UnauthorizedError: If authentication fails.
+        UnauthorizedError: If OpenAPI authentication fails.
         ImportError: If context dependencies are not installed (for user docs).
             Install with: pip install endorlabs-sdk[context]
 
@@ -97,7 +101,24 @@ def init(
         include_user_docs=include_user_docs,
         max_pages=max_pages,
         force=force,
+        sync_skills=sync_skills,
         client=client,
+    )
+
+
+def sync_agent_skills(
+    *,
+    repo_root: str | Path = ".",
+    target: Literal["none", "cursor", "claude", "both", "auto"] = "none",
+    source_dir: str | Path | None = None,
+) -> dict[str, Path]:
+    """Mirror repo skill sources into runtime discovery directories."""
+    from .context import _sync
+
+    return _sync.sync_agent_skills(
+        repo_root=repo_root,
+        target=target,
+        source_dir=source_dir,
     )
 
 
@@ -132,5 +153,6 @@ __all__ = [
     "query_vulnerability",
     "repository",
     "repository_version",
+    "sync_agent_skills",
     "vulnerability",
 ]

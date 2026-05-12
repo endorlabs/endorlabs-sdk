@@ -228,6 +228,56 @@ class TestInit:
         # API should not be called
         mock_client.get.assert_not_called()
 
+    def test_init_user_docs_only_skips_api_client_creation(
+        self, tmp_path: Path
+    ) -> None:
+        """User-doc sync should not instantiate APIClient when OpenAPI is disabled."""
+        from endorlabs.context._sync import init
+
+        output_dir = tmp_path / ".endor-context"
+        with (
+            patch("endorlabs.api_client.APIClient") as mock_cls,
+            patch("endorlabs.context._sync.sync_user_docs", return_value=7),
+        ):
+            status = init(
+                output_dir=output_dir,
+                include_openapi=False,
+                include_user_docs=True,
+            )
+
+        mock_cls.assert_not_called()
+        assert status.openapi_path is None
+        assert status.user_docs_path == output_dir / "docs"
+        assert status.user_docs_count == 7
+
+    def test_init_skills_only_skips_context_dir_and_api_client(
+        self, tmp_path: Path
+    ) -> None:
+        """Skill-only sync should not create context output or require auth."""
+        from endorlabs.context._sync import init
+
+        output_dir = tmp_path / ".endor-context"
+        mirrored_path = tmp_path / ".cursor" / "skills"
+        with (
+            patch("endorlabs.api_client.APIClient") as mock_cls,
+            patch(
+                "endorlabs.context._sync.sync_agent_skills",
+                return_value={"cursor": mirrored_path},
+            ),
+        ):
+            status = init(
+                output_dir=output_dir,
+                include_openapi=False,
+                include_user_docs=False,
+                sync_skills="cursor",
+            )
+
+        mock_cls.assert_not_called()
+        assert not output_dir.exists()
+        assert status.openapi_path is None
+        assert status.user_docs_path is None
+        assert status.synced_skill_paths == {"cursor": mirrored_path}
+
 
 class TestTopLevelInit:
     """Test endorlabs.init() top-level function."""
@@ -244,6 +294,19 @@ class TestTopLevelInit:
         import endorlabs
 
         assert "init" in endorlabs.__all__
+
+    def test_sync_agent_skills_exposed_at_top_level(self) -> None:
+        """Test skill sync helper is accessible from endorlabs module."""
+        import endorlabs
+
+        assert hasattr(endorlabs, "sync_agent_skills")
+        assert callable(endorlabs.sync_agent_skills)
+
+    def test_sync_agent_skills_in_all(self) -> None:
+        """Test skill sync helper is in __all__."""
+        import endorlabs
+
+        assert "sync_agent_skills" in endorlabs.__all__
 
 
 class TestContextDepsCheck:

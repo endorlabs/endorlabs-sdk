@@ -45,6 +45,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=False,
         help="Re-download even if files already exist.",
     )
+    _ = parser.add_argument(
+        "--sync-skills",
+        choices=("none", "cursor", "claude", "both", "auto"),
+        default="none",
+        help=(
+            "Mirror skills-src into runtime skill discovery directories "
+            "(default: none)."
+        ),
+    )
     parser.set_defaults(include_openapi=True, include_user_docs=True)
     return parser.parse_args(argv)
 
@@ -58,12 +67,15 @@ def main(argv: list[str] | None = None) -> None:
         include_user_docs=args.include_user_docs,
         max_pages=args.max_pages,
         force=args.force,
+        sync_skills=args.sync_skills,
     )
     print("Context bootstrap complete.")
     if status.openapi_path is not None:
         print(f"OpenAPI: {status.openapi_path}")
     if status.user_docs_path is not None:
         print(f"User docs: {status.user_docs_path} ({status.user_docs_count} pages)")
+    for target_name, path in sorted(status.synced_skill_paths.items()):
+        print(f"{target_name.title()} skills: {path}")
 
 
 if __name__ == "__main__":

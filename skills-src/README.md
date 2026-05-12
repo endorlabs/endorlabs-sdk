@@ -32,6 +32,12 @@ Skills use progressive disclosure to minimize context window usage:
 
 **Source of truth:** this directory, `skills-src/`, is mirrored into [`.cursor/skills/`](../.cursor/skills/) for Cursor discovery. Edit here first, then sync the same skill tree to `.cursor/skills/` (see [AGENTS.md](../AGENTS.md) — agent skills table).
 
+To refresh runtime mirrors from the repo root:
+
+```bash
+uv run endor-context --no-openapi --no-user-docs --sync-skills auto
+```
+
 For **Claude Code** users: copy either `skills-src/` or `.cursor/skills/` to `.claude/skills/` at the repo root. The SKILL.md format is identical.
 
 For **Claude API** users: zip each skill directory and upload via the `/v1/skills` endpoints. See [Anthropic Skills API docs](https://platform.claude.com/docs/en/build-with-claude/skills-guide).
