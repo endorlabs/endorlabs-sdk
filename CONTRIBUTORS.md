@@ -16,6 +16,8 @@ From the repo root:
 git clone https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
 cd endorlabs-sdk
 uv sync
+uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
 ```
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
@@ -24,8 +26,8 @@ Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies
 
 The SDK uses environment variables only (no config file loading). Set these for local development:
 
-- **Required:** `ENDOR_API`, `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
-- **Optional:** `ENDOR_NAMESPACE` (tenant namespace for operations), `ENDOR_LOG_LEVEL`, `ENDOR_MAX_RETRIES`
+- **Required:** `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`
+- **Optional:** `ENDOR_API` (defaults to `https://api.endorlabs.com`), `ENDOR_NAMESPACE` (tenant namespace for operations), `ENDOR_LOG_LEVEL`, `ENDOR_MAX_RETRIES`
 
 Create a `.env` file in the repo root (gitignored) or export in your shell. Example:
 
@@ -41,13 +43,21 @@ Get API credentials from the Endor Labs platform or configure [endorctl](https:/
 
 ## Validate
 
-Check that env and connectivity are correct:
+Check that env and authentication are correct with an SDK-authenticated call.
+
+If your shell already has the variables exported:
 
 ```bash
-curl -s "$ENDOR_API/health"
+uv run python -c "import endorlabs; print(endorlabs.Client().whoami())"
 ```
 
-Or with Python (requires `requests`): `uv run python -c "import os, requests; r = requests.get(os.environ['ENDOR_API'] + '/health', timeout=5); print(r.status_code)"`
+If you are using a repo-root `.env` file instead:
+
+```bash
+uv run --env-file .env python -c "import endorlabs; print(endorlabs.Client().whoami())"
+```
+
+On success this should print the authenticated identity (email, username, or display name).
 
 ## Tests
 
@@ -91,7 +101,7 @@ git diff --exit-code -- src/endorlabs/client_surface.pyi
 uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 ```
 
-Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI runs the same ruff/pyright sequence (plus generated-artifact checks); see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). **Pre-commit** mirrors that lint job via local `uv run` hooks (see [.pre-commit-config.yaml](.pre-commit-config.yaml)); install with `uv run pre-commit install`. Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
+Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI runs the same ruff/pyright sequence (plus generated-artifact checks); see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). **Pre-commit** mirrors that lint job via local `uv run` hooks (see [.pre-commit-config.yaml](.pre-commit-config.yaml)); install both local gates with `uv run pre-commit install` and `uv run pre-commit install --hook-type pre-push`. Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
 
 **Repository variables (GitHub Settings → Actions):** If present, you may remove deprecated names that are no longer read by workflows: `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, `ENDOR_GITHUB_CHECK_CONCLUSION` (removed Checks-annotations path). See [docs/guides/pr-comment-config-and-parallel-comments.md](docs/guides/pr-comment-config-and-parallel-comments.md) for the active PR-comment variables.
 
