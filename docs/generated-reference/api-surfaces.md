@@ -44,6 +44,7 @@ Auto-generated inventories for stable/public surfaces.
 - `query_vulnerability`
 - `repository`
 - `repository_version`
+- `sync_agent_skills`
 - `vulnerability`
 
 ## Resource modules (`endorlabs.resources.__all__`)

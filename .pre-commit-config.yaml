@@ -17,6 +17,14 @@ repos:
   # --- Ruff + Pyright (parity with CI PR Main lint job) ---
   - repo: local
     hooks:
+      - id: refresh-local-context-and-skills
+        name: refresh local context + skill mirrors
+        entry: uv
+        args: [run, python, -m, endorlabs.context._maintainer_refresh]
+        language: system
+        require_serial: true
+        files: ^(skills-src/.*|src/endorlabs/context/.*)$
+
       - id: ruff-check
         name: ruff check (repo-wide)
         entry: uv

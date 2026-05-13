@@ -14,8 +14,8 @@ Systematic workflow for **Endor-side** evidence: what the platform recorded at l
 
 ## Prerequisites
 
-- **Credentials:** `ENDOR_ADMIN_TOKEN` (or equivalent) available to the SDK, e.g.
-  `uv run --env-file .env python ...`
+- **Credentials:** `ENDOR_TOKEN` (or API creds) available to the SDK, e.g.
+  `uv run --env-file .env python ...` (browser refresh: `devtools/refresh_token_to_dotenv.py` writes `ENDOR_TOKEN` to `.env`).
 - **Local context (optional):** API spec at `.endorlabs-context/openapiv2.swagger.json`;
   resource models in `src/endorlabs/resources/authentication_log.py`,
   `authorization_policy.py`

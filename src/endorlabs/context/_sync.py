@@ -10,11 +10,12 @@ import asyncio
 import hashlib
 import json
 import re
+import shutil
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, cast
 from urllib.parse import urlparse
 
 import defusedxml.ElementTree as DefusedElementTree
@@ -62,6 +63,9 @@ DEFAULT_CONTEXT_DIR = ".endorlabs-context"
 DEFAULT_OPENAPI_FILENAME = "openapiv2.swagger.json"
 DEFAULT_USER_DOCS_DIRNAME = "docs"
 DOCS_HASH_MANIFEST_FILENAME = "_content-hashes.md"
+SKILLS_SOURCE_DIRNAME = "skills-src"
+SKILLS_TARGETS: tuple[str, ...] = ("cursor", "claude")
+SkillSyncMode = Literal["none", "cursor", "claude", "both"]
 
 
 def _default_concurrency() -> int:
@@ -342,6 +346,138 @@ def _prune_stale_docs(
                 break
             parent = parent.parent
     return removed
+
+
+def _normalize_skill_sync_mode(target: str) -> SkillSyncMode:
+    """Validate and normalize a skill sync mode string."""
+    normalized = target.strip().lower()
+    valid_targets = {"none", "cursor", "claude", "both"}
+    if normalized not in valid_targets:
+        raise ValueError(
+            f"Unsupported sync_skills value {target!r}. "
+            "Expected one of: none, cursor, claude, both."
+        )
+    return cast("SkillSyncMode", normalized)
+
+
+def _skill_target_dir(repo_root: Path, target: str) -> Path:
+    """Return the runtime skills directory for a target host."""
+    return repo_root / f".{target}" / "skills"
+
+
+def _resolve_skill_sync_targets(
+    *,
+    target: SkillSyncMode,
+) -> tuple[str, ...]:
+    """Resolve a sync mode to concrete runtime target names."""
+    if target == "none":
+        return ()
+    if target == "both":
+        return SKILLS_TARGETS
+    if target in SKILLS_TARGETS:
+        return (target,)
+    return ()
+
+
+def _prune_stale_skill_files(
+    *,
+    target_dir: Path,
+    expected_rel_paths: set[str],
+) -> None:
+    """Remove mirrored files that no longer exist in the source tree."""
+    if not target_dir.exists():
+        return
+    base_resolved = target_dir.resolve()
+    stale_files = [
+        path
+        for path in target_dir.rglob("*")
+        if path.is_file()
+        and path.relative_to(target_dir).as_posix() not in expected_rel_paths
+    ]
+    for path in stale_files:
+        resolved = path.resolve()
+        if not resolved.is_relative_to(base_resolved):
+            continue
+        resolved.unlink()
+        parent = resolved.parent
+        while parent != base_resolved and parent.exists():
+            try:
+                parent.rmdir()
+            except OSError:
+                break
+            parent = parent.parent
+
+
+def _mirror_skill_tree(source_dir: Path, target_dir: Path) -> int:
+    """Mirror the source skill tree to a runtime directory."""
+    if not source_dir.exists():
+        raise FileNotFoundError(f"Skills source directory does not exist: {source_dir}")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    base_resolved = target_dir.resolve()
+    expected_rel_paths: set[str] = set()
+    mirrored_files = 0
+
+    for source_path in source_dir.rglob("*"):
+        if not source_path.is_file():
+            continue
+        rel_path = source_path.relative_to(source_dir)
+        expected_rel_paths.add(rel_path.as_posix())
+        dest_path = target_dir / rel_path
+        resolved_dest = dest_path.resolve()
+        if not resolved_dest.is_relative_to(base_resolved):
+            raise ValueError(
+                "Skill mirror target "
+                f"{resolved_dest} escapes base directory {base_resolved}"
+            )
+        resolved_dest.parent.mkdir(parents=True, exist_ok=True)
+        _ = shutil.copy2(source_path, resolved_dest)
+        mirrored_files += 1
+
+    _prune_stale_skill_files(
+        target_dir=target_dir,
+        expected_rel_paths=expected_rel_paths,
+    )
+    return mirrored_files
+
+
+def sync_agent_skills(
+    *,
+    repo_root: str | Path = ".",
+    target: SkillSyncMode = "none",
+    source_dir: str | Path | None = None,
+) -> dict[str, Path]:
+    """Sync repo skill sources into runtime discovery directories."""
+    repo_root_path = Path(repo_root)
+    normalized_target = _normalize_skill_sync_mode(target)
+    resolved_targets = _resolve_skill_sync_targets(
+        target=normalized_target,
+    )
+    if not resolved_targets:
+        logger.info(
+            "Skill sync skipped for target=%s (no runtime target resolved).", target
+        )
+        return {}
+
+    source_root = (
+        repo_root_path / SKILLS_SOURCE_DIRNAME
+        if source_dir is None
+        else Path(source_dir)
+    )
+    if not source_root.is_absolute():
+        source_root = repo_root_path / source_root
+
+    synced_paths: dict[str, Path] = {}
+    for resolved_target in resolved_targets:
+        target_dir = _skill_target_dir(repo_root_path, resolved_target)
+        mirrored_files = _mirror_skill_tree(source_root, target_dir)
+        logger.info(
+            "Synced %d skill files to %s runtime path %s",
+            mirrored_files,
+            resolved_target,
+            target_dir,
+        )
+        synced_paths[resolved_target] = target_dir
+    return synced_paths
 
 
 async def _download_sitemap(timeout: int = 10) -> list[str]:
@@ -670,12 +806,13 @@ def init(
     include_user_docs: bool = True,
     max_pages: int | None = None,
     force: bool = False,
+    sync_skills: SkillSyncMode = "none",
     client: APIClient | None = None,
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Downloads API specification and user documentation to a local directory.
-    Requires authentication via APIClient - no public URL fallback.
+    Downloads API specification and user documentation to a local directory,
+    and can optionally mirror repo skills into runtime discovery directories.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
@@ -683,14 +820,17 @@ def init(
         include_user_docs: Download user documentation (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download even if files exist (default: False).
+        sync_skills: Mirror `skills-src/` into runtime directories. Use one of
+            `none`, `cursor`, `claude`, or `both` (default: `none`).
         client: Optional APIClient instance. If not provided, one is created
-            (requires ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
+            when `include_openapi=True` (requires ENDOR_API_CREDENTIALS_KEY/
+            SECRET or ENDOR_TOKEN env vars).
 
     Returns:
         InitStatus with paths to downloaded files and metadata.
 
     Raises:
-        endorlabs.UnauthorizedError: If authentication fails.
+        endorlabs.UnauthorizedError: If OpenAPI authentication fails.
         ImportError: If context dependencies are not installed (for user docs).
 
     Example::
@@ -704,27 +844,24 @@ def init(
     from endorlabs.api_client import APIClient as APIClientClass
 
     output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    # Create client once for auth validation and reuse
-    api_client = client or APIClientClass()
+    if include_openapi or include_user_docs:
+        output_path.mkdir(parents=True, exist_ok=True)
 
     openapi_path: Path | None = None
     user_docs_path: Path | None = None
     user_docs_count = 0
+    synced_skill_paths: dict[str, Path] = {}
 
-    # Download OpenAPI spec (validates auth)
     if include_openapi:
+        api_client = client or APIClientClass()
         openapi_path = sync_openapi(
             output_path=output_path / DEFAULT_OPENAPI_FILENAME,
             force=force,
             client=api_client,
         )
 
-    # Download user docs
     if include_user_docs:
-        # sync_user_docs will check deps internally
-        docs_dir = output_path / "docs"
+        docs_dir = output_path / DEFAULT_USER_DOCS_DIRNAME
         user_docs_count = sync_user_docs(
             output_dir=docs_dir,
             max_pages=max_pages,
@@ -732,9 +869,17 @@ def init(
         )
         user_docs_path = docs_dir
 
+    normalized_sync_target = _normalize_skill_sync_mode(sync_skills)
+    if normalized_sync_target != "none":
+        synced_skill_paths = sync_agent_skills(
+            repo_root=output_path.resolve().parent,
+            target=normalized_sync_target,
+        )
+
     return InitStatus(
         openapi_path=openapi_path,
         user_docs_path=user_docs_path,
         user_docs_count=user_docs_count,
         downloaded_at=datetime.now(UTC),
+        synced_skill_paths=synced_skill_paths,
     )
