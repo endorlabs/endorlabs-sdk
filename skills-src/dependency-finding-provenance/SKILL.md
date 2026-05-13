@@ -27,6 +27,10 @@ Playbook for customer-facing dependency/finding investigations.
   - If both API key/secret and `ENDOR_TOKEN` exist, pass `auth_method="browser-auth"` explicitly for token-first customer access.
 - For package-lineage semantics (multi-manifest path separation, direct vs transitive normalization), apply `dependency-provenance` rules.
 
+## OSS namespace (dependency plane and OSS-scoped facades)
+
+OSS-scoped resources (for example `DependencyMetadata` when stored on the OSS plane, or `Vulnerability` queries against OSS) use the literal top-level namespace **`oss`**, parallel to customer tenants. **Do not** derive `<tenant>.oss`, `<customer>.oss`, or any child namespace under the customer root; the resource facade `scope` (for example `scope="oss"`) controls this plane separately from customer namespace paths.
+
 ## Flow B — Finding Provenance
 
 1. Query findings scoped to the project namespace.
@@ -45,9 +49,7 @@ Playbook for customer-facing dependency/finding investigations.
 2. Inspect `spec.resolved_dependencies` when present:
    - dependency graph nodes
    - component names/versions
-3. Pull `DependencyMetadata` with correct scope (commonly `oss`), keyed by:
-   - `spec.importer_data.project_uuid`
-   - optional `package_version_ref`/`sha`
+3. Pull `DependencyMetadata` with the correct plane/scope (often OSS); match `spec.importer_data.project_uuid` and optional `package_version_ref`/`sha`. Follow [OSS namespace](#oss-namespace-dependency-plane-and-oss-scoped-facades) above for API paths.
 4. Validate referenced UUIDs from findings (`spec.target_uuid`) and flag non-resolving resources.
 5. When function-level provenance/reachability is required, hand off to:
    - `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .tmp/reachability`
@@ -114,7 +116,7 @@ Use this structure in investigation notes:
 
 ## Common Pitfalls
 
-- Mixing namespace scope (tenant namespace vs `oss`) for dependency metadata.
+- Wrong namespace or scope for `DependencyMetadata` / OSS-plane resources (see [OSS namespace](#oss-namespace-dependency-plane-and-oss-scoped-facades)).
 - Counting grouped findings by substring instead of exact coordinate.
 - Treating findings labels and BOM coordinates as the same without lineage evidence.
 - Relying on CSV export alone for commit-level conclusions.
