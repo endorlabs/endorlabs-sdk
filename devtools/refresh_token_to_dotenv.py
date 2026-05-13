@@ -17,22 +17,18 @@ import sys
 from pathlib import Path
 
 
-def _merge_token_into_dotenv(
-    env_path: Path,
-    token: str,
-    *,
-    also_admin_alias: bool = True,
-) -> None:
+def _merge_token_into_dotenv(env_path: Path, token: str) -> None:
     key_token = "ENDOR_TOKEN"
-    key_admin = "ENDOR_ADMIN_TOKEN"
     line_token = f"{key_token}={token}\n"
-    line_admin = f"{key_admin}={token}\n"
 
     if env_path.is_file():
         raw = env_path.read_text(encoding="utf-8")
         lines = raw.splitlines(keepends=True)
     else:
         lines = []
+
+    # Drop deprecated alias if present (SDK reads ENDOR_TOKEN only).
+    lines = [ln for ln in lines if not ln.startswith("ENDOR_ADMIN_TOKEN=")]
 
     def upsert(key: str, line: str) -> None:
         prefix = f"{key}="
@@ -45,18 +41,13 @@ def _merge_token_into_dotenv(
             lines[idx] = line
 
     upsert(key_token, line_token)
-    if also_admin_alias:
-        upsert(key_admin, line_admin)
 
     env_path.write_text("".join(lines), encoding="utf-8")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description=(
-            "Browser SSO token refresh; writes ENDOR_TOKEN "
-            "(and ENDOR_ADMIN_TOKEN) to .env."
-        ),
+        description="Browser SSO token refresh; writes ENDOR_TOKEN to .env.",
     )
     parser.add_argument(
         "--env-file",
@@ -68,8 +59,7 @@ def main() -> int:
         "--environment",
         default="endorlabs.com",
         help=(
-            "API host segment for auth URL "
-            "(default: endorlabs.com → api.endorlabs.com)"
+            "API host segment for auth URL (default: endorlabs.com → api.endorlabs.com)"
         ),
     )
     parser.add_argument(
@@ -77,11 +67,6 @@ def main() -> int:
         type=int,
         default=120,
         help="Seconds to wait for OAuth callback (default: 120)",
-    )
-    parser.add_argument(
-        "--no-admin-alias",
-        action="store_true",
-        help="Do not set ENDOR_ADMIN_TOKEN (only ENDOR_TOKEN)",
     )
     args = parser.parse_args()
 
@@ -101,15 +86,9 @@ def main() -> int:
         print("Authentication failed or timed out.", file=sys.stderr)
         return 1
 
-    _merge_token_into_dotenv(
-        args.env_file,
-        token,
-        also_admin_alias=not args.no_admin_alias,
-    )
+    _merge_token_into_dotenv(args.env_file, token)
     print(
-        f"Updated {args.env_file.resolve()} (ENDOR_TOKEN"
-        + ("" if args.no_admin_alias else " + ENDOR_ADMIN_TOKEN")
-        + " set)",
+        f"Updated {args.env_file.resolve()} (ENDOR_TOKEN set)",
         file=sys.stderr,
     )
     return 0
