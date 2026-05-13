@@ -7,28 +7,11 @@ from pathlib import Path
 from endorlabs.context import _sync
 
 
-def test_resolve_skill_sync_targets_auto_uses_repo_markers(tmp_path: Path) -> None:
-    """Auto mode should resolve existing runtime directories."""
-    (tmp_path / ".cursor").mkdir()
-    assert _sync._resolve_skill_sync_targets(repo_root=tmp_path, target="auto") == (
+def test_resolve_skill_sync_targets_supports_explicit_targets() -> None:
+    """Explicit targets should resolve without repository heuristics."""
+    assert _sync._resolve_skill_sync_targets(target="cursor") == ("cursor",)
+    assert _sync._resolve_skill_sync_targets(target="both") == (
         "cursor",
-    )
-
-    (tmp_path / ".claude").mkdir()
-    assert _sync._resolve_skill_sync_targets(repo_root=tmp_path, target="auto") == (
-        "cursor",
-        "claude",
-    )
-
-
-def test_resolve_skill_sync_targets_auto_honors_env_override(
-    tmp_path: Path, monkeypatch: object
-) -> None:
-    """Env override should win over repo marker detection in auto mode."""
-    (tmp_path / ".cursor").mkdir()
-    monkeypatch.setenv(_sync.SKILL_TARGET_ENV_VAR, "claude")
-
-    assert _sync._resolve_skill_sync_targets(repo_root=tmp_path, target="auto") == (
         "claude",
     )
 

@@ -13,6 +13,9 @@ def test_main_refreshes_skill_mirrors_for_skills_changes(monkeypatch: object) ->
     sync_mock = Mock(return_value={"cursor": Path(".cursor/skills")})
     init_mock = Mock()
 
+    monkeypatch.setattr(
+        _maintainer_refresh, "_configured_skill_sync_target", lambda: "cursor"
+    )
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "init", init_mock)
 
@@ -21,9 +24,26 @@ def test_main_refreshes_skill_mirrors_for_skills_changes(monkeypatch: object) ->
     assert result == 0
     sync_mock.assert_called_once_with(
         repo_root=_maintainer_refresh.REPO_ROOT,
-        target="auto",
+        target="cursor",
     )
     init_mock.assert_not_called()
+
+
+def test_main_skips_skill_sync_when_no_runtime_mirror_is_configured(
+    monkeypatch: object,
+) -> None:
+    """Skill-source changes should no-op when no host mirror is configured."""
+    sync_mock = Mock()
+
+    monkeypatch.setattr(
+        _maintainer_refresh, "_configured_skill_sync_target", lambda: None
+    )
+    monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
+
+    result = _maintainer_refresh.main(["skills-src/README.md"])
+
+    assert result == 0
+    sync_mock.assert_not_called()
 
 
 def test_main_skips_context_refresh_when_context_dir_missing(

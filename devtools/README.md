@@ -6,7 +6,7 @@ For syncing external documentation (OpenAPI spec, user docs), use the programmat
 
 ```python
 import endorlabs
-endorlabs.init(sync_skills="auto")  # downloads context + refreshes runtime skill mirrors
+endorlabs.init(sync_skills="cursor")  # or "claude"/"both" as needed
 ```
 
 See [AGENTS.md](../AGENTS.md#context-bootstrap-for-ai-agents) for details.

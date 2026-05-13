@@ -47,7 +47,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     _ = parser.add_argument(
         "--sync-skills",
-        choices=("none", "cursor", "claude", "both", "auto"),
+        choices=("none", "cursor", "claude", "both"),
         default="none",
         help=(
             "Mirror skills-src into runtime skill discovery directories "
