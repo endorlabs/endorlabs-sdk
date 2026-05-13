@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import os
 import re
 import shutil
 import time
@@ -66,8 +65,7 @@ DEFAULT_USER_DOCS_DIRNAME = "docs"
 DOCS_HASH_MANIFEST_FILENAME = "_content-hashes.md"
 SKILLS_SOURCE_DIRNAME = "skills-src"
 SKILLS_TARGETS: tuple[str, ...] = ("cursor", "claude")
-SKILL_TARGET_ENV_VAR = "ENDORLABS_SKILLS_TARGET"
-SkillSyncMode = Literal["none", "cursor", "claude", "both", "auto"]
+SkillSyncMode = Literal["none", "cursor", "claude", "both"]
 
 
 def _default_concurrency() -> int:
@@ -353,11 +351,11 @@ def _prune_stale_docs(
 def _normalize_skill_sync_mode(target: str) -> SkillSyncMode:
     """Validate and normalize a skill sync mode string."""
     normalized = target.strip().lower()
-    valid_targets = {"none", "cursor", "claude", "both", "auto"}
+    valid_targets = {"none", "cursor", "claude", "both"}
     if normalized not in valid_targets:
         raise ValueError(
             f"Unsupported sync_skills value {target!r}. "
-            "Expected one of: none, cursor, claude, both, auto."
+            "Expected one of: none, cursor, claude, both."
         )
     return cast("SkillSyncMode", normalized)
 
@@ -369,7 +367,6 @@ def _skill_target_dir(repo_root: Path, target: str) -> Path:
 
 def _resolve_skill_sync_targets(
     *,
-    repo_root: Path,
     target: SkillSyncMode,
 ) -> tuple[str, ...]:
     """Resolve a sync mode to concrete runtime target names."""
@@ -379,21 +376,7 @@ def _resolve_skill_sync_targets(
         return SKILLS_TARGETS
     if target in SKILLS_TARGETS:
         return (target,)
-    env_target = os.getenv(SKILL_TARGET_ENV_VAR)
-    if env_target:
-        normalized_env_target = _normalize_skill_sync_mode(env_target)
-        if normalized_env_target != "auto":
-            return _resolve_skill_sync_targets(
-                repo_root=repo_root,
-                target=normalized_env_target,
-            )
-
-    existing_targets = tuple(
-        candidate
-        for candidate in SKILLS_TARGETS
-        if (repo_root / f".{candidate}").exists()
-    )
-    return existing_targets
+    return ()
 
 
 def _prune_stale_skill_files(
@@ -467,7 +450,6 @@ def sync_agent_skills(
     repo_root_path = Path(repo_root)
     normalized_target = _normalize_skill_sync_mode(target)
     resolved_targets = _resolve_skill_sync_targets(
-        repo_root=repo_root_path,
         target=normalized_target,
     )
     if not resolved_targets:
@@ -839,7 +821,7 @@ def init(
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download even if files exist (default: False).
         sync_skills: Mirror `skills-src/` into runtime directories. Use one of
-            `none`, `cursor`, `claude`, `both`, or `auto` (default: `none`).
+            `none`, `cursor`, `claude`, or `both` (default: `none`).
         client: Optional APIClient instance. If not provided, one is created
             when `include_openapi=True` (requires ENDOR_API_CREDENTIALS_KEY/
             SECRET or ENDOR_TOKEN env vars).
