@@ -7,6 +7,7 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Literal
 
 import endorlabs
 
@@ -38,6 +39,21 @@ def _requires_context_refresh(paths: Sequence[str]) -> bool:
     return any(path.startswith(CONTEXT_PREFIX) for path in paths)
 
 
+def _configured_skill_sync_target() -> Literal["cursor", "claude", "both"] | None:
+    """Return explicit sync target for runtime mirrors already configured here."""
+    has_cursor = (REPO_ROOT / ".cursor").exists()
+    has_claude = (REPO_ROOT / ".claude").exists()
+    if has_cursor and has_claude:
+        return "both"
+    if has_cursor:
+        return "cursor"
+    if has_claude:
+        return "claude"
+    if not has_cursor and not has_claude:
+        return None
+    return None
+
+
 def _has_openapi_auth() -> bool:
     """Return whether credentials are available for OpenAPI refresh."""
     token = os.getenv("ENDOR_TOKEN")
@@ -56,17 +72,18 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         if _requires_skill_sync(changed_paths):
-            synced_paths = endorlabs.sync_agent_skills(
-                repo_root=REPO_ROOT,
-                target="auto",
-            )
-            if synced_paths:
+            sync_target = _configured_skill_sync_target()
+            if sync_target is None:
+                logger.info("Skill sync skipped; no runtime host mirror is configured.")
+            else:
+                synced_paths = endorlabs.sync_agent_skills(
+                    repo_root=REPO_ROOT,
+                    target=sync_target,
+                )
                 logger.info(
                     "Refreshed runtime skill mirrors: %s",
                     ", ".join(sorted(synced_paths)),
                 )
-            else:
-                logger.info("Skill sync skipped; no runtime target resolved.")
 
         if _requires_context_refresh(changed_paths):
             if not CONTEXT_DIR.exists():

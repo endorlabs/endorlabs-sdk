@@ -35,8 +35,10 @@ Skills use progressive disclosure to minimize context window usage:
 To refresh runtime mirrors from the repo root:
 
 ```bash
-uv run endor-context --no-openapi --no-user-docs --sync-skills auto
+uv run endor-context --no-openapi --no-user-docs --sync-skills cursor
 ```
+
+Use `claude` or `both` instead when needed.
 
 For **Claude Code** users: copy either `skills-src/` or `.cursor/skills/` to `.claude/skills/` at the repo root. The SKILL.md format is identical.
 
