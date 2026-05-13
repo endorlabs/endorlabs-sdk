@@ -31,7 +31,7 @@ def test_parse_args_supports_switches() -> None:
             "12",
             "--force",
             "--sync-skills",
-            "auto",
+            "both",
         ]
     )
     assert parsed.output_dir == "tmp-context"
@@ -39,7 +39,7 @@ def test_parse_args_supports_switches() -> None:
     assert parsed.include_user_docs is False
     assert parsed.max_pages == 12
     assert parsed.force is True
-    assert parsed.sync_skills == "auto"
+    assert parsed.sync_skills == "both"
 
 
 def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
