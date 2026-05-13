@@ -45,7 +45,7 @@ def init(
     include_user_docs: bool = True,
     max_pages: int | None = None,
     force: bool = False,
-    sync_skills: Literal["none", "cursor", "claude", "both", "auto"] = "none",
+    sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
     client: APIClient | None = None,
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
@@ -102,7 +102,7 @@ def sync_user_docs(
 def sync_agent_skills(
     *,
     repo_root: str | Path = ".",
-    target: Literal["none", "cursor", "claude", "both", "auto"] = "none",
+    target: Literal["none", "cursor", "claude", "both"] = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
     """Mirror repo skill sources into runtime discovery directories."""
