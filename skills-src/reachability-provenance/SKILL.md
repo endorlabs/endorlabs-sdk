@@ -16,6 +16,8 @@ Use this skill to triage findings where reachability signals conflict, especiall
 
 ## What "oss namespace" is used for
 
+**API path rule:** List and resolve OSS-plane resources under the literal namespace **`oss`**. Do not use `<tenant>.oss`, `<customer>.oss`, or a child namespace under the customer root; `scope="oss"` on the client separates this plane from customer namespace paths.
+
 Use the `oss` namespace as the canonical vulnerability provenance source for:
 
 - vulnerability records returned by query/evaluation

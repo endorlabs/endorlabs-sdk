@@ -144,4 +144,11 @@ import endorlabs
 endorlabs.init()  # downloads to .endorlabs-context/
 ```
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](AGENTS.md#context-bootstrap-for-ai-agents) for details.
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_pages=N`, `force=True`, `sync_skills="none|cursor|claude|both"`.
+
+The local pre-commit hook also refreshes these maintainer-only artifacts automatically:
+
+- changes under `skills-src/` refresh any runtime skill mirrors already configured in the repo (for example `.cursor/` or `.claude/`)
+- changes under `src/endorlabs/context/` refresh the existing `.endorlabs-context/` download (docs always; OpenAPI when auth is available)
+
+See [AGENTS.md](AGENTS.md#context-bootstrap-for-ai-agents) for details.

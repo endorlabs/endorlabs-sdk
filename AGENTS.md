@@ -45,12 +45,27 @@ print(status.user_docs_count)  # number of docs downloaded
 - Authentication: `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET` env vars (or `ENDOR_TOKEN`)
 - Dependencies: `pip install endorlabs-sdk[context]`
 
+### Fresh-clone bootstrap
+
+For a repo-local agent session after `git clone`, the SDK consumes **process env / `.env` only**; `endorctl init` does not automatically populate SDK auth.
+
+1. Install the repo with context dependencies:
+   - `uv sync --extra context`
+2. Establish credentials in `.env` using one of:
+   - API key auth: write `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`, and optional `ENDOR_NAMESPACE`
+   - Browser token refresh: `uv run python devtools/refresh_token_to_dotenv.py --env-file .env` (writes `ENDOR_TOKEN` to `.env`)
+3. Verify auth before any heavier workflow:
+   - `uv run --env-file .env python -c "import endorlabs; print(endorlabs.Client().whoami())"`
+4. Bootstrap local context:
+   - `uv run --env-file .env python -c "import endorlabs; endorlabs.init()"`
+
 **Options:**
 - `output_dir`: Where to save files (default: `.endorlabs-context`)
 - `include_openapi`: Download API spec (default: True)
 - `include_user_docs`: Download user docs (default: True)
 - `max_pages`: Limit user doc pages (default: all)
 - `force`: Re-download even if files exist (default: False)
+- `sync_skills`: Mirror `skills-src/` into `.cursor/skills/`, `.claude/skills/`, or both (`none`, `cursor`, `claude`, `both`; default: `none`)
 
 This is the recommended way for agents to bootstrap Endor Labs context before performing platform administration tasks.
 
@@ -68,6 +83,7 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 ## Critical Project Rules
 
 - **Canonical naming:** `tenant.namespace.child` only; no UUIDs in paths.
+- **Environment variables:** Do not invent names for credentials or SDK settings. Use only variables documented in [README.md](README.md), [CONTRIBUTORS.md](CONTRIBUTORS.md), this guide (including bootstrap above), or in official Endor Labs product/API documentation—and in the local OpenAPI download (`.endorlabs-context/openapiv2.swagger.json`) when it defines the same purpose. Bearer refresh via `devtools/refresh_token_to_dotenv.py` updates **`ENDOR_TOKEN`** only.
 - **Env and security:** Credentials via env; run `endorctl scan` before code changes.
 - **Client resource attributes (endorctl parity):** `client.<Kind>` uses **PascalCase** matching `endorctl api … --resource <Kind>` (same as endorctl’s resource syntax). The only non-registry helper on `Client` is **`ScanLogs`** — for fetching log lines; **`ScanLogRequest`** remains the endorctl-aligned resource for scan log *requests*. SDK-only facades use `CustomFacadeEntry` in `registry.py` (including `pyi_*` fields for stub generation); see [docs/contracts.md](docs/contracts.md) (Canonical naming — Custom facades).
 - **Return types:** Functions return typed models: `Resource | None` or `list[Resource]`.
