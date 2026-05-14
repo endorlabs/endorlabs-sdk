@@ -83,15 +83,23 @@ findings = client.Finding.list(
 
 ### Step 4: Narrow with field masks
 
-Use `mask` to limit response fields for performance:
+Use `mask` to limit response fields for performance. With a **non-empty** mask,
+each row is a **`dict[str, Any]`** (wire JSON), not a `Finding` / `Project`
+model—use key access (e.g. `row["spec"]["level"]` after checking keys) or
+**omit `mask`** when you need Pydantic models (e.g. to pass a resource object
+to `delete` / `update`).
 
 ```python
-# Only get finding name and severity
+# Only get finding name and severity (rows are dicts)
 findings = client.Finding.list(
     filter='spec.level==FINDING_LEVEL_CRITICAL',
     mask="meta.name,spec.level,spec.finding_categories",
     traverse=True,
 )
+for row in findings[:5]:
+    spec = row.get("spec") or {}
+    level = spec.get("level") if isinstance(spec, dict) else None
+    print(level, row.get("meta", {}))
 ```
 
 **Note:** `filter` (which rows) and `mask` (which fields) are separate concepts. Do not combine them.
@@ -108,7 +116,11 @@ findings = client.Finding.list(
 
 ## Namespace Scoping After Traverse
 
-When acting on resources returned from `list(traverse=True)`, pass the **resource object** (not just a UUID string) to `get`, `update`, or `delete`:
+When acting on resources returned from `list(traverse=True)` **without** a
+non-empty field `mask`, pass the **resource object** (not just a UUID string) to
+`get`, `update`, or `delete`. If you used `mask=` on that list, rows are
+**dicts**—call `get(uuid, namespace=...)` or list again without `mask` before
+using model-only APIs.
 
 ```python
 # Correct: namespace derived from resource object

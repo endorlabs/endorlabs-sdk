@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from endorlabs import Client
@@ -1302,11 +1302,14 @@ def process_project(
 
     missing: list[str] = []
     if pv_uuid_order:
-        pvs_full = client.PackageVersion.list(  # type: ignore[attr-defined]
-            namespace=project_ns,
-            filter=F("spec.project_uuid") == project.uuid,
-            max_pages=pv_list_max_pages,
-            page_size=pv_list_page_size,
+        pvs_full = cast(
+            "list[Any]",
+            client.PackageVersion.list(  # type: ignore[attr-defined]
+                namespace=project_ns,
+                filter=F("spec.project_uuid") == project.uuid,
+                max_pages=pv_list_max_pages,
+                page_size=pv_list_page_size,
+            ),
         )
         listed_cap = pv_list_max_pages * pv_list_page_size
         result.pv_list_truncated = len(pvs_full) >= listed_cap
@@ -1326,11 +1329,14 @@ def process_project(
         if pv_limit and pv_limit > 0:
             pvs = pvs[:pv_limit]
     else:
-        pvs = client.PackageVersion.list(  # type: ignore[attr-defined]
-            namespace=project_ns,
-            filter=F("spec.project_uuid") == project.uuid,
-            max_pages=1,
-            page_size=pv_limit,
+        pvs = cast(
+            "list[Any]",
+            client.PackageVersion.list(  # type: ignore[attr-defined]
+                namespace=project_ns,
+                filter=F("spec.project_uuid") == project.uuid,
+                max_pages=1,
+                page_size=pv_limit,
+            ),
         )
         pvs = pvs[:pv_limit]
         if deterministic:
