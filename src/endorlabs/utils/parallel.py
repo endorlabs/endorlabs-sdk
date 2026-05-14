@@ -8,13 +8,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import TypeVar
+from typing import Any
 
 from .logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
-
-T = TypeVar("T")
 
 
 class ConcurrentNamespaceQueryError(RuntimeError):
@@ -35,9 +33,9 @@ class ConcurrentNamespaceQueryError(RuntimeError):
 
 def execute_across_namespaces(
     namespaces: list[str],
-    query_fn: Callable[[str], list[T]],
+    query_fn: Callable[[str], list[Any]],
     max_workers: int = 10,
-) -> list[T]:
+) -> list[Any]:
     """Execute query_fn concurrently across namespaces and merge results.
 
     This function queries each namespace in parallel using a thread pool,
@@ -71,7 +69,7 @@ def execute_across_namespaces(
     if not namespaces:
         return []
 
-    all_results: list[T] = []
+    all_results: list[Any] = []
     errors: list[tuple[str, Exception]] = []
 
     # Use min of max_workers and namespace count to avoid idle threads

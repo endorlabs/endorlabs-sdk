@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 _ALLOWED_OVERRIDE_KEYS = {
+    "attr_name",
     "supported_ops",
     "scope",
     "parent_kind",
@@ -19,6 +20,10 @@ _ALLOWED_OVERRIDE_KEYS = {
 
 # Keep this intentionally small: only explicit SDK divergences belong here.
 RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
+    # endorctl --resource PackageFirewallLog; generated model keeps V1 prefix.
+    "V1PackageFirewallLog": {
+        "attr_name": "PackageFirewallLog",
+    },
     # OpenAPI exposes POST-only query endpoints (no collection GET/list).
     "V1Query": {
         "supported_ops": ["create"],

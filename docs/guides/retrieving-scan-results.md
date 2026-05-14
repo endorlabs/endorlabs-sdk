@@ -6,7 +6,7 @@
 - **Finding**: Security findings; linked by `context.scan_uuid` and `spec.project_uuid`.
 - **Relationship**: Project (meta.name = repo URL) → ScanResult (meta.parent_uuid = Project UUID) → Finding UUIDs in spec.findings.
 
-Use **traverse** when namespace is unknown or you need to search across namespaces. Use **field-mask** (ListParameters.mask or --field-mask) for smaller responses.
+Use **traverse** when namespace is unknown or you need to search across namespaces. Use **field-mask** (`ListParameters.mask` or `--field-mask`) for smaller responses; with a **non-empty** mask, SDK `list()` / `list_iter()` return **dict** rows (wire JSON), not full resource models.
 
 ## Workflow (one-line steps)
 

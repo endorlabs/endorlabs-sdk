@@ -278,3 +278,21 @@ class ListParameters(BaseModel):
         None,
         description="Return unique values for these fields in the group.",
     )
+
+
+def list_parameters_has_nonempty_field_mask(
+    list_params: ListParameters | None,
+) -> bool:
+    """True when an effective field mask is present (non-empty after strip).
+
+    Used after the same ``ListParameters`` merge as list/lookup (facade
+    ``_list_params`` + ``_build_list_kwargs``): when True,
+    :class:`endorlabs.operations.BaseResourceOperations` returns shallow-copied
+    wire JSON dicts per row instead of full Pydantic resource models, so sparse
+    masked payloads are not validated against nested required-field rules.
+
+    Whitespace-only ``mask`` is treated as absent (same as unmasked lists).
+    """
+    if list_params is None or list_params.mask is None:
+        return False
+    return bool(str(list_params.mask).strip())
