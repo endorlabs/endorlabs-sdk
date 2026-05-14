@@ -261,9 +261,10 @@ class TestProject:
         assert isinstance(masked_projects, list)
         if masked_projects:
             proj = masked_projects[0]
-            # Should have masked fields
-            assert hasattr(proj, "meta")
-            assert hasattr(proj, "spec")
+            assert isinstance(proj, dict), "Masked list returns wire JSON dict rows"
+            meta = proj.get("meta") or {}
+            assert isinstance(meta, dict)
+            assert "name" in meta or "name" in str(proj)
 
     @pytest.mark.writes
     def test_project_update_with_mask(self) -> None:

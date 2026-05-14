@@ -237,10 +237,10 @@ class TestRepositoryVersion:
         )
         if masked_versions:
             version = masked_versions[0]
-            # Should have masked fields
-            assert hasattr(version, "meta")
-            assert hasattr(version, "spec")
-            print(f"Masked repository version: {version.meta.name}")
+            assert isinstance(version, dict), "Masked list returns wire JSON dict rows"
+            meta = version.get("meta") or {}
+            assert isinstance(meta, dict)
+            print(f"Masked repository version: {meta.get('name', version.get('uuid'))}")
 
     @pytest.mark.writes
     def test_client_ux_update_repository_version(self) -> None:

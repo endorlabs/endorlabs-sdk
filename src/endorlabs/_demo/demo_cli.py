@@ -230,8 +230,26 @@ def _resolve_project_by_uuid(client: endorlabs.Client, project_uuid: str) -> Any
     return projects[0] if projects else None
 
 
+def _wire_uuid(obj: Any) -> str:
+    """Return UUID string from a resource model or masked list row dict."""
+    if isinstance(obj, dict):
+        d: dict[str, Any] = cast("dict[str, Any]", obj)
+        v = d.get("uuid")
+        return str(v) if v is not None else ""
+    return str(getattr(obj, "uuid", "") or "")
+
+
 def _project_name(project: Any) -> str:
     """Return a display-safe project name."""
+    if isinstance(project, dict):
+        d: dict[str, Any] = cast("dict[str, Any]", project)
+        meta = d.get("meta")
+        if isinstance(meta, dict):
+            meta_d: dict[str, Any] = cast("dict[str, Any]", meta)
+            name = meta_d.get("name")
+            if name:
+                return str(name)
+        return _wire_uuid(project) or "<unnamed>"
     if project.meta and project.meta.name:
         return project.meta.name
     return str(project.uuid)
@@ -239,9 +257,59 @@ def _project_name(project: Any) -> str:
 
 def _project_namespace(project: Any) -> str:
     """Return a display-safe project namespace."""
+    if isinstance(project, dict):
+        d: dict[str, Any] = cast("dict[str, Any]", project)
+        tm = d.get("tenant_meta")
+        if isinstance(tm, dict):
+            tm_d: dict[str, Any] = cast("dict[str, Any]", tm)
+            ns = tm_d.get("namespace")
+            if ns:
+                return str(ns)
+        return "unknown-namespace"
     if project.tenant_meta and project.tenant_meta.namespace:
         return project.tenant_meta.namespace
     return "unknown-namespace"
+
+
+def _namespace_label(ns: Any) -> str:
+    """Human-readable label for a Namespace model or list row dict."""
+    if isinstance(ns, dict):
+        d: dict[str, Any] = cast("dict[str, Any]", ns)
+        spec = d.get("spec")
+        if isinstance(spec, dict):
+            spec_d: dict[str, Any] = cast("dict[str, Any]", spec)
+            if spec_d.get("full_name"):
+                return str(spec_d["full_name"])
+        meta = d.get("meta")
+        if isinstance(meta, dict):
+            meta_d: dict[str, Any] = cast("dict[str, Any]", meta)
+            if meta_d.get("name"):
+                return str(meta_d["name"])
+        return _wire_uuid(ns) or "<namespace>"
+    full = ns.spec.full_name if ns.spec else None
+    if full:
+        return str(full)
+    if ns.meta and ns.meta.name:
+        return ns.meta.name
+    return str(ns.uuid)
+
+
+def _finding_preview_line(finding: Any) -> str:
+    """One-line summary for a Finding model or list row dict."""
+    if isinstance(finding, dict):
+        d: dict[str, Any] = cast("dict[str, Any]", finding)
+        spec_any = d.get("spec")
+        if not isinstance(spec_any, dict):
+            return "[unknown]"
+        spec: dict[str, Any] = cast("dict[str, Any]", spec_any)
+        level: Any = spec.get("level", "?")
+        summary: Any = spec.get("summary", "")
+        return f"[{level}] {summary}"
+    if finding.spec:
+        level = getattr(finding.spec, "level", None) or "?"
+        summary = getattr(finding.spec, "summary", None) or ""
+        return f"[{level}] {summary}"
+    return "[unknown]"
 
 
 def _project_matches_identifier(project: Any, identifier: str) -> bool:
@@ -249,7 +317,7 @@ def _project_matches_identifier(project: Any, identifier: str) -> bool:
     needle = identifier.strip().lower()
     if not needle:
         return False
-    uuid = str(getattr(project, "uuid", "")).lower()
+    uuid = _wire_uuid(project).lower()
     name = _project_name(project).lower()
     return needle in (uuid, name) or needle in uuid or needle in name
 
@@ -305,14 +373,17 @@ def _project_has_call_graph(client: endorlabs.Client, project: Any) -> bool:
     namespace = _project_namespace(project)
     call_graph_enabled = True
     try:
-        pvs = client.PackageVersion.list(
-            namespace=namespace,
-            filter=(
-                (F("spec.project_uuid") == str(project.uuid))
-                & (F("spec.call_graph_available") == call_graph_enabled)
+        pvs = cast(
+            "list[Any]",
+            client.PackageVersion.list(
+                namespace=namespace,
+                filter=(
+                    (F("spec.project_uuid") == _wire_uuid(project))
+                    & (F("spec.call_graph_available") == call_graph_enabled)
+                ),
+                max_pages=1,
+                page_size=1,
             ),
-            max_pages=1,
-            page_size=1,
         )
     except Exception:
         return False
@@ -339,7 +410,16 @@ def _choose_project_from_search(
     )
     filtered: list[Any] = []
     for project in projects:
-        name = project.meta.name if project.meta and project.meta.name else ""
+        if isinstance(project, dict):
+            pd = project
+            meta_any = pd.get("meta")
+            name = ""
+            if isinstance(meta_any, dict):
+                md = cast("dict[str, Any]", meta_any)
+                if md.get("name"):
+                    name = str(md["name"])
+        else:
+            name = project.meta.name if project.meta and project.meta.name else ""
         if not query or query in name.lower():
             filtered.append(project)
     if not filtered:
@@ -365,13 +445,15 @@ def _choose_project_from_search(
     for project in eligible:
         _log(
             f"    - {_project_name(project)} "
-            f"({project.uuid}) [{_project_namespace(project)}]"
+            f"({_wire_uuid(project)}) [{_project_namespace(project)}]"
         )
 
     selected = _select_auto_project_candidate(eligible, query)
+    pn = _project_name(selected)
+    pu = _wire_uuid(selected)
+    pns = _project_namespace(selected)
     _log(
-        "  Auto-selected project: "
-        f"{_project_name(selected)} ({selected.uuid}) [{_project_namespace(selected)}]",
+        f"  Auto-selected project: {pn} ({pu}) [{pns}]",
         style="green",
     )
     return selected
@@ -397,11 +479,13 @@ class TenantCatalog:
         self.projects_by_name.clear()
 
         for project in self.projects:
-            project_uuid = str(getattr(project, "uuid", "")).strip()
+            project_uuid = _wire_uuid(project).strip()
             if project_uuid:
                 self.projects_by_uuid[project_uuid] = project
 
-            name = project.meta.name if project.meta else project_uuid
+            name = _project_name(project)
+            if name == "<unnamed>":
+                name = project_uuid
             self.projects_by_name.setdefault(name, []).append(project)
 
         for name, projects in self.projects_by_name.items():
@@ -409,11 +493,7 @@ class TenantCatalog:
                 self.project_index[name] = projects[0]
                 continue
             for project in projects:
-                namespace = (
-                    project.tenant_meta.namespace
-                    if project.tenant_meta and project.tenant_meta.namespace
-                    else "unknown-namespace"
-                )
+                namespace = _project_namespace(project)
                 self.project_index[f"{name} [{namespace}]"] = project
 
     @property
@@ -481,8 +561,7 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
         namespaces = client.Namespace.list(traverse=True)
         _log(f"  Namespaces found: {len(namespaces)}")
         for ns in namespaces[:5]:
-            full = ns.spec.full_name if ns.spec else ns.meta.name
-            _log(f"    - {full}")
+            _log(f"    - {_namespace_label(ns)}")
         projects = client.Project.list(namespace=namespace, max_pages=1, page_size=25)
         _log(f"  Projects (first page): {len(projects)}")
         for proj in projects[:3]:
@@ -525,14 +604,14 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
         scans = client.ScanResult.list(parent=anchor, max_pages=1, page_size=1)
         _log(f"  Scan results for project: {len(scans)}")
         if scans:
-            _log(f"    Latest scan UUID: {scans[0].uuid}")
+            _log(f"    Latest scan UUID: {_wire_uuid(scans[0])}")
 
     def _section_5() -> None:
         count = 0
         for finding in client.Finding.list_iter(traverse=True, max_pages=1):
             count += 1
             if count <= 3:
-                _log(f"    - [{finding.spec.level}] {finding.spec.summary}")
+                _log(f"    - {_finding_preview_line(finding)}")
         _log(f"  Streamed {count} findings (list_iter, 1 page)")
 
     def _section_6() -> None:
@@ -564,7 +643,7 @@ def _run_showcase_sections(client: endorlabs.Client, namespace: str) -> None:
         )
         _log(f"  Masked projects (first page): {len(projects)}")
         for proj in projects[:3]:
-            _log(f"    - {_project_name(proj)} ({proj.uuid})")
+            _log(f"    - {_project_name(proj)} ({_wire_uuid(proj)})")
 
     def _section_9() -> None:
         if anchor is None:
@@ -631,7 +710,7 @@ def _stream_scan_logs_for_project(
     logger.debug(
         "scan_log_flow start namespace=%s project_uuid=%s project_name=%s",
         namespace,
-        project.uuid,
+        _wire_uuid(project),
         _project_name(project),
     )
     if trigger_scan:
@@ -639,7 +718,7 @@ def _stream_scan_logs_for_project(
         logger.debug(
             "scan_trigger update namespace=%s project_uuid=%s",
             namespace,
-            project.uuid,
+            _wire_uuid(project),
         )
         try:
             _ = client.Project.update(
@@ -669,14 +748,36 @@ def _stream_scan_logs_for_project(
         _log("  No scan results found for this project.", style="yellow")
         return
     scan = scans[0]
-    scan_uuid = scan.uuid
-    status = scan.spec.status if scan.spec else "UNKNOWN"
+    scan_uuid = _wire_uuid(scan)
+    status: Any = "UNKNOWN"
+    if isinstance(scan, dict):
+        scan_d: dict[str, Any] = scan
+        spec_d = scan_d.get("spec")
+        spec_map: dict[str, Any] = (
+            cast("dict[str, Any]", spec_d) if isinstance(spec_d, dict) else {}
+        )
+        if spec_map.get("status") is not None:
+            status = spec_map["status"]
+    elif scan.spec and scan.spec.status:
+        status = scan.spec.status
     _log(f"  Scan result: {scan_uuid}")
     _log(f"  Current status: {status}")
 
     start_time: str | None = None
-    if scan.spec and scan.spec.start_time:
-        start_dt = datetime.fromisoformat(scan.spec.start_time)
+    raw_start: str | None = None
+    if isinstance(scan, dict):
+        scan_d2: dict[str, Any] = scan
+        spec_d2 = scan_d2.get("spec")
+        spec_map2: dict[str, Any] = (
+            cast("dict[str, Any]", spec_d2) if isinstance(spec_d2, dict) else {}
+        )
+        st = spec_map2.get("start_time")
+        if st is not None:
+            raw_start = str(st)
+    elif scan.spec and scan.spec.start_time:
+        raw_start = scan.spec.start_time
+    if raw_start:
+        start_dt = datetime.fromisoformat(raw_start)
         start_time = (start_dt - timedelta(hours=1)).isoformat()
 
     seen: set[tuple[str | None, str]] = set()
@@ -742,14 +843,17 @@ def _run_call_graph_for_project(client: endorlabs.Client, project: Any) -> None:
         return
 
     call_graph_enabled = True
-    pvs = client.PackageVersion.list(
-        namespace=namespace,
-        filter=(
-            (F("spec.project_uuid") == str(project.uuid))
-            & (F("spec.call_graph_available") == call_graph_enabled)
+    pvs = cast(
+        "list[Any]",
+        client.PackageVersion.list(
+            namespace=namespace,
+            filter=(
+                (F("spec.project_uuid") == _wire_uuid(project))
+                & (F("spec.call_graph_available") == call_graph_enabled)
+            ),
+            max_pages=1,
+            page_size=1,
         ),
-        max_pages=1,
-        page_size=1,
     )
     if not pvs:
         _log("  No package version with call graph data found.", style="yellow")

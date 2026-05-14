@@ -159,13 +159,16 @@ recent_scans = client.ScanResult.list(
     mask="meta.name,meta.create_time,spec.status",
     max_pages=1,
 )
+# Non-empty mask → each item is a dict (wire JSON), not a ScanResult model.
 ```
 
 ## Namespace Scoping After Traverse
 
-When you act on objects returned from `list(traverse=True)`, pass the
-**resource object** to `get`, `update`, or `delete`. The SDK uses
-`resource.tenant_meta.namespace` to set the correct path:
+When you act on objects returned from `list(traverse=True)` **without** a
+non-empty list `mask`, pass the **resource object** to `get`, `update`, or
+`delete`. The SDK uses `resource.tenant_meta.namespace` to set the correct path.
+If the list used `mask=`, items are **dicts**—use UUID + `get`, or list again
+without `mask`, before passing a model to `delete` / `update`.
 
 ```python
 # Correct: namespace derived from resource

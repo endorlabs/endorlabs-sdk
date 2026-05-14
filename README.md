@@ -241,11 +241,11 @@ Each facade exposes only the operations that resource supports. Hover over any f
 
 ### Operations
 
-- **List:** `client.<ResourceKind>.list(traverse=..., filter=..., mask=..., sort_by=..., desc=..., max_pages=..., page_size=..., parent=...)`. Use `traverse=True` for tenant-wide listing; use `parent=resource` for child resources (e.g. `ScanResult.list(parent=project)`).
+- **List:** `client.<ResourceKind>.list(traverse=..., filter=..., mask=..., sort_by=..., desc=..., max_pages=..., page_size=..., parent=...)`. Use `traverse=True` for tenant-wide listing; use `parent=resource` for child resources (e.g. `ScanResult.list(parent=project)`). A **non-empty** `mask` returns **`dict`** rows per item; omit `mask` for full Pydantic models.
 - **List (parallel):** `client.<resource>.list(traverse=True, concurrent=True, max_workers=10)` queries each namespace in parallel.
-- **List (streaming):** `client.<resource>.list_iter(...)` yields resources one at a time for memory-efficient pagination.
+- **List (streaming):** `client.<resource>.list_iter(...)` yields one item per row; with a non-empty `mask`, each yielded value may be a **`dict`** instead of a model.
 - **Get / Create / Update / Delete:** `client.<resource>.get(id_or_resource)`, `.create(payload=... or **kwargs)`, `.update(resource, update_mask=... or field kwargs)`, `.delete(id_or_resource, ignore_missing=True)`.
-- **Lookup:** `client.<resource>.lookup(...)` returns exactly one result or raises `NotFoundError` / `AmbiguousError`.
+- **Lookup:** `client.<resource>.lookup(...)` returns exactly one **model** or raises `NotFoundError` / `AmbiguousError`; it raises **`ValueError`** if a non-empty list `mask` is set (use `list()` for masked dict rows).
 - **Tag / Untag:** `client.<resource>.tag(resource, tags=["reviewed"])`, `.untag(resource, keys=["deprecated"])` manage `meta.tags` on resources that support it.
 - **Identity kwargs:** `client.Project.lookup(name="my-project")` — identity kwargs are mapped to filter clauses automatically (e.g. `name` → `meta.name`). Hover over a facade to see its available identity kwargs.
 - **Filtering:** Use raw strings (`filter="meta.name==foo"`) or the `F()` builder: `from endorlabs import F; client.Finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")`.

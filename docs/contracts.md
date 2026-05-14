@@ -74,6 +74,7 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 
 - **filter**: Which rows match.
 - **mask**: Which fields are returned in list responses.
+- **List return shape:** After merge of `list_params` and flat kwargs (same rules as `list()`), if **mask** is non-empty when stripped, `list()` returns **`list[dict[str, Any]]`** (shallow-copied wire JSON per row) instead of full Pydantic models; `list_iter()` yields **`Iterator[T | dict[str, Any]]`** (each item is either a model or a dict). If **mask** is absent, empty, or whitespace-only, behavior is unchanged: full models only. **`lookup()`** requires a typed resource and raises **`ValueError`** when an effective non-empty list mask is present; use **`list()`** / **`list_iter()`** for masked dict rows. See [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) and [changelog.md](changelog.md).
 - **MQL conventions:** `filter` query expressions and list `mask` projections mirror MongoDB-style MQL conventions.
 - **page_size**, **page_token**, **page_id**: Pagination controls.
 - **sort_by**, **desc**: Sorting controls mapped to `list_parameters.sort.path` and `list_parameters.sort.order`.
