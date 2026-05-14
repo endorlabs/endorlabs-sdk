@@ -897,6 +897,36 @@ def test_lookup_calls_list_with_identity_kwargs(
     assert args[2] == 2
 
 
+def test_lookup_raises_value_error_when_mask_kwarg_set(
+    client_with_mock_transport: Client,
+) -> None:
+    """lookup raises before list() when mask= is non-empty (typed resource only)."""
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.Project._ops.list = mock_list
+    with pytest.raises(ValueError, match="lookup returns a typed resource"):
+        client.Project.lookup(mask="uuid", name="x", max_pages=2)
+    mock_list.assert_not_called()
+
+
+def test_lookup_raises_value_error_when_list_params_mask_set(
+    client_with_mock_transport: Client,
+) -> None:
+    """lookup raises when ListParameters.mask is non-empty."""
+    from endorlabs.core.types import ListParameters
+
+    client = client_with_mock_transport
+    mock_list = Mock(return_value=[])
+    client.Project._ops.list = mock_list
+    with pytest.raises(ValueError, match="lookup returns a typed resource"):
+        client.Project.lookup(
+            list_params=ListParameters(mask="meta.name"),
+            name="x",
+            max_pages=2,
+        )
+    mock_list.assert_not_called()
+
+
 def test_list_with_identity_kwargs_builds_filter_when_in_map(
     client_with_mock_transport: Client,
 ) -> None:
