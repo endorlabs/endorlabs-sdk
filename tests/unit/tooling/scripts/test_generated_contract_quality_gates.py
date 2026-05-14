@@ -266,14 +266,21 @@ def test_sync_two_run_hash_stability() -> None:
 
 
 def test_sorted_output_ordering() -> None:
-    """Generated contract resources must remain sorted and stable."""
+    """Generated contract resources must remain sorted and stable.
+
+    ``facade_contract.json`` lists ``attr_name`` as written by model-sync
+    ``build_facade_contract`` (the Pydantic ``model_class`` name). The runtime
+    ``RESOURCE_REGISTRY`` can rename the ``Client`` attribute via
+    ``registry_overlay`` without rewriting this artifact; gate ordering against
+    model class names, not ``ResourceEntry.attr_name``.
+    """
     payload = _load_json(_FACADE_CONTRACT_PATH)
     resources = payload.get("resources")
     assert isinstance(resources, list) and resources
     attrs = [row.get("attr_name") for row in resources if isinstance(row, dict)]
     assert attrs == sorted(attrs)
 
-    expected_attrs = sorted(entry.attr_name for entry in RESOURCE_REGISTRY)
+    expected_attrs = sorted(entry.model_class.__name__ for entry in RESOURCE_REGISTRY)
     assert attrs == expected_attrs
 
 
