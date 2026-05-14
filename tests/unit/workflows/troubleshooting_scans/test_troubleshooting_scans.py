@@ -17,14 +17,14 @@ from endorlabs.workflows.troubleshooting_scans.select_anomalous_scans import (
 
 def test_build_filename_uses_required_segments() -> None:
     filename = build_filename(
-        root_tenant_name="datavant.apixio-commercial",
+        root_tenant_name="tenant.example.child",
         object_kind="scan_diff",
         object_uuid="abc123",
         purpose="report",
         extension=".json",
         timestamped=False,
     )
-    assert filename.startswith("datavant.apixio-commercial__scan_diff__abc123__report")
+    assert filename.startswith("tenant.example.child__scan_diff__abc123__report")
     assert filename.endswith(".json")
 
 

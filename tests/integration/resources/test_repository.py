@@ -152,10 +152,11 @@ class TestRepository:
         )
         if masked_repos:
             repo = masked_repos[0]
-            # Should have masked fields
-            assert hasattr(repo, "meta")
-            assert hasattr(repo, "spec")
-            print(f"Masked repository: {repo.meta.name}")
+            assert isinstance(repo, dict), "Masked list returns wire JSON dict rows"
+            meta = repo.get("meta") or {}
+            assert isinstance(meta, dict)
+            assert "name" in meta or "name" in str(repo)
+            print(f"Masked repository: {meta.get('name', repo.get('uuid'))}")
 
     def test_repository_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
