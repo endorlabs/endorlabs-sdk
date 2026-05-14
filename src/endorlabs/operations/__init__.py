@@ -18,7 +18,7 @@ from pydantic import BaseModel, ValidationError
 
 from ..core.exceptions import EndorAPIError
 from ..core.exceptions import ValidationError as EndorValidationError
-from ..core.types import ListParameters
+from ..core.types import ListParameters, list_parameters_has_nonempty_field_mask
 from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
@@ -225,7 +225,7 @@ class BaseResourceOperations(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
         **kwargs: Any,
-    ) -> list[T]:
+    ) -> list[T] | list[dict[str, Any]]:
         """Universal list operation with automatic pagination.
 
         Args:
@@ -237,7 +237,8 @@ class BaseResourceOperations(Generic[T]):
             **kwargs: Additional keyword arguments (e.g. filter, page_size).
 
         Returns:
-            List of resource objects
+            List of resource objects, or shallow-copied wire JSON dicts per row
+            when ``list_parameters_has_nonempty_field_mask(list_params)`` is True.
 
         """
         kwargs.pop("logging_level", None)  # Session-level only; ignore if passed
@@ -278,8 +279,6 @@ class BaseResourceOperations(Generic[T]):
                 tenant_meta_namespace,
             )
 
-            return [self.model_class(**item) for item in all_items]
-
         except EndorAPIError as e:
             # Re-raise our custom exceptions
             raise e from None
@@ -288,8 +287,26 @@ class BaseResourceOperations(Generic[T]):
             raise self.client.map_http_error_to_exception(
                 e, "list", tenant_meta_namespace
             ) from e
+        except Exception as e:
+            # Unexpected errors
+            from ..core.exceptions import ServerError
+
+            raise ServerError(
+                message=(
+                    f"Unexpected error listing {self.resource_name} "
+                    f"in namespace '{tenant_meta_namespace}': {e!s}"
+                ),
+                operation="list",
+                namespace=tenant_meta_namespace,
+            ) from e
+
+        if list_parameters_has_nonempty_field_mask(list_params):
+            return [dict(item) for item in all_items]
+
+        try:
+            return [self.model_class(**item) for item in all_items]
         except ValidationError as e:
-            # Pydantic validation error on response
+            # Pydantic validation error on response (full-model path only)
             from ..core.exceptions import ServerError
 
             error_details = "\n".join(
@@ -306,18 +323,6 @@ class BaseResourceOperations(Generic[T]):
                 namespace=tenant_meta_namespace,
                 response_text=str(e.errors()),
             ) from e
-        except Exception as e:
-            # Unexpected errors
-            from ..core.exceptions import ServerError
-
-            raise ServerError(
-                message=(
-                    f"Unexpected error listing {self.resource_name} "
-                    f"in namespace '{tenant_meta_namespace}': {e!s}"
-                ),
-                operation="list",
-                namespace=tenant_meta_namespace,
-            ) from e
 
     def list_iter(
         self,
@@ -325,17 +330,23 @@ class BaseResourceOperations(Generic[T]):
         list_params: ListParameters | None = None,
         max_pages: int | None = None,
         **kwargs: Any,
-    ) -> Iterator[T]:
+    ) -> Iterator[T | dict[str, Any]]:
         """Yield resources from a paginated list without materializing the full list.
 
-        Same URL and params as list(); yields one model per item from get_all().
+        Same URL and params as list(). Yields one full model per item unless a
+        non-empty field mask is in effect, in which case each item is a shallow
+        copy of the wire JSON dict.
         """
         kwargs.pop("logging_level", None)  # Session-level only; ignore if passed
         ns = validate_namespace(tenant_meta_namespace)
         url = f"v1/namespaces/{ns}/{self.resource_name}"
         params = self._build_params(list_params, **kwargs)
+        masked = list_parameters_has_nonempty_field_mask(list_params)
         for item in self.client.get_all(url, params=params, max_pages=max_pages):
-            yield self.model_class(**item)
+            if masked:
+                yield dict(item)
+            else:
+                yield self.model_class(**item)
 
     def get(self, tenant_meta_namespace: str, resource_uuid: str) -> T:
         """Universal get operation with fallback to list+filter.
@@ -392,7 +403,7 @@ class BaseResourceOperations(Generic[T]):
             )
             resources = self.list(tenant_meta_namespace, list_params)
             if resources:
-                return resources[0]
+                return cast("T", resources[0])
             # No resources found - raise NotFoundError
             from ..core.exceptions import NotFoundError
 

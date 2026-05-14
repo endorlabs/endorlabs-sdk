@@ -267,7 +267,7 @@ def list_dependency_metadata(
     list_params: ListParameters | None = None,
     max_pages: int | None = None,
     **kwargs: Any,
-) -> list[DependencyMetadata]:
+) -> list[DependencyMetadata] | list[dict[str, Any]]:
     """List dependency metadata with advanced filtering and pagination.
 
     Note: This function hardcodes the namespace to "oss" regardless of the
@@ -283,7 +283,7 @@ def list_dependency_metadata_iter(
     list_params: ListParameters | None = None,
     max_pages: int | None = None,
     **kwargs: Any,
-) -> Iterator[DependencyMetadata]:
+) -> Iterator[DependencyMetadata | dict[str, Any]]:
     """Iterate over dependency metadata without materializing the full list."""
     ops = _get_dependency_metadata_ops(client)
     return ops.list_iter(

@@ -27,9 +27,6 @@ def _merge_token_into_dotenv(env_path: Path, token: str) -> None:
     else:
         lines = []
 
-    # Drop deprecated alias if present (SDK reads ENDOR_TOKEN only).
-    lines = [ln for ln in lines if not ln.startswith("ENDOR_ADMIN_TOKEN=")]
-
     def upsert(key: str, line: str) -> None:
         prefix = f"{key}="
         idx = next((i for i, s in enumerate(lines) if s.startswith(prefix)), None)

@@ -135,10 +135,11 @@ class TestScanProfile:
         )
         if masked_profiles:
             profile = masked_profiles[0]
-            # Should have masked fields
-            assert hasattr(profile, "meta")
-            assert hasattr(profile, "spec")
-            print(f"Masked profile: {profile.meta.name if profile.meta else 'N/A'}")
+            assert isinstance(profile, dict), "Masked list returns wire JSON dict rows"
+            meta = profile.get("meta") or {}
+            assert isinstance(meta, dict)
+            pname = meta.get("name", "N/A")
+            print(f"Masked profile: {pname}")
 
     def test_scan_profile_error_handling(self) -> None:
         """Test error handling for invalid UUID."""
