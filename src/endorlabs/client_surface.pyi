@@ -4631,10 +4631,10 @@ class Client:
     APIKey, AuditLog, AuthenticationLog, AuthorizationPolicy, CodeOwners,
     DependencyMetadata, EndorLicense, Finding, FindingLog, Installation,
     Invitation, LinterResult, Malware, Metric, Namespace, NotificationTarget,
-    PRCommentConfig, PackageLicense, PackageVersion, Policy, PolicyTemplate,
-    Project, QueryMalware, QueryVulnerability, Repository, RepositoryVersion,
-    ScanLogRequest, ScanProfile, ScanResult, ScanWorkflow, ScanWorkflowResult,
-    SemgrepRule, V1IdentityProvider, V1PackageFirewallLog, V1Query,
+    PRCommentConfig, PackageFirewallLog, PackageLicense, PackageVersion,
+    Policy, PolicyTemplate, Project, QueryMalware, QueryVulnerability,
+    Repository, RepositoryVersion, ScanLogRequest, ScanProfile, ScanResult,
+    ScanWorkflow, ScanWorkflowResult, SemgrepRule, V1IdentityProvider, V1Query,
     V1QuerySimilarPackages, V1SavedQuery, VectorStore, VectorStoreQuery,
     VersionUpgrade, Vulnerability
     Custom: ScanLogs
@@ -4706,7 +4706,7 @@ class Client:
     """SemgrepRule resource model extending BaseResource."""
     V1IdentityProvider: _V1IdentityProviderFacade
     """V1IdentityProvider resource facade."""
-    V1PackageFirewallLog: _V1PackageFirewallLogFacade
+    PackageFirewallLog: _V1PackageFirewallLogFacade
     """V1PackageFirewallLog resource facade."""
     V1Query: _V1QueryFacade
     """V1Query resource facade."""
