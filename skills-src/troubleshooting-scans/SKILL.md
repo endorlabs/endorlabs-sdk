@@ -78,8 +78,8 @@ Project-specific RCA from project name:
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
-  --tenant datavant \
-  --project-name "Apixio/codenavigator-monitoring" \
+  --tenant tenant.example \
+  --project-name "endorlabs/endorlabs-sdk" \
   --limit 30 \
   --output-dir .tmp \
   --timestamped
@@ -89,8 +89,8 @@ Fast regression check (latest pair only, logs only when regression exists):
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
-  --tenant datavant \
-  --project-name "Apixio/codenavigator-monitoring" \
+  --tenant tenant.example \
+  --project-name "endorlabs/endorlabs-sdk" \
   --scan-window 2 \
   --regression-only \
   --output-dir .tmp
@@ -100,7 +100,7 @@ Tenant-wide error signature search:
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.search_scan_errors \
-  --tenant datavant \
+  --tenant tenant.example \
   --all-projects \
   --error-pattern "maven-profiler|dependency-resolution-error|STATUS_FAILURE" \
   --limit 20 \
@@ -110,11 +110,11 @@ uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.searc
 Manual step-by-step mode:
 
 ```bash
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.resolve_projects --tenant datavant --project-name "Apixio/codenavigator-monitoring"
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --tenant datavant --project-name "Apixio/codenavigator-monitoring" --limit 30
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.select_anomalous_scans --input-summary <summary-json> --root-tenant datavant --project-uuid <project-uuid>
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_logs --tenant datavant --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans --tenant datavant --namespace <project-namespace> --input-pairs <pairs-json>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.resolve_projects --tenant tenant.example --project-name "endorlabs/endorlabs-sdk"
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --tenant tenant.example --project-name "endorlabs/endorlabs-sdk" --limit 30
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.select_anomalous_scans --input-summary <summary-json> --root-tenant tenant.example --project-uuid <project-uuid>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_logs --tenant tenant.example --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans --tenant tenant.example --namespace <project-namespace> --input-pairs <pairs-json>
 ```
 
 ## Interpretation hints
