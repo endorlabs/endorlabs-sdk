@@ -3,6 +3,13 @@
 Expanded reference for recurring SDK issues, test skip analysis, and resource
 cleanup after test runs.
 
+**Scope:** Normative SDK behavior and the same platform gotchas also live in
+`docs/rules-of-engagement/troubleshooting.md` and `docs/contracts.md`. This file
+keeps **integration-test hygiene** (cleanup tables, endorctl checks) that would
+bloat the skill entrypoint. **Model shape drift** (OpenAPI vs shipped Pydantic)
+is handled by the generated contract and `devtools/sync/` model-sync workflows,
+not one-off edits under `src/endorlabs/generated/`.
+
 ---
 
 ## Platform Insights
@@ -37,21 +44,22 @@ See `docs/contracts.md` (Namespace scoping) and
   surfaces these as `ServerError`.
 - **Interpretation**: If the API returns 5xx with that message, the SDK is
   correct to surface it; listing at a child namespace (or different scope) may
-  avoid it. If the API returns 200 but the response body does not match Pydantic
-  models (e.g., partial spec), consider optional/lenient parsing in the SDK only
-  where safe.
+  avoid it. If the API returns **200** but deserialization fails, treat it as
+  **contract or model-sync drift** (regenerate from spec, adjust overlays, or
+  extend tolerance in the resource model layer following repo patterns)—not as
+  something to “paper over” ad hoc in application code.
 
-### List mask / partial response leniency
+### List mask vs partial **model** responses
 
-- List responses may omit spec-required fields when using a **mask**
-  (`list_params.mask`) or at certain scopes (e.g., tenant root). The OpenAPI
-  spec describes the full resource; list is not guaranteed to return every
-  required field.
-- The SDK accepts these partial responses for list via spec-aligned leniency:
-  - **Finding** `context` is optional when the list response omits it
-  - **Project** `spec.platform_source` is optional when the list mask omits it
-  - **BaseMeta** `name` is optional when the list mask omits it
-- Callers that use these fields should handle `None`.
+- **Non-empty list mask** (`list_params.mask` / facade `mask=`, non-empty after
+  strip): `list()` / `list_iter()` return **dict-shaped wire rows**, not sparse
+  Pydantic resources. Use `isinstance(row, dict)` and key access, or omit
+  `mask` when you need typed models.
+- **No effective mask:** rows are full models. The API may still omit fields at
+  some scopes (e.g. tenant root); the SDK keeps spec-aligned leniency when
+  parsing **models** only (e.g. **Finding** `context`, **Project**
+  `spec.platform_source`, **BaseMeta** `name` may be missing on the wire).
+  Callers should handle `None` on those model fields.
 
 ---
 

@@ -44,8 +44,8 @@ The SDK extracts the namespace from `resource.tenant_meta.namespace`.
 
 **Resolution:**
 - If the API returns 5xx, the SDK is correct to surface it as `ServerError`
-- Try listing at a child namespace instead
-- Use `mask` to request only the fields you need
+- Try listing at a child namespace (or different scope) instead
+- Optional: a non-empty list `mask=` reduces payload size; it does not reliably fix backend “spec not full” 5xx by itself
 
 ### Path namespace vs body UUID mismatch
 
@@ -59,30 +59,33 @@ namespace = resource.tenant_meta.namespace  # or resource.namespace
 
 ### `update_mask` validation errors
 
-**Cause:** `update_mask` is required for all update operations. Missing or empty mask raises `ValidationError`.
+**Cause:** `update(uuid, payload=...)` requires a non-empty `update_mask` (and paths must be mutable). Wrong or empty mask raises `ValidationError` / `ValueError`. When you pass **field kwargs** with a **resource instance**, the facade derives the mask—`update_mask` is not required in that form.
 
-**Fix:** Always provide a comma-separated field path list:
-
-```python
-client.Namespace.update(ns, update_mask="meta.description")
-```
-
-Or use field kwargs (mask is derived automatically):
+**Fix:** UUID + payload: provide a comma-separated field path list:
 
 ```python
-ns.update(client.Namespace, meta_description="new description")
+client.Namespace.update(ns.uuid, payload=updated_payload, update_mask="meta.description")
 ```
 
-### Partial responses with list mask
+Or pass the resource and kwargs (mask derived automatically):
 
-**Cause:** List responses may omit spec-required fields when using `mask` or at certain scopes. The OpenAPI spec describes the full resource, but list is not guaranteed to return every field.
+```python
+client.Namespace.update(ns, meta_description="new description")
+```
 
-**Leniency:** The SDK handles this for known cases:
-- `Finding.context` -- optional when list response omits it
-- `Project.spec.platform_source` -- optional when list mask omits it
-- `BaseMeta.name` -- optional when list mask omits it
+### List field mask (dict rows) vs partial **model** responses
 
-**Caller responsibility:** Handle `None` for these fields when using masks.
+**Masked list (non-empty `mask`):** `list()` / `list_iter()` return **dict**
+rows (shallow wire JSON), not Pydantic models—no “partial model” validation path.
+
+**Unmasked list:** Rows are models. The API may still omit fields at some
+scopes; the SDK applies leniency when **constructing models** (e.g.
+`Finding.context`, `Project.spec.platform_source`, `BaseMeta.name` may be
+`None` when absent on the wire).
+
+**Callers:** Use `isinstance(row, dict)` after `list(..., mask=...)`; use dict
+keys or omit `mask` for typed resources. Do not pass masked `dict` rows to
+`delete`/`update` expecting a model—`get` by UUID or list without `mask` first.
 
 ### Tenant-context read-only resources
 
