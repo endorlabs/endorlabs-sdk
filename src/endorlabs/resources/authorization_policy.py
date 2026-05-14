@@ -20,7 +20,7 @@ API FEATURES:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import TYPE_CHECKING, Any, ClassVar, cast, override
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -402,7 +402,8 @@ def list_authorization_policies_by_role(
         filter=f"spec.permissions.roles=={role.value}",
     )
     ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    return ops.list(tenant_meta_namespace, list_params)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
 
 
 def list_authorization_policies_by_namespace(
@@ -415,7 +416,8 @@ def list_authorization_policies_by_namespace(
         filter=f"spec.target_namespaces=={target_namespace}",
     )
     ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    return ops.list(tenant_meta_namespace, list_params)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
 
 
 def list_authorization_policies_paginated(
@@ -430,7 +432,8 @@ def list_authorization_policies_paginated(
         page_token=page_token,
     )
     ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    return ops.list(tenant_meta_namespace, list_params)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)
 
 
 def list_authorization_policies_sorted(
@@ -445,4 +448,5 @@ def list_authorization_policies_sorted(
         desc=desc,
     )
     ops = BaseResourceOperations(client, "authorization-policies", AuthorizationPolicy)
-    return ops.list(tenant_meta_namespace, list_params)
+    rows = ops.list(tenant_meta_namespace, list_params)
+    return cast("list[AuthorizationPolicy]", rows)

@@ -116,7 +116,7 @@ def list_version_upgrades(
     list_params: ListParameters | None = None,
     max_pages: int | None = None,
     **kwargs: Any,
-) -> list[VersionUpgrade]:
+) -> list[VersionUpgrade] | list[dict[str, Any]]:
     """List version upgrades in the namespace."""
     ops = _get_version_upgrade_ops(client)
     return ops.list(tenant_meta_namespace, list_params, max_pages, **kwargs)
@@ -128,7 +128,7 @@ def list_version_upgrades_iter(
     list_params: ListParameters | None = None,
     max_pages: int | None = None,
     **kwargs: Any,
-) -> Iterator[VersionUpgrade]:
+) -> Iterator[VersionUpgrade | dict[str, Any]]:
     """Iterate over version upgrades without materializing the full list."""
     ops = _get_version_upgrade_ops(client)
     return ops.list_iter(tenant_meta_namespace, list_params, max_pages, **kwargs)

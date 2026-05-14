@@ -16,6 +16,7 @@ See docs/reference/resources.md and docs/guides/retrieving-scan-results.md.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -29,12 +30,12 @@ from typing import (
 
 from .core.exceptions import AmbiguousError, NotFoundError
 from .core.filter import F, FilterExpression
-from .core.types import ListParameters
+from .core.types import ListParameters, list_parameters_has_nonempty_field_mask
 from .operations import BaseResourceOperations
 from .utils.namespace import resolve_namespace_for_resource
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable
 
     from .api_client import APIClient
     from .registry import ResourceEntry
@@ -175,6 +176,47 @@ class _ListableFacade(Generic[T]):
 
         return remaining_kwargs
 
+    def _effective_list_parameters(
+        self,
+        *,
+        traverse: bool,
+        list_params: ListParameters | None,
+        parent: Any,
+        filter: str | FilterExpression | None,
+        mask: str | None,
+        page_size: int | None,
+        page_token: str | None,
+        page_id: str | None,
+        sort_by: str | None,
+        desc: bool | None,
+        count: bool | None,
+        from_date: str | None,
+        to_date: str | None,
+        archive: bool | None,
+        pr_uuid: str | None,
+        ci_run_uuid: str | None,
+        **kwargs: Any,
+    ) -> ListParameters | None:
+        """Merge list kwargs and list_params like ``list`` / ``list_iter``."""
+        remaining_kwargs = self._build_list_kwargs(
+            parent=parent,
+            filter=filter,
+            mask=mask,
+            page_size=page_size,
+            page_token=page_token,
+            page_id=page_id,
+            sort_by=sort_by,
+            desc=desc,
+            count=count,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
+            **kwargs,
+        )
+        return self._list_params(list_params, traverse=traverse, **remaining_kwargs)
+
     def list(
         self,
         traverse: bool = False,
@@ -198,7 +240,7 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         ci_run_uuid: str | None = None,
         **kwargs: Any,
-    ) -> list[T]:
+    ) -> list[T] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode.
 
         Uses full pagination (list_all=True). With ``traverse=True`` and
@@ -237,7 +279,10 @@ class _ListableFacade(Generic[T]):
                 ``meta.name=="foo"``).
 
         Returns:
-            List of resources; empty if no matches.
+            List of resources, or shallow-copied wire JSON dicts per row when a
+            non-empty field ``mask`` is in effect (``mask=`` or
+            ``ListParameters.mask``). Use unmasked ``list()`` when you need full
+            Pydantic models.
 
         Raises:
             ValueError: Missing namespace, unsupported parent, or concurrent
@@ -298,7 +343,9 @@ class _ListableFacade(Generic[T]):
             )
 
         # Standard single-query mode
-        remaining_kwargs = self._build_list_kwargs(
+        lp = self._effective_list_parameters(
+            traverse=traverse,
+            list_params=list_params,
             parent=parent,
             filter=filter,
             mask=mask,
@@ -315,7 +362,6 @@ class _ListableFacade(Generic[T]):
             ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
-        lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
         return self._ops.list(ns, lp, max_pages)
 
     def _list_concurrent(
@@ -326,7 +372,7 @@ class _ListableFacade(Generic[T]):
         max_pages: int | None,
         parent: Any,
         **kwargs: Any,
-    ) -> list[T]:
+    ) -> list[T] | list[dict[str, Any]]:
         """Fetch namespaces with traverse, then query each in parallel; merge.
 
         Raises:
@@ -339,10 +385,11 @@ class _ListableFacade(Generic[T]):
         ns_ops: BaseResourceOperations[Any] = BaseResourceOperations(
             self._client, "namespaces", NamespaceModel
         )
-        all_namespaces = ns_ops.list(
+        all_namespaces_list = ns_ops.list(
             namespace,
             ListParameters(traverse=True),  # pyright: ignore[reportCallIssue]
         )
+        all_namespaces = cast("list[NamespaceModel]", all_namespaces_list)
 
         # Extract namespace names (spec.full_name is the canonical name)
         namespace_names: list[str] = []
@@ -362,7 +409,7 @@ class _ListableFacade(Generic[T]):
             namespace_names.insert(0, namespace)
 
         # Phase 2: Build query function for each namespace
-        def query_namespace(ns: str) -> list[T]:
+        def query_namespace(ns: str) -> list[T] | list[dict[str, Any]]:
             # Query without traverse - each namespace independently
             return self.list(
                 traverse=False,
@@ -375,11 +422,12 @@ class _ListableFacade(Generic[T]):
             )
 
         # Phase 3: Execute concurrently and merge
-        return execute_across_namespaces(
+        merged = execute_across_namespaces(
             namespaces=namespace_names,
             query_fn=query_namespace,
             max_workers=max_workers,
         )
+        return cast("list[T] | list[dict[str, Any]]", merged)
 
     def lookup(
         self,
@@ -448,7 +496,10 @@ class _ListableFacade(Generic[T]):
         Raises:
             NotFoundError: No resource matches.
             AmbiguousError: Multiple match; narrow criteria.
-            ValueError: Missing namespace or concurrent without traverse.
+            ValueError: Missing namespace, concurrent without traverse, or a
+                non-empty list field mask (``mask=`` / ``ListParameters.mask``);
+                ``lookup`` always returns a full typed resource—use ``list()`` or
+                ``list_iter()`` for masked wire-shaped rows.
 
         Example:
             project = client.Project.lookup(namespace='tenant.team', name='my-project')
@@ -458,6 +509,30 @@ class _ListableFacade(Generic[T]):
             raise NotImplementedError(
                 "This resource does not support lookup."
             ) from None
+        lp = self._effective_list_parameters(
+            traverse=traverse,
+            list_params=list_params,
+            parent=parent,
+            filter=filter,
+            mask=mask,
+            page_size=page_size,
+            page_token=page_token,
+            page_id=page_id,
+            sort_by=sort_by,
+            desc=desc,
+            count=count,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
+            **kwargs,
+        )
+        if list_parameters_has_nonempty_field_mask(lp):
+            raise ValueError(
+                "lookup returns a typed resource; omit mask= (or ListParameters.mask) "
+                "or use list() / list_iter() for masked wire-shaped rows."
+            )
         items = self.list(
             traverse=traverse,
             concurrent=concurrent,
@@ -491,7 +566,7 @@ class _ListableFacade(Generic[T]):
                 f"Multiple resources ({len(items)}) match; narrow the query.",
                 operation="lookup",
             )
-        return items[0]
+        return cast("T", items[0])
 
     def list_iter(
         self,
@@ -515,7 +590,7 @@ class _ListableFacade(Generic[T]):
         pr_uuid: str | None = None,
         ci_run_uuid: str | None = None,
         **kwargs: Any,
-    ) -> Iterator[T]:
+    ) -> Iterator[T | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination.
 
         Same parameters as ``list()`` except ``concurrent`` is not supported;
@@ -551,7 +626,8 @@ class _ListableFacade(Generic[T]):
                 ``meta.name=="foo"``).
 
         Yields:
-            Resources one at a time.
+            Full resource models, or shallow-copied wire JSON dicts when a
+            non-empty field mask is in effect (same rule as ``list()``).
 
         Raises:
             NotImplementedError: concurrent=True requested.
@@ -580,7 +656,9 @@ class _ListableFacade(Generic[T]):
                 resolve_namespace_for_resource(parent, self._default_namespace)
             )
         ns = self._ns(namespace)
-        remaining_kwargs = self._build_list_kwargs(
+        lp = self._effective_list_parameters(
+            traverse=traverse,
+            list_params=list_params,
             parent=parent,
             filter=filter,
             mask=mask,
@@ -597,7 +675,6 @@ class _ListableFacade(Generic[T]):
             ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
-        lp = self._list_params(list_params, traverse=traverse, **remaining_kwargs)
         return self._ops.list_iter(ns, lp, max_pages)
 
 

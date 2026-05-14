@@ -13,7 +13,7 @@ Guidance for SDK users and contributors when choosing **namespace scope**, **`tr
 
 - Prefer **selective filters** that narrow rows before pagination (e.g. equality on stable dimensions documented for the resource).
 - Avoid relying on **list + filter** for fields that are poor list keys or are known to stress the backend for a given resource; confirm behavior in the OpenAPI spec and, when debugging, compare with `endorctl api list` for the same namespace and filter.
-- **Filter** selects rows; **mask** (`list_params.mask`) reduces returned fields. Do not conflate them; see [guides/consumer-ux-list-update.md](../guides/consumer-ux-list-update.md).
+- **Filter** selects rows; **mask** (`list_params.mask`) reduces returned fields. Do not conflate them; see [guides/consumer-ux-list-update.md](../guides/consumer-ux-list-update.md). A **non-empty** mask also changes the SDK row type to **`dict`** (see [contracts.md](../contracts.md)); omit `mask` when you need full models end-to-end.
 
 ## Pagination: client bounds vs server work
 
