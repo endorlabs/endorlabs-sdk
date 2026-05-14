@@ -20,7 +20,7 @@ API FEATURES:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import TYPE_CHECKING, Any, ClassVar, cast, override
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -388,7 +388,7 @@ def list_policies_by_type(
         filter=f"spec.policy_type=={policy_type.value}",
     )
     ops = BaseResourceOperations(client, "policies", Policy)
-    return ops.list(tenant_meta_namespace, list_params)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
 
 
 def list_policies_by_namespace(
@@ -399,7 +399,7 @@ def list_policies_by_namespace(
         filter=f"tenant_meta.namespace=={target_namespace}",
     )
     ops = BaseResourceOperations(client, "policies", Policy)
-    return ops.list(tenant_meta_namespace, list_params)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
 
 
 def list_policies_paginated(
@@ -414,7 +414,7 @@ def list_policies_paginated(
         page_token=page_token,
     )
     ops = BaseResourceOperations(client, "policies", Policy)
-    return ops.list(tenant_meta_namespace, list_params)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))
 
 
 def list_policies_sorted(
@@ -429,4 +429,4 @@ def list_policies_sorted(
         desc=desc,
     )
     ops = BaseResourceOperations(client, "policies", Policy)
-    return ops.list(tenant_meta_namespace, list_params)
+    return cast("list[Policy]", ops.list(tenant_meta_namespace, list_params))

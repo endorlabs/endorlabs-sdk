@@ -14,6 +14,7 @@ Keep **filter** and **mask** as separate concepts and separate parameters:
 
 - **filter** = "which resources" (e.g. `spec.level==FINDING_LEVEL_CRITICAL`).
 - **mask** (on list) = "which fields in the response" (e.g. `meta.name,spec.level`).
+- **List return type:** With a **non-empty** mask (after strip), `list()` returns **`list[dict[str, Any]]`**. With no effective mask, rows are full **Pydantic** models. **`list_iter()`** yields **`T | dict[str, Any]`** per item under the same mask rule. **`lookup()`** always returns a model and **raises `ValueError`** if a non-empty mask would apply—use **`list()`** / **`list_iter()`** for masked dict rows.
 - `filter` and list `mask` semantics mirror MongoDB-style MQL query/projection conventions.
 - **update_mask** = "which fields to send in the PATCH body"; only for `.update()`, not list.
 
