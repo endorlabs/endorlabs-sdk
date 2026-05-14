@@ -24,6 +24,7 @@ These apply across tenants and skills; prefer them before assuming `lookup`, `ma
 - **Tenant-wide troubleshooting:** `python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --all-projects` is **O(projects × scans)** and can run a long time. Prefer **project-scoped** `--project-name` / `--project-uuid` for interactive RCA; reserve all-projects for batch or narrow `--limit` / `--status-filter` windows.
 - **Relationship map coverage:** `relationships.map` builds producer edges from a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `dependency_row_count` is zero, distinguish **missing DependencyMetadata in `oss`** / unscanned consumers from **pagination truncation** before raising caps (ask before “fetch everything”).
 - **List deserialization vs API drift:** Rarely, `client.*.list()` may fail with Pydantic validation on a field the API populated differently than the shipped model (**ServerError** / validation details). That is a **model-sync** or payload-tolerance issue—see **troubleshoot-sdk** and `devtools/sync/`, not something to fix by changing query parameters alone.
+- **List field masks (`list_parameters.mask` / facade `mask=`):** The API documents `list_parameters.mask` as a comma-separated **field subset** to return (see local OpenAPI: `list_parameters.mask` — *“List of fields to return (all fields are returned by default).”*). It does **not** define a separate sparse list-row schema. When **no** mask is set (or `mask` is empty / whitespace-only after strip), `client.*.list()` / `list_iter()` return full **Pydantic** resource models as today. When a **non-empty** mask is in effect after the same `ListParameters` merge as `list()`, each row is a shallow-copied **`dict[str, Any]`** (wire JSON shape)—no client-side model construction—so sparse payloads never hit nested required-field validation. **`lookup()`** always returns a typed model: it raises **`ValueError`** if an effective non-empty mask is present; use **`list()`** / **`list_iter()`** for masked dict rows. This is a **breaking change** for callers that passed `mask=` and assumed typed models; migrate with `isinstance(row, dict)` or omit `mask` when you need models. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md) (filter vs mask) and [docs/changelog.md](docs/changelog.md). Sort + deep pagination constraints are separate; see [docs/rules-of-engagement/list-query-performance.md](docs/rules-of-engagement/list-query-performance.md).
 
 ## Context Bootstrap (for AI Agents)
 
@@ -178,17 +179,6 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | [troubleshoot-authlog](skills-src/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |
 
 Setup and usage: [skills-src/README.md](skills-src/README.md) (`.cursor/skills` is the mirrored runtime path used by Cursor).
-
-## Essential Commands
-
-```bash
-uv run ruff check .
-uv run ruff format --check .
-uv run pyright
-uv run pytest tests/unit/ -m "not slow and not long"
-uv run pytest tests/integration/ -m "not long"
-endorctl scan
-```
 
 CI runs these (except optional endorctl); include pyright. Unit tests run without credentials; integration tests require `ENDOR_*` env vars.
 

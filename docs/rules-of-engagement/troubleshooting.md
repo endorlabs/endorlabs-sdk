@@ -27,10 +27,10 @@ For endpoints that take a **resource UUID in the body** and a **namespace in the
 - The backend may return errors such as `FindingSpec` / `InstallationSpec` / `RepositorySpec` / `PackageVersionSpec` "is not full..." or "not fully defined" when listing at a given namespace (e.g. tenant root). The SDK surfaces these as `ServerError`.
 - **Interpretation**: If the API returns 5xx with that message, the SDK is correct to surface it; listing at a child namespace (or different scope) may avoid it. If the API returns 200 but the response body does not match Pydantic models (e.g. partial spec), consider optional/lenient parsing in the SDK only where safe.
 
-### List mask / partial response leniency
+### List mask vs partial **model** responses
 
-- List responses may omit spec-required fields when using a **mask** (`list_params.mask`) or at certain scopes (e.g. tenant root). The OpenAPI spec describes the full resource; list is not guaranteed to return every required field.
-- The SDK accepts these partial responses for list via spec-aligned leniency: **Finding** `context` is optional when the list response omits it; **Project** `spec.platform_source` is optional when the list mask omits it; **BaseMeta** `name` is optional when the list mask omits it. Callers that use these fields should handle `None` (e.g. `finding.context`, `project.spec.platform_source`, `resource.meta.name`).
+- **Non-empty list field mask** (`mask=` / `ListParameters.mask`, non-empty after strip): `list()` / `list_iter()` return **wire JSON dicts** (or iterate dicts), not sparse Pydantic instances—there is no client-side “partial model” parse for those rows. Use dict access (or omit `mask` when you need full models).
+- **No effective mask** (mask omitted, empty, or whitespace-only): list responses are still full resource models. At some scopes (e.g. tenant root) the API may omit fields the OpenAPI full schema marks as required; the SDK applies spec-aligned **leniency** when constructing models: **Finding** `context` may be omitted; **Project** `spec.platform_source` may be omitted when the response omits it; **BaseMeta** `name` may be omitted when the response omits it. Callers should still handle `None` for those attributes on **model** instances.
 
 ## Tenant-accessed resources (authentication_log, endor_license, policy_template)
 

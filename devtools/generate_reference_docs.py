@@ -512,11 +512,13 @@ def _generate_api_surfaces_md() -> str:
             "",
             "| Method | Primary purpose | Key parameters |",
             "|--------|------------------|----------------|",
-            "| `list` | List resources with paging/filtering | `traverse`, "
+            "| `list` | List resources with paging/filtering; non-empty `mask` → "
+            "`dict` rows | `traverse`, "
             "`namespace`, `list_params`, `filter`, `mask`, `max_pages` |",
-            "| `lookup` | Return exactly one matching resource | `filter`, "
+            "| `lookup` | Return exactly one matching **model** (no list `mask`) | "
+            "`filter`, "
             "identity kwargs via `filter_kwarg_map`, `max_pages` |",
-            "| `list_iter` | Streaming iteration over list results | same "
+            "| `list_iter` | Stream list results; non-empty `mask` → dict items | same "
             "as `list`, iterator output |",
             "| `get` | Fetch one resource by id or resource object | "
             "`id_or_resource`, `namespace` |",

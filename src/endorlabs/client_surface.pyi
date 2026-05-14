@@ -79,7 +79,7 @@ class _APIKeyFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[APIKey]:
+    ) -> list[APIKey] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -132,7 +132,7 @@ class _APIKeyFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[APIKey]:
+    ) -> Iterator[APIKey | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -196,7 +196,7 @@ class _AuditLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[AuditLog]:
+    ) -> list[AuditLog] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -249,7 +249,7 @@ class _AuditLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[AuditLog]:
+    ) -> Iterator[AuditLog | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -310,7 +310,7 @@ class _AuthenticationLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[AuthenticationLog]:
+    ) -> list[AuthenticationLog] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -363,7 +363,7 @@ class _AuthenticationLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[AuthenticationLog]:
+    ) -> Iterator[AuthenticationLog | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -406,7 +406,7 @@ class _AuthorizationPolicyFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[AuthorizationPolicy]:
+    ) -> list[AuthorizationPolicy] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -459,7 +459,7 @@ class _AuthorizationPolicyFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[AuthorizationPolicy]:
+    ) -> Iterator[AuthorizationPolicy | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -557,7 +557,7 @@ class _CodeOwnersFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[CodeOwners]:
+    ) -> list[CodeOwners] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -610,7 +610,7 @@ class _CodeOwnersFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[CodeOwners]:
+    ) -> Iterator[CodeOwners | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -708,7 +708,7 @@ class _DependencyMetadataFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[DependencyMetadata]:
+    ) -> list[DependencyMetadata] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -761,7 +761,7 @@ class _DependencyMetadataFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[DependencyMetadata]:
+    ) -> Iterator[DependencyMetadata | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -854,7 +854,7 @@ class _EndorLicenseFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[EndorLicense]:
+    ) -> list[EndorLicense] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -907,7 +907,7 @@ class _EndorLicenseFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[EndorLicense]:
+    ) -> Iterator[EndorLicense | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -950,7 +950,7 @@ class _FindingFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Finding]:
+    ) -> list[Finding] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1003,7 +1003,7 @@ class _FindingFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Finding]:
+    ) -> Iterator[Finding | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1099,7 +1099,7 @@ class _FindingLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[FindingLog]:
+    ) -> list[FindingLog] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1152,7 +1152,7 @@ class _FindingLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[FindingLog]:
+    ) -> Iterator[FindingLog | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1218,7 +1218,7 @@ class _InstallationFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Installation]:
+    ) -> list[Installation] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1271,7 +1271,7 @@ class _InstallationFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Installation]:
+    ) -> Iterator[Installation | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1369,7 +1369,7 @@ class _InvitationFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Invitation]:
+    ) -> list[Invitation] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1422,7 +1422,7 @@ class _InvitationFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Invitation]:
+    ) -> Iterator[Invitation | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1518,7 +1518,7 @@ class _LinterResultFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[LinterResult]:
+    ) -> list[LinterResult] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1571,7 +1571,7 @@ class _LinterResultFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[LinterResult]:
+    ) -> Iterator[LinterResult | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1636,7 +1636,7 @@ class _MalwareFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Malware]:
+    ) -> list[Malware] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1689,7 +1689,7 @@ class _MalwareFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Malware]:
+    ) -> Iterator[Malware | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1732,7 +1732,7 @@ class _MetricFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Metric]:
+    ) -> list[Metric] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1785,7 +1785,7 @@ class _MetricFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Metric]:
+    ) -> Iterator[Metric | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -1883,7 +1883,7 @@ class _NamespaceFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Namespace]:
+    ) -> list[Namespace] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -1936,7 +1936,7 @@ class _NamespaceFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Namespace]:
+    ) -> Iterator[Namespace | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2016,7 +2016,7 @@ class _NotificationTargetFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[NotificationTarget]:
+    ) -> list[NotificationTarget] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2069,7 +2069,7 @@ class _NotificationTargetFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[NotificationTarget]:
+    ) -> Iterator[NotificationTarget | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2167,7 +2167,7 @@ class _PRCommentConfigFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[PRCommentConfig]:
+    ) -> list[PRCommentConfig] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2220,7 +2220,7 @@ class _PRCommentConfigFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[PRCommentConfig]:
+    ) -> Iterator[PRCommentConfig | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2318,7 +2318,7 @@ class _PackageLicenseFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[PackageLicense]:
+    ) -> list[PackageLicense] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2371,7 +2371,7 @@ class _PackageLicenseFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[PackageLicense]:
+    ) -> Iterator[PackageLicense | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2469,7 +2469,7 @@ class _PackageVersionFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[PackageVersion]:
+    ) -> list[PackageVersion] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2522,7 +2522,7 @@ class _PackageVersionFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[PackageVersion]:
+    ) -> Iterator[PackageVersion | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2620,7 +2620,7 @@ class _PolicyFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Policy]:
+    ) -> list[Policy] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2673,7 +2673,7 @@ class _PolicyFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Policy]:
+    ) -> Iterator[Policy | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2766,7 +2766,7 @@ class _PolicyTemplateFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[PolicyTemplate]:
+    ) -> list[PolicyTemplate] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2819,7 +2819,7 @@ class _PolicyTemplateFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[PolicyTemplate]:
+    ) -> Iterator[PolicyTemplate | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -2862,7 +2862,7 @@ class _ProjectFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Project]:
+    ) -> list[Project] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -2915,7 +2915,7 @@ class _ProjectFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Project]:
+    ) -> Iterator[Project | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3056,7 +3056,7 @@ class _RepositoryFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Repository]:
+    ) -> list[Repository] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3109,7 +3109,7 @@ class _RepositoryFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Repository]:
+    ) -> Iterator[Repository | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3208,7 +3208,7 @@ class _RepositoryVersionFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[RepositoryVersion]:
+    ) -> list[RepositoryVersion] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3261,7 +3261,7 @@ class _RepositoryVersionFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[RepositoryVersion]:
+    ) -> Iterator[RepositoryVersion | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3379,7 +3379,7 @@ class _ScanProfileFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[ScanProfile]:
+    ) -> list[ScanProfile] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3432,7 +3432,7 @@ class _ScanProfileFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[ScanProfile]:
+    ) -> Iterator[ScanProfile | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3531,7 +3531,7 @@ class _ScanResultFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[ScanResult]:
+    ) -> list[ScanResult] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3584,7 +3584,7 @@ class _ScanResultFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[ScanResult]:
+    ) -> Iterator[ScanResult | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3677,7 +3677,7 @@ class _ScanWorkflowFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[ScanWorkflow]:
+    ) -> list[ScanWorkflow] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3730,7 +3730,7 @@ class _ScanWorkflowFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[ScanWorkflow]:
+    ) -> Iterator[ScanWorkflow | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3778,7 +3778,7 @@ class _ScanWorkflowResultFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[ScanWorkflowResult]:
+    ) -> list[ScanWorkflowResult] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3831,7 +3831,7 @@ class _ScanWorkflowResultFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[ScanWorkflowResult]:
+    ) -> Iterator[ScanWorkflowResult | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -3884,7 +3884,7 @@ class _SemgrepRuleFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[SemgrepRule]:
+    ) -> list[SemgrepRule] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -3937,7 +3937,7 @@ class _SemgrepRuleFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[SemgrepRule]:
+    ) -> Iterator[SemgrepRule | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -4030,7 +4030,7 @@ class _V1IdentityProviderFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[V1IdentityProvider]:
+    ) -> list[V1IdentityProvider] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -4083,7 +4083,7 @@ class _V1IdentityProviderFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[V1IdentityProvider]:
+    ) -> Iterator[V1IdentityProvider | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -4121,7 +4121,7 @@ class _V1PackageFirewallLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[V1PackageFirewallLog]:
+    ) -> list[V1PackageFirewallLog] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -4174,7 +4174,7 @@ class _V1PackageFirewallLogFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[V1PackageFirewallLog]:
+    ) -> Iterator[V1PackageFirewallLog | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -4250,7 +4250,7 @@ class _V1SavedQueryFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[V1SavedQuery]:
+    ) -> list[V1SavedQuery] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -4303,7 +4303,7 @@ class _V1SavedQueryFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[V1SavedQuery]:
+    ) -> Iterator[V1SavedQuery | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -4344,7 +4344,7 @@ class _VectorStoreFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[VectorStore]:
+    ) -> list[VectorStore] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -4397,7 +4397,7 @@ class _VectorStoreFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[VectorStore]:
+    ) -> Iterator[VectorStore | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -4454,7 +4454,7 @@ class _VersionUpgradeFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[VersionUpgrade]:
+    ) -> list[VersionUpgrade] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -4507,7 +4507,7 @@ class _VersionUpgradeFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[VersionUpgrade]:
+    ) -> Iterator[VersionUpgrade | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
@@ -4559,7 +4559,7 @@ class _VulnerabilityFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> list[Vulnerability]:
+    ) -> list[Vulnerability] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode."""
         ...
 
@@ -4612,7 +4612,7 @@ class _VulnerabilityFacade:
         pr_uuid: str | None = ...,
         ci_run_uuid: str | None = ...,
         **kwargs: Any,
-    ) -> Iterator[Vulnerability]:
+    ) -> Iterator[Vulnerability | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination."""
         ...
 
