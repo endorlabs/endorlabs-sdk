@@ -309,6 +309,13 @@
           "$ref": "#/definitions/SpecFindingLevel",
           "description": "Finding severity level."
         },
+        "location": {
+          "description": "File paths or URLs where the finding was detected.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "method": {
           "$ref": "#/definitions/v1SystemEvaluationMethodDefinition",
           "description": "Method used to compute the finding."
