@@ -44,6 +44,7 @@ Legend:
 | Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
+| PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
 | PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
@@ -60,7 +61,6 @@ Legend:
 | ScanWorkflowResult | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |
 | SemgrepRule | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | V1IdentityProvider | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
-| V1PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | V1Query | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | V1QuerySimilarPackages | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | V1SavedQuery | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |

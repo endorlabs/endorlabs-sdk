@@ -15,6 +15,9 @@
           "$ref": "#/definitions/v1ContainerCompositionMetadata",
           "description": "Composition metadata for the dependency if applicable."
         },
+        "conan_dependency_scope": {
+          "$ref": "#/definitions/v1DependencyScope"
+        },
         "container_layers": {
           "description": "A list of layers where a dependency is introduced in final the container\nimage. It is an optional field. Each entry contains the layer ID (the\nSHA256 digest of the layer) and the file locations within the layer that\nindicate the presence of the dependency in the container.",
           "items": {
@@ -538,6 +541,38 @@
           "title": "The Cocoapod version that is defined in the\nPodfile. Example: (~> 1.2)",
           "type": "string",
           "x-endor-name": "cocoapod Package version constraint"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "PackageVersionDependencyConanDependencySpec": {
+      "description": "ConanDependencySpec specifies storing an unresolved dependency for Conan packages.",
+      "properties": {
+        "name": {
+          "description": "Package name, for example, zlib.",
+          "type": "string",
+          "x-endor-name": "Conan package name"
+        },
+        "scope": {
+          "$ref": "#/definitions/v1DependencyScope",
+          "description": "Dependency scope.",
+          "x-endor-name": "Conan package scope"
+        },
+        "targets": {
+          "description": "Targets that this dependency applies to.\nIf there is no target then this dependency applies to all targets.",
+          "items": {
+            "$ref": "#/definitions/v1Target",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "version_constraints": {
+          "description": "Conan version constraints, for example, >=1.2 <2.0.",
+          "type": "string",
+          "x-endor-name": "Conan package version constraint"
         }
       },
       "required": [
@@ -2018,6 +2053,9 @@
         },
         "cocoapod": {
           "$ref": "#/definitions/PackageVersionDependencyCocoapodDependencySpec"
+        },
+        "conan": {
+          "$ref": "#/definitions/PackageVersionDependencyConanDependencySpec"
         },
         "gem": {
           "$ref": "#/definitions/PackageVersionDependencyGemDependencySpec"
