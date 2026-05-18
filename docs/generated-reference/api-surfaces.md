@@ -135,6 +135,7 @@ Auto-generated inventories for stable/public surfaces.
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
 | PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
+| PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
 | PackageLicense | package-licenses | oss | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
@@ -151,7 +152,6 @@ Auto-generated inventories for stable/public surfaces.
 | ScanWorkflowResult | scan-workflow-results | tenant | — | list, get, delete |
 | SemgrepRule | semgrep-rules | tenant | — | list, get, create, update, delete |
 | V1IdentityProvider | identity-providers | tenant | — | list, get |
-| V1PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
 | V1Query | queries | tenant | — | create |
 | V1QuerySimilarPackages | queries/similar-packages | tenant | — | create |
 | V1SavedQuery | saved-queries | tenant | — | list, get |
