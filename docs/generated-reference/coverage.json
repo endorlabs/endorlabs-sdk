@@ -355,6 +355,26 @@
       }
     },
     {
+      "attr_name": "PackageFirewallLog",
+      "parent_kind": null,
+      "resource_name": "package-firewall-logs",
+      "scope": "tenant",
+      "supported_ops_sdk": {
+        "create": false,
+        "delete": false,
+        "get": true,
+        "list": true,
+        "update": false
+      },
+      "supported_ops_spec": {
+        "create": true,
+        "delete": true,
+        "get": true,
+        "list": true,
+        "update": false
+      }
+    },
+    {
       "attr_name": "PackageLicense",
       "parent_kind": null,
       "resource_name": "package-licenses",
@@ -658,26 +678,6 @@
       "attr_name": "V1IdentityProvider",
       "parent_kind": null,
       "resource_name": "identity-providers",
-      "scope": "tenant",
-      "supported_ops_sdk": {
-        "create": false,
-        "delete": false,
-        "get": true,
-        "list": true,
-        "update": false
-      },
-      "supported_ops_spec": {
-        "create": true,
-        "delete": true,
-        "get": true,
-        "list": true,
-        "update": false
-      }
-    },
-    {
-      "attr_name": "V1PackageFirewallLog",
-      "parent_kind": null,
-      "resource_name": "package-firewall-logs",
       "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,
