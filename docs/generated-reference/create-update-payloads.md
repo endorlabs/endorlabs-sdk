@@ -35,6 +35,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | Namespace | yes | build_create_payload | CreateNamespacePayload | meta | none |
 | NotificationTarget | yes | build_create_payload | CreateNotificationTargetPayload | meta, spec | propagate |
 | PRCommentConfig | yes | build_create_payload | CreatePRCommentConfigPayload | meta, spec | propagate |
+| PackageFirewallLog | no | N/A | N/A | N/A | N/A |
 | PackageLicense | yes | build_create_payload | CreatePackageLicensePayload | meta, spec | none |
 | PackageVersion | yes | build_create_payload | CreatePackageVersionPayload | meta, spec | none |
 | Policy | yes | build_create_payload | CreatePolicyPayload | meta, spec | propagate |
@@ -51,7 +52,6 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | ScanWorkflowResult | no | N/A | N/A | N/A | N/A |
 | SemgrepRule | yes | build_create_payload | CreateSemgrepRulePayload | meta, spec | disabled, propagate |
 | V1IdentityProvider | no | N/A | N/A | N/A | N/A |
-| V1PackageFirewallLog | no | N/A | N/A | N/A | N/A |
 | V1Query | yes | N/A | N/A | N/A | N/A |
 | V1QuerySimilarPackages | yes | N/A | N/A | N/A | N/A |
 | V1SavedQuery | no | N/A | N/A | N/A | N/A |
@@ -81,6 +81,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | Namespace | yes | meta.description |
 | NotificationTarget | yes | meta.description, meta.tags |
 | PRCommentConfig | yes | meta.description, meta.tags |
+| PackageFirewallLog | no | — |
 | PackageLicense | yes | meta.name, meta.description, meta.tags, spec |
 | PackageVersion | yes | meta.name, meta.description, meta.tags, spec |
 | Policy | yes | meta.name, meta.description, meta.tags, spec.rule, spec.disable, spec.project_selector, spec.project_exceptions, spec.template_values, propagate |
@@ -97,7 +98,6 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | ScanWorkflowResult | no | meta.description, meta.tags |
 | SemgrepRule | yes | meta.name, meta.description, meta.tags, spec |
 | V1IdentityProvider | no | — |
-| V1PackageFirewallLog | no | — |
 | V1Query | no | — |
 | V1QuerySimilarPackages | no | — |
 | V1SavedQuery | no | — |
@@ -127,6 +127,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | Namespace | name->meta.name |
 | NotificationTarget | name->meta.name |
 | PRCommentConfig | name->meta.name |
+| PackageFirewallLog | — |
 | PackageLicense | — |
 | PackageVersion | name->meta.name |
 | Policy | name->meta.name, policy_type->spec.policy_type |
@@ -143,7 +144,6 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | ScanWorkflowResult | — |
 | SemgrepRule | name->meta.name |
 | V1IdentityProvider | — |
-| V1PackageFirewallLog | — |
 | V1Query | — |
 | V1QuerySimilarPackages | — |
 | V1SavedQuery | — |
