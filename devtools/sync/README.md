@@ -48,6 +48,8 @@ Same on PowerShell.
 uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
+**Provenance watermark:** During generation, `endorctl_version` in `provenance.json` and generated file headers comes from the public **`GET /meta/version`** endpoint (same host as `--spec-url`), not from a local `endorctl` binary.
+
 **Verify committed artifacts vs live upstream** (downloads OpenAPI + queries `meta/version`; no generation):
 
 ```bash
