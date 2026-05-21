@@ -74,10 +74,10 @@ This is the recommended way for agents to bootstrap Endor Labs context before pe
 
 Two-layer, registry-driven design. The same pattern applies to all resources.
 
-- **Layer 1 — Transport:** `APIClient` in `api_client.py`. HTTP, auth, retries only.
-- **Layer 2 — Resource surface:** `Client` in `client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceRuntimeFacade[T]` instances (with `ResourceFacade` kept as a backward-compatible alias); for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"oss"`, `"system"`) is set per-resource from the registry and controls namespace resolution.
+- **Layer 1 — Transport:** `APIClient` in `src/endorlabs/api_client.py`. HTTP, auth, retries only.
+- **Layer 2 — Resource surface:** `Client` in `src/endorlabs/client_surface.py` exposes resource facades built from the registry. At runtime these are `ResourceRuntimeFacade[T]` instances (with `ResourceFacade` kept as a backward-compatible alias); for static analysis the generated stub (`client_surface.pyi`) provides per-resource typed classes (e.g. `_ProjectFacade`) that expose only supported methods with concrete return types. The `scope` property (`None`, `"oss"`, `"system"`) is set per-resource from the registry and controls namespace resolution.
 - **Registry adapter:** `endorlabs.registry` builds `ResourceEntry(...)` values from generated runtime contract data in `src/endorlabs/generated/registry_contract.py`, applies explicit overrides in `src/endorlabs/registry_overlay.py`, and can append narrowly scoped experimental facades when the generated contract has not caught up yet.
-- **Pydantic models:** Request/response types in resource modules and `models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
+- **Pydantic models:** OpenAPI-aligned types in `src/endorlabs/generated/models/` (model-sync); hand-written resource modules under `src/endorlabs/resources/`; occasional shared types in `src/endorlabs/models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
 
 For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
 
@@ -87,7 +87,7 @@ For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of
 - **Environment variables:** Do not invent names for credentials or SDK settings. Use only variables documented in [README.md](README.md), [CONTRIBUTORS.md](CONTRIBUTORS.md), this guide (including bootstrap above), or in official Endor Labs product/API documentation—and in the local OpenAPI download (`.endorlabs-context/openapiv2.swagger.json`) when it defines the same purpose. Bearer refresh via `devtools/refresh_token_to_dotenv.py` updates **`ENDOR_TOKEN`** only.
 - **Env and security:** Credentials via env; run `endorctl scan` before code changes.
 - **Client resource attributes (endorctl parity):** `client.<Kind>` uses **PascalCase** matching `endorctl api … --resource <Kind>` (same as endorctl’s resource syntax). The only non-registry helper on `Client` is **`ScanLogs`** — for fetching log lines; **`ScanLogRequest`** remains the endorctl-aligned resource for scan log *requests*. SDK-only facades use `CustomFacadeEntry` in `registry.py` (including `pyi_*` fields for stub generation); see [docs/contracts.md](docs/contracts.md) (Canonical naming — Custom facades).
-- **Return types:** Functions return typed models: `Resource | None` or `list[Resource]`.
+- **Return types:** `.get()` and `.lookup()` return `Resource | None`. `.list()` and `.list_iter()` return `list[Resource]` unless a non-empty `mask=` is in effect, then `list[dict[str, Any]]` (see list field masks above). `.create()` and `.update()` return typed models.
 - **Field aliasing:** Follows a three-tier rule set (syntax collisions, spec case, semantic renames); see [docs/contracts.md](docs/contracts.md) (Models and API parity -> Field aliasing).
 - **Create/update:** Common create/update args may be exposed as explicit optional facade kwargs; validation remains in the resource’s builder and model; the model is the single source of truth for mutable and immutable fields.
 - **F() operator semantics:** Import: `from endorlabs import F`. `F().matches(pattern)` is for **string** substring/regex matching on scalar fields (e.g. `F("meta.name").matches("endor-sdk")`). `F().contains(value)` is for **array** membership checks on list fields (e.g. `F("spec.finding_tags").contains("FINDING_TAGS_REACHABLE_FUNCTION")`). Using `contains` on a scalar string field will silently return zero results. The `filter=` parameter on `.list()` accepts `str | FilterExpression | None`.
@@ -110,38 +110,42 @@ Model-sync automation is intentionally split:
 
 ## Repository-Scoped Rules (`.cursor/rules/`)
 
-Cursor rules apply when working here. Use **@rule** in chat or rely on glob/always-apply:
+Git-tracked Cursor rules (use **@rule** in chat or rely on glob/always-apply):
 
 | Rule | When it applies |
 |------|------------------|
-| **tdd.mdc** | Always (TDD protocol, quality gate, zero-regression requirement) |
-| **code-review.mdc** | Always (agent self-review checklist before committing) |
-| **local-context.mdc** | Always (local-first research: check `.endorlabs-context/` docs and API spec before going online) |
-| **security.mdc** | When editing `src/endorlabs/**` (credential handling, network safety, dangerous ops) |
-| **architecture.mdc** | When editing `client_surface.py`, `facade.py`, `registry.py`, or adding resources to the Client |
-| **resource-patterns.mdc** | When editing `src/endorlabs/resources/**/*.py` |
-| **python-examples.mdc** | When editing `**/*.py` (examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals) |
+| **local-context.mdc** | Always — local-first research: `.endorlabs-context/` docs and OpenAPI before the web |
+| **docs-skillbase-consistency.mdc** | When editing `**/*.{md,mdc}` — keep docs aligned with `skills-src/`, generated reference, and workflow/CLI inventory |
 
-Details (patterns, LIST/UPDATE, errors) live in those rules and in the docs below. For API workflow guidance, use the **implement-sdk-resource** skill. For troubleshooting, use the **troubleshoot-sdk** skill or see [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md).
+Patterns for LIST/UPDATE, architecture, security, TDD, and code review live in [docs/rules-of-engagement/](docs/rules-of-engagement/README.md) (not separate `.mdc` files). For API workflow guidance, use **implement-sdk-resource**; for failures, **troubleshoot-sdk** or [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md). Python examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals.
 
 ## Project Structure
 
 ```
-endorlabs/
-├── api_client.py        # Transport only (Layer 1)
-├── client_surface.py    # Client facade (Layer 2 entry point)
-├── client_surface.pyi   # Generated stub: per-resource typed facades for IDE DX
-├── facade.py            # ResourceRuntimeFacade (ResourceFacade alias), _ListableFacade, ScanLogsFacade
-├── registry.py          # Registry of resources exposed on Client
-├── resources/           # Pydantic models, convenience functions, and resource-specific logic
-└── models/
+src/endorlabs/
+├── api_client.py              # Layer 1: transport
+├── client_surface.py          # Layer 2: Client entry
+├── client_surface.pyi         # Generated per-resource facade stub (IDE)
+├── facade.py                  # ResourceRuntimeFacade, ScanLogsFacade, …
+├── registry.py                # Registry adapter (+ registry_overlay.py)
+├── generated/
+│   ├── registry_contract.py   # model-sync runtime contract
+│   └── models/                # OpenAPI-aligned Pydantic shards
+├── resources/                 # Hand-written resource modules + builders
+├── models/                    # Small shared hand-written models
+├── core/                      # exceptions, F/filter, ListParameters
+├── operations/                # BaseResourceOperations
+├── utils/                     # model_validation, schema_drift, parallel, …
+├── context/                   # endorlabs.init / bootstrap
+├── workflows/                 # Composable orchestration (no LLM in core)
+└── tools/                     # Standalone utilities (e.g. dependency_explorer)
 ```
 
 > **Stub regeneration:** `uv run python devtools/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
 
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
 - **Workflows:** `endorlabs.workflows` — tenant-facing orchestration (no LLM calls): `agent_context` (context bundles), `callgraph`, `troubleshooting_scans`, `relationships`, `semgrep`, `findings`, `platform`, `notifications`, `dependencies`, `projects`, `reachability`. Optional CLIs: `endor-agent-context`, `endor-callgraph-search`, `endor-semgrep-inventory`, `endor-reachability-context` (see `[project.scripts]` in [pyproject.toml](pyproject.toml)).
-- **Internal:** utils (model_validation, schema_drift), operations.
+- **Internal:** `core`, `operations`, `utils`, `context` (see tree above).
 
 ## Reference — External
 
@@ -168,11 +172,14 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | Skill | When to use |
 |-------|-------------|
 | [custom-sast-rules](skills-src/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
+| [dependency-finding-provenance](skills-src/dependency-finding-provenance/) | Trace vulnerability/dependency lineage across Findings, PackageVersions, and SBOM artifacts; fixed vs present at branch/commit scope |
+| [dependency-provenance](skills-src/dependency-provenance/) | Resolve package-version lineage by manifest path and ref/sha; direct vs transitive introduction |
 | [project-agent-context](skills-src/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`endorlabs.workflows.agent_context`) |
 | [map-project-dependency-relationships](skills-src/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `python -m endorlabs.workflows.relationships.map` |
 | [fetch-and-search-call-graph](skills-src/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts (`endorlabs.workflows.callgraph`; `endor-callgraph-search` for local JSON search) |
 | [implement-sdk-resource](skills-src/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
 | [retrieve-scan-results](skills-src/retrieve-scan-results/) | Querying projects, scan results, and findings |
+| [reachability-provenance](skills-src/reachability-provenance/) | Triaging conflicting reachability signals on findings (dependency vs function reachability, callpath attribution) |
 | [sso-integration-validation-troubleshooting](skills-src/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
 | [troubleshooting-scans](skills-src/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `python -m endorlabs.workflows.troubleshooting_scans.*` |
 | [troubleshoot-sdk](skills-src/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
@@ -184,4 +191,4 @@ CI runs these (except optional endorctl); include pyright. Unit tests run withou
 
 ---
 
-Index for AI agents; in-repo behavior and patterns are defined by `.cursor/rules/*.mdc` and the linked docs.
+Index for AI agents; in-repo behavior and patterns are defined by `.cursor/rules/*.mdc`, [docs/rules-of-engagement/](docs/rules-of-engagement/README.md), skills above, and the linked docs.
