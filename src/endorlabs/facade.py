@@ -20,13 +20,13 @@ from collections.abc import Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
-    Generic,
     Literal,
     TypeGuard,
-    TypeVar,
     cast,
     override,
 )
+
+from pydantic import BaseModel
 
 from .core.exceptions import AmbiguousError, NotFoundError
 from .core.filter import F, FilterExpression
@@ -41,10 +41,8 @@ if TYPE_CHECKING:
     from .registry import ResourceEntry
     from .resources.scan_log_request import ScanLogLevel, ScanLogRequestLogMessage
 
-T = TypeVar("T")
 
-
-class _ListableFacade(Generic[T]):
+class ListableFacade[T: BaseModel]:
     """Base facade: list, list_iter, lookup only. No get/create/update/delete.
 
     Shared parameter vocabulary (list, lookup, list_iter):
@@ -77,7 +75,7 @@ class _ListableFacade(Generic[T]):
         self._tags_paths = tags_paths or []
         self._supported_ops = entry.supported_ops
         self._filter_kwarg_map: dict[str, str] = dict(entry.filter_kwarg_map)
-        self._ops: BaseResourceOperations[Any] = BaseResourceOperations(
+        self._ops: BaseResourceOperations[T] = BaseResourceOperations(
             client, entry.resource_name, entry.model_class
         )
 
@@ -678,7 +676,7 @@ class _ListableFacade(Generic[T]):
         return self._ops.list_iter(ns, lp, max_pages)
 
 
-class ResourceRuntimeFacade(_ListableFacade[T]):
+class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
     """Facade for resources with get/create/update/delete where supported.
 
     id_or_resource / name_or_resource: Methods accept either a UUID string or a
@@ -1201,5 +1199,6 @@ class ScanLogsFacade:
         return result if result is not None else []
 
 
-# Backward-compatible alias while generated stubs and imports converge.
+# Backward-compatible aliases while generated stubs and imports converge.
+_ListableFacade = ListableFacade
 ResourceFacade = ResourceRuntimeFacade
