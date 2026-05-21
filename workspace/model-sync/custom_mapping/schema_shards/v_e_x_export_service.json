@@ -120,6 +120,10 @@
         "format": {
           "$ref": "#/definitions/v1ExportedVEXFormat"
         },
+        "include_test_dependencies": {
+          "description": "Whether to include findings against test, dev, build, and optional\ndependencies in the VEX export. When false (the default), findings whose\ntarget dependency is non-production \u2014 or only reachable from the root\nthrough non-production paths \u2014 are excluded.",
+          "type": "boolean"
+        },
         "kind": {
           "$ref": "#/definitions/v1SBOMKind"
         }

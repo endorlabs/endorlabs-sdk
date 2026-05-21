@@ -15,6 +15,8 @@ if _DEVTOOLS not in sys.path:
 
 from sync.upstream_verify import (
     extract_semver_from_banner,
+    format_endorctl_version_banner,
+    meta_version_url_from_openapi_url,
     parse_committed_provenance,
     semver_less,
 )
@@ -68,3 +70,24 @@ def test_parse_committed_provenance_normalizes_missing_endorctl() -> None:
     sample = f"# model_sync_provenance: {payload}\n"
     got = parse_committed_provenance(sample)
     assert got["endorctl_version"] == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("semver", "expected"),
+    [
+        ("1.7.976", "endorctl version v1.7.976"),
+        ("v1.7.976", "endorctl version v1.7.976"),
+        ("unknown", "unknown"),
+        ("", "unknown"),
+    ],
+)
+def test_format_endorctl_version_banner(semver: str, expected: str) -> None:
+    assert format_endorctl_version_banner(semver) == expected
+
+
+def test_meta_version_url_from_openapi_url() -> None:
+    openapi = "https://api.example.com/download/openapiv2.swagger.json"
+    assert (
+        meta_version_url_from_openapi_url(openapi)
+        == "https://api.example.com/meta/version"
+    )
