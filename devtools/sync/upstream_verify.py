@@ -10,11 +10,14 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
 _PROVENANCE_LINE_PREFIX = "# model_sync_provenance:"
 _SEMVER_RE = re.compile(r"\bv?(\d+(?:\.\d+)+)\b")
+DEFAULT_API_ORIGIN = "https://api.endorlabs.com"
+DEFAULT_META_VERSION_URL = f"{DEFAULT_API_ORIGIN}/meta/version"
 
 
 def parse_committed_provenance(registry_contract_text: str) -> dict[str, str]:
@@ -65,12 +68,34 @@ def fetch_openapi_sha256(spec_url: str, *, timeout_seconds: float = 120.0) -> st
     return digest.hexdigest()
 
 
-def fetch_latest_endorctl_semver(*, timeout_seconds: float = 15.0) -> str | None:
+def meta_version_url_from_openapi_url(openapi_url: str) -> str:
+    """Derive ``/meta/version`` URL from an OpenAPI download URL (same API host)."""
+    parsed = urlparse(openapi_url)
+    if not parsed.scheme or not parsed.netloc:
+        return DEFAULT_META_VERSION_URL
+    return f"{parsed.scheme}://{parsed.netloc}/meta/version"
+
+
+def format_endorctl_version_banner(semver: str) -> str:
+    """Build the canonical model-sync ``# endorctl_version`` banner string."""
+    cleaned = semver.strip()
+    if not cleaned or cleaned.lower() == "unknown":
+        return "unknown"
+    numeric = cleaned.lstrip("v")
+    if not numeric:
+        return "unknown"
+    return f"endorctl version v{numeric}"
+
+
+def fetch_latest_endorctl_semver(
+    *,
+    meta_version_url: str = DEFAULT_META_VERSION_URL,
+    timeout_seconds: float = 15.0,
+) -> str | None:
     """Return latest endorctl semver string from public ``/meta/version`` (no auth)."""
-    url = "https://api.endorlabs.com/meta/version"
     request = urllib.request.Request(  # noqa: S310
-        url,
-        headers={"User-Agent": "endorlabs-sdk-model-sync-verify"},
+        meta_version_url,
+        headers={"User-Agent": "endorlabs-sdk-model-sync"},
     )
     try:
         with urllib.request.urlopen(  # noqa: S310
@@ -159,13 +184,18 @@ def verify_upstream_matches_committed(
             "--generate-stubs --generate-reference-docs"
         )
 
-    api_semver = fetch_latest_endorctl_semver(timeout_seconds=meta_timeout_seconds)
+    meta_url = meta_version_url_from_openapi_url(spec_url)
+    api_semver = fetch_latest_endorctl_semver(
+        meta_version_url=meta_url,
+        timeout_seconds=meta_timeout_seconds,
+    )
     banner_semver = extract_semver_from_banner(committed["endorctl_version"])
     if api_semver and banner_semver and semver_less(banner_semver, api_semver):
         logger.warning(
             "Published endorctl %s is newer than the committed model-sync watermark "
-            "(%s). Upgrade local endorctl and re-run model_sync when you next refresh "
-            "generated artifacts.",
+            "(%s). Re-run model_sync to refresh generated artifacts: "
+            "uv run python devtools/model_sync.py --fetch-spec "
+            "--generate-stubs --generate-reference-docs",
             api_semver,
             banner_semver,
         )
