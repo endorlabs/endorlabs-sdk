@@ -26,6 +26,7 @@ from .contract import (
 from .planner import build_plan, write_mapping_metadata
 from .policy import load_openapi_spec
 from .provenance import build_artifacts_manifest, build_provenance, write_json
+from .upstream_verify import meta_version_url_from_openapi_url
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_SPEC_PATH = REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
@@ -92,6 +93,7 @@ def _run_verify_and_sync_if_stale(args: argparse.Namespace, spec_path: Path) -> 
         profiles_dir=args.custom_profiles_dir,
         generate_stubs=True,
         generate_reference_docs=True,
+        spec_url=args.spec_url,
     )
     if code != 0:
         return code
@@ -212,6 +214,7 @@ def run_sync(
     profiles_dir: Path,
     generate_stubs: bool,
     generate_reference_docs: bool,
+    spec_url: str = DEFAULT_SPEC_URL,
 ) -> int:
     """Run canonical model-sync generation and metadata emission."""
     if not spec_path.exists():
@@ -237,7 +240,11 @@ def run_sync(
         spec_for_provenance = spec_path.resolve().relative_to(REPO_ROOT.resolve())
     except ValueError:
         spec_for_provenance = spec_path
-    provenance = build_provenance(spec_for_provenance, toolchain)
+    provenance = build_provenance(
+        spec_for_provenance,
+        toolchain,
+        meta_version_url=meta_version_url_from_openapi_url(spec_url),
+    )
     model_output = output_root / "custom_mapping"
     if model_output.exists():
         shutil.rmtree(model_output)
@@ -431,6 +438,7 @@ def main(argv: list[str] | None = None) -> int:
         profiles_dir=args.custom_profiles_dir,
         generate_stubs=args.generate_stubs,
         generate_reference_docs=args.generate_reference_docs,
+        spec_url=args.spec_url,
     )
     if code != 0:
         return code
