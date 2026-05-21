@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
-import subprocess
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from .upstream_verify import (
+    DEFAULT_META_VERSION_URL,
+    fetch_latest_endorctl_semver,
+    format_endorctl_version_banner,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def file_sha256(path: Path) -> str:
@@ -20,31 +27,38 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def get_endorctl_version() -> str:
-    """Return current endorctl version string, or unknown."""
-    executable = shutil.which("endorctl")
-    if executable is None:
-        return "unknown"
-    try:
-        result = subprocess.run(  # noqa: S603
-            [executable, "--version"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-    except Exception:
-        return "unknown"
-    output = (result.stdout or result.stderr).strip()
-    return output.splitlines()[0] if output else "unknown"
+def get_endorctl_version(
+    *,
+    meta_version_url: str = DEFAULT_META_VERSION_URL,
+    timeout_seconds: float = 15.0,
+) -> str:
+    """Return published endorctl version banner from public ``/meta/version``."""
+    semver = fetch_latest_endorctl_semver(
+        meta_version_url=meta_version_url,
+        timeout_seconds=timeout_seconds,
+    )
+    if semver:
+        return format_endorctl_version_banner(semver)
+    logger.warning(
+        "Could not resolve published endorctl version from %s; "
+        "provenance will use unknown",
+        meta_version_url,
+    )
+    return "unknown"
 
 
-def build_provenance(spec_path: Path, toolchain: dict[str, Any]) -> dict[str, Any]:
+def build_provenance(
+    spec_path: Path,
+    toolchain: dict[str, Any],
+    *,
+    meta_version_url: str = DEFAULT_META_VERSION_URL,
+) -> dict[str, Any]:
     """Build sync provenance metadata payload."""
     return {
         "generated_at_utc": datetime.now(UTC).isoformat(),
         "spec_path": spec_path.as_posix(),
         "spec_sha256": file_sha256(spec_path),
-        "endorctl_version": get_endorctl_version(),
+        "endorctl_version": get_endorctl_version(meta_version_url=meta_version_url),
         "toolchain": toolchain,
     }
 
@@ -52,7 +66,8 @@ def build_provenance(spec_path: Path, toolchain: dict[str, Any]) -> dict[str, An
 def write_json(path: Path, payload: dict[str, Any]) -> None:
     """Write deterministic JSON payload."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    path.write_text(text, encoding="utf-8")
 
 
 def build_artifacts_manifest(
