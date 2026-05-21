@@ -454,6 +454,18 @@
       ],
       "type": "object"
     },
+    "SpecScanComponent": {
+      "default": "SCAN_COMPONENT_UNSPECIFIED",
+      "description": "Identifies an individual scanner component whose execution\ncontributes towards scan credit usage. Used by the licensing\naggregation job to determine how many credits a scan consumed.\n\n - SCAN_COMPONENT_UNSPECIFIED: No component recorded.\n - SCAN_COMPONENT_SCA: Software Composition Analysis scanner ran.\n - SCAN_COMPONENT_SAST: Static Application Security Testing (semgrep) scanner ran.\n - SCAN_COMPONENT_AI_SAST: AI-assisted SAST scanner ran.\n - SCAN_COMPONENT_SECRETS: Secrets scanner ran.",
+      "enum": [
+        "SCAN_COMPONENT_UNSPECIFIED",
+        "SCAN_COMPONENT_SCA",
+        "SCAN_COMPONENT_SAST",
+        "SCAN_COMPONENT_AI_SAST",
+        "SCAN_COMPONENT_SECRETS"
+      ],
+      "type": "string"
+    },
     "SpecSecurityReviewScannerParameters": {
       "properties": {
         "disable_code_summary": {
@@ -1314,6 +1326,13 @@
           "description": "List of blocking finding uuids identified by the scan.",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        },
+        "components_executed": {
+          "description": "Scanner components that actually executed during this scan.",
+          "items": {
+            "$ref": "#/definitions/SpecScanComponent"
           },
           "type": "array"
         },
