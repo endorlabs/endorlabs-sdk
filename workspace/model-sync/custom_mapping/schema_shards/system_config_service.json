@@ -86,6 +86,19 @@
       },
       "type": "object"
     },
+    "SpecCVSSSeverityLevel": {
+      "default": "CVSS_SEVERITY_LEVEL_UNSPECIFIED",
+      "description": "Common severity level enum used across different CVSS versions.",
+      "enum": [
+        "CVSS_SEVERITY_LEVEL_UNSPECIFIED",
+        "CVSS_SEVERITY_LEVEL_NONE",
+        "CVSS_SEVERITY_LEVEL_LOW",
+        "CVSS_SEVERITY_LEVEL_MEDIUM",
+        "CVSS_SEVERITY_LEVEL_HIGH",
+        "CVSS_SEVERITY_LEVEL_CRITICAL"
+      ],
+      "type": "string"
+    },
     "SpecCVSSVersion": {
       "default": "CVSS_VERSION_UNSPECIFIED",
       "description": "The CVSS version.",
@@ -182,6 +195,14 @@
     "SystemConfigPackageFirewallConfig": {
       "description": "PackageFirewallConfig contains package firewall configuration for exceptions,\nmalware enforcement, restricted license enforcement, and minimum package age enforcement.\nCached per namespace in endorfactory and enforced on versioned requests.",
       "properties": {
+        "cvss_severity_action": {
+          "$ref": "#/definitions/v1PackageFirewallAction",
+          "description": "Action to take when a package has a vulnerability meeting or exceeding cvss_severity_threshold."
+        },
+        "cvss_severity_threshold": {
+          "$ref": "#/definitions/SpecCVSSSeverityLevel",
+          "description": "Minimum CVSS severity level that triggers cvss_severity_action. Packages with a vulnerability\nat or above this threshold are subject to cvss_severity_action. Unspecified disables CVSS checks.\nThe CVSS version used to evaluate this threshold is determined by AnalyticsConfig.cvss_version.\nMust be UNSPECIFIED, HIGH, or CRITICAL."
+        },
         "exceptions": {
           "description": "Exception rules. If any exception matches the request, all checks are skipped.",
           "items": {

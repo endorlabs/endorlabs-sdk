@@ -133,6 +133,10 @@
           "description": "Whether to hide internal packages or not.",
           "type": "boolean"
         },
+        "include_test_dependencies": {
+          "description": "Whether to include test, dev, build, and optional dependencies in the SBOM export.\nWhen false (the default), non-production dependencies \u2014 and any transitive\ndependencies reachable only through them \u2014 are excluded.",
+          "type": "boolean"
+        },
         "kind": {
           "$ref": "#/definitions/v1SBOMKind",
           "description": "SBOM kind."
