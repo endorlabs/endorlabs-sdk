@@ -532,6 +532,8 @@ jobs:
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          # Platform Project meta.name matches the GitHub clone URL for this repo.
+          TEST_REPO_URL: https://github.com/${{ github.repository }}.git
 
   # ---------------------------------------------------------------------------
   # Endor Labs CI security scans (OIDC keyless auth).

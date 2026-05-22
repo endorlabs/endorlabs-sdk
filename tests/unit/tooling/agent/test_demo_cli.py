@@ -126,7 +126,7 @@ def test_resolve_project_by_uuid_returns_first_match_or_none() -> None:
     """UUID resolution uses traverse search and returns first result."""
     expected = _project(
         "698cfb4f26aee2696691c78e",
-        "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
+        "https://github.com/endorlabs/endorlabs-sdk.git",
         "endor-solutions-tgowan.tgowan-endor",
     )
     captured: dict[str, object] = {}

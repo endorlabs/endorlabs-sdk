@@ -21,6 +21,10 @@ TEST_MAX_PAGES_TRAVERSE = 1
 # (Phase 2b) and troubleshooting.md.
 TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
+# Canonical GitHub remote for this repository (post-move: endorlabs/endorlabs-sdk).
+CANONICAL_SDK_REPO_SLUG = "endorlabs/endorlabs-sdk"
+CANONICAL_SDK_REPO_URL = f"https://github.com/{CANONICAL_SDK_REPO_SLUG}.git"
+
 
 def pytest_configure(config) -> None:
     """Load .env file before tests run to ensure environment variables are set.
