@@ -12,8 +12,8 @@
 .github @security-champions
 .cursor/rules/ @security-champions
 
-# Endor Solutions Architecture team owns the logic in src/
-src @endor-solutions-architecture
+# Engineering owns SDK implementation under src/
+src @endorlabs/engineering
 
 # Endor Technical Documentation owns documentation
 docs @tech-docs
