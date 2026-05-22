@@ -11,7 +11,7 @@ import functools
 import os
 import re
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import httpx
 from pydantic import BaseModel, ValidationError
@@ -23,8 +23,6 @@ from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
-
-T = TypeVar("T", bound=BaseModel)
 
 _NAMESPACE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 
@@ -92,7 +90,7 @@ def _load_generated_mutability_by_resource_name() -> dict[str, dict[str, list[st
     return mutability
 
 
-class BaseResourceOperations(Generic[T]):
+class BaseResourceOperations[T: BaseModel]:
     """Base class providing CRUD operations for all resources."""
 
     def __init__(
