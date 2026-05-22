@@ -13,7 +13,7 @@ Single source for contributor setup and development workflow. Consumer install i
 From the repo root:
 
 ```bash
-git clone https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
+git clone https://github.com/endorlabs/endorlabs-sdk.git
 cd endorlabs-sdk
 uv sync
 uv run pre-commit install
@@ -21,6 +21,8 @@ uv run pre-commit install --hook-type pre-push
 ```
 
 Alternatively: `uv venv` then `uv pip install -e .` and install dev dependencies from [pyproject.toml](pyproject.toml) (e.g. `uv sync --group dev` or equivalent for your uv version).
+
+If `uv sync` fails on version metadata (`0.1.1.dev19 can't be bumped`), see [docs/guides/pypi-publication-draft.md](docs/guides/pypi-publication-draft.md) and run `uv run python devtools/check_vcs_version.py`.
 
 ## Environment
 
