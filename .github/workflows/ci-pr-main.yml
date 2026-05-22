@@ -27,7 +27,6 @@ on:
       - 'docs/**'
       - 'LICENSE'
   pull_request:
-    # Includes automation PRs from chore/model-sync-auto -> main/dev.
     branches: [ main, dev ]
     paths-ignore:
       - '**.md'
@@ -299,6 +298,11 @@ jobs:
       - name: Run pyright
         run: |
           uv run pyright --project pyproject.toml
+
+      # Mirrors pre-commit hook model-sync-upstream-verify (see .pre-commit-config.yaml).
+      - name: Verify committed model-sync matches upstream OpenAPI
+        run: |
+          uv run python devtools/model_sync.py --verify-upstream-only
 
       # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
