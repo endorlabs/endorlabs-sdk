@@ -62,9 +62,9 @@ uv run python devtools/model_sync.py --verify-upstream-only
 uv run python devtools/model_sync.py --verify-and-sync-if-stale
 ```
 
-Pre-push hooks run `--verify-upstream-only` so pushes fail when the public OpenAPI digest
-drifts from `registry_contract.py` provenance; newer published endorctl versions log a
-warning without blocking.
+Pre-push hooks and the **CI PR Main** lint job run `--verify-upstream-only` so pushes and
+PRs fail when the public OpenAPI digest drifts from `registry_contract.py` provenance;
+newer published endorctl versions log a warning without blocking.
 
 **SHA-256 of the spec file only** (optional `--fetch-spec` first):
 
