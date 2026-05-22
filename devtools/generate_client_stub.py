@@ -5,8 +5,9 @@ Single source of truth: the registry. Run from repo root with:
 Writes src/endorlabs/client_surface.pyi so Pyright types client.Project, etc.
 
 Each resource gets a dedicated stub class (e.g. ``_ProjectFacade``) that
-exposes only the methods the resource actually supports, with concrete
-return types and validated resource descriptions.
+inherits ``ResourceRuntimeFacade[Project]`` or ``_ListableFacade[Model]`` when
+list-only, with resource-specific docstrings. Method signatures come from the
+PEP 695 generic facade bases (no per-method duplication).
 """
 # ruff: noqa: E402, I001, C901, E501, PERF401, PERF402
 
@@ -26,7 +27,7 @@ src = repo_root / "src"
 if str(src) not in sys.path:
     sys.path.insert(0, str(src))
 
-from endorlabs.facade import ResourceRuntimeFacade, _ListableFacade
+from endorlabs.facade import ResourceRuntimeFacade
 from endorlabs.registry_overlay import merge_generated_contract_with_overlay
 from endorlabs.registry import (
     CUSTOM_FACADE_REGISTRY,
@@ -34,7 +35,6 @@ from endorlabs.registry import (
     RESOURCE_REGISTRY,
     ResourceEntry,
 )
-from endorlabs.utils.model_validation import get_tags_update_paths
 from sync.policy import model_sync_entity_for_model
 
 logger = logging.getLogger(__name__)
@@ -77,135 +77,62 @@ def _default_description_from_attr(attr_name: str) -> str:
         return f"{attr_name.replace('_', ' ').title()} resource facade."
     return f"{attr_name} resource facade."
 
-# ---------------------------------------------------------------------------
-# Signature helpers
-# ---------------------------------------------------------------------------
-
-# Methods defined on _ListableFacade (always present when "list" is supported)
-_LISTABLE_METHODS = ("list", "lookup", "list_iter")
-# Methods defined on ResourceRuntimeFacade
-_CRUD_METHODS = ("get", "create", "update", "delete")
-_TAG_METHODS = ("tag", "untag")
-
-# Map method name -> class that defines it
-_METHOD_SOURCE: dict[str, type] = {}
-for _m in _LISTABLE_METHODS:
-    _METHOD_SOURCE[_m] = _ListableFacade
-for _m in (*_CRUD_METHODS, *_TAG_METHODS):
-    _METHOD_SOURCE[_m] = ResourceRuntimeFacade
-
-
-def _get_method_signatures() -> dict[str, inspect.Signature]:
-    """Extract signatures for all public facade methods once."""
-    sigs: dict[str, inspect.Signature] = {}
-    for name, cls in _METHOD_SOURCE.items():
-        sigs[name] = inspect.signature(getattr(cls, name))
-    return sigs
-
-
-def _get_method_docline(name: str) -> str:
-    """Extract first line of a facade method's docstring.
-
-    Truncates to fit within 88-char line limit (8 chars indent + quotes).
-    """
-    cls = _METHOD_SOURCE[name]
-    doc = getattr(cls, name).__doc__ or ""
-    first = doc.strip().split("\n")[0].strip()
-    # Method docstrings are indented 8 chars: '        """..."""'
-    max_content = 88 - 8 - 6  # 74 chars for the docstring content
-    if len(first) > max_content:
-        # Truncate at last word boundary that fits
-        truncated = first[:max_content].rsplit(" ", 1)[0].rstrip(".,;:")
-        first = truncated + "."
-    return first
-
-
-def _format_annotation(ann: Any, model_name: str) -> str:
-    """Convert an inspect annotation to a .pyi string, replacing T."""
-    if ann is inspect.Parameter.empty:
-        return ""
-    s = str(ann) if isinstance(ann, str) else getattr(ann, "__name__", str(ann))
-    # Replace the generic type variable T with the concrete model name.
-    # Use word-boundary replacement so e.g. "Iterator" is not mangled.
-    s = re.sub(r"\bT\b", model_name, s)
-    return s
-
-
-def _format_default(default: Any) -> str:
-    """Convert inspect default to .pyi representation."""
-    if default is inspect.Parameter.empty:
-        return ""
-    # In .pyi stubs, all defaults are represented as ...
-    return " = ..."
-
-
-def _format_method(
-    name: str,
-    sig: inspect.Signature,
-    model_name: str,
-    indent: str = "    ",
-) -> list[str]:
-    """Format one method as .pyi stub lines."""
-    docline = _get_method_docline(name)
-    params: list[str] = []
-    saw_keyword_only = False
-
-    for pname, param in sig.parameters.items():
-        if pname == "self":
-            params.append(f"{indent}    self,")
-            continue
-
-        # Insert bare * for keyword-only boundary
-        if param.kind == inspect.Parameter.KEYWORD_ONLY and not saw_keyword_only:
-            params.append(f"{indent}    *,")
-            saw_keyword_only = True
-
-        ann = _format_annotation(param.annotation, model_name)
-        default = _format_default(param.default)
-        ann_str = f": {ann}" if ann else ""
-
-        if param.kind == inspect.Parameter.VAR_KEYWORD:
-            params.append(f"{indent}    **{pname}{ann_str},")
-        elif param.kind == inspect.Parameter.VAR_POSITIONAL:
-            params.append(f"{indent}    *{pname}{ann_str},")
-        else:
-            params.append(f"{indent}    {pname}{ann_str}{default},")
-
-    ret = _format_annotation(sig.return_annotation, model_name)
-    ret_str = f" -> {ret}" if ret else ""
-
-    lines = [f"{indent}def {name}("]
-    lines.extend(params)
-    lines.append(f"{indent}){ret_str}:")
-    if docline:
-        lines.append(f'{indent}    """{docline}"""')
-    lines.append(f"{indent}    ...")
-    return lines
-
 
 # ---------------------------------------------------------------------------
 # Per-resource class builder
 # ---------------------------------------------------------------------------
 
 
-def _get_available_methods(entry: ResourceEntry) -> list[str]:
-    """Return method names this resource supports."""
-    methods: list[str] = []
-    if "list" in entry.supported_ops:
-        methods.extend(_LISTABLE_METHODS)
-    if "get" in entry.supported_ops:
-        methods.append("get")
-    if "create" in entry.supported_ops:
-        methods.append("create")
-    if "update" in entry.supported_ops:
-        methods.append("update")
-    if "delete" in entry.supported_ops:
-        methods.append("delete")
-    if "update" in entry.supported_ops:
-        tags_paths = get_tags_update_paths(entry.model_class)
-        if "meta.tags" in tags_paths:
-            methods.extend(_TAG_METHODS)
-    return methods
+def _stub_base_class(entry: ResourceEntry) -> str:
+    """PEP 695 base: full CRUD uses ResourceRuntimeFacade; list/get-only use ListableFacade."""
+    model_name = entry.model_class.__name__
+    if any(op in entry.supported_ops for op in ("create", "update", "delete")):
+        return f"ResourceRuntimeFacade[{model_name}]"
+    return f"ListableFacade[{model_name}]"
+
+
+def _stub_extra_methods(entry: ResourceEntry) -> list[str]:
+    """Declare get on ListableFacade bases so create/update/delete stay hidden."""
+    if (
+        _stub_base_class(entry).startswith("ListableFacade")
+        and "get" in entry.supported_ops
+    ):
+        return ["get"]
+    return []
+
+
+def _format_annotation(ann: Any, model_name: str) -> str:
+    if ann is inspect.Parameter.empty:
+        return ""
+    s = str(ann) if isinstance(ann, str) else getattr(ann, "__name__", str(ann))
+    return re.sub(r"\bT\b", model_name, s)
+
+
+def _format_method_override(name: str, model_name: str) -> list[str]:
+    sig = inspect.signature(getattr(ResourceRuntimeFacade, name))
+    params: list[str] = []
+    saw_keyword_only = False
+    for pname, param in sig.parameters.items():
+        if pname == "self":
+            params.append("        self,")
+            continue
+        if param.kind == inspect.Parameter.KEYWORD_ONLY and not saw_keyword_only:
+            params.append("        *,")
+            saw_keyword_only = True
+        ann = _format_annotation(param.annotation, model_name)
+        ann_str = f": {ann}" if ann else ""
+        default = " = ..." if param.default is not inspect.Parameter.empty else ""
+        if param.kind == inspect.Parameter.VAR_KEYWORD:
+            params.append(f"        **{pname}{ann_str},")
+        else:
+            params.append(f"        {pname}{ann_str}{default},")
+    ret = _format_annotation(sig.return_annotation, model_name)
+    return [
+        f"    def {name}(",
+        *params,
+        f"    ) -> {ret}:",
+        "        ...",
+    ]
 
 
 def _load_model_sync_entities() -> set[str]:
@@ -238,7 +165,9 @@ def _load_facade_contract_resources() -> dict[str, dict[str, Any]]:
 
     candidate = RUNTIME_REGISTRY_CONTRACT.get("resources")
     if not isinstance(candidate, list):
-        raise RuntimeError("Invalid generated runtime contract: resources must be a list")
+        raise RuntimeError(
+            "Invalid generated runtime contract: resources must be a list"
+        )
     resources = [item for item in candidate if isinstance(item, dict)]
 
     resources = merge_generated_contract_with_overlay(resources)
@@ -322,7 +251,9 @@ def _validate_descriptions_and_model_sync() -> None:
         for resource in contract_resources.values():
             canonical = resource.get("canonical_entities")
             if isinstance(canonical, list):
-                entity_names.update(value for value in canonical if isinstance(value, str))
+                entity_names.update(
+                    value for value in canonical if isinstance(value, str)
+                )
 
     op_mismatches: list[str] = []
     missing_sync_entities = sorted(
@@ -337,7 +268,9 @@ def _validate_descriptions_and_model_sync() -> None:
         if not isinstance(contract_ops, list):
             op_mismatches.append(entry.attr_name)
             continue
-        normalized_contract_ops = sorted(op for op in contract_ops if isinstance(op, str))
+        normalized_contract_ops = sorted(
+            op for op in contract_ops if isinstance(op, str)
+        )
         normalized_registry_ops = sorted(entry.supported_ops)
         if normalized_contract_ops != normalized_registry_ops:
             op_mismatches.append(entry.attr_name)
@@ -354,7 +287,9 @@ def _validate_descriptions_and_model_sync() -> None:
         )
 
 
-def _build_class_docstring(entry: ResourceEntry, contract_row: dict[str, Any]) -> list[str]:
+def _build_class_docstring(
+    entry: ResourceEntry, contract_row: dict[str, Any]
+) -> list[str]:
     """Build multi-line class docstring from description + registry metadata."""
     desc = RESOURCE_DESCRIPTIONS.get(entry.attr_name, "")
     parts: list[str] = []
@@ -411,26 +346,24 @@ def _build_class_docstring(entry: ResourceEntry, contract_row: dict[str, Any]) -
 def _emit_resource_class(
     entry: ResourceEntry,
     contract_row: dict[str, Any],
-    sigs: dict[str, inspect.Signature],
 ) -> list[str]:
-    """Generate a per-resource stub class."""
+    """Generate a per-resource stub class inheriting typed facade bases."""
     model_name = entry.model_class.__name__
-    # Class name: _ProjectFacade, _FindingFacade, etc.
     class_name = f"_{model_name}Facade"
-    methods = _get_available_methods(entry)
+    base = _stub_base_class(entry)
 
     lines: list[str] = []
-    lines.append(f"class {class_name}:")
+    lines.append(f"class {class_name}({base}):")
     lines.extend(_build_class_docstring(entry, contract_row))
-    lines.append("")
-
-    for i, method_name in enumerate(methods):
-        sig = sigs[method_name]
-        lines.extend(_format_method(method_name, sig, model_name))
-        # Blank line between methods, but not after the last one
-        if i < len(methods) - 1:
-            lines.append("")
-
+    extra = _stub_extra_methods(entry)
+    if not extra:
+        lines.append("    pass")
+    else:
+        lines.append("")
+        for i, method_name in enumerate(extra):
+            lines.extend(_format_method_override(method_name, model_name))
+            if i < len(extra) - 1:
+                lines.append("")
     return lines
 
 
@@ -443,14 +376,11 @@ def main() -> None:  # noqa: D103
     _validate_descriptions_and_model_sync()
     contract_resources = _load_facade_contract_resources()
     out = src / "endorlabs" / "client_surface.pyi"
-    sigs = _get_method_signatures()
-
     lines: list[str] = [
         "# Generated by devtools/generate_client_stub.py — do not edit by hand.",
         "# Source of truth: endorlabs.registry.RESOURCE_REGISTRY"
         " and CUSTOM_FACADE_REGISTRY.",
         "",
-        "from collections.abc import Iterator",
         "from typing import Any",
         "",
     ]
@@ -459,9 +389,8 @@ def main() -> None:  # noqa: D103
     # isort requires one contiguous first-party block in alpha order.
     relative_imports: dict[str, list[str]] = {
         ".api_client": ["APIClient"],
-        ".core.filter": ["FilterExpression"],
-        ".core.types": ["ListParameters"],
     }
+    facade_imports: set[str] = set()
     for entry in RESOURCE_REGISTRY:
         mod = entry.model_class.__module__
         name = entry.model_class.__name__
@@ -471,7 +400,16 @@ def main() -> None:  # noqa: D103
             relative_imports[mod] = []
         if name not in relative_imports[mod]:
             relative_imports[mod].append(name)
+        base = _stub_base_class(entry)
+        if base.startswith("ResourceRuntimeFacade"):
+            facade_imports.add("ResourceRuntimeFacade")
+        else:
+            facade_imports.add("ListableFacade")
+        if _stub_extra_methods(entry):
+            facade_imports.add("ResourceRuntimeFacade")
 
+    if facade_imports:
+        relative_imports[".facade"] = sorted(facade_imports)
     for custom in CUSTOM_FACADE_REGISTRY:
         rel = custom.pyi_import_module.strip()
         if not rel.startswith("."):
@@ -495,7 +433,7 @@ def main() -> None:  # noqa: D103
             continue
         emitted_facade_classes.add(class_name)
         lines.append("")
-        lines.extend(_emit_resource_class(entry, contract_resources[entry.attr_name], sigs))
+        lines.extend(_emit_resource_class(entry, contract_resources[entry.attr_name]))
 
     # -- Client class ------------------------------------------------------
     lines.append("")

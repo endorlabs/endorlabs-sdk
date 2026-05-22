@@ -205,9 +205,6 @@ ignore = [
     # --- Return patterns ---
     "RET504",  # Assignment-before-return kept for readability and debugging
     "RET505",  # Unnecessary else after return: kept for readability
-    # --- PEP 695 type parameter syntax: defer migration ---
-    "UP046",   # Generic[T] → class Foo[T]: significant refactor, do separately
-    "UP047",   # Generic function type params: same as UP046
 ]
 
 [tool.ruff.lint.isort]
