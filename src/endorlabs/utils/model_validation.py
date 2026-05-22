@@ -6,15 +6,13 @@ and enum validation to handle API evolution gracefully.
 
 import copy
 from datetime import datetime
-from typing import Any, TypeVar
+from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
 from .logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
-
-T = TypeVar("T", bound=BaseModel)
 
 
 def safe_serialize(obj: Any) -> Any:
@@ -150,7 +148,7 @@ def ensure_required_fields(
     return data
 
 
-def create_minimal_payload(model_class: type[T], **kwargs: Any) -> T:
+def create_minimal_payload[T: BaseModel](model_class: type[T], **kwargs: Any) -> T:
     """Create minimal payload with only provided fields.
 
     Useful for partial updates where you only want to update specific fields.
