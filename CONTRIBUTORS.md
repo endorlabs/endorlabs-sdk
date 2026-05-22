@@ -107,19 +107,26 @@ Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI r
 
 **Repository variables (GitHub Settings → Actions):** If present, you may remove deprecated names that are no longer read by workflows: `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, `ENDOR_GITHUB_CHECK_CONCLUSION` (removed Checks-annotations path). See [docs/guides/pr-comment-config-and-parallel-comments.md](docs/guides/pr-comment-config-and-parallel-comments.md) for the active PR-comment variables.
 
-## Model-Sync automation topology
+## Model-sync drift and regeneration
 
-Model-sync automation is split by responsibility:
+Upstream alignment uses **local pre-push hooks** and **CI**, not a bot workflow:
 
-- **Detector:** `.github/workflows/model-sync-detector.yml`
-  - checks latest `endorctl` version + OpenAPI SHA drift
-  - dispatches `repository_dispatch` (`model-sync-check`) when a version/spec change is detected
-- **Sync + PR:** `.github/workflows/model-sync-pr.yml`
-  - runs canonical generation (`devtools/model_sync.py --generate-stubs --generate-reference-docs`)
-  - scopes changed files to generated surfaces
-  - creates/updates bot PR branch (`chore/model-sync-<utc-timestamp>`)
-- **CI gate:** `.github/workflows/ci-pr-main.yml`
-  - remains the required merge gate for all PRs, including bot PRs
+- **Pre-push** (after `uv run pre-commit install --hook-type pre-push`):
+  - `model-sync-upstream-verify` — `devtools/model_sync.py --verify-upstream-only` (OpenAPI digest vs committed provenance)
+  - `model-sync-contract-validate` — contract quality unit gate
+- **CI** (`.github/workflows/ci-pr-main.yml`):
+  - same upstream verify on the lint job
+  - ephemeral `model_sync.py` generation for lint/tests (artifact shared across jobs)
+
+When verify fails locally or in CI, regenerate and commit in your PR:
+
+```bash
+uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+```
+
+See [devtools/sync/README.md](devtools/sync/README.md) and [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
+
+Optional version check (local or cron): `.github/scripts/check_endorctl_version.py`
 
 ## Optional: direnv
 

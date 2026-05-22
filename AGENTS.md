@@ -100,11 +100,7 @@ Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproj
 
 Commits targeting `main` and `dev` must keep a clean bill-of-health in security scanning: `.github/workflows/ci-pr-main.yml` includes a dedicated Endor Labs CI security scan job (OIDC auth + PR review comments from API findings + SCA/Secrets/SAST/AI SAST), and changes should not merge with unresolved policy-breaking findings under current enforcement settings.
 
-Model-sync automation is intentionally split:
-
-- **Detector workflow:** [.github/workflows/model-sync-detector.yml](.github/workflows/model-sync-detector.yml) detects upstream version/spec drift and dispatches sync events.
-- **Sync + PR workflow:** [.github/workflows/model-sync-pr.yml](.github/workflows/model-sync-pr.yml) regenerates canonical artifacts and opens/updates the bot PR branch.
-- **Required CI gate:** [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml) validates all PRs (including bot-generated PRs).
+Model-sync drift is enforced by **pre-push hooks** and **CI PR Main** (`--verify-upstream-only` on lint; ephemeral generation for tests). Regenerate committed artifacts in the PR that needs them: `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs`. See [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
 
 **Maintainer commands** (fetch spec, regenerate, compact deltas): [devtools/sync/README.md](devtools/sync/README.md).
 

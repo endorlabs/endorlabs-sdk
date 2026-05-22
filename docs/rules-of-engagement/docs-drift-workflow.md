@@ -45,34 +45,25 @@ Release builds must validate generated SDK surfaces from the current OpenAPI sna
 This keeps release artifacts aligned with the same spec-driven surfaces checked
 in CI.
 
-## GitHub Actions
+## CI and local gates
 
-**Files**:
+**CI** (`.github/workflows/ci-pr-main.yml`):
 
-- `.github/workflows/model-sync-detector.yml` (detector workflow)
-- `.github/workflows/model-sync-pr.yml` (sync + PR workflow)
+1. **Upstream verify** (lint job): `uv run python devtools/model_sync.py --verify-upstream-only` — fails when live OpenAPI SHA-256 differs from committed provenance in `src/endorlabs/generated/registry_contract.py`.
+2. **Ephemeral generation** (`generate-model-sync` job): runs `devtools/model_sync.py` and shares artifacts with lint/unit tests (validates the generator; does not commit output).
 
-- **Detector schedule**: Hourly (endorctl version check); weekly Mondays 3 AM UTC.
-- **Detector jobs**:
-  1. **check-version**: Runs `.github/scripts/check_endorctl_version.py`; emits version/hash change outputs.
-  2. **dispatch-sync**: Emits `repository_dispatch` (`model-sync-check`) with version/hash metadata.
-- **Sync workflow triggers**: `repository_dispatch` (`model-sync-check`) and `workflow_dispatch` (manual override).
-- **Sync workflow responsibilities**:
-  1. Download OpenAPI snapshot.
-  2. Run canonical generation (`devtools/model_sync.py --generate-stubs --generate-reference-docs`).
-  3. Validate generated artifact presence and changed-file scope.
-  4. Create or update bot PR branch for generated changes.
+**Pre-push** (`.pre-commit-config.yaml`): same upstream verify plus `model-sync-contract-validate` (pytest contract quality gate). Install with `uv run pre-commit install --hook-type pre-push`.
 
-### Failure semantics
+When verify fails, regenerate and commit in your PR:
 
-- Version-check script errors are treated as workflow failures (fail-closed).
-- Sync workflow generation/check failures are fail-closed.
-- Detector and sync workflows use separate concurrency groups to avoid overlap.
+```bash
+uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+```
 
-### Triage and rollback
+### Triage
 
-- If detector breaks, inspect `check-version` outputs and `.github/cache/model_sync_state.json` first.
-- If sync generation breaks, run `.github/workflows/model-sync-pr.yml` via `workflow_dispatch` and inspect the workflow summary + PR attempt details.
+- **Upstream verify failed in CI or pre-push:** run the command above, review diffs under `src/endorlabs/generated/`, `workspace/model-sync/`, `client_surface.pyi`, and `docs/generated-reference/`, then push.
+- **Optional version signal:** `.github/scripts/check_endorctl_version.py` (local or cron; not required for merge).
 
 ## Local Use
 
@@ -119,7 +110,7 @@ uv run python devtools/model_sync.py --inventory-only
 
 ## Scripts
 
-- **`.github/scripts/check_endorctl_version.py`** — Version check (used by first job).
+- **`.github/scripts/check_endorctl_version.py`** — Optional endorctl/OpenAPI drift check (local or cron).
 - **`devtools/model_sync.py`** — Canonical model sync generator/check entrypoint.
 - **`devtools/sync/README.md`** — Generation module responsibilities and triage map.
 - **`src/endorlabs/generated/README.md`** — Runtime generated package maintenance policy.
