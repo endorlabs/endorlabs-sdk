@@ -5,7 +5,7 @@ This test validates the complete workflow described in docs/retrieving-scan-resu
 2. Get most recent ScanResult for Project
 3. Get Findings from ScanResult
 
-Tests against: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
+Tests against the canonical SDK repo URL (see tests.conftest.CANONICAL_SDK_REPO_URL).
 """
 
 import os
@@ -14,7 +14,11 @@ import pytest
 
 import endorlabs
 from endorlabs.core.types import ListParameters
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import (
+    CANONICAL_SDK_REPO_URL,
+    TEST_MAX_PAGES_TRAVERSE,
+    TEST_TRAVERSE_PAGE_SIZE,
+)
 
 
 @pytest.mark.integration
@@ -26,10 +30,7 @@ class TestRetrievingScanResultsWorkflow:
         """Set up test environment (client and namespace from conftest)."""
         self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
         self.namespace = namespace
-        self.repo_url = os.getenv(
-            "TEST_REPO_URL",
-            "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
-        )
+        self.repo_url = os.getenv("TEST_REPO_URL", CANONICAL_SDK_REPO_URL)
 
     def _find_project_by_repo_url(self) -> str:
         """Find project by repository URL."""
