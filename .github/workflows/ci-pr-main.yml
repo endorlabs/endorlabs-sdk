@@ -27,7 +27,6 @@ on:
       - 'docs/**'
       - 'LICENSE'
   pull_request:
-    # Includes automation PRs from chore/model-sync-auto -> main/dev.
     branches: [ main, dev ]
     paths-ignore:
       - '**.md'
@@ -300,6 +299,11 @@ jobs:
         run: |
           uv run pyright --project pyproject.toml
 
+      # Mirrors pre-commit hook model-sync-upstream-verify (see .pre-commit-config.yaml).
+      - name: Verify committed model-sync matches upstream OpenAPI
+        run: |
+          uv run python devtools/model_sync.py --verify-upstream-only
+
       # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
         run: |
@@ -532,6 +536,8 @@ jobs:
           ENDOR_API_CREDENTIALS_KEY: ${{ secrets.ENDOR_API_CREDENTIALS_KEY }}
           ENDOR_API_CREDENTIALS_SECRET: ${{ secrets.ENDOR_API_CREDENTIALS_SECRET }}
           ENDOR_NAMESPACE: ${{ vars.ENDOR_NAMESPACE }}
+          # Platform Project meta.name matches the GitHub clone URL for this repo.
+          TEST_REPO_URL: https://github.com/${{ github.repository }}.git
 
   # ---------------------------------------------------------------------------
   # Endor Labs CI security scans (OIDC keyless auth).
