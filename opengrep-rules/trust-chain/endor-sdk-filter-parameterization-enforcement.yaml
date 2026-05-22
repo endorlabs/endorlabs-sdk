@@ -59,7 +59,7 @@ rules:
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
-        url: https://github.com/Endor-Solutions-Architecture/endorlabs-sdk
+        url: https://github.com/endorlabs/endorlabs-sdk
       endor-tags:
         - A03:2021
         - Injection
