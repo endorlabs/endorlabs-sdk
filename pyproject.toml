@@ -60,7 +60,7 @@ artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 [dependency-groups]
 dev = [
     "jsonschema==4.26.0",
-    "pytest==9.0.2",
+    "pytest==9.0.3",
     "pytest-cov==7.0.0",
     "ruff==0.14.14",
     "pyright==1.1.408",
