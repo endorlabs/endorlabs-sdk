@@ -1,6 +1,6 @@
 # Endor Labs SDK
 
-[Python CI](https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
+[Python CI](https://github.com/endorlabs/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
 Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
@@ -34,7 +34,7 @@ uv add endorlabs-sdk
 From the repository (editable):
 
 ```bash
-git clone https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git
+git clone https://github.com/endorlabs/endorlabs-sdk.git
 cd endorlabs-sdk
 uv sync
 # or: pip install -e .
@@ -162,7 +162,7 @@ for p in projects:
 
 # Filter and limit pages
 projects = client.Project.list(
-    filter="meta.name==https://github.com/Endor-Solutions-Architecture/endorlabs-sdk.git",
+    filter="meta.name==https://github.com/endorlabs/endorlabs-sdk.git",
     max_pages=1,
 )
 
