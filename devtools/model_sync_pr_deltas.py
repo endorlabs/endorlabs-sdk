@@ -17,8 +17,7 @@ When counts are all zero, **Maintainer readout** subsections explain what that m
 If only ``provenance.json`` moved, use ``--provenance-only`` / the workflow provenance
 step for a field-level diff.
 
-Used by `.github/workflows/model-sync-pr.yml` and runnable locally after
-`model_sync.py`.
+Runnable locally after `model_sync.py` (for PR summaries and maintainer triage).
 """
 
 from __future__ import annotations
