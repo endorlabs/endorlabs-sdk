@@ -38,10 +38,10 @@ endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"
-Repository = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk"
+Homepage = "https://github.com/endorlabs/endorlabs-sdk"
+Repository = "https://github.com/endorlabs/endorlabs-sdk"
 Documentation = "https://docs.endorlabs.com/"
-Issues = "https://github.com/Endor-Solutions-Architecture/endorlabs-sdk/issues"
+Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
 
 [build-system]
 requires = ["hatchling==1.28.0", "hatch-vcs"]
@@ -49,6 +49,22 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "vcs"
+
+[tool.hatch.version.raw-options]
+# Release wheels from vX.Y.Z tags should not carry +g<hash> local segments.
+local_scheme = "no-local-version"
+# Prefer .dev0 anchors over experimental tags (dev-build, dev19, etc.) still in remote history.
+# Dev trees: anchor on vX.Y.Z.dev0 only (excludes v0.1.1.dev19, v0.1.1.dev-build.*, etc.).
+# Release builds: set SETUPTOOLS_SCM_PRETEND_VERSION from the vX.Y.Z tag in CI (see release workflow).
+git_describe_command = [
+    "git",
+    "describe",
+    "--dirty",
+    "--tags",
+    "--long",
+    "--match",
+    "v[0-9]*.[0-9]*.[0-9].dev0",
+]
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/endorlabs/_version.py"
@@ -60,7 +76,7 @@ artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 [dependency-groups]
 dev = [
     "jsonschema==4.26.0",
-    "pytest==9.0.2",
+    "pytest==9.0.3",
     "pytest-cov==7.0.0",
     "ruff==0.14.14",
     "pyright==1.1.408",
@@ -71,6 +87,7 @@ dev = [
     "defusedxml==0.7.1",
     "markdownify==1.2.2",
     "datamodel-code-generator==0.55.0",
+    "hatch>=1.14.0",
 ]
 
 [tool.ruff]

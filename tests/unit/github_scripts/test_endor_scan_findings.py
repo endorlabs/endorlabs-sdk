@@ -115,7 +115,7 @@ def test_extract_location_rejects_dot_repo_path() -> None:
 
 def test_extract_location_github_blob_url_overrides_line() -> None:
     blob = (
-        "https://github.com/endor-solutions-architecture/endorlabs-sdk/blob/"
+        "https://github.com/endorlabs/endorlabs-sdk/blob/"
         "9a7001e64bc421a4b3de13d2eba4e5a028e04808/"
         "src/endorlabs/resources/authorization_policy.py?plain=1#L134"
     )
@@ -175,7 +175,7 @@ def test_extract_location_policy_metadata_blob_supplements_spec() -> None:
     """``source_policy_info`` Secret Location URLs live under finding_metadata."""
     path = "tests/unit/platform/utils/test_logging_config.py"
     secret_url = (
-        f"https://github.com/endor-solutions-architecture/endorlabs-sdk/blob/"
+        f"https://github.com/endorlabs/endorlabs-sdk/blob/"
         f"caae61c4498bbc98f98b2384b4b6f72c66ced5bb/{path}?plain=1#L219"
     )
     f = {
