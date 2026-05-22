@@ -17,6 +17,7 @@ import inspect
 import json
 import logging
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -511,6 +512,11 @@ def main() -> None:  # noqa: D103
     lines.append("    ) -> bool: ...")
 
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    subprocess.run(
+        ["uv", "run", "ruff", "format", str(out)],
+        cwd=repo_root,
+        check=True,
+    )
     logger.info("Wrote %s (%s lines)", out, len(lines))
 
 
