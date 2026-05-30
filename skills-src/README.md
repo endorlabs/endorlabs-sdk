@@ -8,6 +8,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
+| [analytics-estate-dependencies](analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, tabular CSV export, optional CVE remediation comparison | `endorlabs.workflows.analytics`; `endor-analytics-export-deps` |
 | [project-agent-context](project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](project-agent-context/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
 | [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
 | [dependency-provenance](dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
@@ -19,6 +20,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 | [troubleshooting-scans](troubleshooting-scans/) | Scan regressions; anomalous ScanResults, ScanLogs, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/rules-of-engagement/list-query-performance.md` |
 | [troubleshoot-sdk](troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/rules-of-engagement/` |
 | [troubleshoot-authlog](troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
+| [validate-policy](validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |
 
 ## How Loading Works
 

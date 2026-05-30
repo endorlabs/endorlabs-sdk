@@ -295,9 +295,9 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
         "BatchDependencyMetadataServiceCreateBatchDependencyMetadataBody",
         "DependencyMetadataServiceCreateDependencyMetadataBody"
       ],
-      "description": "DependencyMetadata resource model extending BaseResource.",
+      "description": "Facade model for DependencyMetadata (generated wire shape).",
       "filter_kwarg_map": {},
-      "has_tag_methods": true,
+      "has_tag_methods": false,
       "identity_filter_fields": [],
       "immutable_fields": [
         "meta.create_time",
@@ -322,18 +322,17 @@ RUNTIME_REGISTRY_CONTRACT = json.loads(
       ],
       "parent_kind": null,
       "resource_name": "dependency-metadata",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops": [
         "create",
         "delete",
         "get",
-        "list",
-        "update"
+        "list"
       ],
       "update_payload_entities": [
         "DependencyMetadataServiceUpdateDependencyMetadataBody"
       ],
-      "update_requires_mask": true,
+      "update_requires_mask": false,
       "workflow_flags": []
     },
     {

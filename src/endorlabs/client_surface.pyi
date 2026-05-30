@@ -93,11 +93,10 @@ class _CodeOwnersFacade(ResourceRuntimeFacade[CodeOwners]):
     pass
 
 class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
-    """DependencyMetadata resource model extending BaseResource.
+    """Facade model for DependencyMetadata (generated wire shape).
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
-    Update mode: update_mask required.
     """
 
     pass
@@ -459,7 +458,7 @@ class Client:
     CodeOwners: _CodeOwnersFacade
     """Code Owners resource model. List, get, create, update, delete."""
     DependencyMetadata: _DependencyMetadataFacade
-    """DependencyMetadata resource model extending BaseResource."""
+    """Facade model for DependencyMetadata (generated wire shape)."""
     EndorLicense: _EndorLicenseFacade
     """Endor License resource model. List and get only."""
     Finding: _FindingFacade
