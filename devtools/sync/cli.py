@@ -20,6 +20,7 @@ from .contract import (
     build_payload_schemas,
     build_registry_parity_report,
     build_runtime_index_metadata,
+    load_resource_scope_overrides,
     render_generated_registry_contract_module,
     validate_contract_artifacts,
 )
@@ -268,6 +269,8 @@ def run_sync(
     facade_contract = build_facade_contract(
         mapping_entries=plan.entries,
         payload_schemas=payload_schemas,
+        operation_metadata=operation_path_metadata,
+        scope_overrides=load_resource_scope_overrides(DEFAULT_CUSTOM_PROFILES_DIR),
     )
     write_json(model_output / "facade_contract.json", facade_contract)
     runtime_index = build_runtime_index_metadata(facade_contract)
