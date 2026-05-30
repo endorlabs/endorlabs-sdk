@@ -37,7 +37,7 @@
     "dependency-metadata": {
       "create_mode": "both",
       "identity_filter_fields": [],
-      "update_requires_mask": true,
+      "update_requires_mask": false,
       "workflow_flags": []
     },
     "endor-licenses": {
