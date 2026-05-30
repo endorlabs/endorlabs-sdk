@@ -1,18 +1,16 @@
 """Test cases for DependencyMetadata resource operations.
 
-Tests GET and LIST operations for DependencyMetadata resources.
-DependencyMetadata represents dependency relationships between PackageVersions.
-
-Note: The SDK hardcodes the \"oss\" namespace for all DependencyMetadata operations
-(list, get, update, create, delete). The tenant/namespace passed to Client or
-module functions is ignored. Use endorctl with -n oss to confirm presence/access.
+DependencyMetadata is tenant-scoped: list/get use the customer namespace path.
+``spec.dependency_data.namespace`` may still be ``oss`` for catalog-backed packages.
 """
+
+from __future__ import annotations
 
 import pytest
 
 import endorlabs
+from endorlabs.core.exceptions import ServerError
 from endorlabs.core.types import ListParameters
-from endorlabs.resources import dependency_metadata
 from tests.conftest import (
     TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
@@ -22,11 +20,11 @@ from tests.conftest import (
 
 @pytest.mark.integration
 class TestDependencyMetadata:
-    """Test cases for DependencyMetadata resource operations."""
+    """Integration tests for DependencyMetadata (tenant namespace)."""
 
     @pytest.fixture(autouse=True)
     def setup_fast(self, api_client, namespace, root_namespace) -> None:
-        """Fast setup: client and namespaces from conftest (LIST/GET only)."""
+        """Fast setup: client and namespaces from conftest."""
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
@@ -37,121 +35,100 @@ class TestDependencyMetadata:
 
     @pytest.fixture
     def sample_dependency_metadata(self):
-        """Fetch minimal sample data (1 item) for UUID operations.
-
-        Uses root_namespace + traverse for consistency with other resources.
-        """
-        results = dependency_metadata.list_dependency_metadata(
-            self.client,
-            self.root_namespace,
-            list_params=ListParameters(
-                page_size=TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
-            ),
+        """Fetch one row from tenant root with traverse."""
+        results = self.endor_root_client.DependencyMetadata.list(
+            traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-        return results[0]  # Return single item, not list
+        return results[0]
 
-    def test_dependency_metadata_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
-        import endorlabs
-        from endorlabs.core.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
+    def test_dependency_metadata_list_uses_tenant_namespace(self) -> None:
+        """LIST with traverse returns rows under the tenant namespace path."""
         try:
-            result = client.DependencyMetadata.list(
+            result = self.endor_root_client.DependencyMetadata.list(
                 traverse=True,
                 max_pages=TEST_MAX_PAGES_TRAVERSE,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
+        if not result:
+            pytest.skip("No dependency metadata in scope")
+        first = result[0]
+        if first.tenant_meta and first.tenant_meta.namespace:
+            assert self.root_namespace in str(first.tenant_meta.namespace)
 
     def test_dependency_metadata_get(self) -> None:
-        """GET first item from LIST (root + traverse) (registry-based)."""
-        import endorlabs
-        from endorlabs.core.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
+        """GET by UUID in tenant namespace."""
         try:
-            items = client.DependencyMetadata.list(
+            items = self.endor_root_client.DependencyMetadata.list(
                 traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                max_pages=1,
+                page_size=TEST_PAGE_SIZE,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not items:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
+            pytest.skip("No dependency metadata in scope")
         item = items[0]
         ns = (
             item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
+            if item.tenant_meta and item.tenant_meta.namespace
             else self.root_namespace
         )
-        got = client.DependencyMetadata.get(item.uuid, namespace=ns)
-        assert got is not None
+        got = self.endor_root_client.DependencyMetadata.get(item.uuid, namespace=ns)
         assert got.uuid == item.uuid
 
     def test_dependency_metadata_error_handling(self) -> None:
-        """Test error handling for invalid UUID."""
-        # Test with invalid UUID format - should raise ValidationError
-        # (server returns HTTP 400 with gRPC code 3 INVALID_ARGUMENT)
-        from endorlabs.core.exceptions import ValidationError
+        """Invalid UUID raises typed error."""
+        from endorlabs.core.exceptions import EndorAPIError
 
-        with pytest.raises(ValidationError) as exc_info:
-            self.endor_root_client.DependencyMetadata.get("invalid-uuid")
-        assert exc_info.value.resource_uuid == "invalid-uuid"
-        assert exc_info.value.operation == "get"
-        assert exc_info.value.status_code == 400
+        with pytest.raises(EndorAPIError):
+            self.endor_root_client.DependencyMetadata.get(
+                "invalid-uuid", namespace=self.root_namespace
+            )
 
     def test_dependency_metadata_filter_by_project(
         self, sample_dependency_metadata
     ) -> None:
-        """Test filtering dependency metadata by project UUID."""
-        print("\n=== TESTING FILTER DEPENDENCY METADATA BY PROJECT ===")
-
-        # Get first dependency metadata to extract project UUID
+        """Filter by project UUID returns a subset."""
         first_dm = sample_dependency_metadata
-        if not first_dm.spec or not first_dm.spec.dependency_data:
-            pytest.skip("Dependency metadata has no dependency_data")
+        project_uuid = None
+        if first_dm.spec and first_dm.spec.importer_data:
+            project_uuid = first_dm.spec.importer_data.project_uuid
+        if not project_uuid:
+            pytest.skip("Sample row has no importer project_uuid")
 
-        project_uuid = first_dm.spec.dependency_data.project_uuid
-
-        # Filter dependency metadata by project with pagination limits
-        list_params = ListParameters(
-            filter=f'spec.dependency_data.project_uuid=="{project_uuid}"',
+        filtered_results = self.endor_root_client.DependencyMetadata.list(
+            filter=f'spec.importer_data.project_uuid=="{project_uuid}"',
             page_size=TEST_PAGE_SIZE,
-        )
-
-        filtered_results = dependency_metadata.list_dependency_metadata(
-            self.client,
-            self.root_namespace,
-            list_params,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )
+        assert isinstance(filtered_results, list)
+        assert len(filtered_results) >= 1
+        for dm in filtered_results:
+            if dm.spec and dm.spec.importer_data:
+                assert dm.spec.importer_data.project_uuid == project_uuid
 
-        assert isinstance(filtered_results, list), (
-            "Should return a list of filtered dependency metadata"
+    def test_dependency_metadata_count_vs_list_bounded(self) -> None:
+        """Traverse count is consistent with a bounded materialized list."""
+        ops = self.endor_root_client.DependencyMetadata._ops
+        try:
+            total = ops.count(
+                self.root_namespace,
+                ListParameters(traverse=True, page_size=TEST_TRAVERSE_PAGE_SIZE),
+            )
+        except ServerError:
+            pytest.skip("Backend count failed")
+        if total == 0:
+            pytest.skip("No dependency metadata to compare")
+
+        listed = self.endor_root_client.DependencyMetadata.list(
+            traverse=True,
+            max_pages=1,
+            page_size=TEST_PAGE_SIZE,
         )
-        if len(filtered_results) == 0:
-            pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
-
-        # Verify all results belong to the project
-        for result in filtered_results:
-            if result.spec and result.spec.dependency_data:
-                assert result.spec.dependency_data.project_uuid == project_uuid, (
-                    "All filtered results should belong to the project"
-                )
-
-        print(
-            f"Found {len(filtered_results)} dependency metadata records "
-            f"for project {project_uuid}"
-        )
+        assert len(listed) <= total

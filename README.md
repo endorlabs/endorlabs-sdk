@@ -42,6 +42,15 @@ uv sync
 
 Verify: `uv run python -c "import endorlabs; print(endorlabs.__version__)"`
 
+### Optional extras
+
+| Extra | Install | Enables |
+| ----- | ------- | ------- |
+| `context` | `pip install 'endorlabs-sdk[context]'` | `endorlabs.init()` — local OpenAPI + user docs mirror |
+| `tabular` | `pip install 'endorlabs-sdk[tabular]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow) |
+
+CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra context --extra tabular`.
+
 ## Configuration
 
 The SDK uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.

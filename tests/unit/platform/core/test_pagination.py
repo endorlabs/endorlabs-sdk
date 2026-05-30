@@ -154,11 +154,11 @@ class TestListParametersSerialization:
             group_unique_count_paths=["x"],
         )
         params = ops._build_params(list_params)
-        assert params.get("list_parameters.group_aggregation_paths") == (
+        assert params.get("list_parameters.group.aggregation_paths") == (
             "meta.name,spec.level"
         )
         assert params.get("list_parameters.group_by_time") == "true"
-        assert params.get("list_parameters.group_unique_count_paths") == "x"
+        assert params.get("list_parameters.group.unique_count_paths") == "x"
 
 
 class TestGetAllPageIdPagination:

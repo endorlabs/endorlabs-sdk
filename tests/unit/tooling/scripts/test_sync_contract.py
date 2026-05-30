@@ -7,10 +7,12 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest  # noqa: TC002
+
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS_DIR = str(_REPO_ROOT / "scripts")
-if _SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, _SCRIPTS_DIR)
+_DEVTOOLS_DIR = str(_REPO_ROOT / "devtools")
+if _DEVTOOLS_DIR not in sys.path:
+    sys.path.insert(0, _DEVTOOLS_DIR)
 
 from sync.contract import (
     build_facade_contract,
@@ -18,6 +20,7 @@ from sync.contract import (
     build_payload_schemas,
     build_registry_parity_report,
     build_runtime_index_metadata,
+    infer_resource_scope,
     validate_contract_artifacts,
 )
 from sync.policy import MappingEntry
@@ -166,6 +169,7 @@ def test_build_payload_schemas_and_contract(monkeypatch) -> None:
     contract = build_facade_contract(
         mapping_entries=mapping_entries,
         payload_schemas=payload,
+        operation_metadata=operation_metadata,
     )
     runtime_index = build_runtime_index_metadata(contract)
     parity = build_registry_parity_report(
@@ -195,3 +199,64 @@ def test_build_payload_schemas_and_contract(monkeypatch) -> None:
     assert isinstance(runtime_index["capability_by_resource"], dict)
     assert parity["status"] in {"pass", "fail"}
     assert not errors
+
+
+def test_infer_resource_scope_from_openapi_paths() -> None:
+    spec = {
+        "paths": {
+            "/v1/namespaces/{tenant_meta.namespace}/dependency-metadata": {"get": {}},
+            "/v1/namespaces/{tenant_meta.namespace}/dependency-metadata/{uuid}": {
+                "get": {}
+            },
+            "/v1/namespaces/{object.tenant_meta.namespace}/dependency-metadata": {
+                "post": {}
+            },
+        }
+    }
+    metadata = build_operation_path_metadata(spec)
+    assert infer_resource_scope("dependency-metadata", metadata) == "tenant"
+
+
+def test_infer_resource_scope_oss_literal_paths() -> None:
+    spec = {
+        "paths": {
+            "/v1/namespaces/oss/malware": {"get": {}},
+            "/v1/namespaces/oss/malware/{uuid}": {"get": {}},
+        }
+    }
+    metadata = build_operation_path_metadata(spec)
+    assert infer_resource_scope("malware", metadata) == "oss"
+
+
+def test_build_facade_contract_uses_openapi_scope_not_runtime_entry(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_registry = [
+        SimpleNamespace(
+            attr_name="dependency_metadata",
+            resource_name="dependency-metadata",
+            model_class=type("DependencyMetadata", (), {}),
+            supported_ops=frozenset({"list", "get"}),
+            filter_kwarg_map={},
+            parent_kind=None,
+            scope="oss",
+        )
+    ]
+    import sync.contract as contract_module
+
+    monkeypatch.setattr(contract_module, "RESOURCE_REGISTRY", fake_registry)
+    spec = {
+        "paths": {
+            "/v1/namespaces/{tenant_meta.namespace}/dependency-metadata": {"get": {}},
+        }
+    }
+    operation_metadata = build_operation_path_metadata(spec)
+    contract = build_facade_contract(
+        mapping_entries=[],
+        payload_schemas={"resources": []},
+        operation_metadata=operation_metadata,
+    )
+    row = next(
+        r for r in contract["resources"] if r["resource_name"] == "dependency-metadata"
+    )
+    assert row["scope"] == "tenant"

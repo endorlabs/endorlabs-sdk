@@ -269,15 +269,15 @@ def test_oss_resource_facade_get_uses_oss_namespace(
 ) -> None:
     """OSS-scoped get(id) delegates with namespace 'oss' (no param required)."""
     client = client_with_mock_transport
-    client.DependencyMetadata._ops.get = Mock(
-        return_value=Mock(uuid="dep-456", tenant_meta=Mock(namespace="oss"))
+    client.Malware._ops.get = Mock(
+        return_value=Mock(uuid="mal-456", tenant_meta=Mock(namespace="oss"))
     )
-    result = client.DependencyMetadata.get("dep-456")
-    assert result.uuid == "dep-456"
-    client.DependencyMetadata._ops.get.assert_called_once()
-    args, _ = client.DependencyMetadata._ops.get.call_args
+    result = client.Malware.get("mal-456")
+    assert result.uuid == "mal-456"
+    client.Malware._ops.get.assert_called_once()
+    args, _ = client.Malware._ops.get.call_args
     assert args[0] == "oss"
-    assert args[1] == "dep-456"
+    assert args[1] == "mal-456"
 
 
 def test_oss_resource_facade_list_uses_oss_namespace(
@@ -285,11 +285,41 @@ def test_oss_resource_facade_list_uses_oss_namespace(
 ) -> None:
     """OSS-scoped list() delegates with namespace 'oss'."""
     client = client_with_mock_transport
+    client.Malware._ops.list = Mock(return_value=[])
+    client.Malware.list(max_pages=TEST_MAX_PAGES)
+    client.Malware._ops.list.assert_called_once()
+    args, _ = client.Malware._ops.list.call_args
+    assert args[0] == "oss"
+
+
+def test_dependency_metadata_facade_get_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """DependencyMetadata get uses the customer namespace path, not oss."""
+    client = client_with_mock_transport
+    client.DependencyMetadata._ops.get = Mock(
+        return_value=Mock(
+            uuid="dep-456", tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT)
+        )
+    )
+    result = client.DependencyMetadata.get("dep-456", namespace="tenant.child")
+    assert result.uuid == "dep-456"
+    client.DependencyMetadata._ops.get.assert_called_once()
+    args, _ = client.DependencyMetadata._ops.get.call_args
+    assert args[0] == "tenant.child"
+    assert args[1] == "dep-456"
+
+
+def test_dependency_metadata_facade_list_uses_tenant_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """DependencyMetadata list uses the customer namespace path, not oss."""
+    client = client_with_mock_transport
     client.DependencyMetadata._ops.list = Mock(return_value=[])
-    client.DependencyMetadata.list(max_pages=TEST_MAX_PAGES)
+    client.DependencyMetadata.list(namespace="tenant.child", max_pages=TEST_MAX_PAGES)
     client.DependencyMetadata._ops.list.assert_called_once()
     args, _ = client.DependencyMetadata._ops.list.call_args
-    assert args[0] == "oss"
+    assert args[0] == "tenant.child"
 
 
 def test_vulnerability_facade_list_uses_oss_namespace(
