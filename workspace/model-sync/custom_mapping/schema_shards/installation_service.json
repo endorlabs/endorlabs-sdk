@@ -171,12 +171,28 @@
     },
     "v1AzureConfig": {
       "properties": {
+        "enable_full_scan": {
+          "description": "enable_full_scan is a boolean value that indicates if the full scan should\nbe enabled for Azure DevOps PR scans.",
+          "type": "boolean"
+        },
+        "enable_pr_comments": {
+          "description": "enable_pr_comments is a boolean value that indicates if automated PR\ncomments are enabled for Azure DevOps repositories.",
+          "type": "boolean"
+        },
+        "enable_pr_scans": {
+          "description": "enable_pr_scans is a boolean value that indicates if automated PR scans\nare enabled for Azure DevOps repositories.",
+          "type": "boolean"
+        },
         "host_url": {
           "description": "The URL of the project.",
           "type": "string"
         },
         "personal_access_token": {
           "description": "PAT of the user doing integration to fetch resources using REST APIs.",
+          "type": "string"
+        },
+        "webhook_secret": {
+          "description": "The shared password configured as the basic authentication credential for\nAzure DevOps Service Hook deliveries belonging to this installation.",
           "type": "string"
         }
       },
