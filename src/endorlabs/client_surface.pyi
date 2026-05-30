@@ -95,7 +95,6 @@ class _CodeOwnersFacade(ResourceRuntimeFacade[CodeOwners]):
 class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
     """Facade model for DependencyMetadata (generated wire shape).
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
@@ -160,7 +159,6 @@ class _MalwareFacade(ListableFacade[Malware]):
     """Malware resource model.
 
     Identity kwargs: name (-> meta.name).
-    OSS-scoped (namespace fixed to 'oss').
     """
 
     def get(
@@ -212,7 +210,6 @@ class _PRCommentConfigFacade(ResourceRuntimeFacade[PRCommentConfig]):
 class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
     """PackageLicense resource model extending BaseResource.
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     Update mode: update_mask required.
     """
@@ -261,7 +258,6 @@ class _ProjectFacade(ResourceRuntimeFacade[Project]):
 class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     """QueryMalware resource model returned by query endpoint.
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
@@ -270,7 +266,6 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
 class _QueryVulnerabilityFacade(ResourceRuntimeFacade[QueryVulnerability]):
     """QueryVulnerability resource model returned by query endpoint.
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
@@ -422,7 +417,6 @@ class _VulnerabilityFacade(ListableFacade[Vulnerability]):
     """Vulnerability resource model.
 
     Identity kwargs: name (-> meta.name).
-    OSS-scoped (namespace fixed to 'oss').
     """
 
     def get(
