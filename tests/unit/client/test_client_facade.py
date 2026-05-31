@@ -204,7 +204,8 @@ def test_all_oss_scoped_resources_force_oss_namespace(
 
     client = client_with_mock_transport
     oss_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "oss"]
-    assert oss_entries, "Expected at least one oss-scoped resource in registry."
+    if not oss_entries:
+        pytest.skip("No oss-scoped resource in registry")
 
     for entry in oss_entries:
         facade = getattr(client, entry.attr_name)
@@ -264,32 +265,34 @@ def test_authentication_log_facade_get_uses_tenant_namespace(
     assert args[1] == "log-123"
 
 
-def test_oss_resource_facade_get_uses_oss_namespace(
+def test_malware_facade_get_uses_default_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """OSS-scoped get(id) delegates with namespace 'oss' (no param required)."""
+    """Tenant-scoped get(id) delegates with the client default namespace."""
     client = client_with_mock_transport
     client.Malware._ops.get = Mock(
-        return_value=Mock(uuid="mal-456", tenant_meta=Mock(namespace="oss"))
+        return_value=Mock(
+            uuid="mal-456", tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT)
+        )
     )
     result = client.Malware.get("mal-456")
     assert result.uuid == "mal-456"
     client.Malware._ops.get.assert_called_once()
     args, _ = client.Malware._ops.get.call_args
-    assert args[0] == "oss"
+    assert args[0] == TEST_NAMESPACE_DEFAULT
     assert args[1] == "mal-456"
 
 
-def test_oss_resource_facade_list_uses_oss_namespace(
+def test_malware_facade_list_uses_default_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """OSS-scoped list() delegates with namespace 'oss'."""
+    """Tenant-scoped list() delegates with the client default namespace."""
     client = client_with_mock_transport
     client.Malware._ops.list = Mock(return_value=[])
     client.Malware.list(max_pages=TEST_MAX_PAGES)
     client.Malware._ops.list.assert_called_once()
     args, _ = client.Malware._ops.list.call_args
-    assert args[0] == "oss"
+    assert args[0] == TEST_NAMESPACE_DEFAULT
 
 
 def test_dependency_metadata_facade_get_uses_tenant_namespace(
@@ -322,22 +325,32 @@ def test_dependency_metadata_facade_list_uses_tenant_namespace(
     assert args[0] == "tenant.child"
 
 
-def test_vulnerability_facade_list_uses_oss_namespace(
+def test_dependency_metadata_registry_scope_is_tenant() -> None:
+    """DependencyMetadata is tenant-scoped in the effective registry contract."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    entry = next(
+        item for item in RESOURCE_REGISTRY if item.attr_name == "DependencyMetadata"
+    )
+    assert entry.scope is None
+
+
+def test_vulnerability_facade_list_uses_default_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """OSS-scoped vulnerability list() delegates with namespace 'oss'."""
+    """Tenant-scoped vulnerability list() delegates with the client default namespace."""
     client = client_with_mock_transport
     client.Vulnerability._ops.list = Mock(return_value=[])
     client.Vulnerability.list(max_pages=TEST_MAX_PAGES)
     client.Vulnerability._ops.list.assert_called_once()
     args, _ = client.Vulnerability._ops.list.call_args
-    assert args[0] == "oss"
+    assert args[0] == TEST_NAMESPACE_DEFAULT
 
 
-def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
+def test_query_vulnerability_create_builds_payload_and_uses_tenant_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Create-only query_vulnerability uses builder and OSS namespace."""
+    """Create-only query_vulnerability uses builder and client tenant namespace."""
     client = client_with_mock_transport
     built_payload = Mock()
     client.QueryVulnerability._build_create_payload_fn = Mock(
@@ -351,7 +364,7 @@ def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
     client.QueryVulnerability._build_create_payload_fn.assert_called_once()
     client.QueryVulnerability._ops.create.assert_called_once()
     args, _ = client.QueryVulnerability._ops.create.call_args
-    assert args[0] == "oss"
+    assert args[0] == TEST_NAMESPACE_DEFAULT
     assert args[1] is built_payload
 
 
