@@ -94,7 +94,7 @@ class TestDependencyMetadata:
     def test_dependency_metadata_filter_by_project(
         self, sample_dependency_metadata
     ) -> None:
-        """Filter by project UUID returns a subset."""
+        """Filter by importer project UUID in the row's owning namespace."""
         first_dm = sample_dependency_metadata
         project_uuid = None
         if first_dm.spec and first_dm.spec.importer_data:
@@ -102,7 +102,15 @@ class TestDependencyMetadata:
         if not project_uuid:
             pytest.skip("Sample row has no importer project_uuid")
 
+        project_ns = (
+            first_dm.tenant_meta.namespace
+            if first_dm.tenant_meta and first_dm.tenant_meta.namespace
+            else self.root_namespace
+        )
+
         filtered_results = self.endor_root_client.DependencyMetadata.list(
+            namespace=project_ns,
+            traverse=False,
             filter=f'spec.importer_data.project_uuid=="{project_uuid}"',
             page_size=TEST_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
