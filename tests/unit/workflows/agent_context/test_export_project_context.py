@@ -94,7 +94,7 @@ def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None
         slug="proj",
         out_dir=str(tmp_path),
         dep_metadata_count=4,
-        dep_metadata_namespace="oss",
+        dep_metadata_namespace="t.ns",
     )
     m = build_context_manifest(
         version=2,
@@ -114,7 +114,7 @@ def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None
     assert m["inventory"]["enabled"] is True
     assert m["selection"]["mode"] == "explicit"
     assert m["hydration"]["pass_2_dependency_explorer"]["skipped"] is False
-    assert m["artifacts"]["dep_metadata_list_namespace"] == "oss"
+    assert m["artifacts"]["dep_metadata_list_namespace"] == "t.ns"
     assert m["artifacts"]["dep_metadata_row_count"] == 4
     assert m["artifacts"]["callgraph_sweep"]["package_versions_total"] == 5
 
