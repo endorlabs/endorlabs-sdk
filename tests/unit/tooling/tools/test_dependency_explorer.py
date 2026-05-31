@@ -14,6 +14,9 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
+import pytest  # noqa: TC002
+
+from endorlabs.tools import dependency_explorer as dependency_explorer_module
 from endorlabs.tools.dependency_explorer import (
     ACCESS_LEVEL,
     CALL_TYPE,
@@ -53,6 +56,7 @@ from endorlabs.tools.dependency_explorer import (
     render_callgraph_analysis,
     render_slim_dependencies,
     retrieve_bom_full,
+    retrieve_dep_metadata_full,
     slugify,
     summarize_call_graph,
     summarize_dep_metadata,
@@ -961,3 +965,35 @@ class TestBuildDependencyCallgraphSummary:
         md = build_dependency_callgraph_summary(result)
         assert "Dependency Metadata" in md
         assert "50" in md
+
+
+def test_retrieve_dep_metadata_full_prefers_project_namespace(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Project namespace is queried first; oss is not tried when tenant rows exist."""
+    urls: list[str] = []
+
+    def _fake_paginate(
+        _api_client: object,
+        url: str,
+        _params: dict[str, str],
+        max_pages: int = 10,
+    ) -> list[dict[str, str]]:
+        _ = max_pages
+        urls.append(url)
+        if "/tenant.child/" in url:
+            return [{"uuid": "dm-1"}]
+        return []
+
+    monkeypatch.setattr(dependency_explorer_module, "paginate_raw", _fake_paginate)
+
+    rows, source_ns = retrieve_dep_metadata_full(
+        MagicMock(),
+        "tenant.child",
+        "project-uuid",
+    )
+
+    assert source_ns == "tenant.child"
+    assert len(rows) == 1
+    assert len(urls) == 1
+    assert urls[0].endswith("/tenant.child/dependency-metadata")

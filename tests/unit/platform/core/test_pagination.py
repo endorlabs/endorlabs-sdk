@@ -289,3 +289,17 @@ class TestCount:
         assert total == 3
         # Regression guard: count() must not mutate caller object.
         assert list_params.count is None
+
+    def test_count_prefers_count_response_block(self) -> None:
+        """count() reads count_response.count when present."""
+        client = Mock()
+        client.get = Mock(
+            return_value=Mock(json=Mock(return_value={"count_response": {"count": 7}}))
+        )
+        ops = BaseResourceOperations(client, "test-resources", Mock)
+
+        total = ops.count(
+            "tenant.ns", list_params=ListParameters(filter="meta.name==x")
+        )
+
+        assert total == 7
