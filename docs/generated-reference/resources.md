@@ -32,26 +32,26 @@ Legend:
 | AuthenticationLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | AuthorizationPolicy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | CodeOwners | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| DependencyMetadata | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
+| DependencyMetadata | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | EndorLicense | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Finding | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | FindingLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | LinterResult | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
-| Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | — |
+| Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Metric | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PRCommentConfig | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PackageFirewallLog | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
-| PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | oss | — | — |
+| PackageLicense | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PackageVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Project | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| QueryMalware | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
-| QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
+| QueryMalware | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | Repository | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | RepositoryVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | project | — |
 | ScanLogRequest | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
@@ -67,7 +67,7 @@ Legend:
 | VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |
-| Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | — |
+| Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 
 Spec (local preferred): `.endorlabs-context/openapiv2.swagger.json`.
 Fallback URL: `https://api.endorlabs.com/download/openapiv2.swagger.json`.

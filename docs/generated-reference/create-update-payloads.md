@@ -69,7 +69,7 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 | AuthenticationLog | no | meta.description, meta.tags |
 | AuthorizationPolicy | yes | meta.name, meta.description, meta.tags, spec, propagate |
 | CodeOwners | yes | meta.description, meta.tags |
-| DependencyMetadata | yes | meta.name, meta.description, meta.tags, spec |
+| DependencyMetadata | no | meta.description, meta.name, meta.tags, spec |
 | EndorLicense | no | meta.description, meta.tags |
 | Finding | yes | meta.tags, spec.finding_tags, spec.dismiss, spec.remediation, context.tags |
 | FindingLog | no | meta.description, meta.tags |

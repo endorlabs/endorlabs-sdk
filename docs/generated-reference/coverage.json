@@ -118,13 +118,13 @@
       "attr_name": "DependencyMetadata",
       "parent_kind": null,
       "resource_name": "dependency-metadata",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,
         "delete": true,
         "get": true,
         "list": true,
-        "update": true
+        "update": false
       },
       "supported_ops_spec": {
         "create": true,
@@ -258,7 +258,7 @@
       "attr_name": "Malware",
       "parent_kind": null,
       "resource_name": "malware",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,
@@ -378,7 +378,7 @@
       "attr_name": "PackageLicense",
       "parent_kind": null,
       "resource_name": "package-licenses",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,
         "delete": true,
@@ -478,7 +478,7 @@
       "attr_name": "QueryMalware",
       "parent_kind": null,
       "resource_name": "queries/malware",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,
         "delete": false,
@@ -498,7 +498,7 @@
       "attr_name": "QueryVulnerability",
       "parent_kind": null,
       "resource_name": "queries/vulnerabilities",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": true,
         "delete": false,
@@ -818,7 +818,7 @@
       "attr_name": "Vulnerability",
       "parent_kind": null,
       "resource_name": "vulnerabilities",
-      "scope": "oss",
+      "scope": "tenant",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,

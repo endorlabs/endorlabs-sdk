@@ -167,7 +167,9 @@ class APIClient:
 
         # Initialize API client parameters
         # Precedence: parameters > environment variables > defaults
-        self.base_url = (
+        if not os.getenv("ENDOR_API"):
+            os.environ["ENDOR_API"] = "https://api.endorlabs.com"
+        self.base_url: str = (
             base_url or os.getenv("ENDOR_API") or "https://api.endorlabs.com"
         )
         self._allowed_api_hosts = self._build_allowed_api_hosts(allowed_api_hosts)
@@ -325,6 +327,8 @@ class APIClient:
         """Build a trusted host allowlist from base_url and optional configuration."""
         hosts: set[str] = set()
         base_host = urlparse(self.base_url).hostname
+        if isinstance(base_host, bytes):
+            base_host = base_host.decode("utf-8", errors="ignore")
         if base_host:
             hosts.add(base_host.lower())
 

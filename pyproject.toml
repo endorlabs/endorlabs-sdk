@@ -29,6 +29,10 @@ context = [
     "defusedxml==0.7.1",
     "markdownify==1.2.2",
 ]
+tabular = [
+    "pandas==3.0.3",
+    "pyarrow==24.0.0",
+]
 [project.scripts]
 endor-demo = "endorlabs._demo.demo_cli:main"
 endor-context = "endorlabs.context.cli:main"
@@ -36,6 +40,7 @@ endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
+endor-analytics-export-deps = "endorlabs.workflows.analytics.cli:cli_main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
@@ -86,6 +91,9 @@ dev = [
     "beautifulsoup4==4.14.3",
     "defusedxml==0.7.1",
     "markdownify==1.2.2",
+    # Tabular deps for unit tests (mirrors [project.optional-dependencies.tabular])
+    "pandas==3.0.3",
+    "pyarrow==24.0.0",
     "datamodel-code-generator==0.55.0",
     "hatch>=1.14.0",
 ]
