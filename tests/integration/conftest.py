@@ -23,14 +23,13 @@ from tests.conftest import TEST_NAMESPACE_DEFAULT
 def _has_credentials() -> bool:
     """Check if Endor Labs API key credentials are available.
 
+    ``ENDOR_API`` is optional; ``APIClient`` defaults to production when unset.
     Tests only support API key authentication, not browser-based auth.
     """
-    required_vars = [
-        "ENDOR_API",
-        "ENDOR_API_CREDENTIALS_KEY",
-        "ENDOR_API_CREDENTIALS_SECRET",
-    ]
-    return all(os.getenv(var) for var in required_vars)
+    return bool(
+        os.getenv("ENDOR_API_CREDENTIALS_KEY")
+        and os.getenv("ENDOR_API_CREDENTIALS_SECRET")
+    )
 
 
 def pytest_collection_modifyitems(config, items) -> None:

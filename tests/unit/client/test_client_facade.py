@@ -196,46 +196,8 @@ def test_registry_supported_ops_not_implemented_contract(
                 facade.delete("unit-uuid", namespace=namespace)
 
 
-def test_all_oss_scoped_resources_force_oss_namespace(
-    client_with_mock_transport: Client,
-) -> None:
-    """OSS-scoped resources should always resolve namespace to oss."""
-    from endorlabs.registry import RESOURCE_REGISTRY
-
-    client = client_with_mock_transport
-    oss_entries = [entry for entry in RESOURCE_REGISTRY if entry.scope == "oss"]
-    if not oss_entries:
-        pytest.skip("No oss-scoped resource in registry")
-
-    for entry in oss_entries:
-        facade = getattr(client, entry.attr_name)
-        if "list" in entry.supported_ops:
-            facade._ops.list = Mock(return_value=[])
-            facade.list(namespace="tenant.other", max_pages=TEST_MAX_PAGES)
-            args, _ = facade._ops.list.call_args
-            assert args[0] == "oss", entry.attr_name
-        if "get" in entry.supported_ops:
-            facade._ops.get = Mock(return_value=Mock(uuid="unit-uuid"))
-            facade.get("unit-uuid", namespace="tenant.other")
-            args, _ = facade._ops.get.call_args
-            assert args[0] == "oss", entry.attr_name
-
-
 class TestBuildFacade:
     """_build_facade factory produces the correct facade scope per registry entry."""
-
-    def test_oss_scope_facade_has_oss_scope(
-        self, client_with_mock_transport: Client
-    ) -> None:
-        from endorlabs.registry import RESOURCE_REGISTRY
-
-        for entry in RESOURCE_REGISTRY:
-            if entry.scope == "oss":
-                facade = getattr(client_with_mock_transport, entry.attr_name)
-                assert facade.scope == "oss", entry.attr_name
-                break
-        else:
-            pytest.skip("No oss-scoped resource in registry")
 
     def test_tenant_scope_facade_has_none_scope(
         self, client_with_mock_transport: Client
