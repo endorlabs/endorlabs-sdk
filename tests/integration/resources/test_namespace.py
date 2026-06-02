@@ -25,7 +25,6 @@ class TestNamespaces:
     def setup(self, api_client_fast_retry, namespace, root_namespace) -> None:
         """Set up test environment (client and namespace from conftest)."""
         required_vars = [
-            "ENDOR_API",
             "ENDOR_API_CREDENTIALS_KEY",
             "ENDOR_API_CREDENTIALS_SECRET",
         ]

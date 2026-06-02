@@ -33,6 +33,11 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
         "supported_ops": ["create"],
         "create_mode": "payload-only",
     },
+    # Tenant-scoped importer rows: list/get use the customer namespace path
+    # (see tests/unit/client/test_client_facade.py).
+    "DependencyMetadata": {
+        "supported_ops": ["create", "delete", "get", "list"],
+    },
 }
 
 

@@ -770,13 +770,21 @@ class BaseResourceOperations[T: BaseModel]:
             res = self.client.get(url, params=params)
             data = res.json()
 
-            # Handle count response
-            if "list" in data and "response" in data["list"]:
-                return data["list"]["response"].get("total", 0)
-            elif "total" in data:
-                return data["total"]
-            else:
-                return 0
+            # Handle count response (OpenAPI: count_response.count or list total)
+            count_response = data.get("count_response")
+            if isinstance(count_response, dict):
+                raw_count = count_response.get("count")
+                if raw_count is not None:
+                    return int(raw_count)
+            if "list" in data and isinstance(data["list"], dict):
+                list_block = data["list"]
+                if isinstance(list_block.get("response"), dict):
+                    total = list_block["response"].get("total")
+                    if total is not None:
+                        return int(total)
+            if data.get("total") is not None:
+                return int(data["total"])
+            return 0
 
         except EndorAPIError:
             raise
@@ -907,7 +915,7 @@ class BaseResourceOperations[T: BaseModel]:
     ) -> None:
         """Add grouping/aggregation list parameters."""
         if list_params.group_aggregation_paths:
-            params["list_parameters.group_aggregation_paths"] = ",".join(
+            params["list_parameters.group.aggregation_paths"] = ",".join(
                 list_params.group_aggregation_paths
             )
         if list_params.group_by_time is not None:
@@ -931,15 +939,15 @@ class BaseResourceOperations[T: BaseModel]:
                 list_params.group_by_time_operator
             )
         if list_params.group_show_aggregation_uuids is not None:
-            params["list_parameters.group_show_aggregation_uuids"] = str(
+            params["list_parameters.group.show_aggregation_uuids"] = str(
                 list_params.group_show_aggregation_uuids
             ).lower()
         if list_params.group_unique_count_paths:
-            params["list_parameters.group_unique_count_paths"] = ",".join(
+            params["list_parameters.group.unique_count_paths"] = ",".join(
                 list_params.group_unique_count_paths
             )
         if list_params.group_unique_value_paths:
-            params["list_parameters.group_unique_value_paths"] = ",".join(
+            params["list_parameters.group.unique_value_paths"] = ",".join(
                 list_params.group_unique_value_paths
             )
 
