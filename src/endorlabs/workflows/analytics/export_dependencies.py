@@ -29,7 +29,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
-from endorlabs import F
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.tabular import TabularExport, write_table
 
@@ -227,7 +226,7 @@ def _list_package_versions_for_project(
 ) -> list[Any]:
     package_versions = client.PackageVersion.list(
         namespace=namespace,
-        filter=F("spec.project_uuid") == project_uuid,
+        filter=endorlabs.F("spec.project_uuid") == project_uuid,
         traverse=False,
     )
     seen: set[str] = set()
@@ -787,9 +786,8 @@ def main(argv: list[str] | None = None) -> int:
 
     output_path = Path(args.output)
     request_timeout = _resolve_request_timeout(args.request_timeout)
-    client = endorlabs.Client(tenant=args.namespace, timeout=request_timeout)
     remediation: RemediationComparisonResult | None = None
-    try:
+    with endorlabs.Client(tenant=args.namespace, timeout=request_timeout) as client:
         if args.package_name_match:
             result = export_version_cardinality_for_package_match(
                 client,
@@ -828,8 +826,6 @@ def main(argv: list[str] | None = None) -> int:
                 cve_id=args.remediation_cve,
                 package_name=package_name,
             )
-    finally:
-        client.close()
 
     if result.ok:
         write_table(result.table, output_path)

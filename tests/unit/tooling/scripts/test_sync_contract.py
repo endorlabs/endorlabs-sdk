@@ -151,7 +151,7 @@ def test_build_payload_schemas_and_contract(monkeypatch) -> None:
             scope=None,
         )
     ]
-    import sync.contract as contract_module
+    contract_module = sys.modules[build_facade_contract.__module__]
 
     monkeypatch.setattr(contract_module, "RESOURCE_REGISTRY", fake_registry)
     mapping_entries = [
@@ -242,7 +242,7 @@ def test_build_facade_contract_uses_openapi_scope_not_runtime_entry(
             scope="oss",
         )
     ]
-    import sync.contract as contract_module
+    contract_module = sys.modules[build_facade_contract.__module__]
 
     monkeypatch.setattr(contract_module, "RESOURCE_REGISTRY", fake_registry)
     spec = {
