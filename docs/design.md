@@ -30,3 +30,4 @@ Normative agreements are defined in `docs/contracts.md`.
 ## In-flight feature plans
 
 - [design/feat-create-convenience-kwargs-and-resource-reference.md](design/feat-create-convenience-kwargs-and-resource-reference.md) — Side A (generated create convenience kwargs + typed stubs) and Side B (per-resource generated reference pages); branch `feat/create-convenience-kwargs-and-resource-docs`.
+- [design/feat-create-convenience-kwargs-e2e-implementation.md](design/feat-create-convenience-kwargs-e2e-implementation.md) — E2E workstreams E2E-1…E2E-8, PR stack, tests, and final smoke script.
