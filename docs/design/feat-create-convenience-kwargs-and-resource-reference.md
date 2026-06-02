@@ -1,7 +1,7 @@
 # Plan: Create convenience kwargs (Side A) and per-resource reference docs (Side B)
 
 **Branch:** `feat/create-convenience-kwargs-and-resource-docs`
-**Status:** Planning (not implemented on this commit)
+**Status:** Implemented
 **E2E playbook:** [feat-create-convenience-kwargs-e2e-implementation.md](feat-create-convenience-kwargs-e2e-implementation.md) (workstreams, PR stack, file lists, smoke script).
 **Normative contracts:** Update [contracts.md](../contracts.md) when behavior ships; this doc is implementation planning only.
 

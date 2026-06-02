@@ -1,3 +1,7 @@
 {
-  "DependencyMetadata": "tenant"
+  "DependencyMetadata": "tenant",
+  "Vulnerability": "oss",
+  "Malware": "oss",
+  "QueryVulnerability": "oss",
+  "QueryMalware": "oss"
 }

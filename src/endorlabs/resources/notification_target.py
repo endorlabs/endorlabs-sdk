@@ -154,4 +154,8 @@ class CreateNotificationTargetPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateNotificationTargetPayload:
     """Build CreateNotificationTargetPayload from kwargs (decoupled create)."""
-    return CreateNotificationTargetPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateNotificationTargetPayload, kwargs, attr_name="NotificationTarget"
+    )

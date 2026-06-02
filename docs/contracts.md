@@ -64,6 +64,8 @@ This document is the in-repo source of truth for shared SDK semantics.
 
 ## Namespace scoping (resource-scoped operations)
 
+**OSS catalog plane:** `Vulnerability`, `Malware`, `QueryVulnerability`, and `QueryMalware` facades use registry `scope="oss"`. List/get and catalog query creates always hit `/v1/namespaces/oss/…` regardless of `Client(tenant=…)`. Prefer `spec.package_version_names` with Endor ecosystem coordinates (for example `pypi://requests@2.31.0`) per product docs; see [Malware detection](https://docs.endorlabs.com/scan/malware) and the Query* API reference pages.
+
 When you have a resource instance (for example from `list(traverse=True)`), pass the resource object to `get`, `update`, or `delete` so namespace is resolved from the resource and cross-namespace 404s are avoided.
 
 - **get / update / delete:** Accept UUID string or resource object.
@@ -85,14 +87,16 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - **archive**, **list_all**: SDK-exposed convenience parameters. Treat these as SDK behavior contracts, not guaranteed cross-endpoint OpenAPI fields.
 - **Advanced / grouping:** `ListParameters` also exposes grouping and aggregation knobs (`group_aggregation_paths`, `group_by_time`, `group_by_time_interval`, and related fields) that map to OpenAPI list parameters where the resource supports them. Prefer the model docstrings on `ListParameters` and the local OpenAPI spec over duplicating the full matrix here.
 
-**Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<ResourceKind>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls.
+**Consumer UX contract:** Common list params are exposed as flat kwargs on `client.<ResourceKind>.list(...)`. Use `list_params=ListParameters(...)` for full/advanced controls. Unknown flat list kwargs (not in `ListParameters`, facade list params, or resource identity kwargs) raise **`TypeError`**.
 
 ## Create (decoupled)
 
 - `create()` accepts either:
   - `payload=CreateXPayload(...)`, or
   - resource kwargs resolved via `build_create_payload`.
-- Facade convenience kwargs are a subset; resource builders remain canonical for allowed kwargs.
+- **Convenience flat kwargs** MUST match the generated OpenAPI allowlist for that resource (`create_convenience_*` in `registry_contract.py` / `create_convenience.py`). Unknown flat keys on promote or pass-through create paths raise **`TypeError`** (no silent drop). Escape hatches: `payload=`, nested `spec=` / `meta=`.
+- Per-resource create kwargs and read-only response fields: [generated-reference/resources/README.md](generated-reference/resources/README.md).
+- Resource builders remain canonical for assembly; Pyright stubs expose typed `create()` where convenience metadata exists (`client_surface.pyi`).
 
 ## Update and update_mask
 

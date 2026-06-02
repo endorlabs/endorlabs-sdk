@@ -834,7 +834,11 @@ class CreateFindingPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateFindingPayload:
     """Build CreateFindingPayload from kwargs (decoupled facade create)."""
-    return CreateFindingPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateFindingPayload, kwargs, attr_name="Finding"
+    )
 
 
 class UpdateFindingPayload(BaseModel):
