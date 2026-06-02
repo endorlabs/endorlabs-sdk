@@ -69,6 +69,12 @@ def test_facade_contract_has_stable_resource_shape() -> None:
         "workflow_flags",
         "create_payload_entities",
         "update_payload_entities",
+        "create_convenience_spec_fields",
+        "create_convenience_spec_required",
+        "create_convenience_meta_fields",
+        "create_convenience_payload_top_level_fields",
+        "create_convenience_read_only_spec_fields",
+        "convenience_skip_reason",
     }
     known_ops = {"list", "get", "create", "update", "delete"}
     seen_attrs: list[str] = []

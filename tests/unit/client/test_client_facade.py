@@ -227,34 +227,32 @@ def test_authentication_log_facade_get_uses_tenant_namespace(
     assert args[1] == "log-123"
 
 
-def test_malware_facade_get_uses_default_tenant_namespace(
+def test_malware_facade_get_uses_oss_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Tenant-scoped get(id) delegates with the client default namespace."""
+    """OSS-scoped get(id) always uses the oss namespace path."""
     client = client_with_mock_transport
     client.Malware._ops.get = Mock(
-        return_value=Mock(
-            uuid="mal-456", tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT)
-        )
+        return_value=Mock(uuid="mal-456", tenant_meta=Mock(namespace="oss"))
     )
     result = client.Malware.get("mal-456")
     assert result.uuid == "mal-456"
     client.Malware._ops.get.assert_called_once()
     args, _ = client.Malware._ops.get.call_args
-    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] == "oss"
     assert args[1] == "mal-456"
 
 
-def test_malware_facade_list_uses_default_tenant_namespace(
+def test_malware_facade_list_uses_oss_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Tenant-scoped list() delegates with the client default namespace."""
+    """OSS-scoped list() always uses the oss namespace path."""
     client = client_with_mock_transport
     client.Malware._ops.list = Mock(return_value=[])
     client.Malware.list(max_pages=TEST_MAX_PAGES)
     client.Malware._ops.list.assert_called_once()
     args, _ = client.Malware._ops.list.call_args
-    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] == "oss"
 
 
 def test_dependency_metadata_facade_get_uses_tenant_namespace(
@@ -297,22 +295,33 @@ def test_dependency_metadata_registry_scope_is_tenant() -> None:
     assert entry.scope is None
 
 
-def test_vulnerability_facade_list_uses_default_tenant_namespace(
+def test_vulnerability_facade_list_uses_oss_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Tenant-scoped vulnerability list() delegates with the client default namespace."""
+    """OSS-scoped vulnerability list() always uses the oss namespace path."""
     client = client_with_mock_transport
     client.Vulnerability._ops.list = Mock(return_value=[])
     client.Vulnerability.list(max_pages=TEST_MAX_PAGES)
     client.Vulnerability._ops.list.assert_called_once()
     args, _ = client.Vulnerability._ops.list.call_args
-    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] == "oss"
 
 
-def test_query_vulnerability_create_builds_payload_and_uses_tenant_namespace(
+def test_vulnerability_and_malware_registry_scope_is_oss() -> None:
+    """Vulnerability and Malware catalog facades are OSS-scoped in the registry."""
+    from endorlabs.registry import RESOURCE_REGISTRY
+
+    by_attr = {entry.attr_name: entry for entry in RESOURCE_REGISTRY}
+    assert by_attr["Vulnerability"].scope == "oss"
+    assert by_attr["Malware"].scope == "oss"
+    assert by_attr["QueryVulnerability"].scope == "oss"
+    assert by_attr["QueryMalware"].scope == "oss"
+
+
+def test_query_vulnerability_create_builds_payload_and_uses_oss_namespace(
     client_with_mock_transport: Client,
 ) -> None:
-    """Create-only query_vulnerability uses builder and client tenant namespace."""
+    """Create-only query_vulnerability uses builder and OSS namespace (catalog plane)."""
     client = client_with_mock_transport
     built_payload = Mock()
     client.QueryVulnerability._build_create_payload_fn = Mock(
@@ -321,12 +330,12 @@ def test_query_vulnerability_create_builds_payload_and_uses_tenant_namespace(
     client.QueryVulnerability._ops.create = Mock(return_value=Mock(uuid="qv-1"))
     client.QueryVulnerability.create(
         name="query-vuln",
-        package_version_name="pkg:maven/a/b@1.0.0",
+        package_version_name="pypi://requests@2.31.0",
     )
     client.QueryVulnerability._build_create_payload_fn.assert_called_once()
     client.QueryVulnerability._ops.create.assert_called_once()
     args, _ = client.QueryVulnerability._ops.create.call_args
-    assert args[0] == TEST_NAMESPACE_DEFAULT
+    assert args[0] == "oss"
     assert args[1] is built_payload
 
 
@@ -971,20 +980,13 @@ def test_authorization_policy_lookup_builds_filter_from_name(
     assert "only-one" in lp.filter
 
 
-def test_list_name_passed_through_when_not_in_identity_map(
+def test_list_name_raises_when_not_in_identity_map(
     client_with_mock_transport: Client,
 ) -> None:
-    """scan_workflow has no list identity map; name is not converted to filter."""
+    """scan_workflow has no list identity map; unknown ``name`` raises TypeError."""
     client = client_with_mock_transport
-    mock_list = Mock(return_value=[])
-    client.ScanWorkflow._ops.list = mock_list
-    client.ScanWorkflow.list(name="some-workflow", max_pages=TEST_MAX_PAGES)
-    mock_list.assert_called_once()
-    args, _ = mock_list.call_args
-    lp = args[1]
-    # scan_workflow has no filter_kwarg_map for name, so no filter from identity;
-    # name is not a ListParameters field so lp may be None or have no filter.
-    assert lp is None or "meta.name" not in (lp.filter or "")
+    with pytest.raises(TypeError, match="Invalid list kwargs"):
+        client.ScanWorkflow.list(name="some-workflow", max_pages=TEST_MAX_PAGES)
 
 
 def test_list_with_parent_raises_when_facade_does_not_support_parent(

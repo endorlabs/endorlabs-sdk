@@ -258,7 +258,7 @@
       "attr_name": "Malware",
       "parent_kind": null,
       "resource_name": "malware",
-      "scope": "tenant",
+      "scope": "oss",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,
@@ -818,7 +818,7 @@
       "attr_name": "Vulnerability",
       "parent_kind": null,
       "resource_name": "vulnerabilities",
-      "scope": "tenant",
+      "scope": "oss",
       "supported_ops_sdk": {
         "create": false,
         "delete": false,

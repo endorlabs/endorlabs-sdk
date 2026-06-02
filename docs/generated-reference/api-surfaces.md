@@ -130,7 +130,7 @@ Auto-generated inventories for stable/public surfaces.
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
 | LinterResult | linter-results | tenant | — | list, get, create, delete |
-| Malware | malware | tenant | — | list, get |
+| Malware | malware | oss | — | list, get |
 | Metric | metrics | tenant | — | list, get, create, update, delete |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
@@ -158,4 +158,4 @@ Auto-generated inventories for stable/public surfaces.
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |
-| Vulnerability | vulnerabilities | tenant | — | list, get |
+| Vulnerability | vulnerabilities | oss | — | list, get |

@@ -247,4 +247,8 @@ class CreateAuditLogPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateAuditLogPayload:
     """Build CreateAuditLogPayload from kwargs (decoupled facade create)."""
-    return CreateAuditLogPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateAuditLogPayload, kwargs, attr_name="AuditLog"
+    )

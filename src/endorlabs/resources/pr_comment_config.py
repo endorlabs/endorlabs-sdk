@@ -115,4 +115,8 @@ class CreatePRCommentConfigPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreatePRCommentConfigPayload:
     """Build CreatePRCommentConfigPayload from kwargs (decoupled facade create)."""
-    return CreatePRCommentConfigPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreatePRCommentConfigPayload, kwargs, attr_name="PRCommentConfig"
+    )
