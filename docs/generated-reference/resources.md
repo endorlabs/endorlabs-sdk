@@ -39,7 +39,7 @@ Legend:
 | Installation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Invitation | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | LinterResult | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
-| Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
+| Malware | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | — |
 | Metric | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | Namespace | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | NotificationTarget | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
@@ -67,7 +67,7 @@ Legend:
 | VectorStore | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | VectorStoreQuery | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |
-| Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
+| Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | — |
 
 Spec (local preferred): `.endorlabs-context/openapiv2.swagger.json`.
 Fallback URL: `https://api.endorlabs.com/download/openapiv2.swagger.json`.

@@ -449,7 +449,11 @@ class CreateInstallationPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateInstallationPayload:
     """Build CreateInstallationPayload from kwargs (decoupled create)."""
-    return CreateInstallationPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateInstallationPayload, kwargs, attr_name="Installation"
+    )
 
 
 class UpdateInstallationPayload(BaseModel):

@@ -96,4 +96,8 @@ class CreateCodeOwnersPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateCodeOwnersPayload:
     """Build CreateCodeOwnersPayload from kwargs (decoupled facade create)."""
-    return CreateCodeOwnersPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateCodeOwnersPayload, kwargs, attr_name="CodeOwners"
+    )

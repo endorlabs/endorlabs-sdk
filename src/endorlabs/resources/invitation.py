@@ -84,4 +84,8 @@ class CreateInvitationPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateInvitationPayload:
     """Build CreateInvitationPayload from kwargs (decoupled facade create)."""
-    return CreateInvitationPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateInvitationPayload, kwargs, attr_name="Invitation"
+    )
