@@ -231,6 +231,8 @@ def test_main_writes_cardinality_csv(
 ) -> None:
     out = tmp_path / "cardinality.csv"
     mock_client = MagicMock()
+    mock_client.__enter__.return_value = mock_client
+    mock_client.__exit__.side_effect = lambda *_args: mock_client.close()
     mock_client_cls.return_value = mock_client
     mock_client.Project.list.return_value = [_mock_project("proj-1", "tenant")]
     mock_client.PackageVersion.list.return_value = [_mock_package_version("pv-1")]
