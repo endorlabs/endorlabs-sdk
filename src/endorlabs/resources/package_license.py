@@ -239,7 +239,11 @@ class CreatePackageLicensePayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreatePackageLicensePayload:
     """Build CreatePackageLicensePayload from kwargs (decoupled create)."""
-    return CreatePackageLicensePayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreatePackageLicensePayload, kwargs, attr_name="PackageLicense"
+    )
 
 
 class UpdatePackageLicensePayload(BaseModel):

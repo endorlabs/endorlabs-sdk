@@ -3,6 +3,26 @@
   "resources": [
     {
       "attr_name": "APIKey",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "issuing_user",
+        "key",
+        "secret"
+      ],
+      "create_convenience_spec_fields": [
+        "permissions",
+        "expiration_time"
+      ],
+      "create_convenience_spec_required": [
+        "permissions",
+        "expiration_time"
+      ],
       "create_payload_definitions": {
         "APIKeyServiceCreateAPIKeyBody": {
           "description": "Manages the system API keys.",
@@ -44,6 +64,25 @@
     },
     {
       "attr_name": "AuditLog",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "operation",
+        "message_uuid",
+        "message_kind",
+        "payload",
+        "error",
+        "claims",
+        "remote_address"
+      ],
+      "create_convenience_spec_required": [
+        "operation"
+      ],
       "create_payload_definitions": {
         "AuditLogServiceCreateAuditLogBody": {
           "description": "AuditLog represents a CRUD operation on a message.",
@@ -82,6 +121,23 @@
     },
     {
       "attr_name": "AuthenticationLog",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "success",
+        "authorized_tenants",
+        "error_message",
+        "status",
+        "claims",
+        "remote_address",
+        "uri"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "AuthenticationLogServiceCreateAuthenticationLogBody": {
           "description": "Represents a CRUD operation on a message.",
@@ -120,6 +176,29 @@
     },
     {
       "attr_name": "AuthorizationPolicy",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "is_support_policy"
+      ],
+      "create_convenience_spec_fields": [
+        "clause",
+        "target_namespaces",
+        "propagate",
+        "permissions",
+        "expiration_time"
+      ],
+      "create_convenience_spec_required": [
+        "clause",
+        "target_namespaces",
+        "propagate",
+        "permissions"
+      ],
       "create_payload_definitions": {
         "AuthorizationPolicyServiceCreateAuthorizationPolicyBody": {
           "description": "Represents an authorization policy in the system.",
@@ -205,6 +284,18 @@
     },
     {
       "attr_name": "CodeOwners",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "patterns",
+        "version"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "CodeOwnersServiceCreateCodeOwnersBody": {
           "description": "Code owner information for a project.",
@@ -284,6 +375,19 @@
     },
     {
       "attr_name": "DependencyMetadata",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "data"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "BatchDependencyMetadataServiceCreateBatchDependencyMetadataBody": {
           "description": "Request to create multiple DependencyMetadata objects.",
@@ -397,6 +501,30 @@
     },
     {
       "attr_name": "EndorLicense",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "license_info"
+      ],
+      "create_convenience_spec_fields": [
+        "target_namespace",
+        "type",
+        "read_access_until",
+        "write_access_until",
+        "bundle_info",
+        "quota",
+        "is_customer",
+        "excluded_feature_types",
+        "license_configurations",
+        "salesforce_account_id"
+      ],
+      "create_convenience_spec_required": [
+        "target_namespace"
+      ],
       "create_payload_definitions": {
         "EndorLicenseServiceCreateEndorLicenseBody": {
           "description": "EndorLicense represents a specific Endor license assigned to a tenant.",
@@ -479,6 +607,59 @@
     },
     {
       "attr_name": "Finding",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "last_processed",
+        "level",
+        "summary",
+        "finding_tags",
+        "target_uuid",
+        "extra_key",
+        "dismiss",
+        "remediation",
+        "finding_metadata",
+        "method",
+        "target_dependency_package_name",
+        "target_dependency_name",
+        "target_dependency_version",
+        "explanation",
+        "remediation_action",
+        "source_code_version",
+        "reachable_paths",
+        "ecosystem",
+        "finding_categories",
+        "relationship",
+        "latest_version",
+        "dependency_file_paths",
+        "approximation",
+        "proposed_version",
+        "exceptions",
+        "actions",
+        "fixing_upgrades",
+        "fixing_patch",
+        "code_owners",
+        "location_urls",
+        "call_graph_analysis_type",
+        "snooze",
+        "ignore"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid",
+        "last_processed",
+        "level",
+        "summary",
+        "finding_tags",
+        "target_uuid",
+        "extra_key"
+      ],
       "create_payload_definitions": {
         "FindingServiceCreateFindingBody": {
           "description": "A finding contains details of a problem that needs to be fixed.\nThe finding applies to the parent object, which can be one of:\nRepository, RepositoryVersion, or PackageVersion.\nFinding objects are connected to the project via spec.project_uuid.",
@@ -570,6 +751,45 @@
     },
     {
       "attr_name": "FindingLog",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "finding_uuid",
+        "finding_parent_kind",
+        "finding_parent_uuid",
+        "operation",
+        "introduced_at",
+        "method",
+        "level",
+        "finding_tags",
+        "finding_categories",
+        "resolved_at",
+        "days_unresolved",
+        "ecosystem",
+        "target_uuid",
+        "target_dependency_package_name",
+        "approximation",
+        "finding_parent_name",
+        "snooze",
+        "location"
+      ],
+      "create_convenience_spec_required": [
+        "finding_uuid",
+        "finding_parent_kind",
+        "finding_parent_uuid",
+        "operation",
+        "introduced_at",
+        "method",
+        "level",
+        "finding_tags",
+        "finding_categories"
+      ],
       "create_payload_definitions": {
         "FindingLogServiceCreateFindingLogBody": {
           "description": "A finding log contains details of the state of a finding at the time it was\ncreated, updated or deleted.",
@@ -614,6 +834,43 @@
     },
     {
       "attr_name": "Installation",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "processing_status",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "external_name",
+        "ingestion_time",
+        "ingestion_token",
+        "marked_for_deletion",
+        "target_type",
+        "user"
+      ],
+      "create_convenience_spec_fields": [
+        "public",
+        "external_id",
+        "suspended",
+        "project_uuids",
+        "login",
+        "invalid",
+        "enabled_features",
+        "platform_source",
+        "platform_type",
+        "github_config",
+        "azure_config",
+        "gitlab_config",
+        "bitbucket_config",
+        "huggingface_config",
+        "include_archived_repos",
+        "installation_error_message",
+        "scm_app_uuid",
+        "cleanup_stale_namespaces"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "InstallationServiceCreateInstallationBody": {
           "description": "Installation represents an installation request in the system.",
@@ -703,6 +960,21 @@
     },
     {
       "attr_name": "Invitation",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "invitation_state"
+      ],
+      "create_convenience_spec_fields": [
+        "user_email"
+      ],
+      "create_convenience_spec_required": [
+        "user_email"
+      ],
       "create_payload_definitions": {
         "InvitationServiceCreateInvitationBody": {
           "description": "Invitation represents an invitation for a new user in the system.",
@@ -780,6 +1052,41 @@
     },
     {
       "attr_name": "LinterResult",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "origin",
+        "level",
+        "extra_key",
+        "version",
+        "sarif_result",
+        "ai_result",
+        "ecosystem",
+        "semgrep",
+        "secret",
+        "aisast",
+        "fingerprints",
+        "fingerprint_count",
+        "distribution_format",
+        "ref",
+        "storage_location",
+        "suppressed",
+        "linter_correctness_analyses",
+        "endor_fingerprint"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid",
+        "origin",
+        "level",
+        "extra_key"
+      ],
       "create_payload_definitions": {
         "LinterResultServiceCreateLinterResultBody": {
           "description": "The meta parent_kind can take one of two values - PackageVersion or RepositoryVersion.",
@@ -869,6 +1176,44 @@
     },
     {
       "attr_name": "Malware",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "contested_date",
+        "contributing_feeds"
+      ],
+      "create_convenience_spec_fields": [
+        "ecosystem",
+        "package_name",
+        "ranges",
+        "version",
+        "status",
+        "pkg_release_date",
+        "malware_detected_on",
+        "advisory_published",
+        "advisory_last_updated",
+        "reasons",
+        "purl",
+        "summary",
+        "contested",
+        "contested_reason",
+        "source",
+        "aliases",
+        "references",
+        "upsert_key",
+        "package_version",
+        "additional_notes",
+        "cwe_id",
+        "deletion_exempt"
+      ],
+      "create_convenience_spec_required": [
+        "ecosystem",
+        "package_name"
+      ],
       "create_payload_definitions": {
         "MalwareServiceCreateMalwareBody": {
           "properties": {
@@ -969,6 +1314,25 @@
     },
     {
       "attr_name": "Metric",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "analytic",
+        "project_uuid",
+        "metric_values",
+        "raw"
+      ],
+      "create_convenience_spec_required": [
+        "analytic",
+        "project_uuid",
+        "metric_values"
+      ],
       "create_payload_definitions": {
         "MetricServiceCreateMetricBody": {
           "description": "This contains the definition all metrics.",
@@ -1056,6 +1420,19 @@
     },
     {
       "attr_name": "Namespace",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "full_name"
+      ],
+      "create_convenience_spec_fields": [
+        "managed"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "NamespaceServiceCreateNamespaceBody": {
           "description": "Namespace provides a mechanism for isolating groups of resources.\nNamespaces may be defined in a parent child hierarchy.",
@@ -1126,6 +1503,21 @@
     },
     {
       "attr_name": "NotificationTarget",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "action",
+        "custom_template"
+      ],
+      "create_convenience_spec_required": [
+        "action"
+      ],
       "create_payload_definitions": {
         "NotificationTargetServiceCreateNotificationTargetBody": {
           "description": "Indicates actions taken when a corresponding notification is raised.",
@@ -1213,6 +1605,21 @@
     },
     {
       "attr_name": "PRCommentConfig",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "template",
+        "platform_type"
+      ],
+      "create_convenience_spec_required": [
+        "template"
+      ],
       "create_payload_definitions": {
         "PRCommentConfigServiceCreatePRCommentConfigBody": {
           "properties": {
@@ -1296,6 +1703,25 @@
     },
     {
       "attr_name": "PackageLicense",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "code_licenses",
+        "package_manager_licenses",
+        "copyrights",
+        "declared_code_licenses",
+        "license_text",
+        "all_licenses",
+        "project_uuid",
+        "version"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "PackageLicenseServiceCreatePackageLicenseBody": {
           "properties": {
@@ -1383,6 +1809,37 @@
     },
     {
       "attr_name": "PackageVersion",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "processing_status",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "ecosystem",
+        "internal_reference_key",
+        "package_name"
+      ],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "source_code_reference",
+        "release_timestamp",
+        "unresolved_dependencies",
+        "resolved_dependencies",
+        "resolution_errors",
+        "language",
+        "relative_path",
+        "container_metadata",
+        "bazel_metadata",
+        "code_owners",
+        "call_graph_available",
+        "precomputed_call_graph_state"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid"
+      ],
       "create_payload_definitions": {
         "PackageVersionServiceCreatePackageVersionBody": {
           "description": "PackageVersion represents a version of a package.",
@@ -1476,6 +1933,37 @@
     },
     {
       "attr_name": "Policy",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "policy_type",
+        "rule",
+        "project_selector",
+        "project_exceptions",
+        "resource_kinds",
+        "disable",
+        "query_statements",
+        "template_uuid",
+        "template_values",
+        "template_version",
+        "template_parameters",
+        "finding_level",
+        "group_by_fields",
+        "finding_categories",
+        "admission",
+        "finding",
+        "notification",
+        "exception"
+      ],
+      "create_convenience_spec_required": [
+        "policy_type"
+      ],
       "create_payload_definitions": {
         "PolicyServiceCreatePolicyBody": {
           "description": "Policy represents a policy in the system.",
@@ -1561,6 +2049,36 @@
     },
     {
       "attr_name": "PolicyTemplate",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "rule",
+        "query_statements",
+        "policy_type",
+        "version",
+        "template_parameters",
+        "resource_kinds",
+        "default_enabled",
+        "finding_level",
+        "group_by_fields",
+        "release_notes",
+        "deprecated",
+        "finding_categories",
+        "admission",
+        "finding"
+      ],
+      "create_convenience_spec_required": [
+        "rule",
+        "query_statements",
+        "policy_type",
+        "version"
+      ],
       "create_payload_definitions": {
         "PolicyTemplateServiceCreatePolicyTemplateBody": {
           "description": "PolicyTemplate represents a policy system in the system. Policy\ntemplates can be used to create policies from these templates.",
@@ -1646,6 +2164,30 @@
     },
     {
       "attr_name": "Project",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "processing_status",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "ingestion_token",
+        "internal_reference_key"
+      ],
+      "create_convenience_spec_fields": [
+        "platform_source",
+        "git",
+        "unsupported",
+        "sbom",
+        "model",
+        "toolchain_profile_uuid",
+        "scan_profile_uuid",
+        "is_archived"
+      ],
+      "create_convenience_spec_required": [
+        "platform_source"
+      ],
       "create_payload_definitions": {
         "ProjectServiceCreateProjectBody": {
           "description": "Logical root object that serves as the basis for organizing and managing all\ninformation related to a repository.\n\nA project corresponds to a repository.",
@@ -1733,6 +2275,24 @@
     },
     {
       "attr_name": "QueryMalware",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "response",
+        "responses",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "package_version_name",
+        "package_version_names",
+        "purls",
+        "mask"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "QueryMalwareServiceCreateQueryMalwareBody": {
           "description": "QueryMalware is used to do query request on malware that are\nnot supported by ListMalware and the filter. For instance, you must\nuse this method to get a list of malware based on a version.",
@@ -1770,6 +2330,26 @@
     },
     {
       "attr_name": "QueryVulnerability",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "response",
+        "responses",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "package_version_name",
+        "package_version_names",
+        "vulnerability_name_query",
+        "purls",
+        "mask",
+        "vulnerability_type"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "QueryVulnerabilityServiceCreateQueryVulnerabilityBody": {
           "description": "QueryVulnerability is used to do query request on vulnerabilities that are\nnot supported by ListVulnerabilities and the filter. For instance, you must\nuse this method to get a list of vulnerabilities based on a version.",
@@ -1807,6 +2387,36 @@
     },
     {
       "attr_name": "Repository",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "ingested_object",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "platform_source",
+        "http_clone_url",
+        "default_branch",
+        "external_id",
+        "owner",
+        "create_time",
+        "update_time",
+        "contributors",
+        "commit_hashes",
+        "languages",
+        "tags",
+        "branch_protections",
+        "vulnerability_alerts_enabled",
+        "org",
+        "repository_license"
+      ],
+      "create_convenience_spec_required": [
+        "platform_source",
+        "http_clone_url",
+        "default_branch"
+      ],
       "create_payload_definitions": {
         "RepositoryServiceCreateRepositoryBody": {
           "description": "Repository represents the ingested information about a source control repository.\nA repository may refer to any type of source control repository, such as GitLab or GitHub.",
@@ -1896,6 +2506,20 @@
     },
     {
       "attr_name": "RepositoryVersion",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "scan_object",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "version",
+        "last_commit_date"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "RepositoryVersionServiceCreateRepositoryVersionBody": {
           "description": "The ingested information about a repository version.",
@@ -1989,6 +2613,33 @@
     },
     {
       "attr_name": "ScanLogRequest",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "applied_filter",
+        "log_messages"
+      ],
+      "create_convenience_spec_fields": [
+        "max_entries",
+        "start_time",
+        "newest_first",
+        "admin_filter",
+        "log_levels",
+        "scan_request_uuid",
+        "project_uuid",
+        "installation_uuid",
+        "onprem_scheduler_uuid",
+        "scan_result_uuid",
+        "execution_id",
+        "end_time"
+      ],
+      "create_convenience_spec_required": [
+        "max_entries"
+      ],
       "create_payload_definitions": {
         "ScanLogRequestServiceCreateScanLogRequestBody": {
           "description": "ScanLogRequest represents a CRUD operation on a message.",
@@ -2027,6 +2678,24 @@
     },
     {
       "attr_name": "ScanProfile",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "toolchain_profile",
+        "automated_scan_parameters",
+        "remediation_parameters",
+        "is_default",
+        "security_review_scanner_parameters",
+        "exporter_parameters",
+        "ai_sast_analysis_parameters"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "ScanProfileServiceCreateScanProfileBody": {
           "description": "ScanProfile represents the scan configuration to use across different\nprojects.",
@@ -2112,6 +2781,48 @@
     },
     {
       "attr_name": "ScanResult",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "status",
+        "type",
+        "errors",
+        "warnings",
+        "infos",
+        "start_time",
+        "end_time",
+        "stats",
+        "refs",
+        "environment",
+        "has_panic",
+        "exit_code",
+        "logs",
+        "policies_triggered",
+        "warning_findings",
+        "blocking_findings",
+        "runtimes",
+        "all_findings",
+        "deleted_findings",
+        "languages_detected",
+        "exception_findings",
+        "findings",
+        "provisioning_result_uuid",
+        "versions",
+        "ecosystem_pkg_counts",
+        "ecosystem_dep_counts",
+        "components_executed",
+        "provisioning_result"
+      ],
+      "create_convenience_spec_required": [
+        "status",
+        "type"
+      ],
       "create_payload_definitions": {
         "ScanResultServiceCreateScanResultBody": {
           "description": "Contains the results of an endorctl scan.",
@@ -2199,6 +2910,19 @@
     },
     {
       "attr_name": "ScanWorkflow",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "steps",
+        "remediation_parameters",
+        "automated_scan_parameters"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "ScanWorkflowServiceCreateScanWorkflowBody": {
           "description": "ScanWorkflow corresponds to a workflow of scan steps.",
@@ -2280,6 +3004,26 @@
     },
     {
       "attr_name": "ScanWorkflowResult",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "status",
+        "start_time",
+        "end_time",
+        "execution_id",
+        "workflow_results",
+        "stats",
+        "versions"
+      ],
+      "create_convenience_spec_required": [
+        "status"
+      ],
       "create_payload_definitions": {
         "ScanWorkflowResultServiceCreateScanWorkflowResultBody": {
           "description": "ScanWorkflowResult corresponds to a workflow scan result.",
@@ -2371,6 +3115,24 @@
     },
     {
       "attr_name": "SemgrepRule",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "disabled",
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "defined_by",
+        "severity_level"
+      ],
+      "create_convenience_spec_fields": [
+        "rule",
+        "disabled",
+        "yaml"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "SemgrepRuleServiceCreateSemgrepRuleBody": {
           "properties": {
@@ -2462,6 +3224,19 @@
     },
     {
       "attr_name": "V1IdentityProvider",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "oidc_provider",
+        "saml_provider"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "IdentityProviderServiceCreateIdentityProviderBody": {
           "description": "Represents an identity provider.",
@@ -2547,6 +3322,36 @@
     },
     {
       "attr_name": "V1PackageFirewallLog",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "ecosystem",
+        "package_name",
+        "package_version",
+        "request_type",
+        "block_reason",
+        "malware_uuid",
+        "api_key_id",
+        "remote_address",
+        "request_uri",
+        "blocked_at",
+        "package_age_hours",
+        "reason",
+        "action",
+        "package_license",
+        "action_at",
+        "cvss_severity_level",
+        "cvss_vuln_uuid"
+      ],
+      "create_convenience_spec_required": [
+        "ecosystem",
+        "package_name"
+      ],
       "create_payload_definitions": {
         "PackageFirewallLogServiceCreatePackageFirewallLogBody": {
           "description": "PackageFirewallLog represents a package firewall audit event recording the\naction taken and the reason that triggered it.",
@@ -2586,6 +3391,19 @@
     },
     {
       "attr_name": "V1Query",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "query_response"
+      ],
+      "create_convenience_spec_fields": [
+        "query_spec"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "QueryServiceCreateQueryBody": {
           "description": "Query implements the metric query requests.",
@@ -2625,6 +3443,22 @@
     },
     {
       "attr_name": "V1QuerySimilarPackages",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "name",
+        "edit_distance",
+        "repo",
+        "exact_match"
+      ],
+      "create_convenience_spec_required": [
+        "name"
+      ],
       "create_payload_definitions": {
         "QuerySimilarPackagesServiceCreateQuerySimilarPackagesBody": {
           "description": "QuerySimilarPackages implements the similar packages query requests.",
@@ -2671,6 +3505,23 @@
     },
     {
       "attr_name": "V1SavedQuery",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "lock"
+      ],
+      "create_convenience_spec_fields": [
+        "query",
+        "monitor",
+        "query_type",
+        "is_default"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "SavedQueryServiceCreateSavedQueryBody": {
           "description": "SavedQuery implements the metric query requests.",
@@ -2754,6 +3605,26 @@
     },
     {
       "attr_name": "VectorStore",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "matches"
+      ],
+      "create_convenience_spec_fields": [
+        "vector_store_uuid",
+        "query",
+        "metadata_filter"
+      ],
+      "create_convenience_spec_required": [
+        "vector_store_uuid",
+        "query"
+      ],
       "create_payload_definitions": {
         "VectorStoreQueryServiceCreateVectorStoreQueryBody": {
           "description": "VectorStoreQuery is the message to query the vector store.",
@@ -2822,6 +3693,26 @@
     },
     {
       "attr_name": "VectorStoreQuery",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "matches"
+      ],
+      "create_convenience_spec_fields": [
+        "vector_store_uuid",
+        "query",
+        "metadata_filter"
+      ],
+      "create_convenience_spec_required": [
+        "vector_store_uuid",
+        "query"
+      ],
       "create_payload_definitions": {
         "VectorStoreQueryServiceCreateVectorStoreQueryBody": {
           "description": "VectorStoreQuery is the message to query the vector store.",
@@ -2857,6 +3748,28 @@
     },
     {
       "attr_name": "VersionUpgrade",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "name",
+        "upgrade_info",
+        "configuration",
+        "stats",
+        "prioritized_upgrades",
+        "all_upgrades",
+        "finding_fixing_upgrades"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid",
+        "name"
+      ],
       "create_payload_definitions": {
         "VersionUpgradeServiceCreateVersionUpgradeBody": {
           "description": "VersionUpgrade contains all information about a possible version upgrade of a dependency package.\nThis upgrade object can be under a project or a package version object.",
@@ -2942,6 +3855,26 @@
     },
     {
       "attr_name": "Vulnerability",
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "response",
+        "responses",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "package_version_name",
+        "package_version_names",
+        "vulnerability_name_query",
+        "purls",
+        "mask",
+        "vulnerability_type"
+      ],
+      "create_convenience_spec_required": [],
       "create_payload_definitions": {
         "QueryVulnerabilityServiceCreateQueryVulnerabilityBody": {
           "description": "QueryVulnerability is used to do query request on vulnerabilities that are\nnot supported by ListVulnerabilities and the filter. For instance, you must\nuse this method to get a list of vulnerabilities based on a version.",

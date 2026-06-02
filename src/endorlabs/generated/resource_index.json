@@ -1,0 +1,475 @@
+{
+  "resources": [
+    {
+      "attr_name": "APIKey",
+      "doc_path": "docs/generated-reference/resources/APIKey.md",
+      "resource_name": "api-keys",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "AuditLog",
+      "doc_path": "docs/generated-reference/resources/AuditLog.md",
+      "resource_name": "audit-logs",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "AuthenticationLog",
+      "doc_path": "docs/generated-reference/resources/AuthenticationLog.md",
+      "resource_name": "authentication-logs",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "AuthorizationPolicy",
+      "doc_path": "docs/generated-reference/resources/AuthorizationPolicy.md",
+      "resource_name": "authorization-policies",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "CodeOwners",
+      "doc_path": "docs/generated-reference/resources/CodeOwners.md",
+      "resource_name": "codeowners",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "DependencyMetadata",
+      "doc_path": "docs/generated-reference/resources/DependencyMetadata.md",
+      "resource_name": "dependency-metadata",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "EndorLicense",
+      "doc_path": "docs/generated-reference/resources/EndorLicense.md",
+      "resource_name": "endor-licenses",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "Finding",
+      "doc_path": "docs/generated-reference/resources/Finding.md",
+      "resource_name": "findings",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "FindingLog",
+      "doc_path": "docs/generated-reference/resources/FindingLog.md",
+      "resource_name": "finding-logs",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "Installation",
+      "doc_path": "docs/generated-reference/resources/Installation.md",
+      "resource_name": "installations",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "Invitation",
+      "doc_path": "docs/generated-reference/resources/Invitation.md",
+      "resource_name": "invitations",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "LinterResult",
+      "doc_path": "docs/generated-reference/resources/LinterResult.md",
+      "resource_name": "linter-results",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "Malware",
+      "doc_path": "docs/generated-reference/resources/Malware.md",
+      "resource_name": "malware",
+      "scope": "oss",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "Metric",
+      "doc_path": "docs/generated-reference/resources/Metric.md",
+      "resource_name": "metrics",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "Namespace",
+      "doc_path": "docs/generated-reference/resources/Namespace.md",
+      "resource_name": "namespaces",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "NotificationTarget",
+      "doc_path": "docs/generated-reference/resources/NotificationTarget.md",
+      "resource_name": "notification-targets",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "PRCommentConfig",
+      "doc_path": "docs/generated-reference/resources/PRCommentConfig.md",
+      "resource_name": "pr-comment-configs",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "PackageFirewallLog",
+      "doc_path": "docs/generated-reference/resources/PackageFirewallLog.md",
+      "resource_name": "package-firewall-logs",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "PackageLicense",
+      "doc_path": "docs/generated-reference/resources/PackageLicense.md",
+      "resource_name": "package-licenses",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "PackageVersion",
+      "doc_path": "docs/generated-reference/resources/PackageVersion.md",
+      "resource_name": "package-versions",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "Policy",
+      "doc_path": "docs/generated-reference/resources/Policy.md",
+      "resource_name": "policies",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "PolicyTemplate",
+      "doc_path": "docs/generated-reference/resources/PolicyTemplate.md",
+      "resource_name": "policy-templates",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "Project",
+      "doc_path": "docs/generated-reference/resources/Project.md",
+      "resource_name": "projects",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "QueryMalware",
+      "doc_path": "docs/generated-reference/resources/QueryMalware.md",
+      "resource_name": "queries/malware",
+      "scope": "oss",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "QueryVulnerability",
+      "doc_path": "docs/generated-reference/resources/QueryVulnerability.md",
+      "resource_name": "queries/vulnerabilities",
+      "scope": "oss",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "Repository",
+      "doc_path": "docs/generated-reference/resources/Repository.md",
+      "resource_name": "repositories",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "RepositoryVersion",
+      "doc_path": "docs/generated-reference/resources/RepositoryVersion.md",
+      "resource_name": "repository-versions",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "ScanLogRequest",
+      "doc_path": "docs/generated-reference/resources/ScanLogRequest.md",
+      "resource_name": "scan-log-requests",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "ScanProfile",
+      "doc_path": "docs/generated-reference/resources/ScanProfile.md",
+      "resource_name": "scan-profiles",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "ScanResult",
+      "doc_path": "docs/generated-reference/resources/ScanResult.md",
+      "resource_name": "scan-results",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "ScanWorkflow",
+      "doc_path": "docs/generated-reference/resources/ScanWorkflow.md",
+      "resource_name": "scan-workflows",
+      "scope": "tenant",
+      "supported_ops": [
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "ScanWorkflowResult",
+      "doc_path": "docs/generated-reference/resources/ScanWorkflowResult.md",
+      "resource_name": "scan-workflow-results",
+      "scope": "tenant",
+      "supported_ops": [
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "SemgrepRule",
+      "doc_path": "docs/generated-reference/resources/SemgrepRule.md",
+      "resource_name": "semgrep-rules",
+      "scope": "tenant",
+      "supported_ops": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    {
+      "attr_name": "V1IdentityProvider",
+      "doc_path": "docs/generated-reference/resources/V1IdentityProvider.md",
+      "resource_name": "identity-providers",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "V1Query",
+      "doc_path": "docs/generated-reference/resources/V1Query.md",
+      "resource_name": "queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "V1QuerySimilarPackages",
+      "doc_path": "docs/generated-reference/resources/V1QuerySimilarPackages.md",
+      "resource_name": "queries/similar-packages",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "V1SavedQuery",
+      "doc_path": "docs/generated-reference/resources/V1SavedQuery.md",
+      "resource_name": "saved-queries",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "VectorStore",
+      "doc_path": "docs/generated-reference/resources/VectorStore.md",
+      "resource_name": "vector-stores",
+      "scope": "tenant",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "VectorStoreQuery",
+      "doc_path": "docs/generated-reference/resources/VectorStoreQuery.md",
+      "resource_name": "queries/vector-stores",
+      "scope": "tenant",
+      "supported_ops": [
+        "create"
+      ]
+    },
+    {
+      "attr_name": "VersionUpgrade",
+      "doc_path": "docs/generated-reference/resources/VersionUpgrade.md",
+      "resource_name": "version-upgrades",
+      "scope": "tenant",
+      "supported_ops": [
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    {
+      "attr_name": "Vulnerability",
+      "doc_path": "docs/generated-reference/resources/Vulnerability.md",
+      "resource_name": "vulnerabilities",
+      "scope": "oss",
+      "supported_ops": [
+        "get",
+        "list"
+      ]
+    }
+  ]
+}
