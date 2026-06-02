@@ -20,9 +20,10 @@ projects = client.Project.list(max_pages=2)
 These apply across tenants and skills; prefer them before assuming `lookup`, `main`, or full-tenant sweeps.
 
 - **Ambiguous project URL:** The same `meta.name` (e.g. identical GitHub URL) may be registered as **multiple** `Project` resources under different child namespaces. `Project.lookup(name=...)` can raise **`AmbiguousError`**. Use `Project.list` with `traverse=True` (and pick `tenant_meta.namespace`), pass an explicit **namespace** to resolution CLIs, or use the **project UUID** from the UI/API.
+- **Project-scoped list namespace:** With `Client(tenant=<estate_root>)` and default `traverse=False`, `.list()` hits **only that path segment** — not child namespaces where projects usually live. **Resolve `Project` first**, then pass **`namespace=project.namespace`** on every project-scoped list (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`). Empty rows often mean **wrong namespace**, not missing data. Use `traverse=True` for **discovery** (`Project.list`); do not rely on implicit client namespace for project RCA. See [docs/contracts.md](docs/contracts.md) (Namespace scoping).
 - **Finding branch field:** `spec.source_code_version.ref` is **not** always `refs/heads/main`; it may be a **short branch name** (e.g. default branch label only). Use `RepositoryVersion.list` for the project, or list findings **without** a branch filter first, then narrow once you know stored ref values.
 - **Tenant-wide troubleshooting:** `python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --all-projects` is **O(projects × scans)** and can run a long time. Prefer **project-scoped** `--project-name` / `--project-uuid` for interactive RCA; reserve all-projects for batch or narrow `--limit` / `--status-filter` windows.
-- **Relationship map coverage:** `relationships.map` builds producer edges from a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `dependency_row_count` is zero, distinguish **missing DependencyMetadata in `oss`** / unscanned consumers from **pagination truncation** before raising caps (ask before “fetch everything”).
+- **Relationship map coverage:** `relationships.map` builds producer edges from a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `dependency_row_count` is zero, distinguish **unscanned consumers / wrong list namespace** from **pagination truncation** before raising caps (ask before “fetch everything”).
 - **List deserialization vs API drift:** Rarely, `client.*.list()` may fail with Pydantic validation on a field the API populated differently than the shipped model (**ServerError** / validation details). That is a **model-sync** or payload-tolerance issue—see **troubleshoot-sdk** and `devtools/sync/`, not something to fix by changing query parameters alone.
 - **List field masks (`list_parameters.mask` / facade `mask=`):** The API documents `list_parameters.mask` as a comma-separated **field subset** to return (see local OpenAPI: `list_parameters.mask` — *“List of fields to return (all fields are returned by default).”*). It does **not** define a separate sparse list-row schema. When **no** mask is set (or `mask` is empty / whitespace-only after strip), `client.*.list()` / `list_iter()` return full **Pydantic** resource models as today. When a **non-empty** mask is in effect after the same `ListParameters` merge as `list()`, each row is a shallow-copied **`dict[str, Any]`** (wire JSON shape)—no client-side model construction—so sparse payloads never hit nested required-field validation. **`lookup()`** always returns a typed model: it raises **`ValueError`** if an effective non-empty mask is present; use **`list()`** / **`list_iter()`** for masked dict rows. This is a **breaking change** for callers that passed `mask=` and assumed typed models; migrate with `isinstance(row, dict)` or omit `mask` when you need models. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md) (filter vs mask) and [docs/changelog.md](docs/changelog.md). Sort + deep pagination constraints are separate; see [docs/rules-of-engagement/list-query-performance.md](docs/rules-of-engagement/list-query-performance.md).
 
@@ -50,8 +51,10 @@ print(status.user_docs_count)  # number of docs downloaded
 
 For a repo-local agent session after `git clone`, the SDK consumes **process env / `.env` only**; `endorctl init` does not automatically populate SDK auth.
 
-1. Install the repo with context dependencies:
-   - `uv sync --extra context`
+1. Install the repo with optional extras as needed:
+   - `uv sync --extra context` — local OpenAPI/docs bootstrap (`endorlabs.init()`)
+   - `uv sync --extra tabular` — DataFrame/Parquet export (`endorlabs.utils.tabular`)
+   - `uv sync --extra context --extra tabular` — typical agent + reporting setup
 2. Establish credentials in `.env` using one of:
    - API key auth: write `ENDOR_API_CREDENTIALS_KEY`, `ENDOR_API_CREDENTIALS_SECRET`, and optional `ENDOR_NAMESPACE`
    - Browser token refresh: `uv run python devtools/refresh_token_to_dotenv.py --env-file .env` (writes `ENDOR_TOKEN` to `.env`)
@@ -140,7 +143,7 @@ src/endorlabs/
 > **Stub regeneration:** `uv run python devtools/generate_client_stub.py` rebuilds `client_surface.pyi` from the registry. Run after adding resources or changing facade method signatures.
 
 - **Tools:** `endorlabs.tools` — standalone utilities (e.g. `dependency_explorer`).
-- **Workflows:** `endorlabs.workflows` — tenant-facing orchestration (no LLM calls): `agent_context` (context bundles), `callgraph`, `troubleshooting_scans`, `relationships`, `semgrep`, `findings`, `platform`, `notifications`, `dependencies`, `projects`, `reachability`. Optional CLIs: `endor-agent-context`, `endor-callgraph-search`, `endor-semgrep-inventory`, `endor-reachability-context` (see `[project.scripts]` in [pyproject.toml](pyproject.toml)).
+- **Workflows:** `endorlabs.workflows` — tenant-facing orchestration (no LLM calls): `agent_context` (context bundles), `callgraph`, `troubleshooting_scans`, `relationships`, `analytics`, `semgrep`, `findings`, `platform`, `notifications`, `dependencies`, `projects`, `reachability`. Optional CLIs: `endor-agent-context`, `endor-callgraph-search`, `endor-semgrep-inventory`, `endor-reachability-context`, `endor-analytics-export-deps` (see `[project.scripts]` in [pyproject.toml](pyproject.toml)).
 - **Internal:** `core`, `operations`, `utils`, `context` (see tree above).
 
 ## Reference — External
@@ -167,6 +170,7 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 
 | Skill | When to use |
 |-------|-------------|
+| [analytics-estate-dependencies](skills-src/analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, version cardinality, single-package export, CVE remediation comparison | `endorlabs.workflows.analytics`; `endor-analytics-export-deps` |
 | [custom-sast-rules](skills-src/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules |
 | [dependency-finding-provenance](skills-src/dependency-finding-provenance/) | Trace vulnerability/dependency lineage across Findings, PackageVersions, and SBOM artifacts; fixed vs present at branch/commit scope |
 | [dependency-provenance](skills-src/dependency-provenance/) | Resolve package-version lineage by manifest path and ref/sha; direct vs transitive introduction |
@@ -180,6 +184,7 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | [troubleshooting-scans](skills-src/troubleshooting-scans/) | Scan regressions: anomalous ScanResults, ScanLogs, result/log diffs via `python -m endorlabs.workflows.troubleshooting_scans.*` |
 | [troubleshoot-sdk](skills-src/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures |
 | [troubleshoot-authlog](skills-src/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, and SSO/login troubleshooting |
+| [validate-policy](skills-src/validate-policy/) | Validate policies against project findings via PolicyValidation API (`endorlabs.workflows.policies.validate`) |
 
 Setup and usage: [skills-src/README.md](skills-src/README.md) (`.cursor/skills` is the mirrored runtime path used by Cursor).
 

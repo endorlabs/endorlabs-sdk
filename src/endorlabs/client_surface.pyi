@@ -93,11 +93,9 @@ class _CodeOwnersFacade(ResourceRuntimeFacade[CodeOwners]):
     pass
 
 class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
-    """DependencyMetadata resource model extending BaseResource.
+    """Facade model for DependencyMetadata (generated wire shape).
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
-    Update mode: update_mask required.
     """
 
     pass
@@ -161,7 +159,6 @@ class _MalwareFacade(ListableFacade[Malware]):
     """Malware resource model.
 
     Identity kwargs: name (-> meta.name).
-    OSS-scoped (namespace fixed to 'oss').
     """
 
     def get(
@@ -213,7 +210,6 @@ class _PRCommentConfigFacade(ResourceRuntimeFacade[PRCommentConfig]):
 class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
     """PackageLicense resource model extending BaseResource.
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     Update mode: update_mask required.
     """
@@ -262,7 +258,6 @@ class _ProjectFacade(ResourceRuntimeFacade[Project]):
 class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     """QueryMalware resource model returned by query endpoint.
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
@@ -271,7 +266,6 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
 class _QueryVulnerabilityFacade(ResourceRuntimeFacade[QueryVulnerability]):
     """QueryVulnerability resource model returned by query endpoint.
 
-    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
@@ -423,7 +417,6 @@ class _VulnerabilityFacade(ListableFacade[Vulnerability]):
     """Vulnerability resource model.
 
     Identity kwargs: name (-> meta.name).
-    OSS-scoped (namespace fixed to 'oss').
     """
 
     def get(
@@ -459,7 +452,7 @@ class Client:
     CodeOwners: _CodeOwnersFacade
     """Code Owners resource model. List, get, create, update, delete."""
     DependencyMetadata: _DependencyMetadataFacade
-    """DependencyMetadata resource model extending BaseResource."""
+    """Facade model for DependencyMetadata (generated wire shape)."""
     EndorLicense: _EndorLicenseFacade
     """Endor License resource model. List and get only."""
     Finding: _FindingFacade

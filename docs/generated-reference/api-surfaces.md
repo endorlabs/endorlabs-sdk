@@ -123,26 +123,26 @@ Auto-generated inventories for stable/public surfaces.
 | AuthenticationLog | authentication-logs | tenant | — | list, get |
 | AuthorizationPolicy | authorization-policies | tenant | — | list, get, create, update, delete |
 | CodeOwners | codeowners | tenant | — | list, get, create, update, delete |
-| DependencyMetadata | dependency-metadata | oss | — | list, get, create, update, delete |
+| DependencyMetadata | dependency-metadata | tenant | — | list, get, create, delete |
 | EndorLicense | endor-licenses | tenant | — | list, get |
 | Finding | findings | tenant | — | list, get, create, update, delete |
 | FindingLog | finding-logs | tenant | — | list, get, create, delete |
 | Installation | installations | tenant | — | list, get, create, update, delete |
 | Invitation | invitations | tenant | — | list, get, create, update, delete |
 | LinterResult | linter-results | tenant | — | list, get, create, delete |
-| Malware | malware | oss | — | list, get |
+| Malware | malware | tenant | — | list, get |
 | Metric | metrics | tenant | — | list, get, create, update, delete |
 | Namespace | namespaces | tenant | — | list, get, create, update, delete |
 | NotificationTarget | notification-targets | tenant | — | list, get, create, update, delete |
 | PRCommentConfig | pr-comment-configs | tenant | — | list, get, create, update, delete |
 | PackageFirewallLog | package-firewall-logs | tenant | — | list, get |
-| PackageLicense | package-licenses | oss | — | list, get, create, update, delete |
+| PackageLicense | package-licenses | tenant | — | list, get, create, update, delete |
 | PackageVersion | package-versions | tenant | — | list, get, create, update, delete |
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
 | Project | projects | tenant | — | list, get, create, update, delete |
-| QueryMalware | queries/malware | oss | — | create |
-| QueryVulnerability | queries/vulnerabilities | oss | — | create |
+| QueryMalware | queries/malware | tenant | — | create |
+| QueryVulnerability | queries/vulnerabilities | tenant | — | create |
 | Repository | repositories | tenant | — | list, get, create, update, delete |
 | RepositoryVersion | repository-versions | tenant | project | list, get, create, update, delete |
 | ScanLogRequest | scan-log-requests | tenant | — | create |
@@ -158,4 +158,4 @@ Auto-generated inventories for stable/public surfaces.
 | VectorStore | vector-stores | tenant | — | list, get |
 | VectorStoreQuery | queries/vector-stores | tenant | — | create |
 | VersionUpgrade | version-upgrades | tenant | — | list, get, delete |
-| Vulnerability | vulnerabilities | oss | — | list, get |
+| Vulnerability | vulnerabilities | tenant | — | list, get |

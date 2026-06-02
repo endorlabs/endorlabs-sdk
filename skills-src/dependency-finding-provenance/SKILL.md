@@ -27,13 +27,65 @@ Playbook for customer-facing dependency/finding investigations.
   - If both API key/secret and `ENDOR_TOKEN` exist, pass `auth_method="browser-auth"` explicitly for token-first customer access.
 - For package-lineage semantics (multi-manifest path separation, direct vs transitive normalization), apply `dependency-provenance` rules.
 
-## OSS namespace (dependency plane and OSS-scoped facades)
+## Project-scoped namespace (required)
 
-OSS-scoped resources (for example `DependencyMetadata` when stored on the OSS plane, or `Vulnerability` queries against OSS) use the literal top-level namespace **`oss`**, parallel to customer tenants. **Do not** derive `<tenant>.oss`, `<customer>.oss`, or any child namespace under the customer root; the resource facade `scope` (for example `scope="oss"`) controls this plane separately from customer namespace paths.
+**Do this before Flow B/C.** `Client(tenant=<estate_root>)` with default
+`traverse=False` lists **only the estate root path** — not child namespaces
+where projects usually live. Filters like `spec.project_uuid` or
+`spec.importer_data.project_uuid` do **not** substitute for the correct namespace;
+you often get **zero rows with no error**.
+
+1. **Discover** the project (when namespace unknown):
+   `Project.list(..., traverse=True)` and pick the intended row.
+2. **Pin namespace** for all project-scoped lists:
+   `namespace=project.namespace` on `Finding`, `ScanResult`, `PackageVersion`,
+   and `DependencyMetadata`.
+3. **Do not** rely on implicit client namespace for project RCA after step 1.
+
+```python
+# Safe pattern (estate-root client is fine once namespace is pinned)
+project_ns = project.namespace
+client.Finding.list(namespace=project_ns, filter=..., traverse=False)
+client.DependencyMetadata.list(
+    namespace=project_ns,
+    filter=F("spec.importer_data.project_uuid") == project.uuid,
+    traverse=False,
+)
+```
+
+Use `traverse=True` on dependency lists only when **deliberately** searching
+tenant-wide (costly). For single-project provenance, always pin
+`project.namespace`.
+
+## OSS namespace (OSS-scoped facades vs tenant-scoped DependencyMetadata)
+
+Some resources use the literal top-level namespace **`oss`** on the wire (facade
+`scope="oss"`), parallel to customer tenants — for example **`Vulnerability`**
+catalog queries. **Do not** derive `<tenant>.oss` or child paths under the
+customer root for those facades.
+
+**`DependencyMetadata` list/get/group is tenant-scoped** (customer namespace
+segment, same as `Project` / `PackageVersion`). Use the project's
+`tenant_meta.namespace` (or an explicit child namespace) for Flow C — **not**
+literal `oss`. Row payloads may still set `spec.dependency_data.namespace` to
+`"oss"` for catalog coordinates; that is field semantics, not the API path.
+
+Verified pattern (matches `endorlabs.workflows.relationships.map` and analytics
+workflows). Requires **`project` resolved first** — see
+[Project-scoped namespace](#project-scoped-namespace-required):
+
+```python
+client.DependencyMetadata.list(
+    namespace=project.namespace,
+    traverse=False,
+    filter=F("spec.importer_data.project_uuid") == project.uuid,
+)
+```
 
 ## Flow B — Finding Provenance
 
-1. Query findings scoped to the project namespace.
+0. Resolve `Project` and set `project_ns = project.namespace` (see above).
+1. Query findings scoped to **`namespace=project_ns`**.
 2. Filter by CVE/GHSA and dependency package match terms.
 3. Group by full `spec.target_dependency_package_name` string (exact coordinate), not substring family.
 4. Record:
@@ -45,11 +97,15 @@ OSS-scoped resources (for example `DependencyMetadata` when stored on the OSS pl
 
 ## Flow C — Dependency Provenance
 
-1. Pull `PackageVersion` rows for project + branch/ref scope.
+0. Same `project` / `project.namespace` as Flow B.
+1. Pull `PackageVersion` rows for project + branch/ref scope (**`namespace=project.namespace`**).
 2. Inspect `spec.resolved_dependencies` when present:
    - dependency graph nodes
    - component names/versions
-3. Pull `DependencyMetadata` with the correct plane/scope (often OSS); match `spec.importer_data.project_uuid` and optional `package_version_ref`/`sha`. Follow [OSS namespace](#oss-namespace-dependency-plane-and-oss-scoped-facades) above for API paths.
+3. Pull `DependencyMetadata` on the **project's tenant namespace** (not literal
+   `oss`); match `spec.importer_data.project_uuid` and optional
+   `package_version_ref`/`sha`. See
+   [OSS namespace vs DependencyMetadata](#oss-namespace-oss-scoped-facades-vs-tenant-scoped-dependencymetadata).
 4. Validate referenced UUIDs from findings (`spec.target_uuid`) and flag non-resolving resources.
 5. When function-level provenance/reachability is required, hand off to:
    - `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .tmp/reachability`
@@ -116,7 +172,12 @@ Use this structure in investigation notes:
 
 ## Common Pitfalls
 
-- Wrong namespace or scope for `DependencyMetadata` / OSS-plane resources (see [OSS namespace](#oss-namespace-dependency-plane-and-oss-scoped-facades)).
+- **Implicit estate-root namespace** on project-scoped lists (`traverse=False`) —
+  silent empty results; always use `namespace=project.namespace` after resolving
+  the project (see [Project-scoped namespace](#project-scoped-namespace-required)).
+- Wrong namespace for **`DependencyMetadata`** (using literal `oss` instead of
+  customer namespace) or for true OSS-scoped facades (see
+  [OSS namespace vs DependencyMetadata](#oss-namespace-oss-scoped-facades-vs-tenant-scoped-dependencymetadata)).
 - Counting grouped findings by substring instead of exact coordinate.
 - Treating findings labels and BOM coordinates as the same without lineage evidence.
 - Relying on CSV export alone for commit-level conclusions.

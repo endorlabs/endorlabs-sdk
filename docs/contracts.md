@@ -67,8 +67,10 @@ This document is the in-repo source of truth for shared SDK semantics.
 When you have a resource instance (for example from `list(traverse=True)`), pass the resource object to `get`, `update`, or `delete` so namespace is resolved from the resource and cross-namespace 404s are avoided.
 
 - **get / update / delete:** Accept UUID string or resource object.
-- **List/filter scoped to a resource:** Use resource namespace or `list(parent=resource)` where supported.
-- **Discovery:** Use root namespace + `traverse=True`.
+- **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** (alias of `tenant_meta.namespace` on models) or `list(parent=resource)` where the registry supports `parent_kind`.
+- **Discovery:** Use root namespace + `traverse=True` (for example `Project.list(traverse=True)`).
+
+**Project-scoped lists (MUST):** `Client(tenant=<estate_root>)` with default `traverse=False` lists only that namespace path — **not** child namespaces. A filter such as `spec.project_uuid==…` or `spec.importer_data.project_uuid==…` does **not** widen the path. Resolve the `Project` row first, then pass **`namespace=project.namespace`** on downstream lists (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get **empty results with no error** (silent miss). Alternatives: `Client(tenant=project.namespace)` for the rest of the session, or `traverse=True` only when deliberately searching tenant-wide (higher cost).
 
 ## List parameters
 
