@@ -11,6 +11,26 @@
       "canonical_entities": [
         "v1APIKey"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "issuing_user",
+        "key",
+        "secret"
+      ],
+      "create_convenience_spec_fields": [
+        "permissions",
+        "expiration_time"
+      ],
+      "create_convenience_spec_required": [
+        "permissions",
+        "expiration_time"
+      ],
       "create_mode": "both",
       "create_payload_entities": [
         "APIKeyServiceCreateAPIKeyBody"
@@ -60,6 +80,25 @@
       "build_create_payload_fn_name": "audit_log_build_create",
       "canonical_entities": [
         "v1AuditLog"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "operation",
+        "message_uuid",
+        "message_kind",
+        "payload",
+        "error",
+        "claims",
+        "remote_address"
+      ],
+      "create_convenience_spec_required": [
+        "operation"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -111,6 +150,23 @@
       "canonical_entities": [
         "v1AuthenticationLog"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "success",
+        "authorized_tenants",
+        "error_message",
+        "status",
+        "claims",
+        "remote_address",
+        "uri"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "AuthenticationLogServiceCreateAuthenticationLogBody"
@@ -158,6 +214,29 @@
       "build_create_payload_fn_name": "authorization_policy_build_create",
       "canonical_entities": [
         "v1AuthorizationPolicy"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "is_support_policy"
+      ],
+      "create_convenience_spec_fields": [
+        "clause",
+        "target_namespaces",
+        "propagate",
+        "permissions",
+        "expiration_time"
+      ],
+      "create_convenience_spec_required": [
+        "clause",
+        "target_namespaces",
+        "propagate",
+        "permissions"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -220,6 +299,18 @@
       "canonical_entities": [
         "v1CodeOwners"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "patterns",
+        "version"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "CodeOwnersServiceCreateCodeOwnersBody"
@@ -277,6 +368,19 @@
       "canonical_entities": [
         "v1DependencyMetadata"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "data"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "BatchDependencyMetadataServiceCreateBatchDependencyMetadataBody",
@@ -332,6 +436,30 @@
       "canonical_entities": [
         "v1EndorLicense"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "license_info"
+      ],
+      "create_convenience_spec_fields": [
+        "target_namespace",
+        "type",
+        "read_access_until",
+        "write_access_until",
+        "bundle_info",
+        "quota",
+        "is_customer",
+        "excluded_feature_types",
+        "license_configurations",
+        "salesforce_account_id"
+      ],
+      "create_convenience_spec_required": [
+        "target_namespace"
+      ],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "EndorLicenseServiceCreateEndorLicenseBody"
@@ -381,6 +509,59 @@
       "build_create_payload_fn_name": "finding_build_create",
       "canonical_entities": [
         "v1Finding"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "last_processed",
+        "level",
+        "summary",
+        "finding_tags",
+        "target_uuid",
+        "extra_key",
+        "dismiss",
+        "remediation",
+        "finding_metadata",
+        "method",
+        "target_dependency_package_name",
+        "target_dependency_name",
+        "target_dependency_version",
+        "explanation",
+        "remediation_action",
+        "source_code_version",
+        "reachable_paths",
+        "ecosystem",
+        "finding_categories",
+        "relationship",
+        "latest_version",
+        "dependency_file_paths",
+        "approximation",
+        "proposed_version",
+        "exceptions",
+        "actions",
+        "fixing_upgrades",
+        "fixing_patch",
+        "code_owners",
+        "location_urls",
+        "call_graph_analysis_type",
+        "snooze",
+        "ignore"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid",
+        "last_processed",
+        "level",
+        "summary",
+        "finding_tags",
+        "target_uuid",
+        "extra_key"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -441,6 +622,45 @@
       "canonical_entities": [
         "v1FindingLog"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "finding_uuid",
+        "finding_parent_kind",
+        "finding_parent_uuid",
+        "operation",
+        "introduced_at",
+        "method",
+        "level",
+        "finding_tags",
+        "finding_categories",
+        "resolved_at",
+        "days_unresolved",
+        "ecosystem",
+        "target_uuid",
+        "target_dependency_package_name",
+        "approximation",
+        "finding_parent_name",
+        "snooze",
+        "location"
+      ],
+      "create_convenience_spec_required": [
+        "finding_uuid",
+        "finding_parent_kind",
+        "finding_parent_uuid",
+        "operation",
+        "introduced_at",
+        "method",
+        "level",
+        "finding_tags",
+        "finding_categories"
+      ],
       "create_mode": "both",
       "create_payload_entities": [
         "FindingLogServiceCreateFindingLogBody"
@@ -491,6 +711,43 @@
       "canonical_entities": [
         "v1Installation"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "processing_status",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "external_name",
+        "ingestion_time",
+        "ingestion_token",
+        "marked_for_deletion",
+        "target_type",
+        "user"
+      ],
+      "create_convenience_spec_fields": [
+        "public",
+        "external_id",
+        "suspended",
+        "project_uuids",
+        "login",
+        "invalid",
+        "enabled_features",
+        "platform_source",
+        "platform_type",
+        "github_config",
+        "azure_config",
+        "gitlab_config",
+        "bitbucket_config",
+        "huggingface_config",
+        "include_archived_repos",
+        "installation_error_message",
+        "scm_app_uuid",
+        "cleanup_stale_namespaces"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "InstallationServiceCreateInstallationBody"
@@ -556,6 +813,21 @@
       "canonical_entities": [
         "v1Invitation"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "invitation_state"
+      ],
+      "create_convenience_spec_fields": [
+        "user_email"
+      ],
+      "create_convenience_spec_required": [
+        "user_email"
+      ],
       "create_mode": "both",
       "create_payload_entities": [
         "InvitationServiceCreateInvitationBody"
@@ -613,6 +885,41 @@
       "canonical_entities": [
         "v1LinterResult"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "origin",
+        "level",
+        "extra_key",
+        "version",
+        "sarif_result",
+        "ai_result",
+        "ecosystem",
+        "semgrep",
+        "secret",
+        "aisast",
+        "fingerprints",
+        "fingerprint_count",
+        "distribution_format",
+        "ref",
+        "storage_location",
+        "suppressed",
+        "linter_correctness_analyses",
+        "endor_fingerprint"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid",
+        "origin",
+        "level",
+        "extra_key"
+      ],
       "create_mode": "both",
       "create_payload_entities": [
         "LinterResultServiceCreateLinterResultBody"
@@ -667,6 +974,44 @@
       "canonical_entities": [
         "v1Malware"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "contested_date",
+        "contributing_feeds"
+      ],
+      "create_convenience_spec_fields": [
+        "ecosystem",
+        "package_name",
+        "ranges",
+        "version",
+        "status",
+        "pkg_release_date",
+        "malware_detected_on",
+        "advisory_published",
+        "advisory_last_updated",
+        "reasons",
+        "purl",
+        "summary",
+        "contested",
+        "contested_reason",
+        "source",
+        "aliases",
+        "references",
+        "upsert_key",
+        "package_version",
+        "additional_notes",
+        "cwe_id",
+        "deletion_exempt"
+      ],
+      "create_convenience_spec_required": [
+        "ecosystem",
+        "package_name"
+      ],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "MalwareServiceCreateMalwareBody",
@@ -701,7 +1046,7 @@
       ],
       "parent_kind": null,
       "resource_name": "malware",
-      "scope": "tenant",
+      "scope": "oss",
       "supported_ops": [
         "get",
         "list"
@@ -722,6 +1067,25 @@
       "build_create_payload_fn_name": "metric_build_create",
       "canonical_entities": [
         "MetricServiceCreateMetricBody"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "analytic",
+        "project_uuid",
+        "metric_values",
+        "raw"
+      ],
+      "create_convenience_spec_required": [
+        "analytic",
+        "project_uuid",
+        "metric_values"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -782,6 +1146,19 @@
       "canonical_entities": [
         "v1Namespace"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "full_name"
+      ],
+      "create_convenience_spec_fields": [
+        "managed"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "NamespaceServiceCreateNamespaceBody"
@@ -833,6 +1210,21 @@
       "build_create_payload_fn_name": "notification_target_build_create",
       "canonical_entities": [
         "v1NotificationTarget"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "action",
+        "custom_template"
+      ],
+      "create_convenience_spec_required": [
+        "action"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -891,6 +1283,21 @@
       "canonical_entities": [
         "v1PRCommentConfig"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "template",
+        "platform_type"
+      ],
+      "create_convenience_spec_required": [
+        "template"
+      ],
       "create_mode": "both",
       "create_payload_entities": [
         "PRCommentConfigServiceCreatePRCommentConfigBody"
@@ -948,6 +1355,25 @@
       "canonical_entities": [
         "v1PackageLicense"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "code_licenses",
+        "package_manager_licenses",
+        "copyrights",
+        "declared_code_licenses",
+        "license_text",
+        "all_licenses",
+        "project_uuid",
+        "version"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "PackageLicenseServiceCreatePackageLicenseBody"
@@ -1002,6 +1428,37 @@
       "build_create_payload_fn_name": "package_version_build_create",
       "canonical_entities": [
         "v1PackageVersion"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "processing_status",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "ecosystem",
+        "internal_reference_key",
+        "package_name"
+      ],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "source_code_reference",
+        "release_timestamp",
+        "unresolved_dependencies",
+        "resolved_dependencies",
+        "resolution_errors",
+        "language",
+        "relative_path",
+        "container_metadata",
+        "bazel_metadata",
+        "code_owners",
+        "call_graph_available",
+        "precomputed_call_graph_state"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -1064,6 +1521,37 @@
       "build_create_payload_fn_name": "policy_build_create",
       "canonical_entities": [
         "v1Policy"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "policy_type",
+        "rule",
+        "project_selector",
+        "project_exceptions",
+        "resource_kinds",
+        "disable",
+        "query_statements",
+        "template_uuid",
+        "template_values",
+        "template_version",
+        "template_parameters",
+        "finding_level",
+        "group_by_fields",
+        "finding_categories",
+        "admission",
+        "finding",
+        "notification",
+        "exception"
+      ],
+      "create_convenience_spec_required": [
+        "policy_type"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -1128,6 +1616,36 @@
       "canonical_entities": [
         "v1PolicyTemplate"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "rule",
+        "query_statements",
+        "policy_type",
+        "version",
+        "template_parameters",
+        "resource_kinds",
+        "default_enabled",
+        "finding_level",
+        "group_by_fields",
+        "release_notes",
+        "deprecated",
+        "finding_categories",
+        "admission",
+        "finding"
+      ],
+      "create_convenience_spec_required": [
+        "rule",
+        "query_statements",
+        "policy_type",
+        "version"
+      ],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "PolicyTemplateServiceCreatePolicyTemplateBody"
@@ -1177,6 +1695,30 @@
       "build_create_payload_fn_name": "project_build_create",
       "canonical_entities": [
         "v1Project"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "processing_status",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "ingestion_token",
+        "internal_reference_key"
+      ],
+      "create_convenience_spec_fields": [
+        "platform_source",
+        "git",
+        "unsupported",
+        "sbom",
+        "model",
+        "toolchain_profile_uuid",
+        "scan_profile_uuid",
+        "is_archived"
+      ],
+      "create_convenience_spec_required": [
+        "platform_source"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -1234,6 +1776,24 @@
       "canonical_entities": [
         "v1QueryMalware"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "response",
+        "responses",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "package_version_name",
+        "package_version_names",
+        "purls",
+        "mask"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "QueryMalwareServiceCreateQueryMalwareBody"
@@ -1281,6 +1841,26 @@
       "canonical_entities": [
         "v1QueryVulnerability"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "response",
+        "responses",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "package_version_name",
+        "package_version_names",
+        "vulnerability_name_query",
+        "purls",
+        "mask",
+        "vulnerability_type"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "QueryVulnerabilityServiceCreateQueryVulnerabilityBody"
@@ -1327,6 +1907,36 @@
       "build_create_payload_fn_name": "repository_build_create",
       "canonical_entities": [
         "v1Repository"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "ingested_object",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "platform_source",
+        "http_clone_url",
+        "default_branch",
+        "external_id",
+        "owner",
+        "create_time",
+        "update_time",
+        "contributors",
+        "commit_hashes",
+        "languages",
+        "tags",
+        "branch_protections",
+        "vulnerability_alerts_enabled",
+        "org",
+        "repository_license"
+      ],
+      "create_convenience_spec_required": [
+        "platform_source",
+        "http_clone_url",
+        "default_branch"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -1391,6 +2001,20 @@
       "canonical_entities": [
         "v1RepositoryVersion"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "scan_object",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "version",
+        "last_commit_date"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "RepositoryVersionServiceCreateRepositoryVersionBody"
@@ -1450,6 +2074,33 @@
       "canonical_entities": [
         "v1ScanLogRequest"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "applied_filter",
+        "log_messages"
+      ],
+      "create_convenience_spec_fields": [
+        "max_entries",
+        "start_time",
+        "newest_first",
+        "admin_filter",
+        "log_levels",
+        "scan_request_uuid",
+        "project_uuid",
+        "installation_uuid",
+        "onprem_scheduler_uuid",
+        "scan_result_uuid",
+        "execution_id",
+        "end_time"
+      ],
+      "create_convenience_spec_required": [
+        "max_entries"
+      ],
       "create_mode": "payload-only",
       "create_payload_entities": [
         "ScanLogRequestServiceCreateScanLogRequestBody"
@@ -1499,6 +2150,24 @@
       "canonical_entities": [
         "v1ScanProfile"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "toolchain_profile",
+        "automated_scan_parameters",
+        "remediation_parameters",
+        "is_default",
+        "security_review_scanner_parameters",
+        "exporter_parameters",
+        "ai_sast_analysis_parameters"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "ScanProfileServiceCreateScanProfileBody"
@@ -1557,6 +2226,48 @@
       "build_create_payload_fn_name": "scan_result_build_create",
       "canonical_entities": [
         "v1ScanResult"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "status",
+        "type",
+        "errors",
+        "warnings",
+        "infos",
+        "start_time",
+        "end_time",
+        "stats",
+        "refs",
+        "environment",
+        "has_panic",
+        "exit_code",
+        "logs",
+        "policies_triggered",
+        "warning_findings",
+        "blocking_findings",
+        "runtimes",
+        "all_findings",
+        "deleted_findings",
+        "languages_detected",
+        "exception_findings",
+        "findings",
+        "provisioning_result_uuid",
+        "versions",
+        "ecosystem_pkg_counts",
+        "ecosystem_dep_counts",
+        "components_executed",
+        "provisioning_result"
+      ],
+      "create_convenience_spec_required": [
+        "status",
+        "type"
       ],
       "create_mode": "both",
       "create_payload_entities": [
@@ -1617,6 +2328,19 @@
       "canonical_entities": [
         "v1ScanWorkflow"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "steps",
+        "remediation_parameters",
+        "automated_scan_parameters"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "ScanWorkflowServiceCreateScanWorkflowBody"
@@ -1667,6 +2391,26 @@
       "build_create_payload_fn_name": null,
       "canonical_entities": [
         "v1ScanWorkflowResult"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "status",
+        "start_time",
+        "end_time",
+        "execution_id",
+        "workflow_results",
+        "stats",
+        "versions"
+      ],
+      "create_convenience_spec_required": [
+        "status"
       ],
       "create_mode": "unsupported",
       "create_payload_entities": [
@@ -1719,6 +2463,24 @@
       "canonical_entities": [
         "v1SemgrepRule"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "disabled",
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "defined_by",
+        "severity_level"
+      ],
+      "create_convenience_spec_fields": [
+        "rule",
+        "disabled",
+        "yaml"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "both",
       "create_payload_entities": [
         "SemgrepRuleServiceCreateSemgrepRuleBody"
@@ -1780,6 +2542,19 @@
       "canonical_entities": [
         "v1IdentityProvider"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "oidc_provider",
+        "saml_provider"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "IdentityProviderServiceCreateIdentityProviderBody"
@@ -1815,6 +2590,36 @@
       "canonical_entities": [
         "v1PackageFirewallLog"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "ecosystem",
+        "package_name",
+        "package_version",
+        "request_type",
+        "block_reason",
+        "malware_uuid",
+        "api_key_id",
+        "remote_address",
+        "request_uri",
+        "blocked_at",
+        "package_age_hours",
+        "reason",
+        "action",
+        "package_license",
+        "action_at",
+        "cvss_severity_level",
+        "cvss_vuln_uuid"
+      ],
+      "create_convenience_spec_required": [
+        "ecosystem",
+        "package_name"
+      ],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "PackageFirewallLogServiceCreatePackageFirewallLogBody"
@@ -1848,6 +2653,19 @@
       "canonical_entities": [
         "v1Query"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "query_response"
+      ],
+      "create_convenience_spec_fields": [
+        "query_spec"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "payload-only",
       "create_payload_entities": [
         "QueryServiceCreateQueryBody"
@@ -1879,6 +2697,22 @@
       "build_create_payload_fn_name": null,
       "canonical_entities": [
         "v1QuerySimilarPackages"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "name",
+        "edit_distance",
+        "repo",
+        "exact_match"
+      ],
+      "create_convenience_spec_required": [
+        "name"
       ],
       "create_mode": "payload-only",
       "create_payload_entities": [
@@ -1912,6 +2746,23 @@
       "canonical_entities": [
         "v1SavedQuery"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "propagate",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "lock"
+      ],
+      "create_convenience_spec_fields": [
+        "query",
+        "monitor",
+        "query_type",
+        "is_default"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "SavedQueryServiceCreateSavedQueryBody"
@@ -1946,6 +2797,26 @@
       "build_create_payload_fn_name": null,
       "canonical_entities": [
         "v1VectorStore"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "matches"
+      ],
+      "create_convenience_spec_fields": [
+        "vector_store_uuid",
+        "query",
+        "metadata_filter"
+      ],
+      "create_convenience_spec_required": [
+        "vector_store_uuid",
+        "query"
       ],
       "create_mode": "unsupported",
       "create_payload_entities": [
@@ -2000,6 +2871,26 @@
       "canonical_entities": [
         "v1VectorStoreQuery"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [
+        "matches"
+      ],
+      "create_convenience_spec_fields": [
+        "vector_store_uuid",
+        "query",
+        "metadata_filter"
+      ],
+      "create_convenience_spec_required": [
+        "vector_store_uuid",
+        "query"
+      ],
       "create_mode": "both",
       "create_payload_entities": [
         "VectorStoreQueryServiceCreateVectorStoreQueryBody"
@@ -2046,6 +2937,28 @@
       "build_create_payload_fn_name": null,
       "canonical_entities": [
         "v1VersionUpgrade"
+      ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [],
+      "create_convenience_payload_top_level_fields": [
+        "context",
+        "meta",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "project_uuid",
+        "name",
+        "upgrade_info",
+        "configuration",
+        "stats",
+        "prioritized_upgrades",
+        "all_upgrades",
+        "finding_fixing_upgrades"
+      ],
+      "create_convenience_spec_required": [
+        "project_uuid",
+        "name"
       ],
       "create_mode": "unsupported",
       "create_payload_entities": [
@@ -2099,6 +3012,26 @@
       "canonical_entities": [
         "v1Vuln"
       ],
+      "convenience_skip_reason": null,
+      "create_convenience_meta_fields": [
+        "name"
+      ],
+      "create_convenience_payload_top_level_fields": [
+        "meta",
+        "response",
+        "responses",
+        "tenant_meta"
+      ],
+      "create_convenience_read_only_spec_fields": [],
+      "create_convenience_spec_fields": [
+        "package_version_name",
+        "package_version_names",
+        "vulnerability_name_query",
+        "purls",
+        "mask",
+        "vulnerability_type"
+      ],
+      "create_convenience_spec_required": [],
       "create_mode": "unsupported",
       "create_payload_entities": [
         "QueryVulnerabilityServiceCreateQueryVulnerabilityBody",
@@ -2133,7 +3066,7 @@
       ],
       "parent_kind": null,
       "resource_name": "vulnerabilities",
-      "scope": "tenant",
+      "scope": "oss",
       "supported_ops": [
         "get",
         "list"

@@ -337,7 +337,11 @@ class CreateAuthorizationPolicyPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateAuthorizationPolicyPayload:
     """Build CreateAuthorizationPolicyPayload from kwargs (decoupled create)."""
-    return CreateAuthorizationPolicyPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateAuthorizationPolicyPayload, kwargs, attr_name="AuthorizationPolicy"
+    )
 
 
 class UpdateAuthorizationPolicyPayload(BaseModel):

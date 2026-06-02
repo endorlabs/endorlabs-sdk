@@ -272,6 +272,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
     "F841",
     "T201",
 ]  # many modules are thin CLIs or large orchestrators
+"src/endorlabs/utils/create_payload.py" = ["C901", "UP047"]
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---

@@ -53,6 +53,12 @@ _REQUIRED_RESOURCE_KEYS = {
     "update_requires_mask",
     "identity_filter_fields",
     "workflow_flags",
+    "create_convenience_spec_fields",
+    "create_convenience_spec_required",
+    "create_convenience_meta_fields",
+    "create_convenience_payload_top_level_fields",
+    "create_convenience_read_only_spec_fields",
+    "convenience_skip_reason",
 }
 
 
@@ -63,6 +69,221 @@ def _extract_ref_name(maybe_ref: Any) -> str | None:
     if marker not in maybe_ref:
         return None
     return maybe_ref.split(marker, maxsplit=1)[1]
+
+
+def _resolve_schema(definitions: dict[str, Any], node: Any) -> dict[str, Any] | None:
+    """Resolve a schema node to a definition dict (follow single $ref)."""
+    if not isinstance(node, dict):
+        return None
+    ref_name = _extract_ref_name(node.get("$ref"))
+    if ref_name is not None and ref_name in definitions:
+        resolved = definitions[ref_name]
+        return resolved if isinstance(resolved, dict) else None
+    return node
+
+
+def _writable_property_names(schema: dict[str, Any]) -> list[str]:
+    """Property names on a schema object that are not readOnly (definition order)."""
+    properties = schema.get("properties")
+    if not isinstance(properties, dict):
+        return []
+    names: list[str] = []
+    for key, prop in properties.items():
+        if not isinstance(key, str) or not isinstance(prop, dict):
+            continue
+        if prop.get("readOnly") is True:
+            continue
+        names.append(key)
+    return names
+
+
+def _ordered_spec_field_names(
+    schema: dict[str, Any],
+    *,
+    writable_names: list[str],
+) -> tuple[list[str], list[str]]:
+    """Return (required_fields, optional_fields) preserving OpenAPI required order."""
+    writable_set = set(writable_names)
+    required_raw = schema.get("required")
+    required: list[str] = []
+    if isinstance(required_raw, list):
+        required = [
+            name
+            for name in required_raw
+            if isinstance(name, str) and name in writable_set
+        ]
+    required_set = set(required)
+    properties = schema.get("properties")
+    optional: list[str] = []
+    if isinstance(properties, dict):
+        for name in properties:
+            if (
+                isinstance(name, str)
+                and name in writable_set
+                and name not in required_set
+            ):
+                optional.append(name)
+    else:
+        optional = sorted(name for name in writable_names if name not in required_set)
+    return required, optional
+
+
+def extract_create_convenience_fields(
+    definitions: dict[str, Any],
+    create_body_definitions: dict[str, Any],
+) -> dict[str, Any]:
+    """Derive create convenience metadata from OpenAPI create body definition(s).
+
+    Returns keys used by facade contract, payload_schemas, and create_convenience.py.
+    """
+    empty: dict[str, Any] = {
+        "create_convenience_spec_fields": [],
+        "create_convenience_spec_required": [],
+        "create_convenience_meta_fields": [],
+        "create_convenience_payload_top_level_fields": [],
+        "create_convenience_read_only_spec_fields": [],
+        "convenience_skip_reason": None,
+    }
+    if not create_body_definitions:
+        return {**empty, "convenience_skip_reason": "no_create_body_definition"}
+
+    # Prefer the body that exposes a top-level spec ref (standard resource create).
+    body_def: dict[str, Any] | None = None
+    for candidate in create_body_definitions.values():
+        if not isinstance(candidate, dict):
+            continue
+        props = candidate.get("properties")
+        if isinstance(props, dict) and "spec" in props:
+            body_def = candidate
+            break
+    if body_def is None:
+        first = next(
+            (item for item in create_body_definitions.values() if isinstance(item, dict)),
+            None,
+        )
+        body_def = first if isinstance(first, dict) else None
+    if body_def is None:
+        return {**empty, "convenience_skip_reason": "no_create_body_definition"}
+
+    body_required_raw = body_def.get("required")
+    body_required = (
+        {name for name in body_required_raw if isinstance(name, str)}
+        if isinstance(body_required_raw, list)
+        else set()
+    )
+    properties = body_def.get("properties")
+    if not isinstance(properties, dict):
+        return {**empty, "convenience_skip_reason": "create_body_missing_properties"}
+
+    spec_node = properties.get("spec")
+    spec_schema = _resolve_schema(definitions, spec_node) if spec_node is not None else None
+    if spec_schema is None:
+        return {**empty, "convenience_skip_reason": "create_body_missing_spec"}
+
+    # Nested spec.request (metadata query style) — no flat spec promotion.
+    spec_props = spec_schema.get("properties")
+    if isinstance(spec_props, dict) and "request" in spec_props:
+        request_schema = _resolve_schema(definitions, spec_props.get("request"))
+        if request_schema is not None:
+            return {
+                **empty,
+                "convenience_skip_reason": "nested_spec_request",
+            }
+
+    spec_writable = _writable_property_names(spec_schema)
+    spec_read_only: list[str] = []
+    if isinstance(spec_props, dict):
+        for key, prop in spec_props.items():
+            if (
+                isinstance(key, str)
+                and isinstance(prop, dict)
+                and prop.get("readOnly") is True
+            ):
+                spec_read_only.append(key)
+    spec_required, spec_optional = _ordered_spec_field_names(
+        spec_schema, writable_names=spec_writable
+    )
+    spec_fields = spec_required + spec_optional
+
+    payload_top_level: list[str] = []
+    meta_fields: list[str] = []
+    for key, prop in sorted(properties.items()):
+        if not isinstance(key, str) or not isinstance(prop, dict):
+            continue
+        if key == "spec":
+            continue
+        if prop.get("readOnly") is True:
+            continue
+        payload_top_level.append(key)
+        if key == "meta":
+            meta_schema = _resolve_schema(definitions, prop)
+            if meta_schema is not None and "name" in _writable_property_names(meta_schema):
+                if "meta" not in body_required:
+                    meta_fields.append("name")
+
+    return {
+        "create_convenience_spec_fields": spec_fields,
+        "create_convenience_spec_required": spec_required,
+        "create_convenience_meta_fields": meta_fields,
+        "create_convenience_payload_top_level_fields": payload_top_level,
+        "create_convenience_read_only_spec_fields": sorted(spec_read_only),
+        "convenience_skip_reason": None,
+    }
+
+
+def attr_name_to_constant_prefix(attr_name: str) -> str:
+    """Convert PascalCase resource attr to SCREAMING_SNAKE (VectorStoreQuery -> VECTOR_STORE_QUERY)."""
+    chars: list[str] = []
+    for index, char in enumerate(attr_name):
+        if char.isupper() and index > 0:
+            chars.append("_")
+        chars.append(char.upper())
+    return "".join(chars)
+
+
+def render_create_convenience_module(facade_contract: dict[str, Any]) -> str:
+    """Render generated create convenience constants module."""
+    resources = facade_contract.get("resources")
+    if not isinstance(resources, list):
+        resources = []
+    lines = [
+        '"""Generated create convenience field lists for build_create_payload helpers."""',
+        "",
+        "from __future__ import annotations",
+        "",
+    ]
+    for resource in sorted(
+        (item for item in resources if isinstance(item, dict)),
+        key=lambda item: str(item.get("attr_name", "")),
+    ):
+        attr_name = resource.get("attr_name")
+        if not isinstance(attr_name, str):
+            continue
+        prefix = attr_name_to_constant_prefix(attr_name)
+        spec_fields = resource.get("create_convenience_spec_fields")
+        spec_required = resource.get("create_convenience_spec_required")
+        meta_fields = resource.get("create_convenience_meta_fields")
+        if not isinstance(spec_fields, list):
+            spec_fields = []
+        if not isinstance(spec_required, list):
+            spec_required = []
+        if not isinstance(meta_fields, list):
+            meta_fields = []
+        spec_names = [name for name in spec_fields if isinstance(name, str)]
+        spec_required_names = [
+            name for name in spec_required if isinstance(name, str)
+        ]
+        meta_names = [name for name in meta_fields if isinstance(name, str)]
+        top_level = resource.get("create_convenience_payload_top_level_fields")
+        if not isinstance(top_level, list):
+            top_level = []
+        top_names = [name for name in top_level if isinstance(name, str)]
+        lines.append(f"{prefix}_SPEC_FIELDS = {tuple(spec_names)!r}")
+        lines.append(f"{prefix}_SPEC_REQUIRED = {tuple(spec_required_names)!r}")
+        lines.append(f"{prefix}_META_FIELDS = {tuple(meta_names)!r}")
+        lines.append(f"{prefix}_PAYLOAD_TOP_LEVEL_FIELDS = {tuple(top_names)!r}")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _collect_schema_refs(node: Any) -> set[str]:
@@ -200,6 +421,7 @@ def build_payload_schemas(
             for name in sorted(update_entities)
             if name in definitions
         }
+        convenience = extract_create_convenience_fields(definitions, create_definitions)
         resources.append(
             {
                 "attr_name": facade_attr_name(entry),
@@ -208,6 +430,7 @@ def build_payload_schemas(
                 "update_payload_entities": sorted(update_entities),
                 "create_payload_definitions": create_definitions,
                 "update_payload_definitions": update_definitions,
+                **convenience,
             }
         )
 
@@ -378,6 +601,22 @@ def build_facade_contract(
                 "workflow_flags": sorted(workflow_flags),
                 "create_payload_entities": payload.get("create_payload_entities", []),
                 "update_payload_entities": payload.get("update_payload_entities", []),
+                "create_convenience_spec_fields": payload.get(
+                    "create_convenience_spec_fields", []
+                ),
+                "create_convenience_spec_required": payload.get(
+                    "create_convenience_spec_required", []
+                ),
+                "create_convenience_meta_fields": payload.get(
+                    "create_convenience_meta_fields", []
+                ),
+                "create_convenience_payload_top_level_fields": payload.get(
+                    "create_convenience_payload_top_level_fields", []
+                ),
+                "create_convenience_read_only_spec_fields": payload.get(
+                    "create_convenience_read_only_spec_fields", []
+                ),
+                "convenience_skip_reason": payload.get("convenience_skip_reason"),
             }
         )
     return {"resource_count": len(resources), "resources": resources}
@@ -599,6 +838,36 @@ def validate_contract_artifacts(
                 errors.append(
                     f"facade_contract.resources[{index}].workflow_flags must be list"
                 )
+            for key in (
+                "create_convenience_spec_fields",
+                "create_convenience_spec_required",
+                "create_convenience_meta_fields",
+                "create_convenience_payload_top_level_fields",
+                "create_convenience_read_only_spec_fields",
+            ):
+                value = resource.get(key)
+                if not isinstance(value, list):
+                    errors.append(
+                        f"facade_contract.resources[{index}].{key} must be a list"
+                    )
+            skip_reason = resource.get("convenience_skip_reason")
+            if skip_reason is not None and not isinstance(skip_reason, str):
+                errors.append(
+                    f"facade_contract.resources[{index}].convenience_skip_reason "
+                    "must be string or null"
+                )
+            create_mode = resource.get("create_mode")
+            spec_fields = resource.get("create_convenience_spec_fields")
+            if (
+                create_mode == "both"
+                and isinstance(spec_fields, list)
+                and not spec_fields
+                and skip_reason is None
+            ):
+                errors.append(
+                    f"facade_contract.resources[{index}]: create_mode=both requires "
+                    "create_convenience_spec_fields or convenience_skip_reason"
+                )
 
             attr_name = resource.get("attr_name")
             model_class = resource.get("model_class")
@@ -671,6 +940,12 @@ def validate_contract_artifacts(
             "update_payload_entities",
             "create_payload_definitions",
             "update_payload_definitions",
+            "create_convenience_spec_fields",
+            "create_convenience_spec_required",
+            "create_convenience_meta_fields",
+            "create_convenience_payload_top_level_fields",
+            "create_convenience_read_only_spec_fields",
+            "convenience_skip_reason",
         }
         for index, resource in enumerate(payload_resources):
             if not isinstance(resource, dict):

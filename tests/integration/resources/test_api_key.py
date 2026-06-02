@@ -120,7 +120,7 @@ class TestAPIKey:
             assert created.uuid
             self.created_api_key_uuids.append(created.uuid)
         finally:
-            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+            if created is not None:
                 try:
                     self.endor_client.APIKey.delete(created.uuid)
                 except Exception as e:

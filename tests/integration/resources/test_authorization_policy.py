@@ -147,7 +147,7 @@ class TestAuthorizationPolicy:
             assert created.meta.name == payload.meta.name
             self.created_policy_uuids.append(created.uuid)
         finally:
-            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+            if created is not None:
                 try:
                     self.endor_client.AuthorizationPolicy.delete(created.uuid)
                 except Exception as e:
@@ -232,7 +232,7 @@ class TestAuthorizationPolicy:
                     f"policy values: {e}"
                 )
         finally:
-            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+            if created is not None:
                 try:
                     self.endor_client.AuthorizationPolicy.delete(created.uuid)
                 except Exception as e:
