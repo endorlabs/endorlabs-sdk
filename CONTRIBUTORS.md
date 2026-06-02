@@ -146,6 +146,8 @@ For full IDE context (OpenAPI spec + user docs from docs.endorlabs.com), create 
 
 ```bash
 uv sync --extra context
+# optional: DataFrame / Parquet tabular export tests
+uv sync --extra tabular
 ```
 
 ```python
