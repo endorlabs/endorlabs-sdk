@@ -26,3 +26,7 @@ Normative agreements are defined in `docs/contracts.md`.
 - `docs/reference/*`: API/resource inventories and payload references.
 - `docs/guides/*`: user workflows and examples.
 - `docs/rules-of-engagement/*`: contributor/agent process and implementation checklists.
+
+## In-flight feature plans
+
+- [design/feat-create-convenience-kwargs-and-resource-reference.md](design/feat-create-convenience-kwargs-and-resource-reference.md) — Side A (generated create convenience kwargs + typed stubs) and Side B (per-resource generated reference pages); branch `feat/create-convenience-kwargs-and-resource-docs`.
