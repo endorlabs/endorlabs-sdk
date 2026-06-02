@@ -214,10 +214,75 @@ def build_payload_schemas(
     return {"resource_count": len(resources), "resources": resources}
 
 
+def load_resource_scope_overrides(profiles_dir: Path) -> dict[str, str]:
+    """Optional explicit scope overrides keyed by registry ``attr_name``."""
+    path = profiles_dir / "resource_scope_overrides.json"
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        return {}
+    overrides: dict[str, str] = {}
+    for key, value in payload.items():
+        if isinstance(key, str) and isinstance(value, str):
+            overrides[key] = value
+    return overrides
+
+
+_TENANT_NAMESPACE_PATH_TOKENS = frozenset(
+    {
+        "{tenant_meta.namespace}",
+        "{object.tenant_meta.namespace}",
+    }
+)
+
+
+def infer_resource_scope(
+    resource_name: str,
+    operation_metadata: dict[str, Any],
+) -> str:
+    """Infer API namespace scope from OpenAPI path namespace segments.
+
+    Collection/item paths under ``/v1/namespaces/{tenant_meta.namespace}/…`` are
+    tenant-scoped. Paths whose namespace segment is the literal ``oss`` (or
+    ``system``) use that fixed plane instead.
+    """
+    operations = operation_metadata.get("operations")
+    if not isinstance(operations, list):
+        return "tenant"
+
+    namespace_segments: set[str] = set()
+    for operation in operations:
+        if not isinstance(operation, dict):
+            continue
+        path = operation.get("path")
+        method = operation.get("method")
+        if not isinstance(path, str) or not isinstance(method, str):
+            continue
+        if "/v1/namespaces/" not in path:
+            continue
+        if f"/{resource_name}" not in path and not path.endswith(f"/{resource_name}"):
+            continue
+        tail = path.split("/v1/namespaces/", maxsplit=1)[1]
+        namespace_segments.add(tail.split("/", maxsplit=1)[0])
+
+    if not namespace_segments:
+        return "tenant"
+    if namespace_segments == {"oss"}:
+        return "oss"
+    if namespace_segments == {"system"}:
+        return "system"
+    if namespace_segments & _TENANT_NAMESPACE_PATH_TOKENS:
+        return "tenant"
+    return "tenant"
+
+
 def build_facade_contract(
     *,
     mapping_entries: list[MappingEntry],
     payload_schemas: dict[str, Any],
+    operation_metadata: dict[str, Any],
+    scope_overrides: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Build registry/facade contract metadata for stubs and docs."""
     mapping_entities = {entry.entity_name for entry in mapping_entries}
@@ -294,7 +359,9 @@ def build_facade_contract(
                     else None
                 ),
                 "build_create_payload_fn_import_path": build_create_import_path,
-                "scope": entry.scope or "tenant",
+                "scope": (scope_overrides or {}).get(
+                    attr, infer_resource_scope(entry.resource_name, operation_metadata)
+                ),
                 "parent_kind": entry.parent_kind,
                 "supported_ops": sorted(entry.supported_ops),
                 "filter_kwarg_map": {
