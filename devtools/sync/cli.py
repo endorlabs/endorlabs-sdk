@@ -21,6 +21,7 @@ from .contract import (
     build_registry_parity_report,
     build_runtime_index_metadata,
     load_resource_scope_overrides,
+    render_create_convenience_module,
     render_generated_registry_contract_module,
     validate_contract_artifacts,
 )
@@ -42,6 +43,9 @@ GENERATED_PACKAGE_INIT_PATH = (
     REPO_ROOT / "src" / "endorlabs" / "generated" / "__init__.py"
 )
 GENERATED_RUNTIME_MODELS_ROOT = REPO_ROOT / "src" / "endorlabs" / "generated" / "models"
+GENERATED_CREATE_CONVENIENCE_PATH = (
+    REPO_ROOT / "src" / "endorlabs" / "generated" / "create_convenience.py"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -288,8 +292,21 @@ def run_sync(
     GENERATED_CONTRACT_MODULE_PATH.write_text(
         generated_contract_content, encoding="utf-8"
     )
+    create_convenience_content = render_create_convenience_module(
+        facade_contract=facade_contract
+    )
+    GENERATED_CREATE_CONVENIENCE_PATH.write_text(
+        create_convenience_content, encoding="utf-8"
+    )
     format_result = _run_command(
-        [sys.executable, "-m", "ruff", "format", str(GENERATED_CONTRACT_MODULE_PATH)],
+        [
+            sys.executable,
+            "-m",
+            "ruff",
+            "format",
+            str(GENERATED_CONTRACT_MODULE_PATH),
+            str(GENERATED_CREATE_CONVENIENCE_PATH),
+        ],
         REPO_ROOT,
     )
     if format_result.returncode != 0:

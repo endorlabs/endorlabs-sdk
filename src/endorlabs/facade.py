@@ -75,9 +75,21 @@ class ListableFacade[T: BaseModel]:
         self._tags_paths = tags_paths or []
         self._supported_ops = entry.supported_ops
         self._filter_kwarg_map: dict[str, str] = dict(entry.filter_kwarg_map)
+        self._entry = entry
         self._ops: BaseResourceOperations[T] = BaseResourceOperations(
             client, entry.resource_name, entry.model_class
         )
+
+    def _validate_list_remaining_kwargs(self, remaining_kwargs: dict[str, Any]) -> None:
+        """Reject unknown flat kwargs before building ``ListParameters``."""
+        allowed = set(ListParameters.model_fields) | set(self._filter_kwarg_map)
+        unknown = sorted(key for key in remaining_kwargs if key not in allowed)
+        if unknown:
+            raise TypeError(
+                f"Invalid list kwargs for {self._entry.attr_name}: {unknown}. "
+                f"Allowed: {sorted(allowed)}. Use list_params=ListParameters(...) "
+                "for advanced parameters."
+            )
 
     def _ns(self, namespace: str | None) -> str:
         ns = namespace if namespace is not None else self._default_namespace
@@ -213,6 +225,7 @@ class ListableFacade[T: BaseModel]:
             ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
+        self._validate_list_remaining_kwargs(remaining_kwargs)
         return self._list_params(list_params, traverse=traverse, **remaining_kwargs)
 
     def list(

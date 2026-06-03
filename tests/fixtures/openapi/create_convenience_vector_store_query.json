@@ -1,0 +1,35 @@
+{
+  "definitions": {
+    "VectorStoreQueryServiceCreateVectorStoreQueryBody": {
+      "type": "object",
+      "properties": {
+        "uuid": {"type": "string", "readOnly": true},
+        "meta": {"$ref": "#/definitions/v1Meta"},
+        "spec": {"$ref": "#/definitions/v1VectorStoreQuerySpec"}
+      },
+      "required": ["spec"]
+    },
+    "v1Meta": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "description": {"type": "string"}
+      }
+    },
+    "v1VectorStoreQuerySpec": {
+      "type": "object",
+      "properties": {
+        "vector_store_uuid": {"type": "string"},
+        "query": {"type": "string"},
+        "matches": {
+          "type": "array",
+          "readOnly": true
+        },
+        "metadata_filter": {
+          "type": "object"
+        }
+      },
+      "required": ["vector_store_uuid", "query"]
+    }
+  }
+}

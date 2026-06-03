@@ -47,7 +47,12 @@ client.ScanResult.list(filter="...", sort_by="meta.create_time", desc=True, page
 
 **For `.create()`:**
 
-- Prefer **kwargs** when the resource supports a builder: `client.<resource>.create(name="...", namespace="...", ...)`. The facade builds the CreateXPayload internally. Alternatively, `client.<resource>.create(payload=CreateXPayload(...))` remains supported. See [reference/create-update-payloads.md](../reference/create-update-payloads.md).
+- Prefer **kwargs** when the resource supports a builder: `client.<resource>.create(name="...", namespace="...", ...)`. The facade builds the CreateXPayload internally. Alternatively, `client.<resource>.create(payload=CreateXPayload(...))` remains supported. See [reference/create-update-payloads.md](../reference/create-update-payloads.md) and the per-resource pages under [generated-reference/resources/README.md](../generated-reference/resources/README.md).
+- **Unknown flat create kwargs** raise **`TypeError`** (OpenAPI-aligned allowlist). Use `payload=` or nested `spec=` / `meta=` for fields outside the flat list.
+
+**For `.list()` — strict kwargs:**
+
+- Unknown flat kwargs (typos or unsupported names) raise **`TypeError`** with an allowed-key hint. Use `list_params=ListParameters(...)` for full control.
 
 **For `.update()`:**
 

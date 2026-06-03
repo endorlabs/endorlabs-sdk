@@ -3,8 +3,8 @@
   "files": [
     {
       "path": "facade_contract.json",
-      "sha256": "5d083d8eb4af2bffa9aaed8c22c65c63868f6a7554b1b499de8f98ae639ef860",
-      "size_bytes": 63797
+      "sha256": "66a4b25dc718302f3dfc0f653bb2f4c3dd9a2b85cfb4c845bc016400828f677a",
+      "size_bytes": 90144
     },
     {
       "path": "generated/a_i_sast_customer_context_service.py",
@@ -383,8 +383,8 @@
     },
     {
       "path": "mapping/payload_schemas.json",
-      "sha256": "786914b647f8cbe17fb76c9e9f57575a2ec7c14602af46dbc1527eb23ddb9a6e",
-      "size_bytes": 111716
+      "sha256": "b1e3191668f3d23ed7ac9064b0ab6ae4b4f31e03a74542c1bff87717b9a09816",
+      "size_bytes": 138069
     },
     {
       "path": "mapping/progress.json",
@@ -767,5 +767,5 @@
       "size_bytes": 86796
     }
   ],
-  "overall_sha256": "dc801b23f930ef6b723c24dc33e7f9cb8b8e79515db97296f25b54eef9ab19fe"
+  "overall_sha256": "69d4ee7ee58aae67a9218f73c587d1ac017b0670571cd41423760baebe7f891e"
 }

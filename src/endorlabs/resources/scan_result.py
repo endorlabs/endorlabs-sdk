@@ -509,7 +509,11 @@ class CreateScanResultPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateScanResultPayload:
     """Build CreateScanResultPayload from kwargs (decoupled facade create)."""
-    return CreateScanResultPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateScanResultPayload, kwargs, attr_name="ScanResult"
+    )
 
 
 class ScanResultMetaUpdate(BaseModel):

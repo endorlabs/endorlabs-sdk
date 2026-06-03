@@ -471,7 +471,11 @@ class CreateSemgrepRulePayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateSemgrepRulePayload:
     """Build CreateSemgrepRulePayload from kwargs (decoupled facade create)."""
-    return CreateSemgrepRulePayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateSemgrepRulePayload, kwargs, attr_name="SemgrepRule"
+    )
 
 
 class UpdateSemgrepRulePayload(BaseModel):
