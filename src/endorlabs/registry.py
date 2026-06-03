@@ -37,6 +37,12 @@ class ResourceEntry:
     )
     update_requires_mask: bool = False
     workflow_flags: frozenset[str] = frozenset()
+    create_convenience_spec_fields: tuple[str, ...] = ()
+    create_convenience_spec_required: tuple[str, ...] = ()
+    create_convenience_meta_fields: tuple[str, ...] = ()
+    create_convenience_payload_top_level_fields: tuple[str, ...] = ()
+    create_convenience_read_only_spec_fields: tuple[str, ...] = ()
+    convenience_skip_reason: str | None = None
 
 
 @dataclass
@@ -185,6 +191,20 @@ def _build_resource_registry() -> list[ResourceEntry]:
         workflow_flags: frozenset[str] = frozenset(
             value for value in workflow_flag_candidates if isinstance(value, str)
         )
+
+        def _str_tuple(key: str, row: dict[str, Any] = item) -> tuple[str, ...]:
+            raw = row.get(key)
+            if not isinstance(raw, list):
+                return ()
+            names: list[str] = []
+            for value in cast("list[Any]", raw):
+                if isinstance(value, str):
+                    names.append(value)
+            return tuple(names)
+
+        skip_raw = item.get("convenience_skip_reason")
+        convenience_skip_reason = skip_raw if isinstance(skip_raw, str) else None
+
         registry.append(
             ResourceEntry(
                 attr_name=attr_name,
@@ -198,6 +218,22 @@ def _build_resource_registry() -> list[ResourceEntry]:
                 create_mode=create_mode,
                 update_requires_mask=update_requires_mask,
                 workflow_flags=workflow_flags,
+                create_convenience_spec_fields=_str_tuple(
+                    "create_convenience_spec_fields"
+                ),
+                create_convenience_spec_required=_str_tuple(
+                    "create_convenience_spec_required"
+                ),
+                create_convenience_meta_fields=_str_tuple(
+                    "create_convenience_meta_fields"
+                ),
+                create_convenience_payload_top_level_fields=_str_tuple(
+                    "create_convenience_payload_top_level_fields"
+                ),
+                create_convenience_read_only_spec_fields=_str_tuple(
+                    "create_convenience_read_only_spec_fields"
+                ),
+                convenience_skip_reason=convenience_skip_reason,
             )
         )
     return registry

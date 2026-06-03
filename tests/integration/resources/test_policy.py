@@ -537,7 +537,7 @@ match_finding[result] {
             assert created.meta.name == policy_name
             self.created_policy_uuids.append(created.uuid)
         finally:
-            if created is not None:  # type: ignore[reportUnnecessaryComparison]
+            if created is not None:
                 try:
                     self.endor_client.Policy.delete(created.uuid)
                 except Exception as e:

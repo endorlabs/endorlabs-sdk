@@ -1,0 +1,10 @@
+{
+  "VectorStore": ["VectorStoreQuery"],
+  "VectorStoreQuery": ["VectorStore"],
+  "Project": ["Finding", "ScanResult", "PackageVersion", "RepositoryVersion"],
+  "Finding": ["Project", "PackageVersion"],
+  "ScanResult": ["Project", "ScanProfile"],
+  "Policy": ["Finding", "PolicyValidation"],
+  "QueryVulnerability": ["Vulnerability", "PackageVersion"],
+  "QueryMalware": ["Malware", "PackageVersion"]
+}
