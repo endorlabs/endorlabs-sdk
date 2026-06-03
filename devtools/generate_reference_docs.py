@@ -744,6 +744,16 @@ def main() -> int:
             logger.error(" - %s", path.relative_to(REPO_ROOT))
         return 1
 
+    devtools_dir = REPO_ROOT / "devtools"
+    if str(devtools_dir) not in sys.path:
+        sys.path.insert(0, str(devtools_dir))
+    from generate_resource_reference_pages import (  # noqa: PLC0415
+        generate_resource_reference_pages,
+    )
+
+    resource_changed = generate_resource_reference_pages()
+    changed_files.extend(resource_changed)
+
     if changed_files:
         logger.info("Updated generated docs:")
         for path in changed_files:
