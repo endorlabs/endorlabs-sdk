@@ -329,7 +329,9 @@ class CreatePolicyPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreatePolicyPayload:
     """Build CreatePolicyPayload from kwargs (decoupled facade create)."""
-    return CreatePolicyPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(CreatePolicyPayload, kwargs, attr_name="Policy")
 
 
 class UpdatePolicyPayload(BaseModel):

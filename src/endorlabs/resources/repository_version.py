@@ -180,7 +180,11 @@ class CreateRepositoryVersionPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateRepositoryVersionPayload:
     """Build CreateRepositoryVersionPayload from kwargs (decoupled create)."""
-    return CreateRepositoryVersionPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateRepositoryVersionPayload, kwargs, attr_name="RepositoryVersion"
+    )
 
 
 class UpdateRepositoryVersionPayload(BaseModel):

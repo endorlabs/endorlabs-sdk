@@ -441,7 +441,11 @@ class CreateLinterResultPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateLinterResultPayload:
     """Build CreateLinterResultPayload from kwargs (decoupled facade create)."""
-    return CreateLinterResultPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateLinterResultPayload, kwargs, attr_name="LinterResult"
+    )
 
 
 class UpdateLinterResultPayload(BaseModel):

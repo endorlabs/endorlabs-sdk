@@ -13,7 +13,12 @@ from typing import Any, ClassVar, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from ..generated.create_convenience import (
+    VECTOR_STORE_QUERY_META_FIELDS,
+    VECTOR_STORE_QUERY_SPEC_FIELDS,
+)
 from ..models.base import BaseMeta, BaseResource, BaseSpec
+from ..utils.create_payload import promote_create_kwargs
 from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
@@ -31,6 +36,10 @@ class VectorStoreQuerySpec(BaseSpec):
     query: str | None = Field(
         None,
         description="Natural-language query string.",
+    )
+    metadata_filter: dict[str, Any] | None = Field(
+        None,
+        description="Optional metadata filter to scope similarity search.",
     )
 
     model_config: ClassVar[ConfigDict] = ConfigDict(extra="allow")
@@ -68,7 +77,7 @@ class VectorStoreQuery(BaseResource):
     def detect_schema_drift(cls, v: Any, info: Any) -> Any:
         """Detect and log schema drift in vector store query responses."""
         if info.field_name == "spec" and isinstance(v, dict):
-            known = {"vector_store_uuid", "query", "matches"}
+            known = {"vector_store_uuid", "query", "metadata_filter", "matches"}
             unknown = set(v.keys()) - known
             if unknown:
                 logger.warning(
@@ -97,18 +106,14 @@ def build_create_payload(**kwargs: Any) -> CreateVectorStoreQueryPayload:
     Supports either explicit payload style (``meta=...``, ``spec=...``) or
     convenience kwargs used by ``ResourceRuntimeFacade.create(...)``.
     """
-    payload_kwargs = dict(kwargs)
-
-    if "meta" not in payload_kwargs:
-        name = payload_kwargs.pop("name", "vector-store-query")
-        payload_kwargs["meta"] = {"name": name}
-
-    if "spec" not in payload_kwargs:
-        spec_fields = ("vector_store_uuid", "query")
-        spec: dict[str, Any] = {}
-        for field in spec_fields:
-            if field in payload_kwargs:
-                spec[field] = payload_kwargs.pop(field)
-        payload_kwargs["spec"] = spec
-
+    meta_aliases = {
+        name: "name" for name in VECTOR_STORE_QUERY_META_FIELDS if name == "name"
+    }
+    payload_kwargs = promote_create_kwargs(
+        dict(kwargs),
+        spec_fields=VECTOR_STORE_QUERY_SPEC_FIELDS,
+        meta_name_default="vector-store-query",
+        meta_flat_aliases=meta_aliases,
+        resource_label="VectorStoreQuery",
+    )
     return CreateVectorStoreQueryPayload(**payload_kwargs)

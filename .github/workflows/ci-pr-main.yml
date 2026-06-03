@@ -369,7 +369,7 @@ jobs:
         id: ref_docs
         run: |
           set -euo pipefail
-          FILES="docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json"
+          FILES="docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json docs/generated-reference/resources/"
           uv run python devtools/generate_reference_docs.py
           if git diff --quiet -- $FILES; then
             echo "docs_stale=false" >> "$GITHUB_OUTPUT"

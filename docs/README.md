@@ -16,6 +16,7 @@ Index for SDK-specific documentation.
 - [reference/api-surfaces.md](reference/api-surfaces.md) — Landing page to canonical generated API surfaces.
 - [reference/create-update-payloads.md](reference/create-update-payloads.md) — Landing page to canonical generated payload matrix.
 - [generated-reference/resources.md](generated-reference/resources.md) — Generated resource matrix from registry + spec.
+- [generated-reference/resources/README.md](generated-reference/resources/README.md) — Per-resource pages (create convenience kwargs, ops, examples).
 - [generated-reference/api-surfaces.md](generated-reference/api-surfaces.md) — Generated facade and client surface inventory.
 - [generated-reference/create-update-payloads.md](generated-reference/create-update-payloads.md) — Generated create/update payload matrix.
 - [generated-reference/coverage.json](generated-reference/coverage.json) — Structured generated coverage metadata.
