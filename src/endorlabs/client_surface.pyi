@@ -602,6 +602,7 @@ class _ProjectFacade(ResourceRuntimeFacade[Project]):
 class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     """QueryMalware resource model returned by query endpoint.
 
+    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
@@ -623,6 +624,7 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
 class _QueryVulnerabilityFacade(ResourceRuntimeFacade[QueryVulnerability]):
     """QueryVulnerability resource model returned by query endpoint.
 
+    OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
     """
 
