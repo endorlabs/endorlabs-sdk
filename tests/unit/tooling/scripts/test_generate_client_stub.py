@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS_DIR = str(_REPO_ROOT / "scripts")
-if _SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, _SCRIPTS_DIR)
+_DEVTOOLS_DIR = str(_REPO_ROOT / "devtools")
+if _DEVTOOLS_DIR not in sys.path:
+    sys.path.insert(0, _DEVTOOLS_DIR)
 
 import generate_client_stub as stubgen
 from sync.policy import (
