@@ -197,7 +197,7 @@ docs/generated-reference/
 | `tests/unit/utils/test_create_payload_promote.py` | **New.** Promotion moves spec fields; default meta; unknown kwarg raises `TypeError`; `spec=` passthrough unchanged. |
 | `tests/unit/resources/test_vector_store_query.py` | **Extend.** `metadata_filter` as flat kwarg appears in `model_dump()["spec"]`; explicit `spec=` still works. |
 | `tests/unit/tooling/scripts/test_generated_contract_quality_gates.py` | **Extend.** Registry contract rows include `create_convenience_spec_fields` when create supported. |
-| `tests/unit/devtools/test_generate_client_stub.py` | **New or extend.** `_VectorStoreQueryFacade.create` in pyi includes `metadata_filter` param after regen. |
+| `tests/unit/devtools/test_client_surface_pyi_create_kwargs.py` | **New or extend.** `_VectorStoreQueryFacade.create` in pyi includes `metadata_filter` param after regen. |
 
 ### Side A — integration (optional, credentialed)
 
