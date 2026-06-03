@@ -220,7 +220,7 @@ Pyright-visible per-resource `create()` for `create_mode=both` resources.
 |--------|------|
 | Modify | `devtools/generate_client_stub.py` — `_format_create_override(entry, contract_row)` |
 | Regen | `src/endorlabs/client_surface.pyi` |
-| Create | `tests/unit/devtools/test_generate_client_stub.py` |
+| Create | `tests/unit/devtools/test_client_surface_pyi_create_kwargs.py` |
 
 ### Implementation steps
 
@@ -242,7 +242,7 @@ Pyright-visible per-resource `create()` for `create_mode=both` resources.
 
 ```bash
 uv run python devtools/generate_client_stub.py
-uv run pytest tests/unit/devtools/test_generate_client_stub.py -q
+uv run pytest tests/unit/devtools/test_client_surface_pyi_create_kwargs.py -q
 uv run pyright src/endorlabs/client_surface.py
 ```
 
@@ -410,7 +410,7 @@ uv run pytest \
   tests/unit/devtools/sync/test_create_convenience_fields.py \
   tests/unit/utils/test_create_payload_promote.py \
   tests/unit/resources/test_vector_store_query.py \
-  tests/unit/devtools/test_generate_client_stub.py \
+  tests/unit/devtools/test_client_surface_pyi_create_kwargs.py \
   tests/unit/devtools/test_generate_resource_reference_pages.py \
   -q
 
@@ -447,7 +447,7 @@ print('matches', len(r.spec.model_dump().get('matches') or []))
 | T1 | unit | `tests/unit/devtools/sync/test_create_convenience_fields.py` | E2E-1 |
 | T2 | unit | `tests/unit/utils/test_create_payload_promote.py` | E2E-2 |
 | T3 | unit | `tests/unit/resources/test_vector_store_query.py` | E2E-3 |
-| T4 | unit | `tests/unit/devtools/test_generate_client_stub.py` | E2E-4 |
+| T4 | unit | `tests/unit/devtools/test_client_surface_pyi_create_kwargs.py` | E2E-4 |
 | T5 | unit | contract quality gates | E2E-1 |
 | T6 | unit | parametrized builder / resource tests | E2E-6 |
 | T7 | unit | `tests/unit/devtools/test_generate_resource_reference_pages.py` | E2E-7 |
