@@ -27,6 +27,28 @@ def test_build_create_payload_convenience_kwargs() -> None:
     assert payload.spec.query == "functions that sanitize input"
 
 
+def test_build_create_payload_metadata_filter() -> None:
+    """Flat metadata_filter is promoted into spec."""
+    payload = build_create_payload(
+        vector_store_uuid="u1",
+        query="q",
+        metadata_filter={"language": "python"},
+    )
+    assert payload.spec.metadata_filter == {"language": "python"}
+    dumped = payload.model_dump()
+    assert dumped["spec"]["metadata_filter"] == {"language": "python"}
+
+
+def test_build_create_payload_unknown_kwarg_raises() -> None:
+    """Unknown flat kwargs raise TypeError instead of being dropped."""
+    with pytest.raises(TypeError, match="typo"):
+        build_create_payload(
+            vector_store_uuid="u1",
+            query="q",
+            typo=True,
+        )
+
+
 def test_build_create_payload_default_name() -> None:
     """Default meta.name when omitted."""
     payload = build_create_payload(

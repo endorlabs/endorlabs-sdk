@@ -56,4 +56,8 @@ class CreateDependencyMetadataPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreateDependencyMetadataPayload:
     """Build create payload for DependencyMetadata."""
-    return CreateDependencyMetadataPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreateDependencyMetadataPayload, kwargs, attr_name="DependencyMetadata"
+    )

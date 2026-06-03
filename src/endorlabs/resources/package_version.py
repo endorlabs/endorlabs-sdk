@@ -495,7 +495,11 @@ class CreatePackageVersionPayload(BaseModel):
 
 def build_create_payload(**kwargs: Any) -> CreatePackageVersionPayload:
     """Build CreatePackageVersionPayload from kwargs (decoupled create)."""
-    return CreatePackageVersionPayload(**kwargs)
+    from ..utils.create_payload import pass_through_create_payload
+
+    return pass_through_create_payload(
+        CreatePackageVersionPayload, kwargs, attr_name="PackageVersion"
+    )
 
 
 class PackageVersionMetaCreate(BaseModel):
