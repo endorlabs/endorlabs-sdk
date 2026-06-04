@@ -1,4 +1,4 @@
-# Troubleshooting Rules of Engagement
+# SDK troubleshooting (contributing)
 
 Workflow below. Resolved-case narratives: local docs snapshots under `.endorlabs-context/docs/` and repo issues.
 

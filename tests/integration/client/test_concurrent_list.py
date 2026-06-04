@@ -1,6 +1,9 @@
-"""Integration tests for concurrent list operations (requires real API access).
+"""Integration tests for list operations with traverse (requires real API access).
 
-Unit tests for the concurrent facade live in tests/unit/client/test_concurrent_list.py.
+Per-resource CRUD integration tests list in the project namespace without
+traverse. This module owns tenant-root `traverse=True` coverage (sequential
+and concurrent). Unit tests for the concurrent facade live in
+tests/unit/client/test_concurrent_list.py.
 """
 
 import pytest
@@ -19,6 +22,19 @@ class TestConcurrentListIntegration:
         self.api_client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
+
+    def test_sequential_list_projects_with_traverse(self) -> None:
+        """Sequential LIST with traverse from tenant root."""
+        client = endorlabs.Client(
+            tenant=self.root_namespace,
+            api_client=self.api_client,
+        )
+        result = client.Project.list(
+            traverse=True,
+            page_size=TEST_TRAVERSE_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        )
+        assert isinstance(result, list)
 
     def test_concurrent_list_projects_returns_results(self) -> None:
         """Concurrent list of projects returns results (integration)."""

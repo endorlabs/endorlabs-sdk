@@ -68,7 +68,8 @@
         }
       },
       "required": [
-        "meta"
+        "meta",
+        "tenant_meta"
       ],
       "type": "object"
     },
@@ -110,7 +111,8 @@
         }
       },
       "required": [
-        "meta"
+        "meta",
+        "tenant_meta"
       ],
       "type": "object"
     },

@@ -15,7 +15,7 @@ from endorlabs.resources.scan_profile import (
     ScanProfileSpecCreate,
     UpdateScanProfilePayload,
 )
-from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -69,40 +69,21 @@ class TestScanProfile:
         return results[0]  # Return single item, not list
 
     def test_scan_profile_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.ScanProfile.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST in namespace."""
+        result = self.endor_client.ScanProfile.list(
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_scan_profile_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.ScanProfile.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from LIST in namespace."""
+        items = self.endor_client.ScanProfile.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.ScanProfile.get(item.uuid, namespace=ns)
+        got = self.endor_client.ScanProfile.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
