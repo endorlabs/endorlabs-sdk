@@ -3,7 +3,7 @@
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -23,11 +23,10 @@ class TestPolicyTemplate:
         )
 
     def test_policy_template_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
+        """LIST in namespace (registry-based)."""
         result = self.endor_root_client.PolicyTemplate.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
@@ -36,9 +35,8 @@ class TestPolicyTemplate:
         from endorlabs.core.exceptions import PermissionDeniedError
 
         items = self.endor_root_client.PolicyTemplate.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")

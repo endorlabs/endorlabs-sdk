@@ -141,8 +141,8 @@ Auto-generated inventories for stable/public surfaces.
 | Policy | policies | tenant | — | list, get, create, update, delete |
 | PolicyTemplate | policy-templates | tenant | — | list, get |
 | Project | projects | tenant | — | list, get, create, update, delete |
-| QueryMalware | queries/malware | tenant | — | create |
-| QueryVulnerability | queries/vulnerabilities | tenant | — | create |
+| QueryMalware | queries/malware | oss | — | create |
+| QueryVulnerability | queries/vulnerabilities | oss | — | create |
 | Repository | repositories | tenant | — | list, get, create, update, delete |
 | RepositoryVersion | repository-versions | tenant | project | list, get, create, update, delete |
 | ScanLogRequest | scan-log-requests | tenant | — | create |

@@ -14,11 +14,12 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 | [dependency-provenance](dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [dependency-finding-provenance](dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
 | [fetch-and-search-call-graph](fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | `endorlabs.workflows.callgraph` |
-| [implement-sdk-resource](implement-sdk-resource/) | Adding a new Endor Labs resource to the SDK | `docs/rules-of-engagement/` |
-| [retrieve-scan-results](retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/rules-of-engagement/` |
+| [implement-sdk-resource](implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
+| [model-sync-drift](model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
+| [retrieve-scan-results](retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
 | [map-project-dependency-relationships](map-project-dependency-relationships/) | Namespace-wide project dependency relationship graphing (direct + indirect) with JSON outputs | Skill-owned |
-| [troubleshooting-scans](troubleshooting-scans/) | Scan regressions; anomalous ScanResults, ScanLogs, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/rules-of-engagement/list-query-performance.md` |
-| [troubleshoot-sdk](troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/rules-of-engagement/` |
+| [troubleshooting-scans](troubleshooting-scans/) | Scan regressions; anomalous ScanResults, ScanLogs, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
+| [troubleshoot-sdk](troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |
 | [troubleshoot-authlog](troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
 | [validate-policy](validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |
 

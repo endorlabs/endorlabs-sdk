@@ -1,117 +1,67 @@
 ---
 name: implement-sdk-resource
 description: >-
-  Implement a new Endor Labs resource in the SDK: API analysis, Pydantic
-  models, CRUD operations, registry entry, and tests. Use when adding a new
-  resource type, implementing list/get/create/update/delete for a resource,
-  or extending the Client surface with a new facade.
+  Extend the SDK client surface after OpenAPI changes: model sync, registry
+  overlay, payload builders, and integration tests. Use when a new API resource
+  appears, facade behavior diverges from generated contract, or list/get/create
+  needs validation—not for hand-implementing every resource from scratch.
 ---
 
-# Implement a New SDK Resource
+# Extend the SDK client surface (model-sync-first)
 
-Phased workflow for adding a new Endor Labs resource to the SDK. Every resource
-follows the same two-layer, registry-driven pattern.
+The SDK **generates** registry rows, models, and facades from OpenAPI. Contributor work is regen, minimal overlay, hand deltas in `resources/` when needed, and integration tests.
 
-## Phase 0: API Analysis (mandatory)
+## Phase 0: API analysis (mandatory)
 
-Before writing any code, understand the API contract.
+Follow [api-validation.md](../../../docs/contributing/api-validation.md) (OpenAPI grep, optional endorctl in namespace scope, operations matrix from generated reference).
 
-1. **Find the resource in the OpenAPI spec**:
-   - Local (preferred): `.endorlabs-context/openapiv2.swagger.json`
-   - Online (fallback): <https://api.endorlabs.com/download/openapiv2.swagger.json>
-   - Grep for `{Resource}Service` and endpoint paths
+## Phase 1: Regenerate and review contract
 
-2. **Extract schema**: `v1{Resource}`, `v1{Resource}Spec`
-   - Note required vs optional fields, readOnly fields, types
-   - Map service name, URL endpoints, HTTP methods
-
-3. **Validate with live data**:
-   ```bash
-   endorctl api list -r {Resource} -n {namespace} --traverse
-   endorctl api get -r {Resource} -n {namespace} --uuid {uuid}
-   ```
-   Compare live response shape with OpenAPI definitions.
-
-4. **Build implementation matrix**:
-   - Universal fields (all resources have them)
-   - Conditional fields (present in some resources)
-   - Resource-specific fields
-   - Which CRUD operations the API supports
-   - Which list parameters work (filter, mask, traverse)
-
-For the full pre-implementation checklist, see [API_VALIDATION.md](API_VALIDATION.md).
-
-## Phase 1: Implementation
-
-### Models
-
-Create in `src/endorlabs/resources/{resource_name}.py`:
-
-- `{Resource}Meta(BaseMeta)` -- resource metadata
-- `{Resource}Spec(BaseSpec)` -- resource specification
-- `{Resource}(BaseResource)` -- top-level resource, extending BaseResource
-
-**Field aliasing rules**: See [docs/contracts.md (Field aliasing)](../../../docs/contracts.md#field-aliasing).
-
-### Operations
-
-CRUD operations are handled by `BaseResourceOperations` via the `Client` facade — no module-level CRUD wrapper functions needed. The resource module only needs to define Pydantic models and any resource-specific convenience functions (e.g. `associate_scan_profile_with_project`).
-
-- `update` requires `update_mask: str` (comma-separated paths); sparse PATCH always
-- Use exception classes exported by `endorlabs` (implemented in `endorlabs.core.exceptions`); log full `response.text` on errors
-
-### Create/Update fields
-
-- Allowed create fields: defined in the resource's `build_create_payload`
-- Allowed update fields: defined by model's `get_mutable_fields_cls()` and `get_immutable_fields_cls()`
-- Override these classmethods if the resource differs from BaseResource defaults
-- The facade may expose a subset as explicit optional kwargs
-
-### Docstrings
-
-All public functions require: Args, Returns, Raises. Pydantic/Pyright and IDE must be self-explanatory.
-
-## Phase 2: Expose on Client
-
-Add one entry to the registry in `src/endorlabs/registry.py`:
-
-```python
-ResourceEntry(
-    attr_name="resource_name",
-    resource_name="api-path",
-    model_class=ResourceModel,
-    supported_ops=frozenset({"list", "get", "create", "update", "delete"}),
-    scope=None,  # "oss" or None
-)
+```bash
+uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs --delta-summary
 ```
 
-Do NOT hand-wire in `Client.__init__`; the registry drives facade attachment.
+- [ ] Resource row in `src/endorlabs/generated/registry_contract.py`
+- [ ] Generated model shard under `src/endorlabs/generated/models/` (or hand module if exempt)
+- [ ] `client_surface.pyi` regen has no unexpected drift
+- [ ] If behavior differs from API: minimal change in `src/endorlabs/registry_overlay.py` (allowed keys only) or `devtools/model_sync_profiles/`
 
-For architecture rules, see [docs/rules-of-engagement/architecture.md](../../../docs/rules-of-engagement/architecture.md).
+**Hand-written `src/endorlabs/resources/{name}.py` only when needed:**
 
-## Phase 2b: Tests
+- `build_create_payload` / create convenience
+- Field aliasing per [contracts.md](../../../docs/contracts.md)
+- Resource-specific helpers (not module-level CRUD — facade uses `BaseResourceOperations`)
 
-Each resource test file follows canonical order:
+Do **not** hand-wire facades in `Client.__init__`.
 
-1. **LIST** -- from root namespace with `traverse=True`. Assert result is a list.
-2. **GET** -- GET the first item from LIST (pass resource object for namespace). Skip if LIST empty.
-3. **Create** -- for resources where `"create" in entry.supported_ops`. Capture UUID for teardown.
-4. **Update** -- for resources where `"update" in entry.supported_ops`. Update resource from step 3.
-5. **Delete** -- for resources where `"delete" in entry.supported_ops`. Delete resource from step 3.
+Architecture: [architecture.md](../../../docs/contributing/architecture.md). Drift: [model-sync-drift](../model-sync-drift/) skill.
 
-**Fixtures**: Use conftest `api_client`, `namespace`, `root_namespace`.
+## Phase 2: Facade and consumer UX
 
-**Cleanup**: Every CREATE test must use try/finally so cleanup runs on pass, failure, or exception.
+- [ ] List/get/create kwargs match registry and [contracts.md](../../../docs/contracts.md)
+- [ ] `update_mask` required for sparse PATCH where applicable
+- [ ] Scope (`tenant`, `oss`, `system`) correct in overlay if not tenant-default
+- [ ] Docstrings on public helpers in `resources/` (Args, Returns, Raises)
 
-**No-update resources**: For `api_keys`, `audit_logs`, `finding_logs`, `linter_results` -- add test asserting `.update()` raises `NotImplementedError`.
+Custom workflow facades (e.g. `ScanLogs`) are rare append-only entries in `registry.py` — prefer overlay + generated contract.
+
+## Phase 3: Integration tests
+
+Follow [integration-resource-tests.md](../../../docs/contributing/integration-resource-tests.md):
+
+1. LIST in `namespace` (no traverse) — generic: `TEST_PAGE_SIZE` / `TEST_MAX_PAGES`; logs: `log_list_kwargs()`
+2. GET first row (resource object for namespace)
+3. Create / update / delete where supported, with teardown
+4. `NotImplementedError` for update on read-only kinds
+
+Traverse coverage: `tests/integration/client/test_concurrent_list.py`. List performance: [list-query-performance.md](../../../docs/contributing/list-query-performance.md).
 
 ## Checklist
 
-- [ ] Phase 0: API analysis complete (spec + live data)
-- [ ] Models: Meta, Spec, Resource with correct field aliasing
-- [ ] Operations: list/get/create/update/delete with BaseResourceOperations
-- [ ] Registry entry added (one line in `registry.py`)
-- [ ] Tests: LIST, GET, Create, Update, Delete in canonical order
-- [ ] Docstrings: Args, Returns, Raises on all public functions
+- [ ] Phase 0: API analysis (spec ± live)
+- [ ] Model sync regen committed; provenance current
+- [ ] Overlay / `resources/` deltas minimal and justified
+- [ ] Integration test file under `tests/integration/resources/`
 - [ ] `uv run ruff check .` and `uv run pyright` pass
-- [ ] `uv run pytest tests/test_{resource}.py -v` passes
+- [ ] `uv run pytest tests/unit -m "not interactive and not long"` pass
+- [ ] Integration tests pass locally with `ENDOR_*` creds when applicable

@@ -24,6 +24,7 @@
       },
       "required": [
         "meta",
+        "tenant_meta",
         "spec"
       ],
       "type": "object"
@@ -60,6 +61,7 @@
       },
       "required": [
         "meta",
+        "tenant_meta",
         "spec"
       ],
       "type": "object"

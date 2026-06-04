@@ -151,6 +151,26 @@
       },
       "type": "object"
     },
+    "SpecScanCreditGrant": {
+      "description": "ScanCreditGrant captures an additional scan credit bucket granted to a\ntenant outside the standard per-bundle entitlement. CS adds entries via\nServiceRequest when upselling extra credits (typically 10,000 buckets).\nNegative values are allowed to record corrections.",
+      "properties": {
+        "credits": {
+          "description": "Number of additional scan credits in this grant. Must be a non-zero\nmultiple of 10,000. Negative values are permitted for corrections.",
+          "format": "int64",
+          "type": "string"
+        },
+        "granted_at": {
+          "description": "Time at which this grant was applied. Stamped by the backend when the\nentry is first persisted; clients should leave this unset on writes.",
+          "format": "date-time",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "required": [
+        "credits"
+      ],
+      "type": "object"
+    },
     "SpecSecurityReviewConfiguration": {
       "description": "SecurityReviewConfiguration is the configuration for the security review.",
       "properties": {
@@ -211,6 +231,11 @@
           },
           "type": "array"
         },
+        "credits_period_start": {
+          "description": "Anchor timestamp for the scan credit counting window. Set on contract\nrenewal. Any unused credits will be refreshed and NOT carry forwarded once the new period starts.",
+          "format": "date-time",
+          "type": "string"
+        },
         "excluded_feature_types": {
           "description": "Indicates excluded features.",
           "items": {
@@ -246,6 +271,20 @@
         },
         "salesforce_account_id": {
           "description": "Salesforce Account ID for CRM integration.\nLinks this license to a Salesforce account for revenue attribution and\ncustomer success reporting.\n\nFormat: Salesforce IDs are either 15 or 18 characters:\n- 15 chars: case-sensitive alphanumeric (0-9, a-z, A-Z)\n- 18 chars: 15-char ID + 3-char case-safe checksum\nPattern validates format only, not checksum correctness.\nRef: https://stackoverflow.com/questions/9742913/validating-a-salesforce-id",
+          "type": "string"
+        },
+        "scan_credit_grants": {
+          "description": "History of additional scan credit buckets outside the bundle entitlement granted to the tenant, in the\norder they were applied. Entries are appended via ServiceRequest by CS\nwhen customers buy additional credits beyond the bundle entitlement.",
+          "items": {
+            "$ref": "#/definitions/SpecScanCreditGrant",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "scan_credit_limit": {
+          "description": "Scan credit limit available to the tenant for the current counting\nwindow. Computed by the backend as the derived base from seats and\nbundle tiers plus the sum of scan_credit_grants. Clients must not\nset this field; any value provided on write is discarded.",
+          "format": "int64",
+          "readOnly": true,
           "type": "string"
         },
         "target_namespace": {
