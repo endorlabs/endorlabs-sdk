@@ -15,6 +15,10 @@
     },
     "AIResultSAST": {
       "properties": {
+        "attack_vector": {
+          "description": "Attack vector breakdown table when no exploit reproduction is emitted (the \"## Attack Vector\" section).",
+          "type": "string"
+        },
         "classification": {
           "$ref": "#/definitions/v1FindingClassification",
           "description": "Classification of the finding type."
@@ -34,6 +38,10 @@
           },
           "type": "array"
         },
+        "exploit_reproduction": {
+          "description": "Step-by-step exploit reproduction for high/critical true positives (the \"## Exploit Reproduction\" section).",
+          "type": "string"
+        },
         "language": {
           "description": "Programming language of the file where this result was found.",
           "type": "string"
@@ -41,6 +49,30 @@
         "location": {
           "$ref": "#/definitions/v1SourceLocation",
           "description": "The main location of the vulnerability."
+        },
+        "remediation": {
+          "description": "Recommended remediation, including any unified-diff fix (the \"## Remediation Guidance\" section).",
+          "type": "string"
+        },
+        "security_controls": {
+          "description": "Security controls assessment table (the \"## Security Controls\" section).",
+          "type": "string"
+        },
+        "severity_scoring": {
+          "description": "Severity scoring breakdown (the \"## Severity Scoring\" section).",
+          "type": "string"
+        },
+        "summary": {
+          "description": "Short prose summary of the vulnerability (the \"## Summary\" section).",
+          "type": "string"
+        },
+        "validation_outcome": {
+          "description": "Validation outcome for unknown findings (the \"## Validation Outcome\" section).",
+          "type": "string"
+        },
+        "verification_scorecard": {
+          "description": "Verification scorecard with per-criterion verdicts (the \"## Verification Scorecard\" section).",
+          "type": "string"
         }
       },
       "type": "object"
@@ -1834,6 +1866,10 @@
         },
         "relative_path": {
           "description": "The relative path to the file where the issue was found.",
+          "type": "string"
+        },
+        "scm_link": {
+          "description": "Permalink to this location in the SCM (GitHub/GitLab/Azure/Bitbucket). Displayed in the UI.",
           "type": "string"
         },
         "snippet": {

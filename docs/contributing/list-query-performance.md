@@ -18,7 +18,7 @@ Guidance for SDK users and contributors when choosing **namespace scope**, **`tr
 ## Pagination: client bounds vs server work
 
 - **`max_pages`** caps how many pages the SDK will fetch in a loop. It does **not** cap backend work for a single page—one page can still be slow if the query is broad or heavy.
-- **`page_size`:** Integration tests often use **`page_size=1`** with **`max_pages=1`** to bound CI cost; that is **not** a universal recommendation for production scripts. Very small page sizes can interact badly with some server plans; prefer defaults or moderate sizes unless you have a specific need. See also [namespace-traversal.md](namespace-traversal.md) (pagination notes).
+- **`page_size`:** Generic resource integration tests may use **`page_size=1`** with **`max_pages=1`** to bound CI cost; that is **not** a universal recommendation for production scripts. **Log-style tests** (`AuditLog`, `FindingLog`, `AuthenticationLog`, …) cap **`max_pages` only** and omit `page_size` — forcing `page_size=1` on log lists can be pathologically slow on the backend. See `TEST_LOG_LIST_*` in `tests/conftest.py`. Very small page sizes can interact badly with some server plans; prefer defaults or moderate sizes unless you have a specific need. See also [namespace-traversal.md](namespace-traversal.md) (pagination notes).
 
 ## Debugging slow or “hanging” lists
 

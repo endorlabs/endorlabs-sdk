@@ -3,372 +3,372 @@
   "files": [
     {
       "path": "facade_contract.json",
-      "sha256": "66a4b25dc718302f3dfc0f653bb2f4c3dd9a2b85cfb4c845bc016400828f677a",
-      "size_bytes": 90144
+      "sha256": "6cc2c7d732047adcea15794db9339e35b8c39b682e8219c965bdbaabd151d2ed",
+      "size_bytes": 90232
     },
     {
       "path": "generated/a_i_sast_customer_context_service.py",
-      "sha256": "f1f30ead87958f3f93a6a90edd75b1fb5161c77cca145fa1ee3ed8efadbd2c2e",
+      "sha256": "bdaaf4a18a51b816fa7e8b7333ca799930a8b266abc8a6c74b6f8d070f5d4a0f",
       "size_bytes": 10640
     },
     {
       "path": "generated/a_p_i_key_service.py",
-      "sha256": "e0e65f83d1cb592f535f8141298e91aba4318797acdf3c2f7105572687cfc9b6",
+      "sha256": "083dbeaf524fa9677c7f62f59634693396d54afdee12a253048e8a0fe69079c0",
       "size_bytes": 13360
     },
     {
       "path": "generated/a_p_i_key_validator_service.py",
-      "sha256": "1a7612a534d6363595f31bf53cfd572657140685f4fc8c6665f16f6d3a7c6a2e",
+      "sha256": "3e58ecc5b9f969d2f620b494ebbb4e580ac9c910013e6b30fa8a27047d832c77",
       "size_bytes": 9762
     },
     {
       "path": "generated/artifact_signature_service.py",
-      "sha256": "6a425d2612255cfd82542e9e3ff22f9f76f2ad7ad1367bf403c2d3a0e4b92dc5",
-      "size_bytes": 15147
+      "sha256": "22efac1a371319d49e480b462cbabb966467d3bdfe0d19496d644d726b7272fb",
+      "size_bytes": 15139
     },
     {
       "path": "generated/audit_log_service.py",
-      "sha256": "5ab1a6fbacf0b33b3aa0f6c4cd4001f83216994d177ac9f7159cdcd7da61d8c7",
+      "sha256": "1e95c2b4b7db39667f88f7f2ae0733a8d0d5230eb5936075e54115f20360038a",
       "size_bytes": 12118
     },
     {
       "path": "generated/authentication_log_service.py",
-      "sha256": "89852b4fff9f21234affcf5b23b7ab8bbe9c301df6a1ab3884176a5c06b54715",
+      "sha256": "a666b6fb228715839d3c9e742b375e20b8c270a0ba53d3a6f189b3f42a3fc871",
       "size_bytes": 10572
     },
     {
       "path": "generated/authentication_service.py",
-      "sha256": "2cb2eda81a2ede3cdb97df3f3763d37289c40b9bfb99aed67487e0030f5cfe61",
+      "sha256": "031cc0cf2fe17b110299ecba3d4aeb930eafe0df3ff37c004a06d3759ca08974",
       "size_bytes": 7156
     },
     {
       "path": "generated/authorization_policy_service.py",
-      "sha256": "ef05ca2dd7a2019168525e9e2dc567c6c9f638ce575a17f904060360c618e935",
-      "size_bytes": 14484
+      "sha256": "6b223368095930b7f46c7125dbaf1e7dcbaaa972536ff56422a8474f4d6950bb",
+      "size_bytes": 14476
     },
     {
       "path": "generated/batch_file_segments_service.py",
-      "sha256": "21399b84fdb5a25f2d3f9773ddf92dbaf61d3a73241f08f92a60695939566973",
+      "sha256": "557e9924cfda1a0ee397107f0e585a3fe018d27f3d1a8c1c9eb0b2b65c1b7656",
       "size_bytes": 12195
     },
     {
       "path": "generated/batch_notification_service.py",
-      "sha256": "5f2a1305b40fa9e865e624e810e16e215b5961bd07bdd309f12137cd79bb0274",
+      "sha256": "c6bb28d873bc0286ac6a57c287076ab28ad281eee58de39af449b9bcd9945a1d",
       "size_bytes": 20430
     },
     {
       "path": "generated/call_graph_data_service.py",
-      "sha256": "5c67148469d1550c08e47ead1a883cf06833f68bbb4c522ca1dba7dff4a7072d",
+      "sha256": "d66c7cbe29fb58b9f7b0bed8330ffc3d092e7644df4f24c80ac733f1f6865649",
       "size_bytes": 11421
     },
     {
       "path": "generated/code_owners_service.py",
-      "sha256": "2c987ba9ef2d970649aa0e01358b8f168555484e3034803ed03b0f95096ec676",
+      "sha256": "9f99af2bb00e1ebff1fcc97568de1cfa55c5d57cbf6ad5c2b3e029ae8ac8c66a",
       "size_bytes": 10263
     },
     {
       "path": "generated/dependency_metadata_service.py",
-      "sha256": "4d4d7831f95f84922254139e3c3ca37ca043a9a70806de778764c3fd538de4d2",
+      "sha256": "bc2a78b1b6a8d45af84313a5b3e613906bf9b95a898f2008af431ec58bcf7e73",
       "size_bytes": 23268
     },
     {
       "path": "generated/endor.py",
-      "sha256": "0e4b669ac4a090a643a845788270d4edd7706598e50a2afc871926b9c503ba13",
-      "size_bytes": 14895
+      "sha256": "d3a45a9f8dcc70f07a6bef00456437d7db884a6432476ebd50a000815afcc196",
+      "size_bytes": 16836
     },
     {
       "path": "generated/endor_ignore_entry_service.py",
-      "sha256": "320f83928c474aabcbe910e66883b2099f9dbfd9741d305f1f5bdce58552a1eb",
+      "sha256": "22f071749b3e6ff9993ba4bcafcfa6bbbb732235ba5d5a563cb8f93e69e9a04a",
       "size_bytes": 16343
     },
     {
       "path": "generated/exporter_service.py",
-      "sha256": "5b44c13c2c2004c77f5e26738e73ed86b4de736d67f0d73da7b022ae421d8a25",
+      "sha256": "153023be169feccbabf261e47d9b3c0a27b33d49ff6146c06d3838fea39858db",
       "size_bytes": 14463
     },
     {
       "path": "generated/finding_log_service.py",
-      "sha256": "e8df3d0ca9aa780a90ede29704fe23800de511afd1f2c58abd977eae5cc16db3",
+      "sha256": "b96818ace497177a8415f5d805cbe46a81dd24855fa743e57031bc8d08ff8376",
       "size_bytes": 20181
     },
     {
       "path": "generated/finding_service.py",
-      "sha256": "0014f99cf25e4ab53a3a697a71aaa4b1996c93444a34bc20f5d0745279888d12",
-      "size_bytes": 183215
+      "sha256": "c65683c461c2e55a580408d5494dca31ccb028ff4508c43dc166e715b3688482",
+      "size_bytes": 188560
     },
     {
       "path": "generated/hugging_face_model_service.py",
-      "sha256": "6b188d017baf83cc42a243b57a923b3f567a045dd9b9f9c5bb2c4add6193d9b3",
+      "sha256": "0d49e99f2df1aa76d3d6d46f2788611e15291be23703a6ab2e2efa3877f1ffb9",
       "size_bytes": 14946
     },
     {
       "path": "generated/hugging_face_organization_service.py",
-      "sha256": "1e243fa7acb7a98df7f8a3a7bfd8e7400c24ec47854aff4a71be1019f0b8b3ab",
+      "sha256": "19464c6f1efade6a31572667fb8f28210657e3d89b94a268bdd9e00d8a842842",
       "size_bytes": 9428
     },
     {
       "path": "generated/i_p_address_policy_service.py",
-      "sha256": "143eac226465460443bee02d4b2f1cdb2888c2fdf24512b5f8d8d7bade6f91c4",
+      "sha256": "76de9a9e6ff7850f07e0205a83fb61f7ba6451947415be5b9abaa968e49b5103",
       "size_bytes": 10338
     },
     {
       "path": "generated/identity_provider_service.py",
-      "sha256": "c995637cd80b25716547cafd4359345f2c0b7a6f0ecf6a0b3aabed3495099f88",
+      "sha256": "83e402bfa0e9c7dbb409f7f046987d5ecd8710b5c6979f4248254424c74c63a7",
       "size_bytes": 12549
     },
     {
       "path": "generated/installation_service.py",
-      "sha256": "9a0c8531acc3e85a78862bbbbd176f02263339512dd9ff864df6fdd67a19f2d5",
-      "size_bytes": 24907
+      "sha256": "a4054eb50383a62861eafae0d386ef432692da96afa1017f1ef6eb61c3ee80b7",
+      "size_bytes": 24899
     },
     {
       "path": "generated/invitation_service.py",
-      "sha256": "d1a8d3cd01ec5fc4e0652dfdcbfab976e604a93f58cde355a863008118d32529",
+      "sha256": "9d25f2917803dc8ca02c0e90d44237c3aec2e079d0abb16b4020bac4b3cc81f5",
       "size_bytes": 9810
     },
     {
       "path": "generated/license_dependency_service.py",
-      "sha256": "f9d9e0e5ef1ea783b7e1c0238e328190572dae932980f7166f477e6727734a41",
+      "sha256": "20a8675b64941e8d524eae5cf7021d16b62667500f260acbcf2bed99b3f5daf9",
       "size_bytes": 11603
     },
     {
       "path": "generated/license_notices_report_service.py",
-      "sha256": "8de66b4b843d37cc9f2857036ea80816666704b0a69b62fc615b067e24f64215",
-      "size_bytes": 9589
+      "sha256": "8f9fd6a21a25725336563d599331e39c2f04d9ece0b2353d6d21a92e08700e4b",
+      "size_bytes": 9581
     },
     {
       "path": "generated/license_summary_service.py",
-      "sha256": "edf5263abba4b27de01e1bdaafd0fbc153598111d084ec368663a79fe7ffd14a",
+      "sha256": "47cc6b3f307a4490cedd7d4b5657ff05bd1342794ed7337c2965ad1c6cbecf6e",
       "size_bytes": 11650
     },
     {
       "path": "generated/linter_result_service.py",
-      "sha256": "258e2dfdca479bb56bb1a68e3de8c4b0ccda50fe075c3e9c08b08755d6de9b58",
-      "size_bytes": 58547
+      "sha256": "0db5c9be043f2b2c68709b2f06a96555a8f904213cbe4a4b04e569bdf784463b",
+      "size_bytes": 60289
     },
     {
       "path": "generated/malware_service.py",
-      "sha256": "ce307882cb582374826003b7c746b4d76a14b06b1c171e6a333173169b81b48d",
+      "sha256": "4bbbd920b8670f8e3886373f99bfe23a0fcac5488f0d4ac687b3f61eea6341ab",
       "size_bytes": 77965
     },
     {
       "path": "generated/metric.py",
-      "sha256": "4b83efd727ea1cf47d83727e35c8ba59ae629774c3fbb8c1e1d17e29119b7d2e",
-      "size_bytes": 162753
+      "sha256": "4cb7af5bef57f2c4e02d5cc4e35b06f97f4d1b2c9738b2d0903d982824e5936f",
+      "size_bytes": 162745
     },
     {
       "path": "generated/metric_service.py",
-      "sha256": "d26bda242f29952359a992dfeb89c6a06cfc2ba424b2122a59629cfa4afa0005",
+      "sha256": "18a16d9cc86a72c83294297af67df50bbaba07c6a66ee021c3dd4bfc1f27aa51",
       "size_bytes": 165303
     },
     {
       "path": "generated/namespace_service.py",
-      "sha256": "46a7392b702d30025b4391d4f1937e267b1893019dffeccebb6b7909387cc076",
+      "sha256": "f1e6af59ffcba936d03f62ab4362f81c4ec0b8031ef4502f047ab8191188ca53",
       "size_bytes": 10806
     },
     {
       "path": "generated/notification_service.py",
-      "sha256": "f71793d726b346894adeee9f88294845db87b8f21c9ac0ad79ddd4123b01a2ca",
+      "sha256": "5a24b5b11734daccb40b760d37689d8f701330ba664855fa0e68dfc5a74cb142",
       "size_bytes": 21201
     },
     {
       "path": "generated/notification_target_service.py",
-      "sha256": "e1e390995dc7c8975ef1521082b4a1108ec4d2273c8222610749176e78e6571a",
+      "sha256": "7aed6c3955697f0773b0390653e4116570f2e89eb2f83417b44d59e7ef0c367d",
       "size_bytes": 20950
     },
     {
       "path": "generated/on_prem_scheduler_service.py",
-      "sha256": "aa65ee0fd401b46b7bb264baa8dded1a3371683907d791d777b9dc41ed68ea42",
-      "size_bytes": 13279
+      "sha256": "78483e0754e80afbee6395e31dd13b57c6b97473b4821eae77c446f06dfc111b",
+      "size_bytes": 13271
     },
     {
       "path": "generated/p_r_comment_config_service.py",
-      "sha256": "819f7f032ca7e500fc641ffd1bc1d0c576df85c336140be91465d0b2fbbc3ee9",
+      "sha256": "2ffcebc5a8af1e9d87a493e92c12ba9ff57f35f7306806954ae28007f3d5b558",
       "size_bytes": 12561
     },
     {
       "path": "generated/package_firewall_log_service.py",
-      "sha256": "5a97c9b834d365571d77621d5f7d5a5ed2b851bf9f6466f3f026e2305991da74",
+      "sha256": "09706007e9d3103e1ecf602f01451105e39e5deb7b02b28e98715e27a68fbfc6",
       "size_bytes": 13941
     },
     {
       "path": "generated/package_license_override_service.py",
-      "sha256": "b267fd97527ff0a381cc660f737e79fb4c119f6a9bb6378912f5e5f49f06993b",
-      "size_bytes": 19953
+      "sha256": "28415fb205f683d488aec47455b8e032b12ab9f215ca2cf1f45c9a552e36c628",
+      "size_bytes": 19945
     },
     {
       "path": "generated/package_license_query_service.py",
-      "sha256": "6642dc3783b4907b40e98dd0df170cbe8b0c9543cb447d3428baef9cb1a19d94",
+      "sha256": "b03946e2e5cf726196bfe5fdf71c635f2c27a951aa12a9d9cbba8beefcba4d80",
       "size_bytes": 21200
     },
     {
       "path": "generated/package_license_service.py",
-      "sha256": "1e477a9844c017e846ffe07df561fd9025631ae47d1d3fc708aae73e591c611b",
-      "size_bytes": 25289
+      "sha256": "69c1ca127932f0832d68a8d0f523eb7a13f90ad88f7ca00e03fc2313a0f737eb",
+      "size_bytes": 25281
     },
     {
       "path": "generated/package_manager_service.py",
-      "sha256": "3a143dbf1cd9d4416eba365b98236f6f27d275bcbc7a61d72e6a699a5bc907fe",
+      "sha256": "fae33141f6658819089903d262f6eb42d04bd473d2ab424cea5a86297af29850",
       "size_bytes": 25451
     },
     {
       "path": "generated/package_version_service.py",
-      "sha256": "460306096c2cfabf23a4cb237fe17acac953ebe16afa015bedd8c37700bddae3",
+      "sha256": "7e61360a5ba8a18ea08e458db0c202335bc8cafcb10adb43a65653452d0aa221",
       "size_bytes": 73253
     },
     {
       "path": "generated/plugin_binary_service.py",
-      "sha256": "d767fd13f60a1e300969f3273f9a80b3ae1f63436c5ae67f12fa1521cb58fdc9",
+      "sha256": "08f9c57a98f9832a20eb8a33663735a0fdd1640e945bb129cb3a39a29e73ee87",
       "size_bytes": 10499
     },
     {
       "path": "generated/policy_service.py",
-      "sha256": "7c2574933ddfdc3a6ec2eb02033943889fe5277818b5a40d7a207024cfcc7704",
+      "sha256": "8715455db34126081bbfb494b9a5a2bda124d181e04e51f1450423c5f79fbfb9",
       "size_bytes": 26777
     },
     {
       "path": "generated/policy_template_service.py",
-      "sha256": "a0f59c1ea7100aff0ae2ba71c8ce1f5c945f573d372355ba97599033814bd29b",
+      "sha256": "84c5bc32b1a4112f9b6a7bc6578c2ab94111ac12484392b85dedf8b13213a4e9",
       "size_bytes": 22304
     },
     {
       "path": "generated/project_service.py",
-      "sha256": "4d3439ed70e1ed2b450eac76d9c890674cf324233cfc0b8d352e96ebd5f48423",
+      "sha256": "71e53cccd8d1fe4f40f44ff3f7e97277911d5f097bc1fdce248889f36f405bf7",
       "size_bytes": 19332
     },
     {
       "path": "generated/provisioning_result_service.py",
-      "sha256": "5724e1f17b86eb8206ea74bd94c222ed6abbaeda916b845e7ace9b7e40a2a302",
+      "sha256": "37601b3b958aa78eab1ee458b434503ca60460281b1dc6a426a4764f8871d01d",
       "size_bytes": 29562
     },
     {
       "path": "generated/query_malware_service.py",
-      "sha256": "ceca3d035f468deb1b180c322b4c6a1fbd11a32fca3808ba5d44ce691ae2c9f1",
+      "sha256": "5833b06b51e409f7a04d3e7b801463a64d1ca4a903b6ae0fad0ec00631e754b1",
       "size_bytes": 79785
     },
     {
       "path": "generated/query_service.py",
-      "sha256": "d8839910b502e70aa052550e6b3ecfb052b50233ce0c3cd6c05551fbdeb8d8f8",
-      "size_bytes": 24511
+      "sha256": "f1e456dde5622b9957bc945fa40760c15986cfe310a0b84b8ee83593ddc92a6b",
+      "size_bytes": 24503
     },
     {
       "path": "generated/query_similar_packages_service.py",
-      "sha256": "c6eb2bde5812cfa0dff488b534b09e27429757e89abb79a2fe08c62a23d27405",
-      "size_bytes": 8868
+      "sha256": "f97f0f1c57abc4d6e78ffd2ce43a69bea9c8daf8cc353c8ae577eb11e0d01c37",
+      "size_bytes": 8860
     },
     {
       "path": "generated/query_vulnerability_service.py",
-      "sha256": "263f0672c8b5cd13596903f9bea9aa56844d6718c6f79e1f52a90d946f19cea2",
+      "sha256": "f7f324c741da9be012aaf6da308d347d1c765784abc4ef9d404f29a498122525",
       "size_bytes": 76516
     },
     {
       "path": "generated/registry_ingestion_checkpoint_service.py",
-      "sha256": "541ca732d880a9674799c5feef327b2f02eadc945d053c4c72daa83395081782",
+      "sha256": "f2a8b9451c3d66c85094efe9bbb02805b2e0a93abf0c82aa6514f5f097d8f63d",
       "size_bytes": 13134
     },
     {
       "path": "generated/repository_service.py",
-      "sha256": "c049d17bbdb80dd0d1eccd4164abff77b62a6f8d288198c9ceecea06f9a12f05",
+      "sha256": "9543f671828744a5062946e2e98ab501805a9adefc188af7b61953813be08f46",
       "size_bytes": 18412
     },
     {
       "path": "generated/repository_version_service.py",
-      "sha256": "84d956ce6388221948fe845e71db3f918151e27e5faa222075035cea20ecc0cf",
+      "sha256": "87ba79193c032b4a60941548e3234b0459cbd8f71d5fbc0e27ccfd98bd8d2edc",
       "size_bytes": 17718
     },
     {
       "path": "generated/rule_set_import_service.py",
-      "sha256": "4dd85d4a7be94eff52795c73eaa040b39df72a30940b147262309159a00459ec",
+      "sha256": "4ef5e1bd526a36422916e42f31cfc12b2382037d1963f04cfd905cced0bc73b9",
       "size_bytes": 13032
     },
     {
       "path": "generated/s_b_o_m_export_service.py",
-      "sha256": "814d0e63f4f30ae38adc6eaa1e69602e878aef1d89baad34ec530627f8d296e2",
+      "sha256": "cbf0eb6cbc7a3ae99fa8cd18dfe3e9af58641b38392bcb22af52fbd647c8115c",
       "size_bytes": 9123
     },
     {
       "path": "generated/s_b_o_m_import_service.py",
-      "sha256": "ee67e940f60c13d80470f8cedeb4602f61a3f6063656ae705d5613b8c880be9f",
+      "sha256": "0b836bf7451f1bb2439d149cb5add4b760e1e222fd8262e8114541b9c82d3ff9",
       "size_bytes": 15562
     },
     {
       "path": "generated/s_c_m_credential_service.py",
-      "sha256": "4e92d193a384ce13e8a0aeba051cc6dcdd51fb85a53dc71ea0a22e4e1bbc1229",
-      "size_bytes": 13814
+      "sha256": "220313423fef5cf8477893671afec49affc9937195ae0478d7d1bcc264de5416",
+      "size_bytes": 13806
     },
     {
       "path": "generated/saved_query_service.py",
-      "sha256": "149b92411f14a9c3b3721bcba94718d3eb799b9ee42ac03e5d4da439199fc370",
-      "size_bytes": 28141
+      "sha256": "bf766d381f7616e909514887c4afdba7297e56ae35de2ca5608d69c292101c8f",
+      "size_bytes": 28133
     },
     {
       "path": "generated/scan_log_request_service.py",
-      "sha256": "29637c369aba88a31d8186dbf85ac50033f34f7416b4ebd4a2c50a0ce3ae4164",
+      "sha256": "5e79db4a36e96db55a8d2bde43d132a89b9648dbd6d1049552743ad58c6b05ef",
       "size_bytes": 10830
     },
     {
       "path": "generated/scan_profile_service.py",
-      "sha256": "82d721266f8e56b4a30be74ca85c03e143738a44e5f85a45ad9abc8078d071a0",
-      "size_bytes": 22951
+      "sha256": "2e4031ce04c5418d1d832d5b2956aef6bbbadcc6a2c1cfc97fbebba02bb400c6",
+      "size_bytes": 22943
     },
     {
       "path": "generated/scan_result_service.py",
-      "sha256": "ec72f7d2783459e94f442d786ac6605ed2bf4d453ca461f2409b99e6d3e2e7bb",
+      "sha256": "4c7693f7cdc168a15c9b3d1e1472de70d06b6403480da3e00b9c8c4c0e761a57",
       "size_bytes": 43087
     },
     {
       "path": "generated/scan_workflow_result_service.py",
-      "sha256": "44e7e5422db9e967948a2d990395be506e6477276fdd7c09a75389e7be8e9cff",
+      "sha256": "b028f9cc6b8aef482bc05d8a2b23bd48296d7cbffb6200aecd7e6ee30a4354f9",
       "size_bytes": 20512
     },
     {
       "path": "generated/scan_workflow_service.py",
-      "sha256": "652cf73aea075051b78c495890f310f8fa239ebb6fead313a13f57864978900c",
+      "sha256": "044abc9206fc6fe489a53d1d715735f33829650e6243d37eb8d7391f864f9a57",
       "size_bytes": 17632
     },
     {
       "path": "generated/secret_rule_service.py",
-      "sha256": "8ad523e0bd249adebf919cc54fdba300a01aae07e6ce2742ffe253148ee097ed",
+      "sha256": "cacff96338a5be0da96f2797a1d15ef55ec30cd2cf8bc19190f184ab0c2421ff",
       "size_bytes": 23643
     },
     {
       "path": "generated/semgrep_rule_service.py",
-      "sha256": "dea2be567f7f6e66034e08ca4b264783ab2d5b95832d771cb6a492d5194f1ecc",
+      "sha256": "dee30999230307412c5cff5e28fba7d3bf1dd4ac4ee30ce54a509fb28a084f36",
       "size_bytes": 21399
     },
     {
       "path": "generated/system_config_service.py",
-      "sha256": "91b764338fc00c6923291313e5a483546d202dbe84c2ecad7686e24fd80f2079",
+      "sha256": "03a7382e35bfd3a2c7f68d919df1c7416a3601efdbeb1e0a05f6a74bae4b4cb5",
       "size_bytes": 24592
     },
     {
       "path": "generated/tenant_service.py",
-      "sha256": "2eb1ade3b8ed6b70b52c27c0f993b7081a09fc48a20ff18250938bf39aca20c6",
+      "sha256": "67f384090908ceb16d90086fa412c635e07a6684de4ddfe73e1e6a6572cba090",
       "size_bytes": 9971
     },
     {
       "path": "generated/v_e_x_export_service.py",
-      "sha256": "bf96b094d5b5e383ef82ea7e08993731fcc9178b5cf5979cec1482923c0df688",
+      "sha256": "cde4ea1f29e2de15b88127576464534ae05a288eaa34073b7c1356cbed54f740",
       "size_bytes": 8743
     },
     {
       "path": "generated/vector.py",
-      "sha256": "ea74f318c7cb6c45581cfc918e4bc61f31cb9f586b91dc31c0bb716a02b50b7f",
+      "sha256": "37eba6ceb13403b1612ef2d2dc4eb0174d58eb777ed02c041141a0b580123e4d",
       "size_bytes": 7685
     },
     {
       "path": "generated/vector_store_service.py",
-      "sha256": "9faf3450e7b23ec164217c6a73df867a4ba5d0db1b4135fba414a22ab0a338ee",
+      "sha256": "78abc6e29d3bf0e355b5fa667063c16ded21f41e7a82fbceff99749e4ac16d25",
       "size_bytes": 11138
     },
     {
       "path": "generated/version_upgrade_service.py",
-      "sha256": "237b2a8583eb94ad6be32d08cfa105cc8816694d45b66495ba6ed54d47150680",
-      "size_bytes": 206236
+      "sha256": "e774164539a940e5cf50ae63a807935888148f1f80db083e565f3fdcb7a7b237",
+      "size_bytes": 211573
     },
     {
       "path": "generated/vulnerability_service.py",
-      "sha256": "fec0378c4217f72bfc5d470bff883a42b25867c05cfd5f0a846bac1e6abc5775",
+      "sha256": "e897f08bc3c0f59edc859178d38ccc9cee569f91c62f9a41c36b10a9e900e5f6",
       "size_bytes": 74215
     },
     {
@@ -383,8 +383,8 @@
     },
     {
       "path": "mapping/payload_schemas.json",
-      "sha256": "b1e3191668f3d23ed7ac9064b0ab6ae4b4f31e03a74542c1bff87717b9a09816",
-      "size_bytes": 138069
+      "sha256": "a37a789f581f96ca571b7e1f7194b7d5fa2f357aeb14478e448eba24fa76ceac",
+      "size_bytes": 138611
     },
     {
       "path": "mapping/progress.json",
@@ -418,8 +418,8 @@
     },
     {
       "path": "schema_shards/artifact_signature_service.json",
-      "sha256": "f904c995a28ad8470c66b3708d062d2d0a1cef3f42a85f8f64f71bf1eed29306",
-      "size_bytes": 23663
+      "sha256": "95efd16c716dbaae9c5f5f79c2de18e054d6bcc67bf43b216cbe5234361f38f7",
+      "size_bytes": 23711
     },
     {
       "path": "schema_shards/audit_log_service.json",
@@ -438,8 +438,8 @@
     },
     {
       "path": "schema_shards/authorization_policy_service.json",
-      "sha256": "b3d62bd99f91148570d3f5cb53c1b9550b19600457e1b593bd306f3fe625ddb7",
-      "size_bytes": 23702
+      "sha256": "5b0c69a349e3257f728420e0ac8af91e9cebde6516b7393f7d15ef83431b22b8",
+      "size_bytes": 23750
     },
     {
       "path": "schema_shards/batch_file_segments_service.json",
@@ -468,8 +468,8 @@
     },
     {
       "path": "schema_shards/endor.json",
-      "sha256": "ba0699bbeadb958df137e5003c1cf27c70b9471cdd3e3648707d4e3ba042bfd8",
-      "size_bytes": 23510
+      "sha256": "6c1bcdedad70445d66053d95c82ccf03e29d4dd8359982c55a2a2dbaf5607f82",
+      "size_bytes": 25700
     },
     {
       "path": "schema_shards/endor_ignore_entry_service.json",
@@ -488,8 +488,8 @@
     },
     {
       "path": "schema_shards/finding_service.json",
-      "sha256": "b6523e5439469e0d6ea9d9ea8d0e9a052b7f9655149475830dd2f34d73511b2d",
-      "size_bytes": 246741
+      "sha256": "66f17844ca03e61a6159752247758b65bf85ea6e9770474eb23e89e0ef9ade9a",
+      "size_bytes": 252484
     },
     {
       "path": "schema_shards/hugging_face_model_service.json",
@@ -513,8 +513,8 @@
     },
     {
       "path": "schema_shards/installation_service.json",
-      "sha256": "e1e2226c390646bd6b815e288e14130fc9d9171310d3a4bfaee9686521cb69b0",
-      "size_bytes": 35990
+      "sha256": "6504020d6d797dcd1812829af90bb67da4f059575ac7925aa6dac29b8d5d47e8",
+      "size_bytes": 36038
     },
     {
       "path": "schema_shards/invitation_service.json",
@@ -528,8 +528,8 @@
     },
     {
       "path": "schema_shards/license_notices_report_service.json",
-      "sha256": "351f10dcf6e289ea37c1f643a6733a7d9c965c2269059f9eb61115a7bbc4c4da",
-      "size_bytes": 16522
+      "sha256": "4a169d76360547b300ecc2ff38066fc57eada7decbe75625da3d98065c11f02f",
+      "size_bytes": 16546
     },
     {
       "path": "schema_shards/license_summary_service.json",
@@ -538,8 +538,8 @@
     },
     {
       "path": "schema_shards/linter_result_service.json",
-      "sha256": "a41df6a0b763c51bd1634b48df418d9f6b17eb4fbafd5883f798e0051238cb34",
-      "size_bytes": 69240
+      "sha256": "e07cd23f0967ea388404122f637114e5641997553ab45b7116fd7292528f0f0c",
+      "size_bytes": 70924
     },
     {
       "path": "schema_shards/malware_service.json",
@@ -548,8 +548,8 @@
     },
     {
       "path": "schema_shards/metric.json",
-      "sha256": "e41c09b1f991cc791f0530a09ebd3471ae1d2694896017f13d90b905c53fe702",
-      "size_bytes": 176443
+      "sha256": "6bc9bc44eb8f165ea5f6305218622caef2bb6b4be3f223765dc6cff809d1dffc",
+      "size_bytes": 176467
     },
     {
       "path": "schema_shards/metric_service.json",
@@ -573,8 +573,8 @@
     },
     {
       "path": "schema_shards/on_prem_scheduler_service.json",
-      "sha256": "0ea22e06c02b2fdc88acd7dcee41408bfa2ba59a2a6e622d8d1265ec2a321755",
-      "size_bytes": 21413
+      "sha256": "9a08be9702d0b0046b19d3f45905a20fabcf701563669e1a16be538be4f3d4cf",
+      "size_bytes": 21461
     },
     {
       "path": "schema_shards/p_r_comment_config_service.json",
@@ -588,8 +588,8 @@
     },
     {
       "path": "schema_shards/package_license_override_service.json",
-      "sha256": "b57563cf17f49756f25262cc1c61552094ca2dd3ec236edea82115201f9fff18",
-      "size_bytes": 28608
+      "sha256": "3bd93a61b5168a9dbc626713d3fa199e4e8e5ca03c093f487e0f5c0f4534d72c",
+      "size_bytes": 28656
     },
     {
       "path": "schema_shards/package_license_query_service.json",
@@ -598,8 +598,8 @@
     },
     {
       "path": "schema_shards/package_license_service.json",
-      "sha256": "7c003414e37f1907528271852cf468e35234271307fb1929527ebd701ffcef88",
-      "size_bytes": 27697
+      "sha256": "eaa20605adbb29282dc71604cbcc93e172b918aa026fb1a882f607c3669832c2",
+      "size_bytes": 27745
     },
     {
       "path": "schema_shards/package_manager_service.json",
@@ -643,13 +643,13 @@
     },
     {
       "path": "schema_shards/query_service.json",
-      "sha256": "3fc91bac016965309cbf199f215499f20b3921fb061769bff211ca54e5c303b1",
-      "size_bytes": 36397
+      "sha256": "9bfe17908b080cf4254902985d658bf4596b195b4b412bc46e605d7311457b04",
+      "size_bytes": 36421
     },
     {
       "path": "schema_shards/query_similar_packages_service.json",
-      "sha256": "01cbaa703316792aa5941cec96ce1ea1d5815eeba4048b8872582407b78e767a",
-      "size_bytes": 15462
+      "sha256": "54724699d8a717f67534eb8df506ef7c04e0fb103c7418a7001e4d70295d4c31",
+      "size_bytes": 15486
     },
     {
       "path": "schema_shards/query_vulnerability_service.json",
@@ -688,13 +688,13 @@
     },
     {
       "path": "schema_shards/s_c_m_credential_service.json",
-      "sha256": "cf17191219449854f943d2745f68285f84a85ab05d2cf0d9b3f7ea6e27fdb0b2",
-      "size_bytes": 21697
+      "sha256": "2fb95946b62bc76a7dc253f3c5c5932b7ca7929c98a83a3ded5072003bc1f500",
+      "size_bytes": 21745
     },
     {
       "path": "schema_shards/saved_query_service.json",
-      "sha256": "32e3b4884b188ee786bc0fe1142a75d8c897a071087142d8a6f98240216708e5",
-      "size_bytes": 42416
+      "sha256": "5c7c915ed01c74ad5123cb8779fecb5f534011e2065ab94652ee0091c5317e56",
+      "size_bytes": 42464
     },
     {
       "path": "schema_shards/scan_log_request_service.json",
@@ -703,8 +703,8 @@
     },
     {
       "path": "schema_shards/scan_profile_service.json",
-      "sha256": "b68a4c31ed8eff1fe716d9511f80c46e5255d81fcd50a902f903396f5e8113fd",
-      "size_bytes": 36698
+      "sha256": "52ca0b9e93bfe0757ea101e8658862264f24d4e21de168449c62c312afb79651",
+      "size_bytes": 36746
     },
     {
       "path": "schema_shards/scan_result_service.json",
@@ -758,8 +758,8 @@
     },
     {
       "path": "schema_shards/version_upgrade_service.json",
-      "sha256": "9898b3fc482d576622131e505d6702b430b4224b73d41406f47f3f410649f00f",
-      "size_bytes": 273254
+      "sha256": "a6ed638be21eeadfd8dd9ced96782c73c1021c3ac8f56b5051f74aa949aa265f",
+      "size_bytes": 279045
     },
     {
       "path": "schema_shards/vulnerability_service.json",
@@ -767,5 +767,5 @@
       "size_bytes": 86796
     }
   ],
-  "overall_sha256": "69d4ee7ee58aae67a9218f73c587d1ac017b0670571cd41423760baebe7f891e"
+  "overall_sha256": "80f8fb89bb9d8e1ec5846d29db36f433bac05984a988ed94242a4860b2c9fbaf"
 }

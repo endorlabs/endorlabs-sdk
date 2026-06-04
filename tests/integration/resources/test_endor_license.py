@@ -3,7 +3,7 @@
 import pytest
 
 import endorlabs
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -23,20 +23,18 @@ class TestEndorLicense:
         )
 
     def test_endor_license_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
+        """LIST in namespace (registry-based)."""
         result = self.endor_root_client.EndorLicense.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_endor_license_spec_quota_and_license_configurations(self) -> None:
         """EndorLicense spec exposes quota and license_configurations when returned."""
         items = self.endor_root_client.EndorLicense.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
@@ -60,9 +58,8 @@ class TestEndorLicense:
         from endorlabs.core.exceptions import PermissionDeniedError
 
         items = self.endor_root_client.EndorLicense.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")

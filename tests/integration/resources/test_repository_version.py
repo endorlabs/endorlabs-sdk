@@ -6,11 +6,12 @@ Tests GET operations for RepositoryVersion resources following the testing proto
 import pytest
 
 import endorlabs
+from endorlabs.core.exceptions import ServerError
 from endorlabs.resources.repository_version import (
     RepositoryVersionMetaUpdate,
     UpdateRepositoryVersionPayload,
 )
-from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -86,18 +87,12 @@ class TestRepositoryVersion:
             assert parent_kind == "Project"
 
     def test_repository_version_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
+        """LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            result = client.RepositoryVersion.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            result = self.endor_client.RepositoryVersion.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -105,17 +100,9 @@ class TestRepositoryVersion:
 
     def test_repository_version_list_with_parent_project(self) -> None:
         """LIST repository versions with parent=project (list with parent resource)."""
-        import endorlabs
-        from endorlabs.core.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            projects = client.Project.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            projects = self.endor_client.Project.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list projects); skip")
@@ -123,56 +110,36 @@ class TestRepositoryVersion:
             pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
         project = projects[0]
         try:
-            result = client.RepositoryVersion.list(
+            result = self.endor_client.RepositoryVersion.list(
                 parent=project,
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
 
     def test_repository_version_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
+        """GET first item from LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            items = client.RepositoryVersion.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            items = self.endor_client.RepositoryVersion.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.RepositoryVersion.get(item.uuid, namespace=ns)
+        got = self.endor_client.RepositoryVersion.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
     def test_repository_version_scan_object_has_status_scan_time(self) -> None:
         """RepositoryVersion scan_object exposes status and scan_time when present."""
-        import endorlabs
-        from endorlabs.core.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            items = client.RepositoryVersion.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            items = self.endor_client.RepositoryVersion.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -187,7 +154,7 @@ class TestRepositoryVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.RepositoryVersion.get(item.uuid, namespace=ns)
+        got = self.endor_client.RepositoryVersion.get(item.uuid, namespace=ns)
         if (
             got
             and got.scan_object is not None
@@ -244,16 +211,11 @@ class TestRepositoryVersion:
 
     @pytest.mark.writes
     def test_client_ux_update_repository_version(self) -> None:
-        """Consumer UX: client.RepositoryVersion.get() then update then revert."""
-        import endorlabs
-        from endorlabs.core.exceptions import ServerError
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            api_client=self.client,
-        )
+        """Consumer UX: self.endor_client.RepositoryVersion.get() then update then revert."""
         try:
-            versions = client.RepositoryVersion.list(max_pages=TEST_MAX_PAGES)
+            versions = self.endor_client.RepositoryVersion.list(
+                max_pages=TEST_MAX_PAGES
+            )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not versions:
@@ -264,7 +226,7 @@ class TestRepositoryVersion:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.RepositoryVersion.get(item.uuid, namespace=ns)
+        current = self.endor_client.RepositoryVersion.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve repository version {item.uuid}")
         original_description = getattr(current.meta, "description", None) or ""
@@ -277,7 +239,7 @@ class TestRepositoryVersion:
             meta=RepositoryVersionMetaUpdate(description=new_description)
         )
         try:
-            updated = client.RepositoryVersion.update(
+            updated = self.endor_client.RepositoryVersion.update(
                 item.uuid,
                 update_payload,
                 update_mask="meta.description",
@@ -292,7 +254,7 @@ class TestRepositoryVersion:
             meta=RepositoryVersionMetaUpdate(description=original_description)
         )
         try:
-            client.RepositoryVersion.update(
+            self.endor_client.RepositoryVersion.update(
                 item.uuid,
                 restore_payload,
                 update_mask="meta.description",
