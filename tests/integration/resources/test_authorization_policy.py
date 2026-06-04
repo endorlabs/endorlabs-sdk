@@ -20,7 +20,7 @@ from endorlabs.resources.authorization_policy import (
     UpdateAuthorizationPolicyPayload,
 )
 from tests.conftest import (
-    TEST_MAX_PAGES_TRAVERSE,
+    TEST_MAX_PAGES,
 )
 
 
@@ -73,40 +73,21 @@ class TestAuthorizationPolicy:
                 )
 
     def test_authorization_policy_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.AuthorizationPolicy.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST in namespace."""
+        result = self.endor_client.AuthorizationPolicy.list(
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_authorization_policy_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.AuthorizationPolicy.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from LIST in namespace."""
+        items = self.endor_client.AuthorizationPolicy.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.AuthorizationPolicy.get(item.uuid, namespace=ns)
+        got = self.endor_client.AuthorizationPolicy.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 

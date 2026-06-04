@@ -27,15 +27,15 @@ Index for SDK-specific documentation.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 
-## Rules of Engagement
+## Contributing
 
-- [rules-of-engagement/README.md](rules-of-engagement/README.md) — Who uses RoE; list of RoE docs.
-- [rules-of-engagement/resource-implementation.md](rules-of-engagement/resource-implementation.md)
-- [rules-of-engagement/api-validation.md](rules-of-engagement/api-validation.md)
-- [rules-of-engagement/troubleshooting.md](rules-of-engagement/troubleshooting.md)
-- [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md)
-- [rules-of-engagement/namespace-traversal.md](rules-of-engagement/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
-- [rules-of-engagement/list-query-performance.md](rules-of-engagement/list-query-performance.md) — List scope, filters, pagination, debugging slow queries.
+- [contributing/README.md](contributing/README.md) — Process and checklists for extending the generated SDK surface.
+- [contributing/integration-resource-tests.md](contributing/integration-resource-tests.md)
+- [contributing/api-validation.md](contributing/api-validation.md)
+- [contributing/troubleshooting.md](contributing/troubleshooting.md)
+- [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md)
+- [contributing/namespace-traversal.md](contributing/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
+- [contributing/list-query-performance.md](contributing/list-query-performance.md) — List scope, filters, pagination, debugging slow queries.
 
 ## Findings / Research
 
@@ -44,7 +44,7 @@ Index for SDK-specific documentation.
 
 ## When to update docs
 
-API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). New resources or operations -> reference index and RoE checklists. Drift and model consistency -> [rules-of-engagement/docs-drift-workflow.md](rules-of-engagement/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.
+API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). New resources or operations -> reference index and [contributing/](contributing/) checklists. Drift and model consistency -> [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.
 
 ## Generated reference docs
 

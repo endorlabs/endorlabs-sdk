@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- **`model-sync-drift` agent skill** — triage and regen workflow for OpenAPI provenance drift (`skills-src/model-sync-drift/`).
+
+### Changed
+
+- **Model-sync provenance** — refreshed to published endorctl **v1.7.990** and current public OpenAPI digest (`registry_contract`, generated models, stubs, reference docs).
+
 ### Breaking
 
 - **Unknown flat `create()` kwargs** on resources with OpenAPI convenience metadata now raise **`TypeError`** instead of being silently ignored (including pass-through `CreateXPayload(**kwargs)` builders).

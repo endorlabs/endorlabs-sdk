@@ -25,7 +25,7 @@ Normative agreements are defined in `docs/contracts.md`.
 - `docs/contracts.md`: normative behavior agreements.
 - `docs/reference/*`: API/resource inventories and payload references.
 - `docs/guides/*`: user workflows and examples.
-- `docs/rules-of-engagement/*`: contributor/agent process and implementation checklists.
+- `docs/contributing/*`: contributor/agent process and implementation checklists.
 
 ## In-flight feature plans
 

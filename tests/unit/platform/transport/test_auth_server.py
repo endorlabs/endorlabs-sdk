@@ -1,8 +1,8 @@
 """Tests for browser OAuth authentication server.
 
-Browser OAuth tests are marked @pytest.mark.writes. Tests that call get_token()
-(which raises in CI) are also marked @pytest.mark.long so the coverage job
-(-m "not long") excludes them; run locally with pytest -m long to run them.
+get_token() is blocked in CI (see test_get_token_prevents_ci_usage). Mocked
+get_token() tests run in the default unit job. For a real browser token flow
+locally, use devtools/refresh_token_to_dotenv.py — not pytest.
 """
 
 import os
@@ -165,7 +165,6 @@ class TestTokenHandler:
 class TestGetToken:
     """Test get_token function for browser OAuth flow."""
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     @patch("endorlabs.auth_server.HTTPServer")
     @patch("endorlabs.auth_server.get_browser")
@@ -192,7 +191,6 @@ class TestGetToken:
         assert token == "alias-token"
         mock_browser.open_new_tab.assert_called_once()
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     @patch("endorlabs.auth_server.HTTPServer")
     @patch("endorlabs.auth_server.get_browser")
@@ -224,7 +222,6 @@ class TestGetToken:
         mock_server.handle_request.assert_called_once()
         mock_server.server_close.assert_called_once()
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     @patch("endorlabs.auth_server.HTTPServer")
     @patch("endorlabs.auth_server.get_browser")
@@ -247,21 +244,18 @@ class TestGetToken:
         assert token is None
         mock_server.server_close.assert_called_once()
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     def test_get_token_invalid_method(self) -> None:
         """Test get_token raises ValueError for invalid method."""
         with pytest.raises(ValueError, match="Unsupported auth method"):
             get_token(method="invalid_method")
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     def test_get_token_email_required(self) -> None:
         """Test get_token requires email for email auth method."""
         with pytest.raises(ValueError, match="Email address required"):
             get_token(method="email")
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     @patch("endorlabs.auth_server.HTTPServer")
     @patch("endorlabs.auth_server.get_browser")
@@ -309,7 +303,6 @@ class TestGetToken:
         for method in expected_methods:
             assert method in AUTH_METHODS, f"Auth method '{method}' not defined"
 
-    @pytest.mark.long  # get_token() raises in CI before mocks (excl. coverage)
     @pytest.mark.writes
     @patch("endorlabs.auth_server.HTTPServer")
     def test_get_token_port_in_use(self, mock_server_class) -> None:
@@ -337,7 +330,6 @@ class TestGetToken:
         ):
             get_token(method="browser-auth")
 
-    @pytest.mark.long
     @pytest.mark.writes
     def test_get_token_sso_requires_tenant(self) -> None:
         """SSO mode should require auth_tenant."""
