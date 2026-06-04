@@ -50,8 +50,8 @@ Legend:
 | Policy | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | PolicyTemplate | yes/yes | yes/yes | no/yes | no/no | no/yes | tenant | — | — |
 | Project | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
-| QueryMalware | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
-| QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |
+| QueryMalware | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
+| QueryVulnerability | no/no | no/no | yes/yes | no/no | no/no | oss | — | — |
 | Repository | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | — | — |
 | RepositoryVersion | yes/yes | yes/yes | yes/yes | yes/no | yes/yes | tenant | project | — |
 | ScanLogRequest | no/no | no/no | yes/yes | no/no | no/no | tenant | — | — |

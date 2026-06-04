@@ -218,7 +218,7 @@ docs/generated-reference/
 | Gate | Action |
 |------|--------|
 | `ci-pr-main.yml` | Add check: `docs/generated-reference/resources/*.md` count matches registry; or `git diff --exit-code` after regen. |
-| `model_sync.py --generate-reference-docs` | Document in [docs-drift-workflow.md](../rules-of-engagement/docs-drift-workflow.md). |
+| `model_sync.py --generate-reference-docs` | Document in [docs-drift-workflow.md](../contributing/docs-drift-workflow.md). |
 | Pre-push | Same as existing generated artifact verification. |
 
 ---

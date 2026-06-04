@@ -1,6 +1,70 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "AIResultSAST": {
+      "properties": {
+        "attack_vector": {
+          "description": "Attack vector breakdown table when no exploit reproduction is emitted (the \"## Attack Vector\" section).",
+          "type": "string"
+        },
+        "classification": {
+          "$ref": "#/definitions/v1FindingClassification",
+          "description": "Classification of the finding type."
+        },
+        "cwes": {
+          "description": "The CWEs of the vulnerability.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "dataflow": {
+          "description": "Deprecated: use call_stack instead.\nOne or more source locations representing the data flow path from a source to a sink.\nThe locations are ordered and include the source, any intermediate nodes, and the sink.\nIf only a single location is provided, it represents the sink location only.",
+          "items": {
+            "$ref": "#/definitions/v1SourceLocation",
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "exploit_reproduction": {
+          "description": "Step-by-step exploit reproduction for high/critical true positives (the \"## Exploit Reproduction\" section).",
+          "type": "string"
+        },
+        "language": {
+          "description": "Programming language of the file where this result was found.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/v1SourceLocation",
+          "description": "The main location of the vulnerability."
+        },
+        "remediation": {
+          "description": "Recommended remediation, including any unified-diff fix (the \"## Remediation Guidance\" section).",
+          "type": "string"
+        },
+        "security_controls": {
+          "description": "Security controls assessment table (the \"## Security Controls\" section).",
+          "type": "string"
+        },
+        "severity_scoring": {
+          "description": "Severity scoring breakdown (the \"## Severity Scoring\" section).",
+          "type": "string"
+        },
+        "summary": {
+          "description": "Short prose summary of the vulnerability (the \"## Summary\" section).",
+          "type": "string"
+        },
+        "validation_outcome": {
+          "description": "Validation outcome for unknown findings (the \"## Validation Outcome\" section).",
+          "type": "string"
+        },
+        "verification_scorecard": {
+          "description": "Verification scorecard with per-criterion verdicts (the \"## Verification Scorecard\" section).",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "AffectedSource": {
       "default": "SOURCE_UNSPECIFIED",
       "enum": [
@@ -2330,6 +2394,7 @@
         }
       },
       "required": [
+        "tenant_meta",
         "meta",
         "context"
       ],
@@ -2370,6 +2435,7 @@
         }
       },
       "required": [
+        "tenant_meta",
         "meta",
         "context"
       ],
@@ -4222,6 +4288,16 @@
       ],
       "type": "string"
     },
+    "v1FindingClassification": {
+      "default": "FINDING_CLASSIFICATION_UNSPECIFIED",
+      "description": "Classification of the finding type. Extensible for future categories.\n\n - FINDING_CLASSIFICATION_SECURITY_VULNERABILITY: Security vulnerability (e.g. SQL injection, XSS, hardcoded creds).\n - FINDING_CLASSIFICATION_LOGICAL_BUG: Logical bug (e.g. null pointer, resource leak, race condition).",
+      "enum": [
+        "FINDING_CLASSIFICATION_UNSPECIFIED",
+        "FINDING_CLASSIFICATION_SECURITY_VULNERABILITY",
+        "FINDING_CLASSIFICATION_LOGICAL_BUG"
+      ],
+      "type": "string"
+    },
     "v1FindingContainerData": {
       "properties": {
         "base_image": {
@@ -4268,6 +4344,10 @@
     "v1FindingMetadata": {
       "description": "Metadata associated with a finding.",
       "properties": {
+        "ai_sast_data": {
+          "$ref": "#/definitions/AIResultSAST",
+          "description": "Structured AI SAST data (per-section markdown and the source-to-sink\ndata-flow path with SCM links) for AI Model SAST findings. Reuses the\nAIResult.SAST message so the typed contract is not duplicated."
+        },
         "ci_blocking_policy_info": {
           "$ref": "#/definitions/v1FindingPolicyInfo",
           "description": "This field is always empty. See spec.actions instead."
@@ -4965,6 +5045,18 @@
         }
       },
       "type": "object"
+    },
+    "v1LocationType": {
+      "default": "LOCATION_TYPE_UNSPECIFIED",
+      "description": "Classification of the location type within a data flow path.\n\n - LOCATION_TYPE_SOURCE: The source location.\n - LOCATION_TYPE_SINK: The sink location.\n - LOCATION_TYPE_INTERMEDIATE: The intermediate location.\n - LOCATION_TYPE_LOGICAL_BUG: The logical bug location.",
+      "enum": [
+        "LOCATION_TYPE_UNSPECIFIED",
+        "LOCATION_TYPE_SOURCE",
+        "LOCATION_TYPE_SINK",
+        "LOCATION_TYPE_INTERMEDIATE",
+        "LOCATION_TYPE_LOGICAL_BUG"
+      ],
+      "type": "string"
     },
     "v1Malware": {
       "properties": {
@@ -6508,6 +6600,51 @@
         "security_impact_type": {
           "$ref": "#/definitions/SecurityAspectMetricSecurityImpactType",
           "description": "Security impact type of the finding."
+        }
+      },
+      "type": "object"
+    },
+    "v1SourceLocation": {
+      "properties": {
+        "end_column": {
+          "format": "int32",
+          "title": "Ending column number in the file",
+          "type": "integer"
+        },
+        "end_line": {
+          "format": "int32",
+          "title": "Ending line number in the file",
+          "type": "integer"
+        },
+        "function_name": {
+          "description": "The name of the function for this location if available.",
+          "type": "string"
+        },
+        "relative_path": {
+          "description": "The relative path to the file where the issue was found.",
+          "type": "string"
+        },
+        "scm_link": {
+          "description": "Permalink to this location in the SCM (GitHub/GitLab/Azure/Bitbucket). Displayed in the UI.",
+          "type": "string"
+        },
+        "snippet": {
+          "description": "Code snippet containing the issue.",
+          "type": "string"
+        },
+        "start_column": {
+          "format": "int32",
+          "title": "Starting column number in the file",
+          "type": "integer"
+        },
+        "start_line": {
+          "format": "int32",
+          "title": "Starting line number in the file",
+          "type": "integer"
+        },
+        "type": {
+          "$ref": "#/definitions/v1LocationType",
+          "description": "The type of the location."
         }
       },
       "type": "object"

@@ -226,6 +226,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec"
           ],
@@ -272,6 +273,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec"
           ],
@@ -508,7 +510,8 @@
         "tenant_meta"
       ],
       "create_convenience_read_only_spec_fields": [
-        "license_info"
+        "license_info",
+        "scan_credit_limit"
       ],
       "create_convenience_spec_fields": [
         "target_namespace",
@@ -520,7 +523,9 @@
         "is_customer",
         "excluded_feature_types",
         "license_configurations",
-        "salesforce_account_id"
+        "salesforce_account_id",
+        "scan_credit_grants",
+        "credits_period_start"
       ],
       "create_convenience_spec_required": [
         "target_namespace"
@@ -901,7 +906,8 @@
             }
           },
           "required": [
-            "meta"
+            "meta",
+            "tenant_meta"
           ],
           "type": "object"
         }
@@ -949,7 +955,8 @@
             }
           },
           "required": [
-            "meta"
+            "meta",
+            "tenant_meta"
           ],
           "type": "object"
         }
@@ -1360,6 +1367,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec",
             "context"
@@ -1407,6 +1415,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec",
             "context"
@@ -1749,6 +1758,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec",
             "context"
@@ -1796,6 +1806,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec",
             "context"
@@ -2723,6 +2734,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec"
           ],
@@ -2769,6 +2781,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "spec"
           ],
@@ -3429,6 +3442,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta"
           ],
           "type": "object"
@@ -3491,6 +3505,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta"
           ],
           "type": "object"
@@ -3549,6 +3564,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta"
           ],
           "type": "object"
@@ -3594,6 +3610,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta"
           ],
           "type": "object"
@@ -3797,6 +3814,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "context"
           ],
@@ -3843,6 +3861,7 @@
             }
           },
           "required": [
+            "tenant_meta",
             "meta",
             "context"
           ],

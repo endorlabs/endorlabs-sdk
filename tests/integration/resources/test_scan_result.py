@@ -14,9 +14,8 @@ import pytest
 import endorlabs
 from endorlabs.core.types import ListParameters
 from tests.conftest import (
-    TEST_MAX_PAGES_TRAVERSE,
+    TEST_MAX_PAGES,
     TEST_PAGE_SIZE,
-    TEST_TRAVERSE_PAGE_SIZE,
 )
 
 
@@ -40,76 +39,48 @@ class TestScanResult:
         """Fetch minimal sample data (1 item) for UUID operations.
 
         Function-scoped but only fetches when explicitly requested by tests.
-        Uses tenant root + traverse so resources in instance are captured.
+        Uses namespace client so resources in instance are captured.
         """
         results = self.endor_root_client.ScanResult.list(
             list_params=ListParameters(
-                page_size=TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
+                page_size=TEST_PAGE_SIZE,
             ),
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def test_scan_result_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.ScanResult.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST in namespace."""
+        result = self.endor_client.ScanResult.list(
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_scan_result_list_with_parent_project(self) -> None:
         """LIST scan results with parent=project (list with parent resource)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        projects = client.Project.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        projects = self.endor_client.Project.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not projects:
             pytest.skip("No projects in scope (empty; may be filter/auth/scope)")
         project = projects[0]
-        result = client.ScanResult.list(
+        result = self.endor_client.ScanResult.list(
             parent=project,
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_scan_result_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.ScanResult.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from LIST in namespace."""
+        items = self.endor_client.ScanResult.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.ScanResult.get(item.uuid, namespace=ns)
+        got = self.endor_client.ScanResult.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -137,7 +108,7 @@ class TestScanResult:
         list_client = endorlabs.Client(tenant=list_namespace, api_client=self.client)
         filtered_results = list_client.ScanResult.list(
             list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
 
         assert isinstance(filtered_results, list), (
@@ -186,7 +157,7 @@ class TestScanResult:
         results = list_client.ScanResult.list(
             parent=project,
             list_params=list_params,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(results, list)
         if not results:

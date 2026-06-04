@@ -70,6 +70,8 @@ ENDOR_LICENSE_SPEC_FIELDS = (
     "excluded_feature_types",
     "license_configurations",
     "salesforce_account_id",
+    "scan_credit_grants",
+    "credits_period_start",
 )
 ENDOR_LICENSE_SPEC_REQUIRED = ("target_namespace",)
 ENDOR_LICENSE_META_FIELDS = ()

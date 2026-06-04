@@ -4,7 +4,7 @@ Expanded reference for recurring SDK issues, test skip analysis, and resource
 cleanup after test runs.
 
 **Scope:** Normative SDK behavior and the same platform gotchas also live in
-`docs/rules-of-engagement/troubleshooting.md` and `docs/contracts.md`. This file
+`docs/contributing/troubleshooting.md` and `docs/contracts.md`. This file
 keeps **integration-test hygiene** (cleanup tables, endorctl checks) that would
 bloat the skill entrypoint. **Model shape drift** (OpenAPI vs shipped Pydantic)
 is handled by the generated contract and `devtools/sync/` model-sync workflows,
@@ -45,7 +45,7 @@ See `docs/contracts.md` (Namespace scoping) and
 - **Interpretation**: If the API returns 5xx with that message, the SDK is
   correct to surface it; listing at a child namespace (or different scope) may
   avoid it. If the API returns **200** but deserialization fails, treat it as
-  **contract or model-sync drift** (regenerate from spec, adjust overlays, or
+  **contract or model-sync drift** (use **model-sync-drift** skill; regenerate from spec, adjust overlays, or
   extend tolerance in the resource model layer following repo patterns)—not as
   something to “paper over” ad hoc in application code.
 

@@ -2,7 +2,7 @@
 
 import pytest
 
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE, TEST_TRAVERSE_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -16,34 +16,23 @@ class TestInvitation:
         self.client = api_client
         self.namespace = namespace
         self.root_namespace = root_namespace
-
-    def test_invitation_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
         import endorlabs
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.Invitation.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        self.endor_client = endorlabs.Client(tenant=namespace, api_client=api_client)
+
+    def test_invitation_list(self) -> None:
+        """LIST in namespace (registry-based)."""
+        result = self.endor_client.Invitation.list(
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_invitation_get(self) -> None:
         """GET first item from LIST if any (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.Invitation.list(
-            traverse=True,
-            page_size=TEST_TRAVERSE_PAGE_SIZE,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        items = self.endor_client.Invitation.list(
+            page_size=TEST_PAGE_SIZE,
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
@@ -53,6 +42,6 @@ class TestInvitation:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.root_namespace
         )
-        got = client.Invitation.get(item.uuid, namespace=ns)
+        got = self.endor_client.Invitation.get(item.uuid, namespace=ns)
         assert got is not None
         assert got.uuid == item.uuid

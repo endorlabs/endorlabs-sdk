@@ -1,4 +1,4 @@
-# Architecture Rules of Engagement
+# SDK architecture (contributing)
 
 Two runtime layers plus registry-driven contract inputs define the Endor Labs SDK.
 Use this when editing the client surface, facade, or registry, or when adding
