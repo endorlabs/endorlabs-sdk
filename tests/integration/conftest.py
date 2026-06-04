@@ -13,7 +13,40 @@ import pytest
 
 import endorlabs
 from endorlabs.api_client import APIClient
-from tests.conftest import TEST_NAMESPACE_DEFAULT
+from endorlabs.core.types import ListParameters
+from tests.conftest import (
+    TEST_LOG_LIST_MAX_PAGES,
+    TEST_LOG_LIST_MAX_ROWS,
+    TEST_NAMESPACE_DEFAULT,
+)
+
+
+def log_list_kwargs() -> dict[str, int]:
+    """Facade list() kwargs for log integration tests: max_pages only (no page_size)."""
+    return {"max_pages": TEST_LOG_LIST_MAX_PAGES}
+
+
+def bounded_log_list_params(
+    *,
+    filter_expr: str | None = None,
+    sort_by: str | None = None,
+    desc: bool | None = None,
+) -> ListParameters:
+    """Bounded ListParameters for log-style integration lists (no traverse, no page_size)."""
+    kwargs: dict[str, object] = {}
+    if filter_expr is not None:
+        kwargs["filter"] = filter_expr
+    if sort_by is not None:
+        kwargs["sort_by"] = sort_by
+    if desc is not None:
+        kwargs["desc"] = desc
+    return ListParameters(**kwargs)
+
+
+def assert_bounded_log_rows(rows: list[object]) -> None:
+    """Assert SDK list stayed within log integration pagination caps."""
+    assert len(rows) <= TEST_LOG_LIST_MAX_ROWS
+
 
 # ---------------------------------------------------------------------------
 # Credential helpers
@@ -103,9 +136,10 @@ def namespace():
 
 @pytest.fixture
 def root_namespace(namespace):
-    """Tenant root (first segment of namespace) for LIST with traverse.
+    """Tenant root (first segment of namespace).
 
-    Use with client.list(traverse=True) so resources in the instance are captured.
+    Use for traverse/concurrent list tests in tests/integration/client/test_concurrent_list.py.
+    Per-resource integration tests list in the leaf namespace without traverse.
     """
     parts = namespace.split(".", 1)
     return parts[0] if len(parts) > 1 else namespace

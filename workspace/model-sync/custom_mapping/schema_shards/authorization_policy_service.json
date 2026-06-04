@@ -27,6 +27,7 @@
         }
       },
       "required": [
+        "tenant_meta",
         "meta",
         "spec"
       ],
@@ -67,6 +68,7 @@
         }
       },
       "required": [
+        "tenant_meta",
         "meta",
         "spec"
       ],
