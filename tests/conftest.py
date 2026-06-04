@@ -15,10 +15,23 @@ TEST_PAGE_SIZE = 1
 TEST_MAX_PAGES = 1
 TEST_TRAVERSE_PAGE_SIZE = 1
 TEST_MAX_PAGES_TRAVERSE = 1
+
+# Log-style integration list profile (AuditLog, FindingLog, AuthenticationLog, …).
+# Cap client fetches with max_pages only — do not force page_size=1; tiny page sizes
+# can make log lists pathologically slow on the backend (see list-query-performance.md).
+TEST_LOG_LIST_MAX_PAGES = 1
+# Safety cap on rows returned in a single bounded list (one default-sized page).
+TEST_LOG_LIST_MAX_ROWS = 100
+
+# ScanLogRequest / get_scan_result_logs: cap returned log lines in tests.
+TEST_SCAN_LOG_MAX_ENTRIES = 10
+
+# Optional debug tests that iterate namespaces (off by default in CI).
+TEST_LOG_DEBUG_MAX_NAMESPACES = 3
 # Single source for test namespace: use env ENDOR_NAMESPACE or this default.
 # Tests should use the `namespace` fixture (or this constant) instead of
-# hardcoding a default. See docs/rules-of-engagement/resource-implementation.md
-# (Phase 2b) and troubleshooting.md.
+# hardcoding a default. See docs/contributing/integration-resource-tests.md
+# and troubleshooting.md.
 TEST_NAMESPACE_DEFAULT = "endor-solutions-tgowan.tgowan-endor"
 
 # Canonical GitHub remote for this repository (post-move: endorlabs/endorlabs-sdk).

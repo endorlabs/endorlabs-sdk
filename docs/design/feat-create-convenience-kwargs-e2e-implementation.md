@@ -343,7 +343,7 @@ Generated discoverability for agents and humans; CI enforces freshness.
 | Modify | `src/endorlabs/generated/README.md` |
 | Modify | `docs/README.md`, `docs/reference/README.md`, root `README.md` |
 | Modify | `.github/workflows/ci-pr-main.yml` — diff check for `docs/generated-reference/resources/` |
-| Modify | `docs/rules-of-engagement/docs-drift-workflow.md` |
+| Modify | `docs/contributing/docs-drift-workflow.md` |
 | Create | `tests/unit/devtools/test_generate_resource_reference_pages.py` |
 | Create | `tests/fixtures/generated-reference/VectorStoreQuery.md` (golden subset) |
 

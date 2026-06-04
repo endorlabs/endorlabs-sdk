@@ -169,6 +169,7 @@
         }
       },
       "required": [
+        "tenant_meta",
         "meta"
       ],
       "type": "object"

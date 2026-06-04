@@ -478,7 +478,7 @@
       "attr_name": "QueryMalware",
       "parent_kind": null,
       "resource_name": "queries/malware",
-      "scope": "tenant",
+      "scope": "oss",
       "supported_ops_sdk": {
         "create": true,
         "delete": false,
@@ -498,7 +498,7 @@
       "attr_name": "QueryVulnerability",
       "parent_kind": null,
       "resource_name": "queries/vulnerabilities",
-      "scope": "tenant",
+      "scope": "oss",
       "supported_ops_sdk": {
         "create": true,
         "delete": false,

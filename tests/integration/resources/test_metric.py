@@ -10,9 +10,7 @@ import endorlabs
 from endorlabs.core.types import ListParameters
 from tests.conftest import (
     TEST_MAX_PAGES,
-    TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
-    TEST_TRAVERSE_PAGE_SIZE,
 )
 
 
@@ -37,63 +35,44 @@ class TestMetric:
         """Fetch minimal sample data (1 item) for UUID operations.
 
         Function-scoped but only fetches when explicitly requested by tests.
-        Uses traverse=True to search across all namespaces, matching the
+        Lists in namespace to find all namespaces, matching the
         pattern used in test_metric_list.
         """
         # Fetch 1 item with traverse to find metrics across namespaces
         results = self.endor_root_client.Metric.list(
-            list_params=ListParameters(
-                traverse=True, page_size=TEST_TRAVERSE_PAGE_SIZE
-            ),
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+            max_pages=TEST_MAX_PAGES,
         )
         if not results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return results[0]  # Return single item, not list
 
     def test_metric_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
+        """LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            result = client.Metric.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            result = self.endor_client.Metric.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
 
     def test_metric_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
+        """GET first item from LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            items = client.Metric.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            items = self.endor_client.Metric.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.Metric.get(item.uuid, namespace=ns)
+        got = self.endor_client.Metric.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 

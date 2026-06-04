@@ -10,7 +10,6 @@ import os
 import pytest
 
 import endorlabs
-from endorlabs.core.types import ListParameters
 from endorlabs.resources import scan_log_request
 from endorlabs.resources.scan_log_request import (
     CreateScanLogRequestPayload,
@@ -19,11 +18,11 @@ from endorlabs.resources.scan_log_request import (
     ScanLogRequestSpecCreate,
 )
 from tests.conftest import (
-    TEST_MAX_PAGES,
-    TEST_MAX_PAGES_TRAVERSE,
-    TEST_PAGE_SIZE,
-    TEST_TRAVERSE_PAGE_SIZE,
+    TEST_LOG_DEBUG_MAX_NAMESPACES,
+    TEST_LOG_LIST_MAX_PAGES,
+    TEST_SCAN_LOG_MAX_ENTRIES,
 )
+from tests.integration.conftest import assert_bounded_log_rows, bounded_log_list_params
 
 
 @pytest.mark.integration
@@ -48,19 +47,18 @@ class TestScanLogRequest:
         """Fetch minimal sample scan result for testing.
 
         Function-scoped but only fetches when explicitly requested by tests.
-        Uses traverse=True to search across namespaces for scan results.
+        Lists in namespace to find namespaces for scan results.
         Use .uuid and .tenant_meta.namespace so create uses the scan result's
         namespace (API requires create in same namespace as the scan result).
         """
         scan_results = self.endor_parent_client.ScanResult.list(
-            list_params=ListParameters(
-                page_size=TEST_TRAVERSE_PAGE_SIZE,
-                traverse=True,
+            list_params=bounded_log_list_params(
                 sort_by="meta.create_time",
                 desc=True,
             ),
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            max_pages=TEST_LOG_LIST_MAX_PAGES,
         )
+        assert_bounded_log_rows(scan_results)
         if not scan_results:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         return scan_results[0]
@@ -89,7 +87,7 @@ class TestScanLogRequest:
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-scan-log-request"),
             spec=ScanLogRequestSpecCreate(
-                max_entries=10,
+                max_entries=TEST_SCAN_LOG_MAX_ENTRIES,
                 scan_result_uuid=sample_scan_result.uuid,
             ),
         )
@@ -104,7 +102,9 @@ class TestScanLogRequest:
 
         assert request is not None, "Should successfully create log request"
         assert request.spec is not None, "Request should have spec"
-        assert request.spec.max_entries == 10, "Max entries should match"
+        assert request.spec.max_entries == TEST_SCAN_LOG_MAX_ENTRIES
+        if request.spec.log_messages:
+            assert len(request.spec.log_messages) <= TEST_SCAN_LOG_MAX_ENTRIES
 
         print(f"Created log request: {request.uuid}")
         if request.spec.log_messages:
@@ -120,13 +120,14 @@ class TestScanLogRequest:
             self.client,
             ns,
             sample_scan_result.uuid,
-            max_entries=10,
+            max_entries=TEST_SCAN_LOG_MAX_ENTRIES,
         )
 
         # Logs may be None or empty list depending on scan result
         if logs is not None:
+            assert len(logs) <= TEST_SCAN_LOG_MAX_ENTRIES
             print(f"Retrieved {len(logs)} log messages")
-            for log in logs[:3]:  # Show first 3
+            for log in logs[:TEST_SCAN_LOG_MAX_ENTRIES]:
                 if log.timestamp and log.level:
                     print(f"  {log.timestamp} [{log.level}]")
 
@@ -143,7 +144,7 @@ class TestScanLogRequest:
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-filtered-log-request"),
             spec=ScanLogRequestSpecCreate(
-                max_entries=20,
+                max_entries=TEST_SCAN_LOG_MAX_ENTRIES,
                 scan_result_uuid=sample_scan_result.uuid,
                 log_levels=[ScanLogLevel.ERROR, ScanLogLevel.WARNING],
                 newest_first=True,
@@ -181,7 +182,7 @@ class TestScanLogRequest:
         payload = CreateScanLogRequestPayload(
             meta=ScanLogRequestMetaCreate(name="test-invalid-uuid-request"),
             spec=ScanLogRequestSpecCreate(
-                max_entries=10,
+                max_entries=TEST_SCAN_LOG_MAX_ENTRIES,
                 scan_result_uuid="invalid-uuid",
             ),
         )
@@ -229,12 +230,12 @@ class TestScanLogRequest:
         logger.setLevel(logging.DEBUG)
         print("\n=== PER-NAMESPACE SCAN LOG REQUEST DEBUG ===")
 
-        # List namespaces under parent (traverse to get children)
+        # Bounded namespace list (no traverse)
         namespaces_list = self.endor_parent_client.Namespace.list(
-            traverse=True,
-            list_params=ListParameters(page_size=TEST_TRAVERSE_PAGE_SIZE),
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+            list_params=bounded_log_list_params(),
+            max_pages=TEST_LOG_LIST_MAX_PAGES,
         )
+        assert_bounded_log_rows(namespaces_list)
         if not namespaces_list:
             pytest.skip("No namespaces under parent (empty list)")
         # Collect canonical namespace names (parent + children)
@@ -246,7 +247,7 @@ class TestScanLogRequest:
             pytest.skip("No namespace paths in list response")
         print(f"Namespaces to try: {sorted(ns_names)}")
 
-        for ns_canonical in sorted(ns_names):
+        for ns_canonical in sorted(ns_names)[:TEST_LOG_DEBUG_MAX_NAMESPACES]:
             list_ok = False
             create_ok = False
             scan_result_uuid = None
@@ -255,9 +256,10 @@ class TestScanLogRequest:
                     tenant=ns_canonical, api_client=self.client
                 )
                 results = ns_client.ScanResult.list(
-                    list_params=ListParameters(page_size=TEST_PAGE_SIZE),
-                    max_pages=TEST_MAX_PAGES,
+                    list_params=bounded_log_list_params(),
+                    max_pages=TEST_LOG_LIST_MAX_PAGES,
                 )
+                assert_bounded_log_rows(results)
                 list_ok = True
                 if not results:
                     print(f"  [{ns_canonical}] list_scan_results: ok, 0 results")
@@ -266,7 +268,7 @@ class TestScanLogRequest:
                 payload = CreateScanLogRequestPayload(
                     meta=ScanLogRequestMetaCreate(name="debug-per-ns-log-request"),
                     spec=ScanLogRequestSpecCreate(
-                        max_entries=10,
+                        max_entries=TEST_SCAN_LOG_MAX_ENTRIES,
                         scan_result_uuid=scan_result_uuid,
                     ),
                 )
