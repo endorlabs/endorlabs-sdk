@@ -1,4 +1,4 @@
-# Architecture Rules of Engagement
+# SDK architecture (contributing)
 
 Two runtime layers plus registry-driven contract inputs define the Endor Labs SDK.
 Use this when editing the client surface, facade, or registry, or when adding
@@ -57,7 +57,33 @@ flowchart TD
 - **Facade delegates to BaseResourceOperations:** The facade instantiates `BaseResourceOperations` from registry metadata and delegates CRUD calls to it. Resource modules contain Pydantic models and convenience functions only; no module-level CRUD wrappers.
 - **Types:** Use `ResourceRuntimeFacade[T]` with the Pydantic model as `T` so `client.Namespace.list()` is typed as `list[Namespace]`; the `ResourceFacade` alias remains for compatibility.
 
+## Contributing to the generated surface
+
+New API resources are **modeled by model sync**, not hand-added to `Client` one at a time. The default workflow:
+
+1. **Regenerate** — `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs` (see [docs-drift-workflow.md](docs-drift-workflow.md)).
+2. **Verify contract** — Resource appears in `src/endorlabs/generated/registry_contract.py`; facade is attached at runtime from the registry adapter (no entry in `Client.__init__`).
+3. **Validate API shape** — [api-validation.md](api-validation.md) (OpenAPI + optional endorctl list/get).
+4. **Diverge only when needed** — [registry_overlay.py](../../src/endorlabs/registry_overlay.py) for scope, ops, or metadata the generator cannot express; keep overrides minimal.
+5. **Hand-written `resources/` modules** — Use for `build_create_payload`, field aliasing, convenience helpers, and schema drift hooks when generated shards are insufficient. Confirm model-sync parity before large manual deltas.
+6. **Integration tests** — [integration-resource-tests.md](integration-resource-tests.md).
+7. **Custom facades** — Rare; append-only experimental entries in `registry.py` (e.g. workflow helpers). Prefer contract + overlay first.
+
+### Canonical generation policy
+
+- Mapping is from `.endorlabs-context/openapiv2.swagger.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/`.
+- Eligibility defaults to include when `x-internal != true`, with explicit allowlist exceptions in model-sync profiles when metadata is incomplete.
+- Mapping must be deterministic (stable bucketing, naming, `entity -> module` manifest).
+
+### Facade behavior (no per-resource CRUD modules)
+
+- `ResourceRuntimeFacade` delegates `list`, `get`, `create`, `update`, `delete` to `BaseResourceOperations` using registry metadata.
+- `update_mask` at the facade is a comma-separated string; UUID+payload updates require an explicit mask.
+- Create/update field allowlists: `build_create_payload` and model `get_mutable_fields_cls()` / `get_immutable_fields_cls()`; see [contracts.md](../contracts.md) (field aliasing, consumer UX).
+- Errors: use `endorlabs` exception types; preserve full response text in logs.
+
 ## When to Use
 
 - Editing `client_surface.py`, `facade.py`, `registry.py`, or `registry_overlay.py`.
-- Adding or changing a resource exposed on `Client` (through model-sync contract generation plus minimal overlay).
+- Regenerating or overriding the client surface after OpenAPI changes.
+- Adding integration tests or custom workflow facades — not for duplicating generated models in docs.

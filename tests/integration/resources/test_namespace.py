@@ -14,7 +14,7 @@ from endorlabs.resources.namespace import (
     NamespaceMetaUpdate,
     UpdateNamespacePayload,
 )
-from tests.conftest import TEST_MAX_PAGES_TRAVERSE
+from tests.conftest import TEST_MAX_PAGES
 
 
 @pytest.mark.integration
@@ -88,11 +88,9 @@ class TestNamespaces:
                         f"Warning: Failed to create namespace {payload.meta.name}: {e}"
                     )
 
-            # List from tenant root with traverse so created child namespaces
-            # are in scope.
-            all_namespaces = self.root_client.Namespace.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            # List child namespaces from the integration namespace.
+            all_namespaces = self.client.Namespace.list(
+                max_pages=TEST_MAX_PAGES,
             )
             created_uuids = set(created_in_this_test)
             found = [ns for ns in all_namespaces if ns.uuid in created_uuids]
@@ -214,38 +212,35 @@ class TestNamespaces:
         assert "update_mask" in (exc_info.value.message or "").lower()
 
     def test_namespace_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        result = self.root_client.Namespace.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST in namespace."""
+        result = self.client.Namespace.list(
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_namespace_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        items = self.root_client.Namespace.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from LIST in namespace."""
+        items = self.client.Namespace.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        got = self.root_client.Namespace.get(item)
+        got = self.client.Namespace.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
     def test_namespace_spec_has_full_name_and_managed(self) -> None:
         """Namespace spec exposes full_name and managed when returned by API."""
-        items = self.root_client.Namespace.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        items = self.client.Namespace.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
         assert hasattr(item.spec, "full_name")
         assert hasattr(item.spec, "managed")
-        got = self.root_client.Namespace.get(item)
+        got = self.client.Namespace.get(item)
         assert hasattr(got.spec, "full_name")
         assert hasattr(got.spec, "managed")
 

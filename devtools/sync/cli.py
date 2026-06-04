@@ -336,7 +336,7 @@ def run_sync(
             "Contract validation triage: inspect "
             "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json "
             "and workspace/model-sync/custom_mapping/facade_contract.json; see "
-            "docs/rules-of-engagement/docs-drift-workflow.md"
+            "docs/contributing/docs-drift-workflow.md"
         )
         return 1
     ok, message, commands = generate_modules(

@@ -12,9 +12,7 @@ from endorlabs.resources.repository import (
 )
 from tests.conftest import (
     TEST_MAX_PAGES,
-    TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
-    TEST_TRAVERSE_PAGE_SIZE,
 )
 
 
@@ -57,10 +55,8 @@ class TestRepository:
 
         try:
             results = self.endor_root_client.Repository.list(
-                list_params=ListParameters(
-                    page_size=TEST_TRAVERSE_PAGE_SIZE, traverse=True
-                ),
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+                list_params=ListParameters(page_size=TEST_PAGE_SIZE),
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
@@ -69,48 +65,31 @@ class TestRepository:
         return results[0]  # Return single item, not list
 
     def test_repository_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
+        """LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            result = client.Repository.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            result = self.endor_client.Repository.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
 
     def test_repository_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
+        """GET first item from LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            items = client.Repository.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            items = self.endor_client.Repository.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.Repository.get(item.uuid, namespace=ns)
+        got = self.endor_client.Repository.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
@@ -181,9 +160,7 @@ class TestRepository:
             api_client=self.client,
         )
         try:
-            repos = client.Repository.list(
-                traverse=True, max_pages=TEST_MAX_PAGES_TRAVERSE
-            )
+            repos = client.Repository.list(max_pages=TEST_MAX_PAGES)
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not repos:

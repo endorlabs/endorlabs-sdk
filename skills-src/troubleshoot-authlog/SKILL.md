@@ -89,4 +89,4 @@ uv run --env-file .env python .cursor/skills/troubleshoot-authlog/troubleshoot_a
 ## Relationship to other docs
 
 - Broader SDK debugging: [troubleshoot-sdk](../troubleshoot-sdk/SKILL.md)
-- Rules of engagement: `docs/rules-of-engagement/troubleshooting.md`
+- Contributing: `docs/contributing/troubleshooting.md`

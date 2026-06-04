@@ -85,6 +85,10 @@ Integration tests (require valid credentials):
 uv run pytest -m integration -v
 ```
 
+**Pytest markers:** `integration`, `writes` (mutating API calls), `long` (heavy integration; CI runs `-m "not long"`), `interactive` (browser OAuth — excluded from CI; use `devtools/refresh_token_to_dotenv.py` for tokens). The unused `slow` marker was removed; use `long` or `interactive` instead. Unit CI: `-m "not interactive and not long"`. Traverse coverage lives in `tests/integration/client/test_concurrent_list.py`; per-resource tests list in the integration `namespace` without `traverse`.
+
+**Log-style integration bounds** (`tests/conftest.py`): `TEST_LOG_LIST_MAX_PAGES` (no forced `page_size` on logs), `TEST_LOG_LIST_MAX_ROWS`, `TEST_SCAN_LOG_MAX_ENTRIES`; helpers `log_list_kwargs()` / `bounded_log_list_params()` / `assert_bounded_log_rows()` in `tests/integration/conftest.py`.
+
 Domain-driven test layout:
 
 - `tests/unit/{client,workflows,platform,tooling}`
@@ -124,7 +128,7 @@ When verify fails locally or in CI, regenerate and commit in your PR:
 uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
-See [devtools/sync/README.md](devtools/sync/README.md) and [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
+See [devtools/sync/README.md](devtools/sync/README.md) and [docs/contributing/docs-drift-workflow.md](docs/contributing/docs-drift-workflow.md).
 
 Optional version check (local or cron): `.github/scripts/check_endorctl_version.py`
 
@@ -138,7 +142,7 @@ When using or documenting the registry-based client (`client.Namespace`, `client
 
 - **List:** Use flat kwargs on `.list()` — e.g. `client.Project.list(traverse=True)`, `client.Project.list(filter="...", mask="meta.name,spec.level", max_pages=1)`. Do **not** combine filter and mask into one parameter; filter = which rows, mask = which fields in the response. With a **non-empty** mask, each row is a **`dict`** (wire JSON), not a resource model—omit `mask` when you need typed instances. See [docs/contracts.md](docs/contracts.md) (List parameters, Update and update_mask) and [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
 - **Update:** Use `update_mask` only on `.update()`; it is separate from list mask.
-- **Spec-driven UX:** Align with spec; centralize sources of truth in modules (see [docs/contracts.md](docs/contracts.md) and [docs/rules-of-engagement/](docs/rules-of-engagement/)).
+- **Spec-driven UX:** Align with spec; centralize sources of truth in modules (see [docs/contracts.md](docs/contracts.md) and [docs/contributing/](docs/contributing/)).
 
 ## Optional: sync external docs
 
