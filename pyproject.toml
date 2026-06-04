@@ -304,10 +304,10 @@ addopts = [
     "-W default"
 ]
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "writes: marks tests that perform create/update/delete (write operations) against the API",
-    "long: marks long-running tests (excluded in CI; run locally with pytest -m long)",
+    "long: marks long-running integration tests (excluded in CI; run locally with pytest -m long)",
+    "interactive: marks browser OAuth / manual token capture (excluded in CI; run locally with pytest -m interactive)",
 ]
 
 [tool.coverage.report]

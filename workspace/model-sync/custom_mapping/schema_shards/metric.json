@@ -684,6 +684,7 @@
         }
       },
       "required": [
+        "tenant_meta",
         "meta",
         "spec",
         "context"

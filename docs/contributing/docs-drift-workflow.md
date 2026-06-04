@@ -117,7 +117,7 @@ uv run python devtools/model_sync.py --inventory-only
 
 ## Related
 
-- [API Validation](./api-validation.md) — Pre-implementation validation
+- [API validation](./api-validation.md) — OpenAPI and optional wire checks before overlay or hand modules
 - [Architecture](./architecture.md) — Generated client surface and overlay
 - [Integration resource tests](./integration-resource-tests.md) — Facade validation tests
 - [Troubleshooting](./troubleshooting.md) — Issue resolution
