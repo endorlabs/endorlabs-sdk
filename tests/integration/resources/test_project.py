@@ -22,7 +22,7 @@ from endorlabs.resources.scan_profile import (
     ScanProfileMetaCreate,
     ScanProfileSpecCreate,
 )
-from tests.conftest import TEST_MAX_PAGES, TEST_MAX_PAGES_TRAVERSE, TEST_PAGE_SIZE
+from tests.conftest import TEST_MAX_PAGES, TEST_PAGE_SIZE
 
 
 @pytest.mark.integration
@@ -75,49 +75,28 @@ class TestProject:
             self.created_scan_profile_uuids.clear()
 
     def test_project_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.Project.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST in namespace (registry-based)."""
+        result = self.endor_client.Project.list(
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_project_get(self) -> None:
-        """GET first item from LIST (root + traverse) (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.Project.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from LIST in namespace (registry-based)."""
+        items = self.endor_client.Project.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        got = client.Project.get(item)
+        got = self.endor_client.Project.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
     def test_project_spec_has_scan_profile_and_archived_attrs(self) -> None:
         """Project spec has scan_profile_uuid, toolchain_profile_uuid and related."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.Project.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        items = self.endor_client.Project.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
@@ -127,7 +106,7 @@ class TestProject:
         assert hasattr(item.spec, "toolchain_profile_uuid")
         assert hasattr(item.spec, "ingestion_token")
         assert hasattr(item.spec, "is_archived")
-        got = client.Project.get(item)
+        got = self.endor_client.Project.get(item)
         if got and got.spec:
             assert hasattr(got.spec, "scan_profile_uuid")
             assert hasattr(got.spec, "toolchain_profile_uuid")
@@ -359,14 +338,8 @@ class TestProject:
 
     @pytest.mark.writes
     def test_client_ux_update_project(self) -> None:
-        """Consumer UX: client.Project.get() then update then revert."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.namespace,
-            api_client=self.client,
-        )
-        projects = client.Project.list(max_pages=TEST_MAX_PAGES)
+        """Consumer UX: self.endor_client.Project.get() then update then revert."""
+        projects = self.endor_client.Project.list(max_pages=TEST_MAX_PAGES)
         if not projects:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = projects[0]
@@ -375,7 +348,7 @@ class TestProject:
             if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
             else self.namespace
         )
-        current = client.Project.get(item.uuid, namespace=ns)
+        current = self.endor_client.Project.get(item.uuid, namespace=ns)
         if not current:
             pytest.skip(f"Could not retrieve project {item.uuid}")
         original_description = current.meta.description
@@ -387,7 +360,7 @@ class TestProject:
         )
         new_tags = [*original_tags, "client-ux-update"]
         try:
-            updated = client.Project.update(
+            updated = self.endor_client.Project.update(
                 current,
                 meta_description=new_description,
                 meta_tags=new_tags,
@@ -397,7 +370,7 @@ class TestProject:
         assert updated is not None
         assert updated.meta.description == new_description
         try:
-            client.Project.update(
+            self.endor_client.Project.update(
                 updated,
                 meta_description=original_description,
                 meta_tags=original_tags,

@@ -34,7 +34,7 @@ Scope:
    - Corrected in:
      - `README.md`
      - `docs/contracts.md`
-     - `docs/rules-of-engagement/resource-implementation.md`
+     - `docs/contributing/integration-resource-tests.md` (formerly `resource-implementation.md`)
      - `.github/copilot-instructions.md`
      - `.cursor/skills/implement-sdk-resource/SKILL.md`
 
@@ -79,7 +79,7 @@ Recommended follow-up sequence (minor DX polish):
 - `AGENTS.md`
 - `CONTRIBUTORS.md`
 - `docs/contracts.md`
-- `docs/rules-of-engagement/docs-drift-workflow.md`
+- `docs/contributing/docs-drift-workflow.md`
 - `devtools/sync/README.md`
 - `docs/reference/README.md`
 - `docs/guides/retrieving-scan-results.md`

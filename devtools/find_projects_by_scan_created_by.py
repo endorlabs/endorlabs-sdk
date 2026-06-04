@@ -3,9 +3,9 @@
 
 Follows repository list guidance:
 
-- ``docs/rules-of-engagement/list-query-performance.md`` — scope, selective
+- ``docs/contributing/list-query-performance.md`` — scope, selective
   filters, pagination vs server work, debugging slow lists (timeouts, narrow scope).
-- ``docs/rules-of-engagement/namespace-traversal.md`` — tenant-wide lists: prefer
+- ``docs/contributing/namespace-traversal.md`` — tenant-wide lists: prefer
   ``traverse=True`` with **selective** filters; avoid tiny ``page_size`` unless
   needed; use ``max_pages`` to cap client-side pagination.
 
@@ -588,7 +588,7 @@ def main(argv: list[str] | None = None) -> int:
         "projects": projects_out,
         "namespace_errors": ns_errors,
         "performance_notes": (
-            "See docs/rules-of-engagement/list-query-performance.md "
+            "See docs/contributing/list-query-performance.md "
             "and namespace-traversal.md. Regex on meta.created_by may be a "
             "heavy list key - validate latency vs endorctl api list if unsure."
         ),

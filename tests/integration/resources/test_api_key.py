@@ -1,7 +1,7 @@
 """Test cases for APIKey resource operations.
 
 Tests list, get, create+delete (GC), and Client (facade) UX for APIKey resources.
-Aligns with test-driven-development.mdc and resource-implementation.md.
+Aligns with docs/contributing/integration-resource-tests.md.
 """
 
 from datetime import UTC, datetime, timedelta
@@ -17,7 +17,7 @@ from endorlabs.resources.api_key import (
     CreateAPIKeyPayload,
 )
 from tests.conftest import (
-    TEST_MAX_PAGES_TRAVERSE,
+    TEST_MAX_PAGES,
     TEST_NAMESPACE_DEFAULT,
 )
 
@@ -51,40 +51,21 @@ class TestAPIKey:
             self.created_api_key_uuids.clear()
 
     def test_api_key_list(self) -> None:
-        """LIST from tenant root with traverse (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        result = client.APIKey.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """LIST in namespace (registry-based)."""
+        result = self.endor_client.APIKey.list(
+            max_pages=TEST_MAX_PAGES,
         )
         assert isinstance(result, list)
 
     def test_api_key_get(self) -> None:
-        """GET first item from LIST (root + traverse) (registry-based)."""
-        import endorlabs
-
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
-        items = client.APIKey.list(
-            traverse=True,
-            max_pages=TEST_MAX_PAGES_TRAVERSE,
+        """GET first item from LIST in namespace (registry-based)."""
+        items = self.endor_client.APIKey.list(
+            max_pages=TEST_MAX_PAGES,
         )
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.APIKey.get(item.uuid, namespace=ns)
+        got = self.endor_client.APIKey.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 

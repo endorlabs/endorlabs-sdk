@@ -25,7 +25,7 @@ These apply across tenants and skills; prefer them before assuming `lookup`, `ma
 - **Tenant-wide troubleshooting:** `python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --all-projects` is **O(projects × scans)** and can run a long time. Prefer **project-scoped** `--project-name` / `--project-uuid` for interactive RCA; reserve all-projects for batch or narrow `--limit` / `--status-filter` windows.
 - **Relationship map coverage:** `relationships.map` builds producer edges from a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `dependency_row_count` is zero, distinguish **unscanned consumers / wrong list namespace** from **pagination truncation** before raising caps (ask before “fetch everything”).
 - **List deserialization vs API drift:** Rarely, `client.*.list()` may fail with Pydantic validation on a field the API populated differently than the shipped model (**ServerError** / validation details). That is a **model-sync** or payload-tolerance issue—see **troubleshoot-sdk** and `devtools/sync/`, not something to fix by changing query parameters alone.
-- **List field masks (`list_parameters.mask` / facade `mask=`):** The API documents `list_parameters.mask` as a comma-separated **field subset** to return (see local OpenAPI: `list_parameters.mask` — *“List of fields to return (all fields are returned by default).”*). It does **not** define a separate sparse list-row schema. When **no** mask is set (or `mask` is empty / whitespace-only after strip), `client.*.list()` / `list_iter()` return full **Pydantic** resource models as today. When a **non-empty** mask is in effect after the same `ListParameters` merge as `list()`, each row is a shallow-copied **`dict[str, Any]`** (wire JSON shape)—no client-side model construction—so sparse payloads never hit nested required-field validation. **`lookup()`** always returns a typed model: it raises **`ValueError`** if an effective non-empty mask is present; use **`list()`** / **`list_iter()`** for masked dict rows. This is a **breaking change** for callers that passed `mask=` and assumed typed models; migrate with `isinstance(row, dict)` or omit `mask` when you need models. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md) (filter vs mask) and [docs/changelog.md](docs/changelog.md). Sort + deep pagination constraints are separate; see [docs/rules-of-engagement/list-query-performance.md](docs/rules-of-engagement/list-query-performance.md).
+- **List field masks (`list_parameters.mask` / facade `mask=`):** The API documents `list_parameters.mask` as a comma-separated **field subset** to return (see local OpenAPI: `list_parameters.mask` — *“List of fields to return (all fields are returned by default).”*). It does **not** define a separate sparse list-row schema. When **no** mask is set (or `mask` is empty / whitespace-only after strip), `client.*.list()` / `list_iter()` return full **Pydantic** resource models as today. When a **non-empty** mask is in effect after the same `ListParameters` merge as `list()`, each row is a shallow-copied **`dict[str, Any]`** (wire JSON shape)—no client-side model construction—so sparse payloads never hit nested required-field validation. **`lookup()`** always returns a typed model: it raises **`ValueError`** if an effective non-empty mask is present; use **`list()`** / **`list_iter()`** for masked dict rows. This is a **breaking change** for callers that passed `mask=` and assumed typed models; migrate with `isinstance(row, dict)` or omit `mask` when you need models. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md) (filter vs mask) and [docs/changelog.md](docs/changelog.md). Sort + deep pagination constraints are separate; see [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md).
 
 ## Context Bootstrap (for AI Agents)
 
@@ -82,7 +82,7 @@ Two-layer, registry-driven design. The same pattern applies to all resources.
 - **Registry adapter:** `endorlabs.registry` builds `ResourceEntry(...)` values from generated runtime contract data in `src/endorlabs/generated/registry_contract.py`, applies explicit overrides in `src/endorlabs/registry_overlay.py`, and can append narrowly scoped experimental facades when the generated contract has not caught up yet.
 - **Pydantic models:** OpenAPI-aligned types in `src/endorlabs/generated/models/` (model-sync); hand-written resource modules under `src/endorlabs/resources/`; occasional shared types in `src/endorlabs/models/`. No HTTP or registry logic in models. CRUD/list execution lives in `BaseResourceOperations` (via facades), not module-level CRUD wrappers.
 
-For the full rules, see [docs/rules-of-engagement/architecture.md](docs/rules-of-engagement/architecture.md).
+For the full rules, see [docs/contributing/architecture.md](docs/contributing/architecture.md).
 
 ## Critical Project Rules
 
@@ -103,7 +103,7 @@ Ruff (style, imports, docstrings) and Pyright (typing) are configured in [pyproj
 
 Commits targeting `main` and `dev` must keep a clean bill-of-health in security scanning: `.github/workflows/ci-pr-main.yml` includes a dedicated Endor Labs CI security scan job (OIDC auth + PR review comments from API findings + SCA/Secrets/SAST/AI SAST), and changes should not merge with unresolved policy-breaking findings under current enforcement settings.
 
-Model-sync drift is enforced by **pre-push hooks** and **CI PR Main** (`--verify-upstream-only` on lint; ephemeral generation for tests). Regenerate committed artifacts in the PR that needs them: `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs`. See [docs/rules-of-engagement/docs-drift-workflow.md](docs/rules-of-engagement/docs-drift-workflow.md).
+Model-sync drift is enforced by **pre-push hooks** and **CI PR Main** (`--verify-upstream-only` on lint; ephemeral generation for tests). Regenerate committed artifacts in the PR that needs them: `uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs`. See [docs/contributing/docs-drift-workflow.md](docs/contributing/docs-drift-workflow.md).
 
 **Maintainer commands** (fetch spec, regenerate, compact deltas): [devtools/sync/README.md](devtools/sync/README.md).
 
@@ -116,7 +116,7 @@ Git-tracked Cursor rules (use **@rule** in chat or rely on glob/always-apply):
 | **local-context.mdc** | Always — local-first research: `.endorlabs-context/` docs and OpenAPI before the web |
 | **docs-skillbase-consistency.mdc** | When editing `**/*.{md,mdc}` — keep docs aligned with `skills-src/`, generated reference, and workflow/CLI inventory |
 
-Patterns for LIST/UPDATE, architecture, security, TDD, and code review live in [docs/rules-of-engagement/](docs/rules-of-engagement/README.md) (not separate `.mdc` files). For API workflow guidance, use **implement-sdk-resource**; for failures, **troubleshoot-sdk** or [docs/rules-of-engagement/troubleshooting.md](docs/rules-of-engagement/troubleshooting.md). Python examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals.
+Patterns for LIST/UPDATE, architecture, security, TDD, and code review live in [docs/contributing/](docs/contributing/README.md) (not separate `.mdc` files). For API workflow guidance, use **implement-sdk-resource**; for failures, **troubleshoot-sdk** or [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md). Python examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals.
 
 ## Project Structure
 
@@ -162,7 +162,7 @@ src/endorlabs/
 - **Consumer UX (list/update):** filter vs mask, flat kwargs — [docs/contracts.md](docs/contracts.md), [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
 - **Reference:** [docs/reference/README.md](docs/reference/README.md) (curated index and stable landing pages), [docs/generated-reference/resources.md](docs/generated-reference/resources.md) (canonical generated operations matrix), [docs/generated-reference/api-surfaces.md](docs/generated-reference/api-surfaces.md), [docs/generated-reference/create-update-payloads.md](docs/generated-reference/create-update-payloads.md), [docs/reference/namespace.md](docs/reference/namespace.md) (list/get/create/update/delete).
 - **Guides:** [docs/guides/README.md](docs/guides/README.md); consumer-ux-list-update, retrieving-scan-results.
-- **Rules of engagement:** [docs/rules-of-engagement/README.md](docs/rules-of-engagement/README.md); api-validation, resource-implementation, troubleshooting, docs-drift-workflow.
+- **Contributing:** [docs/contributing/README.md](docs/contributing/README.md); architecture, api-validation, integration-resource-tests, troubleshooting, docs-drift-workflow.
 
 ## Agent Skills (On-Demand Workflows)
 
@@ -177,7 +177,8 @@ Skills are modular, on-demand workflow packages that agents activate when a task
 | [project-agent-context](skills-src/project-agent-context/) | Multi-pass project context: PV index, targeted hydration, optional call-graph sweep; read `MULTIPASS_LLM_CONTRACT.md` for manifest/escalation semantics (`endorlabs.workflows.agent_context`) |
 | [map-project-dependency-relationships](skills-src/map-project-dependency-relationships/) | Namespace-wide project-to-project dependency graph (JSON) via `python -m endorlabs.workflows.relationships.map` |
 | [fetch-and-search-call-graph](skills-src/fetch-and-search-call-graph/) | Fetch, decode, and search project call graph artifacts (`endorlabs.workflows.callgraph`; `endor-callgraph-search` for local JSON search) |
-| [implement-sdk-resource](skills-src/implement-sdk-resource/) | Adding a new resource to the SDK (models, operations, registry, tests) |
+| [implement-sdk-resource](skills-src/implement-sdk-resource/) | Model-sync-first surface extension: regen, overlay, integration tests |
+| [model-sync-drift](skills-src/model-sync-drift/) | Upstream OpenAPI/provenance drift; regen generated artifacts; CI/pre-push `--verify-upstream-only` failures |
 | [retrieve-scan-results](skills-src/retrieve-scan-results/) | Querying projects, scan results, and findings |
 | [reachability-provenance](skills-src/reachability-provenance/) | Triaging conflicting reachability signals on findings (dependency vs function reachability, callpath attribution) |
 | [sso-integration-validation-troubleshooting](skills-src/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting |
@@ -192,4 +193,4 @@ CI runs these (except optional endorctl); include pyright. Unit tests run withou
 
 ---
 
-Index for AI agents; in-repo behavior and patterns are defined by `.cursor/rules/*.mdc`, [docs/rules-of-engagement/](docs/rules-of-engagement/README.md), skills above, and the linked docs.
+Index for AI agents; in-repo behavior and patterns are defined by `.cursor/rules/*.mdc`, [docs/contributing/](docs/contributing/README.md), skills above, and the linked docs.

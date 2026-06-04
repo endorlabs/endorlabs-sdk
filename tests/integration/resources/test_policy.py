@@ -22,7 +22,6 @@ from endorlabs.resources.policy import (
 )
 from tests.conftest import (
     TEST_MAX_PAGES,
-    TEST_MAX_PAGES_TRAVERSE,
     TEST_PAGE_SIZE,
 )
 
@@ -135,48 +134,31 @@ match_finding[result] {
             self.created_policy_uuids.clear()
 
     def test_policy_list(self) -> None:
-        """LIST from tenant root with traverse."""
-        import endorlabs
+        """LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            result = client.Policy.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            result = self.endor_client.Policy.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         assert isinstance(result, list)
 
     def test_policy_get(self) -> None:
-        """GET first item from LIST (root + traverse)."""
-        import endorlabs
+        """GET first item from LIST in namespace."""
         from endorlabs.core.exceptions import ServerError
 
-        client = endorlabs.Client(
-            tenant=self.root_namespace,
-            api_client=self.client,
-        )
         try:
-            items = client.Policy.list(
-                traverse=True,
-                max_pages=TEST_MAX_PAGES_TRAVERSE,
+            items = self.endor_client.Policy.list(
+                max_pages=TEST_MAX_PAGES,
             )
         except ServerError:
             pytest.skip("Backend returned ServerError (list); skip")
         if not items:
             pytest.skip("No resources in scope (empty; may be filter/auth/scope)")
         item = items[0]
-        ns = (
-            item.tenant_meta.namespace
-            if item.tenant_meta and getattr(item.tenant_meta, "namespace", None)
-            else self.root_namespace
-        )
-        got = client.Policy.get(item.uuid, namespace=ns)
+        got = self.endor_client.Policy.get(item)
         assert got is not None
         assert got.uuid == item.uuid
 
