@@ -340,6 +340,18 @@ def verify_bundle() -> int:
         errors.append("agent_bundle/INDEX.md drift (run devtools/sync_agent_bundle.py)")
     if snapshot_manifest != regen_manifest:
         errors.append("agent_bundle/MANIFEST.json drift")
+        import difflib
+
+        committed_lines = snapshot_manifest.decode("utf-8").splitlines()
+        regen_lines = regen_manifest.decode("utf-8").splitlines()
+        for line in difflib.unified_diff(
+            committed_lines,
+            regen_lines,
+            fromfile="committed",
+            tofile="regenerated",
+            lineterm="",
+        ):
+            print(line, file=sys.stderr)
     if snapshot_workflows != regen_workflows:
         errors.append("agent_bundle/workflows drift")
     if errors:

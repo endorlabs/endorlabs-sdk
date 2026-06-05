@@ -303,7 +303,11 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
             {
                 "id": parsed.contract_id,
                 "path": f"contracts/{path.name}",
-                "tags": list(parsed.frontmatter.get("tags", [])),
+                "tags": sorted(
+                    tag
+                    for tag in parsed.frontmatter.get("tags", [])
+                    if isinstance(tag, str)
+                ),
             }
         )
     return entries
