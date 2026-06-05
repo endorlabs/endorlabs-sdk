@@ -1,24 +1,25 @@
-# Agent skill authoring schema
+# Agent authoring schema
 
-Authoritative guide for writing skills in [`agent-skills/`](../). Skills must round-trip to [Cursor Agent Skills](https://docs.cursor.com) and [Anthropic Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview).
+Authoritative guide for writing agent knowledge under [`agent-knowledge/`](../). Skills must round-trip to [Cursor Agent Skills](https://docs.cursor.com) and [Anthropic Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview).
 
-`agent-skills/schema/` is **maintainer-only** — sync does not ship it in the wheel.
+`agent-knowledge/schema/` is **maintainer-only** — sync does not ship it in the wheel.
 
 ## Directory layout
 
 ```
-agent-skills/
-  schema/           # This directory (not shipped)
-  README.md         # Skill index
+agent-knowledge/
   INDEX.md          # Tier-0 agent index (shipped)
+  README.md         # Skill index (authoring)
   workflows.yaml    # Supplemental workflow rows (skill: null)
-  contracts/*.md    # Tier-0 contracts with YAML frontmatter
-  <skill-name>/     # Folder name MUST equal frontmatter name
-    SKILL.md        # Portable frontmatter + body
-    *.md, scripts/  # Optional reference files
+  schema/           # This directory (not shipped)
+  rules/*.md        # Harness bootstrap (always load; generates .cursor/rules/*.mdc)
+  contracts/*.md    # Reference SDK semantics (on demand)
+  skills/<name>/    # Task playbooks
+    SKILL.md
+    *.md, scripts/
 ```
 
-Run `uv run python devtools/sync_agent_bundle.py` after edits. CI `--verify` enforces drift.
+Run `uv run python devtools/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift.
 
 ## Portable frontmatter (shipped in bundle `SKILL.md`)
 
@@ -32,82 +33,54 @@ Only these keys appear in the generated bundle:
 
 Validated by [`skill.schema.json`](skill.schema.json) (portable subset).
 
-### Description best practices
-
-- Write in **third person** (the skill does X, not "I will…").
-- Lead with **what** the skill accomplishes, then **when** to use it.
-- Keep under 1024 characters; agents inject this into discovery context.
-
 ## Endor extension block (authoring only)
 
-Optional `endorlabs.catalog` links a skill to a workflow CLI/module row. Sync **strips** the entire `endorlabs` key from shipped `SKILL.md`.
+Optional `endorlabs.catalog` links a skill to a workflow CLI/module row. Sync **strips** the entire `endorlabs` key from shipped `SKILL.md`. See prior examples in skill `SKILL.md` files under `agent-knowledge/skills/`.
+
+## Rules (`agent-knowledge/rules/`)
+
+Harness bootstrap invariants. Each `rules/<id>.md` file starts with:
 
 ```yaml
 ---
-name: project-agent-context
-description: >-
-  Deterministic project context bundle...
-endorlabs:
-  catalog:
-    workflow_id: agent-context
-    cli: endor-agent-context
-    module: endorlabs.workflows.agent_context.cli
-    default_output: .endorlabs-context/workspace/projects/<uuid>/
-    agent_visible: true
+id: namespace-scoping
+tags: [list, namespace, traverse]
+summary: >-
+  Resolve Project first; pass namespace=project.namespace on project-scoped lists.
 ---
 ```
 
-| `endorlabs.catalog` field | Required | Notes |
-|---------------------------|----------|-------|
-| `workflow_id` | yes | Stable catalog id |
-| `module` | yes | Python entry module |
-| `cli` | when script exists | Must match `pyproject.toml` `[project.scripts]` |
-| `default_output` | for agent-visible workflows | Context-relative path or `stdout` phrasing |
-| `agent_visible` | default `true` | `false` for maintainer-only |
+Validated by [`rule.schema.json`](rule.schema.json). Listed in `MANIFEST.json` → `rules[]` and `bootstrap.rule_ids`; generate always-on `.cursor/rules/<id>.mdc` with tooling-only provenance (`x-endor-generated`, `x-endor-source`, `x-endor-source-sha256`).
 
-Skills **without** `endorlabs.catalog` are playbook-only (indexed in `MANIFEST.skills` only).
+Hand-maintained Cursor rules: `agent-knowledge-authoring`, `docs-skillbase-consistency` only.
 
-Supplemental workflow rows with no skill live in [`workflows.yaml`](../workflows.yaml).
+## Contracts (`agent-knowledge/contracts/`)
 
-## Contracts
-
-Each `contracts/<id>.md` file starts with:
+On-demand reference semantics. Each `contracts/<id>.md` file starts with:
 
 ```yaml
 ---
-id: canonical-naming
-tags: [naming, facades]
-tier: reference  # bootstrap | reference (required)
-summary: >-      # optional; used in INDEX and generated Cursor rules
-  One-line invariant for harness injection.
+id: list-parameters
+tags: [list, mask, filter]
 ---
 ```
 
-Validated by [`contract.schema.json`](contract.schema.json). Body is copied verbatim to the bundle.
-
-**Bootstrap contracts** (`tier: bootstrap`) are listed in `MANIFEST.json` → `bootstrap`
-and generate always-on `.cursor/rules/<id>.mdc` via `sync_agent_bundle.py` (see
-`.cursor/rules/_generated.json`). Hand-maintained rules: `agent-skills-authoring`,
-`docs-skillbase-consistency` only.
-
-Optional `endorlabs.catalog` workflow fields: `composition` (`artifact_chain` |
-`library_api` | `cli_only`), `library_entrypoints` (import paths for session scripts).
-
-## Progressive disclosure
-
-1. **Metadata** — `name` + `description` (always in agent discovery).
-2. **SKILL.md body** — loaded when the task matches.
-3. **Reference files** — loaded only when needed.
+Validated by [`contract.schema.json`](contract.schema.json). Shipped under `agent_knowledge/contracts/`; listed in `MANIFEST.json` → `contracts[]`.
 
 ## Path rewrites at sync
 
-Authoring paths `agent-skills/` become runtime `sdk/skills/` in shipped bodies and refs.
+| Authoring | Shipped / materialized |
+|-----------|------------------------|
+| `agent-knowledge/skills/` | `sdk/skills/` |
+| `agent-knowledge/rules/` | `sdk/rules/` |
+| `agent-knowledge/contracts/` | `sdk/contracts/` |
 
 ## Machine schemas
 
 | File | Purpose |
 |------|---------|
 | [`skill.schema.json`](skill.schema.json) | `SKILL.md` frontmatter |
+| [`rule.schema.json`](rule.schema.json) | Rule frontmatter |
 | [`contract.schema.json`](contract.schema.json) | Contract frontmatter |
 | [`workflows.schema.json`](workflows.schema.json) | `workflows.yaml` |
 

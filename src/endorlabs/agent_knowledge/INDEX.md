@@ -1,7 +1,7 @@
 # Endor Labs SDK — Agent Index (Tier 0)
 
 Shipped with `endorlabs-sdk` inside the wheel. **`endorlabs.init()` is optional** — use
-`agent_index_path()` to read this file from site-packages, or materialize under
+`agent_knowledge_index_path()` to read this file from site-packages, or materialize under
 `.endorlabs-context/sdk/` when a cwd-relative tree is needed.
 
 ## Quick start
@@ -11,9 +11,9 @@ Shipped with `endorlabs-sdk` inside the wheel. **`endorlabs.init()` is optional*
 ```python
 import endorlabs
 
-print(endorlabs.agent_index_path())
-manifest = endorlabs.agent_manifest()
-paths = endorlabs.agent_bootstrap_paths()  # INDEX + bootstrap rules
+print(endorlabs.agent_knowledge_index_path())
+manifest = endorlabs.agent_knowledge_manifest()
+paths = endorlabs.agent_knowledge_bootstrap_paths()  # INDEX + bootstrap rules
 ```
 
 **Minimal bootstrap** (rules, contracts, skills; no auth):
@@ -22,17 +22,17 @@ paths = endorlabs.agent_bootstrap_paths()  # INDEX + bootstrap rules
 import endorlabs
 
 status = endorlabs.init(include_openapi=False, include_user_docs=False)
-# Read: status.agent_index_path  →  .endorlabs-context/sdk/INDEX.md
+# Read: status.agent_knowledge_index_path  →  .endorlabs-context/sdk/INDEX.md
 ```
 
-**Full bootstrap** (bundle + platform OpenAPI/user docs):
+**Full bootstrap** (agent knowledge + platform OpenAPI/user docs):
 
 ```python
 pip install 'endorlabs-sdk[context]'
 import endorlabs
 
 status = endorlabs.init()
-# Read: status.agent_index_path
+# Read: status.agent_knowledge_index_path
 ```
 
 ## Authentication
@@ -82,7 +82,7 @@ Read **`rules/`** (Tier 1 bootstrap) before project-scoped RCA.
 
 ## Bootstrap (always load)
 
-Harnesses should prepend `agent_bootstrap_paths()` (or read these rules first):
+Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rules first):
 
 | Rule | Summary |
 |------|---------|
@@ -108,7 +108,7 @@ bundles go under `workspace/projects/<uuid>/`. See `rules/workspace-layout.md`.
 3. **`rules/*.md`** — harness bootstrap (always load)
 4. **`sdk/contracts/*.md`** — normative SDK semantics on demand
 5. **`skills/*/SKILL.md`** — task playbooks
-6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference
+6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (after `init()`)
 7. `../workspace/` — your run outputs
 
 ## Maintainer docs (not shipped)

@@ -16,7 +16,7 @@ import endorlabs
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse CLI args for context bootstrap."""
     parser = argparse.ArgumentParser(
-        description="Materialize SDK agent bundle and download platform context."
+        description="Materialize SDK agent knowledge and download platform context."
     )
 
     _ = parser.add_argument(
@@ -40,10 +40,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
 
     _ = parser.add_argument(
-        "--no-sdk-bundle",
+        "--no-agent-knowledge",
         action="store_false",
-        dest="include_sdk_bundle",
-        help="Skip materializing the shipped SDK agent bundle.",
+        dest="include_agent_knowledge",
+        help="Skip materializing the shipped agent knowledge package to sdk/.",
     )
 
     _ = parser.add_argument(
@@ -73,7 +73,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.set_defaults(
         include_openapi=True,
         include_user_docs=True,
-        include_sdk_bundle=True,
+        include_agent_knowledge=True,
     )
 
     return parser.parse_args(argv)
@@ -87,7 +87,7 @@ def main(argv: list[str] | None = None) -> None:
         output_dir=args.output_dir,
         include_openapi=args.include_openapi,
         include_user_docs=args.include_user_docs,
-        include_sdk_bundle=args.include_sdk_bundle,
+        include_agent_knowledge=args.include_agent_knowledge,
         max_pages=args.max_pages,
         force=args.force,
         sync_skills=args.sync_skills,
@@ -95,8 +95,8 @@ def main(argv: list[str] | None = None) -> None:
 
     print("Context bootstrap complete.")
 
-    if status.agent_bundle_path is not None:
-        print(f"Agent bundle: {status.agent_bundle_path}")
+    if status.agent_knowledge_path is not None:
+        print(f"Agent knowledge: {status.agent_knowledge_path}")
 
     if status.context_json_path is not None:
         print(f"Manifest: {status.context_json_path}")

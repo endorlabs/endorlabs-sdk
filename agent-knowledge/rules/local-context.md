@@ -1,7 +1,6 @@
 ---
 id: local-context
 tags: [context, openapi, bootstrap]
-tier: bootstrap
 summary: >-
   Check gitignored .endorlabs-context paths explicitly; prefer local platform docs
   before the web; never print secrets.
@@ -27,7 +26,7 @@ concluding context is unavailable.
 
 ## Research order
 
-1. Shipped bundle under `.endorlabs-context/sdk/` (or wheel via `agent_index_path()`).
+1. Shipped package under `.endorlabs-context/sdk/` (or wheel via `agent_knowledge_index_path()`).
 2. Local OpenAPI and user docs under `.endorlabs-context/platform/`.
 3. Online API spec and docs only as fallback.
 

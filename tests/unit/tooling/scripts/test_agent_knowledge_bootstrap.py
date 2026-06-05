@@ -1,4 +1,4 @@
-"""Unit tests for agent bundle bootstrap metadata and portable content."""
+"""Unit tests for agent knowledge bootstrap metadata and portable content."""
 
 from __future__ import annotations
 
@@ -8,49 +8,76 @@ from pathlib import Path
 
 import pytest
 
-from devtools.agent_bundle_catalog import (
+from devtools.agent_knowledge_catalog import (
     build_bootstrap_manifest_block,
     build_contract_manifest_entries,
+    build_rules_manifest_entries,
 )
-from devtools.sync_agent_bundle import build_cursor_rule_contents
-from devtools.verify_portable_agent_content import verify_portable_agent_content
+from devtools.sync_agent_knowledge import (
+    MANIFEST_SCHEMA_VERSION,
+    build_cursor_rule_contents,
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-AGENT_SKILLS = REPO_ROOT / "agent-skills"
-BUNDLE_ROOT = REPO_ROOT / "src" / "endorlabs" / "agent_bundle"
+AGENT_ROOT = REPO_ROOT / "agent-knowledge"
+BUNDLE_ROOT = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge"
 
 
-def test_build_contract_manifest_includes_tier() -> None:
-    entries = build_contract_manifest_entries(AGENT_SKILLS / "contracts")
-    assert entries
-    tiers = {entry["id"]: entry.get("tier") for entry in entries}
-    assert tiers["workflow-composition"] == "bootstrap"
-    assert tiers["list-parameters"] == "reference"
-    assert "summary" in next(e for e in entries if e["id"] == "namespace-scoping")
+def test_rules_manifest_entries() -> None:
+    rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
+    assert len(rules) == 6
+    ids = {entry["id"] for entry in rules}
+    assert "workflow-composition" in ids
+    assert all(entry["path"].startswith("rules/") for entry in rules)
+    assert all("summary" in entry for entry in rules)
 
 
-def test_manifest_bootstrap_block_matches_tier() -> None:
-    contracts = build_contract_manifest_entries(AGENT_SKILLS / "contracts")
-    bootstrap = build_bootstrap_manifest_block(contracts)
-    expected = sorted(
-        entry["id"] for entry in contracts if entry.get("tier") == "bootstrap"
+def test_contract_manifest_entries_reference_only() -> None:
+    contracts = build_contract_manifest_entries(AGENT_ROOT / "contracts")
+    assert contracts
+    ids = {entry["id"] for entry in contracts}
+    assert "list-parameters" in ids
+    assert "workflow-composition" not in ids
+    assert all(entry["path"].startswith("contracts/") for entry in contracts)
+    assert all("tier" not in entry for entry in contracts)
+
+
+def test_manifest_bootstrap_block_matches_rules() -> None:
+    rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
+    bootstrap = build_bootstrap_manifest_block(rules)
+    expected_ids = sorted(entry["id"] for entry in rules)
+    assert bootstrap == {"index": "INDEX.md", "rule_ids": expected_ids}
+    assert "workflow-composition" in bootstrap["rule_ids"]
+
+
+def test_shipped_manifest_schema_v2() -> None:
+    manifest = json.loads((BUNDLE_ROOT / "MANIFEST.json").read_text(encoding="utf-8"))
+    assert manifest["schema_version"] == MANIFEST_SCHEMA_VERSION
+    assert manifest["bootstrap"]["rule_ids"]
+    assert manifest["rules"]
+    assert manifest["contracts"]
+    rule_ids = {entry["id"] for entry in manifest["rules"]}
+    contract_ids = {entry["id"] for entry in manifest["contracts"]}
+    assert rule_ids.isdisjoint(contract_ids)
+
+
+def test_agent_knowledge_bootstrap_paths() -> None:
+    from endorlabs.agent_knowledge import (
+        agent_knowledge_bootstrap_paths,
+        agent_knowledge_index_path,
+        agent_knowledge_rule_ids,
     )
-    assert bootstrap == {"index": "INDEX.md", "contract_ids": expected}
-    assert "workflow-composition" in bootstrap["contract_ids"]
 
-
-def test_agent_bootstrap_paths() -> None:
-    from endorlabs.agent_bundle import (
-        agent_bootstrap_contract_ids,
-        agent_bootstrap_paths,
-        agent_index_path,
-    )
-
-    ids = agent_bootstrap_contract_ids()
+    ids = agent_knowledge_rule_ids()
     assert "namespace-scoping" in ids
-    paths = agent_bootstrap_paths()
-    assert agent_index_path() in paths
+    paths = agent_knowledge_bootstrap_paths()
+    assert agent_knowledge_index_path() in paths
     assert all(path.is_file() for path in paths)
+    assert all(
+        "rules" in path.as_posix()
+        for path in paths
+        if path != agent_knowledge_index_path()
+    )
 
 
 def test_library_entrypoints_importable() -> None:
@@ -74,17 +101,14 @@ def test_emit_cursor_rules_content() -> None:
     contents = build_cursor_rule_contents()
     mdc = contents["list-query-performance"]
     assert "alwaysApply: true" in mdc
+    assert "x-endor-generated: true" in mdc
+    assert "x-endor-source: agent-knowledge/rules/list-query-performance.md" in mdc
+    assert "x-endor-source-sha256: " in mdc
     assert "# List query performance" in mdc
     assert "Do not set `page_size`" in mdc
 
 
-def test_verify_portable_agent_content_passes() -> None:
-    errors = verify_portable_agent_content(AGENT_SKILLS)
-    assert errors == [], "\n".join(errors)
-
-
-def test_verify_portable_agent_content_catches_banned_tenant(tmp_path: Path) -> None:
-    bad = tmp_path / "bad-skill.md"
-    bad.write_text("tenant: endor-solutions-tgowan\n", encoding="utf-8")
-    errors = verify_portable_agent_content(tmp_path)
-    assert any("banned tenant" in err for err in errors)
+def test_portable_examples_rule_has_summary() -> None:
+    rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
+    portable = next(entry for entry in rules if entry["id"] == "portable-examples")
+    assert portable.get("summary")

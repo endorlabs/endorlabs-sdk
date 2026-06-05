@@ -100,19 +100,19 @@ Model sync is expected to be deterministic for identical spec + profiles:
 - stub description validation failures:
   - check `devtools/model_sync_profiles/resource_descriptions.json`.
 
-## Shipped agent bundle (`src/endorlabs/agent_bundle/`)
+## Shipped agent knowledge (`src/endorlabs/agent_knowledge/`)
 
-Sync `agent-skills/` into the wheel bundle and regenerate `MANIFEST.json`:
+Sync `agent-knowledge/skills/` into the wheel bundle and regenerate `MANIFEST.json`:
 
 ```bash
-uv run python devtools/sync_agent_bundle.py
-uv run python devtools/sync_agent_bundle.py --verify
+uv run python devtools/sync_agent_knowledge.py
+uv run python devtools/sync_agent_knowledge.py --verify
 ```
 
-**When to run:** after editing any file under `agent-skills/`, or when adding/removing skills.
+**When to run:** after editing any file under `agent-knowledge/skills/`, or when adding/removing skills.
 
-**Drift gate:** CI lint and pre-commit run `--verify` so committed bundle matches `agent-skills/`.
+**Drift gate:** CI lint and pre-commit run `--verify` so committed bundle matches `agent-knowledge/skills/`.
 
 **Hand-maintained (not synced):** `INDEX.md`, `contracts/*.md`, `workflows/index.md` structure.
 
-**Synced from `agent-skills/`:** `skills/` tree, `contracts/`, `INDEX.md`, and `MANIFEST.json` (schema-validated frontmatter; portable subset shipped in bundle `SKILL.md`).
+**Synced from `agent-knowledge/skills/`:** `skills/` tree, `contracts/`, `INDEX.md`, and `MANIFEST.json` (schema-validated frontmatter; portable subset shipped in bundle `SKILL.md`).

@@ -1,7 +1,6 @@
 ---
 id: list-parameters
 tags: [list, mask, filter]
-tier: reference
 ---
 
 # List parameters
@@ -30,7 +29,7 @@ Common list params are flat kwargs on `client.<ResourceKind>.list(...)`. Use
 
 **Performance:** Do not set **`page_size`** unless explicitly requested. Prefer
 defaults, selective **`filter`**, and **`max_pages`** caps. See bootstrap contract
-`contracts/list-query-performance.md`.
+`rules/list-query-performance.md`.
 
 ## Update vs list mask
 

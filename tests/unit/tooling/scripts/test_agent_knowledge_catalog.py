@@ -1,4 +1,4 @@
-"""Unit tests for agent-skills schema validation and catalog generation."""
+"""Unit tests for agent-knowledge/ schema validation and catalog generation."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from devtools.agent_bundle_catalog import (
+from devtools.agent_knowledge_catalog import (
     build_workflow_catalog,
     list_skill_refs,
     load_supplemental_workflows,
@@ -18,8 +18,8 @@ from devtools.agent_bundle_catalog import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-AGENT_SKILLS = REPO_ROOT / "agent-skills"
-SCHEMA_DIR = AGENT_SKILLS / "schema"
+AGENT_ROOT = REPO_ROOT / "agent-knowledge"
+SCHEMA_DIR = AGENT_ROOT / "schema"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 
@@ -77,7 +77,7 @@ def test_validate_skill_rejects_name_directory_mismatch(tmp_path: Path) -> None:
 
 def test_build_workflow_catalog_merges_yaml_and_skill_rows() -> None:
     supplemental = load_supplemental_workflows(
-        AGENT_SKILLS / "workflows.yaml",
+        AGENT_ROOT / "workflows.yaml",
         workflows_schema_path=SCHEMA_DIR / "workflows.schema.json",
     )
     catalog_rows = [
@@ -136,12 +136,12 @@ def test_validate_workflow_cli_entries_reports_module_mismatch() -> None:
     "skill_name",
     sorted(
         p.name
-        for p in AGENT_SKILLS.iterdir()
-        if p.is_dir() and (p / "SKILL.md").is_file() and p.name not in {"schema"}
+        for p in (AGENT_ROOT / "skills").iterdir()
+        if p.is_dir() and (p / "SKILL.md").is_file()
     ),
 )
 def test_authoring_skills_validate_against_schema(skill_name: str) -> None:
-    skill_md = AGENT_SKILLS / skill_name / "SKILL.md"
+    skill_md = AGENT_ROOT / "skills" / skill_name / "SKILL.md"
     parsed = parse_skill_md(skill_md)
     errors = validate_skill(parsed, skill_schema_path=SCHEMA_DIR / "skill.schema.json")
     assert errors == [], "\n".join(errors)
@@ -153,7 +153,7 @@ def test_list_skill_refs_uses_posix_byte_order() -> None:
         REPO_ROOT
         / "src"
         / "endorlabs"
-        / "agent_bundle"
+        / "agent_knowledge"
         / "skills"
         / "custom-sast-rules"
     )
@@ -163,7 +163,7 @@ def test_list_skill_refs_uses_posix_byte_order() -> None:
 
 
 def test_shipped_skills_have_no_endorlabs_extension() -> None:
-    bundle_skills = REPO_ROOT / "src" / "endorlabs" / "agent_bundle" / "skills"
+    bundle_skills = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge" / "skills"
     for skill_md in bundle_skills.glob("*/SKILL.md"):
         parsed = parse_skill_md(skill_md)
         assert "endorlabs" not in parsed.frontmatter, skill_md
