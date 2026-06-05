@@ -27,6 +27,14 @@ if TYPE_CHECKING:
 from endorlabs.utils.logging_config import get_resource_logger
 
 from .models import InitStatus
+from .paths import (
+    DEFAULT_CONTEXT_DIR,
+    SDK_DIRNAME,
+    context_json_path,
+    platform_openapi_path,
+    platform_user_docs_path,
+    sdk_dir,
+)
 
 logger = get_resource_logger(__name__)
 
@@ -59,13 +67,12 @@ LLMS_INDEX_URL = "https://docs.endorlabs.com/llms.txt"
 OPENAPI_PATH = "/download/openapiv2.swagger.json"
 
 # Default output paths (single source of truth for context downloads)
-DEFAULT_CONTEXT_DIR = ".endorlabs-context"
 DEFAULT_OPENAPI_FILENAME = "openapiv2.swagger.json"
-DEFAULT_USER_DOCS_DIRNAME = "docs"
+DEFAULT_USER_DOCS_DIRNAME = "user-docs"
 DOCS_HASH_MANIFEST_FILENAME = "_content-hashes.md"
-SKILLS_SOURCE_DIRNAME = "skills-src"
 SKILLS_TARGETS: tuple[str, ...] = ("cursor", "claude")
 SkillSyncMode = Literal["none", "cursor", "claude", "both"]
+CONTEXT_JSON_SCHEMA_VERSION = 1
 
 
 def _default_concurrency() -> int:
@@ -459,9 +466,9 @@ def sync_agent_skills(
         return {}
 
     source_root = (
-        repo_root_path / SKILLS_SOURCE_DIRNAME
-        if source_dir is None
-        else Path(source_dir)
+        Path(source_dir)
+        if source_dir is not None
+        else _resolve_skill_source_root(repo_root_path)
     )
     if not source_root.is_absolute():
         source_root = repo_root_path / source_root
@@ -478,6 +485,76 @@ def sync_agent_skills(
         )
         synced_paths[resolved_target] = target_dir
     return synced_paths
+
+
+def _resolve_skill_source_root(repo_root_path: Path) -> Path:
+    """Resolve skill mirror source from materialized sdk/skills or wheel bundle."""
+    materialized = repo_root_path / DEFAULT_CONTEXT_DIR / SDK_DIRNAME / "skills"
+    if materialized.is_dir():
+        return materialized
+    from endorlabs.agent_bundle import agent_bundle_dir
+
+    return agent_bundle_dir() / "skills"
+
+
+def materialize_agent_bundle(
+    output_dir: str | Path,
+    *,
+    force: bool = False,
+) -> Path:
+    """Copy the wheel-shipped agent bundle into context sdk/."""
+    from endorlabs.agent_bundle import agent_bundle_dir
+
+    output_path = Path(output_dir)
+    dest = sdk_dir(output_path)
+    source = agent_bundle_dir()
+    if dest.exists() and not force:
+        logger.info(
+            "Agent bundle already materialized: %s (use force=True to refresh)",
+            dest,
+        )
+        return dest
+    if dest.exists():
+        shutil.rmtree(dest)
+    _ = shutil.copytree(source, dest)
+    logger.info("Materialized agent bundle to %s", dest)
+    return dest
+
+
+def write_context_json(
+    *,
+    output_dir: Path,
+    sdk_version: str,
+    agent_bundle_path: Path | None,
+    platform_openapi: Path | None,
+    platform_user_docs: Path | None,
+    include_openapi: bool,
+    include_user_docs: bool,
+    sync_skills: SkillSyncMode,
+) -> Path:
+    """Write or update context.json init manifest."""
+    manifest_path = context_json_path(output_dir)
+    payload = {
+        "schema_version": CONTEXT_JSON_SCHEMA_VERSION,
+        "sdk_version": sdk_version,
+        "materialized_at": datetime.now(UTC).isoformat(),
+        "agent_bundle_path": str(agent_bundle_path) if agent_bundle_path else None,
+        "context_json_path": str(manifest_path),
+        "platform_openapi_path": str(platform_openapi) if platform_openapi else None,
+        "platform_user_docs_path": str(platform_user_docs)
+        if platform_user_docs
+        else None,
+        "flags": {
+            "include_openapi": include_openapi,
+            "include_user_docs": include_user_docs,
+            "sync_skills": sync_skills,
+        },
+    }
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(manifest_path, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+        _ = handle.write("\n")
+    return manifest_path
 
 
 async def _download_sitemap(timeout: int = 10) -> list[str]:
@@ -804,6 +881,7 @@ def init(
     output_dir: str | Path = DEFAULT_CONTEXT_DIR,
     include_openapi: bool = True,
     include_user_docs: bool = True,
+    include_sdk_bundle: bool = True,
     max_pages: int | None = None,
     force: bool = False,
     sync_skills: SkillSyncMode = "none",
@@ -811,23 +889,25 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Downloads API specification and user documentation to a local directory,
-    and can optionally mirror repo skills into runtime discovery directories.
+    Always materializes the shipped SDK agent bundle under ``sdk/`` (no auth).
+    Optionally downloads OpenAPI spec and user docs under ``platform/``, and
+    mirrors materialized skills into IDE discovery directories.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
         include_openapi: Download OpenAPI spec (default: True).
         include_user_docs: Download user documentation (default: True).
+        include_sdk_bundle: Materialize wheel agent bundle to sdk/ (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
-        force: Force re-download even if files exist (default: False).
-        sync_skills: Mirror `skills-src/` into runtime directories. Use one of
-            `none`, `cursor`, `claude`, or `both` (default: `none`).
+        force: Force re-download / refresh even if files exist (default: False).
+        sync_skills: Mirror materialized ``sdk/skills/`` into runtime dirs
+            (``none``, ``cursor``, ``claude``, or ``both``; default ``none``).
         client: Optional APIClient instance. If not provided, one is created
-            when `include_openapi=True` (requires ENDOR_API_CREDENTIALS_KEY/
+            when ``include_openapi=True`` (requires ENDOR_API_CREDENTIALS_KEY/
             SECRET or ENDOR_TOKEN env vars).
 
     Returns:
-        InitStatus with paths to downloaded files and metadata.
+        InitStatus with paths to materialized and downloaded files.
 
     Raises:
         endorlabs.UnauthorizedError: If OpenAPI authentication fails.
@@ -837,48 +917,83 @@ def init(
 
         >>> import endorlabs
         >>> status = endorlabs.init()
-        >>> print(status.openapi_path)
-        .endorlabs-context/openapiv2.swagger.json
+        >>> print(status.agent_bundle_path)
+        .endorlabs-context/sdk
 
     """
+    from endorlabs import __version__
     from endorlabs.api_client import APIClient as APIClientClass
 
     output_path = Path(output_dir)
-    if include_openapi or include_user_docs:
+    normalized_sync_target = _normalize_skill_sync_mode(sync_skills)
+    needs_context_dir = (
+        include_sdk_bundle
+        or include_openapi
+        or include_user_docs
+        or normalized_sync_target != "none"
+    )
+    if needs_context_dir:
         output_path.mkdir(parents=True, exist_ok=True)
 
-    openapi_path: Path | None = None
-    user_docs_path: Path | None = None
+    agent_bundle_dest: Path | None = None
+    if include_sdk_bundle:
+        agent_bundle_dest = materialize_agent_bundle(output_path, force=force)
+
+    platform_openapi: Path | None = None
+    platform_user_docs: Path | None = None
     user_docs_count = 0
     synced_skill_paths: dict[str, Path] = {}
 
     if include_openapi:
         api_client = client or APIClientClass()
-        openapi_path = sync_openapi(
-            output_path=output_path / DEFAULT_OPENAPI_FILENAME,
+        platform_openapi = sync_openapi(
+            output_path=platform_openapi_path(output_path),
             force=force,
             client=api_client,
         )
 
     if include_user_docs:
-        docs_dir = output_path / DEFAULT_USER_DOCS_DIRNAME
+        docs_dir = platform_user_docs_path(output_path)
         user_docs_count = sync_user_docs(
             output_dir=docs_dir,
             max_pages=max_pages,
             force=force,
         )
-        user_docs_path = docs_dir
+        platform_user_docs = docs_dir
 
-    normalized_sync_target = _normalize_skill_sync_mode(sync_skills)
     if normalized_sync_target != "none":
+        skill_source = sdk_dir(output_path) / "skills"
+        if not skill_source.is_dir():
+            if include_sdk_bundle:
+                skill_source = (
+                    agent_bundle_dest / "skills" if agent_bundle_dest else skill_source
+                )
+            else:
+                from endorlabs.agent_bundle import agent_bundle_dir
+
+                skill_source = agent_bundle_dir() / "skills"
         synced_skill_paths = sync_agent_skills(
             repo_root=output_path.resolve().parent,
             target=normalized_sync_target,
+            source_dir=skill_source,
         )
 
+    manifest_path = write_context_json(
+        output_dir=output_path,
+        sdk_version=__version__,
+        agent_bundle_path=agent_bundle_dest,
+        platform_openapi=platform_openapi,
+        platform_user_docs=platform_user_docs,
+        include_openapi=include_openapi,
+        include_user_docs=include_user_docs,
+        sync_skills=normalized_sync_target,
+    )
+
     return InitStatus(
-        openapi_path=openapi_path,
-        user_docs_path=user_docs_path,
+        agent_bundle_path=agent_bundle_dest,
+        context_json_path=manifest_path,
+        platform_openapi_path=platform_openapi,
+        platform_user_docs_path=platform_user_docs,
         user_docs_count=user_docs_count,
         downloaded_at=datetime.now(UTC),
         synced_skill_paths=synced_skill_paths,

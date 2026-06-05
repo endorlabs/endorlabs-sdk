@@ -18,7 +18,7 @@ def test_resolve_skill_sync_targets_supports_explicit_targets() -> None:
 
 def test_sync_agent_skills_mirrors_tree_and_prunes_stale(tmp_path: Path) -> None:
     """Skill sync should mirror current files and delete removed ones."""
-    source_dir = tmp_path / "skills-src"
+    source_dir = tmp_path / "agent-skills"
     repo_root = tmp_path / "repo"
     target_dir = repo_root / ".cursor" / "skills"
     source_file = source_dir / "demo-skill" / "SKILL.md"

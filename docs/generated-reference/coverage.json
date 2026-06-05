@@ -1,17 +1,7 @@
 {
-  "facade_contract_path": "workspace/model-sync/custom_mapping/facade_contract.json",
+  "canonical_entity_count": 41,
   "facade_contract_resource_count": 41,
-  "model_sync_entry_count": 215,
-  "model_sync_manifest_file_count": 153,
-  "model_sync_manifest_path": "workspace/model-sync/custom_mapping/artifacts_manifest.json",
-  "model_sync_mapping_path": "workspace/model-sync/custom_mapping/mapping/entity_mapping.json",
-  "operation_path_metadata_count": 749,
-  "operation_path_metadata_path": "workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json",
-  "payload_schema_resource_count": 41,
-  "payload_schemas_path": "workspace/model-sync/custom_mapping/mapping/payload_schemas.json",
-  "registry_parity_missing_in_mapping_count": 0,
-  "registry_parity_report_path": "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json",
-  "registry_parity_status": "pass",
+  "registry_contract_path": "src/endorlabs/generated/registry_contract.py",
   "resource_count": 41,
   "resources": [
     {
@@ -834,8 +824,5 @@
         "update": false
       }
     }
-  ],
-  "runtime_capability_resource_count": 41,
-  "runtime_index_path": "workspace/model-sync/custom_mapping/mapping/runtime_index.json",
-  "runtime_model_import_count": 41
+  ]
 }

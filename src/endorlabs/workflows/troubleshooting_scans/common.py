@@ -12,6 +12,7 @@ from typing import Any
 
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
+from endorlabs.context.paths import workflow_sessions_root
 
 
 def iso_now_compact() -> str:
@@ -444,8 +445,11 @@ def parse_common_args(description: str) -> argparse.ArgumentParser:
     parser.add_argument("--tenant", required=True, help="Target namespace/tenant root")
     parser.add_argument(
         "--output-dir",
-        default=".tmp",
-        help="Directory for generated artifacts (default: .tmp)",
+        default=str(workflow_sessions_root(subdir="troubleshooting")),
+        help=(
+            "Directory for generated artifacts "
+            "(default: .endorlabs-context/workspace/sessions/troubleshooting)"
+        ),
     )
     parser.add_argument(
         "--timestamped",
