@@ -2,7 +2,7 @@
 
 **For SDK usage:** Start with [README.md](../../README.md) (install, configuration, quick start). This section is reference and boundaries.
 
-SDK reference documentation. OpenAPI spec (local): `.endorlabs-context/openapiv2.swagger.json`.
+SDK reference documentation. OpenAPI spec (local): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
 Generated reference surfaces are canonical in `docs/generated-reference/`. Per-resource create/list kwargs: [generated-reference/resources/README.md](../generated-reference/resources/README.md).
 Runtime generated artifacts are documented in `src/endorlabs/generated/README.md`.
 

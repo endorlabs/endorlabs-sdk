@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 
+from endorlabs.context.paths import workflow_projects_root
 from endorlabs.workflows.reachability.context import (
     ReachabilityContextRequest,
     build_reachability_context,
@@ -26,7 +27,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--finding-uuid", default="", help="Finding UUID to analyze.")
     parser.add_argument("--pv-uuid", default="", help="Importer package-version UUID.")
-    parser.add_argument("--output-dir", required=True, help="Output directory.")
+    parser.add_argument(
+        "--output-dir",
+        default=str(workflow_projects_root()),
+        help="Output directory (default: .endorlabs-context/workspace/projects).",
+    )
     parser.add_argument(
         "--max-pages", type=int, default=10, help="Maximum pages for list operations."
     )

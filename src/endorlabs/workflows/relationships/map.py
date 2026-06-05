@@ -11,6 +11,7 @@ from typing import Any
 
 import endorlabs
 from endorlabs import F
+from endorlabs.context.paths import workflow_projects_root
 from endorlabs.tools.dependency_explorer import write_json
 from endorlabs.workflows.relationships.core import (
     SupportingPackage,
@@ -79,8 +80,8 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--output-dir",
-        default=".tmp",
-        help="Output directory. Default: .tmp",
+        default=str(workflow_projects_root()),
+        help="Output directory. Default: .endorlabs-context/workspace/projects",
     )
     return p.parse_args()
 

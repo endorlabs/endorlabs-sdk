@@ -9,7 +9,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-_REPO_ROOT = Path(__file__).resolve().parents[2]
+from .path_safety import find_repo_root
+
+_REPO_ROOT = find_repo_root(start=Path(__file__).resolve().parent)
 _SRC_DIR = _REPO_ROOT / "src"
 if str(_SRC_DIR) not in sys.path:
     sys.path.insert(0, str(_SRC_DIR))

@@ -6,7 +6,7 @@ A Python SDK for the Endor Labs platform.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from .api_client import APIClient
 from .client_surface import Client
@@ -51,10 +51,32 @@ except ImportError:  # editable install or no build
     __version__ = "0.0.0.dev0"
 
 
+def agent_bundle_dir() -> Path:
+    """Return site-packages path to the shipped agent bundle."""
+    from .agent_bundle import agent_bundle_dir as _agent_bundle_dir
+
+    return _agent_bundle_dir()
+
+
+def agent_index_path() -> Path:
+    """Return path to Tier-0 INDEX.md in the shipped agent bundle."""
+    from .agent_bundle import agent_index_path as _agent_index_path
+
+    return _agent_index_path()
+
+
+def agent_manifest() -> dict[str, Any]:
+    """Parse MANIFEST.json from the shipped agent bundle."""
+    from .agent_bundle import agent_manifest as _agent_manifest
+
+    return _agent_manifest()
+
+
 def init(
     output_dir: str | Path = ".endorlabs-context",
     include_openapi: bool = True,
     include_user_docs: bool = True,
+    include_sdk_bundle: bool = True,
     max_pages: int | None = None,
     force: bool = False,
     sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
@@ -62,23 +84,23 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Downloads API specification and user documentation to a local directory,
-    and can optionally refresh runtime skill mirrors.
+    Materializes the shipped SDK agent bundle under ``sdk/`` (no auth required).
+    Optionally downloads OpenAPI spec and user docs under ``platform/``.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
         include_openapi: Download OpenAPI spec (default: True).
         include_user_docs: Download user documentation (default: True).
+        include_sdk_bundle: Materialize wheel agent bundle (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download even if files exist (default: False).
-        sync_skills: Mirror `skills-src/` into runtime discovery directories.
-            Use `none`, `cursor`, `claude`, or `both`.
+        sync_skills: Mirror materialized ``sdk/skills/`` into runtime directories.
         client: Optional APIClient instance. If not provided, one is created
-            when `include_openapi=True` (requires
+            when ``include_openapi=True`` (requires
             ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
 
     Returns:
-        InitStatus with paths to downloaded files and metadata.
+        InitStatus with paths to materialized and downloaded files.
 
     Raises:
         UnauthorizedError: If OpenAPI authentication fails.
@@ -89,8 +111,8 @@ def init(
 
         >>> import endorlabs
         >>> status = endorlabs.init()
-        >>> print(status.openapi_path)
-        .endorlabs-context/openapiv2.swagger.json
+        >>> print(status.agent_index_path)
+        .endorlabs-context/sdk/INDEX.md
 
     """
     from .context import _sync
@@ -99,6 +121,7 @@ def init(
         output_dir=output_dir,
         include_openapi=include_openapi,
         include_user_docs=include_user_docs,
+        include_sdk_bundle=include_sdk_bundle,
         max_pages=max_pages,
         force=force,
         sync_skills=sync_skills,
@@ -112,7 +135,7 @@ def sync_agent_skills(
     target: Literal["none", "cursor", "claude", "both"] = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
-    """Mirror repo skill sources into runtime discovery directories."""
+    """Mirror materialized or repo skill sources into runtime discovery directories."""
     from .context import _sync
 
     return _sync.sync_agent_skills(
@@ -137,6 +160,9 @@ __all__ = [
     "ServerError",
     "UnauthorizedError",
     "ValidationError",
+    "agent_bundle_dir",
+    "agent_index_path",
+    "agent_manifest",
     "dependency_metadata",
     "finding",
     "init",

@@ -7,48 +7,42 @@ maintenance.
 ## Module responsibilities
 
 - `cli.py` - Orchestrates full sync flow and optional downstream generators.
+- `path_safety.py` - Repo-root discovery and safe output paths for all writes.
 - `policy.py` - Deterministic eligibility + partition policy (`x-internal`,
   aliases, entity extraction).
-- `planner.py` - Builds deterministic shard plan and mapping metadata.
-- `codegen.py` - Runs `datamodel-codegen` for shard modules and tracks progress.
-- `contract.py` - Builds facade/runtime contract, parity, payload, operation, and
-  runtime index metadata.
-- `provenance.py` - Hashing, toolchain/provenance stamps, and artifacts manifest.
+- `planner.py` - Builds deterministic shard plan in memory.
+- `codegen.py` - In-process `datamodel_code_generator.generate()` per shard (RAM staging).
+- `contract.py` - Builds facade/runtime contract and validates parity in memory.
+- `provenance.py` - Hashing and provenance stamps embedded in committed artifacts.
 
-## Generated outputs
+## Generated outputs (committed ship surface only)
 
-Primary outputs live under `workspace/model-sync/custom_mapping/`:
-
-- `mapping/entity_mapping.json`
-- `mapping/operation_path_metadata.json`
-- `mapping/payload_schemas.json`
-- `mapping/registry_parity_report.json`
-- `mapping/runtime_index.json`
-- `facade_contract.json`
-- `artifacts_manifest.json`
+There is **no** persistent in-repo staging tree (`workspace/model-sync/`). Sync
+holds plan, contract, and generated module source in RAM during the run.
 
 Runtime-consumed generated files:
 
-- `src/endorlabs/generated/registry_contract.py`
-- `src/endorlabs/generated/models/**` (mirrored generated model modules)
+- `src/endorlabs/generated/registry_contract.py` (embeds `RUNTIME_REGISTRY_CONTRACT`)
+- `src/endorlabs/generated/create_convenience.py`
+- `src/endorlabs/generated/models/**`
+- `src/endorlabs/client_surface.pyi` (via `--generate-stubs`)
+- `docs/generated-reference/**` (via `--generate-reference-docs`)
 
 ## Regeneration commands
 
-**Recommended (download latest public OpenAPI, regenerate, print compact delta vs default branch):**
+**Recommended (download latest public OpenAPI and regenerate stubs + reference docs):**
 
 ```bash
-uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs --delta-summary
+uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
-Same on PowerShell.
-
-**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs-context/openapiv2.swagger.json`):
+**Regenerate using an already-downloaded spec** (repo root; spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`):
 
 ```bash
 uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
-**Provenance watermark:** During generation, `endorctl_version` in `provenance.json` and generated file headers comes from the public **`GET /meta/version`** endpoint (same host as `--spec-url`), not from a local `endorctl` binary.
+**Provenance watermark:** During generation, `endorctl_version` in generated file headers comes from the public **`GET /meta/version`** endpoint (same host as `--spec-url`), not from a local `endorctl` binary.
 
 **Verify committed artifacts vs live upstream** (downloads OpenAPI + queries `meta/version`; no generation):
 
@@ -72,19 +66,7 @@ newer published endorctl versions log a warning without blocking.
 uv run python devtools/model_sync.py --spec-hash-only
 ```
 
-**Compact delta only** (after a sync; baseline = `origin/main` / `main` / … when available):
-
-```bash
-uv run python devtools/model_sync_pr_deltas.py --auto-baseline --print-summary
-```
-
-**Full narrative delta** (upstream + resources + provenance markdown):
-
-```bash
-uv run python devtools/model_sync_pr_deltas.py --auto-baseline --print-all-markdown
-```
-
-Tooling inventory-only check:
+Tooling inventory-only check (logs availability; no files written):
 
 ```bash
 uv run python devtools/model_sync.py --inventory-only
@@ -92,7 +74,6 @@ uv run python devtools/model_sync.py --inventory-only
 
 ## Edit policy
 
-- Do not hand-edit generated files under `workspace/model-sync/custom_mapping/`.
 - Do not hand-edit `src/endorlabs/generated/registry_contract.py`.
 - Do not hand-edit `src/endorlabs/generated/models/**`.
 - Manual policy overrides belong in:
@@ -104,17 +85,34 @@ uv run python devtools/model_sync.py --inventory-only
 
 Model sync is expected to be deterministic for identical spec + profiles:
 
-- stable sorted JSON output (keys and arrays),
+- stable sorted JSON in embedded contract,
 - stable runtime contract/resource ordering by `attr_name`,
-- stable artifacts manifest hash from generated files.
+- stable generated model modules for identical shard inputs.
 
 ## Triage map
 
-- `registry_parity_report.status=fail`:
-  - check `mapping/missing_in_mapping`, then `devtools/sync/policy.py` aliases.
+- Contract validation errors during sync:
+  - inspect `validate_contract_artifacts` output and `src/endorlabs/generated/registry_contract.py`.
 - runtime import failures in `registry.py`:
-  - check `facade_contract.json` import path fields and `mapping/runtime_index.json`.
+  - check `registry_contract.py` import path fields.
 - mutable/immutable update failures:
-  - check `facade_contract.json` `mutable_fields` / `immutable_fields`.
+  - check contract `mutable_fields` / `immutable_fields` in `registry_contract.py`.
 - stub description validation failures:
   - check `devtools/model_sync_profiles/resource_descriptions.json`.
+
+## Shipped agent bundle (`src/endorlabs/agent_bundle/`)
+
+Sync `agent-skills/` into the wheel bundle and regenerate `MANIFEST.json`:
+
+```bash
+uv run python devtools/sync_agent_bundle.py
+uv run python devtools/sync_agent_bundle.py --verify
+```
+
+**When to run:** after editing any file under `agent-skills/`, or when adding/removing skills.
+
+**Drift gate:** CI lint and pre-commit run `--verify` so committed bundle matches `agent-skills/`.
+
+**Hand-maintained (not synced):** `INDEX.md`, `contracts/*.md`, `workflows/index.md` structure.
+
+**Synced from `agent-skills/`:** `skills/` tree, `contracts/`, `INDEX.md`, and `MANIFEST.json` (schema-validated frontmatter; portable subset shipped in bundle `SKILL.md`).
