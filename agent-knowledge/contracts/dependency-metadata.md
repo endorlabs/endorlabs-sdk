@@ -1,7 +1,6 @@
 ---
 id: dependency-metadata
 tags: [analytics, dependency-metadata]
-tier: reference
 ---
 
 # DependencyMetadata
@@ -25,4 +24,4 @@ tenant estate reporting.
 ## Project-scoped queries
 
 When correlating DependencyMetadata with a project, pass **`namespace=project.namespace`** after
-resolving the `Project` row. See `contracts/namespace-scoping.md`.
+resolving the `Project` row. See `rules/namespace-scoping.md`.

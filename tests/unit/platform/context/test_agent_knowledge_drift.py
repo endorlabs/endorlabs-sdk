@@ -1,4 +1,4 @@
-"""Agent bundle drift verification tests."""
+"""Agent knowledge drift verification tests."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
-SYNC_SCRIPT = REPO_ROOT / "devtools" / "sync_agent_bundle.py"
+SYNC_SCRIPT = REPO_ROOT / "devtools" / "sync_agent_knowledge.py"
 
 
-def test_agent_bundle_verify_matches_committed_tree() -> None:
+def test_agent_knowledge_verify_matches_committed_tree() -> None:
     result = subprocess.run(
         [sys.executable, str(SYNC_SCRIPT), "--verify"],
         cwd=REPO_ROOT,

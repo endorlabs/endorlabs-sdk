@@ -19,12 +19,12 @@ status = endorlabs.init()  # materializes sdk/; optional platform downloads
 
 This creates:
 
-- `.endorlabs-context/sdk/` — shipped agent bundle (INDEX, skills, contracts)
+- `.endorlabs-context/sdk/` — shipped agent knowledge (INDEX, rules, skills, contracts)
 - `.endorlabs-context/platform/openapi/openapiv2.swagger.json` — API spec
 - `.endorlabs-context/platform/user-docs/*.md` — User docs (sitemap-based, parallel download)
 - `.endorlabs-context/context.json` — init manifest
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_sdk_bundle=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
 
 ## Model sync workflow (CI and local)
 

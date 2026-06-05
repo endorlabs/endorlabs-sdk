@@ -50,7 +50,7 @@ policies = client.AuthorizationPolicy.list(traverse=True, max_pages=2)
 ```
 
 For structured exports, write JSON under `.endorlabs-context/workspace/sessions/<user>/`
-(see [workspace-layout](../contracts/workspace-layout.md)).
+(see [workspace-layout](../../rules/workspace-layout.md)).
 
 ## Interpretation notes (for agents)
 

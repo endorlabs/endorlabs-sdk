@@ -23,9 +23,9 @@ Auto-generated inventories for stable/public surfaces.
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
-- `agent_bundle_dir`
-- `agent_index_path`
-- `agent_manifest`
+- `agent_knowledge_dir`
+- `agent_knowledge_index_path`
+- `agent_knowledge_manifest`
 - `dependency_metadata`
 - `finding`
 - `init`

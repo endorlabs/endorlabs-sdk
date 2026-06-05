@@ -1,14 +1,14 @@
 ---
-description: Author or update agent skills under agent-skills/ using the schema-driven authoring guide.
-globs: agent-skills/**
+description: Author or update agent knowledge under agent-knowledge/ using the schema-driven authoring guide.
+globs: agent-knowledge/**
 alwaysApply: false
 ---
 
-# Agent skills authoring
+# Agent knowledge authoring
 
-When editing files under `agent-skills/`, follow the canonical authoring spec:
+When editing files under `agent-knowledge/`, follow the canonical authoring spec:
 
-- [agent-skills/schema/README.md](../../agent-skills/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, contracts, workflows.yaml
-- [agent-skills/schema/skill.schema.json](../../agent-skills/schema/skill.schema.json) — machine validation
+- [agent-knowledge/schema/README.md](../../agent-knowledge/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, rules, contracts, workflows.yaml
+- [agent-knowledge/schema/skill.schema.json](../../agent-knowledge/schema/skill.schema.json) — machine validation
 
-After changes, run `uv run python devtools/sync_agent_bundle.py`. Shipped bundle `SKILL.md` files must contain **only** portable frontmatter (`name`, `description`, optional `disable-model-invocation`).
+After changes, run `uv run python devtools/sync_agent_knowledge.py`. Shipped `SKILL.md` files must contain **only** portable frontmatter (`name`, `description`, optional `disable-model-invocation`).
