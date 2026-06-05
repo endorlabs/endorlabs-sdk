@@ -3,16 +3,35 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SPEC_PATH = _REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
-_FACADE_CONTRACT_PATH = (
-    _REPO_ROOT / "workspace" / "model-sync" / "custom_mapping" / "facade_contract.json"
+_SRC_DIR = str(_REPO_ROOT / "src")
+if _SRC_DIR not in sys.path:
+    sys.path.insert(0, _SRC_DIR)
+_SPEC_PATH = (
+    _REPO_ROOT
+    / ".endorlabs-context"
+    / "platform"
+    / "openapi"
+    / "openapiv2.swagger.json"
 )
+
+
+def _load_facade_contract() -> dict[str, Any]:
+    try:
+        from endorlabs.generated.registry_contract import RUNTIME_REGISTRY_CONTRACT
+    except ImportError:
+        pytest.skip("Committed registry contract module not importable")
+    if not isinstance(RUNTIME_REGISTRY_CONTRACT, dict):
+        pytest.skip("Invalid runtime registry contract")
+    return RUNTIME_REGISTRY_CONTRACT
+
+
 _HTTP_METHODS = {"get", "post", "put", "patch", "delete", "options", "head"}
 
 
@@ -109,9 +128,7 @@ def test_definition_refs_resolve_in_request_and_response_schemas() -> None:
 def test_resource_paths_have_expected_method_shapes() -> None:
     """Canonical collection/item paths should expose stable method map shapes."""
     spec = _load_spec()
-    if not _FACADE_CONTRACT_PATH.exists():
-        pytest.skip(f"Facade contract not present ({_FACADE_CONTRACT_PATH})")
-    contract = json.loads(_FACADE_CONTRACT_PATH.read_text(encoding="utf-8"))
+    contract = _load_facade_contract()
     resources = contract.get("resources")
     paths = spec.get("paths")
     if not isinstance(resources, list) or not isinstance(paths, dict):

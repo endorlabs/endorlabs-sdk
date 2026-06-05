@@ -23,10 +23,15 @@ from pathlib import Path
 from typing import Any
 
 # Add src so we can import endorlabs.registry
-repo_root = Path(__file__).resolve().parent.parent
+from sync.path_safety import find_repo_root
+
+repo_root = find_repo_root(start=Path(__file__).resolve().parent)
 src = repo_root / "src"
 if str(src) not in sys.path:
     sys.path.insert(0, str(src))
+devtools_dir = repo_root / "devtools"
+if str(devtools_dir) not in sys.path:
+    sys.path.insert(0, str(devtools_dir))
 
 from endorlabs.facade import ResourceRuntimeFacade
 from endorlabs.registry_overlay import merge_generated_contract_with_overlay
@@ -41,14 +46,23 @@ from sync.policy import model_sync_entity_for_model
 logger = logging.getLogger(__name__)
 
 
-MODEL_SYNC_MAPPING_PATH = (
-    repo_root
-    / "workspace"
-    / "model-sync"
-    / "custom_mapping"
-    / "mapping"
-    / "entity_mapping.json"
-)
+def _load_model_sync_entities() -> set[str]:
+    """Load canonical entity names from the committed runtime registry contract."""
+    try:
+        from endorlabs.generated.registry_contract import RUNTIME_REGISTRY_CONTRACT
+    except ImportError:
+        return set()
+    resources = RUNTIME_REGISTRY_CONTRACT.get("resources")
+    if not isinstance(resources, list):
+        return set()
+    entity_names: set[str] = set()
+    for resource in resources:
+        if not isinstance(resource, dict):
+            continue
+        canonical = resource.get("canonical_entities")
+        if isinstance(canonical, list):
+            entity_names.update(value for value in canonical if isinstance(value, str))
+    return entity_names
 RESOURCE_DESCRIPTION_OVERLAY_PATH = (
     repo_root / "scripts" / "model_sync_profiles" / "resource_descriptions.json"
 )
@@ -230,24 +244,6 @@ def _format_method_override(name: str, model_name: str) -> list[str]:
         f"    ) -> {ret}:",
         "        ...",
     ]
-
-
-def _load_model_sync_entities() -> set[str]:
-    """Load canonical model-sync entity names when available."""
-    if not MODEL_SYNC_MAPPING_PATH.exists():
-        return set()
-    payload = json.loads(MODEL_SYNC_MAPPING_PATH.read_text(encoding="utf-8"))
-    entries = payload.get("entries")
-    if not isinstance(entries, list):
-        return set()
-    entity_names: set[str] = set()
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        entity_name = entry.get("entity_name")
-        if isinstance(entity_name, str):
-            entity_names.add(entity_name)
-    return entity_names
 
 
 def _load_facade_contract_resources() -> dict[str, dict[str, Any]]:

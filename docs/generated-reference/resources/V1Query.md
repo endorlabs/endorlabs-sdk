@@ -1,6 +1,6 @@
 # V1Query
 
-V1Query resource facade.
+Query implements the metric query requests.
 
 ## Client access
 
