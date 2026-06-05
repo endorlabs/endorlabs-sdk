@@ -1,6 +1,9 @@
 ---
 description: Write session/triage artifacts under workspace/sessions/<user>/; not repo-root .tmp/.
 alwaysApply: true
+x-endor-generated: true
+x-endor-source: agent-knowledge/rules/workspace-layout.md
+x-endor-source-sha256: ae2a8417f2bddb6469a87c6750d131a66238da0bf2e0564c46fe332d73812303
 ---
 
 # Workspace layout

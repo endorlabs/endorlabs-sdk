@@ -1,4 +1,4 @@
-"""Parse, validate, and build agent bundle catalog data from agent-skills/."""
+"""Parse, validate, and build agent knowledge catalog data from agent-knowledge/."""
 
 # ruff: noqa: D101, D103, PERF401, TRY004
 
@@ -13,15 +13,27 @@ from typing import Any
 import yaml
 from jsonschema import Draft202012Validator
 
-AGENT_SKILLS_DIRNAME = "agent-skills"
+AGENT_DIRNAME = "agent-knowledge"
+AGENT_SKILLS_SUBDIR = "skills"
+AGENT_RULES_SUBDIR = "rules"
+AGENT_CONTRACTS_SUBDIR = "contracts"
 SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9-]{1,64}$")
 PORTABLE_FRONTMATTER_KEYS = frozenset(
     {"name", "description", "disable-model-invocation"}
 )
-SKIP_SKILL_DIR_NAMES = frozenset({"schema", "_authoring"})
 PATH_REWRITES: tuple[tuple[str, str], ...] = (
-    ("agent-skills/", "sdk/skills/"),
+    ("agent-knowledge/skills/", "sdk/skills/"),
+    ("agent-knowledge/rules/", "sdk/rules/"),
+    ("agent-knowledge/contracts/", "sdk/contracts/"),
     ("skills-src/", "sdk/skills/"),
+)
+# Backward-compat for bodies that still mention legacy paths during migration.
+_LEGACY_PATH_REWRITES: tuple[tuple[str, str], ...] = (
+    ("agent-skills/", "sdk/skills/"),
+    ("agent/skills/", "sdk/skills/"),
+    ("agent/rules/", "sdk/rules/"),
+    ("agent/contracts/", "sdk/contracts/"),
+    ("contracts/", "sdk/contracts/"),
 )
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
@@ -95,7 +107,7 @@ def render_skill_md(frontmatter: dict[str, Any], body: str) -> str:
 
 def rewrite_paths(content: str) -> str:
     updated = content
-    for old, new in PATH_REWRITES:
+    for old, new in (*PATH_REWRITES, *_LEGACY_PATH_REWRITES):
         updated = updated.replace(old, new)
     return updated
 
@@ -168,12 +180,13 @@ def validate_contract(
     parsed: ParsedContract,
     *,
     contract_schema_path: Path,
+    label: str = "contracts",
 ) -> list[str]:
     errors: list[str] = []
     contract_id = parsed.contract_id
     if parsed.source_path.stem != contract_id:
         errors.append(
-            f"contracts/{parsed.source_path.name}: id '{contract_id}' "
+            f"{label}/{parsed.source_path.name}: id '{contract_id}' "
             f"must match filename stem"
         )
     validator = _validator(contract_schema_path)
@@ -182,9 +195,19 @@ def validate_contract(
         key=lambda e: list(e.path),
     )
     errors.extend(
-        f"contracts/{parsed.source_path.name}: {err.message}" for err in schema_errors
+        f"{label}/{parsed.source_path.name}: {err.message}" for err in schema_errors
     )
     return errors
+
+
+def validate_rule(
+    parsed: ParsedContract,
+    *,
+    rule_schema_path: Path,
+) -> list[str]:
+    return validate_contract(
+        parsed, contract_schema_path=rule_schema_path, label="rules"
+    )
 
 
 def render_contract_md(parsed: ParsedContract) -> str:
@@ -306,6 +329,28 @@ def validate_workflow_cli_entries(
     return errors
 
 
+def _sorted_tags(frontmatter: dict[str, Any]) -> list[str]:
+    return sorted(tag for tag in frontmatter.get("tags", []) if isinstance(tag, str))
+
+
+def build_rules_manifest_entries(rules_dir: Path) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    if not rules_dir.is_dir():
+        return entries
+    for path in sorted(rules_dir.glob("*.md")):
+        parsed = parse_contract_md(path)
+        summary = parsed.frontmatter.get("summary")
+        entry: dict[str, Any] = {
+            "id": parsed.contract_id,
+            "path": f"rules/{path.name}",
+            "tags": _sorted_tags(parsed.frontmatter),
+        }
+        if isinstance(summary, str) and summary.strip():
+            entry["summary"] = summary.strip()
+        entries.append(entry)
+    return entries
+
+
 def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
     if not contracts_dir.is_dir():
@@ -315,28 +360,18 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
         entry: dict[str, Any] = {
             "id": parsed.contract_id,
             "path": f"contracts/{path.name}",
-            "tier": parsed.frontmatter.get("tier"),
-            "tags": sorted(
-                tag
-                for tag in parsed.frontmatter.get("tags", [])
-                if isinstance(tag, str)
-            ),
+            "tags": _sorted_tags(parsed.frontmatter),
         }
-        summary = parsed.frontmatter.get("summary")
-        if isinstance(summary, str) and summary.strip():
-            entry["summary"] = summary.strip()
         entries.append(entry)
     return entries
 
 
 def build_bootstrap_manifest_block(
-    contracts: list[dict[str, Any]],
+    rules: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """Derive bootstrap contract ids from tier metadata."""
-    contract_ids = sorted(
-        entry["id"] for entry in contracts if entry.get("tier") == "bootstrap"
-    )
-    return {"index": "INDEX.md", "contract_ids": contract_ids}
+    """Derive bootstrap rule ids from the rules manifest section."""
+    rule_ids = sorted(entry["id"] for entry in rules)
+    return {"index": "INDEX.md", "rule_ids": rule_ids}
 
 
 def list_skill_refs(skill_dir: Path, *, bundle_skill_prefix: str) -> list[str]:
@@ -354,14 +389,15 @@ def list_skill_refs(skill_dir: Path, *, bundle_skill_prefix: str) -> list[str]:
     return refs
 
 
-def iter_skill_dirs(agent_skills_root: Path) -> list[Path]:
-    if not agent_skills_root.is_dir():
+def iter_skill_dirs(agent_root: Path) -> list[Path]:
+    skills_root = agent_root / AGENT_SKILLS_SUBDIR
+    if not skills_root.is_dir():
         return []
     dirs: list[Path] = []
-    for child in sorted(agent_skills_root.iterdir()):
+    for child in sorted(skills_root.iterdir()):
         if not child.is_dir():
             continue
-        if child.name in SKIP_SKILL_DIR_NAMES:
+        if child.name == "_authoring":
             continue
         if (child / "SKILL.md").is_file():
             dirs.append(child)
@@ -369,14 +405,14 @@ def iter_skill_dirs(agent_skills_root: Path) -> list[Path]:
 
 
 def collect_skill_catalog_rows(
-    agent_skills_root: Path,
+    agent_root: Path,
     *,
     skill_schema_path: Path,
 ) -> tuple[list[ParsedSkill], list[tuple[str, dict[str, Any]]], list[str]]:
     parsed_skills: list[ParsedSkill] = []
     catalog_rows: list[tuple[str, dict[str, Any]]] = []
     errors: list[str] = []
-    for skill_dir in iter_skill_dirs(agent_skills_root):
+    for skill_dir in iter_skill_dirs(agent_root):
         parsed = parse_skill_md(skill_dir / "SKILL.md")
         parsed_skills.append(parsed)
         errors.extend(validate_skill(parsed, skill_schema_path=skill_schema_path))

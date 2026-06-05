@@ -19,7 +19,8 @@ def _load_spotcheck_module() -> ModuleType:
     )
     skills_src_path = (
         repo_root
-        / "agent-skills"
+        / "agent"
+        / "skills"
         / "sso-integration-validation-troubleshooting"
         / "sso_access_spotcheck.py"
     )

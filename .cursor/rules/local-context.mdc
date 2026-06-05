@@ -1,6 +1,9 @@
 ---
 description: Check gitignored .endorlabs-context paths explicitly; prefer local platform docs before the web; never print secrets.
 alwaysApply: true
+x-endor-generated: true
+x-endor-source: agent-knowledge/rules/local-context.md
+x-endor-source-sha256: 4fe522781a00a20c5d81d0d1ce58707bf10a5c527c21ff416e90fe1cca60a42d
 ---
 
 # Local context discovery
@@ -23,7 +26,7 @@ concluding context is unavailable.
 
 ## Research order
 
-1. Shipped bundle under `.endorlabs-context/sdk/` (or wheel via `agent_index_path()`).
+1. Shipped package under `.endorlabs-context/sdk/` (or wheel via `agent_knowledge_index_path()`).
 2. Local OpenAPI and user docs under `.endorlabs-context/platform/`.
 3. Online API spec and docs only as fallback.
 

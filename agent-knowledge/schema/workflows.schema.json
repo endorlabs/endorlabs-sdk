@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/endorlabs/endorlabs-sdk/agent-skills/schema/workflows.schema.json",
-  "title": "Supplemental agent-skills/workflows.yaml",
+  "$id": "https://github.com/endorlabs/endorlabs-sdk/agent-knowledge/schema/workflows.schema.json",
+  "title": "Supplemental agent-knowledge/workflows.yaml",
   "type": "object",
   "additionalProperties": false,
   "required": ["workflows"],

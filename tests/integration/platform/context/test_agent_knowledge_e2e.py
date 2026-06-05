@@ -25,27 +25,30 @@ class TestAgentBundleE2e:
             include_openapi=False,
             include_user_docs=False,
         )
-        assert status.agent_bundle_path is not None
-        assert (status.agent_bundle_path / "INDEX.md").is_file()
+        assert status.agent_knowledge_path is not None
+        assert (status.agent_knowledge_path / "INDEX.md").is_file()
         assert (
-            status.agent_bundle_path / "skills" / "retrieve-scan-results" / "SKILL.md"
+            status.agent_knowledge_path
+            / "skills"
+            / "retrieve-scan-results"
+            / "SKILL.md"
         ).is_file()
         assert status.context_json_path is not None
         assert status.context_json_path.is_file()
         payload = json.loads(status.context_json_path.read_text(encoding="utf-8"))
-        assert payload["agent_bundle_path"] is not None
-        assert str(payload["agent_bundle_path"]).endswith("sdk")
+        assert payload.get("agent_knowledge_path") is not None
+        assert str(payload["agent_knowledge_path"]).endswith("sdk")
 
     def test_wheel_manifest_matches_materialized_skill_paths(self, tmp_path) -> None:
-        wheel_manifest = endorlabs.agent_manifest()
+        wheel_manifest = endorlabs.agent_knowledge_manifest()
         status = endorlabs.init(
             output_dir=tmp_path,
             include_openapi=False,
             include_user_docs=False,
         )
-        assert status.agent_bundle_path is not None
+        assert status.agent_knowledge_path is not None
         materialized = json.loads(
-            (status.agent_bundle_path / "MANIFEST.json").read_text(encoding="utf-8")
+            (status.agent_knowledge_path / "MANIFEST.json").read_text(encoding="utf-8")
         )
         wheel_skill = next(
             entry
@@ -58,7 +61,7 @@ class TestAgentBundleE2e:
             if entry["id"] == "troubleshoot-sdk"
         )
         assert wheel_skill["description"] == materialized_skill["description"]
-        assert (status.agent_bundle_path / wheel_skill["path"]).is_file()
+        assert (status.agent_knowledge_path / wheel_skill["path"]).is_file()
 
     def test_retrieve_scan_results_skill_workflow(
         self,

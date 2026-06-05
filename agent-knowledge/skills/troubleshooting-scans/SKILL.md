@@ -18,7 +18,7 @@ endorlabs:
 
 # Troubleshooting Scans
 
-Chain CLI steps on JSON artifacts; extend with library imports per [workflow-composition](../contracts/workflow-composition.md).
+Chain CLI steps on JSON artifacts; extend with library imports per [workflow-composition](../../rules/workflow-composition.md).
 
 ## What this skill does
 
@@ -32,7 +32,7 @@ This skill provides a repeatable workflow for customer scan RCA:
 
 All artifacts are written under `.endorlabs-context/workspace/sessions/` (default
 `.../sessions/troubleshooting/`; prefer `.../sessions/<user>/troubleshooting/` for
-interactive RCA). See [workspace-layout](../contracts/workspace-layout.md). Filename
+interactive RCA). See [workspace-layout](../../rules/workspace-layout.md). Filename
 contract:
 
 `{rootTenant}__{objectKind}__{objectUuid}__{purpose}[__timestamp].ext`

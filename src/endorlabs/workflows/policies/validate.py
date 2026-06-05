@@ -3,7 +3,7 @@
 Loads a stored policy, builds ``spec.request`` from template or rule fields,
 and POSTs to ``/v1/namespaces/{namespace}/policy/validate``.
 
-See ``agent-skills/validate-policy/`` and ``python -m endorlabs.workflows.policies.validate``.
+See ``agent/skills/validate-policy/`` and ``python -m endorlabs.workflows.policies.validate``.
 """
 
 from __future__ import annotations
