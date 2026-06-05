@@ -43,7 +43,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-05T12:37:22.046693+00:00",
+  "generated_at": "2026-06-05T12:46:40.067875+00:00",
   "index": "INDEX.md",
   "schema_version": 1,
   "sdk_version": "0.1.1.dev52",
@@ -65,10 +65,10 @@
       "refs": [
         "skills/custom-sast-rules/AUTHORING.md",
         "skills/custom-sast-rules/IMPORT_EXPORT.md",
-        "skills/custom-sast-rules/scripts/sast_rule_manager.py",
         "skills/custom-sast-rules/SEMGREP_RULE_SHAPE_GUARDRAILS.md",
         "skills/custom-sast-rules/SYNTAX_REFERENCE.md",
-        "skills/custom-sast-rules/THREAT_MODEL.md"
+        "skills/custom-sast-rules/THREAT_MODEL.md",
+        "skills/custom-sast-rules/scripts/sast_rule_manager.py"
       ]
     },
     {
