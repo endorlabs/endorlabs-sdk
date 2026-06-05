@@ -8,6 +8,7 @@ import pytest
 
 from devtools.agent_bundle_catalog import (
     build_workflow_catalog,
+    list_skill_refs,
     load_supplemental_workflows,
     normalize_skill_for_bundle,
     parse_skill_md,
@@ -144,6 +145,21 @@ def test_authoring_skills_validate_against_schema(skill_name: str) -> None:
     parsed = parse_skill_md(skill_md)
     errors = validate_skill(parsed, skill_schema_path=SCHEMA_DIR / "skill.schema.json")
     assert errors == [], "\n".join(errors)
+
+
+def test_list_skill_refs_uses_posix_byte_order() -> None:
+    """Match Linux CI ordering: uppercase filenames before lowercase directories."""
+    skill_dir = (
+        REPO_ROOT
+        / "src"
+        / "endorlabs"
+        / "agent_bundle"
+        / "skills"
+        / "custom-sast-rules"
+    )
+    refs = list_skill_refs(skill_dir, bundle_skill_prefix="skills/custom-sast-rules")
+    assert refs[-1] == "skills/custom-sast-rules/scripts/sast_rule_manager.py"
+    assert refs == sorted(refs, key=str.encode)
 
 
 def test_shipped_skills_have_no_endorlabs_extension() -> None:
