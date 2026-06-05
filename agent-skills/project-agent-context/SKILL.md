@@ -12,9 +12,15 @@ endorlabs:
     module: endorlabs.workflows.agent_context.cli
     default_output: .endorlabs-context/workspace/projects/<uuid>/
     agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.agent_context.build_context_manifest
+      - endorlabs.workflows.agent_context.list_package_versions_for_index
 ---
 
 # Project agent context (umbrella)
+
+Read `context_manifest.json` before custom scripts; composition rules in [workflow-composition](../contracts/workflow-composition.md).
 
 ## Purpose
 

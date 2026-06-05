@@ -1,4 +1,15 @@
 {
+  "bootstrap": {
+    "contract_ids": [
+      "list-query-performance",
+      "local-context",
+      "namespace-scoping",
+      "portable-examples",
+      "workflow-composition",
+      "workspace-layout"
+    ],
+    "index": "INDEX.md"
+  },
   "contracts": [
     {
       "id": "canonical-naming",
@@ -6,7 +17,8 @@
       "tags": [
         "facades",
         "naming"
-      ]
+      ],
+      "tier": "reference"
     },
     {
       "id": "dependency-metadata",
@@ -14,7 +26,8 @@
       "tags": [
         "analytics",
         "dependency-metadata"
-      ]
+      ],
+      "tier": "reference"
     },
     {
       "id": "errors-and-auth",
@@ -22,7 +35,8 @@
       "tags": [
         "auth",
         "errors"
-      ]
+      ],
+      "tier": "reference"
     },
     {
       "id": "list-parameters",
@@ -31,22 +45,80 @@
         "filter",
         "list",
         "mask"
-      ]
+      ],
+      "tier": "reference"
+    },
+    {
+      "id": "list-query-performance",
+      "path": "contracts/list-query-performance.md",
+      "summary": "Do not set page_size unless explicitly asked; scope and filter before raising max_pages.",
+      "tags": [
+        "list",
+        "pagination",
+        "performance"
+      ],
+      "tier": "bootstrap"
+    },
+    {
+      "id": "local-context",
+      "path": "contracts/local-context.md",
+      "summary": "Check gitignored .endorlabs-context paths explicitly; prefer local platform docs before the web; never print secrets.",
+      "tags": [
+        "bootstrap",
+        "context",
+        "openapi"
+      ],
+      "tier": "bootstrap"
     },
     {
       "id": "namespace-scoping",
       "path": "contracts/namespace-scoping.md",
+      "summary": "Resolve Project first; pass namespace=project.namespace on project-scoped lists.",
       "tags": [
         "list",
         "namespace",
         "traverse"
-      ]
+      ],
+      "tier": "bootstrap"
+    },
+    {
+      "id": "portable-examples",
+      "path": "contracts/portable-examples.md",
+      "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers (tenants, project URLs, production UUIDs).",
+      "tags": [
+        "examples",
+        "hygiene",
+        "placeholders"
+      ],
+      "tier": "bootstrap"
+    },
+    {
+      "id": "workflow-composition",
+      "path": "contracts/workflow-composition.md",
+      "summary": "Prefer workflow CLI, then library imports, then Client; extend artifacts instead of re-fetching discovery.",
+      "tags": [
+        "composition",
+        "scripts",
+        "workflows"
+      ],
+      "tier": "bootstrap"
+    },
+    {
+      "id": "workspace-layout",
+      "path": "contracts/workspace-layout.md",
+      "summary": "Write session/triage artifacts under workspace/sessions/<user>/; not repo-root .tmp/.",
+      "tags": [
+        "artifacts",
+        "sessions",
+        "workspace"
+      ],
+      "tier": "bootstrap"
     }
   ],
-  "generated_at": "2026-06-05T12:46:40.067875+00:00",
+  "generated_at": "2026-06-05T15:28:29.005619+00:00",
   "index": "INDEX.md",
   "schema_version": 1,
-  "sdk_version": "0.1.1.dev52",
+  "sdk_version": "0.1.1.dev59",
   "skills": [
     {
       "description": "Estate-scale DependencyMetadata aggregates: version cardinality by package name, optional single-package filtered export, and intra-minor CVE remediation comparisons. Use for estate-wide dependency diversity reporting, how many versions of a package are in use, or upgrade-path planning for a CVE on one coordinate.",
@@ -190,24 +262,37 @@
     {
       "agent_visible": true,
       "cli": "endor-agent-context",
+      "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
       "id": "agent-context",
+      "library_entrypoints": [
+        "endorlabs.workflows.agent_context.build_context_manifest",
+        "endorlabs.workflows.agent_context.list_package_versions_for_index"
+      ],
       "module": "endorlabs.workflows.agent_context.cli",
       "skill": "project-agent-context"
     },
     {
       "agent_visible": true,
       "cli": "endor-analytics-export-deps",
+      "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
       "id": "analytics-export-deps",
+      "library_entrypoints": [
+        "endorlabs.workflows.analytics.export_version_cardinality_for_package_match"
+      ],
       "module": "endorlabs.workflows.analytics.cli",
       "skill": "analytics-estate-dependencies"
     },
     {
       "agent_visible": true,
       "cli": "endor-callgraph-search",
+      "composition": "library_api",
       "default_output": "stdout or caller path",
       "id": "callgraph-search",
+      "library_entrypoints": [
+        "endorlabs.workflows.callgraph.run_callgraph_sweep"
+      ],
       "module": "endorlabs.workflows.callgraph.search",
       "skill": "fetch-and-search-call-graph"
     },
@@ -230,8 +315,12 @@
     {
       "agent_visible": true,
       "cli": null,
+      "composition": "library_api",
       "default_output": "stdout or --output-json",
       "id": "policies-validate",
+      "library_entrypoints": [
+        "endorlabs.workflows.policies.run_validate_policy"
+      ],
       "module": "endorlabs.workflows.policies.validate",
       "skill": "validate-policy"
     },
@@ -262,8 +351,13 @@
     {
       "agent_visible": true,
       "cli": null,
+      "composition": "artifact_chain",
       "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
       "id": "troubleshooting-scans",
+      "library_entrypoints": [
+        "endorlabs.workflows.troubleshooting_scans.list_scan_results_for_project",
+        "endorlabs.workflows.troubleshooting_scans.resolve_project"
+      ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "troubleshooting-scans"
     }

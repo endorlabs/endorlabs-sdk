@@ -143,7 +143,7 @@ Findings are generated **per RepositoryVersion** (branch). A project with 2 scan
 | `spec.source_code_version.ref` | Branch name the finding came from (e.g. `refs/heads/main`) |
 | `context.scan_uuid` | UUID of the specific scan run |
 
-> **Agent note — `ref` shape:** In practice `spec.source_code_version.ref` may be a **short branch name** (e.g. `main`, `dev-tgowan`) rather than the full `refs/heads/...` string. Filters that assume only `refs/heads/main` can return **zero rows** while findings exist on another ref. Prefer `RepositoryVersion.list` for the project to see scanned refs, or list findings **without** a branch filter first, then narrow. See [AGENTS.md](../../AGENTS.md) (Agent notes).
+> **Agent note — `ref` shape:** In practice `spec.source_code_version.ref` may be a **short branch name** (e.g. `main`, `feature-branch`) rather than the full `refs/heads/...` string. Filters that assume only `refs/heads/main` can return **zero rows** while findings exist on another ref. Prefer `RepositoryVersion.list` for the project to see scanned refs, or list findings **without** a branch filter first, then narrow. See [AGENTS.md](../../AGENTS.md) (Agent notes).
 
 **Deduplication strategies:**
 

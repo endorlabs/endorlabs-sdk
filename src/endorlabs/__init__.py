@@ -72,6 +72,22 @@ def agent_manifest() -> dict[str, Any]:
     return _agent_manifest()
 
 
+def agent_bootstrap_contract_ids() -> list[str]:
+    """Return bootstrap contract ids from the shipped agent bundle manifest."""
+    from .agent_bundle import (
+        agent_bootstrap_contract_ids as _agent_bootstrap_contract_ids,
+    )
+
+    return _agent_bootstrap_contract_ids()
+
+
+def agent_bootstrap_paths() -> list[Path]:
+    """Return INDEX.md and bootstrap contract paths for harness injection."""
+    from .agent_bundle import agent_bootstrap_paths as _agent_bootstrap_paths
+
+    return _agent_bootstrap_paths()
+
+
 def init(
     output_dir: str | Path = ".endorlabs-context",
     include_openapi: bool = True,
@@ -160,6 +176,8 @@ __all__ = [
     "ServerError",
     "UnauthorizedError",
     "ValidationError",
+    "agent_bootstrap_contract_ids",
+    "agent_bootstrap_paths",
     "agent_bundle_dir",
     "agent_index_path",
     "agent_manifest",
