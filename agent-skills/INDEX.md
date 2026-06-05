@@ -13,6 +13,7 @@ import endorlabs
 
 print(endorlabs.agent_index_path())
 manifest = endorlabs.agent_manifest()
+paths = endorlabs.agent_bootstrap_paths()  # INDEX + bootstrap contracts
 ```
 
 **Minimal bootstrap** (skills + contracts only; no auth):
@@ -74,15 +75,41 @@ Read **`contracts/`** (Tier 1) before project-scoped RCA.
    `lookup()` raises if mask is active—use `.list()` for masked rows.
 6. **DependencyMetadata wire path:** List/group uses the **customer tenant namespace**, not the
    literal `oss` plane. Field `spec.dependency_data.namespace == "oss"` is data semantics only.
+7. **Workflow composition:** Extend workflow JSON/manifests before re-listing the API; escalate
+   CLI → library → `Client` → session script (see `contracts/workflow-composition.md`).
+8. **Portable examples:** Use placeholders in docs; never commit customer estate identifiers
+   (`contracts/portable-examples.md`).
+
+## Bootstrap (always load)
+
+Harnesses should prepend `agent_bootstrap_paths()` (or read these contracts first):
+
+| Contract | Summary |
+|----------|---------|
+| `namespace-scoping` | Resolve Project; pass `namespace=project.namespace` on project-scoped lists |
+| `workspace-layout` | Session artifacts under `workspace/sessions/<user>/` |
+| `workflow-composition` | CLI → library → Client → session script; artifact-first |
+| `list-query-performance` | Do not set `page_size` unless asked |
+| `local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
+| `portable-examples` | Placeholders only; no committed tenant/project UUID literals |
+
+See `MANIFEST.json` → `bootstrap.contract_ids` for the machine-readable list.
+
+## Workspace outputs
+
+Session/triage debugging artifacts and temporary probe scripts belong under
+`.endorlabs-context/workspace/sessions/<user>/` (not repo-root `.tmp/`). Project
+bundles go under `workspace/projects/<uuid>/`. See `contracts/workspace-layout.md`.
 
 ## Read order
 
 1. This file (Tier 0)
-2. `MANIFEST.json` — skills, contracts, workflow CLI index
-3. `contracts/*.md` — normative SDK semantics
-4. `skills/*/SKILL.md` — task playbooks (Tier 2)
-5. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (Tier 3)
-6. `../workspace/` — your run outputs (Tier 4)
+2. `MANIFEST.json` — skills, contracts, workflow CLI index, `bootstrap` block
+3. Bootstrap `contracts/*.md` (tier `bootstrap` in manifest)
+4. Reference `contracts/*.md` — normative SDK semantics on demand
+5. `skills/*/SKILL.md` — task playbooks (Tier 2)
+6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (Tier 3)
+7. `../workspace/` — your run outputs (Tier 4)
 
 ## Maintainer docs (not shipped)
 

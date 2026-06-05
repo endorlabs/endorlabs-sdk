@@ -2,24 +2,37 @@
   {
     "agent_visible": true,
     "cli": "endor-agent-context",
+    "composition": "library_api",
     "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
     "id": "agent-context",
+    "library_entrypoints": [
+      "endorlabs.workflows.agent_context.build_context_manifest",
+      "endorlabs.workflows.agent_context.list_package_versions_for_index"
+    ],
     "module": "endorlabs.workflows.agent_context.cli",
     "skill": "project-agent-context"
   },
   {
     "agent_visible": true,
     "cli": "endor-analytics-export-deps",
+    "composition": "library_api",
     "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
     "id": "analytics-export-deps",
+    "library_entrypoints": [
+      "endorlabs.workflows.analytics.export_version_cardinality_for_package_match"
+    ],
     "module": "endorlabs.workflows.analytics.cli",
     "skill": "analytics-estate-dependencies"
   },
   {
     "agent_visible": true,
     "cli": "endor-callgraph-search",
+    "composition": "library_api",
     "default_output": "stdout or caller path",
     "id": "callgraph-search",
+    "library_entrypoints": [
+      "endorlabs.workflows.callgraph.run_callgraph_sweep"
+    ],
     "module": "endorlabs.workflows.callgraph.search",
     "skill": "fetch-and-search-call-graph"
   },
@@ -34,8 +47,12 @@
   {
     "agent_visible": true,
     "cli": null,
+    "composition": "library_api",
     "default_output": "stdout or --output-json",
     "id": "policies-validate",
+    "library_entrypoints": [
+      "endorlabs.workflows.policies.run_validate_policy"
+    ],
     "module": "endorlabs.workflows.policies.validate",
     "skill": "validate-policy"
   },
@@ -66,8 +83,13 @@
   {
     "agent_visible": true,
     "cli": null,
+    "composition": "artifact_chain",
     "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
     "id": "troubleshooting-scans",
+    "library_entrypoints": [
+      "endorlabs.workflows.troubleshooting_scans.list_scan_results_for_project",
+      "endorlabs.workflows.troubleshooting_scans.resolve_project"
+    ],
     "module": "endorlabs.workflows.troubleshooting_scans",
     "skill": "troubleshooting-scans"
   }

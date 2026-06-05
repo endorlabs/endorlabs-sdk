@@ -24,6 +24,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from devtools.agent_bundle_catalog import (
     AGENT_SKILLS_DIRNAME,
+    build_bootstrap_manifest_block,
     build_contract_manifest_entries,
     build_workflow_catalog,
     collect_skill_catalog_rows,
@@ -51,6 +52,11 @@ WORKFLOWS_INDEX = BUNDLE_ROOT / "workflows" / "index.md"
 WORKFLOWS_ENTRIES = BUNDLE_ROOT / "workflows" / "entries.json"
 WORKFLOWS_YAML = AGENT_SKILLS / "workflows.yaml"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
+CURSOR_RULES_DIR = REPO_ROOT / ".cursor" / "rules"
+CURSOR_GENERATED_MANIFEST = CURSOR_RULES_DIR / "_generated.json"
+HAND_MAINTAINED_CURSOR_RULES = frozenset(
+    {"agent-skills-authoring", "docs-skillbase-consistency"}
+)
 
 TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".txt"}
 
@@ -152,6 +158,104 @@ def sync_index() -> None:
     INDEX_PATH.write_text(rewrite_paths(source.read_text(encoding="utf-8")), encoding="utf-8")
 
 
+def _contract_description(parsed: Any) -> str:
+    summary = parsed.frontmatter.get("summary")
+    if isinstance(summary, str) and summary.strip():
+        return summary.strip().replace("\n", " ")
+    return str(parsed.contract_id)
+
+
+def build_cursor_rule_contents() -> dict[str, str]:
+    """Build expected .mdc contents from tier:bootstrap contracts."""
+    contract_schema = SCHEMA_DIR / "contract.schema.json"
+    source_dir = AGENT_SKILLS / "contracts"
+    contents: dict[str, str] = {}
+    errors: list[str] = []
+    if not source_dir.is_dir():
+        return contents
+
+    for src_path in sorted(source_dir.glob("*.md")):
+        parsed = parse_contract_md(src_path)
+        errors.extend(
+            validate_contract(parsed, contract_schema_path=contract_schema)
+        )
+        if parsed.frontmatter.get("tier") != "bootstrap":
+            continue
+        rule_id = parsed.contract_id
+        body = rewrite_paths(parsed.body.lstrip("\n"))
+        description = _contract_description(parsed)
+        mdc = (
+            "---\n"
+            f"description: {description}\n"
+            "alwaysApply: true\n"
+            "---\n\n"
+            f"{body}"
+        )
+        if not mdc.endswith("\n"):
+            mdc += "\n"
+        contents[rule_id] = mdc
+
+    _raise_validation_errors(errors)
+    return contents
+
+
+def emit_cursor_rules() -> list[str]:
+    """Generate always-on .mdc rules from tier:bootstrap contracts."""
+    CURSOR_RULES_DIR.mkdir(parents=True, exist_ok=True)
+    contents = build_cursor_rule_contents()
+    generated_ids = sorted(contents)
+
+    for rule_id, mdc in contents.items():
+        (CURSOR_RULES_DIR / f"{rule_id}.mdc").write_text(mdc, encoding="utf-8")
+
+    previous_manifest: list[str] = []
+    if CURSOR_GENERATED_MANIFEST.is_file():
+        loaded = json.loads(CURSOR_GENERATED_MANIFEST.read_text(encoding="utf-8"))
+        if isinstance(loaded, list):
+            previous_manifest = [str(item) for item in loaded]
+
+    for stale_id in previous_manifest:
+        if stale_id in generated_ids or stale_id in HAND_MAINTAINED_CURSOR_RULES:
+            continue
+        stale_path = CURSOR_RULES_DIR / f"{stale_id}.mdc"
+        if stale_path.is_file():
+            stale_path.unlink()
+
+    CURSOR_GENERATED_MANIFEST.write_text(
+        json.dumps(generated_ids, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return generated_ids
+
+
+def verify_cursor_rules() -> list[str]:
+    """Compare committed Cursor rules against bootstrap contract generation."""
+    errors: list[str] = []
+    expected = build_cursor_rule_contents()
+    expected_ids = sorted(expected)
+
+    if CURSOR_GENERATED_MANIFEST.is_file():
+        loaded = json.loads(CURSOR_GENERATED_MANIFEST.read_text(encoding="utf-8"))
+        if list(loaded) != expected_ids:
+            errors.append(
+                ".cursor/rules/_generated.json drift (run devtools/sync_agent_bundle.py)"
+            )
+    else:
+        errors.append(
+            ".cursor/rules/_generated.json missing (run devtools/sync_agent_bundle.py)"
+        )
+
+    for rule_id, mdc in expected.items():
+        path = CURSOR_RULES_DIR / f"{rule_id}.mdc"
+        if not path.is_file():
+            errors.append(f".cursor/rules/{rule_id}.mdc missing")
+            continue
+        if path.read_text(encoding="utf-8") != mdc:
+            errors.append(f".cursor/rules/{rule_id}.mdc drift")
+
+    return errors
+
+
 def build_skills_manifest_entries() -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
     if not BUNDLE_SKILLS.is_dir():
@@ -195,12 +299,14 @@ def build_workflows_manifest_entries() -> list[dict[str, Any]]:
 
 
 def build_manifest() -> dict[str, Any]:
+    contracts = build_contract_manifest_entries(AGENT_SKILLS / "contracts")
     return {
         "schema_version": 1,
         "sdk_version": _read_sdk_version(),
         "generated_at": datetime.now(UTC).isoformat(),
         "index": "INDEX.md",
-        "contracts": build_contract_manifest_entries(AGENT_SKILLS / "contracts"),
+        "bootstrap": build_bootstrap_manifest_block(contracts),
+        "contracts": contracts,
         "skills": build_skills_manifest_entries(),
         "workflows": build_workflows_manifest_entries(),
     }
@@ -253,10 +359,12 @@ def sync_bundle(*, bundle_root: Path | None = None) -> dict[str, Any]:
     INDEX_PATH = root / "INDEX.md"
     WORKFLOWS_INDEX = root / "workflows" / "index.md"
     WORKFLOWS_ENTRIES = root / "workflows" / "entries.json"
+    generated_rules: list[str] = []
     try:
         skill_files = sync_skills_tree()
         contract_files = sync_contracts_tree()
         sync_index()
+        generated_rules = emit_cursor_rules()
         manifest = build_manifest()
         new_manifest_bytes = (
             json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8") + b"\n"
@@ -282,6 +390,8 @@ def sync_bundle(*, bundle_root: Path | None = None) -> dict[str, Any]:
     print(f"Synced {skill_files} skill files into {rel_root / 'skills'}")
     print(f"Synced {contract_files} contract files into {rel_root / 'contracts'}")
     print(f"Wrote {rel_root / 'MANIFEST.json'} ({len(manifest['skills'])} skills)")
+    if generated_rules:
+        print(f"Generated {len(generated_rules)} Cursor rules into .cursor/rules/")
     return manifest
 
 
@@ -310,6 +420,14 @@ def verify_bundle() -> int:
     """Regenerate to a temp dir and compare against committed bundle artifacts."""
     import tempfile
 
+    from devtools.verify_portable_agent_content import verify_portable_agent_content
+
+    portable_errors = verify_portable_agent_content(AGENT_SKILLS)
+    if portable_errors:
+        for msg in portable_errors:
+            print(f"ERROR: {msg}", file=sys.stderr)
+        return 1
+
     snapshot_skills = _file_tree_hash(BUNDLE_SKILLS)
     snapshot_contracts = _file_tree_hash(BUNDLE_CONTRACTS)
     snapshot_index_tree = _file_tree_hash(BUNDLE_ROOT)
@@ -332,6 +450,7 @@ def verify_bundle() -> int:
         regen_workflows = _file_tree_hash(tmp_root / "workflows")
 
     errors: list[str] = []
+    errors.extend(verify_cursor_rules())
     if snapshot_skills != regen_skills:
         errors.append("agent_bundle/skills drift (run devtools/sync_agent_bundle.py)")
     if snapshot_contracts != regen_contracts:
