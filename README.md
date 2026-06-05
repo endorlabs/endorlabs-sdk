@@ -46,7 +46,7 @@ Verify: `uv run python -c "import endorlabs; print(endorlabs.__version__)"`
 
 | Extra | Install | Enables |
 | ----- | ------- | ------- |
-| `context` | `pip install 'endorlabs-sdk[context]'` | `endorlabs.init()` — materializes shipped agent bundle + optional platform OpenAPI/user docs |
+| `context` | `pip install 'endorlabs-sdk[context]'` | `endorlabs.init()` — materializes shipped agent knowledge + optional platform OpenAPI/user docs |
 | `tabular` | `pip install 'endorlabs-sdk[tabular]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow) |
 
 CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra context --extra tabular`.
@@ -108,10 +108,24 @@ For **AuthenticationLog**, **AuthorizationPolicy**, and optional **AuditLog**
 correlation during SSO or tenant login investigations, use the **troubleshoot-authlog**
 skill:
 
-- **Repo clone:** [agent-skills/troubleshoot-authlog/SKILL.md](agent-skills/troubleshoot-authlog/SKILL.md)
-- **Installed wheel:** `endorlabs.agent_manifest()` → `skills/troubleshoot-authlog/SKILL.md`, or materialized `.endorlabs-context/sdk/skills/troubleshoot-authlog/SKILL.md` after `init()`
+- **Repo clone:** [agent-knowledge/skills/troubleshoot-authlog/SKILL.md](agent-knowledge/skills/troubleshoot-authlog/SKILL.md)
+- **Installed wheel:** `endorlabs.agent_knowledge_manifest()` → `skills/troubleshoot-authlog/SKILL.md`, or materialized `.endorlabs-context/sdk/skills/troubleshoot-authlog/SKILL.md` after `init()`
 
 Cursor users may also read `.cursor/skills/troubleshoot-authlog/SKILL.md` when mirrors are synced.
+
+## Entry points
+
+| Surface | When | Example |
+| ------- | ---- | ------- |
+| **`endorlabs.Client`** | Typed API access (default for apps and CI) | `client = endorlabs.Client(tenant="tenant.ns")` |
+| **`endorlabs.APIClient`** | Raw HTTP transport | `APIClient().get("v1/namespaces/...")` |
+| **`endorlabs.init()`** | Materialize agent knowledge + optional platform docs | `status = endorlabs.init()` → `.endorlabs-context/sdk/` |
+| **`agent_knowledge_*` helpers** | Read shipped INDEX/MANIFEST without `init()` | `agent_knowledge_index_path()`, `agent_knowledge_manifest()`, `agent_knowledge_bootstrap_paths()` |
+| **`endorlabs.sync_agent_skills()`** | Mirror `sdk/skills/` into Cursor/Claude dirs | `init(sync_skills="cursor")` or explicit call |
+| **`endor-context` CLI** | Shell bootstrap (same as `init()`) | `uv run endor-context --no-openapi` |
+| **Workflow CLIs** | Shipped playbooks (see `MANIFEST.json` → `workflows`) | `uv run endor-demo`, `python -m endorlabs.workflows...` |
+
+Naming: authoring tree `agent-knowledge/` (repo), Python module `endorlabs.agent_knowledge` (wheel), runtime mirror `.endorlabs-context/sdk/`. Details: [AGENTS.md](AGENTS.md#naming).
 
 ## SDK-only vs agent bootstrap
 
@@ -126,7 +140,7 @@ skills, contracts, OpenAPI, and user docs.
 | Mode | When | What you do |
 | ---- | ---- | ----------- |
 | **SDK-only** | Scripts, apps, CI, typed API usage | `pip install endorlabs-sdk` + env vars → `Client(...)` |
-| **Wheel-only agent nav** | Agent reads the shipped bundle from site-packages | `endorlabs.agent_index_path()` / `agent_manifest()` — no disk materialization |
+| **Wheel-only agent nav** | Agent reads the shipped bundle from site-packages | `endorlabs.agent_knowledge_index_path()` / `agent_knowledge_manifest()` — no disk materialization |
 | **Local agent bootstrap** | Cursor/Claude file reads, offline platform docs | `pip install 'endorlabs-sdk[context]'` → `endorlabs.init()` |
 
 
@@ -135,7 +149,7 @@ After `init()`, the layout is:
 ```
 .endorlabs-context/
   context.json
-  sdk/              # INDEX.md, MANIFEST.json, skills/, contracts/
+  sdk/              # INDEX.md, MANIFEST.json, rules/, contracts/, skills/
   platform/         # openapi/, user-docs/ (optional downloads)
   workspace/        # workflow run outputs (gitignore recommended)
 ```
@@ -144,24 +158,24 @@ Repo architecture and maintainer regions: [AGENTS.md](AGENTS.md#repository-layou
 
 ### Wheel-only navigation (no `init()`)
 
-The agent bundle ships inside the wheel. Read it from site-packages without writing cwd artifacts:
+The agent knowledge package ships inside the wheel. Read it from site-packages without writing cwd artifacts:
 
 ```python
 import endorlabs
 
-print(endorlabs.agent_index_path())  # .../site-packages/endorlabs/agent_bundle/INDEX.md
-manifest = endorlabs.agent_manifest()
+print(endorlabs.agent_knowledge_index_path())  # .../site-packages/endorlabs/agent_knowledge/INDEX.md
+manifest = endorlabs.agent_knowledge_manifest()
 ```
 
-### Minimal bootstrap (SDK bundle only)
+### Minimal bootstrap (agent knowledge only)
 
-Materialize skills and contracts under the project cwd; skip platform downloads (no auth required):
+Materialize rules, contracts, and skills under the project cwd; skip platform downloads (no auth required):
 
 ```python
 import endorlabs
 
 status = endorlabs.init(include_openapi=False, include_user_docs=False)
-print(status.agent_index_path)  # .endorlabs-context/sdk/INDEX.md
+print(status.agent_knowledge_index_path)  # .endorlabs-context/sdk/INDEX.md
 ```
 
 ### Full bootstrap (bundle + platform context)
@@ -174,12 +188,12 @@ pip install 'endorlabs-sdk[context]'
 import endorlabs
 
 status = endorlabs.init()
-print(status.agent_index_path)   # .endorlabs-context/sdk/INDEX.md
+print(status.agent_knowledge_index_path)   # .endorlabs-context/sdk/INDEX.md
 print(status.openapi_path)       # .endorlabs-context/platform/openapi/openapiv2.swagger.json
 print(status.user_docs_path)     # .endorlabs-context/platform/user-docs/
 ```
 
-Read `status.agent_index_path`, then `MANIFEST.json`, then task skills under
+Read `status.agent_knowledge_index_path`, then `MANIFEST.json`, then task skills under
 `.endorlabs-context/sdk/skills/`. Run outputs belong under `.endorlabs-context/workspace/`.
 Agent rules and footguns: [AGENTS.md](AGENTS.md).
 
@@ -367,7 +381,7 @@ Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.
 
 ## Scripts and automation
 
-Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). **In this repo:** SAST rule management (import, export, delete, configure) lives at `agent-skills/custom-sast-rules/scripts/sast_rule_manager.py` (`.cursor/skills` is the Cursor runtime mirror). The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: materialize agent context with `endorlabs.init()` (see [SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap)); maintainers use [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). **In this repo:** SAST rule management (import, export, delete, configure) lives at `agent-knowledge/skills/custom-sast-rules/scripts/sast_rule_manager.py` (`.cursor/skills` is the Cursor runtime mirror). The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: materialize agent context with `endorlabs.init()` (see [SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap)); maintainers use [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

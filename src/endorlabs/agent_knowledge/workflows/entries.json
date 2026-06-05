@@ -1,0 +1,96 @@
+[
+  {
+    "agent_visible": true,
+    "cli": "endor-agent-context",
+    "composition": "library_api",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "agent-context",
+    "library_entrypoints": [
+      "endorlabs.workflows.agent_context.build_context_manifest",
+      "endorlabs.workflows.agent_context.list_package_versions_for_index"
+    ],
+    "module": "endorlabs.workflows.agent_context.cli",
+    "skill": "project-agent-context"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-analytics-export-deps",
+    "composition": "library_api",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "analytics-export-deps",
+    "library_entrypoints": [
+      "endorlabs.workflows.analytics.export_version_cardinality_for_package_match"
+    ],
+    "module": "endorlabs.workflows.analytics.cli",
+    "skill": "analytics-estate-dependencies"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-callgraph-search",
+    "composition": "library_api",
+    "default_output": "stdout or caller path",
+    "id": "callgraph-search",
+    "library_entrypoints": [
+      "endorlabs.workflows.callgraph.run_callgraph_sweep"
+    ],
+    "module": "endorlabs.workflows.callgraph.search",
+    "skill": "fetch-and-search-call-graph"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-context",
+    "default_output": ".endorlabs-context/",
+    "id": "context-bootstrap",
+    "module": "endorlabs.context.cli",
+    "skill": null
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "composition": "library_api",
+    "default_output": "stdout or --output-json",
+    "id": "policies-validate",
+    "library_entrypoints": [
+      "endorlabs.workflows.policies.run_validate_policy"
+    ],
+    "module": "endorlabs.workflows.policies.validate",
+    "skill": "validate-policy"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-reachability-context",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "reachability-context",
+    "module": "endorlabs.workflows.reachability.cli",
+    "skill": "reachability-provenance"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "relationships-map",
+    "module": "endorlabs.workflows.relationships.map",
+    "skill": "map-project-dependency-relationships"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-semgrep-inventory",
+    "default_output": ".endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json",
+    "id": "semgrep-inventory",
+    "module": "endorlabs.workflows.semgrep.inventory",
+    "skill": "custom-sast-rules"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "composition": "artifact_chain",
+    "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
+    "id": "troubleshooting-scans",
+    "library_entrypoints": [
+      "endorlabs.workflows.troubleshooting_scans.list_scan_results_for_project",
+      "endorlabs.workflows.troubleshooting_scans.resolve_project"
+    ],
+    "module": "endorlabs.workflows.troubleshooting_scans",
+    "skill": "troubleshooting-scans"
+  }
+]
