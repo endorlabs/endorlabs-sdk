@@ -4,8 +4,8 @@
       "id": "canonical-naming",
       "path": "contracts/canonical-naming.md",
       "tags": [
-        "naming",
-        "facades"
+        "facades",
+        "naming"
       ]
     },
     {
@@ -28,9 +28,9 @@
       "id": "list-parameters",
       "path": "contracts/list-parameters.md",
       "tags": [
+        "filter",
         "list",
-        "mask",
-        "filter"
+        "mask"
       ]
     },
     {
@@ -38,12 +38,12 @@
       "path": "contracts/namespace-scoping.md",
       "tags": [
         "list",
-        "traverse",
-        "namespace"
+        "namespace",
+        "traverse"
       ]
     }
   ],
-  "generated_at": "2026-06-05T06:11:52.438408+00:00",
+  "generated_at": "2026-06-05T12:37:22.046693+00:00",
   "index": "INDEX.md",
   "schema_version": 1,
   "sdk_version": "0.1.1.dev52",
