@@ -47,7 +47,7 @@ use method IDs for joins, intersections, and path checks.
 
 ## Outputs
 
-- A directory under `.endorlabs-context/workspace/projects/` (or `workspace/sessions/<user>/callgraph/` for ad-hoc sweeps) with `manifest.json` mapping artifact paths when using the sweep workflow. See [workspace-layout](../contracts/workspace-layout.md).
+- A directory under `.endorlabs-context/workspace/projects/` (or `workspace/sessions/<user>/callgraph/` for ad-hoc sweeps) with `manifest.json` mapping artifact paths when using the sweep workflow. See [workspace-layout](../../rules/workspace-layout.md).
 - Decoded `decoded_*.json` when `--decode-zstd` is set.
 - When using **project context export** with a sweep, **`context_manifest.json`** at the bundle root: read `artifacts.callgraph_sweep` to locate the sweep output (or `null` if the sweep was not run).
 

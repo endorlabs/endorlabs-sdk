@@ -8,7 +8,7 @@ description: Validate Endor Labs policies against project finding data via the P
 
 # Validate Policy
 
-Extend with [workflow-composition](../contracts/workflow-composition.md): prefer `run_validate_policy` in session scripts instead of forking the CLI.
+Extend with [workflow-composition](../../rules/workflow-composition.md): prefer `run_validate_policy` in session scripts instead of forking the CLI.
 
 Evaluate whether a **stored policy** (usually an exception policy) matches
 findings for a **project** — without applying exceptions in production.
@@ -132,7 +132,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 - OpenAPI: `PolicyValidationService_CreatePolicyValidation` → `POST /v1/namespaces/{tenant_meta.namespace}/policy/validate` (`x-internal: true`)
 - Local docs: `.endorlabs-context/platform/user-docs/developers-api/cli/commands/validate/policy.md`
 - Implementation: `src/endorlabs/workflows/policies/validate.py`
-- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/sessions/<user>/scripts/policy_validate_probe.py` (see [workspace-layout](../contracts/workspace-layout.md))
+- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/sessions/<user>/scripts/policy_validate_probe.py` (see [workspace-layout](../../rules/workspace-layout.md))
 
 Run validate:
 

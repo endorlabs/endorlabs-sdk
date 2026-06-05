@@ -1,14 +1,14 @@
 {
   "bootstrap": {
-    "contract_ids": [
+    "index": "INDEX.md",
+    "rule_ids": [
       "list-query-performance",
       "local-context",
       "namespace-scoping",
       "portable-examples",
       "workflow-composition",
       "workspace-layout"
-    ],
-    "index": "INDEX.md"
+    ]
   },
   "contracts": [
     {
@@ -17,8 +17,7 @@
       "tags": [
         "facades",
         "naming"
-      ],
-      "tier": "reference"
+      ]
     },
     {
       "id": "dependency-metadata",
@@ -26,8 +25,7 @@
       "tags": [
         "analytics",
         "dependency-metadata"
-      ],
-      "tier": "reference"
+      ]
     },
     {
       "id": "errors-and-auth",
@@ -35,8 +33,7 @@
       "tags": [
         "auth",
         "errors"
-      ],
-      "tier": "reference"
+      ]
     },
     {
       "id": "list-parameters",
@@ -45,79 +42,74 @@
         "filter",
         "list",
         "mask"
-      ],
-      "tier": "reference"
-    },
+      ]
+    }
+  ],
+  "generated_at": "2026-06-05T18:39:38.251531+00:00",
+  "index": "INDEX.md",
+  "rules": [
     {
       "id": "list-query-performance",
-      "path": "contracts/list-query-performance.md",
+      "path": "rules/list-query-performance.md",
       "summary": "Do not set page_size unless explicitly asked; scope and filter before raising max_pages.",
       "tags": [
         "list",
         "pagination",
         "performance"
-      ],
-      "tier": "bootstrap"
+      ]
     },
     {
       "id": "local-context",
-      "path": "contracts/local-context.md",
+      "path": "rules/local-context.md",
       "summary": "Check gitignored .endorlabs-context paths explicitly; prefer local platform docs before the web; never print secrets.",
       "tags": [
         "bootstrap",
         "context",
         "openapi"
-      ],
-      "tier": "bootstrap"
+      ]
     },
     {
       "id": "namespace-scoping",
-      "path": "contracts/namespace-scoping.md",
+      "path": "rules/namespace-scoping.md",
       "summary": "Resolve Project first; pass namespace=project.namespace on project-scoped lists.",
       "tags": [
         "list",
         "namespace",
         "traverse"
-      ],
-      "tier": "bootstrap"
+      ]
     },
     {
       "id": "portable-examples",
-      "path": "contracts/portable-examples.md",
+      "path": "rules/portable-examples.md",
       "summary": "Use placeholders in git-tracked agent content; never commit customer estate identifiers (tenants, project URLs, production UUIDs).",
       "tags": [
         "examples",
         "hygiene",
         "placeholders"
-      ],
-      "tier": "bootstrap"
+      ]
     },
     {
       "id": "workflow-composition",
-      "path": "contracts/workflow-composition.md",
+      "path": "rules/workflow-composition.md",
       "summary": "Prefer workflow CLI, then library imports, then Client; extend artifacts instead of re-fetching discovery.",
       "tags": [
         "composition",
         "scripts",
         "workflows"
-      ],
-      "tier": "bootstrap"
+      ]
     },
     {
       "id": "workspace-layout",
-      "path": "contracts/workspace-layout.md",
+      "path": "rules/workspace-layout.md",
       "summary": "Write session/triage artifacts under workspace/sessions/<user>/; not repo-root .tmp/.",
       "tags": [
         "artifacts",
         "sessions",
         "workspace"
-      ],
-      "tier": "bootstrap"
+      ]
     }
   ],
-  "generated_at": "2026-06-05T15:28:29.005619+00:00",
-  "index": "INDEX.md",
-  "schema_version": 1,
+  "schema_version": 2,
   "sdk_version": "0.1.1.dev59",
   "skills": [
     {
