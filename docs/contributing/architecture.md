@@ -71,7 +71,7 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 
 ### Canonical generation policy
 
-- Mapping is from `.endorlabs-context/openapiv2.swagger.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/`.
+- Mapping is from `.endorlabs-context/platform/openapi/openapiv2.swagger.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/`.
 - Eligibility defaults to include when `x-internal != true`, with explicit allowlist exceptions in model-sync profiles when metadata is incomplete.
 - Mapping must be deterministic (stable bucketing, naming, `entity -> module` manifest).
 

@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.context.paths import workflow_projects_root
 from endorlabs.tools.dependency_explorer import (
     ProjectResult,
     process_project,
@@ -136,8 +137,8 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--output-dir",
-        default=".tmp",
-        help="Base output directory. Default: .tmp",
+        default=str(workflow_projects_root()),
+        help="Base output directory. Default: .endorlabs-context/workspace/projects",
     )
     p.add_argument(
         "--pv-limit",

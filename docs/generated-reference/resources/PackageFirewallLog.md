@@ -1,6 +1,6 @@
 # PackageFirewallLog
 
-V1PackageFirewallLog resource facade.
+PackageFirewallLog represents a package firewall audit event recording the
 
 ## Client access
 
