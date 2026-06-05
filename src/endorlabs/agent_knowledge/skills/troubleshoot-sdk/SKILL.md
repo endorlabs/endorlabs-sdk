@@ -13,7 +13,7 @@ integration failures.
 
 ## Workflow
 
-1. **Document** -- capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs-context/workspace/sessions/<user>/` (see [workspace-layout](../contracts/workspace-layout.md)); use `scripts/` for ad-hoc probes. For CLI → library → script escalation, see [workflow-composition](../contracts/workflow-composition.md).
+1. **Document** -- capture the task, context, approach, and full error (including stack trace and `response.text`). Persist triage notes, repro scripts, and JSON exports under `.endorlabs-context/workspace/sessions/<user>/` (see [workspace-layout](../../rules/workspace-layout.md)); use `scripts/` for ad-hoc probes. For CLI → library → script escalation, see [workflow-composition](../../rules/workflow-composition.md).
 2. **Research** -- search codebase, docs, and API spec. Local spec: `.endorlabs-context/platform/openapi/openapiv2.swagger.json`; local user docs: `.endorlabs-context/platform/user-docs/`. Online fallback: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
 3. **Investigate** -- read SDK code and spec; test with `endorctl`; validate theories with live API calls.
 4. **Resolve** -- implement fix; document signatures and learnings.
