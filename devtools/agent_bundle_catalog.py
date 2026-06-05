@@ -210,6 +210,17 @@ def load_supplemental_workflows(
     return [_normalize_workflow_row(row) for row in workflows]
 
 
+def _optional_workflow_catalog_fields(row: dict[str, Any]) -> dict[str, Any]:
+    extra: dict[str, Any] = {}
+    composition = row.get("composition")
+    if composition is not None:
+        extra["composition"] = composition
+    entrypoints = row.get("library_entrypoints")
+    if entrypoints is not None:
+        extra["library_entrypoints"] = list(entrypoints)
+    return extra
+
+
 def _normalize_workflow_row(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": row["id"],
@@ -218,6 +229,7 @@ def _normalize_workflow_row(row: dict[str, Any]) -> dict[str, Any]:
         "skill": row.get("skill"),
         "default_output": row.get("default_output"),
         "agent_visible": row.get("agent_visible", True),
+        **_optional_workflow_catalog_fields(row),
     }
 
 
@@ -232,6 +244,7 @@ def workflow_row_from_skill_catalog(
         "skill": skill_id,
         "default_output": catalog.get("default_output"),
         "agent_visible": catalog.get("agent_visible", True),
+        **_optional_workflow_catalog_fields(catalog),
     }
 
 
@@ -299,18 +312,31 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
         return entries
     for path in sorted(contracts_dir.glob("*.md")):
         parsed = parse_contract_md(path)
-        entries.append(
-            {
-                "id": parsed.contract_id,
-                "path": f"contracts/{path.name}",
-                "tags": sorted(
-                    tag
-                    for tag in parsed.frontmatter.get("tags", [])
-                    if isinstance(tag, str)
-                ),
-            }
-        )
+        entry: dict[str, Any] = {
+            "id": parsed.contract_id,
+            "path": f"contracts/{path.name}",
+            "tier": parsed.frontmatter.get("tier"),
+            "tags": sorted(
+                tag
+                for tag in parsed.frontmatter.get("tags", [])
+                if isinstance(tag, str)
+            ),
+        }
+        summary = parsed.frontmatter.get("summary")
+        if isinstance(summary, str) and summary.strip():
+            entry["summary"] = summary.strip()
+        entries.append(entry)
     return entries
+
+
+def build_bootstrap_manifest_block(
+    contracts: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Derive bootstrap contract ids from tier metadata."""
+    contract_ids = sorted(
+        entry["id"] for entry in contracts if entry.get("tier") == "bootstrap"
+    )
+    return {"index": "INDEX.md", "contract_ids": contract_ids}
 
 
 def list_skill_refs(skill_dir: Path, *, bundle_skill_prefix: str) -> list[str]:

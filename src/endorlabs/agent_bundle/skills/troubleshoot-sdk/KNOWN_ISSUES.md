@@ -117,7 +117,7 @@ delete, so no try/finally delete is needed.
 ## Checking for Leftover Test Resources
 
 After interrupted runs, verify with the test namespace
-(`ENDOR_NAMESPACE` or default `endor-solutions-tgowan`):
+(`ENDOR_NAMESPACE` or your home tenant from `Client().whoami()`):
 
 ```bash
 # API keys

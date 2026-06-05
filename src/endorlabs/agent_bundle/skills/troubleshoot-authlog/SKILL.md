@@ -48,7 +48,8 @@ logs = client.AuthenticationLog.list(traverse=True, max_pages=2)
 policies = client.AuthorizationPolicy.list(traverse=True, max_pages=2)
 ```
 
-For structured exports, write JSON under `.endorlabs-context/workspace/sessions/<user>/`.
+For structured exports, write JSON under `.endorlabs-context/workspace/sessions/<user>/`
+(see [workspace-layout](../contracts/workspace-layout.md)).
 
 ## Interpretation notes (for agents)
 

@@ -12,9 +12,14 @@ endorlabs:
     module: endorlabs.workflows.policies.validate
     default_output: stdout or --output-json
     agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.policies.run_validate_policy
 ---
 
 # Validate Policy
+
+Extend with [workflow-composition](../contracts/workflow-composition.md): prefer `run_validate_policy` in session scripts instead of forking the CLI.
 
 Evaluate whether a **stored policy** (usually an exception policy) matches
 findings for a **project** — without applying exceptions in production.
@@ -45,7 +50,7 @@ See [API.md](API.md) for request/response shape and [ENDORCTL.md](ENDORCTL.md) f
 
 ### Credentials and namespace
 
-1. **`ENDOR_NAMESPACE`** (or `--namespace`) must be the **customer tenant** you are validating (e.g. `endor-solutions-tgowan`, `veza`).
+1. **`ENDOR_NAMESPACE`** (or `--namespace`) must be the **customer tenant** you are validating (e.g. `<customer-namespace>`).
 2. Include **`tenant_meta.namespace`** in the POST body with the **same** value as the URL path segment.
 3. **Cross-tenant endor-admin read** against a **customer** namespace often returns **403** on `policy/validate` even when `Policy.get` / `Finding.list` succeed. Reproduce in your **home tenant** first, or use **tenant-scoped** user/service credentials for customer work.
 4. Run with `uv run --env-file .env …`; refresh token via `devtools/refresh_token_to_dotenv.py` when needed.
@@ -128,7 +133,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 | Symptom | Likely cause |
 |---------|----------------|
 | **403** on `policy/validate` | Wrong credential class (admin cross-tenant) or wrong namespace in URL |
-| **403** on `veza`, **200** on home tenant | Authz on x-internal endpoint, not bad JSON |
+| **403** on customer namespace, **200** on home tenant | Authz on x-internal endpoint, not bad JSON |
 | Policy should match finding but does not | `VulnID` typo/spacing; `MatchApproximate`; empty template param `{}` vs omitted |
 | endorctl works, SDK 403 | endorctl uses list + local Rego, not `policy/validate` |
 | **501** on PUT/PATCH/GET | Only **POST** is implemented on this route |
@@ -138,7 +143,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 - OpenAPI: `PolicyValidationService_CreatePolicyValidation` → `POST /v1/namespaces/{tenant_meta.namespace}/policy/validate` (`x-internal: true`)
 - Local docs: `.endorlabs-context/platform/user-docs/developers-api/cli/commands/validate/policy.md`
 - Implementation: `src/endorlabs/workflows/policies/validate.py`
-- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): `.tmp/policy_validate_probe.py`
+- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/sessions/<user>/scripts/policy_validate_probe.py` (see [workspace-layout](../contracts/workspace-layout.md))
 
 Run validate:
 
