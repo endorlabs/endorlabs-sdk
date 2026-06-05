@@ -1,4 +1,4 @@
-"""Shipped agent knowledge bundle (rules, contracts, skills, workflow index).
+"""Shipped agent knowledge (rules, contracts, skills, workflow index).
 
 Materialized to ``.endorlabs-context/sdk/`` by :func:`endorlabs.init`.
 """
@@ -14,37 +14,37 @@ _MANIFEST_FILENAME = "MANIFEST.json"
 _INDEX_FILENAME = "INDEX.md"
 
 
-def agent_bundle_dir() -> Path:
-    """Return the installed wheel path to the shipped agent bundle."""
-    module = import_module("endorlabs.agent_bundle")
+def agent_knowledge_dir() -> Path:
+    """Return the installed wheel path to the shipped agent knowledge package."""
+    module = import_module("endorlabs.agent_knowledge")
     if module.__file__ is None:
         raise RuntimeError(
-            "endorlabs.agent_bundle is a namespace package without a path"
+            "endorlabs.agent_knowledge is a namespace package without a path"
         )
     return Path(module.__file__).resolve().parent
 
 
-def agent_index_path() -> Path:
-    """Return path to Tier-0 INDEX.md inside the shipped bundle."""
-    return agent_bundle_dir() / _INDEX_FILENAME
+def agent_knowledge_index_path() -> Path:
+    """Return path to Tier-0 INDEX.md inside the shipped package."""
+    return agent_knowledge_dir() / _INDEX_FILENAME
 
 
-def agent_manifest_path() -> Path:
-    """Return path to MANIFEST.json inside the shipped agent bundle."""
-    return agent_bundle_dir() / _MANIFEST_FILENAME
+def agent_knowledge_manifest_path() -> Path:
+    """Return path to MANIFEST.json inside the shipped agent knowledge package."""
+    return agent_knowledge_dir() / _MANIFEST_FILENAME
 
 
-def agent_manifest() -> dict[str, Any]:
+def agent_knowledge_manifest() -> dict[str, Any]:
     """Load and parse the shipped MANIFEST.json."""
-    path = agent_manifest_path()
+    path = agent_knowledge_manifest_path()
     if not path.is_file():
-        raise FileNotFoundError(f"Agent bundle manifest not found: {path}")
+        raise FileNotFoundError(f"Agent knowledge manifest not found: {path}")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def agent_bootstrap_rule_ids() -> list[str]:
+def agent_knowledge_rule_ids() -> list[str]:
     """Return bootstrap rule ids from the shipped manifest."""
-    manifest: dict[str, Any] = agent_manifest()
+    manifest: dict[str, Any] = agent_knowledge_manifest()
     bootstrap_obj = manifest.get("bootstrap")
     if not isinstance(bootstrap_obj, dict):
         return []
@@ -57,15 +57,15 @@ def agent_bootstrap_rule_ids() -> list[str]:
     ]
 
 
-def agent_bootstrap_paths() -> list[Path]:
+def agent_knowledge_bootstrap_paths() -> list[Path]:
     """Return INDEX.md plus bootstrap rule paths for harness injection."""
-    bundle = agent_bundle_dir()
-    paths: list[Path] = [agent_index_path()]
-    manifest: dict[str, Any] = agent_manifest()
+    bundle = agent_knowledge_dir()
+    paths: list[Path] = [agent_knowledge_index_path()]
+    manifest: dict[str, Any] = agent_knowledge_manifest()
     rules_raw = manifest.get("rules")
     if not isinstance(rules_raw, list):
         return paths
-    bootstrap_ids = set(agent_bootstrap_rule_ids())
+    bootstrap_ids = set(agent_knowledge_rule_ids())
     for entry_raw in cast("list[object]", rules_raw):
         if not isinstance(entry_raw, dict):
             continue
@@ -83,10 +83,10 @@ def agent_bootstrap_paths() -> list[Path]:
 
 
 __all__ = [
-    "agent_bootstrap_paths",
-    "agent_bootstrap_rule_ids",
-    "agent_bundle_dir",
-    "agent_index_path",
-    "agent_manifest",
-    "agent_manifest_path",
+    "agent_knowledge_bootstrap_paths",
+    "agent_knowledge_dir",
+    "agent_knowledge_index_path",
+    "agent_knowledge_manifest",
+    "agent_knowledge_manifest_path",
+    "agent_knowledge_rule_ids",
 ]

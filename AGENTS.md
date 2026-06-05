@@ -45,33 +45,41 @@ workflow outputs under a stable cwd-relative tree.
 | Need | Approach |
 | ---- | -------- |
 | List/get/create resources, run `endorlabs.workflows` CLIs | **SDK-only** — no `.endorlabs-context/` |
-| Tier 0–2 navigation (INDEX, MANIFEST, skills) without cwd writes | `endorlabs.agent_index_path()` / `agent_manifest()` from the installed wheel |
+| Tier 0–2 navigation (INDEX, MANIFEST, skills) without cwd writes | `endorlabs.agent_knowledge_index_path()` / `agent_knowledge_manifest()` from the installed wheel |
 | Cwd-relative skills + optional platform mirror | `endorlabs.init()` |
 | Mirror skills into Cursor/Claude runtime dirs | `init(sync_skills="cursor")` (or `"claude"` / `"both"`) after `sdk/` is materialized |
 
 
 Consumer projects should **gitignore** `.endorlabs-context/` (downloaded docs + `workspace/` outputs).
 
+### Naming
+
+- **Authoring (repo):** `agent-knowledge/` — kebab-case directory paths.
+- **Shipped (Python):** `endorlabs.agent_knowledge` — snake_case module (PEP 8).
+- **Materialized (runtime):** `.endorlabs-context/sdk/` — unchanged consumer path.
+
+Edit `agent-knowledge/` → run `devtools/sync_agent_knowledge.py` → commit `src/endorlabs/agent_knowledge/`.
+
 ## Context Bootstrap (for AI Agents)
 
 Three bootstrap depths (pick the shallowest that fits):
 
-1. **SDK-only** — `Client(...)` only; no agent bundle materialization.
-2. **Wheel-only** — `endorlabs.agent_index_path()` points at `site-packages/.../agent_bundle/INDEX.md`; use `agent_manifest()` for skill paths. No auth, no cwd writes.
-3. **Local materialization** — `endorlabs.init()` copies the wheel bundle to `.endorlabs-context/sdk/` and optionally downloads platform context under `platform/`.
+1. **SDK-only** — `Client(...)` only; no agent knowledge materialization.
+2. **Wheel-only** — `endorlabs.agent_knowledge_index_path()` points at `site-packages/.../agent_knowledge/INDEX.md`; use `agent_knowledge_manifest()` for skill paths. No auth, no cwd writes.
+3. **Local materialization** — `endorlabs.init()` copies the wheel package to `.endorlabs-context/sdk/` and optionally downloads platform context under `platform/`.
 
 ```python
 import endorlabs
 
 # Wheel-only (no init)
-print(endorlabs.agent_index_path())
+print(endorlabs.agent_knowledge_index_path())
 
 # Minimal local bootstrap (bundle only; no auth)
 status = endorlabs.init(include_openapi=False, include_user_docs=False)
 
 # Full bootstrap
 status = endorlabs.init()
-print(status.agent_index_path)   # .endorlabs-context/sdk/INDEX.md
+print(status.agent_knowledge_index_path)   # .endorlabs-context/sdk/INDEX.md
 print(status.openapi_path)       # .endorlabs-context/platform/openapi/openapiv2.swagger.json
 print(status.user_docs_path)     # .endorlabs-context/platform/user-docs/
 print(status.user_docs_count)
@@ -79,15 +87,15 @@ print(status.user_docs_count)
 
 After `init()`, read **`.endorlabs-context/sdk/INDEX.md`** (Tier 0), then `MANIFEST.json`,
 then task skills under `sdk/skills/`. **Non-Cursor harnesses** should prepend
-`endorlabs.agent_bootstrap_paths()` (INDEX + `tier: bootstrap` contracts listed in
-`MANIFEST.json` → `bootstrap.contract_ids`). Run outputs belong under
+`endorlabs.agent_knowledge_bootstrap_paths()` (INDEX + `rules/` listed in
+`MANIFEST.json` → `bootstrap.rule_ids`). Run outputs belong under
 `.endorlabs-context/workspace/` (`projects/<uuid>/` for bundles; `sessions/<user>/` for
 triage artifacts and temp scripts — see shipped `contracts/workspace-layout.md`).
 
 **Requirements:**
 - Authentication (OpenAPI download only): `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET` or `ENDOR_TOKEN`
 - Dependencies: `pip install endorlabs-sdk[context]` for user docs download
-- SDK agent bundle materialization (`include_sdk_bundle=True`, default) requires **no auth**
+- Agent knowledge materialization (`include_agent_knowledge=True`, default) requires **no auth**
 
 ### Fresh-clone bootstrap
 
@@ -104,13 +112,14 @@ For a repo-local agent session after `git clone`, the SDK consumes **process env
    - `uv run --env-file .env python -c "import endorlabs; print(endorlabs.Client().whoami())"`
 4. Bootstrap local context:
    - `uv run --env-file .env python -c "import endorlabs; endorlabs.init()"`
-5. **Contributors editing skills:** after changes under `agent-skills/`, regenerate the shipped bundle:
-   - `uv run python devtools/sync_agent_bundle.py` (pre-push/CI `--verify` enforces drift)
+5. **Contributors editing agent knowledge:** after changes under `agent-knowledge/`, regenerate the shipped package:
+   - `uv run python devtools/sync_agent_knowledge.py` (pre-push/CI `--verify` enforces drift)
 
 **Options:**
 - `output_dir`: Where to save files (default: `.endorlabs-context`)
 - `include_openapi`: Download API spec (default: True)
 - `include_user_docs`: Download user docs (default: True)
+- `include_agent_knowledge`: Materialize wheel agent knowledge to `sdk/` (default: True)
 - `max_pages`: Limit user doc pages (default: all)
 - `force`: Re-download even if files exist (default: False)
 - `sync_skills`: Mirror materialized `sdk/skills/` into `.cursor/skills/`, `.claude/skills/`, or both (`none`, `cursor`, `claude`, `both`; default: `none`)
@@ -146,12 +155,12 @@ Git-tracked Cursor rules (use **@rule** in chat or rely on glob/always-apply):
 
 | Rule | When it applies |
 |------|------------------|
-| **Generated `*.mdc`** | Always — from `agent-skills/contracts/` with `tier: bootstrap` (SSOT); listed in `.cursor/rules/_generated.json` |
-| **docs-skillbase-consistency.mdc** | When editing `**/*.{md,mdc}` — keep docs aligned with `agent-skills/`, generated reference, and workflow/CLI inventory |
-| **agent-skills-authoring.mdc** | When editing `agent-skills/**` — follow [agent-skills/schema/README.md](agent-skills/schema/README.md); run `sync_agent_bundle.py` after changes |
+| **Generated `*.mdc`** | Always — from `agent-knowledge/rules/` (SSOT); listed in `.cursor/rules/_generated.json` |
+| **docs-skillbase-consistency.mdc** | When editing `**/*.{md,mdc}` — keep docs aligned with `agent-knowledge/`, generated reference, and workflow/CLI inventory |
+| **agent-knowledge-authoring.mdc** | When editing `agent-knowledge/**` — follow [agent-knowledge/schema/README.md](agent-knowledge/schema/README.md); run `sync_agent_knowledge.py` after changes |
 
-Regenerate bundle + Cursor rules: `uv run python devtools/sync_agent_bundle.py`. Portable
-example hygiene: `devtools/verify_portable_agent_content.py` (also runs under `--verify`).
+Regenerate bundle + Cursor rules: `uv run python devtools/sync_agent_knowledge.py`. Portable
+example hygiene is **guidance only** — bootstrap rule `portable-examples` (no substring CI gate).
 
 Patterns for LIST/UPDATE, architecture, security, TDD, and code review live in [docs/contributing/](docs/contributing/README.md) (not separate `.mdc` files). For API workflow guidance, use **implement-sdk-resource**; for failures, **troubleshoot-sdk** or [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md). Python examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals.
 
@@ -161,11 +170,11 @@ Canonical map of repo-root regions and who touches each.
 
 | Region | Role | Who touches it |
 |--------|------|----------------|
-| [`agent-skills/`](agent-skills/) | **Authoring** — skills, contracts, `INDEX.md`, `workflows.yaml`, `schema/` (not shipped) | Maintainers |
-| [`src/endorlabs/agent_bundle/`](src/endorlabs/agent_bundle/) | **Generated ship surface** — skills, contracts, `MANIFEST.json`, workflows; only [`__init__.py`](src/endorlabs/agent_bundle/__init__.py) hand-maintained | Sync output |
+| [`agent-knowledge/`](agent-knowledge/) | **Authoring** — `rules/`, `contracts/`, `skills/`, `INDEX.md`, `workflows.yaml`, `schema/` (not shipped) | Maintainers |
+| [`src/endorlabs/agent_knowledge/`](src/endorlabs/agent_knowledge/) | **Generated ship surface** — `rules/`, `contracts/`, `skills/`, `MANIFEST.json`, workflows; only [`__init__.py`](src/endorlabs/agent_knowledge/__init__.py) hand-maintained | Sync output |
 | [`src/endorlabs/`](src/endorlabs/) | **Runtime SDK** — transport, facades, workflows, context bootstrap | Contributors + agents (API) |
 | [`src/endorlabs/generated/`](src/endorlabs/generated/) | **Model-sync artifacts** — `registry_contract.py`, OpenAPI-aligned models | Regenerated via `devtools/model_sync.py` |
-| [`devtools/`](devtools/) | **Maintainer automation** — model sync, stub/reference gen, `sync_agent_bundle.py`, `agent_bundle_catalog.py` | Contributors |
+| [`devtools/`](devtools/) | **Maintainer automation** — model sync, stub/reference gen, `sync_agent_knowledge.py`, `agent_knowledge_catalog.py` | Contributors |
 | [`docs/`](docs/) | Normative contracts, guides, contributing playbooks | Contributors |
 | [`docs/generated-reference/`](docs/generated-reference/) | Generated API/resource matrices | Regenerated; CI drift gate |
 | [`tests/`](tests/) | Unit + integration | CI |
@@ -174,17 +183,20 @@ Canonical map of repo-root regions and who touches each.
 
 ```mermaid
 flowchart LR
-    subgraph author [agent_skills]
+    subgraph author [agent_knowledge_authoring]
         Schema[schema]
-        Skills[skill_dirs]
+        Rules[rules]
         Contracts[contracts]
+        Skills[skills]
         WorkflowsYaml[workflows.yaml]
     end
     subgraph devtools_region [devtools]
-        Sync[sync_agent_bundle.py]
-        Catalog[agent_bundle_catalog.py]
+        Sync[sync_agent_knowledge.py]
+        Catalog[agent_knowledge_catalog.py]
     end
-    subgraph ship [agent_bundle]
+    subgraph ship [agent_knowledge]
+        BundleRules[rules]
+        BundleContracts[contracts]
         BundleSkills[skills]
         Manifest[MANIFEST.json]
     end
@@ -201,15 +213,15 @@ flowchart LR
     Context --> IDE
 ```
 
-**Runtime rule:** agents read the **wheel** or **`.endorlabs-context/sdk/skills/`** — never repo `agent-skills/` directly.
+**Runtime rule:** agents read the **wheel** or **`.endorlabs-context/sdk/`** — never repo `agent-knowledge/` directly.
 
-**Maintainer skill workflow:**
+**Maintainer workflow:**
 
-1. Edit `agent-skills/` per [agent-skills/schema/README.md](agent-skills/schema/README.md)
-2. Run `uv run python devtools/sync_agent_bundle.py` (CI/pre-push `--verify`)
+1. Edit `agent-knowledge/` per [agent-knowledge/schema/README.md](agent-knowledge/schema/README.md)
+2. Run `uv run python devtools/sync_agent_knowledge.py` (CI/pre-push `--verify`)
 3. Optional IDE mirrors: `init(sync_skills=...)` or `uv run endor-context --no-openapi --no-user-docs --sync-skills cursor`
 
-Authoring rule: [`.cursor/rules/agent-skills-authoring.mdc`](.cursor/rules/agent-skills-authoring.mdc).
+Authoring rule: [`.cursor/rules/agent-knowledge-authoring.mdc`](.cursor/rules/agent-knowledge-authoring.mdc).
 
 ## SDK runtime architecture
 
@@ -222,7 +234,7 @@ src/endorlabs/
 ├── client_surface.pyi         # Generated per-resource facade stub (IDE)
 ├── facade.py                  # ResourceRuntimeFacade, ScanLogsFacade, …
 ├── registry.py                # Registry adapter (+ registry_overlay.py)
-├── agent_bundle/              # Generated agent knowledge (wheel); __init__.py only hand-maintained
+├── agent_knowledge/              # Generated agent knowledge (wheel); __init__.py only hand-maintained
 ├── generated/
 │   ├── registry_contract.py   # model-sync runtime contract
 │   └── models/                # OpenAPI-aligned Pydantic shards
@@ -252,7 +264,7 @@ src/endorlabs/
 - **User docs (local):** `.endorlabs-context/platform/user-docs/` — pre-downloaded mirror of docs.endorlabs.com, refreshed by `endorlabs.init()`. **Search here first** using Glob + Read. See `local-context.mdc` for the research protocol.
 - **User docs (online):** <https://docs.endorlabs.com/> — fallback only when local docs do not cover the topic.
 - **API spec (local):** `.endorlabs-context/platform/openapi/openapiv2.swagger.json` — use for required/optional fields, types, enums, read-only markers. **Grep this file** to confirm field formats before implementing.
-- **SDK agent bundle (local):** `.endorlabs-context/sdk/` — INDEX.md, MANIFEST.json, contracts, skills (materialized from wheel on every `init()`).
+- **Agent knowledge (local):** `.endorlabs-context/sdk/` — INDEX.md, MANIFEST.json, `rules/`, `contracts/`, `skills/` (materialized from wheel on every `init()`).
 - **API spec (online):** <https://api.endorlabs.com/download/openapiv2.swagger.json> — fallback for freshness checks.
 - **Bootstrap:** Create the gitignored `.endorlabs-context/` folder: `uv sync --extra context` then `import endorlabs; endorlabs.init()`. See [Context Bootstrap](#context-bootstrap-for-ai-agents) for options.
 
@@ -268,28 +280,28 @@ src/endorlabs/
 
 ## Agent Skills (On-Demand Workflows)
 
-Discovery table below; progressive disclosure, schema, and runtime paths: [agent-skills/README.md](agent-skills/README.md).
+Discovery table below; progressive disclosure, schema, and runtime paths: [agent-knowledge/README.md](agent-knowledge/README.md).
 
 | Skill | When to use | Entry |
 |-------|-------------|-------|
-| [analytics-estate-dependencies](agent-skills/analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, version cardinality, CVE remediation comparison | `endor-analytics-export-deps` |
-| [custom-sast-rules](agent-skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | `endor-semgrep-inventory` |
-| [dependency-finding-provenance](agent-skills/dependency-finding-provenance/) | Trace vulnerability/dependency lineage; fixed vs present at branch/commit scope | Playbook |
-| [dependency-provenance](agent-skills/dependency-provenance/) | Resolve package-version lineage by manifest path and ref/sha | Playbook |
-| [project-agent-context](agent-skills/project-agent-context/) | Multi-pass project context bundle; see `MULTIPASS_LLM_CONTRACT.md` | `endor-agent-context` |
-| [map-project-dependency-relationships](agent-skills/map-project-dependency-relationships/) | Namespace-wide project dependency graph (JSON) | `python -m endorlabs.workflows.relationships.map` |
-| [fetch-and-search-call-graph](agent-skills/fetch-and-search-call-graph/) | Fetch, decode, and search call graph artifacts | `endor-callgraph-search` |
-| [implement-sdk-resource](agent-skills/implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `devtools/model_sync.py` |
-| [model-sync-drift](agent-skills/model-sync-drift/) | OpenAPI/provenance drift; regen generated artifacts | `devtools/sync/` |
-| [retrieve-scan-results](agent-skills/retrieve-scan-results/) | Querying projects, scan results, and findings | Playbook |
-| [reachability-provenance](agent-skills/reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
-| [sso-integration-validation-troubleshooting](agent-skills/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, claims-to-namespace troubleshooting | Playbook |
-| [troubleshooting-scans](agent-skills/troubleshooting-scans/) | Scan regressions; ScanResults, ScanLogs, scripted diffs | `python -m endorlabs.workflows.troubleshooting_scans` |
-| [troubleshoot-sdk](agent-skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures | Playbook |
-| [troubleshoot-authlog](agent-skills/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, SSO/login troubleshooting | Playbook |
-| [validate-policy](agent-skills/validate-policy/) | Validate policies against project findings | `python -m endorlabs.workflows.policies.validate` |
+| [analytics-estate-dependencies](agent-knowledge/skills/analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, version cardinality, CVE remediation comparison | `endor-analytics-export-deps` |
+| [custom-sast-rules](agent-knowledge/skills/custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | `endor-semgrep-inventory` |
+| [dependency-finding-provenance](agent-knowledge/skills/dependency-finding-provenance/) | Trace vulnerability/dependency lineage; fixed vs present at branch/commit scope | Playbook |
+| [dependency-provenance](agent-knowledge/skills/dependency-provenance/) | Resolve package-version lineage by manifest path and ref/sha | Playbook |
+| [project-agent-context](agent-knowledge/skills/project-agent-context/) | Multi-pass project context bundle; see `MULTIPASS_LLM_CONTRACT.md` | `endor-agent-context` |
+| [map-project-dependency-relationships](agent-knowledge/skills/map-project-dependency-relationships/) | Namespace-wide project dependency graph (JSON) | `python -m endorlabs.workflows.relationships.map` |
+| [fetch-and-search-call-graph](agent-knowledge/skills/fetch-and-search-call-graph/) | Fetch, decode, and search call graph artifacts | `endor-callgraph-search` |
+| [implement-sdk-resource](agent-knowledge/skills/implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `devtools/model_sync.py` |
+| [model-sync-drift](agent-knowledge/skills/model-sync-drift/) | OpenAPI/provenance drift; regen generated artifacts | `devtools/sync/` |
+| [retrieve-scan-results](agent-knowledge/skills/retrieve-scan-results/) | Querying projects, scan results, and findings | Playbook |
+| [reachability-provenance](agent-knowledge/skills/reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
+| [sso-integration-validation-troubleshooting](agent-knowledge/skills/sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, claims-to-namespace troubleshooting | Playbook |
+| [troubleshooting-scans](agent-knowledge/skills/troubleshooting-scans/) | Scan regressions; ScanResults, ScanLogs, scripted diffs | `python -m endorlabs.workflows.troubleshooting_scans` |
+| [troubleshoot-sdk](agent-knowledge/skills/troubleshoot-sdk/) | Debugging 404s, 500s, namespace mismatches, test failures | Playbook |
+| [troubleshoot-authlog](agent-knowledge/skills/troubleshoot-authlog/) | AuthenticationLog, AuthorizationPolicy, SSO/login troubleshooting | Playbook |
+| [validate-policy](agent-knowledge/skills/validate-policy/) | Validate policies against project findings | `python -m endorlabs.workflows.policies.validate` |
 
-At runtime, read skills from the wheel or `.endorlabs-context/sdk/skills/` (`.cursor/skills` when mirrored). Repo `agent-skills/` is authoring only.
+At runtime, read skills from the wheel or `.endorlabs-context/sdk/skills/` (`.cursor/skills` when mirrored). Repo `agent-knowledge/skills/` is authoring only; bootstrap rules ship under `sdk/rules/`.
 
 CI runs these (except optional endorctl); include pyright. Unit tests run without credentials; integration tests require `ENDOR_*` env vars.
 

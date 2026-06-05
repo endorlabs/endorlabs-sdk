@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from devtools.agent_bundle_catalog import parse_skill_md, portable_frontmatter
+from devtools.agent_knowledge_catalog import parse_skill_md, portable_frontmatter
 
 
 def test_parse_skill_frontmatter_inline_description(tmp_path: Path) -> None:

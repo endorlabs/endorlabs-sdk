@@ -14,10 +14,11 @@ import endorlabs
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONTEXT_DIR = REPO_ROOT / ".endorlabs-context"
-SKILLS_PREFIX = "agent-skills/"
-AGENT_BUNDLE_PREFIX = "src/endorlabs/agent_bundle/"
+AGENT_PREFIX = "agent-knowledge/"
+AGENT_KNOWLEDGE_SKILLS = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge" / "skills"
+AGENT_KNOWLEDGE_PREFIX = "src/endorlabs/agent_knowledge/"
 CONTEXT_PREFIX = "src/endorlabs/context/"
-SYNC_AGENT_BUNDLE = REPO_ROOT / "devtools" / "sync_agent_bundle.py"
+SYNC_AGENT_KNOWLEDGE = REPO_ROOT / "devtools" / "sync_agent_knowledge.py"
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +35,14 @@ def _normalize_paths(paths: Sequence[str]) -> tuple[str, ...]:
 
 def _requires_skill_sync(paths: Sequence[str]) -> bool:
     """Return whether the staged changes should refresh skill mirrors."""
-    return any(path.startswith((SKILLS_PREFIX, AGENT_BUNDLE_PREFIX)) for path in paths)
+    return any(
+        path.startswith((AGENT_PREFIX, AGENT_KNOWLEDGE_PREFIX)) for path in paths
+    )
 
 
 def _requires_bundle_sync(paths: Sequence[str]) -> bool:
-    """Return whether agent-skills changed and the shipped bundle must regenerate."""
-    return any(path.startswith(SKILLS_PREFIX) for path in paths)
+    """Return whether agent-knowledge/ changed and shipped package must regenerate."""
+    return any(path.startswith(AGENT_PREFIX) for path in paths)
 
 
 def _requires_context_refresh(paths: Sequence[str]) -> bool:
@@ -69,11 +72,11 @@ def _has_openapi_auth() -> bool:
 
 
 def _run_bundle_sync() -> None:
-    """Regenerate committed agent_bundle artifacts from agent-skills."""
-    if not SYNC_AGENT_BUNDLE.is_file():
-        raise FileNotFoundError(f"Missing sync script: {SYNC_AGENT_BUNDLE}")
+    """Regenerate committed agent_knowledge artifacts from agent-knowledge/."""
+    if not SYNC_AGENT_KNOWLEDGE.is_file():
+        raise FileNotFoundError(f"Missing sync script: {SYNC_AGENT_KNOWLEDGE}")
     _ = subprocess.run(  # noqa: S603
-        [sys.executable, str(SYNC_AGENT_BUNDLE)],
+        [sys.executable, str(SYNC_AGENT_KNOWLEDGE)],
         cwd=REPO_ROOT,
         check=True,
     )
@@ -100,7 +103,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                     source_dir = CONTEXT_DIR / "sdk" / "skills"
                     repo_root = REPO_ROOT
                 else:
-                    source_dir = REPO_ROOT / "agent-skills"
+                    source_dir = AGENT_KNOWLEDGE_SKILLS
                     repo_root = REPO_ROOT
                 synced_paths = endorlabs.sync_agent_skills(
                     repo_root=repo_root,
@@ -124,6 +127,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 output_dir=CONTEXT_DIR,
                 include_openapi=include_openapi,
                 include_user_docs=True,
+                include_agent_knowledge=True,
                 force=True,
                 sync_skills="none",
             )

@@ -1,6 +1,9 @@
 ---
 description: Prefer workflow CLI, then library imports, then Client; extend artifacts instead of re-fetching discovery.
 alwaysApply: true
+x-endor-generated: true
+x-endor-source: agent-knowledge/rules/workflow-composition.md
+x-endor-source-sha256: 35508ce06ddc67c1872fcc7b0974cba67ff538cb6fcd2732dc153d3e188800b8
 ---
 
 # Workflow composition
