@@ -313,8 +313,7 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "Spec (local preferred): "
-            "`.endorlabs-context/platform/openapi/openapiv2.swagger.json`.",
+            "Spec (local preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.",
             f"Fallback URL: `{SPEC_URL}`.",
             "",
         ]
