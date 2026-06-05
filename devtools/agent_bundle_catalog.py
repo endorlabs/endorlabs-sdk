@@ -315,7 +315,10 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
 
 def list_skill_refs(skill_dir: Path, *, bundle_skill_prefix: str) -> list[str]:
     refs: list[str] = []
-    for path in sorted(skill_dir.rglob("*")):
+    for path in sorted(
+        skill_dir.rglob("*"),
+        key=lambda candidate: candidate.relative_to(skill_dir).as_posix().encode(),
+    ):
         if not path.is_file():
             continue
         rel = path.relative_to(skill_dir).as_posix()
