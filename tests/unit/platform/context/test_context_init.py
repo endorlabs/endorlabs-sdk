@@ -160,7 +160,7 @@ class TestInit:
         assert status.openapi_path == status.platform_openapi_path
         assert status.user_docs_path is None
         assert status.user_docs_count == 0
-        assert status.agent_bundle_path == output_dir / "sdk"
+        assert status.agent_knowledge_path == output_dir / "sdk"
         assert status.context_json_path == output_dir / "context.json"
         assert status.downloaded_at is not None
 
@@ -294,11 +294,11 @@ class TestInit:
                 output_dir=output_dir,
                 include_openapi=False,
                 include_user_docs=False,
-                include_sdk_bundle=True,
+                include_agent_knowledge=True,
                 sync_skills="none",
             )
         mock_cls.assert_not_called()
-        assert status.agent_bundle_path == output_dir / "sdk"
+        assert status.agent_knowledge_path == output_dir / "sdk"
         assert status.context_json_path == output_dir / "context.json"
 
 
@@ -325,13 +325,13 @@ class TestTopLevelInit:
         assert hasattr(endorlabs, "sync_agent_skills")
         assert callable(endorlabs.sync_agent_skills)
 
-    def test_top_level_agent_bundle_helpers(self) -> None:
-        """Test agent bundle helpers are accessible from endorlabs module."""
+    def test_top_level_agent_knowledge_helpers(self) -> None:
+        """Test agent knowledge helpers are accessible from endorlabs module."""
         import endorlabs
 
-        assert hasattr(endorlabs, "agent_bundle_dir")
-        assert hasattr(endorlabs, "agent_index_path")
-        assert hasattr(endorlabs, "agent_manifest")
+        assert hasattr(endorlabs, "agent_knowledge_dir")
+        assert hasattr(endorlabs, "agent_knowledge_index_path")
+        assert hasattr(endorlabs, "agent_knowledge_manifest")
 
 
 class TestContextDepsCheck:

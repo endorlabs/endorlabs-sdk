@@ -21,7 +21,12 @@ def _load_sast_rule_manager() -> ModuleType:
         / "sast_rule_manager.py"
     )
     skills_src_path = (
-        root / "agent-skills" / "custom-sast-rules" / "scripts" / "sast_rule_manager.py"
+        root
+        / "agent"
+        / "skills"
+        / "custom-sast-rules"
+        / "scripts"
+        / "sast_rule_manager.py"
     )
     script_path = cursor_path if cursor_path.is_file() else skills_src_path
     spec = importlib.util.spec_from_file_location(

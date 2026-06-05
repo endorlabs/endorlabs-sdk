@@ -1,6 +1,6 @@
 """Context bootstrap for Endor Labs agentic workflows.
 
-This module materializes the shipped agent bundle and optionally downloads
+This module materializes the shipped agent knowledge package and optionally downloads
 
 platform context (OpenAPI spec and user documentation) for AI agents.
 
@@ -24,7 +24,7 @@ Example::
 
     >>> status = endorlabs.init()
 
-    >>> print(status.agent_bundle_path)
+    >>> print(status.agent_knowledge_path)
 
     .endorlabs-context/sdk
 
@@ -69,7 +69,7 @@ def init(
     output_dir: str | Path = ".endorlabs-context",
     include_openapi: bool = True,
     include_user_docs: bool = True,
-    include_sdk_bundle: bool = True,
+    include_agent_knowledge: bool = True,
     max_pages: int | None = None,
     force: bool = False,
     sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
@@ -84,7 +84,7 @@ def init(
         output_dir=output_dir,
         include_openapi=include_openapi,
         include_user_docs=include_user_docs,
-        include_sdk_bundle=include_sdk_bundle,
+        include_agent_knowledge=include_agent_knowledge,
         max_pages=max_pages,
         force=force,
         sync_skills=sync_skills,

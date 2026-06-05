@@ -1,27 +1,33 @@
 ---
-description: Prefer local context even when gitignored paths are hard to see
+description: Check gitignored .endorlabs-context paths explicitly; prefer local platform docs before the web; never print secrets.
 alwaysApply: true
+x-endor-generated: true
+x-endor-source: agent-knowledge/rules/local-context.md
+x-endor-source-sha256: 4fe522781a00a20c5d81d0d1ce58707bf10a5c527c21ff416e90fe1cca60a42d
 ---
 
-# Local Context Discovery
+# Local context discovery
 
-When repository guidance references local context under gitignored paths, do not
-assume those files are absent just because a search or listing did not show them.
+When guidance references local context under gitignored paths, do not assume those
+files are absent because a broad search did not show them.
 
-- Check likely local-context paths explicitly when relevant, especially:
-  - `.endorlabs-context/`
-  - `.endorlabs-context/context.json`
-  - `.endorlabs-context/sdk/INDEX.md`
-  - `.endorlabs-context/sdk/MANIFEST.json`
-  - `.endorlabs-context/platform/openapi/openapiv2.swagger.json`
-  - `.endorlabs-context/platform/user-docs/`
-  - `.env`
-- Gitignored files and directories may be missing from broad search results or
-  normal workspace exploration. Try targeted access anyway before concluding the
-  local context is unavailable.
-- Use semantic search and direct file reads against the expected local-context
-  paths when investigating platform behavior, API shape, workflows, or setup.
-- Prefer local `.endorlabs-context/platform/` docs and spec before going to external
-  docs or the web.
-- Never print secrets from `.env`; only confirm whether expected variables exist
-  when that is necessary for the task.
+## Check explicitly
+
+- `.endorlabs-context/`
+- `.endorlabs-context/context.json`
+- `.endorlabs-context/sdk/INDEX.md`
+- `.endorlabs-context/sdk/MANIFEST.json`
+- `.endorlabs-context/platform/openapi/openapiv2.swagger.json`
+- `.endorlabs-context/platform/user-docs/`
+- `.env` (confirm variables exist only — **never print secrets**)
+
+Gitignored paths may be missing from workspace search; try targeted reads before
+concluding context is unavailable.
+
+## Research order
+
+1. Shipped package under `.endorlabs-context/sdk/` (or wheel via `agent_knowledge_index_path()`).
+2. Local OpenAPI and user docs under `.endorlabs-context/platform/`.
+3. Online API spec and docs only as fallback.
+
+Materialize with `endorlabs.init()` when a cwd-relative tree is needed.

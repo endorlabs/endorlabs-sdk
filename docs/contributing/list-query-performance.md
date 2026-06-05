@@ -2,6 +2,8 @@
 
 Guidance for SDK users and contributors when choosing **namespace scope**, **`traverse`**, **filters**, and **pagination** so list calls stay reliable. Normative list behavior remains in [contracts.md](../contracts.md); traverse UX patterns are in [namespace-traversal.md](namespace-traversal.md).
 
+**Agent-facing summary (shipped):** `agent/rules/list-query-performance.md` (`rules/` in the wheel bundle).
+
 ## Scope first
 
 - Prefer **`Client(tenant="<child-or-leaf-namespace>")`** and **list without `traverse`** when you only need resources in that namespace.

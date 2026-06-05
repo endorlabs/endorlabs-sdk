@@ -492,32 +492,32 @@ def _resolve_skill_source_root(repo_root_path: Path) -> Path:
     materialized = repo_root_path / DEFAULT_CONTEXT_DIR / SDK_DIRNAME / "skills"
     if materialized.is_dir():
         return materialized
-    from endorlabs.agent_bundle import agent_bundle_dir
+    from endorlabs.agent_knowledge import agent_knowledge_dir
 
-    return agent_bundle_dir() / "skills"
+    return agent_knowledge_dir() / "skills"
 
 
-def materialize_agent_bundle(
+def materialize_agent_knowledge(
     output_dir: str | Path,
     *,
     force: bool = False,
 ) -> Path:
-    """Copy the wheel-shipped agent bundle into context sdk/."""
-    from endorlabs.agent_bundle import agent_bundle_dir
+    """Copy the wheel-shipped agent knowledge package into context sdk/."""
+    from endorlabs.agent_knowledge import agent_knowledge_dir
 
     output_path = Path(output_dir)
     dest = sdk_dir(output_path)
-    source = agent_bundle_dir()
+    source = agent_knowledge_dir()
     if dest.exists() and not force:
         logger.info(
-            "Agent bundle already materialized: %s (use force=True to refresh)",
+            "Agent knowledge already materialized: %s (use force=True to refresh)",
             dest,
         )
         return dest
     if dest.exists():
         shutil.rmtree(dest)
     _ = shutil.copytree(source, dest)
-    logger.info("Materialized agent bundle to %s", dest)
+    logger.info("Materialized agent knowledge to %s", dest)
     return dest
 
 
@@ -525,7 +525,7 @@ def write_context_json(
     *,
     output_dir: Path,
     sdk_version: str,
-    agent_bundle_path: Path | None,
+    agent_knowledge_path: Path | None,
     platform_openapi: Path | None,
     platform_user_docs: Path | None,
     include_openapi: bool,
@@ -538,7 +538,9 @@ def write_context_json(
         "schema_version": CONTEXT_JSON_SCHEMA_VERSION,
         "sdk_version": sdk_version,
         "materialized_at": datetime.now(UTC).isoformat(),
-        "agent_bundle_path": str(agent_bundle_path) if agent_bundle_path else None,
+        "agent_knowledge_path": (
+            str(agent_knowledge_path) if agent_knowledge_path else None
+        ),
         "context_json_path": str(manifest_path),
         "platform_openapi_path": str(platform_openapi) if platform_openapi else None,
         "platform_user_docs_path": str(platform_user_docs)
@@ -881,7 +883,7 @@ def init(
     output_dir: str | Path = DEFAULT_CONTEXT_DIR,
     include_openapi: bool = True,
     include_user_docs: bool = True,
-    include_sdk_bundle: bool = True,
+    include_agent_knowledge: bool = True,
     max_pages: int | None = None,
     force: bool = False,
     sync_skills: SkillSyncMode = "none",
@@ -889,7 +891,7 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Always materializes the shipped SDK agent bundle under ``sdk/`` (no auth).
+    Always materializes the shipped agent knowledge package under ``sdk/`` (no auth).
     Optionally downloads OpenAPI spec and user docs under ``platform/``, and
     mirrors materialized skills into IDE discovery directories.
 
@@ -897,7 +899,7 @@ def init(
         output_dir: Directory to save context files (default: .endorlabs-context).
         include_openapi: Download OpenAPI spec (default: True).
         include_user_docs: Download user documentation (default: True).
-        include_sdk_bundle: Materialize wheel agent bundle to sdk/ (default: True).
+        include_agent_knowledge: Materialize agent knowledge to sdk/ (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download / refresh even if files exist (default: False).
         sync_skills: Mirror materialized ``sdk/skills/`` into runtime dirs
@@ -917,7 +919,7 @@ def init(
 
         >>> import endorlabs
         >>> status = endorlabs.init()
-        >>> print(status.agent_bundle_path)
+        >>> print(status.agent_knowledge_path)
         .endorlabs-context/sdk
 
     """
@@ -927,7 +929,7 @@ def init(
     output_path = Path(output_dir)
     normalized_sync_target = _normalize_skill_sync_mode(sync_skills)
     needs_context_dir = (
-        include_sdk_bundle
+        include_agent_knowledge
         or include_openapi
         or include_user_docs
         or normalized_sync_target != "none"
@@ -935,9 +937,9 @@ def init(
     if needs_context_dir:
         output_path.mkdir(parents=True, exist_ok=True)
 
-    agent_bundle_dest: Path | None = None
-    if include_sdk_bundle:
-        agent_bundle_dest = materialize_agent_bundle(output_path, force=force)
+    agent_knowledge_dest: Path | None = None
+    if include_agent_knowledge:
+        agent_knowledge_dest = materialize_agent_knowledge(output_path, force=force)
 
     platform_openapi: Path | None = None
     platform_user_docs: Path | None = None
@@ -964,14 +966,16 @@ def init(
     if normalized_sync_target != "none":
         skill_source = sdk_dir(output_path) / "skills"
         if not skill_source.is_dir():
-            if include_sdk_bundle:
+            if include_agent_knowledge:
                 skill_source = (
-                    agent_bundle_dest / "skills" if agent_bundle_dest else skill_source
+                    agent_knowledge_dest / "skills"
+                    if agent_knowledge_dest
+                    else skill_source
                 )
             else:
-                from endorlabs.agent_bundle import agent_bundle_dir
+                from endorlabs.agent_knowledge import agent_knowledge_dir
 
-                skill_source = agent_bundle_dir() / "skills"
+                skill_source = agent_knowledge_dir() / "skills"
         synced_skill_paths = sync_agent_skills(
             repo_root=output_path.resolve().parent,
             target=normalized_sync_target,
@@ -981,7 +985,7 @@ def init(
     manifest_path = write_context_json(
         output_dir=output_path,
         sdk_version=__version__,
-        agent_bundle_path=agent_bundle_dest,
+        agent_knowledge_path=agent_knowledge_dest,
         platform_openapi=platform_openapi,
         platform_user_docs=platform_user_docs,
         include_openapi=include_openapi,
@@ -990,7 +994,7 @@ def init(
     )
 
     return InitStatus(
-        agent_bundle_path=agent_bundle_dest,
+        agent_knowledge_path=agent_knowledge_dest,
         context_json_path=manifest_path,
         platform_openapi_path=platform_openapi,
         platform_user_docs_path=platform_user_docs,
