@@ -64,7 +64,7 @@ def _load_model_sync_entities() -> set[str]:
             entity_names.update(value for value in canonical if isinstance(value, str))
     return entity_names
 RESOURCE_DESCRIPTION_OVERLAY_PATH = (
-    repo_root / "scripts" / "model_sync_profiles" / "resource_descriptions.json"
+    repo_root / "devtools" / "model_sync_profiles" / "resource_descriptions.json"
 )
 
 # ---------------------------------------------------------------------------
