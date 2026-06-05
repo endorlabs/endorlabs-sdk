@@ -51,32 +51,50 @@ except ImportError:  # editable install or no build
     __version__ = "0.0.0.dev0"
 
 
-def agent_bundle_dir() -> Path:
-    """Return site-packages path to the shipped agent bundle."""
-    from .agent_bundle import agent_bundle_dir as _agent_bundle_dir
+def agent_knowledge_dir() -> Path:
+    """Return site-packages path to the shipped agent knowledge package."""
+    from .agent_knowledge import agent_knowledge_dir as _agent_knowledge_dir
 
-    return _agent_bundle_dir()
-
-
-def agent_index_path() -> Path:
-    """Return path to Tier-0 INDEX.md in the shipped agent bundle."""
-    from .agent_bundle import agent_index_path as _agent_index_path
-
-    return _agent_index_path()
+    return _agent_knowledge_dir()
 
 
-def agent_manifest() -> dict[str, Any]:
-    """Parse MANIFEST.json from the shipped agent bundle."""
-    from .agent_bundle import agent_manifest as _agent_manifest
+def agent_knowledge_index_path() -> Path:
+    """Return path to Tier-0 INDEX.md in the shipped agent knowledge package."""
+    from .agent_knowledge import (
+        agent_knowledge_index_path as _agent_knowledge_index_path,
+    )
 
-    return _agent_manifest()
+    return _agent_knowledge_index_path()
+
+
+def agent_knowledge_manifest() -> dict[str, Any]:
+    """Parse MANIFEST.json from the shipped agent knowledge package."""
+    from .agent_knowledge import agent_knowledge_manifest as _agent_knowledge_manifest
+
+    return _agent_knowledge_manifest()
+
+
+def agent_knowledge_rule_ids() -> list[str]:
+    """Return bootstrap rule ids from the shipped agent knowledge manifest."""
+    from .agent_knowledge import agent_knowledge_rule_ids as _agent_knowledge_rule_ids
+
+    return _agent_knowledge_rule_ids()
+
+
+def agent_knowledge_bootstrap_paths() -> list[Path]:
+    """Return INDEX.md and bootstrap rule paths for harness injection."""
+    from .agent_knowledge import (
+        agent_knowledge_bootstrap_paths as _agent_knowledge_bootstrap_paths,
+    )
+
+    return _agent_knowledge_bootstrap_paths()
 
 
 def init(
     output_dir: str | Path = ".endorlabs-context",
     include_openapi: bool = True,
     include_user_docs: bool = True,
-    include_sdk_bundle: bool = True,
+    include_agent_knowledge: bool = True,
     max_pages: int | None = None,
     force: bool = False,
     sync_skills: Literal["none", "cursor", "claude", "both"] = "none",
@@ -84,14 +102,14 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Materializes the shipped SDK agent bundle under ``sdk/`` (no auth required).
+    Materializes the shipped agent knowledge package under ``sdk/`` (no auth required).
     Optionally downloads OpenAPI spec and user docs under ``platform/``.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
         include_openapi: Download OpenAPI spec (default: True).
         include_user_docs: Download user documentation (default: True).
-        include_sdk_bundle: Materialize wheel agent bundle (default: True).
+        include_agent_knowledge: Materialize agent knowledge to sdk/ (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download even if files exist (default: False).
         sync_skills: Mirror materialized ``sdk/skills/`` into runtime directories.
@@ -111,7 +129,7 @@ def init(
 
         >>> import endorlabs
         >>> status = endorlabs.init()
-        >>> print(status.agent_index_path)
+        >>> print(status.agent_knowledge_index_path)
         .endorlabs-context/sdk/INDEX.md
 
     """
@@ -121,7 +139,7 @@ def init(
         output_dir=output_dir,
         include_openapi=include_openapi,
         include_user_docs=include_user_docs,
-        include_sdk_bundle=include_sdk_bundle,
+        include_agent_knowledge=include_agent_knowledge,
         max_pages=max_pages,
         force=force,
         sync_skills=sync_skills,
@@ -160,9 +178,11 @@ __all__ = [
     "ServerError",
     "UnauthorizedError",
     "ValidationError",
-    "agent_bundle_dir",
-    "agent_index_path",
-    "agent_manifest",
+    "agent_knowledge_bootstrap_paths",
+    "agent_knowledge_dir",
+    "agent_knowledge_index_path",
+    "agent_knowledge_manifest",
+    "agent_knowledge_rule_ids",
     "dependency_metadata",
     "finding",
     "init",
