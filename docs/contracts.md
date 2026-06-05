@@ -30,7 +30,7 @@ This document is the in-repo source of truth for shared SDK semantics.
 
 ## OpenAPI / spec
 
-- Local (preferred): `.endorlabs-context/openapiv2.swagger.json`.
+- Local (preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
 - List endpoints use `v1/namespaces/{tenant_meta.namespace}/{resource_name}`.
 - Update (PATCH) uses collection URL; UUID and payload are in request body.
 

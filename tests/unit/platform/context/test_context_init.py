@@ -154,9 +154,14 @@ class TestInit:
         )
 
         assert isinstance(status, InitStatus)
-        assert status.openapi_path == output_dir / "openapiv2.swagger.json"
+        assert status.platform_openapi_path == (
+            output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
+        )
+        assert status.openapi_path == status.platform_openapi_path
         assert status.user_docs_path is None
         assert status.user_docs_count == 0
+        assert status.agent_bundle_path == output_dir / "sdk"
+        assert status.context_json_path == output_dir / "context.json"
         assert status.downloaded_at is not None
 
     def test_init_creates_output_directory(self, tmp_path: Path) -> None:
@@ -182,8 +187,8 @@ class TestInit:
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
-        output_dir.mkdir(parents=True)
-        openapi_file = output_dir / "openapiv2.swagger.json"
+        openapi_file = output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
+        openapi_file.parent.mkdir(parents=True, exist_ok=True)
         openapi_file.write_text('{"old": true}')
 
         mock_client = self._mock_api_client({"new": True})
@@ -206,8 +211,8 @@ class TestInit:
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
-        output_dir.mkdir(parents=True)
-        openapi_file = output_dir / "openapiv2.swagger.json"
+        openapi_file = output_dir / "platform" / "openapi" / "openapiv2.swagger.json"
+        openapi_file.parent.mkdir(parents=True, exist_ok=True)
         openapi_file.write_text('{"old": true}')
 
         mock_client = self._mock_api_client({"new": True})
@@ -247,13 +252,11 @@ class TestInit:
 
         mock_cls.assert_not_called()
         assert status.openapi_path is None
-        assert status.user_docs_path == output_dir / "docs"
+        assert status.user_docs_path == output_dir / "platform" / "user-docs"
         assert status.user_docs_count == 7
 
-    def test_init_skills_only_skips_context_dir_and_api_client(
-        self, tmp_path: Path
-    ) -> None:
-        """Skill-only sync should not create context output or require auth."""
+    def test_init_skills_only_materializes_sdk_bundle(self, tmp_path: Path) -> None:
+        """Skill-only sync still materializes sdk/ and context.json."""
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
@@ -263,7 +266,7 @@ class TestInit:
             patch(
                 "endorlabs.context._sync.sync_agent_skills",
                 return_value={"cursor": mirrored_path},
-            ),
+            ) as mock_sync,
         ):
             status = init(
                 output_dir=output_dir,
@@ -273,10 +276,30 @@ class TestInit:
             )
 
         mock_cls.assert_not_called()
-        assert not output_dir.exists()
+        assert output_dir.exists()
+        assert (output_dir / "sdk" / "INDEX.md").is_file()
         assert status.openapi_path is None
         assert status.user_docs_path is None
         assert status.synced_skill_paths == {"cursor": mirrored_path}
+        mock_sync.assert_called_once()
+        assert mock_sync.call_args.kwargs["source_dir"] == output_dir / "sdk" / "skills"
+
+    def test_init_sdk_bundle_only(self, tmp_path: Path) -> None:
+        """init can materialize sdk bundle without downloads or skill sync."""
+        from endorlabs.context._sync import init
+
+        output_dir = tmp_path / ".endor-context"
+        with patch("endorlabs.api_client.APIClient") as mock_cls:
+            status = init(
+                output_dir=output_dir,
+                include_openapi=False,
+                include_user_docs=False,
+                include_sdk_bundle=True,
+                sync_skills="none",
+            )
+        mock_cls.assert_not_called()
+        assert status.agent_bundle_path == output_dir / "sdk"
+        assert status.context_json_path == output_dir / "context.json"
 
 
 class TestTopLevelInit:
@@ -302,11 +325,13 @@ class TestTopLevelInit:
         assert hasattr(endorlabs, "sync_agent_skills")
         assert callable(endorlabs.sync_agent_skills)
 
-    def test_sync_agent_skills_in_all(self) -> None:
-        """Test skill sync helper is in __all__."""
+    def test_top_level_agent_bundle_helpers(self) -> None:
+        """Test agent bundle helpers are accessible from endorlabs module."""
         import endorlabs
 
-        assert "sync_agent_skills" in endorlabs.__all__
+        assert hasattr(endorlabs, "agent_bundle_dir")
+        assert hasattr(endorlabs, "agent_index_path")
+        assert hasattr(endorlabs, "agent_manifest")
 
 
 class TestContextDepsCheck:

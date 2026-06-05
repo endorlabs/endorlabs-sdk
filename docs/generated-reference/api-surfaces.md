@@ -6,13 +6,8 @@ Auto-generated inventories for stable/public surfaces.
 
 ## Model-sync coverage snapshot
 
-- mapped entities: `215`
-- generated artifact files: `153`
 - facade contract resources: `41`
-- registry parity status: `pass`
-- operation metadata entries: `749`
-- payload schema resources: `41`
-- runtime model import index entries: `41`
+- canonical entities (union): `41`
 
 - `APIClient`
 - `AmbiguousError`
@@ -28,6 +23,9 @@ Auto-generated inventories for stable/public surfaces.
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
+- `agent_bundle_dir`
+- `agent_index_path`
+- `agent_manifest`
 - `dependency_metadata`
 - `finding`
 - `init`

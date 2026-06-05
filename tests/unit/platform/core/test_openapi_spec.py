@@ -12,7 +12,13 @@ import pytest
 from endorlabs.registry import RESOURCE_REGISTRY
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SPEC_PATH = _REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
+_SPEC_PATH = (
+    _REPO_ROOT
+    / ".endorlabs-context"
+    / "platform"
+    / "openapi"
+    / "openapiv2.swagger.json"
+)
 
 
 def test_openapi_spec_paths_exist() -> None:

@@ -1,7 +1,7 @@
 # Resources (SDK API Surface)
 
 Auto-generated from `src/endorlabs/registry.py` and OpenAPI spec.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (215 entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resources, 41 canonical entities).
 Each operation column is `sdk/spec` where spec is derived from OpenAPI
 collection and item paths.
 
@@ -19,13 +19,8 @@ Legend:
 |----------|------------------|----------------|-------------------|-------------------|-------------------|-------|--------|-------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `215`
-- generated artifact files: `153`
 - facade contract resources: `41`
-- registry parity status: `pass`
-- operation metadata entries: `749`
-- payload schema resources: `41`
-- runtime model import index entries: `41`
+- canonical entities (union): `41`
 
 | APIKey | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
 | AuditLog | yes/yes | yes/yes | yes/yes | no/no | yes/yes | tenant | — | — |
@@ -69,5 +64,5 @@ Legend:
 | VersionUpgrade | yes/yes | yes/yes | no/yes | no/no | yes/yes | tenant | — | — |
 | Vulnerability | yes/yes | yes/yes | no/yes | no/no | no/yes | oss | — | — |
 
-Spec (local preferred): `.endorlabs-context/openapiv2.swagger.json`.
+Spec (local preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
 Fallback URL: `https://api.endorlabs.com/download/openapiv2.swagger.json`.

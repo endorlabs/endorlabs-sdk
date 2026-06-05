@@ -7,7 +7,9 @@ construction.
 
 - `registry_contract.py` - generated runtime registry contract used by
   `endorlabs.registry`.
-- `models/**` - mirrored generated model modules produced by model-sync.
+- `models/**` - generated model modules produced by model-sync (no on-disk staging tree).
+
+There is no committed `workspace/model-sync/` staging directory; the runtime contract lives in `registry_contract.py` only.
 
 ## What is hand-maintained
 
