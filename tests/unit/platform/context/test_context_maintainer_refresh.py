@@ -9,22 +9,26 @@ from endorlabs.context import _maintainer_refresh
 
 
 def test_main_refreshes_skill_mirrors_for_skills_changes(monkeypatch: object) -> None:
-    """Skill-source changes should invoke runtime skill mirroring."""
+    """Skill-source changes should regenerate bundle and invoke runtime mirroring."""
     sync_mock = Mock(return_value={"cursor": Path(".cursor/skills")})
     init_mock = Mock()
+    bundle_sync_mock = Mock()
 
     monkeypatch.setattr(
         _maintainer_refresh, "_configured_skill_sync_target", lambda: "cursor"
     )
+    monkeypatch.setattr(_maintainer_refresh, "_run_bundle_sync", bundle_sync_mock)
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "init", init_mock)
 
-    result = _maintainer_refresh.main(["skills-src/README.md"])
+    result = _maintainer_refresh.main(["agent-skills/README.md"])
 
     assert result == 0
+    bundle_sync_mock.assert_called_once()
     sync_mock.assert_called_once_with(
         repo_root=_maintainer_refresh.REPO_ROOT,
         target="cursor",
+        source_dir=_maintainer_refresh.REPO_ROOT / "agent-skills",
     )
     init_mock.assert_not_called()
 
@@ -40,7 +44,7 @@ def test_main_skips_skill_sync_when_no_runtime_mirror_is_configured(
     )
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
 
-    result = _maintainer_refresh.main(["skills-src/README.md"])
+    result = _maintainer_refresh.main(["agent-skills/README.md"])
 
     assert result == 0
     sync_mock.assert_not_called()

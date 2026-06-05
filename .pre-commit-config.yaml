@@ -23,7 +23,7 @@ repos:
         args: [run, python, -m, endorlabs.context._maintainer_refresh]
         language: system
         require_serial: true
-        files: ^(skills-src/.*|src/endorlabs/context/.*)$
+        files: ^(agent-skills/.*|src/endorlabs/context/.*|src/endorlabs/agent_bundle/.*)$
 
       - id: ruff-check
         name: ruff check (repo-wide)
@@ -63,16 +63,17 @@ repos:
           - --select
           - E,F,I,UP
           - devtools/model_sync.py
-          - devtools/model_sync_pr_deltas.py
           - devtools/generate_client_stub.py
           - devtools/generate_reference_docs.py
+          - devtools/sync_agent_bundle.py
+          - devtools/agent_bundle_catalog.py
           - devtools/sync/cli.py
           - devtools/sync/upstream_verify.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_bundle\.py|agent_bundle_catalog\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: pyright-ci-critical-automation
         name: pyright (CI-critical automation scripts)
@@ -83,16 +84,17 @@ repos:
           - --project
           - pyproject.toml
           - devtools/model_sync.py
-          - devtools/model_sync_pr_deltas.py
           - devtools/generate_client_stub.py
           - devtools/generate_reference_docs.py
+          - devtools/sync_agent_bundle.py
+          - devtools/agent_bundle_catalog.py
           - devtools/sync/cli.py
           - devtools/sync/upstream_verify.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|model_sync_pr_deltas\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_bundle\.py|agent_bundle_catalog\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: model-sync-contract-validate
         name: model-sync contract validation
@@ -108,6 +110,16 @@ repos:
         stages: [pre-push]
         files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
+      - id: agent-bundle-verify
+        name: agent bundle verify (agent-skills vs shipped bundle)
+        entry: uv
+        args: [run, python, devtools/sync_agent_bundle.py, --verify]
+        language: system
+        pass_filenames: false
+        require_serial: true
+        stages: [pre-push]
+        files: (^agent-skills/.*|^src/endorlabs/agent_bundle/.*|devtools/sync_agent_bundle\.py$|devtools/agent_bundle_catalog\.py$)
+
       - id: model-sync-upstream-verify
         name: model-sync upstream verify (OpenAPI digest vs committed)
         entry: uv
@@ -122,9 +134,9 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: [--skip, "*.json,*.lock,.git,.endorlabs-context,src/endorlabs/generated,workspace/model-sync"]
+        args: [--skip, "*.json,*.lock,.git,.endorlabs-context,src/endorlabs/generated"]
         # pre-push passes explicit paths; --skip alone does not ignore them.
-        exclude: ^(src/endorlabs/generated/|workspace/model-sync/).*$
+        exclude: ^src/endorlabs/generated/.*$
 
   # --- Python SAST ---
   - repo: https://github.com/PyCQA/bandit

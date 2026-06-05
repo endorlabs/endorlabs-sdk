@@ -1,6 +1,6 @@
 # V1SavedQuery
 
-V1SavedQuery resource facade.
+SavedQuery implements the metric query requests.
 
 ## Client access
 

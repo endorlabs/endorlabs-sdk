@@ -15,6 +15,7 @@
   "Metric": "Analytics output attached to packages or repositories.",
   "Namespace": "Isolate and organize resources in a parent-child hierarchy.",
   "NotificationTarget": "Integration endpoint for notification delivery.",
+  "PackageFirewallLog": "Package firewall audit event recording action and trigger reason.",
   "PackageLicense": "License information for a package.",
   "PackageVersion": "Package version with dependency information.",
   "Policy": "Rule controlling scan behavior, findings, and workflows.",

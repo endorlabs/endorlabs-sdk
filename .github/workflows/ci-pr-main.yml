@@ -18,24 +18,28 @@ on:
   push:
     branches: [ main, dev ]
     paths-ignore:
-      - '**.md'
       - '.cursor/**'
       - '.github/CODEOWNERS'
       - '.github/copilot-instructions.md'
       - '.gitignore'
       - '.pre-commit-config.yaml'
       - 'docs/**'
+      - 'AGENTS.md'
+      - 'CONTRIBUTORS.md'
+      - 'README.md'
       - 'LICENSE'
   pull_request:
     branches: [ main, dev ]
     paths-ignore:
-      - '**.md'
       - '.cursor/**'
       - '.github/CODEOWNERS'
       - '.github/copilot-instructions.md'
       - '.gitignore'
       - '.pre-commit-config.yaml'
       - 'docs/**'
+      - 'AGENTS.md'
+      - 'CONTRIBUTORS.md'
+      - 'README.md'
       - 'LICENSE'
   workflow_dispatch:
     inputs:
@@ -168,7 +172,7 @@ jobs:
           }
 
           check_paths "src"               '^src/'
-          check_paths "unit-tests"        '^tests/(unit/|conftest\.py$|__init__\.py$)'
+          check_paths "unit-tests"        '^tests/(unit/|conftest\.py$|__init__\.py$)|^agent-skills/|^src/endorlabs/agent_bundle/'
           check_paths "integration-tests" '^tests/(integration/|conftest\.py$|__init__\.py$)'
           check_paths "config"            '^(pyproject\.toml|uv\.lock)$'
           check_paths "ci"                '^\.github/(workflows/|actions/|scripts/)'
@@ -249,22 +253,23 @@ jobs:
 
       - name: Download OpenAPI spec for model sync
         run: |
-          mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+          mkdir -p .endorlabs-context/platform/openapi
+          curl -sSfL -o .endorlabs-context/platform/openapi/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
 
       - name: Run canonical model sync generation
         run: |
-          uv run python devtools/model_sync.py
+          uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
 
-      - name: Upload generated model-sync tree
+      - name: Upload generated model-sync ship surface
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: model-sync-generated
           if-no-files-found: error
           path: |
-            workspace/model-sync
             src/endorlabs/generated
-            .endorlabs-context/openapiv2.swagger.json
+            src/endorlabs/client_surface.pyi
+            docs/generated-reference
+            .endorlabs-context/platform/openapi/openapiv2.swagger.json
 
   # ---------------------------------------------------------------------------
   # Lint — runs when any Python file, config, or CI definition changed.
@@ -307,8 +312,8 @@ jobs:
       # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
         run: |
-          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/model_sync_pr_deltas.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync/cli.py devtools/sync/upstream_verify.py .github/scripts/check_endorctl_version.py
-          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/model_sync_pr_deltas.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync/cli.py devtools/sync/upstream_verify.py .github/scripts/check_endorctl_version.py
+          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_bundle.py devtools/agent_bundle_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py .github/scripts/check_endorctl_version.py
+          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_bundle.py devtools/agent_bundle_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py .github/scripts/check_endorctl_version.py
 
       - name: Download generated model-sync artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -316,38 +321,10 @@ jobs:
           name: model-sync-generated
           path: .
 
-      - name: Verify canonical model-sync artifacts are present
+      - name: Verify committed ship artifacts are present
         run: |
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json ]; then
-            echo "::error::Model-sync mapping manifest was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/provenance.json ]; then
-            echo "::error::Model-sync provenance metadata was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/artifacts_manifest.json ]; then
-            echo "::error::Model-sync artifacts manifest was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/facade_contract.json ]; then
-            echo "::error::Model-sync facade contract was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/registry_parity_report.json ]; then
-            echo "::error::Model-sync registry parity report was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json ]; then
-            echo "::error::Model-sync operation metadata was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/payload_schemas.json ]; then
-            echo "::error::Model-sync payload schema metadata was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/runtime_index.json ]; then
-            echo "::error::Model-sync runtime index metadata was not generated."
+          if [ ! -f src/endorlabs/generated/registry_contract.py ]; then
+            echo "::error::Runtime registry contract was not generated."
             exit 1
           fi
           if [ ! -f src/endorlabs/generated/models/__init__.py ]; then
@@ -363,6 +340,10 @@ jobs:
             git --no-pager diff -- src/endorlabs/client_surface.pyi
             exit 1
           fi
+
+      - name: Verify shipped agent bundle is up to date
+        run: |
+          uv run python devtools/sync_agent_bundle.py --verify
 
       - name: Regenerate generated reference docs and report drift
         if: github.event_name != 'pull_request'
