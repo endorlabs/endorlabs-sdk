@@ -313,7 +313,7 @@ def _generate_resources_md(spec: dict[str, Any]) -> str:
     lines.extend(
         [
             "",
-            "Spec (local preferred): `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.",
+            f"Spec (local preferred): `{SPEC_PATH.relative_to(REPO_ROOT).as_posix()}`.",
             f"Fallback URL: `{SPEC_URL}`.",
             "",
         ]
@@ -595,7 +595,7 @@ def main(argv: list[str] | None = None) -> int:
     devtools_dir = REPO_ROOT / "devtools"
     if str(devtools_dir) not in sys.path:
         sys.path.insert(0, str(devtools_dir))
-    from generate_resource_reference_pages import (  # noqa: PLC0415
+    from generate_resource_reference_pages import (
         generate_resource_reference_pages,
     )
 
