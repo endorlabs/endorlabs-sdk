@@ -8,6 +8,8 @@ description: 'Deterministic project context bundle: export context_manifest.json
 
 # Project agent context (umbrella)
 
+Read `context_manifest.json` before custom scripts; composition rules in [workflow-composition](../contracts/workflow-composition.md).
+
 ## Purpose
 
 Produce a **versioned, machine-readable context bundle** for a single project: `context_manifest.json` at the bundle root, plus `dependency_explorer` outputs (BOM slices, `dep_metadata.json`, `dependencies.json`, summary markdown) and optional call-graph export. Supports **multi-pass retrieval**: wide PV **index** → **hydration** (default or selected PVs) → optional **call-graph sweep**. This is the shared **retrieval layer** that remediation, threat-hunting, and repository-profiling agents consume before task-specific reasoning.

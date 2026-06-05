@@ -78,7 +78,11 @@ print(status.user_docs_count)
 ```
 
 After `init()`, read **`.endorlabs-context/sdk/INDEX.md`** (Tier 0), then `MANIFEST.json`,
-then task skills under `sdk/skills/`. Run outputs belong under `.endorlabs-context/workspace/`.
+then task skills under `sdk/skills/`. **Non-Cursor harnesses** should prepend
+`endorlabs.agent_bootstrap_paths()` (INDEX + `tier: bootstrap` contracts listed in
+`MANIFEST.json` → `bootstrap.contract_ids`). Run outputs belong under
+`.endorlabs-context/workspace/` (`projects/<uuid>/` for bundles; `sessions/<user>/` for
+triage artifacts and temp scripts — see shipped `contracts/workspace-layout.md`).
 
 **Requirements:**
 - Authentication (OpenAPI download only): `ENDOR_API_CREDENTIALS_KEY` + `ENDOR_API_CREDENTIALS_SECRET` or `ENDOR_TOKEN`
@@ -142,9 +146,12 @@ Git-tracked Cursor rules (use **@rule** in chat or rely on glob/always-apply):
 
 | Rule | When it applies |
 |------|------------------|
-| **local-context.mdc** | Always — local-first research: `.endorlabs-context/sdk/` + `platform/` before the web |
+| **Generated `*.mdc`** | Always — from `agent-skills/contracts/` with `tier: bootstrap` (SSOT); listed in `.cursor/rules/_generated.json` |
 | **docs-skillbase-consistency.mdc** | When editing `**/*.{md,mdc}` — keep docs aligned with `agent-skills/`, generated reference, and workflow/CLI inventory |
 | **agent-skills-authoring.mdc** | When editing `agent-skills/**` — follow [agent-skills/schema/README.md](agent-skills/schema/README.md); run `sync_agent_bundle.py` after changes |
+
+Regenerate bundle + Cursor rules: `uv run python devtools/sync_agent_bundle.py`. Portable
+example hygiene: `devtools/verify_portable_agent_content.py` (also runs under `--verify`).
 
 Patterns for LIST/UPDATE, architecture, security, TDD, and code review live in [docs/contributing/](docs/contributing/README.md) (not separate `.mdc` files). For API workflow guidance, use **implement-sdk-resource**; for failures, **troubleshoot-sdk** or [docs/contributing/troubleshooting.md](docs/contributing/troubleshooting.md). Python examples: canonical repo `endorlabs/endorlabs-sdk`; no customer names, UUIDs, or tenant-specific literals.
 

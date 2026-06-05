@@ -7,6 +7,8 @@ description: Investigate scan regressions by resolving a project, retrieving ano
 
 # Troubleshooting Scans
 
+Chain CLI steps on JSON artifacts; extend with library imports per [workflow-composition](../contracts/workflow-composition.md).
+
 ## What this skill does
 
 This skill provides a repeatable workflow for customer scan RCA:
@@ -17,8 +19,10 @@ This skill provides a repeatable workflow for customer scan RCA:
 4. Pull logs for chosen scan UUIDs.
 5. Diff scan-result fields and logs into machine + human reports.
 
-All artifacts are written to local storage (default `.tmp/`) with a strict
-filename contract:
+All artifacts are written under `.endorlabs-context/workspace/sessions/` (default
+`.../sessions/troubleshooting/`; prefer `.../sessions/<user>/troubleshooting/` for
+interactive RCA). See [workspace-layout](../contracts/workspace-layout.md). Filename
+contract:
 
 `{rootTenant}__{objectKind}__{objectUuid}__{purpose}[__timestamp].ext`
 
@@ -77,10 +81,9 @@ Project-specific RCA from project name:
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
-  --tenant tenant.example \
-  --project-name "endorlabs/endorlabs-sdk" \
+  --tenant <tenant> \
+  --project-name "https://github.com/endorlabs/endorlabs-sdk" \
   --limit 30 \
-  --output-dir .tmp \
   --timestamped
 ```
 
@@ -88,32 +91,30 @@ Fast regression check (latest pair only, logs only when regression exists):
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.run_troubleshooting_workflow \
-  --tenant tenant.example \
-  --project-name "endorlabs/endorlabs-sdk" \
+  --tenant <tenant> \
+  --project-name "https://github.com/endorlabs/endorlabs-sdk" \
   --scan-window 2 \
-  --regression-only \
-  --output-dir .tmp
+  --regression-only
 ```
 
 Tenant-wide error signature search:
 
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.search_scan_errors \
-  --tenant tenant.example \
+  --tenant <tenant> \
   --all-projects \
   --error-pattern "maven-profiler|dependency-resolution-error|STATUS_FAILURE" \
-  --limit 20 \
-  --output-dir .tmp
+  --limit 20
 ```
 
 Manual step-by-step mode:
 
 ```bash
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.resolve_projects --tenant tenant.example --project-name "endorlabs/endorlabs-sdk"
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --tenant tenant.example --project-name "endorlabs/endorlabs-sdk" --limit 30
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.select_anomalous_scans --input-summary <summary-json> --root-tenant tenant.example --project-uuid <project-uuid>
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_logs --tenant tenant.example --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
-uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans --tenant tenant.example --namespace <project-namespace> --input-pairs <pairs-json>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.resolve_projects --tenant <tenant> --project-name "https://github.com/endorlabs/endorlabs-sdk"
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results --tenant <tenant> --project-name "https://github.com/endorlabs/endorlabs-sdk" --limit 30
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.select_anomalous_scans --input-summary <summary-json> --root-tenant <tenant> --project-uuid <project-uuid>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_logs --tenant <tenant> --namespace <project-namespace> --project-uuid <project-uuid> --input-pairs <pairs-json>
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.diff_scans --tenant <tenant> --namespace <project-namespace> --input-pairs <pairs-json>
 ```
 
 ## Interpretation hints

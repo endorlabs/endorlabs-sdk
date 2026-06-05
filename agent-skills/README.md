@@ -54,6 +54,7 @@ For **Claude API** users: zip each skill directory and upload via the `/v1/skill
 ## Relationship to Other Docs
 
 - **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged.
+- **`contracts/`**: `tier: bootstrap` (always load via `agent_bootstrap_paths()`) vs `tier: reference` (on demand). Key bootstrap: `workflow-composition`, `portable-examples`, `list-query-performance`.
 - **`.cursor/rules/`**: Always-on project rules (apply every session). Skills are on-demand (apply when triggered).
 - **`AGENTS.md`**: Project index for AI agents. Points here for skill discovery.
 

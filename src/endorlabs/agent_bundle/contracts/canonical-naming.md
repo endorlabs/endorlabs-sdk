@@ -3,6 +3,7 @@ id: canonical-naming
 tags:
 - naming
 - facades
+tier: reference
 ---
 
 # Canonical naming

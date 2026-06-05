@@ -12,6 +12,9 @@ endorlabs:
     module: endorlabs.workflows.callgraph.search
     default_output: stdout or caller path
     agent_visible: true
+    composition: library_api
+    library_entrypoints:
+      - endorlabs.workflows.callgraph.run_callgraph_sweep
 ---
 
 # Fetch and Search Call Graph
@@ -55,7 +58,7 @@ use method IDs for joins, intersections, and path checks.
 
 ## Outputs
 
-- A directory (often under `.tmp/`) with sweep output and `manifest.json` mapping artifact paths when using the sweep workflow.
+- A directory under `.endorlabs-context/workspace/projects/` (or `workspace/sessions/<user>/callgraph/` for ad-hoc sweeps) with `manifest.json` mapping artifact paths when using the sweep workflow. See [workspace-layout](../contracts/workspace-layout.md).
 - Decoded `decoded_*.json` when `--decode-zstd` is set.
 - When using **project context export** with a sweep, **`context_manifest.json`** at the bundle root: read `artifacts.callgraph_sweep` to locate the sweep output (or `null` if the sweep was not run).
 
@@ -78,7 +81,7 @@ uv run --env-file .env endor-agent-context \
   --tenant "<tenant>" \
   --namespace "<namespace>" \
   --project "<project-uuid-or-name>" \
-  --output-dir .tmp \
+  --output-dir .endorlabs-context/workspace/projects \
   --callgraph-sweep \
   --decode-zstd
 ```

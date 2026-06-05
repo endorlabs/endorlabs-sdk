@@ -43,8 +43,8 @@ Detail CSV (optional): `project_uuid`, `package_name`, `package_version`,
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.analytics \
   -n <estate_root> \
-  -o .tmp/version-cardinality.csv \
-  --usage-detail-output .tmp/usage-by-project.csv \
+  -o .endorlabs-context/workspace/sessions/agent/analytics/version-cardinality.csv \
+  --usage-detail-output .endorlabs-context/workspace/sessions/agent/analytics/usage-by-project.csv \
   --max-project-workers 16
 ```
 
@@ -53,8 +53,8 @@ uv run --env-file .env python -m endorlabs.workflows.analytics \
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.analytics \
   -n <estate_root> \
-  -o .tmp/jackson-cardinality.csv \
-  --usage-detail-output .tmp/jackson-usage.csv \
+  -o .endorlabs-context/workspace/sessions/agent/analytics/jackson-cardinality.csv \
+  --usage-detail-output .endorlabs-context/workspace/sessions/agent/analytics/jackson-usage.csv \
   --package-name-match jackson-databind \
   --exact-package-name "mvn://com.fasterxml.jackson.core:jackson-databind"
 ```
@@ -64,11 +64,11 @@ uv run --env-file .env python -m endorlabs.workflows.analytics \
 ```bash
 uv run --env-file .env python -m endorlabs.workflows.analytics \
   -n <estate_root> \
-  -o .tmp/jackson-cardinality.csv \
+  -o .endorlabs-context/workspace/sessions/agent/analytics/jackson-cardinality.csv \
   --package-name-match jackson-databind \
   --exact-package-name "mvn://com.fasterxml.jackson.core:jackson-databind" \
   --remediation-cve CVE-2018-19362 \
-  --remediation-output .tmp/jackson-remediation.json
+  --remediation-output .endorlabs-context/workspace/sessions/agent/analytics/jackson-remediation.json
 ```
 
 Programmatic:
