@@ -13,10 +13,10 @@ import endorlabs
 
 print(endorlabs.agent_index_path())
 manifest = endorlabs.agent_manifest()
-paths = endorlabs.agent_bootstrap_paths()  # INDEX + bootstrap contracts
+paths = endorlabs.agent_bootstrap_paths()  # INDEX + bootstrap rules
 ```
 
-**Minimal bootstrap** (skills + contracts only; no auth):
+**Minimal bootstrap** (rules, contracts, skills; no auth):
 
 ```python
 import endorlabs
@@ -59,7 +59,7 @@ projects = client.Project.list(traverse=True, max_pages=2)
 
 ## Critical footguns
 
-Read **`contracts/`** (Tier 1) before project-scoped RCA.
+Read **`rules/`** (Tier 1 bootstrap) before project-scoped RCA.
 
 1. **Ambiguous project URL:** `Project.lookup(name=…)` may raise `AmbiguousError`. Use
    `Project.list(traverse=True)`, pass explicit namespace, or use project UUID.
@@ -76,16 +76,16 @@ Read **`contracts/`** (Tier 1) before project-scoped RCA.
 6. **DependencyMetadata wire path:** List/group uses the **customer tenant namespace**, not the
    literal `oss` plane. Field `spec.dependency_data.namespace == "oss"` is data semantics only.
 7. **Workflow composition:** Extend workflow JSON/manifests before re-listing the API; escalate
-   CLI → library → `Client` → session script (see `contracts/workflow-composition.md`).
+   CLI → library → `Client` → session script (see `rules/workflow-composition.md`).
 8. **Portable examples:** Use placeholders in docs; never commit customer estate identifiers
-   (`contracts/portable-examples.md`).
+   (`rules/portable-examples.md`).
 
 ## Bootstrap (always load)
 
-Harnesses should prepend `agent_bootstrap_paths()` (or read these contracts first):
+Harnesses should prepend `agent_bootstrap_paths()` (or read these rules first):
 
-| Contract | Summary |
-|----------|---------|
+| Rule | Summary |
+|------|---------|
 | `namespace-scoping` | Resolve Project; pass `namespace=project.namespace` on project-scoped lists |
 | `workspace-layout` | Session artifacts under `workspace/sessions/<user>/` |
 | `workflow-composition` | CLI → library → Client → session script; artifact-first |
@@ -93,23 +93,23 @@ Harnesses should prepend `agent_bootstrap_paths()` (or read these contracts firs
 | `local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
 | `portable-examples` | Placeholders only; no committed tenant/project UUID literals |
 
-See `MANIFEST.json` → `bootstrap.contract_ids` for the machine-readable list.
+See `MANIFEST.json` → `bootstrap.rule_ids` for the machine-readable list.
 
 ## Workspace outputs
 
 Session/triage debugging artifacts and temporary probe scripts belong under
 `.endorlabs-context/workspace/sessions/<user>/` (not repo-root `.tmp/`). Project
-bundles go under `workspace/projects/<uuid>/`. See `contracts/workspace-layout.md`.
+bundles go under `workspace/projects/<uuid>/`. See `rules/workspace-layout.md`.
 
 ## Read order
 
 1. This file (Tier 0)
-2. `MANIFEST.json` — skills, contracts, workflow CLI index, `bootstrap` block
-3. Bootstrap `contracts/*.md` (tier `bootstrap` in manifest)
-4. Reference `contracts/*.md` — normative SDK semantics on demand
-5. `skills/*/SKILL.md` — task playbooks (Tier 2)
-6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (Tier 3)
-7. `../workspace/` — your run outputs (Tier 4)
+2. `MANIFEST.json` — rules, contracts, skills, workflow CLI index, `bootstrap` block
+3. **`rules/*.md`** — harness bootstrap (always load)
+4. **`sdk/contracts/*.md`** — normative SDK semantics on demand
+5. **`skills/*/SKILL.md`** — task playbooks
+6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference
+7. `../workspace/` — your run outputs
 
 ## Maintainer docs (not shipped)
 

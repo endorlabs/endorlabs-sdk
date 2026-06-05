@@ -4,7 +4,6 @@ tags:
 - list
 - pagination
 - performance
-tier: bootstrap
 summary: Do not set page_size unless explicitly asked; scope and filter before raising
   max_pages.
 ---
@@ -45,4 +44,4 @@ server-side plan for broad unfiltered queries.
 3. Compare with `endorctl api list` (same resource, namespace, filter, traverse).
 4. Use a shorter read timeout when iterating locally.
 
-See also `contracts/namespace-scoping.md` and `contracts/list-parameters.md`.
+See also `rules/namespace-scoping.md` and `sdk/contracts/list-parameters.md`.
