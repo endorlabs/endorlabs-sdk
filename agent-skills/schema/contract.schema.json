@@ -4,7 +4,7 @@
   "title": "Agent contract frontmatter",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "tags"],
+  "required": ["id", "tags", "tier"],
   "properties": {
     "id": {
       "type": "string",
@@ -18,6 +18,15 @@
         "type": "string",
         "minLength": 1
       }
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["bootstrap", "reference"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
     }
   }
 }

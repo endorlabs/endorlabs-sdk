@@ -77,10 +77,21 @@ Each `contracts/<id>.md` file starts with:
 ---
 id: canonical-naming
 tags: [naming, facades]
+tier: reference  # bootstrap | reference (required)
+summary: >-      # optional; used in INDEX and generated Cursor rules
+  One-line invariant for harness injection.
 ---
 ```
 
 Validated by [`contract.schema.json`](contract.schema.json). Body is copied verbatim to the bundle.
+
+**Bootstrap contracts** (`tier: bootstrap`) are listed in `MANIFEST.json` → `bootstrap`
+and generate always-on `.cursor/rules/<id>.mdc` via `sync_agent_bundle.py` (see
+`.cursor/rules/_generated.json`). Hand-maintained rules: `agent-skills-authoring`,
+`docs-skillbase-consistency` only.
+
+Optional `endorlabs.catalog` workflow fields: `composition` (`artifact_chain` |
+`library_api` | `cli_only`), `library_entrypoints` (import paths for session scripts).
 
 ## Progressive disclosure
 

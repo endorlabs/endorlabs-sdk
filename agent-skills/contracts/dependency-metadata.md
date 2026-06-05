@@ -1,6 +1,7 @@
 ---
 id: dependency-metadata
 tags: [analytics, dependency-metadata]
+tier: reference
 ---
 
 # DependencyMetadata

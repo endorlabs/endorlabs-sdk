@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, TypedDict
 
 import endorlabs
+from endorlabs.context.paths import workflow_sessions_root
 
 
 class PolicyRecord(TypedDict):
@@ -223,8 +224,11 @@ def parse_args() -> argparse.Namespace:
     )
     _ = parser.add_argument(
         "--output-dir",
-        default=".tmp",
-        help="Output directory for JSON report files.",
+        default=str(workflow_sessions_root(user="agent", subdir="exports")),
+        help=(
+            "Output directory for JSON report files "
+            "(default: .endorlabs-context/workspace/sessions/agent/exports)."
+        ),
     )
     return parser.parse_args()
 
