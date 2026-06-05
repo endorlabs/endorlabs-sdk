@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.context.paths import workflow_artifacts_root
 
 
 def _extract_meta_dict(rule: Any) -> dict[str, Any]:
@@ -82,13 +83,13 @@ def main() -> int:
     parser.add_argument(
         "--json-out",
         type=Path,
-        default=Path("artifacts/semgrep_rule_metadata_inventory.json"),
+        default=workflow_artifacts_root() / "semgrep_rule_metadata_inventory.json",
         help="JSON artifact output path",
     )
     parser.add_argument(
         "--summary-out",
         type=Path,
-        default=Path("artifacts/semgrep_rule_metadata_inventory.md"),
+        default=workflow_artifacts_root() / "semgrep_rule_metadata_inventory.md",
         help="Markdown summary output path",
     )
     args = parser.parse_args()

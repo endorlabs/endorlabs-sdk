@@ -1,9 +1,9 @@
 """Session context loader for interactive CLI demos.
 
 Pulls per-project context (findings, policies, repository versions,
-dependencies, call graphs) from the Endor Labs API and writes
-structured artifacts into a progressive-disclosure directory tree
-under ``.endorlabs-context/session-<user>/``.
+dependencies, call graphs) from the Endor Labs API and writes structured
+artifacts into a progressive-disclosure directory tree under
+``.endorlabs-context/workspace/sessions/<user>/``.
 
 Experimental: API may change without the same stability guarantees
 as the rest of the SDK.

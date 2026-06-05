@@ -78,6 +78,9 @@ version-file = "src/endorlabs/_version.py"
 packages = ["src/endorlabs"]
 artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/endorlabs/agent_bundle" = "endorlabs/agent_bundle"
+
 [dependency-groups]
 dev = [
     "jsonschema==4.26.0",
@@ -116,16 +119,14 @@ exclude = [
     ".tox",
     ".nox",
     ".ruff_cache",
-    "workspace",
-    "workspace/**",
     "src/endorlabs/generated",
     "src/endorlabs/generated/**",
     "src/endorlabs/generated/models",
     "src/endorlabs/generated/models/**",
     "devtools",
     "devtools/**",
-    "skills-src",
-    "skills-src/**",
+    "src/endorlabs/agent_bundle/skills",
+    "src/endorlabs/agent_bundle/skills/**",
     ".github/scripts",
     ".github/scripts/**",
     "*.log",
@@ -272,6 +273,19 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
     "F841",
     "T201",
 ]  # many modules are thin CLIs or large orchestrators
+"agent-skills/**/*.py" = [
+    "C901",
+    "D103",
+    "E501",
+    "PERF401",
+    "PERF402",
+    "SIM108",
+    "F841",
+    "T201",
+    "S112",
+    "ERA001",
+    "D301",
+]  # skill helper scripts; lint at authoring, not synced bundle copies
 "src/endorlabs/utils/create_payload.py" = ["C901", "UP047"]
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
@@ -326,7 +340,7 @@ exclude_lines = [
 ]
 
 [tool.codespell]
-skip = ".git,.venv,*.lock,*.json,.endorlabs-context,src/endorlabs/generated,workspace/model-sync"
+skip = ".git,.venv,*.lock,*.json,.endorlabs-context,src/endorlabs/generated"
 ignore-words-list = "endor,endorlabs"
 
 [tool.pyright]
@@ -486,16 +500,14 @@ exclude = [
     ".nox",
     ".ruff_cache",
     "**/.ruff_cache",
-    "workspace",
-    "workspace/**",
     "src/endorlabs/generated",
     "src/endorlabs/generated/**",
     "src/endorlabs/generated/models",
     "src/endorlabs/generated/models/**",
     "devtools",
     "devtools/**",
-    "skills-src",
-    "skills-src/**",
+    "src/endorlabs/agent_bundle/skills",
+    "src/endorlabs/agent_bundle/skills/**",
     ".github/scripts",
     ".github/scripts/**",
     "*.log",

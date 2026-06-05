@@ -1,6 +1,6 @@
 # V1QuerySimilarPackages
 
-V1QuerySimilarPackages resource facade.
+QuerySimilarPackages implements the similar packages query requests.
 
 ## Client access
 

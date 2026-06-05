@@ -2,7 +2,7 @@
 
 Spec-vs-wire checks before **overlay**, hand-written `resources/` modules, or integration tests. The SDK surface is normally **generated** by model sync; run regen first and read [generated-reference/resources.md](../generated-reference/resources.md) (and the per-resource page) for the operations matrix. Normative SDK behavior: [contracts.md](../contracts.md).
 
-**OpenAPI:** `.endorlabs-context/openapiv2.swagger.json` after `endorlabs.init()` or CI fetch; online: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
+**OpenAPI:** `.endorlabs-context/platform/openapi/openapiv2.swagger.json` after `endorlabs.init()` or CI fetch; online: <https://api.endorlabs.com/download/openapiv2.swagger.json>.
 
 ## When to run this
 
