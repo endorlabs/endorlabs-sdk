@@ -1,6 +1,9 @@
 ---
 description: Do not set page_size unless explicitly asked; scope and filter before raising max_pages.
 alwaysApply: true
+x-endor-generated: true
+x-endor-source: agent-knowledge/rules/list-query-performance.md
+x-endor-source-sha256: 6f94d7406c858a146fcfa5f590c7750f90e243ecfa6d8695ebc2334390b0abf8
 ---
 
 # List query performance
@@ -39,4 +42,4 @@ server-side plan for broad unfiltered queries.
 3. Compare with `endorctl api list` (same resource, namespace, filter, traverse).
 4. Use a shorter read timeout when iterating locally.
 
-See also `contracts/namespace-scoping.md` and `contracts/list-parameters.md`.
+See also `rules/namespace-scoping.md` and `sdk/contracts/list-parameters.md`.

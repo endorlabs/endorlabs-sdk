@@ -1,7 +1,6 @@
 ---
 id: workflow-composition
 tags: [workflows, scripts, composition]
-tier: bootstrap
 summary: >-
   Prefer workflow CLI, then library imports, then Client; extend artifacts instead
   of re-fetching discovery.

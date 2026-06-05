@@ -8,7 +8,7 @@ alwaysApply: false
 
 When editing repository docs or rules, keep documentation references aligned with the current repo layout and generated sources of truth.
 
-- Prefer `agent-skills/...` links/paths in git-tracked docs.
+- Prefer `agent/skills/...` links/paths in git-tracked docs.
 - If `.cursor/skills/...` is mentioned, label it as the mirrored runtime path used by Cursor.
 - Do not maintain hardcoded "complete" resource inventories in hand-edited docs; point to `docs/generated-reference/resources.md` for the canonical current list.
 - Keep workflow and CLI inventory statements synchronized with:

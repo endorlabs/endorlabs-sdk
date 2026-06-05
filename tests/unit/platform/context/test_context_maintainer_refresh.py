@@ -8,12 +8,17 @@ from unittest.mock import Mock
 from endorlabs.context import _maintainer_refresh
 
 
-def test_main_refreshes_skill_mirrors_for_skills_changes(monkeypatch: object) -> None:
+def test_main_refreshes_skill_mirrors_for_skills_changes(
+    tmp_path: Path, monkeypatch: object
+) -> None:
     """Skill-source changes should regenerate bundle and invoke runtime mirroring."""
     sync_mock = Mock(return_value={"cursor": Path(".cursor/skills")})
     init_mock = Mock()
     bundle_sync_mock = Mock()
 
+    monkeypatch.setattr(
+        _maintainer_refresh, "CONTEXT_DIR", tmp_path / ".missing-context"
+    )
     monkeypatch.setattr(
         _maintainer_refresh, "_configured_skill_sync_target", lambda: "cursor"
     )
@@ -21,14 +26,14 @@ def test_main_refreshes_skill_mirrors_for_skills_changes(monkeypatch: object) ->
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "init", init_mock)
 
-    result = _maintainer_refresh.main(["agent-skills/README.md"])
+    result = _maintainer_refresh.main(["agent-knowledge/README.md"])
 
     assert result == 0
     bundle_sync_mock.assert_called_once()
     sync_mock.assert_called_once_with(
         repo_root=_maintainer_refresh.REPO_ROOT,
         target="cursor",
-        source_dir=_maintainer_refresh.REPO_ROOT / "agent-skills",
+        source_dir=_maintainer_refresh.AGENT_KNOWLEDGE_SKILLS,
     )
     init_mock.assert_not_called()
 
@@ -44,7 +49,7 @@ def test_main_skips_skill_sync_when_no_runtime_mirror_is_configured(
     )
     monkeypatch.setattr(_maintainer_refresh.endorlabs, "sync_agent_skills", sync_mock)
 
-    result = _maintainer_refresh.main(["agent-skills/README.md"])
+    result = _maintainer_refresh.main(["agent-knowledge/README.md"])
 
     assert result == 0
     sync_mock.assert_not_called()
@@ -91,6 +96,7 @@ def test_main_refreshes_context_without_openapi_when_auth_missing(
         output_dir=context_dir,
         include_openapi=False,
         include_user_docs=True,
+        include_agent_knowledge=True,
         force=True,
         sync_skills="none",
     )

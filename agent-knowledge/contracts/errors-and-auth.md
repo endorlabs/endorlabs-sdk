@@ -1,7 +1,6 @@
 ---
 id: errors-and-auth
 tags: [auth, errors]
-tier: reference
 ---
 
 # Errors and authentication

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/endorlabs/endorlabs-sdk/agent-skills/schema/skill.schema.json",
+  "$id": "https://github.com/endorlabs/endorlabs-sdk/agent-knowledge/schema/skill.schema.json",
   "title": "Agent skill SKILL.md frontmatter",
   "type": "object",
   "additionalProperties": false,

@@ -2,7 +2,7 @@
 
 Guidance for SDK users and contributors when choosing **namespace scope**, **`traverse`**, **filters**, and **pagination** so list calls stay reliable. Normative list behavior remains in [contracts.md](../contracts.md); traverse UX patterns are in [namespace-traversal.md](namespace-traversal.md).
 
-**Agent-facing summary (shipped):** `agent-skills/contracts/list-query-performance.md` (`tier: bootstrap` in the wheel bundle).
+**Agent-facing summary (shipped):** `agent/rules/list-query-performance.md` (`rules/` in the wheel bundle).
 
 ## Scope first
 
