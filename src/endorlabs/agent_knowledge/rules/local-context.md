@@ -4,7 +4,6 @@ tags:
 - context
 - openapi
 - bootstrap
-tier: bootstrap
 summary: Check gitignored .endorlabs-context paths explicitly; prefer local platform
   docs before the web; never print secrets.
 ---

@@ -4,7 +4,6 @@ tags:
 - list
 - traverse
 - namespace
-tier: bootstrap
 summary: Resolve Project first; pass namespace=project.namespace on project-scoped
   lists.
 ---
