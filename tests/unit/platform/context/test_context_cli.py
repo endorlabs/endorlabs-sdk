@@ -17,7 +17,7 @@ def test_parse_args_defaults() -> None:
     assert parsed.max_pages is None
     assert parsed.force is False
     assert parsed.sync_skills == "none"
-    assert parsed.include_sdk_bundle is True
+    assert parsed.include_agent_knowledge is True
 
 
 def test_parse_args_supports_switches() -> None:
@@ -48,7 +48,7 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
     calls: dict[str, object] = {}
 
     class _Status:
-        agent_bundle_path = tmp_path / "sdk"
+        agent_knowledge_path = tmp_path / "sdk"
         context_json_path = tmp_path / "context.json"
         openapi_path = tmp_path / "platform" / "openapi" / "openapiv2.swagger.json"
         user_docs_path = tmp_path / "platform" / "user-docs"
@@ -75,7 +75,7 @@ def test_main_calls_endorlabs_init(monkeypatch: object, tmp_path: Path) -> None:
     assert calls["output_dir"] == str(tmp_path)
     assert calls["include_openapi"] is True
     assert calls["include_user_docs"] is True
-    assert calls["include_sdk_bundle"] is True
+    assert calls["include_agent_knowledge"] is True
     assert calls["max_pages"] == 5
     assert calls["force"] is True
     assert calls["sync_skills"] == "cursor"

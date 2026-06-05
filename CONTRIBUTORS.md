@@ -159,20 +159,20 @@ import endorlabs
 status = endorlabs.init()
 # Materializes:
 #   .endorlabs-context/context.json
-#   .endorlabs-context/sdk/              (shipped agent bundle; no auth)
+#   .endorlabs-context/sdk/              (shipped agent knowledge; no auth)
 #   .endorlabs-context/platform/openapi/  (optional download)
 #   .endorlabs-context/platform/user-docs/
 #   .endorlabs-context/workspace/        (workflow run outputs)
 ```
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_sdk_bundle=True/False`, `max_pages=N`, `force=True`, `sync_skills="none|cursor|claude|both"`.
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`, `sync_skills="none|cursor|claude|both"`.
 
 Consumer projects should add `.endorlabs-context/` to `.gitignore` (downloaded docs + local run artifacts).
 
 The local pre-commit hook also refreshes these maintainer-only artifacts automatically:
 
-- changes under `agent-skills/` require `devtools/sync_agent_bundle.py` (CI/pre-push `--verify` drift gate)
-- `sync_skills` mirrors materialized `.endorlabs-context/sdk/skills/`, not repo `agent-skills/` (pip-safe)
+- changes under `agent-knowledge/skills/` require `devtools/sync_agent_knowledge.py` (CI/pre-push `--verify` drift gate)
+- `sync_skills` mirrors materialized `.endorlabs-context/sdk/skills/`, not repo `agent-knowledge/skills/` (pip-safe)
 - changes under `src/endorlabs/context/` refresh the existing `.endorlabs-context/` download (docs always; OpenAPI when auth is available)
 
 See [AGENTS.md](AGENTS.md#context-bootstrap-for-ai-agents) for details. Full repo region map: [AGENTS.md § Repository layout](AGENTS.md#repository-layout).

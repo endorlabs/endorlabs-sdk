@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/endorlabs/endorlabs-sdk/agent-knowledge/schema/skill.schema.json",
+  "title": "Agent skill SKILL.md frontmatter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{1,64}$",
+      "description": "Portable skill id; must match the parent directory name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "Third-person WHAT + WHEN summary for agent discovery."
+    },
+    "disable-model-invocation": {
+      "type": "boolean",
+      "description": "Cursor-only: when true, the skill is not auto-invoked."
+    },
+    "endorlabs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "catalog": {
+          "$ref": "#/$defs/catalog"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflow_id", "module"],
+      "properties": {
+        "workflow_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "module": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cli": {
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "default_output": {
+          "type": ["string", "null"]
+        },
+        "agent_visible": {
+          "type": "boolean",
+          "default": true
+        },
+        "composition": {
+          "type": "string",
+          "enum": ["artifact_chain", "library_api", "cli_only"]
+        },
+        "library_entrypoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

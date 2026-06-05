@@ -11,7 +11,7 @@ class InitStatus:
     """Status returned by endorlabs.init() after context bootstrap.
 
     Attributes:
-        agent_bundle_path: Materialized SDK agent bundle under context (sdk/).
+        agent_knowledge_path: Materialized agent knowledge under context (sdk/).
         context_json_path: Path to context.json init manifest.
         platform_openapi_path: Path to downloaded OpenAPI spec (None if skipped).
         platform_user_docs_path: Path to user docs directory (None if skipped).
@@ -23,7 +23,7 @@ class InitStatus:
 
     """
 
-    agent_bundle_path: Path | None
+    agent_knowledge_path: Path | None
     context_json_path: Path | None
     platform_openapi_path: Path | None
     platform_user_docs_path: Path | None
@@ -42,18 +42,18 @@ class InitStatus:
         return self.platform_user_docs_path
 
     @property
-    def agent_index_path(self) -> Path | None:
-        """Tier-0 INDEX.md inside the materialized agent bundle."""
-        if self.agent_bundle_path is None:
+    def agent_knowledge_index_path(self) -> Path | None:
+        """Tier-0 INDEX.md inside the materialized agent knowledge package."""
+        if self.agent_knowledge_path is None:
             return None
-        return self.agent_bundle_path / "INDEX.md"
+        return self.agent_knowledge_path / "INDEX.md"
 
     @override
     def __repr__(self) -> str:
         """Return string representation of InitStatus."""
         parts = [f"InitStatus(downloaded_at={self.downloaded_at.isoformat()!r}"]
-        if self.agent_bundle_path:
-            parts.append(f"agent_bundle_path={self.agent_bundle_path!r}")
+        if self.agent_knowledge_path:
+            parts.append(f"agent_knowledge_path={self.agent_knowledge_path!r}")
         if self.context_json_path:
             parts.append(f"context_json_path={self.context_json_path!r}")
         if self.platform_openapi_path:

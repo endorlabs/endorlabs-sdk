@@ -79,7 +79,7 @@ packages = ["src/endorlabs"]
 artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
 
 [tool.hatch.build.targets.wheel.force-include]
-"src/endorlabs/agent_bundle" = "endorlabs/agent_bundle"
+"src/endorlabs/agent_knowledge" = "endorlabs/agent_knowledge"
 
 [dependency-groups]
 dev = [
@@ -125,8 +125,8 @@ exclude = [
     "src/endorlabs/generated/models/**",
     "devtools",
     "devtools/**",
-    "src/endorlabs/agent_bundle/skills",
-    "src/endorlabs/agent_bundle/skills/**",
+    "src/endorlabs/agent_knowledge/skills",
+    "src/endorlabs/agent_knowledge/skills/**",
     ".github/scripts",
     ".github/scripts/**",
     "*.log",
@@ -273,7 +273,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
     "F841",
     "T201",
 ]  # many modules are thin CLIs or large orchestrators
-"agent-skills/**/*.py" = [
+"agent-knowledge/**/*.py" = [
     "C901",
     "D103",
     "E501",
@@ -506,8 +506,8 @@ exclude = [
     "src/endorlabs/generated/models/**",
     "devtools",
     "devtools/**",
-    "src/endorlabs/agent_bundle/skills",
-    "src/endorlabs/agent_bundle/skills/**",
+    "src/endorlabs/agent_knowledge/skills",
+    "src/endorlabs/agent_knowledge/skills/**",
     ".github/scripts",
     ".github/scripts/**",
     "*.log",
