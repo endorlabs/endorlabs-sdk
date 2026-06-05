@@ -4,7 +4,6 @@ tags:
 - workspace
 - artifacts
 - sessions
-tier: bootstrap
 summary: Write session/triage artifacts under workspace/sessions/<user>/; not repo-root
   .tmp/.
 ---

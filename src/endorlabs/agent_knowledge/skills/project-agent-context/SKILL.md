@@ -8,7 +8,7 @@ description: 'Deterministic project context bundle: export context_manifest.json
 
 # Project agent context (umbrella)
 
-Read `context_manifest.json` before custom scripts; composition rules in [workflow-composition](../contracts/workflow-composition.md).
+Read `context_manifest.json` before custom scripts; composition rules in [workflow-composition](../../rules/workflow-composition.md).
 
 ## Purpose
 
