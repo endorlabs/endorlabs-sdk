@@ -57,42 +57,14 @@ jobs:
 
       - name: Download OpenAPI spec for model sync
         run: |
-          mkdir -p .endorlabs-context
-          curl -sSfL -o .endorlabs-context/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
+          mkdir -p .endorlabs-context/platform/openapi
+          curl -sSfL -o .endorlabs-context/platform/openapi/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
 
-      - name: Verify canonical model-sync artifacts are up to date
+      - name: Verify committed ship artifacts are up to date
         run: |
-          uv run python devtools/model_sync.py
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/entity_mapping.json ]; then
-            echo "::error::Model-sync mapping manifest was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/provenance.json ]; then
-            echo "::error::Model-sync provenance metadata was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/artifacts_manifest.json ]; then
-            echo "::error::Model-sync artifacts manifest was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/facade_contract.json ]; then
-            echo "::error::Model-sync facade contract was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/registry_parity_report.json ]; then
-            echo "::error::Model-sync registry parity report was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/operation_path_metadata.json ]; then
-            echo "::error::Model-sync operation metadata was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/payload_schemas.json ]; then
-            echo "::error::Model-sync payload schema metadata was not generated."
-            exit 1
-          fi
-          if [ ! -f workspace/model-sync/custom_mapping/mapping/runtime_index.json ]; then
-            echo "::error::Model-sync runtime index metadata was not generated."
+          uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+          if [ ! -f src/endorlabs/generated/registry_contract.py ]; then
+            echo "::error::Runtime registry contract was not generated."
             exit 1
           fi
           if [ ! -f src/endorlabs/generated/models/__init__.py ]; then

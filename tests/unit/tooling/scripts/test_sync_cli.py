@@ -3,40 +3,38 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[4]
-_SCRIPTS_DIR = str(_REPO_ROOT / "scripts")
-if _SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, _SCRIPTS_DIR)
+_DEVTOOLS_DIR = str(_REPO_ROOT / "devtools")
+if _DEVTOOLS_DIR not in sys.path:
+    sys.path.insert(0, _DEVTOOLS_DIR)
 
 from sync.cli import (
-    DEFAULT_CUSTOM_PROFILES_DIR,
-    DEFAULT_OUTPUT_ROOT,
-    DEFAULT_SPEC_PATH,
     build_parser,
+    default_custom_profiles_dir,
+    default_spec_path,
     main,
 )
-from sync.codegen import _build_codegen_command, load_profiles
+from sync.codegen import load_profiles
 from sync.provenance import write_json
 
 
 def test_build_parser_has_expected_flags() -> None:
     parser = build_parser()
     args = parser.parse_args([])
-    assert args.spec_path == DEFAULT_SPEC_PATH
-    assert args.output_root == DEFAULT_OUTPUT_ROOT
-    assert args.custom_profiles_dir == DEFAULT_CUSTOM_PROFILES_DIR
+    assert args.custom_profiles_dir is None
     assert hasattr(args, "generate_stubs")
     assert hasattr(args, "generate_reference_docs")
     assert hasattr(args, "inventory_only")
     assert hasattr(args, "fetch_spec")
     assert hasattr(args, "spec_url")
     assert hasattr(args, "spec_hash_only")
-    assert hasattr(args, "delta_summary")
-    assert hasattr(args, "delta_git_ref")
+    assert not hasattr(args, "output_root")
+    assert not hasattr(args, "spec_path")
 
 
 def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:
@@ -50,53 +48,34 @@ def test_main_forwards_parser_args_to_run_sync(monkeypatch) -> None:
 
     monkeypatch.setattr(sync_cli_module, "run_sync", _fake_run_sync)
 
+    profiles = _REPO_ROOT / "profiles"
     result = main(
         [
-            "--spec-path",
-            "spec.json",
-            "--output-root",
-            "out",
             "--custom-profiles-dir",
-            "profiles",
+            str(profiles),
             "--generate-stubs",
             "--generate-reference-docs",
         ]
     )
 
     assert result == 7
-    assert captured["spec_path"] == Path("spec.json").resolve()
-    assert captured["output_root"] == Path("out")
-    assert captured["profiles_dir"] == Path("profiles")
+    assert captured["profiles_dir"] == profiles
     assert captured["generate_stubs"] is True
     assert captured["generate_reference_docs"] is True
 
 
-def test_main_inventory_only_writes_toolchain_inventory(tmp_path: Path) -> None:
-    output_root = tmp_path / "sync-output"
-    result = main(["--inventory-only", "--output-root", str(output_root)])
-    inventory_path = output_root / "toolchain_inventory.json"
+def test_main_inventory_only_logs_toolchain(monkeypatch, caplog) -> None:
+    import logging
+
+    caplog.set_level(logging.INFO)
+
+    result = main(["--inventory-only"])
     assert result == 0
-    assert inventory_path.exists()
-    data = json.loads(inventory_path.read_text(encoding="utf-8"))
-    assert "datamodel-codegen" in data
-    assert "path" not in data["datamodel-codegen"]
-    assert "available" in data["datamodel-codegen"]
+    assert any("Toolchain inventory" in record.message for record in caplog.records)
 
 
-def test_build_codegen_command_uses_repo_relative_posix_paths(tmp_path: Path) -> None:
-    repo_root = tmp_path / "repo"
-    repo_root.mkdir()
-    cm = repo_root / "workspace" / "model-sync" / "custom_mapping"
-    input_path = cm / "schema_shards" / "a.json"
-    output_file = cm / "generated" / "a.py"
-    input_path.parent.mkdir(parents=True)
-    output_file.parent.mkdir(parents=True)
-    input_path.write_text("{}", encoding="utf-8")
-    cmd = _build_codegen_command(repo_root, input_path, output_file)
-    want_in = "workspace/model-sync/custom_mapping/schema_shards/a.json"
-    want_out = "workspace/model-sync/custom_mapping/generated/a.py"
-    assert cmd[2].replace("\\", "/") == want_in
-    assert cmd[6].replace("\\", "/") == want_out
+def test_datamodel_code_generator_importable() -> None:
+    assert importlib.util.find_spec("datamodel_code_generator") is not None
 
 
 def test_load_profiles_marks_missing_files(tmp_path: Path) -> None:
@@ -110,3 +89,8 @@ def test_write_json_is_stable(tmp_path: Path) -> None:
     write_json(output, {"b": 2, "a": 1})
     loaded = json.loads(output.read_text(encoding="utf-8"))
     assert loaded == {"a": 1, "b": 2}
+
+
+def test_default_paths_under_repo_root() -> None:
+    assert default_spec_path(_REPO_ROOT).is_relative_to(_REPO_ROOT)
+    assert default_custom_profiles_dir(_REPO_ROOT).is_relative_to(_REPO_ROOT)

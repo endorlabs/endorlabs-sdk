@@ -44,7 +44,7 @@ Index for SDK-specific documentation.
 
 ## When to update docs
 
-API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). New resources or operations -> reference index and [contributing/](contributing/) checklists. Drift and model consistency -> [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** Cursor/Anthropic agent skills under `.cursor/skills/`.
+API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). New resources or operations -> reference index and [contributing/](contributing/) checklists. Drift and model consistency -> [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** authored in `agent-skills/`, shipped via `src/endorlabs/agent_bundle/`, materialized to `.endorlabs-context/sdk/skills/` — see [AGENTS.md](../AGENTS.md#repository-layout).
 
 ## Generated reference docs
 

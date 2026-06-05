@@ -1,0 +1,74 @@
+[
+  {
+    "agent_visible": true,
+    "cli": "endor-agent-context",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "agent-context",
+    "module": "endorlabs.workflows.agent_context.cli",
+    "skill": "project-agent-context"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-analytics-export-deps",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "analytics-export-deps",
+    "module": "endorlabs.workflows.analytics.cli",
+    "skill": "analytics-estate-dependencies"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-callgraph-search",
+    "default_output": "stdout or caller path",
+    "id": "callgraph-search",
+    "module": "endorlabs.workflows.callgraph.search",
+    "skill": "fetch-and-search-call-graph"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-context",
+    "default_output": ".endorlabs-context/",
+    "id": "context-bootstrap",
+    "module": "endorlabs.context.cli",
+    "skill": null
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "default_output": "stdout or --output-json",
+    "id": "policies-validate",
+    "module": "endorlabs.workflows.policies.validate",
+    "skill": "validate-policy"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-reachability-context",
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "reachability-context",
+    "module": "endorlabs.workflows.reachability.cli",
+    "skill": "reachability-provenance"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "id": "relationships-map",
+    "module": "endorlabs.workflows.relationships.map",
+    "skill": "map-project-dependency-relationships"
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-semgrep-inventory",
+    "default_output": ".endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json",
+    "id": "semgrep-inventory",
+    "module": "endorlabs.workflows.semgrep.inventory",
+    "skill": "custom-sast-rules"
+  },
+  {
+    "agent_visible": true,
+    "cli": null,
+    "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
+    "id": "troubleshooting-scans",
+    "module": "endorlabs.workflows.troubleshooting_scans",
+    "skill": "troubleshooting-scans"
+  }
+]

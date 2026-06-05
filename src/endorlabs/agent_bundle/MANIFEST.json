@@ -1,0 +1,271 @@
+{
+  "contracts": [
+    {
+      "id": "canonical-naming",
+      "path": "contracts/canonical-naming.md",
+      "tags": [
+        "facades",
+        "naming"
+      ]
+    },
+    {
+      "id": "dependency-metadata",
+      "path": "contracts/dependency-metadata.md",
+      "tags": [
+        "analytics",
+        "dependency-metadata"
+      ]
+    },
+    {
+      "id": "errors-and-auth",
+      "path": "contracts/errors-and-auth.md",
+      "tags": [
+        "auth",
+        "errors"
+      ]
+    },
+    {
+      "id": "list-parameters",
+      "path": "contracts/list-parameters.md",
+      "tags": [
+        "filter",
+        "list",
+        "mask"
+      ]
+    },
+    {
+      "id": "namespace-scoping",
+      "path": "contracts/namespace-scoping.md",
+      "tags": [
+        "list",
+        "namespace",
+        "traverse"
+      ]
+    }
+  ],
+  "generated_at": "2026-06-05T12:46:40.067875+00:00",
+  "index": "INDEX.md",
+  "schema_version": 1,
+  "sdk_version": "0.1.1.dev52",
+  "skills": [
+    {
+      "description": "Estate-scale DependencyMetadata aggregates: version cardinality by package name, optional single-package filtered export, and intra-minor CVE remediation comparisons. Use for estate-wide dependency diversity reporting, how many versions of a package are in use, or upgrade-path planning for a CVE on one coordinate.",
+      "id": "analytics-estate-dependencies",
+      "name": "analytics-estate-dependencies",
+      "path": "skills/analytics-estate-dependencies/SKILL.md",
+      "refs": [
+        "skills/analytics-estate-dependencies/REMEDIATION.md"
+      ]
+    },
+    {
+      "description": "Author, validate, and import custom OpenGrep/Semgrep SAST rules into the Endor Labs platform. Use when the user wants to write security rules, perform threat modeling for SAST, create absence-detection rules, validate rule YAML, or import Semgrep rules into Endor Labs.",
+      "id": "custom-sast-rules",
+      "name": "custom-sast-rules",
+      "path": "skills/custom-sast-rules/SKILL.md",
+      "refs": [
+        "skills/custom-sast-rules/AUTHORING.md",
+        "skills/custom-sast-rules/IMPORT_EXPORT.md",
+        "skills/custom-sast-rules/SEMGREP_RULE_SHAPE_GUARDRAILS.md",
+        "skills/custom-sast-rules/SYNTAX_REFERENCE.md",
+        "skills/custom-sast-rules/THREAT_MODEL.md",
+        "skills/custom-sast-rules/scripts/sast_rule_manager.py"
+      ]
+    },
+    {
+      "description": "Trace vulnerability and dependency lineage across Findings, PackageVersions, and SBOM artifacts to verify resolved vs present state at branch/commit scope. Use for customer asks about \"is this fixed\", orphaned related-resource errors, patched-vs-upstream coordinate confusion, or mismatches between UI exports and API data.",
+      "id": "dependency-finding-provenance",
+      "name": "dependency-finding-provenance",
+      "path": "skills/dependency-finding-provenance/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Resolve package-version lineage by manifest path and source ref/sha, and distinguish direct vs transitive introduction paths. Use when the same package appears at multiple versions or via multiple manifest files.",
+      "id": "dependency-provenance",
+      "name": "dependency-provenance",
+      "path": "skills/dependency-provenance/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Fetch project call graph artifacts, decode zstd payloads into searchable node and edge files, and run safe intersection/path searches. Use when retrieving call graph data, checking whether symbols exist, and extracting node/edge/path facts for downstream reasoning.",
+      "id": "fetch-and-search-call-graph",
+      "name": "fetch-and-search-call-graph",
+      "path": "skills/fetch-and-search-call-graph/SKILL.md",
+      "refs": [
+        "skills/fetch-and-search-call-graph/CALL_GRAPH_FORMAT_AND_SEARCH.md"
+      ]
+    },
+    {
+      "description": "Extend the SDK client surface after OpenAPI changes: model sync, registry overlay, payload builders, and integration tests. Use when a new API resource appears, facade behavior diverges from generated contract, or list/get/create needs validation\u2014not for hand-implementing every resource from scratch.",
+      "id": "implement-sdk-resource",
+      "name": "implement-sdk-resource",
+      "path": "skills/implement-sdk-resource/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Walk all projects in a namespace, identify direct and indirect dependency relationships between projects via produced/consumed package versions, and emit a JSON relationship graph with evidence scoring.",
+      "id": "map-project-dependency-relationships",
+      "name": "map-project-dependency-relationships",
+      "path": "skills/map-project-dependency-relationships/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Triage and fix OpenAPI / model-sync upstream drift when CI or pre-push fails verify-upstream-only, or when published endorctl is newer than committed provenance. Use for regenerating registry_contract, stubs, and reference docs; reviewing generated diffs; and optional local endorctl upgrades. Not for runtime SDK API errors (see troubleshoot-sdk).",
+      "id": "model-sync-drift",
+      "name": "model-sync-drift",
+      "path": "skills/model-sync-drift/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Deterministic project context bundle: export context_manifest.json plus dependency explorer artifacts, optional call-graph sweep, multi-pass package-version index + targeted hydration, and composition with relationship mapping and call-graph search for remediation, threat, and repo-profiling agents.",
+      "id": "project-agent-context",
+      "name": "project-agent-context",
+      "path": "skills/project-agent-context/SKILL.md",
+      "refs": [
+        "skills/project-agent-context/MULTIPASS_LLM_CONTRACT.md"
+      ]
+    },
+    {
+      "description": "Investigates reachability provenance mismatches in vulnerability findings by comparing dependency reachability, function reachability, and vulnerability metadata in the oss namespace. Use when finding tags or summary text appear contradictory (for example reachable dependency with unreachable function), when validating affected_callpath_uris attribution, or when analyzing CVE/GHSA alias consistency.",
+      "id": "reachability-provenance",
+      "name": "reachability-provenance",
+      "path": "skills/reachability-provenance/SKILL.md",
+      "refs": [
+        "skills/reachability-provenance/examples.md"
+      ]
+    },
+    {
+      "description": "Query projects, scan results, and findings from the Endor Labs platform using the SDK. Use when the user wants to retrieve scan results, list findings, look up a project by repository URL, or build reports from scan data. Covers namespace traversal for tenant-wide queries.",
+      "id": "retrieve-scan-results",
+      "name": "retrieve-scan-results",
+      "path": "skills/retrieve-scan-results/SKILL.md",
+      "refs": [
+        "skills/retrieve-scan-results/TRAVERSAL_PATTERNS.md"
+      ]
+    },
+    {
+      "description": "Customer-facing workflow for planning, validating, and troubleshooting Endor Enterprise SSO integrations. Use when a customer is setting up SSO, validating namespace access behavior, or debugging claims-to-authorization mapping.",
+      "id": "sso-integration-validation-troubleshooting",
+      "name": "sso-integration-validation-troubleshooting",
+      "path": "skills/sso-integration-validation-troubleshooting/SKILL.md",
+      "refs": [
+        "skills/sso-integration-validation-troubleshooting/README.md",
+        "skills/sso-integration-validation-troubleshooting/sso_access_spotcheck.py"
+      ]
+    },
+    {
+      "description": "Investigate tenant SSO/login issues using AuthenticationLog, AuthorizationPolicy, and optional AuditLog. Use when correlating IdP claims with Endor policy mapping, \"no authorized tenant\" symptoms, or exporting structured, flow-agnostic auth investigation JSON.",
+      "id": "troubleshoot-authlog",
+      "name": "troubleshoot-authlog",
+      "path": "skills/troubleshoot-authlog/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Debug Endor Labs SDK errors, API failures, and test issues. Use when encountering 404 Not Found after traverse, 500 Server Error on list, \"Spec is not full\" errors, update_mask validation failures, namespace mismatches, or unexpected test skips. Covers platform-specific gotchas and resolution patterns.",
+      "id": "troubleshoot-sdk",
+      "name": "troubleshoot-sdk",
+      "path": "skills/troubleshoot-sdk/SKILL.md",
+      "refs": [
+        "skills/troubleshoot-sdk/KNOWN_ISSUES.md"
+      ]
+    },
+    {
+      "description": "Investigate scan regressions by resolving a project, retrieving anomalous ScanResults, pulling ScanLogs, and generating result/log diffs with repeatable parameterized scripts.",
+      "id": "troubleshooting-scans",
+      "name": "troubleshooting-scans",
+      "path": "skills/troubleshooting-scans/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Validate Endor Labs policies against project finding data via the PolicyValidation API or endorctl. Use when checking whether an exception policy matches a finding, debugging VulnID/template_values, comparing SDK POST policy/validate to endorctl validate policy, or triaging 403 authz on customer namespaces.",
+      "id": "validate-policy",
+      "name": "validate-policy",
+      "path": "skills/validate-policy/SKILL.md",
+      "refs": [
+        "skills/validate-policy/API.md",
+        "skills/validate-policy/ENDORCTL.md"
+      ]
+    }
+  ],
+  "workflows": [
+    {
+      "agent_visible": true,
+      "cli": "endor-agent-context",
+      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "id": "agent-context",
+      "module": "endorlabs.workflows.agent_context.cli",
+      "skill": "project-agent-context"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-analytics-export-deps",
+      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "id": "analytics-export-deps",
+      "module": "endorlabs.workflows.analytics.cli",
+      "skill": "analytics-estate-dependencies"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-callgraph-search",
+      "default_output": "stdout or caller path",
+      "id": "callgraph-search",
+      "module": "endorlabs.workflows.callgraph.search",
+      "skill": "fetch-and-search-call-graph"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-context",
+      "default_output": ".endorlabs-context/",
+      "id": "context-bootstrap",
+      "module": "endorlabs.context.cli",
+      "skill": null
+    },
+    {
+      "agent_visible": false,
+      "cli": "endor-demo",
+      "default_output": null,
+      "id": "endor-demo",
+      "module": "endorlabs._demo.demo_cli",
+      "skill": null
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": "stdout or --output-json",
+      "id": "policies-validate",
+      "module": "endorlabs.workflows.policies.validate",
+      "skill": "validate-policy"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-reachability-context",
+      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "id": "reachability-context",
+      "module": "endorlabs.workflows.reachability.cli",
+      "skill": "reachability-provenance"
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "id": "relationships-map",
+      "module": "endorlabs.workflows.relationships.map",
+      "skill": "map-project-dependency-relationships"
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-semgrep-inventory",
+      "default_output": ".endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json",
+      "id": "semgrep-inventory",
+      "module": "endorlabs.workflows.semgrep.inventory",
+      "skill": "custom-sast-rules"
+    },
+    {
+      "agent_visible": true,
+      "cli": null,
+      "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
+      "id": "troubleshooting-scans",
+      "module": "endorlabs.workflows.troubleshooting_scans",
+      "skill": "troubleshooting-scans"
+    }
+  ]
+}

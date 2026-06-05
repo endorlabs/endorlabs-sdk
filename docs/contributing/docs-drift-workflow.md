@@ -14,21 +14,23 @@ uv sync --extra context
 
 ```python
 import endorlabs
-endorlabs.init()  # downloads to .endorlabs-context/
+status = endorlabs.init()  # materializes sdk/; optional platform downloads
 ```
 
 This creates:
 
-- `.endorlabs-context/openapiv2.swagger.json` — API spec
-- `.endorlabs-context/docs/*.md` — User docs (sitemap-based, parallel download)
+- `.endorlabs-context/sdk/` — shipped agent bundle (INDEX, skills, contracts)
+- `.endorlabs-context/platform/openapi/openapiv2.swagger.json` — API spec
+- `.endorlabs-context/platform/user-docs/*.md` — User docs (sitemap-based, parallel download)
+- `.endorlabs-context/context.json` — init manifest
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_sdk_bundle=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
 
 ## Model sync workflow (CI and local)
 
 The model sync workflow:
 
-1. **Download OpenAPI spec** — CI/local use `.endorlabs-context/openapiv2.swagger.json`.
+1. **Download OpenAPI spec** — CI/local use `.endorlabs-context/platform/openapi/openapiv2.swagger.json`.
 2. **Run canonical generator** — Generate deterministic custom-mapped Pydantic model modules and mapping metadata.
 3. **Run sync checks** — Validate eligibility (`x-internal` + exception allowlist), mapping determinism, and generated artifact freshness.
 4. **Refresh runtime generated package** — Mirror generated model shards to `src/endorlabs/generated/models/` and refresh runtime registry contract.
@@ -62,7 +64,7 @@ uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-re
 
 ### Triage
 
-- **Upstream verify failed in CI or pre-push:** run the command above, review diffs under `src/endorlabs/generated/`, `workspace/model-sync/`, `client_surface.pyi`, and `docs/generated-reference/`, then push.
+- **Upstream verify failed in CI or pre-push:** run the command above, review diffs under `src/endorlabs/generated/`, `client_surface.pyi`, and `docs/generated-reference/`, then push.
 - **Optional version signal:** `.github/scripts/check_endorctl_version.py` (local or cron; not required for merge).
 
 ## Local Use
@@ -73,7 +75,7 @@ uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-re
 
 ```python
 from endorlabs.context import sync_openapi
-sync_openapi()  # downloads to .endorlabs-context/openapiv2.swagger.json
+sync_openapi()  # downloads to .endorlabs-context/platform/openapi/openapiv2.swagger.json
 ```
 
 Then run model sync:
@@ -106,7 +108,7 @@ Check tooling availability without re-running generation:
 uv run python devtools/model_sync.py --inventory-only
 ```
 
-**Model consistency (static):** Use canonical model-sync artifacts as the static contract signal (no integration test run). Run: `uv run python devtools/model_sync.py` and inspect generated contract outputs under `workspace/model-sync/custom_mapping/` (`facade_contract.json`, `mapping/registry_parity_report.json`, `mapping/operation_path_metadata.json`, `mapping/payload_schemas.json`, `mapping/runtime_index.json`).
+**Model consistency (static):** Use the committed runtime registry contract as the static contract signal (no integration test run). Run: `uv run python devtools/model_sync.py` and inspect `src/endorlabs/generated/registry_contract.py` plus `validate_contract_artifacts` output at sync time.
 
 ## Scripts
 
