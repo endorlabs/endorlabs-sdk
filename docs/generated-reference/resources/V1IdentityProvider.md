@@ -1,6 +1,6 @@
 # V1IdentityProvider
 
-V1IdentityProvider resource facade.
+Represents an identity provider.
 
 ## Client access
 

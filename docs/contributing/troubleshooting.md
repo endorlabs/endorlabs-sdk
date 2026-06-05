@@ -1,6 +1,6 @@
 # SDK troubleshooting (contributing)
 
-Workflow below. Resolved-case narratives: local docs snapshots under `.endorlabs-context/docs/` and repo issues.
+Workflow below. Resolved-case narratives: local docs snapshots under `.endorlabs-context/platform/user-docs/` and repo issues.
 
 ## Platform insight: path namespace vs body UUID
 
@@ -76,4 +76,4 @@ Tests that **create then delete** as the behavior under test (e.g. test_client_u
 ## References
 
 - OpenAPI/spec path and list/update patterns: [contracts.md](../contracts.md).
-- For resolved-case narratives (wrong URL pattern, update_mask, tags): use local docs snapshots under `.endorlabs-context/docs/` or repo issues.
+- For resolved-case narratives (wrong URL pattern, update_mask, tags): use local docs snapshots under `.endorlabs-context/platform/user-docs/` or repo issues.

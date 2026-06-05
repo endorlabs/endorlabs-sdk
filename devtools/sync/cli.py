@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import logging
 import shutil
 import subprocess
@@ -13,58 +14,69 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from .codegen import generate_modules, load_profiles
+from .codegen import generate_modules_in_memory, load_profiles
 from .contract import (
     build_facade_contract,
     build_operation_path_metadata,
     build_payload_schemas,
     build_registry_parity_report,
-    build_runtime_index_metadata,
     load_resource_scope_overrides,
     render_create_convenience_module,
     render_generated_registry_contract_module,
     validate_contract_artifacts,
 )
-from .planner import build_plan, write_mapping_metadata
+from .path_safety import find_repo_root, safe_repo_output_path
+from .planner import build_plan
 from .policy import load_openapi_spec
-from .provenance import build_artifacts_manifest, build_provenance, write_json
+from .provenance import build_provenance
 from .upstream_verify import meta_version_url_from_openapi_url
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_SPEC_PATH = REPO_ROOT / ".endorlabs-context" / "openapiv2.swagger.json"
 DEFAULT_SPEC_URL = "https://api.endorlabs.com/download/openapiv2.swagger.json"
-DEFAULT_OUTPUT_ROOT = REPO_ROOT / "workspace" / "model-sync"
-DEFAULT_CUSTOM_PROFILES_DIR = REPO_ROOT / "devtools" / "model_sync_profiles"
-LEGACY_OUTPUT_ROOT = REPO_ROOT / "workspace" / "model-bakeoff"
-GENERATED_CONTRACT_MODULE_PATH = (
-    REPO_ROOT / "src" / "endorlabs" / "generated" / "registry_contract.py"
-)
-GENERATED_PACKAGE_INIT_PATH = (
-    REPO_ROOT / "src" / "endorlabs" / "generated" / "__init__.py"
-)
-GENERATED_RUNTIME_MODELS_ROOT = REPO_ROOT / "src" / "endorlabs" / "generated" / "models"
-GENERATED_CREATE_CONVENIENCE_PATH = (
-    REPO_ROOT / "src" / "endorlabs" / "generated" / "create_convenience.py"
-)
+LEGACY_OUTPUT_ROOT_REL = Path("workspace") / "model-bakeoff"
+
 logger = logging.getLogger(__name__)
 
 
-def _print_delta_summary(*, git_ref_override: str, repo_root: Path) -> None:
-    from .baseline_ref import resolve_auto_baseline_ref
-    from .delta_summary import render_compact_delta_summary_lines
+def _repo_root() -> Path:
+    return find_repo_root()
 
-    ref = (git_ref_override or "").strip() or resolve_auto_baseline_ref(repo_root)
-    summary_text = "\n".join(
-        render_compact_delta_summary_lines(git_ref=ref, repo_root=repo_root)
+
+def default_spec_path(repo_root: Path | None = None) -> Path:
+    root = repo_root or _repo_root()
+    return root / ".endorlabs-context" / "platform" / "openapi" / "openapiv2.swagger.json"
+
+
+def default_custom_profiles_dir(repo_root: Path | None = None) -> Path:
+    root = repo_root or _repo_root()
+    return root / "devtools" / "model_sync_profiles"
+
+
+def generated_contract_module_path(repo_root: Path | None = None) -> Path:
+    root = repo_root or _repo_root()
+    return safe_repo_output_path(
+        root, "src", "endorlabs", "generated", "registry_contract.py"
     )
-    print(summary_text)  # noqa: T201
+
+
+def _datamodel_codegen_available() -> bool:
+    return importlib.util.find_spec("datamodel_code_generator") is not None
+
+
+def _toolchain_inventory() -> dict[str, dict[str, bool]]:
+    return {"datamodel-codegen": {"available": _datamodel_codegen_available()}}
+
+
+def _ensure_devtools_on_path(repo_root: Path) -> None:
+    devtools = repo_root / "devtools"
+    if str(devtools) not in sys.path:
+        sys.path.insert(0, str(devtools))
 
 
 def _run_upstream_verify_only(args: argparse.Namespace) -> int:
     from .upstream_verify import verify_upstream_matches_committed
 
     drift = verify_upstream_matches_committed(
-        registry_contract_path=GENERATED_CONTRACT_MODULE_PATH,
+        registry_contract_path=generated_contract_module_path(),
         spec_url=args.spec_url,
     )
     if drift:
@@ -79,7 +91,7 @@ def _run_verify_and_sync_if_stale(args: argparse.Namespace, spec_path: Path) -> 
     from .upstream_verify import verify_upstream_matches_committed
 
     drift = verify_upstream_matches_committed(
-        registry_contract_path=GENERATED_CONTRACT_MODULE_PATH,
+        registry_contract_path=generated_contract_module_path(),
         spec_url=args.spec_url,
     )
     if not drift:
@@ -93,8 +105,6 @@ def _run_verify_and_sync_if_stale(args: argparse.Namespace, spec_path: Path) -> 
     if not _fetch_openapi_spec(args.spec_url, spec_path):
         return 1
     code = run_sync(
-        spec_path=spec_path,
-        output_root=args.output_root,
         profiles_dir=args.custom_profiles_dir,
         generate_stubs=True,
         generate_reference_docs=True,
@@ -102,11 +112,6 @@ def _run_verify_and_sync_if_stale(args: argparse.Namespace, spec_path: Path) -> 
     )
     if code != 0:
         return code
-    if args.delta_summary:
-        _print_delta_summary(
-            git_ref_override=args.delta_git_ref,
-            repo_root=REPO_ROOT,
-        )
     return 0
 
 
@@ -133,12 +138,8 @@ def _sha256_hex(path: Path) -> str:
 
 
 def _run_command(command: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    resolved = list(command)
-    executable = shutil.which(resolved[0])
-    if executable is not None:
-        resolved[0] = executable
     return subprocess.run(  # noqa: S603
-        resolved,
+        command,
         cwd=str(cwd),
         capture_output=True,
         text=True,
@@ -147,34 +148,35 @@ def _run_command(command: list[str], cwd: Path) -> subprocess.CompletedProcess[s
 
 
 def _run_optional_generators(
+    repo_root: Path,
+    *,
     generate_stubs: bool,
     generate_reference_docs: bool,
 ) -> bool:
+    _ensure_devtools_on_path(repo_root)
     ok = True
     if generate_stubs:
-        result = _run_command(
-            [sys.executable, "devtools/generate_client_stub.py"], REPO_ROOT
-        )
-        if result.returncode != 0:
+        from generate_client_stub import main as generate_client_stub_main
+
+        try:
+            generate_client_stub_main()
+        except Exception as exc:
             ok = False
-            logger.error(
-                "generate_client_stub failed: %s",
-                (result.stderr or result.stdout).strip(),
-            )
+            logger.error("generate_client_stub failed: %s", exc)
         else:
             logger.info("generate_client_stub completed.")
     if generate_reference_docs:
-        result = _run_command(
-            [sys.executable, "devtools/generate_reference_docs.py"], REPO_ROOT
-        )
-        if result.returncode != 0:
+        from generate_reference_docs import main as generate_reference_docs_main
+
+        try:
+            if generate_reference_docs_main([]) != 0:
+                ok = False
+                logger.error("generate_reference_docs failed.")
+            else:
+                logger.info("generate_reference_docs completed.")
+        except Exception as exc:
             ok = False
-            logger.error(
-                "generate_reference_docs failed: %s",
-                (result.stderr or result.stdout).strip(),
-            )
-        else:
-            logger.info("generate_reference_docs completed.")
+            logger.error("generate_reference_docs failed: %s", exc)
     return ok
 
 
@@ -186,63 +188,68 @@ def _ensure_package_init(path: Path, doc: str | None = None) -> None:
     path.write_text(contents, encoding="utf-8")
 
 
-def _mirror_generated_models_to_runtime(model_output: Path) -> None:
-    generated_source = model_output / "generated"
-    if not generated_source.exists():
-        return
-    if GENERATED_RUNTIME_MODELS_ROOT.exists():
-        shutil.rmtree(GENERATED_RUNTIME_MODELS_ROOT)
-    GENERATED_RUNTIME_MODELS_ROOT.mkdir(parents=True, exist_ok=True)
-    for file_path in sorted(generated_source.rglob("*.py")):
-        rel = file_path.relative_to(generated_source)
-        dest = GENERATED_RUNTIME_MODELS_ROOT / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(file_path, dest)
+def _write_generated_models(
+    repo_root: Path, generated_modules: dict[str, str]
+) -> None:
+    models_root = safe_repo_output_path(
+        repo_root, "src", "endorlabs", "generated", "models"
+    )
+    if models_root.exists():
+        shutil.rmtree(models_root)
+    models_root.mkdir(parents=True, exist_ok=True)
+    package_init = safe_repo_output_path(
+        repo_root, "src", "endorlabs", "generated", "__init__.py"
+    )
     _ensure_package_init(
-        GENERATED_PACKAGE_INIT_PATH,
+        package_init,
         '"""Generated artifacts consumed by runtime registry adapter."""',
     )
     _ensure_package_init(
-        GENERATED_RUNTIME_MODELS_ROOT / "__init__.py",
-        '"""Generated model modules mirrored from model-sync output."""',
+        models_root / "__init__.py",
+        '"""Generated model modules from model-sync."""',
     )
-    for package_dir in sorted(
-        path for path in GENERATED_RUNTIME_MODELS_ROOT.rglob("*") if path.is_dir()
-    ):
+    for rel_path, source in sorted(generated_modules.items()):
+        dest = safe_repo_output_path(
+            repo_root, "src", "endorlabs", "generated", "models", rel_path
+        )
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(source, encoding="utf-8")
+    for package_dir in sorted(path for path in models_root.rglob("*") if path.is_dir()):
         _ensure_package_init(package_dir / "__init__.py")
 
 
 def run_sync(
     *,
-    spec_path: Path,
-    output_root: Path,
     profiles_dir: Path,
     generate_stubs: bool,
     generate_reference_docs: bool,
     spec_url: str = DEFAULT_SPEC_URL,
+    repo_root: Path | None = None,
 ) -> int:
-    """Run canonical model-sync generation and metadata emission."""
+    """Run canonical model-sync generation and write committed ship artifacts only."""
+    root = repo_root or _repo_root()
+    spec_path = default_spec_path(root)
     if not spec_path.exists():
         logger.error("Spec file not found: %s", spec_path)
         return 1
-    if LEGACY_OUTPUT_ROOT.exists():
-        shutil.rmtree(LEGACY_OUTPUT_ROOT)
-        logger.info("Removed legacy multi-approach output at %s", LEGACY_OUTPUT_ROOT)
 
-    toolchain = {
-        "datamodel-codegen": {
-            "available": shutil.which("datamodel-codegen") is not None,
-        }
-    }
-    write_json(output_root / "toolchain_inventory.json", toolchain)
+    legacy_output = root / LEGACY_OUTPUT_ROOT_REL
+    if legacy_output.exists():
+        shutil.rmtree(legacy_output)
+        logger.info("Removed legacy multi-approach output at %s", legacy_output)
+
+    toolchain = _toolchain_inventory()
     if not toolchain["datamodel-codegen"]["available"]:
-        logger.error("datamodel-codegen is required in PATH.")
+        logger.error(
+            "datamodel-code-generator package is required "
+            "(install dev dependencies with uv sync)."
+        )
         return 1
 
     spec = load_openapi_spec(spec_path)
-    profiles = load_profiles(profiles_dir)
+    load_profiles(profiles_dir)
     try:
-        spec_for_provenance = spec_path.resolve().relative_to(REPO_ROOT.resolve())
+        spec_for_provenance = spec_path.resolve().relative_to(root.resolve())
     except ValueError:
         spec_for_provenance = spec_path
     provenance = build_provenance(
@@ -250,78 +257,22 @@ def run_sync(
         toolchain,
         meta_version_url=meta_version_url_from_openapi_url(spec_url),
     )
-    model_output = output_root / "custom_mapping"
-    if model_output.exists():
-        shutil.rmtree(model_output)
-    (model_output / "mapping").mkdir(parents=True, exist_ok=True)
-    write_json(model_output / "provenance.json", provenance)
 
     plan = build_plan(spec)
-    write_mapping_metadata(
-        plan.entries, model_output / "mapping" / "entity_mapping.json", profiles
-    )
     operation_path_metadata = build_operation_path_metadata(spec)
-    write_json(
-        model_output / "mapping" / "operation_path_metadata.json",
-        operation_path_metadata,
-    )
     payload_schemas = build_payload_schemas(
         spec=spec,
         operation_metadata=operation_path_metadata,
     )
-    write_json(model_output / "mapping" / "payload_schemas.json", payload_schemas)
     facade_contract = build_facade_contract(
         mapping_entries=plan.entries,
         payload_schemas=payload_schemas,
         operation_metadata=operation_path_metadata,
-        scope_overrides=load_resource_scope_overrides(DEFAULT_CUSTOM_PROFILES_DIR),
+        scope_overrides=load_resource_scope_overrides(profiles_dir),
     )
-    write_json(model_output / "facade_contract.json", facade_contract)
-    runtime_index = build_runtime_index_metadata(facade_contract)
-    write_json(model_output / "mapping" / "runtime_index.json", runtime_index)
-    generated_contract_content = render_generated_registry_contract_module(
-        facade_contract=facade_contract,
-        provenance=provenance,
-    )
-    GENERATED_PACKAGE_INIT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if not GENERATED_PACKAGE_INIT_PATH.exists():
-        GENERATED_PACKAGE_INIT_PATH.write_text(
-            '"""Generated artifacts consumed by runtime registry adapter."""\n',
-            encoding="utf-8",
-        )
-    GENERATED_CONTRACT_MODULE_PATH.write_text(
-        generated_contract_content, encoding="utf-8"
-    )
-    create_convenience_content = render_create_convenience_module(
-        facade_contract=facade_contract
-    )
-    GENERATED_CREATE_CONVENIENCE_PATH.write_text(
-        create_convenience_content, encoding="utf-8"
-    )
-    format_result = _run_command(
-        [
-            sys.executable,
-            "-m",
-            "ruff",
-            "format",
-            str(GENERATED_CONTRACT_MODULE_PATH),
-            str(GENERATED_CREATE_CONVENIENCE_PATH),
-        ],
-        REPO_ROOT,
-    )
-    if format_result.returncode != 0:
-        logger.error(
-            "failed to format generated runtime contract module: %s",
-            (format_result.stderr or format_result.stdout).strip(),
-        )
-        return 1
     registry_parity_report = build_registry_parity_report(
         mapping_entries=plan.entries,
         facade_contract=facade_contract,
-    )
-    write_json(
-        model_output / "mapping" / "registry_parity_report.json",
-        registry_parity_report,
     )
     contract_errors = validate_contract_artifacts(
         facade_contract=facade_contract,
@@ -333,39 +284,76 @@ def run_sync(
         for error in contract_errors:
             logger.error("model-sync contract validation failed: %s", error)
         logger.error(
-            "Contract validation triage: inspect "
-            "workspace/model-sync/custom_mapping/mapping/registry_parity_report.json "
-            "and workspace/model-sync/custom_mapping/facade_contract.json; see "
-            "docs/contributing/docs-drift-workflow.md"
+            "Contract validation triage: inspect src/endorlabs/generated/"
+            "registry_contract.py and validate_contract_artifacts output; "
+            "see docs/contributing/docs-drift-workflow.md"
         )
         return 1
-    ok, message, commands = generate_modules(
-        repo_root=REPO_ROOT,
-        model_output=model_output,
-        schema_shards=plan.schema_shards,
+
+    try:
+        generated_modules = generate_modules_in_memory(plan.schema_shards)
+    except Exception as exc:
+        logger.error("model-sync codegen failed: %s", exc)
+        return 1
+    logger.info(
+        "model-sync: generated %s model module(s) in memory",
+        len(generated_modules),
+    )
+
+    generated_contract_content = render_generated_registry_contract_module(
+        facade_contract=facade_contract,
         provenance=provenance,
     )
-    logger.info("model-sync: %s", message)
-    if not ok:
-        return 1
-    _mirror_generated_models_to_runtime(model_output)
-
-    write_json(output_root / "commands.json", {"commands": commands})
-    manifest = build_artifacts_manifest(
-        model_output, excluded_paths={"provenance.json"}
+    contract_path = generated_contract_module_path(root)
+    create_convenience_path = safe_repo_output_path(
+        root, "src", "endorlabs", "generated", "create_convenience.py"
     )
-    write_json(model_output / "artifacts_manifest.json", manifest)
+    contract_path.parent.mkdir(parents=True, exist_ok=True)
+    package_init = safe_repo_output_path(
+        root, "src", "endorlabs", "generated", "__init__.py"
+    )
+    _ensure_package_init(
+        package_init,
+        '"""Generated artifacts consumed by runtime registry adapter."""',
+    )
+    contract_path.write_text(generated_contract_content, encoding="utf-8")
+    create_convenience_path.write_text(
+        render_create_convenience_module(facade_contract=facade_contract),
+        encoding="utf-8",
+    )
+    format_result = _run_command(
+        [
+            sys.executable,
+            "-m",
+            "ruff",
+            "format",
+            str(contract_path),
+            str(create_convenience_path),
+        ],
+        root,
+    )
+    if format_result.returncode != 0:
+        logger.error(
+            "failed to format generated runtime contract module: %s",
+            (format_result.stderr or format_result.stdout).strip(),
+        )
+        return 1
 
-    optional_ok = _run_optional_generators(generate_stubs, generate_reference_docs)
+    _write_generated_models(root, generated_modules)
+
+    optional_ok = _run_optional_generators(
+        root,
+        generate_stubs=generate_stubs,
+        generate_reference_docs=generate_reference_docs,
+    )
     if not optional_ok:
         return 1
-    logger.info("Model sync completed at %s", model_output)
+    logger.info("Model sync completed (ship surface under src/endorlabs/generated/)")
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--spec-path", type=Path, default=DEFAULT_SPEC_PATH)
     parser.add_argument(
         "--spec-url",
         default=DEFAULT_SPEC_URL,
@@ -374,30 +362,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--fetch-spec",
         action="store_true",
-        help="Download OpenAPI JSON to --spec-path before running sync",
+        help="Download OpenAPI JSON to the canonical context path before running sync",
     )
     parser.add_argument(
         "--spec-hash-only",
         action="store_true",
-        help="Print SHA-256 of --spec-path and exit (runs --fetch-spec first if set)",
+        help=(
+            "Print SHA-256 of the canonical OpenAPI spec path and exit "
+            "(runs --fetch-spec first if set)"
+        ),
     )
-    parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument(
-        "--custom-profiles-dir", type=Path, default=DEFAULT_CUSTOM_PROFILES_DIR
+        "--custom-profiles-dir",
+        type=Path,
+        default=None,
+        help="Directory containing model_sync_profiles JSON (default: devtools/model_sync_profiles)",
     )
     parser.add_argument("--generate-stubs", action="store_true")
     parser.add_argument("--generate-reference-docs", action="store_true")
     parser.add_argument("--inventory-only", action="store_true")
-    parser.add_argument(
-        "--delta-summary",
-        action="store_true",
-        help="After a successful sync, print a compact delta vs git baseline",
-    )
-    parser.add_argument(
-        "--delta-git-ref",
-        default="",
-        help="Baseline ref for --delta-summary (default: auto origin/main..master)",
-    )
     parser.add_argument(
         "--verify-upstream-only",
         action="store_true",
@@ -425,16 +408,15 @@ def main(argv: list[str] | None = None) -> int:
         parser.error(
             "--verify-upstream-only and --verify-and-sync-if-stale are mutually exclusive"
         )
-    if args.inventory_only:
-        toolchain = {
-            "datamodel-codegen": {
-                "available": shutil.which("datamodel-codegen") is not None,
-            }
-        }
-        write_json(args.output_root / "toolchain_inventory.json", toolchain)
-        return 0
 
-    spec_path = args.spec_path.expanduser().resolve()
+    repo_root = _repo_root()
+    if args.custom_profiles_dir is None:
+        args.custom_profiles_dir = default_custom_profiles_dir(repo_root)
+    spec_path = default_spec_path(repo_root)
+
+    if args.inventory_only:
+        logger.info("Toolchain inventory: %s", _toolchain_inventory())
+        return 0
 
     if args.verify_upstream_only:
         return _run_upstream_verify_only(args)
@@ -453,20 +435,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     code = run_sync(
-        spec_path=spec_path,
-        output_root=args.output_root,
         profiles_dir=args.custom_profiles_dir,
         generate_stubs=args.generate_stubs,
         generate_reference_docs=args.generate_reference_docs,
         spec_url=args.spec_url,
+        repo_root=repo_root,
     )
     if code != 0:
         return code
-
-    if args.delta_summary:
-        _print_delta_summary(
-            git_ref_override=args.delta_git_ref,
-            repo_root=REPO_ROOT,
-        )
 
     return 0

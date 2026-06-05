@@ -1,1 +1,1 @@
-"""Generated model modules mirrored from model-sync output."""
+"""Generated model modules from model-sync."""

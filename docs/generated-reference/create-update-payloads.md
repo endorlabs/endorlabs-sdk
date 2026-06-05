@@ -2,7 +2,7 @@
 
 Auto-generated from `RESOURCE_REGISTRY`, builder return types,
 and payload models.
-Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.json` (215 entities).
+Model sync contract: `src/endorlabs/generated/registry_contract.py` (41 resources, 41 canonical entities).
 
 ## Create payload/builders
 
@@ -10,13 +10,8 @@ Model sync mapping: `workspace/model-sync/custom_mapping/mapping/entity_mapping.
 |----------|--------------------|---------|---------------|-----------------|-----------------|
 ## Model-sync coverage snapshot
 
-- mapped entities: `215`
-- generated artifact files: `153`
 - facade contract resources: `41`
-- registry parity status: `pass`
-- operation metadata entries: `749`
-- payload schema resources: `41`
-- runtime model import index entries: `41`
+- canonical entities (union): `41`
 
 | APIKey | yes | build_create_payload | CreateAPIKeyPayload | meta, spec | propagate |
 | AuditLog | yes | build_create_payload | CreateAuditLogPayload | meta, spec | propagate |
