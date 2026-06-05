@@ -1,10 +1,7 @@
-"""Quality gates for generated model-sync contract artifacts."""
+"""Quality gates for committed model-sync registry contract."""
 
 from __future__ import annotations
 
-import hashlib
-import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -15,34 +12,25 @@ _REPO_ROOT = Path(__file__).resolve().parents[4]
 _DEVTOOLS_DIR = str(_REPO_ROOT / "devtools")
 if _DEVTOOLS_DIR not in sys.path:
     sys.path.insert(0, _DEVTOOLS_DIR)
+_SRC_DIR = str(_REPO_ROOT / "src")
+if _SRC_DIR not in sys.path:
+    sys.path.insert(0, _SRC_DIR)
 
 from sync.policy import MODEL_SYNC_ENTITY_ALIASES_BY_MODEL
 
+from endorlabs.generated.registry_contract import RUNTIME_REGISTRY_CONTRACT
 from endorlabs.registry import RESOURCE_REGISTRY
 
-_MODEL_SYNC_ROOT = _REPO_ROOT / "workspace" / "model-sync" / "custom_mapping"
-_FACADE_CONTRACT_PATH = _MODEL_SYNC_ROOT / "facade_contract.json"
-_PARITY_REPORT_PATH = _MODEL_SYNC_ROOT / "mapping" / "registry_parity_report.json"
-_OP_METADATA_PATH = _MODEL_SYNC_ROOT / "mapping" / "operation_path_metadata.json"
-_PAYLOAD_SCHEMAS_PATH = _MODEL_SYNC_ROOT / "mapping" / "payload_schemas.json"
-_ARTIFACTS_MANIFEST_PATH = _MODEL_SYNC_ROOT / "artifacts_manifest.json"
-_RUNTIME_INDEX_PATH = _MODEL_SYNC_ROOT / "mapping" / "runtime_index.json"
 
-
-def _load_json(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        if os.getenv("CI"):
-            pytest.fail(f"Generated artifact missing in CI ({path})")
-        pytest.skip(f"Generated artifact missing ({path})")
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        pytest.fail(f"Artifact root must be object: {path}")
-    return payload
+def _contract() -> dict[str, Any]:
+    if not isinstance(RUNTIME_REGISTRY_CONTRACT, dict):
+        pytest.fail("RUNTIME_REGISTRY_CONTRACT must be a dict")
+    return RUNTIME_REGISTRY_CONTRACT
 
 
 def test_facade_contract_has_stable_resource_shape() -> None:
-    """Facade contract must expose stable per-resource invariant fields."""
-    payload = _load_json(_FACADE_CONTRACT_PATH)
+    """Runtime registry contract must expose stable per-resource invariant fields."""
+    payload = _contract()
     resources = payload.get("resources")
     assert isinstance(resources, list) and resources
     assert payload.get("resource_count") == len(resources)
@@ -82,19 +70,9 @@ def test_facade_contract_has_stable_resource_shape() -> None:
     for resource in resources:
         assert isinstance(resource, dict)
         assert required_keys.issubset(resource)
-
         attr_name = resource["attr_name"]
         assert isinstance(attr_name, str) and attr_name
         seen_attrs.append(attr_name)
-        assert isinstance(resource["model_class_import_path"], str)
-
-        assert resource["scope"] in {"tenant", "oss"}
-        assert resource["parent_kind"] is None or isinstance(
-            resource["parent_kind"], str
-        )
-        assert isinstance(resource["has_tag_methods"], bool)
-        assert resource["create_mode"] in {"both", "payload-only", "unsupported"}
-        assert isinstance(resource["update_requires_mask"], bool)
 
         supported_ops = resource["supported_ops"]
         assert isinstance(supported_ops, list)
@@ -126,117 +104,9 @@ def test_facade_contract_has_stable_resource_shape() -> None:
     assert len(seen_attrs) == len(set(seen_attrs)), "attr_name values must be unique"
 
 
-def test_registry_parity_report_contract_is_well_formed() -> None:
-    """Parity report must be structured and indicate no missing registry mappings."""
-    payload = _load_json(_PARITY_REPORT_PATH)
-    assert payload.get("status") in {"pass", "fail"}
-    for key in (
-        "missing_in_mapping",
-        "mapping_without_registry_match",
-        "alias_matches",
-    ):
-        assert isinstance(payload.get(key), list)
-    assert payload.get("status") == "pass"
-    assert payload.get("missing_in_mapping") == []
-
-
-def test_operation_metadata_has_unique_path_method_pairs() -> None:
-    """Operation metadata must have stable shape and unique path+method rows."""
-    payload = _load_json(_OP_METADATA_PATH)
-    operations = payload.get("operations")
-    assert isinstance(operations, list) and operations
-    assert payload.get("operation_count") == len(operations)
-
-    required_keys = {
-        "path",
-        "method",
-        "operation_id",
-        "tags",
-        "x_internal",
-        "request_refs",
-        "response_refs",
-    }
-    seen_pairs: set[tuple[str, str]] = set()
-
-    for operation in operations:
-        assert isinstance(operation, dict)
-        assert required_keys.issubset(operation)
-        path = operation["path"]
-        method = operation["method"]
-        assert isinstance(path, str) and path.startswith("/")
-        assert isinstance(method, str) and method == method.lower()
-        pair = (path, method)
-        assert pair not in seen_pairs
-        seen_pairs.add(pair)
-
-        assert operation["operation_id"] is None or isinstance(
-            operation["operation_id"], str
-        )
-        assert isinstance(operation["x_internal"], bool)
-        assert isinstance(operation["tags"], list)
-        assert all(isinstance(tag, str) for tag in operation["tags"])
-        for key in ("request_refs", "response_refs"):
-            value = operation[key]
-            assert isinstance(value, list)
-            assert all(isinstance(ref, str) for ref in value)
-
-
-def test_payload_schema_metadata_has_expected_keys() -> None:
-    """Payload schema catalog must be complete per-resource metadata."""
-    payload = _load_json(_PAYLOAD_SCHEMAS_PATH)
-    resources = payload.get("resources")
-    assert isinstance(resources, list) and resources
-    assert payload.get("resource_count") == len(resources)
-
-    required_keys = {
-        "attr_name",
-        "resource_name",
-        "create_payload_entities",
-        "update_payload_entities",
-        "create_payload_definitions",
-        "update_payload_definitions",
-    }
-    for resource in resources:
-        assert isinstance(resource, dict)
-        assert required_keys.issubset(resource)
-        assert isinstance(resource["attr_name"], str) and resource["attr_name"]
-        assert isinstance(resource["resource_name"], str) and resource["resource_name"]
-        for key in ("create_payload_entities", "update_payload_entities"):
-            value = resource[key]
-            assert isinstance(value, list)
-            assert all(isinstance(item, str) for item in value)
-        for key in ("create_payload_definitions", "update_payload_definitions"):
-            assert isinstance(resource[key], dict)
-
-
-def test_x_internal_policy_consistency() -> None:
-    """x-internal policy should be stable per operationId."""
-    payload = _load_json(_OP_METADATA_PATH)
-    operations = payload.get("operations")
-    assert isinstance(operations, list) and operations
-
-    op_internal_flags: dict[str, bool] = {}
-    for operation in operations:
-        if not isinstance(operation, dict):
-            continue
-        operation_id = operation.get("operation_id")
-        x_internal = operation.get("x_internal")
-        if not isinstance(operation_id, str) or not operation_id:
-            continue
-        if not isinstance(x_internal, bool):
-            continue
-        existing = op_internal_flags.get(operation_id)
-        if existing is not None:
-            assert existing == x_internal, (
-                f"operationId {operation_id} has conflicting x-internal flags "
-                f"({existing} vs {x_internal})"
-            )
-        op_internal_flags[operation_id] = x_internal
-
-
 def test_alias_exceptions_are_explicit_and_resolvable() -> None:
     """All alias exceptions must map to modeled resources."""
-    contract = _load_json(_FACADE_CONTRACT_PATH)
+    contract = _contract()
     resources = contract.get("resources")
     assert isinstance(resources, list) and resources
 
@@ -261,26 +131,9 @@ def test_alias_exceptions_are_explicit_and_resolvable() -> None:
         )
 
 
-def test_sync_two_run_hash_stability() -> None:
-    """Manifest overall hash must match deterministic recomputation."""
-    payload = _load_json(_ARTIFACTS_MANIFEST_PATH)
-    files = payload.get("files")
-    assert isinstance(files, list)
-    manifest_bytes = json.dumps(files, sort_keys=True).encode("utf-8")
-    expected_sha = hashlib.sha256(manifest_bytes).hexdigest()
-    assert payload.get("overall_sha256") == expected_sha
-
-
 def test_sorted_output_ordering() -> None:
-    """Generated contract resources must remain sorted and stable.
-
-    ``facade_contract.json`` lists ``attr_name`` as written by model-sync
-    ``build_facade_contract`` (the Pydantic ``model_class`` name). The runtime
-    ``RESOURCE_REGISTRY`` can rename the ``Client`` attribute via
-    ``registry_overlay`` without rewriting this artifact; gate ordering against
-    model class names, not ``ResourceEntry.attr_name``.
-    """
-    payload = _load_json(_FACADE_CONTRACT_PATH)
+    """Generated contract resources must remain sorted and stable."""
+    payload = _contract()
     resources = payload.get("resources")
     assert isinstance(resources, list) and resources
     attrs = [row.get("attr_name") for row in resources if isinstance(row, dict)]
@@ -288,20 +141,3 @@ def test_sorted_output_ordering() -> None:
 
     expected_attrs = sorted(entry.model_class.__name__ for entry in RESOURCE_REGISTRY)
     assert attrs == expected_attrs
-
-
-def test_runtime_index_has_model_and_builder_imports() -> None:
-    """Runtime index should provide deterministic import maps."""
-    payload = _load_json(_RUNTIME_INDEX_PATH)
-    model_index = payload.get("model_class_import_by_name")
-    builder_index = payload.get("create_builder_import_by_name")
-    mutability_by_resource = payload.get("mutability_by_resource")
-    capability_by_resource = payload.get("capability_by_resource")
-    assert isinstance(model_index, dict) and model_index
-    assert isinstance(builder_index, dict)
-    assert isinstance(mutability_by_resource, dict)
-    assert isinstance(capability_by_resource, dict)
-    for key, value in model_index.items():
-        assert isinstance(key, str)
-        assert isinstance(value, str)
-        assert ":" in value

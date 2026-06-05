@@ -67,7 +67,7 @@ from .resources.version_upgrade import VersionUpgrade
 from .resources.vulnerability import Vulnerability
 
 class _APIKeyFacade(ResourceRuntimeFacade[APIKey]):
-    """API Key resource model extending BaseResource.
+    """API key for programmatic access.
 
     Create mode: both.
     """
@@ -86,7 +86,7 @@ class _APIKeyFacade(ResourceRuntimeFacade[APIKey]):
     ) -> APIKey: ...
 
 class _AuditLogFacade(ResourceRuntimeFacade[AuditLog]):
-    """Audit Log resource model extending BaseResource.
+    """Audit trail of API operations.
 
     Create mode: both.
     """
@@ -109,7 +109,7 @@ class _AuditLogFacade(ResourceRuntimeFacade[AuditLog]):
     ) -> AuditLog: ...
 
 class _AuthenticationLogFacade(ListableFacade[AuthenticationLog]):
-    """Authentication Log resource model. List and get only."""
+    """Authentication event log."""
 
     def get(
         self,
@@ -118,7 +118,7 @@ class _AuthenticationLogFacade(ListableFacade[AuthenticationLog]):
     ) -> AuthenticationLog: ...
 
 class _AuthorizationPolicyFacade(ResourceRuntimeFacade[AuthorizationPolicy]):
-    """Authorization Policy resource model extending BaseResource.
+    """Permission grant for an authenticated identity.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -142,7 +142,7 @@ class _AuthorizationPolicyFacade(ResourceRuntimeFacade[AuthorizationPolicy]):
     ) -> AuthorizationPolicy: ...
 
 class _CodeOwnersFacade(ResourceRuntimeFacade[CodeOwners]):
-    """Code Owners resource model. List, get, create, update, delete.
+    """Code ownership assignments for a project.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -163,7 +163,7 @@ class _CodeOwnersFacade(ResourceRuntimeFacade[CodeOwners]):
     ) -> CodeOwners: ...
 
 class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
-    """Facade model for DependencyMetadata (generated wire shape).
+    """Dependency relationship between packages.
 
     Create mode: both.
     """
@@ -181,7 +181,7 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
     ) -> DependencyMetadata: ...
 
 class _EndorLicenseFacade(ListableFacade[EndorLicense]):
-    """Endor License resource model. List and get only."""
+    """Platform license assigned to a tenant."""
 
     def get(
         self,
@@ -190,7 +190,7 @@ class _EndorLicenseFacade(ListableFacade[EndorLicense]):
     ) -> EndorLicense: ...
 
 class _FindingFacade(ResourceRuntimeFacade[Finding]):
-    """An Endor Labs finding entity extending BaseResource.
+    """Security or compliance finding from a scan.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -243,7 +243,7 @@ class _FindingFacade(ResourceRuntimeFacade[Finding]):
     ) -> Finding: ...
 
 class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
-    """An Endor Labs FindingLog entity extending BaseResource.
+    """Historical snapshot of a finding state.
 
     Create mode: both.
     """
@@ -278,7 +278,7 @@ class _FindingLogFacade(ResourceRuntimeFacade[FindingLog]):
     ) -> FindingLog: ...
 
 class _InstallationFacade(ResourceRuntimeFacade[Installation]):
-    """Installation resource model extending BaseResource.
+    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket).
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -315,7 +315,7 @@ class _InstallationFacade(ResourceRuntimeFacade[Installation]):
     ) -> Installation: ...
 
 class _InvitationFacade(ResourceRuntimeFacade[Invitation]):
-    """Invitation resource model. List, get, create, update, delete.
+    """User invitation for platform access.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -335,7 +335,7 @@ class _InvitationFacade(ResourceRuntimeFacade[Invitation]):
     ) -> Invitation: ...
 
 class _LinterResultFacade(ResourceRuntimeFacade[LinterResult]):
-    """LinterResult resource model extending BaseResource.
+    """Linter analysis result for a package or repository version.
 
     Create mode: both.
     """
@@ -371,7 +371,7 @@ class _LinterResultFacade(ResourceRuntimeFacade[LinterResult]):
     ) -> LinterResult: ...
 
 class _MalwareFacade(ListableFacade[Malware]):
-    """Malware resource model.
+    """Open-source malware records.
 
     Identity kwargs: name (-> meta.name).
     OSS-scoped (namespace fixed to 'oss').
@@ -384,7 +384,7 @@ class _MalwareFacade(ListableFacade[Malware]):
     ) -> Malware: ...
 
 class _MetricFacade(ResourceRuntimeFacade[Metric]):
-    """Metric resource model extending BaseResource.
+    """Analytics output attached to packages or repositories.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -407,7 +407,7 @@ class _MetricFacade(ResourceRuntimeFacade[Metric]):
     ) -> Metric: ...
 
 class _NamespaceFacade(ResourceRuntimeFacade[Namespace]):
-    """An Endor Labs namespace entity extending BaseResource.
+    """Isolate and organize resources in a parent-child hierarchy.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -427,7 +427,7 @@ class _NamespaceFacade(ResourceRuntimeFacade[Namespace]):
     ) -> Namespace: ...
 
 class _NotificationTargetFacade(ResourceRuntimeFacade[NotificationTarget]):
-    """Notification Target resource model.
+    """Integration endpoint for notification delivery.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -469,7 +469,7 @@ class _PRCommentConfigFacade(ResourceRuntimeFacade[PRCommentConfig]):
     ) -> PRCommentConfig: ...
 
 class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
-    """PackageLicense resource model extending BaseResource.
+    """License information for a package.
 
     Create mode: both.
     Update mode: update_mask required.
@@ -495,7 +495,7 @@ class _PackageLicenseFacade(ResourceRuntimeFacade[PackageLicense]):
     ) -> PackageLicense: ...
 
 class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
-    """PackageVersion resource model extending BaseResource.
+    """Package version with dependency information.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -527,7 +527,7 @@ class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
     ) -> PackageVersion: ...
 
 class _PolicyFacade(ResourceRuntimeFacade[Policy]):
-    """Policy resource model extending BaseResource.
+    """Rule controlling scan behavior, findings, and workflows.
 
     Identity kwargs: name (-> meta.name), policy_type (-> spec.policy_type).
     Create mode: both.
@@ -564,7 +564,7 @@ class _PolicyFacade(ResourceRuntimeFacade[Policy]):
     ) -> Policy: ...
 
 class _PolicyTemplateFacade(ListableFacade[PolicyTemplate]):
-    """Policy Template resource model. List and get only."""
+    """Reusable template for creating policies."""
 
     def get(
         self,
@@ -573,7 +573,7 @@ class _PolicyTemplateFacade(ListableFacade[PolicyTemplate]):
     ) -> PolicyTemplate: ...
 
 class _ProjectFacade(ResourceRuntimeFacade[Project]):
-    """An Endor Labs project entity extending BaseResource.
+    """Logical root for a repository and its scan results.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -600,7 +600,7 @@ class _ProjectFacade(ResourceRuntimeFacade[Project]):
     ) -> Project: ...
 
 class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
-    """QueryMalware resource model returned by query endpoint.
+    """Advanced malware query endpoint.
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
@@ -622,7 +622,7 @@ class _QueryMalwareFacade(ResourceRuntimeFacade[QueryMalware]):
     ) -> QueryMalware: ...
 
 class _QueryVulnerabilityFacade(ResourceRuntimeFacade[QueryVulnerability]):
-    """QueryVulnerability resource model returned by query endpoint.
+    """Advanced vulnerability query endpoint.
 
     OSS-scoped (namespace fixed to 'oss').
     Create mode: both.
@@ -646,7 +646,7 @@ class _QueryVulnerabilityFacade(ResourceRuntimeFacade[QueryVulnerability]):
     ) -> QueryVulnerability: ...
 
 class _RepositoryFacade(ResourceRuntimeFacade[Repository]):
-    """Repository resource model extending BaseResource.
+    """Source control repository metadata.
 
     Identity kwargs:
       git_url (-> spec.vcs_url)
@@ -683,7 +683,7 @@ class _RepositoryFacade(ResourceRuntimeFacade[Repository]):
     ) -> Repository: ...
 
 class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
-    """RepositoryVersion resource model extending BaseResource.
+    """Versioned snapshot of a repository.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
@@ -705,7 +705,7 @@ class _RepositoryVersionFacade(ResourceRuntimeFacade[RepositoryVersion]):
     ) -> RepositoryVersion: ...
 
 class _ScanLogRequestFacade(ResourceRuntimeFacade[ScanLogRequest]):
-    """An Endor Labs ScanLogRequest entity extending BaseResource.
+    """Request for scan log messages.
 
     Create mode: payload-only.
     Workflow flags: request-style-endpoint.
@@ -714,7 +714,7 @@ class _ScanLogRequestFacade(ResourceRuntimeFacade[ScanLogRequest]):
     pass
 
 class _ScanProfileFacade(ResourceRuntimeFacade[ScanProfile]):
-    """An Endor Labs ScanProfile entity extending BaseResource.
+    """Scan configuration applied across projects.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -740,7 +740,7 @@ class _ScanProfileFacade(ResourceRuntimeFacade[ScanProfile]):
     ) -> ScanProfile: ...
 
 class _ScanResultFacade(ResourceRuntimeFacade[ScanResult]):
-    """An Endor Labs ScanResult entity extending BaseResource.
+    """Results from an endorctl scan.
 
     Identity kwargs: name (-> meta.name).
     Supports list(parent=<project>).
@@ -788,17 +788,17 @@ class _ScanResultFacade(ResourceRuntimeFacade[ScanResult]):
     ) -> ScanResult: ...
 
 class _ScanWorkflowFacade(ResourceRuntimeFacade[ScanWorkflow]):
-    """Scan Workflow resource model. List and get only."""
+    """Workflow orchestrating scan steps."""
 
     pass
 
 class _ScanWorkflowResultFacade(ResourceRuntimeFacade[ScanWorkflowResult]):
-    """Scan Workflow Result resource model. List and get only."""
+    """Result from a scan workflow execution."""
 
     pass
 
 class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
-    """SemgrepRule resource model extending BaseResource.
+    """Custom SAST rule in Semgrep/OpenGrep format.
 
     Identity kwargs: name (-> meta.name).
     Create mode: both.
@@ -820,7 +820,7 @@ class _SemgrepRuleFacade(ResourceRuntimeFacade[SemgrepRule]):
     ) -> SemgrepRule: ...
 
 class _V1IdentityProviderFacade(ListableFacade[V1IdentityProvider]):
-    """V1IdentityProvider resource facade."""
+    """Represents an identity provider."""
 
     def get(
         self,
@@ -829,7 +829,7 @@ class _V1IdentityProviderFacade(ListableFacade[V1IdentityProvider]):
     ) -> V1IdentityProvider: ...
 
 class _V1PackageFirewallLogFacade(ListableFacade[V1PackageFirewallLog]):
-    """V1PackageFirewallLog resource facade."""
+    """Package firewall audit event recording action and trigger reason."""
 
     def get(
         self,
@@ -838,7 +838,7 @@ class _V1PackageFirewallLogFacade(ListableFacade[V1PackageFirewallLog]):
     ) -> V1PackageFirewallLog: ...
 
 class _V1QueryFacade(ResourceRuntimeFacade[V1Query]):
-    """V1Query resource facade.
+    """Query implements the metric query requests.
 
     Create mode: payload-only.
     """
@@ -846,7 +846,7 @@ class _V1QueryFacade(ResourceRuntimeFacade[V1Query]):
     pass
 
 class _V1QuerySimilarPackagesFacade(ResourceRuntimeFacade[V1QuerySimilarPackages]):
-    """V1QuerySimilarPackages resource facade.
+    """QuerySimilarPackages implements the similar packages query requests.
 
     Create mode: payload-only.
     """
@@ -854,7 +854,7 @@ class _V1QuerySimilarPackagesFacade(ResourceRuntimeFacade[V1QuerySimilarPackages
     pass
 
 class _V1SavedQueryFacade(ListableFacade[V1SavedQuery]):
-    """V1SavedQuery resource facade."""
+    """SavedQuery implements the metric query requests."""
 
     def get(
         self,
@@ -863,7 +863,7 @@ class _V1SavedQueryFacade(ListableFacade[V1SavedQuery]):
     ) -> V1SavedQuery: ...
 
 class _VectorStoreFacade(ListableFacade[VectorStore]):
-    """Vector store resource.
+    """Tenant vector store inventory (embeddings index metadata).
 
     Identity kwargs: name (-> meta.name).
     """
@@ -875,7 +875,7 @@ class _VectorStoreFacade(ListableFacade[VectorStore]):
     ) -> VectorStore: ...
 
 class _VectorStoreQueryFacade(ResourceRuntimeFacade[VectorStoreQuery]):
-    """VectorStoreQuery resource model returned by the query endpoint.
+    """Natural-language query against a vector store (create-only).
 
     Create mode: both.
     """
@@ -895,12 +895,12 @@ class _VectorStoreQueryFacade(ResourceRuntimeFacade[VectorStoreQuery]):
     ) -> VectorStoreQuery: ...
 
 class _VersionUpgradeFacade(ResourceRuntimeFacade[VersionUpgrade]):
-    """Version Upgrade resource model. List and get only."""
+    """Suggested dependency version upgrade."""
 
     pass
 
 class _VulnerabilityFacade(ListableFacade[Vulnerability]):
-    """Vulnerability resource model.
+    """Open-source vulnerability records.
 
     Identity kwargs: name (-> meta.name).
     OSS-scoped (namespace fixed to 'oss').
@@ -929,87 +929,87 @@ class Client:
     """
 
     APIKey: _APIKeyFacade
-    """API Key resource model extending BaseResource."""
+    """API key for programmatic access."""
     AuditLog: _AuditLogFacade
-    """Audit Log resource model extending BaseResource."""
+    """Audit trail of API operations."""
     AuthenticationLog: _AuthenticationLogFacade
-    """Authentication Log resource model. List and get only."""
+    """Authentication event log."""
     AuthorizationPolicy: _AuthorizationPolicyFacade
-    """Authorization Policy resource model extending BaseResource."""
+    """Permission grant for an authenticated identity."""
     CodeOwners: _CodeOwnersFacade
-    """Code Owners resource model. List, get, create, update, delete."""
+    """Code ownership assignments for a project."""
     DependencyMetadata: _DependencyMetadataFacade
-    """Facade model for DependencyMetadata (generated wire shape)."""
+    """Dependency relationship between packages."""
     EndorLicense: _EndorLicenseFacade
-    """Endor License resource model. List and get only."""
+    """Platform license assigned to a tenant."""
     Finding: _FindingFacade
-    """An Endor Labs finding entity extending BaseResource."""
+    """Security or compliance finding from a scan."""
     FindingLog: _FindingLogFacade
-    """An Endor Labs FindingLog entity extending BaseResource."""
+    """Historical snapshot of a finding state."""
     Installation: _InstallationFacade
-    """Installation resource model extending BaseResource."""
+    """SCM platform integration (GitHub, GitLab, Azure, Bitbucket)."""
     Invitation: _InvitationFacade
-    """Invitation resource model. List, get, create, update, delete."""
+    """User invitation for platform access."""
     LinterResult: _LinterResultFacade
-    """LinterResult resource model extending BaseResource."""
+    """Linter analysis result for a package or repository version."""
     Malware: _MalwareFacade
-    """Malware resource model."""
+    """Open-source malware records."""
     Metric: _MetricFacade
-    """Metric resource model extending BaseResource."""
+    """Analytics output attached to packages or repositories."""
     Namespace: _NamespaceFacade
-    """An Endor Labs namespace entity extending BaseResource."""
+    """Isolate and organize resources in a parent-child hierarchy."""
     NotificationTarget: _NotificationTargetFacade
-    """Notification Target resource model."""
+    """Integration endpoint for notification delivery."""
     PRCommentConfig: _PRCommentConfigFacade
     """PR comment configuration resource model."""
     PackageLicense: _PackageLicenseFacade
-    """PackageLicense resource model extending BaseResource."""
+    """License information for a package."""
     PackageVersion: _PackageVersionFacade
-    """PackageVersion resource model extending BaseResource."""
+    """Package version with dependency information."""
     Policy: _PolicyFacade
-    """Policy resource model extending BaseResource."""
+    """Rule controlling scan behavior, findings, and workflows."""
     PolicyTemplate: _PolicyTemplateFacade
-    """Policy Template resource model. List and get only."""
+    """Reusable template for creating policies."""
     Project: _ProjectFacade
-    """An Endor Labs project entity extending BaseResource."""
+    """Logical root for a repository and its scan results."""
     QueryMalware: _QueryMalwareFacade
-    """QueryMalware resource model returned by query endpoint."""
+    """Advanced malware query endpoint."""
     QueryVulnerability: _QueryVulnerabilityFacade
-    """QueryVulnerability resource model returned by query endpoint."""
+    """Advanced vulnerability query endpoint."""
     Repository: _RepositoryFacade
-    """Repository resource model extending BaseResource."""
+    """Source control repository metadata."""
     RepositoryVersion: _RepositoryVersionFacade
-    """RepositoryVersion resource model extending BaseResource."""
+    """Versioned snapshot of a repository."""
     ScanLogRequest: _ScanLogRequestFacade
-    """An Endor Labs ScanLogRequest entity extending BaseResource."""
+    """Request for scan log messages."""
     ScanProfile: _ScanProfileFacade
-    """An Endor Labs ScanProfile entity extending BaseResource."""
+    """Scan configuration applied across projects."""
     ScanResult: _ScanResultFacade
-    """An Endor Labs ScanResult entity extending BaseResource."""
+    """Results from an endorctl scan."""
     ScanWorkflow: _ScanWorkflowFacade
-    """Scan Workflow resource model. List and get only."""
+    """Workflow orchestrating scan steps."""
     ScanWorkflowResult: _ScanWorkflowResultFacade
-    """Scan Workflow Result resource model. List and get only."""
+    """Result from a scan workflow execution."""
     SemgrepRule: _SemgrepRuleFacade
-    """SemgrepRule resource model extending BaseResource."""
+    """Custom SAST rule in Semgrep/OpenGrep format."""
     V1IdentityProvider: _V1IdentityProviderFacade
-    """V1IdentityProvider resource facade."""
+    """Represents an identity provider."""
     PackageFirewallLog: _V1PackageFirewallLogFacade
-    """V1PackageFirewallLog resource facade."""
+    """Package firewall audit event recording action and trigger reason."""
     V1Query: _V1QueryFacade
-    """V1Query resource facade."""
+    """Query implements the metric query requests."""
     V1QuerySimilarPackages: _V1QuerySimilarPackagesFacade
-    """V1QuerySimilarPackages resource facade."""
+    """QuerySimilarPackages implements the similar packages query requests."""
     V1SavedQuery: _V1SavedQueryFacade
-    """V1SavedQuery resource facade."""
+    """SavedQuery implements the metric query requests."""
     VectorStore: _VectorStoreFacade
-    """Vector store resource."""
+    """Tenant vector store inventory (embeddings index metadata)."""
     VectorStoreQuery: _VectorStoreQueryFacade
-    """VectorStoreQuery resource model returned by the query endpoint."""
+    """Natural-language query against a vector store (create-only)."""
     VersionUpgrade: _VersionUpgradeFacade
-    """Version Upgrade resource model. List and get only."""
+    """Suggested dependency version upgrade."""
     Vulnerability: _VulnerabilityFacade
-    """Vulnerability resource model."""
+    """Open-source vulnerability records."""
     ScanLogs: ScanLogsFacade
     """Scan logs facade. Use get_logs() to fetch log messages."""
 

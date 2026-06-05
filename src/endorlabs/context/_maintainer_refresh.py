@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import subprocess
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -13,8 +14,10 @@ import endorlabs
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONTEXT_DIR = REPO_ROOT / ".endorlabs-context"
-SKILLS_PREFIX = "skills-src/"
+SKILLS_PREFIX = "agent-skills/"
+AGENT_BUNDLE_PREFIX = "src/endorlabs/agent_bundle/"
 CONTEXT_PREFIX = "src/endorlabs/context/"
+SYNC_AGENT_BUNDLE = REPO_ROOT / "devtools" / "sync_agent_bundle.py"
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,11 @@ def _normalize_paths(paths: Sequence[str]) -> tuple[str, ...]:
 
 def _requires_skill_sync(paths: Sequence[str]) -> bool:
     """Return whether the staged changes should refresh skill mirrors."""
+    return any(path.startswith((SKILLS_PREFIX, AGENT_BUNDLE_PREFIX)) for path in paths)
+
+
+def _requires_bundle_sync(paths: Sequence[str]) -> bool:
+    """Return whether agent-skills changed and the shipped bundle must regenerate."""
     return any(path.startswith(SKILLS_PREFIX) for path in paths)
 
 
@@ -49,8 +57,6 @@ def _configured_skill_sync_target() -> Literal["cursor", "claude", "both"] | Non
         return "cursor"
     if has_claude:
         return "claude"
-    if not has_cursor and not has_claude:
-        return None
     return None
 
 
@@ -62,6 +68,17 @@ def _has_openapi_auth() -> bool:
     return bool(token or (key and secret))
 
 
+def _run_bundle_sync() -> None:
+    """Regenerate committed agent_bundle artifacts from agent-skills."""
+    if not SYNC_AGENT_BUNDLE.is_file():
+        raise FileNotFoundError(f"Missing sync script: {SYNC_AGENT_BUNDLE}")
+    _ = subprocess.run(  # noqa: S603
+        [sys.executable, str(SYNC_AGENT_BUNDLE)],
+        cwd=REPO_ROOT,
+        check=True,
+    )
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Refresh local generated context artifacts for maintainers."""
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -71,18 +88,28 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
 
     try:
+        if _requires_bundle_sync(changed_paths):
+            _run_bundle_sync()
+
         if _requires_skill_sync(changed_paths):
             sync_target = _configured_skill_sync_target()
             if sync_target is None:
                 logger.info("Skill sync skipped; no runtime host mirror is configured.")
             else:
+                if CONTEXT_DIR.exists() and (CONTEXT_DIR / "sdk" / "skills").is_dir():
+                    source_dir = CONTEXT_DIR / "sdk" / "skills"
+                    repo_root = REPO_ROOT
+                else:
+                    source_dir = REPO_ROOT / "agent-skills"
+                    repo_root = REPO_ROOT
                 synced_paths = endorlabs.sync_agent_skills(
-                    repo_root=REPO_ROOT,
+                    repo_root=repo_root,
                     target=sync_target,
+                    source_dir=source_dir,
                 )
                 logger.info(
                     "Refreshed runtime skill mirrors: %s",
-                    ", ".join(sorted(synced_paths)),
+                    ", ".join(f"{k}={v}" for k, v in sorted(synced_paths.items())),
                 )
 
         if _requires_context_refresh(changed_paths):

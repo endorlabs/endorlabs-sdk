@@ -13,10 +13,10 @@ Type-safe, resource-oriented Python client for the Endor Labs REST API. List, ge
 
 | You want to...                                   | Go to                                     |
 | ------------------------------------------------ | ----------------------------------------- |
-| **Use the SDK** in your project                  | Keep reading (Installation → Quick start) |
+| **Use the SDK** in your project (API scripts, CI) | Keep reading (Installation → Quick start) — **no `init()` required** |
+| **Bootstrap an AI agent** (skills, local OpenAPI) | [SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap) and [AGENTS.md](AGENTS.md) |
 | **Try the interactive SDK demo**                 | [Demo CLI](#demo-cli)                     |
 | **Contribute** to this repo                      | [CONTRIBUTORS.md](CONTRIBUTORS.md)        |
-| **Work with an AI agent** (Cursor, Claude, etc.) | [AGENTS.md](AGENTS.md)                    |
 
 
 ## Installation
@@ -46,7 +46,7 @@ Verify: `uv run python -c "import endorlabs; print(endorlabs.__version__)"`
 
 | Extra | Install | Enables |
 | ----- | ------- | ------- |
-| `context` | `pip install 'endorlabs-sdk[context]'` | `endorlabs.init()` — local OpenAPI + user docs mirror |
+| `context` | `pip install 'endorlabs-sdk[context]'` | `endorlabs.init()` — materializes shipped agent bundle + optional platform OpenAPI/user docs |
 | `tabular` | `pip install 'endorlabs-sdk[tabular]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow) |
 
 CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra context --extra tabular`.
@@ -78,6 +78,8 @@ ENDOR_NAMESPACE=your-tenant.namespace
 ENDOR_LOG_LEVEL=INFO
 ```
 
+If you use agent bootstrap (below), add `.endorlabs-context/` to your project `.gitignore` — it holds downloaded platform docs and workflow run outputs, not application source.
+
 ### Programmatic browser auth
 
 The SDK supports browser auth mode with `APIClient`.
@@ -102,16 +104,84 @@ instead of shell-specific `eval` export workflows.
 
 ### Authentication troubleshooting (Agent Skill)
 
-For `**AuthenticationLog**`, `**AuthorizationPolicy**`, and optional `**AuditLog**`
-correlation during SSO / tenant login investigations, use the **troubleshoot-authlog**
-Agent Skill: [skills-src/troubleshoot-authlog/SKILL.md](skills-src/troubleshoot-authlog/SKILL.md)
-(`.cursor/skills` is the mirrored runtime path used by Cursor).
+For **AuthenticationLog**, **AuthorizationPolicy**, and optional **AuditLog**
+correlation during SSO or tenant login investigations, use the **troubleshoot-authlog**
+skill:
 
-Run from the repo root:
+- **Repo clone:** [agent-skills/troubleshoot-authlog/SKILL.md](agent-skills/troubleshoot-authlog/SKILL.md)
+- **Installed wheel:** `endorlabs.agent_manifest()` → `skills/troubleshoot-authlog/SKILL.md`, or materialized `.endorlabs-context/sdk/skills/troubleshoot-authlog/SKILL.md` after `init()`
+
+Cursor users may also read `.cursor/skills/troubleshoot-authlog/SKILL.md` when mirrors are synced.
+
+## SDK-only vs agent bootstrap
+
+Most pip consumers use **SDK-only mode**: install, set credentials, call `endorlabs.Client(...)`.
+You do **not** need `endorlabs.init()` or a `.endorlabs-context/` directory for API access,
+workflows, or the demo CLI.
+
+Use **agent bootstrap** when an AI agent (or file-based tooling) needs a cwd-relative tree of
+skills, contracts, OpenAPI, and user docs.
+
+
+| Mode | When | What you do |
+| ---- | ---- | ----------- |
+| **SDK-only** | Scripts, apps, CI, typed API usage | `pip install endorlabs-sdk` + env vars → `Client(...)` |
+| **Wheel-only agent nav** | Agent reads the shipped bundle from site-packages | `endorlabs.agent_index_path()` / `agent_manifest()` — no disk materialization |
+| **Local agent bootstrap** | Cursor/Claude file reads, offline platform docs | `pip install 'endorlabs-sdk[context]'` → `endorlabs.init()` |
+
+
+After `init()`, the layout is:
+
+```
+.endorlabs-context/
+  context.json
+  sdk/              # INDEX.md, MANIFEST.json, skills/, contracts/
+  platform/         # openapi/, user-docs/ (optional downloads)
+  workspace/        # workflow run outputs (gitignore recommended)
+```
+
+Repo architecture and maintainer regions: [AGENTS.md](AGENTS.md#repository-layout).
+
+### Wheel-only navigation (no `init()`)
+
+The agent bundle ships inside the wheel. Read it from site-packages without writing cwd artifacts:
+
+```python
+import endorlabs
+
+print(endorlabs.agent_index_path())  # .../site-packages/endorlabs/agent_bundle/INDEX.md
+manifest = endorlabs.agent_manifest()
+```
+
+### Minimal bootstrap (SDK bundle only)
+
+Materialize skills and contracts under the project cwd; skip platform downloads (no auth required):
+
+```python
+import endorlabs
+
+status = endorlabs.init(include_openapi=False, include_user_docs=False)
+print(status.agent_index_path)  # .endorlabs-context/sdk/INDEX.md
+```
+
+### Full bootstrap (bundle + platform context)
 
 ```bash
-uv run --env-file .env python skills-src/troubleshoot-authlog/troubleshoot_authlog.py --help
+pip install 'endorlabs-sdk[context]'
 ```
+
+```python
+import endorlabs
+
+status = endorlabs.init()
+print(status.agent_index_path)   # .endorlabs-context/sdk/INDEX.md
+print(status.openapi_path)       # .endorlabs-context/platform/openapi/openapiv2.swagger.json
+print(status.user_docs_path)     # .endorlabs-context/platform/user-docs/
+```
+
+Read `status.agent_index_path`, then `MANIFEST.json`, then task skills under
+`.endorlabs-context/sdk/skills/`. Run outputs belong under `.endorlabs-context/workspace/`.
+Agent rules and footguns: [AGENTS.md](AGENTS.md).
 
 ## Demo CLI
 
@@ -143,6 +213,9 @@ What the wizard demonstrates:
 The demo is intended as a guided learning surface; production automation should call SDK APIs directly.
 
 ## Quick start
+
+**SDK-only mode** — the examples below do not call `endorlabs.init()`. See
+[SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap) when wiring an AI agent.
 
 Entry point is `endorlabs.Client` with a default tenant namespace. Each resource is exposed as a facade: `client.Namespace`, `client.Project`, `client.Finding`, `client.ScanResult`, etc., with `.list()`, `.get()`, `.create()`, `.update()`, and `.delete()`.
 
@@ -294,7 +367,7 @@ Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.
 
 ## Scripts and automation
 
-Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). For SAST rule management (import, export, delete, configure), see `skills-src/custom-sast-rules/scripts/sast_rule_manager.py` (`.cursor/skills` is the mirror path in Cursor runtime). The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: sync OpenAPI and user docs into `.endorlabs-context/` via [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). **In this repo:** SAST rule management (import, export, delete, configure) lives at `agent-skills/custom-sast-rules/scripts/sast_rule_manager.py` (`.cursor/skills` is the Cursor runtime mirror). The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: materialize agent context with `endorlabs.init()` (see [SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap)); maintainers use [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## License
 

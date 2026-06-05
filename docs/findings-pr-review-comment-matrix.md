@@ -19,7 +19,7 @@ GitHub only accepts comments on lines that exist in the **unified diff** for the
 
 ## Endor side (API model)
 
-`Finding` is defined in the platform OpenAPI (`v1Finding` / `v1FindingSpec` / `v1FindingMetadata` in [`.endorlabs-context/openapiv2.swagger.json`](../.endorlabs-context/openapiv2.swagger.json)). Line anchoring depends on category and what the scanner populated; see `extract_location` sources below.
+`Finding` is defined in the platform OpenAPI (`v1Finding` / `v1FindingSpec` / `v1FindingMetadata` in [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../.endorlabs-context/platform/openapi/openapiv2.swagger.json)). Line anchoring depends on category and what the scanner populated; see `extract_location` sources below.
 
 ## Matrix — review comment field → source
 
@@ -51,4 +51,4 @@ Endor’s web UI may filter findings differently than `Finding.list` / `Finding.
 - [Pull request review comments](https://docs.github.com/en/rest/pulls/comments)
 - Local: [`.github/scripts/endor_scan_findings.py`](../.github/scripts/endor_scan_findings.py), [`.github/scripts/post_parallel_pr_comments.py`](../.github/scripts/post_parallel_pr_comments.py), [`.github/scripts/endor_ci_fetch_scan_findings.py`](../.github/scripts/endor_ci_fetch_scan_findings.py)
 - Guide: [PR review comments from Endor findings](guides/pr-comment-config-and-parallel-comments.md)
-- Local OpenAPI: [`.endorlabs-context/openapiv2.swagger.json`](../.endorlabs-context/openapiv2.swagger.json) (`v1Finding`, `v1FindingSpec`, `v1FindingMetadata`)
+- Local OpenAPI: [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../.endorlabs-context/platform/openapi/openapiv2.swagger.json) (`v1Finding`, `v1FindingSpec`, `v1FindingMetadata`)
