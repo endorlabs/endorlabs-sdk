@@ -23,9 +23,11 @@ Auto-generated inventories for stable/public surfaces.
 - `ServerError`
 - `UnauthorizedError`
 - `ValidationError`
+- `agent_knowledge_bootstrap_paths`
 - `agent_knowledge_dir`
 - `agent_knowledge_index_path`
 - `agent_knowledge_manifest`
+- `agent_knowledge_rule_ids`
 - `dependency_metadata`
 - `finding`
 - `init`

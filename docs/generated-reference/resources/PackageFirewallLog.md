@@ -1,6 +1,6 @@
 # PackageFirewallLog
 
-PackageFirewallLog represents a package firewall audit event recording the
+Package firewall audit event recording action and trigger reason.
 
 ## Client access
 
