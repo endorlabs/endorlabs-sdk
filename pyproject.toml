@@ -52,6 +52,12 @@ Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
 requires = ["hatchling==1.28.0", "hatch-vcs"]
 build-backend = "hatchling.build"
 
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
 [tool.hatch.version]
 source = "vcs"
 
