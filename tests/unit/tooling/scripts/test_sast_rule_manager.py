@@ -20,15 +20,24 @@ def _load_sast_rule_manager() -> ModuleType:
         / "scripts"
         / "sast_rule_manager.py"
     )
-    skills_src_path = (
+    candidate_paths = (
+        cursor_path,
         root
-        / "agent"
+        / "agent-knowledge"
         / "skills"
         / "custom-sast-rules"
         / "scripts"
-        / "sast_rule_manager.py"
+        / "sast_rule_manager.py",
+        root
+        / "src"
+        / "endorlabs"
+        / "agent_knowledge"
+        / "skills"
+        / "custom-sast-rules"
+        / "scripts"
+        / "sast_rule_manager.py",
     )
-    script_path = cursor_path if cursor_path.is_file() else skills_src_path
+    script_path = next(path for path in candidate_paths if path.is_file())
     spec = importlib.util.spec_from_file_location(
         "sast_rule_manager_for_test", script_path
     )
