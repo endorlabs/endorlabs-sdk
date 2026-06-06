@@ -17,14 +17,22 @@ def _load_spotcheck_module() -> ModuleType:
         / "sso-integration-validation-troubleshooting"
         / "sso_access_spotcheck.py"
     )
-    skills_src_path = (
+    candidate_paths = (
+        cursor_path,
         repo_root
-        / "agent"
+        / "agent-knowledge"
         / "skills"
         / "sso-integration-validation-troubleshooting"
-        / "sso_access_spotcheck.py"
+        / "sso_access_spotcheck.py",
+        repo_root
+        / "src"
+        / "endorlabs"
+        / "agent_knowledge"
+        / "skills"
+        / "sso-integration-validation-troubleshooting"
+        / "sso_access_spotcheck.py",
     )
-    script_path = cursor_path if cursor_path.is_file() else skills_src_path
+    script_path = next(path for path in candidate_paths if path.is_file())
     spec = spec_from_file_location("sso_access_spotcheck", script_path)
     assert spec is not None
     assert spec.loader is not None
