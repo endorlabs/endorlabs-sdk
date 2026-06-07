@@ -20,6 +20,7 @@ Read [`schema/README.md`](README.md) first — it is the canonical authoring spe
 5. If the skill is compositional, heuristic, or part of a multi-skill RCA path, add **Scope**, optional **Optional stops** / routing table, and **Related skills** per [schema/README.md — Skill composition and handoffs](README.md#skill-composition-and-handoffs). Update reciprocal links on peer skills in the same change.
 6. Run `uv run python devtools/sync_agent_knowledge.py` and fix validation errors.
 7. Confirm shipped bundle `SKILL.md` has **no** `endorlabs:` key.
+8. **Path consistency:** grep `tests/` and `docs/` for the skill id and any script paths; update inline test loaders and doc examples in the same PR (see [schema/README.md — Path consistency](README.md#path-consistency-tests-and-docs)).
 
 ## Workflow linkage
 
