@@ -33,6 +33,7 @@ def parse_version_quad(version: str) -> tuple[int, int, int, int]:
 
 
 def minor_key(version: str) -> str:
+    """Return ``major.minor`` key for grouping patch variants."""
     major, minor, _, _ = parse_version_quad(version)
     return f"{major}.{minor}"
 
@@ -56,6 +57,7 @@ def flatten_intra_minor_usage(
 
 
 def cve_2018_19362_vulnerable(version: str) -> bool:
+    """Return whether *version* is below the CVE-2018-19362 fix floor."""
     quad = parse_version_quad(version)
     line = (quad[0], quad[1])
     if line >= (2, 10):
@@ -67,6 +69,7 @@ def cve_2018_19362_vulnerable(version: str) -> bool:
 
 
 def cve_2018_19362_fix_target(version: str) -> str:
+    """Return the patched coordinate target for *version* on its minor line."""
     line = minor_key(version)
     if line >= "2.10":
         return version.split("-endor")[0]
@@ -168,6 +171,7 @@ def summarize_remediation_phase(
     is_vulnerable: Callable[[str], bool],
     fix_target: Callable[[str], str],
 ) -> RemediationPhaseStats:
+    """Compute remediation metrics for one usage snapshot."""
     vulnerable = [
         (version, count) for version, count in version_counts if is_vulnerable(version)
     ]
