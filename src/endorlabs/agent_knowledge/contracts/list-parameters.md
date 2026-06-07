@@ -32,7 +32,7 @@ Common list params are flat kwargs on `client.<ResourceKind>.list(...)`. Use
 
 **Performance:** Do not set **`page_size`** unless explicitly requested. Prefer
 defaults, selective **`filter`**, and **`max_pages`** caps. See bootstrap contract
-`rules/list-query-performance.md`.
+`rules/endor-list-query-performance.md`.
 
 ## Update vs list mask
 

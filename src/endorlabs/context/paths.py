@@ -17,7 +17,7 @@ OPENAPI_FILENAME = "openapiv2.swagger.json"
 
 
 def default_context_dir() -> Path:
-    """Return the default context root directory."""
+    """Return the default project-local context root directory."""
     return Path(DEFAULT_CONTEXT_DIR)
 
 

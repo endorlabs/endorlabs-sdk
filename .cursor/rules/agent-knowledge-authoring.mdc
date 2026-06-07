@@ -8,7 +8,18 @@ alwaysApply: false
 
 When editing files under `agent-knowledge/`, follow the canonical authoring spec:
 
-- [agent-knowledge/schema/README.md](../../agent-knowledge/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, rules, contracts, workflows.yaml
+- [agent-knowledge/schema/README.md](../../agent-knowledge/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, **skill composition and handoffs**, rules, contracts, workflows.yaml
 - [agent-knowledge/schema/skill.schema.json](../../agent-knowledge/schema/skill.schema.json) — machine validation
 
+For multi-step or narrow-scope skills, document **Scope**, **Related skills** (with reciprocal links on peers), and optional **Optional stops** / routing tables — see [Skill composition and handoffs](../../agent-knowledge/schema/README.md#skill-composition-and-handoffs). Every skill id must use the **`endor-*`** prefix (see [schema/README.md](../../agent-knowledge/schema/README.md)).
+
 After changes, run `uv run python devtools/sync_agent_knowledge.py`. Shipped `SKILL.md` files must contain **only** portable frontmatter (`name`, `description`, optional `disable-model-invocation`).
+
+## Path consistency (tests and docs)
+
+When renaming a skill directory, script, or cited runtime path, **keep tests and docs aligned in the same change**:
+
+- Grep `tests/` for the old skill id or script path; update any `candidate_paths` loaders (see `tests/unit/tooling/scripts/test_*` for precedent).
+- Update skill body examples (`.cursor/skills/endor-<name>/…` in commands) and cross-links under `agent-knowledge/skills/`.
+- Run sync so `src/endorlabs/agent_knowledge/` matches authoring; integration tests may assert materialized paths under `.endorlabs-context/sdk/skills/`.
+- Do **not** add shared test helper modules for path resolution — inline loaders in the tests that need them are the contract.

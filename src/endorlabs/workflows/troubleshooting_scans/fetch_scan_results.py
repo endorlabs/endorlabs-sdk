@@ -17,6 +17,7 @@ from .common import (
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Fetch scan result window")
     _ = parser.add_argument("--tenant", required=True)
     _ = parser.add_argument("--project-uuid")
@@ -36,6 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     api = build_api_client()
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
@@ -125,6 +127,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     result = run(args)
     print(result["summary_artifact"])

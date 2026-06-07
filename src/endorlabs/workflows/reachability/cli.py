@@ -15,7 +15,10 @@ from endorlabs.workflows.reachability.context import (
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse CLI arguments for reachability context export."""
     parser = argparse.ArgumentParser(
-        description="Build a normalized reachability context bundle for one finding or package version."
+        description=(
+            "Build a normalized reachability context bundle for one finding "
+            "or package version."
+        )
     )
     parser.add_argument(
         "--tenant", required=True, help="Tenant used for authentication."

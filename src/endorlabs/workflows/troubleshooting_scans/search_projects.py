@@ -109,6 +109,7 @@ def _apply_endor_app_url(args: argparse.Namespace) -> None:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     _apply_endor_app_url(args)
 
     _exactly_one(
@@ -243,6 +244,7 @@ def _projects_from_scan(
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = _build_parser().parse_args()
     try:
         result = run(args)

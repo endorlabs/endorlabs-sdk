@@ -177,17 +177,15 @@ def _rollup_version_cardinality(
             versions_by_name[name].add(version)
         usage_by_name[name] += int(row.get("usage_count") or 0)
 
-    rollup: list[dict[str, Any]] = []
-    for package_name in sorted(versions_by_name):
-        rollup.append(
-            {
-                "estate_root": estate_root,
-                "package_name": package_name,
-                "version_cardinality": len(versions_by_name[package_name]),
-                "dependency_usage_rows": usage_by_name[package_name],
-            }
-        )
-    return rollup
+    return [
+        {
+            "estate_root": estate_root,
+            "package_name": package_name,
+            "version_cardinality": len(versions_by_name[package_name]),
+            "dependency_usage_rows": usage_by_name[package_name],
+        }
+        for package_name in sorted(versions_by_name)
+    ]
 
 
 def _project_wire_namespace(project: Any, fallback_namespace: str) -> str:
@@ -244,7 +242,7 @@ def _collect_importer_shards(
     client: Client,
     namespace: str,
 ) -> tuple[list[tuple[str, str, str]], list[str]]:
-    """Return ``(namespace, project_uuid, importer_pv_uuid)`` shards for grouped queries."""
+    """Return importer PV shards as ``(namespace, project_uuid, pv_uuid)`` tuples."""
     errors: list[str] = []
     try:
         projects = _list_projects_in_namespace(client, namespace)
@@ -687,6 +685,7 @@ def _summary_dict(result: VersionCardinalityResult) -> dict[str, Any]:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(
         description=(
             "Export version cardinality for DependencyMetadata: distinct "

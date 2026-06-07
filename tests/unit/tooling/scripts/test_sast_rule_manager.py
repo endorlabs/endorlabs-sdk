@@ -12,20 +12,17 @@ import yaml
 
 def _load_sast_rule_manager() -> ModuleType:
     root = Path(__file__).resolve().parents[4]
-    cursor_path = (
+    candidate_paths = (
         root
         / ".cursor"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
         / "scripts"
-        / "sast_rule_manager.py"
-    )
-    candidate_paths = (
-        cursor_path,
+        / "sast_rule_manager.py",
         root
         / "agent-knowledge"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
         / "scripts"
         / "sast_rule_manager.py",
         root
@@ -33,7 +30,7 @@ def _load_sast_rule_manager() -> ModuleType:
         / "endorlabs"
         / "agent_knowledge"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
         / "scripts"
         / "sast_rule_manager.py",
     )
