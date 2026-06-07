@@ -4,31 +4,32 @@
 
 Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
 
-- **Python:** 3.12+
+- **Python:** 3.12+ (CI gates run on 3.13 — see [CONTRIBUTORS.md](CONTRIBUTORS.md))
 - **API spec:** [OpenAPI (Swagger)](https://api.endorlabs.com/download/openapiv2.swagger.json)
 - **Platform docs:** [docs.endorlabs.com](https://docs.endorlabs.com/)
 
 ## Start here
 
 
-| You want to...                                   | Go to                                     |
-| ------------------------------------------------ | ----------------------------------------- |
-| **Use the SDK** in your project (API scripts, CI) | Keep reading (Installation → Quick start) — **no `init()` required** |
-| **Bootstrap an AI agent** (skills, local OpenAPI) | [SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap) and [AGENTS.md](AGENTS.md) |
-| **Try the interactive SDK demo**                 | [Demo CLI](#demo-cli)                     |
-| **Contribute** to this repo                      | [CONTRIBUTORS.md](CONTRIBUTORS.md)        |
+| You want to…                                        | Go to                                                                                          |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Use the SDK** (API scripts, CI)                   | Installation → [Quick start](#quick-start) — **no `init()` required**                          |
+| **Bootstrap an AI agent** (skills, offline OpenAPI) | [AGENTS.md](AGENTS.md)                                                                         |
+| **Try the SDK on a real tenant**                    | [Try it with skills](#try-it-with-skills) → [docs/guides/examples.md](docs/guides/examples.md) |
+| **SDK contracts and deep reference**                | [docs/README.md](docs/README.md)                                                               |
+| **Contribute to this repo**                         | [CONTRIBUTORS.md](CONTRIBUTORS.md)                                                             |
 
 
 ## Installation
 
 ```bash
-pip install endorlabs-sdk
+pip install endorlabs
 ```
 
 Or with [uv](https://github.com/astral-sh/uv):
 
 ```bash
-uv add endorlabs-sdk
+uv add endorlabs
 ```
 
 From the repository (editable):
@@ -42,32 +43,36 @@ uv sync
 
 Verify: `uv run python -c "import endorlabs; print(endorlabs.__version__)"`
 
+Source repo: [`endorlabs/endorlabs-sdk`](https://github.com/endorlabs/endorlabs-sdk) — PyPI distribution name is **`endorlabs`** (`import endorlabs`).
+
 ### Optional extras
 
-| Extra | Install | Enables |
-| ----- | ------- | ------- |
-| `context` | `pip install 'endorlabs-sdk[context]'` | `endorlabs.init()` — materializes shipped agent knowledge + optional platform OpenAPI/user docs |
-| `tabular` | `pip install 'endorlabs-sdk[tabular]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow) |
 
-CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra context --extra tabular`.
+| Extra     | Install                                | Enables                                                                               |
+| --------- | -------------------------------------- | ------------------------------------------------------------------------------------- |
+| `docs`    | `pip install 'endorlabs[docs]'`    | User-docs sync (`include_user_docs=True`); OpenAPI download works on the base install |
+| `tabular` | `pip install 'endorlabs[tabular]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow)               |
+
+
+CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra docs --extra tabular`.
 
 ## Configuration
 
 The SDK uses **environment variables** only (no config file loading). Precedence: constructor arguments → environment variables → built-in defaults.
 
 
-| Variable                       | Purpose                                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `ENDOR_API`                    | API base URL (default: `https://api.endorlabs.com`)                                            |
-| `ENDOR_API_CREDENTIALS_KEY`    | API key                                                                                        |
-| `ENDOR_API_CREDENTIALS_SECRET` | API secret                                                                                     |
-| `ENDOR_TOKEN`                  | Bearer token. Takes precedence when present and is validated before any interactive auth flow. |
-| `ENDOR_NAMESPACE`              | Default tenant namespace (e.g. `tenant.namespace`)                                             |
-| `ENDOR_LOG_LEVEL`              | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`                                      |
-| `ENDOR_MAX_RETRIES`            | Optional: retry count (default: 5)                                                             |
+| Variable                       | Purpose                                                   |
+| ------------------------------ | --------------------------------------------------------- |
+| `ENDOR_API`                    | API base URL (default: `https://api.endorlabs.com`)       |
+| `ENDOR_API_CREDENTIALS_KEY`    | API key                                                   |
+| `ENDOR_API_CREDENTIALS_SECRET` | API secret                                                |
+| `ENDOR_TOKEN`                  | Bearer token; validated first when set                    |
+| `ENDOR_NAMESPACE`              | Default tenant namespace (e.g. `tenant.namespace`)        |
+| `ENDOR_LOG_LEVEL`              | Optional: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
+| `ENDOR_MAX_RETRIES`            | Optional: retry count (default: 5)                        |
 
 
-Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths.
+Canonical naming is `tenant.namespace.child`; do not use UUIDs in namespace paths. Full semantics: [docs/contracts.md](docs/contracts.md).
 
 Example `.env` for local runs:
 
@@ -78,160 +83,48 @@ ENDOR_NAMESPACE=your-tenant.namespace
 ENDOR_LOG_LEVEL=INFO
 ```
 
-If you use agent bootstrap (below), add `.endorlabs-context/` to your project `.gitignore` — it holds downloaded platform docs and workflow run outputs, not application source.
+If you use agent bootstrap, add `.endorlabs-context/` to your project `.gitignore` (manifest + workflow outputs). The SDK logs a warning for agents to ask the user; it does not edit `.gitignore` automatically. Print the line: `uv run endor-context --print-gitignore-line`.
 
 ### Programmatic browser auth
 
-The SDK supports browser auth mode with `APIClient`.
-The SDK validates a provided token first, and if it is invalid (or missing), it falls
-back to interactive browser authentication.
-After a browser token is validated, it is treated as a session token: repeated
-`client.token` reads do not reopen the browser. Browser reauthentication is
-triggered by real `401 Unauthorized` responses.
+Browser auth via `APIClient(auth_method='browser-auth')`: validates an existing token first, then falls back to interactive login. Session tokens are reused until a `401` response.
 
 ```bash
 uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth'); print(c.token)"
 ```
 
-You can also provide a candidate token and let the SDK validate/fallback automatically:
+For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` over shell-specific export workflows.
 
-```bash
-uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth', token='your-token'); print(c.token)"
-```
+SSO/login investigations: **endor-troubleshoot-authlog** skill under `agent-knowledge/skills/` (see [AGENTS.md — Skills](AGENTS.md#agent-skills-on-demand-workflows)).
 
-For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` as shown above
-instead of shell-specific `eval` export workflows.
-
-### Authentication troubleshooting (Agent Skill)
-
-For **AuthenticationLog**, **AuthorizationPolicy**, and optional **AuditLog**
-correlation during SSO or tenant login investigations, use the **troubleshoot-authlog**
-skill:
-
-- **Repo clone:** [agent-knowledge/skills/troubleshoot-authlog/SKILL.md](agent-knowledge/skills/troubleshoot-authlog/SKILL.md)
-- **Installed wheel:** `endorlabs.agent_knowledge_manifest()` → `skills/troubleshoot-authlog/SKILL.md`, or materialized `.endorlabs-context/sdk/skills/troubleshoot-authlog/SKILL.md` after `init()`
-
-Cursor users may also read `.cursor/skills/troubleshoot-authlog/SKILL.md` when mirrors are synced.
-
-## Entry points
-
-| Surface | When | Example |
-| ------- | ---- | ------- |
-| **`endorlabs.Client`** | Typed API access (default for apps and CI) | `client = endorlabs.Client(tenant="tenant.ns")` |
-| **`endorlabs.APIClient`** | Raw HTTP transport | `APIClient().get("v1/namespaces/...")` |
-| **`endorlabs.init()`** | Materialize agent knowledge + optional platform docs | `status = endorlabs.init()` → `.endorlabs-context/sdk/` |
-| **`agent_knowledge_*` helpers** | Read shipped INDEX/MANIFEST without `init()` | `agent_knowledge_index_path()`, `agent_knowledge_manifest()`, `agent_knowledge_bootstrap_paths()` |
-| **`endorlabs.sync_agent_skills()`** | Mirror `sdk/skills/` into Cursor/Claude dirs | `init(sync_skills="cursor")` or explicit call |
-| **`endor-context` CLI** | Shell bootstrap (same as `init()`) | `uv run endor-context --no-openapi` |
-| **Workflow CLIs** | Shipped playbooks (see `MANIFEST.json` → `workflows`) | `uv run endor-demo`, `python -m endorlabs.workflows...` |
-
-Naming: authoring tree `agent-knowledge/` (repo), Python module `endorlabs.agent_knowledge` (wheel), runtime mirror `.endorlabs-context/sdk/`. Details: [AGENTS.md](AGENTS.md#naming).
-
-## SDK-only vs agent bootstrap
-
-Most pip consumers use **SDK-only mode**: install, set credentials, call `endorlabs.Client(...)`.
-You do **not** need `endorlabs.init()` or a `.endorlabs-context/` directory for API access,
-workflows, or the demo CLI.
-
-Use **agent bootstrap** when an AI agent (or file-based tooling) needs a cwd-relative tree of
-skills, contracts, OpenAPI, and user docs.
+## Surfaces
 
 
-| Mode | When | What you do |
-| ---- | ---- | ----------- |
-| **SDK-only** | Scripts, apps, CI, typed API usage | `pip install endorlabs-sdk` + env vars → `Client(...)` |
-| **Wheel-only agent nav** | Agent reads the shipped bundle from site-packages | `endorlabs.agent_knowledge_index_path()` / `agent_knowledge_manifest()` — no disk materialization |
-| **Local agent bootstrap** | Cursor/Claude file reads, offline platform docs | `pip install 'endorlabs-sdk[context]'` → `endorlabs.init()` |
+| Surface                                 | When                                                                                                                                                        |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `endorlabs.Client`                      | Default typed API access                                                                                                                                    |
+| `endorlabs.APIClient`                   | Raw HTTP transport                                                                                                                                          |
+| `endorlabs.init()` / `endor-context`    | Materialize agent knowledge; opt-in OpenAPI/user-docs — see [AGENTS.md](AGENTS.md)                                                                          |
+| `endorlabs.workflows` + console scripts | Tenant workflows — inventory in shipped `MANIFEST.json` (`workflows`, `workflows/entries.json`) and `[project.scripts]` in [pyproject.toml](pyproject.toml) |
 
 
-After `init()`, the layout is:
+Naming: authoring `agent-knowledge/` → shipped `src/endorlabs/agent_knowledge/` → runtime `.endorlabs-context/sdk/`. Details: [AGENTS.md — Naming](AGENTS.md#naming).
 
-```
-.endorlabs-context/
-  context.json
-  sdk/              # INDEX.md, MANIFEST.json, rules/, contracts/, skills/
-  platform/         # openapi/, user-docs/ (optional downloads)
-  workspace/        # workflow run outputs (gitignore recommended)
-```
+## Try it with skills
 
-Repo architecture and maintainer regions: [AGENTS.md](AGENTS.md#repository-layout).
+After [Configuration](#configuration), use shipped agent skills as guided walkthroughs (no separate demo CLI):
 
-### Wheel-only navigation (no `init()`)
+1. [endor-retrieve-scan-results](agent-knowledge/skills/endor-retrieve-scan-results/SKILL.md) — project → ScanResult → Finding
+2. [endor-troubleshooting-scans](agent-knowledge/skills/endor-troubleshooting-scans/SKILL.md) — scan pipeline, logs, aggregate diffs
+3. [endor-fetch-and-search-call-graph](agent-knowledge/skills/endor-fetch-and-search-call-graph/SKILL.md) — optional call graph search
 
-The agent knowledge package ships inside the wheel. Read it from site-packages without writing cwd artifacts:
-
-```python
-import endorlabs
-
-print(endorlabs.agent_knowledge_index_path())  # .../site-packages/endorlabs/agent_knowledge/INDEX.md
-manifest = endorlabs.agent_knowledge_manifest()
-```
-
-### Minimal bootstrap (agent knowledge only)
-
-Materialize rules, contracts, and skills under the project cwd; skip platform downloads (no auth required):
-
-```python
-import endorlabs
-
-status = endorlabs.init(include_openapi=False, include_user_docs=False)
-print(status.agent_knowledge_index_path)  # .endorlabs-context/sdk/INDEX.md
-```
-
-### Full bootstrap (bundle + platform context)
-
-```bash
-pip install 'endorlabs-sdk[context]'
-```
-
-```python
-import endorlabs
-
-status = endorlabs.init()
-print(status.agent_knowledge_index_path)   # .endorlabs-context/sdk/INDEX.md
-print(status.openapi_path)       # .endorlabs-context/platform/openapi/openapiv2.swagger.json
-print(status.user_docs_path)     # .endorlabs-context/platform/user-docs/
-```
-
-Read `status.agent_knowledge_index_path`, then `MANIFEST.json`, then task skills under
-`.endorlabs-context/sdk/skills/`. Run outputs belong under `.endorlabs-context/workspace/`.
-Agent rules and footguns: [AGENTS.md](AGENTS.md).
-
-## Demo CLI
-
-The SDK includes an interactive demo wizard that walks through common API patterns and
-practical workflows in a real tenant context.
-
-Run the demo:
-
-```bash
-uv run endor-demo
-uv run endor-demo --verbose
-```
-
-Demo prerequisites:
-
-- `ENDOR_NAMESPACE` must be set (or entered in the wizard)
-- Auth supports: `browser-auth`, `sso`, `google`, `github`, `gitlab`, `azureadv2`
-- Credentials/tokens use the same environment variables documented in [Configuration](#configuration)
-
-What the wizard demonstrates:
-
-- Namespace and project discovery (`list`, `lookup`, `traverse`)
-- Filter composition with `F()`
-- Streaming iteration with `list_iter`
-- Cross-resource querying and summaries
-- Optional scan log retrieval
-- Optional call graph retrieval and preview
-
-The demo is intended as a guided learning surface; production automation should call SDK APIs directly.
+Session order and snippets: [docs/guides/examples.md](docs/guides/examples.md). Skills ship in the wheel (`endorlabs.agent_knowledge_index_path()`) or `.endorlabs-context/sdk/skills/` after `init()`.
 
 ## Quick start
 
-**SDK-only mode** — the examples below do not call `endorlabs.init()`. See
-[SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap) when wiring an AI agent.
+**SDK-only** — examples below do not call `endorlabs.init()`. For agent bootstrap, see [AGENTS.md](AGENTS.md).
 
-Entry point is `endorlabs.Client` with a default tenant namespace. Each resource is exposed as a facade: `client.Namespace`, `client.Project`, `client.Finding`, `client.ScanResult`, etc., with `.list()`, `.get()`, `.create()`, `.update()`, and `.delete()`.
+Entry point: `endorlabs.Client(tenant=...)`. Resources are **PascalCase** facades (`client.Project`, `client.Finding`, …) matching `endorctl api … --resource <Kind>`.
 
 ### Basic usage
 
@@ -241,50 +134,25 @@ import endorlabs
 
 client = endorlabs.Client(
     tenant=os.getenv("ENDOR_NAMESPACE", "your-tenant.namespace"),
-    logging_level="ERROR",   # passed to APIClient via **client_kwargs
-    # Optional: pass auth_method for interactive login flows.
-    # When ENDOR_TOKEN is set, it is validated and used first.
+    logging_level="ERROR",
 )
 
-# List namespaces (tenant-wide with traverse=True)
 namespaces = client.Namespace.list(traverse=True)
-for ns in namespaces:
-    print(ns.meta.name)
+projects = client.Project.list(traverse=True, concurrent=True, max_pages=1)
 
-# List projects
-projects = client.Project.list(traverse=True)
-for p in projects:
-    print(p.meta.name)
-
-# Filter and limit pages
-projects = client.Project.list(
-    filter="meta.name==https://github.com/endorlabs/endorlabs-sdk.git",
-    max_pages=1,
-)
-
-# Get by UUID
 if projects:
     project = client.Project.get(projects[0].uuid)
     print(project.meta.name)
-    print(project.spec.platform_source)
-    # Resources are Pydantic models
-    print(project.model_dump_json(indent=2))
 ```
 
 ### Requesting a scan and waiting for results
 
 ```python
-# Resolve project by repo URL (like: endorctl api list -r Project --traverse --filter "meta.name contains <url>")
 repo_url = "https://github.com/tgowan-endor/BenchmarkJava.git"
-project = client.Project.lookup(
-    traverse=True,
-    filter=f"meta.name=={repo_url}",
-)
+project = client.Project.lookup(traverse=True, filter=f"meta.name=={repo_url}")
 
-# Request full rescan (flat kwargs; see resource update_mask / mutable fields)
 client.Project.update(project, scan_state="SCAN_STATE_REQUEST_FULL_RESCAN")
 
-# Poll until scan is idle
 client.wait_until(
     lambda: (
         (p := client.Project.get(project))
@@ -293,95 +161,45 @@ client.wait_until(
     timeout=300,
 )
 
-# List latest scan results for the project (parent-scoped list)
 scans = client.ScanResult.list(
     parent=project,
     max_pages=1,
     sort_by="meta.create_time",
     desc=True,
 )
-print(f"Project: {project.meta.name}; scan results: {len(scans)}")
-if scans:
-    print(scans[0].model_dump_json(indent=2))
 ```
 
-### Alternative: transport-only APIClient
+More patterns (filters, `F()`, masks, namespace scoping): [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/guides/retrieving-scan-results.md](docs/guides/retrieving-scan-results.md).
 
-If you need direct transport access for custom endpoints, use `APIClient`
-directly (the canonical resource interface is still `endorlabs.Client`):
+### Transport-only `APIClient`
 
 ```python
 from endorlabs import APIClient
 
 client = APIClient()
 response = client.get("v1/namespaces/tenant.namespace/projects")
-projects_payload = response.json()
 ```
 
-Use this path when you need raw HTTP control; for typed models and consistent
-namespace handling, prefer `endorlabs.Client`.
+Prefer `endorlabs.Client` for typed models and namespace handling.
 
 ## API surface
 
-### Resources
+- **Resource inventory:** [docs/generated-reference/resources.md](docs/generated-reference/resources.md) (generated; do not hand-maintain lists in README)
+- **Operations, list parameters, masks, errors:** [docs/contracts.md](docs/contracts.md)
+- **Consumer UX (filter vs mask, flat kwargs):** [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md)
+- **Custom facade:** `ScanLogs` (log lines) — not an endorctl `--resource` kind; use `ScanLogRequest` for CRUD on log requests
 
-Registry resources are exposed as typed facades on `Client` using **PascalCase**
-names that match `endorctl api … --resource <Kind>` (e.g. `Project`, `QueryVulnerability`).
-The canonical current list is generated in
-[docs/generated-reference/resources.md](docs/generated-reference/resources.md).
+## Architecture
 
-`ScanLogs` is an SDK-only custom facade for retrieving scan log messages; it is
-not an endorctl `--resource` kind (use `ScanLogRequest` for CRUD on log requests).
-
-Each facade exposes only the operations that resource supports. Hover over any facade or method in your IDE to see its docstring, parameters, and concrete return types.
-
-### Operations
-
-- **List:** `client.<ResourceKind>.list(traverse=..., filter=..., mask=..., sort_by=..., desc=..., max_pages=..., page_size=..., parent=...)`. Use `traverse=True` for tenant-wide listing; use `parent=resource` for child resources (e.g. `ScanResult.list(parent=project)`). A **non-empty** `mask` returns **`dict`** rows per item; omit `mask` for full Pydantic models.
-- **List (parallel):** `client.<resource>.list(traverse=True, concurrent=True, max_workers=10)` queries each namespace in parallel.
-- **List (streaming):** `client.<resource>.list_iter(...)` yields one item per row; with a non-empty `mask`, each yielded value may be a **`dict`** instead of a model.
-- **Get / Create / Update / Delete:** `client.<resource>.get(id_or_resource)`, `.create(payload=... or **kwargs)`, `.update(resource, update_mask=... or field kwargs)`, `.delete(id_or_resource, ignore_missing=True)`.
-- **Lookup:** `client.<resource>.lookup(...)` returns exactly one **model** or raises `NotFoundError` / `AmbiguousError`; it raises **`ValueError`** if a non-empty list `mask` is set (use `list()` for masked dict rows).
-- **Tag / Untag:** `client.<resource>.tag(resource, tags=["reviewed"])`, `.untag(resource, keys=["deprecated"])` manage `meta.tags` on resources that support it.
-- **Identity kwargs:** `client.Project.lookup(name="my-project")` — identity kwargs are mapped to filter clauses automatically (e.g. `name` → `meta.name`). Hover over a facade to see its available identity kwargs.
-- **Filtering:** Use raw strings (`filter="meta.name==foo"`) or the `F()` builder: `from endorlabs import F; client.Finding.list(filter=F("spec.level") == "FINDING_LEVEL_CRITICAL")`.
-- **Polling:** `client.wait_until(predicate, timeout=..., poll_interval_max=...)` for readiness loops.
-- **Identity:** `client.whoami()` returns the authenticated identity name, or `None`.
-
-Details: [docs/generated-reference/resources.md](docs/generated-reference/resources.md), [docs/contracts.md](docs/contracts.md).
-
-## How it works
-
-Two runtime layers, one effective registry:
-
-- **Transport** (`api_client.py`): HTTP, auth, retries. Nothing else.
-- **Resource facades** (`client_surface.py`): Typed wrappers built automatically from the effective registry. `client.Project`, `client.Finding`, etc. all use the same `ResourceRuntimeFacade` pattern (`ResourceFacade` remains as a compatibility alias).
-- **Adding a resource** usually means updating model-sync inputs plus a Pydantic model, then regenerating the effective registry. No hand-written HTTP.
-
-Details: [AGENTS.md — Architecture](AGENTS.md#architecture).
+Transport (`api_client.py`) + registry-driven facades (`client_surface.py`, `facade.py`). Contributor detail: [docs/contributing/architecture.md](docs/contributing/architecture.md). Agent/repo map: [AGENTS.md](AGENTS.md).
 
 ## Errors
 
-Raised exceptions are exported from top-level `endorlabs` (implemented in `endorlabs.core.exceptions`): `EndorAPIError` (base), `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, and `map_status_code_to_exception()`. All carry `status_code`, `operation`, `resource_uuid`, and `namespace` where applicable. See [docs/contracts.md](docs/contracts.md) (Errors section).
+Exported from top-level `endorlabs` (`endorlabs.core.exceptions`): `EndorAPIError`, `UnauthorizedError`, `NotFoundError`, `PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`, `ServerError`, `AmbiguousError`, `MethodNotSupportedError`, and `map_status_code_to_exception()`. See [docs/contracts.md](docs/contracts.md) (Errors).
 
 ## Development
 
-```bash
-uv run pytest                            # all tests
-uv run pytest -m integration -v          # integration only (needs credentials)
-uv run --env-file .env pytest            # if using .env file
-uv run ruff check . && uv run ruff format --check .  # lint
-uv run pyright                           # type check
-```
-
-Runtime compatibility is Python 3.12+, and CI validation is currently pinned to
-Python 3.13 for deterministic lint/type/test gates.
-
-Contributors: [CONTRIBUTORS.md](CONTRIBUTORS.md). AI agents: [AGENTS.md](AGENTS.md). Doc index: [docs/README.md](docs/README.md).
-
-## Scripts and automation
-
-Maintainer tooling lives in `devtools/` (model sync, stub generation, debug helpers). Agent-facing tenant workflows ship in `endorlabs.workflows` (see [AGENTS.md](AGENTS.md)). **In this repo:** SAST rule management (import, export, delete, configure) lives at `agent-knowledge/skills/custom-sast-rules/scripts/sast_rule_manager.py` (`.cursor/skills` is the Cursor runtime mirror). The interactive demo entrypoint is implemented in `src/endorlabs/_demo/demo_cli.py` and exposed via `endor-demo`. Optional: materialize agent context with `endorlabs.init()` (see [SDK-only vs agent bootstrap](#sdk-only-vs-agent-bootstrap)); maintainers use [devtools/README.md](devtools/README.md) and [CONTRIBUTORS.md](CONTRIBUTORS.md).
+Lint, test, and contributor workflow: [CONTRIBUTORS.md](CONTRIBUTORS.md). Maintainer automation: [devtools/README.md](devtools/README.md). Doc index: [docs/README.md](docs/README.md). AI agents: [AGENTS.md](AGENTS.md).
 
 ## License
 

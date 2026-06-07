@@ -16,6 +16,7 @@ from .common import load_json, root_tenant
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Run full troubleshooting workflow")
     _ = parser.add_argument("--tenant", required=True)
     _ = parser.add_argument("--namespace")
@@ -52,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     ns = args.namespace or args.tenant
     root = root_tenant(ns)

@@ -8,8 +8,8 @@
   "properties": {
     "name": {
       "type": "string",
-      "pattern": "^[a-z0-9-]{1,64}$",
-      "description": "Portable skill id; must match the parent directory name."
+      "pattern": "^endor-[a-z0-9-]{1,59}$",
+      "description": "Portable skill id; must match the parent directory name (endor-* prefix)."
     },
     "description": {
       "type": "string",

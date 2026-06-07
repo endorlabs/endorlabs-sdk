@@ -13,7 +13,7 @@ That only works when the tag ends in **`.dev0`** (dev-series anchor), e.g. `v0.1
 
 Tags like **`v0.1.1.dev19`** encode “dev 19” in the tag itself. SCM then refuses to bump
 (“choosing custom numbers for the `.devX` distance is not supported”) and **`uv sync` /
-editable installs fail**—the error in local Endor scans against `pypi://endorlabs-sdk@…`.
+editable installs fail**—the error in local Endor scans against `pypi://endorlabs@…`.
 
 **Repo fix (in `pyproject.toml`):**
 
@@ -118,9 +118,9 @@ Today the workflow on **`v*` tag push**:
 3. Create annotated tag: `git tag -a v0.1.0 -m "Release 0.1.0"` and push.
 4. Wait for **Release Tag Publish** workflow; download `dist/` from the GitHub Release.
 5. **TestPyPI:** `uv publish --index testpypi dist/*` (API token / trusted publishing).
-6. Smoke test: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ endorlabs-sdk==0.1.0`
+6. Smoke test: `pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ endorlabs==0.1.0`
 7. **PyPI:** `uv publish dist/*` (production index).
-8. Verify [PyPI project page](https://pypi.org/project/endorlabs-sdk/) and README links (`endorlabs/endorlabs-sdk`).
+8. Verify [PyPI project page](https://pypi.org/project/endorlabs/) and README links (`endorlabs/endorlabs-sdk` repo).
 
 ### Credentials (your accounts)
 

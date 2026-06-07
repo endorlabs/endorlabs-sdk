@@ -38,8 +38,12 @@ def _object_to_spec_dict(d: Any) -> dict[str, Any]:
 
 
 def parse_args() -> argparse.Namespace:
+    """Build argparse parser for this workflow CLI."""
     p = argparse.ArgumentParser(
-        description="Namespace-wide project relationship graph (PackageVersion + DependencyMetadata)."
+        description=(
+            "Namespace-wide project relationship graph "
+            "(PackageVersion + DependencyMetadata)."
+        )
     )
     p.add_argument(
         "--tenant", required=True, help="Client tenant (auth) as for endorlabs.Client."
@@ -87,6 +91,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     out_dir = Path(args.output_dir)
@@ -147,14 +152,15 @@ def main() -> int:
             n_dep += len(drows)
             for d in drows or []:
                 sp = _object_to_spec_dict(d)
-                for tpl in row_to_supporting_tuples(
-                    sp,
-                    project_set,
-                    include_public=bool(args.include_public),
-                    produced_by=produced_by,
-                    produced_name_only=produced_name,
-                ):
-                    all_support.append(tpl)
+                all_support.extend(
+                    row_to_supporting_tuples(
+                        sp,
+                        project_set,
+                        include_public=bool(args.include_public),
+                        produced_by=produced_by,
+                        produced_name_only=produced_name,
+                    )
+                )
         edges = aggregate_project_edges(all_support)
         paths = indirect_paths_bfs(
             [p["uuid"] for p in projects_json],

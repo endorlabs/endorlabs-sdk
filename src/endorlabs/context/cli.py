@@ -11,12 +11,16 @@ from __future__ import annotations
 import argparse
 
 import endorlabs
+from endorlabs.context._project_context import GITIGNORE_ENTRY
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse CLI args for context bootstrap."""
     parser = argparse.ArgumentParser(
-        description="Materialize SDK agent knowledge and download platform context."
+        description=(
+            "Materialize SDK agent knowledge and optionally download platform "
+            "context under .endorlabs-context/."
+        )
     )
 
     _ = parser.add_argument(
@@ -26,24 +30,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
 
     _ = parser.add_argument(
-        "--no-openapi",
-        action="store_false",
+        "--sync-openapi",
+        action="store_true",
         dest="include_openapi",
-        help="Skip OpenAPI spec download.",
+        help="Download OpenAPI spec to platform/openapi/.",
     )
 
     _ = parser.add_argument(
-        "--no-user-docs",
-        action="store_false",
+        "--sync-user-docs",
+        action="store_true",
         dest="include_user_docs",
-        help="Skip user docs download.",
+        help="Download user docs to platform/user-docs/.",
     )
 
     _ = parser.add_argument(
-        "--no-agent-knowledge",
+        "--no-materialize-agent-knowledge",
         action="store_false",
         dest="include_agent_knowledge",
-        help="Skip materializing the shipped agent knowledge package to sdk/.",
+        help="Skip copying shipped agent knowledge into project sdk/ (default: on).",
     )
 
     _ = parser.add_argument(
@@ -65,23 +69,52 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         choices=("none", "cursor", "claude", "both"),
         default="none",
         help=(
-            "Mirror materialized sdk/skills into runtime discovery directories "
-            "(default: none)."
+            "Mirror skills into runtime discovery directories "
+            "(default: none; uses materialized sdk/skills/ when present)."
         ),
     )
 
+    _ = parser.add_argument(
+        "--print-gitignore-line",
+        action="store_true",
+        default=False,
+        help=f"Print '{GITIGNORE_ENTRY}' and exit.",
+    )
+
     parser.set_defaults(
-        include_openapi=True,
-        include_user_docs=True,
+        include_openapi=False,
+        include_user_docs=False,
         include_agent_knowledge=True,
     )
 
     return parser.parse_args(argv)
 
 
+def _has_bootstrap_actions(args: argparse.Namespace) -> bool:
+    return bool(
+        args.include_openapi
+        or args.include_user_docs
+        or args.include_agent_knowledge
+        or args.sync_skills != "none"
+    )
+
+
 def main(argv: list[str] | None = None) -> None:
     """Context CLI entrypoint."""
     args = _parse_args(argv)
+
+    if args.print_gitignore_line:
+        print(GITIGNORE_ENTRY)
+        return
+
+    if not _has_bootstrap_actions(args):
+        print("No bootstrap actions requested.")
+        print(f"Wheel skills: {endorlabs.agent_knowledge_index_path()}")
+        print(
+            "Pass --sync-openapi, --sync-user-docs, and/or --sync-skills, "
+            "or omit --no-materialize-agent-knowledge."
+        )
+        return
 
     status = endorlabs.init(
         output_dir=args.output_dir,
@@ -95,11 +128,11 @@ def main(argv: list[str] | None = None) -> None:
 
     print("Context bootstrap complete.")
 
-    if status.agent_knowledge_path is not None:
-        print(f"Agent knowledge: {status.agent_knowledge_path}")
-
     if status.context_json_path is not None:
         print(f"Manifest: {status.context_json_path}")
+
+    if status.agent_knowledge_path is not None:
+        print(f"Agent knowledge: {status.agent_knowledge_path}")
 
     if status.openapi_path is not None:
         print(f"OpenAPI: {status.openapi_path}")
