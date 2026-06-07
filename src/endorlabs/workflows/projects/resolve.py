@@ -10,6 +10,7 @@ from endorlabs.core.exceptions import NotFoundError
 
 
 def is_hex_project_id(value: str) -> bool:
+    """Return whether *value* is a 24-character lowercase hex project UUID."""
     return len(value) == 24 and all(c in "0123456789abcdef" for c in value.lower())
 
 
