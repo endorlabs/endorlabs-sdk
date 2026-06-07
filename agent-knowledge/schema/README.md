@@ -21,6 +21,24 @@ agent-knowledge/
 
 Run `uv run python devtools/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift.
 
+### Path consistency (tests and docs)
+
+Skill directory names (`endor-*`), script paths, and runtime examples in `SKILL.md` must stay aligned across:
+
+| Tree | Role |
+|------|------|
+| `agent-knowledge/skills/<id>/` | Authoring source |
+| `src/endorlabs/agent_knowledge/skills/<id>/` | Shipped wheel (sync output) |
+| `.cursor/skills/<id>/` | Cursor mirror (optional; `init(sync_skills=…)`) |
+
+When you rename a skill or move a script:
+
+1. Grep `tests/` for the old skill id or filename; update inline path loaders (e.g. `tests/unit/tooling/scripts/test_sast_rule_manager.py`, `test_sso_access_spotcheck.py`).
+2. Update command examples in skill docs and related guides under `docs/`.
+3. Run sync and fix `--verify` drift before push.
+
+Do not introduce shared test utilities for path resolution — agents and contributors update the citing tests and docs directly.
+
 ## Portable frontmatter (shipped in bundle `SKILL.md`)
 
 Only these keys appear in the generated bundle:

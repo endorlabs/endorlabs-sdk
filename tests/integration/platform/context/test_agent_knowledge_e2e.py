@@ -30,7 +30,7 @@ class TestAgentBundleE2e:
         assert (
             status.agent_knowledge_path
             / "skills"
-            / "retrieve-scan-results"
+            / "endor-retrieve-scan-results"
             / "SKILL.md"
         ).is_file()
         assert status.context_json_path is not None
