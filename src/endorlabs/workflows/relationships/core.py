@@ -94,6 +94,7 @@ def row_to_supporting_tuples(
     produced_by: dict[tuple[str, str], set[str]],
     produced_name_only: dict[str, set[str]],
 ) -> list[tuple[str, str, SupportingPackage]]:
+    """Map one DependencyMetadata row to consumer→producer supporting tuples."""
     r = _extract_one_consumer_row(spec, include_public)
     if not r or r["consumer"] not in project_uuids:
         return []
@@ -200,6 +201,7 @@ def aggregate_project_edges(
 
 
 def path_confidence_for_tiers(tiers: list[str]) -> str:
+    """Map edge-tier sequence to high/medium/low path confidence."""
     if not tiers:
         return "low"
     if all(t == "tier_a_exact" for t in tiers):

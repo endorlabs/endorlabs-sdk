@@ -263,30 +263,18 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 ".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic
 "devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
-# Workflows: migrated CLIs + orchestration; relax style rules (stdout/argparse-heavy)
-"src/endorlabs/workflows/**" = [
-    "C901",
-    "D103",
-    "E501",
-    "PERF401",
-    "PERF402",
-    "SIM108",
-    "F841",
-    "T201",
-]  # many modules are thin CLIs or large orchestrators
-"agent-knowledge/**/*.py" = [
-    "C901",
-    "D103",
-    "E501",
-    "PERF401",
-    "PERF402",
-    "SIM108",
-    "F841",
-    "T201",
-    "S112",
-    "ERA001",
-    "D301",
-]  # skill helper scripts; lint at authoring, not synced bundle copies
+# --- Workflows: library contracts strict; CLI stdout intentional ---
+# Console scripts and argparse mains write paths/JSON to stdout (not library code).
+"src/endorlabs/workflows/**/cli.py" = ["T201"]
+"src/endorlabs/workflows/troubleshooting_scans/*.py" = ["T201"]
+"src/endorlabs/workflows/policies/validate.py" = ["T201"]
+"src/endorlabs/workflows/semgrep/inventory.py" = ["T201"]
+"src/endorlabs/workflows/agent_context/export.py" = ["T201", "C901"]  # CLI main orchestration
+"src/endorlabs/workflows/reachability/context.py" = ["C901"]  # build_reachability_context aggregation
+"src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
+# Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
+"agent-knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
+"agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
 "src/endorlabs/utils/create_payload.py" = ["C901", "UP047"]
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
@@ -362,7 +350,8 @@ executionEnvironments = [
     { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     { root = "src/endorlabs/agent/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportMissingTypeStubs = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportPossiblyUnboundVariable = "none", reportUnnecessaryTypeIgnoreComment = "none", reportMissingImports = "none", reportAttributeAccessIssue = "none", reportConstantRedefinition = "none", reportMissingSuperCall = "none" },
-    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
+    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },

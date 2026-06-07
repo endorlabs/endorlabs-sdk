@@ -411,38 +411,37 @@ def _build_markdown(
             "- status_evidence:",
         ]
     )
-    for entry in evidence_payload.get("status_evidence", []):
-        if isinstance(entry, dict):
-            lines.append(
-                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-                f"(source: `{entry.get('source', '')}`)"
-            )
+    lines.extend(
+        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+        f"(source: `{entry.get('source', '')}`)"
+        for entry in evidence_payload.get("status_evidence", [])
+        if isinstance(entry, dict)
+    )
     lines.append("- provisioning_evidence:")
-    for entry in evidence_payload.get("provisioning_evidence", []):
-        if isinstance(entry, dict):
-            lines.append(
-                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-                f"(source: `{entry.get('source', '')}`)"
-            )
+    lines.extend(
+        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+        f"(source: `{entry.get('source', '')}`)"
+        for entry in evidence_payload.get("provisioning_evidence", [])
+        if isinstance(entry, dict)
+    )
     lines.append("- stats_evidence:")
-    for entry in evidence_payload.get("stats_evidence", []):
-        if isinstance(entry, dict):
-            lines.append(
-                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-                f"(source: `{entry.get('source', '')}`)"
-            )
+    lines.extend(
+        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+        f"(source: `{entry.get('source', '')}`)"
+        for entry in evidence_payload.get("stats_evidence", [])
+        if isinstance(entry, dict)
+    )
     lines.append("- log_evidence:")
-    for entry in evidence_payload.get("log_evidence", []):
-        if isinstance(entry, dict):
-            lines.append(
-                f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
-                f"(source: `{entry.get('source', '')}`)"
-            )
+    lines.extend(
+        f"  - `{entry.get('path', '')}` -> `{entry.get('value', '')}` "
+        f"(source: `{entry.get('source', '')}`)"
+        for entry in evidence_payload.get("log_evidence", [])
+        if isinstance(entry, dict)
+    )
     signatures = evidence_payload.get("matched_signatures") or []
     if isinstance(signatures, list) and signatures:
         lines.append("- matched_signatures:")
-        for tag in signatures:
-            lines.append(f"  - `{tag}`")
+        lines.extend(f"  - `{tag}`" for tag in signatures)
 
     lines.extend(
         [
@@ -457,6 +456,7 @@ def _build_markdown(
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = _build_parser().parse_args()
 
     results_artifact = _load_json(args.scan_results_artifact)
