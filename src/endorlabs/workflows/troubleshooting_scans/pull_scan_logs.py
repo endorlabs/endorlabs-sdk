@@ -32,7 +32,10 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument(
         "--namespace",
         default=None,
-        help="Namespace for scan lookup/requests. If omitted, resolved from project/scan.",
+        help=(
+            "Namespace for scan lookup/requests. "
+            "If omitted, resolved from project/scan."
+        ),
     )
     _ = parser.add_argument(
         "--project-uuid",
@@ -42,7 +45,10 @@ def _parse_args() -> argparse.Namespace:
     _ = parser.add_argument(
         "--scan-result-uuid",
         default=None,
-        help="Optional explicit scan UUID. If omitted, uses latest scan for resolved project.",
+        help=(
+            "Optional explicit scan UUID. "
+            "If omitted, uses latest scan for resolved project."
+        ),
     )
     _ = parser.add_argument(
         "--project-query",
@@ -192,6 +198,7 @@ def _message_to_dict(message: Any) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = _parse_args()
     client = endorlabs.Client(tenant=args.tenant)
     try:

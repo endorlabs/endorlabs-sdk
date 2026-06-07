@@ -1,6 +1,6 @@
 # Endor Labs SDK — Agent Index (Tier 0)
 
-Shipped with `endorlabs-sdk` inside the wheel. **`endorlabs.init()` is optional** — use
+Shipped with `endorlabs` inside the wheel. **`endorlabs.init()` is optional** — use
 `agent_knowledge_index_path()` to read this file from site-packages, or materialize under
 `.endorlabs-context/sdk/` when a cwd-relative tree is needed.
 
@@ -28,10 +28,10 @@ status = endorlabs.init(include_openapi=False, include_user_docs=False)
 **Full bootstrap** (agent knowledge + platform OpenAPI/user docs):
 
 ```python
-pip install 'endorlabs-sdk[context]'
+pip install 'endorlabs[docs]'
 import endorlabs
 
-status = endorlabs.init()
+status = endorlabs.init(include_openapi=True, include_user_docs=True)
 # Read: status.agent_knowledge_index_path
 ```
 
@@ -76,22 +76,22 @@ Read **`rules/`** (Tier 1 bootstrap) before project-scoped RCA.
 6. **DependencyMetadata wire path:** List/group uses the **customer tenant namespace**, not the
    literal `oss` plane. Field `spec.dependency_data.namespace == "oss"` is data semantics only.
 7. **Workflow composition:** Extend workflow JSON/manifests before re-listing the API; escalate
-   CLI → library → `Client` → session script (see `rules/workflow-composition.md`).
+   CLI → library → `Client` → session script (see `rules/endor-workflow-composition.md`).
 8. **Portable examples:** Use placeholders in docs; never commit customer estate identifiers
-   (`rules/portable-examples.md`).
+   (`rules/endor-portable-examples.md`).
 
-## Bootstrap (always load)
+## Bootstrap (load for Endor SDK work)
 
-Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rules first):
+Harnesses should prepend `agent_knowledge_bootstrap_paths()` (or read these rules first). In Cursor, `endor-namespace-scoping` and `endor-list-query-performance` are **always-on**; other bootstrap `endor-*.mdc` rules attach when path **globs** match (`src/endorlabs/**`, Python, `.endorlabs-context/`, etc.).
 
 | Rule | Summary |
 |------|---------|
-| `namespace-scoping` | Resolve Project; pass `namespace=project.namespace` on project-scoped lists |
-| `workspace-layout` | Session artifacts under `workspace/sessions/<user>/` |
-| `workflow-composition` | CLI → library → Client → session script; artifact-first |
-| `list-query-performance` | Do not set `page_size` unless asked |
-| `local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
-| `portable-examples` | Placeholders only; no committed tenant/project UUID literals |
+| `endor-namespace-scoping` | Resolve Project; pass `namespace=project.namespace` on project-scoped lists |
+| `endor-workspace-layout` | Session artifacts under `workspace/sessions/<user>/` |
+| `endor-workflow-composition` | CLI → library → Client → session script; artifact-first |
+| `endor-list-query-performance` | Do not set `page_size` unless asked |
+| `endor-local-context` | Check gitignored `.endorlabs-context/` paths explicitly |
+| `endor-portable-examples` | Placeholders only; no committed tenant/project UUID literals |
 
 See `MANIFEST.json` → `bootstrap.rule_ids` for the machine-readable list.
 
@@ -99,7 +99,7 @@ See `MANIFEST.json` → `bootstrap.rule_ids` for the machine-readable list.
 
 Session/triage debugging artifacts and temporary probe scripts belong under
 `.endorlabs-context/workspace/sessions/<user>/` (not repo-root `.tmp/`). Project
-bundles go under `workspace/projects/<uuid>/`. See `rules/workspace-layout.md`.
+bundles go under `workspace/projects/<uuid>/`. See `rules/endor-workspace-layout.md`.
 
 ## Read order
 

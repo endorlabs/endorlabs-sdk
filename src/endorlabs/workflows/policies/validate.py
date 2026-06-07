@@ -3,7 +3,8 @@
 Loads a stored policy, builds ``spec.request`` from template or rule fields,
 and POSTs to ``/v1/namespaces/{namespace}/policy/validate``.
 
-See ``agent-knowledge/skills/validate-policy/`` and ``python -m endorlabs.workflows.policies.validate``.
+See ``agent-knowledge/skills/endor-validate-policy/`` and
+``python -m endorlabs.workflows.policies.validate``.
 """
 
 from __future__ import annotations
@@ -148,6 +149,7 @@ def _collect_uuids(obj: Any, out: set[str]) -> None:
 
 
 def finding_in_validation_output(finding_uuid: str, validation: dict[str, Any]) -> bool:
+    """Return whether *finding_uuid* appears anywhere in the validation payload."""
     found: set[str] = set()
     _collect_uuids(validation, found)
     normalized = {u.lower() for u in found}
@@ -223,6 +225,7 @@ def run_validate_policy(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the module CLI and return exit code."""
     parser = argparse.ArgumentParser(
         description=(
             "Validate a policy via POST /v1/namespaces/{namespace}/policy/validate."

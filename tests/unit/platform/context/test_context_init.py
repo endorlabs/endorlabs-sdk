@@ -139,6 +139,34 @@ class TestInit:
         mock_client.get.return_value = mock_response
         return mock_client
 
+    def test_init_noop_when_all_flags_off(self, tmp_path: Path) -> None:
+        """init with every action disabled should not write project context."""
+        from endorlabs.context._sync import init
+
+        output_dir = tmp_path / ".endor-context"
+        status = init(
+            output_dir=output_dir,
+            include_agent_knowledge=False,
+        )
+
+        assert status.context_json_path is None
+        assert status.agent_knowledge_path is None
+        assert not output_dir.exists()
+
+    def test_init_defaults_materialize_sdk(self, tmp_path: Path) -> None:
+        """Default init materializes sdk/ without platform downloads."""
+        from endorlabs.context._sync import init
+
+        output_dir = tmp_path / ".endor-context"
+        with patch("endorlabs.api_client.APIClient") as mock_cls:
+            status = init(output_dir=output_dir)
+
+        mock_cls.assert_not_called()
+        assert status.agent_knowledge_path == output_dir / "sdk"
+        assert status.context_json_path == output_dir / "context.json"
+        assert status.openapi_path is None
+        assert status.user_docs_path is None
+
     def test_init_openapi_only(self, tmp_path: Path) -> None:
         """Test init with only OpenAPI download."""
         from endorlabs.context._sync import init
@@ -150,6 +178,7 @@ class TestInit:
             output_dir=output_dir,
             include_openapi=True,
             include_user_docs=False,
+            include_agent_knowledge=False,
             client=mock_client,
         )
 
@@ -160,9 +189,32 @@ class TestInit:
         assert status.openapi_path == status.platform_openapi_path
         assert status.user_docs_path is None
         assert status.user_docs_count == 0
-        assert status.agent_knowledge_path == output_dir / "sdk"
+        assert status.agent_knowledge_path is None
         assert status.context_json_path == output_dir / "context.json"
         assert status.downloaded_at is not None
+
+    def test_init_warns_agent_about_gitignore(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """Project context writes emit a static agent gitignore warning."""
+        from endorlabs.context._sync import init
+
+        output_dir = tmp_path / ".endor-context"
+        mock_client = self._mock_api_client()
+        with caplog.at_level("WARNING"):
+            init(
+                output_dir=output_dir,
+                include_openapi=True,
+                include_user_docs=False,
+                include_agent_knowledge=False,
+                client=mock_client,
+            )
+
+        assert any(
+            "ask the user to add" in record.message
+            and "do not modify .gitignore automatically" in record.message
+            for record in caplog.records
+        )
 
     def test_init_creates_output_directory(self, tmp_path: Path) -> None:
         """Test init creates output directory if it doesn't exist."""
@@ -175,6 +227,7 @@ class TestInit:
             output_dir=output_dir,
             include_openapi=True,
             include_user_docs=False,
+            include_agent_knowledge=False,
             client=mock_client,
         )
 
@@ -198,6 +251,7 @@ class TestInit:
             include_openapi=True,
             include_user_docs=False,
             force=True,
+            include_agent_knowledge=False,
             client=mock_client,
         )
 
@@ -222,6 +276,7 @@ class TestInit:
             include_openapi=True,
             include_user_docs=False,
             force=False,
+            include_agent_knowledge=False,
             client=mock_client,
         )
 
@@ -248,6 +303,7 @@ class TestInit:
                 output_dir=output_dir,
                 include_openapi=False,
                 include_user_docs=True,
+                include_agent_knowledge=False,
             )
 
         mock_cls.assert_not_called()
@@ -255,8 +311,9 @@ class TestInit:
         assert status.user_docs_path == output_dir / "platform" / "user-docs"
         assert status.user_docs_count == 7
 
-    def test_init_skills_only_materializes_sdk_bundle(self, tmp_path: Path) -> None:
-        """Skill-only sync still materializes sdk/ and context.json."""
+    def test_init_skills_only_uses_wheel_source(self, tmp_path: Path) -> None:
+        """Skill-only sync uses wheel skills when sdk/ is not materialized."""
+        from endorlabs.agent_knowledge import agent_knowledge_dir
         from endorlabs.context._sync import init
 
         output_dir = tmp_path / ".endor-context"
@@ -272,17 +329,20 @@ class TestInit:
                 output_dir=output_dir,
                 include_openapi=False,
                 include_user_docs=False,
+                include_agent_knowledge=False,
                 sync_skills="cursor",
             )
 
         mock_cls.assert_not_called()
         assert output_dir.exists()
-        assert (output_dir / "sdk" / "INDEX.md").is_file()
+        assert not (output_dir / "sdk" / "INDEX.md").exists()
         assert status.openapi_path is None
         assert status.user_docs_path is None
         assert status.synced_skill_paths == {"cursor": mirrored_path}
         mock_sync.assert_called_once()
-        assert mock_sync.call_args.kwargs["source_dir"] == output_dir / "sdk" / "skills"
+        assert mock_sync.call_args.kwargs["source_dir"] == (
+            agent_knowledge_dir() / "skills"
+        )
 
     def test_init_sdk_bundle_only(self, tmp_path: Path) -> None:
         """init can materialize sdk bundle without downloads or skill sync."""
@@ -290,13 +350,7 @@ class TestInit:
 
         output_dir = tmp_path / ".endor-context"
         with patch("endorlabs.api_client.APIClient") as mock_cls:
-            status = init(
-                output_dir=output_dir,
-                include_openapi=False,
-                include_user_docs=False,
-                include_agent_knowledge=True,
-                sync_skills="none",
-            )
+            status = init(output_dir=output_dir)
         mock_cls.assert_not_called()
         assert status.agent_knowledge_path == output_dir / "sdk"
         assert status.context_json_path == output_dir / "context.json"
@@ -349,7 +403,7 @@ class TestContextDepsCheck:
                 "_import_docs_deps",
                 side_effect=ImportError(
                     "Context dependencies not installed. "
-                    "Install with: pip install endorlabs-sdk[context]"
+                    "Install with: pip install endorlabs[docs]"
                 ),
             ),
             pytest.raises(ImportError, match="Context dependencies not installed"),

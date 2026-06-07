@@ -9,7 +9,7 @@ Local setup: see [CONTRIBUTORS.md](../../CONTRIBUTORS.md).
 Create the gitignored `.endorlabs-context/` folder with both the OpenAPI spec and local user documentation snapshots. **Optional, for full IDE context** — pull full platform-admin context into the IDE.
 
 ```bash
-uv sync --extra context
+uv sync --extra docs
 ```
 
 ```python

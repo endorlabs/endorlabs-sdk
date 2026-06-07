@@ -1,7 +1,7 @@
 """List ScanResults for a project with a bounded create-time window (default 30 days).
 
-Uses ``ScanResult.list(parent=project, list_params=ListParameters(from_date=..., to_date=...))``
-for server-side filtering instead of pulling unbounded lists.
+Uses ``ScanResult.list(parent=project, list_params=ListParameters(...))`` with
+``from_date`` / ``to_date`` for server-side filtering instead of unbounded lists.
 """
 
 from __future__ import annotations
@@ -58,6 +58,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     rt = root_tenant(args.tenant)
     ns = args.namespace or args.tenant
     from_d, to_d = date_window_from_bounds(
@@ -114,6 +115,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = _build_parser().parse_args()
     try:
         result = run(args)
