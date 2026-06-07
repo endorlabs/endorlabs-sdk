@@ -27,7 +27,7 @@ def test_rules_manifest_entries() -> None:
     rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
     assert len(rules) == 6
     ids = {entry["id"] for entry in rules}
-    assert "workflow-composition" in ids
+    assert "endor-workflow-composition" in ids
     assert all(entry["path"].startswith("rules/") for entry in rules)
     assert all("summary" in entry for entry in rules)
 
@@ -37,7 +37,7 @@ def test_contract_manifest_entries_reference_only() -> None:
     assert contracts
     ids = {entry["id"] for entry in contracts}
     assert "list-parameters" in ids
-    assert "workflow-composition" not in ids
+    assert "endor-workflow-composition" not in ids
     assert all(entry["path"].startswith("contracts/") for entry in contracts)
     assert all("tier" not in entry for entry in contracts)
 
@@ -47,7 +47,7 @@ def test_manifest_bootstrap_block_matches_rules() -> None:
     bootstrap = build_bootstrap_manifest_block(rules)
     expected_ids = sorted(entry["id"] for entry in rules)
     assert bootstrap == {"index": "INDEX.md", "rule_ids": expected_ids}
-    assert "workflow-composition" in bootstrap["rule_ids"]
+    assert "endor-workflow-composition" in bootstrap["rule_ids"]
 
 
 def test_shipped_manifest_schema_v2() -> None:
@@ -69,7 +69,7 @@ def test_agent_knowledge_bootstrap_paths() -> None:
     )
 
     ids = agent_knowledge_rule_ids()
-    assert "namespace-scoping" in ids
+    assert "endor-namespace-scoping" in ids
     paths = agent_knowledge_bootstrap_paths()
     assert agent_knowledge_index_path() in paths
     assert all(path.is_file() for path in paths)
@@ -97,12 +97,31 @@ def test_library_entrypoints_importable() -> None:
         pytest.fail("\n".join(errors))
 
 
-def test_emit_cursor_rules_content() -> None:
+def test_emit_cursor_rules_footgun_rules_always_apply() -> None:
     contents = build_cursor_rule_contents()
-    mdc = contents["list-query-performance"]
+    for rule_id in ("endor-namespace-scoping", "endor-list-query-performance"):
+        mdc = contents[rule_id]
+        assert "alwaysApply: true" in mdc
+        assert "globs:" not in mdc
+        assert "x-endor-generated: true" in mdc
+
+
+def test_emit_cursor_rules_maintainer_rules_glob_scoped() -> None:
+    contents = build_cursor_rule_contents()
+    mdc = contents["endor-workflow-composition"]
+    assert "alwaysApply: false" in mdc
+    assert "globs:" in mdc
+    assert "src/endorlabs/**" in mdc
+    assert "**/*.py" in mdc
+
+
+def test_emit_cursor_rules_list_query_performance_content() -> None:
+    contents = build_cursor_rule_contents()
+    mdc = contents["endor-list-query-performance"]
     assert "alwaysApply: true" in mdc
-    assert "x-endor-generated: true" in mdc
-    assert "x-endor-source: agent-knowledge/rules/list-query-performance.md" in mdc
+    assert (
+        "x-endor-source: agent-knowledge/rules/endor-list-query-performance.md" in mdc
+    )
     assert "x-endor-source-sha256: " in mdc
     assert "# List query performance" in mdc
     assert "Do not set `page_size`" in mdc
@@ -110,5 +129,7 @@ def test_emit_cursor_rules_content() -> None:
 
 def test_portable_examples_rule_has_summary() -> None:
     rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
-    portable = next(entry for entry in rules if entry["id"] == "portable-examples")
+    portable = next(
+        entry for entry in rules if entry["id"] == "endor-portable-examples"
+    )
     assert portable.get("summary")

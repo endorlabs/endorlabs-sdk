@@ -17,7 +17,7 @@ AGENT_DIRNAME = "agent-knowledge"
 AGENT_SKILLS_SUBDIR = "skills"
 AGENT_RULES_SUBDIR = "rules"
 AGENT_CONTRACTS_SUBDIR = "contracts"
-SKILL_NAME_PATTERN = re.compile(r"^[a-z0-9-]{1,64}$")
+SKILL_NAME_PATTERN = re.compile(r"^endor-[a-z0-9-]{1,59}$")
 PORTABLE_FRONTMATTER_KEYS = frozenset(
     {"name", "description", "disable-model-invocation"}
 )
@@ -135,7 +135,9 @@ def validate_skill(
     name = fm.get("name", skill_id)
     if name != skill_id:
         errors.append(f"{skill_id}: frontmatter name '{name}' must match directory")
-    if not SKILL_NAME_PATTERN.fullmatch(str(name)):
+    if not str(name).startswith("endor-"):
+        errors.append(f"{skill_id}: skill name must start with 'endor-'")
+    elif not SKILL_NAME_PATTERN.fullmatch(str(name)):
         errors.append(f"{skill_id}: invalid skill name '{name}'")
     description = fm.get("description", "")
     if not isinstance(description, str) or not description.strip():
@@ -205,9 +207,13 @@ def validate_rule(
     *,
     rule_schema_path: Path,
 ) -> list[str]:
-    return validate_contract(
+    errors = validate_contract(
         parsed, contract_schema_path=rule_schema_path, label="rules"
     )
+    rule_id = parsed.contract_id
+    if not rule_id.startswith("endor-"):
+        errors.append(f"rules/{parsed.source_path.name}: id must start with 'endor-'")
+    return errors
 
 
 def render_contract_md(parsed: ParsedContract) -> str:

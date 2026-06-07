@@ -1,5 +1,5 @@
 ---
-id: workflow-composition
+id: endor-workflow-composition
 tags: [workflows, scripts, composition]
 summary: >-
   Prefer workflow CLI, then library imports, then Client; extend artifacts instead
@@ -28,7 +28,7 @@ Use one step at a time:
 1. **Workflow CLI** — run the skill's documented command with defaults.
 2. **Workflow library** — import composable functions (see `MANIFEST.json` `library_entrypoints`).
 3. **`Client` facade** — when no workflow covers the query.
-4. **Session script** — minimal glue under `sessions/<user>/scripts/` (see `workspace-layout`).
+4. **Session script** — minimal glue under `sessions/<user>/scripts/` (see `endor-workspace-layout`).
 
 ## Artifact-first
 

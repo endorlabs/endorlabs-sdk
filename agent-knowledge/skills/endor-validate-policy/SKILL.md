@@ -1,5 +1,5 @@
 ---
-name: validate-policy
+name: endor-validate-policy
 description: >-
   Validate Endor Labs policies against project finding data via the
   PolicyValidation API or endorctl. Use when checking whether an exception
@@ -19,7 +19,7 @@ endorlabs:
 
 # Validate Policy
 
-Extend with [workflow-composition](../../rules/workflow-composition.md): prefer `run_validate_policy` in session scripts instead of forking the CLI.
+Extend with [workflow-composition](../../rules/endor-workflow-composition.md): prefer `run_validate_policy` in session scripts instead of forking the CLI.
 
 Evaluate whether a **stored policy** (usually an exception policy) matches
 findings for a **project** — without applying exceptions in production.
@@ -53,7 +53,7 @@ See [API.md](API.md) for request/response shape and [ENDORCTL.md](ENDORCTL.md) f
 1. **`ENDOR_NAMESPACE`** (or `--namespace`) must be the **customer tenant** you are validating (e.g. `<customer-namespace>`).
 2. Include **`tenant_meta.namespace`** in the POST body with the **same** value as the URL path segment.
 3. **Cross-tenant endor-admin read** against a **customer** namespace often returns **403** on `policy/validate` even when `Policy.get` / `Finding.list` succeed. Reproduce in your **home tenant** first, or use **tenant-scoped** user/service credentials for customer work.
-4. Run with `uv run --env-file .env …`; refresh token via `devtools/refresh_token_to_dotenv.py` when needed.
+4. Run with `uv run --env-file .env …`; refresh token via `devtools/refresh_token_to_dotenv.py` (env defaults; `--sso` / `-n` or `--admin` when needed).
 
 ### Inputs
 
@@ -143,7 +143,7 @@ Output uses top-level `matching_findings` (full finding objects), not `spec.resu
 - OpenAPI: `PolicyValidationService_CreatePolicyValidation` → `POST /v1/namespaces/{tenant_meta.namespace}/policy/validate` (`x-internal: true`)
 - Local docs: `.endorlabs-context/platform/user-docs/developers-api/cli/commands/validate/policy.md`
 - Implementation: `src/endorlabs/workflows/policies/validate.py`
-- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/sessions/<user>/scripts/policy_validate_probe.py` (see [workspace-layout](../../rules/workspace-layout.md))
+- Fixture probe (creates templated policy in `ENDOR_NAMESPACE`): place under `.endorlabs-context/workspace/sessions/<user>/scripts/policy_validate_probe.py` (see [workspace-layout](../../rules/endor-workspace-layout.md))
 
 Run validate:
 
@@ -152,3 +152,11 @@ uv run --env-file .env python -m endorlabs.workflows.policies.validate \
   --policy-uuid <POLICY_UUID> \
   --finding-uuid <FINDING_UUID>
 ```
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| Resolve finding UUID / project namespace | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| Scan pipeline or aggregate count regression | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
+| Package/finding lineage at commit scope | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |

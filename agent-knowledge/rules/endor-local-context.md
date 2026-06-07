@@ -1,5 +1,5 @@
 ---
-id: local-context
+id: endor-local-context
 tags: [context, openapi, bootstrap]
 summary: >-
   Check gitignored .endorlabs-context paths explicitly; prefer local platform docs
@@ -26,8 +26,8 @@ concluding context is unavailable.
 
 ## Research order
 
-1. Shipped package under `.endorlabs-context/sdk/` (or wheel via `agent_knowledge_index_path()`).
-2. Local OpenAPI and user docs under `.endorlabs-context/platform/`.
+1. Wheel: `agent_knowledge_index_path()` / `agent_knowledge_manifest()` (site-packages), or materialized `.endorlabs-context/sdk/` after `init()`.
+2. Local OpenAPI and user docs under `.endorlabs-context/platform/` (when bootstrapped).
 3. Online API spec and docs only as fallback.
 
 Materialize with `endorlabs.init()` when a cwd-relative tree is needed.
