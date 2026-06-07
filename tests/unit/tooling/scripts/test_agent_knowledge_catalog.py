@@ -25,14 +25,14 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 def test_portable_frontmatter_strips_endorlabs_extension() -> None:
     fm = {
-        "name": "demo-skill",
+        "name": "endor-demo-skill",
         "description": "Does things when asked.",
         "endorlabs": {"catalog": {"workflow_id": "demo", "module": "mod"}},
         "disable-model-invocation": True,
     }
     portable = portable_frontmatter(fm)
     assert portable == {
-        "name": "demo-skill",
+        "name": "endor-demo-skill",
         "description": "Does things when asked.",
         "disable-model-invocation": True,
     }
@@ -40,7 +40,7 @@ def test_portable_frontmatter_strips_endorlabs_extension() -> None:
 
 
 def test_normalize_skill_for_bundle_removes_endorlabs_key(tmp_path: Path) -> None:
-    skill_dir = tmp_path / "demo-skill"
+    skill_dir = tmp_path / "endor-demo-skill"
     skill_dir.mkdir()
     skill_md = skill_dir / "SKILL.md"
     skill_md.write_text(
@@ -82,7 +82,7 @@ def test_build_workflow_catalog_merges_yaml_and_skill_rows() -> None:
     )
     catalog_rows = [
         (
-            "project-agent-context",
+            "endor-project-agent-context",
             {
                 "workflow_id": "agent-context",
                 "cli": "endor-agent-context",
@@ -97,7 +97,7 @@ def test_build_workflow_catalog_merges_yaml_and_skill_rows() -> None:
     assert "context-bootstrap" in ids
     assert "agent-context" in ids
     agent_row = next(row for row in workflows if row["id"] == "agent-context")
-    assert agent_row["skill"] == "project-agent-context"
+    assert agent_row["skill"] == "endor-project-agent-context"
     assert agent_row["cli"] == "endor-agent-context"
 
 
@@ -155,10 +155,12 @@ def test_list_skill_refs_uses_posix_byte_order() -> None:
         / "endorlabs"
         / "agent_knowledge"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
     )
-    refs = list_skill_refs(skill_dir, bundle_skill_prefix="skills/custom-sast-rules")
-    assert refs[-1] == "skills/custom-sast-rules/scripts/sast_rule_manager.py"
+    refs = list_skill_refs(
+        skill_dir, bundle_skill_prefix="skills/endor-custom-sast-rules"
+    )
+    assert refs[-1] == "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py"
     assert refs == sorted(refs, key=str.encode)
 
 

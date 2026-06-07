@@ -1,5 +1,5 @@
 ---
-name: custom-sast-rules
+name: endor-custom-sast-rules
 description: >-
   Author, validate, and import custom OpenGrep/Semgrep SAST rules into the
   Endor Labs platform. Use when the user wants to write security rules,
@@ -89,28 +89,28 @@ Verify: compiles without errors, flags expected files, zero false positives.
 
 ## Phase 4: Import to Platform
 
-Use the SAST Rule Manager script (`.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py`) for all platform operations. It validates every rule against the API-accepted schema before import and handles orphaned findings on delete.
+Use the SAST Rule Manager script (`.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`) for all platform operations. It validates every rule against the API-accepted schema before import and handles orphaned findings on delete.
 
 ```bash
 # Import all rules (validates each rule dict before calling the API)
-uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --force
 
 # Full sync (delete old + orphan cleanup + import + configure enable/disable)
-uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     sync --rules-dir opengrep-rules/ --enabled-dir opengrep-rules/trust-chain/ \
     --name-filter "endor-sdk" --namespace tenant.ns --force
 
 # Validate only (dry run -- parses, validates, logs planned actions)
-uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
 
 # Delete rules matching a name filter and clean up orphaned findings
-uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     delete --name-filter "endor-sdk" --namespace tenant.ns
 
 # Configure enable/disable states by directory
-uv run python .cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     configure --rules-dir opengrep-rules/ \
     --enabled-dir opengrep-rules/trust-chain/ --namespace tenant.ns
 ```
@@ -142,5 +142,5 @@ Compare finding count and affected files against local OpenGrep/Semgrep results.
 | Threat model | Manual / checklist | Threat spec per finding |
 | Author | Text editor + reference rules | Rule YAML file |
 | Validate | `opengrep scan` / `semgrep scan` | Finding count + file list |
-| Import | `.cursor/skills/custom-sast-rules/scripts/sast_rule_manager.py` | Rule created in namespace |
+| Import | `.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py` | Rule created in namespace |
 | Verify | `endorctl scan --sast` | Platform findings match local |

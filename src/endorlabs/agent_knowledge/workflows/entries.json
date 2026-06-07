@@ -10,7 +10,7 @@
       "endorlabs.workflows.agent_context.list_package_versions_for_index"
     ],
     "module": "endorlabs.workflows.agent_context.cli",
-    "skill": "project-agent-context"
+    "skill": "endor-project-agent-context"
   },
   {
     "agent_visible": true,
@@ -22,7 +22,7 @@
       "endorlabs.workflows.analytics.export_version_cardinality_for_package_match"
     ],
     "module": "endorlabs.workflows.analytics.cli",
-    "skill": "analytics-estate-dependencies"
+    "skill": "endor-analytics-estate-dependencies"
   },
   {
     "agent_visible": true,
@@ -34,7 +34,7 @@
       "endorlabs.workflows.callgraph.run_callgraph_sweep"
     ],
     "module": "endorlabs.workflows.callgraph.search",
-    "skill": "fetch-and-search-call-graph"
+    "skill": "endor-fetch-and-search-call-graph"
   },
   {
     "agent_visible": true,
@@ -54,7 +54,7 @@
       "endorlabs.workflows.policies.run_validate_policy"
     ],
     "module": "endorlabs.workflows.policies.validate",
-    "skill": "validate-policy"
+    "skill": "endor-validate-policy"
   },
   {
     "agent_visible": true,
@@ -62,7 +62,7 @@
     "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
     "id": "reachability-context",
     "module": "endorlabs.workflows.reachability.cli",
-    "skill": "reachability-provenance"
+    "skill": "endor-reachability-provenance"
   },
   {
     "agent_visible": true,
@@ -70,7 +70,7 @@
     "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
     "id": "relationships-map",
     "module": "endorlabs.workflows.relationships.map",
-    "skill": "map-project-dependency-relationships"
+    "skill": "endor-map-project-dependency-relationships"
   },
   {
     "agent_visible": true,
@@ -78,7 +78,7 @@
     "default_output": ".endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json",
     "id": "semgrep-inventory",
     "module": "endorlabs.workflows.semgrep.inventory",
-    "skill": "custom-sast-rules"
+    "skill": "endor-custom-sast-rules"
   },
   {
     "agent_visible": true,
@@ -91,6 +91,6 @@
       "endorlabs.workflows.troubleshooting_scans.resolve_project"
     ],
     "module": "endorlabs.workflows.troubleshooting_scans",
-    "skill": "troubleshooting-scans"
+    "skill": "endor-troubleshooting-scans"
   }
 ]

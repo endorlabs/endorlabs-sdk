@@ -23,7 +23,7 @@ def test_parse_skill_frontmatter_multiline_block_scalar(tmp_path: Path) -> None:
     skill_md = tmp_path / "SKILL.md"
     skill_md.write_text(
         "---\n"
-        "name: retrieve-scan-results\n"
+        "name: endor-retrieve-scan-results\n"
         "description: >-\n"
         "  Query projects, scan results, and findings from the Endor Labs platform\n"
         "  using the SDK. Use when the user wants to retrieve scan results.\n"
@@ -32,7 +32,7 @@ def test_parse_skill_frontmatter_multiline_block_scalar(tmp_path: Path) -> None:
     )
     parsed = parse_skill_md(skill_md)
     portable = portable_frontmatter(parsed.frontmatter)
-    assert portable["name"] == "retrieve-scan-results"
+    assert portable["name"] == "endor-retrieve-scan-results"
     assert "Query projects" in portable["description"]
     assert portable["description"].endswith("retrieve scan results.")
 

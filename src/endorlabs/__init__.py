@@ -92,8 +92,8 @@ def agent_knowledge_bootstrap_paths() -> list[Path]:
 
 def init(
     output_dir: str | Path = ".endorlabs-context",
-    include_openapi: bool = True,
-    include_user_docs: bool = True,
+    include_openapi: bool = False,
+    include_user_docs: bool = False,
     include_agent_knowledge: bool = True,
     max_pages: int | None = None,
     force: bool = False,
@@ -102,20 +102,18 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Materializes the shipped agent knowledge package under ``sdk/`` (no auth required).
-    Optionally downloads OpenAPI spec and user docs under ``platform/``.
+    By default, ``init()`` materializes agent knowledge under ``sdk/``. Pass explicit
+    flags to download platform context or mirror skills.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
-        include_openapi: Download OpenAPI spec (default: True).
-        include_user_docs: Download user documentation (default: True).
+        include_openapi: Download OpenAPI spec (default: False).
+        include_user_docs: Download user documentation (default: False).
         include_agent_knowledge: Materialize agent knowledge to sdk/ (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download even if files exist (default: False).
-        sync_skills: Mirror materialized ``sdk/skills/`` into runtime directories.
-        client: Optional APIClient instance. If not provided, one is created
-            when ``include_openapi=True`` (requires
-            ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
+        sync_skills: Mirror skills into runtime discovery directories.
+        client: Optional APIClient instance for OpenAPI download.
 
     Returns:
         InitStatus with paths to materialized and downloaded files.
@@ -123,14 +121,14 @@ def init(
     Raises:
         UnauthorizedError: If OpenAPI authentication fails.
         ImportError: If context dependencies are not installed (for user docs).
-            Install with: pip install endorlabs-sdk[context]
+            Install with: pip install endorlabs[docs]
 
     Example::
 
         >>> import endorlabs
         >>> status = endorlabs.init()
-        >>> print(status.agent_knowledge_index_path)
-        .endorlabs-context/sdk/INDEX.md
+        >>> print(status.agent_knowledge_path)
+        .endorlabs-context/sdk
 
     """
     from .context import _sync
@@ -153,7 +151,7 @@ def sync_agent_skills(
     target: Literal["none", "cursor", "claude", "both"] = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
-    """Mirror materialized or repo skill sources into runtime discovery directories."""
+    """Mirror ``endor-*`` skills into runtime discovery directories."""
     from .context import _sync
 
     return _sync.sync_agent_skills(

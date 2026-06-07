@@ -1,5 +1,5 @@
 ---
-name: model-sync-drift
+name: endor-model-sync-drift
 description: >-
   Triage and fix OpenAPI / model-sync upstream drift when CI or pre-push fails
   verify-upstream-only, or when published endorctl is newer than committed
@@ -69,8 +69,8 @@ Pre-push hooks also run `--verify-upstream-only` and contract validation.
 
 ## When this is not enough
 
-- **New resource or facade behavior** → [implement-sdk-resource](../implement-sdk-resource/SKILL.md) and [docs/contributing/architecture.md](../../docs/contributing/architecture.md).
-- **Runtime list/get/update failures** → [troubleshoot-sdk](../troubleshoot-sdk/SKILL.md).
+- **New resource or facade behavior** → [endor-implement-sdk-resource](../endor-implement-sdk-resource/SKILL.md) and [docs/contributing/architecture.md](../../docs/contributing/architecture.md).
+- **Runtime list/get/update failures** → [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md).
 - **Contract/list validation on masked rows** → [docs/guides/consumer-ux-list-update.md](../../docs/guides/consumer-ux-list-update.md).
 
 ## Local endorctl upgrade (optional, for parity with UI/endorctl)

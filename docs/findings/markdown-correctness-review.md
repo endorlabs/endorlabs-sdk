@@ -36,7 +36,7 @@ Scope:
      - `docs/contracts.md`
      - `docs/contributing/integration-resource-tests.md` (formerly `resource-implementation.md`)
      - `.github/copilot-instructions.md`
-     - `.cursor/skills/implement-sdk-resource/SKILL.md`
+     - `.cursor/skills/endor-implement-sdk-resource/SKILL.md`
 
 3. **Outdated model-sync branch naming**
    - Problem: stale static branch name `chore/model-sync-auto` in contributor workflow docs.

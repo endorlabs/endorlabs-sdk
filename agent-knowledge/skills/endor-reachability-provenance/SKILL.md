@@ -1,5 +1,5 @@
 ---
-name: reachability-provenance
+name: endor-reachability-provenance
 description: Investigates reachability provenance mismatches in vulnerability findings by comparing dependency reachability, function reachability, and vulnerability metadata in the oss namespace. Use when finding tags or summary text appear contradictory (for example reachable dependency with unreachable function), when validating affected_callpath_uris attribution, or when analyzing CVE/GHSA alias consistency.
 disable-model-invocation: true
 endorlabs:
@@ -158,6 +158,14 @@ overloaded_edge_check:
 - Prefer structured `affected_callpath_uris` from `oss` for strict conclusions.
 - If strict and practical signals diverge, report both explicitly.
 - Keep all examples and analysis tenant-neutral and customer-neutral.
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| Finding UUID, project namespace, branch filters | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| Fixed vs present, dependency graph, SBOM | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Scan aggregate metrics regressed | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
 
 ## Additional Resources
 

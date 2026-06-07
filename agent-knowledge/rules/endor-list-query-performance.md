@@ -1,5 +1,5 @@
 ---
-id: list-query-performance
+id: endor-list-query-performance
 tags: [list, pagination, performance]
 summary: >-
   Do not set page_size unless explicitly asked; scope and filter before raising
@@ -42,4 +42,4 @@ server-side plan for broad unfiltered queries.
 3. Compare with `endorctl api list` (same resource, namespace, filter, traverse).
 4. Use a shorter read timeout when iterating locally.
 
-See also `rules/namespace-scoping.md` and `contracts/list-parameters.md`.
+See also `rules/endor-namespace-scoping.md` and `contracts/list-parameters.md`.

@@ -459,7 +459,7 @@ print('matches', len(r.spec.model_dump().get('matches') or []))
 
 ## Agent / PyPI discoverability (E2E outcome)
 
-After E2E-8, an agent with **only** `pip install endorlabs-sdk` gets:
+After E2E-8, an agent with **only** `pip install endorlabs` gets:
 
 | Mechanism | What it sees |
 |-----------|----------------|

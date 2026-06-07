@@ -16,7 +16,7 @@ def _load_sast_rule_manager() -> ModuleType:
         root
         / ".cursor"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
         / "scripts"
         / "sast_rule_manager.py"
     )
@@ -25,7 +25,7 @@ def _load_sast_rule_manager() -> ModuleType:
         root
         / "agent-knowledge"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
         / "scripts"
         / "sast_rule_manager.py",
         root
@@ -33,7 +33,7 @@ def _load_sast_rule_manager() -> ModuleType:
         / "endorlabs"
         / "agent_knowledge"
         / "skills"
-        / "custom-sast-rules"
+        / "endor-custom-sast-rules"
         / "scripts"
         / "sast_rule_manager.py",
     )
