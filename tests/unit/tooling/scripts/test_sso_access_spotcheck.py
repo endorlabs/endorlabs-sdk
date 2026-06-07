@@ -10,15 +10,12 @@ from types import ModuleType
 
 def _load_spotcheck_module() -> ModuleType:
     repo_root = Path(__file__).resolve().parents[4]
-    cursor_path = (
+    candidate_paths = (
         repo_root
         / ".cursor"
         / "skills"
         / "endor-sso-integration-validation-troubleshooting"
-        / "sso_access_spotcheck.py"
-    )
-    candidate_paths = (
-        cursor_path,
+        / "sso_access_spotcheck.py",
         repo_root
         / "agent-knowledge"
         / "skills"
