@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 1b9200699986e46402ee92cd1da63d7c4ca41c06d7e536ef579f0ee06d3d4e66
+x-endor-source-sha256: 83588dcb4a3a1850c0fe2809c3441db4052a1ace849031ee7ebce6e88bb3f65a
 ---
 
 # Workflow composition
@@ -25,8 +25,8 @@ x-endor-source-sha256: 1b9200699986e46402ee92cd1da63d7c4ca41c06d7e536ef579f0ee06
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
 | **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
 
-`endorlabs.workflows` is **experimental** — prefer importing documented entrypoints over
-vendoring workflow source.
+`endorlabs.workflows` ships **documented contracts** — prefer importing
+`library_entrypoints` from `MANIFEST.json` over vendoring workflow source.
 
 ## Escalation ladder
 
