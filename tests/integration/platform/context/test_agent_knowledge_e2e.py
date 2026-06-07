@@ -53,12 +53,12 @@ class TestAgentBundleE2e:
         wheel_skill = next(
             entry
             for entry in wheel_manifest["skills"]
-            if entry["id"] == "troubleshoot-sdk"
+            if entry["id"] == "endor-troubleshoot-sdk"
         )
         materialized_skill = next(
             entry
             for entry in materialized["skills"]
-            if entry["id"] == "troubleshoot-sdk"
+            if entry["id"] == "endor-troubleshoot-sdk"
         )
         assert wheel_skill["description"] == materialized_skill["description"]
         assert (status.agent_knowledge_path / wheel_skill["path"]).is_file()

@@ -1,1 +1,0 @@
-"""Internal demo module namespace."""

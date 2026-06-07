@@ -1,0 +1,178 @@
+# SDK examples and skill walkthrough
+
+Learning path for trying the SDK against a real tenant. **Skills are the source of
+truth** for full workflows; this guide adds minimal API snippets and points to the
+shipped playbooks.
+
+**Prerequisites:** credentials in env (see [README.md](../../README.md#configuration)),
+`ENDOR_NAMESPACE` set, and `uv run --env-file .env` when using a local `.env` file.
+
+**Skill locations:**
+
+- Wheel: `endorlabs.agent_knowledge_index_path()` → `skills/<id>/SKILL.md`
+- Materialized: `.endorlabs-context/sdk/skills/<id>/SKILL.md` after `endorlabs.init()`
+
+## 1. Verify auth and tenant
+
+```python
+import endorlabs
+
+client = endorlabs.Client()
+print(client.whoami())
+```
+
+For browser or SSO setup, see [README — Configuration](../../README.md#configuration).
+
+## 2. Discovery — namespaces and projects
+
+Minimal list/traverse patterns (expanded in [Quick start](../../README.md#quick-start)):
+
+```python
+import os
+import endorlabs
+
+client = endorlabs.Client(tenant=os.getenv("ENDOR_NAMESPACE", "tenant.namespace"))
+
+namespaces = client.Namespace.list(traverse=True)
+print(f"Namespaces: {len(namespaces)}")
+
+projects = client.Project.list(traverse=True, max_pages=1, page_size=25)
+for project in projects[:5]:
+    print(project.meta.name if project.meta else project.uuid)
+```
+
+**Skill:** [endor-retrieve-scan-results](../../agent-knowledge/skills/endor-retrieve-scan-results/SKILL.md) —
+Project → ScanResult → Finding hierarchy, namespace scoping, and filters.
+
+**Guide:** [retrieving-scan-results.md](retrieving-scan-results.md)
+
+## 3. Filters with `F()`
+
+```python
+from endorlabs import F
+
+critical = client.Finding.list(
+    filter=F("spec.level") == "FINDING_LEVEL_CRITICAL",
+    traverse=True,
+    max_pages=1,
+)
+print(f"Critical findings (first page): {len(critical)}")
+```
+
+Use `F().matches(...)` on string fields and `F().contains(...)` on array fields only.
+See [contracts/list-parameters.md](../../agent-knowledge/contracts/list-parameters.md).
+
+## 4. Lookup, cross-resource joins, streaming
+
+```python
+from endorlabs import F
+
+# Lookup by repo URL (may raise AmbiguousError if registered in multiple namespaces)
+project = client.Project.lookup(
+    name="https://github.com/endorlabs/endorlabs-sdk.git",
+    traverse=True,
+)
+
+scan_results = client.ScanResult.list(
+    parent=project,
+    sort_by="meta.create_time",
+    desc=True,
+    max_pages=1,
+)
+findings = client.Finding.list(
+    filter=F("spec.project_uuid") == project.uuid,
+    namespace=project.namespace,
+    max_pages=1,
+)
+
+count = 0
+for row in client.Finding.list_iter(traverse=True, max_pages=1):
+    count += 1
+print(f"Findings streamed: {count}")
+```
+
+**Skill:** [endor-retrieve-scan-results](../../agent-knowledge/skills/endor-retrieve-scan-results/SKILL.md)
+
+## 5. Field masks (sparse list rows)
+
+```python
+rows = client.Project.list(
+    mask="meta.name,uuid",
+    traverse=True,
+    max_pages=1,
+    page_size=10,
+)
+for row in rows:
+    assert isinstance(row, dict)
+    print(row.get("meta", {}).get("name"), row.get("uuid"))
+```
+
+See [consumer-ux-list-update.md](consumer-ux-list-update.md).
+
+## 6. Scan troubleshooting — logs and diffs
+
+When scan results look wrong or regressed, use the troubleshooting workflow (writes
+artifacts under `.endorlabs-context/workspace/sessions/`):
+
+```bash
+uv run --env-file .env python -m endorlabs.workflows.troubleshooting_scans.fetch_scan_results \
+  --tenant YOUR_TENANT \
+  --project-name "https://github.com/org/repo.git" \
+  --limit 10
+```
+
+**Skill:** [endor-troubleshooting-scans](../../agent-knowledge/skills/endor-troubleshooting-scans/SKILL.md)
+
+## 7. Call graph (optional)
+
+For symbol search and path extraction from decoded call graph artifacts:
+
+```bash
+uv run --env-file .env endor-callgraph-search --help
+```
+
+For a full project context bundle including call graph sweep:
+
+```bash
+uv run --env-file .env endor-agent-context --help
+```
+
+**Skill:** [endor-fetch-and-search-call-graph](../../agent-knowledge/skills/endor-fetch-and-search-call-graph/SKILL.md)
+
+## 8. Agent bootstrap (optional)
+
+SDK API usage does not require local context files. For cwd-relative skills and
+offline OpenAPI/user docs:
+
+```python
+import endorlabs
+
+status = endorlabs.init()  # materializes sdk/ by default
+# Full mirror: endorlabs.init(include_openapi=True, include_user_docs=True)
+# Requires [docs] extra for user-docs sync
+```
+
+```bash
+uv run endor-context --sync-openapi
+```
+
+See [AGENTS.md — SDK-only vs agent bootstrap](../../AGENTS.md#sdk-only-vs-agent-bootstrap)
+and [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents).
+
+## Suggested order for a first tenant session
+
+| Step | Action | Skill |
+| ---- | ------ | ----- |
+| 1 | `whoami()` + list projects | retrieve-scan-results |
+| 2 | Latest ScanResult + findings for one project | retrieve-scan-results |
+| 3 | If scans look wrong | troubleshooting-scans |
+| 4 | If reachability/graph questions | fetch-and-search-call-graph |
+| 5 | Materialize skills for IDE/agents | `endorlabs.init()` / endor-context |
+
+After **endor-troubleshooting-scans**, use scan UUIDs from the pairs/diff artifacts with
+**endor-retrieve-scan-results** (`context.scan_uuid` filter) for finding-level drill-down.
+For policy, reachability, or dependency lineage questions, follow the **Related skills**
+tables in each skill's `SKILL.md`.
+
+Production automation should call `endorlabs.Client` and workflow modules directly;
+skills are playbooks, not runtime dependencies.

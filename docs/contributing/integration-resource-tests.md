@@ -57,4 +57,4 @@ List in the integration **`namespace` only** (no `traverse`).
 - [list-query-performance.md](list-query-performance.md) — Traverse, filters, pagination, slow lists
 - [architecture.md](architecture.md) — Generated surface, overlay, custom facades
 - [contracts.md](../contracts.md) — ListParameters, namespace, update_mask
-- [implement-sdk-resource](../../agent-knowledge/skills/implement-sdk-resource/) — End-to-end skill (model-sync-first)
+- [endor-implement-sdk-resource](../../agent-knowledge/skills/endor-implement-sdk-resource/) — End-to-end skill (model-sync-first)

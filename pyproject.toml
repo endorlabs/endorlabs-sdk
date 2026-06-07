@@ -1,5 +1,5 @@
 [project]
-name = "endorlabs-sdk"
+name = "endorlabs"
 dynamic = ["version"]
 description = "Endor Labs SDK — deploys Cursor/Anthropic skills with APIs to administer, operate, and scan with Endor Labs tooling"
 authors = [
@@ -21,12 +21,12 @@ dependencies = [
     "httpx==0.28.1",
     "tenacity==9.1.4",
     "zstandard==0.25.0",
+    "defusedxml==0.7.1",
 ]
 
 [project.optional-dependencies]
-context = [
+docs = [
     "beautifulsoup4==4.14.3",
-    "defusedxml==0.7.1",
     "markdownify==1.2.2",
 ]
 tabular = [
@@ -34,7 +34,6 @@ tabular = [
     "pyarrow==24.0.0",
 ]
 [project.scripts]
-endor-demo = "endorlabs._demo.demo_cli:main"
 endor-context = "endorlabs.context.cli:main"
 endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
@@ -93,9 +92,8 @@ dev = [
     "pyright==1.1.408",
     "pre-commit==4.5.1",
     "rich==14.3.2",
-    # Context deps needed for unit tests (mirrors [project.optional-dependencies.context])
+    # Docs-sync deps for unit tests (mirrors [project.optional-dependencies.docs])
     "beautifulsoup4==4.14.3",
-    "defusedxml==0.7.1",
     "markdownify==1.2.2",
     # Tabular deps for unit tests (mirrors [project.optional-dependencies.tabular])
     "pandas==3.0.3",
@@ -296,9 +294,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT018", "RUF100"]
 # --- Agent: broadly relaxed (langgraph types) ---
 "src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
-# --- Internal demo CLI: readability-focused walkthrough module ---
-"src/endorlabs/_demo/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
-"src/endorlabs/_demo/demo_cli.py" = ["T20"]
 # --- Context CLI: command-line printing is intentional ---
 "src/endorlabs/context/cli.py" = ["T20"]
 # --- Tools: dependency explorer ---
@@ -332,7 +327,6 @@ fail_under = 70
 omit = [
     "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
     "src/endorlabs/generated/*",  # OpenAPI-generated artifacts; validated via contract quality gates
-    "src/endorlabs/_demo/*",  # Demo-only CLI surface
     "src/endorlabs/agent/*",  # Optional extras package validated separately
 ]
 exclude_lines = [

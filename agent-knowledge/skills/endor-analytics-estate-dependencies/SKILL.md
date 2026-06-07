@@ -1,5 +1,5 @@
 ---
-name: analytics-estate-dependencies
+name: endor-analytics-estate-dependencies
 description: >-
   Estate-scale DependencyMetadata aggregates: version cardinality by package name,
   optional single-package filtered export, and intra-minor CVE remediation
@@ -101,10 +101,10 @@ from endorlabs.workflows.analytics import (
 
 ## Related skills
 
-- **dependency-finding-provenance** — project/commit finding and DM lineage for
+- **endor-dependency-finding-provenance** — project/commit finding and DM lineage for
   “is this CVE fixed here?” (tenant namespace for `DependencyMetadata` list/get).
-- **dependency-provenance** — manifest path and direct vs transitive introduction.
-- **retrieve-scan-results** — traverse patterns for discovery-only namespace walks.
+- **endor-dependency-provenance** — manifest path and direct vs transitive introduction.
+- **endor-retrieve-scan-results** — traverse patterns for discovery-only namespace walks.
 
 ## Pitfalls
 

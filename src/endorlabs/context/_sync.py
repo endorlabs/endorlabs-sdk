@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 
 from endorlabs.utils.logging_config import get_resource_logger
 
+from ._project_context import warn_agent_defer_gitignore_to_user
 from .models import InitStatus
 from .paths import (
     DEFAULT_CONTEXT_DIR,
@@ -57,7 +58,7 @@ def _import_docs_deps() -> tuple[Any, Callable[..., str]]:
     except ImportError as e:
         raise ImportError(
             "Context dependencies not installed. "
-            "Install with: pip install endorlabs-sdk[context]"
+            "Install with: pip install endorlabs[docs]"
         ) from e
 
 
@@ -71,6 +72,9 @@ DEFAULT_OPENAPI_FILENAME = "openapiv2.swagger.json"
 DEFAULT_USER_DOCS_DIRNAME = "user-docs"
 DOCS_HASH_MANIFEST_FILENAME = "_content-hashes.md"
 SKILLS_TARGETS: tuple[str, ...] = ("cursor", "claude")
+# Runtime mirrors (.cursor/skills, .claude/skills) may contain non-Endor skills.
+# Only directories with this prefix are copied or pruned by sync_agent_skills.
+MANAGED_SKILL_PREFIX = "endor-"
 SkillSyncMode = Literal["none", "cursor", "claude", "both"]
 CONTEXT_JSON_SCHEMA_VERSION = 1
 
@@ -386,12 +390,18 @@ def _resolve_skill_sync_targets(
     return ()
 
 
+def _managed_skill_rel_path(rel_path: Path) -> bool:
+    """Return True when *rel_path* is under an Endor-managed skill directory."""
+    top = rel_path.parts[0] if rel_path.parts else ""
+    return top.startswith(MANAGED_SKILL_PREFIX)
+
+
 def _prune_stale_skill_files(
     *,
     target_dir: Path,
     expected_rel_paths: set[str],
 ) -> None:
-    """Remove mirrored files that no longer exist in the source tree."""
+    """Remove stale Endor-managed skill files no longer present in the source tree."""
     if not target_dir.exists():
         return
     base_resolved = target_dir.resolve()
@@ -399,6 +409,7 @@ def _prune_stale_skill_files(
         path
         for path in target_dir.rglob("*")
         if path.is_file()
+        and _managed_skill_rel_path(path.relative_to(target_dir))
         and path.relative_to(target_dir).as_posix() not in expected_rel_paths
     ]
     for path in stale_files:
@@ -416,7 +427,7 @@ def _prune_stale_skill_files(
 
 
 def _mirror_skill_tree(source_dir: Path, target_dir: Path) -> int:
-    """Mirror the source skill tree to a runtime directory."""
+    """Mirror Endor-managed (``endor-*``) skills into a runtime directory."""
     if not source_dir.exists():
         raise FileNotFoundError(f"Skills source directory does not exist: {source_dir}")
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -424,21 +435,30 @@ def _mirror_skill_tree(source_dir: Path, target_dir: Path) -> int:
     expected_rel_paths: set[str] = set()
     mirrored_files = 0
 
-    for source_path in source_dir.rglob("*"):
-        if not source_path.is_file():
+    for skill_dir in sorted(source_dir.iterdir()):
+        if not skill_dir.is_dir():
             continue
-        rel_path = source_path.relative_to(source_dir)
-        expected_rel_paths.add(rel_path.as_posix())
-        dest_path = target_dir / rel_path
-        resolved_dest = dest_path.resolve()
-        if not resolved_dest.is_relative_to(base_resolved):
-            raise ValueError(
-                "Skill mirror target "
-                f"{resolved_dest} escapes base directory {base_resolved}"
+        if not skill_dir.name.startswith(MANAGED_SKILL_PREFIX):
+            logger.debug(
+                "Skipping non-managed skill directory during mirror: %s",
+                skill_dir.name,
             )
-        resolved_dest.parent.mkdir(parents=True, exist_ok=True)
-        _ = shutil.copy2(source_path, resolved_dest)
-        mirrored_files += 1
+            continue
+        for source_path in skill_dir.rglob("*"):
+            if not source_path.is_file():
+                continue
+            rel_path = source_path.relative_to(source_dir)
+            expected_rel_paths.add(rel_path.as_posix())
+            dest_path = target_dir / rel_path
+            resolved_dest = dest_path.resolve()
+            if not resolved_dest.is_relative_to(base_resolved):
+                raise ValueError(
+                    "Skill mirror target "
+                    f"{resolved_dest} escapes base directory {base_resolved}"
+                )
+            resolved_dest.parent.mkdir(parents=True, exist_ok=True)
+            _ = shutil.copy2(source_path, resolved_dest)
+            mirrored_files += 1
 
     _prune_stale_skill_files(
         target_dir=target_dir,
@@ -453,7 +473,12 @@ def sync_agent_skills(
     target: SkillSyncMode = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
-    """Sync repo skill sources into runtime discovery directories."""
+    """Sync Endor ``endor-*`` skills into runtime discovery directories.
+
+    Copies and prunes only skill directories whose names start with
+    ``MANAGED_SKILL_PREFIX`` (``endor-``). Other entries under
+    ``.cursor/skills/`` or ``.claude/skills/`` are left untouched.
+    """
     repo_root_path = Path(repo_root)
     normalized_target = _normalize_skill_sync_mode(target)
     resolved_targets = _resolve_skill_sync_targets(
@@ -798,7 +823,7 @@ def sync_user_docs(
     """Download user documentation pages and convert to markdown.
 
     This is the synchronous wrapper for user docs download.
-    Requires: pip install endorlabs-sdk[context]
+    Requires: pip install endorlabs[docs]
 
     Args:
         output_dir: Directory to save markdown files.
@@ -881,8 +906,8 @@ def sync_openapi(
 
 def init(
     output_dir: str | Path = DEFAULT_CONTEXT_DIR,
-    include_openapi: bool = True,
-    include_user_docs: bool = True,
+    include_openapi: bool = False,
+    include_user_docs: bool = False,
     include_agent_knowledge: bool = True,
     max_pages: int | None = None,
     force: bool = False,
@@ -891,18 +916,18 @@ def init(
 ) -> InitStatus:
     """Bootstrap Endor Labs context for agentic workflows.
 
-    Always materializes the shipped agent knowledge package under ``sdk/`` (no auth).
-    Optionally downloads OpenAPI spec and user docs under ``platform/``, and
-    mirrors materialized skills into IDE discovery directories.
+    By default, ``init()`` performs no disk writes. Pass explicit flags to
+    materialize agent knowledge under ``sdk/``, download OpenAPI/user docs
+    under ``platform/``, and/or mirror skills into IDE discovery directories.
 
     Args:
         output_dir: Directory to save context files (default: .endorlabs-context).
-        include_openapi: Download OpenAPI spec (default: True).
-        include_user_docs: Download user documentation (default: True).
+        include_openapi: Download OpenAPI spec (default: False).
+        include_user_docs: Download user documentation (default: False).
         include_agent_knowledge: Materialize agent knowledge to sdk/ (default: True).
         max_pages: Maximum number of user doc pages to download (default: all).
         force: Force re-download / refresh even if files exist (default: False).
-        sync_skills: Mirror materialized ``sdk/skills/`` into runtime dirs
+        sync_skills: Mirror skills into runtime dirs
             (``none``, ``cursor``, ``claude``, or ``both``; default ``none``).
         client: Optional APIClient instance. If not provided, one is created
             when ``include_openapi=True`` (requires ENDOR_API_CREDENTIALS_KEY/
@@ -926,7 +951,6 @@ def init(
     from endorlabs import __version__
     from endorlabs.api_client import APIClient as APIClientClass
 
-    output_path = Path(output_dir)
     normalized_sync_target = _normalize_skill_sync_mode(sync_skills)
     needs_context_dir = (
         include_agent_knowledge
@@ -934,8 +958,25 @@ def init(
         or include_user_docs
         or normalized_sync_target != "none"
     )
-    if needs_context_dir:
-        output_path.mkdir(parents=True, exist_ok=True)
+    if not needs_context_dir:
+        logger.info(
+            "No context bootstrap actions requested. Use agent_knowledge_index_path() "
+            "for shipped skills without disk writes, or pass include_openapi=True, "
+            "include_user_docs=True, include_agent_knowledge=True, and/or sync_skills."
+        )
+        return InitStatus(
+            agent_knowledge_path=None,
+            context_json_path=None,
+            platform_openapi_path=None,
+            platform_user_docs_path=None,
+            user_docs_count=0,
+            downloaded_at=datetime.now(UTC),
+            synced_skill_paths={},
+        )
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    warn_agent_defer_gitignore_to_user(output_path)
 
     agent_knowledge_dest: Path | None = None
     if include_agent_knowledge:
@@ -966,12 +1007,8 @@ def init(
     if normalized_sync_target != "none":
         skill_source = sdk_dir(output_path) / "skills"
         if not skill_source.is_dir():
-            if include_agent_knowledge:
-                skill_source = (
-                    agent_knowledge_dest / "skills"
-                    if agent_knowledge_dest
-                    else skill_source
-                )
+            if include_agent_knowledge and agent_knowledge_dest is not None:
+                skill_source = agent_knowledge_dest / "skills"
             else:
                 from endorlabs.agent_knowledge import agent_knowledge_dir
 
