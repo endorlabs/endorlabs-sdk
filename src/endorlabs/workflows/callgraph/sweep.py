@@ -32,7 +32,7 @@ def run_callgraph_sweep(
     decode_zstd: bool,
     client: Any,
 ) -> dict[str, Any]:
-    """List all package versions for the project and write call graph exports + manifest.
+    """List package versions for the project and write call graph exports.
 
     `list_namespace` is where PackageVersion is listed (same as project tenant
     namespace). ``client`` is ``endorlabs.Client`` for ``PackageVersion.list``.

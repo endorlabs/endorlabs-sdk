@@ -34,6 +34,7 @@ KEYS_TO_DIFF = [
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Diff two scan results")
     parser.add_argument("--tenant", required=True)
     parser.add_argument("--namespace", required=True)
@@ -83,6 +84,7 @@ def build_markdown(diff_payload: dict[str, Any]) -> str:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     pairs = load_json(Path(args.input_pairs))
     selected = pairs.get("selected_pairs", [])
     if not selected:
@@ -131,6 +133,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     result = run(args)
     print(result["json_artifact"])

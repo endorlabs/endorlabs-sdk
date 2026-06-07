@@ -54,7 +54,7 @@ def fetch_openapi_sha256(spec_url: str, *, timeout_seconds: float = 120.0) -> st
     digest = hashlib.sha256()
     request = urllib.request.Request(  # noqa: S310
         spec_url,
-        headers={"User-Agent": "endorlabs-sdk-model-sync-verify"},
+        headers={"User-Agent": "endorlabs-model-sync-verify"},
     )
     with urllib.request.urlopen(  # noqa: S310
         request,
@@ -95,7 +95,7 @@ def fetch_latest_endorctl_semver(
     """Return latest endorctl semver string from public ``/meta/version`` (no auth)."""
     request = urllib.request.Request(  # noqa: S310
         meta_version_url,
-        headers={"User-Agent": "endorlabs-sdk-model-sync"},
+        headers={"User-Agent": "endorlabs-model-sync"},
     )
     try:
         with urllib.request.urlopen(  # noqa: S310

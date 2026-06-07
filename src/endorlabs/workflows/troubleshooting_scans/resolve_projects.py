@@ -16,6 +16,7 @@ from .common import (
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Resolve project candidates")
     parser.add_argument("--tenant", required=True, help="Namespace root/tenant")
     parser.add_argument("--namespace", help="Namespace to query (defaults to tenant)")
@@ -29,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     ns = args.namespace or args.tenant
     api = build_api_client()
     projects = list_projects(api, ns)
@@ -42,10 +44,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     root = root_tenant(ns)
     output_dir = Path(args.output_dir)
 
-    if selected:
-        object_uuid = selected[0].get("uuid", "unknown")
-    else:
-        object_uuid = "no-match"
+    object_uuid = selected[0].get("uuid", "unknown") if selected else "no-match"
 
     payload = {
         "root_tenant": root,
@@ -74,6 +73,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     result = run(args)
     print(result["artifact"])

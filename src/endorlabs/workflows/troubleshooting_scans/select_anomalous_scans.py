@@ -69,6 +69,7 @@ def anomaly_score(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Rank anomalous scan pairs")
     _ = parser.add_argument("--input-summary", required=True)
     _ = parser.add_argument("--output-dir", default=".tmp")
@@ -86,6 +87,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     summary = load_json(Path(args.input_summary))
     items = summary.get("scan_results_summary", [])
     if len(items) < 2:
@@ -142,6 +144,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     result = run(args)
     print(result["artifact"])

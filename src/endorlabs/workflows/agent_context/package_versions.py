@@ -141,6 +141,7 @@ def build_index_rows(
     project_uuid: str,
     namespace: str,
 ) -> list[dict[str, Any]]:
+    """Map package version resources to slim index rows for Pass 1 export."""
     return [
         index_row_from_pv(pv, project_uuid=project_uuid, namespace=namespace)
         for pv in pvs
