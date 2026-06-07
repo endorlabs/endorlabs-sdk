@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Export a machine-readable project context bundle: BOM, DependencyMetadata, optional call graph sweep.
+"""Export a machine-readable project context bundle for agent workflows.
+
+Includes BOM, DependencyMetadata, and optional call graph sweep.
 
 Multi-pass retrieval:
   Pass 1 — optional wide ``package_versions_index.json`` (bounded list).
-  Pass 2 — ``process_project`` hydration (default first *pv_limit* PVs, or selected UUIDs / top-N).
+  Pass 2 — ``process_project`` hydration (default first *pv_limit* PVs, or
+  selected UUIDs / top-N).
   Pass 3 — optional ``--callgraph-sweep`` over listed package versions.
 
 Writes ``context_manifest.json`` and ``dependency-callgraph-summary.md`` under
@@ -61,18 +64,17 @@ def build_context_manifest(
     hydration: dict[str, Any] | None,
 ) -> dict[str, Any]:
     """Assemble the context manifest dict (for JSON serialization)."""
-    pvs_out: list[dict[str, Any]] = []
-    for pvr in project_result.pv_results:
-        pvs_out.append(
-            {
-                "pv_uuid": pvr.pv_uuid,
-                "pv_name": pvr.pv_name,
-                "bom_file": pvr.bom_file or None,
-                "call_graph_file": pvr.cg_file or None,
-                "call_graph_analysis_md": pvr.cg_analysis_file or None,
-                "cg_available_flag": pvr.cg_available,
-            }
-        )
+    pvs_out: list[dict[str, Any]] = [
+        {
+            "pv_uuid": pvr.pv_uuid,
+            "pv_name": pvr.pv_name,
+            "bom_file": pvr.bom_file or None,
+            "call_graph_file": pvr.cg_file or None,
+            "call_graph_analysis_md": pvr.cg_analysis_file or None,
+            "cg_available_flag": pvr.cg_available,
+        }
+        for pvr in project_result.pv_results
+    ]
 
     dmeta = out_dir / "dep_metadata.json"
     djs = out_dir / "dependencies.json"
@@ -117,8 +119,11 @@ def build_context_manifest(
 
 
 def parse_args() -> argparse.Namespace:
+    """Build argparse parser for this workflow CLI."""
     p = argparse.ArgumentParser(
-        description="Export project dependency + call graph context for agent workflows."
+        description=(
+            "Export project dependency + call graph context for agent workflows."
+        )
     )
     p.add_argument(
         "--tenant",
@@ -162,7 +167,10 @@ def parse_args() -> argparse.Namespace:
         "--no-pv-index",
         dest="pv_index",
         action="store_false",
-        help="Skip Pass 1 package_versions_index.json (faster; disables --hydrate-top-n).",
+        help=(
+            "Skip Pass 1 package_versions_index.json "
+            "(faster; disables --hydrate-top-n)."
+        ),
     )
     p.set_defaults(pv_index=True)
     p.add_argument(
@@ -191,13 +199,19 @@ def parse_args() -> argparse.Namespace:
         "--hydrate-top-n",
         type=int,
         default=0,
-        help="Hydrate top N package versions by meta_update_time (requires Pass 1 index).",
+        help=(
+            "Hydrate top N package versions by meta_update_time "
+            "(requires Pass 1 index)."
+        ),
     )
     p.add_argument(
         "--pv-list-max-pages",
         type=int,
         default=50,
-        help="When resolving selected UUIDs: max pages for PackageVersion.list. Default: 50",
+        help=(
+            "When resolving selected UUIDs: max pages for PackageVersion.list. "
+            "Default: 50"
+        ),
     )
     p.add_argument(
         "--pv-list-page-size",
@@ -225,12 +239,15 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--decode-zstd",
         action="store_true",
-        help="With --callgraph-sweep, decode zstd and emit decoded callables/edges JSON.",
+        help=(
+            "With --callgraph-sweep, decode zstd and emit decoded callables/edges JSON."
+        ),
     )
     return p.parse_args()
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     ns = (args.namespace or args.tenant).strip()
@@ -373,9 +390,10 @@ def main() -> int:
                 bundle, bundle / "dependency-callgraph-summary.md", result.report
             )
             if result.hydration_missing_pv_uuids:
+                missing = result.hydration_missing_pv_uuids[:5]
                 warnings.append(
                     "Some requested package version UUIDs were not found in list "
-                    f"results (showing up to 5): {result.hydration_missing_pv_uuids[:5]!r}"
+                    f"results (showing up to 5): {missing!r}"
                 )
             if result.pv_list_truncated:
                 warnings.append(
@@ -406,10 +424,10 @@ def main() -> int:
                 )
             cap_cg = args.callgraph_max_pages * args.callgraph_page_size
             if sweep_result.get("package_versions_total", 0) >= cap_cg:
+                pv_total = sweep_result.get("package_versions_total")
                 warnings.append(
-                    f"Pass 3 listed {sweep_result.get('package_versions_total')} package "
-                    f"versions (capacity {cap_cg}); raise --callgraph-max-pages / "
-                    "--callgraph-page-size if more exist."
+                    f"Pass 3 listed {pv_total} package versions (capacity {cap_cg}); "
+                    "raise --callgraph-max-pages / --callgraph-page-size if more exist."
                 )
             sweep_info = {
                 "pass": "callgraph_sweep_pass_3",

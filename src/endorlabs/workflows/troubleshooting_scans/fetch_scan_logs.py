@@ -18,6 +18,7 @@ from .common import (
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Fetch scan logs for selected scans")
     parser.add_argument("--tenant", required=True)
     parser.add_argument("--namespace", required=True)
@@ -37,6 +38,7 @@ def pull_embedded_logs(api: Any, namespace: str, scan_result_uuid: str) -> list[
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     pair_payload = load_json(Path(args.input_pairs))
     selected_pairs = pair_payload.get("selected_pairs", [])
     if not selected_pairs:
@@ -63,8 +65,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 namespace=args.namespace,
                 max_entries=args.max_entries,
             )
-            for message in log_messages:
-                entries.append(scanlog_line(message))
+            entries.extend(scanlog_line(message) for message in log_messages)
         except Exception:
             entries = []
 
@@ -111,6 +112,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     result = run(args)
     print(result["artifact"])

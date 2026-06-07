@@ -27,6 +27,7 @@ def _extract_meta_dict(rule: Any) -> dict[str, Any]:
 
 
 def build_inventory(client: endorlabs.Client, namespace: str) -> dict[str, Any]:
+    """List Semgrep rules and summarize metadata-key prevalence by origin."""
     rules = client.SemgrepRule.list(namespace=namespace, traverse=True, max_pages=200)
     key_counts: Counter[str] = Counter()
     key_examples: dict[str, list[dict[str, str]]] = defaultdict(list)
@@ -76,6 +77,7 @@ def _write_markdown_summary(inventory: dict[str, Any], output_path: Path) -> Non
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     parser = argparse.ArgumentParser(
         description="Inventory Semgrep rule metadata keys."
     )

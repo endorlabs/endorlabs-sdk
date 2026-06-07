@@ -24,6 +24,7 @@ Index for SDK-specific documentation.
 ## Guides
 
 - [guides/README.md](guides/README.md) — List of guides.
+- [guides/examples.md](guides/examples.md) — Skill walkthrough and minimal API snippets for a first tenant session.
 - [guides/consumer-ux-list-update.md](guides/consumer-ux-list-update.md) — Filter vs mask vs update_mask; flat kwargs; SDK consumer UX.
 - [guides/retrieving-scan-results.md](guides/retrieving-scan-results.md) — Project → ScanResult → Finding; traverse and field-mask.
 
