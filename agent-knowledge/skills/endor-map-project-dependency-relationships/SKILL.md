@@ -1,5 +1,5 @@
 ---
-name: map-project-dependency-relationships
+name: endor-map-project-dependency-relationships
 description: >-
   Walk all projects in a namespace, identify direct and indirect dependency
   relationships between projects via produced/consumed package versions, and
@@ -56,14 +56,14 @@ For a **tenant/namespace** inventory of how repositories relate through package 
 
 ## Cross-skill boundary (LLM)
 
-This skill produces a **namespace-wide project graph** (three JSON files). It does **not** emit `context_manifest.json`, `package_versions_index.json`, or per-project BOM/call-graph hydration. For **one repository’s** multi-pass index → hydrate → sweep workflow, use [project-agent-context](../project-agent-context/SKILL.md) and, if needed, [MULTIPASS_LLM_CONTRACT.md](../project-agent-context/MULTIPASS_LLM_CONTRACT.md) for manifest interpretation.
+This skill produces a **namespace-wide project graph** (three JSON files). It does **not** emit `context_manifest.json`, `package_versions_index.json`, or per-project BOM/call-graph hydration. For **one repository’s** multi-pass index → hydrate → sweep workflow, use [endor-project-agent-context](../endor-project-agent-context/SKILL.md) and, if needed, [MULTIPASS_LLM_CONTRACT.md](../endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) for manifest interpretation.
 For per-PV/finding function reachability proof across customer + `oss` call graph planes, use `endor-reachability-context`; this skill remains topology-only and does not produce stitched vulnerable-function paths.
 
 ## Ordering
 
 1. Set credentials (same as other SDK scripts). Confirm **`--namespace`** is the list root (often tenant root; `traverse=True` lists descendants).
 2. Start with default **`--max-pages`**, **`--dep-metadata-max-pages`**, and raise only if the customer accepts the cost and results look truncated.
-3. Read the three JSON outputs; use [project-agent-context](project-agent-context/SKILL.md) if you also need a single-project bundle the same session.
+3. Read the three JSON outputs; use [endor-project-agent-context](../endor-project-agent-context/SKILL.md) if you also need a single-project bundle the same session.
 
 ## Inputs
 

@@ -80,10 +80,25 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 CURSOR_RULES_DIR = REPO_ROOT / ".cursor" / "rules"
 
-CURSOR_GENERATED_MANIFEST = CURSOR_RULES_DIR / "_generated.json"
+GENERATED_CURSOR_RULE_MARKER = "x-endor-generated: true"
 
-HAND_MAINTAINED_CURSOR_RULES = frozenset(
-    {"agent-knowledge-authoring", "docs-skillbase-consistency"}
+# Footgun rules: always in context (~1.5k tokens). Others: glob-scoped for SDK/automation paths.
+CURSOR_ALWAYS_APPLY_RULE_IDS: frozenset[str] = frozenset(
+    {
+        "endor-namespace-scoping",
+        "endor-list-query-performance",
+    }
+)
+
+# Cursor has no "on import endorlabs" hook — path globs scope non-footgun bootstrap rules.
+# Patterns with no repo match are harmless in consumer trees.
+CURSOR_BOOTSTRAP_RULE_GLOBS: tuple[str, ...] = (
+    "src/endorlabs/**",
+    "**/*.py",
+    "**/.endorlabs-context/**",
+    "agent-knowledge/**",
+    "docs/**",
+    "devtools/**",
 )
 
 
@@ -283,6 +298,39 @@ def _source_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _format_cursor_rule_globs(globs: tuple[str, ...]) -> str:
+    lines = ["globs:"]
+    lines.extend(f"  - {pattern}" for pattern in globs)
+    return "\n".join(lines)
+
+
+def _format_cursor_rule_frontmatter(
+    *,
+    description: str,
+    rule_id: str,
+    source_rel: str,
+    source_sha256: str,
+) -> str:
+    lines = [
+        "---",
+        f"description: {description}",
+    ]
+    if rule_id in CURSOR_ALWAYS_APPLY_RULE_IDS:
+        lines.append("alwaysApply: true")
+    else:
+        lines.extend(_format_cursor_rule_globs(CURSOR_BOOTSTRAP_RULE_GLOBS).splitlines())
+        lines.append("alwaysApply: false")
+    lines.extend(
+        [
+            "x-endor-generated: true",
+            f"x-endor-source: {source_rel}",
+            f"x-endor-source-sha256: {source_sha256}",
+            "---",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def build_cursor_rule_contents() -> dict[str, str]:
     """Build expected .mdc contents from agent-knowledge/rules."""
     rule_schema = SCHEMA_DIR / "rule.schema.json"
@@ -312,13 +360,7 @@ def build_cursor_rule_contents() -> dict[str, str]:
         source_sha256 = _source_sha256(src_path)
 
         mdc = (
-            "---\n"
-            f"description: {description}\n"
-            "alwaysApply: true\n"
-            "x-endor-generated: true\n"
-            f"x-endor-source: {source_rel}\n"
-            f"x-endor-source-sha256: {source_sha256}\n"
-            "---\n\n"
+            f"{_format_cursor_rule_frontmatter(description=description, rule_id=rule_id, source_rel=source_rel, source_sha256=source_sha256)}\n\n"
             f"{body}"
         )
 
@@ -332,6 +374,25 @@ def build_cursor_rule_contents() -> dict[str, str]:
     return contents
 
 
+def _cursor_rule_is_generated(mdc_path: Path) -> bool:
+    """Return True when a .mdc file was emitted from agent-knowledge/rules/."""
+    if not mdc_path.is_file():
+        return False
+    head = mdc_path.read_text(encoding="utf-8")[:512]
+    return GENERATED_CURSOR_RULE_MARKER in head
+
+
+def _prune_stale_cursor_rules(*, expected_rule_ids: set[str]) -> None:
+    """Remove generated .mdc files no longer produced from agent-knowledge/rules/."""
+    if not CURSOR_RULES_DIR.is_dir():
+        return
+    for mdc_path in CURSOR_RULES_DIR.glob("*.mdc"):
+        if not _cursor_rule_is_generated(mdc_path):
+            continue
+        if mdc_path.stem not in expected_rule_ids:
+            mdc_path.unlink()
+
+
 def emit_cursor_rules() -> list[str]:
     """Generate always-on .mdc rules from agent-knowledge/rules."""
     CURSOR_RULES_DIR.mkdir(parents=True, exist_ok=True)
@@ -343,27 +404,7 @@ def emit_cursor_rules() -> list[str]:
     for rule_id, mdc in contents.items():
         (CURSOR_RULES_DIR / f"{rule_id}.mdc").write_text(mdc, encoding="utf-8")
 
-    previous_manifest: list[str] = []
-
-    if CURSOR_GENERATED_MANIFEST.is_file():
-        loaded = json.loads(CURSOR_GENERATED_MANIFEST.read_text(encoding="utf-8"))
-
-        if isinstance(loaded, list):
-            previous_manifest = [str(item) for item in loaded]
-
-    for stale_id in previous_manifest:
-        if stale_id in generated_ids or stale_id in HAND_MAINTAINED_CURSOR_RULES:
-            continue
-
-        stale_path = CURSOR_RULES_DIR / f"{stale_id}.mdc"
-
-        if stale_path.is_file():
-            stale_path.unlink()
-
-    CURSOR_GENERATED_MANIFEST.write_text(
-        json.dumps(generated_ids, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    _prune_stale_cursor_rules(expected_rule_ids=set(generated_ids))
 
     return generated_ids
 
@@ -373,21 +414,6 @@ def verify_cursor_rules() -> list[str]:
     errors: list[str] = []
 
     expected = build_cursor_rule_contents()
-
-    expected_ids = sorted(expected)
-
-    if CURSOR_GENERATED_MANIFEST.is_file():
-        loaded = json.loads(CURSOR_GENERATED_MANIFEST.read_text(encoding="utf-8"))
-
-        if list(loaded) != expected_ids:
-            errors.append(
-                ".cursor/rules/_generated.json drift (run devtools/sync_agent_knowledge.py)"
-            )
-
-    else:
-        errors.append(
-            ".cursor/rules/_generated.json missing (run devtools/sync_agent_knowledge.py)"
-        )
 
     for rule_id, mdc in expected.items():
         path = CURSOR_RULES_DIR / f"{rule_id}.mdc"
@@ -399,6 +425,12 @@ def verify_cursor_rules() -> list[str]:
 
         if path.read_text(encoding="utf-8") != mdc:
             errors.append(f".cursor/rules/{rule_id}.mdc drift")
+
+    for mdc_path in CURSOR_RULES_DIR.glob("*.mdc"):
+        if _cursor_rule_is_generated(mdc_path) and mdc_path.stem not in expected:
+            errors.append(
+                f".cursor/rules/{mdc_path.name} stale (run devtools/sync_agent_knowledge.py)"
+            )
 
     return errors
 

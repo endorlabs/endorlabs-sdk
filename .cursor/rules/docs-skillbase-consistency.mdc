@@ -15,3 +15,4 @@ When editing repository docs or rules, keep documentation references aligned wit
   - `src/endorlabs/workflows/__init__.py`
   - `[project.scripts]` in `pyproject.toml`
 - For doc corrections, preserve OS-agnostic command examples where possible.
+- When editing skill playbooks, follow [agent-knowledge/schema/README.md — Skill composition and handoffs](../../agent-knowledge/schema/README.md#skill-composition-and-handoffs) for **Scope**, **Related skills**, and reciprocal peer links.

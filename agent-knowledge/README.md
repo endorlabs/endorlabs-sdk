@@ -8,22 +8,22 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
-| [analytics-estate-dependencies](analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, tabular CSV export, optional CVE remediation comparison | `endorlabs.workflows.analytics`; `endor-analytics-export-deps` |
-| [project-agent-context](project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](project-agent-context/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
-| [custom-sast-rules](custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
-| [dependency-provenance](dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
-| [dependency-finding-provenance](dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
-| [fetch-and-search-call-graph](fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | `endorlabs.workflows.callgraph` |
-| [implement-sdk-resource](implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
-| [model-sync-drift](model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
-| [retrieve-scan-results](retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
-| [map-project-dependency-relationships](map-project-dependency-relationships/) | Namespace-wide project dependency relationship graphing (direct + indirect) with JSON outputs | Skill-owned |
-| [troubleshooting-scans](troubleshooting-scans/) | Scan regressions; anomalous ScanResults, ScanLogs, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
-| [troubleshoot-sdk](troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |
-| [troubleshoot-authlog](troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
-| [reachability-provenance](reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
-| [sso-integration-validation-troubleshooting](sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting | Skill-owned |
-| [validate-policy](validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |
+| [endor-analytics-estate-dependencies](endor-analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, tabular CSV export, optional CVE remediation comparison | `endorlabs.workflows.analytics`; `endor-analytics-export-deps` |
+| [endor-project-agent-context](endor-project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
+| [endor-custom-sast-rules](endor-custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
+| [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
+| [endor-dependency-finding-provenance](endor-dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
+| [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | `endorlabs.workflows.callgraph` |
+| [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
+| [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
+| [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
+| [endor-map-project-dependency-relationships](endor-map-project-dependency-relationships/) | Namespace-wide project dependency relationship graphing (direct + indirect) with JSON outputs | Skill-owned |
+| [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, ScanLogs, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
+| [endor-troubleshoot-sdk](endor-troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |
+| [endor-troubleshoot-authlog](endor-troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
+| [endor-reachability-provenance](endor-reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |
+| [endor-sso-integration-validation-troubleshooting](endor-sso-integration-validation-troubleshooting/) | Customer SSO setup, validation, and claims-to-namespace troubleshooting | Skill-owned |
+| [endor-validate-policy](endor-validate-policy/) | Validate exception policies vs project findings (PolicyValidation API + endorctl parity) | `endorlabs.workflows.policies.validate` |
 
 ## How Loading Works
 
@@ -37,7 +37,7 @@ Skills use progressive disclosure to minimize context window usage:
 
 Authoring → shipped bundle → runtime mirror flow is documented in [AGENTS.md § Repository layout](../AGENTS.md#repository-layout). **Runtime rule:** agents read the wheel or `.endorlabs-context/sdk/skills/` — not repo `agent-knowledge/skills/` directly.
 
-After editing skills, run `uv run python devtools/sync_agent_knowledge.py` (see [schema/README.md](schema/README.md) for authoring rules). Optional IDE mirrors: `init(sync_skills=...)` or the `endor-context` command below.
+After editing skills, run `uv run python devtools/sync_agent_knowledge.py` (see [schema/README.md](schema/README.md) for authoring rules, including [skill composition and handoffs](schema/README.md#skill-composition-and-handoffs)). Optional IDE mirrors: `init(sync_skills=...)` or the `endor-context` command below.
 
 To refresh runtime mirrors from materialized context:
 

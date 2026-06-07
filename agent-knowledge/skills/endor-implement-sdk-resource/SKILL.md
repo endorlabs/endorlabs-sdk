@@ -1,5 +1,5 @@
 ---
-name: implement-sdk-resource
+name: endor-implement-sdk-resource
 description: >-
   Extend the SDK client surface after OpenAPI changes: model sync, registry
   overlay, payload builders, and integration tests. Use when a new API resource
@@ -34,7 +34,7 @@ uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-re
 
 Do **not** hand-wire facades in `Client.__init__`.
 
-Architecture: [architecture.md](../../../docs/contributing/architecture.md). Drift: [model-sync-drift](../model-sync-drift/) skill.
+Architecture: [architecture.md](../../../docs/contributing/architecture.md). Drift: [endor-model-sync-drift](../endor-model-sync-drift/) skill.
 
 ## Phase 2: Facade and consumer UX
 

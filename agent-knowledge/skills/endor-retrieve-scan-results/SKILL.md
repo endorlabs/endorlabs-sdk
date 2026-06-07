@@ -1,5 +1,5 @@
 ---
-name: retrieve-scan-results
+name: endor-retrieve-scan-results
 description: >-
   Query projects, scan results, and findings from the Endor Labs platform
   using the SDK. Use when the user wants to retrieve scan results, list
@@ -10,7 +10,10 @@ description: >-
 # Retrieving Scan Results and Findings
 
 Workflow for navigating the Project -> ScanResult -> Finding hierarchy in the
-Endor Labs SDK.
+Endor Labs SDK. For **scan pipeline** regressions (bounded scan window, heuristic
+pair scoring, ScanLogs, aggregate diffs), use
+[endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here
+with scan UUIDs for finding-level drill-down.
 
 ## Concepts
 
@@ -188,3 +191,13 @@ repo_versions = client.RepositoryVersion.list(
 | Findings for a project | `client.Finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` |
 | Critical findings, all namespaces | `client.Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True)` |
 | Count findings | `client.Finding.list(filter='...', count=True, traverse=True)` |
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| Scan failed, metrics spiked, logs between runs | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
+| Policy / exception matches a finding | [endor-validate-policy](../endor-validate-policy/SKILL.md) |
+| Reachability conflicts on a finding | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |
+| Fixed vs present, SBOM vs API | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Package paths/versions across manifests | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |
