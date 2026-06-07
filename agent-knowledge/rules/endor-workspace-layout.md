@@ -1,5 +1,5 @@
 ---
-id: workspace-layout
+id: endor-workspace-layout
 tags: [workspace, artifacts, sessions]
 summary: >-
   Write session/triage artifacts under workspace/sessions/<user>/; not repo-root .tmp/.

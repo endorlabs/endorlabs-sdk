@@ -7,9 +7,3 @@ workflows:
     skill: null
     default_output: .endorlabs-context/
     agent_visible: true
-  - id: endor-demo
-    cli: endor-demo
-    module: endorlabs._demo.demo_cli
-    skill: null
-    default_output: null
-    agent_visible: false

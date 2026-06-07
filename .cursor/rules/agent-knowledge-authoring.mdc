@@ -8,7 +8,9 @@ alwaysApply: false
 
 When editing files under `agent-knowledge/`, follow the canonical authoring spec:
 
-- [agent-knowledge/schema/README.md](../../agent-knowledge/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, rules, contracts, workflows.yaml
+- [agent-knowledge/schema/README.md](../../agent-knowledge/schema/README.md) — portable frontmatter, `endorlabs.catalog` extension, **skill composition and handoffs**, rules, contracts, workflows.yaml
 - [agent-knowledge/schema/skill.schema.json](../../agent-knowledge/schema/skill.schema.json) — machine validation
+
+For multi-step or narrow-scope skills, document **Scope**, **Related skills** (with reciprocal links on peers), and optional **Optional stops** / routing tables — see [Skill composition and handoffs](../../agent-knowledge/schema/README.md#skill-composition-and-handoffs). Every skill id must use the **`endor-*`** prefix (see [schema/README.md](../../agent-knowledge/schema/README.md)).
 
 After changes, run `uv run python devtools/sync_agent_knowledge.py`. Shipped `SKILL.md` files must contain **only** portable frontmatter (`name`, `description`, optional `disable-model-invocation`).

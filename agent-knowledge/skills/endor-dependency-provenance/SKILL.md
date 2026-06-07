@@ -1,5 +1,5 @@
 ---
-name: dependency-provenance
+name: endor-dependency-provenance
 description: >-
   Resolve package-version lineage by manifest path and source ref/sha, and
   distinguish direct vs transitive introduction paths. Use when the same
@@ -56,3 +56,11 @@ Return a matrix with one row per introduction path:
 - Merging paths from `requirements.txt`, `pyproject.toml`, and `uv.lock`.
 - Treating same package across different refs as one lineage.
 - Reporting one "introduced by" answer when multiple manifest paths exist.
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| Finding rows, scan UUIDs, project resolution | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| Vuln fixed vs present at ref/sha | [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) |
+| Scan pipeline failure (deps never resolved) | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |

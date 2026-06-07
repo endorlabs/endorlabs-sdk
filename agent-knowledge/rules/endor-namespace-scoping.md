@@ -1,5 +1,5 @@
 ---
-id: namespace-scoping
+id: endor-namespace-scoping
 tags: [list, traverse, namespace]
 summary: >-
   Resolve Project first; pass namespace=project.namespace on project-scoped lists.
@@ -19,7 +19,8 @@ When you have a resource instance (from `list(traverse=True)`), pass the resourc
 
 - **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** or
   `list(parent=resource)` where supported.
-- **Discovery:** Root namespace + `traverse=True` (e.g. `Project.list(traverse=True)`).
+- **Discovery:** Root namespace + `traverse=True` + `concurrent=True` (e.g.
+  `Project.list(traverse=True,concurrent=True)`).
 
 ## Project-scoped lists (MUST)
 
@@ -34,4 +35,4 @@ widen the path.
 Alternatives:
 
 - `Client(tenant=project.namespace)` for the rest of the session, or
-- `traverse=True` only when deliberately searching tenant-wide (higher cost).
+- `traverse=True` and `concurrent=True` only when deliberately searching tenant-wide (higher cost).

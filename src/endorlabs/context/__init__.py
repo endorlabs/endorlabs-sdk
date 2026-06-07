@@ -1,34 +1,19 @@
 """Context bootstrap for Endor Labs agentic workflows.
 
-This module materializes the shipped agent knowledge package and optionally downloads
+By default ``init()`` performs no disk writes. Use explicit flags to materialize
+agent knowledge, download platform context (OpenAPI spec and user documentation),
+or mirror skills into IDE discovery directories.
 
-platform context (OpenAPI spec and user documentation) for AI agents.
+Optional dependencies for user-docs sync::
 
-
-
-Requires authentication via APIClient for OpenAPI downloads and optional
-
-dependencies for user docs::
-
-
-
-    pip install endorlabs-sdk[context]
-
-
+    pip install endorlabs[docs]
 
 Example::
 
-
-
     >>> import endorlabs
-
     >>> status = endorlabs.init()
-
     >>> print(status.agent_knowledge_path)
-
     .endorlabs-context/sdk
-
-
 
 """
 
@@ -67,8 +52,8 @@ def _get_sync() -> Any:
 
 def init(
     output_dir: str | Path = ".endorlabs-context",
-    include_openapi: bool = True,
-    include_user_docs: bool = True,
+    include_openapi: bool = False,
+    include_user_docs: bool = False,
     include_agent_knowledge: bool = True,
     max_pages: int | None = None,
     force: bool = False,
@@ -148,7 +133,7 @@ def sync_agent_skills(
     target: Literal["none", "cursor", "claude", "both"] = "none",
     source_dir: str | Path | None = None,
 ) -> dict[str, Path]:
-    """Mirror materialized or repo skill sources into runtime discovery dirs."""
+    """Mirror ``endor-*`` skills into runtime dirs; preserve non-endor entries."""
     return _get_sync().sync_agent_skills(
         repo_root=repo_root,
         target=target,

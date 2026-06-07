@@ -32,7 +32,9 @@ def test_agent_knowledge_manifest_has_sixteen_skills() -> None:
     assert len(manifest["contracts"]) >= 4
     assert len(manifest["rules"]) == 6
     assert len(manifest["skills"]) == 16
-    assert any(entry["id"] == "retrieve-scan-results" for entry in manifest["skills"])
+    assert any(
+        entry["id"] == "endor-retrieve-scan-results" for entry in manifest["skills"]
+    )
 
 
 def test_agent_knowledge_manifest_path_matches_file() -> None:
@@ -52,9 +54,9 @@ def test_contracts_and_rules_shipped() -> None:
     ):
         assert (package_dir / "contracts" / name).is_file()
     for name in (
-        "namespace-scoping.md",
-        "local-context.md",
-        "workflow-composition.md",
+        "endor-namespace-scoping.md",
+        "endor-local-context.md",
+        "endor-workflow-composition.md",
     ):
         assert (package_dir / "rules" / name).is_file()
 
@@ -76,6 +78,8 @@ def test_agent_knowledge_manifest_skill_descriptions_populated() -> None:
     described = [entry for entry in manifest["skills"] if entry.get("description")]
     assert len(described) >= 14
     retrieve = next(
-        entry for entry in manifest["skills"] if entry["id"] == "retrieve-scan-results"
+        entry
+        for entry in manifest["skills"]
+        if entry["id"] == "endor-retrieve-scan-results"
     )
     assert "scan results" in retrieve["description"].lower()

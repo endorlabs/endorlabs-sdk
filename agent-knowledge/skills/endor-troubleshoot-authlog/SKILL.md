@@ -1,5 +1,5 @@
 ---
-name: troubleshoot-authlog
+name: endor-troubleshoot-authlog
 description: >-
   Investigate tenant SSO/login issues using AuthenticationLog,
   AuthorizationPolicy, and optional AuditLog.
@@ -15,7 +15,7 @@ Systematic workflow for **Endor-side** evidence: what the platform recorded at l
 ## Prerequisites
 
 - **Credentials:** `ENDOR_TOKEN` (or API creds) available to the SDK, e.g.
-  `uv run --env-file .env python ...` (browser refresh: `devtools/refresh_token_to_dotenv.py` writes `ENDOR_TOKEN` to `.env`).
+  `uv run --env-file .env python ...` (browser refresh: `devtools/refresh_token_to_dotenv.py`; `--sso` / `-n` or env tenant; `--admin` for endor-admin).
 - **Local context (optional):** API spec at `.endorlabs-context/platform/openapi/openapiv2.swagger.json`;
   resource models in `src/endorlabs/resources/authentication_log.py`,
   `authorization_policy.py`
@@ -50,7 +50,7 @@ policies = client.AuthorizationPolicy.list(traverse=True, max_pages=2)
 ```
 
 For structured exports, write JSON under `.endorlabs-context/workspace/sessions/<user>/`
-(see [workspace-layout](../../rules/workspace-layout.md)).
+(see [workspace-layout](../../rules/endor-workspace-layout.md)).
 
 ## Interpretation notes (for agents)
 
@@ -65,5 +65,5 @@ For structured exports, write JSON under `.endorlabs-context/workspace/sessions/
 
 ## Relationship to other docs
 
-- Broader SDK debugging: [troubleshoot-sdk](../troubleshoot-sdk/SKILL.md)
+- Broader SDK debugging: [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md)
 - Contributing: `docs/contributing/troubleshooting.md`

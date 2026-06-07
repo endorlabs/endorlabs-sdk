@@ -374,9 +374,10 @@ wheels = [
 ]
 
 [[package]]
-name = "endorlabs-sdk"
+name = "endorlabs"
 source = { editable = "." }
 dependencies = [
+    { name = "defusedxml" },
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pyyaml" },
@@ -385,9 +386,8 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-context = [
+docs = [
     { name = "beautifulsoup4" },
-    { name = "defusedxml" },
     { name = "markdownify" },
 ]
 tabular = [
@@ -399,7 +399,6 @@ tabular = [
 dev = [
     { name = "beautifulsoup4" },
     { name = "datamodel-code-generator" },
-    { name = "defusedxml" },
     { name = "hatch" },
     { name = "jsonschema" },
     { name = "markdownify" },
@@ -415,10 +414,10 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "beautifulsoup4", marker = "extra == 'context'", specifier = "==4.14.3" },
-    { name = "defusedxml", marker = "extra == 'context'", specifier = "==0.7.1" },
+    { name = "beautifulsoup4", marker = "extra == 'docs'", specifier = "==4.14.3" },
+    { name = "defusedxml", specifier = "==0.7.1" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "markdownify", marker = "extra == 'context'", specifier = "==1.2.2" },
+    { name = "markdownify", marker = "extra == 'docs'", specifier = "==1.2.2" },
     { name = "pandas", marker = "extra == 'tabular'", specifier = "==3.0.3" },
     { name = "pyarrow", marker = "extra == 'tabular'", specifier = "==24.0.0" },
     { name = "pydantic", specifier = "==2.13.3" },
@@ -426,13 +425,12 @@ requires-dist = [
     { name = "tenacity", specifier = "==9.1.4" },
     { name = "zstandard", specifier = "==0.25.0" },
 ]
-provides-extras = ["context", "tabular"]
+provides-extras = ["docs", "tabular"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "beautifulsoup4", specifier = "==4.14.3" },
     { name = "datamodel-code-generator", specifier = "==0.55.0" },
-    { name = "defusedxml", specifier = "==0.7.1" },
     { name = "hatch", specifier = ">=1.14.0" },
     { name = "jsonschema", specifier = "==4.26.0" },
     { name = "markdownify", specifier = "==1.2.2" },

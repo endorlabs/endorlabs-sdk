@@ -1,5 +1,5 @@
 ---
-name: dependency-finding-provenance
+name: endor-dependency-finding-provenance
 description: >-
   Trace vulnerability and dependency lineage across Findings, PackageVersions,
   and SBOM artifacts to verify resolved vs present state at branch/commit
@@ -181,3 +181,13 @@ Use this structure in investigation notes:
 - Counting grouped findings by substring instead of exact coordinate.
 - Treating findings labels and BOM coordinates as the same without lineage evidence.
 - Relying on CSV export alone for commit-level conclusions.
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| List findings, filter by scan UUID | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |
+| Function-level reachability triage | [endor-reachability-provenance](../endor-reachability-provenance/SKILL.md) |
+| Scan never completed / aggregate stats collapsed | [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) |
+| Exception policy on a finding | [endor-validate-policy](../endor-validate-policy/SKILL.md) |
+| Manifest path introduction only | [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) |

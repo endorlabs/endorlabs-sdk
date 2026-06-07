@@ -26,4 +26,4 @@ tenant estate reporting.
 ## Project-scoped queries
 
 When correlating DependencyMetadata with a project, pass **`namespace=project.namespace`** after
-resolving the `Project` row. See `rules/namespace-scoping.md`.
+resolving the `Project` row. See `rules/endor-namespace-scoping.md`.

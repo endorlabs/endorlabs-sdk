@@ -1,5 +1,5 @@
 ---
-id: portable-examples
+id: endor-portable-examples
 tags: [examples, hygiene, placeholders]
 summary: >-
   Use placeholders in git-tracked agent content; never commit customer estate
