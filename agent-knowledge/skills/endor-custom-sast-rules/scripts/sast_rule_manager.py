@@ -224,6 +224,7 @@ def _extract_rule_ids_from_dir(directory: Path) -> set[str]:
         try:
             doc = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
         except Exception:
+            logger.debug("Skipping unreadable YAML %s", yaml_path, exc_info=True)
             continue
         if isinstance(doc, dict) and "rules" in doc:
             for rule in doc["rules"]:
@@ -553,6 +554,7 @@ def _build_rule_yaml_map(rules_dir: Path) -> dict[str, str]:
             raw = yaml_path.read_text(encoding="utf-8")
             rule_dicts = _parse_yaml_rules(yaml_path)
         except Exception:
+            logger.debug("Skipping unreadable YAML %s", yaml_path, exc_info=True)
             continue
         for rd in rule_dicts:
             rid = str(rd.get("id", ""))
@@ -799,7 +801,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument(
         "--name-filter",
         default=None,
-        help='Substring for delete step (e.g. "endor-sdk"). If omitted, delete is skipped.',
+        help=(
+            'Substring for delete step (e.g. "endor-sdk"). '
+            "If omitted, delete is skipped."
+        ),
     )
     p_sync.add_argument(
         "--force",

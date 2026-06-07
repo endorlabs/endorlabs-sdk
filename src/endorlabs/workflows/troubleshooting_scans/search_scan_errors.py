@@ -24,6 +24,7 @@ from .common import (
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(
         description=(
             "Search embedded spec.logs lines for a regex. "
@@ -38,7 +39,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--from-search-artifact",
         default=None,
-        help="JSON from search_projects.py (uses projects[0].uuid unless --project-uuid)",
+        help=(
+            "JSON from search_projects.py (uses projects[0].uuid unless --project-uuid)"
+        ),
     )
     parser.add_argument(
         "--all-projects",
@@ -113,11 +116,13 @@ def _resolve_scope(
         return selected, "project_name"
 
     raise ValueError(
-        "Provide --project-uuid, --project-name, --from-search-artifact, or --all-projects"
+        "Provide --project-uuid, --project-name, --from-search-artifact, "
+        "or --all-projects"
     )
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
+    """Execute workflow from parsed CLI args."""
     _ = args.context_lines
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
@@ -139,17 +144,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         for scan_result in scan_results:
             scan_uuid = scan_result.get("uuid")
             scan_logs = (scan_result.get("spec") or {}).get("logs") or []
-            for line in scan_logs:
-                if pattern.search(str(line)):
-                    hits.append(
-                        {
-                            "project_uuid": project_uuid,
-                            "project_namespace": project_ns,
-                            "scan_result_uuid": scan_uuid,
-                            "status": (scan_result.get("spec") or {}).get("status"),
-                            "match_line": str(line),
-                        }
-                    )
+            hits.extend(
+                {
+                    "project_uuid": project_uuid,
+                    "project_namespace": project_ns,
+                    "scan_result_uuid": scan_uuid,
+                    "status": (scan_result.get("spec") or {}).get("status"),
+                    "match_line": str(line),
+                }
+                for line in scan_logs
+                if pattern.search(str(line))
+            )
 
     scope_uuid = args.project_uuid or selected_projects[0].get("uuid") or "scoped"
     payload = {
@@ -175,6 +180,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def main() -> int:
+    """Run the module CLI and return exit code."""
     args = build_parser().parse_args()
     try:
         result = run(args)

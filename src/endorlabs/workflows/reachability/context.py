@@ -300,7 +300,9 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
                 "importer_pv_uuid": subject.importer_pv_uuid,
                 "importer_pv_name": subject.importer_pv_name,
                 "target_dependency_uuid": subject.target_dependency_uuid,
-                "target_dependency_package_name": subject.target_dependency_package_name,
+                "target_dependency_package_name": (
+                    subject.target_dependency_package_name
+                ),
                 "oss_namespace": subject.oss_namespace,
                 "oss_package_version_uuid": subject.oss_package_version_uuid,
                 "oss_package_name": subject.oss_package_name,

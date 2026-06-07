@@ -20,8 +20,8 @@ summary: Prefer workflow CLI, then library imports, then Client; extend artifact
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
 | **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |
 
-`endorlabs.workflows` is **experimental** — prefer importing documented entrypoints over
-vendoring workflow source.
+`endorlabs.workflows` ships **documented contracts** — prefer importing
+`library_entrypoints` from `MANIFEST.json` over vendoring workflow source.
 
 ## Escalation ladder
 
