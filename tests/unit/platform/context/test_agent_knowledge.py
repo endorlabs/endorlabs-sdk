@@ -25,13 +25,13 @@ def test_agent_knowledge_index_path() -> None:
     assert agent_knowledge_index_path().is_file()
 
 
-def test_agent_knowledge_manifest_has_sixteen_skills() -> None:
+def test_agent_knowledge_manifest_has_seventeen_skills() -> None:
     manifest = agent_knowledge_manifest()
     assert manifest["schema_version"] == 2
     assert manifest["index"] == "INDEX.md"
     assert len(manifest["contracts"]) >= 4
     assert len(manifest["rules"]) == 6
-    assert len(manifest["skills"]) == 16
+    assert len(manifest["skills"]) == 17
     assert any(
         entry["id"] == "endor-retrieve-scan-results" for entry in manifest["skills"]
     )
