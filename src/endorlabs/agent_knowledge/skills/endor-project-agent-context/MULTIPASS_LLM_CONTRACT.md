@@ -30,7 +30,7 @@ Load this file **after** reading [SKILL.md](SKILL.md) when you need exact pass b
 ## LLM rules — completeness and escalation
 
 1. **Before** claiming “all package versions” or “no call graph,” read `warnings` and `inventory.truncated` / `hydration` / `callgraph_sweep` caps.
-2. If `inventory.truncated` or `hydration.pv_list_truncated` is true, say coverage is **bounded** and suggest raising the relevant `--*-max-pages` / `--*-page-size` or using `--hydrate-pv-uuids` for known targets.
+2. If `inventory.truncated`, `hydration.pv_list_truncated`, or `artifacts.dep_metadata_truncated` is true, say coverage is **bounded** and suggest raising the relevant `--*-max-pages` / `--*-page-size` (or `--dep-metadata-max-pages 0`) or using `--hydrate-pv-uuids` for known targets.
 3. **Index-only** bundles (`hydration.pass_2_dependency_explorer.skipped`): no BOM/CG hydration — do not infer dependency or call-graph facts from missing files.
 4. **Default Pass 2** without `--hydrate-pv-uuids` / `--hydrate-top-n` still uses **`--pv-limit`** (default 5) on the **legacy first page** of PVs — the **index** may list many more; reconcile with `selection.mode`.
 

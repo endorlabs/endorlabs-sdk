@@ -21,6 +21,10 @@ Index for SDK-specific documentation.
 - [generated-reference/create-update-payloads.md](generated-reference/create-update-payloads.md) — Generated create/update payload matrix.
 - [generated-reference/coverage.json](generated-reference/coverage.json) — Structured generated coverage metadata.
 
+## Analytics
+
+- [analytics/README.md](analytics/README.md) — Estate analytics workflows (compile dependency graph, cross-links to cardinality export and relationship map).
+
 ## Guides
 
 - [guides/README.md](guides/README.md) — List of guides.

@@ -6,7 +6,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from .common import load_json, write_json
+from .common import default_troubleshooting_output_dir, load_json, write_json
 
 
 def anomaly_score(
@@ -72,7 +72,9 @@ def build_parser() -> argparse.ArgumentParser:
     """Build argparse parser for this workflow CLI."""
     parser = argparse.ArgumentParser(description="Rank anomalous scan pairs")
     _ = parser.add_argument("--input-summary", required=True)
-    _ = parser.add_argument("--output-dir", default=".tmp")
+    _ = parser.add_argument(
+        "--output-dir", default=default_troubleshooting_output_dir()
+    )
     _ = parser.add_argument("--root-tenant", required=True)
     _ = parser.add_argument("--project-uuid", required=True)
     _ = parser.add_argument(

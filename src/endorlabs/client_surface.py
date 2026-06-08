@@ -141,6 +141,7 @@ class Client:
         try:
             policies: list[Any] = self.AuthorizationPolicy.list(  # type: ignore[attr-defined]
                 traverse=True,
+                concurrent=False,
                 filter=F("spec.clause").contains(api_key),
                 page_size=1,
                 max_pages=1,

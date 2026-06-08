@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-06T12:30:01.845933+00:00",
+  "generated_at": "2026-06-08T21:16:43.571732+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -110,7 +110,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.1.dev69",
+  "sdk_version": "0.1.1.dev79",
   "skills": [
     {
       "description": "Estate-scale DependencyMetadata aggregates: version cardinality by package name, optional single-package filtered export, and intra-minor CVE remediation comparisons. Use for estate-wide dependency diversity reporting, how many versions of a package are in use, or upgrade-path planning for a CVE on one coordinate.",
@@ -289,11 +289,35 @@
       "skill": "endor-fetch-and-search-call-graph"
     },
     {
+      "agent_visible": false,
+      "cli": "endor-collect-strategy-spike",
+      "default_output": ".endorlabs-context/workspace/sessions/<user>/exports/collect-strategy-spike/",
+      "id": "collect-strategy-spike",
+      "module": "endorlabs.workflows.relationships.collect_strategy_spike",
+      "skill": null
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-compile-dependency-graph",
+      "default_output": ".endorlabs-context/session/<namespace>/",
+      "id": "compile-dependency-graph",
+      "module": "endorlabs.workflows.relationships.dependency_graph",
+      "skill": null
+    },
+    {
       "agent_visible": true,
       "cli": "endor-context",
       "default_output": ".endorlabs-context/",
       "id": "context-bootstrap",
       "module": "endorlabs.context.cli",
+      "skill": null
+    },
+    {
+      "agent_visible": true,
+      "cli": "endor-graph-summarize",
+      "default_output": "stdout or --json",
+      "id": "graph-summarize",
+      "module": "endorlabs.workflows.relationships.summarize_session",
       "skill": null
     },
     {
