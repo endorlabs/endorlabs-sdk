@@ -38,11 +38,27 @@
   },
   {
     "agent_visible": true,
+    "cli": "endor-compile-dependency-graph",
+    "default_output": ".endorlabs-context/session/<namespace>/",
+    "id": "compile-dependency-graph",
+    "module": "endorlabs.workflows.relationships.dependency_graph",
+    "skill": "endor-compile-dependency-graph"
+  },
+  {
+    "agent_visible": true,
     "cli": "endor-context",
     "default_output": ".endorlabs-context/",
     "id": "context-bootstrap",
     "module": "endorlabs.context.cli",
     "skill": null
+  },
+  {
+    "agent_visible": true,
+    "cli": "endor-graph-summarize",
+    "default_output": "stdout or --json",
+    "id": "graph-summarize",
+    "module": "endorlabs.workflows.relationships.summarize_session",
+    "skill": "endor-compile-dependency-graph"
   },
   {
     "agent_visible": true,

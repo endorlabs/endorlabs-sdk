@@ -7,7 +7,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .common import root_tenant, write_json, write_text
+from .common import (
+    default_troubleshooting_output_dir,
+    root_tenant,
+    write_json,
+    write_text,
+)
 
 
 def _load_json(path: str) -> dict[str, Any]:
@@ -46,7 +51,11 @@ def _build_parser() -> argparse.ArgumentParser:
         default=20,
         help="Maximum number of error entries rendered in markdown",
     )
-    p.add_argument("--output-dir", default=".tmp", help="Output directory")
+    p.add_argument(
+        "--output-dir",
+        default=default_troubleshooting_output_dir(),
+        help="Output directory",
+    )
     p.add_argument("--timestamped", action="store_true")
     return p
 

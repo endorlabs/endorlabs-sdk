@@ -138,7 +138,7 @@ client = endorlabs.Client(
 )
 
 namespaces = client.Namespace.list(traverse=True)
-projects = client.Project.list(traverse=True, concurrent=True, max_pages=1)
+projects = client.Project.list(traverse=True, max_pages=1)
 
 if projects:
     project = client.Project.get(projects[0].uuid)

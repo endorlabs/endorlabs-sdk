@@ -798,17 +798,23 @@ def paginate_raw(
     api_client: APIClient,
     url: str,
     params: dict[str, str],
-    max_pages: int = 10,
+    max_pages: int | None = None,
 ) -> list[dict[str, Any]]:
-    """Paginate a raw API list call, returning all objects."""
+    """Paginate a raw API list call, returning all objects.
+
+    ``max_pages`` of ``None`` or ``0`` fetches until the API reports no next page.
+    """
     all_objects: list[dict[str, Any]] = []
     current_params = dict(params)
+    page_limit = None if not max_pages or max_pages <= 0 else max_pages
+    pages_fetched = 0
 
-    for _page in range(max_pages):
+    while True:
         resp = api_client.get(url, params=current_params)
         data = resp.json()
         objects = extract_objects(data)
         all_objects.extend(objects)
+        pages_fetched += 1
 
         next_token = None
         next_page_id = None
@@ -824,6 +830,9 @@ def paginate_raw(
         elif next_token:
             current_params["list_parameters.page_token"] = str(next_token)
         else:
+            break
+
+        if page_limit is not None and pages_fetched >= page_limit:
             break
 
     return all_objects
@@ -968,27 +977,36 @@ def retrieve_dep_metadata_full(
     api_client: APIClient,
     project_namespace: str,
     project_uuid: str,
-    max_pages: int = 10,
-) -> tuple[list[dict[str, Any]], str]:
+    max_pages: int | None = None,
+    *,
+    page_size: int = 500,
+) -> tuple[list[dict[str, Any]], str, bool]:
     """Retrieve all DependencyMetadata rows for a project.
 
     Tries the project's namespace first, then falls back to ``"oss"``.
-    Returns ``(rows, source_namespace)``.
+    Returns ``(rows, source_namespace, truncated)``.
     """
     from endorlabs.operations import validate_namespace
+    from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
 
+    resolved_pages = resolve_max_pages(max_pages)
     for ns in [project_namespace, "oss"]:
         url = f"v1/namespaces/{validate_namespace(ns)}/dependency-metadata"
         params = {
             "list_parameters.filter": (
                 f'spec.importer_data.project_uuid=="{project_uuid}"'
             ),
-            "list_parameters.page_size": "500",
+            "list_parameters.page_size": str(page_size),
         }
-        objects = paginate_raw(api_client, url, params, max_pages=max_pages)
+        objects = paginate_raw(api_client, url, params, max_pages=resolved_pages)
         if objects:
-            return objects, ns
-    return [], ""
+            truncated = is_list_truncated(
+                len(objects),
+                max_pages=resolved_pages,
+                page_size=page_size,
+            )
+            return objects, ns, truncated
+    return [], "", False
 
 
 def summarize_dep_metadata(rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1240,6 +1258,7 @@ class ProjectResult:
     dep_metadata_stats: dict[str, Any] = field(default_factory=dict)
     dep_metadata_namespace: str = ""
     dep_metadata_count: int = 0
+    dep_metadata_truncated: bool = False
     report: str = ""
     pv_list_truncated: bool = False
     hydration_missing_pv_uuids: list[str] = field(default_factory=list)
@@ -1252,7 +1271,7 @@ def process_project(
     project: Any,
     out_dir: str,
     pv_limit: int = 5,
-    dep_metadata_max_pages: int = 10,
+    dep_metadata_max_pages: int = 0,
     *,
     deterministic: bool = False,
     pv_uuid_order: list[str] | None = None,
@@ -1391,12 +1410,20 @@ def process_project(
 
     # 3. DependencyMetadata
     logger.info("  [DepMetadata] project_uuid=%s", project.uuid)
-    dep_rows, dep_ns = retrieve_dep_metadata_full(
+    dep_rows, dep_ns, dep_truncated = retrieve_dep_metadata_full(
         api_client,
         project_ns,
         project.uuid,
         max_pages=dep_metadata_max_pages,
     )
+    result.dep_metadata_truncated = dep_truncated
+    if dep_truncated:
+        logger.warning(
+            "  DependencyMetadata list truncated for project %s "
+            "(dep_metadata_max_pages=%s); use 0 for unlimited",
+            project.uuid,
+            dep_metadata_max_pages,
+        )
     if deterministic:
         dep_rows = sorted(
             dep_rows,
