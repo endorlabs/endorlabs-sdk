@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .setup import (
+from .platform_setup import (
     AuthorizationPolicyResult,
     InstallationResult,
     NamespaceResult,
