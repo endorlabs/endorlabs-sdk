@@ -13,12 +13,22 @@ import endorlabs
 from endorlabs import F
 from endorlabs.context.paths import workflow_projects_root
 from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.workflows.list_bounds import (
+    format_progress,
+    is_list_truncated,
+    resolve_max_pages,
+)
 from endorlabs.workflows.relationships.core import (
     SupportingPackage,
     add_producer_indices,
     aggregate_project_edges,
     indirect_paths_bfs,
     row_to_supporting_tuples,
+)
+from endorlabs.workflows.sharded_collect import (
+    ParentShard,
+    parallel_map_shards,
+    project_model_to_shard,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -67,8 +77,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--max-pages",
         type=int,
-        default=25,
-        help="Max pages for Project/PackageVersion lists. Default: 25",
+        default=0,
+        help="Max pages for Project/PackageVersion lists (0 = unlimited).",
     )
     p.add_argument(
         "--page-size",
@@ -79,8 +89,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--dep-metadata-max-pages",
         type=int,
-        default=5,
-        help="Max pages per project for DependencyMetadata list. Default: 5",
+        default=0,
+        help="Max pages per project for DependencyMetadata (0 = unlimited).",
+    )
+    p.add_argument(
+        "--max-workers",
+        type=int,
+        default=16,
+        help="Parallel workers for per-project DependencyMetadata collect. Default: 16",
     )
     p.add_argument(
         "--output-dir",
@@ -99,12 +115,21 @@ def main() -> int:
 
     client = endorlabs.Client(tenant=args.tenant)
     try:
+        list_max_pages = resolve_max_pages(args.max_pages)
         projects = client.Project.list(
             namespace=args.namespace,
             traverse=True,
-            max_pages=args.max_pages,
+            max_pages=list_max_pages,
             page_size=args.page_size,
         )
+        if is_list_truncated(
+            len(projects), max_pages=list_max_pages, page_size=args.page_size
+        ):
+            LOGGER.warning(
+                "Project list may be truncated at %d rows; "
+                "use --max-pages 0 for full estate",
+                len(projects),
+            )
         project_set = {p.uuid for p in projects if p.uuid}
         projects_json = [
             {
@@ -121,9 +146,16 @@ def main() -> int:
         pvs = client.PackageVersion.list(
             namespace=args.namespace,
             traverse=True,
-            max_pages=args.max_pages,
+            max_pages=list_max_pages,
             page_size=args.page_size,
         )
+        if is_list_truncated(
+            len(pvs), max_pages=list_max_pages, page_size=args.page_size
+        ):
+            LOGGER.warning(
+                "PackageVersion list may be truncated at %d rows; use --max-pages 0",
+                len(pvs),
+            )
         produced_by: dict[tuple[str, str], set[str]] = {}
         produced_name: dict[str, set[str]] = {}
         n_pv = 0
@@ -136,23 +168,37 @@ def main() -> int:
             add_producer_indices(mname, str(puid), produced_by, produced_name)
         all_support: list[tuple[str, str, SupportingPackage]] = []
         n_dep = 0
-        for p in projects:
-            if not p.uuid:
-                continue
+        dm_max_pages = resolve_max_pages(args.dep_metadata_max_pages)
+        dep_shards = [
+            project_model_to_shard(p, args.namespace) for p in projects if p.uuid
+        ]
+
+        def _fetch_dep_metadata(shard: ParentShard) -> tuple[list[Any], int]:
             drows: list[Any] = []
             try:
                 drows = client.DependencyMetadata.list(
-                    filter=(F("spec.importer_data.project_uuid") == p.uuid),
-                    max_pages=args.dep_metadata_max_pages,
+                    filter=(F("spec.importer_data.project_uuid") == shard.key),
+                    namespace=shard.namespace,
+                    max_pages=dm_max_pages,
                     page_size=args.page_size,
                 )
+                if is_list_truncated(
+                    len(drows),
+                    max_pages=dm_max_pages,
+                    page_size=args.page_size,
+                ):
+                    LOGGER.warning(
+                        "DependencyMetadata truncated for project %s (%d rows)",
+                        shard.key,
+                        len(drows),
+                    )
             except (ValueError, TypeError, RuntimeError) as e:
-                LOGGER.debug("dep metadata for project %s: %s", p.uuid, e)
+                LOGGER.debug("dep metadata for project %s: %s", shard.key, e)
                 drows = []
-            n_dep += len(drows)
+            support: list[tuple[str, str, SupportingPackage]] = []
             for d in drows or []:
                 sp = _object_to_spec_dict(d)
-                all_support.extend(
+                support.extend(
                     row_to_supporting_tuples(
                         sp,
                         project_set,
@@ -161,6 +207,27 @@ def main() -> int:
                         produced_name_only=produced_name,
                     )
                 )
+            return support, len(drows or [])
+
+        dep_rows_total = 0
+
+        def _on_dep_progress(completed: int, total: int) -> None:
+            LOGGER.info(
+                "%s",
+                format_progress("DependencyMetadata projects", completed, total),
+            )
+
+        for support, row_count in parallel_map_shards(
+            dep_shards,
+            _fetch_dep_metadata,
+            max_workers=args.max_workers,
+            progress_label="DependencyMetadata projects",
+            progress_every=50,
+            on_progress=_on_dep_progress,
+        ):
+            all_support.extend(support)
+            dep_rows_total += row_count
+        n_dep = dep_rows_total
         edges = aggregate_project_edges(all_support)
         paths = indirect_paths_bfs(
             [p["uuid"] for p in projects_json],

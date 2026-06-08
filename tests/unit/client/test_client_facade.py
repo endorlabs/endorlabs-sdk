@@ -40,7 +40,9 @@ def test_client_namespace_list_uses_default_tenant(
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.Namespace._ops.list = mock_list
-    result = client.Namespace.list(traverse=True, max_pages=TEST_MAX_PAGES)
+    result = client.Namespace.list(
+        traverse=True, concurrent=False, max_pages=TEST_MAX_PAGES
+    )
     assert result == []
     mock_list.assert_called_once()
     args, _ = mock_list.call_args
@@ -104,6 +106,7 @@ def test_client_namespace_list_convenience_kwargs(
     client.Namespace._ops.list = mock_list
     client.Namespace.list(
         traverse=True,
+        concurrent=False,
         page_size=TEST_PAGE_SIZE,
         max_pages=TEST_MAX_PAGES,
     )
@@ -122,7 +125,9 @@ def test_client_projects_present_and_delegates(
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.Project._ops.list = mock_list
-    result = client.Project.list(traverse=True, max_pages=TEST_MAX_PAGES)
+    result = client.Project.list(
+        traverse=True, concurrent=False, max_pages=TEST_MAX_PAGES
+    )
     assert result == []
     mock_list.assert_called_once()
     args, _ = mock_list.call_args

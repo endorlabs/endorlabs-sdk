@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -13,6 +13,14 @@ from typing import Any
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.context.paths import workflow_sessions_root
+
+_DEFAULT_SESSION_USER = "agent"
+
+
+def default_troubleshooting_output_dir(*, user: str | None = None) -> str:
+    """Default RCA/triage directory under workspace/sessions/<user>/troubleshooting/."""
+    slug = (user or _DEFAULT_SESSION_USER).strip() or _DEFAULT_SESSION_USER
+    return str(workflow_sessions_root(user=slug, subdir="troubleshooting"))
 
 
 def iso_now_compact() -> str:
@@ -169,27 +177,56 @@ def list_scan_results_for_project(
     limit: int,
     status_filter: str | None = None,
 ) -> list[dict[str, Any]]:
-    """List and locally filter scan results for a project."""
+    """List scan results for a project (server-side parent filter)."""
     params = {
         "list_parameters.traverse": "false",
         "list_parameters.sort_path": "meta.create_time",
         "list_parameters.sort_order": "descending",
+        "list_parameters.filter": f'meta.parent_uuid=="{project_uuid}"',
     }
     results = list(
         api.get_all(f"v1/namespaces/{namespace}/scan-results", params=params)
     )
-    filtered = [
-        item
-        for item in results
-        if (item.get("meta") or {}).get("parent_uuid") == project_uuid
-    ]
     if status_filter:
-        filtered = [
+        results = [
             item
-            for item in filtered
+            for item in results
             if (item.get("spec") or {}).get("status") == status_filter
         ]
-    return filtered[:limit]
+    return results[:limit]
+
+
+def parallel_collect_for_projects(
+    projects: Sequence[dict[str, Any]],
+    fetch_fn: Callable[[Any], Iterable[Any]],
+    *,
+    max_workers: int,
+    fallback_ns: str,
+    progress_label: str,
+    progress_every: int = 50,
+) -> list[Any]:
+    """Parallel per-project fetch; flatten iterable results from each shard."""
+    from endorlabs.workflows.sharded_collect import (
+        parallel_map_shards,
+        project_dict_to_shard,
+    )
+
+    shards = [
+        project_dict_to_shard(project, fallback_ns)
+        for project in projects
+        if project.get("uuid")
+    ]
+    per_shard = parallel_map_shards(
+        shards,
+        fetch_fn,
+        max_workers=max_workers,
+        progress_label=progress_label,
+        progress_every=progress_every,
+    )
+    out: list[Any] = []
+    for batch in per_shard:
+        out.extend(batch)
+    return out
 
 
 def object_to_dict(item: Any) -> dict[str, Any]:
@@ -290,12 +327,12 @@ def date_window_from_bounds(
     days: int | None,
     end: datetime | None = None,
 ) -> tuple[str, str]:
-    """Resolve list window: explicit from/to wins; else last ``days`` (default 30)."""
+    """Resolve list window: explicit from/to wins; else last ``days`` (default 7)."""
     if from_date and to_date:
         return from_date, to_date
     if from_date or to_date:
         raise ValueError("Provide both --from-date and --to-date, or neither")
-    d = days if days is not None else 30
+    d = days if days is not None else 7
     return date_window_from_days(days=d, end=end)
 
 
@@ -445,10 +482,10 @@ def parse_common_args(description: str) -> argparse.ArgumentParser:
     parser.add_argument("--tenant", required=True, help="Target namespace/tenant root")
     parser.add_argument(
         "--output-dir",
-        default=str(workflow_sessions_root(subdir="troubleshooting")),
+        default=default_troubleshooting_output_dir(),
         help=(
             "Directory for generated artifacts "
-            "(default: .endorlabs-context/workspace/sessions/troubleshooting)"
+            f"(default: {default_troubleshooting_output_dir()})"
         ),
     )
     parser.add_argument(

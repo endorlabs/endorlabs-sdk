@@ -36,7 +36,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Output directory (default: .endorlabs-context/workspace/projects).",
     )
     parser.add_argument(
-        "--max-pages", type=int, default=10, help="Maximum pages for list operations."
+        "--max-pages",
+        type=int,
+        default=0,
+        help="Max pages for call-graph-data list (0 = unlimited).",
     )
     parser.add_argument(
         "--page-size",
