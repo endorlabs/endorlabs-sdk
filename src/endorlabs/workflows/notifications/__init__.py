@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .setup import (
+from .notification_setup import (
     NotificationPolicyResult,
     NotificationTargetResult,
     create_notification_policy,

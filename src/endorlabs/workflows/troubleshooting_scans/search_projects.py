@@ -21,6 +21,7 @@ from endorlabs.workflows.projects.resolve import (
 )
 
 from .common import (
+    default_troubleshooting_output_dir,
     duplicate_project_decision,
     parse_app_scan_history_url,
     parse_endor_app_url,
@@ -69,7 +70,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "(routing only; --tenant still required)"
         ),
     )
-    p.add_argument("--output-dir", default=".tmp")
+    p.add_argument("--output-dir", default=default_troubleshooting_output_dir())
     p.add_argument("--timestamped", action="store_true")
     return p
 
@@ -133,7 +134,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
         elif args.project_name:
             matched = search_projects_by_name_or_uuid(
-                client, namespace=args.tenant, query=args.project_name
+                client,
+                namespace=args.tenant,
+                query=args.project_name,
+                warnings=warnings,
             )
 
             if not matched:

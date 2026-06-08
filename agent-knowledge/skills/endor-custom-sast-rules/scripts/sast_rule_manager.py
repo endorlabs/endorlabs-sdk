@@ -497,7 +497,6 @@ def cmd_orphans(
         namespace=namespace,
         filter="spec.finding_categories contains [FINDING_CATEGORY_SAST]",
         traverse=True,
-        max_pages=20,
     )
     logger.info("Scanned %d SAST findings.", len(all_findings))
 

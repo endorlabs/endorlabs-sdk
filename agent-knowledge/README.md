@@ -53,7 +53,7 @@ For **Claude API** users: zip each skill directory and upload via the `/v1/skill
 
 ## Relationship to Other Docs
 
-- **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged.
+- **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Estate analytics workflows without a skill (e.g. compile dependency graph) live under [`docs/analytics/`](../docs/analytics/README.md).
 - **`rules/`** — always load via `agent_knowledge_bootstrap_paths()` (namespace, workspace, composition, list performance, local context, portable examples).
 - **`contracts/`** — on-demand SDK reference semantics (list parameters, naming, errors, dependency metadata).
 - **`.cursor/rules/`**: Always-on project rules (apply every session). Skills are on-demand (apply when triggered).

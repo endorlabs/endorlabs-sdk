@@ -53,7 +53,7 @@ Practical implication: a finding can be `REACHABLE_FUNCTION` even when a direct 
 0. Build unified context artifact (default path)
    - Run `uv run endor-reachability-context --tenant <tenant> --namespace <namespace> --finding-uuid <finding_uuid> --output-dir .endorlabs-context/workspace/projects/reachability`.
    - Use `--pv-uuid` for direct PV analysis.
-   - Treat `reachability_context.json` as the canonical triage bundle (customer graph plane, `oss` graph plane, stitching summary, warnings).
+   - Treat `reachability_context.json` as the canonical triage bundle (customer graph plane, `oss` graph plane, stitching summary, warnings). `--max-pages` defaults to **0 (unlimited)**; check `list_bounds` and `warnings` when call-graph lists may be capped.
    - Bundle requirement (deterministic): include decoded call graphs from both planes:
      - customer/app side: `app_call_graph_decoded_summary.json`, `app_call_graph_decoded_callables.json`, `app_call_graph_decoded_edges.json`
      - `oss` side: `oss_call_graph_decoded_summary.json`, `oss_call_graph_decoded_callables.json`, `oss_call_graph_decoded_edges.json`

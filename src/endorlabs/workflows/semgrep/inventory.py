@@ -9,12 +9,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_artifacts_root
+from endorlabs.workflows.list_bounds import (
+    is_list_truncated,
+    resolve_max_pages,
+    truncation_message,
+)
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _extract_meta_dict(rule: Any) -> dict[str, Any]:
@@ -26,9 +34,35 @@ def _extract_meta_dict(rule: Any) -> dict[str, Any]:
     return metadata.model_dump(by_alias=True, exclude_none=True)
 
 
-def build_inventory(client: endorlabs.Client, namespace: str) -> dict[str, Any]:
+def build_inventory(
+    client: endorlabs.Client,
+    namespace: str,
+    *,
+    max_pages: int = 0,
+    page_size: int = 500,
+) -> dict[str, Any]:
     """List Semgrep rules and summarize metadata-key prevalence by origin."""
-    rules = client.SemgrepRule.list(namespace=namespace, traverse=True, max_pages=200)
+    list_max_pages = resolve_max_pages(max_pages)
+    rules = client.SemgrepRule.list(
+        namespace=namespace,
+        traverse=True,
+        max_pages=list_max_pages,
+        page_size=page_size,
+    )
+    list_truncated = is_list_truncated(
+        len(rules), max_pages=list_max_pages, page_size=page_size
+    )
+    if list_truncated:
+        LOGGER.warning(
+            "%s",
+            truncation_message(
+                resource="SemgrepRule",
+                scope=f"namespace={namespace}",
+                row_count=len(rules),
+                max_pages=list_max_pages,
+                page_size=page_size,
+            ),
+        )
     key_counts: Counter[str] = Counter()
     key_examples: dict[str, list[dict[str, str]]] = defaultdict(list)
     origin_counts: Counter[str] = Counter()
@@ -52,6 +86,9 @@ def build_inventory(client: endorlabs.Client, namespace: str) -> dict[str, Any]:
     return {
         "namespace": namespace,
         "total_rules": len(rules),
+        "list_truncated": list_truncated,
+        "list_max_pages": max_pages,
+        "list_page_size": page_size,
         "defined_by_counts": dict(sorted(origin_counts.items())),
         "metadata_key_counts": dict(sorted(key_counts.items())),
         "metadata_key_examples": dict(sorted(key_examples.items())),
@@ -83,6 +120,18 @@ def main() -> int:
     )
     parser.add_argument("--namespace", required=True, help="Tenant namespace")
     parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=0,
+        help="Max pages for SemgrepRule.list (0 = unlimited).",
+    )
+    parser.add_argument(
+        "--page-size",
+        type=int,
+        default=500,
+        help="List page size for SemgrepRule.list. Default: 500",
+    )
+    parser.add_argument(
         "--json-out",
         type=Path,
         default=workflow_artifacts_root() / "semgrep_rule_metadata_inventory.json",
@@ -95,10 +144,16 @@ def main() -> int:
         help="Markdown summary output path",
     )
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
     client = endorlabs.Client(tenant=args.namespace)
     try:
-        inventory = build_inventory(client=client, namespace=args.namespace)
+        inventory = build_inventory(
+            client=client,
+            namespace=args.namespace,
+            max_pages=args.max_pages,
+            page_size=args.page_size,
+        )
 
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
         args.json_out.write_text(json.dumps(inventory, indent=2), encoding="utf-8")

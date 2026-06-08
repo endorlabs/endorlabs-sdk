@@ -33,6 +33,10 @@ tabular = [
     "pandas==3.0.3",
     "pyarrow==24.0.0",
 ]
+graph = [
+    "igraph==0.11.9",
+    "leidenalg==0.10.2",
+]
 [project.scripts]
 endor-context = "endorlabs.context.cli:main"
 endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
@@ -40,6 +44,9 @@ endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
 endor-analytics-export-deps = "endorlabs.workflows.analytics.cli:cli_main"
+endor-compile-dependency-graph = "endorlabs.workflows.relationships.dependency_graph:main"
+endor-graph-summarize = "endorlabs.workflows.relationships.summarize_session:main"
+endor-collect-strategy-spike = "endorlabs.workflows.relationships.collect_strategy_spike:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
@@ -98,6 +105,9 @@ dev = [
     # Tabular deps for unit tests (mirrors [project.optional-dependencies.tabular])
     "pandas==3.0.3",
     "pyarrow==24.0.0",
+    # Graph deps for unit tests (mirrors [project.optional-dependencies.graph])
+    "igraph==0.11.9",
+    "leidenalg==0.10.2",
     "datamodel-code-generator==0.55.0",
     "hatch>=1.14.0",
 ]
@@ -262,6 +272,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 ".github/scripts/endor_scan_findings.py" = ["C901"]  # layered location extraction
 ".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic
 "devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
+"devtools/run_phased_compile_graph.py" = ["T201", "D103", "S603", "S607", "E501"]  # maintainer CLI
+"devtools/run_without_endor_token.py" = ["D103", "S603"]  # maintainer env wrapper
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
 # --- Workflows: library contracts strict; CLI stdout intentional ---
 # Console scripts and argparse mains write paths/JSON to stdout (not library code).
@@ -271,6 +283,13 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/workflows/semgrep/inventory.py" = ["T201"]
 "src/endorlabs/workflows/agent_context/export.py" = ["T201", "C901"]  # CLI main orchestration
 "src/endorlabs/workflows/reachability/context.py" = ["C901"]  # build_reachability_context aggregation
+"src/endorlabs/workflows/relationships/dependency_graph.py" = ["C901", "D", "E501", "PERF401"]  # phased pipeline orchestration
+"src/endorlabs/workflows/relationships/summarize_session.py" = ["T201", "D103", "PERF401"]
+"src/endorlabs/workflows/relationships/graph_analytics.py" = ["D103", "E501"]
+"src/endorlabs/workflows/relationships/graph_enrich.py" = ["D103", "C901", "PLW2901", "E501"]
+"src/endorlabs/workflows/relationships/collect_strategy_spike.py" = ["E501", "D103", "ARG001"]
+"src/endorlabs/workflows/sharded_collect.py" = ["UP047"]
+"src/endorlabs/workflows/list_bounds.py" = ["E501"]
 "src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
