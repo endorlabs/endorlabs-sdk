@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from endorlabs.workflows.sharded_collect import ParentShard
 
 from .common import (
     build_api_client,
+    default_troubleshooting_output_dir,
     list_projects,
     list_scan_results_for_project,
+    parallel_collect_for_projects,
     root_tenant,
     scan_result_metrics,
     write_json,
@@ -31,7 +36,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional alias for --limit to emphasize bounded scan windows.",
     )
     _ = parser.add_argument("--status-filter")
-    _ = parser.add_argument("--output-dir", default=".tmp")
+    _ = parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=8,
+        help="Parallel workers when fetching multiple projects. Default: 8",
+    )
+    _ = parser.add_argument(
+        "--output-dir", default=default_troubleshooting_output_dir()
+    )
     _ = parser.add_argument("--timestamped", action="store_true")
     return parser
 
@@ -65,20 +78,40 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     all_results: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
-    for project in selected_projects:
-        project_uuid = project.get("uuid")
-        project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
-        if not project_uuid:
-            continue
-        results = list_scan_results_for_project(
+
+    def _fetch_scan_results(shard: ParentShard) -> list[dict[str, Any]]:
+        return list_scan_results_for_project(
             api,
-            namespace=project_ns,
-            project_uuid=project_uuid,
+            namespace=shard.namespace,
+            project_uuid=shard.key,
             limit=effective_limit,
             status_filter=args.status_filter,
         )
-        all_results.extend(results)
-        summaries.extend(scan_result_metrics(item) for item in results)
+
+    if len(selected_projects) > 1:
+        all_results = parallel_collect_for_projects(
+            selected_projects,
+            _fetch_scan_results,
+            max_workers=args.max_workers,
+            fallback_ns=ns,
+            progress_label="scan results projects",
+        )
+    else:
+        for project in selected_projects:
+            project_uuid = project.get("uuid")
+            project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
+            if not project_uuid:
+                continue
+            all_results.extend(
+                list_scan_results_for_project(
+                    api,
+                    namespace=project_ns,
+                    project_uuid=project_uuid,
+                    limit=effective_limit,
+                    status_filter=args.status_filter,
+                )
+            )
+    summaries.extend(scan_result_metrics(item) for item in all_results)
 
     primary_uuid = (
         args.project_uuid

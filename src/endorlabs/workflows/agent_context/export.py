@@ -89,6 +89,7 @@ def build_context_manifest(
         "package_version_artifacts": pvs_out,
         "dep_metadata_list_namespace": project_result.dep_metadata_namespace or None,
         "dep_metadata_row_count": project_result.dep_metadata_count,
+        "dep_metadata_truncated": project_result.dep_metadata_truncated,
     }
     artifacts["callgraph_sweep"] = callgraph_sweep
 
@@ -155,8 +156,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--dep-metadata-max-pages",
         type=int,
-        default=10,
-        help="Max pages of DependencyMetadata to fetch. Default: 10",
+        default=0,
+        help="Max pages of DependencyMetadata to fetch (0 = unlimited).",
     )
     p.add_argument(
         "--deterministic",
@@ -399,6 +400,11 @@ def main() -> int:
                 warnings.append(
                     "Pass 2 package version list may be truncated at capacity; "
                     "raise --pv-list-max-pages / --pv-list-page-size."
+                )
+            if result.dep_metadata_truncated:
+                warnings.append(
+                    "DependencyMetadata list may be truncated; use "
+                    "--dep-metadata-max-pages 0 for unlimited."
                 )
 
         manifest_path = bundle / "context_manifest.json"

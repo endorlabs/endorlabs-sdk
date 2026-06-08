@@ -8,6 +8,7 @@ from typing import Any
 
 from .common import (
     build_api_client,
+    default_troubleshooting_output_dir,
     list_projects,
     match_projects,
     root_tenant,
@@ -24,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-name")
     parser.add_argument("--project-url")
     parser.add_argument("--project-name-regex")
-    parser.add_argument("--output-dir", default=".tmp")
+    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
