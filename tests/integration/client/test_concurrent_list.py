@@ -31,6 +31,7 @@ class TestConcurrentListIntegration:
         )
         result = client.Project.list(
             traverse=True,
+            concurrent=False,
             page_size=TEST_TRAVERSE_PAGE_SIZE,
             max_pages=TEST_MAX_PAGES_TRAVERSE,
         )

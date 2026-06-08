@@ -46,12 +46,17 @@ def _visibility_label(dd: dict[str, Any]) -> str:
 
 
 def _extract_one_consumer_row(
-    spec: dict[str, Any], include_public: bool
+    spec: dict[str, Any],
+    include_public: bool,
+    *,
+    direct_only: bool = False,
 ) -> dict[str, Any] | None:
     imp = (spec or {}).get("importer_data") or {}
     dd = (spec or {}).get("dependency_data") or {}
     consumer = imp.get("project_uuid")
     if not consumer:
+        return None
+    if direct_only and not bool(dd.get("direct", False)):
         return None
     is_public = dd.get("public", None)
     if not include_public and is_public is True:
@@ -93,9 +98,11 @@ def row_to_supporting_tuples(
     include_public: bool,
     produced_by: dict[tuple[str, str], set[str]],
     produced_name_only: dict[str, set[str]],
+    *,
+    direct_only: bool = False,
 ) -> list[tuple[str, str, SupportingPackage]]:
     """Map one DependencyMetadata row to consumer→producer supporting tuples."""
-    r = _extract_one_consumer_row(spec, include_public)
+    r = _extract_one_consumer_row(spec, include_public, direct_only=direct_only)
     if not r or r["consumer"] not in project_uuids:
         return []
     c, pnm, ver = r["consumer"], r["package_name"], r["version"]
@@ -200,6 +207,38 @@ def aggregate_project_edges(
     return out
 
 
+def aggregate_package_anchored_edges(
+    supporting: list[tuple[str, str, SupportingPackage]],
+) -> list[dict[str, Any]]:
+    """One edge per (consumer, producer, anchor_package_name); strongest match kept."""
+    best: dict[tuple[str, str, str], SupportingPackage] = {}
+    for fr, to, sp in supporting:
+        if fr == to or not sp.package_name:
+            continue
+        k3 = (fr, to, sp.package_name)
+        if k3 not in best or (
+            sp.evidence_tier == "tier_a_exact"
+            and best[k3].evidence_tier != "tier_a_exact"
+        ):
+            best[k3] = sp
+    out: list[dict[str, Any]] = []
+    for (u, v, anchor), sp in sorted(best.items()):
+        out.append(
+            {
+                "from_project_uuid": u,
+                "to_project_uuid": v,
+                "anchor_package_name": anchor,
+                "package_version": sp.package_version,
+                "match_tier": sp.evidence_tier,
+                "import_kind": sp.dependency_kind,
+                "visibility": sp.visibility,
+                "ambiguous": sp.ambiguous,
+                "dependency_scope": "compile",
+            }
+        )
+    return out
+
+
 def path_confidence_for_tiers(tiers: list[str]) -> str:
     """Map edge-tier sequence to high/medium/low path confidence."""
     if not tiers:
@@ -253,7 +292,9 @@ def build_adj_and_edge_tiers(
         if not u or not w or u == w:
             continue
         u_s, w_s = str(u), str(w)
-        tv: str = str(e.get("evidence_tier") or "tier_b_name_only")
+        tv: str = str(
+            e.get("match_tier") or e.get("evidence_tier") or "tier_b_name_only"
+        )
         k = (u_s, w_s)
         if k not in best:
             best[k] = tv

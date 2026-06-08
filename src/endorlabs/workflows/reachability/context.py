@@ -9,8 +9,10 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.context.paths import workflow_projects_root
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.callgraph.decoded import decode_payload
+from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
 from endorlabs.workflows.reachability.resolve import (
     ReachabilitySubject,
     resolve_from_finding,
@@ -31,13 +33,13 @@ class ReachabilityContextRequest:
 
     tenant: str
     namespace: str
-    output_dir: str = ".tmp"
+    output_dir: str = str(workflow_projects_root())
     finding_uuid: str | None = None
     pv_uuid: str | None = None
     decode_zstd: bool = True
     include_oss_callgraph: bool = True
     include_customer_callgraph: bool = True
-    max_pages: int = 10
+    max_pages: int = 0
     page_size: int = 200
 
 
@@ -53,17 +55,26 @@ def _list_callgraph_for_parent(
     namespace: str,
     parent_uuid: str | None,
     page_size: int,
-) -> list[dict[str, Any]]:
+    max_pages: int,
+) -> tuple[list[dict[str, Any]], bool]:
     if not parent_uuid:
-        return []
-    resp = api_client.get(
-        f"v1/namespaces/{namespace}/call-graph-data",
-        params={
-            "list_parameters.filter": f'meta.parent_uuid=="{parent_uuid}"',
-            "list_parameters.page_size": str(page_size),
-        },
-    ).json()
-    return (resp.get("list") or {}).get("objects") or []
+        return [], False
+    list_max_pages = resolve_max_pages(max_pages)
+    params = {
+        "list_parameters.filter": f'meta.parent_uuid=="{parent_uuid}"',
+        "list_parameters.page_size": str(page_size),
+    }
+    objs = list(
+        api_client.get_all(
+            f"v1/namespaces/{namespace}/call-graph-data",
+            params=params,
+            max_pages=list_max_pages,
+        )
+    )
+    truncated = is_list_truncated(
+        len(objs), max_pages=list_max_pages, page_size=page_size
+    )
+    return objs, truncated
 
 
 def _extract_vulnerable_uris(finding: dict[str, Any]) -> list[str]:
@@ -191,13 +202,21 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
         customer_callables: list[dict[str, Any]] = []
         customer_edges: list[dict[str, Any]] = []
         customer_exports: list[dict[str, Any]] = []
+        customer_cg_truncated = False
+        oss_cg_truncated = False
         if request.include_customer_callgraph and subject.importer_pv_uuid:
-            objs = _list_callgraph_for_parent(
+            objs, customer_cg_truncated = _list_callgraph_for_parent(
                 api_client,
                 namespace=request.namespace,
                 parent_uuid=subject.importer_pv_uuid,
                 page_size=request.page_size,
+                max_pages=request.max_pages,
             )
+            if customer_cg_truncated:
+                warnings.append(
+                    "Customer call-graph-data list may be truncated; "
+                    "use --max-pages 0 for unlimited."
+                )
             if not objs:
                 warnings.append(
                     "No customer call-graph-data objects found for importer PV."
@@ -246,12 +265,18 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
             and subject.oss_namespace
             and subject.oss_package_version_uuid
         ):
-            objs = _list_callgraph_for_parent(
+            objs, oss_cg_truncated = _list_callgraph_for_parent(
                 api_client,
                 namespace=subject.oss_namespace,
                 parent_uuid=subject.oss_package_version_uuid,
                 page_size=request.page_size,
+                max_pages=request.max_pages,
             )
+            if oss_cg_truncated:
+                warnings.append(
+                    "OSS call-graph-data list may be truncated; "
+                    "use --max-pages 0 for unlimited."
+                )
             if not objs:
                 warnings.append(
                     "No oss call-graph-data objects found for dependency PV."
@@ -351,6 +376,12 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
                         > 0
                     )
                 ),
+            },
+            "list_bounds": {
+                "max_pages": request.max_pages,
+                "page_size": request.page_size,
+                "customer_callgraph_truncated": customer_cg_truncated,
+                "oss_callgraph_truncated": oss_cg_truncated,
             },
             "warnings": warnings,
         }

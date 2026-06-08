@@ -56,12 +56,12 @@ Wheel/sdist filenames use the distribution name `endorlabs` (underscore in wheel
 ### Smoke install
 
 ```powershell
-uv venv .tmp/testpypi-smoke --python 3.12 --clear
-uv pip install --python .tmp/testpypi-smoke/Scripts/python.exe `
+uv venv .endorlabs-context/workspace/sessions/agent/scripts/testpypi-smoke --python 3.12 --clear
+uv pip install --python .endorlabs-context/workspace/sessions/agent/scripts/testpypi-smoke/Scripts/python.exe `
   --index-url https://test.pypi.org/simple/ `
   --extra-index-url https://pypi.org/simple/ `
   "endorlabs[docs]==<version>"
-.tmp/testpypi-smoke/Scripts/python.exe -c "import endorlabs; print(endorlabs.__version__); print(len(endorlabs.agent_knowledge_manifest()['skills']))"
+.endorlabs-context/workspace/sessions/agent/scripts/testpypi-smoke/Scripts/python.exe -c "import endorlabs; print(endorlabs.__version__); print(len(endorlabs.agent_knowledge_manifest()['skills']))"
 ```
 
 ## 5. Automation gaps

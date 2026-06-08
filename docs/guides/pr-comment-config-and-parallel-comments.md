@@ -72,11 +72,11 @@ This repo **no longer** syncs a custom template from CI. To restore the **vendor
 uv run python .github/scripts/sync_pr_comment_template.py \
   --namespace "$ENDOR_NAMESPACE" \
   --name github-pr-comments-template \
-  --template-path .tmp/pr-findings-summary-default-from-endor.tmpl \
+  --template-path .endorlabs-context/workspace/sessions/agent/exports/pr-findings-summary-default-from-endor.tmpl \
   --platform-type PLATFORM_SOURCE_GITHUB
 ```
 
-Place the stock template text in `.tmp/pr-findings-summary-default-from-endor.tmpl` (that path is typically gitignored). See [`.github/templates/README.md`](../../.github/templates/README.md).
+Place the stock template text in `.endorlabs-context/workspace/sessions/<user>/exports/pr-findings-summary-default-from-endor.tmpl` (gitignored under `.endorlabs-context/`). See [`.github/templates/README.md`](../../.github/templates/README.md).
 
 In **this repo's CI** ([`ci-pr-main.yml`](../../.github/workflows/ci-pr-main.yml)), all Endor Labs Action scan steps set **`enable_pr_comments: false`**. PR feedback on pull requests comes only from **Post Endor findings as PR review comments** (`post_parallel_pr_comments.py`). Tenant-side `PRCommentConfig` templates still apply if other scans or automation enable platform PR comments outside this workflow.
 
