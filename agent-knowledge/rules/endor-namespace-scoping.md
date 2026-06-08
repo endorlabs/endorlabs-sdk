@@ -19,8 +19,8 @@ When you have a resource instance (from `list(traverse=True)`), pass the resourc
 
 - **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** or
   `list(parent=resource)` where supported.
-- **Discovery:** Root namespace + `traverse=True` + `concurrent=True` (e.g.
-  `Project.list(traverse=True,concurrent=True)`).
+- **Discovery:** Root namespace + `traverse=True` (concurrent namespace fan-out is
+  the SDK default; pass `concurrent=False` to opt out).
 
 ## Project-scoped lists (MUST)
 
@@ -35,4 +35,5 @@ widen the path.
 Alternatives:
 
 - `Client(tenant=project.namespace)` for the rest of the session, or
-- `traverse=True` and `concurrent=True` only when deliberately searching tenant-wide (higher cost).
+- `traverse=True` only when deliberately searching tenant-wide (higher cost).
+  Pass `concurrent=False` for a single sequential traverse query.

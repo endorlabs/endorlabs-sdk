@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
+from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
 
 from .common import (
     root_tenant,
@@ -55,6 +56,13 @@ def _parse_args() -> argparse.Namespace:
         default="",
         help="Optional name/uuid substring used by auto-select (demo-like behavior).",
     )
+    _ = parser.add_argument(
+        "--project-list-max-pages",
+        type=int,
+        default=0,
+        help="Max pages when auto-selecting a project (0 = unlimited).",
+    )
+    _ = parser.add_argument("--project-list-page-size", type=int, default=100)
     _ = parser.add_argument("--batch-size", type=int, default=500)
     _ = parser.add_argument("--max-rounds", type=int, default=50)
     _ = parser.add_argument("--start-time", default=None, help="ISO8601 optional")
@@ -97,9 +105,22 @@ def _project_namespace(project: Any) -> str | None:
     return str(ns) if ns else None
 
 
-def _select_project(client: endorlabs.Client, tenant: str, query: str) -> Any:
+def _select_project(
+    client: endorlabs.Client,
+    tenant: str,
+    query: str,
+    *,
+    list_max_pages: int | None,
+    page_size: int,
+) -> tuple[Any, bool]:
     projects = client.Project.list(
-        namespace=tenant, traverse=True, max_pages=5, page_size=100
+        namespace=tenant,
+        traverse=True,
+        max_pages=list_max_pages,
+        page_size=page_size,
+    )
+    truncated = is_list_truncated(
+        len(projects), max_pages=list_max_pages, page_size=page_size
     )
     q = query.strip().lower()
     for project in projects[:80]:
@@ -109,7 +130,7 @@ def _select_project(client: endorlabs.Client, tenant: str, query: str) -> Any:
             continue
         scans = client.ScanResult.list(parent=project, max_pages=1, page_size=1)
         if scans:
-            return project
+            return project, truncated
     raise ValueError(
         "No eligible project with scan results found for this tenant/query."
     )
@@ -203,6 +224,7 @@ def main() -> int:
     client = endorlabs.Client(tenant=args.tenant)
     try:
         project: Any | None = None
+        project_list_truncated = False
         resolved_namespace = args.namespace
         scan: Any | None = None
         scan_uuid: str
@@ -224,7 +246,13 @@ def main() -> int:
                 if project is None:
                     raise ValueError("Project UUID not found in provided scope.")
             else:
-                project = _select_project(client, args.tenant, args.project_query)
+                project, project_list_truncated = _select_project(
+                    client,
+                    args.tenant,
+                    args.project_query,
+                    list_max_pages=resolve_max_pages(args.project_list_max_pages),
+                    page_size=args.project_list_page_size,
+                )
             resolved_namespace = resolved_namespace or _project_namespace(project)
             if not resolved_namespace:
                 raise ValueError("Could not resolve namespace from project.")
@@ -266,6 +294,7 @@ def main() -> int:
             "batch_size": args.batch_size,
             "rounds": rounds,
             "count": len(messages),
+            "project_list_truncated": project_list_truncated,
             "messages": [_message_to_dict(m) for m in messages],
         }
 

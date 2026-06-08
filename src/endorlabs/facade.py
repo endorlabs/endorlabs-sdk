@@ -50,7 +50,8 @@ class ListableFacade[T: BaseModel]:
     filter, mask, page_size, page_token, page_id, sort_by, desc, count,
     from_date, to_date, archive, pr_uuid, ci_run_uuid, **kwargs (identity → filter).
     See method docstrings for signatures; semantics: traverse=tenant-wide,
-    concurrent=parallel namespaces when traverse=True, namespace=canonical path,
+    concurrent=parallel namespaces when traverse=True (default on; opt out with
+    concurrent=False), namespace=canonical path,
     list_params=ListParameters (kwargs override), max_pages=None=all,
     parent=scope by meta.parent_uuid, filter/mask=API expressions,
     page_*=pagination, sort_by/desc=ordering, count=return count only,
@@ -231,7 +232,7 @@ class ListableFacade[T: BaseModel]:
     def list(
         self,
         traverse: bool = False,
-        concurrent: bool = False,
+        concurrent: bool = True,
         max_workers: int = 10,
         namespace: str | None = None,
         list_params: ListParameters | None = None,
@@ -254,14 +255,16 @@ class ListableFacade[T: BaseModel]:
     ) -> list[T] | list[dict[str, Any]]:
         """List resources with full pagination and optional concurrent mode.
 
-        Uses full pagination (list_all=True). With ``traverse=True`` and
-        ``concurrent=True``, queries each namespace in parallel.
+        Uses full pagination (list_all=True). With ``traverse=True``,
+        ``concurrent`` defaults to ``True`` and queries each child namespace in
+        parallel. Pass ``concurrent=False`` to use a single sequential traverse
+        query. When ``traverse=False``, ``concurrent`` is ignored.
         If any namespace query fails, raises after all queries complete.
 
         Args:
             traverse: Search child namespaces recursively (tenant-wide query).
-            concurrent: Query each namespace in parallel (requires
-                ``traverse=True``).
+            concurrent: Query each namespace in parallel when ``traverse=True``
+                (default ``True``; pass ``False`` to opt out).
             max_workers: Thread pool size for concurrent mode (default 10).
             namespace: Canonical namespace path (e.g. ``"tenant.child"``);
                 defaults to the client tenant.
@@ -296,13 +299,12 @@ class ListableFacade[T: BaseModel]:
             Pydantic models.
 
         Raises:
-            ValueError: Missing namespace, unsupported parent, or concurrent
-                without traverse.
+            ValueError: Missing namespace or unsupported parent.
             ConcurrentNamespaceQueryError: Any namespace query failed during
                 concurrent traversal.
 
         Example:
-            List critical findings tenant-wide::
+            List critical findings tenant-wide (concurrent by default)::
 
                 findings = client.Finding.list(
                     traverse=True,
@@ -312,12 +314,6 @@ class ListableFacade[T: BaseModel]:
         """
         if "list" not in self._supported_ops:
             raise NotImplementedError("This resource does not support list.") from None
-        # Validate concurrent usage
-        if concurrent and not traverse:
-            raise ValueError(
-                "concurrent=True requires traverse=True. "
-                "Concurrent mode queries each namespace in parallel."
-            )
 
         if parent is not None:
             if self._parent_kind is None:
@@ -443,7 +439,7 @@ class ListableFacade[T: BaseModel]:
     def lookup(
         self,
         traverse: bool = False,
-        concurrent: bool = False,
+        concurrent: bool = True,
         max_workers: int = 10,
         namespace: str | None = None,
         list_params: ListParameters | None = None,
@@ -473,8 +469,8 @@ class ListableFacade[T: BaseModel]:
 
         Args:
             traverse: Search child namespaces recursively (tenant-wide query).
-            concurrent: Query each namespace in parallel (requires
-                ``traverse=True``).
+            concurrent: Query each namespace in parallel when ``traverse=True``
+                (default ``True``; pass ``False`` to opt out).
             max_workers: Thread pool size for concurrent mode (default 10).
             namespace: Canonical namespace path (e.g. ``"tenant.child"``);
                 defaults to the client tenant.
@@ -507,10 +503,10 @@ class ListableFacade[T: BaseModel]:
         Raises:
             NotFoundError: No resource matches.
             AmbiguousError: Multiple match; narrow criteria.
-            ValueError: Missing namespace, concurrent without traverse, or a
-                non-empty list field mask (``mask=`` / ``ListParameters.mask``);
-                ``lookup`` always returns a full typed resource—use ``list()`` or
-                ``list_iter()`` for masked wire-shaped rows.
+            ValueError: Missing namespace or a non-empty list field mask
+                (``mask=`` / ``ListParameters.mask``); ``lookup`` always returns
+                a full typed resource—use ``list()`` or ``list_iter()`` for
+                masked wire-shaped rows.
 
         Example:
             project = client.Project.lookup(namespace='tenant.team', name='my-project')
@@ -604,13 +600,14 @@ class ListableFacade[T: BaseModel]:
     ) -> Iterator[T | dict[str, Any]]:
         """Yield resources one at a time; memory-efficient lazy pagination.
 
-        Same parameters as ``list()`` except ``concurrent`` is not supported;
-        use ``list(concurrent=True)`` for parallel namespace queries.
+        Same parameters as ``list()`` except ``concurrent`` defaults to
+        ``False`` and is not supported when ``True``; use ``list(traverse=True)``
+        for parallel namespace queries.
 
         Args:
             traverse: Search child namespaces recursively (tenant-wide query).
-            concurrent: Not supported; raises ``NotImplementedError``. Use
-                ``list(concurrent=True)`` instead.
+            concurrent: Not supported; raises ``NotImplementedError`` when
+                ``True``. Defaults to ``False``.
             namespace: Canonical namespace path (e.g. ``"tenant.child"``);
                 defaults to the client tenant.
             list_params: ``ListParameters`` object; flat kwargs override its
@@ -656,7 +653,7 @@ class ListableFacade[T: BaseModel]:
         if concurrent:
             raise NotImplementedError(
                 "concurrent=True is not supported for list_iter. "
-                "Use list(concurrent=True, traverse=True) instead."
+                "Use list(traverse=True) instead."
             ) from None
         if parent is not None:
             if self._parent_kind is None:

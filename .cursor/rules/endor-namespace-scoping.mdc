@@ -3,7 +3,7 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: 57b6a2210fc4e07df1d684850b688b44ca71bee5c3b367d1c5cf6ee1460fa6dc
+x-endor-source-sha256: 22c4d8bdb09fd1fa3686c4b46fb35d6db2e6c3ee58d615896cf97a55fe0a7727
 ---
 
 # Namespace scoping
@@ -20,8 +20,8 @@ When you have a resource instance (from `list(traverse=True)`), pass the resourc
 
 - **List/filter scoped to a resource:** Use **`namespace=resource.namespace`** or
   `list(parent=resource)` where supported.
-- **Discovery:** Root namespace + `traverse=True` + `concurrent=True` (e.g.
-  `Project.list(traverse=True,concurrent=True)`).
+- **Discovery:** Root namespace + `traverse=True` (concurrent namespace fan-out is
+  the SDK default; pass `concurrent=False` to opt out).
 
 ## Project-scoped lists (MUST)
 
@@ -36,4 +36,5 @@ widen the path.
 Alternatives:
 
 - `Client(tenant=project.namespace)` for the rest of the session, or
-- `traverse=True` and `concurrent=True` only when deliberately searching tenant-wide (higher cost).
+- `traverse=True` only when deliberately searching tenant-wide (higher cost).
+  Pass `concurrent=False` for a single sequential traverse query.
