@@ -114,11 +114,11 @@ uv run endor-graph-summarize --namespace tenant --json
 
 Includes **transitive** project paths (BFS); different semantics from the compile graph. Defaults to `workflow_projects_root()`.
 
-## Cross-skill workflows
+## Related workflows
 
-| Skill | Use when |
-|-------|----------|
-| `endor-compile-dependency-graph` | CLI entry + skill summary |
+| Workflow | Use when |
+|----------|----------|
+| [docs/analytics/compile-dependency-graph.md](../../../docs/analytics/compile-dependency-graph.md) | Canonical operator guide for this pipeline |
 | `endor-map-project-dependency-relationships` | Transitive map in one namespace |
 | `endor-analytics-estate-dependencies` | Grouped cardinality CSV → `--cardinality-csv` join |
 

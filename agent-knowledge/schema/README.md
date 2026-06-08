@@ -19,7 +19,9 @@ agent-knowledge/
     *.md, scripts/
 ```
 
-Run `uv run python devtools/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift.
+Run `uv run python devtools/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift (`tests/unit/platform/context/test_agent_knowledge_drift.py`).
+
+Unit tests for the shipped bundle should assert **structure** (unique ids, on-disk paths, bootstrap consistency)—not exact skill or workflow counts. Counts change whenever skills are added, removed, or demoted to workflow-only rows.
 
 ### Path consistency (tests and docs)
 
