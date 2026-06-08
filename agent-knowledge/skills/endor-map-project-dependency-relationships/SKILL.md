@@ -59,10 +59,16 @@ For a **tenant/namespace** inventory of how repositories relate through package 
 This skill produces a **namespace-wide project graph** (three JSON files). It does **not** emit `context_manifest.json`, `package_versions_index.json`, or per-project BOM/call-graph hydration. For **one repository’s** multi-pass index → hydrate → sweep workflow, use [endor-project-agent-context](../endor-project-agent-context/SKILL.md) and, if needed, [MULTIPASS_LLM_CONTRACT.md](../endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) for manifest interpretation.
 For per-PV/finding function reachability proof across customer + `oss` call graph planes, use `endor-reachability-context`; this skill remains topology-only and does not produce stitched vulnerable-function paths.
 
+For an **estate-wide Git-only compile-dependency graph** (direct imports anchored on
+`package_name`, `isolated` nodes, phased session artifacts under
+`.endorlabs-context/session/<namespace>/`), use
+[endor-compile-dependency-graph](../endor-compile-dependency-graph/SKILL.md)
+(`python -m endorlabs.workflows.relationships.dependency_graph`).
+
 ## Ordering
 
 1. Set credentials (same as other SDK scripts). Confirm **`--namespace`** is the list root (often tenant root; `traverse=True` lists descendants).
-2. Start with default **`--max-pages`**, **`--dep-metadata-max-pages`**, and raise only if the customer accepts the cost and results look truncated.
+2. Defaults are **unlimited** (`--max-pages 0`, `--dep-metadata-max-pages 0`). Watch stderr for truncation warnings; set a positive cap only when bounding cost is intentional.
 3. Read the three JSON outputs; use [endor-project-agent-context](../endor-project-agent-context/SKILL.md) if you also need a single-project bundle the same session.
 
 ## Inputs
@@ -71,9 +77,9 @@ For per-PV/finding function reachability proof across customer + `oss` call grap
 - `namespace` (required) — list root (traverse enabled in the script).
 - `include_public` (optional, default: `false`) — if false, skip dependency rows marked public when that field is present.
 - `max_depth` (optional, default: `3`) — indirect path discovery.
-- `max_pages` (optional, default: `25`) — cap for `Project` and `PackageVersion` lists.
+- `max_pages` (optional, default: `0`) — cap for `Project` and `PackageVersion` lists (`0` = unlimited).
 - `page_size` (optional, default: `500`) — list page size.
-- `dep_metadata_max_pages` (optional, default: `5`) — per-project cap for `DependencyMetadata.list`.
+- `dep_metadata_max_pages` (optional, default: `0`) — per-project cap for `DependencyMetadata.list` (`0` = unlimited).
 - `output_dir` (optional, default: `.endorlabs-context/workspace/projects`).
 
 ## Outputs

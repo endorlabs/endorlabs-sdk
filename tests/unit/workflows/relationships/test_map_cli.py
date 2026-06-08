@@ -72,6 +72,7 @@ def test_main_writes_graph_artifacts_and_closes_client() -> None:
                 max_pages=1,
                 page_size=100,
                 dep_metadata_max_pages=1,
+                max_workers=4,
                 output_dir=".tmp",
             ),
         ),
@@ -81,3 +82,6 @@ def test_main_writes_graph_artifacts_and_closes_client() -> None:
     assert code == 0
     assert mock_write_json.call_count == 3
     fake_client.close.assert_called_once()
+    fake_client.DependencyMetadata.list.assert_called_once()
+    _args, kwargs = fake_client.DependencyMetadata.list.call_args
+    assert kwargs.get("namespace") == "tenant.ns"

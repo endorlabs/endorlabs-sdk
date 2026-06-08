@@ -7,6 +7,7 @@ from typing import Any
 import endorlabs
 from endorlabs import F
 from endorlabs.core.exceptions import NotFoundError
+from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
 
 
 def is_hex_project_id(value: str) -> bool:
@@ -47,17 +48,26 @@ def search_projects_by_name_or_uuid(
     *,
     namespace: str,
     query: str,
-    max_pages: int = 50,
+    max_pages: int = 0,
     page_size: int = 100,
+    warnings: list[str] | None = None,
 ) -> list[Any]:
     """Search projects by UUID or case-insensitive name substring."""
     needle = query.strip().lower()
+    list_max_pages = resolve_max_pages(max_pages)
     projects = client.Project.list(
         namespace=namespace,
         traverse=True,
-        max_pages=max_pages,
+        max_pages=list_max_pages,
         page_size=page_size,
     )
+    if is_list_truncated(len(projects), max_pages=list_max_pages, page_size=page_size):
+        msg = (
+            f"Project search list may be truncated at {len(projects)} rows; "
+            "matches beyond the cap are invisible — use max_pages=0."
+        )
+        if warnings is not None:
+            warnings.append(msg)
     out: list[Any] = []
     for project in projects:
         pname = (

@@ -9,6 +9,7 @@ from typing import Any
 from .common import (
     build_api_client,
     build_scanlogs_client,
+    default_troubleshooting_output_dir,
     load_json,
     root_tenant,
     scanlog_line,
@@ -25,7 +26,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--project-uuid", required=True)
     parser.add_argument("--input-pairs", required=True)
     parser.add_argument("--max-entries", type=int, default=500)
-    parser.add_argument("--output-dir", default=".tmp")
+    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
     parser.add_argument("--timestamped", action="store_true")
     return parser
 

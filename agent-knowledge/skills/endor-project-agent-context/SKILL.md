@@ -72,7 +72,10 @@ Produce a **versioned, machine-readable context bundle** for a single project: `
 
 ## Bounds
 
-- Every pass uses explicit `max_pages` / `page_size` or caps. Raising caps increases API load and disk; ask the user before “fetch everything.”
+- **`--dep-metadata-max-pages`** defaults to **0 (unlimited)**; `context_manifest.json` sets
+  `artifacts.dep_metadata_truncated` when a positive cap is hit.
+- Pass 1 / Pass 3 PV list caps remain explicit (`--pv-index-max-pages`, `--callgraph-max-pages`).
+  Raising caps increases API load and disk; ask the user before “fetch everything.”
 - **`--pv-limit`** still caps how many PVs Pass 2 hydrates in **default** mode; the **index** can list more — see [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md).
 
 ## Documentation hops

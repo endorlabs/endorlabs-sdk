@@ -987,7 +987,7 @@ def test_retrieve_dep_metadata_full_prefers_project_namespace(
 
     monkeypatch.setattr(dependency_explorer_module, "paginate_raw", _fake_paginate)
 
-    rows, source_ns = retrieve_dep_metadata_full(
+    rows, source_ns, truncated = retrieve_dep_metadata_full(
         MagicMock(),
         "tenant.child",
         "project-uuid",
@@ -995,5 +995,6 @@ def test_retrieve_dep_metadata_full_prefers_project_namespace(
 
     assert source_ns == "tenant.child"
     assert len(rows) == 1
+    assert truncated is False
     assert len(urls) == 1
     assert urls[0].endswith("/tenant.child/dependency-metadata")
