@@ -106,18 +106,48 @@ class TestExecuteAcrossNamespaces:
 class TestFacadeConcurrentList:
     """Unit tests for concurrent list behavior in _ListableFacade."""
 
-    def test_concurrent_without_traverse_raises_value_error(
+    def test_concurrent_without_traverse_uses_single_query(
         self, client_with_mock_transport: Client
     ) -> None:
-        """list(concurrent=True, traverse=False) raises ValueError."""
+        """list(traverse=False) ignores concurrent default and uses single query."""
         client = client_with_mock_transport
-        client.Project._ops.list = Mock(return_value=[])
-        with pytest.raises(ValueError, match="concurrent=True requires traverse=True"):
+        mock_list = Mock(return_value=[])
+        client.Project._ops.list = mock_list
+        client.Project.list(
+            traverse=False,
+            max_pages=TEST_MAX_PAGES,
+        )
+        mock_list.assert_called_once()
+
+    def test_traverse_defaults_to_concurrent_mode(
+        self, client_with_mock_transport: Client
+    ) -> None:
+        """list(traverse=True) uses concurrent mode without explicit concurrent=True."""
+        from endorlabs.operations import BaseResourceOperations
+
+        client = client_with_mock_transport
+
+        def make_ops(client_arg, resource_name, model_class):
+            if resource_name == "namespaces":
+                m = Mock(spec=BaseResourceOperations)
+                m.list = Mock(return_value=[])
+                return m
+            return BaseResourceOperations(client_arg, resource_name, model_class)
+
+        with (
+            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch(
+                "endorlabs.utils.parallel.execute_across_namespaces",
+                return_value=[],
+            ) as mock_execute,
+        ):
+            client.Project._ops.list = Mock(return_value=[])
             client.Project.list(
-                concurrent=True,
-                traverse=False,
+                traverse=True,
+                namespace="tenant",
                 max_pages=TEST_MAX_PAGES,
             )
+            mock_execute.assert_called_once()
 
     def test_concurrent_with_traverse_calls_namespace_list_first(
         self, client_with_mock_transport: Client
@@ -435,16 +465,21 @@ class TestFacadeLookupConcurrent:
 
             assert result is mock_item
 
-    def test_lookup_concurrent_without_traverse_raises(
+    def test_lookup_without_traverse_uses_single_query(
         self, client_with_mock_transport: Client
     ) -> None:
-        """lookup(concurrent=True, traverse=False) raises ValueError via list()."""
+        """lookup(traverse=False) ignores concurrent default and uses single query."""
         client = client_with_mock_transport
-        client.Project._ops.list = Mock(return_value=[])
-        with pytest.raises(ValueError, match="concurrent=True requires traverse=True"):
-            client.Project.lookup(
-                concurrent=True,
-                traverse=False,
-                name="my-project",
-                max_pages=2,
-            )
+        mock_item = Mock(
+            uuid="proj-1",
+            tenant_meta=Mock(namespace=TEST_NAMESPACE_DEFAULT),
+        )
+        mock_list = Mock(return_value=[mock_item])
+        client.Project._ops.list = mock_list
+        result = client.Project.lookup(
+            traverse=False,
+            name="my-project",
+            max_pages=2,
+        )
+        assert result is mock_item
+        mock_list.assert_called_once()

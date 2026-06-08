@@ -12,7 +12,7 @@ from . import (
     resolve_projects,
     select_anomalous_scans,
 )
-from .common import load_json, root_tenant
+from .common import default_troubleshooting_output_dir, load_json, root_tenant
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -47,7 +47,9 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="When used with --regression-only, also generate diff report.",
     )
-    _ = parser.add_argument("--output-dir", default=".tmp")
+    _ = parser.add_argument(
+        "--output-dir", default=default_troubleshooting_output_dir()
+    )
     _ = parser.add_argument("--timestamped", action="store_true")
     return parser
 

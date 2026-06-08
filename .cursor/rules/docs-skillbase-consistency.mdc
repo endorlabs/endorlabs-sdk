@@ -11,6 +11,7 @@ When editing repository docs or rules, keep documentation references aligned wit
 - Prefer `agent-knowledge/skills/...` links/paths in git-tracked docs.
 - If `.cursor/skills/...` is mentioned, label it as the mirrored runtime path used by Cursor.
 - Do not maintain hardcoded "complete" resource inventories in hand-edited docs; point to `docs/generated-reference/resources.md` for the canonical current list.
+- Apply the same rule to **tests**: do not assert exact skill/workflow counts in `test_agent_knowledge.py`; use `sync_agent_knowledge.py --verify` (see `test_agent_knowledge_drift.py`) plus structural manifest checks.
 - Keep workflow and CLI inventory statements synchronized with:
   - `src/endorlabs/workflows/__init__.py`
   - `[project.scripts]` in `pyproject.toml`

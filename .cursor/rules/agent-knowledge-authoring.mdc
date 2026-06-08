@@ -23,3 +23,9 @@ When renaming a skill directory, script, or cited runtime path, **keep tests and
 - Update skill body examples (`.cursor/skills/endor-<name>/…` in commands) and cross-links under `agent-knowledge/skills/`.
 - Run sync so `src/endorlabs/agent_knowledge/` matches authoring; integration tests may assert materialized paths under `.endorlabs-context/sdk/skills/`.
 - Do **not** add shared test helper modules for path resolution — inline loaders in the tests that need them are the contract.
+
+## Tests (manifest and drift)
+
+- **Drift gate:** `tests/unit/platform/context/test_agent_knowledge_drift.py` runs `devtools/sync_agent_knowledge.py --verify`. That is the authoritative check that authoring, shipped bundle, INDEX, workflows, and `MANIFEST.json` stay aligned.
+- **Do not hardcode skill or workflow counts** in unit tests (same principle as [docs-skillbase-consistency.mdc](docs-skillbase-consistency.mdc): no brittle “complete inventory” assertions). Adding or removing a skill should not require bumping a magic number.
+- Prefer **structural** manifest checks: unique ids, required fields, on-disk paths under `agent_knowledge_dir()`, bootstrap `rule_ids` matches `rules[]`, and targeted presence/absence for the change under test (e.g. workflow row with `skill: null`).
