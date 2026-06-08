@@ -59,11 +59,11 @@ For a **tenant/namespace** inventory of how repositories relate through package 
 This skill produces a **namespace-wide project graph** (three JSON files). It does **not** emit `context_manifest.json`, `package_versions_index.json`, or per-project BOM/call-graph hydration. For **one repository’s** multi-pass index → hydrate → sweep workflow, use [endor-project-agent-context](../endor-project-agent-context/SKILL.md) and, if needed, [MULTIPASS_LLM_CONTRACT.md](../endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) for manifest interpretation.
 For per-PV/finding function reachability proof across customer + `oss` call graph planes, use `endor-reachability-context`; this skill remains topology-only and does not produce stitched vulnerable-function paths.
 
-For an **estate-wide Git-only compile-dependency graph** (direct imports anchored on
+For an **estate-wide compile-dependency graph** (direct imports anchored on
 `package_name`, `isolated` nodes, phased session artifacts under
-`.endorlabs-context/session/<namespace>/`), use
-[endor-compile-dependency-graph](../endor-compile-dependency-graph/SKILL.md)
-(`python -m endorlabs.workflows.relationships.dependency_graph`).
+`.endorlabs-context/session/<namespace>/`), see
+[docs/analytics/compile-dependency-graph.md](../../../docs/analytics/compile-dependency-graph.md)
+(`endor-compile-dependency-graph` / `python -m endorlabs.workflows.relationships.dependency_graph`).
 
 ## Ordering
 

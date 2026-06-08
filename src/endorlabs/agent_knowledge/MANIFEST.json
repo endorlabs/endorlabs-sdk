@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-08T05:12:26.036969+00:00",
+  "generated_at": "2026-06-08T21:16:43.571732+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -110,7 +110,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.1.dev75",
+  "sdk_version": "0.1.1.dev79",
   "skills": [
     {
       "description": "Estate-scale DependencyMetadata aggregates: version cardinality by package name, optional single-package filtered export, and intra-minor CVE remediation comparisons. Use for estate-wide dependency diversity reporting, how many versions of a package are in use, or upgrade-path planning for a CVE on one coordinate.",
@@ -120,13 +120,6 @@
       "refs": [
         "skills/endor-analytics-estate-dependencies/REMEDIATION.md"
       ]
-    },
-    {
-      "description": "Build an estate-wide compile-dependency graph over all project registrations (Git repos and binary/component nodes): direct import edges anchored on package_name, isolated nodes, publisher rankings, and optional Leiden partition. Multi-hop reachability is out of scope \u2014 query the built graph in post-processing.",
-      "id": "endor-compile-dependency-graph",
-      "name": "endor-compile-dependency-graph",
-      "path": "skills/endor-compile-dependency-graph/SKILL.md",
-      "refs": []
     },
     {
       "description": "Author, validate, and import custom OpenGrep/Semgrep SAST rules into the Endor Labs platform. Use when the user wants to write security rules, perform threat modeling for SAST, create absence-detection rules, validate rule YAML, or import Semgrep rules into Endor Labs.",
@@ -309,7 +302,7 @@
       "default_output": ".endorlabs-context/session/<namespace>/",
       "id": "compile-dependency-graph",
       "module": "endorlabs.workflows.relationships.dependency_graph",
-      "skill": "endor-compile-dependency-graph"
+      "skill": null
     },
     {
       "agent_visible": true,
@@ -325,7 +318,7 @@
       "default_output": "stdout or --json",
       "id": "graph-summarize",
       "module": "endorlabs.workflows.relationships.summarize_session",
-      "skill": "endor-compile-dependency-graph"
+      "skill": null
     },
     {
       "agent_visible": true,

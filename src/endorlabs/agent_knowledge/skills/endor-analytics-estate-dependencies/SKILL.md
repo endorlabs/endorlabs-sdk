@@ -87,8 +87,12 @@ from endorlabs.workflows.analytics import (
 2. Omit estate root from counting when child namespaces exist (avoid double-count).
 3. Never use estate-wide `DependencyMetadata` traverse for aggregates.
 
-## Related skills
+## Related skills and workflows
 
+- **Compile dependency graph** — optional `version_cardinality.csv` from this workflow
+  can be passed to `endor-compile-dependency-graph --cardinality-csv` on the
+  `enrich_graph` phase. Operator guide:
+  [docs/analytics/compile-dependency-graph.md](../../../docs/analytics/compile-dependency-graph.md).
 - **endor-dependency-finding-provenance** — project/commit finding and DM lineage for
   “is this CVE fixed here?” (tenant namespace for `DependencyMetadata` list/get).
 - **endor-dependency-provenance** — manifest path and direct vs transitive introduction.
