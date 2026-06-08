@@ -300,7 +300,6 @@ def annotate_vertices(
     out_degree: dict[int, int] = {}
 
     for node in nodes:
-        nid = int(node["node_id"])
         uuids = node.get("project_uuids") or [node.get("project_uuid")]
         published: dict[str, dict[str, Any]] = {}
         for uid in uuids:
