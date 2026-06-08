@@ -25,16 +25,42 @@ def test_agent_knowledge_index_path() -> None:
     assert agent_knowledge_index_path().is_file()
 
 
-def test_agent_knowledge_manifest_has_seventeen_skills() -> None:
+def test_agent_knowledge_manifest_structure() -> None:
     manifest = agent_knowledge_manifest()
+    package_dir = agent_knowledge_dir()
+
     assert manifest["schema_version"] == 2
     assert manifest["index"] == "INDEX.md"
-    assert len(manifest["contracts"]) >= 4
-    assert len(manifest["rules"]) == 6
-    assert len(manifest["skills"]) == 17
-    assert any(
-        entry["id"] == "endor-retrieve-scan-results" for entry in manifest["skills"]
+    assert manifest["contracts"]
+    assert manifest["rules"]
+    assert manifest["skills"]
+
+    rule_ids = [entry["id"] for entry in manifest["rules"]]
+    assert len(rule_ids) == len(set(rule_ids))
+    assert manifest["bootstrap"]["rule_ids"] == sorted(rule_ids)
+    for entry in manifest["rules"]:
+        assert (package_dir / entry["path"]).is_file()
+
+    skill_ids = [entry["id"] for entry in manifest["skills"]]
+    assert len(skill_ids) == len(set(skill_ids))
+    assert "endor-compile-dependency-graph" not in skill_ids
+    for entry in manifest["skills"]:
+        assert entry["id"].startswith("endor-")
+        assert entry["path"].startswith("skills/")
+        assert entry.get("description", "").strip()
+        assert (package_dir / entry["path"]).is_file()
+
+
+def test_workflow_catalog_includes_compile_graph_without_skill() -> None:
+    entries = json.loads(
+        (agent_knowledge_dir() / "workflows" / "entries.json").read_text(
+            encoding="utf-8"
+        )
     )
+    row = next(e for e in entries if e["id"] == "compile-dependency-graph")
+    assert row["skill"] is None
+    assert row["agent_visible"] is True
+    assert row["cli"] == "endor-compile-dependency-graph"
 
 
 def test_agent_knowledge_manifest_path_matches_file() -> None:
@@ -73,10 +99,8 @@ def test_workflows_index_shipped() -> None:
     assert (workflows_dir / "entries.json").is_file()
 
 
-def test_agent_knowledge_manifest_skill_descriptions_populated() -> None:
+def test_agent_knowledge_manifest_anchor_skill_description() -> None:
     manifest = agent_knowledge_manifest()
-    described = [entry for entry in manifest["skills"] if entry.get("description")]
-    assert len(described) >= 14
     retrieve = next(
         entry
         for entry in manifest["skills"]

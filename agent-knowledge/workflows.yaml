@@ -7,10 +7,16 @@ workflows:
     skill: null
     default_output: .endorlabs-context/
     agent_visible: true
+  - id: compile-dependency-graph
+    cli: endor-compile-dependency-graph
+    module: endorlabs.workflows.relationships.dependency_graph
+    skill: null
+    default_output: .endorlabs-context/session/<namespace>/
+    agent_visible: true
   - id: graph-summarize
     cli: endor-graph-summarize
     module: endorlabs.workflows.relationships.summarize_session
-    skill: endor-compile-dependency-graph
+    skill: null
     default_output: stdout or --json
     agent_visible: true
   - id: collect-strategy-spike
