@@ -13,11 +13,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from endorlabs.workflows.sharded_collect import ParentShard
+
 from .common import (
     build_api_client,
+    default_troubleshooting_output_dir,
     list_projects,
     list_scan_results_for_project,
     load_json,
+    parallel_collect_for_projects,
     root_tenant,
     write_json,
 )
@@ -57,12 +61,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--error-pattern", required=True)
     parser.add_argument("--limit", type=int, default=25)
     parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=8,
+        help="Parallel workers when searching multiple projects. Default: 8",
+    )
+    parser.add_argument(
         "--context-lines",
         type=int,
         default=1,
         help="Reserved for future use (embedded logs are single-line JSON strings)",
     )
-    parser.add_argument("--output-dir", default=".tmp")
+    parser.add_argument("--output-dir", default=default_troubleshooting_output_dir())
     parser.add_argument("--timestamped", action="store_true")
     return parser
 
@@ -133,21 +143,22 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     selected_projects, scope_label = _resolve_scope(args, projects)
 
     hits: list[dict[str, Any]] = []
-    for project in selected_projects:
-        project_uuid = project.get("uuid")
-        project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
-        if not project_uuid:
-            continue
+
+    def _search_project(shard: ParentShard) -> list[dict[str, Any]]:
+        project_hits: list[dict[str, Any]] = []
         scan_results = list_scan_results_for_project(
-            api, namespace=project_ns, project_uuid=project_uuid, limit=args.limit
+            api,
+            namespace=shard.namespace,
+            project_uuid=shard.key,
+            limit=args.limit,
         )
         for scan_result in scan_results:
             scan_uuid = scan_result.get("uuid")
             scan_logs = (scan_result.get("spec") or {}).get("logs") or []
-            hits.extend(
+            project_hits.extend(
                 {
-                    "project_uuid": project_uuid,
-                    "project_namespace": project_ns,
+                    "project_uuid": shard.key,
+                    "project_namespace": shard.namespace,
                     "scan_result_uuid": scan_uuid,
                     "status": (scan_result.get("spec") or {}).get("status"),
                     "match_line": str(line),
@@ -155,6 +166,24 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 for line in scan_logs
                 if pattern.search(str(line))
             )
+        return project_hits
+
+    if len(selected_projects) > 1:
+        hits = parallel_collect_for_projects(
+            selected_projects,
+            _search_project,
+            max_workers=args.max_workers,
+            fallback_ns=ns,
+            progress_label="scan error search projects",
+        )
+    else:
+        for project in selected_projects:
+            project_uuid = project.get("uuid")
+            project_ns = (project.get("tenant_meta") or {}).get("namespace") or ns
+            if not project_uuid:
+                continue
+            shard = ParentShard(key=str(project_uuid), namespace=str(project_ns))
+            hits.extend(_search_project(shard))
 
     scope_uuid = args.project_uuid or selected_projects[0].get("uuid") or "scoped"
     payload = {

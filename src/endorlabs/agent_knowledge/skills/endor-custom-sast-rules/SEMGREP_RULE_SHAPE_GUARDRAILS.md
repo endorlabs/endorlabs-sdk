@@ -47,6 +47,9 @@ Use the inventory script to snapshot metadata key usage in your tenant:
 uv run endor-semgrep-inventory --namespace tenant.namespace
 ```
 
+`--max-pages` defaults to **0 (unlimited)**. The JSON includes `list_truncated`
+when a positive cap is hit.
+
 Outputs:
 
 - `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json`
