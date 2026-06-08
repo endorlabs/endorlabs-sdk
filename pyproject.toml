@@ -105,6 +105,9 @@ dev = [
     # Tabular deps for unit tests (mirrors [project.optional-dependencies.tabular])
     "pandas==3.0.3",
     "pyarrow==24.0.0",
+    # Graph deps for unit tests (mirrors [project.optional-dependencies.graph])
+    "igraph==0.11.9",
+    "leidenalg==0.10.2",
     "datamodel-code-generator==0.55.0",
     "hatch>=1.14.0",
 ]
