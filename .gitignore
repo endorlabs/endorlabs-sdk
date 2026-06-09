@@ -70,8 +70,5 @@ src/endorlabs/_version.py
 .tmp/
 .generated/
 
-# Model consistency reports (optional local output)
-model_consistency_report.json
-
 # GitHub Actions cache directory
 .github/cache/

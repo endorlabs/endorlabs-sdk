@@ -3,9 +3,7 @@
 
 from __future__ import annotations
 
-import argparse
 import json
-import sys
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -20,7 +18,7 @@ from endorlabs.workflows.estate.contracts.ir_artifacts import (
     PRODUCER_RANKINGS_IR,
 )
 from endorlabs.workflows.estate.workspace.collect_manifest import load_collect_manifest
-from endorlabs.workflows.estate.workspace.paths import ir_path, workspace_dir_for
+from endorlabs.workflows.estate.workspace.paths import ir_path
 
 SUMMARY_SCHEMA = "endor.workspace_summary.v1"
 
@@ -194,63 +192,3 @@ def format_summary_text(summary: dict[str, Any]) -> str:
             f"inbound={row.get('inbound_import_count')}"
         )
     return "\n".join(lines)
-
-
-# Backward alias for tests migrating from session layout
-summarize_session_dir = summarize_workspace_dir
-
-
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Summarize estate workspace IR artifacts.")
-    p.add_argument(
-        "--namespace",
-        action="append",
-        required=True,
-        dest="namespaces",
-        metavar="NAMESPACE",
-    )
-    p.add_argument("--workspace", action="append", dest="workspaces", default=[])
-    p.add_argument(
-        "--date",
-        help="UTC YYYYMMDD suffix when resolving workspace from namespace",
-    )
-    p.add_argument("--json", action="store_true")
-    return p.parse_args(argv)
-
-
-def main(argv: list[str] | None = None) -> int:
-    args = parse_args(argv)
-    summaries: list[dict[str, Any]] = []
-    exit_code = 0
-    if args.workspaces:
-        for workspace in args.workspaces:
-            workspace_root = Path(workspace)
-            try:
-                summaries.append(summarize_workspace_dir(workspace_root))
-            except FileNotFoundError as exc:
-                print(str(exc), file=sys.stderr)
-                exit_code = 1
-    else:
-        for namespace in args.namespaces:
-            workspace_root = workspace_dir_for(
-                ".endorlabs-context", namespace, date_suffix=args.date
-            )
-            try:
-                summaries.append(
-                    summarize_workspace_dir(workspace_root, namespace=namespace)
-                )
-            except FileNotFoundError as exc:
-                print(str(exc), file=sys.stderr)
-                exit_code = 1
-
-    if args.json:
-        print(json.dumps(summaries, indent=2))
-    else:
-        for summary in summaries:
-            print(format_summary_text(summary))
-            print()
-    return exit_code
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

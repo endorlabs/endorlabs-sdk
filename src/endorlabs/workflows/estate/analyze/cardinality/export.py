@@ -663,10 +663,6 @@ def export_version_cardinality_for_package_match(
     return result
 
 
-# Backward-compatible alias.
-export_estate_dependencies = export_version_cardinality
-
-
 def _summary_dict(result: VersionCardinalityResult) -> dict[str, Any]:
     return {
         "status": result.status,
@@ -701,8 +697,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--output",
         "-o",
-        required=True,
-        help="Output CSV path for version-cardinality rollup.",
+        help=(
+            "Output CSV path for version-cardinality rollup "
+            "(default: .endorlabs-context/workspace/sessions/<user>/exports/"
+            "version_cardinality_<slug>.csv)."
+        ),
     )
     parser.add_argument(
         "--usage-detail-output",
@@ -783,7 +782,18 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write("error: --namespace or ENDOR_NAMESPACE is required\n")
         return 2
 
-    output_path = Path(args.output)
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        from endorlabs.context.paths import workflow_sessions_root
+        from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
+            namespace_slug,
+        )
+
+        slug = namespace_slug(args.namespace)
+        output_path = (
+            workflow_sessions_root(subdir="exports") / f"version_cardinality_{slug}.csv"
+        )
     request_timeout = _resolve_request_timeout(args.request_timeout)
     remediation: RemediationComparisonResult | None = None
     with endorlabs.Client(tenant=args.namespace, timeout=request_timeout) as client:
@@ -846,7 +856,3 @@ def main(argv: list[str] | None = None) -> int:
             summary["remediation_output"] = args.remediation_output
     sys.stdout.write(json.dumps(summary, indent=2) + "\n")
     return 0 if result.ok else 1
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

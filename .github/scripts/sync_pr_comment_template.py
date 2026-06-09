@@ -3,7 +3,8 @@
 
 Creates or updates a tenant-scoped PRCommentConfig entry for GitHub using a
 template file on disk. Intended for **manual** or one-off runs (for example
-restoring the vendor default template from ``.tmp/``); the main PR CI workflow
+restoring the vendor default template from
+``.endorlabs-context/workspace/sessions/<user>/exports/``); the main PR CI workflow
 does not invoke this script.
 """
 
