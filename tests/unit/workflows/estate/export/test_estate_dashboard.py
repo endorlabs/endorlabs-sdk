@@ -39,7 +39,7 @@ def _write_min_workspace(workspace_root: Path) -> None:
         ),
         encoding="utf-8",
     )
-    ir_path(workspace_root, "leiden_input.json").write_text(
+    ir_path(workspace_root, "clustering_graph.json").write_text(
         json.dumps(
             {
                 "nodes": [{"id": 0, "name": "https://github.com/acme/a"}],
@@ -48,8 +48,8 @@ def _write_min_workspace(workspace_root: Path) -> None:
         ),
         encoding="utf-8",
     )
-    ir_path(workspace_root, "publisher_rankings.json").write_text(
-        json.dumps({"total_nodes": 1, "publishers_with_consumers": 0, "rankings": []}),
+    ir_path(workspace_root, "producer_rankings.json").write_text(
+        json.dumps({"total_nodes": 1, "producers_with_importers": 0, "rankings": []}),
         encoding="utf-8",
     )
 
@@ -59,7 +59,7 @@ def test_estate_dashboard_includes_risk_and_graph_tabs(tmp_path: Path) -> None:
     _write_min_workspace(workspace)
     html_doc = render_estate_dashboard_html(workspace, namespace_label="tenant")
     assert "Risk families" in html_doc
-    assert "Graph overview" in html_doc
+    assert "Internal dependencies" in html_doc
     assert "mvn://com.example:lib" in html_doc
     assert "Longest chain" not in html_doc
 

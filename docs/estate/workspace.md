@@ -17,11 +17,11 @@ Schema: `endor.workspace_collect.v1` in `data/collect_manifest.json`.
     risk_cardinality.json
     compile_dependency_graph.json
     compile_dependency_graph_enriched.json
-    leiden_input.json
-    graph_partition.json
-    community_summary.json
+    clustering_graph.json
+    community_detection.json
+    community_profiles.json
     graph_metrics.json
-    publisher_rankings.json
+    producer_rankings.json
   viz/
     estate_dashboard.html
   logs/

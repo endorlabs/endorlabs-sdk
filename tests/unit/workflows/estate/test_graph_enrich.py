@@ -14,8 +14,8 @@ def _minimal_graph() -> dict[str, Any]:
         "nodes": [
             {
                 "node_id": 0,
-                "project_uuid": "consumer-1",
-                "project_uuids": ["consumer-1"],
+                "project_uuid": "importer-1",
+                "project_uuids": ["importer-1"],
                 "name": "https://github.com/a/repo",
                 "namespace": "tenant.ns",
                 "published_packages": [{"package_name": "mvn://com.acme:lib"}],
@@ -24,8 +24,8 @@ def _minimal_graph() -> dict[str, Any]:
             },
             {
                 "node_id": 1,
-                "project_uuid": "publisher-1",
-                "project_uuids": ["publisher-1"],
+                "project_uuid": "producer-1",
+                "project_uuids": ["producer-1"],
                 "name": "https://github.com/b/lib",
                 "namespace": "tenant.ns",
                 "published_packages": [],
@@ -35,9 +35,9 @@ def _minimal_graph() -> dict[str, Any]:
         ],
         "edges": [
             {
-                "source_id": 0,
-                "target_id": 1,
-                "anchor_package_name": "mvn://com.acme:lib",
+                "importer_vertex_id": 0,
+                "producer_vertex_id": 1,
+                "linking_package_name": "mvn://com.acme:lib",
             }
         ],
     }
@@ -47,7 +47,7 @@ def test_enrich_graph_adds_corpus_stats() -> None:
     graph = _minimal_graph()
     discover = [
         {
-            "uuid": "consumer-1",
+            "uuid": "importer-1",
             "tags": ["team-a"],
             "namespace": "tenant.ns",
             "namespaces": ["tenant.ns"],
@@ -55,7 +55,7 @@ def test_enrich_graph_adds_corpus_stats() -> None:
     ]
     corpus = [
         {
-            "project_uuid": "consumer-1",
+            "project_uuid": "importer-1",
             "dm_uuid": "dm-1",
             "row": {
                 "uuid": "dm-1",
@@ -77,9 +77,9 @@ def test_enrich_graph_adds_corpus_stats() -> None:
     assert node0["corpus_direct_count"] == 1
     assert "team-a" in node0["tags"]
     edge = result.enriched["edges"][0]
-    assert edge["consumer_row_count"] == 1
+    assert edge["import_evidence_count"] == 1
     assert "1.0" in edge["resolved_versions"]
-    assert result.leiden_input["node_count"] == 2
+    assert result.clustering_graph["node_count"] == 2
 
 
 def test_enrich_graph_risk_metadata() -> None:
