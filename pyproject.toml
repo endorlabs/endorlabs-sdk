@@ -334,6 +334,7 @@ omit = [
     "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
     "src/endorlabs/generated/*",  # OpenAPI-generated artifacts; validated via contract quality gates
     "src/endorlabs/agent/*",  # Optional extras package validated separately
+    "src/endorlabs/workflows/estate/collect/benchmark.py",  # Local collect-strategy spike; not shipped workflow
 ]
 exclude_lines = [
     "pragma: no cover",
