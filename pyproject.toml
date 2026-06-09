@@ -5,15 +5,31 @@ description = "Type-safe Python SDK for the Endor Labs REST API — resource fac
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
 ]
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.12"
+keywords = [
+    "endor",
+    "endorlabs",
+    "security",
+    "sdk",
+    "api-client",
+    "supply-chain",
+    "vulnerability",
+    "sast",
+    "sca",
+]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security",
+    "Typing :: Typed",
 ]
 dependencies = [
     "pydantic==2.13.3",
@@ -53,6 +69,7 @@ endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
 Repository = "https://github.com/endorlabs/endorlabs-sdk"
 Documentation = "https://docs.endorlabs.com/"  # Endor Labs platform docs; SDK docs in repo README
+Changelog = "https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md"
 Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
 
 [dependency-groups]
@@ -74,6 +91,7 @@ dev = [
     "leidenalg==0.10.2",
     "datamodel-code-generator==0.55.0",
     "hatch>=1.14.0",
+    "twine==6.1.0",
 ]
 
 [build-system]
