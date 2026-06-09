@@ -1,19 +1,30 @@
-# The CODEOWNERS file is a list of patterns and owners, where the last matching
-# pattern is used.
+# CODEOWNERS — last matching pattern wins.
+# Teams: @endorlabs/<slug>  Users: @username
 
-# --- Global Defaults ---
+# Default owner for the SDK repo
+* @endorlabs/engineering
 
-# Set a default owner for everything in the repository. This owner will be
-# requested for review for any changes not matched by a more specific pattern.
-* @tgowan-endor
+# CI, releases, GitHub automation
+/.github/ @endorlabs/engineering
 
+# IDE agent rules and skill mirrors
+/.cursor/ @endorlabs/engineering
 
-# Security Champions Team are responsible for appropriate implementation of security controls
-.github @security-champions
-.cursor/rules/ @security-champions
+# Maintainer automation and model sync
+/devtools/ @endorlabs/engineering
 
-# Engineering owns SDK implementation under src/
-src @endorlabs/engineering
+# Agent knowledge (authoring + shipped wheel copy)
+/agent-knowledge/ @endorlabs/engineering
+/src/endorlabs/agent_knowledge/ @endorlabs/engineering
 
-# Endor Technical Documentation owns documentation
-docs @tech-docs
+# Runtime SDK
+/src/ @endorlabs/engineering
+
+# Tests
+/tests/ @endorlabs/engineering
+
+# Documentation (user + contributor guides)
+/docs/ @endorlabs/technical-documentation
+/README.md @endorlabs/technical-documentation
+/CONTRIBUTORS.md @endorlabs/technical-documentation
+/AGENTS.md @endorlabs/engineering
