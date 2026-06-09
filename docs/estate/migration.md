@@ -49,3 +49,33 @@ uv run endor-estate analyze --namespace tenant.example.child --workspace .endorl
 ```
 
 Open `.endorlabs-context/workspace/tenant_example_child-20260608/viz/estate_dashboard.html`.
+
+## IR artifact renames (breaking)
+
+Re-run `endor-estate analyze --only graph,viz` after upgrading; old filenames and JSON keys are not read.
+
+| Old IR file | New IR file |
+|-------------|-------------|
+| `leiden_input.json` | `clustering_graph.json` |
+| `graph_partition.json` | `community_detection.json` |
+| `community_summary.json` | `community_profiles.json` |
+| `publisher_rankings.json` | `producer_rankings.json` |
+
+| Old schema ID | New schema ID |
+|---------------|---------------|
+| `endor.leiden_input.v1` | `endor.clustering_graph.v1` |
+| `endor.graph_partition.v1` | `endor.community_detection.v1` |
+| `endor.community_summary.v1` | `endor.community_profiles.v1` |
+| `endor.publisher_rankings.v1` | `endor.producer_rankings.v1` |
+
+Selected JSON field renames on compile graph artifacts:
+
+| Old | New |
+|-----|-----|
+| `source_id` / `target_id` | `importer_vertex_id` / `producer_vertex_id` |
+| `anchor_package_name` | `linking_package_name` |
+| `consumer_row_count` | `import_evidence_count` |
+| `publishers_with_consumers` | `producers_with_importers` |
+| `inbound_edge_count` | `inbound_import_count` |
+
+Phased CLI: `partition_graph` → `detect_communities`; flags `--partition-*` → `--community-*`.

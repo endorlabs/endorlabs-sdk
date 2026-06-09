@@ -1,4 +1,4 @@
-"""Post-build graph enrichment from session corpus and discover artifacts."""
+"""Post-build graph enrichment from workspace corpus and project artifacts."""
 
 from __future__ import annotations
 
@@ -15,10 +15,14 @@ from endorlabs.workflows.estate.collect.dependency_metadata import (
     load_dependency_metadata_records,
 )
 from endorlabs.workflows.estate.collect.projects import load_project_records
+from endorlabs.workflows.estate.contracts.ir_artifacts import (
+    CLUSTERING_GRAPH_IR,
+    CLUSTERING_GRAPH_SCHEMA,
+    COMPILE_DEPENDENCY_GRAPH_ENRICHED_IR,
+    COMPILE_DEPENDENCY_GRAPH_ENRICHED_SCHEMA,
+    COMPILE_DEPENDENCY_GRAPH_IR,
+)
 from endorlabs.workflows.estate.workspace.paths import ir_path
-
-COMPILE_DEPENDENCY_GRAPH_V2 = "endor.compile_dependency_graph.v2"
-LEIDEN_INPUT_SCHEMA = "endor.leiden_input.v1"
 
 
 @dataclass
@@ -26,7 +30,7 @@ class EnrichResult:
     """Outputs from enrich_graph phase."""
 
     enriched: dict[str, Any]
-    leiden_input: dict[str, Any]
+    clustering_graph: dict[str, Any]
 
 
 def _utc_now() -> str:
@@ -118,14 +122,14 @@ def _project_uuid_set(node: dict[str, Any]) -> set[str]:
 
 
 def enrich_graph(
-    flat_graph: dict[str, Any],
+    import_graph: dict[str, Any],
     *,
     discover_rows: list[dict[str, Any]],
     corpus_records: list[dict[str, Any]],
     cardinality_by_package: dict[str, int] | None = None,
     risk_by_package: dict[str, dict[str, Any]] | None = None,
 ) -> EnrichResult:
-    """Join corpus and discover metadata onto compile graph nodes and edges."""
+    """Join corpus and discover metadata onto compile-import graph nodes and edges."""
     cardinality_by_package = cardinality_by_package or {}
     risk_by_package = risk_by_package or {}
     discover_by_uuid = {str(r["uuid"]): r for r in discover_rows if r.get("uuid")}
@@ -134,10 +138,12 @@ def enrich_graph(
     for rec in corpus_records:
         corpus_by_project[str(rec.get("project_uuid", ""))].append(rec)
 
-    nodes = [dict(n) for n in flat_graph.get("nodes") or []]
-    edges = [dict(e) for e in flat_graph.get("edges") or []]
+    nodes = [dict(n) for n in import_graph.get("nodes") or []]
+    edges = [dict(e) for e in import_graph.get("edges") or []]
     node_by_id = {int(n["node_id"]): n for n in nodes if "node_id" in n}
-    edge_pairs = {(int(e["source_id"]), int(e["target_id"])) for e in edges}
+    edge_pairs = {
+        (int(e["importer_vertex_id"]), int(e["producer_vertex_id"])) for e in edges
+    }
 
     for node in nodes:
         uuids = _project_uuid_set(node)
@@ -202,20 +208,20 @@ def enrich_graph(
                 )
 
     for edge in edges:
-        sid = int(edge["source_id"])
-        tid = int(edge["target_id"])
-        anchor = str(edge.get("anchor_package_name") or "")
-        src = node_by_id.get(sid, {})
-        consumer_uuids = _project_uuid_set(src)
+        importer_id = int(edge["importer_vertex_id"])
+        producer_id = int(edge["producer_vertex_id"])
+        linking_pkg = str(edge.get("linking_package_name") or "")
+        importer_node = node_by_id.get(importer_id, {})
+        importer_uuids = _project_uuid_set(importer_node)
         versions: set[str] = set()
         scopes: set[str] = set()
         licenses: set[str] = set()
         row_count = 0
         oss_backed = False
-        for uid in consumer_uuids:
+        for uid in importer_uuids:
             for rec in corpus_by_project.get(uid, []):
                 dep = _dep_data(rec)
-                if str(dep.get("package_name") or "") != anchor:
+                if str(dep.get("package_name") or "") != linking_pkg:
                     continue
                 row_count += 1
                 ver = dep.get("resolved_version") or dep.get("unresolved_version")
@@ -235,19 +241,19 @@ def enrich_graph(
         edge["version_cardinality_on_edge"] = len(versions)
         edge["scopes"] = sorted(scopes)
         edge["license_spdx_ids"] = sorted(licenses)
-        edge["consumer_row_count"] = row_count
+        edge["import_evidence_count"] = row_count
         edge["oss_backed"] = oss_backed
-        edge["mutual_edge"] = (tid, sid) in edge_pairs
+        edge["mutual_edge"] = (producer_id, importer_id) in edge_pairs
 
     enriched = {
-        **flat_graph,
-        "schema": COMPILE_DEPENDENCY_GRAPH_V2,
+        **import_graph,
+        "schema": COMPILE_DEPENDENCY_GRAPH_ENRICHED_SCHEMA,
         "enriched_at": _utc_now(),
         "nodes": nodes,
         "edges": edges,
     }
 
-    leiden_nodes = [
+    cluster_vertices = [
         {
             "id": int(n["node_id"]),
             "name": n.get("name"),
@@ -258,25 +264,25 @@ def enrich_graph(
         }
         for n in nodes
     ]
-    leiden_edges = [
+    cluster_edges = [
         {
-            "source": int(e["source_id"]),
-            "target": int(e["target_id"]),
-            "weight": e.get("consumer_row_count") or 1,
-            "anchor_package_name": e.get("anchor_package_name"),
+            "importer": int(e["importer_vertex_id"]),
+            "producer": int(e["producer_vertex_id"]),
+            "import_evidence_count": e.get("import_evidence_count") or 1,
+            "linking_package_name": e.get("linking_package_name"),
         }
         for e in edges
     ]
-    leiden_input = {
-        "schema": LEIDEN_INPUT_SCHEMA,
-        "namespace": flat_graph.get("namespace"),
+    clustering_graph = {
+        "schema": CLUSTERING_GRAPH_SCHEMA,
+        "namespace": import_graph.get("namespace"),
         "generated_at": _utc_now(),
-        "node_count": len(leiden_nodes),
-        "edge_count": len(leiden_edges),
-        "nodes": leiden_nodes,
-        "edges": leiden_edges,
+        "node_count": len(cluster_vertices),
+        "edge_count": len(cluster_edges),
+        "nodes": cluster_vertices,
+        "edges": cluster_edges,
     }
-    return EnrichResult(enriched=enriched, leiden_input=leiden_input)
+    return EnrichResult(enriched=enriched, clustering_graph=clustering_graph)
 
 
 def run_enrich_graph_phase(
@@ -285,9 +291,15 @@ def run_enrich_graph_phase(
     cardinality_csv: Path | None = None,
     cardinality_json: Path | None = None,
     risk_cardinality_json: Path | None = None,
+    use_intermediate_representation: bool = True,
 ) -> EnrichResult:
-    graph_path = ir_path(workspace_root, "compile_dependency_graph.json")
-    flat = json.loads(graph_path.read_text(encoding="utf-8"))
+    def _artifact_path(name: str) -> Path:
+        if use_intermediate_representation:
+            return ir_path(workspace_root, name)
+        return workspace_root / name
+
+    graph_path = _artifact_path(COMPILE_DEPENDENCY_GRAPH_IR)
+    import_graph = json.loads(graph_path.read_text(encoding="utf-8"))
     projects = load_project_records(workspace_root)
     discover_rows: list[dict[str, Any]] = []
     for project in projects:
@@ -321,20 +333,20 @@ def run_enrich_graph_phase(
         if default_risk.is_file():
             risk_by_package = _load_risk_cardinality_json(default_risk)
     result = enrich_graph(
-        flat,
+        import_graph,
         discover_rows=discover_rows,
         corpus_records=dm_records,
         cardinality_by_package=cardinality or None,
         risk_by_package=risk_by_package or None,
     )
     write_json(
-        str(ir_path(workspace_root, "compile_dependency_graph_enriched.json")),
+        str(_artifact_path(COMPILE_DEPENDENCY_GRAPH_ENRICHED_IR)),
         result.enriched,
         base_dir=workspace_root,
     )
     write_json(
-        str(ir_path(workspace_root, "leiden_input.json")),
-        result.leiden_input,
+        str(_artifact_path(CLUSTERING_GRAPH_IR)),
+        result.clustering_graph,
         base_dir=workspace_root,
     )
     return result

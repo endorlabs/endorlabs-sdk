@@ -210,7 +210,7 @@ def aggregate_project_edges(
 def aggregate_package_anchored_edges(
     supporting: list[tuple[str, str, SupportingPackage]],
 ) -> list[dict[str, Any]]:
-    """One edge per (consumer, producer, anchor_package_name); strongest match kept."""
+    """One edge per (importer, producer, linking_package_name); strongest match kept."""
     best: dict[tuple[str, str, str], SupportingPackage] = {}
     for fr, to, sp in supporting:
         if fr == to or not sp.package_name:
@@ -227,7 +227,7 @@ def aggregate_package_anchored_edges(
             {
                 "from_project_uuid": u,
                 "to_project_uuid": v,
-                "anchor_package_name": anchor,
+                "linking_package_name": anchor,
                 "package_version": sp.package_version,
                 "match_tier": sp.evidence_tier,
                 "import_kind": sp.dependency_kind,
