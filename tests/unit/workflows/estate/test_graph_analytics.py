@@ -19,8 +19,16 @@ def _toy_graph() -> dict:
             {"node_id": 2, "name": "c", "in_degree": 1, "out_degree": 0},
         ],
         "edges": [
-            {"source_id": 0, "target_id": 1, "consumer_row_count": 2},
-            {"source_id": 1, "target_id": 2, "consumer_row_count": 1},
+            {
+                "importer_vertex_id": 0,
+                "producer_vertex_id": 1,
+                "import_evidence_count": 2,
+            },
+            {
+                "importer_vertex_id": 1,
+                "producer_vertex_id": 2,
+                "import_evidence_count": 1,
+            },
         ],
     }
 
