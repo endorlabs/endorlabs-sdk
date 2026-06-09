@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 83588dcb4a3a1850c0fe2809c3441db4052a1ace849031ee7ebce6e88bb3f65a
+x-endor-source-sha256: 46ecc0ef270744e16bee128fca7d018c3e4432c939bc903d864571a1a3fab35b
 ---
 
 # Workflow composition
@@ -52,7 +52,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.projects.resolve.resolve_project`
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
-- `endorlabs.workflows.analytics.export_version_cardinality_for_package_match`
+- `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_sweep`
 - `endorlabs.workflows.troubleshooting_scans` — `list_scan_results_for_project`, `resolve_project`, …
 - `endorlabs.tools.dependency_explorer` — hydration primitive; not a workflow orchestrator

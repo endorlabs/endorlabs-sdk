@@ -16,7 +16,7 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_artifacts_root
-from endorlabs.workflows.list_bounds import (
+from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     resolve_max_pages,
     truncation_message,

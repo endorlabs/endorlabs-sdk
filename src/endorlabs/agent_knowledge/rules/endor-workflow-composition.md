@@ -47,7 +47,7 @@ Generic entrypoints (no estate literals):
 - `endorlabs.workflows.projects.resolve.resolve_project`
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
-- `endorlabs.workflows.analytics.export_version_cardinality_for_package_match`
+- `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_sweep`
 - `endorlabs.workflows.troubleshooting_scans` — `list_scan_results_for_project`, `resolve_project`, …
 - `endorlabs.tools.dependency_explorer` — hydration primitive; not a workflow orchestrator

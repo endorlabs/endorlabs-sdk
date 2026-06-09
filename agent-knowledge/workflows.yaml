@@ -7,21 +7,9 @@ workflows:
     skill: null
     default_output: .endorlabs-context/
     agent_visible: true
-  - id: compile-dependency-graph
-    cli: endor-compile-dependency-graph
-    module: endorlabs.workflows.relationships.dependency_graph
-    skill: null
-    default_output: .endorlabs-context/session/<namespace>/
-    agent_visible: true
-  - id: graph-summarize
-    cli: endor-graph-summarize
-    module: endorlabs.workflows.relationships.summarize_session
-    skill: null
-    default_output: stdout or --json
-    agent_visible: true
   - id: collect-strategy-spike
-    cli: endor-collect-strategy-spike
-    module: endorlabs.workflows.relationships.collect_strategy_spike
+    cli: null
+    module: endorlabs.workflows.estate.collect.benchmark
     skill: null
     default_output: .endorlabs-context/workspace/sessions/<user>/exports/collect-strategy-spike/
     agent_visible: false

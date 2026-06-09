@@ -51,16 +51,16 @@ def test_agent_knowledge_manifest_structure() -> None:
         assert (package_dir / entry["path"]).is_file()
 
 
-def test_workflow_catalog_includes_compile_graph_without_skill() -> None:
+def test_workflow_catalog_includes_estate_session_with_skill() -> None:
     entries = json.loads(
         (agent_knowledge_dir() / "workflows" / "entries.json").read_text(
             encoding="utf-8"
         )
     )
-    row = next(e for e in entries if e["id"] == "compile-dependency-graph")
-    assert row["skill"] is None
+    row = next(e for e in entries if e["id"] == "estate-session")
+    assert row["skill"] == "endor-analytics-estate-dependencies"
     assert row["agent_visible"] is True
-    assert row["cli"] == "endor-compile-dependency-graph"
+    assert row["cli"] == "endor-estate"
 
 
 def test_agent_knowledge_manifest_path_matches_file() -> None:
