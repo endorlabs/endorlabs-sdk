@@ -51,10 +51,10 @@ Source repo: [`endorlabs/endorlabs-sdk`](https://github.com/endorlabs/endorlabs-
 | Extra     | Install                                | Enables                                                                               |
 | --------- | -------------------------------------- | ------------------------------------------------------------------------------------- |
 | `docs`    | `pip install 'endorlabs[docs]'`    | User-docs sync (`include_user_docs=True`); OpenAPI download works on the base install |
-| `tabular` | `pip install 'endorlabs[tabular]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow)               |
+| `analytics` | `pip install 'endorlabs[analytics]'` | `endorlabs.utils.tabular` DataFrame / Parquet export (pandas + pyarrow); estate graph metrics and community detection (igraph + leidenalg) |
 
 
-CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra docs --extra tabular`.
+CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra docs --extra analytics`.
 
 ## Configuration
 

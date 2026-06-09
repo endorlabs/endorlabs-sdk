@@ -44,7 +44,7 @@ project = client.Project.lookup(name="https://github.com/org/repo.git")
 
 Use `traverse=True` when the namespace is unknown or you need to search across all child namespaces.
 
-> **Agent note — duplicate projects:** The same repository URL may exist as **several** `Project` rows (different `tenant_meta.namespace`). `lookup` then raises **`AmbiguousError`**. Prefer `Project.list` with a filter on `meta.name` and `traverse=True`, then choose the row for the intended namespace, or call `get` / workflows with **project UUID** (and optional namespace). Universal summary: [AGENTS.md](../../AGENTS.md) (Agent notes: projects, findings, and workflows).
+> **Agent note — duplicate projects:** The same repository URL may exist as **several** `Project` rows (different `tenant_meta.namespace`). `lookup` then raises **`AmbiguousError`**. Prefer `Project.list` with a filter on `meta.name` and `traverse=True`, then choose the row for the intended namespace, or call `get` / workflows with **project UUID** (and optional namespace). Universal summary: [AGENTS.md](../../../AGENTS.md) (Agent notes: projects, findings, and workflows).
 
 ### Step 2: Get the Most Recent ScanResult
 
@@ -146,7 +146,7 @@ Findings are generated **per RepositoryVersion** (branch). A project with 2 scan
 | `spec.source_code_version.ref` | Branch name the finding came from (e.g. `refs/heads/main`) |
 | `context.scan_uuid` | UUID of the specific scan run |
 
-> **Agent note — `ref` shape:** In practice `spec.source_code_version.ref` may be a **short branch name** (e.g. `main`, `feature-branch`) rather than the full `refs/heads/...` string. Filters that assume only `refs/heads/main` can return **zero rows** while findings exist on another ref. Prefer `RepositoryVersion.list` for the project to see scanned refs, or list findings **without** a branch filter first, then narrow. See [AGENTS.md](../../AGENTS.md) (Agent notes).
+> **Agent note — `ref` shape:** In practice `spec.source_code_version.ref` may be a **short branch name** (e.g. `main`, `feature-branch`) rather than the full `refs/heads/...` string. Filters that assume only `refs/heads/main` can return **zero rows** while findings exist on another ref. Prefer `RepositoryVersion.list` for the project to see scanned refs, or list findings **without** a branch filter first, then narrow. See [AGENTS.md](../../../AGENTS.md) (Agent notes).
 
 **Deduplication strategies:**
 

@@ -4,9 +4,8 @@ Fetches PackageVersion BOMs, DependencyMetadata, and call graph data from
 the Endor Labs API and produces human-readable Markdown summaries alongside
 raw JSON artifacts.
 
-This module consolidates logic previously split across
-``.tmp/prove_dependency_tree_and_call_graph.py`` and
-``.tmp/explore/analyze_callgraph.py``.
+This module consolidates logic previously split across ad-hoc probe scripts for
+dependency trees and call graph analysis.
 
 Experimental: API may change without the same stability guarantees as the
 rest of the SDK.
