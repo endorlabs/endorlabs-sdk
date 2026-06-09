@@ -22,6 +22,12 @@ from typing import Any, Literal
 import endorlabs
 from endorlabs.core.exceptions import EndorAPIError
 from endorlabs.tools.dependency_explorer import parse_dep_name, write_json
+from endorlabs.workflows.estate.analyze.compile_graph.community_detection import (
+    CommunityDetectionOptions,
+    CommunityDetectionValidation,
+    detect_communities,
+    load_clustering_graph_input,
+)
 from endorlabs.workflows.estate.analyze.compile_graph.enrich import (
     run_enrich_graph_phase,
 )
@@ -44,6 +50,13 @@ from endorlabs.workflows.estate.collect.bounds import (
 from endorlabs.workflows.estate.collect.dependency_metadata import (
     dependency_metadata_record_from_row,
 )
+from endorlabs.workflows.estate.contracts.ir_artifacts import (
+    COMMUNITY_DETECTION_IR,
+    COMMUNITY_PROFILES_IR,
+    COMPILE_DEPENDENCY_GRAPH_SCHEMA,
+    PRODUCER_RANKINGS_IR,
+    PRODUCER_RANKINGS_SCHEMA,
+)
 from endorlabs.workflows.estate.filters.main_context import main_context_filter
 from endorlabs.workflows.estate.filters.masks import (
     DEP_METADATA_LIST_MASK,
@@ -61,15 +74,12 @@ PhaseName = Literal[
     "build_graph",
     "enrich_graph",
     "graph_analytics",
-    "partition_graph",
+    "detect_communities",
 ]
 
 RegistrationType = Literal["git_repository", "binary_component"]
 REGISTRATION_GIT: RegistrationType = "git_repository"
 REGISTRATION_BINARY: RegistrationType = "binary_component"
-
-COMPILE_DEPENDENCY_GRAPH_SCHEMA = "endor.compile_dependency_graph.v1"
-PUBLISHER_RANKINGS_SCHEMA = "endor.publisher_rankings.v1"
 GIT_URL_NAME_RE = re.compile(r"^(https?://|git@)", re.IGNORECASE)
 
 
@@ -242,28 +252,28 @@ def _merge_union_edges(
     for raw in aggregated_edges:
         fr = str(raw.get("from_project_uuid", ""))
         to = str(raw.get("to_project_uuid", ""))
-        anchor = str(raw.get("anchor_package_name") or "")
-        if not anchor or fr not in uuid_to_node or to not in uuid_to_node:
+        linking_pkg = str(raw.get("linking_package_name") or "")
+        if not linking_pkg or fr not in uuid_to_node or to not in uuid_to_node:
             continue
-        sid = uuid_to_node[fr]
-        tid = uuid_to_node[to]
-        if sid == tid:
+        importer_id = uuid_to_node[fr]
+        producer_id = uuid_to_node[to]
+        if importer_id == producer_id:
             continue
-        key = (sid, tid, anchor)
+        key = (importer_id, producer_id, linking_pkg)
         if key not in merged:
             merged[key] = {
-                "source_id": sid,
-                "target_id": tid,
-                "anchor_package_name": anchor,
-                "source_uuids": set(),
-                "target_uuids": set(),
+                "importer_vertex_id": importer_id,
+                "producer_vertex_id": producer_id,
+                "linking_package_name": linking_pkg,
+                "importer_uuids": set(),
+                "producer_uuids": set(),
                 "package_version": raw.get("package_version"),
                 "match_tier": raw.get("match_tier"),
                 "visibility": raw.get("visibility"),
             }
         row = merged[key]
-        row["source_uuids"].add(fr)
-        row["target_uuids"].add(to)
+        row["importer_uuids"].add(fr)
+        row["producer_uuids"].add(to)
         row["match_tier"] = _stronger_match_tier(
             row.get("match_tier"),
             raw.get("match_tier"),
@@ -273,17 +283,17 @@ def _merge_union_edges(
 
     edges: list[dict[str, Any]] = []
     for row in merged.values():
-        source_uuids = sorted(row["source_uuids"])
-        target_uuids = sorted(row["target_uuids"])
+        importer_uuids = sorted(row["importer_uuids"])
+        producer_uuids = sorted(row["producer_uuids"])
         edges.append(
             {
-                "source_id": row["source_id"],
-                "target_id": row["target_id"],
-                "source_uuid": source_uuids[0],
-                "target_uuid": target_uuids[0],
-                "source_uuids": source_uuids,
-                "target_uuids": target_uuids,
-                "anchor_package_name": row["anchor_package_name"],
+                "importer_vertex_id": row["importer_vertex_id"],
+                "producer_vertex_id": row["producer_vertex_id"],
+                "importer_uuid": importer_uuids[0],
+                "producer_uuid": producer_uuids[0],
+                "importer_uuids": importer_uuids,
+                "producer_uuids": producer_uuids,
+                "linking_package_name": row["linking_package_name"],
                 "package_version": row.get("package_version") or "",
                 "match_tier": row.get("match_tier"),
                 "import_kind": "direct",
@@ -322,27 +332,27 @@ def annotate_vertices(
         node["imported_by"] = []
 
     for edge in edges:
-        sid = int(edge["source_id"])
-        tid = int(edge["target_id"])
-        out_degree[sid] = out_degree.get(sid, 0) + 1
-        in_degree[tid] = in_degree.get(tid, 0) + 1
-        src = node_by_id.get(sid, {})
-        tgt = node_by_id.get(tid, {})
+        importer_id = int(edge["importer_vertex_id"])
+        producer_id = int(edge["producer_vertex_id"])
+        out_degree[importer_id] = out_degree.get(importer_id, 0) + 1
+        in_degree[producer_id] = in_degree.get(producer_id, 0) + 1
+        importer_node = node_by_id.get(importer_id, {})
+        producer_node = node_by_id.get(producer_id, {})
         entry = {
-            "anchor_package_name": edge.get("anchor_package_name"),
+            "linking_package_name": edge.get("linking_package_name"),
             "package_version": edge.get("package_version"),
-            "publisher_node_id": tid,
-            "publisher_name": tgt.get("name"),
+            "producer_vertex_id": producer_id,
+            "producer_name": producer_node.get("name"),
             "match_tier": edge.get("match_tier"),
             "visibility": edge.get("visibility"),
         }
-        src.setdefault("direct_imports", []).append(entry)
-        tgt.setdefault("imported_by", []).append(
+        importer_node.setdefault("direct_imports", []).append(entry)
+        producer_node.setdefault("imported_by", []).append(
             {
-                "anchor_package_name": edge.get("anchor_package_name"),
+                "linking_package_name": edge.get("linking_package_name"),
                 "package_version": edge.get("package_version"),
-                "consumer_node_id": sid,
-                "consumer_name": src.get("name"),
+                "importer_vertex_id": importer_id,
+                "importer_name": importer_node.get("name"),
                 "match_tier": edge.get("match_tier"),
                 "visibility": edge.get("visibility"),
             }
@@ -386,33 +396,35 @@ def aggregate_compile_dependency_edges(
     return aggregate_package_anchored_edges(supporting)
 
 
-def compute_publisher_rankings(
-    flat_graph: dict[str, Any],
+def compute_producer_rankings(
+    import_graph: dict[str, Any],
     *,
     top_n: int = 50,
 ) -> dict[str, Any]:
-    nodes = flat_graph.get("nodes") or []
-    edges = flat_graph.get("edges") or []
+    nodes = import_graph.get("nodes") or []
+    edges = import_graph.get("edges") or []
     node_by_id = {int(n["node_id"]): n for n in nodes if "node_id" in n}
 
-    inbound_edges: dict[int, int] = {}
-    consumer_nodes: dict[int, set[int]] = {}
-    anchor_names: dict[int, set[str]] = {}
+    inbound_imports: dict[int, int] = {}
+    importer_nodes: dict[int, set[int]] = {}
+    linking_packages: dict[int, set[str]] = {}
 
     for edge in edges:
-        sid = int(edge["source_id"])
-        tid = int(edge["target_id"])
-        inbound_edges[tid] = inbound_edges.get(tid, 0) + 1
-        consumer_nodes.setdefault(tid, set()).add(sid)
-        anchor = edge.get("anchor_package_name")
-        if anchor:
-            anchor_names.setdefault(tid, set()).add(str(anchor))
+        importer_id = int(edge["importer_vertex_id"])
+        producer_id = int(edge["producer_vertex_id"])
+        inbound_imports[producer_id] = inbound_imports.get(producer_id, 0) + 1
+        importer_nodes.setdefault(producer_id, set()).add(importer_id)
+        pkg = edge.get("linking_package_name")
+        if pkg:
+            linking_packages.setdefault(producer_id, set()).add(str(pkg))
 
-    sorted_targets = sorted(inbound_edges.items(), key=lambda item: (-item[1], item[0]))
+    sorted_producers = sorted(
+        inbound_imports.items(), key=lambda item: (-item[1], item[0])
+    )
     rankings: list[dict[str, Any]] = []
-    for rank, (nid, edge_count) in enumerate(sorted_targets[:top_n], start=1):
+    for rank, (nid, import_count) in enumerate(sorted_producers[:top_n], start=1):
         node = node_by_id.get(nid, {})
-        anchors = sorted(anchor_names.get(nid, set()))
+        pkgs = sorted(linking_packages.get(nid, set()))
         rankings.append(
             {
                 "rank": rank,
@@ -426,22 +438,22 @@ def compute_publisher_rankings(
                 "name": node.get("name"),
                 "namespace": node.get("namespace"),
                 "namespaces": node.get("namespaces") or [node.get("namespace")],
-                "consumer_count": len(consumer_nodes.get(nid, set())),
-                "inbound_edge_count": edge_count,
-                "sample_anchor_packages": anchors[:10],
-                "anchor_package_count": len(anchors),
+                "importer_count": len(importer_nodes.get(nid, set())),
+                "inbound_import_count": import_count,
+                "sample_linking_packages": pkgs[:10],
+                "linking_package_count": len(pkgs),
             }
         )
 
     return {
-        "schema": PUBLISHER_RANKINGS_SCHEMA,
-        "namespace": flat_graph.get("namespace"),
+        "schema": PRODUCER_RANKINGS_SCHEMA,
+        "namespace": import_graph.get("namespace"),
         "generated_at": _utc_now(),
         "total_nodes": len(nodes),
-        "isolated_count": flat_graph.get("isolated_count", 0),
-        "project_registration_count": flat_graph.get("project_registration_count"),
+        "isolated_count": import_graph.get("isolated_count", 0),
+        "project_registration_count": import_graph.get("project_registration_count"),
         "total_edges": len(edges),
-        "publishers_with_consumers": len(inbound_edges),
+        "producers_with_importers": len(inbound_imports),
         "top_n": top_n,
         "rankings": rankings,
     }
@@ -1173,273 +1185,17 @@ def _save_collected_direct_edges(
     )
 
 
-@dataclass(frozen=True, slots=True)
-class PartitionOptions:
-    """Leiden partition tuning knobs."""
-
-    resolution: float = 1.0
-    iterations: int = 10
-    weight_field: Literal["none", "consumer_row_count", "inbound_rank"] = "none"
-    component_min_size: int = 1
-    seed: int = 42
-
-
-def _partition_weights(
-    graph: dict[str, Any],
-    *,
-    weight_field: str,
-) -> list[float] | None:
-    if weight_field == "none":
-        return None
-    nodes = graph.get("nodes") or []
-    if weight_field == "inbound_rank":
-        in_deg = {int(n["node_id"]): int(n.get("in_degree") or 0) for n in nodes}
-        return [float(max(1, in_deg.get(i, 0))) for i in range(len(nodes))]
-    return None
-
-
-def _edge_weights_for_partition(
-    graph: dict[str, Any],
-    *,
-    weight_field: str,
-) -> list[float] | None:
-    if weight_field != "consumer_row_count":
-        return None
-    edges = graph.get("edges") or []
-    return [float(max(1, e.get("consumer_row_count") or 1)) for e in edges]
-
-
-def _build_community_summary(
-    graph: dict[str, Any],
-    communities: list[dict[str, Any]],
-) -> dict[str, Any]:
-    nodes = graph.get("nodes") or []
-    edges = graph.get("edges") or []
-    node_by_id = {int(n["node_id"]): n for n in nodes if "node_id" in n}
-    rows: list[dict[str, Any]] = []
-    for comm in communities:
-        node_ids = [int(i) for i in comm.get("node_ids") or []]
-        comm_nodes = [node_by_id[i] for i in node_ids if i in node_by_id]
-        namespaces: dict[str, int] = {}
-        tags: dict[str, int] = {}
-        anchors: dict[str, int] = {}
-        in_deg: dict[int, int] = {}
-        for edge in edges:
-            tid = int(edge.get("target_id", -1))
-            if tid in node_ids:
-                in_deg[tid] = in_deg.get(tid, 0) + 1
-                anchor = str(edge.get("anchor_package_name") or "")
-                if anchor:
-                    anchors[anchor] = anchors.get(anchor, 0) + 1
-        for node in comm_nodes:
-            for ns in node.get("namespaces") or [node.get("namespace")]:
-                if ns:
-                    namespaces[str(ns)] = namespaces.get(str(ns), 0) + 1
-            for tag in node.get("tags") or []:
-                tags[str(tag)] = tags.get(str(tag), 0) + 1
-        hub_ids = sorted(in_deg.items(), key=lambda x: (-x[1], x[0]))[:10]
-        rows.append(
-            {
-                "community_id": comm.get("community_id"),
-                "node_count": len(node_ids),
-                "edge_count": sum(
-                    1
-                    for e in edges
-                    if int(e.get("source_id", -1)) in node_ids
-                    and int(e.get("target_id", -1)) in node_ids
-                ),
-                "dominant_namespaces": sorted(
-                    namespaces.items(), key=lambda x: (-x[1], x[0])
-                )[:5],
-                "top_tags": sorted(tags.items(), key=lambda x: (-x[1], x[0]))[:5],
-                "top_anchor_packages": sorted(
-                    anchors.items(), key=lambda x: (-x[1], x[0])
-                )[:10],
-                "hub_node_ids": [i for i, _ in hub_ids],
-            }
-        )
-    return {
-        "schema": "endor.community_summary.v1",
-        "namespace": graph.get("namespace"),
-        "generated_at": _utc_now(),
-        "communities": rows,
-    }
-
-
-def _load_partition_graph_input(session_dir: Path) -> dict[str, Any]:
-    leiden_path = session_dir / "leiden_input.json"
-    if leiden_path.is_file():
-        leiden = json.loads(leiden_path.read_text(encoding="utf-8"))
-        nodes = []
-        for item in leiden.get("nodes") or []:
-            nodes.append(
-                {
-                    "node_id": item.get("id"),
-                    "project_uuid": item.get("name"),
-                    "name": item.get("name"),
-                }
-            )
-        edges = [
-            {
-                "source_id": e.get("source"),
-                "target_id": e.get("target"),
-                "anchor_package_name": e.get("anchor_package_name"),
-                "consumer_row_count": e.get("weight"),
-            }
-            for e in leiden.get("edges") or []
-        ]
-        enriched_path = session_dir / "compile_dependency_graph_enriched.json"
-        base = {}
-        if enriched_path.is_file():
-            base = json.loads(enriched_path.read_text(encoding="utf-8"))
-        return {
-            **base,
-            "namespace": leiden.get("namespace") or base.get("namespace"),
-            "nodes": base.get("nodes") or nodes,
-            "edges": base.get("edges") or edges,
-        }
-    graph_path = session_dir / "compile_dependency_graph_enriched.json"
-    if graph_path.is_file():
-        return json.loads(graph_path.read_text(encoding="utf-8"))
-    return json.loads(
-        (session_dir / "compile_dependency_graph.json").read_text(encoding="utf-8")
+def _community_validation_to_phase(
+    validation: CommunityDetectionValidation,
+) -> PhaseValidation:
+    return PhaseValidation(
+        phase="detect_communities",
+        ok=validation.ok,
+        checks=[
+            PhaseCheck(name=c.name, ok=c.ok, detail=c.detail) for c in validation.checks
+        ],
+        generated_at=validation.generated_at,
     )
-
-
-def run_graph_partition(
-    flat_graph: dict[str, Any],
-    *,
-    options: PartitionOptions | None = None,
-) -> tuple[dict[str, Any], PhaseValidation, dict[str, Any]]:
-    try:
-        import igraph as ig  # pyright: ignore[reportMissingTypeStubs]
-        import leidenalg  # pyright: ignore[reportMissingTypeStubs]
-    except ImportError:
-        validation = PhaseValidation(
-            phase="partition_graph",
-            ok=False,
-            checks=[
-                PhaseCheck(
-                    "igraph_leidenalg_installed",
-                    False,
-                    "Install optional extra: uv sync --extra graph",
-                )
-            ],
-            generated_at=_utc_now(),
-        )
-        return {}, validation, {}
-
-    opts = options or PartitionOptions()
-    nodes = flat_graph.get("nodes") or []
-    edges = flat_graph.get("edges") or []
-    n = len(nodes)
-    if n == 0:
-        validation = PhaseValidation(
-            phase="partition_graph",
-            ok=False,
-            checks=[PhaseCheck("node_count_gt_zero", False, "0 nodes")],
-            generated_at=_utc_now(),
-        )
-        return {}, validation, {}
-
-    graph_node_ids = [int(node["node_id"]) for node in nodes if "node_id" in node]
-    id_to_idx = {nid: i for i, nid in enumerate(graph_node_ids)}
-
-    g = ig.Graph(directed=True)
-    g.add_vertices(len(graph_node_ids))
-    e_pairs = []
-    edge_index_map: list[int] = []
-    for i, e in enumerate(edges):
-        sid = int(e["source_id"])
-        tid = int(e["target_id"])
-        if sid in id_to_idx and tid in id_to_idx:
-            e_pairs.append((id_to_idx[sid], id_to_idx[tid]))
-            edge_index_map.append(i)
-    if e_pairs:
-        g.add_edges(e_pairs)
-        ew = _edge_weights_for_partition(flat_graph, weight_field=opts.weight_field)
-        if ew is not None:
-            g.es["weight"] = [ew[i] for i in edge_index_map]
-
-    if opts.component_min_size > 1:
-        wcc = g.components(mode="weak")
-        largest = max(wcc, key=len)
-        if len(largest) < opts.component_min_size:
-            validation = PhaseValidation(
-                phase="partition_graph",
-                ok=False,
-                checks=[
-                    PhaseCheck(
-                        "largest_wcc_min_size",
-                        False,
-                        f"largest component size {len(largest)} < {opts.component_min_size}",
-                    )
-                ],
-                generated_at=_utc_now(),
-            )
-            return {}, validation, {}
-
-    vertex_weights = _partition_weights(flat_graph, weight_field=opts.weight_field)
-    partition = leidenalg.find_partition(
-        g,
-        leidenalg.RBConfigurationVertexPartition,
-        weights=vertex_weights,
-        resolution_parameter=opts.resolution,
-        n_iterations=opts.iterations,
-        seed=opts.seed,
-    )
-    membership = {graph_node_ids[i]: int(m) for i, m in enumerate(partition.membership)}
-    communities: dict[int, list[int]] = {}
-    for node_id, comm in membership.items():
-        communities.setdefault(comm, []).append(node_id)
-
-    id_to_uuid = {int(n["node_id"]): str(n.get("project_uuid") or "") for n in nodes}
-    community_rows = []
-    for comm_id, comm_node_ids in sorted(communities.items()):
-        uuids = [id_to_uuid[i] for i in sorted(comm_node_ids) if i in id_to_uuid]
-        community_rows.append(
-            {
-                "community_id": comm_id,
-                "node_ids": sorted(comm_node_ids),
-                "project_uuids": uuids,
-            }
-        )
-
-    payload = {
-        "algorithm": "leiden",
-        "schema": "endor.graph_partition.v1",
-        "seed": opts.seed,
-        "resolution": opts.resolution,
-        "iterations": opts.iterations,
-        "weight_field": opts.weight_field,
-        "generated_at": _utc_now(),
-        "node_count": len(graph_node_ids),
-        "edge_count": len(e_pairs),
-        "isolated_count": flat_graph.get("isolated_count", 0),
-        "community_count": len(community_rows),
-        "membership": {str(k): v for k, v in membership.items()},
-        "communities": community_rows,
-    }
-    community_summary = _build_community_summary(flat_graph, community_rows)
-    checks = [
-        PhaseCheck(
-            "partition_nonempty",
-            len(membership) == len(graph_node_ids),
-            f"{len(membership)} membership / {len(graph_node_ids)} nodes",
-        ),
-        PhaseCheck(
-            "community_count_gt_zero",
-            len(community_rows) > 0,
-            f"{len(community_rows)} communities",
-        ),
-    ]
-    validation = PhaseValidation(
-        phase="partition_graph",
-        ok=all(c.ok for c in checks),
-        checks=checks,
-        generated_at=_utc_now(),
-    )
-    return payload, validation, community_summary
 
 
 def run_dependency_graph_pipeline(
@@ -1452,7 +1208,7 @@ def run_dependency_graph_pipeline(
     dep_metadata_max_pages: int = 0,
     max_workers: int = 8,
     phases: set[PhaseName] | None = None,
-    partition_options: PartitionOptions | None = None,
+    community_detection_options: CommunityDetectionOptions | None = None,
     cardinality_csv: Path | None = None,
     risk_cardinality_json: Path | None = None,
     package_name_match: str | None = None,
@@ -1468,7 +1224,7 @@ def run_dependency_graph_pipeline(
         "build_graph",
         "enrich_graph",
         "graph_analytics",
-        "partition_graph",
+        "detect_communities",
     }
     out_dir = session_dir_for(context_dir, namespace)
     _configure_session_logging(out_dir)
@@ -1696,9 +1452,9 @@ def run_dependency_graph_pipeline(
 
                 def _edge_key(edge: dict[str, Any]) -> tuple[Any, Any, Any]:
                     return (
-                        edge.get("source_id"),
-                        edge.get("target_id"),
-                        edge.get("anchor_package_name"),
+                        edge.get("from_project_uuid"),
+                        edge.get("to_project_uuid"),
+                        edge.get("linking_package_name"),
                     )
 
                 merged = {_edge_key(e): e for e in prior}
@@ -1731,7 +1487,7 @@ def run_dependency_graph_pipeline(
                 published_by_project = {
                     str(k): v for k, v in raw_pub.items() if isinstance(v, list)
                 }
-        flat = build_graph_document(
+        import_graph = build_graph_document(
             namespace=namespace,
             projects=graph_project_rows,
             aggregated_edges=direct_edges,
@@ -1740,10 +1496,10 @@ def run_dependency_graph_pipeline(
         checks = [
             PhaseCheck(
                 "graph_built",
-                flat["node_count"] > 0,
+                import_graph["node_count"] > 0,
                 (
-                    f"{flat['edge_count']} edges, {flat['node_count']} nodes, "
-                    f"{flat['isolated_count']} isolated"
+                    f"{import_graph['edge_count']} edges, {import_graph['node_count']} nodes, "
+                    f"{import_graph['isolated_count']} isolated"
                 ),
             ),
         ]
@@ -1753,15 +1509,15 @@ def run_dependency_graph_pipeline(
             checks=checks,
             generated_at=_utc_now(),
         )
-        _write_phase(out_dir, "build_graph", flat, val)
+        _write_phase(out_dir, "build_graph", import_graph, val)
         write_json(
             str(out_dir / "compile_dependency_graph.json"),
-            flat,
+            import_graph,
             base_dir=out_dir,
         )
-        rankings = compute_publisher_rankings(flat)
+        rankings = compute_producer_rankings(import_graph)
         write_json(
-            str(out_dir / "publisher_rankings.json"),
+            str(out_dir / PRODUCER_RANKINGS_IR),
             rankings,
             base_dir=out_dir,
         )
@@ -1774,6 +1530,7 @@ def run_dependency_graph_pipeline(
             out_dir,
             cardinality_csv=cardinality_csv,
             risk_cardinality_json=risk_cardinality_json,
+            use_intermediate_representation=False,
         )
         checks = [
             PhaseCheck(
@@ -1833,22 +1590,25 @@ def run_dependency_graph_pipeline(
             val,
         )
 
-    if run_all or "partition_graph" in wanted:
+    if run_all or "detect_communities" in wanted:
         require_prior_phase(out_dir, "build_graph")
-        flat = _load_partition_graph_input(out_dir)
-        partition_payload, val, community_summary = run_graph_partition(
-            flat, options=partition_options
+        import_graph = load_clustering_graph_input(
+            out_dir, use_intermediate_representation=False
         )
-        _write_phase(out_dir, "partition_graph", partition_payload, val)
+        detection_payload, cd_val, profiles = detect_communities(
+            import_graph, options=community_detection_options
+        )
+        val = _community_validation_to_phase(cd_val)
+        _write_phase(out_dir, "detect_communities", detection_payload, val)
         if val.ok:
             write_json(
-                str(out_dir / "graph_partition.json"),
-                partition_payload,
+                str(out_dir / COMMUNITY_DETECTION_IR),
+                detection_payload,
                 base_dir=out_dir,
             )
             write_json(
-                str(out_dir / "community_summary.json"),
-                community_summary,
+                str(out_dir / COMMUNITY_PROFILES_IR),
+                profiles,
                 base_dir=out_dir,
             )
 
@@ -1864,7 +1624,7 @@ PHASE_CHOICES: tuple[str, ...] = (
     "build_graph",
     "enrich_graph",
     "graph_analytics",
-    "partition_graph",
+    "detect_communities",
 )
 
 
@@ -1919,28 +1679,34 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Parallel workers for per-project dependency fetch.",
     )
     p.add_argument(
-        "--partition-resolution",
+        "--community-resolution",
         type=float,
         default=1.0,
-        help="Leiden resolution_parameter (default 1.0).",
+        help="Community detection resolution/granularity (default 1.0).",
     )
     p.add_argument(
-        "--partition-iterations",
+        "--community-iterations",
         type=int,
         default=10,
-        help="Leiden n_iterations (default 10).",
+        help="Leiden refinement iterations (default 10).",
     )
     p.add_argument(
-        "--partition-weight-field",
-        choices=["none", "consumer_row_count", "inbound_rank"],
+        "--community-edge-weight",
+        choices=["none", "import_evidence_count"],
         default="none",
-        help="Edge/vertex weight source for Leiden.",
+        help="Edge weight source for community detection.",
     )
     p.add_argument(
-        "--partition-component-min-size",
+        "--community-vertex-weight",
+        choices=["none", "inbound_import_count"],
+        default="none",
+        help="Vertex weight source for community detection.",
+    )
+    p.add_argument(
+        "--community-min-component-size",
         type=int,
         default=1,
-        help="Skip Leiden when largest WCC is smaller than N.",
+        help="Skip detection when largest weak component is smaller than N.",
     )
     p.add_argument(
         "--cardinality-csv",
@@ -2000,11 +1766,12 @@ def main(argv: list[str] | None = None) -> int:
                 slug,
                 args.phase,
             )
-            partition_opts = PartitionOptions(
-                resolution=args.partition_resolution,
-                iterations=args.partition_iterations,
-                weight_field=args.partition_weight_field,
-                component_min_size=args.partition_component_min_size,
+            community_opts = CommunityDetectionOptions(
+                resolution=args.community_resolution,
+                iterations=args.community_iterations,
+                edge_weight_source=args.community_edge_weight,
+                vertex_weight_source=args.community_vertex_weight,
+                component_min_size=args.community_min_component_size,
             )
             cardinality_path = (
                 Path(args.cardinality_csv) if args.cardinality_csv else None
@@ -2021,14 +1788,14 @@ def main(argv: list[str] | None = None) -> int:
                 dep_metadata_max_pages=args.dep_metadata_max_pages,
                 max_workers=args.max_workers,
                 phases=phases,
-                partition_options=partition_opts,
+                community_detection_options=community_opts,
                 cardinality_csv=cardinality_path,
                 risk_cardinality_json=risk_cardinality_path,
                 package_name_match=args.package_name_match,
                 analytics_max_nodes=args.analytics_max_nodes,
                 retry_fetch_errors=args.retry_fetch_errors,
             )
-            final_phase = args.phase if args.phase != "all" else "partition_graph"
+            final_phase = args.phase if args.phase != "all" else "detect_communities"
             val_path = out / f"phase_{final_phase}_validation.json"
             if not val_path.is_file() and args.phase == "all":
                 for phase in reversed(PHASE_CHOICES):
