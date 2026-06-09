@@ -51,13 +51,13 @@ def test_agent_knowledge_manifest_structure() -> None:
         assert (package_dir / entry["path"]).is_file()
 
 
-def test_workflow_catalog_includes_estate_session_with_skill() -> None:
+def test_workflow_catalog_includes_estate_workspace_with_skill() -> None:
     entries = json.loads(
         (agent_knowledge_dir() / "workflows" / "entries.json").read_text(
             encoding="utf-8"
         )
     )
-    row = next(e for e in entries if e["id"] == "estate-session")
+    row = next(e for e in entries if e["id"] == "estate-workspace")
     assert row["skill"] == "endor-analytics-estate-dependencies"
     assert row["agent_visible"] is True
     assert row["cli"] == "endor-estate"
