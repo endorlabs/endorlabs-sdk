@@ -145,7 +145,8 @@ jobs:
           path: dist/
 
       - name: Publish to PyPI with attestations
-        uses: pypa/gh-action-pypi-publish@6733eb7d741f0b11ec6a39b58540dab7590f9b7d # v1.14.0
+        # PyPA publishes ghcr.io images for release/v1, not arbitrary commit SHAs.
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
 
