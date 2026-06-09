@@ -10,7 +10,7 @@ description: Fetch project call graph artifacts, decode zstd payloads into searc
 
 ## Purpose
 
-Turn raw call graph storage into **searchable, join-friendly JSON** (`decoded_callables.json`, `decoded_edges.json` when using `--decode-zstd`) and run **deterministic** node/edge/path queries. Use this skill when the task is symbol reachability, presence checks, or extracting graph facts for reasoning—not for listing scan findings (see [endor-retrieve-scan-results](retrieve-scan-results/SKILL.md)).
+Turn raw call graph storage into **searchable, join-friendly JSON** (`decoded_callables.json`, `decoded_edges.json` when using `--decode-zstd`) and run **deterministic** node/edge/path queries. Use this skill when the task is symbol reachability, presence checks, or extracting graph facts for reasoning—not for listing scan findings (see [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)).
 
 For full PV/finding reachability triage across customer and `oss` planes, prefer `uv run endor-reachability-context` first; use this skill as the graph-plane utility layer when you need focused symbol/path extraction from decoded artifacts.
 

@@ -27,7 +27,7 @@
 ## Python package moves
 
 - `pull_layers` → `collect_workspace`
-- `session_dir_for` → `workspace_dir_for`
+- `session_dir_for` → removed (use `workspace_dir_for`)
 - `load_corpus_records` → `load_dependency_metadata_records`
 - `endorlabs.workflows.estate.session.*` → `endorlabs.workflows.estate.workspace.*`
 

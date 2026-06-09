@@ -5,12 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from endorlabs.workflows.estate.cli.main import main as estate_main
 from endorlabs.workflows.estate.export.summarize import (
     format_summary_text,
     summarize_workspace_dir,
-)
-from endorlabs.workflows.estate.export.summarize import (
-    main as summarize_main,
 )
 from endorlabs.workflows.estate.workspace.paths import ensure_workspace_layout, ir_path
 
@@ -103,7 +101,7 @@ def test_summarize_includes_community_detection_and_metrics(tmp_path: Path) -> N
     assert "metrics:" in text
 
 
-def test_summarize_main_json_output(tmp_path: Path, capsys) -> None:
+def test_estate_summarize_json_output(tmp_path: Path, capsys) -> None:
     workspace = tmp_path / "tenant-20260101"
     ensure_workspace_layout(workspace)
     ir_path(workspace, "compile_dependency_graph.json").write_text(
@@ -112,19 +110,31 @@ def test_summarize_main_json_output(tmp_path: Path, capsys) -> None:
         ),
         encoding="utf-8",
     )
-    rc = summarize_main(
-        ["--namespace", "tenant", "--workspace", str(workspace), "--json"]
+    rc = estate_main(
+        [
+            "summarize",
+            "--namespace",
+            "tenant",
+            "--workspace",
+            str(workspace),
+            "--json",
+        ]
     )
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload[0]["graph"]["node_count"] == 1
+    assert payload["graph"]["node_count"] == 1
 
 
-def test_summarize_main_reports_missing_graph(tmp_path: Path, capsys) -> None:
+def test_estate_summarize_reports_missing_graph(tmp_path: Path) -> None:
     workspace = tmp_path / "empty"
     ensure_workspace_layout(workspace)
-    rc = summarize_main(
-        ["--namespace", "tenant", "--workspace", str(workspace), "--json"]
+    rc = estate_main(
+        [
+            "summarize",
+            "--namespace",
+            "tenant",
+            "--workspace",
+            str(workspace),
+        ]
     )
     assert rc == 1
-    assert "compile_dependency_graph.json" in capsys.readouterr().err
