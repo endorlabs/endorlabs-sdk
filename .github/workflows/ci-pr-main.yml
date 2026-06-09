@@ -472,6 +472,7 @@ jobs:
   # ---------------------------------------------------------------------------
   # Endor Labs CI security scans (OIDC keyless auth).
   # Fastest feedback first: secrets -> dependencies -> comprehensive SAST/AI SAST.
+  # Dependency scans use --quick-scan (no call graph) for faster CI on workflow/docs-only changes.
   # ---------------------------------------------------------------------------
   endorlabs-security-scan:
     name: Endor Labs Security Scan
@@ -535,6 +536,7 @@ jobs:
           scan_secrets: false
           scan_sast: false
           enable_pr_comments: false
+          additional_args: --quick-scan
 
       - name: Endor Labs comprehensive SAST + AI SAST scan
         uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
@@ -545,7 +547,7 @@ jobs:
           scan_dependencies: true
           scan_secrets: true
           scan_sast: true
-          additional_args: --ai-sast-analysis=agent-fallback
+          additional_args: --quick-scan --ai-sast-analysis=agent-fallback
           enable_pr_comments: false
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
