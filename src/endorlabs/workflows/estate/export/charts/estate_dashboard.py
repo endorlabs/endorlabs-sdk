@@ -202,8 +202,8 @@ def render_estate_dashboard_html(
   </header>
   <nav>
     <button type="button" class="tab active" data-tab="risk">Risk families</button>
-    <button type="button" class="tab" data-tab="graph">Graph overview</button>
-    <button type="button" class="tab" data-tab="bipartite">Bipartite hubs</button>
+    <button type="button" class="tab" data-tab="graph">Internal dependencies</button>
+    <button type="button" class="tab" data-tab="bipartite">Top importers and producers</button>
   </nav>
   <main>
     {risk_panel}

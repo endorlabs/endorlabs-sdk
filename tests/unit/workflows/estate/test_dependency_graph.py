@@ -10,7 +10,7 @@ from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     build_graph_document,
     build_union_nodes,
     classify_project_registrations,
-    compute_publisher_rankings,
+    compute_producer_rankings,
     filter_git_repositories,
     is_git_url_project_name,
     namespace_slug,
@@ -131,7 +131,7 @@ def test_package_anchored_edges_two_anchors() -> None:
     ]
     edges = aggregate_package_anchored_edges(supporting)
     assert len(edges) == 2
-    anchors = {e["anchor_package_name"] for e in edges}
+    anchors = {e["linking_package_name"] for e in edges}
     assert anchors == {"mvn://a", "mvn://b"}
     assert all(e["dependency_scope"] == "compile" for e in edges)
 
@@ -161,7 +161,7 @@ def test_build_graph_document_isolated_and_imports() -> None:
         {
             "from_project_uuid": "app",
             "to_project_uuid": "lib",
-            "anchor_package_name": "mvn://com.acme:lib",
+            "linking_package_name": "mvn://com.acme:lib",
             "package_version": "1.0",
             "match_tier": "tier_a_exact",
             "visibility": "private",
@@ -258,7 +258,7 @@ def test_build_union_nodes_merges_duplicate_git_urls() -> None:
     assert uuid_to_node["u1"] == uuid_to_node["u2"]
 
 
-def test_compute_publisher_rankings() -> None:
+def test_compute_producer_rankings() -> None:
     published = {
         "lib": [{"package_name": "mvn://x", "package_version_name": "mvn://x@1"}]
     }
@@ -288,41 +288,41 @@ def test_compute_publisher_rankings() -> None:
             {
                 "from_project_uuid": "a",
                 "to_project_uuid": "lib",
-                "anchor_package_name": "mvn://x",
+                "linking_package_name": "mvn://x",
                 "package_version": "1",
                 "match_tier": "tier_a_exact",
             },
             {
                 "from_project_uuid": "b",
                 "to_project_uuid": "lib",
-                "anchor_package_name": "mvn://x",
+                "linking_package_name": "mvn://x",
                 "package_version": "1",
                 "match_tier": "tier_a_exact",
             },
         ],
         published_by_project=published,
     )
-    rankings = compute_publisher_rankings(doc, top_n=5)
-    assert rankings["publishers_with_consumers"] == 1
+    rankings = compute_producer_rankings(doc, top_n=5)
+    assert rankings["producers_with_importers"] == 1
     top = rankings["rankings"][0]
-    assert top["consumer_count"] == 2
-    assert top["inbound_edge_count"] == 2
+    assert top["importer_count"] == 2
+    assert top["inbound_import_count"] == 2
 
 
 def test_main_context_filter() -> None:
     assert main_context_filter() == MAIN_CONTEXT_LIST_FILTER
 
 
-def test_run_graph_partition_membership_covers_all_nodes() -> None:
+def test_detect_communities_membership_covers_all_nodes() -> None:
     import pytest
 
     pytest.importorskip("igraph")
     pytest.importorskip("leidenalg")
-    from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
-        run_graph_partition,
+    from endorlabs.workflows.estate.analyze.compile_graph.community_detection import (
+        detect_communities,
     )
 
-    flat_graph = {
+    import_graph = {
         "namespace": "tenant.ns",
         "nodes": [
             {"node_id": 0, "project_uuid": "a", "namespace": "tenant.ns"},
@@ -330,16 +330,61 @@ def test_run_graph_partition_membership_covers_all_nodes() -> None:
             {"node_id": 2, "project_uuid": "c", "namespace": "tenant.ns"},
         ],
         "edges": [
-            {"source_id": 0, "target_id": 1, "anchor_package_name": "mvn://x"},
-            {"source_id": 1, "target_id": 2, "anchor_package_name": "mvn://y"},
+            {
+                "importer_vertex_id": 0,
+                "producer_vertex_id": 1,
+                "linking_package_name": "mvn://x",
+            },
+            {
+                "importer_vertex_id": 1,
+                "producer_vertex_id": 2,
+                "linking_package_name": "mvn://y",
+            },
         ],
         "isolated_count": 0,
     }
-    payload, validation, summary = run_graph_partition(flat_graph)
+    payload, validation, profiles = detect_communities(import_graph)
     assert validation.ok
     assert payload["node_count"] == 3
     assert len(payload["membership"]) == 3
-    assert len(summary.get("communities") or []) > 0
+    assert len(profiles.get("communities") or []) > 0
+
+
+def test_community_detection_edge_and_vertex_weights() -> None:
+    import pytest
+
+    pytest.importorskip("igraph")
+    pytest.importorskip("leidenalg")
+    from endorlabs.workflows.estate.analyze.compile_graph.community_detection import (
+        CommunityDetectionOptions,
+        detect_communities,
+    )
+
+    import_graph = {
+        "namespace": "tenant.ns",
+        "nodes": [
+            {"node_id": 0, "project_uuid": "a", "in_degree": 0},
+            {"node_id": 1, "project_uuid": "b", "in_degree": 2},
+        ],
+        "edges": [
+            {
+                "importer_vertex_id": 0,
+                "producer_vertex_id": 1,
+                "linking_package_name": "mvn://x",
+                "import_evidence_count": 5,
+            }
+        ],
+    }
+    payload, validation, _ = detect_communities(
+        import_graph,
+        options=CommunityDetectionOptions(
+            edge_weight_source="import_evidence_count",
+            vertex_weight_source="inbound_import_count",
+        ),
+    )
+    assert validation.ok
+    assert payload["edge_weight_source"] == "import_evidence_count"
+    assert payload["vertex_weight_source"] == "inbound_import_count"
 
 
 def test_annotate_vertices_published_packages_deduped() -> None:
