@@ -117,16 +117,6 @@ def _usage_rows_from_dependency_metadata(
     ]
 
 
-def _usage_rows_from_corpus_session(
-    corpus_session: Path,
-    estate_root: str,
-    package_key: str,
-) -> list[dict[str, Any]]:
-    return _usage_rows_from_dependency_metadata(
-        corpus_session, estate_root, package_key
-    )
-
-
 def _version_cardinality(usage_rows: list[dict[str, Any]]) -> int:
     versions: set[str] = set()
     for row in usage_rows:
@@ -180,8 +170,6 @@ def export_risk_ranked_version_cardinality(
     max_pages: int | None = None,
     max_workers: int = 16,
     findings_output: Path | None = None,
-    corpus_session: Path | None = None,
-    session: Path | None = None,
     risk_json_output: Path | None = None,
 ) -> RiskRankedCardinalityResult:
     """Rank estate packages by finding risk; drill into top-N version cardinality."""
@@ -192,8 +180,6 @@ def export_risk_ranked_version_cardinality(
         resolved_scorer = resolve_scorer(scorer)
     else:
         resolved_scorer = scorer
-
-    effective_corpus = corpus_session or session
 
     finding_result = collect_estate_findings(
         client,
@@ -225,26 +211,17 @@ def export_risk_ranked_version_cardinality(
 
     for summary in top_packages:
         dm_name = dm_package_name_for_key(summary.package_name)
-        if effective_corpus is not None:
-            usage_rows = _usage_rows_from_corpus_session(
-                effective_corpus,
+        try:
+            usage_rows = _collect_usage_for_package(
+                client,
                 estate_root,
                 summary.package_name,
+                page_size=page_size,
+                max_pages=max_pages,
             )
-        else:
-            try:
-                usage_rows = _collect_usage_for_package(
-                    client,
-                    estate_root,
-                    summary.package_name,
-                    page_size=page_size,
-                    max_pages=max_pages,
-                )
-            except Exception as exc:
-                warnings.append(
-                    f"{summary.package_name}: dependency usage failed: {exc}"
-                )
-                usage_rows = []
+        except Exception as exc:
+            warnings.append(f"{summary.package_name}: dependency usage failed: {exc}")
+            usage_rows = []
 
         version_risk = aggregate_family_findings_by_version(
             finding_result.findings,
@@ -522,28 +499,4 @@ def analyze_risk_cardinality_from_workspace(
             columns=list(RISK_VERSION_DETAIL_COLUMNS),
         ),
         document=document,
-    )
-
-
-def finalize_session_worksheet(
-    session_root: Path,
-    *,
-    estate_root: str,
-    result: RiskRankedCardinalityResult,
-    consumer_plan: Any,
-    findings_output: Path | None,
-    risk_json_output: Path | None,
-    top_n: int,
-    scorer_name: str,
-) -> None:
-    """No-op: legacy session worksheet removed in workspace refactor."""
-    del (
-        session_root,
-        estate_root,
-        result,
-        consumer_plan,
-        findings_output,
-        risk_json_output,
-        top_n,
-        scorer_name,
     )

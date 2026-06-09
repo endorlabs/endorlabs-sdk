@@ -23,7 +23,7 @@ Index for SDK-specific documentation.
 
 ## Analytics
 
-- [estate/README.md](estate/README.md) — Unified estate workflows (`endor-estate`): session layers, risk cardinality, compile graph.
+- [estate/README.md](estate/README.md) — Unified estate workflows (`endor-estate`): workspace pull/analyze, risk cardinality, compile graph.
 
 ## Guides
 

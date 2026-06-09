@@ -22,7 +22,7 @@ endorlabs:
 
 # Estate dependency workflows
 
-Unified CLI: **`endor-estate`** (`pull` | `analyze` | `summarize`).
+Unified CLI: **`endor-estate`** (`pull` | `analyze` | `summarize` | `export-version`).
 
 Workspace: `.endorlabs-context/workspace/<slug>-<YYYYMMDD>/` with `data/collect_manifest.json`.
 
@@ -63,7 +63,9 @@ from endorlabs.workflows.estate import (
 ## Single-package version drill (live API)
 
 ```bash
-uv run endor-estate analyze -n <estate_root> --only version --package-match jackson-databind
+uv run endor-estate export-version -n <estate_root> \
+  --package-name-match jackson-databind \
+  -o version_cardinality.csv
 ```
 
 Or library: `export_version_cardinality_for_package_match`.
