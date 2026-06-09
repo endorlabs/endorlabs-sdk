@@ -69,9 +69,9 @@ Pre-push hooks also run `--verify-upstream-only` and contract validation.
 
 ## When this is not enough
 
-- **New resource or facade behavior** → [endor-implement-sdk-resource](../endor-implement-sdk-resource/SKILL.md) and [docs/contributing/architecture.md](../../docs/contributing/architecture.md).
+- **New resource or facade behavior** → [endor-implement-sdk-resource](../endor-implement-sdk-resource/SKILL.md) and [docs/contributing/architecture.md](../../../docs/contributing/architecture.md).
 - **Runtime list/get/update failures** → [endor-troubleshoot-sdk](../endor-troubleshoot-sdk/SKILL.md).
-- **Contract/list validation on masked rows** → [docs/guides/consumer-ux-list-update.md](../../docs/guides/consumer-ux-list-update.md).
+- **Contract/list validation on masked rows** → [docs/guides/consumer-ux-list-update.md](../../../docs/guides/consumer-ux-list-update.md).
 
 ## Local endorctl upgrade (optional, for parity with UI/endorctl)
 
@@ -96,6 +96,6 @@ endorctl --version
 
 ## References
 
-- [docs/contributing/docs-drift-workflow.md](../../docs/contributing/docs-drift-workflow.md)
-- [devtools/sync/README.md](../../devtools/sync/README.md)
-- [AGENTS.md](../../AGENTS.md) — Model-sync drift enforcement
+- [docs/contributing/docs-drift-workflow.md](../../../docs/contributing/docs-drift-workflow.md)
+- [devtools/sync/README.md](../../../devtools/sync/README.md)
+- [AGENTS.md](../../../AGENTS.md) — Model-sync drift enforcement

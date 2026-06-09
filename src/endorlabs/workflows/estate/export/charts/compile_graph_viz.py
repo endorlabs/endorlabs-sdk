@@ -1,8 +1,7 @@
-"""Standalone HTML dashboard for compile-dependency graph session artifacts."""
+"""HTML panels for compile-dependency graph workspace IR artifacts."""
 
 from __future__ import annotations
 
-import argparse
 import html
 import json
 import re
@@ -16,7 +15,7 @@ from endorlabs.workflows.estate.contracts.ir_artifacts import (
     GRAPH_METRICS_IR,
     PRODUCER_RANKINGS_IR,
 )
-from endorlabs.workflows.estate.workspace.paths import ir_path, viz_path
+from endorlabs.workflows.estate.workspace.paths import ir_path
 
 TOP_IMPORTERS = 45
 TOP_PRODUCERS = 28
@@ -570,43 +569,3 @@ def export_compile_graph_viz(
     )
     output_path.write_text(document, encoding="utf-8")
     return output_path
-
-
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--context-dir", type=Path, default=".endorlabs-context")
-    parser.add_argument(
-        "--namespace", required=True, help="Session slug under session/"
-    )
-    parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--path-start", default=None)
-    parser.add_argument(
-        "--collapse-prefix",
-        action="append",
-        default=[],
-        metavar="PREFIX",
-    )
-    return parser.parse_args(argv)
-
-
-def main(argv: list[str] | None = None) -> int:
-    from endorlabs.workflows.estate.workspace.paths import workspace_dir_for
-
-    args = parse_args(argv)
-    workspace_root = workspace_dir_for(args.context_dir, args.namespace)
-    if not workspace_root.is_dir():
-        raise SystemExit(f"Workspace directory not found: {workspace_root}")
-    default_out = viz_path(workspace_root, "compile_graph_viz.html")
-    output = args.output or default_out
-    export_compile_graph_viz(
-        workspace_root,
-        output,
-        namespace_label=args.namespace,
-        collapse_prefixes=tuple(args.collapse_prefix or ()),
-    )
-    print(f"Wrote {output} ({output.stat().st_size // 1024} KB)")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

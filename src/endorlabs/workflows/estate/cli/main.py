@@ -129,7 +129,14 @@ def cmd_analyze(args: argparse.Namespace) -> int:
 
 def cmd_summarize(args: argparse.Namespace) -> int:
     workspace_root = _resolve_workspace(args)
-    summary = summarize_workspace_dir(workspace_root)
+    try:
+        summary = summarize_workspace_dir(
+            workspace_root,
+            namespace=args.namespace,
+        )
+    except FileNotFoundError as exc:
+        LOGGER.error("%s", exc)
+        return 1
     if args.json:
         print(json.dumps(summary, indent=2))
     else:
@@ -139,10 +146,43 @@ def cmd_summarize(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_export_version(args: argparse.Namespace) -> int:
+    from endorlabs.workflows.estate.analyze.cardinality.export import (
+        main as export_main,
+    )
+
+    argv: list[str] = []
+    if args.namespace:
+        argv.extend(["--namespace", args.namespace])
+    if args.output:
+        argv.extend(["--output", args.output])
+    if args.usage_detail_output:
+        argv.extend(["--usage-detail-output", args.usage_detail_output])
+    if args.max_pages is not None:
+        argv.extend(["--max-pages", str(args.max_pages)])
+    if args.page_size is not None:
+        argv.extend(["--page-size", str(args.page_size)])
+    if args.progress_batch is not None:
+        argv.extend(["--progress-batch", str(args.progress_batch)])
+    if args.max_project_workers is not None:
+        argv.extend(["--max-project-workers", str(args.max_project_workers)])
+    if args.request_timeout is not None:
+        argv.extend(["--request-timeout", str(args.request_timeout)])
+    if args.package_name_match:
+        argv.extend(["--package-name-match", args.package_name_match])
+    if args.exact_package_name:
+        argv.extend(["--exact-package-name", args.exact_package_name])
+    if args.remediation_cve:
+        argv.extend(["--remediation-cve", args.remediation_cve])
+    if args.remediation_output:
+        argv.extend(["--remediation-output", args.remediation_output])
+    return export_main(argv)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="endor-estate",
-        description="Estate workflows: pull data, analyze, summarize.",
+        description="Estate workflows: pull data, analyze, summarize, export-version.",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -177,6 +217,29 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_args(summarize)
     summarize.add_argument("--json", action="store_true")
     summarize.set_defaults(func=cmd_summarize)
+
+    export_version = sub.add_parser(
+        "export-version",
+        help="Live API version-cardinality export (grouped DependencyMetadata)",
+    )
+    export_version.add_argument(
+        "--namespace",
+        "-n",
+        default=os.environ.get("ENDOR_NAMESPACE"),
+        help="Estate root namespace",
+    )
+    export_version.add_argument("--output", "-o", help="Output CSV path")
+    export_version.add_argument("--usage-detail-output")
+    export_version.add_argument("--max-pages", type=int, default=None)
+    export_version.add_argument("--page-size", type=int, default=None)
+    export_version.add_argument("--progress-batch", type=int, default=None)
+    export_version.add_argument("--max-project-workers", type=int, default=None)
+    export_version.add_argument("--request-timeout", type=float, default=None)
+    export_version.add_argument("--package-name-match")
+    export_version.add_argument("--exact-package-name")
+    export_version.add_argument("--remediation-cve")
+    export_version.add_argument("--remediation-output")
+    export_version.set_defaults(func=cmd_export_version)
 
     return parser
 

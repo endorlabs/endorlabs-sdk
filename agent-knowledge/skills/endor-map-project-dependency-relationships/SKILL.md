@@ -60,10 +60,11 @@ This skill produces a **namespace-wide project graph** (three JSON files). It do
 For per-PV/finding function reachability proof across customer + `oss` call graph planes, use `endor-reachability-context`; this skill remains topology-only and does not produce stitched vulnerable-function paths.
 
 For an **estate-wide compile-dependency graph** (direct imports anchored on
-`package_name`, `isolated` nodes, phased session artifacts under
-`.endorlabs-context/session/<namespace>/`), see
-[docs/estate/compile-graph.md](../../../docs/estate/compile-graph.md)
-(`endor-estate analyze compile-graph` / `endorlabs.workflows.estate.analyze.compile_graph.pipeline`).
+`package_name`, `isolated` nodes, IR under
+`.endorlabs-context/workspace/<slug>-<YYYYMMDD>/intermediate-representation/`), use
+[endor-analytics-estate-dependencies](../endor-analytics-estate-dependencies/SKILL.md)
+and [docs/estate/compile-graph.md](../../../docs/estate/compile-graph.md)
+(`endor-estate pull` + `endor-estate analyze --only graph,viz`).
 
 ## Ordering
 
@@ -91,7 +92,7 @@ Three JSON files under `output_dir` (see [JSON outputs](#json-outputs-required) 
 - `max_pages` / `dep_metadata_max_pages` prevent unbounded namespace-wide listing. Do not set these to “fetch everything” without explicit approval.
 - Prefer the same `traverse=True` + namespace pattern documented here when listing from tenant root.
 
-> **Agent note — empty edges vs truncation:** Producer-side matching uses a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `direct_project_edge_count` is **0**, distinguish (a) **no consumer `DependencyMetadata`** rows / no overlapping producer coordinates from (b) **truncated PV listing** where a producer never entered the capped window. Raise caps only with user approval. Tenant-wide context: [AGENTS.md](../../AGENTS.md) (Agent notes — relationship map coverage).
+> **Agent note — empty edges vs truncation:** Producer-side matching uses a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `direct_project_edge_count` is **0**, distinguish (a) **no consumer `DependencyMetadata`** rows / no overlapping producer coordinates from (b) **truncated PV listing** where a producer never entered the capped window. Raise caps only with user approval. Tenant-wide context: [AGENTS.md](../../../AGENTS.md) (Agent notes — relationship map coverage).
 
 ## Documentation hops
 

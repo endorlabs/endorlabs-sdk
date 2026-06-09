@@ -386,17 +386,15 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+analytics = [
+    { name = "igraph" },
+    { name = "leidenalg" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+]
 docs = [
     { name = "beautifulsoup4" },
     { name = "markdownify" },
-]
-graph = [
-    { name = "igraph" },
-    { name = "leidenalg" },
-]
-tabular = [
-    { name = "pandas" },
-    { name = "pyarrow" },
 ]
 
 [package.dev-dependencies]
@@ -423,17 +421,17 @@ requires-dist = [
     { name = "beautifulsoup4", marker = "extra == 'docs'", specifier = "==4.14.3" },
     { name = "defusedxml", specifier = "==0.7.1" },
     { name = "httpx", specifier = "==0.28.1" },
-    { name = "igraph", marker = "extra == 'graph'", specifier = "==0.11.9" },
-    { name = "leidenalg", marker = "extra == 'graph'", specifier = "==0.10.2" },
+    { name = "igraph", marker = "extra == 'analytics'", specifier = "==0.11.9" },
+    { name = "leidenalg", marker = "extra == 'analytics'", specifier = "==0.10.2" },
     { name = "markdownify", marker = "extra == 'docs'", specifier = "==1.2.2" },
-    { name = "pandas", marker = "extra == 'tabular'", specifier = "==3.0.3" },
-    { name = "pyarrow", marker = "extra == 'tabular'", specifier = "==24.0.0" },
+    { name = "pandas", marker = "extra == 'analytics'", specifier = "==3.0.3" },
+    { name = "pyarrow", marker = "extra == 'analytics'", specifier = "==24.0.0" },
     { name = "pydantic", specifier = "==2.13.3" },
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "tenacity", specifier = "==9.1.4" },
     { name = "zstandard", specifier = "==0.25.0" },
 ]
-provides-extras = ["docs", "graph", "tabular"]
+provides-extras = ["analytics", "docs"]
 
 [package.metadata.requires-dev]
 dev = [
