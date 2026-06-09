@@ -11,6 +11,44 @@ from typing import Any
 from pydantic import AwareDatetime, BaseModel, Field
 
 
+class ADOBoardsConfigProjectConfig(BaseModel):
+    """
+    ProjectConfig specifies a single ADO project and work item associated.
+    """
+
+    child_work_item_type: str | None = None
+    """
+    Work item type to create as a child under the parent work item.
+    """
+    project_guid: str | None = None
+    """
+    ADO project GUID. Populated server-side during validation.
+    """
+    project_name: str
+    """
+    Project name in ADO.
+    """
+    tags: list[str] | None = None
+    """
+    The tags to apply to the ADO work item.
+    """
+    work_item_type: str
+    """
+    Work item type to create, e.g., "Bug", "Task", "Epic".
+    """
+
+
+class AuthConfigPAT(BaseModel):
+    """
+    PAT authenticates with ADO using a Personal Access Token.
+    """
+
+    token: str
+    """
+    The Personal Access Token required.
+    """
+
+
 class JIRAConfigCustomField(BaseModel):
     key: str
     value: str
@@ -37,6 +75,7 @@ class NotificationTargetActionActionType(StrEnum):
     - ACTION_TYPE_VANTA: ACTION_TYPE_VANTA indicates configuration of a Vanta plugin.
     - ACTION_TYPE_SLACK: ACTION_TYPE_SLACK indicates a Slack integration.
     - ACTION_TYPE_GITHUB_PR: ACTION_TYPE_GITHUB_PR indicates a GitHub PR action.
+    - ACTION_TYPE_ADO_BOARDS: ACTION_TYPE_ADO_BOARDS indicates an ADO board action.
     """
 
     ACTION_TYPE_UNSPECIFIED = 'ACTION_TYPE_UNSPECIFIED'
@@ -46,6 +85,7 @@ class NotificationTargetActionActionType(StrEnum):
     ACTION_TYPE_VANTA = 'ACTION_TYPE_VANTA'
     ACTION_TYPE_SLACK = 'ACTION_TYPE_SLACK'
     ACTION_TYPE_GITHUB_PR = 'ACTION_TYPE_GITHUB_PR'
+    ACTION_TYPE_ADO_BOARDS = 'ACTION_TYPE_ADO_BOARDS'
 
 
 class VantaConfigVantaAccessTokenAuth(BaseModel):
@@ -225,6 +265,33 @@ class GoogleprotobufAny(BaseModel):
 
     Schemes other than `http`, `https` (or the empty scheme) might be
     used with implementation specific semantics.
+    """
+
+
+class Project(BaseModel):
+    """
+    ProjectConfig specifies a single ADO project and work item associated.
+    """
+
+    child_work_item_type: str | None = None
+    """
+    Work item type to create as a child under the parent work item.
+    """
+    project_guid: str | None = None
+    """
+    ADO project GUID. Populated server-side during validation.
+    """
+    project_name: str
+    """
+    Project name in ADO.
+    """
+    tags: list[str] | None = None
+    """
+    The tags to apply to the ADO work item.
+    """
+    work_item_type: str
+    """
+    Work item type to create, e.g., "Bug", "Task", "Epic".
     """
 
 
@@ -579,6 +646,32 @@ class V1WebhookTemplate(BaseModel):
     """
 
 
+class ADOBoardsConfigAuthConfig(BaseModel):
+    """
+    AuthConfig holds the credentials used to authenticate with ADO.
+    """
+
+    pat: AuthConfigPAT | None = None
+    """
+    pat authenticates using a Personal Access Token.
+    """
+
+
+class ADOBoardsConfigUserConfig(BaseModel):
+    """
+    UserConfig holds org URL and auth provided directly by the user.
+    """
+
+    auth: ADOBoardsConfigAuthConfig
+    """
+    Authentication configuration for the ADO organization.
+    """
+    org_url: str
+    """
+    The URL of the ADO organization (e.g. https://dev.azure.com/myorg).
+    """
+
+
 class GroupResponseGroupData(BaseModel):
     """
     Information about objects matching the given key.
@@ -610,27 +703,23 @@ class GroupResponseGroupData(BaseModel):
     """
 
 
-class NotificationTargetNotificationTargetAction(BaseModel):
-    action_type: NotificationTargetActionActionType
+class V1ADOBoardsConfig(BaseModel):
     """
-    Indicates an action that needs to be taken in response to a policy violation.
-    For example, JIRA, Webhook, or an email notification.
+    ADOBoardsConfig configures Azure DevOps Boards as a notification action target.
     """
-    email_config: V1EMailConfig | None = None
-    exclude_endor_url: bool | None = None
+
+    installation_uuid: str | None = None
     """
-    Excludes the URL to access the Endor Labs app which provides the notification details.
+    UUID of the installation that provides ADO credentials.
     """
-    github_pr_config: V1GitHubPRConfig | None = None
-    jira_config: V1JIRAConfig | None = None
-    public: bool | None = None
+    projects: list[Project]
     """
-    Indicates if the action endpoint is public.
-    If the endpoint not public, then endorctl attempts to create the action as if the endpoint is running on-prem.
+    Projects to create work items in. At least one project must be specified.
     """
-    slack_config: V1SlackConfig | None = None
-    vanta_config: V1VantaConfig | None = None
-    webhook_config: V1WebhookConfig | None = None
+    user_config: ADOBoardsConfigUserConfig | None = None
+    """
+    Credentials provided directly by the user (org URL and PAT).
+    """
 
 
 class V1CustomTemplate(BaseModel):
@@ -659,6 +748,30 @@ class V1GroupResponse(BaseModel):
     for example, {"[{"key":"meta.kind","value":"Project"}]": {
     "aggregation_count": { "count": 1649 } } }.
     """
+
+
+class NotificationTargetNotificationTargetAction(BaseModel):
+    action_type: NotificationTargetActionActionType
+    """
+    Indicates an action that needs to be taken in response to a policy violation.
+    For example, JIRA, Webhook, or an email notification.
+    """
+    ado_boards_config: V1ADOBoardsConfig | None = None
+    email_config: V1EMailConfig | None = None
+    exclude_endor_url: bool | None = None
+    """
+    Excludes the URL to access the Endor Labs app which provides the notification details.
+    """
+    github_pr_config: V1GitHubPRConfig | None = None
+    jira_config: V1JIRAConfig | None = None
+    public: bool | None = None
+    """
+    Indicates if the action endpoint is public.
+    If the endpoint not public, then endorctl attempts to create the action as if the endpoint is running on-prem.
+    """
+    slack_config: V1SlackConfig | None = None
+    vanta_config: V1VantaConfig | None = None
+    webhook_config: V1WebhookConfig | None = None
 
 
 class V1NotificationTargetSpec(BaseModel):
