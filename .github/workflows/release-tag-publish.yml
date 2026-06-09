@@ -2,14 +2,13 @@ name: Release Tag Publish
 
 # Triggered when a PEP 440-compatible version tag is pushed
 # (e.g. v0.1.0, v1.0.0rc1). Dev-series anchors use v1.1.0.dev0 only—not v1.1.0.dev19.
+# Final release tags (vX.Y.Z) publish to PyPI via OIDC Trusted Publishing.
 # See docs/guides/pypi-publication-draft.md for tag policy and PyPI/TestPyPI rollout.
-# Builds the package, runs the quality gate, and creates a GitHub Release
-# with the wheel and sdist attached.
 
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -19,14 +18,38 @@ env:
   UV_VERSION: "0.9.3"
 
 jobs:
-  release:
-    name: Validate, Build, and Publish Release
+  classify:
+    name: Classify Release Tag
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_final_release: ${{ steps.version.outputs.is_final_release }}
+    steps:
+      - name: Classify tag version
+        id: version
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_final_release=true" >> "$GITHUB_OUTPUT"
+            echo "Final release tag: ${TAG} (${VERSION})"
+          else
+            echo "is_final_release=false" >> "$GITHUB_OUTPUT"
+            echo "Non-final tag (dev/pre-release): ${TAG} (${VERSION}) — publish skipped"
+          fi
+
+  build:
+    name: Validate, Build, and Attach Release
+    runs-on: ubuntu-latest
+    needs: classify
+    if: needs.classify.outputs.is_final_release == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          fetch-depth: 0  # full history for hatch-vcs version derivation
+          fetch-depth: 0
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
@@ -36,10 +59,12 @@ jobs:
 
       - name: Set release version from tag
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#v}"
+          VERSION="${{ needs.classify.outputs.version }}"
           echo "SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION}" >> "$GITHUB_ENV"
           echo "Release version: ${VERSION}"
+
+      - name: Verify hatch-vcs version resolution
+        run: uv run python devtools/check_vcs_version.py
 
       - name: Run quality gate
         run: |
@@ -86,10 +111,15 @@ jobs:
       - name: Build package
         run: uv build
 
-      - name: Verify build artifacts
-        run: |
-          echo "Build artifacts:"
-          ls -la dist/
+      - name: Verify distribution metadata
+        run: uv run twine check dist/*
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
@@ -97,8 +127,65 @@ jobs:
           files: dist/*
           generate_release_notes: true
 
+  publish-pypi:
+    name: Publish to PyPI (OIDC)
+    runs-on: ubuntu-latest
+    needs: [classify, build]
+    if: needs.classify.outputs.is_final_release == 'true'
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI with attestations
+        uses: pypa/gh-action-pypi-publish@6733eb7d741f0b11ec6a39b58540dab7590f9b7d # v1.14.0
+        with:
+          verbose: true
+
+  post-release-bump:
+    name: Push Next Dev Anchor Tag
+    runs-on: ubuntu-latest
+    needs: [classify, publish-pypi]
+    if: >-
+      needs.classify.outputs.is_final_release == 'true' &&
+      needs.publish-pypi.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Push next dev anchor tag
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.classify.outputs.version }}"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          NEXT_PATCH=$((PATCH + 1))
+          NEXT_TAG="v${MAJOR}.${MINOR}.${NEXT_PATCH}.dev0"
+          if git rev-parse "$NEXT_TAG" >/dev/null 2>&1; then
+            echo "Dev anchor tag ${NEXT_TAG} already exists; skipping"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$NEXT_TAG" -m "Dev anchor after release v${VERSION}"
+          git push origin "$NEXT_TAG"
+          echo "Pushed dev anchor tag: ${NEXT_TAG}"
+
+  release-summary:
+    name: Publish Release Summary
+    runs-on: ubuntu-latest
+    needs: [classify, build, publish-pypi, post-release-bump]
+    if: always()
+    steps:
       - name: Publish release summary
-        if: always()
         run: |
           {
             echo "## Release Summary"
@@ -111,12 +198,18 @@ jobs:
             echo "### Outcome Matrix"
             echo "| Signal | Value |"
             echo "|---|---|"
-            echo "| Job status | \`${{ job.status }}\` |"
-            echo "| Release trigger tag | \`${{ github.ref_name }}\` |"
+            echo "| Tag | \`${{ github.ref_name }}\` |"
+            echo "| Version | \`${{ needs.classify.outputs.version }}\` |"
+            echo "| Final release | \`${{ needs.classify.outputs.is_final_release }}\` |"
+            echo "| Build | \`${{ needs.build.result }}\` |"
+            echo "| PyPI publish | \`${{ needs.publish-pypi.result }}\` |"
+            echo "| Dev anchor bump | \`${{ needs.post-release-bump.result }}\` |"
             echo ""
-            echo "### Skips/Reasons"
-            echo "- This workflow runs only for \`v*\` tag pushes."
-            echo ""
-            echo "### Next Action"
-            echo "- Confirm release assets and signature verification in the GitHub release page."
+            if [ "${{ needs.classify.outputs.is_final_release }}" != "true" ]; then
+              echo "### Skips"
+              echo "- Non-final tags skip build, PyPI publish, GitHub Release, and dev-anchor bump."
+            else
+              echo "### Next Action"
+              echo "- Confirm GitHub Release assets and PyPI provenance on the project page."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
