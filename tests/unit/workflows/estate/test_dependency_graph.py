@@ -69,13 +69,12 @@ def test_filter_git_repositories_legacy_split() -> None:
     assert binary_rows[0]["registration_type"] == REGISTRATION_BINARY
 
 
-def test_run_filter_git_repositories_validation() -> None:
+def test_run_filter_git_repositories_returns_classified() -> None:
     rows = [
         {"uuid": "g1", "name": "https://github.com/a", "namespace": "ns"},
         {"uuid": "b1", "name": "binary-dist_lib-1.0", "namespace": "ns"},
     ]
-    graph_projects, counts, val = run_filter_git_repositories(rows)
-    assert val.ok
+    graph_projects, counts = run_filter_git_repositories(rows)
     assert len(graph_projects) == 2
     assert counts[REGISTRATION_GIT] == 1
     assert counts[REGISTRATION_BINARY] == 1

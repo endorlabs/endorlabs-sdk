@@ -11,7 +11,7 @@ Example::
     table = export_records(rows, include=("uuid", "meta", "spec"))
     write_table(table, "findings.csv")
 
-    # Optional: pip install 'endorlabs[tabular]'
+    # Optional: pip install 'endorlabs[analytics]'
     # df = table.to_dataframe()
 """
 
@@ -27,8 +27,8 @@ from typing import Any
 from pydantic import BaseModel
 
 _TABULAR_INSTALL_HINT = (
-    "Install tabular extras for DataFrame/Parquet support: "
-    "pip install 'endorlabs[tabular]'"
+    "Install analytics extras for DataFrame/Parquet support: "
+    "pip install 'endorlabs[analytics]'"
 )
 
 
@@ -167,7 +167,7 @@ class TabularExport:
         return len(self.rows)
 
     def to_dataframe(self, *, columns: Sequence[str] | None = None) -> Any:
-        """Build a pandas ``DataFrame`` (requires ``endorlabs[tabular]``)."""
+        """Build a pandas ``DataFrame`` (requires ``endorlabs[analytics]``)."""
         try:
             import pandas as pd  # pyright: ignore[reportMissingTypeStubs]
         except ImportError as e:

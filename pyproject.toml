@@ -1,7 +1,7 @@
 [project]
 name = "endorlabs"
 dynamic = ["version"]
-description = "Endor Labs SDK — deploys Cursor/Anthropic skills with APIs to administer, operate, and scan with Endor Labs tooling"
+description = "Type-safe Python SDK for the Endor Labs REST API — resource facades, operational workflows, and optional agent-context bootstrap"
 authors = [
     { name = "Tim Gowan", email = "tgowan@endor.ai" }
 ]
@@ -25,41 +25,60 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# User-docs sync (include_user_docs=True in init/endor-context)
 docs = [
     "beautifulsoup4==4.14.3",
     "markdownify==1.2.2",
 ]
-tabular = [
+# DataFrame/Parquet export (utils.tabular) + estate graph metrics (igraph/leidenalg)
+analytics = [
     "pandas==3.0.3",
     "pyarrow==24.0.0",
-]
-graph = [
     "igraph==0.11.9",
     "leidenalg==0.10.2",
 ]
+
 [project.scripts]
+# Bootstrap / agent context
 endor-context = "endorlabs.context.cli:main"
 endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
-endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
+# Estate analytics
+endor-estate = "endorlabs.workflows.estate.cli.main:main"
+# Security and analysis workflows
 endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
-endor-estate = "endorlabs.workflows.estate.cli.main:main"
+endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
 Repository = "https://github.com/endorlabs/endorlabs-sdk"
-Documentation = "https://docs.endorlabs.com/"
+Documentation = "https://docs.endorlabs.com/"  # Endor Labs platform docs; SDK docs in repo README
 Issues = "https://github.com/endorlabs/endorlabs-sdk/issues"
+
+[dependency-groups]
+dev = [
+    "jsonschema==4.26.0",
+    "pytest==9.0.3",
+    "pytest-cov==7.0.0",
+    "ruff==0.14.14",
+    "pyright==1.1.408",
+    "pre-commit==4.5.1",
+    "rich==14.3.2",
+    # Docs-sync deps for unit tests (mirrors [project.optional-dependencies.docs])
+    "beautifulsoup4==4.14.3",
+    "markdownify==1.2.2",
+    # Analytics deps for unit tests (mirrors [project.optional-dependencies.analytics])
+    "pandas==3.0.3",
+    "pyarrow==24.0.0",
+    "igraph==0.11.9",
+    "leidenalg==0.10.2",
+    "datamodel-code-generator==0.55.0",
+    "hatch>=1.14.0",
+]
 
 [build-system]
 requires = ["hatchling==1.28.0", "hatch-vcs"]
 build-backend = "hatchling.build"
-
-[[tool.uv.index]]
-name = "testpypi"
-url = "https://test.pypi.org/simple/"
-publish-url = "https://test.pypi.org/legacy/"
-explicit = true
 
 [tool.hatch.version]
 source = "vcs"
@@ -85,29 +104,50 @@ version-file = "src/endorlabs/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/endorlabs"]
-artifacts = ["src/endorlabs/py.typed"] # Adds marker file to package
+artifacts = ["src/endorlabs/py.typed"]  # PEP 561 marker for typed package
 
-[dependency-groups]
-dev = [
-    "jsonschema==4.26.0",
-    "pytest==9.0.3",
-    "pytest-cov==7.0.0",
-    "ruff==0.14.14",
-    "pyright==1.1.408",
-    "pre-commit==4.5.1",
-    "rich==14.3.2",
-    # Docs-sync deps for unit tests (mirrors [project.optional-dependencies.docs])
-    "beautifulsoup4==4.14.3",
-    "markdownify==1.2.2",
-    # Tabular deps for unit tests (mirrors [project.optional-dependencies.tabular])
-    "pandas==3.0.3",
-    "pyarrow==24.0.0",
-    # Graph deps for unit tests (mirrors [project.optional-dependencies.graph])
-    "igraph==0.11.9",
-    "leidenalg==0.10.2",
-    "datamodel-code-generator==0.55.0",
-    "hatch>=1.14.0",
+# Maintainer publish target only (explicit index; not used for default uv sync).
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/integration"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-ra",
+    "-W default"
 ]
+markers = [
+    "integration: marks tests as integration tests",
+    "writes: marks tests that perform create/update/delete (write operations) against the API",
+    "long: marks long-running integration tests (excluded in CI; run locally with pytest -m long)",
+    "interactive: marks browser OAuth / manual token capture (excluded in CI; run locally with pytest -m interactive)",
+]
+
+[tool.coverage.report]
+fail_under = 70
+omit = [
+    "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
+    "src/endorlabs/generated/*",  # OpenAPI-generated artifacts; validated via contract quality gates
+    "src/endorlabs/workflows/estate/collect/benchmark.py",  # Local collect-strategy spike; not shipped workflow
+]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@overload",
+]
+
+[tool.codespell]
+skip = ".git,.venv,*.lock,*.json,.endorlabs-context,src/endorlabs/generated"
+ignore-words-list = "endor,endorlabs"
 
 [tool.ruff]
 line-length = 88
@@ -263,13 +303,11 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/resources/finding.py" = ["F811", "S105"]  # TenantMeta duplicate; INVALID_SECRET/VALID_SECRET enum
 "src/endorlabs/resources/package_license.py" = ["ARG001"]
 # --- Utils: intentional patterns ---
-".github/scripts/model_consistency.py" = ["S310"]  # URL open for spec download
 ".github/scripts/endor_ci_fetch_scan_findings.py" = ["T201"]  # CI helper; stderr progress
 ".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
 ".github/scripts/endor_scan_findings.py" = ["C901"]  # layered location extraction
 ".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic
 "devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
-"devtools/run_phased_compile_graph.py" = ["T201", "D103", "S603", "S607", "E501"]  # maintainer CLI
 "devtools/run_without_endor_token.py" = ["D103", "S603"]  # maintainer env wrapper
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
 # --- Workflows: library contracts strict; CLI stdout intentional ---
@@ -287,8 +325,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/workflows/estate/analyze/graph_metrics/analytics.py" = ["D103", "E501"]
 "src/endorlabs/workflows/estate/analyze/compile_graph/enrich.py" = ["D103", "C901", "PLW2901", "E501"]
 "src/endorlabs/workflows/estate/collect/benchmark.py" = ["E501", "D103", "ARG001"]
-"src/endorlabs/workflows/sharded_collect.py" = ["UP047"]
-"src/endorlabs/workflows/list_bounds.py" = ["E501"]
 "src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
@@ -298,94 +334,76 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
 "tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT017", "PT018", "RUF100", "SIM117"]
-# --- Agent: broadly relaxed (langgraph types) ---
-"src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
 # --- Context CLI: command-line printing is intentional ---
 "src/endorlabs/context/cli.py" = ["T20"]
 # --- Tools: dependency explorer ---
 "src/endorlabs/tools/**" = ["C901", "SLF001", "S108"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-[tool.pytest.ini_options]
-testpaths = ["tests/unit", "tests/integration"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "--strict-markers",
-    "--strict-config",
-    "-ra",
-    "-W default"
-]
-markers = [
-    "integration: marks tests as integration tests",
-    "writes: marks tests that perform create/update/delete (write operations) against the API",
-    "long: marks long-running integration tests (excluded in CI; run locally with pytest -m long)",
-    "interactive: marks browser OAuth / manual token capture (excluded in CI; run locally with pytest -m interactive)",
-]
-
-[tool.coverage.report]
-fail_under = 70
-omit = [
-    "src/endorlabs/auth_server.py",  # Browser-interactive; cannot be meaningfully covered in CI
-    "src/endorlabs/generated/*",  # OpenAPI-generated artifacts; validated via contract quality gates
-    "src/endorlabs/agent/*",  # Optional extras package validated separately
-    "src/endorlabs/workflows/estate/collect/benchmark.py",  # Local collect-strategy spike; not shipped workflow
-]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "raise NotImplementedError",
-    "@overload",
-]
-
-[tool.codespell]
-skip = ".git,.venv,*.lock,*.json,.endorlabs-context,src/endorlabs/generated"
-ignore-words-list = "endor,endorlabs"
-
 [tool.pyright]
 pythonVersion = "3.13"
 pythonPlatform = "All"
 typeCheckingMode = "standard"
 
-# Developer-facing surface: strict mode (all strict-only rules apply).
-strict = [
-  "src/endorlabs/__init__.py",
-  "src/endorlabs/client_surface.py",
-  "src/endorlabs/facade.py",
-  "src/endorlabs/api_client.py",
-  "src/endorlabs/core/exceptions.py",
-  "src/endorlabs/core/filter.py",
-  "src/endorlabs/core/types.py",
+# ============================================================================
+# Include/Exclude Patterns
+# ============================================================================
+# Note: exclude patterns should match [tool.ruff] exclude for consistency
+include = ["src", "tests"]
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "env",
+    "ENV",
+    "env.bak",
+    "venv.bak",
+    ".vscode",
+    ".idea",
+    ".pytest_cache",
+    "**/.pytest_cache",
+    ".tox",
+    ".nox",
+    ".ruff_cache",
+    "**/.ruff_cache",
+    "src/endorlabs/generated",
+    "src/endorlabs/generated/**",
+    "src/endorlabs/generated/models",
+    "src/endorlabs/generated/models/**",
+    "devtools",
+    "devtools/**",
+    "src/endorlabs/agent_knowledge/skills",
+    "src/endorlabs/agent_knowledge/skills/**",
+    ".github/scripts",
+    ".github/scripts/**",
+    "*.log",
+    "*.md",
+    "__pycache__",
+    "**/__pycache__",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "build",
+    "dist",
+    "*.egg-info",
+    "**/*.egg-info",
+    ".coverage",
+    "**/.coverage",
+    "coverage.xml",
+    "**/coverage.xml",
+    ".hypothesis",
+    "**/.hypothesis",
+    ".DS_Store",
+    "Thumbs.db",
+    "**/node_modules",  # Pyright-specific
+    ".tmp",
+    ".tmp/**",
 ]
-
-# More specific roots first (first match wins). Internal modules use relaxed
-# unknown-type rules so we focus on public API type quality.
-executionEnvironments = [
-    { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
-    { root = "src/endorlabs/agent/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportMissingTypeStubs = "none", reportUnusedCallResult = "none" },
-    { root = "src/endorlabs/agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportPossiblyUnboundVariable = "none", reportUnnecessaryTypeIgnoreComment = "none", reportMissingImports = "none", reportAttributeAccessIssue = "none", reportConstantRedefinition = "none", reportMissingSuperCall = "none" },
-    # Estate workflows: staged typing (migrated analytics + relationships modules).
-    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
-    # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
-    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
-    { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
-    { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
-    { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
-    { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
-    { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
-    { root = "src/endorlabs/generated/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportMissingTypeArgument = "none", reportAttributeAccessIssue = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportUnnecessaryTypeIgnoreComment = "none" },
-    # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
-    { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
-    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", "devtools", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
-    { root = "src", pythonVersion = "3.13" },
-]
-
-# Note: stubPath set when Client stub is added (Phase 4). venvPath, venv omitted for portability.
 
 # ============================================================================
 # Import & Visibility Configuration
@@ -480,63 +498,35 @@ reportConstantRedefinition = "error"         # Catch constant redefinitions
 reportDeprecated = "error"                   # Catch deprecated API usage
 reportIncompleteStub = "warning"             # For future stubs
 reportImplicitOverride = "error"             # Require @override on overrides (3.12+; 3.13 enforced)
-
-# ============================================================================
-# Type Narrowing for Union Types
-# ============================================================================
 reportImplicitStringConcatenation = "none"  # Allow multi-line strings (for docstrings)
 
-# ============================================================================
-# Include/Exclude Patterns
-# ============================================================================
-# Note: exclude patterns should match [tool.ruff] exclude for consistency
-include = ["src", "tests"]
-exclude = [
-    ".git",
-    ".venv",
-    "venv",
-    "env",
-    "ENV",
-    "env.bak",
-    "venv.bak",
-    ".vscode",
-    ".idea",
-    ".pytest_cache",
-    "**/.pytest_cache",
-    ".tox",
-    ".nox",
-    ".ruff_cache",
-    "**/.ruff_cache",
-    "src/endorlabs/generated",
-    "src/endorlabs/generated/**",
-    "src/endorlabs/generated/models",
-    "src/endorlabs/generated/models/**",
-    "devtools",
-    "devtools/**",
-    "src/endorlabs/agent_knowledge/skills",
-    "src/endorlabs/agent_knowledge/skills/**",
-    ".github/scripts",
-    ".github/scripts/**",
-    "*.log",
-    "*.md",
-    "__pycache__",
-    "**/__pycache__",
-    "*.pyc",
-    "*.pyo",
-    "*.pyd",
-    "build",
-    "dist",
-    "*.egg-info",
-    "**/*.egg-info",
-    ".coverage",
-    "**/.coverage",
-    "coverage.xml",
-    "**/coverage.xml",
-    ".hypothesis",
-    "**/.hypothesis",
-    ".DS_Store",
-    "Thumbs.db",
-    "**/node_modules",  # Pyright-specific
-    ".tmp",
-    ".tmp/**",
+# Developer-facing surface: strict mode (all strict-only rules apply).
+strict = [
+  "src/endorlabs/__init__.py",
+  "src/endorlabs/client_surface.py",
+  "src/endorlabs/facade.py",
+  "src/endorlabs/api_client.py",
+  "src/endorlabs/core/exceptions.py",
+  "src/endorlabs/core/filter.py",
+  "src/endorlabs/core/types.py",
+]
+
+# Per-root overrides (more specific roots first; first match wins).
+# client_surface.pyi supplies the typed Client stub; venvPath omitted for portability.
+executionEnvironments = [
+    { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
+    # Estate workflows: staged typing (migrated analytics + relationships modules).
+    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
+    { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
+    { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
+    { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
+    { root = "src/endorlabs/generated/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportMissingTypeArgument = "none", reportAttributeAccessIssue = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportUnnecessaryTypeIgnoreComment = "none" },
+    # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
+    { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
+    { root = "tests", pythonVersion = "3.13", extraPaths = ["src", ".", "devtools", ".github/scripts"], reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportUninitializedInstanceVariable = "none", reportAttributeAccessIssue = "none", reportMissingParameterType = "none", reportUnusedCallResult = "none", reportReturnType = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportPrivateUsage = "none", reportOperatorIssue = "none", reportMissingTypeArgument = "none" },
+    { root = "src", pythonVersion = "3.13" },
 ]

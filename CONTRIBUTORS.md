@@ -120,7 +120,7 @@ Upstream alignment uses **local pre-push hooks** and **CI**, not a bot workflow:
   - `model-sync-contract-validate` — contract quality unit gate
 - **CI** (`.github/workflows/ci-pr-main.yml`):
   - same upstream verify on the lint job
-  - ephemeral `model_sync.py` generation for lint/tests (artifact shared across jobs)
+  - full `model_sync.py` generation in the dedicated generate-model-sync job (validates live OpenAPI regen succeeds)
 
 When verify fails locally or in CI, regenerate and commit in your PR:
 
@@ -131,10 +131,6 @@ uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-re
 See [devtools/sync/README.md](devtools/sync/README.md) and [docs/contributing/docs-drift-workflow.md](docs/contributing/docs-drift-workflow.md).
 
 Optional version check (local or cron): `.github/scripts/check_endorctl_version.py`
-
-## Optional: direnv
-
-If you use [direnv](https://direnv.net/), run `direnv allow` in the repo root. [.envrc](.envrc) loads the uv virtual environment and sources `.env` when you enter the directory.
 
 ## Consumer API style (SDK UX)
 
@@ -150,8 +146,8 @@ For full IDE context (OpenAPI spec + user docs from docs.endorlabs.com), create 
 
 ```bash
 uv sync --extra docs
-# optional: DataFrame / Parquet tabular export tests
-uv sync --extra tabular
+# optional: DataFrame / Parquet export and estate graph analytics tests
+uv sync --extra analytics
 ```
 
 ```python

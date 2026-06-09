@@ -29,7 +29,7 @@ Prefer these before assuming `lookup`, `main`, or full-tenant sweeps. Shipped bo
 | ---- | -------------- | ----- | --------- | ----------- | ----- |
 | Compile graph collect | [`estate/collect/runner.py`](src/endorlabs/workflows/estate/collect/runner.py) | Per-project DM + workers | `spec.importer_data.project_uuid` | **Yes** | `endor-estate pull` → `data/`; `--resume` via `collect_manifest.json` |
 | Relationship map | [`estate/analyze/project_map/map.py`](src/endorlabs/workflows/estate/analyze/project_map/map.py) | Per-project DM + `--max-workers` (default 16) | `spec.importer_data.project_uuid` | **Yes** | Uses [`estate/collect/shards.py`](src/endorlabs/workflows/estate/collect/shards.py) |
-| Estate cardinality | [`estate/collect/dependency_metadata.py`](src/endorlabs/workflows/estate/collect/dependency_metadata.py) | Corpus rollup from `data/dependency_metadata.jsonl` | — | **No** | Default `endor-estate analyze`; live API only for `--package-match` drill |
+| Estate cardinality | [`estate/analyze/cardinality/export.py`](src/endorlabs/workflows/estate/analyze/cardinality/export.py) | Corpus rollup from `data/dependency_metadata.jsonl` | — | **No** | Default `endor-estate analyze`; live API via `endor-estate export-version` |
 | Tenant traverse | `Client.*.list(traverse=True, concurrent=True)` | Per **child namespace** | namespace path | **Yes** | [`execute_across_namespaces`](src/endorlabs/utils/parallel.py) — not per-project |
 | Scan RCA (all projects) | [`fetch_scan_results.py`](src/endorlabs/workflows/troubleshooting_scans/fetch_scan_results.py) | Per-project `ScanResult` + `--max-workers` (default 8) | `meta.parent_uuid` | **Yes** | Server-side parent filter; still O(projects) — prefer `--project-uuid` for RCA |
 | Scan error search | [`search_scan_errors.py`](src/endorlabs/workflows/troubleshooting_scans/search_scan_errors.py) | Per-project scan logs + `--max-workers` (default 8) | `project_uuid` | **Yes** | Same sharded pattern when `--all-projects` |
@@ -78,7 +78,7 @@ After materialization, read **INDEX.md** → **MANIFEST.json** → `skills/<id>/
 
 ### Fresh-clone bootstrap (this repo)
 
-1. `uv sync --extra docs --extra tabular` as needed
+1. `uv sync --extra docs --extra analytics` as needed
 2. Credentials in `.env` — API keys or `uv run --env-file .env python devtools/refresh_token_to_dotenv.py` (`ENDOR_AUTH_METHOD`, `--admin`, `--sso`, `-n`)
 3. Verify: `uv run --env-file .env python -c "import endorlabs; print(endorlabs.Client().whoami())"`
 4. Optional full mirror: `endorlabs.init(include_openapi=True, include_user_docs=True)`
