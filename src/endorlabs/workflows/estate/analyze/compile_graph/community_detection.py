@@ -216,7 +216,7 @@ def detect_communities(
                 CommunityDetectionCheck(
                     "igraph_leidenalg_installed",
                     False,
-                    "Install optional extra: uv sync --extra graph",
+                    "Install optional extra: uv sync --extra analytics",
                 )
             ],
             generated_at=_utc_now(),
