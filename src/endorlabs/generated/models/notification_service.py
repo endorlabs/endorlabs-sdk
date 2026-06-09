@@ -102,6 +102,7 @@ class NotificationTargetActionActionType(StrEnum):
     - ACTION_TYPE_VANTA: ACTION_TYPE_VANTA indicates configuration of a Vanta plugin.
     - ACTION_TYPE_SLACK: ACTION_TYPE_SLACK indicates a Slack integration.
     - ACTION_TYPE_GITHUB_PR: ACTION_TYPE_GITHUB_PR indicates a GitHub PR action.
+    - ACTION_TYPE_ADO_BOARDS: ACTION_TYPE_ADO_BOARDS indicates an ADO board action.
     """
 
     ACTION_TYPE_UNSPECIFIED = 'ACTION_TYPE_UNSPECIFIED'
@@ -111,6 +112,7 @@ class NotificationTargetActionActionType(StrEnum):
     ACTION_TYPE_VANTA = 'ACTION_TYPE_VANTA'
     ACTION_TYPE_SLACK = 'ACTION_TYPE_SLACK'
     ACTION_TYPE_GITHUB_PR = 'ACTION_TYPE_GITHUB_PR'
+    ACTION_TYPE_ADO_BOARDS = 'ACTION_TYPE_ADO_BOARDS'
 
 
 class PolicyPolicyType(StrEnum):
