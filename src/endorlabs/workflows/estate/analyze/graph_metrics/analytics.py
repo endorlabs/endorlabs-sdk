@@ -47,11 +47,11 @@ def _build_igraph(graph: dict[str, Any]) -> Any:
     e_pairs = []
     weights = []
     for edge in edges:
-        sid = int(edge["source_id"])
-        tid = int(edge["target_id"])
-        if sid in id_to_idx and tid in id_to_idx:
-            e_pairs.append((id_to_idx[sid], id_to_idx[tid]))
-            weights.append(float(edge.get("consumer_row_count") or 1))
+        importer_id = int(edge["importer_vertex_id"])
+        producer_id = int(edge["producer_vertex_id"])
+        if importer_id in id_to_idx and producer_id in id_to_idx:
+            e_pairs.append((id_to_idx[importer_id], id_to_idx[producer_id]))
+            weights.append(float(edge.get("import_evidence_count") or 1))
     if e_pairs:
         g.add_edges(e_pairs)
         g.es["weight"] = weights

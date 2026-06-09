@@ -14,41 +14,41 @@ from endorlabs.workflows.estate.workspace.paths import ensure_workspace_layout, 
 
 def _write_min_workspace(workspace_root: Path) -> None:
     ensure_workspace_layout(workspace_root)
-    ir_path(workspace_root, "leiden_input.json").write_text(
+    ir_path(workspace_root, "clustering_graph.json").write_text(
         json.dumps(
             {
                 "nodes": [
-                    {"id": 0, "name": "https://github.com/acme/consumer"},
-                    {"id": 1, "name": "https://github.com/acme/publisher"},
+                    {"id": 0, "name": "https://github.com/acme/importer"},
+                    {"id": 1, "name": "https://github.com/acme/producer"},
                 ],
                 "edges": [
                     {
-                        "source": 0,
-                        "target": 1,
-                        "anchor_package_name": "maven:com.example:lib",
-                        "weight": 3,
+                        "importer": 0,
+                        "producer": 1,
+                        "linking_package_name": "maven:com.example:lib",
+                        "import_evidence_count": 3,
                     }
                 ],
             }
         ),
         encoding="utf-8",
     )
-    ir_path(workspace_root, "publisher_rankings.json").write_text(
+    ir_path(workspace_root, "producer_rankings.json").write_text(
         json.dumps(
             {
                 "total_nodes": 2,
-                "publishers_with_consumers": 1,
+                "producers_with_importers": 1,
                 "rankings": [
                     {
-                        "name": "https://github.com/acme/publisher",
-                        "inbound_edge_count": 1,
+                        "name": "https://github.com/acme/producer",
+                        "inbound_import_count": 1,
                     }
                 ],
             }
         ),
         encoding="utf-8",
     )
-    ir_path(workspace_root, "community_summary.json").write_text(
+    ir_path(workspace_root, "community_profiles.json").write_text(
         json.dumps(
             {
                 "communities": [
@@ -56,7 +56,7 @@ def _write_min_workspace(workspace_root: Path) -> None:
                         "node_count": 2,
                         "edge_count": 1,
                         "dominant_namespaces": [["tenant.child", 2]],
-                        "top_anchor_packages": [["maven:com.example:lib", 1]],
+                        "top_linking_packages": [["maven:com.example:lib", 1]],
                     }
                 ]
             }
@@ -70,8 +70,8 @@ def test_render_compile_graph_viz_html(tmp_path: Path) -> None:
     _write_min_workspace(workspace)
     html_doc = render_compile_graph_viz_html(workspace, namespace_label="tenant")
     assert "Compile-dependency graph" in html_doc
-    assert "Largest Leiden communities" in html_doc
-    assert "acme/consumer" in html_doc
+    assert "Repo groups (shared compile dependencies)" in html_doc
+    assert "acme/importer" in html_doc
     assert "Longest chain" not in html_doc
 
 
