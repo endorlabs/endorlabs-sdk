@@ -14,7 +14,10 @@ from typing import Any
 
 import endorlabs
 from endorlabs.core.types import ListParameters
-from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
+from endorlabs.workflows.estate.collect.bounds import (
+    is_list_truncated,
+    resolve_max_pages,
+)
 
 from .common import (
     date_window_from_bounds,

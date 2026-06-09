@@ -7,7 +7,10 @@ from typing import Any
 import endorlabs
 from endorlabs import F
 from endorlabs.core.exceptions import NotFoundError
-from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
+from endorlabs.workflows.estate.collect.bounds import (
+    is_list_truncated,
+    resolve_max_pages,
+)
 
 
 def is_hex_project_id(value: str) -> bool:

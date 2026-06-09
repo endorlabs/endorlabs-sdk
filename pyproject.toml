@@ -43,10 +43,7 @@ endor-agent-context = "endorlabs.workflows.agent_context.cli:cli_main"
 endor-semgrep-inventory = "endorlabs.workflows.semgrep.inventory:main"
 endor-callgraph-search = "endorlabs.workflows.callgraph.search:main"
 endor-reachability-context = "endorlabs.workflows.reachability.cli:main"
-endor-analytics-export-deps = "endorlabs.workflows.analytics.cli:cli_main"
-endor-compile-dependency-graph = "endorlabs.workflows.relationships.dependency_graph:main"
-endor-graph-summarize = "endorlabs.workflows.relationships.summarize_session:main"
-endor-collect-strategy-spike = "endorlabs.workflows.relationships.collect_strategy_spike:main"
+endor-estate = "endorlabs.workflows.estate.cli.main:main"
 
 [project.urls]
 Homepage = "https://github.com/endorlabs/endorlabs-sdk"
@@ -283,11 +280,13 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/workflows/semgrep/inventory.py" = ["T201"]
 "src/endorlabs/workflows/agent_context/export.py" = ["T201", "C901"]  # CLI main orchestration
 "src/endorlabs/workflows/reachability/context.py" = ["C901"]  # build_reachability_context aggregation
-"src/endorlabs/workflows/relationships/dependency_graph.py" = ["C901", "D", "E501", "PERF401"]  # phased pipeline orchestration
-"src/endorlabs/workflows/relationships/summarize_session.py" = ["T201", "D103", "PERF401"]
-"src/endorlabs/workflows/relationships/graph_analytics.py" = ["D103", "E501"]
-"src/endorlabs/workflows/relationships/graph_enrich.py" = ["D103", "C901", "PLW2901", "E501"]
-"src/endorlabs/workflows/relationships/collect_strategy_spike.py" = ["E501", "D103", "ARG001"]
+# Estate workflows: migrated analytics + relationships; staged docstring/line-length ratchet.
+"src/endorlabs/workflows/estate/**" = ["D", "E501", "PERF401", "ARG001", "PLW2901", "SIM117", "C901", "UP047", "T201", "RUF001"]
+"src/endorlabs/workflows/estate/analyze/compile_graph/pipeline.py" = ["C901", "D", "E501", "PERF401"]  # phased pipeline orchestration
+"src/endorlabs/workflows/estate/export/summarize.py" = ["T201", "D103", "PERF401"]
+"src/endorlabs/workflows/estate/analyze/graph_metrics/analytics.py" = ["D103", "E501"]
+"src/endorlabs/workflows/estate/analyze/compile_graph/enrich.py" = ["D103", "C901", "PLW2901", "E501"]
+"src/endorlabs/workflows/estate/collect/benchmark.py" = ["E501", "D103", "ARG001"]
 "src/endorlabs/workflows/sharded_collect.py" = ["UP047"]
 "src/endorlabs/workflows/list_bounds.py" = ["E501"]
 "src/endorlabs/workflows/troubleshooting_scans/summarize_scan_triage.py" = ["C901"]  # markdown builder
@@ -298,7 +297,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter"]  # API field names
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
 # --- Tests: broadly relaxed ---
-"tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT018", "RUF100"]
+"tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT017", "PT018", "RUF100", "SIM117"]
 # --- Agent: broadly relaxed (langgraph types) ---
 "src/endorlabs/agent/**" = ["ANN", "D", "ARG001", "PERF401", "S", "TRY", "RET", "ERA", "A", "DTZ", "PLC", "PLE", "PLW", "FURB", "FLY", "PIE", "C901"]
 # --- Context CLI: command-line printing is intentional ---
@@ -369,6 +368,8 @@ executionEnvironments = [
     { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     { root = "src/endorlabs/agent/langgraph_agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportMissingImports = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportUntypedFunctionDecorator = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportMissingTypeStubs = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/agent", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportPossiblyUnboundVariable = "none", reportUnnecessaryTypeIgnoreComment = "none", reportMissingImports = "none", reportAttributeAccessIssue = "none", reportConstantRedefinition = "none", reportMissingSuperCall = "none" },
+    # Estate workflows: staged typing (migrated analytics + relationships modules).
+    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
     { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },

@@ -987,7 +987,10 @@ def retrieve_dep_metadata_full(
     Returns ``(rows, source_namespace, truncated)``.
     """
     from endorlabs.operations import validate_namespace
-    from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
+    from endorlabs.workflows.estate.collect.bounds import (
+        is_list_truncated,
+        resolve_max_pages,
+    )
 
     resolved_pages = resolve_max_pages(max_pages)
     for ns in [project_namespace, "oss"]:

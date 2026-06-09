@@ -25,7 +25,7 @@ Return JSON artifacts only.
 
 ## CLI
 
-- `python -m endorlabs.workflows.relationships.map`
+- `python -m endorlabs.workflows.estate.analyze.project_map.map`
   - Namespace-wide relationship graph extractor.
   - Requires **`--tenant`** and **`--namespace`**. Lists `Project` and `PackageVersion` with `traverse=True` from the given namespace; lists `DependencyMetadata` per project filtered to `spec.importer_data.project_uuid` (when exposed on the model).
   - Writes:
@@ -36,7 +36,7 @@ Return JSON artifacts only.
 Example:
 
 ```bash
-uv run --env-file .env python -m endorlabs.workflows.relationships.map \
+uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.map \
   --tenant "<endor_or_auth_tenant>" \
   --namespace "<tenant.namespace>" \
   --max-depth 3 \
@@ -55,8 +55,8 @@ For per-PV/finding function reachability proof across customer + `oss` call grap
 For an **estate-wide compile-dependency graph** (direct imports anchored on
 `package_name`, `isolated` nodes, phased session artifacts under
 `.endorlabs-context/session/<namespace>/`), see
-[docs/analytics/compile-dependency-graph.md](../../../docs/analytics/compile-dependency-graph.md)
-(`endor-compile-dependency-graph` / `python -m endorlabs.workflows.relationships.dependency_graph`).
+[docs/estate/compile-graph.md](../../../docs/estate/compile-graph.md)
+(`endor-estate analyze compile-graph` / `endorlabs.workflows.estate.analyze.compile_graph.pipeline`).
 
 ## Ordering
 
