@@ -28,7 +28,7 @@ _PHASES = (
     "build_graph",
     "enrich_graph",
     "graph_analytics",
-    "partition_graph",
+    "detect_communities",
 )
 
 
@@ -46,7 +46,7 @@ def _parse_args() -> argparse.Namespace:
         "--to-phase",
         choices=_PHASES,
         default=_PHASES[-1],
-        help="Last phase to run (default: partition_graph)",
+        help="Last phase to run (default: detect_communities)",
     )
     p.add_argument("--env-file", type=Path, default=Path(".env"))
     p.add_argument("--max-workers", type=int, default=16)

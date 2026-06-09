@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.workflows.estate.analyze.compile_graph.community_detection import (
+    detect_communities,
+)
 from endorlabs.workflows.estate.analyze.compile_graph.enrich import (
     run_enrich_graph_phase,
 )
@@ -14,8 +17,7 @@ from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     aggregate_compile_dependency_edges,
     build_graph_document,
     classify_project_registrations,
-    compute_publisher_rankings,
-    run_graph_partition,
+    compute_producer_rankings,
 )
 from endorlabs.workflows.estate.analyze.graph_metrics.analytics import (
     run_graph_analytics_phase,
@@ -29,6 +31,13 @@ from endorlabs.workflows.estate.collect.dependency_metadata import (
 )
 from endorlabs.workflows.estate.collect.projects import load_project_records
 from endorlabs.workflows.estate.contracts import RESOURCE_PACKAGE_VERSION
+from endorlabs.workflows.estate.contracts.ir_artifacts import (
+    COMMUNITY_DETECTION_IR,
+    COMMUNITY_PROFILES_IR,
+    COMPILE_DEPENDENCY_GRAPH_ENRICHED_IR,
+    COMPILE_DEPENDENCY_GRAPH_IR,
+    PRODUCER_RANKINGS_IR,
+)
 from endorlabs.workflows.estate.workspace.paths import ir_path, resource_path
 
 
@@ -98,7 +107,7 @@ def build_compile_graph_from_workspace(
     *,
     namespace: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Build flat compile graph and publisher rankings from pulled workspace data."""
+    """Build compile-import graph and producer rankings from pulled workspace data."""
     projects_raw = load_project_records(workspace_root)
     discover_rows = _discover_rows_from_projects(projects_raw, namespace)
     graph_projects, _ = classify_project_registrations(discover_rows)
@@ -126,14 +135,14 @@ def build_compile_graph_from_workspace(
         )
 
     aggregated = aggregate_compile_dependency_edges(all_support)
-    flat = build_graph_document(
+    import_graph = build_graph_document(
         namespace=namespace,
         projects=graph_projects,
         aggregated_edges=aggregated,
         published_by_project=published_by_project,
     )
-    rankings = compute_publisher_rankings(flat)
-    return flat, rankings
+    rankings = compute_producer_rankings(import_graph)
+    return import_graph, rankings
 
 
 def write_compile_graph_ir(
@@ -141,20 +150,20 @@ def write_compile_graph_ir(
     *,
     namespace: str,
 ) -> dict[str, Any]:
-    flat, rankings = build_compile_graph_from_workspace(
+    import_graph, rankings = build_compile_graph_from_workspace(
         workspace_root, namespace=namespace
     )
     write_json(
-        str(ir_path(workspace_root, "compile_dependency_graph.json")),
-        flat,
+        str(ir_path(workspace_root, COMPILE_DEPENDENCY_GRAPH_IR)),
+        import_graph,
         base_dir=workspace_root,
     )
     write_json(
-        str(ir_path(workspace_root, "publisher_rankings.json")),
+        str(ir_path(workspace_root, PRODUCER_RANKINGS_IR)),
         rankings,
         base_dir=workspace_root,
     )
-    return flat
+    return import_graph
 
 
 def run_graph_pipeline_from_workspace(
@@ -163,7 +172,7 @@ def run_graph_pipeline_from_workspace(
     namespace: str,
     skip_metrics: bool = False,
 ) -> None:
-    """Full disk graph pipeline: build, enrich, metrics, partition."""
+    """Full disk graph pipeline: build, enrich, metrics, community detection."""
     write_compile_graph_ir(workspace_root, namespace=namespace)
 
     version_cardinality = ir_path(workspace_root, "version_cardinality.json")
@@ -177,19 +186,17 @@ def run_graph_pipeline_from_workspace(
     if not skip_metrics:
         run_graph_analytics_phase(workspace_root)
 
-    enriched_path = ir_path(workspace_root, "compile_dependency_graph_enriched.json")
+    enriched_path = ir_path(workspace_root, COMPILE_DEPENDENCY_GRAPH_ENRICHED_IR)
     if enriched_path.is_file():
-        import json
-
         enriched = json.loads(enriched_path.read_text(encoding="utf-8"))
-        partition_payload, _, community_summary = run_graph_partition(enriched)
+        detection_payload, _, profiles = detect_communities(enriched)
         write_json(
-            str(ir_path(workspace_root, "graph_partition.json")),
-            partition_payload,
+            str(ir_path(workspace_root, COMMUNITY_DETECTION_IR)),
+            detection_payload,
             base_dir=workspace_root,
         )
         write_json(
-            str(ir_path(workspace_root, "community_summary.json")),
-            community_summary,
+            str(ir_path(workspace_root, COMMUNITY_PROFILES_IR)),
+            profiles,
             base_dir=workspace_root,
         )

@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from endorlabs.workflows.estate.analyze.cardinality.export import (
+    export_version_cardinality,
+    export_version_cardinality_for_package_match,
+)
 from endorlabs.workflows.estate.analyze.cardinality.remediation import (
     RemediationComparisonResult,
     analyze_intra_minor_remediation,
@@ -43,6 +47,8 @@ __all__ = [
     "analyze_workspace",
     "collect_workspace",
     "export_risk_ranked_version_cardinality",
+    "export_version_cardinality",
+    "export_version_cardinality_for_package_match",
     "load_dependency_metadata_records",
     "resolve_scorer",
     "workspace_dir_for",

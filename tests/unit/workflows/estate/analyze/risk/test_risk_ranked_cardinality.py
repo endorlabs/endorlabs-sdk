@@ -274,3 +274,136 @@ def test_export_risk_ranked_version_cardinality_mocked() -> None:
     call_kwargs = client.Finding.list.call_args.kwargs
     assert "CONTEXT_TYPE_MAIN" in call_kwargs["filter"]
     assert call_kwargs["mask"] == FINDING_LIST_MASK
+
+
+def test_export_version_cardinality_for_package_match_mocked() -> None:
+    from endorlabs.workflows.estate.analyze.cardinality.export import (
+        export_version_cardinality_for_package_match,
+    )
+
+    group_key = json.dumps(
+        [
+            {"key": "spec.dependency_data.package_name", "value": "pypi://django"},
+            {"key": "spec.dependency_data.resolved_version", "value": "4.2"},
+        ]
+    )
+    client = MagicMock()
+
+    def _buckets(
+        _client: MagicMock,
+        _ns: str,
+        _params: object,
+        *,
+        max_pages: int | None = None,
+    ):
+        _ = max_pages
+        yield group_key, {"aggregation_count": {"count": 1}}
+
+    with (
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
+            return_value=["tenant"],
+        ),
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export.iter_group_buckets",
+            side_effect=_buckets,
+        ),
+    ):
+        result = export_version_cardinality_for_package_match(
+            client,
+            "tenant",
+            "django",
+            exact_package_name="pypi://django",
+        )
+
+    assert result.status == "success"
+    assert result.stats.package_count == 1
+
+
+def test_export_version_cardinality_for_package_match_namespace_error() -> None:
+    from endorlabs.workflows.estate.analyze.cardinality.export import (
+        export_version_cardinality_for_package_match,
+    )
+
+    client = MagicMock()
+    with patch(
+        "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
+        side_effect=RuntimeError("boom"),
+    ):
+        result = export_version_cardinality_for_package_match(
+            client, "tenant", "django"
+        )
+    assert result.status == "error"
+    assert "Namespace list failed" in result.message
+
+
+def test_export_version_cardinality_mocked() -> None:
+    from endorlabs.workflows.estate.analyze.cardinality.export import (
+        export_version_cardinality,
+    )
+
+    client = MagicMock()
+    usage_row = {
+        "estate_root": "tenant",
+        "project_uuid": "proj-1",
+        "package_name": "pypi://flask",
+        "package_version": "2.0",
+        "usage_count": 2,
+    }
+
+    with (
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
+            return_value=["tenant"],
+        ),
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export._fetch_namespace_via_importer_package_versions",
+            return_value=([usage_row], 1, 1, 1, []),
+        ),
+    ):
+        result = export_version_cardinality(client, "tenant")
+
+    assert result.status == "success"
+    assert result.stats.package_count == 1
+
+
+def test_export_version_cardinality_all_namespaces_fail() -> None:
+    from endorlabs.workflows.estate.analyze.cardinality.export import (
+        export_version_cardinality,
+    )
+
+    client = MagicMock()
+    with (
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
+            return_value=["tenant"],
+        ),
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export._fetch_namespace_via_importer_package_versions",
+            return_value=([], 0, 0, 0, ["tenant: boom"]),
+        ),
+    ):
+        result = export_version_cardinality(client, "tenant")
+    assert result.status == "error"
+
+
+def test_export_version_cardinality_for_package_match_all_namespaces_fail() -> None:
+    from endorlabs.workflows.estate.analyze.cardinality.export import (
+        export_version_cardinality_for_package_match,
+    )
+
+    client = MagicMock()
+    with (
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export.discover_estate_namespace_names",
+            return_value=["tenant"],
+        ),
+        patch(
+            "endorlabs.workflows.estate.analyze.cardinality.export.iter_group_buckets",
+            side_effect=RuntimeError("boom"),
+        ),
+    ):
+        result = export_version_cardinality_for_package_match(
+            client, "tenant", "django"
+        )
+    assert result.status == "error"

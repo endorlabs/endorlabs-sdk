@@ -9,10 +9,17 @@ import re
 from collections import defaultdict, deque
 from pathlib import Path
 
+from endorlabs.workflows.estate.contracts.ir_artifacts import (
+    CLUSTERING_GRAPH_IR,
+    COMMUNITY_DETECTION_IR,
+    COMMUNITY_PROFILES_IR,
+    GRAPH_METRICS_IR,
+    PRODUCER_RANKINGS_IR,
+)
 from endorlabs.workflows.estate.workspace.paths import ir_path, viz_path
 
-TOP_CONSUMERS = 45
-TOP_PUBLISHERS = 28
+TOP_IMPORTERS = 45
+TOP_PRODUCERS = 28
 _COLLAPSED_KEY_RE = re.compile(r"^__collapsed_(.+)__$")
 COMPILE_GRAPH_VIZ_SCHEMA = "endor.compile_graph_viz.v1"
 
@@ -30,7 +37,7 @@ def short_name(
     return name if len(name) <= limit else name[: limit - 1] + "…"
 
 
-def publisher_key(name: str, collapse_prefixes: tuple[str, ...]) -> str:
+def producer_key(name: str, collapse_prefixes: tuple[str, ...]) -> str:
     for prefix in collapse_prefixes:
         if name.startswith(prefix):
             return f"__collapsed_{prefix.rstrip('_')}__"
@@ -80,7 +87,7 @@ def farthest_geodesic_path_from(start: int, adj: dict[int, list[dict]]) -> list[
     while queue:
         node = queue.popleft()
         for edge in adj.get(node, []):
-            target = int(edge["target"])
+            target = int(edge["producer"])
             if target not in dist:
                 dist[target] = dist[node] + 1
                 parent[target] = node
@@ -97,20 +104,20 @@ def farthest_geodesic_path_from(start: int, adj: dict[int, list[dict]]) -> list[
     return path
 
 
-def load_leiden_session(
+def load_clustering_graph(
     workspace_root: Path,
 ) -> tuple[dict[int, dict], list[dict], list[tuple[int, int]]]:
-    leiden_path = ir_path(workspace_root, "leiden_input.json")
-    if not leiden_path.is_file():
-        msg = f"Missing {leiden_path.name}; run analyze graph step first"
+    clustering_path = ir_path(workspace_root, CLUSTERING_GRAPH_IR)
+    if not clustering_path.is_file():
+        msg = f"Missing {clustering_path.name}; run analyze graph step first"
         raise FileNotFoundError(msg)
-    leiden = json.loads(leiden_path.read_text(encoding="utf-8"))
-    nodes_by_id = {int(node["id"]): node for node in leiden["nodes"]}
-    edge_rows = leiden["edges"]
+    clustering = json.loads(clustering_path.read_text(encoding="utf-8"))
+    nodes_by_id = {int(node["id"]): node for node in clustering["nodes"]}
+    edge_rows = clustering["edges"]
     pairs = [
-        (int(edge["source"]), int(edge["target"]))
+        (int(edge["importer"]), int(edge["producer"]))
         for edge in edge_rows
-        if int(edge["source"]) in nodes_by_id and int(edge["target"]) in nodes_by_id
+        if int(edge["importer"]) in nodes_by_id and int(edge["producer"]) in nodes_by_id
     ]
     return nodes_by_id, edge_rows, pairs
 
@@ -147,6 +154,7 @@ def build_dashboard_section(
     rankings: dict,
     metrics: dict | None,
     communities: dict | None,
+    community_detection: dict | None,
     collapse_prefixes: tuple[str, ...],
 ) -> str:
     id_set = set(nodes_by_id)
@@ -163,17 +171,17 @@ def build_dashboard_section(
     rank_rows = (rankings.get("rankings") or [])[:12]
     pub_bars = []
     max_in = (
-        max((row.get("inbound_edge_count") or 1) for row in rank_rows)
+        max((row.get("inbound_import_count") or 1) for row in rank_rows)
         if rank_rows
         else 1
     )
     for row in rank_rows:
-        width = max(2, int(100 * (row.get("inbound_edge_count") or 0) / max_in))
+        width = max(2, int(100 * (row.get("inbound_import_count") or 0) / max_in))
         pub_bars.append(
             f'<div class="bar-row graph-bar-row" title="{html.escape(str(row.get("name") or ""))}">'
             f'<span class="bar-label">{html.escape(short_name(str(row.get("name") or ""), 36, collapse_prefixes))}</span>'
             f'<span class="bar-track"><span class="bar-fill pub" style="width:{width}%"></span></span>'
-            f'<span class="bar-val">{row.get("inbound_edge_count")}</span></div>'
+            f'<span class="bar-val">{row.get("inbound_import_count")}</span></div>'
         )
 
     out_deg: dict[int, int] = defaultdict(int)
@@ -208,17 +216,25 @@ def build_dashboard_section(
         for row in multi[:5]:
             namespaces = row.get("dominant_namespaces") or []
             ns_txt = ", ".join(f"{item[0]} ({item[1]})" for item in namespaces[:2])
-            anchors = row.get("top_anchor_packages") or []
-            anchor = anchors[0][0].split(":")[-1][:40] if anchors else "—"
+            linking = row.get("top_linking_packages") or []
+            pkg = linking[0][0].split(":")[-1][:40] if linking else "—"
             comm_rows += (
                 f"<tr><td>{row.get('node_count')}</td><td>{row.get('edge_count')}</td>"
-                f"<td>{html.escape(ns_txt)}</td><td><code>{html.escape(anchor)}</code></td></tr>"
+                f"<td>{html.escape(ns_txt)}</td><td><code>{html.escape(pkg)}</code></td></tr>"
             )
 
     graph = rankings
     wcc = (metrics or {}).get("components") or {}
     scc = (metrics or {}).get("scc") or {}
     kcore = (metrics or {}).get("k_core") or {}
+    detection_hint = ""
+    if community_detection:
+        detection_hint = (
+            f" · detection: {community_detection.get('method')} "
+            f"resolution={community_detection.get('resolution')} "
+            f"edge_weight={community_detection.get('edge_weight_source')} "
+            f"vertex_weight={community_detection.get('vertex_weight_source')}"
+        )
 
     return f"""
     <section id="panel-dashboard" class="panel active">
@@ -226,20 +242,20 @@ def build_dashboard_section(
         <div class="stat"><b>{graph.get("total_nodes", "—")}</b><span>graph nodes</span></div>
         <div class="stat"><b>{sum(len(component) for component in comps)}</b><span>connected</span></div>
         <div class="stat"><b>{isolated}</b><span>isolated (hidden in graph views)</span></div>
-        <div class="stat"><b>{len(comps)}</b><span>WCCs (size&gt;1)</span></div>
+        <div class="stat"><b>{len(comps)}</b><span>disconnected islands</span></div>
         <div class="stat"><b>{wcc.get("weakly_connected_count", "—")}</b><span>weak components</span></div>
         <div class="stat"><b>{kcore.get("max_k", "—")}</b><span>k-core max</span></div>
       </div>
       <div class="columns-2">
-        <div><h3>Top publishers (inbound compile edges)</h3>{"".join(pub_bars)}</div>
-        <div><h3>Top consumers (outbound compile edges)</h3>{"".join(con_bars)}</div>
+        <div><h3>Most reused internal libraries</h3>{"".join(pub_bars)}</div>
+        <div><h3>Repos importing the most libraries</h3>{"".join(con_bars)}</div>
       </div>
-      <h3>Connected components (left → right by size in bipartite view)</h3>
+      <h3>Disconnected islands (by size in bipartite view)</h3>
       <div class="tiles">{comp_tiles}</div>
-      <h3>Largest Leiden communities (multi-node)</h3>
-      <table class="data"><thead><tr><th>Nodes</th><th>Edges</th><th>Namespaces</th><th>Top anchor</th></tr></thead>
+      <h3>Repo groups (shared compile dependencies)</h3>
+      <table class="data"><thead><tr><th>Nodes</th><th>Edges</th><th>Org namespaces</th><th>Shared library</th></tr></thead>
       <tbody>{comm_rows or "<tr><td colspan=4>—</td></tr>"}</tbody></table>
-      <p class="hint">SCC cycles: {scc.get("has_cycles")} · publishers with consumers: {graph.get("publishers_with_consumers")}</p>
+      <p class="hint">Circular internal dependencies: {scc.get("has_cycles")} · producers with importers: {graph.get("producers_with_importers")}{detection_hint}</p>
     </section>
     """
 
@@ -255,41 +271,41 @@ def build_bipartite_svg(
     in_deg: dict[str, int] = defaultdict(int)
 
     for edge in edge_rows:
-        source, target = int(edge["source"]), int(edge["target"])
-        if source not in main or target not in main:
+        importer, producer = int(edge["importer"]), int(edge["producer"])
+        if importer not in main or producer not in main:
             continue
-        pub = publisher_key(nodes_by_id[target]["name"], collapse_prefixes)
-        key = (source, pub)
+        pub = producer_key(nodes_by_id[producer]["name"], collapse_prefixes)
+        key = (importer, pub)
         if key not in pair_edges:
             pair_edges[key] = {
                 "count": 0,
-                "anchor": str(edge.get("anchor_package_name") or ""),
+                "linking_package": str(edge.get("linking_package_name") or ""),
             }
         pair_edges[key]["count"] += 1
-        out_deg[source] += 1
+        out_deg[importer] += 1
         in_deg[pub] += 1
 
-    consumers = sorted(
+    importers = sorted(
         [node_id for node_id in main if out_deg[node_id] > 0],
         key=lambda node_id: (-out_deg[node_id], node_id),
-    )[:TOP_CONSUMERS]
+    )[:TOP_IMPORTERS]
     pub_keys = sorted(in_deg.keys(), key=lambda key: (-in_deg[key], key))[
-        :TOP_PUBLISHERS
+        :TOP_PRODUCERS
     ]
 
-    con_index = {node_id: index for index, node_id in enumerate(consumers)}
+    con_index = {node_id: index for index, node_id in enumerate(importers)}
     pub_index = {key: index for index, key in enumerate(pub_keys)}
 
     edges_draw: list[tuple[int, str, int]] = []
-    for (source, pub), meta in pair_edges.items():
-        if source in con_index and pub in pub_index:
-            edges_draw.append((source, pub, meta["count"]))
+    for (importer, pub), meta in pair_edges.items():
+        if importer in con_index and pub in pub_index:
+            edges_draw.append((importer, pub, meta["count"]))
     edges_draw.sort(key=lambda item: -item[2])
 
     row_h = 22
     left_x, right_x = 320, 720
     margin_top = 36
-    n_rows = max(len(consumers), len(pub_keys), 1)
+    n_rows = max(len(importers), len(pub_keys), 1)
     height = margin_top + n_rows * row_h + 40
     width = 900
 
@@ -298,11 +314,11 @@ def build_bipartite_svg(
     )
     lines: list[str] = [
         f'<svg class="bipartite" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg">',
-        '<text x="12" y="22" class="svg-title">Consumers (out-degree)</text>',
-        f'<text x="530" y="22" class="svg-title">Publishers (in-degree{collapse_note})</text>',
+        '<text x="12" y="22" class="svg-title">Importers (out-degree)</text>',
+        f'<text x="530" y="22" class="svg-title">Producers (in-degree{collapse_note})</text>',
     ]
 
-    for node_id in consumers:
+    for node_id in importers:
         y = margin_top + con_index[node_id] * row_h
         label = html.escape(
             short_name(nodes_by_id[node_id]["name"], 38, collapse_prefixes)
@@ -327,8 +343,8 @@ def build_bipartite_svg(
         lines.append(f'<circle cx="{right_x}" cy="{y}" r="4" class="dot pub"/>')
 
     max_cnt = max((count for _, _, count in edges_draw), default=1)
-    for source, pub, count in edges_draw[:120]:
-        y1 = margin_top + con_index[source] * row_h
+    for importer, pub, count in edges_draw[:120]:
+        y1 = margin_top + con_index[importer] * row_h
         y2 = margin_top + pub_index[pub] * row_h
         opacity = 0.15 + 0.55 * (count / max_cnt)
         lines.append(
@@ -338,8 +354,8 @@ def build_bipartite_svg(
 
     lines.append("</svg>")
     legend = (
-        f"<p class='hint'>Largest WCC ({len(main)} nodes): top {len(consumers)} consumers × "
-        f"top {len(pub_keys)} publishers · {len(edges_draw)} bundled edges drawn "
+        f"<p class='hint'>Largest weak component ({len(main)} nodes): top {len(importers)} importers × "
+        f"top {len(pub_keys)} producers · {len(edges_draw)} bundled edges drawn "
         f"(cap 120 strongest)</p>"
     )
     return f'<section id="panel-bipartite" class="panel">{legend}{"".join(lines)}</section>'
@@ -355,7 +371,7 @@ def build_path_section(
 ) -> str:
     adj: dict[int, list[dict]] = defaultdict(list)
     for edge in edge_rows:
-        adj[int(edge["source"])].append(edge)
+        adj[int(edge["importer"])].append(edge)
 
     start = pick_path_start(nodes_by_id, edge_pairs, main, path_start)
     path_ids = farthest_geodesic_path_from(start, adj)
@@ -379,7 +395,7 @@ def build_path_section(
     seed_hint = (
         f"matching <code>{html.escape(path_start)}</code>"
         if path_start
-        else f"from top consumer <code>{html.escape(start_label)}</code>"
+        else f"from top importer <code>{html.escape(start_label)}</code>"
     )
     return f"""
     <section id="panel-path" class="panel">
@@ -395,20 +411,26 @@ def render_compile_graph_panels_html(
     collapse_prefixes: tuple[str, ...] = (),
 ) -> tuple[str, str]:
     """Return (dashboard_panel, bipartite_panel) HTML fragments."""
-    nodes_by_id, edge_rows, edge_pairs = load_leiden_session(workspace_root)
+    nodes_by_id, edge_rows, edge_pairs = load_clustering_graph(workspace_root)
     rankings = json.loads(
-        ir_path(workspace_root, "publisher_rankings.json").read_text(encoding="utf-8")
+        ir_path(workspace_root, PRODUCER_RANKINGS_IR).read_text(encoding="utf-8")
     )
-    metrics_path = ir_path(workspace_root, "graph_metrics.json")
+    metrics_path = ir_path(workspace_root, GRAPH_METRICS_IR)
     metrics = (
         json.loads(metrics_path.read_text(encoding="utf-8"))
         if metrics_path.is_file()
         else None
     )
-    comm_path = ir_path(workspace_root, "community_summary.json")
+    comm_path = ir_path(workspace_root, COMMUNITY_PROFILES_IR)
     communities = (
         json.loads(comm_path.read_text(encoding="utf-8"))
         if comm_path.is_file()
+        else None
+    )
+    detection_path = ir_path(workspace_root, COMMUNITY_DETECTION_IR)
+    community_detection = (
+        json.loads(detection_path.read_text(encoding="utf-8"))
+        if detection_path.is_file()
         else None
     )
 
@@ -421,7 +443,13 @@ def render_compile_graph_panels_html(
     main = comps[0] if comps else set()
 
     dashboard = build_dashboard_section(
-        nodes_by_id, edge_pairs, rankings, metrics, communities, collapse_prefixes
+        nodes_by_id,
+        edge_pairs,
+        rankings,
+        metrics,
+        communities,
+        community_detection,
+        collapse_prefixes,
     )
     bipartite = build_bipartite_svg(nodes_by_id, edge_rows, main, collapse_prefixes)
     return dashboard, bipartite
