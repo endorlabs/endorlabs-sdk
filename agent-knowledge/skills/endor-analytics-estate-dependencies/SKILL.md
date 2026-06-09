@@ -1,124 +1,78 @@
 ---
 name: endor-analytics-estate-dependencies
 description: >-
-  Estate-scale DependencyMetadata aggregates: version cardinality by package name,
-  optional single-package filtered export, and intra-minor CVE remediation
-  comparisons. Use for estate-wide dependency diversity reporting, how many
-  versions of a package are in use, or upgrade-path planning for a CVE on one
-  coordinate.
+  Estate-scale workflows: pull workspace resources (project, dependency_metadata,
+  finding, package_version), analyze version/risk cardinality and compile dependency
+  graph from disk, unified dashboard viz. Use for estate-wide dependency diversity,
+  risk-ranked cardinality, or CVE upgrade-path planning.
 endorlabs:
   catalog:
-    workflow_id: analytics-export-deps
-    cli: endor-analytics-export-deps
-    module: endorlabs.workflows.analytics.cli
-    default_output: .endorlabs-context/workspace/projects/<uuid>/
+    workflow_id: estate-workspace
+    cli: endor-estate
+    module: endorlabs.workflows.estate.cli.main
+    default_output: .endorlabs-context/workspace/<slug>-<YYYYMMDD>/
     agent_visible: true
     composition: library_api
     library_entrypoints:
-      - endorlabs.workflows.analytics.export_version_cardinality_for_package_match
+      - endorlabs.workflows.estate.collect_workspace
+      - endorlabs.workflows.estate.analyze_workspace
+      - endorlabs.workflows.estate.export_version_cardinality_for_package_match
+      - endorlabs.workflows.estate.export_risk_ranked_version_cardinality
 ---
 
-# Analytics — Estate Dependency Aggregates
+# Estate dependency workflows
 
-Playbook for tenant-wide dependency usage reporting via grouped
-`DependencyMetadata` queries.
+Unified CLI: **`endor-estate`** (`pull` | `analyze` | `summarize`).
 
-## Prerequisites
+Workspace: `.endorlabs-context/workspace/<slug>-<YYYYMMDD>/` with `data/collect_manifest.json`.
 
-- Auth via `ENDOR_*` env vars (see README / AGENTS.md bootstrap).
-- Estate root namespace (for example `tenant`, `tenant.child`).
-- `DependencyMetadata` is **tenant-scoped** for list/group API paths (customer
-  namespace segment, not literal `oss`). Row fields such as
-  `spec.dependency_data.namespace` may still read `oss` for catalog coordinates.
+See [docs/estate/README.md](../../../docs/estate/README.md).
 
-## Metric — version cardinality
-
-For a qualified `spec.dependency_data.package_name`:
-
-**version_cardinality** = count of distinct `spec.dependency_data.resolved_version`
-values in use across the estate.
-
-Rollup CSV columns: `package_name`, `version_cardinality`, `dependency_usage_rows`.
-Detail CSV (optional): `project_uuid`, `package_name`, `package_version`,
-`usage_count`.
-
-## Query modes
-
-| Goal | API / CLI | Notes |
-|------|-----------|-------|
-| All packages, full estate | `export_version_cardinality` / default CLI | Importer `PackageVersion` shards; slow on large estates |
-| One package family | `--package-name-match` (+ optional `--exact-package-name`) | Per-namespace grouped list with name filter; minutes vs hours |
-| CVE upgrade-path delta | `--remediation-cve CVE-…` + usage rows | Intra-minor flatten vs as-is; see [REMEDIATION.md](REMEDIATION.md) |
-
-### Full estate (all packages)
+## Pull workspace
 
 ```bash
-uv run --env-file .env python -m endorlabs.workflows.analytics \
-  -n <estate_root> \
-  -o .endorlabs-context/workspace/sessions/agent/analytics/version-cardinality.csv \
-  --usage-detail-output .endorlabs-context/workspace/sessions/agent/analytics/usage-by-project.csv \
-  --max-project-workers 16
+uv run --env-file .env endor-estate pull -n <estate_root>
+
+uv run endor-estate pull -n <estate_root> \
+  --workspace .endorlabs-context/workspace/<slug>-20260608 --resume
 ```
 
-### Single package (example)
+Collects all four resources: `project`, `dependency_metadata`, `finding`, `package_version`.
+
+## Analyze (disk-first)
 
 ```bash
-uv run --env-file .env python -m endorlabs.workflows.analytics \
-  -n <estate_root> \
-  -o .endorlabs-context/workspace/sessions/agent/analytics/jackson-cardinality.csv \
-  --usage-detail-output .endorlabs-context/workspace/sessions/agent/analytics/jackson-usage.csv \
-  --package-name-match jackson-databind \
-  --exact-package-name "mvn://com.fasterxml.jackson.core:jackson-databind"
+uv run endor-estate analyze -n <estate_root> \
+  --workspace .endorlabs-context/workspace/<slug>-20260608
+
+uv run endor-estate analyze -n <estate_root> --only risk,graph,viz --top-n 20
 ```
 
-### CVE remediation comparison
-
-```bash
-uv run --env-file .env python -m endorlabs.workflows.analytics \
-  -n <estate_root> \
-  -o .endorlabs-context/workspace/sessions/agent/analytics/jackson-cardinality.csv \
-  --package-name-match jackson-databind \
-  --exact-package-name "mvn://com.fasterxml.jackson.core:jackson-databind" \
-  --remediation-cve CVE-2018-19362 \
-  --remediation-output .endorlabs-context/workspace/sessions/agent/analytics/jackson-remediation.json
-```
+Outputs IR under `intermediate-representation/` and `viz/estate_dashboard.html`.
 
 Programmatic:
 
 ```python
-from endorlabs.workflows.analytics import (
-    analyze_intra_minor_remediation,
-    export_version_cardinality_for_package_match,
+from endorlabs.workflows.estate import (
+    analyze_workspace,
+    collect_workspace,
+    workspace_dir_for,
 )
 ```
 
-## Namespace discovery
+## Single-package version drill (live API)
 
-1. `Namespace.list(traverse=True)` under estate root → canonical paths
-   (`spec.full_name`).
-2. Omit estate root from counting when child namespaces exist (avoid double-count).
-3. Never use estate-wide `DependencyMetadata` traverse for aggregates.
+```bash
+uv run endor-estate analyze -n <estate_root> --only version --package-match jackson-databind
+```
 
-## Related skills and workflows
+Or library: `export_version_cardinality_for_package_match`.
 
-- **Compile dependency graph** — optional `version_cardinality.csv` from this workflow
-  can be passed to `endor-compile-dependency-graph --cardinality-csv` on the
-  `enrich_graph` phase. Operator guide:
-  [docs/analytics/compile-dependency-graph.md](../../../docs/analytics/compile-dependency-graph.md).
-- **endor-dependency-finding-provenance** — project/commit finding and DM lineage for
-  “is this CVE fixed here?” (tenant namespace for `DependencyMetadata` list/get).
-- **endor-dependency-provenance** — manifest path and direct vs transitive introduction.
-- **endor-retrieve-scan-results** — traverse patterns for discovery-only namespace walks.
+## Summarize
 
-## Pitfalls
+```bash
+uv run endor-estate summarize -n <estate_root> \
+  --workspace .endorlabs-context/workspace/<slug>-20260608
+```
 
-- Unscoped grouped `DependencyMetadata` per namespace on large tenants (timeouts).
-- Confusing importer `PackageVersion` inventory with transitive dependency
-  version cardinality (different questions).
-- Using literal `oss` wire namespace for `DependencyMetadata` list/group (wrong
-  plane; use customer namespace).
-
-## Reference
-
-- [REMEDIATION.md](REMEDIATION.md) — flatten semantics and supported CVE policies
-- CLI: `endor-analytics-export-deps` (`endorlabs.workflows.analytics.cli`)
+Docs: [workspace.md](../../../docs/estate/workspace.md), [migration.md](../../../docs/estate/migration.md).

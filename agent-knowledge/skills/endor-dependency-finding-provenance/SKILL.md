@@ -70,7 +70,7 @@ segment, same as `Project` / `PackageVersion`). Use the project's
 literal `oss`. Row payloads may still set `spec.dependency_data.namespace` to
 `"oss"` for catalog coordinates; that is field semantics, not the API path.
 
-Verified pattern (matches `endorlabs.workflows.relationships.map` and analytics
+Verified pattern (matches `endorlabs.workflows.estate.analyze.project_map.map` and estate analytics
 workflows). Requires **`project` resolved first** — see
 [Project-scoped namespace](#project-scoped-namespace-required):
 
