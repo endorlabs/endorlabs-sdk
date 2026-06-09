@@ -15,7 +15,7 @@ scripts to repo-root `.tmp/` unless the user explicitly requests that path.
 
 | Subdir | Use for |
 |--------|---------|
-| `session/<namespace_slug>/` | Compile-dependency-graph phased session artifacts (`dependency_graph` CLI; context root, not under `workspace/`) |
+| `<slug>-<YYYYMMDD>/` | Estate pull + analyze (`endor-estate`; `data/`, `intermediate-representation/`, `viz/`) |
 | `projects/<uuid>/` | Project-scoped workflow bundles (`endor-agent-context`, reachability exports, relationship maps) |
 | `sessions/<user>/` | Interactive session, RCA/triage exports, one-off scripts, and other non-project scratch work |
 | `artifacts/` | Namespace-scoped inventory outputs (e.g. Semgrep metadata) |

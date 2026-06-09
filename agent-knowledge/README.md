@@ -8,7 +8,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
-| [endor-analytics-estate-dependencies](endor-analytics-estate-dependencies/) | Estate session layers, cardinality, risk charts, compile graph | `endorlabs.workflows.estate`; `endor-estate` |
+| [endor-analytics-estate-dependencies](endor-analytics-estate-dependencies/) | Estate workspace pull/analyze, cardinality, compile graph | `endorlabs.workflows.estate`; `endor-estate` |
 | [endor-project-agent-context](endor-project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
@@ -53,7 +53,7 @@ For **Claude API** users: zip each skill directory and upload via the `/v1/skill
 
 ## Relationship to Other Docs
 
-- **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Estate analytics workflows without a skill (e.g. compile dependency graph) live under [`docs/analytics/`](../docs/analytics/README.md).
+- **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Estate analytics workflows without a skill (e.g. compile dependency graph) live under [`docs/estate/`](../docs/estate/README.md).
 - **`rules/`** — always load via `agent_knowledge_bootstrap_paths()` (namespace, workspace, composition, list performance, local context, portable examples).
 - **`contracts/`** — on-demand SDK reference semantics (list parameters, naming, errors, dependency metadata).
 - **`.cursor/rules/`**: Always-on project rules (apply every session). Skills are on-demand (apply when triggered).

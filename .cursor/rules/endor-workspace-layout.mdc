@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workspace-layout.md
-x-endor-source-sha256: fa08c5752de3339f16f857243ece0253d0049f1dd9c4337b87b2c7652c84bcfe
+x-endor-source-sha256: b51518816d4095dbcea484204ec53af3844557f3f6305638ce6f5622d6170e81
 ---
 
 # Workspace layout
@@ -23,7 +23,7 @@ scripts to repo-root `.tmp/` unless the user explicitly requests that path.
 
 | Subdir | Use for |
 |--------|---------|
-| `session/<namespace_slug>/` | Compile-dependency-graph phased session artifacts (`dependency_graph` CLI; context root, not under `workspace/`) |
+| `<slug>-<YYYYMMDD>/` | Estate pull + analyze (`endor-estate`; `data/`, `intermediate-representation/`, `viz/`) |
 | `projects/<uuid>/` | Project-scoped workflow bundles (`endor-agent-context`, reachability exports, relationship maps) |
 | `sessions/<user>/` | Interactive session, RCA/triage exports, one-off scripts, and other non-project scratch work |
 | `artifacts/` | Namespace-scoped inventory outputs (e.g. Semgrep metadata) |

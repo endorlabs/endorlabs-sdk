@@ -249,7 +249,7 @@ def _collect_package_version(
         for shard in discover_project_shards(client, namespace):
             project_set.add(shard.key)
 
-    _, _, published_by_project, _, _, _ = build_publisher_index(
+    _, _, published_by_project, _ = build_publisher_index(
         client,
         namespace=namespace,
         project_set=project_set,
