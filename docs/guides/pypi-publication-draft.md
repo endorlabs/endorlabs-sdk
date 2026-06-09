@@ -112,7 +112,9 @@ Configure **pending** publishers before the first upload to each index.
 | `pypi` | `release-tag-publish.yml` | Required reviewers |
 
 No `PYPI_API_TOKEN` or `TEST_PYPI_API_TOKEN` secrets are used. OIDC + PEP 740 attestations
-are handled by `pypa/gh-action-pypi-publish` (attestations on by default).
+are handled by `pypa/gh-action-pypi-publish` pinned to a release commit SHA (attestations on by default).
+
+Pin the action to the **git commit SHA** for a release (e.g. `@cef22109… # v1.14.0`), not `@release/v1` (moving branch; Endor “Block Misconfigured GHAs”) and not a **tag object SHA** (PyPA publishes `ghcr.io` images keyed by commit SHA only — tag object SHAs cause `manifest unknown`).
 
 ## Local verification (before any upload)
 
