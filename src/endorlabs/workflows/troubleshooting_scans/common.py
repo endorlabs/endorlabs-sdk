@@ -206,7 +206,7 @@ def parallel_collect_for_projects(
     progress_every: int = 50,
 ) -> list[Any]:
     """Parallel per-project fetch; flatten iterable results from each shard."""
-    from endorlabs.workflows.sharded_collect import (
+    from endorlabs.workflows.estate.collect.shards import (
         parallel_map_shards,
         project_dict_to_shard,
     )

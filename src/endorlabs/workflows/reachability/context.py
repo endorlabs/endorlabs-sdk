@@ -12,7 +12,10 @@ import endorlabs
 from endorlabs.context.paths import workflow_projects_root
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.callgraph.decoded import decode_payload
-from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
+from endorlabs.workflows.estate.collect.bounds import (
+    is_list_truncated,
+    resolve_max_pages,
+)
 from endorlabs.workflows.reachability.resolve import (
     ReachabilitySubject,
     resolve_from_finding,
