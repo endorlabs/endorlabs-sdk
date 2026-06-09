@@ -29,11 +29,10 @@ Get-Content .env | ForEach-Object {
 }
 ```
 
-On Linux/macOS with `direnv`:
+Load credentials from a local `.env` file when running SDK commands:
 
 ```bash
-# .envrc
-dotenv
+uv run --env-file .env endorctl api list --resource Project -n "$ENDOR_NAMESPACE"
 ```
 
 ### Dependencies

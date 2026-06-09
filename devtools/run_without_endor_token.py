@@ -69,7 +69,7 @@ def main() -> int:
     parser.add_argument(
         "command",
         nargs=argparse.REMAINDER,
-        help="Command after -- (e.g. -- uv run endor-compile-dependency-graph ...)",
+        help="Command after -- (e.g. -- uv run endor-estate analyze -n tenant.example)",
     )
     args = parser.parse_args()
     cmd = args.command

@@ -6,7 +6,6 @@
 !.endorlabs-context/**
 !.endorlabs-context/docs/
 !.endorlabs-context/docs/**
-!.endorlabs-context/openapiv2.swagger.json
 !.endorlabs-context/session-*
 
 # Research files, responses
