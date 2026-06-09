@@ -8,7 +8,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
-| [endor-analytics-estate-dependencies](endor-analytics-estate-dependencies/) | Estate DependencyMetadata aggregates, tabular CSV export, optional CVE remediation comparison | `endorlabs.workflows.analytics`; `endor-analytics-export-deps` |
+| [endor-analytics-estate-dependencies](endor-analytics-estate-dependencies/) | Estate session layers, cardinality, risk charts, compile graph | `endorlabs.workflows.estate`; `endor-estate` |
 | [endor-project-agent-context](endor-project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |

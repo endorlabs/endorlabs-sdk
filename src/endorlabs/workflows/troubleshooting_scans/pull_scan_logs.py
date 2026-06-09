@@ -17,7 +17,10 @@ from pathlib import Path
 from typing import Any
 
 import endorlabs
-from endorlabs.workflows.list_bounds import is_list_truncated, resolve_max_pages
+from endorlabs.workflows.estate.collect.bounds import (
+    is_list_truncated,
+    resolve_max_pages,
+)
 
 from .common import (
     root_tenant,

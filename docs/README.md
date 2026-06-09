@@ -23,7 +23,7 @@ Index for SDK-specific documentation.
 
 ## Analytics
 
-- [analytics/README.md](analytics/README.md) — Estate analytics workflows (compile dependency graph, cross-links to cardinality export and relationship map).
+- [estate/README.md](estate/README.md) — Unified estate workflows (`endor-estate`): session layers, risk cardinality, compile graph.
 
 ## Guides
 

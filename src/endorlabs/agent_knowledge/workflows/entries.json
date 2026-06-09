@@ -14,18 +14,6 @@
   },
   {
     "agent_visible": true,
-    "cli": "endor-analytics-export-deps",
-    "composition": "library_api",
-    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
-    "id": "analytics-export-deps",
-    "library_entrypoints": [
-      "endorlabs.workflows.analytics.export_version_cardinality_for_package_match"
-    ],
-    "module": "endorlabs.workflows.analytics.cli",
-    "skill": "endor-analytics-estate-dependencies"
-  },
-  {
-    "agent_visible": true,
     "cli": "endor-callgraph-search",
     "composition": "library_api",
     "default_output": "stdout or caller path",
@@ -38,14 +26,6 @@
   },
   {
     "agent_visible": true,
-    "cli": "endor-compile-dependency-graph",
-    "default_output": ".endorlabs-context/session/<namespace>/",
-    "id": "compile-dependency-graph",
-    "module": "endorlabs.workflows.relationships.dependency_graph",
-    "skill": null
-  },
-  {
-    "agent_visible": true,
     "cli": "endor-context",
     "default_output": ".endorlabs-context/",
     "id": "context-bootstrap",
@@ -54,11 +34,18 @@
   },
   {
     "agent_visible": true,
-    "cli": "endor-graph-summarize",
-    "default_output": "stdout or --json",
-    "id": "graph-summarize",
-    "module": "endorlabs.workflows.relationships.summarize_session",
-    "skill": null
+    "cli": "endor-estate",
+    "composition": "library_api",
+    "default_output": ".endorlabs-context/workspace/<slug>-<YYYYMMDD>/",
+    "id": "estate-workspace",
+    "library_entrypoints": [
+      "endorlabs.workflows.estate.collect_workspace",
+      "endorlabs.workflows.estate.analyze_workspace",
+      "endorlabs.workflows.estate.export_version_cardinality_for_package_match",
+      "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
+    ],
+    "module": "endorlabs.workflows.estate.cli.main",
+    "skill": "endor-analytics-estate-dependencies"
   },
   {
     "agent_visible": true,
@@ -85,7 +72,7 @@
     "cli": null,
     "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
     "id": "relationships-map",
-    "module": "endorlabs.workflows.relationships.map",
+    "module": "endorlabs.workflows.estate.analyze.project_map.map",
     "skill": "endor-map-project-dependency-relationships"
   },
   {

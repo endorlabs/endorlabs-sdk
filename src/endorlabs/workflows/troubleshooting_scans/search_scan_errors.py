@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from endorlabs.workflows.sharded_collect import ParentShard
+from endorlabs.workflows.estate.collect.shards import ParentShard
 
 from .common import (
     build_api_client,
