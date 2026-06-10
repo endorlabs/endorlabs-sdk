@@ -217,6 +217,10 @@ uv run python devtools/history_purge_audit.py --json
 
 **Collaborators:** re-clone after force-push — do not merge from pre-purge branches.
 
+If `main` has branch protection (no force-push), either temporarily allow maintainers to
+force-push after `git filter-repo`, or land the purged history via a one-time admin merge
+of `chore/release-automation-hardening` (rewritten root) before re-enabling protection.
+
 ## Rollback and TestPyPI hygiene
 
 | Action | When |
