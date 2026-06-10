@@ -1,6 +1,6 @@
 # Finding attributes vs GitHub pull request review comments (matrix)
 
-Manual crosswalk: **what GitHub’s REST API expects** for review comments created via [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request) versus **what Endor exposes on `Finding`** and what [`.github/scripts/post_parallel_pr_comments.py`](../../.github/scripts/post_parallel_pr_comments.py) uses. Not generated from code.
+Manual crosswalk: **what GitHub’s REST API expects** for review comments created via [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request) versus **what Endor exposes on `Finding`**. Not generated from code. (In-repo posting scripts were removed from CI; this matrix remains a reference for custom integrations.)
 
 ## GitHub side (official)
 
@@ -25,9 +25,9 @@ GitHub only accepts comments on lines that exist in the **unified diff** for the
 
 | GitHub field | Source in this repo | Typical coverage |
 |--------------|---------------------|------------------|
-| `path` | [`endor_scan_findings.extract_location`](../../.github/scripts/endor_scan_findings.py) → normalized against `GET .../pulls/{n}/files` in `post_parallel_pr_comments` | **Variable:** must match a PR-changed file for a comment to be posted. |
-| `line` / `start_line` / `side` | `build_review_comment_object` from `extract_location` `line` / `line_end`, always `side: RIGHT` | **Often the gap:** no comment if line is not in a RIGHT-side hunk. |
-| `body` | `build_review_comment_body`: hidden dedupe marker, UUID, `spec.level`, optional `spec.category`, summary line, blob link, optional snippet | **Good** when `spec` fields are populated. |
+| `path` | `Finding` location extraction (file path hints in metadata / dependency paths) → must match a PR-changed file | **Variable:** must match a PR-changed file for a comment to be posted. |
+| `line` / `start_line` / `side` | Line from metadata; GitHub requires `side: RIGHT` on unified-diff hunks | **Often the gap:** no comment if line is not in a RIGHT-side hunk. |
+| `body` | Markdown from level, category, summary, blob link, optional snippet | **Good** when `spec` fields are populated. |
 
 ## Matrix — Endor signal → use in review comments
 
@@ -39,7 +39,7 @@ GitHub only accepts comments on lines that exist in the **unified diff** for the
 | `spec.finding_metadata.custom` | SAST-style `path` + `start.line` / `end.line` when structured like Semgrep/OpenGrep. |
 | `spec.dependency_file_paths` | Path hints; line often from `custom` or summary heuristics. |
 | `spec.finding_metadata.location` (`path:line`) | Path + line when present. |
-| GitHub `blob/.../path#Ln` in spec text | Parsed in `endor_scan_findings` for path + line. |
+| GitHub `blob/.../path#Ln` in spec text | Parsed for path + line when present. |
 
 ## UI vs API scoping (conceptual)
 
@@ -49,6 +49,5 @@ Endor’s web UI may filter findings differently than `Finding.list` / `Finding.
 
 - [Create a review for a pull request (REST)](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request)
 - [Pull request review comments](https://docs.github.com/en/rest/pulls/comments)
-- Local: [`.github/scripts/endor_scan_findings.py`](../../.github/scripts/endor_scan_findings.py), [`.github/scripts/post_parallel_pr_comments.py`](../../.github/scripts/post_parallel_pr_comments.py), [`.github/scripts/endor_ci_fetch_scan_findings.py`](../../.github/scripts/endor_ci_fetch_scan_findings.py)
 - Guide: [PR review comments from Endor findings](pr-review-comments.md)
 - Local OpenAPI: [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../../.endorlabs-context/platform/openapi/openapiv2.swagger.json) (`v1Finding`, `v1FindingSpec`, `v1FindingMetadata`)
