@@ -17,6 +17,7 @@ from typing import Any
 import endorlabs
 from endorlabs.context.paths import workflow_sessions_root
 from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     ProjectRef,
     namespace_slug,
@@ -32,7 +33,7 @@ from endorlabs.workflows.estate.collect.bounds import (
 from endorlabs.workflows.estate.filters.main_context import main_context_filter
 from endorlabs.workflows.estate.filters.masks import DEP_METADATA_LIST_MASK
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def _session_user_slug(client: endorlabs.Client) -> str:

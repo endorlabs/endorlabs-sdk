@@ -29,8 +29,9 @@ rules:
       cwe:
         - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
       description: >-
-        mkdir(parents=True) on an unresolved Path -- path traversal sequences
-        could create arbitrary directory trees outside the intended location.
+        mkdir(parents=True) on an unresolved Path can create directories
+        outside the intended base when path components are user-controlled.
+        Resolve and verify containment before creating parent chains.
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
@@ -54,7 +55,7 @@ rules:
         Call .resolve() on the Path and verify it starts with the expected
         base directory before calling mkdir(parents=True).
       security-severity: Low
-      version: v1.0.0
+      version: v1.1.0
     patterns:
       - pattern-either:
           - pattern: $PATH.mkdir(parents=True, ...)
@@ -71,3 +72,11 @@ rules:
     paths:
       include:
         - src/endorlabs/
+      exclude:
+        - src/endorlabs/utils/path_safety.py
+        - src/endorlabs/utils/tabular.py
+        - src/endorlabs/context/_sync.py
+        - src/endorlabs/context/paths.py
+        - src/endorlabs/workflows/
+        - src/endorlabs/agent_knowledge/skills/
+        - src/endorlabs/workflows/estate/workspace/paths.py

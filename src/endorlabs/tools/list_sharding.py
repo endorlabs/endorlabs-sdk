@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any
 
-LOGGER = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+
+LOGGER = get_resource_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
