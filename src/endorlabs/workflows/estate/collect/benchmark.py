@@ -16,7 +16,7 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_sessions_root
-from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.artifact_io import write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     ProjectRef,
