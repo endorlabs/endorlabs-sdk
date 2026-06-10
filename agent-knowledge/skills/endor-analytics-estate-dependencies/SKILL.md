@@ -50,7 +50,7 @@ uv run endor-estate analyze -n <estate_root> --only risk,graph,viz --top-n 20
 uv run endor-estate analyze -n <estate_root> --only-relationships
 ```
 
-`--only-relationships` runs the live API project relationship map into `intermediate-representation/` (same JSON as [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md)). Does not require a prior `pull`.
+`--only-relationships` runs the live API project relationship map into `intermediate-representation/` (same JSON as [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md)). Optional **`--focus-producer-project-uuid`** narrows to consumer→producer edges for one producer project (breaking-change blast radius). Does not require a prior `pull`.
 
 Outputs IR under `intermediate-representation/` and `viz/estate_dashboard.html`.
 
