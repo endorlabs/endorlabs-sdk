@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 from endorlabs import F
+from endorlabs.utils.logging_config import get_resource_logger
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def _iso_timestamp(val: Any) -> str | None:

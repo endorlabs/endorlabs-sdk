@@ -53,9 +53,9 @@ rules:
       cwe:
         - "CWE-943: Improper Neutralization of Special Elements in Data Query Logic"
       description: >-
-        Filter string built via f-string interpolation -- user-controlled
-        values may break out of the filter clause if they contain unescaped
-        quotes or operators.  Use F() from endorlabs.filter instead.
+        Filter string built with f-string interpolation. User- or file-derived
+        values can alter query semantics. Build filters with F() from
+        endorlabs (endorlabs.core.filter).
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
@@ -87,7 +87,7 @@ rules:
         from endorlabs.filter (e.g. F("meta.name") == name), or manually
         escape values before interpolation.
       security-severity: Medium
-      version: v1.2.0
+      version: v1.3.0
     patterns:
       - pattern: $FUNC(..., filter=f"...", ...)
       # Safe: unquoted enum/internal values -- no injection vector because

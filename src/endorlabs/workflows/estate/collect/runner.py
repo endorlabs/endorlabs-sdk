@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
-import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.collect.bounds import (
     count_list_delta_check,
     list_resource_count,
@@ -60,7 +61,7 @@ from endorlabs.workflows.estate.workspace.paths import (
 if TYPE_CHECKING:
     from endorlabs import Client
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -140,9 +141,8 @@ def _collect_sharded_resource(
     pending_shards = [s for s in shards if s.key in pending_keys]
 
     out_path = resource_path(workspace_root, resource_id)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     if not resume or not out_path.is_file():
-        out_path.write_text("", encoding="utf-8")
+        safe_write_text(workspace_root, out_path, "")
 
     total_rows = 0
     errors: list[str] = []
@@ -161,7 +161,8 @@ def _collect_sharded_resource(
                 )
                 if err:
                     return shard.key, [], err
-                return shard.key, list(rows or []), None
+                records = record_builder(list(rows or []), shard)
+                return shard.key, records, None
             rows = client.DependencyMetadata.list(
                 filter=filt,
                 namespace=shard.namespace,
@@ -377,7 +378,7 @@ def collect_workspace(
         ):
             path = resource_path(workspace_root, resource_id)
             if path.is_file():
-                path.write_text("", encoding="utf-8")
+                safe_write_text(workspace_root, path, "")
     else:
         manifest = create_or_load_manifest(workspace_root, namespace)
 

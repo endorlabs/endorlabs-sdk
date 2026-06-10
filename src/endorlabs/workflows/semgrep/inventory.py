@@ -16,13 +16,15 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_artifacts_root
+from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     resolve_max_pages,
     truncation_message,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def _extract_meta_dict(rule: Any) -> dict[str, Any]:
@@ -110,7 +112,7 @@ def _write_markdown_summary(inventory: dict[str, Any], output_path: Path) -> Non
     lines.extend(["", "## Metadata keys", ""])
     for key, count in inventory["metadata_key_counts"].items():
         lines.append(f"- `{key}`: {count}")
-    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    safe_write_text(output_path.parent, output_path, "\n".join(lines) + "\n")
 
 
 def main() -> int:
@@ -155,10 +157,14 @@ def main() -> int:
             page_size=args.page_size,
         )
 
-        args.json_out.parent.mkdir(parents=True, exist_ok=True)
-        args.json_out.write_text(json.dumps(inventory, indent=2), encoding="utf-8")
+        args.json_out = args.json_out.resolve()
+        args.summary_out = args.summary_out.resolve()
+        safe_write_text(
+            args.json_out.parent,
+            args.json_out,
+            json.dumps(inventory, indent=2),
+        )
 
-        args.summary_out.parent.mkdir(parents=True, exist_ok=True)
         _write_markdown_summary(inventory, args.summary_out)
 
         print(f"Wrote {args.json_out}")

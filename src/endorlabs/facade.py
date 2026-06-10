@@ -29,7 +29,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-from .core.exceptions import AmbiguousError, NotFoundError
+from .core.exceptions import AmbiguousError, NotFoundError, ValidationError
 from .core.filter import F, FilterExpression
 from .core.types import ListParameters, list_parameters_has_nonempty_field_mask
 from .operations import BaseResourceOperations
@@ -143,7 +143,7 @@ class ListableFacade[T: BaseModel]:
     def _ns(self, namespace: str | None) -> str:
         ns = namespace if namespace is not None else self._default_namespace
         if ns is None:
-            raise ValueError(
+            raise ValidationError(
                 "Namespace required: set tenant= on Client(...) or pass namespace=."
             )
         return ns
@@ -365,7 +365,7 @@ class ListableFacade[T: BaseModel]:
 
         if parent is not None:
             if self._parent_kind is None:
-                raise ValueError(
+                raise ValidationError(
                     "This resource does not support list(parent=)."
                 ) from None
             namespace = self._ns(
@@ -600,7 +600,7 @@ class ListableFacade[T: BaseModel]:
             **kwargs,
         )
         if list_parameters_has_nonempty_field_mask(lp):
-            raise ValueError(
+            raise ValidationError(
                 "lookup returns a typed resource; omit mask= (or ListParameters.mask) "
                 "or use list() / list_iter() for masked wire-shaped rows."
             )
@@ -721,7 +721,7 @@ class ListableFacade[T: BaseModel]:
             ) from None
         if parent is not None:
             if self._parent_kind is None:
-                raise ValueError(
+                raise ValidationError(
                     "This resource does not support list_iter(parent=)."
                 ) from None
             namespace = self._ns(
@@ -1199,7 +1199,7 @@ class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
         )
         meta = getattr(resource, "meta", None)
         if meta is None:
-            raise ValueError(
+            raise ValidationError(
                 f"Resource has no meta; cannot {operation} meta.tags."
             ) from None
         return resource, uuid, ns, meta
@@ -1220,7 +1220,7 @@ class ScanLogsFacade:
     def _ns(self, namespace: str | None) -> str:
         ns = namespace if namespace is not None else self._default_namespace
         if ns is None:
-            raise ValueError(
+            raise ValidationError(
                 "Namespace required: set tenant= on Client(...) or pass namespace=."
             )
         return ns

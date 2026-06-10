@@ -10,6 +10,8 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any, cast
 
+from endorlabs.core.exceptions import ValidationError
+
 _MANIFEST_FILENAME = "MANIFEST.json"
 _INDEX_FILENAME = "INDEX.md"
 
@@ -18,7 +20,7 @@ def agent_knowledge_dir() -> Path:
     """Return the installed wheel path to the shipped agent knowledge package."""
     module = import_module("endorlabs.agent_knowledge")
     if module.__file__ is None:
-        raise RuntimeError(
+        raise ValidationError(
             "endorlabs.agent_knowledge is a namespace package without a path"
         )
     return Path(module.__file__).resolve().parent
