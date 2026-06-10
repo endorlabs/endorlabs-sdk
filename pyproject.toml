@@ -46,7 +46,7 @@ docs = [
     "beautifulsoup4==4.15.0",
     "markdownify==1.2.2",
 ]
-# DataFrame/Parquet export (utils.tabular) + estate graph metrics (igraph/leidenalg)
+# DataFrame/Parquet export (estate cardinality tabular; utils.tabular shim) + estate graph metrics (igraph/leidenalg)
 analytics = [
     "pandas==3.0.3",
     "pyarrow==24.0.0",
@@ -353,8 +353,12 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT017", "PT018", "RUF100", "SIM117"]
 # --- Context CLI: command-line printing is intentional ---
 "src/endorlabs/context/cli.py" = ["T20"]
-# --- Tools: dependency explorer ---
+# --- Tools: list sharding; split call-graph/dependency modules live under workflows/ ---
 "src/endorlabs/tools/**" = ["C901", "SLF001", "S108"]
+"src/endorlabs/workflows/callgraph/**" = ["C901", "SLF001", "S108", "TC001"]
+"src/endorlabs/workflows/agent_context/hydration.py" = ["C901"]
+"src/endorlabs/workflows/dependencies/metadata_fetch.py" = ["TC001"]
+"src/endorlabs/utils/api_pagination.py" = ["TC001"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -534,7 +538,13 @@ strict = [
 executionEnvironments = [
     { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     # Estate workflows: staged typing (migrated analytics + relationships modules).
-    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    # Split dependency/call-graph modules (migrated from tools/dependency_explorer).
+    { root = "src/endorlabs/workflows/callgraph", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/dependencies/bom_graph.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/dependencies/coordinates.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/dependencies/metadata_fetch.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/agent_context/hydration.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
     { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },

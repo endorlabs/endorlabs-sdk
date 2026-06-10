@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.artifact_io import write_json
 from endorlabs.workflows.estate.collect.dependency_metadata import (
     dep_data_from_record,
     load_dependency_metadata_records,

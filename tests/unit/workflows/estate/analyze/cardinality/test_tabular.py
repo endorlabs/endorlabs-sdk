@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pytest
 from pydantic import BaseModel
 
-from endorlabs.utils.tabular import (
+from endorlabs.workflows.estate.analyze.cardinality.tabular import (
     TabularExport,
     column_names,
     export_records,

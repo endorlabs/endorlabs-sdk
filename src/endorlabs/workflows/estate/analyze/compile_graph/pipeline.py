@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
-from endorlabs.tools.dependency_explorer import parse_dep_name
 from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 from endorlabs.workflows.estate.analyze.project_map.core import (
     add_producer_indices,
     aggregate_package_anchored_edges,
