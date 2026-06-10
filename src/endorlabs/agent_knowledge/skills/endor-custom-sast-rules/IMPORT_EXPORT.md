@@ -136,7 +136,7 @@ sast_rule_manager.py delete --name-filter SUBSTRING [--dry-run]
 
 | Flag | Description |
 |------|-------------|
-| `--name-filter SUBSTRING` | Substring to match against `meta.name` |
+| `--name-filter SUBSTRING` | Substring match on `meta.name` via `matches` regex (not `contains`) |
 
 Returns the list of deleted rule names, which can be passed to
 `orphans` for cleanup.
@@ -180,7 +180,7 @@ Chains: `delete` -> `orphans` -> `import` -> `configure`. If
 |------|-------------|
 | `--rules-dir PATH` | Directory containing all rule YAML files |
 | `--enabled-dir PATH` | Directory whose rules should be enabled |
-| `--name-filter SUBSTRING` | Substring for delete step (optional) |
+| `--name-filter SUBSTRING` | Substring for delete step via `meta.name matches` (optional) |
 | `--force` | Update existing rules during import step |
 
 ---
