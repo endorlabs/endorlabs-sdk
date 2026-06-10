@@ -201,6 +201,84 @@ def test_build_payload_schemas_and_contract(monkeypatch) -> None:
     assert not errors
 
 
+def test_validate_contract_artifacts_fails_on_parity_status_fail() -> None:
+    facade_contract = {
+        "resources": [
+            {
+                "attr_name": "Example",
+                "resource_name": "examples",
+                "model_class": "Example",
+                "model_class_import_path": "endorlabs.resources.example:Example",
+                "build_create_payload_fn_name": None,
+                "build_create_payload_fn_import_path": None,
+                "scope": None,
+                "parent_kind": None,
+                "supported_ops": ["list"],
+                "filter_kwarg_map": {},
+                "canonical_entities": [],
+                "accepted_canonical_entities": [],
+                "has_tag_methods": False,
+                "mutable_fields": [],
+                "immutable_fields": [],
+                "create_mode": "unsupported",
+                "update_requires_mask": False,
+                "identity_filter_fields": [],
+                "workflow_flags": [],
+                "create_payload_entities": [],
+                "update_payload_entities": [],
+                "create_convenience_spec_fields": [],
+                "create_convenience_spec_required": [],
+                "create_convenience_meta_fields": [],
+                "create_convenience_payload_top_level_fields": [],
+                "create_convenience_read_only_spec_fields": [],
+                "convenience_skip_reason": "test",
+            }
+        ],
+        "resource_count": 1,
+    }
+    registry_parity_report = {
+        "status": "fail",
+        "missing_in_mapping": ["Example"],
+        "mapping_without_registry_match": [],
+        "alias_matches": [],
+    }
+    operation_path_metadata = {
+        "operations": [
+            {
+                "path": "/v1/namespaces/{tenant_meta.namespace}/examples",
+                "method": "get",
+                "operation_id": "ExampleServiceList",
+                "tags": [],
+                "x_internal": False,
+                "request_refs": [],
+                "response_refs": [],
+            }
+        ]
+    }
+    payload_schemas = {
+        "resources": [
+            {
+                "attr_name": "Example",
+                "create_definitions": {},
+                "update_definitions": {},
+                "create_convenience_spec_fields": [],
+                "create_convenience_spec_required": [],
+                "create_convenience_meta_fields": [],
+                "create_convenience_payload_top_level_fields": [],
+                "create_convenience_read_only_spec_fields": [],
+                "convenience_skip_reason": "test",
+            }
+        ]
+    }
+    errors = validate_contract_artifacts(
+        facade_contract=facade_contract,
+        registry_parity_report=registry_parity_report,
+        operation_path_metadata=operation_path_metadata,
+        payload_schemas=payload_schemas,
+    )
+    assert any("registry parity failed" in error for error in errors)
+
+
 def test_infer_resource_scope_from_openapi_paths() -> None:
     spec = {
         "paths": {

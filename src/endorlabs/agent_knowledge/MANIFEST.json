@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-09T06:12:26.079128+00:00",
+  "generated_at": "2026-06-10T13:32:38.501432+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -110,7 +110,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.1.dev81",
+  "sdk_version": "0.1.1.dev96",
   "skills": [
     {
       "description": "Estate-scale workflows: pull workspace resources (project, dependency_metadata, finding, package_version), analyze version/risk cardinality and compile dependency graph from disk, unified dashboard viz. Use for estate-wide dependency diversity, risk-ranked cardinality, or CVE upgrade-path planning.",
@@ -132,6 +132,7 @@
         "skills/endor-custom-sast-rules/SEMGREP_RULE_SHAPE_GUARDRAILS.md",
         "skills/endor-custom-sast-rules/SYNTAX_REFERENCE.md",
         "skills/endor-custom-sast-rules/THREAT_MODEL.md",
+        "skills/endor-custom-sast-rules/scripts/__pycache__/sast_rule_manager.cpython-312.pyc",
         "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py"
       ]
     },

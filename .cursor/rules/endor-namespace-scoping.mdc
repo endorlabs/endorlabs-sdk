@@ -3,7 +3,7 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: d229906d3bb7ab495d3322166259b9fd292ecdf68f0b5adb6b41a9b5ba209892
+x-endor-source-sha256: 19165cca42acf4b7958fa76ad7395fb908f546d5f7bcb99b6df6ac899d613d99
 ---
 
 # Namespace scoping
@@ -31,7 +31,8 @@ widen the path.
 
 **Resolve the `Project` row first**, then pass **`namespace=project.namespace`** on downstream lists
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
-**empty results with no error**.
+**empty results with no error** (the SDK may emit a `UserWarning` on empty tenant-root lists for
+these resources).
 
 Alternatives:
 

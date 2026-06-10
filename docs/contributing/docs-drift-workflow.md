@@ -37,34 +37,41 @@ The model sync workflow:
 
 ## Release alignment guardrail
 
-Release builds must validate generated SDK surfaces from the current OpenAPI snapshot before packaging artifacts:
+Release, TestPyPI, and CI lint jobs run the same ship-artifact verifier:
 
-- Canonical model-sync generator must produce no unexpected diffs
-- `devtools/generate_client_stub.py` must produce no diff
-- `devtools/generate_reference_docs.py` must produce no diff
-- Runtime generated package (`src/endorlabs/generated/**`) must be refreshed by model sync
+```bash
+uv run python devtools/verify_ship_artifacts.py --fetch-spec
+```
 
-This keeps release artifacts aligned with the same spec-driven surfaces checked
-in CI.
+The verifier (in order): upstream OpenAPI SHA check (`--verify-upstream-only`), full model-sync
+regeneration, `git diff` on committed generated surfaces (`src/endorlabs/generated/**`,
+`client_surface.pyi`, `docs/generated-reference/**`), and `sync_agent_knowledge.py --verify`.
+
+Release workflows also pass `--verify-changelog VERSION` so `docs/changelog.md` contains a
+matching `## VERSION` section before publish.
 
 ## CI and local gates
 
-**CI** (`.github/workflows/ci-pr-main.yml`):
+**CI** (`.github/workflows/ci-pr-main.yml` lint job): `uv run python devtools/verify_ship_artifacts.py --fetch-spec`
 
-1. **Upstream verify** (lint job): `uv run python devtools/model_sync.py --verify-upstream-only` — fails when live OpenAPI SHA-256 differs from committed provenance in `src/endorlabs/generated/registry_contract.py`.
-2. **Ephemeral generation** (`generate-model-sync` job): runs `devtools/model_sync.py` and shares artifacts with lint/unit tests (validates the generator; does not commit output).
+**Release** (`.github/workflows/release-tag-publish.yml`, `release-testpypi.yml`): composite
+`.github/actions/release-build-gate` (quality gate + `verify_ship_artifacts` + wheel build).
 
-**Pre-push** (`.pre-commit-config.yaml`): same upstream verify plus `model-sync-contract-validate` (pytest contract quality gate). Install with `uv run pre-commit install --hook-type pre-push`.
+**Pre-push** (`.pre-commit-config.yaml`): `model-sync-upstream-verify` plus
+`model-sync-contract-validate` (pytest contract quality gate). Install with
+`uv run pre-commit install --hook-type pre-push`.
 
 When verify fails, regenerate and commit in your PR:
 
 ```bash
 uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/sync_agent_knowledge.py
 ```
 
 ### Triage
 
-- **Upstream verify failed in CI or pre-push:** run the command above, review diffs under `src/endorlabs/generated/`, `client_surface.pyi`, and `docs/generated-reference/`, then push.
+- **Ship-artifact verify failed in CI or release:** run the commands above, review diffs under
+  `src/endorlabs/generated/`, `client_surface.pyi`, and `docs/generated-reference/`, then push.
 - **Optional version signal:** `.github/scripts/check_endorctl_version.py` (local or cron; not required for merge).
 
 ## Local Use

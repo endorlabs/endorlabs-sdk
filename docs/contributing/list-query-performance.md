@@ -31,6 +31,27 @@ Guidance for SDK users and contributors when choosing **namespace scope**, **`tr
 
 Related: [troubleshooting.md](troubleshooting.md) (list `ServerError`, 404 after traverse), [guides/retrieving-scan-results.md](../guides/retrieving-scan-results.md) (Project → ScanResult → Finding workflow).
 
+## Sharded parallel lists (SDK helper)
+
+For large project-scoped resources (`DependencyMetadata`, `Finding`, …), prefer per-project
+parallel `list()` with selective filters instead of one namespace-wide pagination chain:
+
+```python
+from endorlabs.tools.list_sharding import ParentShard, list_for_shards, project_model_to_shard
+
+projects = client.Project.list(namespace=child_ns)
+shards = [project_model_to_shard(p, child_ns) for p in projects]
+rows = list_for_shards(
+    client.Finding,
+    shards,
+    filter_fn=lambda s: f'spec.project_uuid=="{s.key}"',
+    max_workers=12,
+)
+```
+
+Estate-scale bulk collect remains in `endor-estate` workflows; see `AGENTS.md` for measured
+speedup notes.
+
 ## References
 
 - [contracts.md](../contracts.md) — `ListParameters`, namespace scoping.
