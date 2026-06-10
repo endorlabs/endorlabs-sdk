@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from devtools.agent_knowledge_catalog import (
+    BOOTSTRAP_EXCLUDE_RULE_IDS,
     build_bootstrap_manifest_block,
     build_contract_manifest_entries,
     build_rules_manifest_entries,
@@ -47,9 +48,12 @@ def test_contract_manifest_entries_reference_only() -> None:
 def test_manifest_bootstrap_block_matches_rules() -> None:
     rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
     bootstrap = build_bootstrap_manifest_block(rules)
-    expected_ids = sorted(entry["id"] for entry in rules)
+    expected_ids = sorted(
+        entry["id"] for entry in rules if entry["id"] not in BOOTSTRAP_EXCLUDE_RULE_IDS
+    )
     assert bootstrap == {"index": "INDEX.md", "rule_ids": expected_ids}
     assert "endor-workflow-composition" in bootstrap["rule_ids"]
+    assert "endor-changelog" not in bootstrap["rule_ids"]
 
 
 def test_shipped_manifest_schema_v2() -> None:
