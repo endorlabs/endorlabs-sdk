@@ -11,5 +11,7 @@ Thin index of SDK workflow entry points. See `MANIFEST.json` for machine-readabl
 | policies-validate | `—` | `endorlabs.workflows.policies.validate` | endor-validate-policy | stdout or --output-json |
 | reachability-context | `endor-reachability-context` | `endorlabs.workflows.reachability.cli` | endor-reachability-provenance | .endorlabs-context/workspace/projects/<uuid>/ |
 | relationships-map | `—` | `endorlabs.workflows.estate.analyze.project_map.map` | endor-map-project-dependency-relationships | .endorlabs-context/workspace/projects/<uuid>/ |
-| semgrep-inventory | `endor-semgrep-inventory` | `endorlabs.workflows.semgrep.inventory` | endor-custom-sast-rules | .endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json |
+| semgrep-inventory | `endor-semgrep-inventory` | `endorlabs.workflows.semgrep.inventory` | endor-custom-sast-rules | `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json` (`SemgrepRule.list`) |
 | troubleshooting-scans | `—` | `endorlabs.workflows.troubleshooting_scans` | endor-troubleshooting-scans | .endorlabs-context/workspace/sessions/<user>/troubleshooting/ |
+
+**Naming:** workflow id `semgrep-inventory` and module path `workflows/semgrep/` are shorthand; the API resource is **`SemgrepRule`** (`client.SemgrepRule`).
