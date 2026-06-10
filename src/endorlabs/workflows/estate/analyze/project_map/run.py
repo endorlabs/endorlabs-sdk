@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs import F
-from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.artifact_io import write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.core import (
     SupportingPackage,

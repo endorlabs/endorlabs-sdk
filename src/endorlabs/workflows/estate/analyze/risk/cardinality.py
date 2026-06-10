@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.utils.tabular import TabularExport
 from endorlabs.workflows.estate.analyze.cardinality.columns import (
     RISK_RANKING_COLUMNS,
     RISK_VERSION_DETAIL_COLUMNS,
@@ -21,6 +20,7 @@ from endorlabs.workflows.estate.analyze.cardinality.group_list import (
     grouped_count_list_parameters_for_package_name,
     iter_group_buckets,
 )
+from endorlabs.workflows.estate.analyze.cardinality.tabular import TabularExport
 from endorlabs.workflows.estate.analyze.cardinality.types import (
     RiskRankedCardinalityResult,
     RiskRankedCardinalityStats,
@@ -349,7 +349,7 @@ def analyze_risk_cardinality_from_workspace(
     scorer: RiskScorer | str | None = None,
 ) -> RiskRankedCardinalityResult:
     """Rank packages by findings and drill version cardinality from workspace JSONL."""
-    from endorlabs.tools.dependency_explorer import write_json
+    from endorlabs.utils.artifact_io import write_json
     from endorlabs.workflows.estate.collect.finding_loader import load_finding_records
     from endorlabs.workflows.estate.collect.projects import load_project_records
     from endorlabs.workflows.estate.workspace.paths import ir_path

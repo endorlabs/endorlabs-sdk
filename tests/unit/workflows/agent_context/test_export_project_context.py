@@ -9,12 +9,9 @@ from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
-from endorlabs.tools.dependency_explorer import (
-    ProjectResult,
-    PVResult,
-)
 from endorlabs.workflows.agent_context import export as export_mod
 from endorlabs.workflows.agent_context.export import build_context_manifest, parse_args
+from endorlabs.workflows.agent_context.hydration import ProjectResult, PVResult
 from endorlabs.workflows.agent_context.package_versions import (
     _iso_timestamp,
     build_index_rows,
