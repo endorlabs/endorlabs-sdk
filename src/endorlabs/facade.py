@@ -921,6 +921,8 @@ class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
             raise TypeError(
                 "create() for this resource requires payload=; kwargs not supported."
             )
+        if payload is None:
+            raise TypeError("create() internal error: payload unresolved.")
         ns = self._ns(namespace)
         return self._ops.create(ns, payload)
 

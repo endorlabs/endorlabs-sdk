@@ -331,7 +331,7 @@ def build_bipartite_svg(
     for pub in pub_keys:
         y = margin_top + pub_index[pub] * row_h
         collapsed = collapsed_label(pub)
-        label = collapsed if collapsed else short_name(pub, 38, collapse_prefixes)
+        label = collapsed or short_name(pub, 38, collapse_prefixes)
         lines.append(
             f'<text x="{right_x + 12}" y="{y + 4}" class="node-label right">'
             f"{html.escape(label)}</text>"

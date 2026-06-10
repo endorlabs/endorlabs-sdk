@@ -18,13 +18,22 @@ scripts to repo-root `.tmp/` unless the user explicitly requests that path.
 | `<slug>-<YYYYMMDD>/` | Estate pull + analyze (`endor-estate`; `data/`, `intermediate-representation/`, `viz/`) |
 | `projects/<uuid>/` | Project-scoped workflow bundles (`endor-agent-context`, reachability exports, relationship maps) |
 | `sessions/<user>/` | Interactive session, RCA/triage exports, one-off scripts, and other non-project scratch work |
-| `artifacts/` | Namespace-scoped inventory outputs (e.g. Semgrep metadata) |
+| `artifacts/` | Namespace-scoped inventory outputs (e.g. **`SemgrepRule`** metadata inventory from `endor-semgrep-inventory`) |
 
 Common session subfolders (create as needed):
 
 - `sessions/<user>/troubleshooting/` — scan RCA (`troubleshooting_scans` workflow default)
 - `sessions/<user>/scripts/` — temporary probe/debug `.py` files for the current investigation
 - `sessions/<user>/exports/` — structured JSON/CSV from auth/SSO/policy spot-checks
+- `sessions/<user>/notes/` — ephemeral markdown (readiness reports, doc audits, design spikes)
+
+## Ephemeral markdown (do not commit)
+
+Short-shelf-life notes belong under **`sessions/<user>/notes/`**, not tracked `docs/`.
+Do not add `docs/findings/`, `*-draft.md`, or `*-assessment.md` under git. Durable
+public docs live in `docs/guides/` (consumers) and `docs/contributing/` (maintainers).
+Breaking changes and notable releases: [docs/changelog.md](../../docs/changelog.md) only — no parallel `*-migration.md`.
+See [docs/design.md](../../docs/design.md) placement rules.
 
 ## Resolving `<user>`
 
@@ -36,7 +45,9 @@ When identity is unknown, use `agent`.
 1. **Project workflows** — pass `--output-dir .endorlabs-context/workspace/projects/` (or omit when the CLI default is already `workspace/projects`).
 2. **Triage / debugging** — write artifacts under `.endorlabs-context/workspace/sessions/<user>/` (add a task subdir when helpful).
 3. **Temp scripts** — create under `sessions/<user>/scripts/`; never commit them to `src/` or repo root.
-4. **Do not** assume `.endorlabs-context/` exists; `mkdir -p` parent dirs before writing.
+4. **Ephemeral markdown** — readiness assessments, audit logs, and spike notes go under
+   `sessions/<user>/notes/`; do not commit under `docs/`.
+5. **Do not** assume `.endorlabs-context/` exists; `mkdir -p` parent dirs before writing.
 
 Path helpers (SDK): `endorlabs.context.paths.workflow_projects_root`,
 `workflow_sessions_root`, `workflow_artifacts_root`.

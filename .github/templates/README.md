@@ -12,4 +12,4 @@ uv run python .github/scripts/sync_pr_comment_template.py \
   --platform-type PLATFORM_SOURCE_GITHUB
 ```
 
-See [docs/guides/pr-comment-config-and-parallel-comments.md](../../docs/guides/pr-comment-config-and-parallel-comments.md).
+See [docs/contributing/pr-review-comments.md](../../docs/contributing/pr-review-comments.md).
