@@ -4,7 +4,8 @@ description: >-
   Deterministic single-project retrieval bundle via endor-agent-context:
   context_manifest.json, dependency explorer artifacts, optional session
   summaries, PV index + hydration, optional call-graph sweep. Not namespace
-  topology or breaking-change consumer discovery — hand off to relationship-map.
+  topology or breaking-change consumer discovery — hand off to
+  endor-namespace-relationship-map.
 endorlabs:
   catalog:
     workflow_id: agent-context
@@ -26,19 +27,28 @@ Read `context_manifest.json` first; composition rules in [workflow-composition](
 
 Produce a **versioned, machine-readable retrieval bundle for one project** via **`endor-agent-context`** (not `endor-estate`). This is the shared **retrieval layer** for SBOM slices, DependencyMetadata, optional findings/policies/versions summaries, and call-graph exports — not namespace topology or “who must I warn about a breaking change?”
 
+## Vocabulary
+
+| Term | Meaning |
+|------|---------|
+| **Client tenant** | `--tenant` on export — auth context for `endorlabs.Client`. |
+| **`--namespace` (optional)** | Disambiguates project lookup only; export remains **one project**. |
+| **`--project`** | Required — single repo (UUID or name). |
+| **Not namespace scope** | Multi-repo / blast-radius questions → [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) or [endor-estate-workspace](../endor-estate-workspace/SKILL.md). |
+
 ## Decision table
 
 | Question | Use this skill | Hand off to |
 |----------|----------------|-------------|
 | SBOM / DM / PV index-hydration for **one repo** | `uv run endor-agent-context` | — |
 | Findings/policies/repo-version **summaries in the bundle** | add `--session-summaries` | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) for scan RCA |
-| **Who consumes packages my repo produces** (breaking-change blast radius) | — | [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md) with `--focus-producer-project-uuid`, or `endor-estate analyze --only-relationships --focus-producer-project-uuid` |
-| Full namespace project graph (all edges) | — | map skill or `endor-estate analyze --only-relationships` (no focus filter) |
-| Compile-import graph across an **estate** | — | [endor-analytics-estate-dependencies](../endor-analytics-estate-dependencies/SKILL.md) |
+| **Who consumes packages my repo produces** (breaking-change blast radius) | — | [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) with `--focus-producer-project-uuid`, or `endor-estate analyze -n <namespace_scope> --only-relationships --focus-producer-project-uuid` |
+| Full namespace project graph (all edges) | — | namespace relationship map or `endor-estate analyze --only-relationships` |
+| Bulk pull/analyze under a **namespace scope** | — | [endor-estate-workspace](../endor-estate-workspace/SKILL.md) |
 | Function-level call graph search | `--callgraph-sweep` | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) |
 | Stitched vulnerable-function reachability | bundle as input | `endor-reachability-context` |
 
-**Estate vs this skill:** `endor-estate` is disk-first estate analytics and live namespace relationship maps. **`endor-agent-context` is always single-project** (`--project` UUID or name + optional `--namespace` for resolution). It does not run relationship correlation.
+**Not `endor-estate`:** this skill is always **single-project** (`--project`). `endor-estate` uses **namespace scope** for multi-project workspace work.
 
 ## Ordering
 
@@ -83,7 +93,8 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 
 ## Linked skills
 
-- [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md) — namespace consumer→producer edges
+- [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) — namespace consumer→producer edges
+- [endor-estate-workspace](../endor-estate-workspace/SKILL.md) — bulk namespace-scoped pull/analyze
 - [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
 - [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md)

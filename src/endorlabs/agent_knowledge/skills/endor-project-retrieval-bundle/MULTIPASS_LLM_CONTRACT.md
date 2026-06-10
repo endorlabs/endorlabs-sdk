@@ -10,7 +10,7 @@ Load this file **after** reading [SKILL.md](SKILL.md) when you need exact pass b
 | **2 — Hydrate** | `process_project` (BOM + optional CG pull + `DependencyMetadata`) | `bom_*.json`, `call_graph_*.json`, `dep_metadata.json`, `dependencies.json`, summary md | `--pv-limit`, `--dep-metadata-max-pages`, and list caps when using `--hydrate-pv-uuids` / `--hydrate-top-n` |
 | **3 — Call-graph sweep** | Optional; enumerates PVs and exports call graph payloads | `callgraph_sweep/` + nested manifest | `--callgraph-max-pages`, `--callgraph-page-size` |
 
-**Namespace graph (different skill):** [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md) answers *cross-project* edges, not this per-repo bundle.
+**Namespace graph (different skill):** [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) answers *cross-project* edges, not this per-repo bundle.
 
 ## Progressive disclosure — what to read first
 
