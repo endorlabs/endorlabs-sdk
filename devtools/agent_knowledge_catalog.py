@@ -32,8 +32,6 @@ _LEGACY_PATH_REWRITES: tuple[tuple[str, str], ...] = (
     ("agent-skills/", "sdk/skills/"),
     ("agent/skills/", "sdk/skills/"),
     ("agent/rules/", "sdk/rules/"),
-    ("agent/contracts/", "sdk/contracts/"),
-    ("contracts/", "sdk/contracts/"),
 )
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
