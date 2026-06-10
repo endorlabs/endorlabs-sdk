@@ -56,6 +56,11 @@ def main() -> int:
         default=ROOT / "dist",
         help="Directory containing built wheels",
     )
+    parser.add_argument(
+        "--expect-version",
+        default=None,
+        help="Fail unless installed endorlabs.__version__ equals this string",
+    )
     args = parser.parse_args()
 
     wheel = _find_wheel(args.dist_dir, args.wheel)
@@ -82,6 +87,12 @@ def main() -> int:
         version = version_proc.stdout.strip()
         if not version:
             print("smoke test failed: empty __version__", file=sys.stderr)
+            return 1
+        if args.expect_version is not None and version != args.expect_version:
+            print(
+                f"smoke test failed: version {version!r} != expected {args.expect_version!r}",
+                file=sys.stderr,
+            )
             return 1
 
         print(f"import ok; endorlabs.__version__={version}")
