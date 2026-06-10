@@ -77,7 +77,7 @@ def cmd_pull(args: argparse.Namespace) -> int:
     _attach_workspace_log(workspace_root, PULL_LOG_FILENAME)
     client = endorlabs.Client(tenant=args.namespace)
     try:
-        date_suffix = args.date if args.date else None
+        date_suffix = args.date or None
         result = collect_workspace(
             client,
             namespace=args.namespace,
