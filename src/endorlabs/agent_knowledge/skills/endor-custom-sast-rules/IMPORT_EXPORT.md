@@ -1,8 +1,21 @@
-# Importing and Exporting Semgrep Rules with Endor Labs
+# Importing and Exporting SemgrepRule resources
 
-How to push custom OpenGrep/Semgrep rules into an Endor Labs namespace
-using the import maneuver, and how to export existing rules for local
-editing or backup.
+How to push custom OpenGrep/Semgrep rule YAML into Endor Labs as **`SemgrepRule`**
+rows, export existing rules, and validate before create.
+
+## Validation (no dedicated validate endpoint)
+
+The public OpenAPI spec exposes **`SemgrepRule` CRUD only** (`GET`/`POST`
+`/semgrep-rules`, `GET`/`DELETE` by UUID) — **not** a separate validate RPC.
+The platform rejects invalid payloads on **create/update** (`400`).
+
+**Before import, prefer:**
+
+1. Local engine: `opengrep scan --config rule.yaml --validate`
+2. Skill manager: `sast_rule_manager.py validate --rules-dir … --namespace …`
+   — runs guardrails + `validate_semgrep_rule()` from
+   `endorlabs.resources.semgrep_rule` (SDK-only, no API write)
+3. Import dry-run: `import --dry-run` (guardrails only; still no server round-trip)
 
 ---
 
@@ -18,21 +31,10 @@ Set these in your `.env` file or shell environment:
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret for Endor Labs authentication |
 | `ENDOR_NAMESPACE` | Target namespace (e.g., `tenant.child`) |
 
-The maneuver scripts read these automatically. On Windows PowerShell,
-load `.env` manually if your shell does not source it:
-
-```powershell
-Get-Content .env | ForEach-Object {
-    if ($_ -match '^\s*([^#][^=]+?)\s*=\s*(.+?)\s*$') {
-        Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
-    }
-}
-```
-
-Load credentials from a local `.env` file when running SDK commands:
+`sast_rule_manager.py` and other SDK workflow scripts read these from the environment. Load a local `.env` with **`uv run --env-file .env`** (see [README.md](../../../README.md#configuration)):
 
 ```bash
-uv run --env-file .env endorctl api list --resource Project -n "$ENDOR_NAMESPACE"
+uv run --env-file .env endorctl api list --resource Project -n tenant.ns
 ```
 
 ### Dependencies
@@ -136,7 +138,7 @@ sast_rule_manager.py delete --name-filter SUBSTRING [--dry-run]
 
 | Flag | Description |
 |------|-------------|
-| `--name-filter SUBSTRING` | Substring to match against `meta.name` |
+| `--name-filter SUBSTRING` | Substring match on `meta.name` via `matches` regex (not `contains`) |
 
 Returns the list of deleted rule names, which can be passed to
 `orphans` for cleanup.
@@ -180,7 +182,7 @@ Chains: `delete` -> `orphans` -> `import` -> `configure`. If
 |------|-------------|
 | `--rules-dir PATH` | Directory containing all rule YAML files |
 | `--enabled-dir PATH` | Directory whose rules should be enabled |
-| `--name-filter SUBSTRING` | Substring for delete step (optional) |
+| `--name-filter SUBSTRING` | Substring for delete step via `meta.name matches` (optional) |
 | `--force` | Update existing rules during import step |
 
 ---
@@ -449,4 +451,3 @@ After importing, verify end-to-end:
 
 - [AUTHORING.md](AUTHORING.md) -- authoring guide
 - [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) -- rule syntax card
-- [THREAT_MODEL.md](THREAT_MODEL.md) -- threat modeling checklist

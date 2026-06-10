@@ -1,7 +1,7 @@
 # Authoring OpenGrep / Semgrep Rules
 
-How to go from a threat-model finding to a validated rule YAML file, ready
-for local scanning and import into the Endor Labs platform.
+How to author validated rule YAML for local scanning and import into the
+Endor Labs platform.
 
 > **Note:** Both `opengrep scan` and `semgrep scan` accept the same rule
 > YAML format. Commands below use `opengrep`; substitute `semgrep` if that
@@ -17,7 +17,7 @@ structurally close to what you need and adapt it.
 Good sources for reference rules:
 - `.endorlabs-context/semgrep-rules/` (rules already imported into your namespace)
 - [semgrep/semgrep-rules](https://github.com/semgrep/semgrep-rules) (community registry)
-- The Endor Labs platform UI (export a rule with the export maneuver)
+- The Endor Labs platform UI or SDK export (see [IMPORT_EXPORT.md](IMPORT_EXPORT.md))
 
 ### Anatomy of a rule file
 
@@ -297,8 +297,8 @@ If the logger is followed (anywhere in the same scope) by an
 **Result:** 27 non-compliant files flagged, 12 compliant files
 correctly suppressed, 0 false positives.
 
-After local validation, the rule was imported into Endor Labs using the
-import maneuver (see [IMPORT_EXPORT.md](IMPORT_EXPORT.md)) and verified
+After local validation, the rule was imported into Endor Labs with
+`sast_rule_manager.py import` (see [IMPORT_EXPORT.md](IMPORT_EXPORT.md)) and verified
 with `endorctl scan --sast` (28 findings across 27 files, matching the
 local results exactly).
 
@@ -308,5 +308,4 @@ local results exactly).
 
 - [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) -- full syntax card
 - [IMPORT_EXPORT.md](IMPORT_EXPORT.md) -- import/export workflow
-- [THREAT_MODEL.md](THREAT_MODEL.md) -- threat modeling checklist
 - [Semgrep Rule Syntax (official docs)](https://semgrep.dev/docs/writing-rules/rule-syntax)
