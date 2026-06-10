@@ -5,8 +5,9 @@ Run from repo root::
     uv run python devtools/verify_ship_artifacts.py --fetch-spec
     uv run python devtools/verify_ship_artifacts.py --verify-changelog 0.1.2
 
-Used by CI, release, and TestPyPI workflows to ensure published wheels match the
-tagged commit (no silent regeneration drift).
+Used by pre-commit (local regen + drift), pre-push/CI/release (``--fetch-spec``),
+and TestPyPI workflows to ensure published wheels match the tagged commit (no silent
+regeneration drift).
 """
 # ruff: noqa: D103, S603
 
@@ -104,9 +105,12 @@ def git_diff_dirty(paths: tuple[str, ...], *, root: Path) -> str | None:
     stat = _run(["git", "diff", "--stat", "--", *paths], cwd=root)
     detail = (stat.stdout or stat.stderr or "").strip()
     return (
-        "Committed ship artifacts are out of date after regeneration. "
-        "Run: uv run python devtools/model_sync.py --fetch-spec "
+        "Committed ship artifacts are out of date after regeneration.\n"
+        "Fix: uv run python devtools/verify_ship_artifacts.py --fetch-spec\n"
+        "Or: uv run python devtools/model_sync.py --fetch-spec "
         "--generate-stubs --generate-reference-docs\n"
+        "Then: git add src/endorlabs/generated/ src/endorlabs/client_surface.pyi "
+        "docs/generated-reference/ && re-commit\n"
         f"{detail}"
     )
 
@@ -114,6 +118,7 @@ def git_diff_dirty(paths: tuple[str, ...], *, root: Path) -> str | None:
 def run_verify(
     *,
     fetch_spec: bool = False,
+    skip_upstream: bool = False,
     spec_url: str = DEFAULT_SPEC_URL,
     verify_changelog: str | None = None,
     root: Path | None = None,
@@ -141,14 +146,15 @@ def run_verify(
         )
         return 1
 
-    upstream = _run(
-        [sys.executable, "devtools/model_sync.py", "--verify-upstream-only"],
-        cwd=base,
-    )
-    if upstream.returncode != 0:
-        msg = (upstream.stdout or upstream.stderr or "").strip()
-        logger.error("Upstream OpenAPI verify failed.\n%s", msg)
-        return upstream.returncode
+    if not skip_upstream:
+        upstream = _run(
+            [sys.executable, "devtools/model_sync.py", "--verify-upstream-only"],
+            cwd=base,
+        )
+        if upstream.returncode != 0:
+            msg = (upstream.stdout or upstream.stderr or "").strip()
+            logger.error("Upstream OpenAPI verify failed.\n%s", msg)
+            return upstream.returncode
 
     regen = _run(
         [
@@ -202,6 +208,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Download OpenAPI spec before verification",
     )
     parser.add_argument(
+        "--skip-upstream",
+        action="store_true",
+        help="Skip live OpenAPI SHA verify (pre-commit local regen + drift check)",
+    )
+    parser.add_argument(
         "--spec-url",
         default=DEFAULT_SPEC_URL,
         help=f"OpenAPI download URL (default: {DEFAULT_SPEC_URL})",
@@ -214,6 +225,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     return run_verify(
         fetch_spec=args.fetch_spec,
+        skip_upstream=args.skip_upstream,
         spec_url=args.spec_url,
         verify_changelog=args.verify_changelog,
     )
