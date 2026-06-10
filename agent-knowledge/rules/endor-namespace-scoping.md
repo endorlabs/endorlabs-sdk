@@ -30,7 +30,8 @@ widen the path.
 
 **Resolve the `Project` row first**, then pass **`namespace=project.namespace`** on downstream lists
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
-**empty results with no error**.
+**empty results with no error** (the SDK may emit a `UserWarning` on empty tenant-root lists for
+these resources).
 
 **Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](../../docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
 

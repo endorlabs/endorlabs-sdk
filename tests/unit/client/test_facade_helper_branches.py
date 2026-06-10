@@ -18,6 +18,7 @@ def _entry(*, filter_map: dict[str, str] | None = None) -> SimpleNamespace:
         supported_ops={"list"},
         filter_kwarg_map=filter_map or {},
         model_class=SimpleNamespace,
+        workflow_flags=frozenset(),
     )
 
 
