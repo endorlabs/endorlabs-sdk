@@ -67,6 +67,10 @@ Thumbs.db
 # Generated version file (hatch-vcs)
 src/endorlabs/_version.py
 
+# Customer / session exports (never commit)
+*findings-export*.csv
+*.gh-endorlabs*.csv
+
 # Context bootstrap (downloaded by SDK or scripts)
 .endorlabs-context/
 .tmp/

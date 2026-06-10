@@ -27,7 +27,10 @@ runs:
 
     - name: Verify hatch-vcs version resolution
       shell: bash
-      run: uv run python devtools/check_vcs_version.py
+      run: >-
+        uv run python devtools/check_vcs_version.py
+        --expect "${{ inputs.version }}"
+        --release-only
 
     - name: Run quality gate
       shell: bash
@@ -57,3 +60,9 @@ runs:
     - name: Verify distribution metadata
       shell: bash
       run: uv run twine check dist/*
+
+    - name: Smoke test built wheel
+      shell: bash
+      run: >-
+        uv run python devtools/smoke_test_wheel.py
+        --expect-version "${{ inputs.version }}"
