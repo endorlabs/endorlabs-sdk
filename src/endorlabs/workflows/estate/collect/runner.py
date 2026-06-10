@@ -161,7 +161,8 @@ def _collect_sharded_resource(
                 )
                 if err:
                     return shard.key, [], err
-                return shard.key, list(rows or []), None
+                records = record_builder(list(rows or []), shard)
+                return shard.key, records, None
             rows = client.DependencyMetadata.list(
                 filter=filt,
                 namespace=shard.namespace,
