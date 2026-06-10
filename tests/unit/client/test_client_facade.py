@@ -24,8 +24,39 @@ from tests.conftest import (
 )
 
 
-def test_client_requires_namespace_or_tenant_for_list() -> None:
+def test_client_uses_endor_namespace_env_when_tenant_omitted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Client() without tenant uses ENDOR_NAMESPACE from the environment."""
+    monkeypatch.setenv("ENDOR_NAMESPACE", "env.tenant.namespace")
+    mock = Mock(spec=APIClient)
+    client = endorlabs.Client(api_client=mock)
+    mock_list = Mock(return_value=[])
+    client.Namespace._ops.list = mock_list
+    client.Namespace.list(max_pages=TEST_MAX_PAGES)
+    args, _ = mock_list.call_args
+    assert args[0] == "env.tenant.namespace"
+
+
+def test_client_explicit_tenant_overrides_endor_namespace_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Explicit tenant= wins over ENDOR_NAMESPACE."""
+    monkeypatch.setenv("ENDOR_NAMESPACE", "env.tenant.namespace")
+    mock = Mock(spec=APIClient)
+    client = endorlabs.Client(api_client=mock, tenant="explicit.tenant")
+    mock_list = Mock(return_value=[])
+    client.Namespace._ops.list = mock_list
+    client.Namespace.list(max_pages=TEST_MAX_PAGES)
+    args, _ = mock_list.call_args
+    assert args[0] == "explicit.tenant"
+
+
+def test_client_requires_namespace_or_tenant_for_list(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """When tenant is None and namespace is not passed to list(), raise ValueError."""
+    monkeypatch.delenv("ENDOR_NAMESPACE", raising=False)
     client = endorlabs.Client(api_client=Mock(spec=APIClient), tenant=None)
     client.Namespace._ops.list = Mock(return_value=[])
     with pytest.raises(ValidationError, match="namespace"):
