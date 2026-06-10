@@ -6,6 +6,24 @@ tags: [list, mask, filter]
 # List parameters
 
 - **filter:** Which rows match (MQL-style expressions).
+
+## Filter operators (common)
+
+| Operator | Typical field type | Example |
+| -------- | ------------------ | ------- |
+| `==` | Scalar | `meta.name == "my-rule"` |
+| `matches` | String (regex) | `meta.name matches "endor-sdk.*"` |
+| `contains` | Array / enum list | `spec.finding_tags contains [FINDING_TAGS_REACHABLE_FUNCTION]` |
+
+**String fields:** use **`F("field").matches(...)`** (or raw `field matches "pattern"`).
+Do **not** use `contains` for substring search on scalar strings —
+`meta.name contains "substring"` (without bracket list syntax) often returns
+**zero rows with no error**.
+
+**Array fields:** use **`F("field").contains(...)`**, which emits bracket syntax
+(`field contains [VALUE]`).
+
+See also [docs/guides/examples.md](../../docs/guides/examples.md) (SDK examples).
 - **mask:** Which fields are returned in list responses.
 
 ## Return shape

@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 46ecc0ef270744e16bee128fca7d018c3e4432c939bc903d864571a1a3fab35b
+x-endor-source-sha256: 481ae55de6d6ffb094eae0f66be5ce45760c95068e232cb3c447f7383052d370
 ---
 
 # Workflow composition
@@ -61,6 +61,7 @@ See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row ti
 
 ## Anti-patterns
 
+- Run **`endor-estate pull`** (namespace-wide bulk collect) unless the user explicitly requests it — see [docs/estate/README.md](../../docs/estate/README.md).
 - Copy-paste a workflow CLI `main()` into a session script.
 - Unbounded re-fetch to "fix" empty rows (check namespace first).
 - Add triage code under `src/endorlabs/` during an investigation.
