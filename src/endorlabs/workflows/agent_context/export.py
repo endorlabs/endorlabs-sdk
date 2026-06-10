@@ -23,13 +23,10 @@ from typing import Any
 
 import endorlabs
 from endorlabs.context.paths import workflow_projects_root
-from endorlabs.tools.dependency_explorer import (
-    ProjectResult,
-    process_project,
-    slugify,
-    write_json,
-)
+from endorlabs.utils.artifact_io import slugify, write_json
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
+from endorlabs.workflows.agent_context.hydration import ProjectResult, process_project
 from endorlabs.workflows.agent_context.package_versions import (
     build_index_rows,
     list_package_versions_for_index,
@@ -43,7 +40,7 @@ from endorlabs.workflows.agent_context.session_artifacts import (
 from endorlabs.workflows.callgraph.sweep import run_callgraph_sweep
 from endorlabs.workflows.projects.resolve import resolve_project
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 MANIFEST_VERSION = 2
 
 

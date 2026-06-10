@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from endorlabs.utils.tabular import TabularExport
 from endorlabs.workflows.common import WorkflowResult
+from endorlabs.workflows.estate.analyze.cardinality.tabular import TabularExport
 
 
 @dataclass

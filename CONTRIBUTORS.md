@@ -109,8 +109,6 @@ uv run pyright --verifytypes endorlabs --ignoreexternal --project pyproject.toml
 
 Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI runs the same ruff/pyright sequence (plus generated-artifact checks); see [.github/workflows/ci-pr-main.yml](.github/workflows/ci-pr-main.yml). **Pre-commit** mirrors the lint job via local `uv run` hooks, including **`pytest tests/unit/ -m "not interactive and not long"`** on staged Python changes (see [.pre-commit-config.yaml](.pre-commit-config.yaml)); install commit and push gates with `uv run pre-commit install` and `uv run pre-commit install --hook-type pre-push`. Pyright checks types; `--verifytypes endorlabs` checks that the package's public API does not expose `Unknown`. The stub check ensures `client_surface.pyi` stays synchronized with `RESOURCE_REGISTRY`.
 
-**Repository variables (GitHub Settings → Actions):** If present, you may remove deprecated names that are no longer read by workflows: `ENDOR_ENABLE_GITHUB_CHECK_ANNOTATIONS`, `ENDOR_GITHUB_CHECK_MODE`, `ENDOR_GITHUB_CHECK_CONCLUSION` (removed Checks-annotations path). See [docs/contributing/pr-review-comments.md](docs/contributing/pr-review-comments.md) for the active PR-comment variables.
-
 ## Model-sync drift and regeneration
 
 Upstream alignment uses **pre-commit**, **pre-push**, and **CI**, not a bot workflow:

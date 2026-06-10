@@ -16,6 +16,9 @@ from typing import Any, override
 from urllib.parse import parse_qs, urlparse
 from webbrowser import get as get_browser
 
+from endorlabs.core.exceptions import ValidationError
+from endorlabs.utils.logging_config import get_resource_logger
+
 from .utils.redaction import (
     JSON_REDACTION_REPLACEMENT,
     RedactingFilter,
@@ -25,7 +28,7 @@ from .utils.redaction import (
     url_token_redaction_replacement,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 logger.addFilter(
     RedactingFilter(
         [
@@ -170,7 +173,7 @@ def get_token(
     is_ci = any(os.getenv(indicator) for indicator in ci_indicators)
 
     if is_ci:
-        raise ValueError(
+        raise ValidationError(
             "Browser authentication cannot be used in CI/CD environments. "
             "Browser authentication requires human interaction (opens browser window). "
             "Use API key authentication instead by setting ENDOR_API_CREDENTIALS_KEY "
@@ -182,16 +185,16 @@ def get_token(
     )
 
     if normalized_method not in AUTH_METHODS:
-        raise ValueError(
+        raise ValidationError(
             f"Unsupported auth method: {normalized_method}. "
             f"Supported methods: {', '.join(AUTH_METHODS.keys())}"
         )
 
     if normalized_method == "email" and not email:
-        raise ValueError("Email address required for email-based authentication")
+        raise ValidationError("Email address required for email-based authentication")
 
     if normalized_method == "sso" and not auth_tenant:
-        raise ValueError("Tenant is required for sso authentication")
+        raise ValidationError("Tenant is required for sso authentication")
 
     # Build OAuth URL
     auth_url_template = AUTH_METHODS[normalized_method]

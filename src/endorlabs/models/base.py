@@ -491,7 +491,10 @@ class BaseResource(JsonDefaultModel):
                     if ann is not None:
                         try:
                             parent = ann(disable_automated_scan=False, scan_state="")
-                        except Exception:
+                        except Exception as exc:
+                            logger.debug(
+                                "Unable to construct parent model for %s: %s", ann, exc
+                            )
                             parent = None
             if parent is not None:
                 dump = (

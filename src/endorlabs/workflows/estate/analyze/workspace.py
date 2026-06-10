@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.artifact_io import write_json
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.compile_graph.disk_build import (
     run_graph_pipeline_from_workspace,
 )
@@ -30,7 +30,7 @@ from endorlabs.workflows.estate.workspace.paths import (
     ir_path,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 AnalysisStep = Literal["cardinality", "risk", "graph", "viz", "relationships"]
 

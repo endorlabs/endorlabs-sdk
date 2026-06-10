@@ -13,6 +13,7 @@ from typing import Any
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.context.paths import workflow_sessions_root
+from endorlabs.utils.path_safety import safe_write_text
 
 _DEFAULT_SESSION_USER = "agent"
 
@@ -78,7 +79,6 @@ def write_json(
     timestamped: bool = False,
 ) -> Path:
     """Write JSON payload using filename contract."""
-    output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / build_filename(
         root_tenant_name=root_tenant_name,
         object_kind=object_kind,
@@ -87,7 +87,7 @@ def write_json(
         extension=".json",
         timestamped=timestamped,
     )
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    safe_write_text(output_dir, path, json.dumps(payload, indent=2))
     return path
 
 
@@ -103,7 +103,6 @@ def write_text(
     timestamped: bool = False,
 ) -> Path:
     """Write text payload using filename contract."""
-    output_dir.mkdir(parents=True, exist_ok=True)
     path = output_dir / build_filename(
         root_tenant_name=root_tenant_name,
         object_kind=object_kind,
@@ -112,7 +111,7 @@ def write_text(
         extension=extension,
         timestamped=timestamped,
     )
-    path.write_text(text, encoding="utf-8")
+    safe_write_text(output_dir, path, text)
     return path
 
 

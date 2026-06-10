@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from endorlabs import F
-from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.artifact_io import write_json
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.core import (
     SupportingPackage,
     add_producer_indices,
@@ -28,7 +28,7 @@ from endorlabs.workflows.estate.collect.shards import (
     project_model_to_shard,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def _object_to_spec_dict(d: Any) -> dict[str, Any]:

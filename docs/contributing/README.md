@@ -7,8 +7,6 @@ Agent skills: [endor-implement-sdk-resource](../../agent-knowledge/skills/endor-
 - [repository-layout.md](repository-layout.md) — Tracked vs gitignored regions, `.endorlabs-context/`, workflows vs skills.
 - [architecture.md](architecture.md) — Layers, registry, facade; regen, overlay, `resources/` deltas.
 - [release-publishing.md](release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
-- [pr-review-comments.md](pr-review-comments.md) — Endor findings → GitHub PR review comments in CI.
-- [pr-review-comment-matrix.md](pr-review-comment-matrix.md) — Finding fields vs GitHub review comment payloads.
 - PR template: [`.github/pull_request_template.md`](../../.github/pull_request_template.md) — changelog intake block; policy in [agent-knowledge/rules/endor-changelog.md](../../agent-knowledge/rules/endor-changelog.md).
 - [integration-resource-tests.md](integration-resource-tests.md) — Integration test order, pagination profiles (generic vs log); see [contracts.md](../contracts.md).
 - [api-validation.md](api-validation.md) — OpenAPI and optional wire validation before overlay or hand modules.

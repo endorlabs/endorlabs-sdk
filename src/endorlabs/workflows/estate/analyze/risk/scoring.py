@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from endorlabs.tools.dependency_explorer import parse_dep_name
+from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 
 FINDING_LEVEL_CRITICAL = "FINDING_LEVEL_CRITICAL"
 FINDING_LEVEL_HIGH = "FINDING_LEVEL_HIGH"
