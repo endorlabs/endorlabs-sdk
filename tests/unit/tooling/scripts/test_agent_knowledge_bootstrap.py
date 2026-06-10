@@ -24,10 +24,12 @@ BUNDLE_ROOT = REPO_ROOT / "src" / "endorlabs" / "agent_knowledge"
 
 
 def test_rules_manifest_entries() -> None:
-    rules = build_rules_manifest_entries(AGENT_ROOT / "rules")
-    assert len(rules) == 6
+    rules_dir = AGENT_ROOT / "rules"
+    rules = build_rules_manifest_entries(rules_dir)
+    assert len(rules) == len(list(rules_dir.glob("*.md")))
     ids = {entry["id"] for entry in rules}
     assert "endor-workflow-composition" in ids
+    assert "endor-changelog" in ids
     assert all(entry["path"].startswith("rules/") for entry in rules)
     assert all("summary" in entry for entry in rules)
 
