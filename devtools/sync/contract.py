@@ -905,6 +905,18 @@ def validate_contract_artifacts(
         if not isinstance(registry_parity_report.get(key), list):
             errors.append(f"registry_parity_report.{key} must be a list")
 
+    if registry_parity_report.get("status") == "fail":
+        missing = registry_parity_report.get("missing_in_mapping")
+        missing_list = (
+            sorted(value for value in missing if isinstance(value, str))
+            if isinstance(missing, list)
+            else []
+        )
+        errors.append(
+            "registry parity failed: missing canonical mapping for "
+            f"{missing_list}"
+        )
+
     operations = operation_path_metadata.get("operations")
     if not isinstance(operations, list) or not operations:
         errors.append("operation_path_metadata.operations must be a non-empty list")
