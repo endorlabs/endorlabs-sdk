@@ -46,7 +46,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-10T00:03:36.067311+00:00",
+  "generated_at": "2026-06-10T00:42:36.671416+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -133,7 +133,7 @@
       ]
     },
     {
-      "description": "Author, validate, and import custom OpenGrep/Semgrep SAST rules into the Endor Labs platform. Use when the user wants to write security rules, perform threat modeling for SAST, create absence-detection rules, validate rule YAML, or import Semgrep rules into Endor Labs.",
+      "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
       "id": "endor-custom-sast-rules",
       "name": "endor-custom-sast-rules",
       "path": "skills/endor-custom-sast-rules/SKILL.md",
@@ -142,7 +142,6 @@
         "skills/endor-custom-sast-rules/IMPORT_EXPORT.md",
         "skills/endor-custom-sast-rules/SEMGREP_RULE_SHAPE_GUARDRAILS.md",
         "skills/endor-custom-sast-rules/SYNTAX_REFERENCE.md",
-        "skills/endor-custom-sast-rules/THREAT_MODEL.md",
         "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py"
       ]
     },
