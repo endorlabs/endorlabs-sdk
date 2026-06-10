@@ -107,7 +107,12 @@ def cmd_analyze(args: argparse.Namespace) -> int:
     _attach_workspace_log(workspace_root, ANALYZE_LOG_FILENAME)
     namespace = args.namespace or workspace_root.name.split("-")[0].replace("_", ".")
     only = None
-    if args.only:
+    if args.only_relationships:
+        if args.only:
+            LOGGER.error("Use --only-relationships or --only, not both")
+            return 2
+        only = ("relationships",)
+    elif args.only:
         only = tuple(part.strip() for part in args.only.split(",") if part.strip())
     try:
         result = analyze_workspace(
@@ -118,6 +123,8 @@ def cmd_analyze(args: argparse.Namespace) -> int:
             scorer=args.scorer,
             skip_metrics=args.skip_metrics,
             skip_validate=args.skip_validate,
+            relationship_max_depth=args.relationship_max_depth,
+            relationship_max_workers=args.relationship_max_workers,
         )
     except Exception as exc:
         LOGGER.error("%s", exc)
@@ -205,12 +212,32 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common_args(analyze)
     analyze.add_argument(
         "--only",
-        help="Comma-separated steps: cardinality,risk,graph,viz",
+        help="Comma-separated steps: cardinality,risk,graph,viz,relationships",
+    )
+    analyze.add_argument(
+        "--only-relationships",
+        action="store_true",
+        help=(
+            "Live API project relationship map into workspace "
+            "intermediate-representation/ (alias for --only relationships)."
+        ),
     )
     analyze.add_argument("--top-n", type=int, default=20)
     analyze.add_argument("--scorer", default="critical_high_count")
     analyze.add_argument("--skip-metrics", action="store_true")
     analyze.add_argument("--skip-validate", action="store_true")
+    analyze.add_argument(
+        "--relationship-max-depth",
+        type=int,
+        default=3,
+        help="Max hop count when --only relationships is used. Default: 3",
+    )
+    analyze.add_argument(
+        "--relationship-max-workers",
+        type=int,
+        default=16,
+        help="Parallel DM workers for relationship map. Default: 16",
+    )
     analyze.set_defaults(func=cmd_analyze)
 
     summarize = sub.add_parser("summarize", help="Summarize workspace IR")

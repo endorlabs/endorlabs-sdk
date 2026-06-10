@@ -1,87 +1,78 @@
 ---
 name: endor-project-agent-context
-description: 'Deterministic project context bundle: export context_manifest.json plus
-  dependency explorer artifacts, optional call-graph sweep, multi-pass package-version
-  index + targeted hydration, and composition with relationship mapping and call-graph
-  search for remediation, threat, and repo-profiling agents.'
+description: 'Deterministic single-project retrieval bundle: context_manifest.json,
+  dependency explorer artifacts, optional session summaries (findings/policies/ versions),
+  multi-pass PV index + hydration, and optional call-graph sweep.'
 ---
 
-# Project agent context (umbrella)
+# Project agent context (retrieval bundle)
 
-Read `context_manifest.json` before custom scripts; composition rules in [workflow-composition](../../rules/endor-workflow-composition.md).
+Read `context_manifest.json` first; composition rules in [workflow-composition](../../rules/endor-workflow-composition.md).
 
 ## Purpose
 
-Produce a **versioned, machine-readable context bundle** for a single project: `context_manifest.json` at the bundle root, plus `dependency_explorer` outputs (BOM slices, `dep_metadata.json`, `dependencies.json`, summary markdown) and optional call-graph export. Supports **multi-pass retrieval**: wide PV **index** → **hydration** (default or selected PVs) → optional **call-graph sweep**. This is the shared **retrieval layer** that remediation, threat-hunting, and repository-profiling agents consume before task-specific reasoning.
+Produce a **versioned, machine-readable retrieval bundle for one project** — not threat modeling, not namespace topology. The bundle is the shared **retrieval layer** agents consume before task-specific reasoning (remediation, profiling, reachability proof).
+
+## Decision table
+
+| Question | Use this skill | Hand off to |
+|----------|----------------|-------------|
+| SBOM slices, DependencyMetadata, PV index/hydration for **one repo** | `uv run endor-agent-context` | — |
+| Findings/policies/repo-version **summaries in the same bundle** | add `--session-summaries` | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) for deeper scan RCA |
+| Cross-project edges in a **namespace** | — | [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md) or `endor-estate analyze --only-relationships` for estate workspace IR |
+| Compile-import graph across an **estate** | — | [endor-analytics-estate-dependencies](../endor-analytics-estate-dependencies/SKILL.md) |
+| Function-level call graph search | `--callgraph-sweep` or Pass 3 | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) |
+| Stitched vulnerable-function reachability | bundle as input context | `endor-reachability-context` |
 
 ## Ordering
 
-1. **Resolve credentials** — `uv run --env-file .env` (or equivalent) so `endorlabs.Client` can authenticate. Tenant-scoped; never paste secrets into skills or logs.
-2. **Single-project context export** — run `uv run endor-agent-context` (or `uv run python -m endorlabs.workflows.agent_context.cli`) with `--tenant`, `--project`, optional `--namespace`, and `--output-dir` (default `.endorlabs-context/workspace/projects/`). **Done** means `context_manifest.json` exists and `artifacts` paths resolve on disk. If `--project` is a repo URL and resolution fails with **multiple matches**, pass **`--namespace`** for the intended child namespace or use the **24-hex project UUID** instead (same as `endorlabs.workflows.projects.resolve`). See [AGENTS.md](../../../AGENTS.md#agent-notes) (ambiguous project URL).
-3. **Read the manifest first (LLM)** — open only `context_manifest.json`, then follow progressive disclosure (see [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md)).
-4. **Namespace project graph** (different question) — for *cross-project* edges in a namespace, use `uv run python -m endorlabs.workflows.estate.analyze.project_map.map` ([endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md)); not a substitute for the per-project bundle.
-5. **Call graphs** — Pass 3: **`--callgraph-sweep`** on the export script, or standalone [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md).
-6. **Findings, scans, lineage** — [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md), [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md), [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md).
-7. **Reachability stitching** — run `uv run endor-reachability-context` with `--finding-uuid` or `--pv-uuid` and feed bundle outputs from this skill as source context when deeper function-level proof is needed.
+1. **Credentials** — `uv run --env-file .env` (or equivalent). Never paste secrets into skills or logs.
+2. **Export** — `uv run endor-agent-context` with `--tenant`, `--project`, optional `--namespace`, `--output-dir`. **Done** when `context_manifest.json` exists and `artifacts` paths resolve. Ambiguous repo URL → pass **`--namespace`** or **24-hex project UUID** ([AGENTS.md](../../../AGENTS.md#agent-notes)).
+3. **Optional session layer** — `--session-summaries` writes `project-summary.md`, `findings/`, `policies/`, `repository-versions/` under the bundle; paths appear in `artifacts.session_summaries`.
+4. **Read manifest (LLM)** — [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md) for `inventory`, `selection`, `hydration`, `warnings`.
+5. **Downstream** — scans/findings lineage, call-graph search, namespace graph, or reachability as the decision table indicates.
 
-## Multi-pass behavior (summary)
+## Multi-pass behavior
 
 | Pass | Role | Default |
 |------|------|---------|
-| **1 — Index** | `package_versions_index.json` for triage (names, refs, `call_graph_available`, times) | **On**; disable with `--no-pv-index` |
-| **2 — Hydrate** | BOM + CG + DependencyMetadata via `process_project` | **On** unless `--index-only` |
-| **3 — Sweep** | Optional full PV call-graph export pass | `--callgraph-sweep` |
+| **1 — Index** | `package_versions_index.json` | **On**; `--no-pv-index` to skip |
+| **2 — Hydrate** | BOM + CG + DependencyMetadata | **On** unless `--index-only` |
+| **3 — Sweep** | Full PV call-graph export | `--callgraph-sweep` |
 
-**LLM contract:** Always interpret `inventory`, `selection`, `hydration`, and `warnings` before claiming full coverage. Details: [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md).
-
-## Library and CLI entrypoints
+## CLI entrypoints
 
 | Step | Path |
 |------|------|
-| Project resolution | `endorlabs.workflows.projects.resolve` |
-| Context export + manifest | `endorlabs.workflows.agent_context.export` / `endor-agent-context` |
+| Export + manifest | `endor-agent-context` / `endorlabs.workflows.agent_context.export` |
+| Session summaries | `--session-summaries` → `create_session` in `session_artifacts` |
 | PV index helpers | `endorlabs.workflows.agent_context.package_versions` |
-| Call-graph sweep (Pass 3) | `endorlabs.workflows.callgraph.sweep` (via export `--callgraph-sweep`) |
-| Relationship map (namespace) | `python -m endorlabs.workflows.estate.analyze.project_map.map` |
-| Local search on decoded JSON | `endor-callgraph-search` / `python -m endorlabs.workflows.callgraph.search` |
+| Call-graph sweep | `--callgraph-sweep` → `endorlabs.workflows.callgraph.sweep` |
 
-## Inputs
+## Key flags
 
-- **Core:** `--tenant`, `--project`, optional `--namespace`, `--output-dir`.
-- **Pass 1:** `--no-pv-index`, `--pv-index-max-pages`, `--pv-index-page-size`.
-- **Pass 2:** `--index-only` (skip hydration), `--pv-limit`, `--dep-metadata-max-pages`, `--hydrate-pv-uuids`, `--hydrate-top-n`, `--pv-list-max-pages`, `--pv-list-page-size`.
-- **Pass 3:** `--callgraph-sweep`, `--callgraph-max-pages`, `--callgraph-page-size`, `--decode-zstd`.
-- **`--deterministic`** — stable ordering where applicable.
+- **Core:** `--tenant`, `--project`, `--namespace`, `--output-dir`
+- **Pass 1:** `--no-pv-index`, `--pv-index-max-pages`, `--pv-index-page-size`
+- **Pass 2:** `--index-only`, `--pv-limit`, `--dep-metadata-max-pages`, `--hydrate-pv-uuids`, `--hydrate-top-n`
+- **Pass 3:** `--callgraph-sweep`, `--callgraph-max-pages`, `--decode-zstd`
+- **Session:** `--session-summaries`
+- **`--deterministic`** — stable ordering for replay/diff
 
 ## Outputs
 
-- **Bundle dir:** `<output_dir>/<slug>_<timestamp>/` with `context_manifest.json` (version **2** for new bundles), optional `package_versions_index.json`, dependency explorer files, optional `callgraph_sweep/`.
-- **Stdout:** absolute path to `context_manifest.json` on success.
+- **Bundle:** `<output_dir>/<slug>_<timestamp>/` with `context_manifest.json` (version **2**), optional `package_versions_index.json`, dependency explorer files, optional `callgraph_sweep/`, optional session subdir.
+- **Stdout:** absolute path to `context_manifest.json`.
 
 ## Bounds
 
-- **`--dep-metadata-max-pages`** defaults to **0 (unlimited)**; `context_manifest.json` sets
-  `artifacts.dep_metadata_truncated` when a positive cap is hit.
-- Pass 1 / Pass 3 PV list caps remain explicit (`--pv-index-max-pages`, `--callgraph-max-pages`).
-  Raising caps increases API load and disk; ask the user before “fetch everything.”
-- **`--pv-limit`** still caps how many PVs Pass 2 hydrates in **default** mode; the **index** can list more — see [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md).
-
-## Documentation hops
-
-- **Deep:** [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md) — manifest keys, escalation, progressive disclosure.
-- Local: `.endorlabs-context/platform/user-docs/` after `endorlabs.init()` ([AGENTS.md — Bootstrap](../../../AGENTS.md#bootstrap)).
-- Online: [https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt)
+- **`--dep-metadata-max-pages`** defaults to **0 (unlimited)**; manifest sets `artifacts.dep_metadata_truncated` when capped.
+- Pass 1 / Pass 3 list caps remain explicit; raising caps increases API load — ask before “fetch everything.”
+- **`--pv-limit`** caps Pass 2 hydration in default mode; the index can list more ([MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md)).
 
 ## Linked skills
 
-- [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) — findings, scan results, project lookup
-- [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md) — manifest / package introduction routes
-- [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md) — finding and SBOM lineages
-- [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) — decode and search call graphs
-- [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md) — namespace project graph
-
-## Personas (guidance only)
-
-- **Remediation:** Bundle for repo facts; relationship map for cross-repo upgrade alignment.
-- **Threat / reachability:** Pass 3 sweep or standalone fetch; read `artifacts.callgraph_sweep` in the manifest.
-- **Profiling:** Manifest + summary + [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md).
+- [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
+- [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
+- [endor-dependency-finding-provenance](../endor-dependency-finding-provenance/SKILL.md)
+- [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md)
+- [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md)
