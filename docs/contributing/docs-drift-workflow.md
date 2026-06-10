@@ -57,9 +57,12 @@ matching `## VERSION` section before publish.
 **Release** (`.github/workflows/release-tag-publish.yml`, `release-testpypi.yml`): composite
 `.github/actions/release-build-gate` (quality gate + `verify_ship_artifacts` + wheel build).
 
-**Pre-push** (`.pre-commit-config.yaml`): `model-sync-upstream-verify` plus
-`model-sync-contract-validate` (pytest contract quality gate). Install with
-`uv run pre-commit install --hook-type pre-push`.
+**Pre-commit** (`.pre-commit-config.yaml`): `ship-artifacts-verify` runs
+`verify_ship_artifacts.py --skip-upstream` before ruff/pyright when model-sync or
+generated paths change.
+
+**Pre-push**: `ship-artifacts-verify-upstream` (`--fetch-spec`) plus
+`model-sync-contract-validate`. Install with `uv run pre-commit install --hook-type pre-push`.
 
 When verify fails, regenerate and commit in your PR:
 
