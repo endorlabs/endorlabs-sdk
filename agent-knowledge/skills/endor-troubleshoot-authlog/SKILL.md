@@ -25,17 +25,16 @@ Systematic workflow for **Endor-side** evidence: what the platform recorded at l
 
 ## What this skill does
 
-1. Lists **`AuthenticationLog` with `Client(tenant=<tenant-hint>)`** using
-   traversal so auth evidence is collected from the customer context.
-2. Traverses **namespaces** under `--tenant-hint` and pulls full
-   **`AuthorizationPolicy`** `meta`/`spec` (clauses, `target_namespaces`,
-   `propagate`, `permissions`, expiration).
-3. Runs **validated probes**: control email + SSO URI filter, tenant-attributed SSO
-   slice, target identity/group filters, failed / no-tenant slices.
-4. Optionally emits **investigation export** artifacts (`--investigation-export`):
-   separate evidence and scalar JSON (flow-agnostic; SSO-slice correlation is labeled
-   as such—not “successful auth”). Operators may add a human-written
-   `interpretation.md` beside outputs; the script does not generate it.
+1. Lists **`AuthenticationLog`** with `Client(tenant=<tenant-hint>)` and
+   `traverse=True` to collect auth evidence from the customer context.
+2. Lists **`AuthorizationPolicy`** under the same tenant with `traverse=True`
+   and inspects `meta`/`spec` (clauses, `target_namespaces`, `propagate`,
+   `permissions`, expiration).
+3. Applies **narrow filters** on auth logs (SSO URI slices, target email/group,
+   failed or no-tenant rows) before drawing conclusions — see interpretation notes.
+4. Optionally writes **investigation export** JSON under
+   `.endorlabs-context/workspace/sessions/<user>/` (flow-agnostic evidence bundle;
+   add a human-written `interpretation.md` beside outputs when needed).
 
 ## How to run
 
@@ -57,8 +56,8 @@ For structured exports, write JSON under `.endorlabs-context/workspace/sessions/
 - **`spec.claims`** uses list **membership** filters (`contains`); regex on claims is
   easy to misuse — the utility prefers exact `contains` strings.
 - **SSO vs API-key noise:** broad auth lists include `/v1/auth/api-key` and
-  `issuing_user=...`; use `tenant_sso` / `target_with_sso` filters for SAML/OIDC
-  callbacks (`auth/saml-callback`, `auth/sso`, `tenant=<name>`).
+  `issuing_user=...`; narrow with `filter=` on `spec.uri` for SAML/OIDC callbacks
+  (`auth/saml-callback`, `auth/sso`, `tenant=<name>`) before correlating tenants.
 - **`authorized_tenants`** in a row vs **`spec.uri`** with `tenant=...` — compare
   both when reasoning about tenant mapping.
 - **Policy clauses** are **AND**ed within a policy; strings are case-sensitive.
