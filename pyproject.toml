@@ -348,6 +348,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
 "agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
+"src/endorlabs/agent_knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
+"src/endorlabs/agent_knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
 "src/endorlabs/utils/create_payload.py" = ["C901", "UP047"]
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)

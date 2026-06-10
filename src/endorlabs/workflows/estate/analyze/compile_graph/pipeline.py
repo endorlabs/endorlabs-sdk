@@ -9,13 +9,13 @@ this pipeline does not precompute indirect paths.
 
 from __future__ import annotations
 
-import logging
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from endorlabs.tools.dependency_explorer import parse_dep_name
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.core import (
     add_producer_indices,
     aggregate_package_anchored_edges,
@@ -36,7 +36,7 @@ from endorlabs.workflows.estate.filters.masks import PV_PUBLISHER_LIST_MASK
 if TYPE_CHECKING:
     from endorlabs import Client
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 RegistrationType = Literal["git_repository", "binary_component"]
 REGISTRATION_GIT: RegistrationType = "git_repository"

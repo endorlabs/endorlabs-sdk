@@ -15,7 +15,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
-from endorlabs.core.exceptions import AmbiguousError, NotFoundError
+from endorlabs.core.exceptions import AmbiguousError, NotFoundError, ValidationError
 from endorlabs.facade import ScanLogsFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
@@ -28,7 +28,7 @@ def test_client_requires_namespace_or_tenant_for_list() -> None:
     """When tenant is None and namespace is not passed to list(), raise ValueError."""
     client = endorlabs.Client(api_client=Mock(spec=APIClient), tenant=None)
     client.Namespace._ops.list = Mock(return_value=[])
-    with pytest.raises(ValueError, match="namespace"):
+    with pytest.raises(ValidationError, match="namespace"):
         client.Namespace.list()
     client.Namespace._ops.list.assert_not_called()
 
@@ -777,7 +777,7 @@ def test_tag_raises_when_resource_has_no_meta(
     client = client_with_mock_transport
     resource = Mock(uuid="no-meta", tenant_meta=Mock(namespace="t.ns"), meta=None)
     client.Project._ops.update = Mock()
-    with pytest.raises(ValueError, match="no meta"):
+    with pytest.raises(ValidationError, match="no meta"):
         client.Project.tag(resource, ["a"])
 
 
@@ -788,7 +788,7 @@ def test_untag_raises_when_resource_has_no_meta(
     client = client_with_mock_transport
     resource = Mock(uuid="no-meta", tenant_meta=Mock(namespace="t.ns"), meta=None)
     client.Project._ops.update = Mock()
-    with pytest.raises(ValueError, match="no meta"):
+    with pytest.raises(ValidationError, match="no meta"):
         client.Project.untag(resource, ["a"])
 
 
@@ -923,7 +923,7 @@ def test_lookup_raises_value_error_when_mask_kwarg_set(
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.Project._ops.list = mock_list
-    with pytest.raises(ValueError, match="lookup returns a typed resource"):
+    with pytest.raises(ValidationError, match="lookup returns a typed resource"):
         client.Project.lookup(mask="uuid", name="x", max_pages=2)
     mock_list.assert_not_called()
 
@@ -937,7 +937,7 @@ def test_lookup_raises_value_error_when_list_params_mask_set(
     client = client_with_mock_transport
     mock_list = Mock(return_value=[])
     client.Project._ops.list = mock_list
-    with pytest.raises(ValueError, match="lookup returns a typed resource"):
+    with pytest.raises(ValidationError, match="lookup returns a typed resource"):
         client.Project.lookup(
             list_params=ListParameters(mask="meta.name"),
             name="x",
@@ -1000,7 +1000,7 @@ def test_list_with_parent_raises_when_facade_does_not_support_parent(
     """list(parent=...) raises when resource has no parent_kind."""
     client = client_with_mock_transport
     some_resource = Mock(uuid="ns-1", tenant_meta=Mock(namespace="tenant.foo"))
-    with pytest.raises(ValueError, match="does not support list\\(parent="):
+    with pytest.raises(ValidationError, match="does not support list\\(parent="):
         client.Namespace.list(parent=some_resource, max_pages=TEST_MAX_PAGES)
 
 

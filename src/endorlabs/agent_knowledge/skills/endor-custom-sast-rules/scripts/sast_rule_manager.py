@@ -52,8 +52,9 @@ from endorlabs.resources.semgrep_rule import (
     UpdateSemgrepRulePayload,
     validate_semgrep_rule,
 )
+from endorlabs.utils.logging_config import get_resource_logger
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Validation guardrail
@@ -226,8 +227,10 @@ def _extract_rule_ids_from_dir(directory: Path) -> set[str]:
     for yaml_path in _collect_yaml_files(directory):
         try:
             doc = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-        except Exception:
-            logger.debug("Skipping unreadable YAML %s", yaml_path, exc_info=True)
+        except Exception as exc:
+            logger.debug(
+                "Skipping unreadable YAML %s: %s", yaml_path, exc, exc_info=True
+            )
             continue
         if isinstance(doc, dict) and "rules" in doc:
             for rule in doc["rules"]:
@@ -451,7 +454,7 @@ def cmd_import(
             # Check for existing rule
             existing_rules = client.SemgrepRule.list(
                 namespace=namespace,
-                filter=f'meta.name=="{rule_name}"',
+                filter=F("meta.name") == rule_name,
                 max_pages=1,
             )
             existing = existing_rules[0] if existing_rules else None
@@ -654,8 +657,10 @@ def _build_rule_yaml_map(rules_dir: Path) -> dict[str, str]:
         try:
             raw = yaml_path.read_text(encoding="utf-8")
             rule_dicts = _parse_yaml_rules(yaml_path)
-        except Exception:
-            logger.debug("Skipping unreadable YAML %s", yaml_path, exc_info=True)
+        except Exception as exc:
+            logger.debug(
+                "Skipping unreadable YAML %s: %s", yaml_path, exc, exc_info=True
+            )
             continue
         for rd in rule_dicts:
             rid = str(rd.get("id", ""))
@@ -702,7 +707,7 @@ def cmd_configure(
 
         matches = client.SemgrepRule.list(
             namespace=namespace,
-            filter=f'meta.name=="{rule_id}"',
+            filter=F("meta.name") == rule_id,
             max_pages=1,
         )
         if not matches:

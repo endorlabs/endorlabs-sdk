@@ -13,11 +13,15 @@ from .api_client import APIClient
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+from .core.exceptions import ValidationError
 from .core.filter import F
 from .facade import ResourceRuntimeFacade
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
+from .utils.logging_config import get_resource_logger
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
+
+_logger = get_resource_logger(__name__)
 
 
 class Client:
@@ -80,7 +84,7 @@ class Client:
     def _build_facade(self, entry: ResourceEntry) -> ResourceRuntimeFacade[Any]:
         """Build the appropriate facade for *entry* based on its scope."""
         if self._client is None:
-            raise RuntimeError("Client is closed.")  # pragma: no cover
+            raise ValidationError("Client is closed.")  # pragma: no cover
 
         tags_paths = (
             get_tags_update_paths(entry.model_class)
@@ -146,7 +150,10 @@ class Client:
                 page_size=1,
                 max_pages=1,
             )
-        except Exception:
+        except Exception as exc:
+            _logger.debug(
+                "AuthorizationPolicy lookup for API key failed: %s", exc, exc_info=True
+            )
             return None
         if not policies:
             return None
@@ -168,7 +175,7 @@ class Client:
             Resolved identity string (email/username/name), or ``None`` if not found.
         """
         if self._client is None:
-            raise RuntimeError("Client is closed.")
+            raise ValidationError("Client is closed.")
 
         user_info = self._client.get_user_info()
         if isinstance(user_info, dict):
