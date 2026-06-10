@@ -45,7 +45,7 @@
       "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
     ],
     "module": "endorlabs.workflows.estate.cli.main",
-    "skill": "endor-analytics-estate-dependencies"
+    "skill": "endor-estate-workspace"
   },
   {
     "agent_visible": true,
@@ -73,7 +73,7 @@
     "default_output": ".endorlabs-context/workspace/",
     "id": "relationships-map",
     "module": "endorlabs.workflows.estate.analyze.project_map.map",
-    "skill": "endor-map-project-dependency-relationships"
+    "skill": "endor-namespace-relationship-map"
   },
   {
     "agent_visible": true,

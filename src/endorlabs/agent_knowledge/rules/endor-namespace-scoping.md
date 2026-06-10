@@ -27,13 +27,15 @@ When you have a resource instance (from `list(traverse=True)`), pass the resourc
 
 ## Project-scoped lists (MUST)
 
-`Client(tenant=<estate_root>)` with default `traverse=False` lists **only that path segment**—not
+`Client(tenant=<client_tenant>)` with default `traverse=False` lists **only that path segment**—not
 child namespaces where projects usually live. A filter such as `spec.project_uuid==…` does **not**
 widen the path.
 
 **Resolve the `Project` row first**, then pass **`namespace=project.namespace`** on downstream lists
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
 **empty results with no error**.
+
+**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [endor-estate-workspace](../skills/endor-estate-workspace/SKILL.md).
 
 Alternatives:
 
