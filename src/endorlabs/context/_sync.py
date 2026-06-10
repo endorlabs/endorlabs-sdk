@@ -30,6 +30,7 @@ from ._project_context import warn_agent_defer_gitignore_to_user
 from .models import InitStatus
 from .paths import (
     DEFAULT_CONTEXT_DIR,
+    OPENAPI_FILENAME,
     SDK_DIRNAME,
     context_json_path,
     platform_openapi_path,
@@ -813,8 +814,41 @@ async def _download_user_docs_async(
     return changed_count
 
 
+def _reconcile_legacy_platform_downloads(context_dir: Path) -> None:
+    """Move or remove flat pre-layout downloads under ``.endorlabs-context/``."""
+    root = Path(context_dir)
+    legacy_openapi = root / OPENAPI_FILENAME
+    canonical_openapi = platform_openapi_path(root)
+    legacy_openapi_resolved = legacy_openapi.resolve()
+    canonical_openapi_resolved = canonical_openapi.resolve()
+    if (
+        legacy_openapi.is_file()
+        and legacy_openapi_resolved != canonical_openapi_resolved
+    ):
+        if canonical_openapi.is_file():
+            legacy_openapi.unlink()
+            logger.info("Removed stale legacy OpenAPI download: %s", legacy_openapi)
+        else:
+            canonical_openapi.parent.mkdir(parents=True, exist_ok=True)
+            _ = legacy_openapi.replace(canonical_openapi)
+            logger.info("Moved legacy OpenAPI download to %s", canonical_openapi)
+
+    legacy_docs = root / DEFAULT_USER_DOCS_DIRNAME
+    canonical_docs = platform_user_docs_path(root)
+    legacy_docs_resolved = legacy_docs.resolve()
+    canonical_docs_resolved = canonical_docs.resolve()
+    if legacy_docs.is_dir() and legacy_docs_resolved != canonical_docs_resolved:
+        if canonical_docs.is_dir():
+            shutil.rmtree(legacy_docs)
+            logger.info("Removed stale legacy user-docs directory: %s", legacy_docs)
+        else:
+            canonical_docs.parent.mkdir(parents=True, exist_ok=True)
+            _ = legacy_docs.replace(canonical_docs)
+            logger.info("Moved legacy user-docs directory to %s", canonical_docs)
+
+
 def sync_user_docs(
-    output_dir: str | Path = f"{DEFAULT_CONTEXT_DIR}/{DEFAULT_USER_DOCS_DIRNAME}",
+    output_dir: str | Path | None = None,
     max_pages: int | None = None,
     timeout: int = 10,
     force: bool = False,
@@ -836,11 +870,20 @@ def sync_user_docs(
         Number of successfully downloaded pages.
 
     """
+    resolved_dir = (
+        Path(output_dir)
+        if output_dir is not None
+        else platform_user_docs_path(DEFAULT_CONTEXT_DIR)
+    )
+    context_dir = resolved_dir.parent.parent
+    if resolved_dir.resolve() == platform_user_docs_path(context_dir).resolve():
+        _reconcile_legacy_platform_downloads(context_dir)
+
     # Check deps early to fail fast
     _ = _import_docs_deps()
     return asyncio.run(
         _download_user_docs_async(
-            output_dir=Path(output_dir),
+            output_dir=resolved_dir,
             max_pages=max_pages,
             timeout=timeout,
             force=force,
@@ -850,7 +893,7 @@ def sync_user_docs(
 
 
 def sync_openapi(
-    output_path: str | Path = f"{DEFAULT_CONTEXT_DIR}/{DEFAULT_OPENAPI_FILENAME}",
+    output_path: str | Path | None = None,
     force: bool = False,
     client: APIClient | None = None,
 ) -> Path:
@@ -859,7 +902,8 @@ def sync_openapi(
     Requires authentication via APIClient - no public URL fallback.
 
     Args:
-        output_path: Path to save the OpenAPI spec file.
+        output_path: Path to save the OpenAPI spec file (default:
+            ``.endorlabs-context/platform/openapi/openapiv2.swagger.json``).
         force: Force re-download even if file exists.
         client: Optional APIClient instance. If not provided, one is created
             (requires ENDOR_API_CREDENTIALS_KEY/SECRET or ENDOR_TOKEN env vars).
@@ -874,7 +918,14 @@ def sync_openapi(
     """
     from endorlabs.api_client import APIClient as APIClientClass
 
-    output_file = Path(output_path)
+    output_file = (
+        Path(output_path)
+        if output_path is not None
+        else platform_openapi_path(DEFAULT_CONTEXT_DIR)
+    )
+    context_dir = output_file.parent.parent.parent
+    if output_file.resolve() == platform_openapi_path(context_dir).resolve():
+        _reconcile_legacy_platform_downloads(context_dir)
 
     # Skip if file exists and not forcing
     if output_file.exists() and not force:

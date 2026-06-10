@@ -1,7 +1,7 @@
 r"""Generic, guardrailed SAST Rule Manager for Endor Labs.
 
 Manages custom OpenGrep/Semgrep rules on the Endor Labs platform with
-five composable subcommands: import, delete, orphans, configure, sync.
+composable subcommands: validate, import, delete, orphans, configure, sync.
 
 Designed for agent use with strict validation guardrails that reject
 unknown metadata fields rather than silently stripping them.
@@ -50,6 +50,7 @@ from endorlabs.resources.semgrep_rule import (
     SemgrepRuleMetaCreate,
     SemgrepRuleSpec,
     UpdateSemgrepRulePayload,
+    validate_semgrep_rule,
 )
 
 logger = logging.getLogger(__name__)
@@ -295,6 +296,89 @@ def _meta_name_substring_filter(name_filter: str) -> str:
     return str(F("meta.name").matches(pattern))
 
 
+def _build_create_payload_from_rule_dict(
+    rule_dict: dict[str, Any],
+    raw_yaml: str,
+) -> CreateSemgrepRulePayload:
+    """Build a create payload from a normalized rule dict."""
+    rule_name = str(rule_dict.get("id", ""))
+    wrapped_yaml = _wrap_yaml(rule_dict, raw_yaml)
+    desc = _extract_description(rule_dict)
+    native_rule = SemgrepNativeRule.model_validate(rule_dict)
+    return CreateSemgrepRulePayload(
+        meta=SemgrepRuleMetaCreate(name=rule_name, description=desc),
+        spec=SemgrepRuleSpec(rule=native_rule, yaml=wrapped_yaml),
+    )
+
+
+def _validate_rule_dict(
+    rule_dict: dict[str, Any],
+    *,
+    raw_yaml: str,
+) -> tuple[bool, list[str], list[str]]:
+    """Run guardrails + SDK ``validate_semgrep_rule`` (no API call)."""
+    normalized = normalize_rule_dict_for_semgrep_crud(rule_dict)
+    errors = list(normalized.errors)
+    warnings = list(normalized.warnings)
+    if errors:
+        return False, errors, warnings
+    try:
+        payload = _build_create_payload_from_rule_dict(normalized.rule, raw_yaml)
+    except Exception as exc:
+        return False, [*errors, f"Payload build failed: {exc}"], warnings
+    ok, sdk_errors = validate_semgrep_rule(payload)
+    return ok, [*errors, *sdk_errors], warnings
+
+
+# ---------------------------------------------------------------------------
+# Subcommand: validate
+# ---------------------------------------------------------------------------
+
+
+def cmd_validate(
+    client: endorlabs.Client,
+    namespace: str,
+    rules_dir: Path,
+) -> int:
+    """Validate rule YAML for SemgrepRule import (local only; no API write).
+
+    The platform has no separate validate RPC — server checks run on create/update.
+    """
+    _ = client, namespace
+    logger.info("=== validate: checking rules in %s ===", rules_dir)
+
+    yaml_files = _collect_yaml_files(rules_dir)
+    if not yaml_files:
+        logger.warning("No YAML files found in %s", rules_dir)
+        return 1
+
+    passed = failed = 0
+    for yaml_path in yaml_files:
+        try:
+            rule_dicts = _parse_yaml_rules(yaml_path)
+        except Exception as exc:
+            logger.error("Failed to parse %s: %s", yaml_path, exc)
+            failed += 1
+            continue
+
+        raw_yaml = yaml_path.read_text(encoding="utf-8")
+        for rule_dict in rule_dicts:
+            rid = _display_id(rule_dict)
+            ok, errors, warnings = _validate_rule_dict(rule_dict, raw_yaml=raw_yaml)
+            for warning in warnings:
+                logger.warning("'%s': %s", rid, warning)
+            if ok:
+                logger.info("OK: %s", rid)
+                passed += 1
+            else:
+                for err in errors:
+                    logger.error("FAIL '%s': %s", rid, err)
+                failed += 1
+
+    logger.info("Validate complete: passed=%d, failed=%d.", passed, failed)
+    return 0 if failed == 0 else 1
+
+
 # ---------------------------------------------------------------------------
 # Subcommand: import
 # ---------------------------------------------------------------------------
@@ -343,12 +427,14 @@ def cmd_import(
             rule_name = str(rule_dict.get("id", ""))
 
             # --- Validation guardrail (warn-and-drop for unknown metadata) ---
-            normalized = normalize_rule_dict_for_semgrep_crud(rule_dict)
-            for warning in normalized.warnings:
-                logger.warning("Normalization warning for '%s': %s", rid, warning)
+            ok, val_errors, val_warnings = _validate_rule_dict(
+                rule_dict, raw_yaml=raw_yaml
+            )
+            for warning in val_warnings:
+                logger.warning("Validation warning for '%s': %s", rid, warning)
 
-            if normalized.errors:
-                for err in normalized.errors:
+            if not ok:
+                for err in val_errors:
                     logger.error("Validation failed for '%s': %s", rid, err)
                 failed += 1
                 continue
@@ -358,7 +444,7 @@ def cmd_import(
                 skipped += 1
                 continue
 
-            normalized_rule = normalized.rule
+            normalized_rule = normalize_rule_dict_for_semgrep_crud(rule_dict).rule
             wrapped_yaml = _wrap_yaml(normalized_rule, raw_yaml)
             desc = _extract_description(normalized_rule)
 
@@ -738,6 +824,18 @@ def _build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # --- validate ---
+    p_validate = subparsers.add_parser(
+        "validate",
+        help="Validate rule YAML for SemgrepRule import (local SDK; no API).",
+    )
+    p_validate.add_argument(
+        "--rules-dir",
+        type=Path,
+        required=True,
+        help="Directory containing rule YAML files.",
+    )
+
     # --- import ---
     p_import = subparsers.add_parser(
         "import",
@@ -855,6 +953,11 @@ def main() -> None:
     client = endorlabs.Client(tenant=args.namespace, logging_level=log_level)
 
     # Dispatch
+    if args.command == "validate":
+        rc = cmd_validate(client, args.namespace, args.rules_dir)
+        logger.info("--- Done ---")
+        raise SystemExit(rc)
+
     if args.command == "import":
         cmd_import(
             client,
