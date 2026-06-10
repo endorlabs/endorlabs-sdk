@@ -7,6 +7,7 @@ All facades are built from the registries in endorlabs.registry.
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any, cast
 
 from .api_client import APIClient
@@ -27,8 +28,8 @@ _logger = get_resource_logger(__name__)
 class Client:
     """Resource-oriented client; holds default namespace and exposes resource facades.
 
-    Use endorlabs.Client(tenant="...") or
-    endorlabs.Client(api_client=..., tenant="...").
+    Use endorlabs.Client(tenant="..."), endorlabs.Client() with
+    ``ENDOR_NAMESPACE`` set, or endorlabs.Client(api_client=..., tenant="...").
     Then client.Namespace.list(traverse=True), client.Namespace.get(uuid), etc.
     All resources are driven by the registry in endorlabs.registry.
 
@@ -67,7 +68,9 @@ class Client:
             api_kwargs["base_url"] = base_url
             api_client = APIClient(**api_kwargs)
         self._client: APIClient | None = api_client
-        self._default_namespace: str | None = tenant
+        self._default_namespace: str | None = tenant or (
+            os.environ.get("ENDOR_NAMESPACE", "").strip() or None
+        )
 
         # self._client is always set here (assigned above); None only after close().
         for entry in RESOURCE_REGISTRY:
