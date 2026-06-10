@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from endorlabs.tools.dependency_explorer import decode_callgraph
+from endorlabs.workflows.callgraph.proto_decode import decode_callgraph
 
 
 def decode_payload(

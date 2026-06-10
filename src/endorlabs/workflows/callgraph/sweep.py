@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs import F
-from endorlabs.tools.dependency_explorer import retrieve_call_graph_full
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.callgraph.decoded import decode_payload
+from endorlabs.workflows.callgraph.fetch import retrieve_call_graph_full
 
 LOGGER = get_resource_logger(__name__)
 
