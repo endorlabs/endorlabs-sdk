@@ -113,19 +113,23 @@ Use `uv run ruff format .` (without `--check`) to apply formatting locally. CI r
 
 ## Model-sync drift and regeneration
 
-Upstream alignment uses **local pre-push hooks** and **CI**, not a bot workflow:
+Upstream alignment uses **pre-commit**, **pre-push**, and **CI**, not a bot workflow:
 
+- **Pre-commit** (`.pre-commit-config.yaml`): `ship-artifacts-verify` runs
+  `devtools/verify_ship_artifacts.py --skip-upstream` **before** ruff/pyright when
+  model-sync inputs or generated surfaces change — regen + `git diff` so linters see
+  current stubs.
 - **Pre-push** (after `uv run pre-commit install --hook-type pre-push`):
-  - `model-sync-upstream-verify` — `devtools/model_sync.py --verify-upstream-only` (OpenAPI digest vs committed provenance)
+  - `ship-artifacts-verify-upstream` — `verify_ship_artifacts.py --fetch-spec` (upstream
+    SHA, regen, ship `git diff`, agent-knowledge `--verify`; CI parity)
   - `model-sync-contract-validate` — contract quality unit gate
-- **CI** (`.github/workflows/ci-pr-main.yml`):
-  - same upstream verify on the lint job
-  - full `model_sync.py` generation in the dedicated generate-model-sync job (validates live OpenAPI regen succeeds)
+- **CI** (`.github/workflows/ci-pr-main.yml` lint job): `verify_ship_artifacts.py --fetch-spec`
 
-When verify fails locally or in CI, regenerate and commit in your PR:
+When verify fails locally or in CI:
 
 ```bash
-uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
+uv run python devtools/verify_ship_artifacts.py --fetch-spec
+# or: uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
 ```
 
 See [devtools/sync/README.md](devtools/sync/README.md) and [docs/contributing/docs-drift-workflow.md](docs/contributing/docs-drift-workflow.md).

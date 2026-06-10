@@ -7,6 +7,11 @@
 #   uv run pytest tests/unit/ -m "not interactive and not long"
 #   uv run ruff check --select E,F,I,UP <CI-critical scripts>
 #   uv run pyright --project pyproject.toml <same scripts>
+#   uv run python devtools/verify_ship_artifacts.py --fetch-spec  (pre-push; CI lint)
+#
+# Ship-artifact verify runs before ruff/pyright on commit (local spec, regen + git
+# diff) so linters typecheck regenerated surfaces. Pre-push runs the full gate
+# (--fetch-spec, upstream SHA) and replaces separate upstream/agent-knowledge hooks.
 #
 # We use local `uv run` hooks instead of astral-sh/ruff-pre-commit because that
 # hook passes --force-exclude, which skips paths listed in [tool.ruff] exclude
@@ -25,6 +30,20 @@ repos:
         language: system
         require_serial: true
         files: ^(agent-knowledge/.*|src/endorlabs/context/.*|src/endorlabs/agent_knowledge/.*)$
+
+      # Regenerate + drift-check ship surfaces before linters (local OpenAPI spec).
+      - id: ship-artifacts-verify
+        name: ship artifacts verify (regen + drift; before linters)
+        entry: uv
+        args:
+          - run
+          - python
+          - devtools/verify_ship_artifacts.py
+          - --skip-upstream
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: (^pyproject\.toml$|^devtools/(model_sync\.py|model_sync_profiles/|sync/|generate_client_stub\.py|generate_reference_docs\.py|verify_ship_artifacts\.py)|^src/endorlabs/(generated/|registry_overlay\.py|registry\.py|client_surface\.pyi)|^docs/generated-reference/)
 
       - id: ruff-check
         name: ruff check (repo-wide)
@@ -128,20 +147,14 @@ repos:
         stages: [pre-push]
         files: (^pyproject\.toml$|^src/endorlabs/registry\.py$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync/.*\.py))$)
 
-      - id: agent-knowledge-verify
-        name: agent knowledge verify (authoring vs shipped package)
+      - id: ship-artifacts-verify-upstream
+        name: ship artifacts verify (upstream + full gate; CI parity)
         entry: uv
-        args: [run, python, devtools/sync_agent_knowledge.py, --verify]
-        language: system
-        pass_filenames: false
-        require_serial: true
-        stages: [pre-push]
-        files: (^agent-knowledge/.*|^src/endorlabs/agent_knowledge/.*|devtools/sync_agent_knowledge\.py$|devtools/agent_knowledge_catalog\.py$)
-
-      - id: model-sync-upstream-verify
-        name: model-sync upstream verify (OpenAPI digest vs committed)
-        entry: uv
-        args: [run, python, devtools/model_sync.py, --verify-upstream-only]
+        args:
+          - run
+          - python
+          - devtools/verify_ship_artifacts.py
+          - --fetch-spec
         language: system
         pass_filenames: false
         require_serial: true
@@ -183,4 +196,6 @@ repos:
         args: [--maxkb=500]
       - id: detect-private-key
       - id: end-of-file-fixer
+        exclude: ^src/endorlabs/generated/
       - id: trailing-whitespace
+        exclude: ^src/endorlabs/generated/
