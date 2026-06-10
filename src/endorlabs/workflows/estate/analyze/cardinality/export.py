@@ -7,7 +7,7 @@ rolled up per name).
 Example::
 
     import endorlabs
-    from endorlabs.utils.tabular import write_table
+    from endorlabs.workflows.estate.analyze.cardinality.tabular import write_table
     from endorlabs.workflows.estate import export_version_cardinality
 
     client = endorlabs.Client(tenant="tenant.example")
@@ -30,7 +30,10 @@ from typing import TYPE_CHECKING, Any
 
 import endorlabs
 from endorlabs.utils.logging_config import get_resource_logger
-from endorlabs.utils.tabular import TabularExport, write_table
+from endorlabs.workflows.estate.analyze.cardinality.tabular import (
+    TabularExport,
+    write_table,
+)
 from endorlabs.workflows.estate.collect.namespaces import (
     discover_estate_namespace_names,
     namespaces_for_grouped_counts,

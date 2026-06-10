@@ -6,6 +6,8 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from endorlabs.utils.logging_config import get_resource_logger
+
 from .common import (
     build_api_client,
     build_scanlogs_client,
@@ -16,6 +18,8 @@ from .common import (
     write_json,
     write_text,
 )
+
+_LOGGER = get_resource_logger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -67,7 +71,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 max_entries=args.max_entries,
             )
             entries.extend(scanlog_line(message) for message in log_messages)
-        except Exception:
+        except Exception as exc:
+            _LOGGER.warning(
+                "ScanLogs fetch failed for %s: %s", scan_uuid, exc, exc_info=True
+            )
             entries = []
 
         if not entries:

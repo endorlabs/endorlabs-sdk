@@ -11,6 +11,7 @@ import pytest
 import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
+from endorlabs.core.exceptions import ValidationError
 from tests.conftest import TEST_NAMESPACE_DEFAULT
 
 
@@ -94,7 +95,7 @@ class TestWhoAmI:
         assert result is None
 
     def test_whoami_raises_on_closed_client(self) -> None:
-        """whoami raises RuntimeError on a closed client."""
+        """whoami raises ValidationError on a closed client."""
         mock = Mock(spec=APIClient)
         mock.auth_type = "api-key"
         mock.is_api_key_auth = True
@@ -107,7 +108,7 @@ class TestWhoAmI:
         # Simulate closed client
         client._client = None
 
-        with pytest.raises(RuntimeError, match="closed"):
+        with pytest.raises(ValidationError, match="closed"):
             client.whoami()
 
     def test_whoami_filter_contains_key(

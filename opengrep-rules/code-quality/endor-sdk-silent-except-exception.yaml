@@ -39,9 +39,9 @@ rules:
       cwe:
         - "CWE-755: Improper Handling of Exceptional Conditions"
       description: >-
-        Bare except Exception: handler without variable binding silently
-        swallows all exceptions including programming bugs.  Bind the
-        exception, re-raise, or log at warning+ level.
+        Unbound `except Exception:` swallows errors without binding the
+        exception object. Bind with `as exc`, log at warning+, re-raise, or
+        catch a narrower exception type.
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
@@ -67,7 +67,7 @@ rules:
         warning or error level, or replace with a more specific exception
         type.
       security-severity: Medium
-      version: v1.0.0
+      version: v1.1.0
     patterns:
       - pattern: |
           try:
@@ -77,9 +77,15 @@ rules:
       - pattern-not: |
           try:
               ...
-          except Exception:
+          except Exception as $E:
               ...
               raise
+      - pattern-not: |
+          try:
+              ...
+          except Exception as $E:
+              ...
+              $LOGGER.$LEVEL(...)
     severity: WARNING
     paths:
       include:

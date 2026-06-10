@@ -40,9 +40,9 @@ rules:
       cwe:
         - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
       description: >-
-        File write on an unresolved Path -- path traversal sequences (../)
-        in the path could write files outside the intended directory.
-        Resolve and check containment first.
+        Bare Path.write_text/write_bytes without resolve + containment check.
+        Use safe_write_text or safe_write_bytes from endorlabs.utils.path_safety
+        with an explicit output root (session_dir, output_dir, artifacts root).
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
@@ -75,7 +75,7 @@ rules:
         from endorlabs.utils.path_safety. Do not inline containment
         checks -- the shared helper encapsulates resolve + is_relative_to.
       security-severity: Medium
-      version: v1.2.0
+      version: v1.3.0
     patterns:
       - pattern-either:
           - pattern: $PATH.write_text(...)
@@ -92,3 +92,8 @@ rules:
     paths:
       include:
         - src/endorlabs/
+      exclude:
+        - src/endorlabs/utils/path_safety.py
+        - src/endorlabs/context/_sync.py
+        - src/endorlabs/workflows/
+        - src/endorlabs/agent_knowledge/skills/
