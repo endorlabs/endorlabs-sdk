@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 
 import endorlabs
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.workspace import analyze_workspace
 from endorlabs.workflows.estate.collect.runner import collect_workspace
 from endorlabs.workflows.estate.contracts.resources import (
@@ -24,7 +25,7 @@ from endorlabs.workflows.estate.workspace.paths import (
     workspace_dir_for,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def _attach_workspace_log(workspace_root: Path, log_filename: str) -> Path:

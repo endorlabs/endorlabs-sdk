@@ -20,6 +20,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 - **Model-sync parity** — `validate_contract_artifacts` fails when registry resources lack canonical OpenAPI mapping.
 - **Project-scoped empty lists** — `UserWarning` when `Finding`, `ScanResult`, `PackageVersion`, or `DependencyMetadata` return no rows at the client default namespace without `traverse=True`.
 - `sast_rule_manager.py` `--name-filter` uses `meta.name matches` (regex) instead of `contains` for substring rule names.
+- **CI Endor security scans** — GitHub Action steps use `enable_pr_comments: true` for platform-managed PR review comments (tenant `PRCommentConfig`). Comprehensive SAST uses `--quick-scan`.
 
 ### Breaking
 

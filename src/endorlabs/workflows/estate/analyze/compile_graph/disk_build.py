@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from endorlabs.tools.dependency_explorer import write_json
+from endorlabs.utils.artifact_io import write_json
 from endorlabs.workflows.estate.analyze.compile_graph.community_detection import (
     detect_communities,
 )

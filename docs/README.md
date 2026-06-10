@@ -38,8 +38,6 @@ Index for SDK-specific documentation.
 - [contributing/README.md](contributing/README.md) — Process and checklists for extending the generated SDK surface.
 - [contributing/release-publishing.md](contributing/release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
 - [changelog.md](changelog.md) — User-facing **Added**, **Changed**, and **Breaking** per release (including estate CLI/layout upgrades).
-- [contributing/pr-review-comments.md](contributing/pr-review-comments.md) — Endor findings → GitHub PR review comments in CI.
-- [contributing/pr-review-comment-matrix.md](contributing/pr-review-comment-matrix.md) — Finding fields vs GitHub review comment payloads.
 - [contributing/integration-resource-tests.md](contributing/integration-resource-tests.md)
 - [contributing/api-validation.md](contributing/api-validation.md)
 - [contributing/troubleshooting.md](contributing/troubleshooting.md)

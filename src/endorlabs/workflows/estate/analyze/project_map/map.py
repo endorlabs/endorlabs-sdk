@@ -9,11 +9,12 @@ from pathlib import Path
 
 import endorlabs
 from endorlabs.context.paths import workflow_projects_root
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.project_map.run import (
     run_project_relationship_map,
 )
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def parse_args() -> argparse.Namespace:

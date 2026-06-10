@@ -46,7 +46,7 @@ docs = [
     "beautifulsoup4==4.15.0",
     "markdownify==1.2.2",
 ]
-# DataFrame/Parquet export (utils.tabular) + estate graph metrics (igraph/leidenalg)
+# DataFrame/Parquet export (estate cardinality tabular; utils.tabular shim) + estate graph metrics (igraph/leidenalg)
 analytics = [
     "pandas==3.0.3",
     "pyarrow==24.0.0",
@@ -322,10 +322,6 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "src/endorlabs/resources/finding.py" = ["F811", "S105"]  # TenantMeta duplicate; INVALID_SECRET/VALID_SECRET enum
 "src/endorlabs/resources/package_license.py" = ["ARG001"]
 # --- Utils: intentional patterns ---
-".github/scripts/endor_ci_fetch_scan_findings.py" = ["T201"]  # CI helper; stderr progress
-".github/scripts/post_parallel_pr_comments.py" = ["S310", "T201"]  # GitHub REST; CLI progress
-".github/scripts/endor_scan_findings.py" = ["C901"]  # layered location extraction
-".github/scripts/validate_pr_comment_flow.py" = ["T201", "D103", "D301", "E501"]  # CLI diagnostic
 "devtools/refresh_token_to_dotenv.py" = ["T201", "D103", "S105"]  # CLI; env var name strings
 "devtools/run_without_endor_token.py" = ["D103", "S603"]  # maintainer env wrapper
 "main.py" = ["T201"]  # repo-root SDK walkthrough; intentional print() for learners
@@ -348,6 +344,8 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 # Skill-maintained CLI scripts (authoring tree; mirrored into agent_knowledge bundle).
 "agent-knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
 "agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
+"src/endorlabs/agent_knowledge/skills/**/scripts/*.py" = ["ERA001"]  # section divider comments
+"src/endorlabs/agent_knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py" = ["C901"]  # cmd_import
 "src/endorlabs/utils/create_payload.py" = ["C901", "UP047"]
 "src/endorlabs/utils/polling.py" = ["S311"]  # Non-crypto random for jitter
 "src/endorlabs/utils/redaction.py" = ["S105"]  # Variable names contain "token"/"secret" (regex patterns)
@@ -355,8 +353,12 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 "tests/**" = ["ANN", "D", "E402", "E501", "SLF001", "ARG001", "ARG002", "S", "T20", "ERA", "TRY", "DTZ", "RET", "A", "PLW", "PT017", "PT018", "RUF100", "SIM117"]
 # --- Context CLI: command-line printing is intentional ---
 "src/endorlabs/context/cli.py" = ["T20"]
-# --- Tools: dependency explorer ---
+# --- Tools: list sharding; split call-graph/dependency modules live under workflows/ ---
 "src/endorlabs/tools/**" = ["C901", "SLF001", "S108"]
+"src/endorlabs/workflows/callgraph/**" = ["C901", "SLF001", "S108", "TC001"]
+"src/endorlabs/workflows/agent_context/hydration.py" = ["C901"]
+"src/endorlabs/workflows/dependencies/metadata_fetch.py" = ["TC001"]
+"src/endorlabs/utils/api_pagination.py" = ["TC001"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -536,7 +538,13 @@ strict = [
 executionEnvironments = [
     { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     # Estate workflows: staged typing (migrated analytics + relationships modules).
-    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
+    # Split dependency/call-graph modules (migrated from tools/dependency_explorer).
+    { root = "src/endorlabs/workflows/callgraph", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/dependencies/bom_graph.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/dependencies/coordinates.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/dependencies/metadata_fetch.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
+    { root = "src/endorlabs/workflows/agent_context/hydration.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     # Staged strictness ratchet (phase 2): workflow library unknown-types to warning.
     { root = "src/endorlabs/workflows", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning", reportCallIssue = "none", reportUnusedCallResult = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
     { root = "src/endorlabs/tools", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },

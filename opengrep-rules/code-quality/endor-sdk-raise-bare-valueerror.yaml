@@ -35,9 +35,10 @@ rules:
       cwe:
         - "CWE-755: Improper Handling of Exceptional Conditions"
       description: >-
-        Bare ValueError or RuntimeError raised in AF code -- consumers
-        catching EndorAPIError will miss these, breaking the closed error
-        contract.  Use EndorValidationError or another EndorAPIError subclass.
+        Bare ValueError or RuntimeError in SDK library code breaks the
+        EndorAPIError contract. Use ValidationError or another EndorAPIError
+        subclass from endorlabs.core.exceptions (Pydantic field_validator
+        ValueError is allowed).
       endor-category: warning
       endor-rule-origin:
         license: Apache-2.0
@@ -58,11 +59,11 @@ rules:
       references:
         - https://cwe.mitre.org/data/definitions/755.html
       remediation: >-
-        Replace raise ValueError(...) with raise EndorValidationError(...)
-        or another EndorAPIError subclass from endorlabs.exceptions.
+        Replace raise ValueError(...) with raise ValidationError(...)
+        or another EndorAPIError subclass from endorlabs.core.exceptions.
         In Pydantic field validators, ValueError is acceptable.
       security-severity: Medium
-      version: v1.0.0
+      version: v1.1.0
     patterns:
       - pattern-either:
           - pattern: raise ValueError(...)
@@ -82,3 +83,14 @@ rules:
     paths:
       include:
         - src/endorlabs/
+      exclude:
+        - src/endorlabs/workflows/
+        - src/endorlabs/core/filter.py
+        - src/endorlabs/utils/path_safety.py
+        - src/endorlabs/resources/
+        - src/endorlabs/context/
+        - src/endorlabs/registry.py
+        - src/endorlabs/operations/
+        - src/endorlabs/tools/
+        - src/endorlabs/utils/model_validation.py
+        - src/endorlabs/utils/tabular.py

@@ -279,7 +279,8 @@ def _extract_markdown_body(markdown_file: Path) -> str | None:
     """Extract body content from markdown file with optional frontmatter."""
     try:
         text = markdown_file.read_text(encoding="utf-8")
-    except Exception:
+    except OSError as exc:
+        logger.debug("Unable to read markdown file %s: %s", markdown_file, exc)
         return None
     if not text.startswith("---"):
         return text

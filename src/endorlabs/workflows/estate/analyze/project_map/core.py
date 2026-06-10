@@ -6,7 +6,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from endorlabs.tools.dependency_explorer import parse_dep_name
+from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 
 
 @dataclass

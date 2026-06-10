@@ -75,7 +75,7 @@ Source repo: [`endorlabs/endorlabs-sdk`](https://github.com/endorlabs/endorlabs-
 | `analytics` | `pip install 'endorlabs[analytics]'`    | DataFrame / Parquet export and estate graph metrics — see [docs/estate/README.md](docs/estate/README.md) |
 
 
-CSV export from `utils.tabular` works without extras. In this repo: `uv sync --extra docs --extra analytics`.
+CSV export from `workflows.estate.analyze.cardinality.tabular` works without extras (`utils.tabular` re-exports the same API). In this repo: `uv sync --extra docs --extra analytics`.
 
 ## Quick start
 
