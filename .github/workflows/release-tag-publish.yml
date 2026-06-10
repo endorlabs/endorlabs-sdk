@@ -1,14 +1,30 @@
 name: Release Tag Publish
 
-# Triggered when a PEP 440-compatible version tag is pushed
-# (e.g. v0.1.0, v1.0.0rc1). Dev-series anchors use v1.1.0.dev0 only—not v1.1.0.dev19.
-# Final release tags (vX.Y.Z) publish to PyPI via OIDC Trusted Publishing.
-# See docs/contributing/release-publishing.md for tag policy and PyPI/TestPyPI rollout.
+# Tag push or workflow_dispatch for final vX.Y.Z release builds.
+# Production PyPI publish is opt-in: workflow_dispatch publish=true, or tag push with
+# repository variable PYPI_TAG_PUBLISH_ENABLED=true. Default is build-only (dry-run).
+# See docs/contributing/release-publishing.md
 
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "PEP 440 final version (e.g. 0.2.0)"
+        required: true
+        type: string
+      ref:
+        description: "Git ref to build from"
+        required: false
+        default: main
+        type: string
+      publish:
+        description: "Upload to PyPI and create GitHub Release"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -19,29 +35,45 @@ env:
 
 jobs:
   classify:
-    name: Classify Release Tag
+    name: Classify Release
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      is_final_release: ${{ steps.version.outputs.is_final_release }}
+      version: ${{ steps.classify.outputs.version }}
+      is_final_release: ${{ steps.classify.outputs.is_final_release }}
+      publish: ${{ steps.classify.outputs.publish }}
+      checkout_ref: ${{ steps.classify.outputs.checkout_ref }}
     steps:
-      - name: Classify tag version
-        id: version
+      - name: Classify release version
+        id: classify
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
-          VERSION="${TAG#v}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            CHECKOUT_REF="${{ inputs.ref }}"
+            PUBLISH="${{ inputs.publish }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+            VERSION="${TAG#v}"
+            CHECKOUT_REF="${GITHUB_REF}"
+            if [ "${{ vars.PYPI_TAG_PUBLISH_ENABLED }}" = "true" ]; then
+              PUBLISH="true"
+            else
+              PUBLISH="false"
+            fi
+          fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "checkout_ref=${CHECKOUT_REF}" >> "$GITHUB_OUTPUT"
+          echo "publish=${PUBLISH}" >> "$GITHUB_OUTPUT"
           if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is_final_release=true" >> "$GITHUB_OUTPUT"
-            echo "Final release tag: ${TAG} (${VERSION})"
+            echo "Final release: ${VERSION} (publish=${PUBLISH})"
           else
             echo "is_final_release=false" >> "$GITHUB_OUTPUT"
-            echo "Non-final tag (dev/pre-release): ${TAG} (${VERSION}) — publish skipped"
+            echo "Non-final version: ${VERSION} — build/publish skipped"
           fi
 
   build:
-    name: Validate, Build, and Attach Release
+    name: Validate, Build, and Upload Artifacts
     runs-on: ubuntu-latest
     needs: classify
     if: needs.classify.outputs.is_final_release == 'true'
@@ -49,7 +81,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          fetch-depth: 0
+          ref: ${{ needs.classify.outputs.checkout_ref }}
+          fetch-depth: 1
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
@@ -71,17 +104,13 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
-        with:
-          files: dist/*
-          generate_release_notes: true
-
   publish-pypi:
     name: Publish to PyPI (OIDC)
     runs-on: ubuntu-latest
     needs: [classify, build]
-    if: needs.classify.outputs.is_final_release == 'true'
+    if: >-
+      needs.classify.outputs.is_final_release == 'true' &&
+      needs.classify.outputs.publish == 'true'
     environment: pypi
     permissions:
       id-token: write
@@ -95,10 +124,31 @@ jobs:
           path: dist/
 
       - name: Publish to PyPI with attestations
-        # Pin to commit SHA (Endor GHA policy); image tag matches GITHUB_SHA from PyPA release/v1 builds.
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           verbose: true
+
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [classify, build, publish-pypi]
+    if: >-
+      needs.classify.outputs.is_final_release == 'true' &&
+      needs.classify.outputs.publish == 'true' &&
+      needs.publish-pypi.result == 'success'
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          tag_name: v${{ needs.classify.outputs.version }}
+          files: dist/*
+          generate_release_notes: true
 
   post-release-bump:
     name: Push Next Dev Anchor Tag
@@ -106,12 +156,13 @@ jobs:
     needs: [classify, publish-pypi]
     if: >-
       needs.classify.outputs.is_final_release == 'true' &&
+      needs.classify.outputs.publish == 'true' &&
       needs.publish-pypi.result == 'success'
     steps:
       - name: Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Push next dev anchor tag
         run: |
@@ -133,7 +184,7 @@ jobs:
   release-summary:
     name: Publish Release Summary
     runs-on: ubuntu-latest
-    needs: [classify, build, publish-pypi, post-release-bump]
+    needs: [classify, build, publish-pypi, github-release, post-release-bump]
     if: always()
     steps:
       - name: Publish release summary
@@ -143,24 +194,22 @@ jobs:
             echo ""
             echo "### Run Context"
             echo "- Event: \`${{ github.event_name }}\`"
-            echo "- Tag ref: \`${{ github.ref }}\`"
+            echo "- Ref: \`${{ github.ref }}\`"
             echo "- Actor: \`${{ github.actor }}\`"
             echo ""
             echo "### Outcome Matrix"
             echo "| Signal | Value |"
             echo "|---|---|"
-            echo "| Tag | \`${{ github.ref_name }}\` |"
             echo "| Version | \`${{ needs.classify.outputs.version }}\` |"
             echo "| Final release | \`${{ needs.classify.outputs.is_final_release }}\` |"
+            echo "| Publish requested | \`${{ needs.classify.outputs.publish }}\` |"
             echo "| Build | \`${{ needs.build.result }}\` |"
             echo "| PyPI publish | \`${{ needs.publish-pypi.result }}\` |"
+            echo "| GitHub Release | \`${{ needs.github-release.result }}\` |"
             echo "| Dev anchor bump | \`${{ needs.post-release-bump.result }}\` |"
             echo ""
-            if [ "${{ needs.classify.outputs.is_final_release }}" != "true" ]; then
-              echo "### Skips"
-              echo "- Non-final tags skip build, PyPI publish, GitHub Release, and dev-anchor bump."
-            else
-              echo "### Next Action"
-              echo "- Confirm GitHub Release assets and PyPI provenance on the project page."
+            if [ "${{ needs.classify.outputs.publish }}" != "true" ]; then
+              echo "### Dry-run"
+              echo "- Build gate and artifacts only; PyPI publish and GitHub Release skipped."
             fi
           } >> "$GITHUB_STEP_SUMMARY"

@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           ref: ${{ inputs.ref }}
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Setup Python with UV
         uses: ./.github/actions/setup-python-uv
@@ -93,6 +93,17 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
 
+      - name: Setup Python with UV for smoke install
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+
+      - name: Smoke test published install
+        run: >-
+          uv run python devtools/smoke_test_published_install.py
+          --version ${{ needs.build.outputs.version }}
+
       - name: Publish TestPyPI summary
         run: |
           {
@@ -108,7 +119,7 @@ jobs:
             echo "### Smoke install"
             echo "\`\`\`bash"
             echo "python -m venv /tmp/endorlabs-smoke"
-            echo "/tmp/endorlabs-smoke/Scripts/python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ endorlabs==${{ needs.build.outputs.version }}"
-            echo "/tmp/endorlabs-smoke/Scripts/python -c \"import endorlabs; print(endorlabs.__version__)\""
+            echo "/tmp/endorlabs-smoke/bin/python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ endorlabs==${{ needs.build.outputs.version }}"
+            echo "/tmp/endorlabs-smoke/bin/python -c \"import endorlabs; print(endorlabs.__version__)\""
             echo "\`\`\`"
           } >> "$GITHUB_STEP_SUMMARY"

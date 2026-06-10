@@ -27,7 +27,9 @@ editable installs fail**—the error in local Endor scans against `pypi://endorl
 4. Do **not** put `tag-pattern` on `[tool.hatch.version]` with a group that includes `.dev0` in the
    captured version (e.g. `0.1.1.dev0`) — setuptools-scm treats that as a custom dev id and fails.
 
-Nearest valid anchor today: **`v0.1.1.dev0`** → working tree versions like `0.1.1.devN`.
+After a history purge or tag reset, the active dev anchor is **`v0.2.0.dev0`** → working tree
+versions like `0.2.0.devN`. Release CI sets `SETUPTOOLS_SCM_PRETEND_VERSION` so builds do not
+depend on deep git history (`fetch-depth: 1` on release workflows).
 
 **Remote tag hygiene (recommended):** delete or stop creating tags that break SCM
 (`v0.1.1.dev19`, `v0.1.0.dev1`, `v0.1.0-test.*`, `v0.1.1.dev-build.*`). The describe command
@@ -130,10 +132,13 @@ uv run python devtools/check_vcs_version.py
 # Editable install path used by uv sync / Endor scans
 uv sync --dev
 
-# Build release artifacts (optional: set SETUPTOOLS_SCM_PRETEND_VERSION=0.1.1 in the environment for local simulation)
+# Release simulation (PowerShell: $env:SETUPTOOLS_SCM_PRETEND_VERSION = "0.2.0")
+export SETUPTOOLS_SCM_PRETEND_VERSION=0.2.0
+uv run python devtools/check_vcs_version.py --expect 0.2.0 --release-only
+uv run python devtools/verify_ship_artifacts.py --fetch-spec --verify-changelog 0.2.0
 uv build
 uv run twine check dist/*
-uv run python devtools/smoke_test_wheel.py
+uv run python devtools/smoke_test_wheel.py --expect-version 0.2.0
 ```
 
 Do not publish wheels built with `SETUPTOOLS_SCM_PRETEND_VERSION` unless CI also sets the
@@ -144,37 +149,89 @@ same version from a tag or workflow input.
 ### TestPyPI — `.github/workflows/release-testpypi.yml`
 
 - **Trigger:** `workflow_dispatch` with inputs `version` (required) and `ref` (default `main`)
-- **Build job:** same composite gate as production (ruff, pyright, unit tests, `verify_ship_artifacts`, `uv build`, `twine check`)
-- **Publish job:** `environment: testpypi`, `permissions: id-token: write`, OIDC publish to TestPyPI
-- **Use for:** staging uploads and smoke installs before production; keep available on branches when validating deployment changes
+- **Build job:** composite `release-build-gate` (ruff, pyright, unit tests, `verify_ship_artifacts`, `uv build`, `twine check`, wheel smoke)
+- **Publish job:** `environment: testpypi`, OIDC publish to TestPyPI, then `smoke_test_published_install.py`
+- **Use for:** staging uploads and smoke installs before production
 
 ### PyPI (manual) — `.github/workflows/release-pypi.yml`
 
-- **Trigger:** `workflow_dispatch` with inputs `version` (required) and `ref` (default `main`)
-- **Build job:** same as TestPyPI manual path (`check_vcs_version.py`, `uv build`, `twine check`)
-- **Publish job:** `environment: pypi`, OIDC publish to PyPI with attestations
-- **Use for:** manual production uploads when tag-driven release is not appropriate; prefer **`release-tag-publish.yml`** for final `vX.Y.Z` cuts (full quality gate + GitHub Release + dev anchor bump)
+- **Trigger:** `workflow_dispatch` with inputs `version`, `ref` (default `main`), and `publish` (default **`false`**)
+- **Build job:** same composite gate as TestPyPI
+- **Publish job:** runs only when `publish: true`; `environment: pypi`, OIDC publish to PyPI
+- **Dry-run:** `publish: false` — build, gate, and upload artifacts only (no OIDC)
 
 ### Production PyPI (tag) — `.github/workflows/release-tag-publish.yml`
 
-- **Trigger:** push tag matching `v*`
-- **Classify:** final releases match `vX.Y.Z` exactly; dev anchors and pre-releases skip publish
-- **Build job (final only):** composite release build gate (quality + ship-artifact verify + wheel build), GitHub Release
-- **Publish job (final only):** `environment: pypi`, OIDC publish to PyPI with attestations
-- **Post-release bump (final only):** pushes `vX.Y.(Z+1).dev0` dev anchor tag
+- **Trigger:** push tag matching `v*`, or `workflow_dispatch` with `version`, `ref`, and `publish` (default **`false`**)
+- **Classify:** final releases match `vX.Y.Z` exactly; dev anchors and pre-releases skip build
+- **Build job (final only):** composite release build gate; artifacts uploaded (no GitHub Release until publish succeeds)
+- **Publish job:** only when `publish: true` (dispatch input) or repository variable `PYPI_TAG_PUBLISH_ENABLED=true` on tag push
+- **GitHub Release:** after successful PyPI publish (not before)
+- **Post-release bump:** only after successful publish — pushes `vX.Y.(Z+1).dev0`
 
 ```mermaid
 flowchart TD
-  dispatchTest["workflow_dispatch release-testpypi.yml"] --> testBuild[build + twine check]
-  testBuild --> pubT["publish-testpypi OIDC → TestPyPI"]
-  dispatchProd["workflow_dispatch release-pypi.yml"] --> prodManualBuild[build + twine check]
-  prodManualBuild --> pubM["publish-pypi OIDC → PyPI"]
-  tag["push vX.Y.Z tag"] --> gate{final version?}
-  gate -- yes --> prodBuild[build + gate + GitHub Release]
-  prodBuild --> pubP["publish-pypi OIDC → PyPI"]
-  pubP --> bump["push vX.Y.Z+1.dev0 anchor"]
-  bump -.->|dev anchor| gate
-  gate -- no --> skip[skip publish]
+  dispatchTest["workflow_dispatch release-testpypi.yml"] --> testGate[release-build-gate]
+  testGate --> pubT["OIDC TestPyPI + smoke install"]
+  dispatchProd["workflow_dispatch release-pypi.yml publish=false"] --> prodGate[release-build-gate]
+  prodGate --> dryRun[artifacts only]
+  dispatchProdPub["publish=true"] --> prodGate2[release-build-gate]
+  prodGate2 --> pubM["OIDC PyPI"]
+  tagPush["push vX.Y.Z tag"] --> classify{final?}
+  classify -- yes --> tagGate[release-build-gate]
+  tagGate --> pubOpt{publish enabled?}
+  pubOpt -- yes --> pubP["OIDC PyPI + GitHub Release"]
+  pubOpt -- no --> dryTag[dry-run artifacts]
+```
+
+## Dry-run workflows (no PyPI upload)
+
+Validate the full gate without publishing:
+
+1. **Release PyPI Publish** — `workflow_dispatch`, `version: 0.2.0`, `publish: false`
+2. **Release Tag Publish** — `workflow_dispatch`, `version: 0.2.0`, `ref: main`, `publish: false`
+
+Tag pushes run **build-only** by default until `PYPI_TAG_PUBLISH_ENABLED` is set to `true` on the repository.
+
+## History purge (before public release)
+
+Personal-project history may contain proprietary exports (for example `*findings-export*.csv`) or
+bulk committed platform docs under `.endorlabs-context/`. **Tag deletion does not remove blobs
+from history** — use `git filter-repo` while the repository is still **private**.
+
+### Discovery
+
+```bash
+uv run python devtools/history_purge_audit.py
+uv run python devtools/history_purge_audit.py --json
+```
+
+### Purge (maintainer, destructive)
+
+1. Close open PRs; announce maintenance window.
+2. Run discovery; expand `--invert-paths` list from audit output.
+3. On a fresh clone: `git filter-repo --force --path .endorlabs-context/ --invert-paths` (plus each discovered path).
+4. Optionally squash to a clean root; **force-push** `main`.
+5. Delete all old `v*` tags on the remote; push `v0.2.0.dev0` on the new tip.
+6. Re-run discovery (expect zero hits), `release-build-gate` dry-run, and TestPyPI `0.2.0`.
+
+**Collaborators:** re-clone after force-push — do not merge from pre-purge branches.
+
+## Rollback and TestPyPI hygiene
+
+| Action | When |
+|--------|------|
+| **Yank** on TestPyPI | Trial uploads are expendable; yank before re-uploading the same version |
+| **Yank + patch** on production PyPI | Bad release shipped — yank `X.Y.Z`, publish `X.Y.(Z+1)` from a fix commit |
+| **Do not** rewrite published prod versions | PyPI versions are immutable; yank only |
+
+## Re-clone after history rewrite
+
+After `git filter-repo` or force-push:
+
+```bash
+git fetch --prune --tags
+# Prefer a fresh clone instead of merge/rebase from old local main
 ```
 
 ## TestPyPI smoke install
@@ -211,4 +268,5 @@ Intake while merging PRs: [`.github/pull_request_template.md`](../../.github/pul
 - Version config: `pyproject.toml` → `[tool.hatch.version]`, `[tool.hatch.build.hooks.vcs]`
 - Generated at build: `src/endorlabs/_version.py` (gitignored)
 - Release CI: `.github/workflows/release-tag-publish.yml`, `.github/workflows/release-pypi.yml`, `.github/workflows/release-testpypi.yml`
-- Local helpers: `devtools/check_vcs_version.py`, `devtools/smoke_test_wheel.py`, `devtools/smoke_test_published_install.py`
+- Local helpers: `devtools/check_vcs_version.py`, `devtools/smoke_test_wheel.py`, `devtools/smoke_test_published_install.py`, `devtools/history_purge_audit.py`
+- Release gate: `.github/actions/release-build-gate/action.yml`

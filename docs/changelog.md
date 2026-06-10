@@ -8,6 +8,16 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+### Changed
+
+### Breaking
+
+## 0.2.0
+
+First release candidate validated via TestPyPI; consolidates estate workflow unification and release automation gates.
+
+### Added
+
 - **`devtools/verify_ship_artifacts.py`** — canonical CI/release gate: upstream OpenAPI SHA verify, model-sync regen, committed-artifact `git diff`, and agent-knowledge `--verify`.
 - **`.github/actions/release-build-gate`** — shared quality + ship-artifact + wheel build for production and TestPyPI releases.
 - **`endorlabs.tools.list_sharding`** — `ParentShard`, `parallel_map_shards`, and `list_for_shards` for per-project parallel SDK lists.
