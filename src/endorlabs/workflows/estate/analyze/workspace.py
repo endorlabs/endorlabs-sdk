@@ -76,6 +76,7 @@ def analyze_workspace(
     skip_validate: bool = False,
     relationship_max_depth: int = 3,
     relationship_max_workers: int = 16,
+    focus_producer_project_uuid: str | None = None,
 ) -> AnalyzeResult:
     """Run disk-first IR transforms and unified viz from pulled workspace data."""
     ensure_workspace_layout(workspace_root)
@@ -130,6 +131,7 @@ def analyze_workspace(
                 output_dir=ir_dir(workspace_root),
                 max_depth=relationship_max_depth,
                 max_workers=relationship_max_workers,
+                focus_producer_project_uuid=focus_producer_project_uuid,
             )
         finally:
             client.close()

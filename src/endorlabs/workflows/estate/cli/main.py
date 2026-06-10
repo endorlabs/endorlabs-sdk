@@ -125,6 +125,9 @@ def cmd_analyze(args: argparse.Namespace) -> int:
             skip_validate=args.skip_validate,
             relationship_max_depth=args.relationship_max_depth,
             relationship_max_workers=args.relationship_max_workers,
+            focus_producer_project_uuid=(
+                (args.focus_producer_project_uuid or "").strip() or None
+            ),
         )
     except Exception as exc:
         LOGGER.error("%s", exc)
@@ -237,6 +240,14 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=16,
         help="Parallel DM workers for relationship map. Default: 16",
+    )
+    analyze.add_argument(
+        "--focus-producer-project-uuid",
+        default="",
+        help=(
+            "With --only relationships: restrict to consumer→producer edges where "
+            "this project UUID is the producer (breaking-change consumer discovery)."
+        ),
     )
     analyze.set_defaults(func=cmd_analyze)
 
