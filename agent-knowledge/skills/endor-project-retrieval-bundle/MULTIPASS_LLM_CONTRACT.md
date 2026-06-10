@@ -10,7 +10,7 @@ Load this file **after** reading [SKILL.md](SKILL.md) when you need exact pass b
 | **2 — Hydrate** | `process_project` (BOM + optional CG pull + `DependencyMetadata`) | `bom_*.json`, `call_graph_*.json`, `dep_metadata.json`, `dependencies.json`, summary md | `--pv-limit`, `--dep-metadata-max-pages`, and list caps when using `--hydrate-pv-uuids` / `--hydrate-top-n` |
 | **3 — Call-graph sweep** | Optional; enumerates PVs and exports call graph payloads | `callgraph_sweep/` + nested manifest | `--callgraph-max-pages`, `--callgraph-page-size` |
 
-**Namespace graph (different skill):** [endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md) answers *cross-project* edges, not this per-repo bundle.
+**Namespace graph (different skill):** [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) answers *cross-project* edges, not this per-repo bundle.
 
 ## Progressive disclosure — what to read first
 
@@ -26,6 +26,7 @@ Load this file **after** reading [SKILL.md](SKILL.md) when you need exact pass b
 - **`selection`**: How Pass 2 chose PVs: `default_first_pv_limit`, `explicit_uuid_list`, or `top_n_by_meta_update_time`.
 - **`hydration.pass_2_dependency_explorer`**: `skipped` true for `--index-only`; `missing_pv_uuids` if requested UUIDs were not in list results; `pv_list_truncated` if Pass 2 list cap may cut off data.
 - **`artifacts.callgraph_sweep`**: Pass 3; `null` if not run. Object includes `pass`, `package_versions_total`, `call_graph_exports_total`, list caps.
+- **`artifacts.session_summaries`**: Present when export used `--session-summaries`. Includes `findings_total`, `policies_total`, `versions_total`, and paths to summary markdown/JSON — prefer counts first; open files only when needed.
 
 ## LLM rules — completeness and escalation
 
@@ -49,4 +50,5 @@ Index only:  --index-only
 Pass 2 selection:  --hydrate-pv-uuids a,b  |  --hydrate-top-n N
 Pass 2 caps:  --pv-limit, --dep-metadata-max-pages, --pv-list-max-pages, --pv-list-page-size
 Pass 3:  --callgraph-sweep, --callgraph-max-pages, --callgraph-page-size, --decode-zstd
+Session:  --session-summaries
 ```

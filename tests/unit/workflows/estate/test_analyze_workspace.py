@@ -111,3 +111,29 @@ def test_analyze_workspace_risk_step(tmp_path: Path) -> None:
         )
     mock_risk.assert_called_once()
     assert result.steps["risk"] == "risk ok"
+
+
+def test_analyze_workspace_relationships_step(tmp_path: Path) -> None:
+    workspace = tmp_path / "tenant-20260101"
+    ensure_workspace_layout(workspace)
+    fake_rel = MagicMock(
+        graph_path=tmp_path / "project_relationship_graph.json",
+        stats={"direct_project_edge_count": 7},
+    )
+    fake_client = MagicMock()
+    with (
+        patch("endorlabs.Client", return_value=fake_client),
+        patch(
+            "endorlabs.workflows.estate.analyze.project_map.run.run_project_relationship_map",
+            return_value=fake_rel,
+        ) as mock_rel_map,
+    ):
+        result = analyze_workspace(
+            workspace,
+            namespace="tenant.example",
+            only=("relationships",),
+            skip_validate=True,
+        )
+    mock_rel_map.assert_called_once()
+    fake_client.close.assert_called_once()
+    assert "7 direct edges" in result.steps["relationships"]

@@ -24,11 +24,15 @@ from endorlabs.workflows.estate.export.charts.estate_dashboard import (
 from endorlabs.workflows.estate.workspace.collect_manifest import (
     validate_workspace_collect,
 )
-from endorlabs.workflows.estate.workspace.paths import ensure_workspace_layout, ir_path
+from endorlabs.workflows.estate.workspace.paths import (
+    ensure_workspace_layout,
+    ir_dir,
+    ir_path,
+)
 
 logger = logging.getLogger(__name__)
 
-AnalysisStep = Literal["cardinality", "risk", "graph", "viz"]
+AnalysisStep = Literal["cardinality", "risk", "graph", "viz", "relationships"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,13 +74,17 @@ def analyze_workspace(
     scorer: str = "critical_high_count",
     skip_metrics: bool = False,
     skip_validate: bool = False,
+    relationship_max_depth: int = 3,
+    relationship_max_workers: int = 16,
+    focus_producer_project_uuid: str | None = None,
 ) -> AnalyzeResult:
     """Run disk-first IR transforms and unified viz from pulled workspace data."""
     ensure_workspace_layout(workspace_root)
-    if not skip_validate:
+    steps = only or ("cardinality", "risk", "graph", "viz")
+    disk_steps = frozenset({"cardinality", "risk", "graph", "viz"})
+    if not skip_validate and disk_steps.intersection(steps):
         validate_workspace_collect(workspace_root)
 
-    steps = only or ("cardinality", "risk", "graph", "viz")
     outcomes: dict[str, str] = {}
 
     if "cardinality" in steps:
@@ -108,5 +116,28 @@ def analyze_workspace(
             scorer_name=scorer,
         )
         outcomes["viz"] = str(dashboard)
+
+    if "relationships" in steps:
+        import endorlabs
+        from endorlabs.workflows.estate.analyze.project_map.run import (
+            run_project_relationship_map,
+        )
+
+        client = endorlabs.Client(tenant=namespace)
+        try:
+            rel_result = run_project_relationship_map(
+                client,
+                namespace=namespace,
+                output_dir=ir_dir(workspace_root),
+                max_depth=relationship_max_depth,
+                max_workers=relationship_max_workers,
+                focus_producer_project_uuid=focus_producer_project_uuid,
+            )
+        finally:
+            client.close()
+        direct = rel_result.stats.get("direct_project_edge_count", 0)
+        outcomes["relationships"] = (
+            f"{direct} direct edges -> {rel_result.graph_path.name}"
+        )
 
     return AnalyzeResult(workspace_root=workspace_root, steps=outcomes)

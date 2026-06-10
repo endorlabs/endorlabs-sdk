@@ -17,9 +17,13 @@ files are absent because a broad search did not show them.
 - `.endorlabs-context/context.json`
 - `.endorlabs-context/sdk/INDEX.md`
 - `.endorlabs-context/sdk/MANIFEST.json`
-- `.endorlabs-context/platform/openapi/openapiv2.swagger.json`
+- `.endorlabs-context/platform/openapi/openapiv2.swagger.json` (canonical OpenAPI)
 - `.endorlabs-context/platform/user-docs/`
 - `.env` (confirm variables exist only — **never print secrets**)
+
+Do **not** use legacy flat paths (`.endorlabs-context/openapiv2.swagger.json`,
+`.endorlabs-context/user-docs/`). `endorlabs.init(include_openapi=True)` and
+`sync_openapi()` reconcile or remove them when syncing to `platform/`.
 
 Gitignored paths may be missing from workspace search; try targeted reads before
 concluding context is unavailable.

@@ -3,7 +3,7 @@ description: Resolve Project first; pass namespace=project.namespace on project-
 alwaysApply: true
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-namespace-scoping.md
-x-endor-source-sha256: d229906d3bb7ab495d3322166259b9fd292ecdf68f0b5adb6b41a9b5ba209892
+x-endor-source-sha256: 961c8c80c3969c51e96d36f571e689a9a4bf099a80a3392d950facc35a192540
 ---
 
 # Namespace scoping
@@ -25,13 +25,15 @@ When you have a resource instance (from `list(traverse=True)`), pass the resourc
 
 ## Project-scoped lists (MUST)
 
-`Client(tenant=<estate_root>)` with default `traverse=False` lists **only that path segment**—not
+`Client(tenant=<client_tenant>)` with default `traverse=False` lists **only that path segment**—not
 child namespaces where projects usually live. A filter such as `spec.project_uuid==…` does **not**
 widen the path.
 
 **Resolve the `Project` row first**, then pass **`namespace=project.namespace`** on downstream lists
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
 **empty results with no error**.
+
+**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](../../docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
 
 Alternatives:
 

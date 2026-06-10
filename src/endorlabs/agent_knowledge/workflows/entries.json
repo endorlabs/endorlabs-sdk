@@ -3,14 +3,14 @@
     "agent_visible": true,
     "cli": "endor-agent-context",
     "composition": "library_api",
-    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "default_output": ".endorlabs-context/workspace/projects/<slug>_<timestamp>/",
     "id": "agent-context",
     "library_entrypoints": [
       "endorlabs.workflows.agent_context.build_context_manifest",
       "endorlabs.workflows.agent_context.list_package_versions_for_index"
     ],
     "module": "endorlabs.workflows.agent_context.cli",
-    "skill": "endor-project-agent-context"
+    "skill": "endor-project-retrieval-bundle"
   },
   {
     "agent_visible": true,
@@ -31,21 +31,6 @@
     "id": "context-bootstrap",
     "module": "endorlabs.context.cli",
     "skill": null
-  },
-  {
-    "agent_visible": true,
-    "cli": "endor-estate",
-    "composition": "library_api",
-    "default_output": ".endorlabs-context/workspace/<slug>-<YYYYMMDD>/",
-    "id": "estate-workspace",
-    "library_entrypoints": [
-      "endorlabs.workflows.estate.collect_workspace",
-      "endorlabs.workflows.estate.analyze_workspace",
-      "endorlabs.workflows.estate.export_version_cardinality_for_package_match",
-      "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
-    ],
-    "module": "endorlabs.workflows.estate.cli.main",
-    "skill": "endor-analytics-estate-dependencies"
   },
   {
     "agent_visible": true,
@@ -70,10 +55,10 @@
   {
     "agent_visible": true,
     "cli": null,
-    "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+    "default_output": ".endorlabs-context/workspace/",
     "id": "relationships-map",
     "module": "endorlabs.workflows.estate.analyze.project_map.map",
-    "skill": "endor-map-project-dependency-relationships"
+    "skill": "endor-namespace-relationship-map"
   },
   {
     "agent_visible": true,

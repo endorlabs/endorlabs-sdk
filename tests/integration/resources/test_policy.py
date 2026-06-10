@@ -63,8 +63,8 @@ class TestPolicy:
     def _create_test_policy(self, name_suffix: str = ""):
         """Helper method to create a test policy for CRUD operations.
 
-        Uses EXCEPTION policy type (maneuver format) instead of USER_FINDING
-        to avoid API 500 errors. Exception policies work reliably.
+        Uses EXCEPTION policy type instead of USER_FINDING to avoid API 500
+        errors. Exception policies work reliably for CRUD tests.
 
         Args:
             name_suffix: Optional suffix to add to policy name for uniqueness
@@ -82,7 +82,7 @@ class TestPolicy:
                 name=policy_name,
                 description=(
                     "A test EXCEPTION policy created for CRUD operations testing "
-                    "(using maneuver format to avoid API 500 errors)"
+                    "(EXCEPTION policy type for reliable CRUD testing)"
                 ),
                 tags=["test", "exception", "crud-test", "endorlabs-sdk"],
             ),
