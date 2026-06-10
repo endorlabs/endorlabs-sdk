@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-10T01:23:25.642769+00:00",
+  "generated_at": "2026-06-10T01:33:10.628750+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -150,15 +150,6 @@
       "refs": []
     },
     {
-      "description": "Namespace-scoped bulk workflows via endor-estate: pull JSONL workspace, disk-first analyze (cardinality, risk, compile graph, dashboard), summarize, export-version, and optional live relationship map into IR. --namespace is scope (tenant root or child), not single-project export \u2014 use endor-project-retrieval-bundle for one repo.",
-      "id": "endor-estate-workspace",
-      "name": "endor-estate-workspace",
-      "path": "skills/endor-estate-workspace/SKILL.md",
-      "refs": [
-        "skills/endor-estate-workspace/REMEDIATION.md"
-      ]
-    },
-    {
       "description": "Fetch project call graph artifacts, decode zstd payloads into searchable node and edge files, and run safe intersection/path searches. Use when retrieving call graph data, checking whether symbols exist, and extracting node/edge/path facts for downstream reasoning.",
       "id": "endor-fetch-and-search-call-graph",
       "name": "endor-fetch-and-search-call-graph",
@@ -207,13 +198,11 @@
       ]
     },
     {
-      "description": "Query projects, scan results, and findings from the Endor Labs platform using the SDK. Use when the user wants to retrieve scan results, list findings, look up a project by repository URL, or build reports from scan data. Covers namespace traversal for tenant-wide queries.",
+      "description": "Project-scoped SDK workflow: resolve Project \u2192 latest ScanResult \u2192 Finding rows for one repo. Use when the user wants scan results, findings, or reports for a specific project. Default to namespace=project.namespace without traverse on findings; use traverse only to discover Project when namespace is unknown, or when the user explicitly requests tenant-wide reports.",
       "id": "endor-retrieve-scan-results",
       "name": "endor-retrieve-scan-results",
       "path": "skills/endor-retrieve-scan-results/SKILL.md",
-      "refs": [
-        "skills/endor-retrieve-scan-results/TRAVERSAL_PATTERNS.md"
-      ]
+      "refs": []
     },
     {
       "description": "Customer-facing workflow for planning, validating, and troubleshooting Endor Enterprise SSO integrations. Use when a customer is setting up SSO, validating namespace access behavior, or debugging claims-to-authorization mapping.",
@@ -302,7 +291,7 @@
       "skill": null
     },
     {
-      "agent_visible": true,
+      "agent_visible": false,
       "cli": "endor-estate",
       "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/<slug>-<YYYYMMDD>/",
@@ -314,7 +303,7 @@
         "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
       ],
       "module": "endorlabs.workflows.estate.cli.main",
-      "skill": "endor-estate-workspace"
+      "skill": null
     },
     {
       "agent_visible": true,

@@ -20,7 +20,6 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 
 | Skill | Trigger | Source docs |
 |-------|---------|-------------|
-| [endor-estate-workspace](endor-estate-workspace/) | Namespace-scoped bulk pull/analyze (`endor-estate`); cardinality, compile graph, relationship IR | `endorlabs.workflows.estate`; `endor-estate` |
 | [endor-project-retrieval-bundle](endor-project-retrieval-bundle/) | Single-project retrieval bundle: `endor-agent-context`, manifest, optional session summaries; [MULTIPASS_LLM_CONTRACT.md](endor-project-retrieval-bundle/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
 | [endor-namespace-relationship-map](endor-namespace-relationship-map/) | Namespace consumer→producer project graph (live API); breaking-change focus filter | `endorlabs.workflows.estate.analyze.project_map` |
 | [endor-custom-sast-rules](endor-custom-sast-rules/) | SemgrepRule YAML authoring, validation, import | Canonical (skill-owned) |
@@ -65,7 +64,7 @@ For **Claude API** users: zip each skill directory and upload via the `/v1/skill
 
 ## Relationship to Other Docs
 
-- **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Estate analytics workflows without a skill (e.g. compile dependency graph) live under [`docs/estate/`](../docs/estate/README.md).
+- **`docs/`**: Full reference material. Skills condense and link to these; originals are unchanged. Namespace bulk workflows (`endor-estate` pull/analyze) are **not** agent skills — see [`docs/estate/`](../docs/estate/README.md) and `workflows.yaml` (`estate-workspace`, `agent_visible: false`).
 - **`rules/`** — always load via `agent_knowledge_bootstrap_paths()` (namespace, workspace, composition, list performance, local context, portable examples).
 - **`contracts/`** — on-demand SDK reference semantics (list parameters, naming, errors, dependency metadata).
 - **`.cursor/rules/`**: Always-on project rules (apply every session). Skills are on-demand (apply when triggered).
