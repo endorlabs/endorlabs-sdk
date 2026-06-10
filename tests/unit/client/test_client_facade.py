@@ -8,6 +8,7 @@ Delegation is asserted by mocking the facade's _ops (BaseResourceOperations)
 methods (list, get, create, update, delete, list_iter) (noqa: SLF001).
 """
 
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
@@ -22,6 +23,65 @@ from tests.conftest import (
     TEST_NAMESPACE_DEFAULT,
     TEST_PAGE_SIZE,
 )
+
+
+def test_client_uses_endorctl_config_when_env_unset(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Client() falls back to ENDOR_NAMESPACE in ~/.endorctl/config.yaml."""
+    config_dir = tmp_path / ".endorctl"
+    config_dir.mkdir()
+    (config_dir / "config.yaml").write_text(
+        "ENDOR_NAMESPACE: config.tenant.namespace\n", encoding="utf-8"
+    )
+    monkeypatch.setattr("endorlabs.utils.endorctl_config.Path.home", lambda: tmp_path)
+    monkeypatch.delenv("ENDOR_NAMESPACE", raising=False)
+    monkeypatch.delenv("ENDOR_CONFIG_PATH", raising=False)
+    mock = Mock(spec=APIClient)
+    client = endorlabs.Client(api_client=mock)
+    mock_list = Mock(return_value=[])
+    client.Namespace._ops.list = mock_list
+    client.Namespace.list(max_pages=TEST_MAX_PAGES)
+    args, _ = mock_list.call_args
+    assert args[0] == "config.tenant.namespace"
+
+
+def test_client_env_namespace_overrides_endorctl_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """ENDOR_NAMESPACE env wins over endorctl config file."""
+    config_dir = tmp_path / ".endorctl"
+    config_dir.mkdir()
+    (config_dir / "config.yaml").write_text(
+        "ENDOR_NAMESPACE: config.tenant\n", encoding="utf-8"
+    )
+    monkeypatch.setattr("endorlabs.utils.endorctl_config.Path.home", lambda: tmp_path)
+    monkeypatch.setenv("ENDOR_NAMESPACE", "env.tenant")
+    mock = Mock(spec=APIClient)
+    client = endorlabs.Client(api_client=mock)
+    mock_list = Mock(return_value=[])
+    client.Namespace._ops.list = mock_list
+    client.Namespace.list(max_pages=TEST_MAX_PAGES)
+    args, _ = mock_list.call_args
+    assert args[0] == "env.tenant"
+
+
+def test_client_logs_endorctl_config_fallback(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Client init logs when namespace comes from endorctl config."""
+    import logging
+
+    config_dir = tmp_path / ".endorctl"
+    config_dir.mkdir()
+    config_file = config_dir / "config.yaml"
+    config_file.write_text("ENDOR_NAMESPACE: config.tenant\n", encoding="utf-8")
+    monkeypatch.setattr("endorlabs.utils.endorctl_config.Path.home", lambda: tmp_path)
+    monkeypatch.delenv("ENDOR_NAMESPACE", raising=False)
+    caplog.set_level(logging.INFO, logger="endorlabs.client_surface")
+    endorlabs.Client(api_client=Mock(spec=APIClient))
+    assert "Default namespace from endorctl config" in caplog.text
+    assert str(config_file) in caplog.text
 
 
 def test_client_uses_endor_namespace_env_when_tenant_omitted(
@@ -57,6 +117,11 @@ def test_client_requires_namespace_or_tenant_for_list(
 ) -> None:
     """When tenant is None and namespace is not passed to list(), raise ValueError."""
     monkeypatch.delenv("ENDOR_NAMESPACE", raising=False)
+    monkeypatch.delenv("ENDOR_CONFIG_PATH", raising=False)
+    monkeypatch.setattr(
+        "endorlabs.utils.endorctl_config.read_endorctl_namespace",
+        lambda: None,
+    )
     client = endorlabs.Client(api_client=Mock(spec=APIClient), tenant=None)
     client.Namespace._ops.list = Mock(return_value=[])
     with pytest.raises(ValidationError, match="namespace"):
