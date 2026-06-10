@@ -1,0 +1,118 @@
+name: Release PyPI Publish
+
+# Manual PyPI publish via OIDC Trusted Publishing (PEP 740 attestations by default).
+# Configure a pending publisher on pypi.org before first upload:
+#   Owner: endorlabs · Repo: endorlabs-sdk · Workflow: release-pypi.yml · Environment: pypi
+# Prefer tag-driven releases (release-tag-publish.yml) for final vX.Y.Z cuts with full CI gates.
+# See docs/contributing/release-publishing.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "PEP 440 version to publish (e.g. 0.1.1)"
+        required: true
+        type: string
+      ref:
+        description: "Git ref to build from"
+        required: false
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13"
+  UV_VERSION: "0.9.3"
+
+jobs:
+  build:
+    name: Build and Verify Artifacts
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+
+      - name: Setup Python with UV
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          uv-version: ${{ env.UV_VERSION }}
+
+      - name: Validate version input
+        id: version
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^[0-9]+(\.[0-9]+)*((a|b|rc)[0-9]+)?(\.post[0-9]+)?(\.dev[0-9]+)?$ ]]; then
+            echo "::error::Invalid PEP 440 version: ${VERSION}"
+            exit 1
+          fi
+          echo "SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "version=${VERSION}" >> "$GITHUB_ENV"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: ${VERSION}"
+
+      - name: Verify hatch-vcs version resolution
+        run: uv run python devtools/check_vcs_version.py
+
+      - name: Build package
+        run: uv build
+
+      - name: Verify distribution metadata
+        run: uv run twine check dist/*
+
+      - name: Upload distribution artifacts
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: dist
+          path: dist/*
+          if-no-files-found: error
+
+  publish-pypi:
+    name: Publish to PyPI (OIDC)
+    runs-on: ubuntu-latest
+    needs: build
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI with attestations
+        # Pin to commit SHA (Endor GHA policy); image tag matches GITHUB_SHA from PyPA release/v1 builds.
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        with:
+          verbose: true
+
+      - name: Publish PyPI summary
+        run: |
+          {
+            echo "## PyPI Publish Summary"
+            echo ""
+            echo "| Signal | Value |"
+            echo "|---|---|"
+            echo "| Version | \`${{ needs.build.outputs.version }}\` |"
+            echo "| Index | \`https://pypi.org/project/endorlabs/\` |"
+            echo "| Auth | OIDC Trusted Publishing (no API token) |"
+            echo "| Attestations | PEP 740 (default via gh-action-pypi-publish) |"
+            echo ""
+            echo "### Smoke install"
+            echo "\`\`\`bash"
+            echo "python -m venv /tmp/endorlabs-smoke"
+            echo "/tmp/endorlabs-smoke/bin/python -m pip install endorlabs==${{ needs.build.outputs.version }}"
+            echo "/tmp/endorlabs-smoke/bin/python -c \"import endorlabs; print(endorlabs.__version__)\""
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
