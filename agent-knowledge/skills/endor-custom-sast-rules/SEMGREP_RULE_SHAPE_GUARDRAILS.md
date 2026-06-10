@@ -24,7 +24,7 @@ At least one pattern key is required:
 ## Metadata handling policy
 
 The manager uses a skill-local key map and normalization logic in
-`.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`.
+`agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`.
 
 - **Accepted**: keys listed in `ALLOWED_METADATA_KEYS`
 - **Dropped with warning**: unknown keys

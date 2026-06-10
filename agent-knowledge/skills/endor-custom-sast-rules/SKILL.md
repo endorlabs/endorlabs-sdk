@@ -70,8 +70,8 @@ local pass; it does not call the server.
 
 ## 3. Import to platform
 
-Use `sast_rule_manager.py` for **`SemgrepRule`** CRUD (paths below mirror
-`.cursor/skills/` after `sync_skills`):
+Use `sast_rule_manager.py` for **`SemgrepRule`** CRUD (authoring path below; same
+relative path under `src/endorlabs/agent_knowledge/skills/` in the wheel):
 
 ```bash
 uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
