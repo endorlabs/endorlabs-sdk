@@ -390,6 +390,7 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      pull-requests: write
       security-events: write
       checks: write
       actions: read
@@ -423,7 +424,8 @@ jobs:
           scan_dependencies: false
           scan_secrets: true
           scan_sast: false
-          enable_pr_comments: false
+          enable_pr_comments: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Endor Labs SCA scan
         uses: endorlabs/github-action@b8992820cc4d9c9e7ded5022adf6cabe2dc11946 # v1.1.12
@@ -434,7 +436,8 @@ jobs:
           scan_dependencies: true
           scan_secrets: false
           scan_sast: false
-          enable_pr_comments: false
+          enable_pr_comments: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           additional_args: --quick-scan
 
       - name: Endor Labs comprehensive SAST + AI SAST scan
@@ -447,7 +450,7 @@ jobs:
           scan_secrets: true
           scan_sast: true
           additional_args: --quick-scan
-          enable_pr_comments: false
+          enable_pr_comments: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
   # ---------------------------------------------------------------------------
