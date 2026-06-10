@@ -98,4 +98,4 @@ endorctl --version
 
 - [docs/contributing/docs-drift-workflow.md](../../../docs/contributing/docs-drift-workflow.md)
 - [devtools/sync/README.md](../../../devtools/sync/README.md)
-- [AGENTS.md](../../../AGENTS.md) — Model-sync drift enforcement
+- [docs/contributing/docs-drift-workflow.md](../../../docs/contributing/docs-drift-workflow.md) — Model-sync drift enforcement

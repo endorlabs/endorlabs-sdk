@@ -92,7 +92,7 @@ Three JSON files under `output_dir` (see [JSON outputs](#json-outputs-required) 
 - `max_pages` / `dep_metadata_max_pages` prevent unbounded namespace-wide listing. Do not set these to “fetch everything” without explicit approval.
 - Prefer the same `traverse=True` + namespace pattern documented here when listing from tenant root.
 
-> **Agent note — empty edges vs truncation:** Producer-side matching uses a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `direct_project_edge_count` is **0**, distinguish (a) **no consumer `DependencyMetadata`** rows / no overlapping producer coordinates from (b) **truncated PV listing** where a producer never entered the capped window. Raise caps only with user approval. Tenant-wide context: [AGENTS.md](../../../AGENTS.md) (Agent notes — relationship map coverage).
+> **Agent note — empty edges vs truncation:** Producer-side matching uses a **bounded** `PackageVersion` list (`max_pages` × `page_size`). If `direct_project_edge_count` is **0**, distinguish (a) **no consumer `DependencyMetadata`** rows / no overlapping producer coordinates from (b) **truncated PV listing** where a producer never entered the capped window. Raise caps only with user approval. Tenant-wide context: [AGENTS.md](../../../AGENTS.md#agent-notes) (relationship map coverage).
 
 ## Documentation hops
 
