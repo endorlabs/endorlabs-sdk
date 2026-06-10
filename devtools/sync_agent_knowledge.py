@@ -174,6 +174,8 @@ def sync_skills_tree() -> int:
         for src_path in skill_dir.rglob("*"):
             if not src_path.is_file() or src_path.name == "SKILL.md":
                 continue
+            if "__pycache__" in src_path.parts or src_path.suffix == ".pyc":
+                continue
 
             rel = src_path.relative_to(skill_dir)
 

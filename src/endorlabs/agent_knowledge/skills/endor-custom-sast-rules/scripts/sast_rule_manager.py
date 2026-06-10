@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -42,6 +43,7 @@ from typing import Any
 import yaml
 
 import endorlabs
+from endorlabs import F
 from endorlabs.resources.semgrep_rule import (
     CreateSemgrepRulePayload,
     SemgrepNativeRule,
@@ -282,6 +284,17 @@ def _rule_display_name(rule: object) -> str:
     return f"{name} ({uuid})" if name else str(uuid)
 
 
+def _meta_name_substring_filter(name_filter: str) -> str:
+    """Build a ``meta.name`` substring filter using ``matches`` (regex).
+
+    ``contains`` is for array membership (``field contains [VALUE]``). On
+    scalar strings, ``meta.name contains "substring"`` does not substring-match
+    and often returns zero rows without error.
+    """
+    pattern = f".*{re.escape(name_filter)}.*"
+    return str(F("meta.name").matches(pattern))
+
+
 # ---------------------------------------------------------------------------
 # Subcommand: import
 # ---------------------------------------------------------------------------
@@ -421,7 +434,10 @@ def cmd_delete(
     *,
     dry_run: bool = False,
 ) -> list[str]:
-    """Delete rules whose ``meta.name`` contains *name_filter*.
+    """Delete rules whose ``meta.name`` matches *name_filter* as a substring.
+
+    Uses ``F("meta.name").matches(...)`` (regex), not ``contains`` — see
+    ``sdk/contracts/list-parameters.md``.
 
     Returns:
         List of deleted rule names (for orphan cleanup).
@@ -430,7 +446,7 @@ def cmd_delete(
 
     rules = client.SemgrepRule.list(
         namespace=namespace,
-        filter=f'meta.name contains "{name_filter}"',
+        filter=_meta_name_substring_filter(name_filter),
     )
 
     if not rules:
@@ -747,7 +763,10 @@ def _build_parser() -> argparse.ArgumentParser:
     p_delete.add_argument(
         "--name-filter",
         required=True,
-        help='Substring to match against meta.name (e.g. "endor-sdk").',
+        help=(
+            "Substring to match against meta.name via regex matches "
+            '(e.g. "endor-sdk" matches endor-sdk-*).'
+        ),
     )
 
     # --- orphans ---
@@ -801,7 +820,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--name-filter",
         default=None,
         help=(
-            'Substring for delete step (e.g. "endor-sdk"). '
+            'Substring for delete step via meta.name matches (e.g. "endor-sdk"). '
             "If omitted, delete is skipped."
         ),
     )
