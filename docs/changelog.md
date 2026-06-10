@@ -14,6 +14,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **`init(sync_skills="claude")`** — generates repo-root `CLAUDE.md` (bootstrap rules + skill index) and `.claude/commands/` slash commands instead of mirroring `.claude/skills/`.
 - **Release and TestPyPI workflows** — full ship-artifact verification before publish; optional `--verify-changelog` on release cuts.
 - **CI lint** — uses `verify_ship_artifacts.py` instead of separate upstream-only and non-blocking reference-doc drift steps.
 - **Model-sync parity** — `validate_contract_artifacts` fails when registry resources lack canonical OpenAPI mapping.
