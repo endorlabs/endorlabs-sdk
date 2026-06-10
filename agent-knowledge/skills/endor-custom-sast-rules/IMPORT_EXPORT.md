@@ -1,8 +1,21 @@
-# Importing and Exporting Semgrep Rules with Endor Labs
+# Importing and Exporting SemgrepRule resources
 
-How to push custom OpenGrep/Semgrep rules into an Endor Labs namespace
-using the import maneuver, and how to export existing rules for local
-editing or backup.
+How to push custom OpenGrep/Semgrep rule YAML into Endor Labs as **`SemgrepRule`**
+rows, export existing rules, and validate before create.
+
+## Validation (no dedicated validate endpoint)
+
+The public OpenAPI spec exposes **`SemgrepRule` CRUD only** (`GET`/`POST`
+`/semgrep-rules`, `GET`/`DELETE` by UUID) — **not** a separate validate RPC.
+The platform rejects invalid payloads on **create/update** (`400`).
+
+**Before import, prefer:**
+
+1. Local engine: `opengrep scan --config rule.yaml --validate`
+2. Skill manager: `sast_rule_manager.py validate --rules-dir … --namespace …`
+   — runs guardrails + `validate_semgrep_rule()` from
+   `endorlabs.resources.semgrep_rule` (SDK-only, no API write)
+3. Import dry-run: `import --dry-run` (guardrails only; still no server round-trip)
 
 ---
 
@@ -18,7 +31,8 @@ Set these in your `.env` file or shell environment:
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret for Endor Labs authentication |
 | `ENDOR_NAMESPACE` | Target namespace (e.g., `tenant.child`) |
 
-The maneuver scripts read these automatically. On Windows PowerShell,
+`sast_rule_manager.py` and other SDK workflow scripts read these automatically.
+On Windows PowerShell,
 load `.env` manually if your shell does not source it:
 
 ```powershell
@@ -449,4 +463,3 @@ After importing, verify end-to-end:
 
 - [AUTHORING.md](AUTHORING.md) -- authoring guide
 - [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) -- rule syntax card
-- [THREAT_MODEL.md](THREAT_MODEL.md) -- threat modeling checklist

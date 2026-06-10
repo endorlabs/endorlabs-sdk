@@ -524,6 +524,26 @@ _PATTERN_KEYS = frozenset(
         "pattern_regex",
     }
 )
+# Semgrep YAML uses hyphenated keys; ``SemgrepNativeRule`` stores them in model_extra.
+_HYPHEN_PATTERN_KEYS = frozenset(
+    {
+        "pattern-either",
+        "pattern-regex",
+        "pattern-sources",
+        "pattern-sinks",
+    }
+)
+
+
+def _pattern_key_present(val: Any) -> bool:
+    """Return True when a pattern field holds a non-empty value."""
+    if val is None:
+        return False
+    if isinstance(val, str):
+        return bool(val)
+    if isinstance(val, list):
+        return len(val) > 0
+    return True
 
 
 def _validate_patterns(rule: Any, errors: list[str]) -> None:
@@ -533,19 +553,18 @@ def _validate_patterns(rule: Any, errors: list[str]) -> None:
     compound-pattern rules whose pattern keys landed in extra still pass.
     """
     has_patterns = (
-        rule.pattern is not None
-        or (rule.patterns and len(rule.patterns) > 0)
-        or (rule.pattern_either and len(rule.pattern_either) > 0)
-        or (rule.pattern_sources and len(rule.pattern_sources) > 0)
-        or (rule.pattern_sinks and len(rule.pattern_sinks) > 0)
-        or rule.pattern_regex is not None
+        _pattern_key_present(rule.pattern)
+        or _pattern_key_present(rule.patterns)
+        or _pattern_key_present(rule.pattern_either)
+        or _pattern_key_present(rule.pattern_sources)
+        or _pattern_key_present(rule.pattern_sinks)
+        or _pattern_key_present(rule.pattern_regex)
     )
 
     # Also check model_extra for pattern keys (extra="allow" may store them there)
     if not has_patterns and hasattr(rule, "model_extra") and rule.model_extra:
-        for key in _PATTERN_KEYS:
-            val = rule.model_extra.get(key)
-            if val is not None:
+        for key in _PATTERN_KEYS | _HYPHEN_PATTERN_KEYS:
+            if _pattern_key_present(rule.model_extra.get(key)):
                 has_patterns = True
                 break
 

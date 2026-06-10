@@ -9,8 +9,12 @@ SDK how-to and workflows for **consumers** of the package.
 
 **Scan regression troubleshooting:** Agent skill [endor-troubleshooting-scans](../../agent-knowledge/skills/endor-troubleshooting-scans/SKILL.md) (optional Cursor mirror: `.cursor/skills/endor-troubleshooting-scans/`); workflows in `endorlabs.workflows.troubleshooting_scans`. Related: [list-query-performance.md](../contributing/list-query-performance.md), [troubleshooting.md](../contributing/troubleshooting.md).
 
-## Custom SAST Rules
+## Custom SAST rules (SemgrepRule)
 
-End-to-end workflow for threat modeling, authoring, and deploying custom OpenGrep/Semgrep rules into the Endor Labs platform. Canonical docs: [endor-custom-sast-rules](../../agent-knowledge/skills/endor-custom-sast-rules/SKILL.md) (`THREAT_MODEL.md`, `AUTHORING.md`, `SYNTAX_REFERENCE.md`, `IMPORT_EXPORT.md`). Optional Cursor mirror: `.cursor/skills/endor-custom-sast-rules/`.
+Author, validate, and import OpenGrep/Semgrep YAML as platform **`SemgrepRule`**
+resources. Canonical playbook:
+[endor-custom-sast-rules](../../agent-knowledge/skills/endor-custom-sast-rules/SKILL.md)
+(`AUTHORING.md`, `SYNTAX_REFERENCE.md`, `SEMGREP_RULE_SHAPE_GUARDRAILS.md`,
+`IMPORT_EXPORT.md`). Optional Cursor mirror: `.cursor/skills/endor-custom-sast-rules/`.
 
 Maintainer topics (release CI, PR comment wiring, estate migration): [contributing/README.md](../contributing/README.md).

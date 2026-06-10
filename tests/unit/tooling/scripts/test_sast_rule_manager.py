@@ -268,3 +268,45 @@ def test_cmd_import_drops_parser_unsupported_short_description(tmp_path: Path) -
     assert isinstance(rules, list)
     metadata = rules[0].get("metadata", {})
     assert "short-description" not in metadata
+
+
+def test_cmd_validate_reports_guardrail_and_sdk_errors(tmp_path: Path) -> None:
+    manager = _load_sast_rule_manager()
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir()
+    (rules_dir / "bad.yml").write_text(
+        """rules:
+  - id: missing-pattern
+    message: "No pattern key"
+    severity: ERROR
+    languages: [python]
+""",
+        encoding="utf-8",
+    )
+
+    client = MagicMock()
+    rc = manager.cmd_validate(client, "tenant.ns", rules_dir)
+    assert rc == 1
+
+
+def test_cmd_validate_passes_minimal_rule(tmp_path: Path) -> None:
+    manager = _load_sast_rule_manager()
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir()
+    (rules_dir / "ok.yml").write_text(
+        """rules:
+  - id: ok-rule
+    message: "OK"
+    severity: WARNING
+    languages: [python]
+    pattern: eval(...)
+    metadata:
+      category: security
+      description: test
+""",
+        encoding="utf-8",
+    )
+
+    client = MagicMock()
+    rc = manager.cmd_validate(client, "tenant.ns", rules_dir)
+    assert rc == 0
