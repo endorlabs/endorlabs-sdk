@@ -1,10 +1,10 @@
 ---
 name: endor-custom-sast-rules
 description: >-
-  Author, validate, and import custom OpenGrep/Semgrep SAST rules into the
-  Endor Labs platform. Use when the user wants to write security rules,
-  perform threat modeling for SAST, create absence-detection rules, validate
-  rule YAML, or import Semgrep rules into Endor Labs.
+  Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs
+  SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata
+  shape, local opengrep/semgrep checks, or importing rules to a namespace — not
+  for finding triage (hand off to endor-retrieve-scan-results).
 endorlabs:
   catalog:
     workflow_id: semgrep-inventory
@@ -14,137 +14,108 @@ endorlabs:
     agent_visible: true
 ---
 
-# Custom SAST Rules Workflow
+# Custom SemgrepRule authoring and import
 
-End-to-end: threat model a repository, author rule YAML, validate locally, import to Endor Labs, verify.
+Write OpenGrep/Semgrep-compatible YAML, validate shape, import as platform
+**`SemgrepRule`** rows.
 
-## Phase 1: Threat Model
+## Scope
 
-Identify what custom rules the codebase needs before writing any YAML.
+**In scope:** rule YAML syntax and formatting; Endor `/semgrep-rules` shape and
+metadata guardrails; local `opengrep`/`semgrep` checks; SDK +
+`sast_rule_manager.py` validate/import/delete/sync; **`SemgrepRule`** metadata
+inventory (`endor-semgrep-inventory`).
 
-1. **Threat canvas** -- answer: what credential types, trust boundaries, consumers, log frameworks, existing safety measures?
-2. **Credential lifecycle** -- trace each secret through four stages:
+**Out of scope:** repository-wide threat modeling; individual **Finding** triage —
+[endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md).
 
-   ```
-   ENTER --> TRANSIT --> REST --> EXIT
-   ```
+## 1. Author rule YAML
 
-   Focus SAST rules on TRANSIT and EXIT (accidental exposure).
+1. Start from a reference rule — `.endorlabs-context/semgrep-rules/`, [semgrep/semgrep-rules](https://github.com/semgrep/semgrep-rules), or an existing tenant **`SemgrepRule`**.
+2. Required top-level keys: `id`, `languages`, `severity`, `message`. Add Endor metadata (`endor-category`, `endor-tags`, `endor-targets`) when importing to the platform.
+3. Use `|` (literal block) for multi-line patterns — not `>-` (folded).
+4. Scope with `paths.include` / `paths.exclude` when needed.
 
-3. **CWE checklist** -- for SDKs/libraries, prioritize: CWE-798 (hardcoded creds), CWE-532 (log leaks), CWE-209 (error exposure), CWE-311 (missing encryption), CWE-319 (cleartext transmission), CWE-94 (code injection).
+| Doc | Use for |
+| --- | --- |
+| [AUTHORING.md](AUTHORING.md) | Pattern strategies, pitfalls, Endor metadata |
+| [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md) | Operator syntax card |
+| [SEMGREP_RULE_SHAPE_GUARDRAILS.md](SEMGREP_RULE_SHAPE_GUARDRAILS.md) | API-accepted keys, metadata inventory |
 
-4. **Presence vs absence** -- most rules detect the *presence* of something dangerous. The highest-impact SDK rules detect the *absence* of something safe (e.g., logger without redaction filter). Absence rules use `pattern` + `pattern-not-inside`.
+## 2. Validate (before import)
 
-5. **Capture as spec** before writing YAML:
-
-   ```
-   Threat:       [description]
-   CWE:          [CWE-NNN]
-   Detection:    [presence / absence]
-   Safe pattern: [compliant code]
-   Unsafe pattern: [non-compliant code]
-   Scope:        [directories]
-   Confidence:   [HIGH / MEDIUM / LOW]
-   ```
-
-For the full checklist and worked example, see [THREAT_MODEL.md](THREAT_MODEL.md).
-
-## Phase 2: Author Rule YAML
-
-1. **Start from a reference rule** -- never from scratch. Sources: `.endorlabs-context/semgrep-rules/`, [semgrep/semgrep-rules](https://github.com/semgrep/semgrep-rules), Endor Labs platform UI.
-
-2. **Choose pattern strategy**:
-   - **Presence** (simple): `pattern: dangerous_call(...)`
-   - **Absence** (compound): `patterns:` with positive `pattern` + `pattern-not-inside` for the safe context
-   - **Either/or**: `pattern-either:` list
-
-3. **Metavariable unification** -- use the same `$VAR` name in positive and negative patterns so they bind to the same value.
-
-4. **Scope** with `paths.include` / `paths.exclude` to reduce noise.
-
-5. **Required fields**: `id`, `languages`, `severity`, `message`. Add Endor metadata: `endor-category`, `endor-tags`, `endor-targets`.
-
-6. **YAML scalar**: use `|` (literal block) for multi-line patterns, never `>-` (folded).
-
-For pattern strategies, pitfalls, and worked examples, see [AUTHORING.md](AUTHORING.md).
-For the full syntax card, see [SYNTAX_REFERENCE.md](SYNTAX_REFERENCE.md).
-
-## Phase 3: Validate Locally
-
-Both `opengrep` and `semgrep` CLIs accept the same rule YAML format:
+**Layer 1 — local engine (recommended):**
 
 ```bash
-# Run rule against target directory
-opengrep scan --config path/to/rule.yaml target/
-# or: semgrep scan --config path/to/rule.yaml target/
-
-# JSON output for programmatic checks
-opengrep scan --config path/to/rule.yaml target/ --json
-
-# Parse-only validation (no scan)
 opengrep scan --config path/to/rule.yaml --validate
+# or: semgrep scan --config path/to/rule.yaml --validate
 ```
 
-Verify: compiles without errors, flags expected files, zero false positives.
+Optional scan against a target tree: `opengrep scan --config rule.yaml target/`.
 
-## Phase 4: Import to Platform
-
-Use the SAST Rule Manager script (`.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`) for all platform operations. It validates every rule against the API-accepted schema before import and handles orphaned findings on delete.
+**Layer 2 — platform shape (SDK, no API write):**
 
 ```bash
-# Import all rules (validates each rule dict before calling the API)
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    import --rules-dir opengrep-rules/ --namespace tenant.ns --force
-
-# Full sync (delete old + orphan cleanup + import + configure enable/disable)
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    sync --rules-dir opengrep-rules/ --enabled-dir opengrep-rules/trust-chain/ \
-    --name-filter "endor-sdk" --namespace tenant.ns --force
-
-# Validate only (dry run -- parses, validates, logs planned actions)
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
-
-# Delete rules matching a name filter and clean up orphaned findings
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    delete --name-filter "endor-sdk" --namespace tenant.ns
-
-# Configure enable/disable states by directory
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
-    configure --rules-dir opengrep-rules/ \
-    --enabled-dir opengrep-rules/trust-chain/ --namespace tenant.ns
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+  validate --rules-dir opengrep-rules/ --namespace "$ENDOR_NAMESPACE"
 ```
 
-### Subcommands
+Runs skill guardrails (`normalize_rule_dict_for_semgrep_crud`) plus
+`endorlabs.resources.semgrep_rule.validate_semgrep_rule()` (payload checks).
+
+**Layer 3 — server:** there is **no** separate SemgrepRule validate RPC in the
+public OpenAPI spec — the platform validates on **`SemgrepRule.create`** /
+**update** (expect `400` on bad payloads). Use import `--dry-run` only for a
+local pass; it does not call the server.
+
+## 3. Import to platform
+
+Use `sast_rule_manager.py` for **`SemgrepRule`** CRUD (paths below mirror
+`.cursor/skills/` after `sync_skills`):
+
+```bash
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+  import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
+
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+  sync --rules-dir opengrep-rules/ --enabled-dir opengrep-rules/enabled/ \
+  --name-filter "my-prefix" --namespace tenant.ns --force
+```
 
 | Command | Purpose |
-|---------|---------|
-| `import` | Import rules from a directory; validates each rule first |
-| `delete` | Delete rules by name filter; returns names for orphan cleanup |
-| `orphans` | Clean stale findings referencing deleted rules |
-| `configure` | Enable rules from one dir, disable all others |
-| `sync` | Full lifecycle: delete -> orphans -> import -> configure |
+| --- | --- |
+| `validate` | Guardrails + SDK payload validation (no API) |
+| `import` | Create/update **`SemgrepRule`** rows |
+| `delete` / `orphans` | Remove rules and stale findings |
+| `configure` | Enable/disable by directory |
+| `sync` | delete → orphans → import → configure |
 
-For SDK types, API constraints, validation guardrails, and export workflow, see [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
+Platform types, export, and troubleshooting: [IMPORT_EXPORT.md](IMPORT_EXPORT.md).
 
-## Phase 5: Verify
+## 4. Optional: verify with scan
 
 ```bash
 endorctl scan --sast
 ```
 
-Compare finding count and affected files against local OpenGrep/Semgrep results. They should align (platform may report +1 if a file has multiple match sites).
+Compare counts with local opengrep/semgrep on the same target.
 
-## Quick Reference
+## SemgrepRule metadata inventory
 
-| Phase | Tool | Output |
-|-------|------|--------|
-| Threat model | Manual / checklist | Threat spec per finding |
-| Author | Text editor + reference rules | Rule YAML file |
-| Validate | `opengrep scan` / `semgrep scan` | Finding count + file list |
-| Import | `.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py` | Rule created in namespace |
-| Verify | `endorctl scan --sast` | Platform findings match local |
+```bash
+uv run endor-semgrep-inventory --namespace tenant.namespace
+```
+
+Lists tenant **`SemgrepRule`** rows and summarizes metadata-key prevalence —
+see [SEMGREP_RULE_SHAPE_GUARDRAILS.md](SEMGREP_RULE_SHAPE_GUARDRAILS.md).
 
 ## Naming (CLI vs API resource)
 
-Linked workflow **`semgrep-inventory`** / CLI **`endor-semgrep-inventory`** lists tenant **`SemgrepRule`** rows via `client.SemgrepRule.list()` — there is no separate “Semgrep” API resource kind. Module path `workflows/semgrep/` is domain shorthand only.
+Workflow **`semgrep-inventory`** / CLI **`endor-semgrep-inventory`** operate on
+**`SemgrepRule`** via `client.SemgrepRule.list()` — not a separate “Semgrep” API kind.
+
+## Related skills
+
+| Need | Skill |
+| ---- | ----- |
+| Findings after scan | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) |

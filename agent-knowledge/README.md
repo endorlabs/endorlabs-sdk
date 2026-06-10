@@ -10,7 +10,7 @@ These skills follow the cross-compatible format supported by both [Cursor](https
 |-------|---------|-------------|
 | [endor-analytics-estate-dependencies](endor-analytics-estate-dependencies/) | Estate workspace pull/analyze, cardinality, compile graph | `endorlabs.workflows.estate`; `endor-estate` |
 | [endor-project-agent-context](endor-project-agent-context/) | Multi-pass bundle: PV index + hydration + optional sweep; `context_manifest.json`; deep LLM contract in [MULTIPASS_LLM_CONTRACT.md](endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md) | `endorlabs.workflows.agent_context` |
-| [endor-custom-sast-rules](endor-custom-sast-rules/) | Threat modeling, authoring, or importing OpenGrep/Semgrep rules | Canonical (skill-owned) |
+| [endor-custom-sast-rules](endor-custom-sast-rules/) | SemgrepRule YAML authoring, validation, import | Canonical (skill-owned) |
 | [endor-dependency-provenance](endor-dependency-provenance/) | Resolve exact package lineage by manifest path/ref and direct-vs-transitive introduction routes | Skill-owned |
 | [endor-dependency-finding-provenance](endor-dependency-finding-provenance/) | Trace vulnerability/dependency lineage and commit-scoped presence across findings, package versions, and artifacts | Skill-owned |
 | [endor-fetch-and-search-call-graph](endor-fetch-and-search-call-graph/) | Fetch/decode call graphs and run safe node/edge/path retrieval workflows | `endorlabs.workflows.callgraph` |
