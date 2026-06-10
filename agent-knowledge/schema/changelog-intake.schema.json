@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/endorlabs/endorlabs-sdk/agent-knowledge/schema/changelog-intake.schema.json",
+  "title": "Changelog intake (PR description block)",
+  "description": "Optional structured fields for the Changelog intake table in .github/pull_request_template.md. Not validated in CI today.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "user_facing": {
+      "type": "boolean",
+      "description": "When false, leave docs/changelog.md Unreleased unchanged."
+    },
+    "section": {
+      "type": "string",
+      "enum": ["Added", "Changed", "Breaking", "none"]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One imperative sentence for the Unreleased bullet."
+    },
+    "audience": {
+      "type": "string",
+      "enum": ["sdk-user", "agent-skill", "both"]
+    },
+    "migration": {
+      "type": "string",
+      "description": "Breaking only: old → new or pointer to changelog detail."
+    }
+  },
+  "required": ["user_facing"],
+  "if": {
+    "properties": { "user_facing": { "const": true } },
+    "required": ["user_facing"]
+  },
+  "then": {
+    "required": ["section", "summary", "audience"],
+    "properties": {
+      "section": { "not": { "const": "none" } }
+    }
+  }
+}

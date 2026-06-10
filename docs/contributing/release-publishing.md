@@ -1,10 +1,10 @@
-# PyPI / TestPyPI publication (maintainer guide)
+# Release and PyPI publishing
 
-> **Status:** Release automation is implemented in CI. Configure Trusted Publishing on
-> TestPyPI and PyPI before the first upload (pending publishers are supported for new
-> projects).
+Maintainer guide for version tags, hatch-vcs, OIDC trusted publishing, and release CI.
 
-## Root cause of the hatch-vcs failure
+Configure **pending** Trusted Publishing on TestPyPI and PyPI before the first upload to each index.
+
+## hatch-vcs and dev tags
 
 `hatch-vcs` delegates to **setuptools-scm**. SCM computes post-tag versions as
 `{tag_base}.dev{N}` where **N = commits since the tag**.
@@ -85,7 +85,7 @@ v0.1.0-test.20260511.1
 v0.1.1.dev-build.20260519.1
 ```
 
-## Trusted Publishing setup (free — no API tokens)
+## Trusted Publishing setup (OIDC — no API tokens)
 
 Configure **pending** publishers before the first upload to each index.
 
@@ -98,7 +98,7 @@ Configure **pending** publishers before the first upload to each index.
 5. **Workflow name:** `release-testpypi.yml`
 6. **Environment name:** `testpypi`
 
-### PyPI (pypi.org — production, configure before first prod release)
+### PyPI (pypi.org — production)
 
 1. Same steps on pypi.org → **Publishing**
 2. **Workflow name:** `release-tag-publish.yml`
@@ -170,54 +170,32 @@ flowchart TD
   gate -- no --> skip[skip publish]
 ```
 
-## TestPyPI validation plan (OIDC + attestations)
+## TestPyPI smoke install
 
-Run this once after merging the release workflows and configuring the pending TestPyPI publisher.
-
-### 1. Publish `0.1.1` to TestPyPI
-
-1. Merge release automation to `main`
-2. Configure pending TestPyPI publisher + GitHub `testpypi` environment (above)
-3. **Actions → Release TestPyPI Publish → Run workflow**
-   - `version`: `0.1.1`
-   - `ref`: `main`
-4. Confirm the publish job log shows OIDC token exchange (no username/password/token env vars)
-5. Open `https://test.pypi.org/project/endorlabs/0.1.1/` and verify **Verified details** / provenance
-
-### 2. Smoke install from TestPyPI
+After a TestPyPI publish via **Release TestPyPI Publish**:
 
 ```bash
-python -m venv /tmp/endorlabs-smoke
-# Windows: /tmp/endorlabs-smoke/Scripts/python
-# Unix:    /tmp/endorlabs-smoke/bin/python
-
-python -m pip install \
-  --index-url https://test.pypi.org/simple/ \
-  --extra-index-url https://pypi.org/simple/ \
-  endorlabs==0.1.1
-
-python -c "import endorlabs; from endorlabs import Client; print(endorlabs.__version__)"
-# Expected: 0.1.1
+uv run python devtools/smoke_test_published_install.py --version <version>
 ```
 
-Or after a TestPyPI publish:
+Or install manually from `https://test.pypi.org/project/endorlabs/`.
 
-```bash
-uv run python devtools/smoke_test_published_install.py --version 0.1.1
-```
-
-### 3. Publish patch `0.1.2` to TestPyPI
-
-Repeat step 1 with `version: 0.1.2` (confirms OIDC + attestations on a second upload).
-
-### 4. Production PyPI (when ready)
+## Production release
 
 1. Configure pending publisher on pypi.org for `release-tag-publish.yml` / environment `pypi`
 2. Tag a final release: `git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin vX.Y.Z`
 3. Wait for **Release Tag Publish** workflow; confirm PyPI provenance and GitHub Release assets
 4. Confirm CI pushed the next dev anchor tag (`vX.Y.(Z+1).dev0`)
 
-Production first-release version (0.x vs 1.0.0) is a product decision—defer until ready.
+## Changelog at release cut
+
+Before tagging `vX.Y.Z`:
+
+1. Open [`docs/changelog.md`](../changelog.md) **Unreleased** — collapse model-sync-only work into one **Changed** footnote or omit.
+2. Rename **Unreleased** → **`## X.Y.Z`**; leave fresh empty **Unreleased** subsection headers.
+3. Grep removed CLI/API names; durable docs describe **current** behavior only (upgraders read the changelog).
+
+Intake while merging PRs: [`.github/pull_request_template.md`](../../.github/pull_request_template.md) and [`endor-changelog`](../../agent-knowledge/rules/endor-changelog.md). Do not auto-generate the changelog from `git log`.
 
 ## Related files
 

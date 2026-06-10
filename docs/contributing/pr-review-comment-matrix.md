@@ -1,6 +1,6 @@
 # Finding attributes vs GitHub pull request review comments (matrix)
 
-Manual crosswalk: **what GitHub’s REST API expects** for review comments created via [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request) versus **what Endor exposes on `Finding`** and what [`.github/scripts/post_parallel_pr_comments.py`](../.github/scripts/post_parallel_pr_comments.py) uses. Not generated from code.
+Manual crosswalk: **what GitHub’s REST API expects** for review comments created via [Create a review for a pull request](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request) versus **what Endor exposes on `Finding`** and what [`.github/scripts/post_parallel_pr_comments.py`](../../.github/scripts/post_parallel_pr_comments.py) uses. Not generated from code.
 
 ## GitHub side (official)
 
@@ -19,13 +19,13 @@ GitHub only accepts comments on lines that exist in the **unified diff** for the
 
 ## Endor side (API model)
 
-`Finding` is defined in the platform OpenAPI (`v1Finding` / `v1FindingSpec` / `v1FindingMetadata` in [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../.endorlabs-context/platform/openapi/openapiv2.swagger.json)). Line anchoring depends on category and what the scanner populated; see `extract_location` sources below.
+`Finding` is defined in the platform OpenAPI (`v1Finding` / `v1FindingSpec` / `v1FindingMetadata` in [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../../.endorlabs-context/platform/openapi/openapiv2.swagger.json)). Line anchoring depends on category and what the scanner populated; see `extract_location` sources below.
 
 ## Matrix — review comment field → source
 
 | GitHub field | Source in this repo | Typical coverage |
 |--------------|---------------------|------------------|
-| `path` | [`endor_scan_findings.extract_location`](../.github/scripts/endor_scan_findings.py) → normalized against `GET .../pulls/{n}/files` in `post_parallel_pr_comments` | **Variable:** must match a PR-changed file for a comment to be posted. |
+| `path` | [`endor_scan_findings.extract_location`](../../.github/scripts/endor_scan_findings.py) → normalized against `GET .../pulls/{n}/files` in `post_parallel_pr_comments` | **Variable:** must match a PR-changed file for a comment to be posted. |
 | `line` / `start_line` / `side` | `build_review_comment_object` from `extract_location` `line` / `line_end`, always `side: RIGHT` | **Often the gap:** no comment if line is not in a RIGHT-side hunk. |
 | `body` | `build_review_comment_body`: hidden dedupe marker, UUID, `spec.level`, optional `spec.category`, summary line, blob link, optional snippet | **Good** when `spec` fields are populated. |
 
@@ -49,6 +49,6 @@ Endor’s web UI may filter findings differently than `Finding.list` / `Finding.
 
 - [Create a review for a pull request (REST)](https://docs.github.com/en/rest/pulls/reviews#create-a-review-for-a-pull-request)
 - [Pull request review comments](https://docs.github.com/en/rest/pulls/comments)
-- Local: [`.github/scripts/endor_scan_findings.py`](../.github/scripts/endor_scan_findings.py), [`.github/scripts/post_parallel_pr_comments.py`](../.github/scripts/post_parallel_pr_comments.py), [`.github/scripts/endor_ci_fetch_scan_findings.py`](../.github/scripts/endor_ci_fetch_scan_findings.py)
-- Guide: [PR review comments from Endor findings](guides/pr-comment-config-and-parallel-comments.md)
-- Local OpenAPI: [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../.endorlabs-context/platform/openapi/openapiv2.swagger.json) (`v1Finding`, `v1FindingSpec`, `v1FindingMetadata`)
+- Local: [`.github/scripts/endor_scan_findings.py`](../../.github/scripts/endor_scan_findings.py), [`.github/scripts/post_parallel_pr_comments.py`](../../.github/scripts/post_parallel_pr_comments.py), [`.github/scripts/endor_ci_fetch_scan_findings.py`](../../.github/scripts/endor_ci_fetch_scan_findings.py)
+- Guide: [PR review comments from Endor findings](pr-review-comments.md)
+- Local OpenAPI: [`.endorlabs-context/platform/openapi/openapiv2.swagger.json`](../../.endorlabs-context/platform/openapi/openapiv2.swagger.json) (`v1Finding`, `v1FindingSpec`, `v1FindingMetadata`)
