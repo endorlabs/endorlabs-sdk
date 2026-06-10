@@ -398,7 +398,7 @@ def main() -> int:
                 pv_limit=args.pv_limit,
                 dep_metadata_max_pages=args.dep_metadata_max_pages,
                 deterministic=args.deterministic,
-                pv_uuid_order=hydrate_uuids if hydrate_uuids else None,
+                pv_uuid_order=hydrate_uuids or None,
                 pv_list_max_pages=args.pv_list_max_pages,
                 pv_list_page_size=args.pv_list_page_size,
             )
