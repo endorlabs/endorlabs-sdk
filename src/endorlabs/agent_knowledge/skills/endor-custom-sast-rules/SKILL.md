@@ -136,3 +136,7 @@ Compare finding count and affected files against local OpenGrep/Semgrep results.
 | Validate | `opengrep scan` / `semgrep scan` | Finding count + file list |
 | Import | `.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py` | Rule created in namespace |
 | Verify | `endorctl scan --sast` | Platform findings match local |
+
+## Naming (CLI vs API resource)
+
+Linked workflow **`semgrep-inventory`** / CLI **`endor-semgrep-inventory`** lists tenant **`SemgrepRule`** rows via `client.SemgrepRule.list()` — there is no separate “Semgrep” API resource kind. Module path `workflows/semgrep/` is domain shorthand only.

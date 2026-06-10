@@ -1,4 +1,4 @@
-"""Unit tests for semgrep metadata inventory."""
+"""Unit tests for SemgrepRule metadata inventory workflow."""
 
 from __future__ import annotations
 

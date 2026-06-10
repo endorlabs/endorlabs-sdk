@@ -39,9 +39,9 @@ The `/semgrep-rules` parser rejects some keys that may appear in other
 ingestion paths. Guardrails prevent platform-side failures by normalizing
 rule metadata before create/update.
 
-## Tenant metadata inventory
+## Tenant SemgrepRule metadata inventory
 
-Use the inventory script to snapshot metadata key usage in your tenant:
+Use the inventory CLI to snapshot **`SemgrepRule`** metadata key usage in your tenant (workflow id `semgrep-inventory`; API resource **`SemgrepRule`**, not a generic “Semgrep” kind):
 
 ```bash
 uv run endor-semgrep-inventory --namespace tenant.namespace
@@ -55,6 +55,6 @@ Outputs:
 - `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.json`
 - `.endorlabs-context/workspace/artifacts/semgrep_rule_metadata_inventory.md`
 
-The JSON contains per-key prevalence and representative rule examples
+The JSON contains per-key prevalence and representative **`SemgrepRule`** examples
 (`meta.name`, `defined_by`, `uuid`) to help decide which fields should be
 preserved in source YAML.
