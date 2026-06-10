@@ -8,7 +8,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
-LOGGER = logging.getLogger(__name__)
+from endorlabs.utils.logging_config import get_resource_logger
+from endorlabs.utils.path_safety import safe_write_text
+
+LOGGER = get_resource_logger(__name__)
 
 
 def _matches_all(text: str, patterns: list[str]) -> bool:
@@ -109,10 +112,13 @@ def run_search_main(argv: list[str] | None = None) -> int:
     )
 
     if args.out:
-        Path(args.out).write_text(
-            json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8"
+        out_path = Path(args.out).resolve()
+        safe_write_text(
+            out_path.parent,
+            out_path,
+            json.dumps(payload, indent=2, ensure_ascii=False),
         )
-        LOGGER.info("Wrote search output: %s", args.out)
+        LOGGER.info("Wrote search output: %s", out_path)
     else:
         LOGGER.info("node_hits_total=%s", payload["node_hits_total"])
         LOGGER.info("edge_hits_total=%s", payload["edge_hits_total"])

@@ -64,9 +64,9 @@ rules:
       cwe:
         - "CWE-532: Insertion of Sensitive Information into Log File"
       description: >-
-        Logger created without RedactingFilter in security-sensitive SDK --
-        API keys, bearer tokens, or OAuth callback tokens may leak to log
-        output when DEBUG-level logging is active.
+        Module logger created with logging.getLogger without RedactingFilter.
+        Use get_resource_logger(__name__) from endorlabs.utils.logging_config
+        so API keys, bearer tokens, and OAuth callback URLs are scrubbed.
       endor-category: vulnerability
       endor-rule-origin:
         license: Apache-2.0
@@ -97,7 +97,7 @@ rules:
         RedactingFilter with all required patterns automatically. Do not
         manually construct RedactingFilter -- use the centralized helper.
       security-severity: High
-      version: v1.3.0
+      version: v1.4.0
     patterns:
       - pattern: $LOGGER = logging.getLogger(...)
       - pattern-not-inside: |

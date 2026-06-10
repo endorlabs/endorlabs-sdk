@@ -21,6 +21,7 @@ from endorlabs.auth_server import (
     TokenHandler,
     get_token,
 )
+from endorlabs.core.exceptions import ValidationError
 
 
 class TestTokenHandler:
@@ -253,14 +254,14 @@ class TestGetToken:
     @pytest.mark.writes
     def test_get_token_invalid_method(self) -> None:
         """Test get_token raises ValueError for invalid method."""
-        with pytest.raises(ValueError, match="Unsupported auth method"):
+        with pytest.raises(ValidationError, match="Unsupported auth method"):
             get_token(method="invalid_method")
 
     @pytest.mark.interactive
     @pytest.mark.writes
     def test_get_token_email_required(self) -> None:
         """Test get_token requires email for email auth method."""
-        with pytest.raises(ValueError, match="Email address required"):
+        with pytest.raises(ValidationError, match="Email address required"):
             get_token(method="email")
 
     @pytest.mark.interactive
@@ -327,7 +328,7 @@ class TestGetToken:
     def test_get_token_prevents_ci_usage(self) -> None:
         """Test that get_token raises ValueError in CI environments."""
         with pytest.raises(
-            ValueError, match="Browser authentication cannot be used in CI"
+            ValidationError, match="Browser authentication cannot be used in CI"
         ):
             get_token(method="admin")
 
@@ -335,7 +336,7 @@ class TestGetToken:
     def test_get_token_prevents_github_actions_usage(self) -> None:
         """Test that get_token raises ValueError in GitHub Actions."""
         with pytest.raises(
-            ValueError, match="Browser authentication cannot be used in CI"
+            ValidationError, match="Browser authentication cannot be used in CI"
         ):
             get_token(method="browser-auth")
 
@@ -343,5 +344,5 @@ class TestGetToken:
     @pytest.mark.writes
     def test_get_token_sso_requires_tenant(self) -> None:
         """SSO mode should require auth_tenant."""
-        with pytest.raises(ValueError, match="Tenant is required for sso"):
+        with pytest.raises(ValidationError, match="Tenant is required for sso"):
             get_token(method="sso")
