@@ -16,6 +16,7 @@ See docs/reference/resources.md and docs/guides/retrieving-scan-results.md.
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterator
 from typing import (
     TYPE_CHECKING,
@@ -79,6 +80,53 @@ class ListableFacade[T: BaseModel]:
         self._entry = entry
         self._ops: BaseResourceOperations[T] = BaseResourceOperations(
             client, entry.resource_name, entry.model_class
+        )
+        self._workflow_flags = entry.workflow_flags
+
+    def _filter_expression_text(
+        self,
+        filter: str | FilterExpression | None,
+        list_params: ListParameters | None,
+    ) -> str:
+        """Return normalized filter text from kwargs and list_params."""
+        if isinstance(filter, FilterExpression):
+            return str(filter)
+        if isinstance(filter, str):
+            return filter
+        if list_params is not None and list_params.filter is not None:
+            filt = list_params.filter
+            if isinstance(filt, FilterExpression):
+                return str(filt)
+            return filt
+        return ""
+
+    def _maybe_warn_empty_project_namespace_list(
+        self,
+        rows: list[Any],
+        *,
+        traverse: bool,
+        namespace_arg: str | None,
+        filter: str | FilterExpression | None,
+        list_params: ListParameters | None,
+    ) -> None:
+        """Warn when a project-scoped list at tenant root returns no rows."""
+        if "project-namespace-list" not in self._workflow_flags:
+            return
+        if rows or traverse:
+            return
+        if namespace_arg is not None and namespace_arg != self._default_namespace:
+            return
+        filter_text = self._filter_expression_text(filter, list_params).lower()
+        if "project_uuid" in filter_text:
+            return
+        warnings.warn(
+            f"{self._entry.attr_name}.list() returned no rows at the client default "
+            f"namespace ({self._default_namespace!r}) without traverse=True. "
+            "Project-scoped resources usually live in child namespaces: resolve "
+            "Project first, then pass namespace=project.namespace (see rule "
+            "endor-namespace-scoping).",
+            UserWarning,
+            stacklevel=3,
         )
 
     def _validate_list_remaining_kwargs(self, remaining_kwargs: dict[str, Any]) -> None:
@@ -327,7 +375,7 @@ class ListableFacade[T: BaseModel]:
 
         # Handle concurrent mode: query namespaces in parallel
         if concurrent and traverse:
-            return self._list_concurrent(
+            rows = self._list_concurrent(
                 namespace=ns,
                 max_workers=max_workers,
                 list_params=list_params,
@@ -348,6 +396,14 @@ class ListableFacade[T: BaseModel]:
                 ci_run_uuid=ci_run_uuid,
                 **kwargs,
             )
+            self._maybe_warn_empty_project_namespace_list(
+                list(rows),
+                traverse=True,
+                namespace_arg=namespace,
+                filter=filter,
+                list_params=list_params,
+            )
+            return rows
 
         # Standard single-query mode
         lp = self._effective_list_parameters(
@@ -369,7 +425,15 @@ class ListableFacade[T: BaseModel]:
             ci_run_uuid=ci_run_uuid,
             **kwargs,
         )
-        return self._ops.list(ns, lp, max_pages)
+        rows = self._ops.list(ns, lp, max_pages)
+        self._maybe_warn_empty_project_namespace_list(
+            list(rows),
+            traverse=traverse,
+            namespace_arg=namespace,
+            filter=filter,
+            list_params=lp,
+        )
+        return rows
 
     def _list_concurrent(
         self,
@@ -720,7 +784,6 @@ class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
         self._scope: Literal["system"] | Literal["oss"] | None = entry.scope
         self._create_mode = entry.create_mode
         self._update_requires_mask = entry.update_requires_mask
-        self._workflow_flags = entry.workflow_flags
 
     @property
     def scope(self) -> Literal["system"] | Literal["oss"] | None:

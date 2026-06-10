@@ -56,9 +56,15 @@ uv run python devtools/model_sync.py --verify-upstream-only
 uv run python devtools/model_sync.py --verify-and-sync-if-stale
 ```
 
-Pre-push hooks and the **CI PR Main** lint job run `--verify-upstream-only` so pushes and
-PRs fail when the public OpenAPI digest drifts from `registry_contract.py` provenance;
-newer published endorctl versions log a warning without blocking.
+Pre-push hooks run `--verify-upstream-only`. **CI, release, and TestPyPI** use the
+combined ship-artifact gate:
+
+```bash
+uv run python devtools/verify_ship_artifacts.py --fetch-spec
+```
+
+That runs upstream verify, full regeneration, `git diff` on committed generated surfaces,
+and `sync_agent_knowledge.py --verify`.
 
 **SHA-256 of the spec file only** (optional `--fetch-spec` first):
 
