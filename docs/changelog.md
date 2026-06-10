@@ -1,6 +1,8 @@
 # Changelog
 
-User-facing **Added**, **Changed**, and **Breaking** entries for each release. Maintainers: see [AGENTS.md](../AGENTS.md#changelog) — do not duplicate breaking-change tables in separate `docs/` files; record them here and move **Unreleased** into a `## X.Y.Z` section at release time.
+User-facing **Added**, **Changed**, and **Breaking** entries for each release.
+
+**Maintainers:** append to **`## Unreleased`** in the same PR as user-visible changes; use the intake block in [`.github/pull_request_template.md`](../.github/pull_request_template.md). At release, rename Unreleased to `## X.Y.Z` and reset empty subsection headers — [contributing/release-publishing.md](contributing/release-publishing.md). Policy: [agent-knowledge/rules/endor-changelog.md](../agent-knowledge/rules/endor-changelog.md). Do not duplicate breaking-change tables in separate `docs/` files.
 
 ## Unreleased
 

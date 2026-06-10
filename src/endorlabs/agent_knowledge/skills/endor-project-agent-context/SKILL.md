@@ -17,7 +17,7 @@ Produce a **versioned, machine-readable context bundle** for a single project: `
 ## Ordering
 
 1. **Resolve credentials** — `uv run --env-file .env` (or equivalent) so `endorlabs.Client` can authenticate. Tenant-scoped; never paste secrets into skills or logs.
-2. **Single-project context export** — run `uv run endor-agent-context` (or `uv run python -m endorlabs.workflows.agent_context.cli`) with `--tenant`, `--project`, optional `--namespace`, and `--output-dir` (default `.endorlabs-context/workspace/projects/`). **Done** means `context_manifest.json` exists and `artifacts` paths resolve on disk. If `--project` is a repo URL and resolution fails with **multiple matches**, pass **`--namespace`** for the intended child namespace or use the **24-hex project UUID** instead (same as `endorlabs.workflows.projects.resolve`). See [AGENTS.md](../../../AGENTS.md) (Agent notes — ambiguous project URL).
+2. **Single-project context export** — run `uv run endor-agent-context` (or `uv run python -m endorlabs.workflows.agent_context.cli`) with `--tenant`, `--project`, optional `--namespace`, and `--output-dir` (default `.endorlabs-context/workspace/projects/`). **Done** means `context_manifest.json` exists and `artifacts` paths resolve on disk. If `--project` is a repo URL and resolution fails with **multiple matches**, pass **`--namespace`** for the intended child namespace or use the **24-hex project UUID** instead (same as `endorlabs.workflows.projects.resolve`). See [AGENTS.md](../../../AGENTS.md#agent-notes) (ambiguous project URL).
 3. **Read the manifest first (LLM)** — open only `context_manifest.json`, then follow progressive disclosure (see [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md)).
 4. **Namespace project graph** (different question) — for *cross-project* edges in a namespace, use `uv run python -m endorlabs.workflows.estate.analyze.project_map.map` ([endor-map-project-dependency-relationships](../endor-map-project-dependency-relationships/SKILL.md)); not a substitute for the per-project bundle.
 5. **Call graphs** — Pass 3: **`--callgraph-sweep`** on the export script, or standalone [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md).
@@ -69,7 +69,7 @@ Produce a **versioned, machine-readable context bundle** for a single project: `
 ## Documentation hops
 
 - **Deep:** [MULTIPASS_LLM_CONTRACT.md](MULTIPASS_LLM_CONTRACT.md) — manifest keys, escalation, progressive disclosure.
-- Local: `.endorlabs-context/platform/user-docs/` after `endorlabs.init()` ([AGENTS.md](../../../AGENTS.md)).
+- Local: `.endorlabs-context/platform/user-docs/` after `endorlabs.init()` ([AGENTS.md — Bootstrap](../../../AGENTS.md#bootstrap)).
 - Online: [https://docs.endorlabs.com/llms.txt](https://docs.endorlabs.com/llms.txt)
 
 ## Linked skills

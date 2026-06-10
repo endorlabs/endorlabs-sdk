@@ -171,4 +171,4 @@ The local pre-commit hook also refreshes these maintainer-only artifacts automat
 - `sync_skills` mirrors materialized `.endorlabs-context/sdk/skills/`, not repo `agent-knowledge/skills/` (pip-safe)
 - changes under `src/endorlabs/context/` refresh the existing `.endorlabs-context/` download (docs always; OpenAPI when auth is available)
 
-See [AGENTS.md](AGENTS.md#context-bootstrap-for-ai-agents) for details. Full repo region map: [AGENTS.md § Repository layout](AGENTS.md#repository-layout).
+See [AGENTS.md](AGENTS.md#bootstrap) for agent bootstrap. Full repo region map: [docs/contributing/repository-layout.md](docs/contributing/repository-layout.md).
