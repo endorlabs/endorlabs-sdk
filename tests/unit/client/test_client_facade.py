@@ -1104,3 +1104,27 @@ def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
 
     resource_none_ns = _ConcreteResource(uuid="r-2", meta=meta, tenant_meta=None)
     assert resource_none_ns.namespace is None
+
+
+def test_finding_empty_list_warns_at_default_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Empty project-scoped list at tenant root emits a namespace scoping warning."""
+    client = client_with_mock_transport
+    client.Finding._ops.list = Mock(return_value=[])
+    with pytest.warns(UserWarning, match="namespace=project.namespace"):
+        client.Finding.list(max_pages=TEST_MAX_PAGES)
+
+
+def test_finding_empty_list_no_warn_with_child_namespace(
+    client_with_mock_transport: Client,
+) -> None:
+    """Explicit child namespace suppresses the empty-list namespace warning."""
+    import warnings
+
+    client = client_with_mock_transport
+    client.Finding._ops.list = Mock(return_value=[])
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        client.Finding.list(namespace="tenant.child", max_pages=TEST_MAX_PAGES)
+    assert not [w for w in caught if issubclass(w.category, UserWarning)]

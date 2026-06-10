@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class FileLocation(BaseModel):
@@ -210,6 +210,10 @@ class GoogleprotobufAny(BaseModel):
         }
     """
 
+    model_config = ConfigDict(
+        extra='allow',
+    )
+    __pydantic_extra__: dict[str, Any]
     field_type: str | None = Field(None, alias='@type')
     """
     A URL/resource name that uniquely identifies the type of the serialized

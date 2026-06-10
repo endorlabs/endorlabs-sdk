@@ -10,7 +10,7 @@ description: >-
 
 # Model-sync upstream drift
 
-When **OpenAPI SHA-256** in live upstream differs from `src/endorlabs/generated/registry_contract.py` provenance, CI and pre-push **fail**. A newer **published endorctl** alone is a **warning** only until you re-run model sync.
+When **OpenAPI SHA-256** in live upstream differs from `src/endorlabs/generated/registry_contract.py` provenance, CI and pre-push **fail**. Pre-commit runs local regen + ship `git diff` (no upstream fetch) before linters when generated paths change. A newer **published endorctl** alone is a **warning** only until you re-run model sync.
 
 ## Quick diagnose
 
@@ -65,7 +65,9 @@ uv run pyright --project pyproject.toml
 uv run pytest
 ```
 
-Pre-push hooks also run `--verify-upstream-only` and contract validation.
+Pre-commit runs `verify_ship_artifacts.py --skip-upstream` before ruff/pyright on
+model-sync changes. Pre-push runs `verify_ship_artifacts.py --fetch-spec` (upstream SHA +
+agent-knowledge verify) and contract validation.
 
 ## When this is not enough
 

@@ -37,7 +37,24 @@ For large **project-scoped** resources (`DependencyMetadata`, `Finding`, `ScanRe
 
 Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `list_resource_count()` per shard for progress denominators, and spike with [`estate/collect/benchmark.py`](../../src/endorlabs/workflows/estate/collect/benchmark.py) before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
 
-**Primitives:** [`parallel_map_shards()`](../../src/endorlabs/workflows/estate/collect/shards.py), [`list_resource_count()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`main_context_filter()`](../../src/endorlabs/workflows/estate/filters/main_context.py). Estate context: [estate/README.md](../estate/README.md).
+### SDK helper (`endorlabs.tools.list_sharding`)
+
+```python
+from endorlabs.tools.list_sharding import list_for_shards, project_model_to_shard
+
+projects = client.Project.list(namespace=child_ns)
+shards = [project_model_to_shard(p, child_ns) for p in projects]
+rows = list_for_shards(
+    client.Finding,
+    shards,
+    filter_fn=lambda s: f'spec.project_uuid=="{s.key}"',
+    max_workers=12,
+)
+```
+
+Estate-scale bulk collect remains in `endor-estate` workflows; see `AGENTS.md` for measured speedup notes.
+
+**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ParentShard`, `parallel_map_shards`, `list_for_shards`), [`list_resource_count()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`main_context_filter()`](../../src/endorlabs/workflows/estate/filters/main_context.py). Estate context: [estate/README.md](../estate/README.md).
 
 ### Workflow applicability
 

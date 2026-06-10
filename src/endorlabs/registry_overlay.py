@@ -16,6 +16,7 @@ _ALLOWED_OVERRIDE_KEYS = {
     "parent_kind",
     "filter_kwarg_map",
     "create_mode",
+    "workflow_flags",
 }
 
 # Keep this intentionally small: only explicit SDK divergences belong here.
@@ -37,6 +38,16 @@ RESOURCE_CONTRACT_OVERLAY_BY_ATTR: dict[str, dict[str, Any]] = {
     # (see tests/unit/client/test_client_facade.py).
     "DependencyMetadata": {
         "supported_ops": ["create", "delete", "get", "list"],
+        "workflow_flags": ["project-namespace-list"],
+    },
+    "Finding": {
+        "workflow_flags": ["project-namespace-list"],
+    },
+    "ScanResult": {
+        "workflow_flags": ["project-namespace-list"],
+    },
+    "PackageVersion": {
+        "workflow_flags": ["project-namespace-list"],
     },
 }
 
