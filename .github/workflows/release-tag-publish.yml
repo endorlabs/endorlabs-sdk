@@ -3,7 +3,7 @@ name: Release Tag Publish
 # Triggered when a PEP 440-compatible version tag is pushed
 # (e.g. v0.1.0, v1.0.0rc1). Dev-series anchors use v1.1.0.dev0 only—not v1.1.0.dev19.
 # Final release tags (vX.Y.Z) publish to PyPI via OIDC Trusted Publishing.
-# See docs/guides/pypi-publication-draft.md for tag policy and PyPI/TestPyPI rollout.
+# See docs/contributing/release-publishing.md for tag policy and PyPI/TestPyPI rollout.
 
 on:
   push:

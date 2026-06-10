@@ -24,7 +24,7 @@ When you have a resource instance (from `list(traverse=True)`), pass the resourc
 
 ## Project-scoped lists (MUST)
 
-`Client(tenant=<estate_root>)` with default `traverse=False` lists **only that path segment**—not
+`Client(tenant=<client_tenant>)` with default `traverse=False` lists **only that path segment**—not
 child namespaces where projects usually live. A filter such as `spec.project_uuid==…` does **not**
 widen the path.
 
@@ -32,6 +32,8 @@ widen the path.
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
 **empty results with no error** (the SDK may emit a `UserWarning` on empty tenant-root lists for
 these resources).
+
+**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](../../docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
 
 Alternatives:
 

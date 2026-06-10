@@ -10,7 +10,7 @@ In [`.github/workflows/ci-pr-main.yml`](../../.github/workflows/ci-pr-main.yml) 
 2. [`.github/scripts/endor_ci_fetch_scan_findings.py`](../../.github/scripts/endor_ci_fetch_scan_findings.py) resolves the **Project** by `https://github.com/{owner}/{repo}.git` (and a non-`.git` variant), lists **ScanResults** for that project (newest first), and picks a result whose `spec.versions[].sha` matches the PR **head SHA** (preferring `TYPE_PR_SECURITY_REVIEW` when several match). When `spec.environment.config` exposes a PR context id (e.g. `ExecutionID`), findings are loaded with **`Finding.list`** and OpenAPI **`list_parameters.ci_run_uuid`**; otherwise UUIDs from `spec.findings` (or blocking + warning lists) are hydrated via **`Finding.get`**. Dicts are passed to the posting script.
 3. [`.github/scripts/post_parallel_pr_comments.py`](../../.github/scripts/post_parallel_pr_comments.py) maps findings to GitHub review payloads. Location resolution is centralized in [`.github/scripts/endor_scan_findings.py`](../../.github/scripts/endor_scan_findings.py) (`extract_location`): `spec.finding_metadata` (including `file_path` / `line_number`, `security_review_data.code_snippet`, and `custom` Semgrep-style `path` + `start.line`), then `spec.dependency_file_paths` and summary fallbacks when needed.
 
-**Field-level crosswalk:** [findings-pr-review-comment-matrix.md](../findings-pr-review-comment-matrix.md).
+**Field-level crosswalk:** [pr-review-comment-matrix.md](pr-review-comment-matrix.md).
 
 **Validate before pushing:**
 
