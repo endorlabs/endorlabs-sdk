@@ -1,19 +1,20 @@
 ---
 name: endor-retrieve-scan-results
 description: >-
-  Query projects, scan results, and findings from the Endor Labs platform
-  using the SDK. Use when the user wants to retrieve scan results, list
-  findings, look up a project by repository URL, or build reports from
-  scan data. Covers namespace traversal for tenant-wide queries.
+  Project-scoped SDK workflow: resolve Project → latest ScanResult → Finding rows
+  for one repo. Use when the user wants scan results, findings, or reports for a
+  specific project. Default to namespace=project.namespace without traverse on
+  findings; use traverse only to discover Project when namespace is unknown, or
+  when the user explicitly requests tenant-wide reports.
 ---
 
 # Retrieving Scan Results and Findings
 
-Workflow for navigating the Project -> ScanResult -> Finding hierarchy in the
-Endor Labs SDK. For **scan pipeline** regressions (bounded scan window, heuristic
-pair scoring, ScanLogs, aggregate diffs), use
-[endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here
-with scan UUIDs for finding-level drill-down.
+**Default path:** one **Project** → **`ScanResult.list(parent=project)`** → **`Finding.list(..., namespace=project.namespace)`** — no `traverse=True` on findings after the project is resolved.
+
+For **scan pipeline** regressions (bounded scan window, heuristic pair scoring, ScanLogs, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs for finding-level drill-down.
+
+Human-oriented reference: [docs/guides/retrieving-scan-results.md](../../../docs/guides/retrieving-scan-results.md). General **`traverse`** mechanics: [docs/contributing/namespace-traversal.md](../../../docs/contributing/namespace-traversal.md).
 
 ## Concepts
 
@@ -23,14 +24,16 @@ with scan UUIDs for finding-level drill-down.
 | **ScanResult** | One scan's metadata, stats, policies triggered | `meta.parent_uuid` = Project UUID, `spec.findings` = Finding UUIDs |
 | **Finding** | A security finding | `context.scan_uuid`, `spec.project_uuid`, `spec.level` |
 
-**Relationship chain:** Project (by repo URL) -> ScanResult (by parent UUID) -> Finding (by scan or project UUID).
+**Relationship chain:** Project (by repo URL) → ScanResult (by parent UUID) → Finding (by scan or project UUID).
 
-## Workflow
+## Workflow (project-scoped)
 
 ### Step 1: Find the Project
 
+Prefer **namespace + filter** when the user names a child namespace; use **`traverse=True` only when the namespace is unknown** (discovery), with **`max_pages`** to bound cost.
+
 ```python
-# By repository URL
+# Discovery: namespace unknown — bounded traverse on Project only
 projects = client.Project.list(
     filter='meta.name=="https://github.com/org/repo.git"',
     traverse=True,
@@ -38,20 +41,26 @@ projects = client.Project.list(
 )
 project = projects[0] if projects else None
 
-# Or use lookup for a single match
+# When namespace is known — no traverse
+projects = client.Project.list(
+    filter='meta.name=="https://github.com/org/repo.git"',
+    namespace="<child-or-leaf-namespace>",
+    max_pages=1,
+)
+```
+
+```python
+# Single unambiguous row only
 project = client.Project.lookup(name="https://github.com/org/repo.git")
 ```
 
-Use `traverse=True` when the namespace is unknown or you need to search across all child namespaces.
-
-> **Agent note — duplicate projects:** The same repository URL may exist as **several** `Project` rows (different `tenant_meta.namespace`). `lookup` then raises **`AmbiguousError`**. Prefer `Project.list` with a filter on `meta.name` and `traverse=True`, then choose the row for the intended namespace, or call `get` / workflows with **project UUID** (and optional namespace). Universal summary: [AGENTS.md](../../../AGENTS.md) (Agent notes: projects, findings, and workflows).
+> **Agent note — duplicate projects:** The same repository URL may exist as **several** `Project` rows (different `tenant_meta.namespace`). `lookup` then raises **`AmbiguousError`**. Prefer `Project.list` with `meta.name` filter and `traverse=True` (bounded), then pick the row for the intended namespace, or use **project UUID** (+ optional namespace). See [AGENTS.md](../../../AGENTS.md#agent-notes).
 
 ### Step 2: Get the Most Recent ScanResult
 
 ```python
-# List scan results for the project, sorted by creation time
 scan_results = client.ScanResult.list(
-    parent=project,                        # Derives namespace + parent_uuid filter
+    parent=project,  # namespace + meta.parent_uuid filter
     sort_by="meta.create_time",
     desc=True,
     max_pages=1,
@@ -59,138 +68,106 @@ scan_results = client.ScanResult.list(
 latest_scan = scan_results[0] if scan_results else None
 ```
 
-The `parent=project` argument automatically scopes the query to the project's namespace and filters by `meta.parent_uuid`.
+### Step 3: Get Findings (no traverse)
 
-### Step 3: Get Findings
+After **`project`** is resolved, pass **`namespace=project.namespace`** (or `latest_scan.namespace`). Do **not** add `traverse=True` — it widens scope and cost without fixing empty rows from wrong namespace.
 
 ```python
-# All findings for the project
+# All findings for the project (preferred)
 findings = client.Finding.list(
     filter=f'spec.project_uuid=="{project.uuid}"',
     namespace=project.namespace,
-    traverse=True,
 )
 
-# Or findings from a specific scan
+# One scan's findings
 findings = client.Finding.list(
     filter=f'context.scan_uuid=="{latest_scan.uuid}"',
     namespace=latest_scan.namespace,
 )
 
-# Critical findings only
+# Severity filter — still project-scoped
 findings = client.Finding.list(
-    filter='spec.level==FINDING_LEVEL_CRITICAL',
+    filter=(
+        f'spec.project_uuid=="{project.uuid}" '
+        '& spec.level==FINDING_LEVEL_CRITICAL'
+    ),
+    namespace=project.namespace,
+)
+```
+
+**Tenant-wide findings** — only when the user **explicitly** asks for all namespaces / estate-wide reports. Add selective **`filter`**, **`max_pages`**, and prefer **`count=True`** for totals before full pagination:
+
+```python
+# Explicit user request only — not the default for one repo
+critical = client.Finding.list(
+    filter="spec.level==FINDING_LEVEL_CRITICAL",
     traverse=True,
+    max_pages=5,
 )
 ```
 
 ### Step 4: Narrow with field masks
 
-Use `mask` to limit response fields for performance. With a **non-empty** mask,
-each row is a **`dict[str, Any]`** (wire JSON), not a `Finding` / `Project`
-model—use key access (e.g. `row["spec"]["level"]` after checking keys) or
-**omit `mask`** when you need Pydantic models (e.g. to pass a resource object
-to `delete` / `update`).
+Use `mask` to limit response fields. With a **non-empty** mask, each row is a **`dict[str, Any]`** (wire JSON), not a model — use key access or **omit `mask`** when you need Pydantic models for `delete` / `update`.
 
 ```python
-# Only get finding name and severity (rows are dicts)
 findings = client.Finding.list(
-    filter='spec.level==FINDING_LEVEL_CRITICAL',
+    filter=f'spec.project_uuid=="{project.uuid}"',
+    namespace=project.namespace,
     mask="meta.name,spec.level,spec.finding_categories",
-    traverse=True,
 )
-for row in findings[:5]:
-    spec = row.get("spec") or {}
-    level = spec.get("level") if isinstance(spec, dict) else None
-    print(level, row.get("meta", {}))
 ```
 
-**Note:** `filter` (which rows) and `mask` (which fields) are separate concepts. Do not combine them.
+**Note:** `filter` (which rows) and `mask` (which fields) are separate concepts.
 
-## When to Use Traverse
+## When to use traverse
 
-| Scenario | Use traverse? |
-|----------|--------------|
-| Querying resources across the entire tenant | Yes |
-| Building tenant-wide reports or analytics | Yes |
-| Resource namespace is unknown | Yes |
-| Only need resources from one specific namespace | No |
-| Namespace-scoped operations (update, delete) | No |
+| Scenario | Traverse? |
+|----------|-----------|
+| **Findings / ScanResults for a resolved project** | **No** — use `namespace=project.namespace` or `parent=project` |
+| **Discover Project** when namespace unknown | **Yes** — `Project.list(..., traverse=True, max_pages=…)` |
+| **User explicitly requests tenant-wide report** | **Yes** — selective `filter`, cap `max_pages` |
+| **update / delete on a resource** | **No** — pass the resource object or correct namespace |
 
-## Namespace Scoping After Traverse
-
-When acting on resources returned from `list(traverse=True)` **without** a
-non-empty field `mask`, pass the **resource object** (not just a UUID string) to
-`get`, `update`, or `delete`. If you used `mask=` on that list, rows are
-**dicts**—call `get(uuid, namespace=...)` or list again without `mask` before
-using model-only APIs.
-
-```python
-# Correct: namespace derived from resource object
-client.Project.delete(target)
-
-# Risky: may 404 if target is in a child namespace
-client.Project.delete(target.uuid, namespace="tenant-root")
-```
-
-For full traversal patterns, performance comparison, and filtering examples, see [TRAVERSAL_PATTERNS.md](TRAVERSAL_PATTERNS.md).
+After `list(traverse=True)`, pass the **resource object** to `get` / `update` / `delete` (unless the list used `mask=` → dict rows). See [namespace-traversal.md](../../../docs/contributing/namespace-traversal.md#namespace-scoping-after-traverse).
 
 ## Per-Branch Finding Deduplication
 
-Findings are generated **per RepositoryVersion** (branch). A project with 2 scanned branches (e.g. `main` and `feature-x`) produces **2x finding objects** for the same code-level issue — one per branch scan.
-
-**Key fields for distinguishing branches:**
+Findings are generated **per RepositoryVersion** (branch). Two scanned branches → **2× finding objects** for the same code-level issue.
 
 | Field | Purpose |
 |-------|---------|
-| `spec.source_code_version.ref` | Branch name the finding came from (e.g. `refs/heads/main`) |
-| `context.scan_uuid` | UUID of the specific scan run |
+| `spec.source_code_version.ref` | Branch the finding came from |
+| `context.scan_uuid` | UUID of the scan run |
 
-> **Agent note — `ref` shape:** In practice `spec.source_code_version.ref` may be a **short branch name** (e.g. `main`, `feature-branch`) rather than the full `refs/heads/...` string. Filters that assume only `refs/heads/main` can return **zero rows** while findings exist on another ref. Prefer `RepositoryVersion.list` for the project to see scanned refs, or list findings **without** a branch filter first, then narrow. See [AGENTS.md](../../../AGENTS.md) (Agent notes).
-
-**Deduplication strategies:**
+> **Agent note — `ref` shape:** `spec.source_code_version.ref` may be a **short branch name** (`main`) rather than `refs/heads/main`. Branch filters that assume full ref strings can return **zero rows**. List findings **without** a branch filter first, or use `RepositoryVersion.list` for scanned refs. See [AGENTS.md](../../../AGENTS.md#agent-notes).
 
 ```python
-# Strategy 1: Filter to a single branch
 main_findings = client.Finding.list(
     filter=(
         (F("spec.project_uuid") == project.uuid)
-        & F("spec.source_code_version.ref").matches("refs/heads/main")
+        & F("spec.source_code_version.ref").matches("main")
     ),
     namespace=project.namespace,
 )
 
-# Strategy 2: Group by explanation text to identify unique issues
-from collections import defaultdict
-by_explanation = defaultdict(list)
-for f in findings:
-    key = (
-        getattr(f.spec, "explanation", "") or "",
-        getattr(f.spec, "remediation", "") or "",
-    )
-    by_explanation[key].append(f)
-# Each group represents one unique code issue (may have N branch variants)
-
-# Strategy 3: Use RepositoryVersion to understand branch coverage
 repo_versions = client.RepositoryVersion.list(
     filter=f'spec.project_uuid=="{project.uuid}"',
     namespace=project.namespace,
 )
-# Each RepositoryVersion = one scanned branch
 ```
 
-**When reviewing findings programmatically**, always account for branch multiplicity to avoid double-counting severity totals or issue counts.
+When counting severity or unique issues, dedupe by explanation/remediation or filter to one branch — do not sum raw row counts across branches blindly.
 
-## Quick Reference
+## Quick reference
 
 | Operation | Example |
 |-----------|---------|
-| List all projects | `client.Project.list(traverse=True)` |
-| Find project by URL | `client.Project.lookup(name="https://github.com/org/repo.git")` |
-| Latest scan for a project | `client.ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)` |
-| Findings for a project | `client.Finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` |
-| Critical findings, all namespaces | `client.Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True)` |
-| Count findings | `client.Finding.list(filter='...', count=True, traverse=True)` |
+| Latest scan for a project | `ScanResult.list(parent=project, sort_by="meta.create_time", desc=True, max_pages=1)` |
+| Findings for a project | `Finding.list(filter=f'spec.project_uuid=="{project.uuid}"', namespace=project.namespace)` |
+| Findings for one scan | `Finding.list(filter=f'context.scan_uuid=="{scan.uuid}"', namespace=scan.namespace)` |
+| Discover project by URL | `Project.list(filter='meta.name=="…"', traverse=True, max_pages=1)` |
+| Tenant-wide critical (explicit ask) | `Finding.list(filter='spec.level==FINDING_LEVEL_CRITICAL', traverse=True, max_pages=5)` |
 
 ## Related skills
 

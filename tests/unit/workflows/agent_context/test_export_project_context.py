@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 
 from endorlabs.tools.dependency_explorer import (
@@ -22,6 +23,12 @@ from endorlabs.workflows.agent_context.package_versions import (
     parse_uuid_list_csv,
     select_top_n_uuids_by_update_time,
     source_ref_sha_from_pv,
+)
+from endorlabs.workflows.agent_context.session_artifacts import (
+    FindingsContext,
+    PoliciesContext,
+    SessionResult,
+    VersionsContext,
 )
 from endorlabs.workflows.projects.resolve import is_hex_project_id
 
@@ -117,6 +124,39 @@ def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None
     assert m["artifacts"]["dep_metadata_list_namespace"] == "t.ns"
     assert m["artifacts"]["dep_metadata_row_count"] == 4
     assert m["artifacts"]["callgraph_sweep"]["package_versions_total"] == 5
+
+
+def test_build_context_manifest_includes_session_summaries(tmp_path: Path) -> None:
+    pr = ProjectResult(
+        project_uuid="p1",
+        project_name="proj",
+        namespace="t.ns",
+        slug="proj",
+        out_dir=str(tmp_path),
+    )
+    session_root = tmp_path / "proj__p1"
+    m = build_context_manifest(
+        version=2,
+        tenant="t",
+        project_uuid="p1",
+        project_name="proj",
+        project_namespace="t.ns",
+        cli={"session_summaries": True},
+        warnings=[],
+        project_result=pr,
+        out_dir=tmp_path,
+        callgraph_sweep=None,
+        inventory=None,
+        selection=None,
+        hydration=None,
+        session_artifacts={
+            "enabled": True,
+            "session_dir": str(session_root),
+            "project_summary_md": str(session_root / "project-summary.md"),
+            "findings_total": 3,
+        },
+    )
+    assert m["artifacts"]["session_summaries"]["findings_total"] == 3
 
 
 def test_source_ref_sha_from_pv_version_fallback() -> None:
@@ -248,6 +288,7 @@ def test_main_rejects_index_only_with_top_n() -> None:
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
+        session_summaries=False,
     )
     with patch.object(export_mod, "parse_args", return_value=args):
         assert export_mod.main() == 2
@@ -274,6 +315,7 @@ def test_main_rejects_index_only_with_hydrate_uuids() -> None:
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
+        session_summaries=False,
     )
     with patch.object(export_mod, "parse_args", return_value=args):
         assert export_mod.main() == 2
@@ -300,6 +342,7 @@ def test_main_rejects_top_n_without_index() -> None:
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
+        session_summaries=False,
     )
     with patch.object(export_mod, "parse_args", return_value=args):
         assert export_mod.main() == 2
@@ -363,6 +406,7 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
         callgraph_max_pages=1,
         callgraph_page_size=1,
         decode_zstd=False,
+        session_summaries=False,
     )
     proj = SimpleNamespace(
         uuid="p1",
@@ -387,3 +431,81 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
         patch("endorlabs.workflows.agent_context.export.print"),
     ):
         assert export_mod.main() == 0
+
+
+def test_main_session_summaries_writes_manifest_pointers(tmp_path: Path) -> None:
+    args = SimpleNamespace(
+        tenant="root",
+        namespace="root.ns",
+        project="proj-name",
+        output_dir=str(tmp_path),
+        pv_limit=5,
+        dep_metadata_max_pages=10,
+        deterministic=False,
+        pv_index=False,
+        pv_index_max_pages=1,
+        pv_index_page_size=1,
+        index_only=True,
+        hydrate_pv_uuids="",
+        hydrate_top_n=0,
+        pv_list_max_pages=1,
+        pv_list_page_size=1,
+        callgraph_sweep=False,
+        callgraph_max_pages=1,
+        callgraph_page_size=1,
+        decode_zstd=False,
+        session_summaries=True,
+    )
+    proj = SimpleNamespace(
+        uuid="p1",
+        meta=SimpleNamespace(name="repo"),
+        tenant_meta=SimpleNamespace(namespace="root.ns"),
+    )
+    fake_client = SimpleNamespace(_client=object(), close=lambda: None)
+    session_result = SessionResult(
+        session_dir=str(tmp_path),
+        status="success",
+        findings=FindingsContext(total=2),
+        policies=PoliciesContext(total=1),
+        versions=VersionsContext(total=4),
+    )
+    manifest_payload: dict[str, Any] = {}
+
+    def _capture_manifest(_path: str, payload: dict[str, Any], **_: object) -> None:
+        manifest_payload.update(payload)
+
+    with (
+        patch.object(export_mod, "parse_args", return_value=args),
+        patch(
+            "endorlabs.workflows.agent_context.export.endorlabs.Client",
+            return_value=fake_client,
+        ),
+        patch(
+            "endorlabs.workflows.agent_context.export.resolve_project",
+            return_value=proj,
+        ),
+        patch(
+            "endorlabs.workflows.agent_context.export.create_session",
+            return_value=session_result,
+        ) as mock_create_session,
+        patch(
+            "endorlabs.workflows.agent_context.export.build_project_session_key",
+            return_value="repo__p1",
+        ),
+        patch("endorlabs.workflows.agent_context.export.slugify", return_value="repo"),
+        patch(
+            "endorlabs.workflows.agent_context.export.write_json",
+            side_effect=_capture_manifest,
+        ),
+        patch("endorlabs.workflows.agent_context.export._write_text"),
+        patch("endorlabs.workflows.agent_context.export.print"),
+    ):
+        assert export_mod.main() == 0
+
+    mock_create_session.assert_called_once()
+    session_block = manifest_payload["artifacts"]["session_summaries"]
+    assert session_block["enabled"] is True
+    assert session_block["findings_total"] == 2
+    assert session_block["policies_total"] == 1
+    assert session_block["versions_total"] == 4
+    assert session_block["project_summary_md"].endswith("project-summary.md")

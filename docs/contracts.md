@@ -116,3 +116,8 @@ When you have a resource instance (for example from `list(traverse=True)`), pass
 - Use exception classes exported at top-level `endorlabs` (defined in
   `endorlabs.core.exceptions`); resources may return `None` on 404 where documented.
 - Preserve full server error context in SDK error handling.
+
+Exported from `endorlabs`: `EndorAPIError`, `UnauthorizedError`, `NotFoundError`,
+`PermissionDeniedError`, `ValidationError`, `ConflictError`, `RateLimitError`,
+`ServerError`, `AmbiguousError`, `MethodNotSupportedError`, and
+`map_status_code_to_exception()`.

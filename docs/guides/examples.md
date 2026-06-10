@@ -21,7 +21,21 @@ client = endorlabs.Client()
 print(client.whoami())
 ```
 
-For browser or SSO setup, see [README — Configuration](../../README.md#configuration).
+Environment variables and `.env` layout: [README — Configuration](../../README.md#configuration) and [contracts.md](../contracts.md).
+
+### Browser auth
+
+Browser auth via `APIClient(auth_method='browser-auth')`: validates an existing token first, then falls back to interactive login. Session tokens are reused until a `401` response.
+
+```bash
+uv run python -c "from endorlabs.api_client import APIClient; c=APIClient(auth_method='browser-auth'); print(c.token)"
+```
+
+For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` over shell-specific export workflows.
+
+### SSO / login investigations
+
+Use the **endor-troubleshoot-authlog** skill (see [AGENTS.md — Skills and handoffs](../../AGENTS.md#skills-and-handoffs)).
 
 ## 2. Discovery — namespaces and projects
 
@@ -156,8 +170,8 @@ status = endorlabs.init()  # materializes sdk/ by default
 uv run endor-context --sync-openapi
 ```
 
-See [AGENTS.md — SDK-only vs agent bootstrap](../../AGENTS.md#sdk-only-vs-agent-bootstrap)
-and [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents).
+See [AGENTS.md — Bootstrap](../../AGENTS.md#bootstrap)
+and [CONTRIBUTORS.md — Optional: sync external docs](../../CONTRIBUTORS.md#optional-sync-external-docs).
 
 ## Suggested order for a first tenant session
 

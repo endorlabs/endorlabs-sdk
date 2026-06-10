@@ -24,7 +24,7 @@ This creates:
 - `.endorlabs-context/platform/user-docs/*.md` — User docs (sitemap-based, parallel download)
 - `.endorlabs-context/context.json` — init manifest
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#bootstrap) and [CONTRIBUTORS.md](../../CONTRIBUTORS.md#optional-sync-external-docs).
 
 ## Model sync workflow (CI and local)
 
@@ -85,28 +85,10 @@ from endorlabs.context import sync_openapi
 sync_openapi()  # downloads to .endorlabs-context/platform/openapi/openapiv2.swagger.json
 ```
 
-Then run model sync:
-
-**Linux / macOS (bash):**
+Then run model sync (credentials in `.env`; see [README.md](../../README.md#configuration)):
 
 ```bash
-export ENDOR_API="https://api.endorlabs.com"
-export ENDOR_API_CREDENTIALS_KEY="your-key"
-export ENDOR_API_CREDENTIALS_SECRET="your-secret"
-export ENDOR_NAMESPACE="your-namespace"
-
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
-```
-
-**Windows (PowerShell):**
-
-```powershell
-$env:ENDOR_API = "https://api.endorlabs.com"
-$env:ENDOR_API_CREDENTIALS_KEY = "your-key"
-$env:ENDOR_API_CREDENTIALS_SECRET = "your-secret"
-$env:ENDOR_NAMESPACE = "your-namespace"
-
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run --env-file .env python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 Check tooling availability without re-running generation:
@@ -130,4 +112,5 @@ uv run python devtools/model_sync.py --inventory-only
 - [Architecture](./architecture.md) — Generated client surface and overlay
 - [Integration resource tests](./integration-resource-tests.md) — Facade validation tests
 - [Troubleshooting](./troubleshooting.md) — Issue resolution
-- [AGENTS.md](../../AGENTS.md) — AI agent index
+- [AGENTS.md](../../AGENTS.md) — Agent bootstrap and API gotchas
+- [repository-layout.md](./repository-layout.md) — Full repo region map

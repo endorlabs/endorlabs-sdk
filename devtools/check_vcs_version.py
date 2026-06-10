@@ -68,7 +68,7 @@ def main() -> int:
     except subprocess.CalledProcessError as exc:
         print(exc.stderr or exc.stdout or str(exc), file=sys.stderr)
         print(
-            "\nSee docs/guides/pypi-publication-draft.md (invalid tags like v0.1.1.dev19).",
+            "\nSee docs/contributing/release-publishing.md (invalid tags like v0.1.1.dev19).",
             file=sys.stderr,
         )
         return 1
