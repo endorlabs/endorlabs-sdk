@@ -1,10 +1,10 @@
-# PyPI / TestPyPI publication (maintainer guide)
+# Release and PyPI publishing
 
-> **Status:** Release automation is implemented in CI. Configure Trusted Publishing on
-> TestPyPI and PyPI before the first upload (pending publishers are supported for new
-> projects).
+Maintainer guide for version tags, hatch-vcs, OIDC trusted publishing, and release CI.
 
-## Root cause of the hatch-vcs failure
+Configure **pending** Trusted Publishing on TestPyPI and PyPI before the first upload to each index.
+
+## hatch-vcs and dev tags
 
 `hatch-vcs` delegates to **setuptools-scm**. SCM computes post-tag versions as
 `{tag_base}.dev{N}` where **N = commits since the tag**.
@@ -51,7 +51,7 @@ release tag** (`vX.Y.Z`), not from a random branch with a `.devN` version.
 
 | Requirement | Status in `pyproject.toml` |
 |-------------|---------------------------|
-| `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.28.0`, `hatch-vcs` |
+| `[build-system]` pinned backend (PEP 518/517) | `hatchling==1.30.1`, `hatch-vcs==0.5.0` |
 | `[project]` name, description, readme, requires-python, authors (PEP 621) | Present |
 | Dependencies as PEP 508 strings | Present (pinned `==` for reproducibility) |
 | License SPDX + `license-files` (PEP 639, metadata 2.4) | `license = "MIT"`, `license-files = ["LICENSE"]` |
@@ -85,7 +85,7 @@ v0.1.0-test.20260511.1
 v0.1.1.dev-build.20260519.1
 ```
 
-## Trusted Publishing setup (free — no API tokens)
+## Trusted Publishing setup (OIDC — no API tokens)
 
 Configure **pending** publishers before the first upload to each index.
 
@@ -98,10 +98,12 @@ Configure **pending** publishers before the first upload to each index.
 5. **Workflow name:** `release-testpypi.yml`
 6. **Environment name:** `testpypi`
 
-### PyPI (pypi.org — production, configure before first prod release)
+### PyPI (pypi.org — production)
 
 1. Same steps on pypi.org → **Publishing**
-2. **Workflow name:** `release-tag-publish.yml`
+2. Register **both** pending publishers (same project `endorlabs`, environment `pypi`):
+   - **Workflow name:** `release-tag-publish.yml` — tag-driven final releases (`vX.Y.Z`)
+   - **Workflow name:** `release-pypi.yml` — manual `workflow_dispatch` when needed
 3. **Environment name:** `pypi`
 
 ### GitHub Environments (Settings → Environments)
@@ -109,7 +111,7 @@ Configure **pending** publishers before the first upload to each index.
 | Environment | Used by | Recommended protection |
 |-------------|---------|------------------------|
 | `testpypi` | `release-testpypi.yml` | Optional reviewers |
-| `pypi` | `release-tag-publish.yml` | Required reviewers |
+| `pypi` | `release-tag-publish.yml`, `release-pypi.yml` | Required reviewers |
 
 No `PYPI_API_TOKEN` or `TEST_PYPI_API_TOKEN` secrets are used. OIDC + PEP 740 attestations
 are handled by `pypa/gh-action-pypi-publish` pinned to a release commit SHA (attestations on by default).
@@ -128,12 +130,7 @@ uv run python devtools/check_vcs_version.py
 # Editable install path used by uv sync / Endor scans
 uv sync --dev
 
-# Build release artifacts (set version explicitly for local release simulation)
-# PowerShell:
-$env:SETUPTOOLS_SCM_PRETEND_VERSION = "0.1.1"
-# bash:
-# export SETUPTOOLS_SCM_PRETEND_VERSION=0.1.1
-
+# Build release artifacts (optional: set SETUPTOOLS_SCM_PRETEND_VERSION=0.1.1 in the environment for local simulation)
 uv build
 uv run twine check dist/*
 uv run python devtools/smoke_test_wheel.py
@@ -147,10 +144,18 @@ same version from a tag or workflow input.
 ### TestPyPI — `.github/workflows/release-testpypi.yml`
 
 - **Trigger:** `workflow_dispatch` with inputs `version` (required) and `ref` (default `main`)
-- **Build job:** quality checks via `check_vcs_version.py`, `uv build`, `twine check`, upload artifact
+- **Build job:** `check_vcs_version.py`, `uv build`, `twine check`, upload artifact
 - **Publish job:** `environment: testpypi`, `permissions: id-token: write`, OIDC publish to TestPyPI
+- **Use for:** staging uploads and smoke installs before production; keep available on branches when validating deployment changes
 
-### Production PyPI — `.github/workflows/release-tag-publish.yml`
+### PyPI (manual) — `.github/workflows/release-pypi.yml`
+
+- **Trigger:** `workflow_dispatch` with inputs `version` (required) and `ref` (default `main`)
+- **Build job:** same as TestPyPI manual path (`check_vcs_version.py`, `uv build`, `twine check`)
+- **Publish job:** `environment: pypi`, OIDC publish to PyPI with attestations
+- **Use for:** manual production uploads when tag-driven release is not appropriate; prefer **`release-tag-publish.yml`** for final `vX.Y.Z` cuts (full quality gate + GitHub Release + dev anchor bump)
+
+### Production PyPI (tag) — `.github/workflows/release-tag-publish.yml`
 
 - **Trigger:** push tag matching `v*`
 - **Classify:** final releases match `vX.Y.Z` exactly; dev anchors and pre-releases skip publish
@@ -160,68 +165,50 @@ same version from a tag or workflow input.
 
 ```mermaid
 flowchart TD
-  dispatch["workflow_dispatch release-testpypi.yml"] --> testBuild[build + twine check]
-  testBuild --> pubT["publish-testpypi OIDC + attestations"]
+  dispatchTest["workflow_dispatch release-testpypi.yml"] --> testBuild[build + twine check]
+  testBuild --> pubT["publish-testpypi OIDC → TestPyPI"]
+  dispatchProd["workflow_dispatch release-pypi.yml"] --> prodManualBuild[build + twine check]
+  prodManualBuild --> pubM["publish-pypi OIDC → PyPI"]
   tag["push vX.Y.Z tag"] --> gate{final version?}
   gate -- yes --> prodBuild[build + gate + GitHub Release]
-  prodBuild --> pubP["publish-pypi OIDC + attestations"]
+  prodBuild --> pubP["publish-pypi OIDC → PyPI"]
   pubP --> bump["push vX.Y.Z+1.dev0 anchor"]
   bump -.->|dev anchor| gate
   gate -- no --> skip[skip publish]
 ```
 
-## TestPyPI validation plan (OIDC + attestations)
+## TestPyPI smoke install
 
-Run this once after merging the release workflows and configuring the pending TestPyPI publisher.
-
-### 1. Publish `0.1.1` to TestPyPI
-
-1. Merge release automation to `main`
-2. Configure pending TestPyPI publisher + GitHub `testpypi` environment (above)
-3. **Actions → Release TestPyPI Publish → Run workflow**
-   - `version`: `0.1.1`
-   - `ref`: `main`
-4. Confirm the publish job log shows OIDC token exchange (no username/password/token env vars)
-5. Open `https://test.pypi.org/project/endorlabs/0.1.1/` and verify **Verified details** / provenance
-
-### 2. Smoke install from TestPyPI
+After a TestPyPI publish via **Release TestPyPI Publish**:
 
 ```bash
-python -m venv /tmp/endorlabs-smoke
-# Windows: /tmp/endorlabs-smoke/Scripts/python
-# Unix:    /tmp/endorlabs-smoke/bin/python
-
-python -m pip install \
-  --index-url https://test.pypi.org/simple/ \
-  --extra-index-url https://pypi.org/simple/ \
-  endorlabs==0.1.1
-
-python -c "import endorlabs; from endorlabs import Client; print(endorlabs.__version__)"
-# Expected: 0.1.1
+uv run python devtools/smoke_test_published_install.py --version <version>
 ```
 
-Or after a TestPyPI publish:
+Or install manually from `https://test.pypi.org/project/endorlabs/`.
 
-```bash
-uv run python devtools/smoke_test_published_install.py --version 0.1.1
-```
+## Production release
 
-### 3. Publish patch `0.1.2` to TestPyPI
-
-Repeat step 1 with `version: 0.1.2` (confirms OIDC + attestations on a second upload).
-
-### 4. Production PyPI (when ready)
-
-1. Configure pending publisher on pypi.org for `release-tag-publish.yml` / environment `pypi`
-2. Tag a final release: `git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin vX.Y.Z`
+1. Configure pending publishers on pypi.org for `release-tag-publish.yml` and/or `release-pypi.yml` / environment `pypi`
+2. **Recommended (final release):** tag at the release commit: `git tag -a vX.Y.Z -m "Release X.Y.Z" && git push origin vX.Y.Z`
 3. Wait for **Release Tag Publish** workflow; confirm PyPI provenance and GitHub Release assets
 4. Confirm CI pushed the next dev anchor tag (`vX.Y.(Z+1).dev0`)
 
-Production first-release version (0.x vs 1.0.0) is a product decision—defer until ready.
+**Manual PyPI:** run **Release PyPI Publish** (`release-pypi.yml`) with an explicit `version` and `ref` when you need a dispatch upload without a tag (same OIDC path; no GitHub Release or dev-anchor bump).
+
+## Changelog at release cut
+
+Before tagging `vX.Y.Z`:
+
+1. Open [`docs/changelog.md`](../changelog.md) **Unreleased** — collapse model-sync-only work into one **Changed** footnote or omit.
+2. Rename **Unreleased** → **`## X.Y.Z`**; leave fresh empty **Unreleased** subsection headers.
+3. Grep removed CLI/API names; durable docs describe **current** behavior only (upgraders read the changelog).
+
+Intake while merging PRs: [`.github/pull_request_template.md`](../../.github/pull_request_template.md) and [`endor-changelog`](../../agent-knowledge/rules/endor-changelog.md). Do not auto-generate the changelog from `git log`.
 
 ## Related files
 
 - Version config: `pyproject.toml` → `[tool.hatch.version]`, `[tool.hatch.build.hooks.vcs]`
 - Generated at build: `src/endorlabs/_version.py` (gitignored)
-- Release CI: `.github/workflows/release-tag-publish.yml`, `.github/workflows/release-testpypi.yml`
+- Release CI: `.github/workflows/release-tag-publish.yml`, `.github/workflows/release-pypi.yml`, `.github/workflows/release-testpypi.yml`
 - Local helpers: `devtools/check_vcs_version.py`, `devtools/smoke_test_wheel.py`, `devtools/smoke_test_published_install.py`

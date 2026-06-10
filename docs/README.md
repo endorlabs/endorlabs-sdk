@@ -5,6 +5,7 @@ Index for SDK-specific documentation.
 ## Doc taxonomy
 
 - [contracts.md](contracts.md) — Normative SDK behavior agreements (`MUST/SHALL` semantics).
+- [changelog.md](changelog.md) — User-facing release notes (**Added**, **Changed**, **Breaking**).
 - [design.md](design.md) — Design rationale and tradeoffs (non-normative).
 - [reference/README.md](reference/README.md) — Curated reference index and stable landing pages.
 
@@ -35,6 +36,10 @@ Index for SDK-specific documentation.
 ## Contributing
 
 - [contributing/README.md](contributing/README.md) — Process and checklists for extending the generated SDK surface.
+- [contributing/release-publishing.md](contributing/release-publishing.md) — Version tags, hatch-vcs, OIDC PyPI/TestPyPI release CI.
+- [changelog.md](changelog.md) — User-facing **Added**, **Changed**, and **Breaking** per release (including estate CLI/layout upgrades).
+- [contributing/pr-review-comments.md](contributing/pr-review-comments.md) — Endor findings → GitHub PR review comments in CI.
+- [contributing/pr-review-comment-matrix.md](contributing/pr-review-comment-matrix.md) — Finding fields vs GitHub review comment payloads.
 - [contributing/integration-resource-tests.md](contributing/integration-resource-tests.md)
 - [contributing/api-validation.md](contributing/api-validation.md)
 - [contributing/troubleshooting.md](contributing/troubleshooting.md)
@@ -42,14 +47,9 @@ Index for SDK-specific documentation.
 - [contributing/namespace-traversal.md](contributing/namespace-traversal.md) — Traverse and list parameters; patterns and examples.
 - [contributing/list-query-performance.md](contributing/list-query-performance.md) — List scope, filters, pagination, debugging slow queries.
 
-## Findings / Research
-
-- [findings-pr-review-comment-matrix.md](findings-pr-review-comment-matrix.md) — Endor Finding fields vs GitHub pull request review comment payloads (CI script crosswalk).
-- [findings/integration-test-pagination-research.md](findings/integration-test-pagination-research.md) — Research on test pagination configuration and conftest constants.
-
 ## When to update docs
 
-API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). New resources or operations -> reference index and [contributing/](contributing/) checklists. Drift and model consistency -> [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** authored in `agent-knowledge/skills/`, shipped via `src/endorlabs/agent_knowledge/`, materialized to `.endorlabs-context/sdk/skills/` — see [AGENTS.md](../AGENTS.md#repository-layout).
+API or endpoint behavior changes -> [contracts.md](contracts.md) and [generated-reference/resources.md](generated-reference/resources.md). User-visible breaks or notable features -> [changelog.md](changelog.md) (**Unreleased**). New resources or operations -> reference index and [contributing/](contributing/) checklists. Drift and model consistency -> [contributing/docs-drift-workflow.md](contributing/docs-drift-workflow.md). **Internal:** utils (model_validation, schema_drift, traversal), operations — not in top-level `__all__`. **Skills:** authored in `agent-knowledge/skills/`, shipped via `src/endorlabs/agent_knowledge/`, materialized to `.endorlabs-context/sdk/skills/` — see [contributing/repository-layout.md](contributing/repository-layout.md). Ephemeral session notes belong under `.endorlabs-context/workspace/sessions/<user>/notes/` — not tracked in `docs/`.
 
 ## Generated reference docs
 

@@ -174,6 +174,8 @@ def sync_skills_tree() -> int:
         for src_path in skill_dir.rglob("*"):
             if not src_path.is_file() or src_path.name == "SKILL.md":
                 continue
+            if "__pycache__" in src_path.parts or src_path.suffix == ".pyc":
+                continue
 
             rel = src_path.relative_to(skill_dir)
 
@@ -534,12 +536,23 @@ def write_workflows_index(manifest: dict[str, Any]) -> None:
         skill = entry.get("skill") or "—"
 
         default_out = entry.get("default_output") or "—"
+        if entry["id"] == "semgrep-inventory" and default_out != "—":
+            default_out = f"`{default_out}` (`SemgrepRule.list`)"
 
         lines.append(
             f"| {entry['id']} | `{cli}` | `{entry['module']}` | {skill} | {default_out} |"
         )
 
-    WORKFLOWS_INDEX.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    lines.extend(
+        [
+            "",
+            "**Naming:** workflow id `semgrep-inventory` and module path `workflows/semgrep/` are "
+            "shorthand; the API resource is **`SemgrepRule`** (`client.SemgrepRule`).",
+            "",
+        ]
+    )
+
+    WORKFLOWS_INDEX.write_text("\n".join(lines), encoding="utf-8")
 
     visible = [e for e in manifest["workflows"] if e.get("agent_visible", True)]
 

@@ -7,7 +7,7 @@ CRUD operations live in ``endorlabs.operations.BaseResourceOperations``.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import (
     Any,
     Literal,
@@ -68,7 +68,7 @@ RESOURCE_NAME_TO_TYPE: dict[str, str] = {
 }
 
 
-class FlexibleEnum(str, Enum):
+class FlexibleEnum(StrEnum):
     """Base class for flexible enums that can handle unknown values."""
 
     @override
