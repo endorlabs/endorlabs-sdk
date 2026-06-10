@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from endorlabs.workflows.estate.analyze.project_map import map as rel_map
+from endorlabs.workflows.estate.analyze.project_map import run as rel_run
+from endorlabs.workflows.estate.analyze.project_map.run import RelationshipMapResult
 
 
 def _project(uuid: str, name: str, namespace: str) -> SimpleNamespace:
@@ -24,20 +27,19 @@ def _package_version(project_uuid: str, name: str) -> SimpleNamespace:
 
 def test_object_to_spec_dict_supports_model_dump_and_raw() -> None:
     dumped = SimpleNamespace(model_dump=lambda **_: {"spec": {"a": 1}})
-    assert rel_map._object_to_spec_dict(dumped) == {"a": 1}
-    assert rel_map._object_to_spec_dict({"spec": {"b": 2}}) == {"b": 2}
-    assert rel_map._object_to_spec_dict("bad") == {}
+    assert rel_run._object_to_spec_dict(dumped) == {"a": 1}
+    assert rel_run._object_to_spec_dict({"spec": {"b": 2}}) == {"b": 2}
+    assert rel_run._object_to_spec_dict("bad") == {}
 
 
 def test_main_writes_graph_artifacts_and_closes_client() -> None:
-    projects = [_project("p1", "repo-1", "tenant.ns")]
-    pvs = [_package_version("p1", "pkg-a@1.0.0")]
-    dep_rows = [{"supporting_packages": [{"name": "pkg-a", "version": "1.0.0"}]}]
-
     fake_client = Mock()
-    fake_client.Project.list.return_value = projects
-    fake_client.PackageVersion.list.return_value = pvs
-    fake_client.DependencyMetadata.list.return_value = dep_rows
+    fake_result = RelationshipMapResult(
+        graph_path=Path(".tmp/project_relationship_graph.json"),
+        paths_path=Path(".tmp/project_relationship_paths.json"),
+        stats_path=Path(".tmp/project_relationship_stats.json"),
+        stats={"direct_project_edge_count": 1},
+    )
 
     with (
         patch(
@@ -45,26 +47,9 @@ def test_main_writes_graph_artifacts_and_closes_client() -> None:
             return_value=fake_client,
         ),
         patch(
-            "endorlabs.workflows.estate.analyze.project_map.map.row_to_supporting_tuples",
-            return_value=[("p1", "p1", {"name": "pkg-a"})],
-        ),
-        patch(
-            "endorlabs.workflows.estate.analyze.project_map.map.aggregate_project_edges",
-            return_value=[
-                {
-                    "source_project_uuid": "p1",
-                    "target_project_uuid": "p1",
-                    "evidence_tier": "tier_a_exact",
-                }
-            ],
-        ),
-        patch(
-            "endorlabs.workflows.estate.analyze.project_map.map.indirect_paths_bfs",
-            return_value=[],
-        ),
-        patch(
-            "endorlabs.workflows.estate.analyze.project_map.map.write_json"
-        ) as mock_write_json,
+            "endorlabs.workflows.estate.analyze.project_map.map.run_project_relationship_map",
+            return_value=fake_result,
+        ) as mock_run,
         patch(
             "endorlabs.workflows.estate.analyze.project_map.map.parse_args",
             return_value=SimpleNamespace(
@@ -77,14 +62,42 @@ def test_main_writes_graph_artifacts_and_closes_client() -> None:
                 dep_metadata_max_pages=1,
                 max_workers=4,
                 output_dir=".tmp",
+                focus_producer_project_uuid="",
             ),
         ),
     ):
         code = rel_map.main()
 
     assert code == 0
-    assert mock_write_json.call_count == 3
+    mock_run.assert_called_once()
     fake_client.close.assert_called_once()
+
+
+def test_run_project_relationship_map_lists_dependency_metadata_per_project(
+    tmp_path: Path,
+) -> None:
+    projects = [_project("p1", "repo-1", "tenant.ns")]
+    pvs = [_package_version("p1", "npm://pkg-a@1.0.0")]
+
+    fake_client = Mock()
+    fake_client.Project.list.return_value = projects
+    fake_client.PackageVersion.list.return_value = pvs
+    fake_client.DependencyMetadata.list.return_value = []
+
+    with patch(
+        "endorlabs.workflows.estate.analyze.project_map.run.row_to_supporting_tuples",
+        return_value=[],
+    ):
+        rel_run.run_project_relationship_map(
+            fake_client,
+            namespace="tenant.ns",
+            output_dir=tmp_path,
+            max_pages=1,
+            page_size=100,
+            dep_metadata_max_pages=1,
+            max_workers=1,
+        )
+
     fake_client.DependencyMetadata.list.assert_called_once()
     _args, kwargs = fake_client.DependencyMetadata.list.call_args
     assert kwargs.get("namespace") == "tenant.ns"

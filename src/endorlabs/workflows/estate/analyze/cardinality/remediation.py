@@ -19,7 +19,7 @@ _CVE_2018_19362_FIX_BY_MINOR: dict[tuple[int, int], tuple[int, ...]] = {
 
 def parse_version_quad(version: str) -> tuple[int, int, int, int]:
     """Parse ``major.minor.patch.micro`` from a resolved version string."""
-    base = version.split("-endor")[0]
+    base = version.split("-endor", maxsplit=1)[0]
     base = re.sub(r"-rc\d+$", "", base)
     base = re.sub(r"\.pr\d+$", "", base)
     nums: list[int] = []
@@ -72,7 +72,7 @@ def cve_2018_19362_fix_target(version: str) -> str:
     """Return the patched coordinate target for *version* on its minor line."""
     line = minor_key(version)
     if line >= "2.10":
-        return version.split("-endor")[0]
+        return version.split("-endor", maxsplit=1)[0]
     return {
         "2.6": "2.6.7.3",
         "2.7": "2.7.9.5",

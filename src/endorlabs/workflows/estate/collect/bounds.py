@@ -93,7 +93,7 @@ def list_resource_count(
     if lp is None:
         lp = ListParameters(
             filter=filter_expr,
-            traverse=traverse if traverse else None,
+            traverse=traverse or None,
         )
     else:
         updates: dict[str, Any] = {}
