@@ -21,7 +21,7 @@ scripts to repo-root `.tmp/` unless the user explicitly requests that path.
 | `<slug>-<YYYYMMDD>/` | Estate pull + analyze (`endor-estate`; `data/`, `intermediate-representation/`, `viz/`) |
 | `projects/<uuid>/` | Project-scoped workflow bundles (`endor-agent-context`, reachability exports, relationship maps) |
 | `sessions/<user>/` | Interactive session, RCA/triage exports, one-off scripts, and other non-project scratch work |
-| `artifacts/` | Namespace-scoped inventory outputs (e.g. Semgrep metadata) |
+| `artifacts/` | Namespace-scoped inventory outputs (e.g. **`SemgrepRule`** metadata inventory from `endor-semgrep-inventory`) |
 
 Common session subfolders (create as needed):
 

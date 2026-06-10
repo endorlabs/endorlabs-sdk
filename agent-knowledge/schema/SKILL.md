@@ -18,9 +18,10 @@ Read [`schema/README.md`](README.md) first — it is the canonical authoring spe
 3. If the skill maps to a workflow CLI, add `endorlabs.catalog` (authoring only).
 4. Add reference `.md` / scripts only when `SKILL.md` would become too long.
 5. If the skill is compositional, heuristic, or part of a multi-skill RCA path, add **Scope**, optional **Optional stops** / routing table, and **Related skills** per [schema/README.md — Skill composition and handoffs](README.md#skill-composition-and-handoffs). Update reciprocal links on peer skills in the same change.
-6. Run `uv run python devtools/sync_agent_knowledge.py` and fix validation errors.
-7. Confirm shipped bundle `SKILL.md` has **no** `endorlabs:` key.
-8. **Path consistency:** grep `tests/` and `docs/` for the skill id and any script paths; update inline test loaders and doc examples in the same PR (see [schema/README.md — Path consistency](README.md#path-consistency-tests-and-docs)).
+6. When a linked workflow CLI/id differs from the API resource name, add a short **Naming** note near that step — see [schema/README.md — Recommended sections](README.md#recommended-sections-precedent).
+7. Run `uv run python devtools/sync_agent_knowledge.py` and fix validation errors.
+8. Confirm shipped bundle `SKILL.md` has **no** `endorlabs:` key.
+9. **Path consistency:** grep `tests/` and `docs/` for the skill id and any script paths; update inline test loaders and doc examples in the same PR (see [schema/README.md — Path consistency](README.md#path-consistency-tests-and-docs)).
 
 ## Workflow linkage
 
