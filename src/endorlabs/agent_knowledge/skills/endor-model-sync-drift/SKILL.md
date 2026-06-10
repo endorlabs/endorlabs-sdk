@@ -27,7 +27,7 @@ uv run python .github/scripts/check_endorctl_version.py
 
 ## Regenerate (canonical)
 
-**Linux / macOS / PowerShell** (repo root; public spec download):
+From repo root (public spec download):
 
 ```bash
 uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-reference-docs
@@ -74,24 +74,7 @@ Pre-push hooks also run `--verify-upstream-only` and contract validation.
 
 ## Local endorctl upgrade (optional, for parity with UI/endorctl)
 
-SDK model-sync does **not** require a matching local `endorctl` for regen. To upgrade the CLI for manual `endorctl api` checks:
-
-**Windows (replace your install path; stop processes locking `endorctl.exe` first, or rename the old binary then copy):**
-
-```powershell
-$installDir = (Get-Command endorctl -ErrorAction Stop).Source | Split-Path -Parent
-$tmp = "$env:TEMP\endorctl_windows_amd64.exe"
-Invoke-WebRequest -Uri "https://api.endorlabs.com/download/latest/endorctl_windows_amd64.exe" -OutFile $tmp -UseBasicParsing
-Copy-Item $tmp (Join-Path $installDir "endorctl.exe") -Force
-endorctl --version
-```
-
-**npm global:**
-
-```bash
-npm update -g endorctl
-endorctl --version
-```
+SDK model-sync does **not** require a matching local `endorctl` for regen. To upgrade the CLI for manual `endorctl api` checks: `npm update -g endorctl` then `endorctl --version`, or follow [Endor CLI install](https://docs.endorlabs.com/developers-api/cli/install-and-configure/) (stop processes locking `endorctl.exe` on Windows before replacing the binary).
 
 ## References
 

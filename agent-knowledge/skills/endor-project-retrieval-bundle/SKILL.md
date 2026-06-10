@@ -34,7 +34,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 | **Client tenant** | `--tenant` on export — auth context for `endorlabs.Client`. |
 | **`--namespace` (optional)** | Disambiguates project lookup only; export remains **one project**. |
 | **`--project`** | Required — single repo (UUID or name). |
-| **Not namespace scope** | Multi-repo / blast-radius questions → [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) or [endor-estate-workspace](../endor-estate-workspace/SKILL.md). |
+| **Not namespace scope** | Multi-repo / blast-radius → [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md); bulk namespace pull → [docs/estate/README.md](../../../docs/estate/README.md) (user must request). |
 
 ## Decision table
 
@@ -44,7 +44,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 | Findings/policies/repo-version **summaries in the bundle** | add `--session-summaries` | [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md) for scan RCA |
 | **Who consumes packages my repo produces** (breaking-change blast radius) | — | [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) with `--focus-producer-project-uuid`, or `endor-estate analyze -n <namespace_scope> --only-relationships --focus-producer-project-uuid` |
 | Full namespace project graph (all edges) | — | namespace relationship map or `endor-estate analyze --only-relationships` |
-| Bulk pull/analyze under a **namespace scope** | — | [endor-estate-workspace](../endor-estate-workspace/SKILL.md) |
+| Bulk pull/analyze under a **namespace scope** (explicit user request) | — | [docs/estate/README.md](../../../docs/estate/README.md) (`endor-estate`) |
 | Function-level call graph search | `--callgraph-sweep` | [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md) |
 | Stitched vulnerable-function reachability | bundle as input | `endor-reachability-context` |
 
@@ -94,7 +94,7 @@ Produce a **versioned, machine-readable retrieval bundle for one project** via *
 ## Linked skills
 
 - [endor-namespace-relationship-map](../endor-namespace-relationship-map/SKILL.md) — namespace consumer→producer edges
-- [endor-estate-workspace](../endor-estate-workspace/SKILL.md) — bulk namespace-scoped pull/analyze
+- [docs/estate/README.md](../../../docs/estate/README.md) — bulk namespace-scoped pull/analyze (`endor-estate`; not an agent skill)
 - [endor-retrieve-scan-results](../endor-retrieve-scan-results/SKILL.md)
 - [endor-dependency-provenance](../endor-dependency-provenance/SKILL.md)
 - [endor-fetch-and-search-call-graph](../endor-fetch-and-search-call-graph/SKILL.md)
