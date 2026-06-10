@@ -69,11 +69,12 @@ repos:
           - devtools/agent_knowledge_catalog.py
           - devtools/sync/cli.py
           - devtools/sync/upstream_verify.py
+          - devtools/verify_ship_artifacts.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py|verify_ship_artifacts\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: pyright-ci-critical-automation
         name: pyright (CI-critical automation scripts)
@@ -90,11 +91,12 @@ repos:
           - devtools/agent_knowledge_catalog.py
           - devtools/sync/cli.py
           - devtools/sync/upstream_verify.py
+          - devtools/verify_ship_artifacts.py
           - .github/scripts/check_endorctl_version.py
         language: system
         pass_filenames: false
         require_serial: true
-        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py)|\.github/scripts/check_endorctl_version\.py)$)
+        files: (^pyproject\.toml$|^(devtools/(model_sync\.py|generate_client_stub\.py|generate_reference_docs\.py|sync_agent_knowledge\.py|agent_knowledge_catalog\.py|sync/cli\.py|sync/upstream_verify\.py|verify_ship_artifacts\.py)|\.github/scripts/check_endorctl_version\.py)$)
 
       - id: model-sync-contract-validate
         name: model-sync contract validation

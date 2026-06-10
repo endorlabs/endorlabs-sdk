@@ -145,6 +145,14 @@ if projects:
     print(project.meta.name)
 ```
 
+**List field masks:** a non-empty `mask=` on `list()` returns `list[dict]` wire JSON rows, not
+full Pydantic models. Omit `mask` when you need typed resources end-to-end. See
+[docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md).
+
+**Large estate lists:** for project-scoped resources at scale, use
+[`endorlabs.tools.list_sharding`](src/endorlabs/tools/list_sharding.py) or the `endor-estate`
+workflow CLI (see [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md)).
+
 ### Requesting a scan and waiting for results
 
 ```python
