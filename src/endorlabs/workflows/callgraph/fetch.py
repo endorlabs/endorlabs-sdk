@@ -100,14 +100,17 @@ def summarize_call_graph(cg_data: dict[str, Any]) -> dict[str, Any]:
     return summary
 
 
+_ENDORCTL_WORKSPACE_MARKER = "endorctl/"
+
+
 def _clean_source_path(path: str) -> str:
-    """Strip ``/tmp/endorctl/<project>/`` prefix from source file paths."""
-    if "/tmp/endorctl/" in path:
-        after = path.split("/tmp/endorctl/", 1)[1]
-        if "/" in after:
-            return after.split("/", 1)[1]
-        return after
-    return path
+    """Strip ``<scan-root>/endorctl/<project>/`` from call-graph source paths."""
+    if _ENDORCTL_WORKSPACE_MARKER not in path:
+        return path
+    after_project_slug = path.split(_ENDORCTL_WORKSPACE_MARKER, 1)[1]
+    if "/" in after_project_slug:
+        return after_project_slug.split("/", 1)[1]
+    return after_project_slug
 
 
 def render_call_graph_summary_md(cg_json_path: str | Path) -> str | None:
