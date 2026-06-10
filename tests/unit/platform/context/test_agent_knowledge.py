@@ -57,16 +57,20 @@ def test_agent_knowledge_manifest_structure() -> None:
         assert (package_dir / entry["path"]).is_file()
 
 
-def test_workflow_catalog_includes_estate_workspace_with_skill() -> None:
+def test_workflow_catalog_estate_workspace_not_agent_visible() -> None:
+    manifest = agent_knowledge_manifest()
+    row = next(e for e in manifest["workflows"] if e["id"] == "estate-workspace")
+    assert row["skill"] is None
+    assert row["agent_visible"] is False
+    assert row["cli"] == "endor-estate"
+    assert "endor-estate-workspace" not in {entry["id"] for entry in manifest["skills"]}
+
     entries = json.loads(
         (agent_knowledge_dir() / "workflows" / "entries.json").read_text(
             encoding="utf-8"
         )
     )
-    row = next(e for e in entries if e["id"] == "estate-workspace")
-    assert row["skill"] == "endor-estate-workspace"
-    assert row["agent_visible"] is True
-    assert row["cli"] == "endor-estate"
+    assert not any(entry["id"] == "estate-workspace" for entry in entries)
 
 
 def test_agent_knowledge_manifest_path_matches_file() -> None:

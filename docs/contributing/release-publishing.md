@@ -128,12 +128,7 @@ uv run python devtools/check_vcs_version.py
 # Editable install path used by uv sync / Endor scans
 uv sync --dev
 
-# Build release artifacts (set version explicitly for local release simulation)
-# PowerShell:
-$env:SETUPTOOLS_SCM_PRETEND_VERSION = "0.1.1"
-# bash:
-# export SETUPTOOLS_SCM_PRETEND_VERSION=0.1.1
-
+# Build release artifacts (optional: set SETUPTOOLS_SCM_PRETEND_VERSION=0.1.1 in the environment for local simulation)
 uv build
 uv run twine check dist/*
 uv run python devtools/smoke_test_wheel.py
