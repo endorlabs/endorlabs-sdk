@@ -17,4 +17,4 @@ resources. Canonical playbook:
 (`AUTHORING.md`, `SYNTAX_REFERENCE.md`, `SEMGREP_RULE_SHAPE_GUARDRAILS.md`,
 `IMPORT_EXPORT.md`). Optional Cursor mirror: `.cursor/skills/endor-custom-sast-rules/`.
 
-Maintainer topics (release CI, PR comment wiring, estate migration): [contributing/README.md](../contributing/README.md).
+Maintainer topics (release CI, estate migration): [contributing/README.md](../contributing/README.md).
