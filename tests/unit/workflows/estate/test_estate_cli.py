@@ -110,10 +110,13 @@ def test_cmd_analyze_returns_error_on_failure(tmp_path: Path) -> None:
             workspace=str(tmp_path),
             date=None,
             only=None,
+            only_relationships=False,
             top_n=5,
             scorer="critical_high_count",
             skip_metrics=False,
             skip_validate=True,
+            relationship_max_depth=3,
+            relationship_max_workers=16,
         )
         assert cmd_analyze(args) == 1
 
@@ -130,10 +133,13 @@ def test_cmd_analyze_delegates_to_workspace(tmp_path: Path) -> None:
             workspace=str(tmp_path),
             date=None,
             only="graph,viz",
+            only_relationships=False,
             top_n=5,
             scorer="critical_high_count",
             skip_metrics=True,
             skip_validate=True,
+            relationship_max_depth=3,
+            relationship_max_workers=16,
         )
         assert cmd_analyze(args) == 0
     mock_analyze.assert_called_once()
