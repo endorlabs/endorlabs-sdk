@@ -24,7 +24,7 @@ This creates:
 - `.endorlabs-context/platform/user-docs/*.md` — User docs (sitemap-based, parallel download)
 - `.endorlabs-context/context.json` — init manifest
 
-Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents) for details.
+Options: `include_openapi=True/False`, `include_user_docs=True/False`, `include_agent_knowledge=True/False`, `max_pages=N`, `force=True`. See [AGENTS.md](../../AGENTS.md#bootstrap) and [CONTRIBUTORS.md](../../CONTRIBUTORS.md#optional-sync-external-docs).
 
 ## Model sync workflow (CI and local)
 
@@ -123,4 +123,5 @@ uv run python devtools/model_sync.py --inventory-only
 - [Architecture](./architecture.md) — Generated client surface and overlay
 - [Integration resource tests](./integration-resource-tests.md) — Facade validation tests
 - [Troubleshooting](./troubleshooting.md) — Issue resolution
-- [AGENTS.md](../../AGENTS.md) — AI agent index
+- [AGENTS.md](../../AGENTS.md) — Agent bootstrap and API gotchas
+- [repository-layout.md](./repository-layout.md) — Full repo region map
