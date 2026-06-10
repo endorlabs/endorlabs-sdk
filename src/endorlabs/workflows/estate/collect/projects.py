@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     list_resource_count,
@@ -19,7 +19,7 @@ from endorlabs.workflows.estate.workspace.paths import resource_path
 if TYPE_CHECKING:
     from endorlabs import Client
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 
 
 def _project_row(project: Any, fallback_ns: str) -> dict[str, Any]:

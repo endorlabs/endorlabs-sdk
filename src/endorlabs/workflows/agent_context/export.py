@@ -29,6 +29,7 @@ from endorlabs.tools.dependency_explorer import (
     slugify,
     write_json,
 )
+from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.agent_context.package_versions import (
     build_index_rows,
@@ -43,7 +44,7 @@ from endorlabs.workflows.agent_context.session_artifacts import (
 from endorlabs.workflows.callgraph.sweep import run_callgraph_sweep
 from endorlabs.workflows.projects.resolve import resolve_project
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = get_resource_logger(__name__)
 MANIFEST_VERSION = 2
 
 
