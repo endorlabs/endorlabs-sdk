@@ -31,6 +31,30 @@ Guidance for SDK users and contributors when choosing **namespace scope**, **`tr
 
 Related: [troubleshooting.md](troubleshooting.md) (list `ServerError`, 404 after traverse), [guides/retrieving-scan-results.md](../guides/retrieving-scan-results.md) (Project → ScanResult → Finding workflow).
 
+## Sharded parallel lists
+
+For large **project-scoped** resources (`DependencyMetadata`, `Finding`, `ScanResult`, grouped DM shards), one namespace-wide `list()` can return the same rows but force a long sequential pagination chain. Prefer **discover shard keys** (usually `Project` rows in the target namespace) → **parallel `list()` per shard** with a selective filter (`spec.importer_data.project_uuid==…`, `spec.project_uuid==…`) and **`namespace=project.namespace`**.
+
+Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `list_resource_count()` per shard for progress denominators, and spike with [`estate/collect/benchmark.py`](../../src/endorlabs/workflows/estate/collect/benchmark.py) before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
+
+**Primitives:** [`parallel_map_shards()`](../../src/endorlabs/workflows/estate/collect/shards.py), [`list_resource_count()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`main_context_filter()`](../../src/endorlabs/workflows/estate/filters/main_context.py). Estate context: [estate/README.md](../estate/README.md).
+
+### Workflow applicability
+
+| Area | Module / skill | Shard key | Parallel? | Notes |
+| ---- | -------------- | --------- | ----------- | ----- |
+| Compile graph collect | [`estate/collect/runner.py`](../../src/endorlabs/workflows/estate/collect/runner.py) | `spec.importer_data.project_uuid` | **Yes** | `endor-estate pull` → `data/`; `--resume` via `collect_manifest.json` |
+| Relationship map | [`estate/analyze/project_map/map.py`](../../src/endorlabs/workflows/estate/analyze/project_map/map.py) | `spec.importer_data.project_uuid` | **Yes** | Uses [`estate/collect/shards.py`](../../src/endorlabs/workflows/estate/collect/shards.py) |
+| Estate cardinality | [`estate/analyze/cardinality/export.py`](../../src/endorlabs/workflows/estate/analyze/cardinality/export.py) | — | **No** | Disk rollup from pulled JSONL |
+| Tenant traverse | `Client.*.list(traverse=True, concurrent=True)` | namespace path | **Yes** | Per child namespace, not per project |
+| Scan RCA (all projects) | [`fetch_scan_results.py`](../../src/endorlabs/workflows/troubleshooting_scans/fetch_scan_results.py) | `meta.parent_uuid` | **Yes** | Prefer `--project-uuid` for interactive RCA |
+| Scan error search | [`search_scan_errors.py`](../../src/endorlabs/workflows/troubleshooting_scans/search_scan_errors.py) | `project_uuid` | **Yes** | Same pattern when `--all-projects` |
+| Agent context export | [`agent_context/export.py`](../../src/endorlabs/workflows/agent_context/export.py) | `spec.project_uuid` | Partial | Single project per run |
+| Findings / policies session | [`session_artifacts.py`](../../src/endorlabs/workflows/agent_context/session_artifacts.py) | `spec.project_uuid` | **No** | Low volume per project |
+| Publisher index / PV sweep | [`estate/collect/runner.py`](../../src/endorlabs/workflows/estate/collect/runner.py) | — | Traverse | `PackageVersion.list(traverse=True)` on pull |
+| Semgrep inventory | [`semgrep/inventory.py`](../../src/endorlabs/workflows/semgrep/inventory.py) | — | **No** | Not project-scoped |
+| Reachability / call graph | [`reachability/`](../../src/endorlabs/workflows/reachability/) | project / PV UUID | Partial | Bounded artifact fetch |
+
 ## References
 
 - [contracts.md](../contracts.md) — `ListParameters`, namespace scoping.

@@ -35,7 +35,7 @@ For shell portability (PowerShell + POSIX), prefer `uv run python -c ...` over s
 
 ### SSO / login investigations
 
-Use the **endor-troubleshoot-authlog** skill (see [AGENTS.md — Skills](../../AGENTS.md#agent-skills-on-demand-workflows)).
+Use the **endor-troubleshoot-authlog** skill (see [AGENTS.md — Skills and handoffs](../../AGENTS.md#skills-and-handoffs)).
 
 ## 2. Discovery — namespaces and projects
 
@@ -170,8 +170,8 @@ status = endorlabs.init()  # materializes sdk/ by default
 uv run endor-context --sync-openapi
 ```
 
-See [AGENTS.md — SDK-only vs agent bootstrap](../../AGENTS.md#sdk-only-vs-agent-bootstrap)
-and [AGENTS.md](../../AGENTS.md#context-bootstrap-for-ai-agents).
+See [AGENTS.md — Bootstrap](../../AGENTS.md#bootstrap)
+and [CONTRIBUTORS.md — Optional: sync external docs](../../CONTRIBUTORS.md#optional-sync-external-docs).
 
 ## Suggested order for a first tenant session
 
