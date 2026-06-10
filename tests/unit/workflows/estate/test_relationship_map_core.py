@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from endorlabs.tools.dependency_explorer import parse_dep_name
+from endorlabs.workflows.dependencies.coordinates import parse_dep_name
 from endorlabs.workflows.estate.analyze.project_map.core import (
     SupportingPackage,
     _extract_one_consumer_row,

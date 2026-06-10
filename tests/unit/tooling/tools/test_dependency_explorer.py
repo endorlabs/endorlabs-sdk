@@ -1,4 +1,4 @@
-"""Tests for dependency_explorer utility functions.
+"""Tests for split dependency/call-graph workflow modules.
 
 Covers protobuf wire-format decoder, data class helpers, BOM utilities,
 rendering, and summary builders. API-calling functions are tested with mocks.
@@ -16,8 +16,16 @@ from unittest.mock import MagicMock
 
 import pytest  # noqa: TC002
 
-from endorlabs.tools import dependency_explorer as dependency_explorer_module
-from endorlabs.tools.dependency_explorer import (
+from endorlabs.utils.api_pagination import extract_objects
+from endorlabs.utils.artifact_io import slugify, write_json
+from endorlabs.workflows.agent_context.hydration import (
+    ProjectResult,
+    PVResult,
+    _render_pv_section,
+    build_dependency_callgraph_summary,
+)
+from endorlabs.workflows.callgraph.fetch import _clean_source_path, summarize_call_graph
+from endorlabs.workflows.callgraph.proto_decode import (
     ACCESS_LEVEL,
     CALL_TYPE,
     CALLGRAPH_VERSION,
@@ -26,12 +34,7 @@ from endorlabs.tools.dependency_explorer import (
     CallableInfo,
     CallEdge,
     CallGraphInfo,
-    ProjectResult,
-    PVResult,
     TypeInfo,
-    _bom_to_serializable,
-    _build_call_tree,
-    _clean_source_path,
     _decode_call,
     _decode_callable,
     _decode_callsite,
@@ -41,26 +44,29 @@ from endorlabs.tools.dependency_explorer import (
     _decode_varint,
     _get_field,
     _get_fields,
-    _infer_profile,
-    _normalize_children,
-    _render_pv_section,
-    _short_type_key,
     _unwrap_bool,
     _unwrap_int,
     _unwrap_string,
-    build_dependency_callgraph_summary,
+)
+from endorlabs.workflows.callgraph.render import (
+    _build_call_tree,
+    _infer_profile,
+    _short_type_key,
+    render_callgraph_analysis,
+)
+from endorlabs.workflows.dependencies import metadata_fetch as metadata_fetch_module
+from endorlabs.workflows.dependencies.bom_graph import (
+    _bom_to_serializable,
+    _normalize_children,
     count_transitive_children,
     extract_direct_deps,
-    extract_objects,
-    parse_dep_name,
-    render_callgraph_analysis,
     render_slim_dependencies,
     retrieve_bom_full,
+)
+from endorlabs.workflows.dependencies.coordinates import parse_dep_name
+from endorlabs.workflows.dependencies.metadata_fetch import (
     retrieve_dep_metadata_full,
-    slugify,
-    summarize_call_graph,
     summarize_dep_metadata,
-    write_json,
 )
 
 # ===================================================================
@@ -985,7 +991,7 @@ def test_retrieve_dep_metadata_full_prefers_project_namespace(
             return [{"uuid": "dm-1"}]
         return []
 
-    monkeypatch.setattr(dependency_explorer_module, "paginate_raw", _fake_paginate)
+    monkeypatch.setattr(metadata_fetch_module, "paginate_raw", _fake_paginate)
 
     rows, source_ns, truncated = retrieve_dep_metadata_full(
         MagicMock(),

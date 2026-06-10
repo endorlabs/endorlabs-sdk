@@ -328,7 +328,7 @@ def pull_repository_versions_context(
 
 def build_project_session_key(project: Any) -> str:
     """Build a collision-safe session key for project artifact directories."""
-    from endorlabs.tools.dependency_explorer import slugify
+    from endorlabs.utils.artifact_io import slugify
 
     project_name = project.meta.name if project.meta else project.uuid
     project_uuid = str(getattr(project, "uuid", "")).strip()
