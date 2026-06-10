@@ -1,5 +1,27 @@
 # Endor Labs SDK
 
+<p align="center">
+  <a href="https://www.endorlabs.com/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/endor-labs-wordmark-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/assets/endor-labs-wordmark-light.png">
+      <img src="docs/assets/endor-labs-wordmark-light.png" alt="Endor Labs" width="360">
+    </picture>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.endorlabs.com/platform">
+    <img src="docs/assets/endor-auri-platform.webp" alt="AURI by Endor Labs — agentic application security platform (CLI, API, MCP, Skills, Web UI)" width="720">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.endorlabs.com/platform">AURI platform</a> ·
+  <a href="https://docs.endorlabs.com/">Platform docs</a> ·
+  <a href="https://github.com/endorlabs/endorlabs-sdk">SDK source</a>
+</p>
+
 [Python CI](https://github.com/endorlabs/endorlabs-sdk/actions/workflows/ci-pr-main.yml)
 
 Type-safe, resource-oriented Python client for the Endor Labs REST API. List, get, create, update, and delete resources (projects, findings, scan results, policies, namespaces, and [the rest of the registry-backed resource set](docs/generated-reference/resources.md)) with consistent patterns for filtering, pagination, namespace traversal, and IDE-friendly typed facades.
