@@ -59,7 +59,7 @@ Edit `agent-knowledge/` → `uv run python devtools/sync_agent_knowledge.py` →
 | `platform/user-docs/` | Downloaded platform docs when synced (`[docs]` extra) |
 | `workspace/projects/<uuid>/` | Project-scoped workflow bundles (agent context, call graph, relationship maps) |
 | `workspace/sessions/<user>/` | Interactive RCA, exports, temp scripts, notes |
-| `workspace/artifacts/` | Namespace-scoped inventories (e.g. Semgrep metadata) |
+| `workspace/artifacts/` | Namespace-scoped inventories (e.g. **`SemgrepRule`** metadata from `endor-semgrep-inventory`) |
 | `workspace/<slug>-<YYYYMMDD>/` | Estate pull/analyze workspaces — [estate/workspace.md](../estate/workspace.md) |
 
 Path helpers: `endorlabs.context.paths`. Session layout rule: shipped `rules/endor-workspace-layout.md`.
