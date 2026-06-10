@@ -54,6 +54,7 @@ See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row ti
 
 ## Anti-patterns
 
+- Run **`endor-estate pull`** (namespace-wide bulk collect) unless the user explicitly requests it — see [docs/estate/README.md](../../docs/estate/README.md).
 - Copy-paste a workflow CLI `main()` into a session script.
 - Unbounded re-fetch to "fix" empty rows (check namespace first).
 - Add triage code under `src/endorlabs/` during an investigation.

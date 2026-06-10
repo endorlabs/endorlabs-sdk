@@ -31,22 +31,10 @@ Set these in your `.env` file or shell environment:
 | `ENDOR_API_CREDENTIALS_SECRET` | API secret for Endor Labs authentication |
 | `ENDOR_NAMESPACE` | Target namespace (e.g., `tenant.child`) |
 
-`sast_rule_manager.py` and other SDK workflow scripts read these automatically.
-On Windows PowerShell,
-load `.env` manually if your shell does not source it:
-
-```powershell
-Get-Content .env | ForEach-Object {
-    if ($_ -match '^\s*([^#][^=]+?)\s*=\s*(.+?)\s*$') {
-        Set-Item -Path "env:$($Matches[1])" -Value $Matches[2]
-    }
-}
-```
-
-Load credentials from a local `.env` file when running SDK commands:
+`sast_rule_manager.py` and other SDK workflow scripts read these from the environment. Load a local `.env` with **`uv run --env-file .env`** (see [README.md](../../../README.md#configuration)):
 
 ```bash
-uv run --env-file .env endorctl api list --resource Project -n "$ENDOR_NAMESPACE"
+uv run --env-file .env endorctl api list --resource Project -n tenant.ns
 ```
 
 ### Dependencies

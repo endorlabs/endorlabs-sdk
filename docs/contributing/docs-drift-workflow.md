@@ -78,28 +78,10 @@ from endorlabs.context import sync_openapi
 sync_openapi()  # downloads to .endorlabs-context/platform/openapi/openapiv2.swagger.json
 ```
 
-Then run model sync:
-
-**Linux / macOS (bash):**
+Then run model sync (credentials in `.env`; see [README.md](../../README.md#configuration)):
 
 ```bash
-export ENDOR_API="https://api.endorlabs.com"
-export ENDOR_API_CREDENTIALS_KEY="your-key"
-export ENDOR_API_CREDENTIALS_SECRET="your-secret"
-export ENDOR_NAMESPACE="your-namespace"
-
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
-```
-
-**Windows (PowerShell):**
-
-```powershell
-$env:ENDOR_API = "https://api.endorlabs.com"
-$env:ENDOR_API_CREDENTIALS_KEY = "your-key"
-$env:ENDOR_API_CREDENTIALS_SECRET = "your-secret"
-$env:ENDOR_NAMESPACE = "your-namespace"
-
-uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
+uv run --env-file .env python devtools/model_sync.py --generate-stubs --generate-reference-docs
 ```
 
 Check tooling availability without re-running generation:

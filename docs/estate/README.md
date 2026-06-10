@@ -12,7 +12,9 @@ endor-estate summarize → stdout / JSON summary
 
 Workspace root: `.endorlabs-context/workspace/<namespace-slug>-<YYYYMMDD>/`
 
-See [workspace.md](workspace.md), [risk-cardinality.md](risk-cardinality.md), and [compile-graph.md](compile-graph.md). Upgrading from legacy CLI names: [changelog.md](../changelog.md) (**Unreleased → Breaking**).
+See [workspace.md](workspace.md), [risk-cardinality.md](risk-cardinality.md), [compile-graph.md](compile-graph.md), and [remediation.md](remediation.md). Upgrading from legacy CLI names: [changelog.md](../changelog.md) (**Unreleased → Breaking**).
+
+**Agents:** `endor-estate` namespace bulk pull/analyze is a maintainer/human workflow (`agent_visible: false` in `MANIFEST.json`). Do not run `endor-estate pull` unless the user explicitly requests namespace-wide bulk collect.
 
 ## CLI quick start
 

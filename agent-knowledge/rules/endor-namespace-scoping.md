@@ -32,7 +32,7 @@ widen the path.
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
 **empty results with no error**.
 
-**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [endor-estate-workspace](../skills/endor-estate-workspace/SKILL.md).
+**Do not confuse:** `Client(tenant=…)` (auth) with **`--namespace` scope** on bulk workflows (`endor-estate pull -n …`) — namespace scope may be tenant root **or** a child namespace; see [docs/estate/README.md](../../docs/estate/README.md). Do not run bulk pull unless the user explicitly requests it.
 
 Alternatives:
 
