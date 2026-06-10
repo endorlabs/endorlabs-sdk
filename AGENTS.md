@@ -124,6 +124,24 @@ API workflow failures: **endor-troubleshoot-sdk** or [docs/contributing/troubles
 
 **Runtime rule:** read the **wheel** or **`.endorlabs-context/sdk/`** — not repo `agent-knowledge/` directly (authoring only).
 
+## Documentation placement
+
+- **Tracked [`docs/`](docs/)** — durable, public-safe: [`contracts.md`](docs/contracts.md), [`changelog.md`](docs/changelog.md), consumer [`guides/`](docs/guides/), maintainer [`contributing/`](docs/contributing/), generated [`reference/`](docs/reference/) landing → [`generated-reference/`](docs/generated-reference/).
+- **Ephemeral / session markdown** — readiness snapshots, audit logs, design spikes, one-off assessments → **`.endorlabs-context/workspace/sessions/<user>/notes/`** (gitignored). Do **not** commit under `docs/`.
+- **Do not add** `docs/findings/`, tracked `*-draft.md` / `*-assessment.md`, or parallel `*-migration.md` files — record breaks in [`changelog.md`](docs/changelog.md) instead.
+- **Public doc links:** prefer [`agent-knowledge/skills/`](agent-knowledge/skills/) in git-tracked docs; label [`.cursor/skills/`](.cursor/skills/) as an optional IDE mirror only.
+
+See [docs/design.md](docs/design.md) placement rules and bootstrap rule `endor-workspace-layout`.
+
+## Changelog
+
+- **Canonical:** [`docs/changelog.md`](docs/changelog.md) — user-facing **Added**, **Changed**, and **Breaking** per release.
+- **While developing:** append to **`## Unreleased`**; use the PR intake block in [`.github/pull_request_template.md`](.github/pull_request_template.md); copy user-facing **Summary** bullets into the changelog in the same PR.
+- **Added:** new console scripts, facades/public API, shipped skills (aggregate when many). **Not** routine OpenAPI regen — **Added** only for new/changed consumer surfaces; regen-only → omit or one **Changed** footnote at release.
+- **At release:** rename Unreleased to `## X.Y.Z`, then reset Unreleased with empty subsection headers ([release-publishing.md](docs/contributing/release-publishing.md)).
+- **Quality bar:** Breaking = action required; Added = new capability; omit internal refactors, CI-only changes, and doc reorgs unless user-visible.
+- Bootstrap rule: [`endor-changelog`](agent-knowledge/rules/endor-changelog.md) (glob: `docs/**`, `pyproject.toml`, release workflows).
+
 ## SDK runtime architecture
 
 Two layers: **transport** (`api_client.py`) + **registry-driven facades** (`client_surface.py`, `facade.py`, `generated/registry_contract.py`). Deep dive: [docs/contributing/architecture.md](docs/contributing/architecture.md). Workflow inventory: shipped `MANIFEST.json` → `workflows`; console scripts in [pyproject.toml](pyproject.toml) `[project.scripts]`.

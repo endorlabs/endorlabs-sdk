@@ -106,7 +106,7 @@ bundles go under `workspace/projects/<uuid>/`. See `rules/endor-workspace-layout
 1. This file (Tier 0)
 2. `MANIFEST.json` — rules, contracts, skills, workflow CLI index, `bootstrap` block
 3. **`rules/*.md`** — harness bootstrap (always load)
-4. **`sdk/contracts/*.md`** — normative SDK semantics on demand
+4. **`contracts/*.md`** — normative SDK semantics on demand
 5. **`skills/*/SKILL.md`** — task playbooks
 6. `../platform/openapi/` and `../platform/user-docs/` — product/API reference (after `init()`)
 7. `../workspace/` — your run outputs

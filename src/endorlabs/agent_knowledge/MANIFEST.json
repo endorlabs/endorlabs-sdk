@@ -2,6 +2,7 @@
   "bootstrap": {
     "index": "INDEX.md",
     "rule_ids": [
+      "endor-changelog",
       "endor-list-query-performance",
       "endor-local-context",
       "endor-namespace-scoping",
@@ -45,9 +46,19 @@
       ]
     }
   ],
-  "generated_at": "2026-06-09T06:12:26.079128+00:00",
+  "generated_at": "2026-06-10T00:03:36.067311+00:00",
   "index": "INDEX.md",
   "rules": [
+    {
+      "id": "endor-changelog",
+      "path": "rules/endor-changelog.md",
+      "summary": "Record breaking changes and notable features in docs/changelog.md only; keep Unreleased high-signal; use PR intake block before merge.",
+      "tags": [
+        "changelog",
+        "docs",
+        "release"
+      ]
+    },
     {
       "id": "endor-list-query-performance",
       "path": "rules/endor-list-query-performance.md",
@@ -110,7 +121,7 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.1.dev81",
+  "sdk_version": "0.1.1.dev93",
   "skills": [
     {
       "description": "Estate-scale workflows: pull workspace resources (project, dependency_metadata, finding, package_version), analyze version/risk cardinality and compile dependency graph from disk, unified dashboard viz. Use for estate-wide dependency diversity, risk-ranked cardinality, or CVE upgrade-path planning.",

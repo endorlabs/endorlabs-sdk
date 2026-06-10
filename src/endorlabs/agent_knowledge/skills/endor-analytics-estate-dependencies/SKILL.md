@@ -63,4 +63,4 @@ uv run endor-estate summarize -n <estate_root> \
   --workspace .endorlabs-context/workspace/<slug>-20260608
 ```
 
-Docs: [workspace.md](../../../docs/estate/workspace.md), [migration.md](../../../docs/estate/migration.md).
+Docs: [workspace.md](../../../docs/estate/workspace.md). Legacy CLI/layout: [changelog.md](../../../docs/changelog.md) (**Unreleased → Breaking**).

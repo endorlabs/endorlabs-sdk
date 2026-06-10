@@ -13,6 +13,7 @@ from devtools.agent_knowledge_catalog import (
     normalize_skill_for_bundle,
     parse_skill_md,
     portable_frontmatter,
+    rewrite_paths,
     validate_skill,
     validate_workflow_cli_entries,
 )
@@ -37,6 +38,11 @@ def test_portable_frontmatter_strips_endorlabs_extension() -> None:
         "disable-model-invocation": True,
     }
     assert "endorlabs" not in portable
+
+
+def test_rewrite_paths_does_not_double_prefix_sdk_contracts() -> None:
+    text = "See ``agent-knowledge/contracts/list-parameters.md``."
+    assert rewrite_paths(text) == "See ``sdk/contracts/list-parameters.md``."
 
 
 def test_normalize_skill_for_bundle_removes_endorlabs_key(tmp_path: Path) -> None:
