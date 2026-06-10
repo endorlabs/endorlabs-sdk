@@ -166,6 +166,7 @@ class _DependencyMetadataFacade(ResourceRuntimeFacade[DependencyMetadata]):
     """Dependency relationship between packages.
 
     Create mode: both.
+    Workflow flags: project-namespace-list.
     """
 
     def create(
@@ -195,6 +196,7 @@ class _FindingFacade(ResourceRuntimeFacade[Finding]):
     Identity kwargs: name (-> meta.name).
     Create mode: both.
     Update mode: update_mask required.
+    Workflow flags: project-namespace-list.
     """
 
     def create(
@@ -500,6 +502,7 @@ class _PackageVersionFacade(ResourceRuntimeFacade[PackageVersion]):
     Identity kwargs: name (-> meta.name).
     Create mode: both.
     Update mode: update_mask required.
+    Workflow flags: project-namespace-list.
     """
 
     def create(
@@ -746,6 +749,7 @@ class _ScanResultFacade(ResourceRuntimeFacade[ScanResult]):
     Supports list(parent=<project>).
     Create mode: both.
     Update mode: update_mask required.
+    Workflow flags: project-namespace-list.
     """
 
     def create(
