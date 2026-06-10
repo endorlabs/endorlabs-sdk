@@ -7,7 +7,7 @@
 <!-- Agents/maintainers: see agent-knowledge/rules/endor-changelog.md -->
 
 - [ ] **Not user-facing** — no edit to `docs/changelog.md` **Unreleased**
-- [ ] **User-facing** — add one bullet under **Added**, **Changed**, or **Breaking** in [`docs/changelog.md`](../docs/changelog.md) **Unreleased** (same PR when possible)
+- [ ] **User-facing** — add one bullet under **Added**, **Changed**, or **Breaking** in [`docs/changelog.md`](https://github.com/endorlabs/endorlabs-sdk/blob/main/docs/changelog.md) **Unreleased** (same PR when possible)
 
 | Field | Value |
 |-------|-------|
