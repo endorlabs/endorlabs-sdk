@@ -147,14 +147,14 @@ same version from a tag or workflow input.
 ### TestPyPI — `.github/workflows/release-testpypi.yml`
 
 - **Trigger:** `workflow_dispatch` with inputs `version` (required) and `ref` (default `main`)
-- **Build job:** quality checks via `check_vcs_version.py`, `uv build`, `twine check`, upload artifact
+- **Build job:** same composite gate as production (ruff, pyright, unit tests, `verify_ship_artifacts`, `uv build`, `twine check`)
 - **Publish job:** `environment: testpypi`, `permissions: id-token: write`, OIDC publish to TestPyPI
 
 ### Production PyPI — `.github/workflows/release-tag-publish.yml`
 
 - **Trigger:** push tag matching `v*`
 - **Classify:** final releases match `vX.Y.Z` exactly; dev anchors and pre-releases skip publish
-- **Build job (final only):** full quality gate, model-sync drift checks, `uv build`, `twine check`, GitHub Release
+- **Build job (final only):** composite release build gate (quality + ship-artifact verify + wheel build), GitHub Release
 - **Publish job (final only):** `environment: pypi`, OIDC publish to PyPI with attestations
 - **Post-release bump (final only):** pushes `vX.Y.(Z+1).dev0` dev anchor tag
 
