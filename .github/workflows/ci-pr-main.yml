@@ -201,44 +201,12 @@ jobs:
           uv-version: ${{ env.UV_VERSION }}
 
   # ---------------------------------------------------------------------------
-  # Validate full model_sync generation against live OpenAPI (lint gates on verify-upstream-only).
-  # ---------------------------------------------------------------------------
-  generate-model-sync:
-    name: Generate Model Sync Artifacts
-    runs-on: ubuntu-latest
-    needs: [resolve-dependencies, detect-changes]
-    if: >-
-      needs.detect-changes.outputs.python == 'true' ||
-      needs.detect-changes.outputs.config == 'true' ||
-      needs.detect-changes.outputs.ci == 'true' ||
-      needs.detect-changes.outputs.src == 'true' ||
-      needs.detect-changes.outputs.unit-tests == 'true'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - name: Setup Python with UV
-        uses: ./.github/actions/setup-python-uv
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          uv-version: ${{ env.UV_VERSION }}
-
-      - name: Download OpenAPI spec for model sync
-        run: |
-          mkdir -p .endorlabs-context/platform/openapi
-          curl -sSfL -o .endorlabs-context/platform/openapi/openapiv2.swagger.json https://api.endorlabs.com/download/openapiv2.swagger.json
-
-      - name: Run canonical model sync generation
-        run: |
-          uv run python devtools/model_sync.py --generate-stubs --generate-reference-docs
-
-  # ---------------------------------------------------------------------------
   # Lint — runs when any Python file, config, or CI definition changed.
   # ---------------------------------------------------------------------------
   lint:
     name: Lint, Typecheck, and Verify Generated Artifacts
     runs-on: ubuntu-latest
-    needs: [resolve-dependencies, detect-changes, generate-model-sync]
+    needs: [resolve-dependencies, detect-changes]
     if: >-
       needs.detect-changes.outputs.python == 'true' ||
       needs.detect-changes.outputs.config == 'true' ||
@@ -265,62 +233,15 @@ jobs:
         run: |
           uv run pyright --project pyproject.toml
 
-      # Mirrors pre-commit hook model-sync-upstream-verify (see .pre-commit-config.yaml).
-      - name: Verify committed model-sync matches upstream OpenAPI
+      - name: Verify ship artifacts (model-sync, stub, reference docs, agent knowledge)
         run: |
-          uv run python devtools/model_sync.py --verify-upstream-only
+          uv run python devtools/verify_ship_artifacts.py --fetch-spec
 
       # Keep script list aligned with .pre-commit-config.yaml (ruff-check-ci-critical-automation / pyright-ci-critical-automation).
       - name: Validate CI-critical automation scripts
         run: |
-          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py .github/scripts/check_endorctl_version.py
-          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py .github/scripts/check_endorctl_version.py
-
-      - name: Verify committed ship artifacts are present
-        run: |
-          if [ ! -f src/endorlabs/generated/registry_contract.py ]; then
-            echo "::error::Runtime registry contract was not generated."
-            exit 1
-          fi
-          if [ ! -f src/endorlabs/generated/models/__init__.py ]; then
-            echo "::error::Runtime generated model package was not generated."
-            exit 1
-          fi
-
-      - name: Verify generated client stub is up to date
-        run: |
-          uv run python devtools/generate_client_stub.py
-          if ! git diff --exit-code -- src/endorlabs/client_surface.pyi; then
-            echo "::error::client_surface.pyi is out of date. Run: uv run python devtools/generate_client_stub.py"
-            git --no-pager diff -- src/endorlabs/client_surface.pyi
-            exit 1
-          fi
-
-      - name: Verify shipped agent knowledge is up to date
-        run: |
-          uv run python devtools/sync_agent_knowledge.py --verify
-
-      - name: Regenerate generated reference docs and report drift
-        if: github.event_name != 'pull_request'
-        id: ref_docs
-        run: |
-          set -euo pipefail
-          FILES="docs/generated-reference/resources.md docs/generated-reference/create-update-payloads.md docs/generated-reference/api-surfaces.md docs/generated-reference/coverage.json docs/generated-reference/resources/"
-          uv run python devtools/generate_reference_docs.py
-          if git diff --quiet -- $FILES; then
-            echo "docs_stale=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::Generated reference docs are up to date."
-            exit 0
-          fi
-
-          echo "docs_stale=true" >> "$GITHUB_OUTPUT"
-          echo "::warning::Generated reference docs were stale; CI regenerated docs in the runner workspace (non-blocking)."
-          echo "::group::Generated reference docs drift (stat)"
-          git --no-pager diff --stat -- $FILES
-          echo "::endgroup::"
-          echo "::group::Generated reference docs drift (patch)"
-          git --no-pager diff -- $FILES
-          echo "::endgroup::"
+          uv run ruff check --select E,F,I,UP devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py devtools/verify_ship_artifacts.py .github/scripts/check_endorctl_version.py
+          uv run pyright --project pyproject.toml devtools/model_sync.py devtools/generate_client_stub.py devtools/generate_reference_docs.py devtools/sync_agent_knowledge.py devtools/agent_knowledge_catalog.py devtools/sync/cli.py devtools/sync/upstream_verify.py devtools/verify_ship_artifacts.py .github/scripts/check_endorctl_version.py
 
       - name: Run pyright verifytypes (public API type completeness)
         continue-on-error: true  # Remove when type completeness is 100% (see docs/reference/README.md)
@@ -347,25 +268,8 @@ jobs:
 
           python -c "import sys; score=float(sys.argv[1]); minimum=float(sys.argv[2]); mode=sys.argv[3]; print(f'verifytypes completeness score: {score:.2f}% (mode={mode}, min={minimum:.2f}%)'); raise SystemExit(1 if mode == 'enforce' and score < minimum else 0)" "$SCORE" "$MIN" "$MODE"
 
-      - name: Publish lint drift summary
-        if: github.event_name != 'pull_request' && always()
-        run: |
-          {
-            echo "## Lint/Generation Drift Summary"
-            echo ""
-            echo "| Signal | Value |"
-            echo "|---|---|"
-            echo "| Reference docs stale | \`${{ steps.ref_docs.outputs.docs_stale || 'false' }}\` |"
-            echo ""
-            if [ "${{ steps.ref_docs.outputs.docs_stale || 'false' }}" = "true" ]; then
-              echo "### Why stale?"
-              echo "- Generated reference docs differed from committed files after running \`devtools/generate_reference_docs.py\`."
-              echo "- See grouped logs in this job for full diff (\`drift (stat)\`, \`drift (patch)\`)."
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
-
   # ---------------------------------------------------------------------------
-  # Unit tests + coverage — committed generated ship surface (validated in generate-model-sync + lint).
+  # Unit tests + coverage — committed generated ship surface (validated in lint via verify_ship_artifacts).
   # Domain buckets live under tests/unit/{client,workflows,platform,tooling}.
   # Runs when src/, unit test files, config, or CI definition changed.
   # Note: lint conditions are a superset of unit-test conditions, so lint
@@ -613,14 +517,13 @@ jobs:
     name: Branch Protection CI Gate
     runs-on: ubuntu-latest
     if: always()
-    needs: [detect-changes, resolve-dependencies, generate-model-sync, lint, unit-tests, test-integration, endorlabs-security-scan]
+    needs: [detect-changes, resolve-dependencies, lint, unit-tests, test-integration, endorlabs-security-scan]
     steps:
       - name: Verify no failures
         run: |
           required_results=(
             "${{ needs.detect-changes.result }}"
             "${{ needs.resolve-dependencies.result }}"
-            "${{ needs.generate-model-sync.result }}"
             "${{ needs.lint.result }}"
             "${{ needs.unit-tests.result }}"
             "${{ needs.test-integration.result }}"
@@ -655,7 +558,6 @@ jobs:
             echo "|---|---|"
             echo "| Detect changes | \`${{ needs.detect-changes.result }}\` |"
             echo "| Resolve dependencies | \`${{ needs.resolve-dependencies.result }}\` |"
-            echo "| Generate model sync | \`${{ needs.generate-model-sync.result }}\` |"
             echo "| Lint/typecheck | \`${{ needs.lint.result }}\` |"
             echo "| Unit tests and coverage | \`${{ needs.unit-tests.result }}\` |"
             echo "| Integration tests | \`${{ needs.test-integration.result }}\` |"

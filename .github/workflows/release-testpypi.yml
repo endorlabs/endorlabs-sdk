@@ -53,19 +53,15 @@ jobs:
             echo "::error::Invalid PEP 440 version: ${VERSION}"
             exit 1
           fi
-          echo "SETUPTOOLS_SCM_PRETEND_VERSION=${VERSION}" >> "$GITHUB_ENV"
-          echo "version=${VERSION}" >> "$GITHUB_ENV"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Publishing version: ${VERSION}"
 
-      - name: Verify hatch-vcs version resolution
-        run: uv run python devtools/check_vcs_version.py
-
-      - name: Build package
-        run: uv build
-
-      - name: Verify distribution metadata
-        run: uv run twine check dist/*
+      - name: Run release build gate
+        uses: ./.github/actions/release-build-gate
+        with:
+          version: ${{ steps.version.outputs.version }}
+          fetch-spec: "true"
+          verify-changelog: "true"
 
       - name: Upload distribution artifacts
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
