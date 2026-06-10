@@ -65,9 +65,11 @@ def run_project_relationship_map(
     page_size: int = 500,
     dep_metadata_max_pages: int = 0,
     max_workers: int = 16,
+    focus_producer_project_uuid: str | None = None,
 ) -> RelationshipMapResult:
     """Build project-to-project relationship JSON under ``output_dir``."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    focus_uuid = (focus_producer_project_uuid or "").strip() or None
     list_max_pages = resolve_max_pages(max_pages)
     projects = client.Project.list(
         namespace=namespace,
@@ -93,6 +95,12 @@ def run_project_relationship_map(
         }
         for p in projects
     ]
+    if focus_uuid and focus_uuid not in project_set:
+        LOGGER.warning(
+            "focus producer project %s not in namespace project list; edges may be empty",
+            focus_uuid,
+        )
+
     pvs = client.PackageVersion.list(
         namespace=namespace,
         traverse=True,
@@ -110,6 +118,8 @@ def run_project_relationship_map(
     for pv in pvs:
         puid = getattr(pv.spec, "project_uuid", None) if pv.spec else None
         if not puid or puid not in project_set:
+            continue
+        if focus_uuid and str(puid) != focus_uuid:
             continue
         n_pv += 1
         mname = pv.meta.name if pv.meta and pv.meta.name else ""
@@ -178,6 +188,11 @@ def run_project_relationship_map(
         edges,
         max_depth,
     )
+    if focus_uuid:
+        edges = [edge for edge in edges if edge.get("to_project_uuid") == focus_uuid]
+        paths = [
+            path for path in paths if path.get("target_project_uuid") == focus_uuid
+        ]
     tier_counts: dict[str, int] = {
         "tier_a_exact": sum(
             1 for edge in edges if edge.get("evidence_tier") == "tier_a_exact"
@@ -190,16 +205,19 @@ def run_project_relationship_map(
     graph_payload = {
         "namespace": namespace,
         "generated_at": ts,
+        "focus_producer_project_uuid": focus_uuid,
         "projects": projects_json,
         "edges": edges,
     }
     paths_payload = {
         "namespace": namespace,
         "max_depth": max_depth,
+        "focus_producer_project_uuid": focus_uuid,
         "paths": paths,
     }
     stats_payload = {
         "namespace": namespace,
+        "focus_producer_project_uuid": focus_uuid,
         "project_count": len(projects_json),
         "package_version_count": n_pv,
         "dependency_row_count": dep_rows_total,

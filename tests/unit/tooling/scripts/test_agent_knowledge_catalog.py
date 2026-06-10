@@ -88,7 +88,7 @@ def test_build_workflow_catalog_merges_yaml_and_skill_rows() -> None:
     )
     catalog_rows = [
         (
-            "endor-project-agent-context",
+            "endor-project-retrieval-bundle",
             {
                 "workflow_id": "agent-context",
                 "cli": "endor-agent-context",
@@ -103,7 +103,7 @@ def test_build_workflow_catalog_merges_yaml_and_skill_rows() -> None:
     assert "context-bootstrap" in ids
     assert "agent-context" in ids
     agent_row = next(row for row in workflows if row["id"] == "agent-context")
-    assert agent_row["skill"] == "endor-project-agent-context"
+    assert agent_row["skill"] == "endor-project-retrieval-bundle"
     assert agent_row["cli"] == "endor-agent-context"
 
 

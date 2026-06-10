@@ -117,6 +117,7 @@ def test_cmd_analyze_returns_error_on_failure(tmp_path: Path) -> None:
             skip_validate=True,
             relationship_max_depth=3,
             relationship_max_workers=16,
+            focus_producer_project_uuid="",
         )
         assert cmd_analyze(args) == 1
 
@@ -140,6 +141,7 @@ def test_cmd_analyze_delegates_to_workspace(tmp_path: Path) -> None:
             skip_validate=True,
             relationship_max_depth=3,
             relationship_max_workers=16,
+            focus_producer_project_uuid="",
         )
         assert cmd_analyze(args) == 0
     mock_analyze.assert_called_once()
