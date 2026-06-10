@@ -119,6 +119,39 @@ def test_build_context_manifest_includes_optional_blocks(tmp_path: Path) -> None
     assert m["artifacts"]["callgraph_sweep"]["package_versions_total"] == 5
 
 
+def test_build_context_manifest_includes_session_summaries(tmp_path: Path) -> None:
+    pr = ProjectResult(
+        project_uuid="p1",
+        project_name="proj",
+        namespace="t.ns",
+        slug="proj",
+        out_dir=str(tmp_path),
+    )
+    session_root = tmp_path / "proj__p1"
+    m = build_context_manifest(
+        version=2,
+        tenant="t",
+        project_uuid="p1",
+        project_name="proj",
+        project_namespace="t.ns",
+        cli={"session_summaries": True},
+        warnings=[],
+        project_result=pr,
+        out_dir=tmp_path,
+        callgraph_sweep=None,
+        inventory=None,
+        selection=None,
+        hydration=None,
+        session_artifacts={
+            "enabled": True,
+            "session_dir": str(session_root),
+            "project_summary_md": str(session_root / "project-summary.md"),
+            "findings_total": 3,
+        },
+    )
+    assert m["artifacts"]["session_summaries"]["findings_total"] == 3
+
+
 def test_source_ref_sha_from_pv_version_fallback() -> None:
     pv = SimpleNamespace(
         spec=SimpleNamespace(
@@ -248,6 +281,7 @@ def test_main_rejects_index_only_with_top_n() -> None:
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
+        session_summaries=False,
     )
     with patch.object(export_mod, "parse_args", return_value=args):
         assert export_mod.main() == 2
@@ -274,6 +308,7 @@ def test_main_rejects_index_only_with_hydrate_uuids() -> None:
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
+        session_summaries=False,
     )
     with patch.object(export_mod, "parse_args", return_value=args):
         assert export_mod.main() == 2
@@ -300,6 +335,7 @@ def test_main_rejects_top_n_without_index() -> None:
         callgraph_max_pages=50,
         callgraph_page_size=200,
         decode_zstd=False,
+        session_summaries=False,
     )
     with patch.object(export_mod, "parse_args", return_value=args):
         assert export_mod.main() == 2
@@ -363,6 +399,7 @@ def test_main_index_only_success_flow(tmp_path: Path) -> None:
         callgraph_max_pages=1,
         callgraph_page_size=1,
         decode_zstd=False,
+        session_summaries=False,
     )
     proj = SimpleNamespace(
         uuid="p1",

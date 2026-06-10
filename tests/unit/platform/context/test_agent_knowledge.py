@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import endorlabs
+from devtools.sync_agent_knowledge import MANIFEST_SCHEMA_VERSION
 from endorlabs.agent_knowledge import (
     agent_knowledge_dir,
     agent_knowledge_index_path,
@@ -29,7 +31,7 @@ def test_agent_knowledge_manifest_structure() -> None:
     manifest = agent_knowledge_manifest()
     package_dir = agent_knowledge_dir()
 
-    assert manifest["schema_version"] == 2
+    assert manifest["schema_version"] == MANIFEST_SCHEMA_VERSION
     assert manifest["index"] == "INDEX.md"
     assert manifest["contracts"]
     assert manifest["rules"]
@@ -37,7 +39,11 @@ def test_agent_knowledge_manifest_structure() -> None:
 
     rule_ids = [entry["id"] for entry in manifest["rules"]]
     assert len(rule_ids) == len(set(rule_ids))
-    assert manifest["bootstrap"]["rule_ids"] == sorted(rule_ids)
+    bootstrap_ids = manifest["bootstrap"]["rule_ids"]
+    assert bootstrap_ids == sorted(bootstrap_ids)
+    assert "endor-changelog" in rule_ids
+    assert "endor-changelog" not in bootstrap_ids
+    assert set(bootstrap_ids).issubset(set(rule_ids))
     for entry in manifest["rules"]:
         assert (package_dir / entry["path"]).is_file()
 
@@ -71,20 +77,17 @@ def test_agent_knowledge_manifest_path_matches_file() -> None:
 
 
 def test_contracts_and_rules_shipped() -> None:
+    """Shipped rules/contracts on disk match MANIFEST.json (no drift either way)."""
+    manifest = agent_knowledge_manifest()
     package_dir = agent_knowledge_dir()
-    for name in (
-        "canonical-naming.md",
-        "list-parameters.md",
-        "dependency-metadata.md",
-        "errors-and-auth.md",
-    ):
-        assert (package_dir / "contracts" / name).is_file()
-    for name in (
-        "endor-namespace-scoping.md",
-        "endor-local-context.md",
-        "endor-workflow-composition.md",
-    ):
-        assert (package_dir / "rules" / name).is_file()
+
+    shipped_rules = {path.name for path in (package_dir / "rules").glob("*.md")}
+    manifest_rules = {Path(entry["path"]).name for entry in manifest["rules"]}
+    assert shipped_rules == manifest_rules
+
+    shipped_contracts = {path.name for path in (package_dir / "contracts").glob("*.md")}
+    manifest_contracts = {Path(entry["path"]).name for entry in manifest["contracts"]}
+    assert shipped_contracts == manifest_contracts
 
 
 def test_top_level_agent_knowledge_helpers() -> None:

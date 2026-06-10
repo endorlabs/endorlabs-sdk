@@ -36,6 +36,10 @@ from endorlabs.workflows.agent_context.package_versions import (
     parse_uuid_list_csv,
     select_top_n_uuids_by_update_time,
 )
+from endorlabs.workflows.agent_context.session_artifacts import (
+    build_project_session_key,
+    create_session,
+)
 from endorlabs.workflows.callgraph.sweep import run_callgraph_sweep
 from endorlabs.workflows.projects.resolve import resolve_project
 
@@ -62,6 +66,7 @@ def build_context_manifest(
     inventory: dict[str, Any] | None,
     selection: dict[str, Any] | None,
     hydration: dict[str, Any] | None,
+    session_artifacts: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble the context manifest dict (for JSON serialization)."""
     pvs_out: list[dict[str, Any]] = [
@@ -92,6 +97,8 @@ def build_context_manifest(
         "dep_metadata_truncated": project_result.dep_metadata_truncated,
     }
     artifacts["callgraph_sweep"] = callgraph_sweep
+    if session_artifacts is not None:
+        artifacts["session_summaries"] = session_artifacts
 
     out: dict[str, Any] = {
         "version": version,
@@ -242,6 +249,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help=(
             "With --callgraph-sweep, decode zstd and emit decoded callables/edges JSON."
+        ),
+    )
+    p.add_argument(
+        "--session-summaries",
+        action="store_true",
+        help=(
+            "Fetch findings, policies, and repository versions into the bundle "
+            "(project-summary.md plus findings/policies/versions subdirs)."
         ),
     )
     return p.parse_args()
@@ -458,6 +473,42 @@ def main() -> int:
             }
         }
 
+        session_block: dict[str, Any] | None = None
+        if args.session_summaries:
+            session_result = create_session(
+                client,
+                proj,
+                bundle,
+                deterministic=bool(args.deterministic),
+            )
+            session_key = build_project_session_key(proj)
+            session_root = bundle / session_key
+            session_block = {
+                "enabled": True,
+                "session_dir": str(session_root),
+                "status": session_result.status,
+                "project_summary_md": str(session_root / "project-summary.md"),
+                "findings_summary_md": str(
+                    session_root / "findings" / "findings-summary.md"
+                ),
+                "findings_json": str(session_root / "findings" / "findings.json"),
+                "policies_summary_md": str(
+                    session_root / "policies" / "policies-summary.md"
+                ),
+                "policies_json": str(session_root / "policies" / "policies.json"),
+                "versions_summary_md": str(
+                    session_root / "repository-versions" / "versions-summary.md"
+                ),
+                "versions_json": str(
+                    session_root / "repository-versions" / "versions.json"
+                ),
+                "findings_total": session_result.findings.total,
+                "policies_total": session_result.policies.total,
+                "versions_total": session_result.versions.total,
+            }
+            if session_result.errors:
+                warnings.extend(session_result.errors)
+
         cli_flags = {
             "tenant": args.tenant,
             "namespace": ns or None,
@@ -478,6 +529,7 @@ def main() -> int:
             "callgraph_max_pages": args.callgraph_max_pages,
             "callgraph_page_size": args.callgraph_page_size,
             "decode_zstd": args.decode_zstd,
+            "session_summaries": bool(args.session_summaries),
         }
 
         mdata = build_context_manifest(
@@ -494,6 +546,7 @@ def main() -> int:
             inventory=inventory_block,
             selection=selection_block,
             hydration=hydration_block,
+            session_artifacts=session_block,
         )
         write_json(str(manifest_path), mdata, base_dir=bundle)
         print(str(manifest_path.resolve()))

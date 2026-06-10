@@ -2,7 +2,6 @@
   "bootstrap": {
     "index": "INDEX.md",
     "rule_ids": [
-      "endor-changelog",
       "endor-list-query-performance",
       "endor-local-context",
       "endor-namespace-scoping",
@@ -46,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-10T00:42:36.671416+00:00",
+  "generated_at": "2026-06-10T01:04:02.016348+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -176,7 +175,7 @@
       "refs": []
     },
     {
-      "description": "Walk all projects in a namespace, identify direct and indirect dependency relationships between projects via produced/consumed package versions, and emit a JSON relationship graph with evidence scoring.",
+      "description": "Live API namespace project graph: producer PackageVersion + consumer DependencyMetadata joined by coordinate, with direct/indirect paths and evidence tiers. JSON only \u2014 not single-project SBOM export.",
       "id": "endor-map-project-dependency-relationships",
       "name": "endor-map-project-dependency-relationships",
       "path": "skills/endor-map-project-dependency-relationships/SKILL.md",
@@ -190,7 +189,7 @@
       "refs": []
     },
     {
-      "description": "Deterministic project context bundle: export context_manifest.json plus dependency explorer artifacts, optional call-graph sweep, multi-pass package-version index + targeted hydration, and composition with relationship mapping and call-graph search for remediation, threat, and repo-profiling agents.",
+      "description": "Deterministic single-project retrieval bundle: context_manifest.json, dependency explorer artifacts, optional session summaries (findings/policies/ versions), multi-pass PV index + hydration, and optional call-graph sweep.",
       "id": "endor-project-agent-context",
       "name": "endor-project-agent-context",
       "path": "skills/endor-project-agent-context/SKILL.md",
@@ -265,7 +264,7 @@
       "agent_visible": true,
       "cli": "endor-agent-context",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "default_output": ".endorlabs-context/workspace/projects/<slug>_<timestamp>/",
       "id": "agent-context",
       "library_entrypoints": [
         "endorlabs.workflows.agent_context.build_context_manifest",
@@ -340,7 +339,7 @@
     {
       "agent_visible": true,
       "cli": null,
-      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "default_output": ".endorlabs-context/workspace/projects/",
       "id": "relationships-map",
       "module": "endorlabs.workflows.estate.analyze.project_map.map",
       "skill": "endor-map-project-dependency-relationships"
