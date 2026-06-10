@@ -1,14 +1,12 @@
-# GitHub workflow templates
+# PR comment templates (manual)
 
-This directory used to hold `pr-findings-summary.tmpl`, which CI synced into Endor `PRCommentConfig`. That flow was removed: in-repo PR feedback uses the Endor API and [`.github/scripts/post_parallel_pr_comments.py`](../scripts/post_parallel_pr_comments.py) to post pull request review comments.
+This directory used to hold `pr-findings-summary.tmpl`, which CI synced into Endor `PRCommentConfig`. That flow was removed.
 
 To restore **Endor's default** PR comment template on your tenant after a custom template was applied, save the stock template text to a **gitignored** path such as `.endorlabs-context/workspace/sessions/agent/exports/pr-findings-summary-default-from-endor.tmpl` and run:
 
 ```bash
 uv run python .github/scripts/sync_pr_comment_template.py \
-  --namespace "$ENDOR_NAMESPACE" \
   --name github-pr-comments-template \
-  --template-path .endorlabs-context/workspace/sessions/agent/exports/pr-findings-summary-default-from-endor.tmpl \
   --platform-type PLATFORM_SOURCE_GITHUB
 ```
 
