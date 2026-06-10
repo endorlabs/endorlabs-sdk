@@ -2,7 +2,7 @@
 
 Two runtime layers plus registry-driven contract inputs define the Endor Labs SDK.
 Use this when editing the client surface, facade, or registry, or when adding
-resources to the Client. Agent/repo map: [AGENTS.md](../../AGENTS.md).
+resources to the Client. Repo map: [repository-layout.md](repository-layout.md). Agent bootstrap: [AGENTS.md](../../AGENTS.md).
 
 ```mermaid
 flowchart TD

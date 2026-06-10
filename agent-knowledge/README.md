@@ -35,7 +35,7 @@ Skills use progressive disclosure to minimize context window usage:
 
 ## Location
 
-Authoring → shipped bundle → runtime mirror flow is documented in [AGENTS.md § Repository layout](../AGENTS.md#repository-layout). **Runtime rule:** agents read the wheel or `.endorlabs-context/sdk/skills/` — not repo `agent-knowledge/skills/` directly.
+Authoring → shipped bundle → runtime mirror flow: [docs/contributing/repository-layout.md](../../docs/contributing/repository-layout.md). **Runtime rule:** agents read the wheel or `.endorlabs-context/sdk/skills/` — not repo `agent-knowledge/skills/` directly.
 
 After editing skills, run `uv run python devtools/sync_agent_knowledge.py` (see [schema/README.md](schema/README.md) for authoring rules, including [skill composition and handoffs](schema/README.md#skill-composition-and-handoffs)). Optional IDE mirrors: `init(sync_skills=...)` or the `endor-context` command below.
 

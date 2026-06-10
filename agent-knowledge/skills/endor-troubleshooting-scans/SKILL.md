@@ -101,7 +101,7 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
   - Use `--scan-window` (alias of `--limit`) to bound retrieved scan count.
   - Optional **`--status-filter`** (e.g. `STATUS_FAILURE`, `STATUS_PARTIAL_SUCCESS`) filters results client-side after listing.
   - Output object kind: `scan_results`.
-  - **Cost:** lists scan results for the namespace then filters by project client-side; keep `--limit` small for interactive RCA. **`--all-projects`** walks every project under `--tenant` — expect long runtimes (see [AGENTS.md](../../../AGENTS.md) — tenant-wide troubleshooting).
+  - **Cost:** lists scan results for the namespace then filters by project client-side; keep `--limit` small for interactive RCA. **`--all-projects`** walks every project under `--tenant` — expect long runtimes (see [AGENTS.md](../../../AGENTS.md#agent-notes) — tenant-wide scan fetch).
 
 - `select_anomalous_scans.py`
   - **Heuristic** scoring on adjacent pairs using summary metrics (status, total finding counts, dependency totals, `scan_success` / `scan_failures` deltas). Default thresholds: `--min-delta-findings 10`, `--min-delta-deps 50`.

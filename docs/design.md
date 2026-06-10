@@ -54,4 +54,4 @@ Normative agreements are defined in `docs/contracts.md`.
 - `docs/design.md`: durable rationale only (no feature PR playbooks or session reports).
 - `.endorlabs-context/workspace/sessions/<user>/notes/`: ephemeral markdown (readiness assessments, audits, design spikes) — gitignored; do not commit under `docs/`.
 
-Do not add `docs/findings/`, tracked `*-draft.md` / `*-assessment.md`, or parallel `*-migration.md` files. See [AGENTS.md](../AGENTS.md#documentation-placement).
+Do not add `docs/findings/`, tracked `*-draft.md` / `*-assessment.md`, or parallel `*-migration.md` files. Repo region map: [contributing/repository-layout.md](contributing/repository-layout.md).
