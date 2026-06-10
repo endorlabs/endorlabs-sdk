@@ -1,30 +1,57 @@
 ---
 name: endor-map-project-dependency-relationships
 description: >-
-  Live API namespace project graph: producer PackageVersion + consumer
-  DependencyMetadata joined by coordinate, with direct/indirect paths and
-  evidence tiers. JSON only — not single-project SBOM export.
+  Live API namespace project graph: consumer DependencyMetadata joined to producer
+  PackageVersion coordinates, with direct/indirect paths. Optional
+  focus-producer-project-uuid for breaking-change consumer discovery. Not
+  single-project SBOM export — use endor-project-retrieval-bundle.
 endorlabs:
   catalog:
     workflow_id: relationships-map
     module: endorlabs.workflows.estate.analyze.project_map.map
-    default_output: .endorlabs-context/workspace/projects/
+    default_output: .endorlabs-context/workspace/
     agent_visible: true
 ---
 
 # Map project dependency relationships
 
-Namespace-wide **project-to-project topology** from produced/consumed package coordinates. Does **not** emit `context_manifest.json` or per-project BOM/call-graph hydration.
+Namespace **consumer→producer** topology from produced/consumed package coordinates. Does **not** emit `context_manifest.json` or per-project BOM hydration.
 
 ## When to use
 
 | Need | Tool |
 |------|------|
-| Ad hoc graph under `workspace/projects/` | This skill's module CLI (below) |
-| Same graph into an **estate workspace** IR tree | `uv run endor-estate analyze -n <estate_root> --only-relationships` ([endor-analytics-estate-dependencies](../endor-analytics-estate-dependencies/SKILL.md)) |
-| **One repository** dependency context | [endor-project-agent-context](../endor-project-agent-context/SKILL.md) (`endor-agent-context`) |
-| Compile-import graph (not PV coordinate join) | `endor-estate analyze --only graph,viz` — [docs/estate/compile-graph.md](../../../docs/estate/compile-graph.md) |
-| Function reachability / stitched paths | `endor-reachability-context` (not topology-only) |
+| **Breaking change:** who consumes packages **my repo produces** | `--focus-producer-project-uuid <24-hex>` (below) |
+| Full namespace graph (all project edges) | module CLI or `endor-estate analyze --only-relationships` without focus |
+| Same graph into **estate workspace** IR | `uv run endor-estate analyze -n <estate_root> --only-relationships` ([endor-analytics-estate-dependencies](../endor-analytics-estate-dependencies/SKILL.md)) |
+| **One repository** SBOM/DM/CG slice | [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) (`endor-agent-context`) — **not** relationship correlation |
+| Compile-import graph | `endor-estate analyze --only graph,viz` |
+
+## Breaking-change blast radius (narrow pull)
+
+**Question:** “I changed an internal library in repo A — which other repos’ owners do I warn?”
+
+1. Resolve **producer** project UUID for repo A (`Project.lookup` / export bundle `subject.project_uuid`).
+2. Run relationship map with **`--focus-producer-project-uuid`** — still lists DependencyMetadata **across the namespace** (all potential consumers), but indexes producers **only from that project** and filters output edges to `to_project_uuid == <producer>`.
+
+```bash
+uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.map \
+  --tenant "<tenant>" \
+  --namespace "<tenant.namespace>" \
+  --focus-producer-project-uuid "<producer_project_uuid>" \
+  --output-dir .endorlabs-context/workspace/relationships
+```
+
+Or estate IR:
+
+```bash
+uv run endor-estate analyze -n <estate_root> --only-relationships \
+  --focus-producer-project-uuid "<producer_project_uuid>"
+```
+
+**Read:** `project_relationship_graph.json` → `edges[]` where each edge is **consumer** (`from_project_uuid`) → **your repo** (`to_project_uuid`). Map `from_project_uuid` to `projects[].name` (repo URL) for owner notification. Use `project_relationship_paths.json` for indirect consumers up to `--max-depth`.
+
+**Not project-scoped:** without `--focus-producer-project-uuid`, the pull is namespace-wide (all producers × all consumers). The retrieval bundle skill does **not** substitute — it has no cross-project join.
 
 ## Module CLI
 
@@ -33,50 +60,29 @@ uv run --env-file .env python -m endorlabs.workflows.estate.analyze.project_map.
   --tenant "<tenant>" \
   --namespace "<tenant.namespace>" \
   --max-depth 3 \
-  --output-dir .endorlabs-context/workspace/projects
+  --output-dir .endorlabs-context/workspace/relationships
 ```
 
-**Requires:** `--tenant`, `--namespace`. Lists `Project` and `PackageVersion` with `traverse=True`; sharded per-project `DependencyMetadata` with `spec.importer_data.project_uuid` filter.
+Lists `Project` and `PackageVersion` with `traverse=True`; sharded per-project `DependencyMetadata` filtered by `spec.importer_data.project_uuid`.
 
-**Writes (three JSON files):**
+**Writes:**
 
-- `project_relationship_graph.json` — projects + direct edges with evidence
-- `project_relationship_paths.json` — bounded indirect paths (`--max-depth`, default 3)
-- `project_relationship_stats.json` — counts and tier summary
+- `project_relationship_graph.json` — `focus_producer_project_uuid` when set; `edges` consumer→producer
+- `project_relationship_paths.json` — indirect paths to the focus producer when set
+- `project_relationship_stats.json`
 
-## Estate analysis layer
-
-For large estates, prefer writing into the pulled workspace IR (same JSON filenames under `intermediate-representation/`):
-
-```bash
-uv run endor-estate analyze -n <estate_root> --only-relationships
-# equivalent: --only relationships
-```
-
-Live API — does **not** require `endor-estate pull` first, but composes cleanly with pull + other analyze steps on the same workspace.
-
-## Inputs (module CLI)
+## Inputs
 
 - `tenant`, `namespace` (required)
-- `include_public` (default skip public rows)
-- `max_depth` (default 3), `max_pages` / `dep_metadata_max_pages` (0 = unlimited)
-- `page_size` (default 500), `max_workers` (default 16)
-- `output_dir` (default `.endorlabs-context/workspace/projects`)
+- `focus_producer_project_uuid` (optional) — narrow to one producer project
+- `include_public`, `max_depth`, `max_pages`, `dep_metadata_max_pages`, `page_size`, `max_workers`
+- `output_dir` (default `.endorlabs-context/workspace/projects` in CLI; prefer `workspace/relationships/` or estate IR)
 
 ## Bounds
 
-- Defaults are **unlimited** list caps; watch stderr for truncation warnings.
-- **Empty edges:** distinguish no overlapping coordinates from **truncated** `PackageVersion` listing before raising caps ([AGENTS.md](../../../AGENTS.md#agent-notes)).
-- Per-PV coordinate join only — not compile-time import graph.
-
-## Correlation (summary)
-
-1. Index producers from `PackageVersion.meta.name` → `(package, version)` and name-only tiers.
-2. Join consumer `DependencyMetadata` rows (exact coordinate, then name-only fallback).
-3. Aggregate project edges; BFS indirect paths up to `max_depth`.
-4. Confidence: all `tier_a_exact` → high; mixed → medium; name-only → low.
-
-Full field list and JSON shapes: module source `endorlabs.workflows.estate.analyze.project_map` and prior skill revision in git history if needed.
+- Unlimited list caps by default; watch stderr for truncation.
+- Focus mode still scans **all projects’** DependencyMetadata in the namespace — cost is not reduced to one project, only **output** is narrowed.
+- Coordinate join only — not compile-time import graph.
 
 ## Documentation hops
 

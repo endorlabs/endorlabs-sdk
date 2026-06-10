@@ -62,6 +62,7 @@ def test_main_writes_graph_artifacts_and_closes_client() -> None:
                 dep_metadata_max_pages=1,
                 max_workers=4,
                 output_dir=".tmp",
+                focus_producer_project_uuid="",
             ),
         ),
     ):

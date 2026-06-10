@@ -10,7 +10,7 @@
       "endorlabs.workflows.agent_context.list_package_versions_for_index"
     ],
     "module": "endorlabs.workflows.agent_context.cli",
-    "skill": "endor-project-agent-context"
+    "skill": "endor-project-retrieval-bundle"
   },
   {
     "agent_visible": true,
@@ -70,7 +70,7 @@
   {
     "agent_visible": true,
     "cli": null,
-    "default_output": ".endorlabs-context/workspace/projects/",
+    "default_output": ".endorlabs-context/workspace/",
     "id": "relationships-map",
     "module": "endorlabs.workflows.estate.analyze.project_map.map",
     "skill": "endor-map-project-dependency-relationships"
