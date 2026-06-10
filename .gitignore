@@ -37,8 +37,8 @@ venv.bak/
 # Cursor — local MCP server config (machine paths, tokens)
 .cursor/mcp.json
 .cursor/skills/
-.claude/skills/
-.claude/settings.local.json
+# Claude Code — local skill mirrors, generated slash commands, local settings
+.claude/
 *.swp
 *.swo
 *~
