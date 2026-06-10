@@ -52,7 +52,7 @@ Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `list_resource_coun
 | Agent context export | [`agent_context/export.py`](../../src/endorlabs/workflows/agent_context/export.py) | `spec.project_uuid` | Partial | Single project per run |
 | Findings / policies session | [`session_artifacts.py`](../../src/endorlabs/workflows/agent_context/session_artifacts.py) | `spec.project_uuid` | **No** | Low volume per project |
 | Publisher index / PV sweep | [`estate/collect/runner.py`](../../src/endorlabs/workflows/estate/collect/runner.py) | — | Traverse | `PackageVersion.list(traverse=True)` on pull |
-| Semgrep inventory | [`semgrep/inventory.py`](../../src/endorlabs/workflows/semgrep/inventory.py) | — | **No** | Not project-scoped |
+| SemgrepRule metadata inventory | [`semgrep/inventory.py`](../../src/endorlabs/workflows/semgrep/inventory.py) | — | **No** | `SemgrepRule.list(traverse=True)` via `endor-semgrep-inventory`; not project-scoped |
 | Reachability / call graph | [`reachability/`](../../src/endorlabs/workflows/reachability/) | project / PV UUID | Partial | Bounded artifact fetch |
 
 ## References
