@@ -21,6 +21,8 @@ agent-knowledge/
 
 Run `uv run python devtools/sync_agent_knowledge.py` after edits. CI `--verify` enforces drift (`tests/unit/platform/context/test_agent_knowledge_drift.py`).
 
+**Schema files:** [`skill.schema.json`](skill.schema.json), [`rule.schema.json`](rule.schema.json), [`contract.schema.json`](contract.schema.json), [`workflows.schema.json`](workflows.schema.json), [`changelog-intake.schema.json`](changelog-intake.schema.json) (optional PR intake fields; reference only).
+
 Unit tests for the shipped bundle should assert **structure** (unique ids, on-disk paths, bootstrap consistency)—not exact skill or workflow counts. Counts change whenever skills are added, removed, or demoted to workflow-only rows.
 
 ### Path consistency (tests and docs)
@@ -84,6 +86,7 @@ Use these headings in `SKILL.md` body (order may vary; omit sections that do not
 | **When to use this skill vs others** | Optional routing table: symptom/goal → start skill → then skill. |
 | **Optional stops** | For artifact chains: which module/flag to stop after and when (e.g. `--regression-only`). |
 | **Related skills** | Compact table at end (or after main workflow): Need → Skill link. Keep rows to skills that are **direct** handoffs, not the whole catalog. |
+| **Naming (optional footer)** | When a **CLI name, workflow id, or module path** uses domain shorthand but the API resource differs, state both once near the workflow step — e.g. `endor-semgrep-inventory` lists **`SemgrepRule`** via `client.SemgrepRule.list()`, not a separate “Semgrep” resource kind. Do not rename shipped CLIs; be explicit in prose. |
 
 **Intro blurb:** One or two sentences after the title can point **to** or **from** a sibling skill when users often start on the wrong playbook (e.g. retrieve-scan-results → troubleshooting-scans for pipeline failure).
 
@@ -162,6 +165,7 @@ Validated by [`contract.schema.json`](contract.schema.json). Shipped under `agen
 | [`rule.schema.json`](rule.schema.json) | Rule frontmatter |
 | [`contract.schema.json`](contract.schema.json) | Contract frontmatter |
 | [`workflows.schema.json`](workflows.schema.json) | `workflows.yaml` |
+| [`changelog-intake.schema.json`](changelog-intake.schema.json) | PR description intake block (reference; not CI-gated) |
 
 ## Meta-skill
 

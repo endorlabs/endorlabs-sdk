@@ -45,9 +45,19 @@
       ]
     }
   ],
-  "generated_at": "2026-06-09T06:12:26.079128+00:00",
+  "generated_at": "2026-06-10T01:33:10.628750+00:00",
   "index": "INDEX.md",
   "rules": [
+    {
+      "id": "endor-changelog",
+      "path": "rules/endor-changelog.md",
+      "summary": "Record breaking changes and notable features in docs/changelog.md only; keep Unreleased high-signal; use PR intake block before merge.",
+      "tags": [
+        "changelog",
+        "docs",
+        "release"
+      ]
+    },
     {
       "id": "endor-list-query-performance",
       "path": "rules/endor-list-query-performance.md",
@@ -110,19 +120,10 @@
     }
   ],
   "schema_version": 2,
-  "sdk_version": "0.1.1.dev81",
+  "sdk_version": "0.1.1.dev93",
   "skills": [
     {
-      "description": "Estate-scale workflows: pull workspace resources (project, dependency_metadata, finding, package_version), analyze version/risk cardinality and compile dependency graph from disk, unified dashboard viz. Use for estate-wide dependency diversity, risk-ranked cardinality, or CVE upgrade-path planning.",
-      "id": "endor-analytics-estate-dependencies",
-      "name": "endor-analytics-estate-dependencies",
-      "path": "skills/endor-analytics-estate-dependencies/SKILL.md",
-      "refs": [
-        "skills/endor-analytics-estate-dependencies/REMEDIATION.md"
-      ]
-    },
-    {
-      "description": "Author, validate, and import custom OpenGrep/Semgrep SAST rules into the Endor Labs platform. Use when the user wants to write security rules, perform threat modeling for SAST, create absence-detection rules, validate rule YAML, or import Semgrep rules into Endor Labs.",
+      "description": "Author, validate, and import custom OpenGrep/Semgrep rule YAML into Endor Labs SemgrepRule resources. Use when writing or fixing rule syntax, Endor metadata shape, local opengrep/semgrep checks, or importing rules to a namespace \u2014 not for finding triage (hand off to endor-retrieve-scan-results).",
       "id": "endor-custom-sast-rules",
       "name": "endor-custom-sast-rules",
       "path": "skills/endor-custom-sast-rules/SKILL.md",
@@ -131,7 +132,6 @@
         "skills/endor-custom-sast-rules/IMPORT_EXPORT.md",
         "skills/endor-custom-sast-rules/SEMGREP_RULE_SHAPE_GUARDRAILS.md",
         "skills/endor-custom-sast-rules/SYNTAX_REFERENCE.md",
-        "skills/endor-custom-sast-rules/THREAT_MODEL.md",
         "skills/endor-custom-sast-rules/scripts/sast_rule_manager.py"
       ]
     },
@@ -166,13 +166,6 @@
       "refs": []
     },
     {
-      "description": "Walk all projects in a namespace, identify direct and indirect dependency relationships between projects via produced/consumed package versions, and emit a JSON relationship graph with evidence scoring.",
-      "id": "endor-map-project-dependency-relationships",
-      "name": "endor-map-project-dependency-relationships",
-      "path": "skills/endor-map-project-dependency-relationships/SKILL.md",
-      "refs": []
-    },
-    {
       "description": "Triage and fix OpenAPI / model-sync upstream drift when CI or pre-push fails verify-upstream-only, or when published endorctl is newer than committed provenance. Use for regenerating registry_contract, stubs, and reference docs; reviewing generated diffs; and optional local endorctl upgrades. Not for runtime SDK API errors (see troubleshoot-sdk).",
       "id": "endor-model-sync-drift",
       "name": "endor-model-sync-drift",
@@ -180,12 +173,19 @@
       "refs": []
     },
     {
-      "description": "Deterministic project context bundle: export context_manifest.json plus dependency explorer artifacts, optional call-graph sweep, multi-pass package-version index + targeted hydration, and composition with relationship mapping and call-graph search for remediation, threat, and repo-profiling agents.",
-      "id": "endor-project-agent-context",
-      "name": "endor-project-agent-context",
-      "path": "skills/endor-project-agent-context/SKILL.md",
+      "description": "Live API namespace consumer\u2192producer project graph from PackageVersion + DependencyMetadata coordinates; optional focus-producer-project-uuid for breaking-change blast radius. Namespace-scoped, not single-project SBOM \u2014 use endor-project-retrieval-bundle for one repo.",
+      "id": "endor-namespace-relationship-map",
+      "name": "endor-namespace-relationship-map",
+      "path": "skills/endor-namespace-relationship-map/SKILL.md",
+      "refs": []
+    },
+    {
+      "description": "Deterministic single-project retrieval bundle via endor-agent-context: context_manifest.json, dependency explorer artifacts, optional session summaries, PV index + hydration, optional call-graph sweep. Not namespace topology or breaking-change consumer discovery \u2014 hand off to endor-namespace-relationship-map.",
+      "id": "endor-project-retrieval-bundle",
+      "name": "endor-project-retrieval-bundle",
+      "path": "skills/endor-project-retrieval-bundle/SKILL.md",
       "refs": [
-        "skills/endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md"
+        "skills/endor-project-retrieval-bundle/MULTIPASS_LLM_CONTRACT.md"
       ]
     },
     {
@@ -198,13 +198,11 @@
       ]
     },
     {
-      "description": "Query projects, scan results, and findings from the Endor Labs platform using the SDK. Use when the user wants to retrieve scan results, list findings, look up a project by repository URL, or build reports from scan data. Covers namespace traversal for tenant-wide queries.",
+      "description": "Project-scoped SDK workflow: resolve Project \u2192 latest ScanResult \u2192 Finding rows for one repo. Use when the user wants scan results, findings, or reports for a specific project. Default to namespace=project.namespace without traverse on findings; use traverse only to discover Project when namespace is unknown, or when the user explicitly requests tenant-wide reports.",
       "id": "endor-retrieve-scan-results",
       "name": "endor-retrieve-scan-results",
       "path": "skills/endor-retrieve-scan-results/SKILL.md",
-      "refs": [
-        "skills/endor-retrieve-scan-results/TRAVERSAL_PATTERNS.md"
-      ]
+      "refs": []
     },
     {
       "description": "Customer-facing workflow for planning, validating, and troubleshooting Endor Enterprise SSO integrations. Use when a customer is setting up SSO, validating namespace access behavior, or debugging claims-to-authorization mapping.",
@@ -255,14 +253,14 @@
       "agent_visible": true,
       "cli": "endor-agent-context",
       "composition": "library_api",
-      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "default_output": ".endorlabs-context/workspace/projects/<slug>_<timestamp>/",
       "id": "agent-context",
       "library_entrypoints": [
         "endorlabs.workflows.agent_context.build_context_manifest",
         "endorlabs.workflows.agent_context.list_package_versions_for_index"
       ],
       "module": "endorlabs.workflows.agent_context.cli",
-      "skill": "endor-project-agent-context"
+      "skill": "endor-project-retrieval-bundle"
     },
     {
       "agent_visible": true,
@@ -293,7 +291,7 @@
       "skill": null
     },
     {
-      "agent_visible": true,
+      "agent_visible": false,
       "cli": "endor-estate",
       "composition": "library_api",
       "default_output": ".endorlabs-context/workspace/<slug>-<YYYYMMDD>/",
@@ -305,7 +303,7 @@
         "endorlabs.workflows.estate.export_risk_ranked_version_cardinality"
       ],
       "module": "endorlabs.workflows.estate.cli.main",
-      "skill": "endor-analytics-estate-dependencies"
+      "skill": null
     },
     {
       "agent_visible": true,
@@ -330,10 +328,10 @@
     {
       "agent_visible": true,
       "cli": null,
-      "default_output": ".endorlabs-context/workspace/projects/<uuid>/",
+      "default_output": ".endorlabs-context/workspace/",
       "id": "relationships-map",
       "module": "endorlabs.workflows.estate.analyze.project_map.map",
-      "skill": "endor-map-project-dependency-relationships"
+      "skill": "endor-namespace-relationship-map"
     },
     {
       "agent_visible": true,

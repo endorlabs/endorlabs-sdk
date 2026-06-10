@@ -9,16 +9,12 @@ from unittest.mock import MagicMock
 
 import yaml
 
+from endorlabs import F
+
 
 def _load_sast_rule_manager() -> ModuleType:
     root = Path(__file__).resolve().parents[4]
     candidate_paths = (
-        root
-        / ".cursor"
-        / "skills"
-        / "endor-custom-sast-rules"
-        / "scripts"
-        / "sast_rule_manager.py",
         root
         / "agent-knowledge"
         / "skills"
@@ -33,6 +29,12 @@ def _load_sast_rule_manager() -> ModuleType:
         / "endor-custom-sast-rules"
         / "scripts"
         / "sast_rule_manager.py",
+        root
+        / ".cursor"
+        / "skills"
+        / "endor-custom-sast-rules"
+        / "scripts"
+        / "sast_rule_manager.py",
     )
     script_path = next(path for path in candidate_paths if path.is_file())
     spec = importlib.util.spec_from_file_location(
@@ -43,6 +45,35 @@ def _load_sast_rule_manager() -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def test_meta_name_substring_filter_uses_matches_not_contains() -> None:
+    import re
+
+    manager = _load_sast_rule_manager()
+    expr = manager._meta_name_substring_filter("endor-sdk")
+    expected = str(F("meta.name").matches(f".*{re.escape('endor-sdk')}.*"))
+    assert expr == expected
+    assert "contains" not in expr
+
+
+def test_cmd_delete_uses_meta_name_matches_filter() -> None:
+    import re
+
+    manager = _load_sast_rule_manager()
+    client = MagicMock()
+    client.SemgrepRule.list.return_value = []
+
+    manager.cmd_delete(
+        client=client,
+        namespace="tenant.ns",
+        name_filter="endor-sdk",
+        dry_run=True,
+    )
+
+    list_kwargs = client.SemgrepRule.list.call_args.kwargs
+    expected = str(F("meta.name").matches(f".*{re.escape('endor-sdk')}.*"))
+    assert list_kwargs["filter"] == expected
 
 
 def test_cmd_import_preserves_compound_rule_structure(tmp_path: Path) -> None:
@@ -237,3 +268,45 @@ def test_cmd_import_drops_parser_unsupported_short_description(tmp_path: Path) -
     assert isinstance(rules, list)
     metadata = rules[0].get("metadata", {})
     assert "short-description" not in metadata
+
+
+def test_cmd_validate_reports_guardrail_and_sdk_errors(tmp_path: Path) -> None:
+    manager = _load_sast_rule_manager()
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir()
+    (rules_dir / "bad.yml").write_text(
+        """rules:
+  - id: missing-pattern
+    message: "No pattern key"
+    severity: ERROR
+    languages: [python]
+""",
+        encoding="utf-8",
+    )
+
+    client = MagicMock()
+    rc = manager.cmd_validate(client, "tenant.ns", rules_dir)
+    assert rc == 1
+
+
+def test_cmd_validate_passes_minimal_rule(tmp_path: Path) -> None:
+    manager = _load_sast_rule_manager()
+    rules_dir = tmp_path / "rules"
+    rules_dir.mkdir()
+    (rules_dir / "ok.yml").write_text(
+        """rules:
+  - id: ok-rule
+    message: "OK"
+    severity: WARNING
+    languages: [python]
+    pattern: eval(...)
+    metadata:
+      category: security
+      description: test
+""",
+        encoding="utf-8",
+    )
+
+    client = MagicMock()
+    rc = manager.cmd_validate(client, "tenant.ns", rules_dir)
+    assert rc == 0

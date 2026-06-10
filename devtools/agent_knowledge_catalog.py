@@ -32,8 +32,6 @@ _LEGACY_PATH_REWRITES: tuple[tuple[str, str], ...] = (
     ("agent-skills/", "sdk/skills/"),
     ("agent/skills/", "sdk/skills/"),
     ("agent/rules/", "sdk/rules/"),
-    ("agent/contracts/", "sdk/contracts/"),
-    ("contracts/", "sdk/contracts/"),
 )
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
 
@@ -372,11 +370,19 @@ def build_contract_manifest_entries(contracts_dir: Path) -> list[dict[str, Any]]
     return entries
 
 
+# Maintainer-only rules ship in ``rules[]`` but are omitted from harness bootstrap.
+BOOTSTRAP_EXCLUDE_RULE_IDS: frozenset[str] = frozenset({"endor-changelog"})
+
+
 def build_bootstrap_manifest_block(
     rules: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Derive bootstrap rule ids from the rules manifest section."""
-    rule_ids = sorted(entry["id"] for entry in rules)
+    rule_ids = sorted(
+        entry["id"]
+        for entry in rules
+        if entry["id"] not in BOOTSTRAP_EXCLUDE_RULE_IDS
+    )
     return {"index": "INDEX.md", "rule_ids": rule_ids}
 
 

@@ -1,4 +1,4 @@
-"""Inventory metadata keys used by tenant Semgrep rules.
+"""Inventory metadata keys on tenant SemgrepRule resources.
 
 Produces:
 - JSON artifact with per-key prevalence and example rules
@@ -41,7 +41,7 @@ def build_inventory(
     max_pages: int = 0,
     page_size: int = 500,
 ) -> dict[str, Any]:
-    """List Semgrep rules and summarize metadata-key prevalence by origin."""
+    """List SemgrepRule resources and summarize metadata-key prevalence by origin."""
     list_max_pages = resolve_max_pages(max_pages)
     rules = client.SemgrepRule.list(
         namespace=namespace,
@@ -97,7 +97,7 @@ def build_inventory(
 
 def _write_markdown_summary(inventory: dict[str, Any], output_path: Path) -> None:
     lines = [
-        "# Semgrep metadata inventory",
+        "# SemgrepRule metadata inventory",
         "",
         f"- Namespace: `{inventory['namespace']}`",
         f"- Total rules: `{inventory['total_rules']}`",
@@ -116,7 +116,7 @@ def _write_markdown_summary(inventory: dict[str, Any], output_path: Path) -> Non
 def main() -> int:
     """Run the module CLI and return exit code."""
     parser = argparse.ArgumentParser(
-        description="Inventory Semgrep rule metadata keys."
+        description="Inventory SemgrepRule metadata keys (endor-semgrep-inventory)."
     )
     parser.add_argument("--namespace", required=True, help="Tenant namespace")
     parser.add_argument(

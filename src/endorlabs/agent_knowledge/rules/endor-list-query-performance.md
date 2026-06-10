@@ -44,4 +44,4 @@ server-side plan for broad unfiltered queries.
 3. Compare with `endorctl api list` (same resource, namespace, filter, traverse).
 4. Use a shorter read timeout when iterating locally.
 
-See also `rules/endor-namespace-scoping.md` and `sdk/contracts/list-parameters.md`.
+See also `rules/endor-namespace-scoping.md` and `contracts/list-parameters.md`.
