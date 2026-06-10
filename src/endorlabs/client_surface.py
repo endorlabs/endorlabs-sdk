@@ -7,6 +7,7 @@ All facades are built from the registries in endorlabs.registry.
 
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any, cast
 
 from .api_client import APIClient
@@ -17,10 +18,6 @@ from .core.exceptions import ValidationError
 from .core.filter import F
 from .facade import ResourceRuntimeFacade
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
-from .utils.endorctl_config import (
-    endorctl_config_path,
-    resolve_client_default_namespace,
-)
 from .utils.logging_config import get_resource_logger
 from .utils.model_validation import get_tags_update_paths
 from .utils.polling import wait_until as _wait_until
@@ -32,8 +29,7 @@ class Client:
     """Resource-oriented client; holds default namespace and exposes resource facades.
 
     Use endorlabs.Client(tenant="..."), endorlabs.Client() with
-    ``ENDOR_NAMESPACE`` or endorctl ``~/.endorctl/config.yaml`` set, or
-    endorlabs.Client(api_client=..., tenant="...").
+    ``ENDOR_NAMESPACE`` set, or endorlabs.Client(api_client=..., tenant="...").
     Then client.Namespace.list(traverse=True), client.Namespace.get(uuid), etc.
     All resources are driven by the registry in endorlabs.registry.
 
@@ -72,14 +68,15 @@ class Client:
             api_kwargs["base_url"] = base_url
             api_client = APIClient(**api_kwargs)
         self._client: APIClient | None = api_client
-        self._default_namespace, ns_source = resolve_client_default_namespace(tenant)
-        if ns_source == "env":
-            _logger.info("Default namespace from ENDOR_NAMESPACE environment variable")
-        elif ns_source == "endorctl_config":
-            _logger.info(
-                "Default namespace from endorctl config %s",
-                endorctl_config_path(),
-            )
+        if tenant:
+            self._default_namespace = tenant
+        else:
+            env_ns = os.environ.get("ENDOR_NAMESPACE", "").strip()
+            self._default_namespace = env_ns or None
+            if env_ns:
+                _logger.info(
+                    "Default namespace from ENDOR_NAMESPACE environment variable"
+                )
 
         # self._client is always set here (assigned above); None only after close().
         for entry in RESOURCE_REGISTRY:
