@@ -64,7 +64,7 @@ def test_workflow_catalog_includes_estate_workspace_with_skill() -> None:
         )
     )
     row = next(e for e in entries if e["id"] == "estate-workspace")
-    assert row["skill"] == "endor-analytics-estate-dependencies"
+    assert row["skill"] == "endor-estate-workspace"
     assert row["agent_visible"] is True
     assert row["cli"] == "endor-estate"
 
