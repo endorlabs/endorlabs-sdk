@@ -1153,7 +1153,8 @@ def render_call_graph_summary_md(cg_json_path: str | Path) -> str | None:
     try:
         with open(cg_json_path, encoding="utf-8") as f:
             envelope = json.load(f)
-    except Exception:
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning("Unable to read call graph JSON %s: %s", cg_json_path, exc)
         return None
     if "zstd_bytes" not in envelope:
         return None
@@ -1206,7 +1207,8 @@ def generate_call_graph_analysis_md(cg_json_path: str | Path) -> str | None:
     cg_json_path = Path(cg_json_path)
     try:
         envelope = json.loads(cg_json_path.read_text(encoding="utf-8"))
-    except Exception:
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning("Unable to read call graph JSON %s: %s", cg_json_path, exc)
         return None
     if "zstd_bytes" not in envelope:
         return None

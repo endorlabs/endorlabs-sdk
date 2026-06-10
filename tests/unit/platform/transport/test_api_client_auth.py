@@ -12,6 +12,7 @@ import httpx
 import pytest
 
 from endorlabs.api_client import APIClient
+from endorlabs.core.exceptions import ValidationError
 
 
 def _auth_post_response(
@@ -429,7 +430,7 @@ class TestAuthenticationBackwardCompatibility:
     def test_invalid_auth_method_fails_fast(self) -> None:
         """Unknown auth modes should raise clear startup validation errors."""
         with (
-            pytest.raises(ValueError, match="Unsupported auth_method"),
+            pytest.raises(ValidationError, match="Unsupported auth_method"),
             _patch_httpx_client(get_return=_auth_get_response()),
         ):
             _ = APIClient(auth_method="bad-mode")
@@ -444,7 +445,7 @@ class TestAuthenticationBackwardCompatibility:
     def test_email_mode_requires_email(self) -> None:
         """Email auth mode should require email input."""
         with (
-            pytest.raises(ValueError, match="requires email"),
+            pytest.raises(ValidationError, match="requires email"),
             _patch_httpx_client(get_return=_auth_get_response()),
         ):
             _ = APIClient(auth_method="email")
@@ -459,7 +460,7 @@ class TestAuthenticationBackwardCompatibility:
     def test_sso_mode_requires_auth_tenant(self) -> None:
         """SSO mode should require explicit auth_tenant."""
         with (
-            pytest.raises(ValueError, match="requires auth_tenant"),
+            pytest.raises(ValidationError, match="requires auth_tenant"),
             _patch_httpx_client(get_return=_auth_get_response()),
         ):
             _ = APIClient(auth_method="sso")
@@ -474,7 +475,7 @@ class TestAuthenticationBackwardCompatibility:
     def test_azureadv2_mode_fails_fast_until_supported(self) -> None:
         """azureadv2 is recognized but intentionally not yet implemented."""
         with (
-            pytest.raises(ValueError, match="not implemented"),
+            pytest.raises(ValidationError, match="not implemented"),
             _patch_httpx_client(get_return=_auth_get_response()),
         ):
             _ = APIClient(auth_method="azureadv2")
@@ -513,7 +514,9 @@ class TestAuthenticationBackwardCompatibility:
 
         with (
             _patch_httpx_client(post_return=malformed),
-            pytest.raises(ValueError, match="Invalid auth response: missing token"),
+            pytest.raises(
+                ValidationError, match="Invalid auth response: missing token"
+            ),
         ):
             _ = APIClient(auth_method="api-key")
 

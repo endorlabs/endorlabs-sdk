@@ -6,8 +6,9 @@ import logging
 from typing import Any
 
 from endorlabs.core.types import ListParameters
+from endorlabs.utils.logging_config import get_resource_logger
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = get_resource_logger(__name__)
 
 
 def resolve_max_pages(value: int | None) -> int | None:

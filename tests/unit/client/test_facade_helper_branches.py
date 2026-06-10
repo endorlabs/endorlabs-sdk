@@ -8,6 +8,7 @@ from unittest.mock import Mock
 import pytest
 
 from endorlabs import F
+from endorlabs.core.exceptions import ValidationError
 from endorlabs.facade import _ListableFacade
 
 
@@ -24,7 +25,7 @@ def _entry(*, filter_map: dict[str, str] | None = None) -> SimpleNamespace:
 
 def test_ns_requires_explicit_or_default_namespace() -> None:
     facade = _ListableFacade(Mock(), None, _entry())
-    with pytest.raises(ValueError, match="Namespace required"):
+    with pytest.raises(ValidationError, match="Namespace required"):
         facade._ns(None)
 
 

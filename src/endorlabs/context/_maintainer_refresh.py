@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Literal
 
 import endorlabs
+from endorlabs.utils.logging_config import get_resource_logger
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONTEXT_DIR = REPO_ROOT / ".endorlabs-context"
@@ -20,7 +21,7 @@ AGENT_KNOWLEDGE_PREFIX = "src/endorlabs/agent_knowledge/"
 CONTEXT_PREFIX = "src/endorlabs/context/"
 SYNC_AGENT_KNOWLEDGE = REPO_ROOT / "devtools" / "sync_agent_knowledge.py"
 
-logger = logging.getLogger(__name__)
+logger = get_resource_logger(__name__)
 
 
 def _normalize_paths(paths: Sequence[str]) -> tuple[str, ...]:

@@ -221,7 +221,7 @@ class APIClient:
                     "APIClient(auth_method='browser-auth')"
                 )
                 self.logger.error(error_msg)
-                raise ValueError(error_msg)
+                raise ValidationError(error_msg)
 
         # Store browser auth parameters
         self._browser_name = os.getenv("ENDOR_BROWSER")
@@ -766,7 +766,7 @@ class APIClient:
                 raise
         if last_exc:
             raise last_exc
-        raise RuntimeError("Retry loop exited without response or exception")
+        raise EndorAPIError("Retry loop exited without response or exception")
 
     def _handle_rate_limited(self, response: httpx.Response) -> None:
         """Handle HTTP 429 responses by setting rate-limit delay."""
@@ -1337,7 +1337,7 @@ class APIClient:
                 data = cast("dict[str, Any]", data_raw)
                 token_raw = data.get("token")
                 if not isinstance(token_raw, str) or not token_raw:
-                    raise ValueError("Invalid auth response: missing token")
+                    raise ValidationError("Invalid auth response: missing token")
                 token = token_raw
 
                 self._token_expires = self._parse_token_expiration(data)
@@ -1480,25 +1480,25 @@ class APIClient:
         """Validate auth mode and required mode-specific arguments."""
         if self.auth_method not in SUPPORTED_AUTH_METHODS:
             allowed = ", ".join(SUPPORTED_AUTH_METHODS)
-            raise ValueError(
+            raise ValidationError(
                 f"Unsupported auth_method '{self.auth_method}'. "
                 f"Supported modes: {allowed}"
             )
 
         if self.auth_method == "email" and not self._email:
-            raise ValueError(
+            raise ValidationError(
                 "auth_method='email' requires email=... "
                 "(or ENDOR_AUTH_EMAIL environment variable)."
             )
 
         if self.auth_method == "sso" and not self._auth_tenant:
-            raise ValueError(
+            raise ValidationError(
                 "auth_method='sso' requires auth_tenant=... "
                 "(or ENDOR_AUTH_TENANT / ENDOR_INIT_AUTH_TENANT)."
             )
 
         if self.auth_method == "azureadv2":
-            raise ValueError(
+            raise ValidationError(
                 "auth_method='azureadv2' is recognized for parity but is not "
                 "implemented in SDK browser OAuth routing yet. "
                 "Use 'sso', 'browser-auth', 'google', 'github', 'gitlab', or 'email'."
