@@ -45,7 +45,7 @@
       ]
     }
   ],
-  "generated_at": "2026-06-10T01:04:02.016348+00:00",
+  "generated_at": "2026-06-10T01:09:36.744872+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -175,7 +175,7 @@
       "refs": []
     },
     {
-      "description": "Live API namespace project graph: producer PackageVersion + consumer DependencyMetadata joined by coordinate, with direct/indirect paths and evidence tiers. JSON only \u2014 not single-project SBOM export.",
+      "description": "Live API namespace project graph: consumer DependencyMetadata joined to producer PackageVersion coordinates, with direct/indirect paths. Optional focus-producer-project-uuid for breaking-change consumer discovery. Not single-project SBOM export \u2014 use endor-project-retrieval-bundle.",
       "id": "endor-map-project-dependency-relationships",
       "name": "endor-map-project-dependency-relationships",
       "path": "skills/endor-map-project-dependency-relationships/SKILL.md",
@@ -189,12 +189,12 @@
       "refs": []
     },
     {
-      "description": "Deterministic single-project retrieval bundle: context_manifest.json, dependency explorer artifacts, optional session summaries (findings/policies/ versions), multi-pass PV index + hydration, and optional call-graph sweep.",
-      "id": "endor-project-agent-context",
-      "name": "endor-project-agent-context",
-      "path": "skills/endor-project-agent-context/SKILL.md",
+      "description": "Deterministic single-project retrieval bundle via endor-agent-context: context_manifest.json, dependency explorer artifacts, optional session summaries, PV index + hydration, optional call-graph sweep. Not namespace topology or breaking-change consumer discovery \u2014 hand off to relationship-map.",
+      "id": "endor-project-retrieval-bundle",
+      "name": "endor-project-retrieval-bundle",
+      "path": "skills/endor-project-retrieval-bundle/SKILL.md",
       "refs": [
-        "skills/endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md"
+        "skills/endor-project-retrieval-bundle/MULTIPASS_LLM_CONTRACT.md"
       ]
     },
     {
@@ -271,7 +271,7 @@
         "endorlabs.workflows.agent_context.list_package_versions_for_index"
       ],
       "module": "endorlabs.workflows.agent_context.cli",
-      "skill": "endor-project-agent-context"
+      "skill": "endor-project-retrieval-bundle"
     },
     {
       "agent_visible": true,
@@ -339,7 +339,7 @@
     {
       "agent_visible": true,
       "cli": null,
-      "default_output": ".endorlabs-context/workspace/projects/",
+      "default_output": ".endorlabs-context/workspace/",
       "id": "relationships-map",
       "module": "endorlabs.workflows.estate.analyze.project_map.map",
       "skill": "endor-map-project-dependency-relationships"

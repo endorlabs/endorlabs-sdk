@@ -72,6 +72,15 @@ def parse_args() -> argparse.Namespace:
         default=str(workflow_projects_root()),
         help="Output directory. Default: .endorlabs-context/workspace/projects",
     )
+    p.add_argument(
+        "--focus-producer-project-uuid",
+        default="",
+        help=(
+            "Optional 24-hex producer project UUID. Restrict producer PackageVersion "
+            "index to this project and return only consumer→producer edges (and paths) "
+            "where this project is the producer — e.g. breaking-change blast radius."
+        ),
+    )
     return p.parse_args()
 
 
@@ -93,6 +102,8 @@ def main() -> int:
             page_size=args.page_size,
             dep_metadata_max_pages=args.dep_metadata_max_pages,
             max_workers=args.max_workers,
+            focus_producer_project_uuid=(args.focus_producer_project_uuid or "").strip()
+            or None,
         )
         return 0
     finally:

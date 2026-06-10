@@ -29,7 +29,7 @@ For full PV/finding reachability triage across customer and `oss` planes, prefer
 
 1. **Credentials** — `uv run --env-file .env` (or equivalent) for `endorlabs.Client`.
 2. **Fetch (choose one):**
-   - **Context bundle (recommended)** — run [endor-project-agent-context](../endor-project-agent-context/SKILL.md) with **`--callgraph-sweep`** (`uv run endor-agent-context ...`). Use **`context_manifest.json`** `artifacts.callgraph_sweep` for paths to raw/decoded exports and the sweep manifest.
+   - **Context bundle (recommended)** — run [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) with **`--callgraph-sweep`** (`uv run endor-agent-context ...`). Use **`context_manifest.json`** `artifacts.callgraph_sweep` for paths to raw/decoded exports and the sweep manifest.
    - **Programmatic** — `endorlabs.tools.dependency_explorer.retrieve_call_graph_full` plus `decode_callgraph` (same primitives as `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep`) when you need a one-off fetch outside the export CLI.
 3. **Discover paths** — from `context_manifest.json` `artifacts.callgraph_sweep`, or from a sweep output directory’s `manifest.json`. Use a namespace consistent with the project’s `tenant_meta.namespace` when listing or resolving the project.
 4. **Search** — `uv run endor-callgraph-search` (or `uv run python -m endorlabs.workflows.callgraph.search`) with `--callables`, `--edges`, and filter patterns.
@@ -46,7 +46,7 @@ use method IDs for joins, intersections, and path checks.
 - `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep` — enumerates PVs and writes call graph exports (used by agent context `--callgraph-sweep`).
 - `endorlabs.workflows.callgraph.decoded.decode_payload` — canonical decoded shape contract (`summary`, `callables`, `edges`) shared by sweep + reachability workflows.
 - `endorlabs.workflows.callgraph.search` — searches decoded callables/edges (`endor-callgraph-search`).
-- Bundle orchestration: `uv run endor-agent-context ... --callgraph-sweep` (see [endor-project-agent-context](../endor-project-agent-context/SKILL.md)).
+- Bundle orchestration: `uv run endor-agent-context ... --callgraph-sweep` (see [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md)).
 
 ## Inputs
 
@@ -70,7 +70,7 @@ use method IDs for joins, intersections, and path checks.
 
 When the user ran `endor-agent-context` with **`--callgraph-sweep`** (Pass 3), **`context_manifest.json`** records `artifacts.callgraph_sweep` with export counts and list caps. **Read that object before** concluding “missing call graphs” — Pass 1 may list many PVs while Pass 2 only hydrated a subset unless `--hydrate-pv-uuids` / `--hydrate-top-n` was used.
 
-**Progressive disclosure:** full pass/manifest rules live in [MULTIPASS_LLM_CONTRACT.md](../endor-project-agent-context/MULTIPASS_LLM_CONTRACT.md). Load it only when you need truncation/escalation semantics.
+**Progressive disclosure:** full pass/manifest rules live in [MULTIPASS_LLM_CONTRACT.md](../endor-project-retrieval-bundle/MULTIPASS_LLM_CONTRACT.md). Load it only when you need truncation/escalation semantics.
 
 ## Example workflow (standalone)
 
