@@ -30,7 +30,8 @@ widen the path.
 
 **Resolve the `Project` row first**, then pass **`namespace=project.namespace`** on downstream lists
 (`Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`, …). Otherwise you often get
-**empty results with no error**.
+**empty results with no error** (the SDK may emit a `UserWarning` on empty tenant-root lists for
+these resources).
 
 Alternatives:
 
