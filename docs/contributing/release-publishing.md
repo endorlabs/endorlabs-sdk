@@ -27,7 +27,7 @@ editable installs fail**—the error in local Endor scans against `pypi://endorl
 4. Do **not** put `tag-pattern` on `[tool.hatch.version]` with a group that includes `.dev0` in the
    captured version (e.g. `0.1.1.dev0`) — setuptools-scm treats that as a custom dev id and fails.
 
-After a history purge or tag reset, the active dev anchor is **`v0.2.0.dev0`** → working tree
+The active dev anchor is **`v0.2.0.dev0`** → working tree
 versions like `0.2.0.devN`. Release CI sets `SETUPTOOLS_SCM_PRETEND_VERSION` so builds do not
 depend on deep git history (`fetch-depth: 1` on release workflows).
 
@@ -193,34 +193,6 @@ Validate the full gate without publishing:
 
 Tag pushes run **build-only** by default until `PYPI_TAG_PUBLISH_ENABLED` is set to `true` on the repository.
 
-## History purge (before public release)
-
-Personal-project history may contain proprietary exports (for example `*findings-export*.csv`) or
-bulk committed platform docs under `.endorlabs-context/`. **Tag deletion does not remove blobs
-from history** — use `git filter-repo` while the repository is still **private**.
-
-### Discovery
-
-```bash
-uv run python devtools/history_purge_audit.py
-uv run python devtools/history_purge_audit.py --json
-```
-
-### Purge (maintainer, destructive)
-
-1. Close open PRs; announce maintenance window.
-2. Run discovery; expand `--invert-paths` list from audit output.
-3. On a fresh clone: `git filter-repo --force --path .endorlabs-context/ --invert-paths` (plus each discovered path).
-4. Optionally squash to a clean root; **force-push** `main`.
-5. Delete all old `v*` tags on the remote; push `v0.2.0.dev0` on the new tip.
-6. Re-run discovery (expect zero hits), `release-build-gate` dry-run, and TestPyPI `0.2.0`.
-
-**Collaborators:** re-clone after force-push — do not merge from pre-purge branches.
-
-If `main` has branch protection (no force-push), either temporarily allow maintainers to
-force-push after `git filter-repo`, or land the purged history via a one-time admin merge
-of `chore/release-automation-hardening` (rewritten root) before re-enabling protection.
-
 ## Rollback and TestPyPI hygiene
 
 | Action | When |
@@ -228,15 +200,6 @@ of `chore/release-automation-hardening` (rewritten root) before re-enabling prot
 | **Yank** on TestPyPI | Trial uploads are expendable; yank before re-uploading the same version |
 | **Yank + patch** on production PyPI | Bad release shipped — yank `X.Y.Z`, publish `X.Y.(Z+1)` from a fix commit |
 | **Do not** rewrite published prod versions | PyPI versions are immutable; yank only |
-
-## Re-clone after history rewrite
-
-After `git filter-repo` or force-push:
-
-```bash
-git fetch --prune --tags
-# Prefer a fresh clone instead of merge/rebase from old local main
-```
 
 ## TestPyPI smoke install
 
@@ -272,5 +235,5 @@ Intake while merging PRs: [`.github/pull_request_template.md`](../../.github/pul
 - Version config: `pyproject.toml` → `[tool.hatch.version]`, `[tool.hatch.build.hooks.vcs]`
 - Generated at build: `src/endorlabs/_version.py` (gitignored)
 - Release CI: `.github/workflows/release-tag-publish.yml`, `.github/workflows/release-pypi.yml`, `.github/workflows/release-testpypi.yml`
-- Local helpers: `devtools/check_vcs_version.py`, `devtools/smoke_test_wheel.py`, `devtools/smoke_test_published_install.py`, `devtools/history_purge_audit.py`
+- Local helpers: `devtools/check_vcs_version.py`, `devtools/smoke_test_wheel.py`, `devtools/smoke_test_published_install.py`
 - Release gate: `.github/actions/release-build-gate/action.yml`
