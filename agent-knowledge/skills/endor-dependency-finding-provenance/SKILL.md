@@ -22,7 +22,10 @@ Playbook for customer-facing dependency/finding investigations.
 
 ## Prerequisites
 
-- Use customer-request framing and output style from `.cursor/rules/customer-requests.mdc`.
+- For customer-facing output: separate **scope** (tenant/namespace/project), **evidence**
+  (API rows and filters used), and **conclusion**; use placeholders such as
+  `<tenant>` / `<namespace>` in portable examples (see
+  [portable-examples](../../rules/endor-portable-examples.md)).
 - Confirm auth mode before running queries:
   - If both API key/secret and `ENDOR_TOKEN` exist, pass `auth_method="browser-auth"` explicitly for token-first customer access.
 - For package-lineage semantics (multi-manifest path separation, direct vs transitive normalization), apply `dependency-provenance` rules.

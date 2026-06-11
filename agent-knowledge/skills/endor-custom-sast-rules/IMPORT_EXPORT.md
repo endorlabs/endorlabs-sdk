@@ -73,19 +73,19 @@ expectations.
 
 ```bash
 # Import all rules in a directory (validates each rule first)
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns
 
 # Force update existing rules
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --force
 
 # Dry run (parse, validate, and log planned actions without calling the API)
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --dry-run
 
 # Verbose logging
-uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
+uv run python agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \
     import --rules-dir opengrep-rules/ --namespace tenant.ns --verbose
 ```
 
@@ -105,7 +105,7 @@ OpenGrep/Semgrep results.
 
 ## SAST Rule Manager CLI Reference
 
-The script is at `.cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`.
+The script is at `agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py`.
 
 ### Common flags (all subcommands)
 
