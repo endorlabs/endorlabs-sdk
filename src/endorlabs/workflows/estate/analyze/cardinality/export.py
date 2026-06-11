@@ -24,11 +24,17 @@ import logging
 import os
 import sys
 from collections import defaultdict
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
+from endorlabs.operations.list_response import (
+    GroupBucket,
+    count_from_wire,
+    parse_group_key,
+)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.cardinality.tabular import (
     TabularExport,
@@ -46,11 +52,8 @@ from .columns import (
     VERSION_USAGE_COLUMNS,
 )
 from .group_list import (
-    count_from_wire,
     grouped_count_list_parameters,
     grouped_count_list_parameters_for_importer_package_version,
-    iter_group_buckets,
-    parse_group_key,
 )
 from .remediation import RemediationComparisonResult, analyze_intra_minor_remediation
 from .types import VersionCardinalityResult, VersionCardinalityStats
@@ -271,6 +274,24 @@ def _collect_importer_shards(
     return shards, errors
 
 
+def _iter_group_buckets(
+    client: Client,
+    namespace: str,
+    list_params: ListParameters,
+    *,
+    max_pages: int | None,
+) -> Iterator[GroupBucket]:
+    paths = list_params.group_aggregation_paths
+    if not paths:
+        raise ValueError("list_params.group_aggregation_paths is required")
+    return client.DependencyMetadata.list_groups(
+        namespace=namespace,
+        list_params=list_params,
+        paths=list(paths),
+        max_pages=max_pages,
+    )
+
+
 def _fetch_grouped_usage_rows(
     client: Client,
     namespace: str,
@@ -283,12 +304,14 @@ def _fetch_grouped_usage_rows(
 ) -> tuple[list[dict[str, Any]], int]:
     usage_rows: list[dict[str, Any]] = []
     processed_groups = 0
-    for group_key, group_data in iter_group_buckets(
+    for bucket in _iter_group_buckets(
         client,
         namespace,
         list_params,
         max_pages=max_pages,
     ):
+        group_key = bucket.key
+        group_data = bucket.data
         row = _usage_row_from_group(
             estate_root,
             group_key,
@@ -612,12 +635,14 @@ def export_version_cardinality_for_package_match(
         _emit_progress(index, total_namespaces, label="namespaces")
         try:
             group_count = 0
-            for group_key, group_data in iter_group_buckets(
+            for bucket in _iter_group_buckets(
                 client,
                 ns,
                 list_params,
                 max_pages=max_pages,
             ):
+                group_key = bucket.key
+                group_data = bucket.data
                 row = _usage_row_from_group(
                     estate_root,
                     group_key,

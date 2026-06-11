@@ -42,7 +42,7 @@ Architecture: [architecture.md](../../../docs/contributing/architecture.md). Dri
 - [ ] Scope (`tenant`, `oss`, `system`) correct in overlay if not tenant-default
 - [ ] Docstrings on public helpers in `resources/` (Args, Returns, Raises)
 
-Custom workflow facades (e.g. `ScanLogs`) are rare append-only entries in `registry.py` — prefer overlay + generated contract.
+Custom workflow facades (e.g. `CallGraphData`) are rare append-only entries in `registry.py` — prefer overlay + generated contract.
 
 ## Phase 3: Integration tests
 

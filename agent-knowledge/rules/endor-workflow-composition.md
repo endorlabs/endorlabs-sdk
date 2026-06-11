@@ -42,14 +42,17 @@ After a workflow run, treat outputs as source of truth:
 
 Generic entrypoints (no estate literals):
 
-- `endorlabs.workflows.projects.resolve.resolve_project`
+- `client.Project.resolve()` — prefer over `workflows.projects.resolve.resolve_project`
+- `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
+- `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
+- `client.Finding.list_for_scan()` — scan-scoped finding lists
+- `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_sweep`
-- `endorlabs.workflows.troubleshooting_scans` — `list_scan_results_for_project`, `resolve_project`, …
+- `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer facade sugar for scan lists and project resolve
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
-- `endorlabs.tools.dependency_explorer` — backward-compatible re-exports of the hydration/call-graph modules above
 
 See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row tied to each skill.
 

@@ -65,15 +65,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     for scan_uuid in uuids:
         entries: list[str] = []
         try:
-            log_messages = scanlogs_client.ScanLogs.get_logs(
-                scan_result_uuid=scan_uuid,
+            log_messages = scanlogs_client.ScanResult.get_logs(
+                scan_uuid,
                 namespace=args.namespace,
                 max_entries=args.max_entries,
             )
             entries.extend(scanlog_line(message) for message in log_messages)
         except Exception as exc:
             _LOGGER.warning(
-                "ScanLogs fetch failed for %s: %s", scan_uuid, exc, exc_info=True
+                "ScanResult.get_logs failed for %s: %s", scan_uuid, exc, exc_info=True
             )
             entries = []
 

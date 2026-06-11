@@ -95,7 +95,7 @@ def compare_scan_logs(
         )
 
         try:
-            logs = client.ScanLogs.get_logs(
+            logs = client.ScanResult.get_logs(
                 sr.uuid,
                 namespace=namespace,
                 log_levels=resolved_levels,

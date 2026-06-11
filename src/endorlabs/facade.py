@@ -3,7 +3,8 @@
 
 Provides ``ResourceRuntimeFacade[T]`` — a single facade class that handles all
 resource scopes (tenant, oss, system) via the ``scope`` parameter — and
-``ScanLogsFacade`` for the request-based scan logs workflow.
+``CallGraphDataFacade`` for call-graph decode/fetch and resource facades with
+skill-backed sugar (``ScanResult.get_logs``, ``Project.resolve``, …).
 
 ``scope`` controls namespace resolution:
 
@@ -40,7 +41,6 @@ if TYPE_CHECKING:
 
     from .api_client import APIClient
     from .registry import ResourceEntry
-    from .resources.scan_log_request import ScanLogLevel, ScanLogRequestLogMessage
 
 
 class ListableFacade[T: BaseModel]:
@@ -362,6 +362,30 @@ class ListableFacade[T: BaseModel]:
         """
         if "list" not in self._supported_ops:
             raise NotImplementedError("This resource does not support list.") from None
+
+        if count is True:
+            warnings.warn(
+                f"{self._entry.attr_name}.list(count=True) is deprecated; "
+                "use .count() instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return cast(
+                "list[T] | list[dict[str, Any]]",
+                self.count(
+                    traverse=traverse,
+                    namespace=namespace,
+                    list_params=list_params,
+                    parent=parent,
+                    filter=filter,
+                    from_date=from_date,
+                    to_date=to_date,
+                    archive=archive,
+                    pr_uuid=pr_uuid,
+                    ci_run_uuid=ci_run_uuid,
+                    **kwargs,
+                ),
+            )
 
         if parent is not None:
             if self._parent_kind is None:
@@ -749,6 +773,176 @@ class ListableFacade[T: BaseModel]:
         )
         return self._ops.list_iter(ns, lp, max_pages)
 
+    def count(
+        self,
+        traverse: bool = False,
+        namespace: str | None = None,
+        list_params: ListParameters | None = None,
+        parent: Any = None,
+        filter: str | FilterExpression | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        archive: bool | None = None,
+        pr_uuid: str | None = None,
+        ci_run_uuid: str | None = None,
+        **kwargs: Any,
+    ) -> int:
+        """Return the number of resources matching list filters."""
+        if "list" not in self._supported_ops:
+            raise NotImplementedError("This resource does not support count.") from None
+        if parent is not None:
+            if self._parent_kind is None:
+                raise ValidationError(
+                    "This resource does not support count(parent=)."
+                ) from None
+            namespace = self._ns(
+                resolve_namespace_for_resource(parent, self._default_namespace)
+            )
+        ns = self._ns(namespace)
+        lp = self._effective_list_parameters(
+            traverse=traverse,
+            list_params=list_params,
+            parent=parent,
+            filter=filter,
+            mask=None,
+            page_size=None,
+            page_token=None,
+            page_id=None,
+            sort_by=None,
+            desc=None,
+            count=None,
+            from_date=from_date,
+            to_date=to_date,
+            archive=archive,
+            pr_uuid=pr_uuid,
+            ci_run_uuid=ci_run_uuid,
+            **kwargs,
+        )
+        return self._ops.count(ns, list_params=lp)
+
+    def list_groups(
+        self,
+        *,
+        paths: list[str] | None = None,
+        traverse: bool = False,
+        namespace: str | None = None,
+        list_params: ListParameters | None = None,
+        max_pages: int | None = None,
+        parent: Any = None,
+        filter: str | FilterExpression | None = None,
+        page_size: int | None = None,
+        **kwargs: Any,
+    ) -> Iterator[Any]:
+        """Yield grouped aggregation buckets from ``group_response`` pages."""
+        from .operations.list_response import iter_group_buckets_from_pages
+
+        if "list" not in self._supported_ops:
+            raise NotImplementedError(
+                "This resource does not support list_groups."
+            ) from None
+        if parent is not None:
+            if self._parent_kind is None:
+                raise ValidationError(
+                    "This resource does not support list_groups(parent=)."
+                ) from None
+            namespace = self._ns(
+                resolve_namespace_for_resource(parent, self._default_namespace)
+            )
+        ns = self._ns(namespace)
+        lp = self._effective_list_parameters(
+            traverse=traverse,
+            list_params=list_params,
+            parent=parent,
+            filter=filter,
+            mask=None,
+            page_size=page_size,
+            page_token=None,
+            page_id=None,
+            sort_by=None,
+            desc=None,
+            count=None,
+            from_date=None,
+            to_date=None,
+            archive=None,
+            pr_uuid=None,
+            ci_run_uuid=None,
+            **kwargs,
+        )
+        if paths:
+            if lp is None:
+                lp = ListParameters.model_validate({"group_aggregation_paths": paths})
+            else:
+                lp = lp.model_copy(update={"group_aggregation_paths": paths})
+        pages = self._ops.iter_group_pages(ns, lp, max_pages=max_pages)
+        return iter_group_buckets_from_pages(pages)
+
+    def latest(
+        self,
+        *,
+        sort_by: str = "meta.create_time",
+        desc: bool = True,
+        parent: Any = None,
+        namespace: str | None = None,
+        list_params: ListParameters | None = None,
+        filter: str | FilterExpression | None = None,
+        **kwargs: Any,
+    ) -> T | None:
+        """Return the newest single row for ``sort_by`` (always ``max_pages=1``)."""
+        if self._parent_kind and parent is None:
+            warnings.warn(
+                f"{self._entry.attr_name}.latest() without parent= may scan the "
+                f"wrong scope; this resource has parent_kind={self._parent_kind!r}.",
+                UserWarning,
+                stacklevel=2,
+            )
+        items = self.list(
+            parent=parent,
+            namespace=namespace,
+            list_params=list_params,
+            filter=filter,
+            sort_by=sort_by,
+            desc=desc,
+            max_pages=1,
+            page_size=1,
+            concurrent=False,
+            **kwargs,
+        )
+        if not items:
+            return None
+        return cast("T", items[0])
+
+    def latest_created(
+        self,
+        *,
+        parent: Any = None,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> T | None:
+        """Newest row by ``meta.create_time`` (``max_pages=1``)."""
+        return self.latest(
+            sort_by="meta.create_time",
+            desc=True,
+            parent=parent,
+            namespace=namespace,
+            **kwargs,
+        )
+
+    def latest_updated(
+        self,
+        *,
+        parent: Any = None,
+        namespace: str | None = None,
+        **kwargs: Any,
+    ) -> T | None:
+        """Newest row by ``meta.update_time`` (``max_pages=1``)."""
+        return self.latest(
+            sort_by="meta.update_time",
+            desc=True,
+            parent=parent,
+            namespace=namespace,
+            **kwargs,
+        )
+
 
 class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
     """Facade for resources with get/create/update/delete where supported.
@@ -849,6 +1043,31 @@ class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
             uuid = id_or_resource
             ns = self._ns(namespace)
         return self._ops.get(ns, cast("str", uuid))
+
+    def parent(self, resource: T) -> BaseModel:
+        """Fetch the parent resource declared by registry ``parent_kind``."""
+        if self._parent_kind is None:
+            raise ValidationError(
+                f"{self._entry.attr_name} has no parent_kind; parent() unsupported."
+            ) from None
+        meta = getattr(resource, "meta", None)
+        parent_uuid = getattr(meta, "parent_uuid", None) if meta is not None else None
+        if not parent_uuid:
+            raise NotFoundError(
+                "Resource has no meta.parent_uuid.",
+                operation="parent",
+            )
+        ns = self._ns(resolve_namespace_for_resource(resource, self._default_namespace))
+        if self._parent_kind == "project":
+            from .resources.project import Project
+
+            project_ops: BaseResourceOperations[Any] = BaseResourceOperations(
+                self._client, "projects", Project
+            )
+            return project_ops.get(ns, str(parent_uuid))
+        raise ValidationError(
+            f"Unsupported parent_kind {self._parent_kind!r} for parent()."
+        ) from None
 
     def create(
         self,
@@ -1205,66 +1424,52 @@ class ResourceRuntimeFacade[T: BaseModel](ListableFacade[T]):
         return resource, uuid, ns, meta
 
 
-class ScanLogsFacade:
-    """Facade for retrieving scan logs (request-based API; not in registry).
-
-    Use client.ScanLogs.get_logs(scan_result_uuid) after obtaining a scan
-    result UUID (e.g. from client.ScanResult.list() or .get()).
-    """
-
-    def __init__(self, client: APIClient, default_namespace: str | None) -> None:
-        super().__init__()
-        self._client = client
-        self._default_namespace = default_namespace
-
-    def _ns(self, namespace: str | None) -> str:
-        ns = namespace if namespace is not None else self._default_namespace
-        if ns is None:
-            raise ValidationError(
-                "Namespace required: set tenant= on Client(...) or pass namespace=."
-            )
-        return ns
+class ScanResultFacade(ResourceRuntimeFacade[Any]):
+    """ScanResult facade with log-line fetch sugar."""
 
     def get_logs(
         self,
-        scan_result_uuid: str,
+        scan_result: Any,
+        *,
         namespace: str | None = None,
         max_entries: int = 100,
-        log_levels: list[ScanLogLevel] | None = None,
+        log_levels: list[Any] | None = None,
         start_time: str | None = None,
         end_time: str | None = None,
         newest_first: bool | None = None,
-    ) -> list[ScanLogRequestLogMessage]:
-        """Fetch log messages for a scan result (ScanLogRequest API).
+    ) -> list[Any]:
+        """Fetch log messages for a scan (ScanLogRequest API under the hood).
 
         Args:
-            scan_result_uuid: UUID from client.ScanResult.list() or .get().
-            namespace: Target namespace; defaults to client tenant.
+            scan_result: ``ScanResult`` model or scan UUID string.
+            namespace: Target namespace; defaults to scan resource namespace
+                or client tenant.
             max_entries: Max log entries (default 100).
-            log_levels: Filter by level (ScanLogLevel); None = all.
+            log_levels: Filter by level (``ScanLogLevel``); None = all.
             start_time: Logs after (ISO 8601).
             end_time: Logs before (ISO 8601).
             newest_first: True = newest first; False/None = chronological.
 
         Returns:
-            Log message list; empty if none match.
-
-        Raises:
-            ValueError: Namespace required but not set.
-
-        Example:
-            logs = client.ScanLogs.get_logs(
-                scan_result_uuid='...', namespace='tenant.team'
-            )
-
+            ``ScanLogRequestLogMessage`` list; empty if none match.
         """
         from .resources.scan_log_request import get_scan_result_logs
 
-        ns = self._ns(namespace)
+        scan_uuid = getattr(scan_result, "uuid", None) or scan_result
+        if not isinstance(scan_uuid, str) or not scan_uuid:
+            raise ValueError("scan_result must be a ScanResult model or UUID string")
+        if namespace is not None:
+            ns = self._ns(namespace)
+        elif hasattr(scan_result, "tenant_meta"):
+            ns = self._ns(
+                resolve_namespace_for_resource(scan_result, self._default_namespace)
+            )
+        else:
+            ns = self._ns(None)
         result = get_scan_result_logs(
             self._client,
             ns,
-            scan_result_uuid,
+            scan_uuid,
             max_entries=max_entries,
             log_levels=log_levels,
             start_time=start_time,
@@ -1272,6 +1477,132 @@ class ScanLogsFacade:
             newest_first=newest_first,
         )
         return result if result is not None else []
+
+
+class ProjectFacade(ResourceRuntimeFacade[Any]):
+    """Project facade with resolve sugar."""
+
+    def resolve(
+        self,
+        name_or_uuid: str,
+        *,
+        namespace: str | None = None,
+        warnings_out: list[str] | None = None,
+    ) -> Any:
+        """Resolve a project by UUID (with traverse fallback) or by name."""
+        from .core.exceptions import NotFoundError as EndorNotFoundError
+        from .core.filter import F
+
+        ns = self._ns(namespace)
+
+        def _is_hex_project_id(value: str) -> bool:
+            return len(value) == 24 and all(
+                c in "0123456789abcdef" for c in value.lower()
+            )
+
+        if _is_hex_project_id(name_or_uuid):
+            try:
+                return self.get(name_or_uuid, namespace=ns)
+            except EndorNotFoundError:
+                matches = self.list(
+                    namespace=ns,
+                    filter=F("uuid") == name_or_uuid,
+                    traverse=True,
+                    max_pages=1,
+                    page_size=5,
+                    concurrent=False,
+                )
+                if not matches:
+                    raise
+                if warnings_out is not None:
+                    warnings_out.append(
+                        f"Project {name_or_uuid!r} is not in namespace {ns!r}; "
+                        "resolved the same UUID via list(traverse=True)."
+                    )
+                return matches[0]
+        return self.lookup(name=name_or_uuid, namespace=ns, traverse=True)
+
+
+class FindingFacade(ResourceRuntimeFacade[Any]):
+    """Finding facade with scan-scoped list preset."""
+
+    def list_for_scan(
+        self,
+        scan_result: Any,
+        *,
+        namespace: str | None = None,
+        filter: str | FilterExpression | None = None,
+        **kwargs: Any,
+    ) -> list[Any] | list[dict[str, Any]]:
+        """List findings scoped to a ScanResult via ``context.scan_uuid``."""
+        scan_uuid = getattr(scan_result, "uuid", None) or scan_result
+        scan_ns = namespace
+        if scan_ns is None:
+            scan_ns = resolve_namespace_for_resource(
+                scan_result, self._default_namespace
+            )
+        scan_filter = f'context.scan_uuid=="{scan_uuid}"'
+        if filter is not None:
+            filter_text = str(filter)
+            scan_filter = f"{filter_text} AND {scan_filter}"
+        return self.list(
+            namespace=scan_ns,
+            filter=scan_filter,
+            **kwargs,
+        )
+
+
+FACADE_CLASS_BY_ATTR: dict[str, type[ResourceRuntimeFacade[Any]]] = {
+    "Project": ProjectFacade,
+    "ScanResult": ScanResultFacade,
+    "Finding": FindingFacade,
+}
+
+
+class CallGraphDataFacade:
+    """Fetch and decode ``CallGraphData`` rows keyed by parent ``PackageVersion``.
+
+    Supported decode sources: ``PackageVersion`` (``meta.parent_uuid``).
+    Wire logic lives in ``operations.call_graph``; this facade names the
+    API resource kind returned on the wire.
+    """
+
+    def __init__(self, client: APIClient, default_namespace: str | None) -> None:
+        super().__init__()
+        self._client = client
+        self._default_namespace = default_namespace
+
+    def decode(
+        self,
+        package_version: Any,
+        *,
+        namespace: str | None = None,
+    ) -> Any:
+        """Fetch and unpack call graph JSON for a ``PackageVersion``."""
+        from .operations.call_graph import get_call_graph_for_package_version
+
+        return get_call_graph_for_package_version(
+            self._client,
+            package_version,
+            namespace=namespace,
+            decode=True,
+        )
+
+    def fetch(
+        self,
+        package_version: Any,
+        *,
+        namespace: str | None = None,
+    ) -> Any:
+        """Fetch raw ``CallGraphData`` wire JSON for a ``PackageVersion``."""
+        from .operations.call_graph import get_call_graph_for_package_version
+
+        return get_call_graph_for_package_version(
+            self._client,
+            package_version,
+            namespace=namespace,
+            decode=False,
+        )
 
 
 # Backward-compatible aliases while generated stubs and imports converge.
