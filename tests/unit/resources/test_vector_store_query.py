@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from endorlabs.models.base import BaseMeta, TenantMeta
+from endorlabs.resources.base import BaseMeta, TenantMeta
 from endorlabs.resources.vector_store import VectorStore, VectorStoreSpec
 from endorlabs.resources.vector_store_query import (
     CreateVectorStoreQueryPayload,

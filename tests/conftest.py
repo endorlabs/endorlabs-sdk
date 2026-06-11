@@ -117,5 +117,3 @@ TEST_POLICY_NAME_PREFIXES = (
 def setup_logging() -> None:
     """Setup logging for tests."""
     logging.basicConfig(level=logging.DEBUG)
-    # Suppress schema drift warnings in tests
-    logging.getLogger("endorlabs.utils.schema_drift").setLevel(logging.ERROR)

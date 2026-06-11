@@ -649,7 +649,7 @@ def test_update_with_kwargs_derives_mask_and_calls_update(
     client_with_mock_transport: Client,
 ) -> None:
     """update(resource, meta_description=...) derives update_mask and builds payload."""
-    from endorlabs.models.base import TenantMeta as BaseTenantMeta
+    from endorlabs.resources.base import TenantMeta as BaseTenantMeta
     from endorlabs.resources.project import (
         Project,
         ProjectMeta,
@@ -725,7 +725,7 @@ def test_update_with_explicit_meta_params_merges_into_kwargs(
     client_with_mock_transport: Client,
 ) -> None:
     """update(resource, meta_description=..., meta_tags=...) merges into kwargs."""
-    from endorlabs.models.base import TenantMeta as BaseTenantMeta
+    from endorlabs.resources.base import TenantMeta as BaseTenantMeta
     from endorlabs.resources.project import (
         Project,
         ProjectMeta,
@@ -1193,7 +1193,7 @@ class TestBuildListKwargs:
 
 def test_resource_namespace_property_returns_tenant_meta_namespace() -> None:
     """Resource .namespace returns tenant_meta.namespace when set, None otherwise."""
-    from endorlabs.models.base import BaseMeta, BaseResource, TenantMeta
+    from endorlabs.resources.base import BaseMeta, BaseResource, TenantMeta
 
     class _ConcreteResource(BaseResource):
         pass
@@ -1265,7 +1265,7 @@ def test_project_resolve_delegates(client_with_mock_transport: Client) -> None:
 def test_call_graph_data_decode(
     client_with_mock_transport: Client, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from endorlabs.operations.call_graph import CallGraphDecoded
+    from endorlabs.resources.call_graph_data import CallGraphDecoded
 
     client = client_with_mock_transport
     decoded = CallGraphDecoded(
@@ -1275,9 +1275,35 @@ def test_call_graph_data_decode(
         envelope={"uuid": "cg1"},
     )
     monkeypatch.setattr(
-        "endorlabs.operations.call_graph.get_call_graph_for_package_version",
+        "endorlabs.resources.call_graph_data.get_call_graph_for_package_version",
         Mock(return_value=decoded),
     )
     pv = Mock(uuid="pv1")
     out = client.CallGraphData.decode(pv)
     assert out.summary["uuid"] == "cg1"
+
+
+def test_scan_result_list_for_project(client_with_mock_transport: Client) -> None:
+    """ScanResult.list_for_project filters by parent and optional status."""
+    client = client_with_mock_transport
+    sr1 = Mock()
+    sr1.spec = Mock(status="STATUS_SUCCESS")
+    sr2 = Mock()
+    sr2.spec = Mock(status="STATUS_FAILED")
+    client.ScanResult.list = Mock(return_value=[sr1, sr2])
+
+    out = client.ScanResult.list_for_project(
+        "p1",
+        namespace="tenant.child",
+        limit=10,
+        status_filter="STATUS_SUCCESS",
+    )
+    client.ScanResult.list.assert_called_once()
+    kwargs = client.ScanResult.list.call_args.kwargs
+    assert kwargs["namespace"] == "tenant.child"
+    assert kwargs["filter"] == 'meta.parent_uuid=="p1"'
+    assert kwargs["sort_by"] == "meta.create_time"
+    assert kwargs["desc"] is True
+    assert kwargs["max_pages"] == 1
+    assert kwargs["page_size"] == 10
+    assert out == [sr1]

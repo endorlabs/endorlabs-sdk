@@ -44,7 +44,7 @@ use method IDs for joins, intersections, and path checks.
 ## Library and CLI entrypoints
 
 - `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep` — enumerates PVs and writes call graph exports (used by agent context `--callgraph-sweep`).
-- `endorlabs.workflows.callgraph.decoded.decode_payload` — canonical decoded shape contract (`summary`, `callables`, `edges`) shared by sweep + reachability workflows.
+- `client.CallGraphData.decode(package_version)` — canonical decoded shape (`CallGraphDecoded`: `summary`, `callables`, `edges`, `envelope`) shared by sweep + reachability workflows.
 - `endorlabs.workflows.callgraph.search` — searches decoded callables/edges (`endor-callgraph-search`).
 - Bundle orchestration: `uv run endor-agent-context ... --callgraph-sweep` (see [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md)).
 

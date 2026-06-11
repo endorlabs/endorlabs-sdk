@@ -5,7 +5,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock, Mock
 
 from endorlabs.core.exceptions import NotFoundError
-from endorlabs.operations.call_graph import CallGraphDecoded
+from endorlabs.resources.call_graph_data import CallGraphDecoded
 from endorlabs.workflows.reachability.context import _fetch_decoded_callgraph
 
 

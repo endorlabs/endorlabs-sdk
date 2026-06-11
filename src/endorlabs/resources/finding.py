@@ -22,13 +22,13 @@ from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -656,29 +656,6 @@ class FindingSpec(BaseSpec):
         None, description="Call graph analysis type"
     )  # IMMUTABLE: Analysis-determined
 
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Override BaseSpec drift detection to skip typed nested model fields."""
-        # Skip drift detection for typed nested models
-        # (they handle their own validation)
-        typed_model_fields = {
-            "finding_metadata",  # FindingMetadata
-            "actions",  # Actions
-            "fixing_patch",  # FixingPatch
-            "source_code_version",  # SourceCodeVersion
-            "location_urls",  # Dict[str, str] - typed
-        }
-        if (
-            info.field_name
-            and isinstance(v, dict)
-            and info.field_name not in typed_model_fields
-        ):
-            # Call parent validator for non-typed-model fields
-            return super().detect_schema_drift(v, info)
-        return v
-
 
 class Context(BaseModel):
     """Context information for findings."""
@@ -743,56 +720,6 @@ class Finding(BaseResource):
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = FindingSpec(**data["spec"])
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "project_uuid",
-                "last_processed",
-                "level",
-                "dismiss",
-                "remediation",
-                "finding_metadata",
-                "summary",
-                "finding_tags",
-                "target_uuid",
-                "extra_key",
-                "method",
-                "target_dependency_package_name",
-                "target_dependency_name",
-                "target_dependency_version",
-                "explanation",
-                "remediation_action",
-                "source_code_version",
-                "reachable_paths",
-                "ecosystem",
-                "finding_categories",
-                "relationship",
-                "latest_version",
-                "dependency_file_paths",
-                "approximation",
-                "proposed_version",
-                "exceptions",
-                "actions",
-                "fixing_upgrades",
-                "fixing_patch",
-                "code_owners",
-                "location_urls",
-                "call_graph_analysis_type",
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
     @override
     @classmethod

@@ -4,7 +4,7 @@ Tests GET and PATCH operations for Project resources, including tag management.
 Follows the testing protocol for comprehensive coverage.
 
 Greenfield alias unit tests live in
-tests/unit/platform/models/test_greenfield_aliases.py.
+tests/unit/resources/test_greenfield_aliases.py.
 """
 
 import pytest

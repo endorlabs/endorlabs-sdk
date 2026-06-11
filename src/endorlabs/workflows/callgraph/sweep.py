@@ -11,7 +11,6 @@ from endorlabs import F
 from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
-from endorlabs.workflows.callgraph.decoded import decode_payload
 
 LOGGER = get_resource_logger(__name__)
 
@@ -22,7 +21,6 @@ def _write_json_base(root: Path, path: Path, data: Any) -> None:
 
 
 def run_callgraph_sweep(
-    _api_client: Any,
     *,
     project_uuid: str,
     out_dir: Path,
@@ -46,8 +44,13 @@ def run_callgraph_sweep(
 
     exports: list[dict[str, Any]] = []
     for idx, pv in enumerate(pvs, start=1):
+        decoded = None
         try:
-            cg_data = client.CallGraphData.fetch(pv)
+            if decode_zstd:
+                decoded = client.CallGraphData.decode(pv)
+                cg_data = decoded.envelope
+            else:
+                cg_data = client.CallGraphData.fetch(pv)
         except NotFoundError:
             continue
         if not cg_data:
@@ -64,31 +67,24 @@ def run_callgraph_sweep(
             "parent_uuid": (cg_data.get("meta") or {}).get("parent_uuid"),
         }
 
-        if decode_zstd and "zstd_bytes" in cg_data:
-            summary, callables, edges = decode_payload(cg_data)
+        if decode_zstd and decoded is not None:
             summary_file = out_dir / f"{idx:04d}_{pv.uuid}.decoded_summary.json"
             callables_file = out_dir / f"{idx:04d}_{pv.uuid}.decoded_callables.json"
             edges_file = out_dir / f"{idx:04d}_{pv.uuid}.decoded_edges.json"
-            _write_json_base(out_dir, summary_file, summary)
-            _write_json_base(out_dir, callables_file, callables)
-            _write_json_base(out_dir, edges_file, edges)
+            _write_json_base(out_dir, summary_file, decoded.summary)
+            _write_json_base(out_dir, callables_file, decoded.callables)
+            _write_json_base(out_dir, edges_file, decoded.edges)
             row["decoded_summary_file"] = str(summary_file)
             row["decoded_callables_file"] = str(callables_file)
             row["decoded_edges_file"] = str(edges_file)
 
         exports.append(row)
 
-    manifest: dict[str, Any] = {
+    return {
+        "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "project_uuid": project_uuid,
+        "list_namespace": list_namespace,
         "package_versions_total": len(pvs),
         "call_graph_exports_total": len(exports),
         "exports": exports,
-        "generated_at": datetime.now(UTC).isoformat(),
-    }
-    manifest_path = out_dir / "callgraph_sweep_manifest.json"
-    _write_json_base(out_dir, manifest_path, manifest)
-    LOGGER.info("Wrote %s", manifest_path)
-    return {
-        "manifest_path": str(manifest_path),
-        "package_versions_total": len(pvs),
-        "call_graph_exports_total": len(exports),
     }

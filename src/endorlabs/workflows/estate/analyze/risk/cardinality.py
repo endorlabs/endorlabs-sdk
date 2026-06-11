@@ -77,12 +77,9 @@ def _collect_usage_for_package(
             paths=list(paths),
             max_pages=max_pages,
         ):
-            group_key = bucket.key
-            group_data = bucket.data
             row = _usage_row_from_group(
                 estate_root,
-                group_key,
-                group_data,
+                bucket,
                 project_uuid="",
             )
             if row is None:

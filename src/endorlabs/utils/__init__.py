@@ -6,11 +6,9 @@ code duplication while maintaining functionality and type safety.
 
 from .namespace import resolve_namespace_for_resource
 from .parallel import execute_across_namespaces
-from .schema_drift import SchemaDriftDetector
 from .tabular import TabularExport, export_records, records_to_rows, write_table
 
 __all__ = [
-    "SchemaDriftDetector",
     "TabularExport",
     "execute_across_namespaces",
     "export_records",

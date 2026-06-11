@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: db6be9e6afcff2a01bd7ce8c3ae186e34a4c4edcc1310a26f9a84fa942e88e05
+x-endor-source-sha256: ec7cf54afff9df1f4b34d56302d5ce410745b0e962a0f58f3c225299afb926ce
 ---
 
 # Workflow composition
@@ -20,7 +20,7 @@ x-endor-source-sha256: db6be9e6afcff2a01bd7ce8c3ae186e34a4c4edcc1310a26f9a84fa94
 | Layer | Location | Responsibility | Must not |
 |-------|----------|----------------|----------|
 | **Primitives** | `Client`, `APIClient` | CRUD/list/get per resource | Orchestration, file I/O, argparse |
-| **Tools** | `endorlabs.tools.*` | Reusable domain utilities (e.g. dependency explorer) | Tenant-wide workflow opinions, CLI mains |
+| **Tools** | `endorlabs.tools.*` | Reusable domain utilities (e.g. list sharding) | Tenant-wide workflow opinions, CLI mains |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
 | **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |

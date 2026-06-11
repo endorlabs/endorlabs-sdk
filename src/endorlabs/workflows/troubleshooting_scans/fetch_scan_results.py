@@ -13,12 +13,29 @@ from endorlabs.client_surface import Client
 
 from .common import (
     default_troubleshooting_output_dir,
-    list_scan_results_for_project,
+    object_to_dict,
     parallel_collect_for_projects,
     root_tenant,
     scan_result_metrics,
     write_json,
 )
+
+
+def _list_scan_dicts(
+    client: Client,
+    *,
+    namespace: str,
+    project_uuid: str,
+    limit: int,
+    status_filter: str | None = None,
+) -> list[dict[str, Any]]:
+    rows = client.ScanResult.list_for_project(
+        project_uuid,
+        namespace=namespace,
+        limit=limit,
+        status_filter=status_filter,
+    )
+    return [object_to_dict(item) for item in rows]
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -84,7 +101,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     summaries: list[dict[str, Any]] = []
 
     def _fetch_scan_results(shard: ParentShard) -> list[dict[str, Any]]:
-        return list_scan_results_for_project(
+        return _list_scan_dicts(
             client,
             namespace=shard.namespace,
             project_uuid=shard.key,
@@ -107,7 +124,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             if not project_uuid:
                 continue
             all_results.extend(
-                list_scan_results_for_project(
+                _list_scan_dicts(
                     client,
                     namespace=project_ns,
                     project_uuid=project_uuid,

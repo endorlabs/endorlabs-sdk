@@ -1,4 +1,4 @@
-"""Regression tests for Installation schema drift handling."""
+"""Regression tests for Installation spec forward compatibility."""
 
 from endorlabs.resources.installation import Installation, InstallationSpec
 

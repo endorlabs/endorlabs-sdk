@@ -170,7 +170,7 @@ class TestAuditLog:
         assert_bounded_log_rows(filtered_logs)
         for log_item in filtered_logs[:TEST_LOG_LIST_MAX_ROWS]:
             if log_item.spec and log_item.spec.claims:
-                assert "api-key" in log_item.spec.claims.lower()
+                assert any("api-key" in claim.lower() for claim in log_item.spec.claims)
 
     def test_audit_log_filter_by_remote_address(self) -> None:
         """Filter audit logs by remote address in namespace (bounded, no traverse)."""
@@ -210,7 +210,7 @@ class TestAuditLog:
         assert_bounded_log_rows(api_key_logs)
         for log_item in api_key_logs[:TEST_LOG_LIST_MAX_ROWS]:
             if log_item.spec and log_item.spec.claims:
-                assert "api-key" in log_item.spec.claims.lower()
+                assert any("api-key" in claim.lower() for claim in log_item.spec.claims)
 
         for pattern in (
             "spec.claims matches '.*ID=.*'",

@@ -1,7 +1,7 @@
 """Test cases for model validation utilities.
 
 Tests merge_partial_update, get_tags_update_paths (from model class),
-validate_update_mask, safe_serialize, and related helpers used by models/base.
+validate_update_mask, safe_serialize, and related helpers used by resources/base.
 """
 
 from datetime import datetime
@@ -158,7 +158,7 @@ class TestGetListFilterMap:
 
     def test_list_filter_map_keys_match_resource_name_to_type_values(self) -> None:
         """Every LIST_FILTER_KWARG_MAP key has a RESOURCE_NAME_TO_TYPE entry."""
-        from endorlabs.models.base import RESOURCE_NAME_TO_TYPE
+        from endorlabs.resources.base import RESOURCE_NAME_TO_TYPE
         from endorlabs.utils import model_validation
 
         type_values = set(RESOURCE_NAME_TO_TYPE.values())

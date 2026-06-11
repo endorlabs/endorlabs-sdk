@@ -8,16 +8,16 @@ client.EndorLicense.list().
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, override
+from typing import Any, ClassVar
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -112,26 +112,3 @@ class EndorLicense(BaseResource):
     )
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in Endor license responses."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            known = {
-                "license_info",
-                "bundle_info",
-                "target_namespace",
-                "excluded_feature_types",
-                "is_customer",
-                "license_configurations",
-                "quota",
-            }
-            unknown = set(v.keys()) - known
-            if unknown:
-                logger.warning(
-                    "Schema drift in EndorLicense.spec: unknown fields %s",
-                    unknown,
-                )
-        return v
