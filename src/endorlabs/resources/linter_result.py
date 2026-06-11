@@ -41,13 +41,13 @@ from typing import Any, override
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -174,12 +174,116 @@ class AISastSummary(BaseModel):
     confidence: str = Field(..., description="Result confidence")
 
 
-class LinterCorrectnessAnalysis(BaseModel):
-    """Linter correctness analysis."""
+class CorrectnessAnalyzer(FlexibleEnum):
+    """Analyzer for linter correctness (OpenAPI v1CorrectnessAnalyzer)."""
 
-    analysis_type: str = Field(..., description="Type of analysis")
-    result: str = Field(..., description="Analysis result")
-    confidence: float | None = Field(None, description="Analysis confidence")
+    UNSPECIFIED = "CORRECTNESS_ANALYZER_UNSPECIFIED"
+    AI_GEMINI_FLASH_2_5 = "CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5"
+    AI_GEMINI_FLASH_2_5_LITE = "CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_2_5_LITE"
+    AI_GEMINI_FLASH_LATEST = "CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LATEST"
+    AI_GEMINI_FLASH_LITE_LATEST = "CORRECTNESS_ANALYZER_AI_GEMINI_FLASH_LITE_LATEST"
+
+
+class Correctness(FlexibleEnum):
+    """Correctness assessment (OpenAPI v1Correctness)."""
+
+    UNSPECIFIED = "CORRECTNESS_UNSPECIFIED"
+    TRUE_POSITIVE = "CORRECTNESS_TRUE_POSITIVE"
+    FALSE_POSITIVE = "CORRECTNESS_FALSE_POSITIVE"
+    FALSE_NEGATIVE = "CORRECTNESS_FALSE_NEGATIVE"
+    UNKNOWN = "CORRECTNESS_UNKNOWN"
+
+
+class AIMetaConfidenceLevel(FlexibleEnum):
+    """Confidence level for correctness analysis (OpenAPI v1AIMetaConfidenceLevel)."""
+
+    UNSPECIFIED = "CONFIDENCE_LEVEL_UNSPECIFIED"
+    CRITICAL = "CONFIDENCE_LEVEL_CRITICAL"
+    HIGH = "CONFIDENCE_LEVEL_HIGH"
+    MEDIUM = "CONFIDENCE_LEVEL_MEDIUM"
+    LOW = "CONFIDENCE_LEVEL_LOW"
+
+
+class LinterCorrectnessAnalysisCodeFix(BaseModel):
+    """Potential fix for a true-positive linter result."""
+
+    model_config = ConfigDict(extra="allow")
+
+    file_path: str | None = Field(None, description="File path of the code fix")
+    line_start: int | None = Field(None, description="Start line of the code fix")
+    line_end: int | None = Field(None, description="End line of the code fix")
+    patch: str | None = Field(None, description="Patch to apply")
+
+
+class LinterCorrectnessAnalysisDataFlowNode(BaseModel):
+    """Node in a source-to-sink data-flow trace."""
+
+    model_config = ConfigDict(extra="allow")
+
+    code_line_num: int | None = Field(
+        None, description="Line number in the source file"
+    )
+    code_snippet: str | None = Field(
+        None, description="Variable or expression at this point in the flow"
+    )
+    type: str | None = Field(
+        None, description="Node type in the data flow (source, step, or sink)"
+    )
+
+
+class LinterCorrectnessAnalysis(BaseModel):
+    """Linter correctness analysis (OpenAPI v1LinterCorrectnessAnalysis).
+
+    OpenAPI marks version, analyzer, correctness, and confidence_level as
+    required on full resources; list responses may omit fields on nested rows,
+    so consumer fields stay optional with extra="allow" for forward compat.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    version: str | None = Field(
+        None, description="Version of the linter correctness analysis"
+    )
+    analyzer: CorrectnessAnalyzer | str | None = Field(
+        None, description="Analyzer used for the correctness assessment"
+    )
+    description: str | None = Field(
+        None, description="Textual description of the analysis"
+    )
+    correctness: Correctness | str | None = Field(
+        None, description="Correctness assessment"
+    )
+    confidence_level: AIMetaConfidenceLevel | str | None = Field(
+        None, description="Confidence level of the assessment"
+    )
+    sanitizers: list[str] | None = Field(
+        None, description="Sanitizers used in the assessment"
+    )
+    code_fixes: list[LinterCorrectnessAnalysisCodeFix] | None = Field(
+        None, description="Potential fixes for the issue"
+    )
+    analysis_summary: str | None = Field(
+        None, description="Summary explaining classification"
+    )
+    security_impact: str | None = Field(
+        None, description="Security impact / consequences"
+    )
+    technical_detail: str | None = Field(None, description="Further technical details")
+    data_flow: list[LinterCorrectnessAnalysisDataFlowNode] | None = Field(
+        None, description="Source-to-sink data-flow nodes"
+    )
+    risk_assessment: str | None = Field(
+        None, description="False/true positive reasoning"
+    )
+    security_control: str | None = Field(
+        None, description="Sanitizers, validators, or mitigations found"
+    )
+    code_references: str | None = Field(
+        None, description="Line references / fields / variables"
+    )
+    symbols: str | None = Field(
+        None, description="Key variables/symbols in the data-flow path"
+    )
 
 
 class LinterResultMeta(BaseMeta):
@@ -386,41 +490,6 @@ class LinterResult(BaseResource):
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = LinterResultSpec(**data["spec"])
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "project_uuid",
-                "origin",
-                "level",
-                "extra_key",
-                "version",
-                "sarif_result",
-                "ecosystem",
-                "semgrep",
-                "secret",
-                "aisast",
-                "fingerprints",
-                "fingerprint_count",
-                "distribution_format",
-                "ref",
-                "storage_location",
-                "suppressed",
-                "linter_correctness_analyses",
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
     @override
     @classmethod

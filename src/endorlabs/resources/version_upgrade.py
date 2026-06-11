@@ -7,17 +7,17 @@ dependency package. List and get only.
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Any, ClassVar, override
+from typing import TYPE_CHECKING, Any, ClassVar
 
-from pydantic import Field, field_validator
+from pydantic import Field
 
-from ..models.base import (
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
 )
-from ..operations import BaseResourceOperations
-from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -84,30 +84,6 @@ class VersionUpgrade(BaseResource):
     )
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in version upgrade responses."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            known = {
-                "project_uuid",
-                "name",
-                "configuration",
-                "stats",
-                "upgrade_info",
-                "prioritized_upgrades",
-                "all_upgrades",
-                "finding_fixing_upgrades",
-            }
-            unknown = set(v.keys()) - known
-            if unknown:
-                logger.warning(
-                    "Schema drift in VersionUpgrade.spec: unknown fields %s",
-                    unknown,
-                )
-        return v
 
 
 def list_version_upgrades(

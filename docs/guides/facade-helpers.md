@@ -7,7 +7,8 @@ Normative catalog for SDK facade helpers. Wire logic lives in `operations/`; wor
 | Layer | Owns |
 |-------|------|
 | `facade.py` | Public helpers on resource facades + `CallGraphData` custom facade |
-| `operations/` | Pagination, group wire parsing, call-graph fetch/decode |
+| `operations/` | Pagination, group wire parsing |
+| `resources/call_graph_data.py` | CallGraphData fetch/decode wire helpers |
 | `api_client.py` | `get_all` — single low-level pagination loop |
 | `workflows/` | Orchestration — **must not** duplicate list/count/group pagination |
 | `tools/` | Composition (`list_sharding`, hydration orchestration) |
@@ -22,6 +23,7 @@ Normative catalog for SDK facade helpers. Wire logic lives in `operations/`; wor
 4. **Parent-scoped sugar** on the facade the caller already holds when that is more ergonomic:
    - `client.ScanResult.get_logs(scan_result)` → `list[ScanLogRequestLogMessage]` (wire: ScanLogRequest POST)
    - `client.Finding.list_for_scan(scan_result)` → `list[Finding]`
+   - `client.ScanResult.list_for_project(project, …)` → `list[ScanResult]`
    - `client.Project.resolve(name_or_uuid)` → `Project`
 5. **Custom facades** only when the kind is not yet on `registry_contract` but needs a client attr — today: **`CallGraphData`** only. Do **not** add parallel attrs like `ScanLogs`.
 
@@ -53,6 +55,7 @@ Normative catalog for SDK facade helpers. Wire logic lives in `operations/`; wor
 | `ScanResult.get_logs(scan_result, …)` | `ScanResult` or UUID + `namespace=` | `ScanLogRequestLogMessage[]` |
 | `Project.resolve(name_or_uuid, …)` | name or UUID | `Project` |
 | `Finding.list_for_scan(scan_result, …)` | `ScanResult` | `list[Finding]` |
+| `ScanResult.list_for_project(project, …)` | `Project` or UUID | `list[ScanResult]` |
 | `ScanResult.latest_created(parent=project, …)` | `Project` parent | `ScanResult \| None` |
 
 ### `CallGraphData`
@@ -77,7 +80,11 @@ Uses ScanLogRequest POST under the hood. For embedded lines only, GET the scan-r
 | `endorlabs.utils.api_pagination` | `facade.list()` / `api_client.get_all` |
 | `bounds.list_resource_count` | `facade.count()` or `count_for_progress` |
 | `group_list.iter_group_*` | `facade.list_groups()` |
-| `callgraph.fetch.retrieve_*` | `CallGraphData.decode` / `fetch` |
+| `workflows.callgraph.fetch.retrieve_*` | `CallGraphData.decode` / `fetch` |
+| `workflows.callgraph.decoded.decode_payload` | `CallGraphData.decode` |
+| `workflows.troubleshooting_scans.list_scan_results_for_project` | `client.ScanResult.list_for_project` |
+| `workflows.troubleshooting_scans.list_projects` | `client.Project.list` |
+| `retrieve_dep_metadata_full(api_client, …)` | `retrieve_dep_metadata_full(client, …)` via `client.DependencyMetadata.list` |
 | `client.ScanLogs` | `client.ScanResult.get_logs` |
 
 ## See also

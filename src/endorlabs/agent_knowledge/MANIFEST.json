@@ -348,7 +348,7 @@
       "default_output": ".endorlabs-context/workspace/sessions/<user>/troubleshooting/",
       "id": "troubleshooting-scans",
       "library_entrypoints": [
-        "endorlabs.workflows.troubleshooting_scans.list_scan_results_for_project",
+        "endorlabs.Client.ScanResult.list_for_project",
         "endorlabs.workflows.troubleshooting_scans.resolve_project"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",

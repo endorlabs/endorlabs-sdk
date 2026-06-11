@@ -20,15 +20,15 @@ from __future__ import annotations
 
 from typing import Any, override
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -272,36 +272,6 @@ class ScanProfile(BaseResource):
         if spec_val is not None and isinstance(spec_val, dict):
             data["spec"] = ScanProfileSpec(**spec_val)
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and v is not None and isinstance(v, dict):
-            # Skip drift detection for typed nested models
-            # - they handle their own validation
-            # These will be converted to Pydantic models by the field validators
-            # Known top-level fields in ScanProfileSpec
-            known_fields = {
-                "toolchain_profile",  # Dict[str, Any] - flexible structure
-                "automated_scan_parameters",  # Typed model
-                "remediation_parameters",  # Typed model
-                "is_default",
-                "security_review_scanner_parameters",  # Typed model
-                "exporter_parameters",  # Typed model
-                "ai_sast_analysis_parameters",  # Typed model
-            }
-
-            # Only check top-level fields, skip nested model fields
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
     @override
     @classmethod

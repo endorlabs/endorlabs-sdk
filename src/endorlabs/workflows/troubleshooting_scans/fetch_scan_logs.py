@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from endorlabs.client_surface import Client
 from endorlabs.utils.logging_config import get_resource_logger
 
 from .common import (
-    build_api_client,
     build_scanlogs_client,
     default_troubleshooting_output_dir,
     load_json,
@@ -35,11 +36,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def pull_embedded_logs(api: Any, namespace: str, scan_result_uuid: str) -> list[str]:
+def pull_embedded_logs(
+    client: Client, namespace: str, scan_result_uuid: str
+) -> list[str]:
     """Fallback to scan-result embedded logs if ScanLogRequest returns nothing."""
-    resp = api.get(f"v1/namespaces/{namespace}/scan-results/{scan_result_uuid}")
-    result = resp.json()
-    return (result.get("spec") or {}).get("logs") or []
+    scan_result = client.ScanResult.get(scan_result_uuid, namespace=namespace)
+    spec = getattr(scan_result, "spec", None)
+    logs = getattr(spec, "logs", None) if spec is not None else None
+    return list(logs or [])
 
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
@@ -52,7 +56,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     root = root_tenant(args.tenant)
     output_dir = Path(args.output_dir)
     scanlogs_client = build_scanlogs_client(args.namespace)
-    api = build_api_client()
 
     uuids: list[str] = []
     first = selected_pairs[0]
@@ -78,7 +81,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             entries = []
 
         if not entries:
-            entries = pull_embedded_logs(api, args.namespace, scan_uuid)
+            entries = pull_embedded_logs(scanlogs_client, args.namespace, scan_uuid)
 
         text_blob = "\n".join(entries)
         log_artifact = write_text(

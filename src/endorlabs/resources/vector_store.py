@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import Field
 
-from ..models.base import BaseResource, BaseSpec
+from .base import BaseResource, BaseSpec
 
 if TYPE_CHECKING:
     from ..client_surface import Client

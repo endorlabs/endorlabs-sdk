@@ -1,4 +1,4 @@
-"""Tools and utilities (e.g. dependency explorer, list sharding)."""
+"""Tools and utilities (e.g. list sharding)."""
 
 from endorlabs.tools.list_sharding import (
     ParentShard,

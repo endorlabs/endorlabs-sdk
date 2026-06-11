@@ -30,11 +30,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import endorlabs
-from endorlabs.operations.list_response import (
-    GroupBucket,
-    count_from_wire,
-    parse_group_key,
-)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.estate.analyze.cardinality.tabular import (
     TabularExport,
@@ -61,6 +56,7 @@ from .types import VersionCardinalityResult, VersionCardinalityStats
 if TYPE_CHECKING:
     from endorlabs import Client
     from endorlabs.core.types import ListParameters
+    from endorlabs.operations.list_response import GroupBucket
 
 logger = get_resource_logger(__name__)
 
@@ -99,23 +95,21 @@ def _emit_progress(processed: int, total: int | None, *, label: str) -> None:
 
 def _usage_row_from_group(
     estate_root: str,
-    group_key: str,
-    group_data: dict[str, Any],
+    bucket: GroupBucket,
     *,
     project_uuid: str,
 ) -> dict[str, Any] | None:
-    fields = parse_group_key(group_key)
+    fields = bucket.parsed
     package_name = fields.get(PACKAGE_NAME_PATH, "")
     package_version = fields.get(PACKAGE_VERSION_PATH, "")
     if not package_name:
         return None
-    usage_count = count_from_wire(group_data.get("aggregation_count"))
     return {
         "estate_root": estate_root,
         "project_uuid": project_uuid,
         "package_name": package_name,
         "package_version": package_version,
-        "usage_count": usage_count,
+        "usage_count": bucket.count,
     }
 
 
@@ -310,12 +304,9 @@ def _fetch_grouped_usage_rows(
         list_params,
         max_pages=max_pages,
     ):
-        group_key = bucket.key
-        group_data = bucket.data
         row = _usage_row_from_group(
             estate_root,
-            group_key,
-            group_data,
+            bucket,
             project_uuid=project_uuid,
         )
         if row is not None:
@@ -641,12 +632,9 @@ def export_version_cardinality_for_package_match(
                 list_params,
                 max_pages=max_pages,
             ):
-                group_key = bucket.key
-                group_data = bucket.data
                 row = _usage_row_from_group(
                     estate_root,
-                    group_key,
-                    group_data,
+                    bucket,
                     project_uuid="",
                 )
                 if row is None:

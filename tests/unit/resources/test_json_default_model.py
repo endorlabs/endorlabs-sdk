@@ -11,7 +11,7 @@ from typing import Any
 
 from pydantic import Field
 
-from endorlabs.models.base import (
+from endorlabs.resources.base import (
     BaseMeta,
     BaseResource,
     BaseSpec,

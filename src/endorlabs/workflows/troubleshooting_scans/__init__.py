@@ -9,20 +9,18 @@ from __future__ import annotations
 from endorlabs.workflows.common import WorkflowResult
 from endorlabs.workflows.projects.resolve import resolve_project
 from endorlabs.workflows.troubleshooting_scans.common import (
-    list_projects,
-    list_scan_results_for_project,
     load_json,
     match_projects,
+    object_to_dict,
     project_namespace,
     write_json,
 )
 
 __all__ = [
     "WorkflowResult",
-    "list_projects",
-    "list_scan_results_for_project",
     "load_json",
     "match_projects",
+    "object_to_dict",
     "project_namespace",
     "resolve_project",
     "write_json",
