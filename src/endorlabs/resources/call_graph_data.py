@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from ..core.exceptions import NotFoundError
+from ..core.filter import F
 from ..operations import validate_namespace
 from ..operations.list_response import extract_list_objects
 
@@ -57,7 +58,7 @@ def fetch_call_graph_envelope(
     ns = validate_namespace(namespace)
     list_url = f"v1/namespaces/{ns}/call-graph-data"
     params = {
-        "list_parameters.filter": f'meta.parent_uuid=="{package_version_uuid}"',
+        "list_parameters.filter": str(F("meta.parent_uuid") == package_version_uuid),
         "list_parameters.page_size": "1",
     }
     resp = client.get(list_url, params=params)
