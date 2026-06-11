@@ -21,12 +21,16 @@ This document is the in-repo source of truth for shared SDK semantics.
 - **Custom facades (SDK-only helpers):** Register in `CUSTOM_FACADE_REGISTRY` in
   [`src/endorlabs/registry.py`](../src/endorlabs/registry.py), not in
   `registry_contract`. Use **PascalCase** `attr_name` on `Client` for consistency.
+  Prefer wire-resource facades with auxiliary methods (e.g. **`CallGraphData.decode`**)
+  and parent-scoped sugar on registry facades (e.g. **`ScanResult.get_logs`**) over
+  parallel helper attrs (removed **`ScanLogs`**).
   Each entry carries `pyi_*` metadata for
   `devtools/generate_client_stub.py` (typed `client_surface.pyi`); run
   `uv run python devtools/generate_client_stub.py` after changes.
 - **Template — resource vs helper:** **`ScanLogRequest`** = generated
-  `ResourceEntry`, endorctl `--resource` kind. **`ScanLogs`** = custom facade for
-  log *lines* only (not a listable API resource).
+  `ResourceEntry`, endorctl `--resource` kind. **`ScanResult.get_logs`** = sugar on
+  the scan facade (log lines via ScanLogRequest wire API). **`CallGraphData`** =
+  custom facade for decode/fetch keyed by parent PackageVersion.
 
 ## OpenAPI / spec
 

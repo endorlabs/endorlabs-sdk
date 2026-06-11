@@ -17,7 +17,7 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import AmbiguousError, NotFoundError, ValidationError
-from endorlabs.facade import ScanLogsFacade
+from endorlabs.facade import CallGraphDataFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
     TEST_NAMESPACE_DEFAULT,
@@ -514,25 +514,31 @@ def test_client_namespace_list_uses_session_logging_only(
     assert "logging_level" not in kwargs
 
 
-def test_client_scan_logs_facade_present_and_delegates(
+def test_client_scan_result_get_logs_delegates(
     client_with_mock_transport: Client,
 ) -> None:
-    """client.ScanLogs present; get_logs delegates to get_scan_result_logs."""
+    """ScanResult.get_logs delegates to get_scan_result_logs."""
     client = client_with_mock_transport
-    assert hasattr(client, "ScanLogs")
-    assert isinstance(client.ScanLogs, ScanLogsFacade)
     with patch(
         "endorlabs.resources.scan_log_request.get_scan_result_logs",
         return_value=[],
     ) as mock_get_logs:
-        result = client.ScanLogs.get_logs("scan-result-uuid-123")
+        result = client.ScanResult.get_logs("scan-result-uuid-123")
         assert result == []
         mock_get_logs.assert_called_once()
-        args, kwargs = mock_get_logs.call_args
+        args, _kwargs = mock_get_logs.call_args
         assert args[0] is client._client
         assert args[1] == TEST_NAMESPACE_DEFAULT
         assert args[2] == "scan-result-uuid-123"
-        assert kwargs.get("max_entries") == 100
+
+
+def test_client_call_graph_data_facade_present(
+    client_with_mock_transport: Client,
+) -> None:
+    """client.CallGraphData is a custom facade for decode/fetch."""
+    client = client_with_mock_transport
+    assert hasattr(client, "CallGraphData")
+    assert isinstance(client.CallGraphData, CallGraphDataFacade)
 
 
 def test_get_with_uuid_string_uses_default_namespace(
@@ -1224,3 +1230,54 @@ def test_finding_empty_list_no_warn_with_child_namespace(
         warnings.simplefilter("always")
         client.Finding.list(namespace="tenant.child", max_pages=TEST_MAX_PAGES)
     assert not [w for w in caught if issubclass(w.category, UserWarning)]
+
+
+def test_facade_count_delegates_to_ops(client_with_mock_transport: Client) -> None:
+    client = client_with_mock_transport
+    client.Finding._ops.count = Mock(return_value=7)
+    assert client.Finding.count(namespace=TEST_NAMESPACE_DEFAULT) == 7
+    client.Finding._ops.count.assert_called_once()
+
+
+def test_facade_list_count_true_emits_deprecation_and_uses_count(
+    client_with_mock_transport: Client,
+) -> None:
+
+    client = client_with_mock_transport
+    client.Finding.count = Mock(return_value=3)
+    with pytest.warns(DeprecationWarning, match="use .count\\(\\)"):
+        result = client.Finding.list(count=True, namespace=TEST_NAMESPACE_DEFAULT)
+    assert result == 3
+    client.Finding.count.assert_called_once()
+
+
+def test_project_resolve_delegates(client_with_mock_transport: Client) -> None:
+    client = client_with_mock_transport
+    project = Mock()
+    client.Project.lookup = Mock(return_value=project)
+    out = client.Project.resolve(
+        "https://github.com/org/repo", namespace="tenant.child"
+    )
+    assert out is project
+    client.Project.lookup.assert_called_once()
+
+
+def test_call_graph_data_decode(
+    client_with_mock_transport: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from endorlabs.operations.call_graph import CallGraphDecoded
+
+    client = client_with_mock_transport
+    decoded = CallGraphDecoded(
+        summary={"uuid": "cg1"},
+        callables=[],
+        edges=[],
+        envelope={"uuid": "cg1"},
+    )
+    monkeypatch.setattr(
+        "endorlabs.operations.call_graph.get_call_graph_for_package_version",
+        Mock(return_value=decoded),
+    )
+    pv = Mock(uuid="pv1")
+    out = client.CallGraphData.decode(pv)
+    assert out.summary["uuid"] == "cg1"

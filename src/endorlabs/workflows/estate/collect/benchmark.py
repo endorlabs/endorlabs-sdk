@@ -25,9 +25,9 @@ from endorlabs.workflows.estate.analyze.compile_graph.pipeline import (
     project_rows_from_models,
 )
 from endorlabs.workflows.estate.collect.bounds import (
+    count_for_progress,
     format_progress,
     is_list_truncated,
-    list_resource_count,
     resolve_max_pages,
 )
 from endorlabs.workflows.estate.filters.main_context import main_context_filter
@@ -68,7 +68,7 @@ def _fetch_s0_project(
     filt = main_context_filter(f'spec.importer_data.project_uuid=="{project.uuid}"')
     expected = 0
     if preflight_count:
-        cnt = list_resource_count(
+        cnt = count_for_progress(
             client.DependencyMetadata,
             project.namespace,
             resource_label="DependencyMetadata",
@@ -168,7 +168,7 @@ def strategy_s1_namespace_dm(
 ) -> dict[str, Any]:
     filt = main_context_filter()
     t_count = time.perf_counter()
-    count_value = list_resource_count(
+    count_value = count_for_progress(
         client.DependencyMetadata,
         namespace,
         resource_label="DependencyMetadata",
@@ -209,7 +209,7 @@ def strategy_s2_discover_only(
     namespace: str,
 ) -> dict[str, Any]:
     t0 = time.perf_counter()
-    count_value = list_resource_count(
+    count_value = count_for_progress(
         client.Project,
         namespace,
         resource_label="Project",

@@ -9,12 +9,12 @@ from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.artifact_io import slugify, write_json
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.workflows.callgraph.fetch import (
     generate_call_graph_analysis_md,
     render_call_graph_summary_md,
-    retrieve_call_graph_full,
     summarize_call_graph,
 )
 from endorlabs.workflows.dependencies.bom_graph import (
@@ -200,7 +200,10 @@ def process_project(
 
         # Call Graph
         logger.info("  [CallGraph] %s (available=%s)", pv_name, cg_available)
-        cg_data = retrieve_call_graph_full(api_client, project_ns, pv.uuid)
+        try:
+            cg_data = client.CallGraphData.fetch(pv)
+        except NotFoundError:
+            cg_data = {}
         if cg_data:
             cg_filename = (
                 "call_graph.json" if single_pv else f"call_graph_{pv_slug}.json"

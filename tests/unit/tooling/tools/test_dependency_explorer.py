@@ -16,7 +16,7 @@ from unittest.mock import MagicMock
 
 import pytest  # noqa: TC002
 
-from endorlabs.utils.api_pagination import extract_objects
+from endorlabs.operations.list_response import extract_list_objects as extract_objects
 from endorlabs.utils.artifact_io import slugify, write_json
 from endorlabs.workflows.agent_context.hydration import (
     ProjectResult,
@@ -54,7 +54,6 @@ from endorlabs.workflows.callgraph.render import (
     _short_type_key,
     render_callgraph_analysis,
 )
-from endorlabs.workflows.dependencies import metadata_fetch as metadata_fetch_module
 from endorlabs.workflows.dependencies.bom_graph import (
     _bom_to_serializable,
     _normalize_children,
@@ -979,22 +978,24 @@ def test_retrieve_dep_metadata_full_prefers_project_namespace(
     """Project namespace is queried first; oss is not tried when tenant rows exist."""
     urls: list[str] = []
 
-    def _fake_paginate(
-        _api_client: object,
+    def _fake_get_all(
         url: str,
-        _params: dict[str, str],
-        max_pages: int = 10,
+        *,
+        params: dict[str, str],
+        max_pages: int | None = None,
     ) -> list[dict[str, str]]:
+        _ = params
         _ = max_pages
         urls.append(url)
         if "/tenant.child/" in url:
             return [{"uuid": "dm-1"}]
         return []
 
-    monkeypatch.setattr(metadata_fetch_module, "paginate_raw", _fake_paginate)
+    api = MagicMock()
+    api.get_all = _fake_get_all
 
     rows, source_ns, truncated = retrieve_dep_metadata_full(
-        MagicMock(),
+        api,
         "tenant.child",
         "project-uuid",
     )

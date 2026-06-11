@@ -54,7 +54,8 @@ class CustomFacadeEntry:
     the generator. They are not used at runtime.
 
     Use this for SDK-only helpers that are not OpenAPI resources (no row in
-    ``registry_contract``), similar to ``ScanLogs`` vs ``ScanLogRequest``.
+    ``registry_contract``), e.g. ``CallGraphData`` decode/fetch until registry
+    list/get is wired.
     """
 
     attr_name: str
@@ -64,11 +65,11 @@ class CustomFacadeEntry:
     pyi_attr_doc: str
 
 
-def _scan_logs_facade(client: APIClient, default_namespace: str | None) -> Any:
-    """Build ScanLogsFacade for ``client.ScanLogs`` (request-based log lines API)."""
-    from .facade import ScanLogsFacade
+def _call_graph_data_facade(client: APIClient, default_namespace: str | None) -> Any:
+    """Build CallGraphDataFacade for ``client.CallGraphData``."""
+    from .facade import CallGraphDataFacade
 
-    return ScanLogsFacade(client, default_namespace)
+    return CallGraphDataFacade(client, default_namespace)
 
 
 def _normalize_contract_rows(items: list[Any]) -> list[dict[str, Any]]:
@@ -357,15 +358,17 @@ RESOURCE_REGISTRY: list[ResourceEntry] = _PRIMARY_RESOURCE_REGISTRY + (
     _build_generated_experimental_facades()
 )
 
-# ``ScanLogs`` is an SDK-only facade (fetch log lines for a scan result). It is not
-# an endorctl ``--resource`` kind; CRUD for scan log *requests* uses
-# ``client.ScanLogRequest`` like endorctl.
+# ``CallGraphData`` is an SDK custom facade (decode/fetch by parent PackageVersion).
+# Log lines use ``ScanResult.get_logs`` (ScanLogRequest wire API). CRUD for scan
+# log *requests* uses ``client.ScanLogRequest`` like endorctl.
 CUSTOM_FACADE_REGISTRY: list[CustomFacadeEntry] = [
     CustomFacadeEntry(
-        attr_name="ScanLogs",
-        factory=_scan_logs_facade,
-        pyi_facade_class="ScanLogsFacade",
+        attr_name="CallGraphData",
+        factory=_call_graph_data_facade,
+        pyi_facade_class="CallGraphDataFacade",
         pyi_import_module="facade",
-        pyi_attr_doc="Scan logs facade. Use get_logs() to fetch log messages.",
+        pyi_attr_doc=(
+            "Call graph data facade. Use decode() or fetch() with a PackageVersion."
+        ),
     ),
 ]

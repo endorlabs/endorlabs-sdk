@@ -10,7 +10,7 @@ globs:
 alwaysApply: false
 x-endor-generated: true
 x-endor-source: agent-knowledge/rules/endor-workflow-composition.md
-x-endor-source-sha256: 747dc27cf8b061ef27834f077a2a09c2cfa5a284d21cc5a873204ce7c398fda0
+x-endor-source-sha256: db6be9e6afcff2a01bd7ce8c3ae186e34a4c4edcc1310a26f9a84fa942e88e05
 ---
 
 # Workflow composition
@@ -49,14 +49,17 @@ After a workflow run, treat outputs as source of truth:
 
 Generic entrypoints (no estate literals):
 
-- `endorlabs.workflows.projects.resolve.resolve_project`
+- `client.Project.resolve()` — prefer over `workflows.projects.resolve.resolve_project`
+- `client.CallGraphData.decode()` / `.fetch()` — call graph fetch + decode
+- `client.ScanResult.get_logs()` — scan log lines (ScanLogRequest wire API)
+- `client.Finding.list_for_scan()` — scan-scoped finding lists
+- `client.<Resource>.count()` / `.list_groups()` / `.latest_created()` — list helpers (see [facade-helpers.md](../../docs/guides/facade-helpers.md))
 - `endorlabs.workflows.common.WorkflowResult`
 - `endorlabs.workflows.policies.run_validate_policy`
 - `endorlabs.workflows.estate.export_version_cardinality_for_package_match`
 - `endorlabs.workflows.callgraph.run_callgraph_sweep`
-- `endorlabs.workflows.troubleshooting_scans` — `list_scan_results_for_project`, `resolve_project`, …
+- `endorlabs.workflows.troubleshooting_scans` — workflow CLIs; prefer facade sugar for scan lists and project resolve
 - `endorlabs.workflows.agent_context.hydration` — per-project BOM/CG hydration primitive; not a workflow orchestrator
-- `endorlabs.tools.dependency_explorer` — backward-compatible re-exports of the hydration/call-graph modules above
 
 See `MANIFEST.json` → `workflows[].library_entrypoints` for the catalog row tied to each skill.
 

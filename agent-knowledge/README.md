@@ -29,7 +29,7 @@ Each skill is a directory with `SKILL.md` plus optional reference files. Format:
 | [endor-implement-sdk-resource](endor-implement-sdk-resource/) | Model-sync-first surface extension, overlay, integration tests | `docs/contributing/architecture.md`, `integration-resource-tests.md` |
 | [endor-model-sync-drift](endor-model-sync-drift/) | OpenAPI/provenance drift; regen `registry_contract`, stubs, reference docs; CI/pre-push verify failures | `docs/contributing/docs-drift-workflow.md`, `devtools/sync/` |
 | [endor-retrieve-scan-results](endor-retrieve-scan-results/) | Querying findings, scan results, or projects | `docs/guides/`, `docs/contributing/` |
-| [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, ScanLogs, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
+| [endor-troubleshooting-scans](endor-troubleshooting-scans/) | Scan pipeline RCA; ScanResults, `ScanResult.get_logs`, scripted diffs | `endorlabs.workflows.troubleshooting_scans`; see `docs/guides/`, `docs/contributing/list-query-performance.md` |
 | [endor-troubleshoot-sdk](endor-troubleshoot-sdk/) | Debugging SDK errors, 404s, 500s, or test failures | `docs/contributing/` |
 | [endor-troubleshoot-authlog](endor-troubleshoot-authlog/) | AuthenticationLog / AuthorizationPolicy / SSO login troubleshooting | Skill-owned |
 | [endor-reachability-provenance](endor-reachability-provenance/) | Triaging conflicting reachability signals on findings | `endor-reachability-context` |

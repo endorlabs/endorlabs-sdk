@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from endorlabs.api_client import APIClient
-from endorlabs.utils.api_pagination import paginate_raw
+if TYPE_CHECKING:
+    from endorlabs.api_client import APIClient
 
 
 def retrieve_dep_metadata_full(
@@ -37,7 +37,7 @@ def retrieve_dep_metadata_full(
             ),
             "list_parameters.page_size": str(page_size),
         }
-        objects = paginate_raw(api_client, url, params, max_pages=resolved_pages)
+        objects = list(api_client.get_all(url, params=params, max_pages=resolved_pages))
         if objects:
             truncated = is_list_truncated(
                 len(objects),

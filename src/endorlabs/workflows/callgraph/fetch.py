@@ -1,73 +1,17 @@
-"""Call graph API fetch and summary artifact helpers."""
+"""Call graph summary artifact helpers."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from endorlabs.utils.api_pagination import extract_objects
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.callgraph.proto_decode import _HAS_ZSTD, decode_callgraph
 from endorlabs.workflows.callgraph.render import render_callgraph_analysis
 
-if TYPE_CHECKING:
-    from endorlabs import Client
-    from endorlabs.api_client import APIClient
-
 logger = get_resource_logger(__name__)
-
-
-def retrieve_call_graph_full(
-    api_client: APIClient,
-    namespace: str,
-    pv_uuid: str,
-) -> dict[str, Any]:
-    """Retrieve the full call graph data for a PackageVersion.
-
-    Uses ``x-callgraph-encoding=any`` header to request JSON encoding.
-    """
-    from endorlabs.operations import validate_namespace
-
-    ns = validate_namespace(namespace)
-    url = f"v1/namespaces/{ns}/call-graph-data"
-    params = {
-        "list_parameters.filter": f'meta.parent_uuid=="{pv_uuid}"',
-        "list_parameters.page_size": "1",
-    }
-    resp = api_client.get(url, params=params)
-    data = resp.json()
-    objects = extract_objects(data)
-    if not objects:
-        return {}
-
-    cg_uuid = objects[0].get("uuid", "")
-    if not cg_uuid:
-        return objects[0]
-
-    get_url = f"v1/namespaces/{ns}/call-graph-data/{cg_uuid}"
-    try:
-        resp_full = api_client.get(
-            get_url,
-            headers={"x-callgraph-encoding": "any"},
-        )
-        return resp_full.json()
-    except Exception as exc:
-        logger.warning("  Unable to GET full call graph %s: %s", cg_uuid, exc)
-        return objects[0]
-
-
-def retrieve_call_graph_for_client(
-    client: Client,
-    namespace: str,
-    pv_uuid: str,
-) -> dict[str, Any]:
-    """Retrieve call graph data using a high-level ``Client`` instance."""
-    api_client = getattr(client, "_client", None)
-    if api_client is None:
-        raise RuntimeError("Client is closed; cannot retrieve call graph data.")
-    return retrieve_call_graph_full(api_client, namespace, pv_uuid)
 
 
 def summarize_call_graph(cg_data: dict[str, Any]) -> dict[str, Any]:

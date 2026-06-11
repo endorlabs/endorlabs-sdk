@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import endorlabs
-from endorlabs import F
-from endorlabs.core.exceptions import NotFoundError
 from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     resolve_max_pages,
 )
+
+if TYPE_CHECKING:
+    from endorlabs import Client
 
 
 def is_hex_project_id(value: str) -> bool:
@@ -19,35 +19,17 @@ def is_hex_project_id(value: str) -> bool:
 
 
 def resolve_project(
-    client: endorlabs.Client,
+    client: Client,
     namespace: str,
     project: str,
     warnings: list[str],
 ) -> Any:
     """Resolve a project by UUID (with traverse fallback) or by name (lookup)."""
-    if is_hex_project_id(project):
-        try:
-            return client.Project.get(project, namespace=namespace)
-        except NotFoundError:
-            matches = client.Project.list(
-                namespace=namespace,
-                filter=F("uuid") == project,
-                traverse=True,
-                max_pages=1,
-                page_size=5,
-            )
-            if not matches:
-                raise
-            warnings.append(
-                f"Project {project!r} is not in namespace {namespace!r}; "
-                "resolved the same UUID via list(traverse=True)."
-            )
-            return matches[0]
-    return client.Project.lookup(name=project, namespace=namespace, traverse=True)
+    return client.Project.resolve(project, namespace=namespace, warnings_out=warnings)
 
 
 def search_projects_by_name_or_uuid(
-    client: endorlabs.Client,
+    client: Client,
     *,
     namespace: str,
     query: str,

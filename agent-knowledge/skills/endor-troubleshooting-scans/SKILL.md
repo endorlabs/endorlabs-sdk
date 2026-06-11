@@ -2,7 +2,7 @@
 name: endor-troubleshooting-scans
 description: >-
   Scan pipeline RCA: resolve a project, fetch a bounded scan window, heuristically
-  rank suspicious scan pairs, pull ScanLogs for selected scans, and diff aggregate
+  rank suspicious scan pairs, pull scan logs via ScanResult.get_logs for selected
   metrics/logs. Not for individual Finding rows or policy validation — hand off to
   other skills when deeper analysis is needed.
 endorlabs:
@@ -28,7 +28,7 @@ Chain CLI steps on JSON artifacts; extend with library imports per [workflow-com
 - Resolve project candidates (name, URL, UUID).
 - Fetch a **bounded** scan-result window and normalized summary metrics.
 - **Heuristically** rank adjacent scan pairs (status, aggregate finding counts, dependency totals).
-- Pull **ScanLogs** for the selected pair (at most two scan UUIDs by default).
+- Pull **scan logs** for the selected pair via `client.ScanResult.get_logs` (at most two scan UUIDs by default).
 - Diff scan-level metrics and log excerpts into JSON + markdown artifacts.
 
 **Out of scope (use another skill):**
@@ -111,7 +111,7 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
   - Output object kind: `scan_result_pairs`.
 
 - `fetch_scan_logs.py`
-  - Retrieves ScanLog entries for the **first selected pair** (up to two scan UUIDs; `--max-entries` default 500). ScanLogs facade first, embedded `spec.logs` fallback.
+  - Retrieves ScanLog entries for the **first selected pair** (up to two scan UUIDs; `--max-entries` default 500). `ScanResult.get_logs` first, embedded `spec.logs` fallback.
   - Inputs: selected pairs JSON.
   - Output object kinds: `scan_log`, `scan_logs`.
 
@@ -122,7 +122,7 @@ Installed package modules (run with `uv run python -m endorlabs.workflows.troubl
   - Output object kind: `scan_diff`.
 
 - `search_scan_errors.py`
-  - Standalone: regex search over **embedded** `spec.logs` lines in a bounded scan window (no ScanLogs API).
+  - Standalone: regex search over **embedded** `spec.logs` lines in a bounded scan window (no ScanLogRequest API).
   - Inputs: project selector or tenant-wide, error regex.
   - Output object kind: `scan_error_hits`.
 
