@@ -8,9 +8,20 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Added
 
+- **Facade list helpers** — `count()`, `list_groups()`, `latest()` / `latest_created()` / `latest_updated()`, `parent()` on listable facades; catalog in [facade-helpers.md](guides/facade-helpers.md).
+- **Facade sugar** — `Project.resolve()`, `Finding.list_for_scan()`, `CallGraphData.decode()` / `fetch()`, `ScanResult.get_logs()`, `ScanResult.latest_created(parent=…)`.
+
 ### Changed
 
+- Estate grouped counts and collect preflight use `facade.count()` / `DependencyMetadata.list_groups()` instead of workflow-local pagination helpers.
+
 ### Breaking
+
+- Removed **`endorlabs.utils.api_pagination`** (`paginate_raw`, `extract_objects`) — use `facade.list()` / `api_client.get_all` or `operations.list_response.extract_list_objects`.
+- Removed **`list_resource_count`** from `workflows.estate.collect.bounds` — use `facade.count()` or `count_for_progress`.
+- Removed **`retrieve_call_graph_full`** / **`retrieve_call_graph_for_client`** from `workflows.callgraph.fetch` — use `client.CallGraphData.decode` / `fetch`.
+- Removed **`client.ScanLogs`** — use `client.ScanResult.get_logs`.
+- Removed call-graph and pagination re-exports from **`endorlabs.tools.dependency_explorer`**.
 
 ## 0.2.0
 

@@ -9,10 +9,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from endorlabs.workflows.estate.collect.shards import ParentShard
 
+from endorlabs.client_surface import Client
+
 from .common import (
-    build_api_client,
     default_troubleshooting_output_dir,
-    list_projects,
     list_scan_results_for_project,
     parallel_collect_for_projects,
     root_tenant,
@@ -51,13 +51,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(args: argparse.Namespace) -> dict[str, Any]:
     """Execute workflow from parsed CLI args."""
-    api = build_api_client()
     ns = args.namespace or args.tenant
+    client = Client(tenant=ns)
     root = root_tenant(ns)
     output_dir = Path(args.output_dir)
     effective_limit = args.scan_window or args.limit
 
-    projects = list_projects(api, ns)
+    traverse = "." not in ns
+    projects = [
+        p.model_dump(mode="json")
+        for p in client.Project.list(namespace=ns, traverse=traverse)
+    ]
     selected_projects = projects
     if not args.all_projects:
         if args.project_uuid:
@@ -81,7 +85,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     def _fetch_scan_results(shard: ParentShard) -> list[dict[str, Any]]:
         return list_scan_results_for_project(
-            api,
+            client,
             namespace=shard.namespace,
             project_uuid=shard.key,
             limit=effective_limit,
@@ -104,7 +108,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 continue
             all_results.extend(
                 list_scan_results_for_project(
-                    api,
+                    client,
                     namespace=project_ns,
                     project_uuid=project_uuid,
                     limit=effective_limit,

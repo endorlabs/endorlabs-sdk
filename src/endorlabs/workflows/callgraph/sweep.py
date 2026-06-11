@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from endorlabs import F
+from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.callgraph.decoded import decode_payload
-from endorlabs.workflows.callgraph.fetch import retrieve_call_graph_full
 
 LOGGER = get_resource_logger(__name__)
 
@@ -22,7 +22,7 @@ def _write_json_base(root: Path, path: Path, data: Any) -> None:
 
 
 def run_callgraph_sweep(
-    api_client: Any,
+    _api_client: Any,
     *,
     project_uuid: str,
     out_dir: Path,
@@ -46,7 +46,10 @@ def run_callgraph_sweep(
 
     exports: list[dict[str, Any]] = []
     for idx, pv in enumerate(pvs, start=1):
-        cg_data = retrieve_call_graph_full(api_client, list_namespace, pv.uuid)
+        try:
+            cg_data = client.CallGraphData.fetch(pv)
+        except NotFoundError:
+            continue
         if not cg_data:
             continue
 

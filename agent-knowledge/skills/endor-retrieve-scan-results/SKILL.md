@@ -12,7 +12,7 @@ description: >-
 
 **Default path:** one **Project** → **`ScanResult.list(parent=project)`** → **`Finding.list(..., namespace=project.namespace)`** — no `traverse=True` on findings after the project is resolved.
 
-For **scan pipeline** regressions (bounded scan window, heuristic pair scoring, ScanLogs, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs for finding-level drill-down.
+For **scan pipeline** regressions (bounded scan window, heuristic pair scoring, scan logs via `ScanResult.get_logs`, aggregate diffs), use [endor-troubleshooting-scans](../endor-troubleshooting-scans/SKILL.md) first, then return here with scan UUIDs for finding-level drill-down.
 
 Human-oriented reference: [docs/guides/retrieving-scan-results.md](../../../docs/guides/retrieving-scan-results.md). General **`traverse`** mechanics: [docs/contributing/namespace-traversal.md](../../../docs/contributing/namespace-traversal.md).
 

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 from .core.exceptions import ValidationError
 from .core.filter import F
-from .facade import ResourceRuntimeFacade
+from .facade import FACADE_CLASS_BY_ATTR, ResourceRuntimeFacade
 from .registry import CUSTOM_FACADE_REGISTRY, RESOURCE_REGISTRY, ResourceEntry
 from .utils.endorctl_config import (
     endorctl_config_path,
@@ -103,14 +103,12 @@ class Client:
             if "update" in entry.supported_ops
             else []
         )
-        return cast(
-            "ResourceRuntimeFacade[Any]",
-            ResourceRuntimeFacade[entry.model_class](
-                self._client,
-                self._default_namespace,
-                entry,
-                tags_paths=tags_paths,
-            ),
+        facade_cls = FACADE_CLASS_BY_ATTR.get(entry.attr_name, ResourceRuntimeFacade)
+        return facade_cls(
+            self._client,
+            self._default_namespace,
+            entry,
+            tags_paths=tags_paths,
         )
 
     def close(self) -> None:

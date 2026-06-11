@@ -21,9 +21,9 @@ from endorlabs.workflows.estate.analyze.project_map.core import (
     aggregate_package_anchored_edges,
 )
 from endorlabs.workflows.estate.collect.bounds import (
+    count_for_progress,
     format_progress,
     is_list_truncated,
-    list_resource_count,
     truncation_message,
 )
 from endorlabs.workflows.estate.contracts.ir_artifacts import (
@@ -509,7 +509,7 @@ def build_publisher_index(
     int,
 ]:
     pv_filter = main_context_filter()
-    in_scope_count = list_resource_count(
+    in_scope_count = count_for_progress(
         client.PackageVersion,
         namespace,
         resource_label="PackageVersion",

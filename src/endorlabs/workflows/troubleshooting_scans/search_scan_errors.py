@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from endorlabs.client_surface import Client
 from endorlabs.workflows.estate.collect.shards import ParentShard
 
 from .common import (
@@ -138,6 +139,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     root = root_tenant(ns)
     pattern = re.compile(args.error_pattern, re.IGNORECASE)
     api = build_api_client()
+    client = Client(tenant=ns)
     projects = list_projects(api, ns) if not args.from_search_artifact else []
 
     selected_projects, scope_label = _resolve_scope(args, projects)
@@ -147,7 +149,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     def _search_project(shard: ParentShard) -> list[dict[str, Any]]:
         project_hits: list[dict[str, Any]] = []
         scan_results = list_scan_results_for_project(
-            api,
+            client,
             namespace=shard.namespace,
             project_uuid=shard.key,
             limit=args.limit,

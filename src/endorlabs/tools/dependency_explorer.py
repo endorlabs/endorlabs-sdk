@@ -3,19 +3,18 @@
 Canonical import paths:
 
 - ``endorlabs.utils.artifact_io`` — ``slugify``, ``write_json``
-- ``endorlabs.utils.api_pagination`` — ``extract_objects``, ``paginate_raw``
 - ``endorlabs.workflows.dependencies.coordinates`` — ``parse_dep_name``
 - ``endorlabs.workflows.dependencies.bom_graph`` — BOM graph helpers
 - ``endorlabs.workflows.dependencies.metadata_fetch`` — DependencyMetadata fetch
 - ``endorlabs.workflows.callgraph.proto_decode`` — protobuf decode types/helpers
 - ``endorlabs.workflows.callgraph.render`` — Markdown rendering
-- ``endorlabs.workflows.callgraph.fetch`` — API fetch and summary artifacts
+- ``endorlabs.workflows.callgraph.fetch`` — summary artifact helpers
+- ``client.CallGraphData.decode`` / ``fetch`` — call graph fetch + decode
 - ``endorlabs.workflows.agent_context.hydration`` — per-project hydration
 """
 
 from __future__ import annotations
 
-from endorlabs.utils.api_pagination import extract_objects, paginate_raw
 from endorlabs.utils.artifact_io import slugify, write_json
 from endorlabs.workflows.agent_context.hydration import (
     ProjectResult,
@@ -26,8 +25,6 @@ from endorlabs.workflows.agent_context.hydration import (
 from endorlabs.workflows.callgraph.fetch import (
     generate_call_graph_analysis_md,
     render_call_graph_summary_md,
-    retrieve_call_graph_for_client,
-    retrieve_call_graph_full,
     summarize_call_graph,
 )
 from endorlabs.workflows.callgraph.proto_decode import (
@@ -69,17 +66,13 @@ __all__ = [
     "count_transitive_children",
     "decode_callgraph",
     "extract_direct_deps",
-    "extract_objects",
     "generate_call_graph_analysis_md",
-    "paginate_raw",
     "parse_dep_name",
     "process_project",
     "render_call_graph_summary_md",
     "render_callgraph_analysis",
     "render_slim_dependencies",
     "retrieve_bom_full",
-    "retrieve_call_graph_for_client",
-    "retrieve_call_graph_full",
     "retrieve_dep_metadata_full",
     "slugify",
     "summarize_call_graph",

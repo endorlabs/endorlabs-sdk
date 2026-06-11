@@ -24,13 +24,12 @@ def test_fetch_scan_results_requires_project_or_all_projects() -> None:
         output_dir=".tmp",
         timestamped=False,
     )
+    mock_client = Mock()
+    mock_client.Project.list.return_value = []
     with (
         patch(
-            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.build_api_client"
-        ),
-        patch(
-            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.list_projects",
-            return_value=[],
+            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.Client",
+            return_value=mock_client,
         ),
         pytest.raises(ValueError, match="Provide --project-uuid or --project-name"),
     ):
@@ -57,14 +56,14 @@ def test_fetch_scan_results_writes_raw_and_summary_artifacts() -> None:
             "meta": {"name": "proj-1"},
         }
     ]
+    mock_client = Mock()
+    mock_client.Project.list.return_value = [
+        Mock(model_dump=Mock(return_value=projects[0])),
+    ]
     with (
         patch(
-            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.build_api_client",
-            return_value=Mock(),
-        ),
-        patch(
-            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.list_projects",
-            return_value=projects,
+            "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.Client",
+            return_value=mock_client,
         ),
         patch(
             "endorlabs.workflows.troubleshooting_scans.fetch_scan_results.list_scan_results_for_project",

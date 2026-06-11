@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from endorlabs.core.types import ListParameters
 from endorlabs.utils.logging_config import get_resource_logger
+
+if TYPE_CHECKING:
+    from endorlabs.core.types import ListParameters
 
 _LOGGER = get_resource_logger(__name__)
 
@@ -68,7 +70,7 @@ def format_progress(
     return f"{label}: {processed}/{denom}{suffix}"
 
 
-def list_resource_count(
+def count_for_progress(
     facade: Any,
     namespace: str,
     *,
@@ -78,7 +80,7 @@ def list_resource_count(
     list_params: ListParameters | None = None,
     logger: logging.Logger | None = None,
 ) -> int | None:
-    """Issue a single count request with the same filters as a subsequent list.
+    """Issue ``facade.count()`` with the same filters as a subsequent list.
 
     Returns ``None`` on failure (caller should use ``?`` as progress denominator).
     """
@@ -90,23 +92,13 @@ def list_resource_count(
         scope_parts.append(f"filter={filter_expr[:80]}")
     scope = " ".join(scope_parts)
 
-    lp = list_params
-    if lp is None:
-        lp = ListParameters(
-            filter=filter_expr,
-            traverse=traverse or None,
-        )
-    else:
-        updates: dict[str, Any] = {}
-        if filter_expr is not None:
-            updates["filter"] = filter_expr
-        if traverse:
-            updates["traverse"] = True
-        if updates:
-            lp = lp.model_copy(update=updates)
-
     try:
-        total = facade._ops.count(namespace, list_params=lp)  # noqa: SLF001
+        total = facade.count(
+            namespace=namespace,
+            filter=filter_expr,
+            traverse=traverse,
+            list_params=list_params,
+        )
     except Exception as exc:
         log.warning(
             "%s count failed (%s); progress denominator unknown",

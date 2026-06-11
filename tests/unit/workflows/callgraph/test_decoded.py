@@ -45,7 +45,7 @@ def test_decode_payload_shapes_summary_callables_and_edges(monkeypatch) -> None:
         callable_label=lambda i: {1: method_b.uri, 2: method_a.uri}[i],
     )
     monkeypatch.setattr(
-        "endorlabs.workflows.callgraph.decoded.decode_callgraph",
+        "endorlabs.workflows.callgraph.proto_decode.decode_callgraph",
         lambda _cg: decoded,
     )
 

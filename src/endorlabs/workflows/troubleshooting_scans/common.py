@@ -121,7 +121,7 @@ def build_api_client() -> APIClient:
 
 
 def build_scanlogs_client(tenant: str) -> Client:
-    """Construct high-level client for ScanLogs facade."""
+    """Construct high-level ``Client`` for ``ScanResult.get_logs``."""
     return Client(tenant=tenant)
 
 
@@ -169,7 +169,7 @@ def match_projects(
 
 
 def list_scan_results_for_project(
-    api: APIClient,
+    client: Client,
     *,
     namespace: str,
     project_uuid: str,
@@ -177,22 +177,23 @@ def list_scan_results_for_project(
     status_filter: str | None = None,
 ) -> list[dict[str, Any]]:
     """List scan results for a project (server-side parent filter)."""
-    params = {
-        "list_parameters.traverse": "false",
-        "list_parameters.sort_path": "meta.create_time",
-        "list_parameters.sort_order": "descending",
-        "list_parameters.filter": f'meta.parent_uuid=="{project_uuid}"',
-    }
-    results = list(
-        api.get_all(f"v1/namespaces/{namespace}/scan-results", params=params)
+    page_size = limit if limit > 0 else None
+    rows = client.ScanResult.list(
+        namespace=namespace,
+        filter=f'meta.parent_uuid=="{project_uuid}"',
+        sort_by="meta.create_time",
+        desc=True,
+        max_pages=1,
+        page_size=page_size,
     )
+    results = [object_to_dict(item) for item in rows]
     if status_filter:
         results = [
             item
             for item in results
             if (item.get("spec") or {}).get("status") == status_filter
         ]
-    return results[:limit]
+    return results[:limit] if limit > 0 else results
 
 
 def parallel_collect_for_projects(
@@ -245,7 +246,7 @@ def project_namespace(project: Any) -> str | None:
 
 
 def scanlog_line(message: Any) -> str:
-    """Normalize a ScanLogs message object into plain text."""
+    """Normalize a scan log message object into plain text."""
     level = str(getattr(message, "log_level", "UNKNOWN"))
     timestamp = getattr(message, "timestamp", "")
     text = getattr(message, "message", "")

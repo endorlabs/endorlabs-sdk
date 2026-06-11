@@ -18,7 +18,6 @@ from endorlabs.workflows.estate.analyze.cardinality.export import (
 )
 from endorlabs.workflows.estate.analyze.cardinality.group_list import (
     grouped_count_list_parameters_for_package_name,
-    iter_group_buckets,
 )
 from endorlabs.workflows.estate.analyze.cardinality.tabular import TabularExport
 from endorlabs.workflows.estate.analyze.cardinality.types import (
@@ -71,12 +70,15 @@ def _collect_usage_for_package(
         main_context=True,
     )
     for namespace in namespace_names:
-        for group_key, group_data in iter_group_buckets(
-            client,
-            namespace,
-            list_params,
+        paths = list_params.group_aggregation_paths or []
+        for bucket in client.DependencyMetadata.list_groups(
+            namespace=namespace,
+            list_params=list_params,
+            paths=list(paths),
             max_pages=max_pages,
         ):
+            group_key = bucket.key
+            group_data = bucket.data
             row = _usage_row_from_group(
                 estate_root,
                 group_key,
