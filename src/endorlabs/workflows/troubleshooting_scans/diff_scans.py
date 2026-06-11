@@ -6,8 +6,9 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from endorlabs.client_surface import Client
+
 from .common import (
-    build_api_client,
     default_troubleshooting_output_dir,
     load_json,
     root_tenant,
@@ -46,10 +47,9 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def fetch_scan_result(api: Any, namespace: str, scan_uuid: str) -> dict[str, Any]:
+def fetch_scan_result(client: Client, namespace: str, scan_uuid: str) -> dict[str, Any]:
     """Fetch one scan result by UUID."""
-    resp = api.get(f"v1/namespaces/{namespace}/scan-results/{scan_uuid}")
-    return resp.json()
+    return client.ScanResult.get(scan_uuid, namespace=namespace).model_dump(mode="json")
 
 
 def compute_diff(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any]:
@@ -94,9 +94,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     primary_uuid = first["primary_scan_result_uuid"]
     secondary_uuid = first["secondary_scan_result_uuid"]
 
-    api = build_api_client()
-    primary = fetch_scan_result(api, args.namespace, primary_uuid)
-    secondary = fetch_scan_result(api, args.namespace, secondary_uuid)
+    client = Client(tenant=args.tenant)
+    primary = fetch_scan_result(client, args.namespace, primary_uuid)
+    secondary = fetch_scan_result(client, args.namespace, secondary_uuid)
     diff_payload = compute_diff(primary, secondary)
 
     root = root_tenant(args.tenant)

@@ -1,4 +1,8 @@
-"""Call graph fetch and decode for PackageVersion-scoped payloads."""
+"""CallGraphData wire helpers for PackageVersion-scoped fetch and decode.
+
+Mirrors the ScanLogRequest pattern: resource module owns non-CRUD wire paths;
+``CallGraphDataFacade`` on ``Client`` delegates here.
+"""
 
 from __future__ import annotations
 
@@ -6,8 +10,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from ..core.exceptions import NotFoundError
-from . import validate_namespace
-from .list_response import extract_list_objects
+from ..operations import validate_namespace
+from ..operations.list_response import extract_list_objects
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -78,7 +82,7 @@ def unpack_call_graph_envelope(
     envelope: dict[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     """Decode a CallGraphData envelope into summary, callables, and edges."""
-    from ..workflows.callgraph.proto_decode import decode_callgraph
+    from .call_graph_data_proto import decode_callgraph
 
     decoded = decode_callgraph(envelope)
     callables = [

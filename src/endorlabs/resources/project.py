@@ -23,14 +23,19 @@ from typing import TYPE_CHECKING, Any, override
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..models.base import BaseMeta, BaseResource, BaseSpec
 from ..operations import BaseResourceOperations
 from ..utils.logging_config import get_resource_logger
+from .base import BaseMeta, BaseResource, BaseSpec
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
 
 logger = get_resource_logger(__name__)
+
+
+def is_hex_project_id(value: str) -> bool:
+    """Return whether *value* is a 24-character lowercase hex project UUID."""
+    return len(value) == 24 and all(c in "0123456789abcdef" for c in value.lower())
 
 
 # Pydantic Models for Project data based on actual API response
@@ -294,40 +299,6 @@ class Project(BaseResource):
         if "spec" in data and isinstance(data["spec"], dict):
             data["spec"] = ProjectSpec(**data["spec"])
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "git",
-                "language",
-                "framework",
-                "repository_url",
-                "branch",
-                "commit_hash",
-                "scan_config",
-                "policy_config",
-                "notification_config",
-                "integration_config",
-                "platform_source",
-                "internal_reference_key",
-                "ingestion_token",
-                "toolchain_profile_uuid",
-                "scan_profile_uuid",
-                "is_archived",
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
     @field_validator("uuid")
     @classmethod

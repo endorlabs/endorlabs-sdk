@@ -6,11 +6,11 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from endorlabs.api_client import APIClient
+    from endorlabs import Client
 
 
 def retrieve_dep_metadata_full(
-    api_client: APIClient,
+    client: Client,
     project_namespace: str,
     project_uuid: str,
     max_pages: int | None = None,
@@ -22,29 +22,31 @@ def retrieve_dep_metadata_full(
     Tries the project's namespace first, then falls back to ``"oss"``.
     Returns ``(rows, source_namespace, truncated)``.
     """
-    from endorlabs.operations import validate_namespace
     from endorlabs.workflows.estate.collect.bounds import (
         is_list_truncated,
         resolve_max_pages,
     )
 
     resolved_pages = resolve_max_pages(max_pages)
+    dep_filter = f'spec.importer_data.project_uuid=="{project_uuid}"'
     for ns in [project_namespace, "oss"]:
-        url = f"v1/namespaces/{validate_namespace(ns)}/dependency-metadata"
-        params = {
-            "list_parameters.filter": (
-                f'spec.importer_data.project_uuid=="{project_uuid}"'
-            ),
-            "list_parameters.page_size": str(page_size),
-        }
-        objects = list(api_client.get_all(url, params=params, max_pages=resolved_pages))
+        objects = client.DependencyMetadata.list(
+            namespace=ns,
+            filter=dep_filter,
+            max_pages=resolved_pages,
+            page_size=page_size,
+        )
         if objects:
+            rows = [
+                item if isinstance(item, dict) else item.model_dump(mode="json")
+                for item in objects
+            ]
             truncated = is_list_truncated(
                 len(objects),
                 max_pages=resolved_pages,
                 page_size=page_size,
             )
-            return objects, ns, truncated
+            return rows, ns, truncated
     return [], "", False
 
 

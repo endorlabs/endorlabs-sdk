@@ -164,22 +164,18 @@ def build_reachability_context(request: ReachabilityContextRequest) -> Path:
     client = endorlabs.Client(tenant=request.tenant)
     warnings: list[str] = []
     try:
-        api_client = getattr(client, "_client", None)
-        if api_client is None:
-            raise RuntimeError("Client API handle is unavailable.")
-
         subject: ReachabilitySubject
         finding_obj: dict[str, Any] | None = None
         dep_meta: dict[str, Any] | None = None
         if request.finding_uuid:
             subject, finding_obj, dep_meta = resolve_from_finding(
-                api_client,
+                client,
                 namespace=request.namespace,
                 finding_uuid=request.finding_uuid,
             )
         else:
             subject, _pv = resolve_from_package_version(
-                api_client,
+                client,
                 namespace=request.namespace,
                 package_version_uuid=request.pv_uuid or "",
             )

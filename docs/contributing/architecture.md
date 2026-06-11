@@ -14,7 +14,7 @@ flowchart TD
     FACADE["Layer 2: ResourceRuntimeFacade[T]<br/>(ResourceFacade alias)"]
     OPS["BaseResourceOperations"]
     API["Layer 1: APIClient"]
-    MODEL["Pydantic resource models"]
+    MODEL["consumer models<br/>resources/base.py + resources/{kind}.py"]
     NS["namespace resolution<br/>tenant / oss / system"]
 
     RC --> REG
@@ -64,13 +64,13 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 2. **Verify contract** — Resource appears in `src/endorlabs/generated/registry_contract.py`; facade is attached at runtime from the registry adapter (no entry in `Client.__init__`).
 3. **Validate API shape** — [api-validation.md](api-validation.md) (OpenAPI + optional endorctl list/get).
 4. **Diverge only when needed** — [registry_overlay.py](../../src/endorlabs/registry_overlay.py) for scope, ops, or metadata the generator cannot express; keep overrides minimal.
-5. **Hand-written `resources/` modules** — Use for `build_create_payload`, field aliasing, convenience helpers, and schema drift hooks when generated shards are insufficient. Confirm model-sync parity before large manual deltas.
+5. **Hand-written `resources/` modules** — Extend `resources.base.BaseResource` / `BaseSpec` for `Client` return types; use for `build_create_payload`, field aliasing (Tier 3 → `resources/field_aliases.py`), convenience helpers, and `extra="allow"` forward compat when generated shards are insufficient. Confirm model-sync parity before large manual deltas.
 6. **Integration tests** — [integration-resource-tests.md](integration-resource-tests.md).
 7. **Custom facades** — Rare; append-only experimental entries in `registry.py` (e.g. workflow helpers). Prefer contract + overlay first.
 
 ### Canonical generation policy
 
-- Mapping is from `.endorlabs-context/platform/openapi/openapiv2.swagger.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/`.
+- Mapping is from `.endorlabs-context/platform/openapi/openapiv2.swagger.json` to deterministic Pydantic modules under `src/endorlabs/generated/models/` (wire mirror only — not the consumer types in `resources/`).
 - Eligibility defaults to include when `x-internal != true`, with explicit allowlist exceptions in model-sync profiles when metadata is incomplete.
 - Mapping must be deterministic (stable bucketing, naming, `entity -> module` manifest).
 
@@ -80,6 +80,56 @@ New API resources are **modeled by model sync**, not hand-added to `Client` one 
 - `update_mask` at the facade is a comma-separated string; UUID+payload updates require an explicit mask.
 - Create/update field allowlists: `build_create_payload` and model `get_mutable_fields_cls()` / `get_immutable_fields_cls()`; see [contracts.md](../contracts.md) (field aliasing, consumer UX).
 - Errors: use `endorlabs` exception types; preserve full response text in logs.
+
+## Consumer vs generated models
+
+Two model planes coexist until per-resource cutover completes:
+
+| Plane | Location | Role |
+| ----- | -------- | ---- |
+| **Wire truth** | `src/endorlabs/generated/models/**`, `generated/registry_contract.py` | OpenAPI-shaped `V1*` types, CRUD metadata — **never hand-edit** |
+| **Consumer runtime** | `resources/base.py`, `resources/{kind}.py`, `resources/*_config.py` | What `Client.*.list()` / `get()` deserialize into; greenfield names, mask tolerance, `.update()`, `build_create_payload` |
+
+**Naming rule:** `generated/models` = wire mirror; `resources/` = consumer types for the primary registry kinds (plus wire helpers such as `call_graph_data*.py`).
+
+**Policy nested specs:** [`finding_config.py`](../../src/endorlabs/resources/finding_config.py), [`notification_config.py`](../../src/endorlabs/resources/notification_config.py), and [`exception_config.py`](../../src/endorlabs/resources/exception_config.py) are intentional siblings on [`BaseSpec`](../../src/endorlabs/resources/base.py). They align with product policy UI tabs (finding / notification / exception lifecycle). Policy types may use different action shapes; fields belong in the OpenAPI model and consumer configs document known keys with `extra="allow"`.
+
+**API shape drift:** Primary detection is **model-sync regen** + **CI parity** ([docs-drift-workflow.md](docs-drift-workflow.md), `verify_ship_artifacts.py`). Consumer specs use `extra="allow"` so unknown API keys do not break parse. Optional maintainer wire-key probes: `from endorlabs.utils.schema_drift import log_unknown_wire_keys` — **not** in `endorlabs.utils.__all__`; never hooked into default model validation.
+
+Tier 3 semantic aliases: [`resources/field_aliases.py`](../../src/endorlabs/resources/field_aliases.py) — [contracts.md](../contracts.md#field-aliasing).
+
+```mermaid
+flowchart TB
+    subgraph transport [Layer1_Transport]
+        APIClient["api_client.py"]
+    end
+    subgraph contract [Contract_Generated_NeverHandEdit]
+        OpenAPI[".endorlabs-context/platform/openapi/"]
+        GenModels["generated/models/**"]
+        GenContract["generated/registry_contract.py"]
+    end
+    subgraph runtime [Layer2_ConsumerRuntime]
+        Registry["registry.py + registry_overlay.py"]
+        Client["client_surface.py + facade.py"]
+        Ops["operations/BaseResourceOperations"]
+        ResBase["resources/base.py + *_config.py"]
+        ResKinds["resources/{kind}.py"]
+    end
+    subgraph orchestration [Layer3_Workflows]
+        Workflows["workflows/**"]
+    end
+    OpenAPI --> GenModels
+    OpenAPI --> GenContract
+    GenContract --> Registry
+    Registry --> Client
+    Client --> Ops
+    Ops --> APIClient
+    Client --> ResKinds
+    ResBase --> ResKinds
+    Workflows --> Client
+```
+
+**Long-term cutover:** Flip `model_class_import_path` per resource so type bodies live in `generated/models/`; keep thin `resources/{kind}.py` for payload builders and facade sugar.
 
 ## When to Use
 

@@ -12,20 +12,12 @@ from datetime import UTC, datetime
 from io import StringIO
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
 import pytest  # noqa: TC002
 
 from endorlabs.operations.list_response import extract_list_objects as extract_objects
-from endorlabs.utils.artifact_io import slugify, write_json
-from endorlabs.workflows.agent_context.hydration import (
-    ProjectResult,
-    PVResult,
-    _render_pv_section,
-    build_dependency_callgraph_summary,
-)
-from endorlabs.workflows.callgraph.fetch import _clean_source_path, summarize_call_graph
-from endorlabs.workflows.callgraph.proto_decode import (
+from endorlabs.resources.call_graph_data_proto import (
     ACCESS_LEVEL,
     CALL_TYPE,
     CALLGRAPH_VERSION,
@@ -48,6 +40,14 @@ from endorlabs.workflows.callgraph.proto_decode import (
     _unwrap_int,
     _unwrap_string,
 )
+from endorlabs.utils.artifact_io import slugify, write_json
+from endorlabs.workflows.agent_context.hydration import (
+    ProjectResult,
+    PVResult,
+    _render_pv_section,
+    build_dependency_callgraph_summary,
+)
+from endorlabs.workflows.callgraph.fetch import _clean_source_path, summarize_call_graph
 from endorlabs.workflows.callgraph.render import (
     _build_call_tree,
     _infer_profile,
@@ -976,26 +976,30 @@ def test_retrieve_dep_metadata_full_prefers_project_namespace(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Project namespace is queried first; oss is not tried when tenant rows exist."""
-    urls: list[str] = []
+    namespaces: list[str] = []
 
-    def _fake_get_all(
-        url: str,
+    def _fake_list(
         *,
-        params: dict[str, str],
+        namespace: str,
+        filter: str,
         max_pages: int | None = None,
-    ) -> list[dict[str, str]]:
-        _ = params
+        page_size: int = 500,
+    ) -> list[Mock]:
+        _ = filter
         _ = max_pages
-        urls.append(url)
-        if "/tenant.child/" in url:
-            return [{"uuid": "dm-1"}]
+        _ = page_size
+        namespaces.append(namespace)
+        if namespace == "tenant.child":
+            row = Mock()
+            row.model_dump = Mock(return_value={"uuid": "dm-1"})
+            return [row]
         return []
 
-    api = MagicMock()
-    api.get_all = _fake_get_all
+    client = MagicMock()
+    client.DependencyMetadata.list = Mock(side_effect=_fake_list)
 
     rows, source_ns, truncated = retrieve_dep_metadata_full(
-        api,
+        client,
         "tenant.child",
         "project-uuid",
     )
@@ -1003,5 +1007,4 @@ def test_retrieve_dep_metadata_full_prefers_project_namespace(
     assert source_ns == "tenant.child"
     assert len(rows) == 1
     assert truncated is False
-    assert len(urls) == 1
-    assert urls[0].endswith("/tenant.child/dependency-metadata")
+    assert namespaces == ["tenant.child"]

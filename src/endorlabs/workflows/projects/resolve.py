@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from endorlabs.resources.project import is_hex_project_id
 from endorlabs.workflows.estate.collect.bounds import (
     is_list_truncated,
     resolve_max_pages,
@@ -12,10 +13,7 @@ from endorlabs.workflows.estate.collect.bounds import (
 if TYPE_CHECKING:
     from endorlabs import Client
 
-
-def is_hex_project_id(value: str) -> bool:
-    """Return whether *value* is a 24-character lowercase hex project UUID."""
-    return len(value) == 24 and all(c in "0123456789abcdef" for c in value.lower())
+__all__ = ["is_hex_project_id", "resolve_project", "search_projects_by_name_or_uuid"]
 
 
 def resolve_project(

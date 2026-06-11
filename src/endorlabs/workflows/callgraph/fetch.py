@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 from typing import Any
 
+from endorlabs.resources.call_graph_data_proto import _HAS_ZSTD, decode_callgraph
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
-from endorlabs.workflows.callgraph.proto_decode import _HAS_ZSTD, decode_callgraph
 from endorlabs.workflows.callgraph.render import render_callgraph_analysis
 
 logger = get_resource_logger(__name__)

@@ -15,7 +15,7 @@ summary: Prefer workflow CLI, then library imports, then Client; extend artifact
 | Layer | Location | Responsibility | Must not |
 |-------|----------|----------------|----------|
 | **Primitives** | `Client`, `APIClient` | CRUD/list/get per resource | Orchestration, file I/O, argparse |
-| **Tools** | `endorlabs.tools.*` | Reusable domain utilities (e.g. dependency explorer) | Tenant-wide workflow opinions, CLI mains |
+| **Tools** | `endorlabs.tools.*` | Reusable domain utilities (e.g. list sharding) | Tenant-wide workflow opinions, CLI mains |
 | **Workflow libraries** | `endorlabs.workflows.*` (non-`cli`) | `Client` in → typed `WorkflowResult` out | `print()`, argparse, cwd-relative writes |
 | **Workflow CLIs** | `*.cli`, `troubleshooting_scans/*` | Args, artifacts, filenames | Become copy-paste targets for agents |
 | **Session scripts** | `workspace/sessions/<user>/scripts/` | Thin glue on artifacts + library imports | Live in `src/`, reimplement discovery |

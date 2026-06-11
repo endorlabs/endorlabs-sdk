@@ -315,7 +315,7 @@ builtins-ignorelist = ["type", "id", "hash", "filter", "list"]  # API field name
 # --- Resource model quirks ---
 "src/endorlabs/resources/project.py" = ["F811"]  # TenantMeta duplicate
 # --- Internal/API compatibility: private helpers and unused params ---
-"src/endorlabs/models/base.py" = ["SLF001"]
+"src/endorlabs/resources/base.py" = ["SLF001"]
 "src/endorlabs/operations/__init__.py" = ["SLF001"]
 "src/endorlabs/resources/audit_log.py" = ["SLF001"]
 "src/endorlabs/resources/dependency_metadata.py" = ["ARG001"]
@@ -539,7 +539,7 @@ executionEnvironments = [
     { root = "src/endorlabs/core", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },
     # Estate workflows: staged typing (migrated analytics + relationships modules).
     { root = "src/endorlabs/workflows/estate", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportMissingTypeArgument = "none", reportPrivateUsage = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none", reportCallIssue = "none", reportArgumentType = "none", reportAttributeAccessIssue = "none" },
-    # Split dependency/call-graph modules (migrated from tools/dependency_explorer).
+    # Call-graph and dependency hydration workflow modules.
     { root = "src/endorlabs/workflows/callgraph", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/bom_graph.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
     { root = "src/endorlabs/workflows/dependencies/coordinates.py", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryTypeIgnoreComment = "none", reportUnnecessaryIsInstance = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportArgumentType = "none" },
@@ -551,7 +551,6 @@ executionEnvironments = [
     { root = "src/endorlabs/context", pythonVersion = "3.13", reportMissingImports = "none", reportUnknownVariableType = "none" },
     { root = "src/endorlabs/utils", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnnecessaryIsInstance = "none", reportUnusedCallResult = "none" },
     { root = "src/endorlabs/resources", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
-    { root = "src/endorlabs/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none" },
     { root = "src/endorlabs/generated/models", pythonVersion = "3.13", reportUnknownVariableType = "none", reportUnknownArgumentType = "none", reportUnknownMemberType = "none", reportUnknownParameterType = "none", reportCallIssue = "none", reportArgumentType = "none", reportAssignmentType = "none", reportOptionalMemberAccess = "none", reportOptionalSubscript = "none", reportMissingTypeArgument = "none", reportAttributeAccessIssue = "none", reportPrivateUsage = "none", reportUnusedCallResult = "none", reportUnnecessaryTypeIgnoreComment = "none" },
     # Staged strictness ratchet (phase 1): move operations unknown-types to warning.
     { root = "src/endorlabs/operations", pythonVersion = "3.13", reportUnknownVariableType = "warning", reportUnknownArgumentType = "warning", reportUnknownMemberType = "warning" },

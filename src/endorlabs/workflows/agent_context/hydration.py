@@ -29,7 +29,6 @@ from endorlabs.workflows.dependencies.metadata_fetch import (
 
 if TYPE_CHECKING:
     from endorlabs import Client
-    from endorlabs.api_client import APIClient
 
 logger = get_resource_logger(__name__)
 
@@ -73,7 +72,6 @@ class ProjectResult:
 
 def process_project(
     client: Client,
-    api_client: APIClient,
     root_namespace: str,
     project: Any,
     out_dir: str,
@@ -89,7 +87,6 @@ def process_project(
 
     Args:
         client: Authenticated Endor Labs Client.
-        api_client: Low-level APIClient for raw calls.
         root_namespace: Tenant namespace.
         project: Project resource object.
         out_dir: Output directory for this project's artifacts.
@@ -221,7 +218,7 @@ def process_project(
     # 3. DependencyMetadata
     logger.info("  [DepMetadata] project_uuid=%s", project.uuid)
     dep_rows, dep_ns, dep_truncated = retrieve_dep_metadata_full(
-        api_client,
+        client,
         project_ns,
         project.uuid,
         max_pages=dep_metadata_max_pages,

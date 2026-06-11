@@ -1478,6 +1478,56 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
         )
         return result if result is not None else []
 
+    def list_for_project(
+        self,
+        project: Any,
+        *,
+        namespace: str | None = None,
+        limit: int = 0,
+        status_filter: str | None = None,
+        **kwargs: Any,
+    ) -> list[Any] | list[dict[str, Any]]:
+        """List scan results for a project, newest first.
+
+        Args:
+            project: ``Project`` model or project UUID string.
+            namespace: List namespace; defaults from project or client tenant.
+            limit: Max rows (``page_size``); ``0`` means no explicit cap.
+            status_filter: Optional ``spec.status`` equality filter (client-side).
+            **kwargs: Forwarded to ``list()`` (e.g. ``mask``, ``max_pages``).
+        """
+        project_uuid = getattr(project, "uuid", None) or project
+        if not isinstance(project_uuid, str) or not project_uuid:
+            raise ValueError("project must be a Project model or UUID string")
+        list_ns = namespace
+        if list_ns is None and hasattr(project, "tenant_meta"):
+            list_ns = resolve_namespace_for_resource(project, self._default_namespace)
+        page_size = limit if limit > 0 else None
+        rows = self.list(
+            namespace=self._ns(list_ns),
+            filter=f'meta.parent_uuid=="{project_uuid}"',
+            sort_by="meta.create_time",
+            desc=True,
+            max_pages=1,
+            page_size=page_size,
+            **kwargs,
+        )
+        if status_filter:
+            filtered: list[Any] = []
+            for item in rows:
+                spec = getattr(item, "spec", None)
+                status = getattr(spec, "status", None) if spec is not None else None
+                if status is None and isinstance(item, dict):
+                    spec_raw = cast("dict[str, Any]", item).get("spec")
+                    if isinstance(spec_raw, dict):
+                        status = cast("dict[str, Any]", spec_raw).get("status")
+                if str(status) == status_filter:
+                    filtered.append(item)
+            rows = filtered
+        if limit > 0:
+            rows = rows[:limit]
+        return rows
+
 
 class ProjectFacade(ResourceRuntimeFacade[Any]):
     """Project facade with resolve sugar."""
@@ -1492,15 +1542,11 @@ class ProjectFacade(ResourceRuntimeFacade[Any]):
         """Resolve a project by UUID (with traverse fallback) or by name."""
         from .core.exceptions import NotFoundError as EndorNotFoundError
         from .core.filter import F
+        from .resources.project import is_hex_project_id
 
         ns = self._ns(namespace)
 
-        def _is_hex_project_id(value: str) -> bool:
-            return len(value) == 24 and all(
-                c in "0123456789abcdef" for c in value.lower()
-            )
-
-        if _is_hex_project_id(name_or_uuid):
+        if is_hex_project_id(name_or_uuid):
             try:
                 return self.get(name_or_uuid, namespace=ns)
             except EndorNotFoundError:
@@ -1563,7 +1609,7 @@ class CallGraphDataFacade:
     """Fetch and decode ``CallGraphData`` rows keyed by parent ``PackageVersion``.
 
     Supported decode sources: ``PackageVersion`` (``meta.parent_uuid``).
-    Wire logic lives in ``operations.call_graph``; this facade names the
+    Wire logic lives in ``resources.call_graph_data``; this facade names the
     API resource kind returned on the wire.
     """
 
@@ -1579,7 +1625,7 @@ class CallGraphDataFacade:
         namespace: str | None = None,
     ) -> Any:
         """Fetch and unpack call graph JSON for a ``PackageVersion``."""
-        from .operations.call_graph import get_call_graph_for_package_version
+        from .resources.call_graph_data import get_call_graph_for_package_version
 
         return get_call_graph_for_package_version(
             self._client,
@@ -1595,7 +1641,7 @@ class CallGraphDataFacade:
         namespace: str | None = None,
     ) -> Any:
         """Fetch raw ``CallGraphData`` wire JSON for a ``PackageVersion``."""
-        from .operations.call_graph import get_call_graph_for_package_version
+        from .resources.call_graph_data import get_call_graph_for_package_version
 
         return get_call_graph_for_package_version(
             self._client,

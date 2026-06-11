@@ -125,21 +125,6 @@ def build_scanlogs_client(tenant: str) -> Client:
     return Client(tenant=tenant)
 
 
-def list_projects(
-    api: APIClient, namespace: str, traverse: bool | None = None
-) -> list[dict[str, Any]]:
-    """List projects under a namespace.
-
-    Default behavior is namespace-aware:
-    - Root tenant namespace (no dot): traverse=true for discovery across children.
-    - Child namespace (contains dot): traverse=false for direct namespace listing.
-    """
-    if traverse is None:
-        traverse = "." not in namespace
-    params = {"list_parameters.traverse": str(traverse).lower()}
-    return list(api.get_all(f"v1/namespaces/{namespace}/projects", params=params))
-
-
 def match_projects(
     projects: list[dict[str, Any]],
     *,
@@ -166,34 +151,6 @@ def match_projects(
             continue
         selected.append(project)
     return selected
-
-
-def list_scan_results_for_project(
-    client: Client,
-    *,
-    namespace: str,
-    project_uuid: str,
-    limit: int,
-    status_filter: str | None = None,
-) -> list[dict[str, Any]]:
-    """List scan results for a project (server-side parent filter)."""
-    page_size = limit if limit > 0 else None
-    rows = client.ScanResult.list(
-        namespace=namespace,
-        filter=f'meta.parent_uuid=="{project_uuid}"',
-        sort_by="meta.create_time",
-        desc=True,
-        max_pages=1,
-        page_size=page_size,
-    )
-    results = [object_to_dict(item) for item in rows]
-    if status_filter:
-        results = [
-            item
-            for item in results
-            if (item.get("spec") or {}).get("status") == status_filter
-        ]
-    return results[:limit] if limit > 0 else results
 
 
 def parallel_collect_for_projects(

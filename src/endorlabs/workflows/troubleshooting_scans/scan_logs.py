@@ -43,22 +43,17 @@ def compare_scan_logs(
     *,
     num_scans: int = 2,
     log_levels: list[str] | None = None,
-    traverse: bool = False,
+    _traverse: bool = False,
 ) -> ScanLogComparison:
     """Compare the last N scan results and their logs for a project."""
-    from endorlabs import F
     from endorlabs.resources.scan_log_request import ScanLogLevel
 
     result = ScanLogComparison(num_scans_requested=num_scans)
 
-    scan_results = client.ScanResult.list(
+    scan_results = client.ScanResult.list_for_project(
+        project_uuid,
         namespace=namespace,
-        filter=F("meta.parent_uuid") == project_uuid,
-        sort_by="meta.create_time",
-        desc=True,
-        page_size=num_scans,
-        max_pages=1,
-        traverse=traverse,
+        limit=num_scans,
     )
 
     result.num_scans_found = len(scan_results)
