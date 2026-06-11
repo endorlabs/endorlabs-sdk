@@ -1505,7 +1505,7 @@ class ScanResultFacade(ResourceRuntimeFacade[Any]):
         page_size = limit if limit > 0 else None
         rows = self.list(
             namespace=self._ns(list_ns),
-            filter=f'meta.parent_uuid=="{project_uuid}"',
+            filter=F("meta.parent_uuid") == project_uuid,
             sort_by="meta.create_time",
             desc=True,
             max_pages=1,
