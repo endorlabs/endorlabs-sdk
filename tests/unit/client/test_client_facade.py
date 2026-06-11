@@ -17,6 +17,7 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import AmbiguousError, NotFoundError, ValidationError
+from endorlabs.core.filter import F
 from endorlabs.facade import CallGraphDataFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
@@ -1301,7 +1302,7 @@ def test_scan_result_list_for_project(client_with_mock_transport: Client) -> Non
     client.ScanResult.list.assert_called_once()
     kwargs = client.ScanResult.list.call_args.kwargs
     assert kwargs["namespace"] == "tenant.child"
-    assert kwargs["filter"] == 'meta.parent_uuid=="p1"'
+    assert str(kwargs["filter"]) == str(F("meta.parent_uuid") == "p1")
     assert kwargs["sort_by"] == "meta.create_time"
     assert kwargs["desc"] is True
     assert kwargs["max_pages"] == 1
