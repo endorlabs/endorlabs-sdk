@@ -7,25 +7,30 @@ Designed for agent use with strict validation guardrails that reject
 unknown metadata fields rather than silently stripping them.
 
 Usage examples:
-    # Import rules from a directory
-    uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
+    # Import rules from a directory (from repo root)
+    uv run python \\
+        agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         import --rules-dir opengrep-rules/ --namespace tenant.ns
 
     # Delete rules matching a name filter
-    uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
+    uv run python \\
+        agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         delete --name-filter "endor-sdk" --namespace tenant.ns
 
     # Clean orphaned findings from deleted rules
-    uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
+    uv run python \\
+        agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         orphans --deleted-names rule-a rule-b --namespace tenant.ns
 
     # Configure enable/disable state
-    uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
+    uv run python \\
+        agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         configure --rules-dir opengrep-rules/ \\
         --enabled-dir opengrep-rules/trust-chain/ --namespace tenant.ns
 
     # Full sync (delete + orphans + import + configure)
-    uv run python .cursor/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
+    uv run python \\
+        agent-knowledge/skills/endor-custom-sast-rules/scripts/sast_rule_manager.py \\
         sync --rules-dir opengrep-rules/ \\
         --enabled-dir opengrep-rules/trust-chain/ \\
         --name-filter "endor-sdk" --namespace tenant.ns --force
