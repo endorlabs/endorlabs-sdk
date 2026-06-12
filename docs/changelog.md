@@ -13,6 +13,7 @@ User-facing **Added**, **Changed**, and **Breaking** entries for each release.
 
 ### Changed
 
+- **Discovery API not pursued** — no `client.at` / `ScopedClient`, catalog presets (`queries/`, `access/` layers), or `discovery-presets` contract. Project-scoped discovery stays on facade sugar (`Project.resolve`, `list_for_scan`, …) and explicit `namespace=project.namespace` ([facade-helpers.md](guides/facade-helpers.md), `endor-namespace-scoping` rule).
 - Architecture doc: consumer vs generated model planes ([architecture.md](contributing/architecture.md)); removed per-resource schema drift validators; `PolicySpec.finding` / `.notification` use typed config models.
 - Estate grouped counts and collect preflight use `facade.count()` / `DependencyMetadata.list_groups()` instead of workflow-local pagination helpers.
 - Troubleshooting scan workflows and dependency metadata fetch use `Client` facades instead of raw `APIClient.get` / `get_all` loops.

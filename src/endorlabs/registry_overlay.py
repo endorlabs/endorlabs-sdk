@@ -7,6 +7,7 @@ runtime contract: PascalCase model class names (endorctl resource kinds), e.g.
 
 from __future__ import annotations
 
+import warnings
 from typing import Any, cast
 
 _ALLOWED_OVERRIDE_KEYS = {
@@ -66,6 +67,12 @@ def merge_generated_contract_with_overlay(
             by_attr[attr_name] = dict(item_dict)
     for attr_name, override in RESOURCE_CONTRACT_OVERLAY_BY_ATTR.items():
         if attr_name not in by_attr:
+            warnings.warn(
+                f"registry_overlay: no generated contract row for {attr_name!r}; "
+                "overlay entry skipped",
+                UserWarning,
+                stacklevel=2,
+            )
             continue
         for key, value in override.items():
             if key in _ALLOWED_OVERRIDE_KEYS:

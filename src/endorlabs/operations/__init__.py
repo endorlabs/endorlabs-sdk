@@ -20,6 +20,7 @@ from ..core.exceptions import EndorAPIError
 from ..core.exceptions import ValidationError as EndorValidationError
 from ..core.types import ListParameters, list_parameters_has_nonempty_field_mask
 from ..utils.logging_config import get_resource_logger
+from ..utils.namespace import resource_in_namespace_tree
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -400,8 +401,9 @@ class BaseResourceOperations[T: BaseModel]:
                 traverse=True,  # Enable traversal to search child namespaces
             )
             resources = self.list(tenant_meta_namespace, list_params)
-            if resources:
-                return cast("T", resources[0])
+            for resource in resources:
+                if resource_in_namespace_tree(resource, tenant_meta_namespace):
+                    return cast("T", resource)
             # No resources found - raise NotFoundError
             from ..core.exceptions import NotFoundError
 
