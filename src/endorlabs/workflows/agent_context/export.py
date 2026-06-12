@@ -278,10 +278,6 @@ def main() -> int:
 
     client = endorlabs.Client(tenant=args.tenant)
     try:
-        api = getattr(client, "_client", None)
-        if api is None:
-            raise RuntimeError("Client is closed; API client unavailable.")
-
         proj = resolve_project(client, ns, args.project, warnings)
         project_name = proj.meta.name if proj.meta and proj.meta.name else proj.uuid
         project_ns = (
@@ -388,7 +384,6 @@ def main() -> int:
         else:
             result = process_project(
                 client,
-                api,
                 args.tenant,
                 proj,
                 str(bundle),
@@ -426,7 +421,6 @@ def main() -> int:
             sweep_dir = bundle / "callgraph_sweep"
             sweep_dir.mkdir(parents=True, exist_ok=True)
             sweep_result = run_callgraph_sweep(
-                api,
                 project_uuid=proj.uuid,
                 out_dir=sweep_dir,
                 list_namespace=project_ns,

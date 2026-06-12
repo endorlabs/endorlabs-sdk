@@ -804,6 +804,48 @@ class BaseResourceOperations[T: BaseModel]:
                 namespace=tenant_meta_namespace,
             ) from e
 
+    def iter_group_pages(
+        self,
+        tenant_meta_namespace: str,
+        list_params: ListParameters | None = None,
+        *,
+        max_pages: int | None = None,
+        **kwargs: Any,
+    ) -> Iterator[dict[str, Any]]:
+        """Yield raw API JSON pages that contain ``group_response``."""
+        ns = validate_namespace(tenant_meta_namespace)
+        url = f"v1/namespaces/{ns}/{self.resource_name}"
+        params = self._build_params(list_params, **kwargs)
+        page_id: str | None = None
+        pages = 0
+
+        while True:
+            if max_pages is not None and pages >= max_pages:
+                break
+            request_params = dict(params)
+            if page_id:
+                request_params["list_parameters.page_id"] = page_id
+            response = self.client.get(url, params=request_params)
+            data = response.json()
+            if not isinstance(data, dict):
+                break
+            yield data
+            pages += 1
+
+            from .list_response import next_page_id_from_response
+
+            next_page_id = next_page_id_from_response(data)
+            if not next_page_id:
+                break
+            page_id = next_page_id
+
+        self.logger.info(
+            "Fetched %s grouped page(s) for %s in %s",
+            pages,
+            self.resource_name,
+            tenant_meta_namespace,
+        )
+
     def _build_params(
         self, list_params: ListParameters | None, **kwargs: Any
     ) -> dict[str, Any]:

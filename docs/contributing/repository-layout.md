@@ -37,8 +37,8 @@ devtools/  (maintainer automation)
 | ------ | ---- |
 | [`agent-knowledge/`](../../agent-knowledge/) | Authoring — `rules/`, `contracts/`, `skills/`, `schema/` (not pip-installed as source tree) |
 | [`src/endorlabs/agent_knowledge/`](../../src/endorlabs/agent_knowledge/) | Shipped bundle — `INDEX.md`, `MANIFEST.json`, mirrored rules/skills/contracts |
-| [`src/endorlabs/`](../../src/endorlabs/) | Runtime SDK — `api_client`, facades, `workflows/`, `context/`, hand `resources/` |
-| [`src/endorlabs/generated/`](../../src/endorlabs/generated/) | Model-sync output — `registry_contract.py`, `models/**` (never hand-edit) |
+| [`src/endorlabs/`](../../src/endorlabs/) | Runtime SDK — `api_client`, facades, `workflows/`, `context/`, hand `resources/` (includes `base.py`, `*_config.py`, `field_aliases.py`) |
+| [`src/endorlabs/generated/`](../../src/endorlabs/generated/) | Model-sync output — `registry_contract.py`, `models/**` (never hand-edit; wire mirror, distinct from `resources/`) |
 | [`src/endorlabs/registry.py`](../../src/endorlabs/registry.py) + [`registry_overlay.py`](../../src/endorlabs/registry_overlay.py) | Registry adapter + explicit overrides |
 | [`devtools/`](../../devtools/) | Model sync, agent-knowledge sync, reference generation |
 | [`docs/`](../../docs/) | Tracked public docs — contracts, guides, contributing, generated reference |

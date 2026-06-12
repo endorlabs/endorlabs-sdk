@@ -35,7 +35,7 @@ Related: [troubleshooting.md](troubleshooting.md) (list `ServerError`, 404 after
 
 For large **project-scoped** resources (`DependencyMetadata`, `Finding`, `ScanResult`, grouped DM shards), one namespace-wide `list()` can return the same rows but force a long sequential pagination chain. Prefer **discover shard keys** (usually `Project` rows in the target namespace) → **parallel `list()` per shard** with a selective filter (`spec.importer_data.project_uuid==…`, `spec.project_uuid==…`) and **`namespace=project.namespace`**.
 
-Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `list_resource_count()` per shard for progress denominators, and spike with [`estate/collect/benchmark.py`](../../src/endorlabs/workflows/estate/collect/benchmark.py) before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
+Use `ThreadPoolExecutor` / `--max-workers` (typical 8–16), `facade.count()` or `count_for_progress()` per shard for progress denominators, and spike with [`estate/collect/benchmark.py`](../../src/endorlabs/workflows/estate/collect/benchmark.py) before changing defaults. Do **not** assume namespace-wide list is faster — benchmark when row counts are high. Still prefer **one** `traverse=True` list when the resource is not naturally project-sharded or row counts are small.
 
 ### SDK helper (`endorlabs.tools.list_sharding`)
 
@@ -54,7 +54,7 @@ rows = list_for_shards(
 
 Estate-scale bulk collect remains in `endor-estate` workflows; see `AGENTS.md` for measured speedup notes.
 
-**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ParentShard`, `parallel_map_shards`, `list_for_shards`), [`list_resource_count()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`main_context_filter()`](../../src/endorlabs/workflows/estate/filters/main_context.py). Estate context: [estate/README.md](../estate/README.md).
+**Primitives:** [`endorlabs.tools.list_sharding`](../../src/endorlabs/tools/list_sharding.py) (`ParentShard`, `parallel_map_shards`, `list_for_shards`), [`facade.count()`](../../src/endorlabs/facade.py) / [`count_for_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`format_progress()`](../../src/endorlabs/workflows/estate/collect/bounds.py), [`execute_across_namespaces()`](../../src/endorlabs/utils/parallel.py), [`main_context_filter()`](../../src/endorlabs/workflows/estate/filters/main_context.py). Catalog: [facade-helpers.md](../guides/facade-helpers.md). Estate context: [estate/README.md](../estate/README.md).
 
 ### Workflow applicability
 

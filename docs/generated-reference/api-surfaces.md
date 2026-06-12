@@ -53,6 +53,8 @@ Auto-generated inventories for stable/public surfaces.
 - `audit_log`
 - `authentication_log`
 - `authorization_policy`
+- `call_graph_data`
+- `call_graph_data_proto`
 - `code_owners`
 - `dependency_metadata`
 - `endor_license`

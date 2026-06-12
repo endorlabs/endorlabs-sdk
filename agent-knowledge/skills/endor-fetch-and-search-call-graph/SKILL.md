@@ -30,7 +30,7 @@ For full PV/finding reachability triage across customer and `oss` planes, prefer
 1. **Credentials** — `uv run --env-file .env` (or equivalent) for `endorlabs.Client`.
 2. **Fetch (choose one):**
    - **Context bundle (recommended)** — run [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md) with **`--callgraph-sweep`** (`uv run endor-agent-context ...`). Use **`context_manifest.json`** `artifacts.callgraph_sweep` for paths to raw/decoded exports and the sweep manifest.
-   - **Programmatic** — `endorlabs.workflows.callgraph.fetch.retrieve_call_graph_full` plus `endorlabs.workflows.callgraph.proto_decode.decode_callgraph` (same primitives as `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep`) when you need a one-off fetch outside the export CLI. The legacy path `endorlabs.tools.dependency_explorer` re-exports the same symbols.
+   - **Programmatic** — `client.CallGraphData.decode(package_version)` or `.fetch(...)` for raw envelope. See [facade-helpers.md](../../../docs/guides/facade-helpers.md).
 3. **Discover paths** — from `context_manifest.json` `artifacts.callgraph_sweep`, or from a sweep output directory’s `manifest.json`. Use a namespace consistent with the project’s `tenant_meta.namespace` when listing or resolving the project.
 4. **Search** — `uv run endor-callgraph-search` (or `uv run python -m endorlabs.workflows.callgraph.search`) with `--callables`, `--edges`, and filter patterns.
 5. **Reason** — join on method IDs; treat edges as static analysis facts, not proof of runtime execution.
@@ -44,7 +44,7 @@ use method IDs for joins, intersections, and path checks.
 ## Library and CLI entrypoints
 
 - `endorlabs.workflows.callgraph.sweep.run_callgraph_sweep` — enumerates PVs and writes call graph exports (used by agent context `--callgraph-sweep`).
-- `endorlabs.workflows.callgraph.decoded.decode_payload` — canonical decoded shape contract (`summary`, `callables`, `edges`) shared by sweep + reachability workflows.
+- `client.CallGraphData.decode(package_version)` — canonical decoded shape (`CallGraphDecoded`: `summary`, `callables`, `edges`, `envelope`) shared by sweep + reachability workflows.
 - `endorlabs.workflows.callgraph.search` — searches decoded callables/edges (`endor-callgraph-search`).
 - Bundle orchestration: `uv run endor-agent-context ... --callgraph-sweep` (see [endor-project-retrieval-bundle](../endor-project-retrieval-bundle/SKILL.md)).
 

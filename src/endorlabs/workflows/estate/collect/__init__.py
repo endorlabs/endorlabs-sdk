@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from .bounds import (
+    count_for_progress,
     count_list_delta_check,
     format_progress,
     is_list_truncated,
-    list_resource_count,
     list_row_capacity,
     resolve_max_pages,
     truncation_message,
@@ -33,12 +33,12 @@ __all__ = [
     "aggregate_consumers_by_version",
     "aggregate_usage_by_package_version",
     "collect_workspace",
+    "count_for_progress",
     "count_list_delta_check",
     "dep_data_from_record",
     "dependency_metadata_record_from_row",
     "format_progress",
     "is_list_truncated",
-    "list_resource_count",
     "list_row_capacity",
     "load_dependency_metadata_records",
     "parallel_map_shards",

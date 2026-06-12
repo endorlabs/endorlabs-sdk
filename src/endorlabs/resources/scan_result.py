@@ -21,16 +21,16 @@ from __future__ import annotations
 
 from typing import Any, override
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
-from ..models.base import (
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     Context,
     FlexibleEnum,
 )
-from ..utils.logging_config import get_resource_logger
 
 logger = get_resource_logger(__name__)
 
@@ -419,59 +419,6 @@ class ScanResult(BaseResource):
         if spec_val is not None and isinstance(spec_val, dict):
             data["spec"] = ScanResultSpec(**spec_val)
         super().__init__(**data)
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift for unknown fields."""
-        if info.field_name == "spec" and v is not None and isinstance(v, dict):
-            # Known top-level fields in ScanResultSpec
-            # Skip drift detection for nested typed models and dynamic dicts:
-            # - environment: Environment model (handles its own validation)
-            # - provisioning_result: SpecProvisioningResultData model
-            # - versions: List[Version] models
-            # - deleted_findings, all_findings, exception_findings:
-            #   string-keyed maps of SpecFindingData
-            # - stats, runtimes, ecosystem_pkg_counts, ecosystem_dep_counts:
-            #   Dict with dynamic keys
-            known_fields = {
-                "status",
-                "type",
-                "start_time",
-                "end_time",
-                "stats",  # Dict[str, int] - dynamic keys
-                "refs",
-                "environment",  # Environment model
-                "has_panic",
-                "exit_code",
-                "logs",
-                "policies_triggered",
-                "warning_findings",
-                "blocking_findings",
-                "runtimes",  # Dict[str, int] - dynamic keys
-                "findings",
-                "deleted_findings",  # Dict[str, SpecFindingData] - dynamic keys
-                "languages_detected",
-                "provisioning_result_uuid",
-                "versions",  # List[Version] models
-                "ecosystem_pkg_counts",  # Dict[str, int] - dynamic ecosystem keys
-                "ecosystem_dep_counts",  # Dict[str, int] - dynamic ecosystem keys
-                "provisioning_result",  # SpecProvisioningResultData model
-                "errors",
-                "warnings",
-                "infos",
-                "all_findings",  # Dict[str, SpecFindingData] - dynamic keys
-                "exception_findings",  # Dict[str, SpecFindingData] - dynamic keys
-            }
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-        return v
 
     @override
     @classmethod

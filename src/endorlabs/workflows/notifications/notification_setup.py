@@ -293,7 +293,7 @@ def create_notification_policy(
         return result
 
     # Build notification config
-    notification_config: dict[str, Any] = {
+    notification_spec_dict: dict[str, Any] = {
         "notification_target_uuids": target_uuids,
     }
 
@@ -304,7 +304,7 @@ def create_notification_policy(
         "description": description or f"Notification policy: {name}",
         "tags": ["notification", "endorlabs-sdk"],
         "policy_type": "POLICY_TYPE_NOTIFICATION",
-        "notification": notification_config,
+        "notification": notification_spec_dict,
         "resource_kinds": ["Finding"],
         "disable": False,
         "propagate": propagate,

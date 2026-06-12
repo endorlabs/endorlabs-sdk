@@ -25,14 +25,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast, override
 from pydantic import BaseModel, Field, field_validator
 
 from ..core.types import ListParameters
-from ..models.base import (
+from ..operations import BaseResourceOperations
+from ..utils.logging_config import get_resource_logger
+from .base import (
     BaseMeta,
     BaseResource,
     BaseSpec,
     FlexibleEnum,
 )
-from ..operations import BaseResourceOperations
-from ..utils.logging_config import get_resource_logger
 
 if TYPE_CHECKING:
     from ..api_client import APIClient
@@ -264,32 +264,6 @@ class AuthorizationPolicy(BaseResource):
     )
 
     model_config: ClassVar[dict[str, str]] = {"extra": "ignore"}
-
-    @override
-    @field_validator("*", mode="before")
-    @classmethod
-    def detect_schema_drift(cls, v: Any, info: Any) -> Any:
-        """Detect and log schema drift in authorization policy responses."""
-        if info.field_name == "spec" and isinstance(v, dict):
-            # Log unknown fields for schema drift detection in spec
-            known_fields = {
-                "clause",
-                "target_namespaces",
-                "propagate",
-                "permissions",
-                "expiration_time",
-                "is_support_policy",
-            }
-
-            unknown_fields = set(v.keys()) - known_fields
-            if unknown_fields:
-                logger.warning(
-                    "Schema drift detected in %s: unknown fields %s",
-                    info.field_name,
-                    unknown_fields,
-                )
-
-        return v
 
     @override
     @classmethod

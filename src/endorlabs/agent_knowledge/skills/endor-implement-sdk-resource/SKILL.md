@@ -27,13 +27,16 @@ uv run python devtools/model_sync.py --fetch-spec --generate-stubs --generate-re
 
 **Hand-written `src/endorlabs/resources/{name}.py` only when needed:**
 
-- `build_create_payload` / create convenience
-- Field aliasing per [contracts.md](../../../docs/contracts.md)
+- Extend `resources.base.BaseResource` / `BaseSpec` for `Client` return types
+- Policy nested specs: `finding_config.py`, `notification_config.py`, `exception_config.py` as siblings (product policy UI tabs)
+- `build_create_payload` / create convenience; `extra="allow"` on specs for forward compat
+- Field aliasing per [contracts.md](../../../docs/contracts.md); Tier 3 aliases in `resources/field_aliases.py`
 - Resource-specific helpers (not module-level CRUD — facade uses `BaseResourceOperations`)
+- Do **not** add per-resource `detect_schema_drift` validators — use model-sync parity ([endor-model-sync-drift](../endor-model-sync-drift/))
 
 Do **not** hand-wire facades in `Client.__init__`.
 
-Architecture: [architecture.md](../../../docs/contributing/architecture.md). Drift: [endor-model-sync-drift](../endor-model-sync-drift/) skill.
+Architecture: [architecture.md](../../../docs/contributing/architecture.md) (consumer vs generated models).
 
 ## Phase 2: Facade and consumer UX
 
@@ -42,7 +45,7 @@ Architecture: [architecture.md](../../../docs/contributing/architecture.md). Dri
 - [ ] Scope (`tenant`, `oss`, `system`) correct in overlay if not tenant-default
 - [ ] Docstrings on public helpers in `resources/` (Args, Returns, Raises)
 
-Custom workflow facades (e.g. `ScanLogs`) are rare append-only entries in `registry.py` — prefer overlay + generated contract.
+Custom workflow facades (e.g. `CallGraphData`) are rare append-only entries in `registry.py` — prefer overlay + generated contract.
 
 ## Phase 3: Integration tests
 

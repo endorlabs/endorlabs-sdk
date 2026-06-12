@@ -13,14 +13,13 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from endorlabs.client_surface import Client
 from endorlabs.workflows.estate.collect.shards import ParentShard
 
 from .common import (
-    build_api_client,
     default_troubleshooting_output_dir,
-    list_projects,
-    list_scan_results_for_project,
     load_json,
+    object_to_dict,
     parallel_collect_for_projects,
     root_tenant,
     write_json,
@@ -137,8 +136,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     ns = args.namespace or args.tenant
     root = root_tenant(ns)
     pattern = re.compile(args.error_pattern, re.IGNORECASE)
-    api = build_api_client()
-    projects = list_projects(api, ns) if not args.from_search_artifact else []
+    client = Client(tenant=ns)
+    if not args.from_search_artifact:
+        traverse = "." not in ns
+        projects = [
+            p.model_dump(mode="json")
+            for p in client.Project.list(namespace=ns, traverse=traverse)
+        ]
+    else:
+        projects = []
 
     selected_projects, scope_label = _resolve_scope(args, projects)
 
@@ -146,12 +152,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     def _search_project(shard: ParentShard) -> list[dict[str, Any]]:
         project_hits: list[dict[str, Any]] = []
-        scan_results = list_scan_results_for_project(
-            api,
-            namespace=shard.namespace,
-            project_uuid=shard.key,
-            limit=args.limit,
-        )
+        scan_results = [
+            object_to_dict(item)
+            for item in client.ScanResult.list_for_project(
+                shard.key,
+                namespace=shard.namespace,
+                limit=args.limit,
+            )
+        ]
         for scan_result in scan_results:
             scan_uuid = scan_result.get("uuid")
             scan_logs = (scan_result.get("spec") or {}).get("logs") or []
