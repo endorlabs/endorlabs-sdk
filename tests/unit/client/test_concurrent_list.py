@@ -135,7 +135,7 @@ class TestFacadeConcurrentList:
             return BaseResourceOperations(client_arg, resource_name, model_class)
 
         with (
-            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=[],
@@ -181,7 +181,7 @@ class TestFacadeConcurrentList:
 
         with (
             patch(
-                "endorlabs.facade.BaseResourceOperations",
+                "endorlabs.facade.base.BaseResourceOperations",
                 side_effect=make_ops,
             ),
             patch(
@@ -233,7 +233,7 @@ class TestFacadeConcurrentList:
             return BaseResourceOperations(client_arg, resource_name, model_class)
 
         with (
-            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 side_effect=capture_query_fn,
@@ -282,7 +282,7 @@ class TestFacadeConcurrentList:
             return BaseResourceOperations(client_arg, resource_name, model_class)
 
         with (
-            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=merged_results,
@@ -315,7 +315,7 @@ class TestFacadeConcurrentList:
             return BaseResourceOperations(client_arg, resource_name, model_class)
 
         with (
-            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=[],
@@ -364,7 +364,7 @@ class TestFacadeConcurrentList:
             return BaseResourceOperations(client_arg, resource_name, model_class)
 
         with (
-            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 side_effect=capture_execute,
@@ -449,7 +449,7 @@ class TestFacadeLookupConcurrent:
             return BaseResourceOperations(client_arg, resource_name, model_class)
 
         with (
-            patch("endorlabs.facade.BaseResourceOperations", side_effect=make_ops),
+            patch("endorlabs.facade.base.BaseResourceOperations", side_effect=make_ops),
             patch(
                 "endorlabs.utils.parallel.execute_across_namespaces",
                 return_value=[mock_item],

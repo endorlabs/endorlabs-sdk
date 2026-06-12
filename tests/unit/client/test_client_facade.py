@@ -17,7 +17,6 @@ import endorlabs
 from endorlabs.api_client import APIClient
 from endorlabs.client_surface import Client
 from endorlabs.core.exceptions import AmbiguousError, NotFoundError, ValidationError
-from endorlabs.core.filter import F
 from endorlabs.facade import CallGraphDataFacade
 from tests.conftest import (
     TEST_MAX_PAGES,
@@ -1297,27 +1296,28 @@ def test_call_graph_data_decode(
     assert out.summary["uuid"] == "cg1"
 
 
-def test_scan_result_list_for_project(client_with_mock_transport: Client) -> None:
-    """ScanResult.list_for_project filters by parent and optional status."""
+def test_scan_result_list_by_project(client_with_mock_transport: Client) -> None:
+    """ScanResult.list_by_project filters by parent and optional status."""
     client = client_with_mock_transport
     sr1 = Mock()
     sr1.spec = Mock(status="STATUS_SUCCESS")
     sr2 = Mock()
     sr2.spec = Mock(status="STATUS_FAILED")
-    client.ScanResult.list = Mock(return_value=[sr1, sr2])
+    route_result = Mock(
+        values=[sr1, sr2], edge_used="project.scan_results", warnings=[]
+    )
+    client.ScanResult._execute_route = Mock(return_value=route_result)
 
-    out = client.ScanResult.list_for_project(
+    out = client.ScanResult.list_by_project(
         "p1",
         namespace="tenant.child",
         limit=10,
         status_filter="STATUS_SUCCESS",
     )
-    client.ScanResult.list.assert_called_once()
-    kwargs = client.ScanResult.list.call_args.kwargs
-    assert kwargs["namespace"] == "tenant.child"
-    assert str(kwargs["filter"]) == str(F("meta.parent_uuid") == "p1")
-    assert kwargs["sort_by"] == "meta.create_time"
-    assert kwargs["desc"] is True
-    assert kwargs["max_pages"] == 1
-    assert kwargs["page_size"] == 10
-    assert out == [sr1]
+    client.ScanResult._execute_route.assert_called_once()
+    call = client.ScanResult._execute_route.call_args
+    assert call.args[0] == "project.scan_results"
+    assert call.kwargs["source"] == "p1"
+    assert call.kwargs["namespace"] == "tenant.child"
+    assert call.kwargs["page_size"] == 10
+    assert out.values == [sr1]
