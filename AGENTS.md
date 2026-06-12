@@ -31,6 +31,7 @@ Prefer these before assuming `lookup`, `main`, or full-tenant sweeps:
 
 - **Ambiguous project URL:** identical `meta.name` may exist under multiple child namespaces → `AmbiguousError` on `Project.lookup`. Use `Project.list(traverse=True)`, explicit namespace, or project UUID.
 - **Project-scoped list namespace:** resolve `Project` first; pass `namespace=project.namespace` on `Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`. Empty rows often mean wrong namespace, not missing data.
+- **Contract routes (CRUD+):** use `Finding.list_by_project`, `Finding.list_by_scan`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — relationship map in [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md).
 - **Finding branch field:** `spec.source_code_version.ref` may be a short branch name, not `refs/heads/main`. List findings without a branch filter first, or use `RepositoryVersion.list`.
 - **Tenant-wide scan fetch:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer `--project-name` / `--project-uuid` for interactive RCA.
 - **Relationship map:** `estate.analyze.project_map.map` uses a bounded `PackageVersion` list — distinguish wrong namespace / unscanned consumers from pagination truncation before raising caps.

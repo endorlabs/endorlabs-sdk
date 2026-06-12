@@ -13,7 +13,7 @@ endorlabs:
     agent_visible: true
     composition: artifact_chain
     library_entrypoints:
-      - endorlabs.Client.ScanResult.list_for_project
+      - endorlabs.Client.ScanResult.list_by_project
       - endorlabs.Client.Project.resolve
 ---
 

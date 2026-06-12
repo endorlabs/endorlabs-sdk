@@ -81,7 +81,7 @@ class TestCompareScanLogs:
 
     def test_no_scan_results(self) -> None:
         client = Mock()
-        client.ScanResult.list_for_project.return_value = []
+        client.ScanResult.list_by_project.return_value = Mock(values=[])
 
         result = compare_scan_logs(client, "ns", "proj-1")
         assert isinstance(result, ScanLogComparison)
@@ -92,7 +92,7 @@ class TestCompareScanLogs:
         sr1 = _make_scan_result("sr-1")
         sr2 = _make_scan_result("sr-2", status="FAILED", exit_code=1)
         client = Mock()
-        client.ScanResult.list_for_project.return_value = [sr1, sr2]
+        client.ScanResult.list_by_project.return_value = Mock(values=[sr1, sr2])
         client.ScanResult.get_logs.return_value = [
             _make_log_message("ERROR", "something failed")
         ]
@@ -105,7 +105,7 @@ class TestCompareScanLogs:
     def test_handles_log_fetch_failure(self) -> None:
         sr = _make_scan_result("sr-1")
         client = Mock()
-        client.ScanResult.list_for_project.return_value = [sr]
+        client.ScanResult.list_by_project.return_value = Mock(values=[sr])
         client.ScanResult.get_logs.side_effect = RuntimeError("timeout")
 
         result = compare_scan_logs(client, "ns", "proj-1")
@@ -114,9 +114,9 @@ class TestCompareScanLogs:
 
     def test_respects_num_scans(self) -> None:
         client = Mock()
-        client.ScanResult.list_for_project.return_value = [
-            _make_scan_result(f"sr-{i}") for i in range(5)
-        ]
+        client.ScanResult.list_by_project.return_value = Mock(
+            values=[_make_scan_result(f"sr-{i}") for i in range(5)]
+        )
         client.ScanResult.get_logs.return_value = []
 
         result = compare_scan_logs(client, "ns", "proj-1", num_scans=3)
@@ -125,7 +125,7 @@ class TestCompareScanLogs:
     def test_custom_log_levels(self) -> None:
         sr = _make_scan_result("sr-1")
         client = Mock()
-        client.ScanResult.list_for_project.return_value = [sr]
+        client.ScanResult.list_by_project.return_value = Mock(values=[sr])
         client.ScanResult.get_logs.return_value = []
 
         compare_scan_logs(client, "ns", "proj-1", log_levels=["ERROR", "INFO"])

@@ -116,6 +116,37 @@ def _stub_extra_methods(entry: ResourceEntry) -> list[str]:
     return []
 
 
+def _load_route_public_methods(attr_name: str) -> list[str]:
+    try:
+        from endorlabs.generated.route_contract import ROUTE_CONTRACT
+    except ImportError:
+        return []
+    seen: set[str] = set()
+    methods: list[str] = []
+    for edge in ROUTE_CONTRACT.edges_for_attr(attr_name):
+        public = edge.public_method
+        if not public or "." not in public:
+            continue
+        _, method_name = public.split(".", 1)
+        if method_name in seen:
+            continue
+        seen.add(method_name)
+        methods.append(method_name)
+    return methods
+
+
+def _emit_route_method_stubs(entry: ResourceEntry) -> list[str]:
+    """Emit public CRUD+ route methods from generated route contract."""
+    methods = _load_route_public_methods(entry.attr_name)
+    if not methods:
+        return []
+    lines: list[str] = []
+    for name in methods:
+        lines.append("")
+        lines.append(f"    def {name}(self, *args: Any, **kwargs: Any) -> Any: ...")
+    return lines
+
+
 def _format_annotation(ann: Any, model_name: str) -> str:
     if ann is inspect.Parameter.empty:
         return ""
@@ -450,13 +481,15 @@ def _emit_resource_class(
     lines.extend(_build_class_docstring(entry, contract_row))
     create_lines = _emit_create_override(entry, contract_row)
     extra = _stub_extra_methods(entry)
-    if create_lines or extra:
+    route_lines = _emit_route_method_stubs(entry)
+    if create_lines or extra or route_lines:
         if create_lines:
             lines.append("")
             lines.extend(create_lines)
         for method_name in extra:
             lines.append("")
             lines.extend(_format_method_override(method_name, model_name))
+        lines.extend(route_lines)
     else:
         lines.append("    pass")
     return lines
