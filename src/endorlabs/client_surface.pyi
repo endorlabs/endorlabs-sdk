@@ -787,6 +787,7 @@ class _ScanResultFacade(ResourceRuntimeFacade[ScanResult]):
         ecosystem_pkg_counts: Any | None = None,
         ecosystem_dep_counts: Any | None = None,
         components_executed: Any | None = None,
+        deleted_package_versions: Any | None = None,
         provisioning_result: Any | None = None,
         **kwargs: Any,
     ) -> ScanResult: ...

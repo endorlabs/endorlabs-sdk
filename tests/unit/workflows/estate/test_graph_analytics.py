@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from endorlabs.workflows.estate.analyze.graph_metrics.analytics import (
@@ -41,6 +43,27 @@ def test_compute_graph_metrics_smoke(extra: str) -> None:
     assert metrics["node_count"] == 3
     assert "centrality" in metrics
     assert metrics["components"]["weakly_connected_count"] >= 1
+
+
+def test_run_graph_analytics_phase_skips_without_igraph(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from endorlabs.workflows.estate.analyze.graph_metrics import analytics
+
+    ir_dir = tmp_path / "intermediate-representation"
+    ir_dir.mkdir()
+    (ir_dir / "compile_dependency_graph.json").write_text(
+        '{"nodes": [], "edges": []}',
+        encoding="utf-8",
+    )
+
+    def _raise_igraph(*_args: object, **_kwargs: object) -> dict[str, object]:
+        raise analytics._igraph_import_error()
+
+    monkeypatch.setattr(analytics, "compute_graph_metrics", _raise_igraph)
+    result = analytics.run_graph_analytics_phase(tmp_path)
+    assert result.get("skipped") is True
+    assert "igraph" in result.get("reason", "")
 
 
 def test_build_package_subgraph_from_corpus() -> None:

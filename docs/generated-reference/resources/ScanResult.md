@@ -46,6 +46,7 @@ Optional:
 - `blocking_findings`
 - `components_executed`
 - `deleted_findings`
+- `deleted_package_versions`
 - `ecosystem_dep_counts`
 - `ecosystem_pkg_counts`
 - `end_time`
