@@ -9,6 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from endorlabs.tools.list_sharding import (
+    ParentShard,
+    parallel_map_shards,
+    project_dict_to_shard,
+)
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
 from endorlabs.workflows.estate.collect.bounds import (
@@ -27,11 +32,6 @@ from endorlabs.workflows.estate.collect.findings import (
 from endorlabs.workflows.estate.collect.projects import (
     collect_project_resource,
     load_project_records,
-)
-from endorlabs.workflows.estate.collect.shards import (
-    ParentShard,
-    parallel_map_shards,
-    project_dict_to_shard,
 )
 from endorlabs.workflows.estate.contracts import (
     RESOURCE_DEPENDENCY_METADATA,

@@ -38,7 +38,6 @@ from endorlabs.workflows.agent_context.session_artifacts import (
     create_session,
 )
 from endorlabs.workflows.callgraph.sweep import run_callgraph_sweep
-from endorlabs.workflows.projects.resolve import resolve_project
 
 LOGGER = get_resource_logger(__name__)
 MANIFEST_VERSION = 2
@@ -278,7 +277,7 @@ def main() -> int:
 
     client = endorlabs.Client(tenant=args.tenant)
     try:
-        proj = resolve_project(client, ns, args.project, warnings)
+        proj = client.Project.resolve(args.project, namespace=ns, warnings_out=warnings)
         project_name = proj.meta.name if proj.meta and proj.meta.name else proj.uuid
         project_ns = (
             proj.tenant_meta.namespace
