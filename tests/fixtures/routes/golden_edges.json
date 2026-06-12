@@ -56,37 +56,6 @@
       "match": "exact",
       "namespace_from": "source",
       "also_filter": "spec.importer_data.project_uuid==\"{source.spec.project_uuid}\""
-    },
-    {
-      "id": "finding.semgrep_rule.by_linter",
-      "from_kind": "Finding",
-      "to_kind": "SemgrepRule",
-      "edge": "via_intermediate",
-      "tier": "C",
-      "public_method": "Finding.to_semgrep_rule",
-      "when": {
-        "categories": ["FINDING_CATEGORY_SAST"]
-      },
-      "steps": [
-        {
-          "kind": "list_by_uuid_field",
-          "through_kind": "LinterResult",
-          "filter_field": "spec.project_uuid",
-          "uuid_from": "source.spec.project_uuid"
-        },
-        {
-          "kind": "get_by_uuid",
-          "uuid_from": "through.spec.semgrep.rule_uuid",
-          "optional": true
-        },
-        {
-          "kind": "list_by_attribute",
-          "source_attr": "through.spec.semgrep.rule_name",
-          "target_filter_field": "meta.name",
-          "match": "substring",
-          "optional": true
-        }
-      ]
     }
   ]
 }

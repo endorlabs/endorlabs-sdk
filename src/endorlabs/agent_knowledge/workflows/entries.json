@@ -76,7 +76,7 @@
     "id": "troubleshooting-scans",
     "library_entrypoints": [
       "endorlabs.Client.ScanResult.list_by_project",
-      "endorlabs.Client.Project.resolve"
+      "endorlabs.Client.Project.search_by_name"
     ],
     "module": "endorlabs.workflows.troubleshooting_scans",
     "skill": "endor-troubleshooting-scans"

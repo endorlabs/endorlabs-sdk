@@ -38,7 +38,7 @@ endorlabs:
 
 ## Breaking-change blast radius
 
-1. Resolve producer project UUID (repo A) — `Project.lookup` or retrieval bundle `subject.project_uuid`.
+1. Resolve producer project UUID (repo A) — `Project.search_by_name` / `get(uuid)` or retrieval bundle `subject.project_uuid`.
 2. Run with **`--focus-producer-project-uuid`**.
 
 ```bash

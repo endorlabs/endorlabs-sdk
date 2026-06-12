@@ -1,7 +1,7 @@
 """List ScanResults for a project with a bounded create-time window (default 7 days).
 
-Uses ``ScanResult.list(parent=project, list_params=ListParameters(...))`` with
-``from_date`` / ``to_date`` for server-side filtering instead of unbounded lists.
+Uses ``ScanResult.list_by_project`` with ``from_date`` / ``to_date`` for server-side
+filtering instead of unbounded lists.
 """
 
 from __future__ import annotations
@@ -90,12 +90,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             page_size=args.page_size,
         )
         list_max_pages = resolve_max_pages(args.max_pages)
-        scans = client.ScanResult.list(
-            parent=project,
+        scan_result = client.ScanResult.list_by_project(
+            project,
             namespace=list_ns,
             list_params=lp,
             max_pages=list_max_pages,
         )
+        scans = scan_result.values or []
     finally:
         client.close()
 

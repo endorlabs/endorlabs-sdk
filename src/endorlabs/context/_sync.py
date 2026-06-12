@@ -429,8 +429,8 @@ or call `endorlabs.agent_knowledge_index_path()`.
 
 - **Client:** `client = endorlabs.Client(tenant="namespace")`
 - **List:** `client.Project.list(traverse=True, max_pages=1)`
-- **Lookup:** `client.Project.lookup(name="https://github.com/...")`
-- **Findings:** `client.Finding.list(namespace=project.namespace, filter=...)`
+- **Discovery:** `client.Project.search_by_name("github.com/org/repo", traverse=True)`
+- **Findings:** `client.Finding.list_by_project(project, filter=...)`
 
 ## See Also
 

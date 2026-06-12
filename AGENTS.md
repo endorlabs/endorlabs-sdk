@@ -27,16 +27,16 @@ Shipped bootstrap rules (`endor-namespace-scoping`, `endor-list-query-performanc
 
 ## Agent notes
 
-Prefer these before assuming `lookup`, `main`, or full-tenant sweeps:
+Prefer these before assuming full-tenant sweeps or hand-built relationship filters:
 
-- **Ambiguous project URL:** identical `meta.name` may exist under multiple child namespaces → `AmbiguousError` on `Project.lookup`. Use `Project.list(traverse=True)`, explicit namespace, or project UUID.
-- **Project-scoped list namespace:** resolve `Project` first; pass `namespace=project.namespace` on `Finding`, `ScanResult`, `PackageVersion`, `DependencyMetadata`. Empty rows often mean wrong namespace, not missing data.
-- **Contract routes (CRUD+):** use `Finding.list_by_project`, `Finding.list_by_scan`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — relationship map in [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md).
+- **Ambiguous project URL:** identical `meta.name` may exist under multiple child namespaces. Use `Project.search_by_name(..., traverse=True, max_pages=…)` and pick the row for the intended namespace, or use project UUID with `get()`.
+- **Project-scoped list namespace:** resolve `Project` first; pass `namespace=project.namespace` on downstream lists or use **`list_by_project`** accessors. Empty rows often mean wrong namespace, not missing data.
+- **Generated accessor helpers:** use `Finding.list_by_project`, `Finding.list_by_scan`, `ScanResult.list_by_project`, `Finding.to_dependency_metadata` — relationship map in [docs/generated-reference/resource-routes.md](docs/generated-reference/resource-routes.md).
 - **Finding branch field:** `spec.source_code_version.ref` may be a short branch name, not `refs/heads/main`. List findings without a branch filter first, or use `RepositoryVersion.list`.
 - **Tenant-wide scan fetch:** `fetch_scan_results --all-projects` is O(projects × scans). Prefer `--project-name` / `--project-uuid` for interactive RCA.
 - **Relationship map:** `estate.analyze.project_map.map` uses a bounded `PackageVersion` list — distinguish wrong namespace / unscanned consumers from pagination truncation before raising caps.
 - **List deserialization vs API drift:** Pydantic validation failures on `list()` → model-sync / payload tolerance (**endor-troubleshoot-sdk**, `devtools/sync/`), not query-parameter tweaks alone.
-- **List field masks:** non-empty `mask=` → `dict` rows from `list()` / `list_iter()`; `lookup()` raises `ValueError` if masked. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/contracts.md](docs/contracts.md), shipped `contracts/list-parameters.md`.
+- **List field masks:** non-empty `mask=` → `dict` rows from `list()` / `list_iter()` and from `search_by_*`. See [docs/guides/consumer-ux-list-update.md](docs/guides/consumer-ux-list-update.md), [docs/contracts.md](docs/contracts.md), shipped `contracts/list-parameters.md`.
 - **Sharded parallel lists:** for large project-scoped resources, prefer per-project parallel `list()` with selective filters — [docs/contributing/list-query-performance.md](docs/contributing/list-query-performance.md#sharded-parallel-lists).
 
 ## Bootstrap
@@ -73,7 +73,7 @@ Maintainers editing authoring: `uv run python devtools/sync_agent_knowledge.py` 
 - **Canonical naming:** `tenant.namespace.child`; no UUIDs in namespace paths.
 - **Environment variables:** only names in [README.md](README.md), [CONTRIBUTORS.md](CONTRIBUTORS.md), product docs, or local OpenAPI.
 - **Client facades:** `client.<Kind>` PascalCase = `endorctl api … --resource <Kind>`. Custom: **`CallGraphData`** (decode/fetch); log lines via **`ScanResult.get_logs`** — [docs/contracts.md](docs/contracts.md), [docs/guides/facade-helpers.md](docs/guides/facade-helpers.md).
-- **Return types:** `.get()` / `.lookup()` → typed model or raise; `.list()` → models unless non-empty `mask=` → `dict` rows.
+- **Return types:** `.get()` → typed model or raise; `.list()` / `search_by_*` → models unless non-empty `mask=` → `dict` rows; `list_by_*` → `RouteResult`.
 - **F():** `matches()` on strings; `contains()` on array fields only.
 
 ## Repository layout (summary)

@@ -136,7 +136,7 @@ def _load_route_public_methods(attr_name: str) -> list[str]:
 
 
 def _emit_route_method_stubs(entry: ResourceEntry) -> list[str]:
-    """Emit public CRUD+ route methods from generated route contract."""
+    """Emit public generated accessor methods from route contract."""
     methods = _load_route_public_methods(entry.attr_name)
     if not methods:
         return []

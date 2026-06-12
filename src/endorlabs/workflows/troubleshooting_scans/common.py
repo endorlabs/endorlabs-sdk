@@ -366,27 +366,6 @@ def scan_result_extended_summary(scan_result: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def duplicate_project_decision(
-    matches: Sequence[Any], *, max_auto: int = 3
-) -> tuple[bool, list[str], str | None]:
-    """Return (proceed_with_all, warnings, error_if_too_many)."""
-    n = len(matches)
-    if n == 0:
-        return False, [], "no_projects_matched"
-    if n > max_auto:
-        return (
-            False,
-            [],
-            f"too_many_project_matches:{n}>max_auto:{max_auto}",
-        )
-    warnings: list[str] = []
-    if n > 1:
-        warnings.append(
-            f"duplicate_candidates:{n}:verify_these_are_distinct_projects_before_proceeding"
-        )
-    return True, warnings, None
-
-
 def scan_result_metrics(scan_result: dict[str, Any]) -> dict[str, Any]:
     """Extract normalized metrics used for anomaly and diff analysis."""
     spec = scan_result.get("spec") or {}

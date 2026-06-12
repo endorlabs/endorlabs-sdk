@@ -1,5 +1,5 @@
 # ruff: noqa: D102, TC001, UP046, SIM108
-"""Generic route executors for CRUD+ stitched resource paths."""
+"""Generic route executors for generated relationship accessors."""
 
 from __future__ import annotations
 
@@ -281,9 +281,10 @@ class RouteExecutor:
             )
         field = edge.filter_field or "spec.project_uuid"
         clause = f'{field}=="{uuid_val}"'
-        merged = f"{filter} AND {clause}" if filter else clause
+        filter_text = str(filter) if filter is not None else None
+        merged = f"{filter_text} AND {clause}" if filter_text else clause
         lp = ListParameters(filter=merged)  # pyright: ignore[reportCallIssue]
-        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages)
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **list_kwargs)
         return RouteResult(
             edge_used=edge.id, values=list(rows), warnings=list(warnings)
         )
@@ -299,7 +300,6 @@ class RouteExecutor:
         warnings: list[str],
         **list_kwargs: Any,
     ) -> RouteResult[Any]:
-        _ = list_kwargs
         return self._list_by_uuid_field(
             edge,
             source=source,
@@ -307,6 +307,7 @@ class RouteExecutor:
             filter=filter,
             max_pages=max_pages,
             warnings=warnings,
+            **list_kwargs,
         )
 
     def _list_by_attribute(
@@ -319,7 +320,6 @@ class RouteExecutor:
         max_pages: int | None,
         **list_kwargs: Any,
     ) -> RouteResult[Any]:
-        _ = list_kwargs
         attr = edge.source_attr
         if not attr or not edge.target_filter_field:
             raise RouteNotApplicableError(
@@ -343,9 +343,10 @@ class RouteExecutor:
         if edge.also_filter:
             extra = format_filter_template(edge.also_filter, source)
             clause = f"{extra} AND {clause}"
-        merged = f"{filter} AND {clause}" if filter else clause
+        filter_text = str(filter) if filter is not None else None
+        merged = f"{filter_text} AND {clause}" if filter_text else clause
         lp = ListParameters(filter=merged)  # pyright: ignore[reportCallIssue]
-        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages)
+        rows = self._ops(edge.to_kind).list(namespace, lp, max_pages, **list_kwargs)
         truncated = len(rows) > 1
         warnings: list[str] = []
         if truncated:

@@ -7,7 +7,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from endorlabs import F
 from endorlabs.core.exceptions import NotFoundError
 from endorlabs.utils.logging_config import get_resource_logger
 from endorlabs.utils.path_safety import safe_write_text
@@ -33,14 +32,22 @@ def run_callgraph_sweep(
     """List package versions for the project and write call graph exports.
 
     `list_namespace` is where PackageVersion is listed (same as project tenant
-    namespace). ``client`` is ``endorlabs.Client`` for ``PackageVersion.list``.
+    namespace). ``client`` is ``endorlabs.Client`` for
+    ``PackageVersion.list_by_project``.
     """
-    pvs = client.PackageVersion.list(
+    from types import SimpleNamespace
+
+    source = SimpleNamespace(
+        uuid=project_uuid,
+        tenant_meta=SimpleNamespace(namespace=list_namespace),
+    )
+    route = client.PackageVersion.list_by_project(
+        source,
         namespace=list_namespace,
-        filter=F("spec.project_uuid") == project_uuid,
         max_pages=max_pages,
         page_size=page_size,
     )
+    pvs = route.values or []
 
     exports: list[dict[str, Any]] = []
     for idx, pv in enumerate(pvs, start=1):

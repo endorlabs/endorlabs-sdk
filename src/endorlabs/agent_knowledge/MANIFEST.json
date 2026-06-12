@@ -43,9 +43,19 @@
         "list",
         "mask"
       ]
+    },
+    {
+      "id": "resource-discovery",
+      "path": "contracts/resource-discovery.md",
+      "tags": [
+        "discovery",
+        "facade",
+        "list",
+        "search"
+      ]
     }
   ],
-  "generated_at": "2026-06-12T02:22:42.545514+00:00",
+  "generated_at": "2026-06-12T03:41:38.608148+00:00",
   "index": "INDEX.md",
   "rules": [
     {
@@ -349,7 +359,7 @@
       "id": "troubleshooting-scans",
       "library_entrypoints": [
         "endorlabs.Client.ScanResult.list_by_project",
-        "endorlabs.Client.Project.resolve"
+        "endorlabs.Client.Project.search_by_name"
       ],
       "module": "endorlabs.workflows.troubleshooting_scans",
       "skill": "endor-troubleshooting-scans"

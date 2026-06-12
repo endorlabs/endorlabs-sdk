@@ -1,7 +1,7 @@
-"""Project search helpers for workflow orchestration."""
+"""Project discovery helpers for workflow orchestration."""
 
 from __future__ import annotations
 
-from .resolve import search_projects_by_name_or_uuid
+from .discovery import resolve_project_candidate
 
-__all__ = ["search_projects_by_name_or_uuid"]
+__all__ = ["resolve_project_candidate"]

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from endorlabs import F
 from endorlabs.utils.logging_config import get_resource_logger
 
 LOGGER = get_resource_logger(__name__)
@@ -94,12 +93,19 @@ def list_package_versions_for_index(
     deterministic: bool,
 ) -> tuple[list[Any], dict[str, Any]]:
     """Return raw PV list and inventory metadata for manifest ``inventory``."""
-    pvs = client.PackageVersion.list(
+    from types import SimpleNamespace
+
+    source = SimpleNamespace(
+        uuid=project_uuid,
+        tenant_meta=SimpleNamespace(namespace=namespace),
+    )
+    route = client.PackageVersion.list_by_project(
+        source,
         namespace=namespace,
-        filter=F("spec.project_uuid") == project_uuid,
         max_pages=max_pages,
         page_size=page_size,
     )
+    pvs = route.values or []
     cap = max_pages * page_size
     truncated = len(pvs) >= cap
     truncation_reason: str | None = None
