@@ -83,31 +83,12 @@ class ListableFacade[T: BaseModel]:
         )
         self._workflow_flags = entry.workflow_flags
 
-    def _filter_expression_text(
-        self,
-        filter: str | FilterExpression | None,
-        list_params: ListParameters | None,
-    ) -> str:
-        """Return normalized filter text from kwargs and list_params."""
-        if isinstance(filter, FilterExpression):
-            return str(filter)
-        if isinstance(filter, str):
-            return filter
-        if list_params is not None and list_params.filter is not None:
-            filt = list_params.filter
-            if isinstance(filt, FilterExpression):
-                return str(filt)
-            return filt
-        return ""
-
     def _maybe_warn_empty_project_namespace_list(
         self,
         rows: list[Any],
         *,
         traverse: bool,
         namespace_arg: str | None,
-        filter: str | FilterExpression | None,
-        list_params: ListParameters | None,
     ) -> None:
         """Warn when a project-scoped list at tenant root returns no rows."""
         if "project-namespace-list" not in self._workflow_flags:
@@ -115,9 +96,6 @@ class ListableFacade[T: BaseModel]:
         if rows or traverse:
             return
         if namespace_arg is not None and namespace_arg != self._default_namespace:
-            return
-        filter_text = self._filter_expression_text(filter, list_params).lower()
-        if "project_uuid" in filter_text:
             return
         warnings.warn(
             f"{self._entry.attr_name}.list() returned no rows at the client default "
@@ -424,8 +402,6 @@ class ListableFacade[T: BaseModel]:
                 list(rows),
                 traverse=True,
                 namespace_arg=namespace,
-                filter=filter,
-                list_params=list_params,
             )
             return rows
 
@@ -454,8 +430,6 @@ class ListableFacade[T: BaseModel]:
             list(rows),
             traverse=traverse,
             namespace_arg=namespace,
-            filter=filter,
-            list_params=lp,
         )
         return rows
 

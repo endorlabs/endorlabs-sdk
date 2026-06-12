@@ -36,8 +36,17 @@ def _load_graph(workspace_root: Path) -> dict[str, Any]:
     raise FileNotFoundError(msg)
 
 
+def _igraph_import_error() -> ImportError:
+    return ImportError(
+        "igraph is required for graph metrics; install with: uv sync --extra analytics"
+    )
+
+
 def _build_igraph(graph: dict[str, Any]) -> Any:
-    import igraph as ig  # pyright: ignore[reportMissingTypeStubs]
+    try:
+        import igraph as ig  # pyright: ignore[reportMissingTypeStubs]
+    except ImportError as exc:
+        raise _igraph_import_error() from exc
 
     nodes = graph.get("nodes") or []
     edges = graph.get("edges") or []
@@ -213,7 +222,15 @@ def run_graph_analytics_phase(
     max_betweenness_nodes: int = 5000,
 ) -> dict[str, Any]:
     graph = _load_graph(workspace_root)
-    metrics = compute_graph_metrics(graph, max_betweenness_nodes=max_betweenness_nodes)
+    try:
+        metrics = compute_graph_metrics(
+            graph, max_betweenness_nodes=max_betweenness_nodes
+        )
+    except ImportError:
+        return {
+            "skipped": True,
+            "reason": "igraph not installed; uv sync --extra analytics",
+        }
     write_json(
         str(ir_path(workspace_root, "graph_metrics.json")),
         metrics,

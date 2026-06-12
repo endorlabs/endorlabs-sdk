@@ -484,6 +484,7 @@ SCAN_RESULT_SPEC_FIELDS = (
     "ecosystem_pkg_counts",
     "ecosystem_dep_counts",
     "components_executed",
+    "deleted_package_versions",
     "provisioning_result",
 )
 SCAN_RESULT_SPEC_REQUIRED = ("status", "type")
